@@ -1,0 +1,2 @@
+# 改行コードは作業ツリーも含めて LF に統一する(.editorconfig の end_of_line と揃える)
+* text=auto eol=lf
