@@ -20,7 +20,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 - 危険な操作(エディタ終了・上書き保存等)も「技術的にツール化するか」で分類する。
   公開の可否・確認フローはアーキテクチャ仕様書の危険操作の公開方針が定める。
 
-集計: 提供 298 / 非対応 4 / 要調査 66(計 368)
+集計: 提供 465 / 非対応 7 / 要調査 0(計 472)
 
 | ID | 大分類 | 対象 | 分類 | 担当 | 備考 |
 |---|---|---|---|---|---|
@@ -101,9 +101,9 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-075 | システム | IPESystemConnector.RegisteredCPluginCount | 提供 | セッション |  |
 | CAP-076 | システム | IPESystemConnector.GetCPluginInfo | 提供 | セッション |  |
 | CAP-077 | システム | IPESystemConnector.RunCPlugin | 提供 | セッション |  |
-| CAP-078 | システム | IPESystemConnector.GetCPluginRunArgsClone | 要調査 |  | PXCPlugin型の扱いが不明。実機確認 |
-| CAP-079 | PmxView | IPXPmxViewConnector.GetViewMatrix | 要調査 |  | シグネチャを解決できなかったため実機確認 |
-| CAP-080 | PmxView | IPXPmxViewConnector.GetProjectionMatrix | 要調査 |  | シグネチャを解決できなかったため実機確認 |
+| CAP-078 | システム | IPESystemConnector.GetCPluginRunArgsClone | 提供 | セッション | Cプラグイン連携の各操作(モデル/セッション/ビュー)への取得経路。一次資料で利用非推奨とされる点を契約に明記する |
+| CAP-079 | PmxView | IPXPmxViewConnector.GetViewMatrix | 提供 | ビュー |  |
+| CAP-080 | PmxView | IPXPmxViewConnector.GetProjectionMatrix | 提供 | ビュー |  |
 | CAP-081 | PmxView | IPXPmxViewConnector.UpdateView | 提供 | ビュー |  |
 | CAP-082 | PmxView | IPXPmxViewConnector.UpdateModel | 提供 | ビュー |  |
 | CAP-083 | PmxView | IPXPmxViewConnector.UpdateModel_Vertex | 提供 | ビュー |  |
@@ -142,7 +142,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-116 | PmxView | IPXPmxViewConnector.StopVmdView | 提供 | 変形・モーション |  |
 | CAP-117 | PmxView | IPXPmxViewConnector.ShowBoneVmdView | 提供 | 変形・モーション |  |
 | CAP-118 | PmxView | IPXPmxViewConnector.EnableCameraVmdView | 提供 | 変形・モーション |  |
-| CAP-119 | PmxView | IPXPmxViewConnector.SetVmeEvent | 提供 | 変形・モーション | IPEVme版とIPEVmeResult版の2種。IPEVme版は読込不可型IPEVme(要調査)の調査結果に連動 |
+| CAP-119 | PmxView | IPXPmxViewConnector.SetVmeEvent | 提供 | 変形・モーション | IPEVme版とIPEVmeResult版の2種。デリゲートを含むVME記述は宣言的な記述からの変換設計を前提とする |
 | CAP-120 | PmxView | IPXPmxViewConnector.GetClientImage | 提供 | ビュー |  |
 | CAP-121 | PmxView | IPXPmxViewConnector.Visible | 提供 | ビュー |  |
 | CAP-122 | PmxView | IPXPmxViewConnector.Location | 提供 | ビュー |  |
@@ -263,132 +263,236 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-237 | 頂点ガイド | IPEVertexGuideConnector.SetVertexIndices | 提供 | ビュー |  |
 | CAP-238 | サブビュー | IPESubViewConnector.UpdateView | 提供 | ビュー |  |
 | CAP-239 | サブビュー | IPESubViewConnector.GetClientImage | 提供 | ビュー |  |
-| CAP-240 | モデルデータ型 | IPXBody | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: BoxSize, Position, Rotation |
-| CAP-241 | モデルデータ型 | IPXBone | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Position, ToOffset, FixAxis, SetLocalAxis, GetLocalAxis |
-| CAP-242 | モデルデータ型 | IPXBoneMorphOffset | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Translation, Rotation |
-| CAP-243 | モデルデータ型 | IPXBoneNodeItem | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-244 | モデルデータ型 | IPXFace | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-245 | モデルデータ型 | IPXGroupMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-246 | モデルデータ型 | IPXHeader | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-247 | モデルデータ型 | IPXIK | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-248 | モデルデータ型 | IPXIKLink | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Low, High |
-| CAP-249 | モデルデータ型 | IPXImpulseMorphOffset | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Velocity, Torque |
-| CAP-250 | モデルデータ型 | IPXJoint | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Position, Rotation, Limit_MoveLow, Limit_MoveHigh, Limit_AngleLow, Limit_AngleHigh等 |
-| CAP-251 | モデルデータ型 | IPXMaterial | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Diffuse, Specular, Ambient, EdgeColor |
-| CAP-252 | モデルデータ型 | IPXMaterialMorphOffset | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Diffuse, Specular, Ambient, EdgeColor, Tex, Sphere等 |
-| CAP-253 | モデルデータ型 | IPXModelInfo | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-254 | モデルデータ型 | IPXMorph | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-255 | モデルデータ型 | IPXMorphNodeItem | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-256 | モデルデータ型 | IPXMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-257 | モデルデータ型 | IPXNode | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-258 | モデルデータ型 | IPXNodeItem | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-259 | モデルデータ型 | IPXPmx | 提供 | モデル | 全公開メンバー(型単位)。FromStream/ToStreamはファイルパス版で代替し対象外 |
-| CAP-260 | モデルデータ型 | IPXSoftBody | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-261 | モデルデータ型 | IPXSoftBodyAnchor | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
-| CAP-262 | モデルデータ型 | IPXUVMorphOffset | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Offset |
-| CAP-263 | モデルデータ型 | IPXVertex | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Position, Normal, UV, UVA1, UVA2, UVA3等 |
-| CAP-264 | モデルデータ型 | IPXVertexMorphOffset | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: Offset |
-| CAP-265 | PMXビルダ | IPXPmxBuilder.Pmx | 提供 | モデル |  |
-| CAP-266 | PMXビルダ | IPXPmxBuilder.Vertex | 要調査 |  | 生成対象型 IPXVertex(要調査)の調査結果に連動 |
-| CAP-267 | PMXビルダ | IPXPmxBuilder.Face | 提供 | モデル |  |
-| CAP-268 | PMXビルダ | IPXPmxBuilder.Material | 要調査 |  | 生成対象型 IPXMaterial(要調査)の調査結果に連動 |
-| CAP-269 | PMXビルダ | IPXPmxBuilder.Bone | 要調査 |  | 生成対象型 IPXBone(要調査)の調査結果に連動 |
-| CAP-270 | PMXビルダ | IPXPmxBuilder.IKLink | 要調査 |  | 生成対象型 IPXIKLink(要調査)の調査結果に連動 |
-| CAP-271 | PMXビルダ | IPXPmxBuilder.Morph | 提供 | モデル |  |
-| CAP-272 | PMXビルダ | IPXPmxBuilder.VertexMorphOffset | 要調査 |  | 生成対象型 IPXVertexMorphOffset(要調査)の調査結果に連動 |
-| CAP-273 | PMXビルダ | IPXPmxBuilder.UVMorphOffset | 要調査 |  | 生成対象型 IPXUVMorphOffset(要調査)の調査結果に連動 |
-| CAP-274 | PMXビルダ | IPXPmxBuilder.BoneMorphOffset | 要調査 |  | 生成対象型 IPXBoneMorphOffset(要調査)の調査結果に連動 |
-| CAP-275 | PMXビルダ | IPXPmxBuilder.MaterialMorphOffset | 要調査 |  | 生成対象型 IPXMaterialMorphOffset(要調査)の調査結果に連動 |
-| CAP-276 | PMXビルダ | IPXPmxBuilder.GroupMorphOffset | 提供 | モデル |  |
-| CAP-277 | PMXビルダ | IPXPmxBuilder.ImpulseMorphOffset | 要調査 |  | 生成対象型 IPXImpulseMorphOffset(要調査)の調査結果に連動 |
-| CAP-278 | PMXビルダ | IPXPmxBuilder.Node | 提供 | モデル |  |
-| CAP-279 | PMXビルダ | IPXPmxBuilder.BoneNodeItem | 提供 | モデル |  |
-| CAP-280 | PMXビルダ | IPXPmxBuilder.MorphNodeItem | 提供 | モデル |  |
-| CAP-281 | PMXビルダ | IPXPmxBuilder.Body | 要調査 |  | 生成対象型 IPXBody(要調査)の調査結果に連動 |
-| CAP-282 | PMXビルダ | IPXPmxBuilder.Joint | 要調査 |  | 生成対象型 IPXJoint(要調査)の調査結果に連動 |
-| CAP-283 | PMXビルダ | IPXPmxBuilder.SoftBody | 提供 | モデル |  |
-| CAP-284 | PMXビルダ | IPXPmxBuilder.SoftBodyAnchor | 提供 | モデル |  |
-| CAP-285 | プリミティブ | IPXPrimitiveBuilder.AddPlane | 要調査 |  | シグネチャを解決できなかったため実機確認 |
-| CAP-286 | プリミティブ | IPXPrimitiveBuilder.AddBox | 要調査 |  | シグネチャを解決できなかったため実機確認 |
-| CAP-287 | プリミティブ | IPXPrimitiveBuilder.AddSphere | 要調査 |  | シグネチャを解決できなかったため実機確認 |
-| CAP-288 | プリミティブ | IPXPrimitiveBuilder.AddCylinder | 要調査 |  | シグネチャを解決できなかったため実機確認 |
-| CAP-289 | プリミティブ | IPXPrimitiveBuilder.AddTorus | 要調査 |  | シグネチャを解決できなかったため実機確認 |
-| CAP-290 | プリミティブ | IPXPrimitiveBuilder.AddText | 要調査 |  | シグネチャを解決できなかったため実機確認 |
-| CAP-291 | VMD/VMEビルダ | IPEBuilder.CreateVmd | 提供 | 変形・モーション | PMDを引数に取る版はレガシーのため対象外。他のオーバーロードを提供 |
-| CAP-292 | VMD/VMEビルダ | IPEBuilder.CreateVmdIPL | 提供 | 変形・モーション |  |
-| CAP-293 | VMD/VMEビルダ | IPEBuilder.CreateVmdBoneKey | 提供 | 変形・モーション |  |
-| CAP-294 | VMD/VMEビルダ | IPEBuilder.CreateVmdMorphKey | 提供 | 変形・モーション |  |
-| CAP-295 | VMD/VMEビルダ | IPEBuilder.CreateVmdBasCameraKey | 提供 | 変形・モーション |  |
-| CAP-296 | VMD/VMEビルダ | IPEBuilder.CreateVmdLightKey | 提供 | 変形・モーション |  |
-| CAP-297 | VMD/VMEビルダ | IPEBuilder.CreateVmdSelfShadowKey | 提供 | 変形・モーション |  |
-| CAP-298 | VMD/VMEビルダ | IPEBuilder.CreateVmdBonePoseState | 要調査 |  | 生成対象型 IPEVmdBonePoseState(要調査)の調査結果に連動 |
-| CAP-299 | VMD/VMEビルダ | IPEBuilder.CreateVme | 要調査 |  | PMDを引数に取る版はレガシーのため対象外。生成対象型 IPEVme(読込不可・要調査)の調査結果に連動 |
-| CAP-300 | VMD/VMEビルダ | IPEBuilder.CreateVmeGroup | 提供 | 変形・モーション | デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供 |
-| CAP-301 | VMD/VMEビルダ | IPEBuilder.CreateVmePath | 要調査 |  | 生成対象型 IPEVmePath(読込不可・要調査)の調査結果に連動 |
-| CAP-302 | VMDデータ型 | IPEVmd | 提供 | 変形・モーション | 全公開メンバー(型単位)。Stream入出力メンバーはファイルパス版で代替し対象外 |
-| CAP-303 | VMDデータ型 | IPEVmdBoneKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-304 | VMDデータ型 | IPEVmdBonePoseState | 要調査 |  | シグネチャを解決できなかったメンバーの変換可否を実機確認: FromPoseArray, ToPoseArray, GetPose |
-| CAP-305 | VMDデータ型 | IPEVmdCameraKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-306 | VMDデータ型 | IPEVmdFrameKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-307 | VMDデータ型 | IPEVmdIKEnable | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-308 | VMDデータ型 | IPEVmdIPL | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-309 | VMDデータ型 | IPEVmdLightKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-310 | VMDデータ型 | IPEVmdMorphKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-311 | VMDデータ型 | IPEVmdSelfShadowKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-312 | VMDデータ型 | IPEVmdVisibleIKKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-313 | VMEデータ型 | IPEVmeBoneState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-314 | VMEデータ型 | IPEVmeCameraState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-315 | VMEデータ型 | IPEVmeElement | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-316 | VMEデータ型 | IPEVmeEventElement | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-317 | VMEデータ型 | IPEVmeEventState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-318 | VMEデータ型 | IPEVmeFrameEvent | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-319 | VMEデータ型 | IPEVmeGroup | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-320 | VMEデータ型 | IPEVmeGroupBone | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-321 | VMEデータ型 | IPEVmeGroupMorph | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-322 | VMEデータ型 | IPEVmeLight | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-323 | VMEデータ型 | IPEVmeLightState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-324 | VMEデータ型 | IPEVmeMorphResult | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-325 | VMEデータ型 | IPEVmeObject | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-326 | VMEデータ型 | IPEVmePrimaryValue`1 | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-327 | VMEデータ型 | IPEVmeResult | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-328 | VMEデータ型 | IPEVmeSingleValue | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-329 | VMEデータ型 | IPEVmeSingleValueElement | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-330 | VMEデータ型 | IPEVmeSingleValueEventOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-331 | VMEデータ型 | IPEVmeSingleValueOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-332 | VMEデータ型 | IPEVmeSingleValueState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
-| CAP-333 | プラグイン機構 | IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult | 非対応 |  | プラグイン自身がホストに登録されるための実装専用API |
-| CAP-334 | プラグイン情報 | IPERegisteredPluginInfo / IPEPluginOption | 提供 | セッション | GetPluginInfoの結果として返す読み取り用データ |
-| CAP-335 | ビルダ別経路 | PEStaticBuilder / IPEShortBuilder | 非対応 |  | IPXPmxBuilder等の提供経路と重複する短絡経路のため |
-| CAP-336 | プラグイン拡張点 | IPECheckerPlugin / IPEImportPlugin / IPEExportPlugin | 非対応 |  | プラグインDLL側の拡張点(MCPからの呼び出し対象ではない) |
-| CAP-337 | PMDレガシー | PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成 | 非対応 |  | PMX系に同等機能。PMDファイル入出力はFormコネクタの能力として提供 |
-| CAP-338 | ビューヘルパ | IPEObjectSelectConnector / IPEExtensionEditConnector | 要調査 |  | 公開メンバーがウィンドウ操作のみ。実機で用途確認 |
-| CAP-339 | Cプラグイン連携 | PXCPlugin.* の全型 | 要調査 |  | Cプラグイン実行引数・選択状態操作の型。資料が乏しく実機確認 |
-| CAP-340 | SDX(読込不可型) | M | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-341 | SDX(読込不可型) | Q | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-342 | SDX(読込不可型) | V2 | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-343 | SDX(読込不可型) | V3 | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-344 | SDX(読込不可型) | V4 | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-345 | Vmd(読込不可型) | PEVmdBonePose | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-346 | Vme(読込不可型) | IPEVme | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-347 | Vme(読込不可型) | IPEVmeBone | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-348 | Vme(読込不可型) | IPEVmeBoneResult | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-349 | Vme(読込不可型) | IPEVmeCamera | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-350 | Vme(読込不可型) | IPEVmeCameraPosition | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-351 | Vme(読込不可型) | IPEVmeCameraResult | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-352 | Vme(読込不可型) | IPEVmeDirection | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-353 | Vme(読込不可型) | IPEVmeDirectionEventOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-354 | Vme(読込不可型) | IPEVmeDirectionOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-355 | Vme(読込不可型) | IPEVmeLightResult | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-356 | Vme(読込不可型) | IPEVmePath | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-357 | Vme(読込不可型) | IPEVmePosition | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-358 | Vme(読込不可型) | IPEVmePositionEventOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-359 | Vme(読込不可型) | IPEVmePositionOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-360 | Vme(読込不可型) | IPEVmeQuaternionValue | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-361 | Vme(読込不可型) | IPEVmeQuaternionValueEventOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-362 | Vme(読込不可型) | IPEVmeQuaternionValueOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-363 | Vme(読込不可型) | IPEVmeScale | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-364 | Vme(読込不可型) | IPEVmeScalingEventOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-365 | Vme(読込不可型) | IPEVmeScalingOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-366 | Vme(読込不可型) | IPEVmeVectorValue | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-367 | Vme(読込不可型) | IPEVmeVectorValueEventOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
-| CAP-368 | Vme(読込不可型) | IPEVmeVectorValueOperator | 要調査 |  | リフレクションで型を読み込めない(依存型の解決失敗)。メンバー構成をドキュメントXMLで確認し実機で分類を確定 |
+| CAP-240 | Cプラグイン連携 | PXCBridge.Builder | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-241 | Cプラグイン連携 | PXCBridge.BuilderInitialize | 提供 | モデル | Builder利用前の初期化。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-242 | Cプラグイン連携 | PXCBridge.PrimitiveBuilder | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-243 | Cプラグイン連携 | PXCBridge.PrimitiveBuilderInitialize | 提供 | モデル | PrimitiveBuilder利用前の初期化(一次資料で必須)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-244 | Cプラグイン連携 | PXCBridge.GetCurrentPmx | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-245 | Cプラグイン連携 | PXCBridge.UpdatePmx | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-246 | Cプラグイン連携 | PXCBridge.GetViewAxis | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-247 | Cプラグイン連携 | PXCBridge.ViewCtrl | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-248 | Cプラグイン連携 | PXCBridge.SystemCtrl | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-249 | Cプラグイン連携 | PXCBridge.RegisterUIModel | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-250 | Cプラグイン連携 | PXCBridge.CreateEventConnector | 提供 | ビュー | イベントは宣言的な記述からの変換設計を前提。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-251 | Cプラグイン連携 | PXCBridge.ReleaseEventConnector | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-252 | Cプラグイン連携 | IPXCPluginConnector.GetSelectedVertexIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-253 | Cプラグイン連携 | IPXCPluginConnector.SetSelectedVertexIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-254 | Cプラグイン連携 | IPXCPluginConnector.GetSelectedFaceIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-255 | Cプラグイン連携 | IPXCPluginConnector.SetSelectedFaceIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-256 | Cプラグイン連携 | IPXCPluginConnector.GetSelectedBoneIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-257 | Cプラグイン連携 | IPXCPluginConnector.SetSelectedBoneIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-258 | Cプラグイン連携 | IPXCPluginConnector.GetSelectedBodyIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-259 | Cプラグイン連携 | IPXCPluginConnector.SetSelectedBodyIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-260 | Cプラグイン連携 | IPXCPluginConnector.GetSelectedJointIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-261 | Cプラグイン連携 | IPXCPluginConnector.SetSelectedJointIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-262 | Cプラグイン連携 | IPXCPluginConnector.GetVisibleMaterialIndices | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-263 | Cプラグイン連携 | IPXSystemControl.PEPluginCount | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-264 | Cプラグイン連携 | IPXSystemControl.FindPEPlugins | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-265 | Cプラグイン連携 | IPXSystemControl.GetPEPluginInfo | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-266 | Cプラグイン連携 | IPXSystemControl.RunPEPlugin | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-267 | Cプラグイン連携 | IPXSystemControl.CPluginCount | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-268 | Cプラグイン連携 | IPXSystemControl.FindCPlugins | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-269 | Cプラグイン連携 | IPXSystemControl.GetCPluginInfo | 提供 | セッション | Int32版を提供。IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-270 | Cプラグイン連携 | IPXSystemControl.RunCPlugin | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-271 | Cプラグイン連携 | IPXSystemControl.SetShareData | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-272 | Cプラグイン連携 | IPXSystemControl.GetShareValue | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-273 | Cプラグイン連携 | IPXSystemControl.GetShareText | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-274 | Cプラグイン連携 | IPXSystemControl.GetShareBuffer | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-275 | Cプラグイン連携 | IPXSystemControl.RemoveShareData | 提供 | セッション | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-276 | Cプラグイン連携 | IPXViewControl.UpdateView | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-277 | Cプラグイン連携 | IPXViewControl.ClientSize | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-278 | Cプラグイン連携 | IPXViewControl.ScreenPosition | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-279 | Cプラグイン連携 | IPXViewControl.ViewMatrix | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-280 | Cプラグイン連携 | IPXViewControl.ProjectionMatrix | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-281 | Cプラグイン連携 | IPXViewControl.Viewport | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-282 | Cプラグイン連携 | IPXViewControl.CameraRotateCenter | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-283 | Cプラグイン連携 | IPXViewControl.CameraTarget | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-284 | Cプラグイン連携 | IPXViewControl.CameraPosition | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-285 | Cプラグイン連携 | IPXViewControl.CameraUpVector | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-286 | Cプラグイン連携 | IPXViewControl.SetCameraParameter | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-287 | Cプラグイン連携 | IPXViewControl.VCursorPosition | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-288 | Cプラグイン連携 | IPXViewControl.ViewAxis | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-289 | Cプラグイン連携 | IPXViewControl.EnableVAxis | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-290 | Cプラグイン連携 | IPXViewControl.GetVAxis | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-291 | Cプラグイン連携 | IPXViewControl.SetVAxis | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-292 | Cプラグイン連携 | IPXViewControl.VAxisOrigin | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-293 | Cプラグイン連携 | IPXViewControl.GetBodyVisibles | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-294 | Cプラグイン連携 | IPXViewControl.SetBodyVisibles | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-295 | Cプラグイン連携 | IPXViewControl.GetJointVisibles | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-296 | Cプラグイン連携 | IPXViewControl.SetJointVisibles | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-297 | Cプラグイン連携 | IPXCPrimitiveBuilder.AddPlane | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-298 | Cプラグイン連携 | IPXCPrimitiveBuilder.AddBox | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-299 | Cプラグイン連携 | IPXCPrimitiveBuilder.AddSphere | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-300 | Cプラグイン連携 | IPXCPrimitiveBuilder.AddCylinder | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-301 | Cプラグイン連携 | IPXCPrimitiveBuilder.AddTorus | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-302 | Cプラグイン連携 | IPXCPrimitiveBuilder.AddText | 提供 | モデル | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-303 | Cプラグイン連携 | IPXUIModel.Release | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-304 | Cプラグイン連携 | IPXUIModel.SetAutoRelease | 非対応 |  | 引数のIPXCPlugin(実装拡張点・非対応)を取得経路から得られないため |
+| CAP-305 | Cプラグイン連携 | IPXUIModel.Name | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-306 | Cプラグイン連携 | IPXUIModel.Visible | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-307 | Cプラグイン連携 | IPXUIModel.DrawMode | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-308 | Cプラグイン連携 | IPXUIModel.Light | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-309 | Cプラグイン連携 | IPXUIModel.Depth | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-310 | Cプラグイン連携 | IPXUIModel.TopMost | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-311 | Cプラグイン連携 | IPXUIModel.FixedDrawScale | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-312 | Cプラグイン連携 | IPXUIModel.SetBillboard | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-313 | Cプラグイン連携 | IPXUIModel.SetWorld | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-314 | Cプラグイン連携 | IPXUIModel.GetWorld | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-315 | Cプラグイン連携 | IPXUIModel.SetBone | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-316 | Cプラグイン連携 | IPXUIModel.SetBoneScale | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-317 | Cプラグイン連携 | IPXUIModel.SetBoneRotate | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-318 | Cプラグイン連携 | IPXUIModel.SetBoneTranslate | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-319 | Cプラグイン連携 | IPXUIModel.ResetBone | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-320 | Cプラグイン連携 | IPXUIModel.SetMorph | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-321 | Cプラグイン連携 | IPXUIModel.ResetMorph | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-322 | Cプラグイン連携 | IPXUIModel.UpdateTransform | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-323 | Cプラグイン連携 | IPXUIModel.GetTransformedVertexPosition | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-324 | Cプラグイン連携 | IPXUIModel.GetTransformedVertexNormal | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-325 | Cプラグイン連携 | IPXUIModel.GetTransformedBonePosition | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-326 | Cプラグイン連携 | IPXUIModel.GetTransformedBoneMatrix | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-327 | Cプラグイン連携 | IPXUIModel.UpdateMaterialColor | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-328 | Cプラグイン連携 | IPXUIModel.UpdateMaterialEdge | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-329 | Cプラグイン連携 | IPXUIModel.UpdateMaterialFlags | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-330 | Cプラグイン連携 | IPXUIModel.SetBitmapTexture | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-331 | Cプラグイン連携 | IPXUIModel.UpdateBitmapTexture | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-332 | Cプラグイン連携 | IPXUIModel.CreateEventListener | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-333 | Cプラグイン連携 | IPXUIModel.ReleaseEventListener | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-334 | Cプラグイン連携 | PXUIModelHelper.SetMouseOverColor | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-335 | Cプラグイン連携 | PXUIModelHelper.SetMouseDragMove | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-336 | Cプラグイン連携 | PXUIModelHelper.CreateTextControl | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-337 | Cプラグイン連携 | IPXEventConnector.CreateViewEventListener | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-338 | Cプラグイン連携 | IPXEventConnector.ReleaseViewEventListener | 提供 | ビュー | 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-339 | モデルデータ型 | IPXPmx | 提供 | モデル | 全公開メンバー(型単位)。FromStream/ToStreamはファイルパス版で代替し対象外 |
+| CAP-340 | モデルデータ型 | IPXHeader | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-341 | モデルデータ型 | IPXModelInfo | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-342 | モデルデータ型 | IPXVertex | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-343 | モデルデータ型 | IPXFace | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-344 | モデルデータ型 | IPXMaterial | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-345 | モデルデータ型 | IPXBone | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-346 | モデルデータ型 | IPXIK | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-347 | モデルデータ型 | IPXIKLink | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-348 | モデルデータ型 | IPXMorph | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-349 | モデルデータ型 | IPXMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-350 | モデルデータ型 | IPXVertexMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-351 | モデルデータ型 | IPXUVMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-352 | モデルデータ型 | IPXBoneMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-353 | モデルデータ型 | IPXImpulseMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-354 | モデルデータ型 | IPXMaterialMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-355 | モデルデータ型 | IPXGroupMorphOffset | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-356 | モデルデータ型 | IPXNode | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-357 | モデルデータ型 | IPXNodeItem | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-358 | モデルデータ型 | IPXBoneNodeItem | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-359 | モデルデータ型 | IPXMorphNodeItem | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-360 | モデルデータ型 | IPXBody | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-361 | モデルデータ型 | IPXJoint | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-362 | モデルデータ型 | IPXSoftBody | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-363 | モデルデータ型 | IPXSoftBodyAnchor | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
+| CAP-364 | PMXビルダ | IPXPmxBuilder.Pmx | 提供 | モデル |  |
+| CAP-365 | PMXビルダ | IPXPmxBuilder.Vertex | 提供 | モデル |  |
+| CAP-366 | PMXビルダ | IPXPmxBuilder.Face | 提供 | モデル |  |
+| CAP-367 | PMXビルダ | IPXPmxBuilder.Material | 提供 | モデル |  |
+| CAP-368 | PMXビルダ | IPXPmxBuilder.Bone | 提供 | モデル |  |
+| CAP-369 | PMXビルダ | IPXPmxBuilder.IKLink | 提供 | モデル |  |
+| CAP-370 | PMXビルダ | IPXPmxBuilder.Morph | 提供 | モデル |  |
+| CAP-371 | PMXビルダ | IPXPmxBuilder.VertexMorphOffset | 提供 | モデル |  |
+| CAP-372 | PMXビルダ | IPXPmxBuilder.UVMorphOffset | 提供 | モデル |  |
+| CAP-373 | PMXビルダ | IPXPmxBuilder.BoneMorphOffset | 提供 | モデル |  |
+| CAP-374 | PMXビルダ | IPXPmxBuilder.MaterialMorphOffset | 提供 | モデル |  |
+| CAP-375 | PMXビルダ | IPXPmxBuilder.GroupMorphOffset | 提供 | モデル |  |
+| CAP-376 | PMXビルダ | IPXPmxBuilder.ImpulseMorphOffset | 提供 | モデル |  |
+| CAP-377 | PMXビルダ | IPXPmxBuilder.Node | 提供 | モデル |  |
+| CAP-378 | PMXビルダ | IPXPmxBuilder.BoneNodeItem | 提供 | モデル |  |
+| CAP-379 | PMXビルダ | IPXPmxBuilder.MorphNodeItem | 提供 | モデル |  |
+| CAP-380 | PMXビルダ | IPXPmxBuilder.Body | 提供 | モデル |  |
+| CAP-381 | PMXビルダ | IPXPmxBuilder.Joint | 提供 | モデル |  |
+| CAP-382 | PMXビルダ | IPXPmxBuilder.SoftBody | 提供 | モデル |  |
+| CAP-383 | PMXビルダ | IPXPmxBuilder.SoftBodyAnchor | 提供 | モデル |  |
+| CAP-384 | プリミティブ | IPXPrimitiveBuilder.AddPlane | 提供 | モデル |  |
+| CAP-385 | プリミティブ | IPXPrimitiveBuilder.AddBox | 提供 | モデル |  |
+| CAP-386 | プリミティブ | IPXPrimitiveBuilder.AddSphere | 提供 | モデル |  |
+| CAP-387 | プリミティブ | IPXPrimitiveBuilder.AddCylinder | 提供 | モデル |  |
+| CAP-388 | プリミティブ | IPXPrimitiveBuilder.AddTorus | 提供 | モデル |  |
+| CAP-389 | プリミティブ | IPXPrimitiveBuilder.AddText | 提供 | モデル |  |
+| CAP-390 | VMD/VMEビルダ | IPEBuilder.CreateVmd | 提供 | 変形・モーション | PMDを引数に取る版はレガシーのため対象外。他のオーバーロードを提供 |
+| CAP-391 | VMD/VMEビルダ | IPEBuilder.CreateVmdIPL | 提供 | 変形・モーション |  |
+| CAP-392 | VMD/VMEビルダ | IPEBuilder.CreateVmdBoneKey | 提供 | 変形・モーション |  |
+| CAP-393 | VMD/VMEビルダ | IPEBuilder.CreateVmdMorphKey | 提供 | 変形・モーション |  |
+| CAP-394 | VMD/VMEビルダ | IPEBuilder.CreateVmdBasCameraKey | 提供 | 変形・モーション |  |
+| CAP-395 | VMD/VMEビルダ | IPEBuilder.CreateVmdLightKey | 提供 | 変形・モーション |  |
+| CAP-396 | VMD/VMEビルダ | IPEBuilder.CreateVmdSelfShadowKey | 提供 | 変形・モーション |  |
+| CAP-397 | VMD/VMEビルダ | IPEBuilder.CreateVmdBonePoseState | 提供 | 変形・モーション |  |
+| CAP-398 | VMD/VMEビルダ | IPEBuilder.CreateVme | 提供 | 変形・モーション | PMDを引数に取る版はレガシーのため対象外。デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供 |
+| CAP-399 | VMD/VMEビルダ | IPEBuilder.CreateVmeGroup | 提供 | 変形・モーション | デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供 |
+| CAP-400 | VMD/VMEビルダ | IPEBuilder.CreateVmePath | 提供 | 変形・モーション | デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供 |
+| CAP-401 | VMEデータ型 | IPEVmeElement | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-402 | VMEデータ型 | IPEVmeEventElement | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-403 | VMEデータ型 | IPEVmeObject | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-404 | VMEデータ型 | IPEVme | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-405 | VMEデータ型 | IPEVmeFrameEvent | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-406 | VMEデータ型 | IPEVmeEventState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-407 | VMEデータ型 | IPEVmeSingleValueState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-408 | VMEデータ型 | IPEVmeSingleValueElement | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-409 | VMEデータ型 | IPEVmeGroup | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-410 | VMEデータ型 | IPEVmeGroupBone | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-411 | VMEデータ型 | IPEVmeGroupMorph | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-412 | VMEデータ型 | IPEVmePrimaryValue`1 | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-413 | VMEデータ型 | IPEVmeSingleValue | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-414 | VMEデータ型 | IPEVmeVectorValue | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-415 | VMEデータ型 | IPEVmeQuaternionValue | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-416 | VMEデータ型 | IPEVmePosition | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-417 | VMEデータ型 | IPEVmeDirection | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-418 | VMEデータ型 | IPEVmeScale | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-419 | VMEデータ型 | IPEVmeSingleValueOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-420 | VMEデータ型 | IPEVmeVectorValueOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-421 | VMEデータ型 | IPEVmeQuaternionValueOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-422 | VMEデータ型 | IPEVmePositionOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-423 | VMEデータ型 | IPEVmeDirectionOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-424 | VMEデータ型 | IPEVmeScalingOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-425 | VMEデータ型 | IPEVmeSingleValueEventOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-426 | VMEデータ型 | IPEVmeVectorValueEventOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-427 | VMEデータ型 | IPEVmeQuaternionValueEventOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-428 | VMEデータ型 | IPEVmePositionEventOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-429 | VMEデータ型 | IPEVmeDirectionEventOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-430 | VMEデータ型 | IPEVmeScalingEventOperator | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-431 | VMEデータ型 | IPEVmePath | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-432 | VMEデータ型 | IPEVmeBoneState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-433 | VMEデータ型 | IPEVmeBone | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-434 | VMEデータ型 | IPEVmeCameraState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-435 | VMEデータ型 | IPEVmeCameraPosition | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-436 | VMEデータ型 | IPEVmeCamera | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-437 | VMEデータ型 | IPEVmeResult | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-438 | VMEデータ型 | IPEVmeBoneResult | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-439 | VMEデータ型 | IPEVmeMorphResult | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-440 | VMEデータ型 | IPEVmeCameraResult | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-441 | VMEデータ型 | IPEVmeLightResult | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-442 | VMEデータ型 | IPEVmeLightState | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-443 | VMEデータ型 | IPEVmeLight | 提供 | 変形・モーション | デリゲートを取るメンバーは宣言的な記述からの変換設計を前提に提供 |
+| CAP-444 | VMDデータ型 | IPEVmdBonePoseState | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-445 | VMDデータ型 | IPEVmd | 提供 | 変形・モーション | 全公開メンバー(型単位)。Stream入出力メンバーはファイルパス版で代替し対象外 |
+| CAP-446 | VMDデータ型 | IPEVmdFrameKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-447 | VMDデータ型 | IPEVmdIPL | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-448 | VMDデータ型 | IPEVmdBoneKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-449 | VMDデータ型 | IPEVmdMorphKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-450 | VMDデータ型 | IPEVmdCameraKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-451 | VMDデータ型 | IPEVmdLightKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-452 | VMDデータ型 | IPEVmdSelfShadowKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-453 | VMDデータ型 | IPEVmdVisibleIKKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-454 | VMDデータ型 | IPEVmdIKEnable | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
+| CAP-455 | Cプラグイン連携 | PXPluginInfo | 提供 | セッション | プラグイン情報の読み取り用データ(型単位)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-456 | Cプラグイン連携 | IPXViewEventListener | 提供 | ビュー | イベント通知の型(型単位)。宣言的な記述からの変換設計を前提。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-457 | Cプラグイン連携 | IPXUIModelEventListener | 提供 | ビュー | イベント通知の型(型単位)。宣言的な記述からの変換設計を前提。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-458 | Cプラグイン連携 | PXEventArgs | 提供 | ビュー | イベント引数の型(型単位)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-459 | プラグイン機構 | IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult | 非対応 |  | プラグイン自身がホストに登録されるための実装専用API |
+| CAP-460 | プラグイン情報 | IPERegisteredPluginInfo / IPEPluginOption | 提供 | セッション | GetPluginInfoの結果として返す読み取り用データ |
+| CAP-461 | ビルダ別経路 | PEStaticBuilder / IPEShortBuilder | 非対応 |  | IPXPmxBuilder等の提供経路と重複する短絡経路のため |
+| CAP-462 | プラグイン拡張点 | IPECheckerPlugin / IPEImportPlugin / IPEExportPlugin | 非対応 |  | プラグインDLL側の拡張点(MCPからの呼び出し対象ではない) |
+| CAP-463 | PMDレガシー | PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成 | 非対応 |  | PMX系に同等機能。PMDファイル入出力はFormコネクタの能力として提供 |
+| CAP-464 | ビューヘルパ | IPEObjectSelectConnector / IPEExtensionEditConnector | 提供 | ビュー | 固有メンバーなし。基底のウィンドウ表示制御(Visible・Location・Focus)のみ |
+| CAP-465 | Cプラグイン実装拡張点 | PXCPlugin.RegisterBase / IPXCPlugin / PXCPluginClass | 非対応 |  | Cプラグインを実装する側の基底クラス・エントリポイント(実装専用) |
+| CAP-466 | SDX数値型 | PEPlugin.SDX.*(M・Q・V2・V3・V4) | 非対応 |  | SlimDX数値型の橋渡し型。演算メンバーはモデル状態に作用せずクライアント側で完結する数値計算のため対象外。値の受け渡しはJSON数値配列(共通契約仕様書が定める) |
+| CAP-467 | Cプラグイン連携 | PXEventArgs.UIModelMouse | 提供 | ビュー | 入れ子の公開データ型(型単位)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-468 | Cプラグイン連携 | PXEventArgs.UIModelMouseDrag | 提供 | ビュー | 入れ子の公開データ型(型単位)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-469 | Cプラグイン連携 | PXEventArgs.ViewMouse | 提供 | ビュー | 入れ子の公開データ型(型単位)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-470 | Cプラグイン連携 | PXEventArgs.ViewObjectSelected | 提供 | ビュー | 入れ子の公開データ型(型単位)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-471 | Cプラグイン連携 | PXUIModelHelper.MaterialColorEvPara | 提供 | ビュー | 入れ子の公開データ型(型単位)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
+| CAP-472 | Cプラグイン連携 | PXUIModelHelper.TextControl | 提供 | ビュー | 入れ子の公開データ型(型単位)。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記 |
