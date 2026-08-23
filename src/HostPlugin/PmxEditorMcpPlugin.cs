@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Windows.Forms;
 using PEPlugin;
 
@@ -20,6 +19,7 @@ namespace PmxEditorMcp
         private Form _uiAnchor;
         private HostLog _log;
         private McpHost _host;
+        private JsonRpcConnection _connection;
 
         /// <summary>起動時実行とメニュー登録を有効にして生成する。</summary>
         public PmxEditorMcpPlugin()
@@ -114,11 +114,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>接続を受けても要求を読み書きせず、直ちに切断する。</summary>
-        private static void DisconnectWithoutExchange(Stream stream, HostGeneration generation)
-        {
-        }
-
         private void StartOnBootup()
         {
             lock (_operationGate)
@@ -139,12 +134,17 @@ namespace PmxEditorMcp
                 // 表示しないフォームはハンドルを持たず Invoke できないため、ここで確保する。
                 _ = _uiAnchor.Handle;
 
+                ResponseBudget budget = ResponseBudget.ReadFromEnvironment();
+
+                // ツールに対応する処理は無く、基盤メソッドは接続が受け持つ。
+                _connection = new JsonRpcConnection(_log, new McpMethodTable(), HostVersion, budget.Chars);
+
                 _host = new McpHost(
                     McpHost.BuildPipeName(editorProcessId),
                     _log,
-                    ResponseBudget.ReadFromEnvironment(),
+                    budget,
                     new FormUiDispatcher(_uiAnchor),
-                    DisconnectWithoutExchange);
+                    (stream, generation) => _connection.Handle(stream, generation));
 
                 string reason;
                 if (!_host.TryStart(out reason))
