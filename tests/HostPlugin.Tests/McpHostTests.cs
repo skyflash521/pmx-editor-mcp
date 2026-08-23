@@ -10,8 +10,6 @@ namespace PmxEditorMcp.Tests
 {
     public class McpHostTests : IDisposable
     {
-        private const string Pending = "impl pending: 名前付きパイプの待受を稼働世代の単位で開始・停止し、状態区分の判定とUIディスパッチの可否を世代ごとに決める";
-
         private static readonly TimeSpan WaitLimit = TimeSpan.FromSeconds(10);
         private const int ConnectTimeoutMs = 3000;
         private const int AbsentTimeoutMs = 300;
@@ -125,14 +123,14 @@ namespace PmxEditorMcp.Tests
         {
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void パイプ名はエディタのプロセスIDで決まる()
         {
             Assert.Equal("pmx-editor-mcp-1234", McpHost.BuildPipeName(1234));
             Assert.NotEqual(McpHost.BuildPipeName(1234), McpHost.BuildPipeName(5678));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 予算設定が不正なら待受を開始せず理由を返す()
         {
             McpHost host = CreateHost(Ignore, "9999");
@@ -152,7 +150,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(HostStatus.NotStartedInvalidBudget, host.Status);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 状態表示に使う値をそのまま返す()
         {
             McpHost host = CreateHost(Ignore);
@@ -163,7 +161,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ResponseBudget.DefaultChars, host.Budget.Chars);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 開始すると稼働中になりクライアントが接続できる()
         {
             McpHost host = CreateHost(Ignore);
@@ -175,7 +173,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(CanConnect(_pipeName, ConnectTimeoutMs));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 切断されたら待受に戻る()
         {
             McpHost host = CreateHost(Ignore);
@@ -186,7 +184,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(CanConnect(_pipeName, ConnectTimeoutMs));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 接続は同時に1本までしか受けない()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
@@ -211,9 +209,10 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 接続処理が例外で終わっても待受は続く()
         {
+            using (ManualResetEventSlim failed = new ManualResetEventSlim())
             using (ManualResetEventSlim handled = new ManualResetEventSlim())
             {
                 int attempts = 0;
@@ -221,6 +220,7 @@ namespace PmxEditorMcp.Tests
                 {
                     if (Interlocked.Increment(ref attempts) == 1)
                     {
+                        failed.Set();
                         throw new InvalidOperationException("接続処理の失敗");
                     }
 
@@ -229,15 +229,22 @@ namespace PmxEditorMcp.Tests
                 string reason;
                 host.TryStart(out reason);
 
-                Assert.True(CanConnect(_pipeName, ConnectTimeoutMs));
-                Assert.True(CanConnect(_pipeName, ConnectTimeoutMs));
+                // 接続処理へ確実に届かせるため、処理が始まるまでクライアントを開いたままにする。
+                using (Connect(_pipeName, ConnectTimeoutMs))
+                {
+                    Assert.True(failed.Wait(WaitLimit));
+                }
 
-                Assert.True(handled.Wait(WaitLimit));
+                using (Connect(_pipeName, ConnectTimeoutMs))
+                {
+                    Assert.True(handled.Wait(WaitLimit));
+                }
+
                 Assert.Equal(HostStatus.Running, host.Status);
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 読み取りでブロックしていても停止で解ける()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
@@ -274,7 +281,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 未開始と停止済みでの停止は何も変えない()
         {
             McpHost host = CreateHost(Ignore);
@@ -292,7 +299,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(host.TryStart(out reason));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 稼働中の開始は拒否する()
         {
             McpHost host = CreateHost(Ignore);
@@ -304,21 +311,30 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(HostStatus.Running, host.Status);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 停止すると待受が無くなり停止済みになる()
         {
-            McpHost host = CreateHost(Ignore);
-            string reason;
-            host.TryStart(out reason);
-            Assert.True(CanConnect(_pipeName, ConnectTimeoutMs));
+            using (ManualResetEventSlim connected = new ManualResetEventSlim())
+            {
+                McpHost host = CreateHost((stream, generation) => connected.Set());
+                string reason;
+                host.TryStart(out reason);
 
-            host.Stop();
+                // 接続処理へ確実に届かせるため、処理が始まるまでクライアントを開いたままにする。
+                using (Connect(_pipeName, ConnectTimeoutMs))
+                {
+                    Assert.True(connected.Wait(WaitLimit));
+                }
 
-            Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
-            Assert.False(CanConnect(_pipeName, AbsentTimeoutMs));
+                host.Stop();
+
+                Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
+                Assert.False(CanConnect(_pipeName, AbsentTimeoutMs));
+                Assert.DoesNotContain("待受で例外が起きた", File.ReadAllText(host.LogFilePath, Encoding.UTF8));
+            }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 開始直後に停止してもパイプインスタンスが待受へ残らない()
         {
             McpHost host = CreateHost(Ignore);
@@ -333,7 +349,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 接続処理の最中に停止しても呼び出しスレッドをブロックしない()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
@@ -364,7 +380,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 停止した稼働世代ではUIディスパッチを行わない()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
@@ -397,7 +413,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 待受を担うスレッドが終了する前は停止処理中と判定して開始を拒否する()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
@@ -428,7 +444,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 停止から開始すると同じパイプ名の待受へ戻る()
         {
             McpHost host = CreateHost(Ignore);
@@ -444,7 +460,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(CanConnect(_pipeName, ConnectTimeoutMs));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 新しい稼働世代は前の稼働世代のUIディスパッチ禁止を引き継がない()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
@@ -483,7 +499,83 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        /// <summary>UIスレッドが空くまでの間に停止手順が終わる並びを作るディスパッチ。</summary>
+        private sealed class StoppingDispatcher : IUiDispatcher
+        {
+            public McpHost Host { get; set; }
+
+            public void Invoke(Action action)
+            {
+                Host.Stop();
+                action();
+            }
+        }
+
+        [Fact]
+        public void 委譲がUIスレッドへ届くまでに停止したら実行しない()
+        {
+            using (ManualResetEventSlim connected = new ManualResetEventSlim())
+            using (ManualResetEventSlim finished = new ManualResetEventSlim())
+            {
+                bool dispatched = true;
+                bool actionRan = false;
+                StoppingDispatcher dispatcher = new StoppingDispatcher();
+                _host = new McpHost(
+                    _pipeName,
+                    new HostLog(Path.Combine(_directory, "host.log")),
+                    ResponseBudget.Read(null),
+                    dispatcher,
+                    (stream, generation) =>
+                    {
+                        connected.Set();
+                        dispatched = generation.TryInvokeOnUi(() => actionRan = true);
+                        finished.Set();
+                    });
+                dispatcher.Host = _host;
+
+                string reason;
+                _host.TryStart(out reason);
+
+                using (Connect(_pipeName, ConnectTimeoutMs))
+                {
+                    Assert.True(connected.Wait(WaitLimit));
+                    Assert.True(finished.Wait(WaitLimit));
+                }
+
+                Assert.False(dispatched);
+                Assert.False(actionRan);
+            }
+        }
+
+        [Fact]
+        public void 待受の準備に失敗し続けても記録は繰り返さない()
+        {
+            using (new NamedPipeServerStream(_pipeName, PipeDirection.InOut, 1))
+            {
+                McpHost host = CreateHost(Ignore);
+
+                string reason;
+                Assert.True(host.TryStart(out reason));
+
+                // 再試行の間隔より十分長く置き、3回以上失敗させる。
+                Thread.Sleep(1800);
+                host.Stop();
+                Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
+
+                string log = File.ReadAllText(host.LogFilePath, Encoding.UTF8);
+                int occurrences = 0;
+                int index = log.IndexOf("待受の準備に失敗した", StringComparison.Ordinal);
+                while (index >= 0)
+                {
+                    occurrences++;
+                    index = log.IndexOf("待受の準備に失敗した", index + 1, StringComparison.Ordinal);
+                }
+
+                Assert.Equal(1, occurrences);
+            }
+        }
+
+        [Fact]
         public void 接続中は接続状態を返す()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
