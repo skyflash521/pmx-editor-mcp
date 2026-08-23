@@ -9,7 +9,7 @@ namespace PmxEditorMcp
     /// ひとまとめに持つ。停止手順も状態判定もUIディスパッチの可否もこの単位で決まり、
     /// 停止した稼働世代での禁止は新しい稼働世代へ持ち越さない。
     /// </summary>
-    public sealed class HostGeneration
+    public sealed class HostGeneration : IUiInvoker
     {
         private readonly IUiDispatcher _uiDispatcher;
 

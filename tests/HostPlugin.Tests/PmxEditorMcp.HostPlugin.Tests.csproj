@@ -17,6 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 応答の照合で、ホストと同じシリアライザを使ってJSONを読み解くため。 -->
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\HostPlugin\PmxEditorMcp.HostPlugin.csproj" />
   </ItemGroup>
 
