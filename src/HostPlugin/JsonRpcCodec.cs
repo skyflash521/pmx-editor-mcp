@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp
 {
@@ -40,11 +41,22 @@ namespace PmxEditorMcp
     /// <summary>解析できた要求。</summary>
     public sealed class JsonRpcRequest
     {
+        private readonly object _parameters;
+        private readonly bool _hasParameters;
+
+        internal JsonRpcRequest(object id, string method, object parameters, bool hasParameters)
+        {
+            Id = id;
+            Method = method;
+            _parameters = parameters;
+            _hasParameters = hasParameters;
+        }
+
         /// <summary>要求の識別子。数値または文字列。</summary>
-        public object Id => throw new NotImplementedException();
+        public object Id { get; }
 
         /// <summary>呼ぶ処理の名前。</summary>
-        public string Method => throw new NotImplementedException();
+        public string Method { get; }
 
         /// <summary>
         /// 引数をオブジェクトとして取り出す。省略されていたときは空を渡して真を返し、
@@ -55,27 +67,59 @@ namespace PmxEditorMcp
         /// </summary>
         public bool TryGetParams(out IDictionary<string, object> parameters)
         {
-            throw new NotImplementedException();
+            if (!_hasParameters)
+            {
+                parameters = new Dictionary<string, object>();
+                return true;
+            }
+
+            IDictionary<string, object> given = _parameters as IDictionary<string, object>;
+            if (given == null)
+            {
+                parameters = null;
+                return false;
+            }
+
+            parameters = given;
+            return true;
         }
     }
 
     /// <summary>要求を1件解析した結果。</summary>
     public sealed class JsonRpcParseResult
     {
+        private JsonRpcParseResult(JsonRpcRequest request, object id, int errorCode, string errorMessage)
+        {
+            Request = request;
+            Id = id;
+            ErrorCode = errorCode;
+            ErrorMessage = errorMessage;
+        }
+
         /// <summary>解析できたかどうか。</summary>
-        public bool IsValid => throw new NotImplementedException();
+        public bool IsValid => Request != null;
 
         /// <summary>解析できた要求。<see cref="IsValid"/> が真のときだけ意味を持つ。</summary>
-        public JsonRpcRequest Request => throw new NotImplementedException();
+        public JsonRpcRequest Request { get; }
 
         /// <summary>応答に載せる識別子。判別できなかったときは null。</summary>
-        public object Id => throw new NotImplementedException();
+        public object Id { get; }
 
         /// <summary>エラーコード。<see cref="IsValid"/> が偽のときだけ意味を持つ。</summary>
-        public int ErrorCode => throw new NotImplementedException();
+        public int ErrorCode { get; }
 
         /// <summary>エラーの説明。<see cref="IsValid"/> が偽のときだけ意味を持つ。</summary>
-        public string ErrorMessage => throw new NotImplementedException();
+        public string ErrorMessage { get; }
+
+        internal static JsonRpcParseResult Parsed(JsonRpcRequest request)
+        {
+            return new JsonRpcParseResult(request, request.Id, 0, null);
+        }
+
+        internal static JsonRpcParseResult Rejected(object id, int errorCode, string errorMessage)
+        {
+            return new JsonRpcParseResult(null, id, errorCode, errorMessage);
+        }
     }
 
     /// <summary>
@@ -89,10 +133,76 @@ namespace PmxEditorMcp
         /// </summary>
         public const int ParseMaxJsonLength = 32 * 1024 * 1024;
 
+        /// <summary>要求と応答の jsonrpc に固定で置く値。</summary>
+        private const string ProtocolVersion = "2.0";
+
         /// <summary>要求を1件解析する。</summary>
         public static JsonRpcParseResult ParseRequest(string line)
         {
-            throw new NotImplementedException();
+            if (line == null)
+            {
+                throw new ArgumentNullException(nameof(line));
+            }
+
+            // 空(空白のみのものを含む)の本文は、シリアライザからは null リテラルと同じ結果に
+            // 見えるため、解析へ渡す前に構文不正として分ける。
+            if (line.Trim().Length == 0)
+            {
+                return JsonRpcParseResult.Rejected(
+                    null, JsonRpcErrorCodes.ParseError, "本文が空でJSONとして解釈できない。");
+            }
+
+            object parsed;
+            try
+            {
+                parsed = CreateSerializer(ParseMaxJsonLength).DeserializeObject(line);
+            }
+            catch (Exception exception) when (IsDeserializeFailure(exception))
+            {
+                return JsonRpcParseResult.Rejected(
+                    null, JsonRpcErrorCodes.ParseError, "本文をJSONとして解釈できない。");
+            }
+
+            IDictionary<string, object> request = parsed as IDictionary<string, object>;
+            if (request == null)
+            {
+                return JsonRpcParseResult.Rejected(
+                    null, JsonRpcErrorCodes.InvalidRequest, "要求はJSONオブジェクトでなければならない。");
+            }
+
+            // 識別子を先に判定する。応答に要求の識別子を載せられるかがこれで決まる。
+            object id;
+            if (!request.TryGetValue("id", out id) || !IsAllowedId(id))
+            {
+                return JsonRpcParseResult.Rejected(
+                    null, JsonRpcErrorCodes.InvalidRequest, "id は数値または文字列で、省略できない。");
+            }
+
+            object version;
+            if (!request.TryGetValue("jsonrpc", out version)
+                || !ProtocolVersion.Equals(version as string, StringComparison.Ordinal))
+            {
+                return JsonRpcParseResult.Rejected(
+                    id, JsonRpcErrorCodes.InvalidRequest, "jsonrpc は 2.0 でなければならない。");
+            }
+
+            object methodValue;
+            if (!request.TryGetValue("method", out methodValue))
+            {
+                return JsonRpcParseResult.Rejected(
+                    id, JsonRpcErrorCodes.InvalidRequest, "method は省略できない。");
+            }
+
+            string method = methodValue as string;
+            if (method == null)
+            {
+                return JsonRpcParseResult.Rejected(
+                    id, JsonRpcErrorCodes.InvalidRequest, "method は文字列でなければならない。");
+            }
+
+            object parameters;
+            bool hasParameters = request.TryGetValue("params", out parameters);
+            return JsonRpcParseResult.Parsed(new JsonRpcRequest(id, method, parameters, hasParameters));
         }
 
         /// <summary>
@@ -102,13 +212,62 @@ namespace PmxEditorMcp
         /// </summary>
         public static string SerializeResult(object id, object result)
         {
-            throw new NotImplementedException();
+            Dictionary<string, object> response = new Dictionary<string, object>
+            {
+                { "jsonrpc", ProtocolVersion },
+                { "id", id },
+                { "result", result },
+            };
+
+            return CreateSerializer(int.MaxValue).Serialize(response);
         }
 
         /// <summary>エラーの応答を組み立てる。</summary>
         public static string SerializeError(object id, int code, string message)
         {
-            throw new NotImplementedException();
+            Dictionary<string, object> error = new Dictionary<string, object>
+            {
+                { "code", code },
+                { "message", message },
+            };
+            Dictionary<string, object> response = new Dictionary<string, object>
+            {
+                { "jsonrpc", ProtocolVersion },
+                { "id", id },
+                { "error", error },
+            };
+
+            return CreateSerializer(int.MaxValue).Serialize(response);
+        }
+
+        /// <summary>
+        /// 識別子として受理する型かどうかを判定する。数値の側の並びは、シリアライザがJSONの数値を
+        /// 実体化するときに使う型(Int32 から Int64・Decimal・Double へ落ちる順)をすべて挙げた
+        /// もので、1つでも欠けると妥当な識別子を構造不正として弾いてしまう。
+        /// </summary>
+        private static bool IsAllowedId(object id)
+        {
+            return id is string || id is int || id is long || id is decimal || id is double;
+        }
+
+        /// <summary>
+        /// 本文をJSONとして解釈できなかったことを表す例外かどうかを判定する。要求の本文は接続の
+        /// 相手が自由に作れるため、シリアライザが投げる例外の型を1つに賭けず、解釈の失敗として
+        /// ありうる型をまとめて構文不正へ寄せる(メモリ不足などの続行できない失敗は通す)。
+        /// </summary>
+        private static bool IsDeserializeFailure(Exception exception)
+        {
+            return exception is ArgumentException
+                || exception is FormatException
+                || exception is OverflowException
+                || exception is InvalidOperationException;
+        }
+
+        private static JavaScriptSerializer CreateSerializer(int maxJsonLength)
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            serializer.MaxJsonLength = maxJsonLength;
+            return serializer;
         }
     }
 }

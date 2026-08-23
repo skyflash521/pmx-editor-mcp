@@ -7,8 +7,6 @@ namespace PmxEditorMcp.Tests
 {
     public class MessageChannelTests
     {
-        private const string Pending = "impl pending: メッセージを1行として読み書きし、上限付きの生バイト読み取りと厳格なUTF-8で扱う";
-
         private static readonly Encoding Utf8WithoutBom = new UTF8Encoding(false);
 
         private static MessageChannel FromBytes(byte[] input)
@@ -21,7 +19,7 @@ namespace PmxEditorMcp.Tests
             return FromBytes(Utf8WithoutBom.GetBytes(input));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void LFで区切られた本文を読み取る()
         {
             MessageChannel channel = FromText("いち\n");
@@ -31,7 +29,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("いち", message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CRLFで区切られた本文も受理する()
         {
             MessageChannel channel = FromText("いち\r\n");
@@ -41,7 +39,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("いち", message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 複数の本文を順に読み取る()
         {
             MessageChannel channel = FromText("いち\nに\r\nさん\n");
@@ -57,7 +55,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("さん", third);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 空の本文を読み取れる()
         {
             MessageChannel channel = FromText("\n");
@@ -67,7 +65,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(string.Empty, message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 相手が切断したら終端を返す()
         {
             MessageChannel channel = FromText(string.Empty);
@@ -77,7 +75,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 区切りの無いまま終端に達したら終端を返す()
         {
             MessageChannel channel = FromText("区切りが来ない");
@@ -86,7 +84,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(MessageReadOutcome.EndOfStream, channel.Read(out message));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 上限ちょうどの本文は受理する()
         {
             MessageChannel channel = new MessageChannel(new MemoryStream(Utf8WithoutBom.GetBytes(new string('a', 16) + "\n")), 16);
@@ -96,7 +94,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(16, message.Length);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 上限ちょうどの本文にCRLFが続いても受理する()
         {
             MessageChannel channel = new MessageChannel(new MemoryStream(Utf8WithoutBom.GetBytes(new string('a', 16) + "\r\n")), 16);
@@ -106,7 +104,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(16, message.Length);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 上限を超える本文は上限超過として返す()
         {
             MessageChannel channel = new MessageChannel(new MemoryStream(Utf8WithoutBom.GetBytes(new string('a', 17) + "\n")), 16);
@@ -116,7 +114,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 区切りが来なくても上限を超えた時点で読み取りを打ち切る()
         {
             // 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
@@ -128,7 +126,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(source.BytesRead < 100000, "読み取ったバイト数は " + source.BytesRead);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 上限は文字数でなくバイト数で測る()
         {
             // 「あ」はUTF-8で3バイトなので、6文字は18バイトで上限16を超える。
@@ -138,7 +136,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(MessageReadOutcome.TooLarge, channel.Read(out message));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void UTF8として解釈できないバイト列は不正な符号化として返す()
         {
             MessageChannel channel = FromBytes(new byte[] { 0x82, 0xA0, (byte)'\n' });
@@ -148,7 +146,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 書き出しはBOMなしUTF8でLFを付す()
         {
             MemoryStream stream = new MemoryStream();
@@ -161,7 +159,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(Utf8WithoutBom.GetBytes("いち\nに\n"), written);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void バイト数はUTF8で数える()
         {
             Assert.Equal(0, MessageChannel.MeasureBytes(string.Empty));
@@ -169,20 +167,20 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(4, MessageChannel.MeasureBytes("abcd"));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 上限は生成時に指定した値を返す()
         {
             Assert.Equal(MessageChannel.DefaultMaxMessageBytes, new MessageChannel(new MemoryStream()).MaxMessageBytes);
             Assert.Equal(16, new MessageChannel(new MemoryStream(), 16).MaxMessageBytes);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 既定の上限は16MiBである()
         {
             Assert.Equal(16777216, MessageChannel.DefaultMaxMessageBytes);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 上限を超える本文は書き出さない()
         {
             MemoryStream stream = new MemoryStream();
@@ -196,7 +194,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(stream.ToArray());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 書き出しの上限も文字数でなくバイト数で測る()
         {
             MemoryStream stream = new MemoryStream();
@@ -210,7 +208,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(stream.ToArray());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 上限ちょうどの本文は書き出す()
         {
             MemoryStream stream = new MemoryStream();

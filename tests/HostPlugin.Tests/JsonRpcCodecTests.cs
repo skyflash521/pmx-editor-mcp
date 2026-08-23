@@ -6,8 +6,6 @@ namespace PmxEditorMcp.Tests
 {
     public class JsonRpcCodecTests
     {
-        private const string Pending = "impl pending: JSON-RPC 2.0のサブセットを解析し、応答を組み立てる";
-
         private const string EmptyMethodRequest = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"\"}";
 
         private const string NullIdWithArrayParamsRequest =
@@ -24,7 +22,7 @@ namespace PmxEditorMcp.Tests
             return parameters;
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 妥当な要求を解析する()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest("{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"ping\"}");
@@ -40,7 +38,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(parameters);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 文字列の識別子を受理する()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest("{\"jsonrpc\":\"2.0\",\"id\":\"a-1\",\"method\":\"ping\"}");
@@ -49,7 +47,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("a-1", result.Request.Id);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 引数を解析する()
         {
             IDictionary<string, object> parameters = ParseObject("{\"protocol\":1,\"name\":\"あ\"}");
@@ -60,12 +58,15 @@ namespace PmxEditorMcp.Tests
 
         // 空(空白のみのものを含む)の本文は、シリアライザからは null リテラルと同じ結果に
         // 見えるため、解析の前に構文不正として分ける必要がある。
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("")]
         [InlineData("   ")]
         [InlineData("{")]
         [InlineData("{\"jsonrpc\":}")]
         [InlineData("これはJSONではない")]
+        // 数値の桁あふれと壊れた数値も、シリアライザからは解釈の失敗として返る。
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1e999999,\"method\":\"ping\"}")]
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"m\",\"params\":{\"x\":1.2.3}}")]
         public void JSONとして解釈できない本文は構文不正になる(string line)
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(line);
@@ -76,7 +77,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(string.IsNullOrEmpty(result.ErrorMessage));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("[{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}]")]
         [InlineData("\"文字列\"")]
         [InlineData("5")]
@@ -90,7 +91,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(result.Id);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("{\"id\":1,\"method\":\"ping\"}")]
         [InlineData("{\"jsonrpc\":\"1.0\",\"id\":1,\"method\":\"ping\"}")]
         [InlineData("{\"jsonrpc\":2.0,\"id\":1,\"method\":\"ping\"}")]
@@ -105,7 +106,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, Convert.ToInt32(result.Id));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("{\"jsonrpc\":\"2.0\",\"method\":\"ping\"}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"ping\"}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":true,\"method\":\"ping\"}")]
@@ -120,7 +121,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(result.Id);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\",\"params\":[1,2]}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\",\"params\":\"文字列\"}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\",\"params\":5}")]
@@ -138,7 +139,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(parameters);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 空のメソッド名は構造不正にしない()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(EmptyMethodRequest);
@@ -148,7 +149,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(string.Empty, result.Request.Method);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 識別子と引数がともに不正なら構造不正を先に判定する()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(NullIdWithArrayParamsRequest);
@@ -158,7 +159,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(result.Id);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void シリアライザの既定より大きい本文を解析できる()
         {
             // 既定の上限は約200万文字。それを超えても16MiB以下なら受理する。
@@ -172,7 +173,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(large, parameters["text"]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 成功の応答を組み立てる()
         {
             string line = JsonRpcCodec.SerializeResult(7, "pong");
@@ -183,7 +184,7 @@ namespace PmxEditorMcp.Tests
             Assert.DoesNotContain("\"error\"", line);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 文字列の識別子を持つ応答を組み立てる()
         {
             string line = JsonRpcCodec.SerializeResult("a-1", "pong");
@@ -191,7 +192,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains("\"id\":\"a-1\"", line);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void オブジェクトの結果を組み立てる()
         {
             Dictionary<string, object> result = new Dictionary<string, object>
@@ -209,7 +210,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains("\"budgetChars\":100000", line);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エラーの応答を組み立てる()
         {
             string line = JsonRpcCodec.SerializeError(null, JsonRpcErrorCodes.ParseError, "解釈できない");
@@ -222,7 +223,7 @@ namespace PmxEditorMcp.Tests
             Assert.DoesNotContain("\"result\"", line);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エラーの応答の本文に改行を含めない()
         {
             string line = JsonRpcCodec.SerializeError(1, JsonRpcErrorCodes.InternalError, "改行\r\nを含む説明");
@@ -231,7 +232,7 @@ namespace PmxEditorMcp.Tests
             Assert.DoesNotContain("\r", line);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 成功の応答の本文に改行を含めない()
         {
             string line = JsonRpcCodec.SerializeResult(1, "改行\r\nを含む結果");
@@ -240,7 +241,7 @@ namespace PmxEditorMcp.Tests
             Assert.DoesNotContain("\r", line);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void シリアライザの既定より大きい結果も組み立てる()
         {
             // シリアライザの既定の上限は約200万文字。組み立てには上限を課さない。
@@ -251,7 +252,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(large, line, StringComparison.Ordinal);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void シリアライズできない結果は例外になる()
         {
             Dictionary<string, object> looped = new Dictionary<string, object>();
@@ -260,13 +261,13 @@ namespace PmxEditorMcp.Tests
             Assert.ThrowsAny<Exception>(() => JsonRpcCodec.SerializeResult(1, looped));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 解析の文字数の上限は3355万文字である()
         {
             Assert.Equal(33554432, JsonRpcCodec.ParseMaxJsonLength);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エラーコードは契約で定めた値である()
         {
             Assert.Equal(-32700, JsonRpcErrorCodes.ParseError);
