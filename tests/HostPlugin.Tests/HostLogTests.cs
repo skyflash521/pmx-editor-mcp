@@ -9,8 +9,6 @@ namespace PmxEditorMcp.Tests
 {
     public class HostLogTests : IDisposable
     {
-        private const string Pending = "impl pending: ホストのログを複数スレッドから追記し、一定量を超えたら1世代だけローテーションして書き込みの失敗を握りつぶす";
-
         private readonly string _directory;
 
         public HostLogTests()
@@ -43,7 +41,7 @@ namespace PmxEditorMcp.Tests
             File.WriteAllBytes(path, new byte[byteCount]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 書いた内容が順に追記される()
         {
             HostLog log = new HostLog(PathIn("host.log"));
@@ -57,7 +55,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(content.IndexOf("一つ目", StringComparison.Ordinal) < content.IndexOf("二つ目", StringComparison.Ordinal));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ローテーション先は書き込み先と同名に1世代ぶんの接尾辞を付けたパスになる()
         {
             HostLog log = new HostLog(PathIn("host.log"));
@@ -65,7 +63,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(log.FilePath + ".1", log.RotatedFilePath);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 閾値ちょうどではローテーションせず同じファイルへ追記する()
         {
             string path = PathIn("host.log");
@@ -78,7 +76,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains("閾値ちょうどの行", File.ReadAllText(log.FilePath, Encoding.UTF8));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 閾値を超えるとローテーションして新しいファイルへ書き続ける()
         {
             string path = PathIn("host.log");
@@ -92,7 +90,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(new FileInfo(log.FilePath).Length < HostLog.RotateThresholdBytes);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ローテーションは1世代だけ残し古いローテーション先を上書きする()
         {
             string path = PathIn("host.log");
@@ -105,7 +103,23 @@ namespace PmxEditorMcp.Tests
             Assert.DoesNotContain("古いローテーション先の内容", File.ReadAllText(log.RotatedFilePath, Encoding.UTF8));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void ローテーションに失敗しても追記は続く()
+        {
+            string path = PathIn("host.log");
+            HostLog log = new HostLog(path);
+            File.WriteAllText(log.RotatedFilePath, "解放されないローテーション先", Encoding.UTF8);
+            Prefill(path, HostLog.RotateThresholdBytes + 1);
+
+            using (File.Open(log.RotatedFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                log.Write("ローテーションできないときの行");
+            }
+
+            Assert.Contains("ローテーションできないときの行", File.ReadAllText(log.FilePath, Encoding.UTF8));
+        }
+
+        [Fact]
         public void 書き込めないファイルでも例外を投げない()
         {
             string path = PathIn("host.log");
@@ -118,7 +132,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 例外はスタックトレース付きで記録される()
         {
             HostLog log = new HostLog(PathIn("host.log"));
@@ -140,7 +154,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(nameof(例外はスタックトレース付きで記録される), content);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 複数スレッドから書いても全行が失われない()
         {
             const int ThreadCount = 4;
@@ -198,7 +212,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ThreadCount * LinesPerThread, written.Count);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 既定の書き込み先はプロセスごとに分かれる()
         {
             string first = HostLog.BuildDefaultFilePath(1234);

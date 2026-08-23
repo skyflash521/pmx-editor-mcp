@@ -4,9 +4,7 @@ namespace PmxEditorMcp.Tests
 {
     public class ResponseBudgetTests
     {
-        private const string Pending = "impl pending: 応答サイズ予算の環境変数を厳格な10進表記として読み、範囲外・構文違反を無効として扱う";
-
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 未設定なら既定の文字数で有効になる()
         {
             ResponseBudget budget = ResponseBudget.Read(null);
@@ -15,7 +13,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ResponseBudget.DefaultChars, budget.Chars);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("10000", 10000)]
         [InlineData("100000", 100000)]
         [InlineData("500000", 500000)]
@@ -27,7 +25,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(expected, budget.Chars);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("9999")]
         [InlineData("500001")]
         [InlineData("0")]
@@ -40,7 +38,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(string.IsNullOrEmpty(budget.InvalidReason));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("")]
         [InlineData("+100000")]
         [InlineData("-100000")]
@@ -59,7 +57,33 @@ namespace PmxEditorMcp.Tests
             Assert.False(string.IsNullOrEmpty(budget.InvalidReason));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void 無効な理由は値に含まれる制御文字をそのまま載せない()
+        {
+            const char CarriageReturn = (char)13;
+            const char LineFeed = (char)10;
+
+            ResponseBudget budget = ResponseBudget.Read("12" + CarriageReturn + LineFeed + "34");
+
+            Assert.False(budget.IsValid);
+            Assert.DoesNotContain(CarriageReturn.ToString(), budget.InvalidReason);
+            Assert.DoesNotContain(LineFeed.ToString(), budget.InvalidReason);
+        }
+
+        [Fact]
+        public void 無効な理由は長大な値をそのまま載せない()
+        {
+            // 長さは受理範囲の境界値と一致させない(範囲の説明文と区別できなくなるため)。
+            string rawValue = new string('9', 12345);
+
+            ResponseBudget budget = ResponseBudget.Read(rawValue);
+
+            Assert.False(budget.IsValid);
+            Assert.DoesNotContain(rawValue, budget.InvalidReason);
+            Assert.Contains("全 12345 文字", budget.InvalidReason);
+        }
+
+        [Fact]
         public void 無効な設定は既定の文字数へ落とさない()
         {
             ResponseBudget budget = ResponseBudget.Read("9999");
