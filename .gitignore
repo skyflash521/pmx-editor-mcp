@@ -21,6 +21,8 @@ ehthumbs_vista.db
 # ビルド成果物
 bin/
 obj/
+# 環境依存のビルド設定。PMXエディタ導入ディレクトリ(PmxEditorDir)は各自の環境ごとに異なる。
+/local.props
 
 ### VisualStudioCode ###
 .vscode/*

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <!-- 実行対象は x64 版エディタ(PmxEditor_x64.exe)のプロセスだが、
+         ホストは呼び出し側のビット数に依存しないため AnyCPU でビルドする。 -->
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <AssemblyName>PmxEditorMcp</AssemblyName>
+    <RootNamespace>PmxEditorMcp</RootNamespace>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 配布物のDLLは再配布できないため、各自の導入物を参照するだけで出力へコピーしない。 -->
+    <Reference Include="PEPlugin">
+      <HintPath>$(PmxEditorDir)\Lib\PEPlugin\PEPlugin.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <!-- 同梱依存ゼロでJSONを扱うため、.NET Framework 付属の JavaScriptSerializer を使う。 -->
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+
+  <Target Name="EnsurePmxEditorDir" BeforeTargets="BeforeBuild;Deploy">
+    <Error Condition="'$(PmxEditorDir)' == ''"
+           Text="local.props に PmxEditorDir を定義せよ(PMXエディタ導入ディレクトリのパス)。" />
+  </Target>
+
+  <Target Name="Deploy" DependsOnTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PmxEditorDir)\_plugin\" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

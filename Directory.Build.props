@@ -1,0 +1,8 @@
+<Project>
+
+  <!-- PMXエディタ導入ディレクトリ(PmxEditorDir)は各自の環境ごとに異なるため、
+       Git管理外の local.props で定義する。存在しない環境でも読み込み自体は成立させ、
+       未定義のままホストをビルドしたときに明示エラーで失敗させる。 -->
+  <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
+
+</Project>
