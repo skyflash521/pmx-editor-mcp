@@ -206,7 +206,7 @@ namespace PmxEditorMcp.Bridge
             return TryGetInt32(idNode, out id) && id == expectedId;
         }
 
-        private static bool TryGetInt32(JsonNode node, out int value)
+        internal static bool TryGetInt32(JsonNode node, out int value)
         {
             value = 0;
 
@@ -214,7 +214,7 @@ namespace PmxEditorMcp.Bridge
             return jsonValue != null && jsonValue.TryGetValue(out value);
         }
 
-        private static bool TryGetString(JsonNode node, out string value)
+        internal static bool TryGetString(JsonNode node, out string value)
         {
             value = null;
 

@@ -11,17 +11,15 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class HostIpcClientTests
     {
-        private const string Pending = "impl pending: 接続とhandshakeを済ませてから要求を中継し、応答の不正と切断で接続を捨てる";
-
         private const int BudgetChars = 100000;
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ハンドシェイクのプロトコル番号は契約で定めた値である()
         {
             Assert.Equal(1, HostIpcClient.Protocol);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 最初の呼び出しで接続しハンドシェイクを済ませてから要求を送る()
         {
             using FakeHost host = new FakeHost()
@@ -43,7 +41,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("ping", (string)call["method"]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 続けての呼び出しは同じ接続を使いハンドシェイクをやり直さない()
         {
             using FakeHost host = new FakeHost()
@@ -61,7 +59,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(3, host.Requests.Count);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 引数を与えた呼び出しはそのまま要求へ載せる()
         {
             using FakeHost host = new FakeHost()
@@ -77,7 +75,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(7, (int)call["params"]["index"]);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         // プロトコル番号の不一致は、ホストが切断を伴うエラーとして返す。
         [InlineData(-32001, "プロトコル番号が一致しない")]
         [InlineData(-32602, "引数が不正")]
@@ -96,7 +94,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("null")]
         [InlineData("\"ok\"")]
         [InlineData("[1]")]
@@ -121,7 +119,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         // 別の要求の識別子・版の不一致・解析できない本文。
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":OTHER_ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
         [InlineData("{\"jsonrpc\":\"1.0\",\"id\":ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
@@ -138,7 +136,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイクの応答が不正なUTF8なら不成立として接続を閉じる()
         {
             // 同じ不正でも、handshakeが成立する前なら不成立として区分する。
@@ -154,7 +152,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイクの応答が上限を超えたら不成立として接続を閉じる()
         {
             using FakeHost host = new FakeHost().ReplyBytes(OversizedResponse()).Start();
@@ -167,7 +165,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイクの応答を待っている間の切断は切断として返す()
         {
             // 応答を受け取る前に相手が消えただけなので、版やプロトコルの食い違いを示唆する
@@ -182,7 +180,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 応答サイズ予算が一致しなければ両方の値を示して接続を閉じる()
         {
             using FakeHost host = new FakeHost()
@@ -199,7 +197,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 応答サイズ予算が一致するホストへ繋ぎ直せば通常の動作へ戻る()
         {
             // 予算の不一致でプロセスを終えないので、設定を直したホストへ繋ぎ直せば回復する。
@@ -221,7 +219,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pong", (string)result);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイクが不成立でも次の呼び出しは新しい接続からやり直す()
         {
             using FakeHost host = new FakeHost()
@@ -239,7 +237,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, connector.ConnectCount);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイク後のホストのエラーはホスト由来のコードで返し接続を保つ()
         {
             using FakeHost host = new FakeHost()
@@ -260,7 +258,35 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
         }
 
-        [Fact(Skip = Pending)]
+        [Theory]
+        // IPC仕様書のエラー表で、ホストが応答のあと切断すると定めているコード。
+        [InlineData(-32700)]
+        [InlineData(-32001)]
+        [InlineData(-32003)]
+        [InlineData(-32004)]
+        public async Task ホストが切断を伴うエラーを返したら接続を捨てる(int hostErrorCode)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Error(request, hostErrorCode, "切断を伴うエラー"))
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("boom", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ForHostError(hostErrorCode), error.Code);
+            Assert.False(client.IsConnected);
+
+            // 捨てた接続を引きずらないので、次の呼び出しは新しい接続からやり直せる。
+            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal(2, connector.ConnectCount);
+        }
+
+        [Fact]
         public async Task 応答を待っている間に切断されたら切断として返す()
         {
             using FakeHost host = new FakeHost()
@@ -276,7 +302,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 切断されたあとの呼び出しは新しい接続からやり直す()
         {
             using FakeHost host = new FakeHost()
@@ -295,7 +321,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, connector.ConnectCount);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         // 別の要求の識別子・結果とエラーの同居・どちらも無い・解析できない本文。識別子の照合
         // だけで落ちないよう、不一致を見るケース以外は要求の識別子に合わせる。
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":OTHER_ID,\"result\":1}")]
@@ -317,7 +343,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイク後の不正なUTF8は通信規約の違反として接続を閉じる()
         {
             using FakeHost host = new FakeHost()
@@ -333,7 +359,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイク後の応答が上限を超えたら通信規約の違反として接続を閉じる()
         {
             using FakeHost host = new FakeHost()
@@ -349,7 +375,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 通信規約の違反のあとの呼び出しは新しい接続からやり直す()
         {
             using FakeHost host = new FakeHost()
@@ -368,7 +394,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, connector.ConnectCount);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 上限を超える要求は送らずに知らせて接続を保つ()
         {
             using FakeHost host = new FakeHost()
@@ -395,7 +421,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 破棄すると保っていた接続を手放す()
         {
             // パイプの同時接続は1本なので、破棄が接続を手放していなければ次の接続は成立しない。
@@ -416,7 +442,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pong", (string)await second.CallAsync("ping", null, CancellationToken.None));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 接続役が返した失敗はそのまま要求元へ返す()
         {
             // 接続を確立できたかどうかを判断するのは接続役で、こちらはその結果を包み直さない。
@@ -430,7 +456,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(typeof(IOException))]
         [InlineData(typeof(UnauthorizedAccessException))]
         public async Task パイプを開けなかった失敗は接続の失敗として返す(Type failure)
@@ -448,7 +474,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 接続のたびに接続先を決め直して開く()
         {
             // エディタを起動し直すとパイプ名は変わる。決め直さずに握り続けると、繋ぎ直しが
