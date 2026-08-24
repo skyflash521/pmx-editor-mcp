@@ -17,17 +17,15 @@ namespace PmxEditorMcp.Bridge.Tests
     /// </summary>
     public class BridgeToolsTests
     {
-        private const string Pending = "impl pending: 応答サイズ予算を載せたツール定義を作り、ホストへ中継する";
-
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(60);
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 結果の大きさを宣言する鍵は契約で定めた値である()
         {
             Assert.Equal("anthropic/maxResultSizeChars", BridgeTools.ResultSizeMetaKey);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task サーバーは契約で定めた名前とブリッジのバージョンを名乗る()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -39,7 +37,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.ServerInfo.Version);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 登録するツールはホストへ中継する1件だけである()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -51,7 +49,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("ping", only.Name);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ツール定義は応答サイズ予算の既定値を宣言する()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -62,7 +60,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Assert.Single(tools)));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ツール定義は環境変数で上書きした応答サイズ予算を宣言する()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -73,7 +71,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(250000, DeclaredResultSize(Assert.Single(tools)));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ツール定義はホストへ接続していなくても得られる()
         {
             // 接続は最初のツール呼び出しまで行わないので、待ち受けていないパイプを指していても
@@ -87,7 +85,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Assert.Single(tools)));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ツールの呼び出しはホストへ中継して応答を返す()
         {
             using FakeHost host = new FakeHost()
@@ -101,14 +99,15 @@ namespace PmxEditorMcp.Bridge.Tests
             CallToolResult result = await client.CallToolAsync(
                 "ping", cancellationToken: limit.Token);
 
-            Assert.False(result.IsError);
+            // 失敗の印は省略できる(省略は偽の意味)ので、真でないことを見る。
+            Assert.NotEqual(true, result.IsError);
             Assert.Equal("pong", TextOf(result));
 
             // ホストが受け取ったのは handshake と ping で、名前を作り替えていない。
             Assert.Equal(new string[] { "handshake", "ping" }, MethodsOf(host.Requests));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 中継に失敗してもプロセスは落ちずエラーとしてツール結果で返す()
         {
             // ホストの応答サイズ予算をブリッジと食い違わせる。待ちに入らず決まった失敗になる。

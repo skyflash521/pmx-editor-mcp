@@ -1,5 +1,8 @@
-using System;
-using ModelContextProtocol.Server;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Protocol;
 
 namespace PmxEditorMcp.Bridge
 {
@@ -13,9 +16,23 @@ namespace PmxEditorMcp.Bridge
         /// stdioトランスポートのMCPサーバーを構成して動かす。標準出力はプロトコルの通り道なので、
         /// ログと診断は標準エラー出力だけへ出す。
         /// </summary>
-        public static System.Threading.Tasks.Task RunAsync(string[] args, HostIpcClient client)
+        public static async Task RunAsync(string[] args, HostIpcClient client)
         {
-            throw new NotImplementedException();
+            HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
+
+            builder.Services
+                .AddMcpServer(options => options.ServerInfo = new Implementation
+                {
+                    Name = ServerName,
+                    Version = typeof(BridgeServer).Assembly.GetName().Version.ToString(),
+                })
+                .WithStdioServerTransport()
+                .WithTools(BridgeTools.Create(client));
+
+            await builder.Build().RunAsync().ConfigureAwait(false);
         }
     }
 }

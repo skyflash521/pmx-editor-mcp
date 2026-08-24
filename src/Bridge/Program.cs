@@ -1,10 +1,11 @@
 using System;
+using System.Threading.Tasks;
 
 namespace PmxEditorMcp.Bridge
 {
     internal static class Program
     {
-        private static int Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
             BridgeBudget budget = BridgeBudget.ReadFromEnvironment();
             if (!budget.IsValid)
@@ -14,6 +15,8 @@ namespace PmxEditorMcp.Bridge
                 return BridgeBudget.InvalidExitCode;
             }
 
+            using HostIpcClient client = new HostIpcClient(new NamedPipeHostConnector(), budget.Chars);
+            await BridgeServer.RunAsync(args, client);
             return 0;
         }
     }
