@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -160,6 +161,46 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void 入れ子の深さが上限までの要求は解析できる()
+        {
+            // 要求のオブジェクトと params のオブジェクトで2段、残りを空配列で埋めて上限ちょうどにする。
+            JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
+                BuildNested(JsonRpcCodec.JsonRecursionLimit - 2));
+
+            Assert.True(result.IsValid);
+        }
+
+        [Fact]
+        public void 入れ子の深さが上限を超える要求は構文不正になる()
+        {
+            JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
+                BuildNested(JsonRpcCodec.JsonRecursionLimit - 1));
+
+            Assert.False(result.IsValid);
+            Assert.Equal(JsonRpcErrorCodes.ParseError, result.ErrorCode);
+        }
+
+        private static string BuildNested(int arrayDepth)
+        {
+            return BuildNested(arrayDepth, null);
+        }
+
+        private static string BuildNested(int arrayDepth, string innermost)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"params\":{\"a\":");
+            builder.Append('[', arrayDepth);
+            if (innermost != null)
+            {
+                builder.Append(innermost);
+            }
+
+            builder.Append(']', arrayDepth);
+            builder.Append("}}");
+            return builder.ToString();
+        }
+
+        [Fact]
         public void シリアライザの既定より大きい本文を解析できる()
         {
             // 既定の上限は約200万文字。それを超えても16MiB以下なら受理する。
@@ -259,6 +300,20 @@ namespace PmxEditorMcp.Tests
             looped["self"] = looped;
 
             Assert.ThrowsAny<Exception>(() => JsonRpcCodec.SerializeResult(1, looped));
+        }
+
+        [Fact]
+        public void 入れ子の深さの上限は100段である()
+        {
+            Assert.Equal(100, JsonRpcCodec.JsonRecursionLimit);
+        }
+
+        [Fact]
+        public void 末端の値も1段として数える()
+        {
+            // 配列97段の内側に数値を置くと、要求と params の2段と合わせて上限ちょうどになる。
+            Assert.True(JsonRpcCodec.ParseRequest(BuildNested(97, "1")).IsValid);
+            Assert.False(JsonRpcCodec.ParseRequest(BuildNested(98, "1")).IsValid);
         }
 
         [Fact]

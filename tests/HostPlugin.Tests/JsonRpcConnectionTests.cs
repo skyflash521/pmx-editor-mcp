@@ -527,6 +527,48 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void 入れ子の深さが上限までの結果は組み立てて返す()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            // 応答の包絡(トップレベルのオブジェクト)で1段、最も内側の文字列で1段使うため、
+            // 結果のリストは上限より2段少なくすると上限ちょうどになる。
+            methods.Add("deep", context => Nest(JsonRpcCodec.JsonRecursionLimit - 2));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "deep"), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.True(responses[1].ContainsKey("result"));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void 入れ子の深さが上限を超える結果は内部エラーになり接続を保つ()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("deep", context => Nest(JsonRpcCodec.JsonRecursionLimit - 1));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "deep"), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InternalError, ErrorCodeOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        /// <summary>指定した段数だけ入れ子にしたリストを作る。</summary>
+        private static object Nest(int depth)
+        {
+            object current = "おわり";
+            for (int index = 0; index < depth; index++)
+            {
+                current = new List<object> { current };
+            }
+
+            return current;
+        }
+
+        [Fact]
         public void 時間切れの応答は処理の完了を待たずに返し完了まで次を読まない()
         {
             using (ManualResetEventSlim started = new ManualResetEventSlim())

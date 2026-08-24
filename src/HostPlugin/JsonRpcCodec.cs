@@ -133,6 +133,13 @@ namespace PmxEditorMcp
         /// </summary>
         public const int ParseMaxJsonLength = 32 * 1024 * 1024;
 
+        /// <summary>
+        /// シリアライザに許す入れ子の深さ。解析と組み立ての両方に効く。深さは値の再帰の段数で数え、
+        /// オブジェクト・配列だけでなくその中の文字列や数値も1段として数える(トップレベルの値が
+        /// 1段目)。フレームワークの暗黙の既定に依らず、契約としてここで固定する。
+        /// </summary>
+        public const int JsonRecursionLimit = 100;
+
         /// <summary>要求と応答の jsonrpc に固定で置く値。</summary>
         private const string ProtocolVersion = "2.0";
 
@@ -267,6 +274,7 @@ namespace PmxEditorMcp
         {
             JavaScriptSerializer serializer = new JavaScriptSerializer();
             serializer.MaxJsonLength = maxJsonLength;
+            serializer.RecursionLimit = JsonRecursionLimit;
             return serializer;
         }
     }
