@@ -12,6 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- 接続の失敗をエラーコードへ変換する経路は、実際の入出力の失敗を起こさないと通らない。
+         テストから差し替えられる口を internal で開ける。 -->
+    <InternalsVisibleTo Include="PmxEditorMcp.Bridge.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
     <!-- ModelContextProtocol が推移的に持つのは Hosting.Abstractions だけで、
          Generic Host の実装は含まれないため直接参照する。 -->
