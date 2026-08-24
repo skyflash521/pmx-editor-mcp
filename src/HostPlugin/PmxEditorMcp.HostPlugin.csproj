@@ -32,7 +32,7 @@
   </Target>
 
   <Target Name="Deploy" DependsOnTargets="Build">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PmxEditorDir)\_plugin\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PmxEditorDir)\_plugin\User\" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
