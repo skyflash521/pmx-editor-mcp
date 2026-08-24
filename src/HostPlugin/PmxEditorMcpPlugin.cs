@@ -176,7 +176,6 @@ namespace PmxEditorMcp
                         {
                             host.Stop();
                             _log.Write("メニューから停止した。");
-                            ShowResult(host);
                         }
 
                         break;
@@ -193,15 +192,13 @@ namespace PmxEditorMcp
                             {
                                 _log.Write("メニューからの開始を受け付けなかった: " + reason);
                             }
-
-                            ShowResult(host);
                         }
 
                         break;
 
                     default:
-                        // 開始できない状態では問いを出さず、理由を状態表示の本文に含める。
-                        ShowResult(host);
+                        // 開始できない状態では問いを出さず、なぜ開始できないかを状態表示の本文に含める。
+                        ShowStatusMessage(host);
                         break;
                 }
             }
@@ -218,7 +215,7 @@ namespace PmxEditorMcp
             return result == DialogResult.Yes;
         }
 
-        private void ShowResult(McpHost host)
+        private void ShowStatusMessage(McpHost host)
         {
             MessageBox.Show(BuildStatusText(host), MenuText, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
