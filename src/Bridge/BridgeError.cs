@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using ModelContextProtocol.Protocol;
 
 namespace PmxEditorMcp.Bridge
@@ -33,10 +35,12 @@ namespace PmxEditorMcp.Bridge
         /// <summary>送信前検査で要求が上限のバイト数を超えた。</summary>
         public const string RequestTooLarge = "BRIDGE_REQUEST_TOO_LARGE";
 
+        private const string HostErrorPrefix = "HOST_";
+
         /// <summary>ホストが返したJSON-RPCエラーのコードを、ブリッジのエラーコードへ写す。</summary>
         public static string ForHostError(int hostErrorCode)
         {
-            throw new NotImplementedException();
+            return HostErrorPrefix + hostErrorCode.ToString(CultureInfo.InvariantCulture);
         }
     }
 
@@ -50,16 +54,16 @@ namespace PmxEditorMcp.Bridge
         public BridgeException(string code, string message)
             : base(message)
         {
-            throw new NotImplementedException();
+            Code = code;
         }
 
         /// <summary>ツール結果のテキスト本文へ載せるエラーコード。</summary>
-        public string Code => throw new NotImplementedException();
+        public string Code { get; }
 
         /// <summary>ツール結果のテキスト本文。</summary>
         public string ToResultText()
         {
-            throw new NotImplementedException();
+            return Code + ": " + Message;
         }
 
         /// <summary>
@@ -68,7 +72,11 @@ namespace PmxEditorMcp.Bridge
         /// </summary>
         public CallToolResult ToToolResult()
         {
-            throw new NotImplementedException();
+            return new CallToolResult
+            {
+                IsError = true,
+                Content = new List<ContentBlock> { new TextContentBlock { Text = ToResultText() } },
+            };
         }
     }
 }

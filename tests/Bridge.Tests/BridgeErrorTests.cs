@@ -6,9 +6,7 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class BridgeErrorTests
     {
-        private const string Pending = "impl pending: 失敗をエラーコード付きの本文へ組み立て、エラーであることを示すツール結果として返す";
-
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 本文はエラーコードとメッセージをコロンで連ねる()
         {
             BridgeException error = new BridgeException(BridgeErrorCodes.Timeout, "待機上限を超えた。");
@@ -18,7 +16,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("BRIDGE_TIMEOUT: 待機上限を超えた。", error.ToResultText());
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(-32601, "HOST_-32601")]
         [InlineData(-32002, "HOST_-32002")]
         [InlineData(0, "HOST_0")]
@@ -27,7 +25,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(expected, BridgeErrorCodes.ForHostError(hostErrorCode));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ホストのエラーは本文へメッセージをそのまま載せる()
         {
             BridgeException error = new BridgeException(
@@ -36,7 +34,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("HOST_-32601: 未知のメソッド", error.ToResultText());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ツール結果はエラーであることを示しテキスト1件を持つ()
         {
             BridgeException error = new BridgeException(BridgeErrorCodes.NoEditor, "起動していない。");
@@ -50,7 +48,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("BRIDGE_NO_EDITOR: 起動していない。", text.Text);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エラーコードは契約で定めた値である()
         {
             Assert.Equal("BRIDGE_NO_EDITOR", BridgeErrorCodes.NoEditor);

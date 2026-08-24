@@ -5,8 +5,6 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class PipeTargetResolverTests
     {
-        private const string Pending = "impl pending: 明示指定を優先し、無ければ起動中のPMXエディタから接続先のパイプ名を決める";
-
         /// <summary>
         /// 環境変数名が本文に出るだけでは、それで指定できるという案内になっているとは限らない
         /// (できない理由として名前を挙げる本文でも通ってしまう)。指定の手段までを一続きの
@@ -14,20 +12,20 @@ namespace PmxEditorMcp.Bridge.Tests
         /// </summary>
         private const string PipeNameGuidance = "環境変数 PMX_EDITOR_MCP_PIPE で接続先のパイプ名を指定する";
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 接続先の指定と発見に用いる名前は契約で定めた値である()
         {
             Assert.Equal("PMX_EDITOR_MCP_PIPE", PipeTargetResolver.EnvironmentVariableName);
             Assert.Equal("PmxEditor_x64", PipeTargetResolver.EditorProcessName);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void パイプ名はエディタのプロセスIDで決まる()
         {
             Assert.Equal("pmx-editor-mcp-1234", PipeTargetResolver.PipeNameForProcess(1234));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 明示指定があればエディタを数えずにその名前を使う()
         {
             string resolved = PipeTargetResolver.Resolve("pmx-editor-mcp-9", new int[] { 1234, 5678 });
@@ -35,7 +33,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pmx-editor-mcp-9", resolved);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 自動発見へ落ちるのは明示指定が無いときだけとする()
         {
             // 空文字列は「指定が無い」ではなく「空の名前を指定した」として扱い、黙って
@@ -45,7 +43,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(string.Empty, resolved);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 明示指定が無くエディタが1つならそのプロセスIDで決める()
         {
             string resolved = PipeTargetResolver.Resolve(null, new int[] { 1234 });
@@ -53,7 +51,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pmx-editor-mcp-1234", resolved);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エディタが起動していなければ起動を促すエラーにする()
         {
             BridgeException error = Assert.Throws<BridgeException>(
@@ -64,7 +62,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Contains("起動", error.Message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エディタが複数なら明示指定の手段を案内するエラーにする()
         {
             BridgeException error = Assert.Throws<BridgeException>(
@@ -74,7 +72,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Contains(PipeNameGuidance, error.Message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 複数起動のエラーは候補のパイプ名を1つずつ列挙する()
         {
             BridgeException error = Assert.Throws<BridgeException>(
