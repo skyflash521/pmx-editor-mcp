@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace PmxEditorMcp.Bridge.Tests
@@ -12,12 +13,21 @@ namespace PmxEditorMcp.Bridge.Tests
     /// ブリッジの相手役。名前付きパイプで待ち受け、受け取った要求ごとに、あらかじめ積んだ
     /// 応答を順に返す。応答の代わりに切断させることもでき、契約に沿わない本文もそのまま
     /// 書けるので、ブリッジ側の検証を外から確かめられる。
+    ///
+    /// 要求の読み取りは応答の組み立てと切り離して先へ進める。応答を返すまで読み取りを止める
+    /// 作りだと、相手が応答を待たずに次の要求を送っていても要求の数に現れず、直列化の破れを
+    /// 見逃す。
     /// </summary>
     public sealed class FakeHost : IDisposable
     {
+        private const string LineFeed = "\n";
+
         private static readonly Encoding Utf8WithoutBom = new UTF8Encoding(false);
 
-        private readonly List<Func<string, byte[]>> _replies = new List<Func<string, byte[]>>();
+        /// <summary>応答を返さずに接続を保つことを表す本文。</summary>
+        private static readonly byte[] NoReply = Array.Empty<byte>();
+
+        private readonly List<Func<string, Task<byte[]>>> _replies = new List<Func<string, Task<byte[]>>>();
         private readonly List<string> _requests = new List<string>();
         private readonly CancellationTokenSource _stopping = new CancellationTokenSource();
         private readonly object _gate = new object();
@@ -28,7 +38,7 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>相手が接続するパイプの名前。テストごとに重ならない名前を作る。</summary>
         public string PipeName { get; } = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
 
-        /// <summary>これまでに受け取った要求の本文。</summary>
+        /// <summary>これまでに受け取った要求の本文。応答を返す前の要求も含む。</summary>
         public IReadOnlyList<string> Requests
         {
             get
@@ -43,28 +53,54 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>受け取った要求に対して、本文をそのまま1行として返す応答を積む。</summary>
         public FakeHost Reply(string message)
         {
-            _replies.Add(_ => Utf8WithoutBom.GetBytes(message + "\n"));
+            _replies.Add(_ => Task.FromResult(Utf8WithoutBom.GetBytes(message + LineFeed)));
             return this;
         }
 
         /// <summary>受け取った要求に対して、生のバイト列をそのまま返す応答を積む。</summary>
         public FakeHost ReplyBytes(byte[] payload)
         {
-            _replies.Add(_ => payload);
+            _replies.Add(_ => Task.FromResult(payload));
             return this;
         }
 
         /// <summary>受け取った要求から本文を組み立てて返す応答を積む。</summary>
         public FakeHost Reply(Func<string, string> compose)
         {
-            _replies.Add(request => Utf8WithoutBom.GetBytes(compose(request) + "\n"));
+            _replies.Add(request => Task.FromResult(Utf8WithoutBom.GetBytes(compose(request) + LineFeed)));
+            return this;
+        }
+
+        /// <summary>
+        /// 受け取った要求から本文を組み立てて返す応答を積む。組み立てを待たせられるので、
+        /// 応答を保留したまま次の呼び出しの振る舞いを確かめられる。組み立てには待受の停止を
+        /// 知らせる合図を渡す——渡さないと、保留したまま終わるテストで後始末が止まり、本来の
+        /// 失敗が後始末の失敗に覆われる。
+        /// </summary>
+        public FakeHost ReplyAsync(Func<string, CancellationToken, Task<string>> compose)
+        {
+            _replies.Add(async request =>
+            {
+                string message = await compose(request, _stopping.Token).ConfigureAwait(false);
+                return Utf8WithoutBom.GetBytes(message + LineFeed);
+            });
             return this;
         }
 
         /// <summary>受け取った要求に応答せず、そのまま切断する。</summary>
         public FakeHost Disconnect()
         {
-            _replies.Add(_ => null);
+            _replies.Add(_ => Task.FromResult<byte[]>(null));
+            return this;
+        }
+
+        /// <summary>
+        /// 受け取った要求に応答せず、接続は保ったままにする。相手の待つ上限を確かめるための
+        /// 筋書きで、相手が打ち切って閉じれば待受は次の接続へ進める。
+        /// </summary>
+        public FakeHost Stall()
+        {
+            _replies.Add(_ => Task.FromResult(NoReply));
             return this;
         }
 
@@ -149,34 +185,82 @@ namespace PmxEditorMcp.Bridge.Tests
 
         private async Task ServeAsync(NamedPipeServerStream pipe)
         {
-            while (!_stopping.IsCancellationRequested)
+            Channel<ReceivedRequest> received = Channel.CreateUnbounded<ReceivedRequest>();
+            Task reading = ReadRequestsAsync(pipe, received.Writer);
+
+            try
             {
-                string request = await ReadLineAsync(pipe).ConfigureAwait(false);
-                if (request == null)
+                while (await received.Reader.WaitToReadAsync(_stopping.Token).ConfigureAwait(false))
                 {
-                    return;
-                }
+                    ReceivedRequest request = await received.Reader
+                        .ReadAsync(_stopping.Token)
+                        .ConfigureAwait(false);
 
-                int index;
-                lock (_gate)
+                    if (request.Index >= _replies.Count)
+                    {
+                        return;
+                    }
+
+                    byte[] payload = await _replies[request.Index](request.Body).ConfigureAwait(false);
+                    if (payload == null)
+                    {
+                        return;
+                    }
+
+                    if (payload.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    await pipe.WriteAsync(payload.AsMemory(), _stopping.Token).ConfigureAwait(false);
+                    await pipe.FlushAsync(_stopping.Token).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                // パイプを閉じないと読み取りが戻らないので、閉じてから終わりを見届ける。
+                pipe.Dispose();
+                await reading.ConfigureAwait(false);
+            }
+        }
+
+        private async Task ReadRequestsAsync(Stream pipe, ChannelWriter<ReceivedRequest> writer)
+        {
+            try
+            {
+                while (true)
                 {
-                    _requests.Add(request);
-                    index = _requests.Count - 1;
-                }
+                    string body = await ReadLineAsync(pipe).ConfigureAwait(false);
+                    if (body == null)
+                    {
+                        return;
+                    }
 
-                if (index >= _replies.Count)
-                {
-                    return;
-                }
+                    int index;
+                    lock (_gate)
+                    {
+                        _requests.Add(body);
+                        index = _requests.Count - 1;
+                    }
 
-                byte[] payload = _replies[index](request);
-                if (payload == null)
-                {
-                    return;
+                    await writer.WriteAsync(new ReceivedRequest(body, index)).ConfigureAwait(false);
                 }
-
-                await pipe.WriteAsync(payload.AsMemory(), _stopping.Token).ConfigureAwait(false);
-                await pipe.FlushAsync(_stopping.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // 停止した。
+            }
+            catch (IOException)
+            {
+                // 相手が閉じた。
+            }
+            catch (ObjectDisposedException)
+            {
+                // パイプを閉じた。
+            }
+            finally
+            {
+                writer.Complete();
             }
         }
 
@@ -200,6 +284,20 @@ namespace PmxEditorMcp.Bridge.Tests
 
                 body.WriteByte(buffer[0]);
             }
+        }
+
+        /// <summary>読み取った要求と、積んだ応答のどれを使うかを決める通し番号。</summary>
+        private readonly struct ReceivedRequest
+        {
+            public ReceivedRequest(string body, int index)
+            {
+                Body = body;
+                Index = index;
+            }
+
+            public string Body { get; }
+
+            public int Index { get; }
         }
     }
 

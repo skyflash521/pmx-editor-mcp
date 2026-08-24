@@ -101,6 +101,12 @@ namespace PmxEditorMcp.Bridge
         /// <summary>handshake で一致していなければならないプロトコル番号。</summary>
         public const int Protocol = 1;
 
+        /// <summary>
+        /// 接続・handshake・ホストの要求処理を待つ上限。ホストの処理タイムアウトへ往復の余裕を
+        /// 足した値で、これより短いとホストが処理しきる要求まで打ち切ってしまう。
+        /// </summary>
+        public static readonly TimeSpan DefaultWaitLimit = TimeSpan.FromSeconds(125);
+
         private const int HostParseError = -32700;
         private const int HostProtocolMismatch = -32001;
         private const int HostHandshakeRequired = -32003;
@@ -116,6 +122,15 @@ namespace PmxEditorMcp.Bridge
         /// 接続の開き方と、ホストと一致していなければならない応答サイズ予算の文字数を与えて生成する。
         /// </summary>
         public HostIpcClient(IHostConnector connector, int budgetChars)
+            : this(connector, budgetChars, DefaultWaitLimit)
+        {
+        }
+
+        /// <summary>
+        /// 待つ上限を差し替えて生成する。既定の上限は待ち切るのにテストが実時間を費やすため、
+        /// 打ち切りの振る舞いを確かめるときだけ短くする。
+        /// </summary>
+        internal HostIpcClient(IHostConnector connector, int budgetChars, TimeSpan waitLimit)
         {
             if (connector == null)
             {
@@ -124,10 +139,14 @@ namespace PmxEditorMcp.Bridge
 
             _connector = connector;
             BudgetChars = budgetChars;
+            WaitLimit = waitLimit;
         }
 
         /// <summary>ホストと一致していなければならない応答サイズ予算の文字数。</summary>
         public int BudgetChars { get; }
+
+        /// <summary>接続・handshake・ホストの要求処理を待つ上限。</summary>
+        public TimeSpan WaitLimit { get; }
 
         /// <summary>ホストへの接続を保っているかどうか。</summary>
         public bool IsConnected => _channel != null;
