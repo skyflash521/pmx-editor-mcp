@@ -6,8 +6,6 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class BridgeJsonRpcTests
     {
-        private const string Pending = "impl pending: 要求を1行へ組み立て、ホストの応答が契約に沿っているかを判定する";
-
         /// <summary>
         /// IPC仕様書がホストへ課している入れ子の深さの上限。ホストは値の再帰の段数で数え、
         /// 末端の値も1段に数える。応答は包絡のオブジェクトで1段、末端の値で1段使うので、
@@ -15,7 +13,7 @@ namespace PmxEditorMcp.Bridge.Tests
         /// </summary>
         private const int HostRecursionLimit = 100;
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 引数のない要求を組み立てる()
         {
             string request = BridgeJsonRpc.SerializeRequest(1, "ping", null);
@@ -29,7 +27,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(parsed.ContainsKey("params"));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 引数のある要求を組み立てる()
         {
             JsonObject parameters = new JsonObject { ["protocol"] = 1 };
@@ -42,7 +40,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(1, (int)parsed["params"]["protocol"]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 組み立てた要求は改行を含まない()
         {
             // 本文は1行として送るので、区切りと紛れる文字がそのまま入ってはならない。
@@ -54,7 +52,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.DoesNotContain("\r", request);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 成功応答を解析する()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
@@ -65,7 +63,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pong", (string)result.Response.Result);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 結果がnullの成功応答も受理する()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
@@ -76,7 +74,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Null(result.Response.Result);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エラー応答を解析する()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
@@ -88,7 +86,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("未知のメソッド", result.Response.ErrorMessage);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エラー応答は識別子がnullでも受理する()
         {
             // ホストは要求の識別子を判別できないときや応答が上限を超えたときにnullを載せる。
@@ -102,7 +100,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(string.Empty, result.Response.ErrorMessage);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(-32700)]
         [InlineData(-32004)]
         [InlineData(-32601)]
@@ -116,7 +114,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(hostErrorCode, result.Response.ErrorCode);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エラー応答でも識別子の項目が無ければ不正とする()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
@@ -126,7 +124,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(string.IsNullOrEmpty(result.InvalidReason));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void エラー応答の識別子が別の要求のものなら不正とする()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
@@ -136,7 +134,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(string.IsNullOrEmpty(result.InvalidReason));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         // 解析できない本文。
         [InlineData("")]
         [InlineData("{")]
@@ -172,13 +170,13 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(string.IsNullOrEmpty(result.InvalidReason));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 解析で許す深さの上限は契約で定めた値である()
         {
             Assert.Equal(100, BridgeJsonRpc.MaxDepth);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 最も内側が空の配列でもホストの上限までの深さを受理する()
         {
             // 末端が数値などのスカラー値でなく空の配列のときは、その配列自体が末端の1段になるので、包絡の1段と
@@ -189,7 +187,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(result.IsValid);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ホストが返しうる最も深い応答を受理する()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
@@ -198,7 +196,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(result.IsValid);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 深さの上限を超える応答は不正とする()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
