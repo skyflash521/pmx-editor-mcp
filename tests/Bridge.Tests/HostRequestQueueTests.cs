@@ -6,9 +6,7 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class HostRequestQueueTests
     {
-        private const string Pending = "impl pending: 順番待ちを到着順に1件ずつ通し、取り消された待ちを飛ばす";
-
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 待つ相手がいなければ直ちに通す()
         {
             HostRequestQueue queue = new HostRequestQueue();
@@ -18,7 +16,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(first.IsCompletedSuccessfully);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 先客がいるあいだは通さない()
         {
             HostRequestQueue queue = new HostRequestQueue();
@@ -29,7 +27,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(second.IsCompleted);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 到着した順に通す()
         {
             HostRequestQueue queue = new HostRequestQueue();
@@ -51,7 +49,7 @@ namespace PmxEditorMcp.Bridge.Tests
             await third;
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 待っているあいだの取り消しはその待ちだけを取り消す()
         {
             HostRequestQueue queue = new HostRequestQueue();
@@ -73,7 +71,7 @@ namespace PmxEditorMcp.Bridge.Tests
             await following;
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 譲ったあとに待つ相手がいなければ次の相手を直ちに通す()
         {
             HostRequestQueue queue = new HostRequestQueue();
@@ -86,7 +84,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(next.IsCompletedSuccessfully);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 取り消し済みの合図なら先客がいなくても通さない()
         {
             // 待つ相手がいないときに取り消しを見ずに通す作りだと、取り消した呼び出しが
@@ -104,7 +102,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(queue.EnterAsync(CancellationToken.None).IsCompletedSuccessfully);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 取り消し済みの合図なら先客がいるときも通さない()
         {
             HostRequestQueue queue = new HostRequestQueue();

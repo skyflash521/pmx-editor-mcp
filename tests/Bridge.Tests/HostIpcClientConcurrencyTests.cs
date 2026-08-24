@@ -14,8 +14,6 @@ namespace PmxEditorMcp.Bridge.Tests
     /// </summary>
     public class HostIpcClientConcurrencyTests
     {
-        private const string Pending = "impl pending: 呼び出しを到着順に直列化し、待つ上限とキャンセルで接続を捨てる";
-
         private const int BudgetChars = 100000;
 
         /// <summary>打ち切りの振る舞いを確かめるための短い上限。</summary>
@@ -24,7 +22,7 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>テストが応答を待つ上限。これを超えたら直列化か打ち切りが働いていない。</summary>
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(30);
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 待つ上限は契約で定めた値である()
         {
             Assert.Equal(TimeSpan.FromSeconds(125), HostIpcClient.DefaultWaitLimit);
@@ -34,7 +32,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(HostIpcClient.DefaultWaitLimit, client.WaitLimit);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 応答が返らなければ上限で打ち切り接続を捨てる()
         {
             using FakeHost host = new FakeHost()
@@ -57,7 +55,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, connector.ConnectCount);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイクの応答が返らなくても上限で打ち切る()
         {
             using FakeHost host = new FakeHost().Stall().Start();
@@ -71,7 +69,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 接続が開き終わらなくても上限で打ち切る()
         {
             // 待つ上限は送受信だけでなく接続の確立にも掛かる。掛かっていないと、開かないパイプを
@@ -86,7 +84,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task ハンドシェイクの途中で取り消したら接続を捨てる()
         {
             using FakeHost host = new FakeHost()
@@ -112,7 +110,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, connector.ConnectCount);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 接続とハンドシェイクの最中に呼んでも接続をやり直さない()
         {
             // 排他の区間は接続の確立から始まる。要求の送受信だけを直列化する作りだと、
@@ -151,7 +149,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 MethodsOf(host.Requests));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 並行して呼んでも要求を重ねずに1件ずつ送る()
         {
             // 到着順に譲ること自体は順番待ちのテストが決定的に押さえる。ここでは、並行して
@@ -191,7 +189,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Contains("third", methods);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 送っていない呼び出しの取り消しは先行の要求を巻き添えにしない()
         {
             using SemaphoreSlim holding = new SemaphoreSlim(0, 1);
@@ -225,7 +223,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.DoesNotContain("queued", MethodsOf(host.Requests));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 要求を送ったあとの取り消しは接続を捨てて再送しない()
         {
             using FakeHost host = new FakeHost()
@@ -257,7 +255,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 MethodsOf(host.Requests));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public async Task 接続の途中で取り消したら部分的な接続を残さない()
         {
             using FakeHost host = new FakeHost()

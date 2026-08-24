@@ -113,6 +113,7 @@ namespace PmxEditorMcp.Bridge
         private const int HostInputTooLarge = -32004;
 
         private readonly IHostConnector _connector;
+        private readonly HostRequestQueue _queue = new HostRequestQueue();
 
         private Stream _stream;
         private BridgeMessageChannel _channel;
@@ -156,6 +157,45 @@ namespace PmxEditorMcp.Bridge
         /// 済ませてから送る。失敗は <see cref="BridgeException"/> で返す。
         /// </summary>
         public async Task<JsonNode> CallAsync(string method, JsonObject parameters, CancellationToken cancellationToken)
+        {
+            await _queue.EnterAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                // 順番を取った直後の取り消しは、まだ何も送っていないので接続に触れない。
+                cancellationToken.ThrowIfCancellationRequested();
+
+                using CancellationTokenSource limit =
+                    CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                limit.CancelAfter(WaitLimit);
+
+                try
+                {
+                    return await CallCoreAsync(method, parameters, limit.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // 呼び出し側ではなく待つ上限で打ち切った。遅れて届く応答を次の要求の応答と
+                    // 取り違えないよう、接続を捨てる。
+                    throw FailAndClose(
+                        BridgeErrorCodes.Timeout,
+                        "ホストからの応答が " + Describe(WaitLimit) + " 以内に返らなかった。");
+                }
+                catch (OperationCanceledException)
+                {
+                    // 呼び出し側の取り消し。実行されたか分からない要求を残すので接続を捨て、
+                    // 同じ要求を送り直さない。
+                    Close();
+                    throw;
+                }
+            }
+            finally
+            {
+                _queue.Leave();
+            }
+        }
+
+        private async Task<JsonNode> CallCoreAsync(
+            string method, JsonObject parameters, CancellationToken cancellationToken)
         {
             if (!IsConnected)
             {
@@ -350,6 +390,11 @@ namespace PmxEditorMcp.Bridge
         private static string Describe(int value)
         {
             return value.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string Describe(TimeSpan value)
+        {
+            return value.TotalSeconds.ToString(CultureInfo.InvariantCulture) + " 秒";
         }
 
         private BridgeException FailAndClose(string code, string message)
