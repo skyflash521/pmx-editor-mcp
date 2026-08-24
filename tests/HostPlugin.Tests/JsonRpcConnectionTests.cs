@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -397,6 +398,72 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void 返したエラー応答はコードを記録する()
+        {
+            Exchange(
+                CreateConnection(new McpMethodTable()), Handshake(), Request(2, "しらないめそっど"),
+                Request(3, "ping"));
+
+            string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+            Assert.Contains(
+                "エラー応答: code=" + JsonRpcErrorCodes.MethodNotFound.ToString(CultureInfo.InvariantCulture),
+                log);
+        }
+
+        [Fact]
+        public void エラー応答の説明は記録しない()
+        {
+            // 不正な引数の説明は要求の値を指しうるので、記録するのはコードだけにする。
+            Exchange(
+                CreateConnection(new McpMethodTable()),
+                Handshake(),
+                "{" + Quoted("jsonrpc") + ":" + Quoted("2.0") + "," + Quoted("id") + ":2,"
+                    + Quoted("method") + ":" + Quoted("ping") + "," + Quoted("params") + ":"
+                    + Quoted("モデルの秘密") + "}");
+
+            string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+            Assert.Contains(
+                "エラー応答: code=" + JsonRpcErrorCodes.InvalidParams.ToString(CultureInfo.InvariantCulture),
+                log);
+            Assert.DoesNotContain("モデルの秘密", log);
+            Assert.DoesNotContain("params はオブジェクトでなければならない。", log);
+        }
+
+        [Fact]
+        public void 同じコードのエラー応答は最初の1回だけ記録し合計を残す()
+        {
+            // 相手はエラーをいくらでも起こせる。毎回記録すると有用な履歴が押し流される。
+            Exchange(
+                CreateConnection(new McpMethodTable()),
+                Handshake(),
+                Request(2, "しらないめそっど"),
+                Request(3, "しらないめそっど"),
+                Request(4, "しらないめそっど"));
+
+            string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+            string code = JsonRpcErrorCodes.MethodNotFound.ToString(CultureInfo.InvariantCulture);
+            Assert.Equal(1, CountOccurrences(log, "エラー応答: code=" + code));
+            Assert.Contains("エラー応答の反復: code=" + code + " count=3", log);
+        }
+
+        private static int CountOccurrences(string text, string value)
+        {
+            int count = 0;
+            for (int index = text.IndexOf(value, StringComparison.Ordinal); index >= 0;
+                index = text.IndexOf(value, index + value.Length, StringComparison.Ordinal))
+            {
+                count++;
+            }
+
+            return count;
+        }
+
+        private static string Quoted(string value)
+        {
+            return "\"" + value + "\"";
+        }
+
+        [Fact]
         public void 要求の内容は記録しない()
         {
             McpMethodTable methods = new McpMethodTable();
@@ -621,6 +688,35 @@ namespace PmxEditorMcp.Tests
                 string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
                 Assert.Contains("処理タイムアウト", log);
                 Assert.Contains("slow", log);
+            }
+        }
+
+        [Fact]
+        public void 書けなかったエラー応答は記録しない()
+        {
+            using (ExchangeStream stream = new ExchangeStream(
+                Lines(Handshake(), Request(2, "しらないめそっど"))))
+            {
+                // ハンドシェイクの応答だけ通し、エラー応答は書けなくする。
+                stream.FailWritesAfter(1);
+
+                JsonRpcConnection connection = CreateConnection(new McpMethodTable());
+                try
+                {
+                    connection.Handle(stream, new InlineInvoker());
+                }
+                catch (IOException)
+                {
+                }
+
+                // 記録が1件も無ければファイル自体ができない。
+                string log = File.Exists(_log.FilePath)
+                    ? File.ReadAllText(_log.FilePath, Encoding.UTF8)
+                    : string.Empty;
+                Assert.DoesNotContain(
+                    "エラー応答: code="
+                        + JsonRpcErrorCodes.MethodNotFound.ToString(CultureInfo.InvariantCulture),
+                    log);
             }
         }
 

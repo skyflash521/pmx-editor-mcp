@@ -186,6 +186,24 @@ namespace PmxEditorMcp
             // 接続ごとに独立させるため、この呼び出しのローカルに持つ。
             bool handshaked = false;
 
+            // エラー応答の数はコードごとに数え、記録は最初の1回と、接続が切れたときの合計に限る。
+            // 同じ記録の反復でローテーションが有用な履歴を押し流すのを避けるため。数え上げは接続ごとに
+            // 独立させたいので、稼働世代やインスタンスでなくこの呼び出しのローカルに持つ。
+            ErrorResponseCounter errors = new ErrorResponseCounter();
+
+            try
+            {
+                HandleRequests(channel, errors, ui, handshaked);
+            }
+            finally
+            {
+                errors.WriteSummary(_log);
+            }
+        }
+
+        private void HandleRequests(
+            MessageChannel channel, ErrorResponseCounter errors, IUiInvoker ui, bool handshaked)
+        {
             while (true)
             {
                 string line;
@@ -195,12 +213,12 @@ namespace PmxEditorMcp
                         return;
 
                     case MessageReadOutcome.TooLarge:
-                        Respond(channel, null, JsonRpcErrorCodes.RequestTooLarge,
+                        Respond(channel, errors, null, JsonRpcErrorCodes.RequestTooLarge,
                             "要求のメッセージが上限のバイト数を超えている。");
                         return;
 
                     case MessageReadOutcome.InvalidEncoding:
-                        Respond(channel, null, JsonRpcErrorCodes.ParseError,
+                        Respond(channel, errors, null, JsonRpcErrorCodes.ParseError,
                             "要求の本文がUTF-8として解釈できない。");
                         return;
                 }
@@ -208,7 +226,7 @@ namespace PmxEditorMcp
                 JsonRpcParseResult parsed = JsonRpcCodec.ParseRequest(line);
                 if (!parsed.IsValid)
                 {
-                    Respond(channel, parsed.Id, parsed.ErrorCode, parsed.ErrorMessage);
+                    Respond(channel, errors, parsed.Id, parsed.ErrorCode, parsed.ErrorMessage);
                     if (parsed.ErrorCode == JsonRpcErrorCodes.ParseError)
                     {
                         return;
@@ -222,14 +240,14 @@ namespace PmxEditorMcp
 
                 if (!handshaked && !isHandshake)
                 {
-                    Respond(channel, request.Id, JsonRpcErrorCodes.HandshakeRequired,
+                    Respond(channel, errors, request.Id, JsonRpcErrorCodes.HandshakeRequired,
                         "接続後の最初の要求は handshake でなければならない。");
                     return;
                 }
 
                 if (isHandshake)
                 {
-                    HandshakeOutcome outcome = CheckHandshake(channel, request);
+                    HandshakeOutcome outcome = CheckHandshake(channel, errors, request);
                     if (outcome == HandshakeOutcome.Mismatched)
                     {
                         return;
@@ -238,7 +256,7 @@ namespace PmxEditorMcp
                     if (outcome == HandshakeOutcome.Accepted)
                     {
                         handshaked = true;
-                        WriteResult(channel, request.Id, BuildHandshakeResult());
+                        WriteResult(channel, errors, request.Id, BuildHandshakeResult());
                     }
 
                     continue;
@@ -248,7 +266,7 @@ namespace PmxEditorMcp
                 bool isPing = PingMethodName.Equals(request.Method, StringComparison.Ordinal);
                 if (!isPing && !_methods.TryGet(request.Method, out method))
                 {
-                    Respond(channel, request.Id, JsonRpcErrorCodes.MethodNotFound,
+                    Respond(channel, errors, request.Id, JsonRpcErrorCodes.MethodNotFound,
                         "method に対応する処理が無い。");
                     continue;
                 }
@@ -256,7 +274,7 @@ namespace PmxEditorMcp
                 IDictionary<string, object> parameters;
                 if (!request.TryGetParams(out parameters))
                 {
-                    Respond(channel, request.Id, JsonRpcErrorCodes.InvalidParams,
+                    Respond(channel, errors, request.Id, JsonRpcErrorCodes.InvalidParams,
                         "params はオブジェクトでなければならない。");
                     continue;
                 }
@@ -266,12 +284,12 @@ namespace PmxEditorMcp
                 {
                     result = "pong";
                 }
-                else if (!TryInvoke(channel, request, method, parameters, ui, out result))
+                else if (!TryInvoke(channel, errors, request, method, parameters, ui, out result))
                 {
                     continue;
                 }
 
-                WriteResult(channel, request.Id, result);
+                WriteResult(channel, errors, request.Id, result);
             }
         }
 
@@ -289,12 +307,13 @@ namespace PmxEditorMcp
         }
 
         /// <summary>ハンドシェイクの引数を検査し、受理できないときは応答まで済ませる。</summary>
-        private HandshakeOutcome CheckHandshake(MessageChannel channel, JsonRpcRequest request)
+        private HandshakeOutcome CheckHandshake(
+            MessageChannel channel, ErrorResponseCounter errors, JsonRpcRequest request)
         {
             IDictionary<string, object> parameters;
             if (!request.TryGetParams(out parameters))
             {
-                Respond(channel, request.Id, JsonRpcErrorCodes.InvalidParams,
+                Respond(channel, errors, request.Id, JsonRpcErrorCodes.InvalidParams,
                     "params はオブジェクトでなければならない。");
                 return HandshakeOutcome.InvalidParams;
             }
@@ -302,14 +321,14 @@ namespace PmxEditorMcp
             object protocol;
             if (!parameters.TryGetValue("protocol", out protocol) || !IsNumber(protocol))
             {
-                Respond(channel, request.Id, JsonRpcErrorCodes.InvalidParams,
+                Respond(channel, errors, request.Id, JsonRpcErrorCodes.InvalidParams,
                     "handshake には数値の protocol が要る。");
                 return HandshakeOutcome.InvalidParams;
             }
 
             if (!MatchesProtocol(protocol))
             {
-                Respond(channel, request.Id, JsonRpcErrorCodes.ProtocolMismatch,
+                Respond(channel, errors, request.Id, JsonRpcErrorCodes.ProtocolMismatch,
                     "プロトコル番号が合わない。このホストは "
                     + Protocol.ToString(CultureInfo.InvariantCulture) + " を用いる。");
                 return HandshakeOutcome.Mismatched;
@@ -371,6 +390,7 @@ namespace PmxEditorMcp
 
         private bool TryInvoke(
             MessageChannel channel,
+            ErrorResponseCounter errors,
             JsonRpcRequest request,
             McpMethod method,
             IDictionary<string, object> parameters,
@@ -390,7 +410,7 @@ namespace PmxEditorMcp
                     try
                     {
                         _log.Write("処理タイムアウト: " + request.Method);
-                        Respond(channel, request.Id, JsonRpcErrorCodes.RequestTimeout,
+                        Respond(channel, errors, request.Id, JsonRpcErrorCodes.RequestTimeout,
                             "処理が上限の時間を超えた。");
                     }
                     finally
@@ -412,7 +432,7 @@ namespace PmxEditorMcp
             }
             catch (AggregateException aggregate)
             {
-                RespondToFailure(channel, request, aggregate);
+                RespondToFailure(channel, errors, request, aggregate);
                 return false;
             }
 
@@ -420,22 +440,25 @@ namespace PmxEditorMcp
             return true;
         }
 
-        private void RespondToFailure(MessageChannel channel, JsonRpcRequest request, AggregateException aggregate)
+        private void RespondToFailure(
+            MessageChannel channel, ErrorResponseCounter errors, JsonRpcRequest request,
+            AggregateException aggregate)
         {
             Exception cause = aggregate.InnerException ?? aggregate;
 
             InvalidParamsException invalidParams = cause as InvalidParamsException;
             if (invalidParams != null)
             {
-                Respond(channel, request.Id, JsonRpcErrorCodes.InvalidParams, invalidParams.Message);
+                Respond(channel, errors, request.Id, JsonRpcErrorCodes.InvalidParams, invalidParams.Message);
                 return;
             }
 
             _log.WriteException("要求の処理で例外が起きた。", cause);
-            Respond(channel, request.Id, JsonRpcErrorCodes.InternalError, "要求の処理で例外が起きた。");
+            Respond(channel, errors, request.Id, JsonRpcErrorCodes.InternalError, "要求の処理で例外が起きた。");
         }
 
-        private void WriteResult(MessageChannel channel, object id, object result)
+        private void WriteResult(
+            MessageChannel channel, ErrorResponseCounter errors, object id, object result)
         {
             string line;
             try
@@ -445,13 +468,13 @@ namespace PmxEditorMcp
             catch (Exception exception) when (IsSerializeFailure(exception))
             {
                 _log.WriteException("応答の組み立てで例外が起きた。", exception);
-                Respond(channel, id, JsonRpcErrorCodes.InternalError, "応答を組み立てられなかった。");
+                Respond(channel, errors, id, JsonRpcErrorCodes.InternalError, "応答を組み立てられなかった。");
                 return;
             }
 
             if (MessageChannel.MeasureBytes(line) > channel.MaxMessageBytes)
             {
-                Respond(channel, id, JsonRpcErrorCodes.ResponseTooLarge,
+                Respond(channel, errors, id, JsonRpcErrorCodes.ResponseTooLarge,
                     "応答のメッセージが上限のバイト数を超えた。");
                 return;
             }
@@ -459,7 +482,8 @@ namespace PmxEditorMcp
             channel.Write(line);
         }
 
-        private void Respond(MessageChannel channel, object id, int code, string message)
+        private void Respond(
+            MessageChannel channel, ErrorResponseCounter errors, object id, int code, string message)
         {
             string line = JsonRpcCodec.SerializeError(id, code, message);
             if (MessageChannel.MeasureBytes(line) > channel.MaxMessageBytes)
@@ -476,6 +500,43 @@ namespace PmxEditorMcp
             }
 
             channel.Write(line);
+            errors.Note(_log, code);
+        }
+
+        /// <summary>
+        /// 1つの接続で返したエラー応答をコードごとに数える。記録するのはコードだけにする。
+        /// 説明は不正な引数の値を指すことがあり、要求の内容を記録しない規則に触れる。
+        /// </summary>
+        private sealed class ErrorResponseCounter
+        {
+            private readonly Dictionary<int, int> _counts = new Dictionary<int, int>();
+
+            /// <summary>返したエラー応答を数え、そのコードで最初の1回だけ記録する。</summary>
+            public void Note(HostLog log, int code)
+            {
+                int count;
+                _counts.TryGetValue(code, out count);
+                _counts[code] = count + 1;
+
+                if (count == 0)
+                {
+                    log.Write("エラー応答: code=" + code.ToString(CultureInfo.InvariantCulture));
+                }
+            }
+
+            /// <summary>接続が切れたところで、繰り返したエラー応答の合計を記録する。</summary>
+            public void WriteSummary(HostLog log)
+            {
+                foreach (KeyValuePair<int, int> entry in _counts)
+                {
+                    if (entry.Value > 1)
+                    {
+                        log.Write("エラー応答の反復: code="
+                            + entry.Key.ToString(CultureInfo.InvariantCulture)
+                            + " count=" + entry.Value.ToString(CultureInfo.InvariantCulture));
+                    }
+                }
+            }
         }
     }
 }
