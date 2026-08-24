@@ -9,12 +9,10 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class BridgeBudgetTests
     {
-        private const string Pending = "impl pending: 応答サイズ予算の環境変数を読み、受理できない値では理由を1行出して終了する";
-
         /// <summary>起動したブリッジのプロセスが終わるのを待つ上限。</summary>
         private static readonly TimeSpan ExitWait = TimeSpan.FromSeconds(30);
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 未設定なら既定の文字数で有効になる()
         {
             BridgeBudget budget = BridgeBudget.Read(null);
@@ -23,7 +21,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeBudget.DefaultChars, budget.Chars);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 応答サイズ予算の設定は契約で定めた値である()
         {
             Assert.Equal("PMX_EDITOR_MCP_BUDGET_CHARS", BridgeBudget.EnvironmentVariableName);
@@ -33,7 +31,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, BridgeBudget.InvalidExitCode);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("10000", 10000)]
         [InlineData("100000", 100000)]
         [InlineData("500000", 500000)]
@@ -45,7 +43,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(expected, budget.Chars);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("9999")]
         [InlineData("500001")]
         [InlineData("0")]
@@ -58,7 +56,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(string.IsNullOrEmpty(budget.InvalidReason));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("")]
         [InlineData("+100000")]
         [InlineData("-100000")]
@@ -77,7 +75,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(string.IsNullOrEmpty(budget.InvalidReason));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 無効な理由は値に含まれる制御文字をそのまま載せない()
         {
             const char CarriageReturn = (char)13;
@@ -90,7 +88,20 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.DoesNotContain(LineFeed.ToString(), budget.InvalidReason);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void 無効な理由は制御文字に分類されない行区切りもそのまま載せない()
+        {
+            const char LineSeparator = (char)0x2028;
+            const char ParagraphSeparator = (char)0x2029;
+
+            BridgeBudget budget = BridgeBudget.Read("12" + LineSeparator + ParagraphSeparator + "34");
+
+            Assert.False(budget.IsValid);
+            Assert.DoesNotContain(LineSeparator.ToString(), budget.InvalidReason);
+            Assert.DoesNotContain(ParagraphSeparator.ToString(), budget.InvalidReason);
+        }
+
+        [Fact]
         public void 無効な理由は長大な値をそのまま載せない()
         {
             // 長さは受理範囲の境界値と一致させない(範囲の説明文と区別できなくなるため)。
@@ -103,7 +114,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Contains("全 12345 文字", budget.InvalidReason);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 無効な設定は既定の文字数へ落とさない()
         {
             BridgeBudget budget = BridgeBudget.Read("9999");
@@ -112,7 +123,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(0, budget.Chars);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("+100000")]
         [InlineData("0100000")]
         [InlineData("9999")]
