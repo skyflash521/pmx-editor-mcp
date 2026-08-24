@@ -139,6 +139,14 @@ namespace PmxEditorMcp
                     body.Write(_readBuffer, _readOffset, available);
                     _readOffset += available;
 
+                    if (newlineIndex < 0 && body.Length > MaxMessageBytes
+                        && body.GetBuffer()[body.Length - 1] != CarriageReturn)
+                    {
+                        // 余分な1バイトを保留してよいのは、それがCRLFのCRで、続くLFで本文から
+                        // 外れる見込みがあるときだけ。そうでなければこの時点で上限を超えている。
+                        return MessageReadOutcome.TooLarge;
+                    }
+
                     if (newlineIndex >= 0)
                     {
                         _readOffset++;

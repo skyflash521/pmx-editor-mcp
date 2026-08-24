@@ -115,6 +115,31 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void 上限を1バイト超えた本文は区切りを待たずに上限超過として返す()
+        {
+            // 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
+            MessageChannel channel = new MessageChannel(
+                new MemoryStream(Utf8WithoutBom.GetBytes(new string('a', 17))), 16);
+
+            string message;
+            Assert.Equal(MessageReadOutcome.TooLarge, channel.Read(out message));
+            Assert.Null(message);
+        }
+
+        [Fact]
+        public void 上限ちょうどの本文はCRとLFが別の読み取りに分かれても受理する()
+        {
+            ChunkedStream source = new ChunkedStream(
+                Utf8WithoutBom.GetBytes(new string('a', 16) + "\r"),
+                Utf8WithoutBom.GetBytes("\n"));
+            MessageChannel channel = new MessageChannel(source, 16);
+
+            string message;
+            Assert.Equal(MessageReadOutcome.Message, channel.Read(out message));
+            Assert.Equal(new string('a', 16), message);
+        }
+
+        [Fact]
         public void 区切りが来なくても上限を超えた時点で読み取りを打ち切る()
         {
             // 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
@@ -217,6 +242,69 @@ namespace PmxEditorMcp.Tests
             channel.Write(new string('a', 16));
 
             Assert.Equal(17, stream.ToArray().Length);
+        }
+
+        /// <summary>読み取りを与えた塊の単位で返す。名前付きパイプの分割読み取りを模す。</summary>
+        private sealed class ChunkedStream : Stream
+        {
+            private readonly byte[][] _chunks;
+            private int _index;
+
+            public ChunkedStream(params byte[][] chunks)
+            {
+                _chunks = chunks;
+            }
+
+            public override bool CanRead => true;
+
+            public override bool CanSeek => false;
+
+            public override bool CanWrite => false;
+
+            public override long Length => throw new NotSupportedException();
+
+            public override long Position
+            {
+                get { throw new NotSupportedException(); }
+                set { throw new NotSupportedException(); }
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                if (_index >= _chunks.Length)
+                {
+                    return 0;
+                }
+
+                byte[] chunk = _chunks[_index];
+                if (chunk.Length > count)
+                {
+                    throw new InvalidOperationException("塊が読み取り要求より大きい。");
+                }
+
+                Array.Copy(chunk, 0, buffer, offset, chunk.Length);
+                _index++;
+                return chunk.Length;
+            }
+
+            public override void Flush()
+            {
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void SetLength(long value)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                throw new NotSupportedException();
+            }
         }
 
         /// <summary>読み取られたバイト数を数える読み取り専用のストリーム。</summary>
