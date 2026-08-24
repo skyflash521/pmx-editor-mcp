@@ -13,13 +13,66 @@ const JSONRPC_VERSION = "2.0";
 const HANDSHAKE_PROTOCOL = 1;
 
 /**
+ * 引数を省略したときに期待する応答サイズ予算の文字数。実機動作確認の手順は、エディタを起動する
+ * 時点で予算の環境変数を設定していないことを求めるので、ホストが読む既定値がそのまま返る。
+ * 設定したまま起動していれば、この検査で分かる。
+ */
+const EXPECTED_BUDGET_CHARS = 100000;
+
+/**
  * 応答を受け切ったあとも接続を保ち続けるよう指示する語。第1引数の直後に置く。
  * 接続を張ったままエディタを終了する・待受を止める確認は、切断せずに待つ側が要る。
  */
 const HOLD_WORD = "--hold";
 
-/** 引数を省略したときに送る要求の並び。ハンドシェイクが通り、応答が返ることだけを見る。 */
+/** 引数を省略したときに送る要求の並び。 */
 const DEFAULT_REQUEST_WORDS = ["handshake", JSON.stringify({ protocol: HANDSHAKE_PROTOCOL }), "ping"];
+
+/**
+ * 引数を省略したときに送る要求へ課す期待。応答が返っただけでは疎通の確認にならない——
+ * ハンドシェイクが拒まれ、続く要求も拒まれる並びは、契約どおりのエラー応答の連なりとして
+ * 通ってしまう。既定の要求は成功する前提なので、結果の中身まで確かめる。
+ * 要求を明示したときは、拒まれること自体を確かめる使い方があるので課さない。
+ */
+const DEFAULT_EXPECTATIONS = {
+    handshake: expectHandshakeResult,
+    ping: expectPongResult,
+};
+
+/** ハンドシェイクの成功応答が契約どおりかを見る。合っていれば null を返す。 */
+function expectHandshakeResult(taken) {
+    if (!taken.hasResult) {
+        return "成功応答であるべきところがエラー応答です。";
+    }
+    const result = taken.result;
+    if (result === null || typeof result !== "object" || Array.isArray(result)) {
+        return "result がJSONのオブジェクトではありません。";
+    }
+    if (result.protocol !== HANDSHAKE_PROTOCOL) {
+        return "result の protocol が " + HANDSHAKE_PROTOCOL + " ではありません。";
+    }
+    if (typeof result.hostVersion !== "string" || result.hostVersion.length === 0) {
+        return "result の hostVersion が空でない文字列ではありません。";
+    }
+    if (result.budgetChars !== EXPECTED_BUDGET_CHARS) {
+        return (
+            "result の budgetChars が " + EXPECTED_BUDGET_CHARS + " ではありません" +
+            "(予算の環境変数を設定したままエディタを起動していないか確かめてください)。"
+        );
+    }
+    return null;
+}
+
+/** ping の成功応答が契約どおりかを見る。合っていれば null を返す。 */
+function expectPongResult(taken) {
+    if (!taken.hasResult) {
+        return "成功応答であるべきところがエラー応答です。";
+    }
+    if (taken.result !== "pong") {
+        return "result が pong ではありません。";
+    }
+    return null;
+}
 
 /**
  * 1件の応答が収まるバイト数の上限。ホストが本文へ課すのと同じ値を採り、区切りが来ないまま
@@ -143,7 +196,9 @@ function encodeRequest(request) {
 /**
  * 受信済みのバイト列の先頭から、応答を1件取り出す。buffer は Buffer。
  * 取り出せたときは、表示する文字列を持つ text・残りのバイト列(Buffer)を持つ rest・
- * エラー応答ならそのコード、成功応答なら null を持つ errorCode からなるオブジェクトを返す。
+ * エラー応答ならそのコード、成功応答なら null を持つ errorCode・成功応答かどうかを持つ
+ * hasResult・成功応答ならその result(エラー応答なら undefined)からなるオブジェクトを返す。
+ * hasResult と result は、既定の要求に課す期待値検査が結果の中身を見るために使う。
  * 1件に満たないときは null を返す。
  * 1件ぶん揃っているが契約に反する場合は、応答の本文(長ければ切り詰めたもの)を添えた例外を投げる。
  */
@@ -229,7 +284,7 @@ function takeResponse(buffer) {
     }
 
     const text = JSON.stringify(hasResult ? response.result : response.error);
-    return { text, rest, errorCode };
+    return { text, rest, errorCode, hasResult, result: hasResult ? response.result : undefined };
 }
 
 /**
@@ -391,6 +446,13 @@ function run(pipeName, requests, hold) {
                 break;
             }
             console.log(requests[index].label + " -> " + taken.text);
+
+            const mismatch = requests[index].expect === undefined ? null : requests[index].expect(taken);
+            if (mismatch !== null) {
+                abort("応答が期待と違います(" + requests[index].label + "): " + mismatch);
+                return;
+            }
+
             lastErrorCode = taken.errorCode;
             buffer = taken.rest;
             index += 1;
@@ -531,12 +593,19 @@ function main() {
         return;
     }
 
+    const useDefaults = words.length === 0;
     let requests;
     try {
-        requests = parseRequests(words.length === 0 ? DEFAULT_REQUEST_WORDS : words);
+        requests = parseRequests(useDefaults ? DEFAULT_REQUEST_WORDS : words);
     } catch (error) {
         reject(error.message);
         return;
+    }
+
+    if (useDefaults) {
+        for (const request of requests) {
+            request.expect = DEFAULT_EXPECTATIONS[request.method];
+        }
     }
 
     run(buildPipeName(editorProcessId), requests, hold);
