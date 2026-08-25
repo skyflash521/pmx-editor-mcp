@@ -64,6 +64,16 @@ namespace PmxEditorMcp.Bridge
             {
                 return await _openPipe(pipeName, cancellationToken).ConfigureAwait(false);
             }
+            catch (TimeoutException)
+            {
+                // 待ち受けていないときのほか、ホストは同時接続を1本に限るので別の接続が使用中でも
+                // ここへ来る。区別できないので、事実だけを述べて考えられる原因を並べる。
+                throw new BridgeException(
+                    BridgeErrorCodes.ConnectFailed,
+                    "ホストのパイプ " + pipeName + " へ " + Describe(ConnectWaitLimit)
+                        + "以内に接続できなかった。接続先のエディタが終了している、エディタでホストが"
+                        + "停止している、または別の接続がパイプを使用中である可能性がある。");
+            }
             catch (IOException error)
             {
                 throw ConnectFailed(pipeName, error);
@@ -72,6 +82,11 @@ namespace PmxEditorMcp.Bridge
             {
                 throw ConnectFailed(pipeName, error);
             }
+        }
+
+        private static string Describe(TimeSpan value)
+        {
+            return value.TotalSeconds.ToString(CultureInfo.InvariantCulture) + " 秒";
         }
 
         private static BridgeException ConnectFailed(string pipeName, Exception error)
@@ -91,7 +106,9 @@ namespace PmxEditorMcp.Bridge
                 ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             try
             {
-                await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+                // 上限を付けずに待つと、パイプが無いだけの場合まで要求全体の上限まで待ってしまう。
+                await pipe.ConnectAsync((int)ConnectWaitLimit.TotalMilliseconds, cancellationToken)
+                    .ConfigureAwait(false);
                 return pipe;
             }
             catch

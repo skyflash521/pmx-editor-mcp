@@ -461,7 +461,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Fact(Skip = "impl pending: 待ち受けていないパイプは待ち続けずに接続の失敗として返す")]
+        [Fact]
         public async Task 待ち受けていないパイプは待ち続けずに接続の失敗として返す()
         {
             // 接続先を決めた時点でエディタのプロセスは在るので、パイプが出てこないのは待って
@@ -481,6 +481,16 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
             Assert.Contains(absent, error.Message);
 
+            // パイプ名だけを検査すると、原因を1つに断定する本文へ戻しても通ってしまう。
+            // 観測した事実と、原因が1つに絞られていないことの両方を固定する。
+            // 語ごとに検査すると、同じ候補を断定文で並べ直した本文も通ってしまう。挙げた
+            // 候補以外の原因もありうるので、観測した事実から候補の列挙を経て断定していない
+            // ことを示す語尾までを、一続きの文として固定する。
+            Assert.Contains(
+                ConnectWaitLimitSeconds + " 秒以内に接続できなかった。接続先のエディタが終了している、"
+                    + "エディタでホストが停止している、または別の接続がパイプを使用中である可能性がある。",
+                error.Message);
+
             // 打ち切りは公開した上限で決まる。上下から挟まないと、上限を名乗りながら実際には
             // ずっと短い値で諦める作りも、上限と無関係に長く待つ作りも通ってしまう。
             Assert.InRange(
@@ -489,7 +499,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 NamedPipeHostConnector.ConnectWaitLimit + TimeSpan.FromSeconds(5));
         }
 
-        [Fact(Skip = "impl pending: 待ち受けていないパイプは待ち続けずに接続の失敗として返す")]
+        [Fact]
         public async Task 接続中に取り消されたら接続の失敗ではなく取り消しとして返す()
         {
             // 上限による打ち切りと呼び出し側の取り消しは、どちらも同じ種類の例外で表れる。
@@ -507,7 +517,7 @@ namespace PmxEditorMcp.Bridge.Tests
             await WithinTestWait(Assert.ThrowsAnyAsync<OperationCanceledException>(() => opening));
         }
 
-        [Fact(Skip = "impl pending: 待ち受けていないパイプは待ち続けずに接続の失敗として返す")]
+        [Fact]
         public async Task 少し遅れて現れたパイプは上限のあいだ待って受け入れる()
         {
             // プラグインの起動が間に合わずパイプが遅れて現れる場合まで落とさない。即座に諦める
@@ -569,6 +579,16 @@ namespace PmxEditorMcp.Bridge.Tests
                 () => connector.ConnectAsync(CancellationToken.None));
 
             Assert.Equal(new string[] { "pmx-editor-mcp-1", "pmx-editor-mcp-2" }, opened);
+        }
+
+        /// <summary>接続の待機上限を、本文に現れるのと同じ表記で得る。</summary>
+        private static string ConnectWaitLimitSeconds
+        {
+            get
+            {
+                return NamedPipeHostConnector.ConnectWaitLimit.TotalSeconds
+                    .ToString(CultureInfo.InvariantCulture);
+            }
         }
 
         /// <summary>上限付きで例外を待つ。製品側が待つ上限を掛け忘れても有限時間で失敗する。</summary>
