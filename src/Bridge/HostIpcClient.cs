@@ -21,6 +21,13 @@ namespace PmxEditorMcp.Bridge
     /// <summary>環境変数と起動中のPMXエディタから決めた名前付きパイプへ接続する。</summary>
     public sealed class NamedPipeHostConnector : IHostConnector
     {
+        /// <summary>
+        /// パイプが開くのを待つ上限。接続先を決めた時点でエディタのプロセスは在るので、パイプが
+        /// 出てこないのは待って解決する話ではない。プラグインの起動が間に合っていない場合だけを
+        /// 見込んだ短い値にし、待ち続けずに接続の失敗として返す。
+        /// </summary>
+        public static readonly TimeSpan ConnectWaitLimit = TimeSpan.FromSeconds(5);
+
         private readonly Func<string> _resolvePipeName;
         private readonly Func<string, CancellationToken, Task<Stream>> _openPipe;
 
@@ -74,7 +81,11 @@ namespace PmxEditorMcp.Bridge
                 "ホストのパイプ " + pipeName + " へ接続できない: " + error.Message);
         }
 
-        private static async Task<Stream> OpenNamedPipeAsync(string pipeName, CancellationToken cancellationToken)
+        /// <summary>
+        /// 名前付きパイプを実際に開く既定の処理。接続先の決定だけを差し替えて、この経路を
+        /// そのまま通すために内部へ開けている。
+        /// </summary>
+        internal static async Task<Stream> OpenNamedPipeAsync(string pipeName, CancellationToken cancellationToken)
         {
             NamedPipeClientStream pipe = new NamedPipeClientStream(
                 ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);

@@ -12,6 +12,13 @@ namespace PmxEditorMcp.Bridge.Tests
         /// </summary>
         private const string PipeNameGuidance = "環境変数 PMX_EDITOR_MCP_PIPE で接続先のパイプ名を指定する";
 
+        /// <summary>
+        /// 明示指定の寿命を伝えているかを見るための語。パイプ名にはエディタのプロセスIDが入るので、
+        /// 恒久的な設定へ書き写すと、エディタを起動し直した時点で死んだ名前を指す。寿命と
+        /// 指定し直しの必要を一続きの語句として固定する。
+        /// </summary>
+        private const string PipeNameLifetime = "この指定は今動いているエディタ限りで、エディタを起動し直したら指定し直す";
+
         [Fact]
         public void 接続先の指定と発見に用いる名前は契約で定めた値である()
         {
@@ -70,6 +77,15 @@ namespace PmxEditorMcp.Bridge.Tests
 
             Assert.Equal(BridgeErrorCodes.MultipleEditors, error.Code);
             Assert.Contains(PipeNameGuidance, error.Message);
+        }
+
+        [Fact(Skip = "impl pending: 明示指定が今動いているエディタ限りであることを案内へ含める")]
+        public void 複数起動の案内は指定が今のエディタ限りであることを伝える()
+        {
+            BridgeException error = Assert.Throws<BridgeException>(
+                () => PipeTargetResolver.Resolve(null, new int[] { 5678, 1234 }));
+
+            Assert.Contains(PipeNameLifetime, error.Message);
         }
 
         [Fact]

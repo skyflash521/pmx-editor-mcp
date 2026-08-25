@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Pipes;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +14,9 @@ namespace PmxEditorMcp.Bridge.Tests
     public class HostIpcClientTests
     {
         private const int BudgetChars = 100000;
+
+        /// <summary>テストが待つ上限。製品側が待つ上限を掛け忘れても有限時間で失敗させる。</summary>
+        private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(30);
 
         [Fact]
         public void ハンドシェイクのプロトコル番号は契約で定めた値である()
@@ -456,6 +461,74 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
+        [Fact(Skip = "impl pending: 待ち受けていないパイプは待ち続けずに接続の失敗として返す")]
+        public async Task 待ち受けていないパイプは待ち続けずに接続の失敗として返す()
+        {
+            // 接続先を決めた時点でエディタのプロセスは在るので、パイプが出てこないのは待って
+            // 解決する話ではない。待ち続けると要求全体の上限まで使い、原因も分からなくなる。
+            Assert.Equal(TimeSpan.FromSeconds(5), NamedPipeHostConnector.ConnectWaitLimit);
+
+            // 接続先の決定だけを固定し、パイプを開く処理は製品と同じものを通す。
+            string absent = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                () => absent, NamedPipeHostConnector.OpenNamedPipeAsync);
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            BridgeException error = await ThrowsWithin<BridgeException>(
+                () => connector.ConnectAsync(CancellationToken.None));
+            elapsed.Stop();
+
+            Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
+            Assert.Contains(absent, error.Message);
+
+            // 打ち切りは公開した上限で決まる。上下から挟まないと、上限を名乗りながら実際には
+            // ずっと短い値で諦める作りも、上限と無関係に長く待つ作りも通ってしまう。
+            Assert.InRange(
+                elapsed.Elapsed,
+                NamedPipeHostConnector.ConnectWaitLimit - TimeSpan.FromMilliseconds(500),
+                NamedPipeHostConnector.ConnectWaitLimit + TimeSpan.FromSeconds(5));
+        }
+
+        [Fact(Skip = "impl pending: 待ち受けていないパイプは待ち続けずに接続の失敗として返す")]
+        public async Task 接続中に取り消されたら接続の失敗ではなく取り消しとして返す()
+        {
+            // 上限による打ち切りと呼び出し側の取り消しは、どちらも同じ種類の例外で表れる。
+            // 取り消しまで接続の失敗へ変えると、呼び出し側が自分で止めたことが分からなくなる。
+            string absent = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                () => absent, NamedPipeHostConnector.OpenNamedPipeAsync);
+
+            using CancellationTokenSource connecting = new CancellationTokenSource();
+            Task<Stream> opening = connector.ConnectAsync(connecting.Token);
+
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            connecting.Cancel();
+
+            await WithinTestWait(Assert.ThrowsAnyAsync<OperationCanceledException>(() => opening));
+        }
+
+        [Fact(Skip = "impl pending: 待ち受けていないパイプは待ち続けずに接続の失敗として返す")]
+        public async Task 少し遅れて現れたパイプは上限のあいだ待って受け入れる()
+        {
+            // プラグインの起動が間に合わずパイプが遅れて現れる場合まで落とさない。即座に諦める
+            // 作りだと、エディタの起動直後の呼び出しが理由もなく失敗する。
+            string pipeName = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                () => pipeName, NamedPipeHostConnector.OpenNamedPipeAsync);
+
+            Task<Stream> connecting = connector.ConnectAsync(CancellationToken.None);
+
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            using NamedPipeServerStream listening = new NamedPipeServerStream(
+                pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            Task accepting = listening.WaitForConnectionAsync();
+
+            using Stream opened = await WithinTestWait(connecting);
+
+            await WithinTestWait(accepting);
+            Assert.True(listening.IsConnected);
+        }
+
         [Theory]
         [InlineData(typeof(IOException))]
         [InlineData(typeof(UnauthorizedAccessException))]
@@ -496,6 +569,29 @@ namespace PmxEditorMcp.Bridge.Tests
                 () => connector.ConnectAsync(CancellationToken.None));
 
             Assert.Equal(new string[] { "pmx-editor-mcp-1", "pmx-editor-mcp-2" }, opened);
+        }
+
+        /// <summary>上限付きで例外を待つ。製品側が待つ上限を掛け忘れても有限時間で失敗する。</summary>
+        private static async Task<TException> ThrowsWithin<TException>(Func<Task> action)
+            where TException : Exception
+        {
+            Task<TException> throwing = Assert.ThrowsAnyAsync<TException>(action);
+
+            return await WithinTestWait(throwing);
+        }
+
+        private static async Task<T> WithinTestWait<T>(Task<T> pending)
+        {
+            await WithinTestWait((Task)pending);
+            return await pending;
+        }
+
+        private static async Task WithinTestWait(Task pending)
+        {
+            Task finished = await Task.WhenAny(pending, Task.Delay(TestWait));
+
+            Assert.True(ReferenceEquals(finished, pending), "待機上限内に終わらなかった。");
+            await pending;
         }
 
         private static HostIpcClient Connect(FakeHost host)
