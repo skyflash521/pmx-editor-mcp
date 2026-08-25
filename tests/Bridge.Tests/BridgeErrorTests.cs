@@ -53,6 +53,8 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             Assert.Equal("BRIDGE_NO_EDITOR", BridgeErrorCodes.NoEditor);
             Assert.Equal("BRIDGE_MULTIPLE_EDITORS", BridgeErrorCodes.MultipleEditors);
+            Assert.Equal("BRIDGE_NO_HOST", BridgeErrorCodes.NoHost);
+            Assert.Equal("BRIDGE_MULTIPLE_HOSTS", BridgeErrorCodes.MultipleHosts);
             Assert.Equal("BRIDGE_CONNECT_FAILED", BridgeErrorCodes.ConnectFailed);
             Assert.Equal("BRIDGE_HANDSHAKE_MISMATCH", BridgeErrorCodes.HandshakeMismatch);
             Assert.Equal("BRIDGE_BUDGET_MISMATCH", BridgeErrorCodes.BudgetMismatch);

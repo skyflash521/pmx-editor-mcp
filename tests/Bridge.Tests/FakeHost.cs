@@ -32,10 +32,27 @@ namespace PmxEditorMcp.Bridge.Tests
         private readonly CancellationTokenSource _stopping = new CancellationTokenSource();
         private readonly object _gate = new object();
 
+        private readonly TaskCompletionSource<bool> _listeningStarted =
+            new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
         private NamedPipeServerStream _pipe;
         private Task _listening;
 
-        /// <summary>相手が接続するパイプの名前。テストごとに重ならない名前を作る。</summary>
+        /// <summary>
+        /// テストごとに重ならない名前で待ち受ける。この名前は接頭辞に続く部分がプロセスIDに
+        /// ならないので、待受の列挙による接続先の発見では拾われない。
+        /// </summary>
+        public FakeHost()
+        {
+        }
+
+        /// <summary>待ち受ける名前を選んで生成する。発見の対象にしたい場合に用いる。</summary>
+        public FakeHost(string pipeName)
+        {
+            PipeName = pipeName;
+        }
+
+        /// <summary>相手が接続するパイプの名前。</summary>
         public string PipeName { get; } = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
 
         /// <summary>これまでに受け取った要求の本文。応答を返す前の要求も含む。</summary>
@@ -111,6 +128,15 @@ namespace PmxEditorMcp.Bridge.Tests
         public FakeHost Start()
         {
             _listening = Task.Run(ListenAsync);
+
+            // パイプが公開されるのは背景の待受の中なので、戻った時点ではまだ名前が現れて
+            // いないことがある。待ち受けているパイプを列挙して相手を探す側は一度見るだけで
+            // 済ませるため、公開を見届けてから戻る。
+            if (!_listeningStarted.Task.Wait(TimeSpan.FromSeconds(10)))
+            {
+                throw new InvalidOperationException("試験用ホストの待受を始められなかった。");
+            }
+
             return this;
         }
 
@@ -147,11 +173,14 @@ namespace PmxEditorMcp.Bridge.Tests
                     if (_stopping.IsCancellationRequested)
                     {
                         pipe.Dispose();
+                        _listeningStarted.TrySetResult(false);
                         return;
                     }
 
                     _pipe = pipe;
                 }
+
+                _listeningStarted.TrySetResult(true);
 
                 try
                 {

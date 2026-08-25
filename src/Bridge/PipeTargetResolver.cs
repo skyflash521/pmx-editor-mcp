@@ -18,7 +18,18 @@ namespace PmxEditorMcp.Bridge
         /// <summary>自動発見で数えるPMXエディタのプロセス名。</summary>
         public const string EditorProcessName = "PmxEditor_x64";
 
-        private const string PipeNamePrefix = "pmx-editor-mcp-";
+        /// <summary>
+        /// テスト専用。接続先のパイプ名を固定する環境変数の名前。実機ではホストが待ち受けて
+        /// いると自動発見が曖昧になるため、テストはこの指定で対象を固定する。利用者向けの
+        /// 接続先の選び分けにはこの環境変数を用いない。
+        /// </summary>
+        public const string TestPipeEnvironmentVariableName = "PMX_EDITOR_MCP_TEST_PIPE";
+
+        /// <summary>ホストの待受パイプ名の接頭辞。この後ろにエディタのプロセスIDが続く。</summary>
+        public const string PipeNamePrefix = "pmx-editor-mcp-";
+
+        /// <summary>待ち受けているパイプが並ぶディレクトリ。ここを列挙して接続先を探す。</summary>
+        public const string PipeDirectory = @"\\.\pipe\";
 
         /// <summary>エディタのプロセスIDからホストの待受パイプ名を作る。</summary>
         public static string PipeNameForProcess(int processId)
@@ -56,6 +67,42 @@ namespace PmxEditorMcp.Bridge
             }
 
             throw new BridgeException(BridgeErrorCodes.MultipleEditors, DescribeCandidates(editorProcessIds));
+        }
+
+        /// <summary>
+        /// 接続先のパイプ名を決める。<paramref name="configuredPipeName"/> が null のときだけ
+        /// <paramref name="pipeDirectoryEntries"/> から決める。項目は
+        /// <see cref="PipeDirectory"/> を列挙した結果をそのまま渡してよく、ホストの待受パイプで
+        /// ないものはここで落とす。<paramref name="editorProcessIds"/> は待ち受けているホストが
+        /// 無いときの案内を分けるためだけに使う。
+        /// </summary>
+        public static string Resolve(
+            string configuredPipeName,
+            IReadOnlyList<string> pipeDirectoryEntries,
+            IReadOnlyList<int> editorProcessIds)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// パイプディレクトリの項目からエディタのプロセスIDを読む。ホストの待受パイプで
+        /// なければ負の値を返す。
+        /// </summary>
+        internal static int ProcessIdOf(string pipeDirectoryEntry)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 接続先を決める材料の取り方を差し替えて解決する。実機のパイプとプロセスに依存せずに
+        /// 経路を確かめられるようにするための入口。
+        /// </summary>
+        internal static string ResolveFrom(
+            Func<string, string> readEnvironmentVariable,
+            Func<string, IReadOnlyList<string>> enumeratePipeDirectory,
+            Func<string, IReadOnlyList<int>> findEditorProcessIds)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>環境変数の現在値と起動中のPMXエディタから接続先のパイプ名を決める。</summary>
