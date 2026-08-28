@@ -51,7 +51,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
 
             // 打ち切った接続は捨てているので、次の呼び出しは新しい接続からやり直せる。
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
             Assert.Equal(2, connector.ConnectCount);
         }
 
@@ -96,7 +96,7 @@ namespace PmxEditorMcp.Bridge.Tests
             using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
 
             using CancellationTokenSource shaking = new CancellationTokenSource();
-            Task<JsonNode> opening = client.CallAsync("ping", null, shaking.Token);
+            Task<HostCallResult> opening = client.CallAsync("ping", null, shaking.Token);
 
             await WaitForRequestCount(host, 1);
             shaking.Cancel();
@@ -106,7 +106,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
 
             // 中途半端に開いた接続を引きずらないので、次の呼び出しは新規に開く。
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
             Assert.Equal(2, connector.ConnectCount);
         }
 
@@ -130,10 +130,10 @@ namespace PmxEditorMcp.Bridge.Tests
             RecordingConnector connector = new RecordingConnector(host.PipeName);
             using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
 
-            Task<JsonNode> first = client.CallAsync("first", null, CancellationToken.None);
+            Task<HostCallResult> first = client.CallAsync("first", null, CancellationToken.None);
             await WaitForRequestCount(host, 1);
 
-            Task<JsonNode> second = client.CallAsync("second", null, CancellationToken.None);
+            Task<HostCallResult> second = client.CallAsync("second", null, CancellationToken.None);
 
             // handshake の応答を保留しているあいだ、2件目は接続もhandshakeも始めない。書き出しは
             // 呼ばれた時点で数えるので、送ったかどうかは相手の読み取りを待たずに分かる。
@@ -168,11 +168,11 @@ namespace PmxEditorMcp.Bridge.Tests
             RecordingConnector connector = new RecordingConnector(host.PipeName);
             using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
 
-            Task<JsonNode> first = client.CallAsync("first", null, CancellationToken.None);
+            Task<HostCallResult> first = client.CallAsync("first", null, CancellationToken.None);
             await WaitForRequestCount(host, 2);
 
-            Task<JsonNode> second = client.CallAsync("second", null, CancellationToken.None);
-            Task<JsonNode> third = client.CallAsync("third", null, CancellationToken.None);
+            Task<HostCallResult> second = client.CallAsync("second", null, CancellationToken.None);
+            Task<HostCallResult> third = client.CallAsync("third", null, CancellationToken.None);
 
             // 先行が応答を待っているあいだ、後続の要求は書き出されない。書き出しは呼ばれた時点で
             // 数えるので、相手が読み取るのを待たずに重複送信が分かる。
@@ -204,19 +204,19 @@ namespace PmxEditorMcp.Bridge.Tests
                 .Start();
             using HostIpcClient client = Connect(host);
 
-            Task<JsonNode> running = client.CallAsync("first", null, CancellationToken.None);
+            Task<HostCallResult> running = client.CallAsync("first", null, CancellationToken.None);
             await WaitForRequestCount(host, 2);
 
             // 先行が順番を握っているので、この呼び出しは要求を送れていない。
             using CancellationTokenSource waiting = new CancellationTokenSource();
-            Task<JsonNode> queued = client.CallAsync("queued", null, waiting.Token);
+            Task<HostCallResult> queued = client.CallAsync("queued", null, waiting.Token);
             waiting.Cancel();
 
             await ThrowsWithin<OperationCanceledException>(() => queued);
 
             holding.Release();
 
-            Assert.Equal("pong", (string)await running);
+            Assert.Equal("pong", (string)(await running).Result);
             Assert.True(client.IsConnected);
 
             // 送られていないので、ホストは取り消された呼び出しを見ていない。
@@ -236,7 +236,7 @@ namespace PmxEditorMcp.Bridge.Tests
             using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
 
             using CancellationTokenSource sending = new CancellationTokenSource();
-            Task<JsonNode> sent = client.CallAsync("slow", null, sending.Token);
+            Task<HostCallResult> sent = client.CallAsync("slow", null, sending.Token);
 
             await WaitForRequestCount(host, 2);
             sending.Cancel();
@@ -246,7 +246,7 @@ namespace PmxEditorMcp.Bridge.Tests
             // 実行されたか分からない要求なので、接続を捨てるだけで送り直さない。
             Assert.False(client.IsConnected);
 
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
             Assert.Equal(2, connector.ConnectCount);
 
             // 送り直していれば、2本目の接続にも同じメソッドが現れる。
@@ -267,14 +267,14 @@ namespace PmxEditorMcp.Bridge.Tests
             BlockingConnector connector = new BlockingConnector(host.PipeName, connecting);
             using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
 
-            Task<JsonNode> opening = client.CallAsync("ping", null, connecting.Token);
+            Task<HostCallResult> opening = client.CallAsync("ping", null, connecting.Token);
 
             await ThrowsWithin<OperationCanceledException>(() => opening);
 
             Assert.False(client.IsConnected);
 
             // 部分的に開いた接続を引きずらないので、次の呼び出しは新規に開く。
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
         }
 
         private static HostIpcClient Connect(FakeHost host)
@@ -361,10 +361,12 @@ namespace PmxEditorMcp.Bridge.Tests
             /// <summary>本文の書き出しが呼ばれた回数。呼ばれた時点で数える。</summary>
             public int WriteCount => Volatile.Read(ref _writes);
 
-            public async Task<Stream> ConnectAsync(CancellationToken cancellationToken)
+            public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
             {
-                Stream inner = await _inner.ConnectAsync(cancellationToken).ConfigureAwait(false);
-                return new RecordingStream(inner, () => Interlocked.Increment(ref _writes));
+                HostConnection inner = await _inner.ConnectAsync(cancellationToken).ConfigureAwait(false);
+                return new HostConnection(
+                    new RecordingStream(inner.Stream, () => Interlocked.Increment(ref _writes)),
+                    inner.PipeName);
             }
         }
 
@@ -452,7 +454,7 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>いつまでも接続を開き終えない接続役。</summary>
         private sealed class NeverOpeningConnector : IHostConnector
         {
-            public async Task<Stream> ConnectAsync(CancellationToken cancellationToken)
+            public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
             {
                 await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
                 throw new InvalidOperationException("ここへは到達しない。");
@@ -473,7 +475,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 _release = release;
             }
 
-            public async Task<Stream> ConnectAsync(CancellationToken cancellationToken)
+            public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
             {
                 if (++_opened == 1)
                 {

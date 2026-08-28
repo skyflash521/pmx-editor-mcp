@@ -107,7 +107,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             // 失敗の印は省略できる(省略は偽の意味)ので、真でないことを見る。
             Assert.NotEqual(true, result.IsError);
-            Assert.Equal("pong", TextOf(result));
+            Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(result));
 
             // ホストが受け取ったのは handshake と ping で、名前を作り替えていない。
             Assert.Equal(new string[] { "handshake", "ping" }, MethodsOf(host.Requests));
@@ -152,7 +152,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 "ping", cancellationToken: limit.Token);
 
             Assert.NotEqual(true, result.IsError);
-            Assert.Equal("pong", TextOf(result));
+            Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(result));
 
             // 応答の中身だけでは、指定を無視して別の相手を見つけた実装も通る。この待受が
             // 要求を受け取ったことまでを見て、指定が効いていることを確かめる。
@@ -199,6 +199,73 @@ namespace PmxEditorMcp.Bridge.Tests
                 await client.CallToolAsync("ping", cancellationToken: limit.Token), host);
         }
 
+        [Fact]
+        public async Task 成功した結果は先頭行で接続先を名乗る()
+        {
+            // どのエディタの応答かを、その応答だけを見て分かるようにする。過去の知らせを
+            // 覚えていることに頼ると、文脈が失われた時点で相手が分からなくなる。
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeWithAsync(
+                PipeTargetResolver.TestPipeEnvironmentVariableName, host.PipeName, null, limit.Token);
+
+            CallToolResult result = await client.CallToolAsync(
+                "ping", cancellationToken: limit.Token);
+
+            Assert.NotEqual(true, result.IsError);
+            Assert.Equal("接続先: " + host.PipeName + "\npong", TextOf(result));
+        }
+
+        [Fact]
+        public async Task 二度目以降の成功した結果も毎回接続先を名乗る()
+        {
+            // 一度きりの知らせだと、呼び出し元がそれを覚えていることに頼ることになる。文脈が
+            // 失われた後の応答からも相手が分かるよう、同じ相手のままでも毎回名乗る。
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeWithAsync(
+                PipeTargetResolver.TestPipeEnvironmentVariableName, host.PipeName, null, limit.Token);
+
+            await client.CallToolAsync("ping", cancellationToken: limit.Token);
+            CallToolResult second = await client.CallToolAsync(
+                "ping", cancellationToken: limit.Token);
+
+            Assert.NotEqual(true, second.IsError);
+            Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(second));
+        }
+
+        [Fact]
+        public async Task 失敗した結果はコードと説明だけを返す()
+        {
+            // 失敗の本文は「コード: 説明」の形で読まれるので、接続先の行を足して形を崩さない。
+            // 接続先が変わった事実は、次に成功した結果で必ず伝わる。
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BridgeBudget.MaximumChars))
+                .Start();
+
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeWithAsync(
+                PipeTargetResolver.TestPipeEnvironmentVariableName, host.PipeName, null, limit.Token);
+
+            CallToolResult result = await client.CallToolAsync(
+                "ping", cancellationToken: limit.Token);
+
+            Assert.True(result.IsError);
+
+            // 行が増えていないことまで見る。何かを足せる余地を残すと、形が崩れても通る。
+            Assert.StartsWith(BridgeErrorCodes.BudgetMismatch + ": ", TextOf(result));
+            Assert.DoesNotContain("\n", TextOf(result));
+        }
+
         /// <summary>
         /// 待受の列挙で相手を見つけたことを確かめる。実機のホストが同時に待ち受けていると
         /// 候補が増えるので、その場合は候補として挙がるところまでを見る。どちらの結果も、
@@ -221,7 +288,7 @@ namespace PmxEditorMcp.Bridge.Tests
             }
             else
             {
-                Assert.Equal("pong", TextOf(result));
+                Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(result));
 
                 // 応答の中身だけでは、別の相手が同じ本文を返しても通る。この待受が要求を
                 // 受け取ったことまでを見て、繋いだ先がここであることを確かめる。
@@ -270,6 +337,12 @@ namespace PmxEditorMcp.Bridge.Tests
                 });
 
             return McpClient.CreateAsync(transport, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>接続先の行を先頭に置いた、要求元へ返る本文を組み立てる。</summary>
+        private static string Relayed(string pipeName, string body)
+        {
+            return "接続先: " + pipeName + "\n" + body;
         }
 
         private static int DeclaredResultSize(McpClientTool tool)

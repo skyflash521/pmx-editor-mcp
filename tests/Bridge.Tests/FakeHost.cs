@@ -333,28 +333,35 @@ namespace PmxEditorMcp.Bridge.Tests
     /// <summary>試験用のホストへ接続する。</summary>
     public sealed class FakeHostConnector : IHostConnector
     {
-        private readonly string _pipeName;
+        private readonly string[] _pipeNames;
 
-        /// <summary>接続先のパイプ名を与えて生成する。</summary>
-        public FakeHostConnector(string pipeName)
+        /// <summary>
+        /// 接続先のパイプ名を与えて生成する。名前を続けて与えると、繋ぎ直しのたびに次の名前へ
+        /// 移る——接続先が別のエディタへ移る筋書きを書けるようにするため。最後の名前は以後
+        /// 繰り返し使う。
+        /// </summary>
+        public FakeHostConnector(string pipeName, params string[] furtherPipeNames)
         {
-            _pipeName = pipeName;
+            _pipeNames = new string[furtherPipeNames.Length + 1];
+            _pipeNames[0] = pipeName;
+            furtherPipeNames.CopyTo(_pipeNames, 1);
         }
 
         /// <summary>これまでに接続を開いた回数。繋ぎ直しの有無を外から数えるために持つ。</summary>
         public int ConnectCount { get; private set; }
 
         /// <summary>生成時に与えられたパイプへ接続する。</summary>
-        public async Task<Stream> ConnectAsync(CancellationToken cancellationToken)
+        public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
         {
+            string pipeName = _pipeNames[Math.Min(ConnectCount, _pipeNames.Length - 1)];
             ConnectCount++;
 
             NamedPipeClientStream pipe = new NamedPipeClientStream(
-                ".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+                ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             try
             {
                 await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
-                return pipe;
+                return new HostConnection(pipe, pipeName);
             }
             catch
             {

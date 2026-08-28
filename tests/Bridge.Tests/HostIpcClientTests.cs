@@ -33,7 +33,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 .Start();
             using HostIpcClient client = Connect(host);
 
-            JsonNode result = await client.CallAsync("ping", null, CancellationToken.None);
+            JsonNode result = (await client.CallAsync("ping", null, CancellationToken.None)).Result;
 
             Assert.Equal("pong", (string)result);
             Assert.Equal(2, host.Requests.Count);
@@ -212,14 +212,14 @@ namespace PmxEditorMcp.Bridge.Tests
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
 
-            SwitchingConnector connector = new SwitchingConnector(mismatched.PipeName, matched.PipeName);
+            FakeHostConnector connector = new FakeHostConnector(mismatched.PipeName, matched.PipeName);
             using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
 
             BridgeException error = await Assert.ThrowsAsync<BridgeException>(
                 () => client.CallAsync("ping", null, CancellationToken.None));
             Assert.Equal(BridgeErrorCodes.BudgetMismatch, error.Code);
 
-            JsonNode result = await client.CallAsync("ping", null, CancellationToken.None);
+            JsonNode result = (await client.CallAsync("ping", null, CancellationToken.None)).Result;
 
             Assert.Equal("pong", (string)result);
         }
@@ -238,7 +238,7 @@ namespace PmxEditorMcp.Bridge.Tests
             await Assert.ThrowsAsync<BridgeException>(
                 () => client.CallAsync("ping", null, CancellationToken.None));
 
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
             Assert.Equal(2, connector.ConnectCount);
         }
 
@@ -260,7 +260,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(client.IsConnected);
 
             // 接続を保っているので、続けて呼べる。
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
         }
 
         [Theory]
@@ -287,7 +287,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
 
             // 捨てた接続を引きずらないので、次の呼び出しは新しい接続からやり直せる。
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
             Assert.Equal(2, connector.ConnectCount);
         }
 
@@ -322,7 +322,7 @@ namespace PmxEditorMcp.Bridge.Tests
             await Assert.ThrowsAsync<BridgeException>(
                 () => client.CallAsync("ping", null, CancellationToken.None));
 
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
             Assert.Equal(2, connector.ConnectCount);
         }
 
@@ -395,7 +395,7 @@ namespace PmxEditorMcp.Bridge.Tests
             await Assert.ThrowsAsync<BridgeException>(
                 () => client.CallAsync("ping", null, CancellationToken.None));
 
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
             Assert.Equal(2, connector.ConnectCount);
         }
 
@@ -423,7 +423,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Single(host.Requests);
 
             // 接続を保っているので、続けて呼べる。
-            Assert.Equal("pong", (string)await client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
         }
 
         [Fact]
@@ -444,7 +444,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(first.IsConnected);
 
             using HostIpcClient second = Connect(host);
-            Assert.Equal("pong", (string)await second.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await second.CallAsync("ping", null, CancellationToken.None)).Result);
         }
 
         [Fact]
@@ -523,7 +523,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 () => absent, NamedPipeHostConnector.OpenNamedPipeAsync);
 
             using CancellationTokenSource connecting = new CancellationTokenSource();
-            Task<Stream> opening = connector.ConnectAsync(connecting.Token);
+            Task<HostConnection> opening = connector.ConnectAsync(connecting.Token);
 
             await Task.Delay(TimeSpan.FromMilliseconds(300));
             connecting.Cancel();
@@ -540,14 +540,14 @@ namespace PmxEditorMcp.Bridge.Tests
             NamedPipeHostConnector connector = new NamedPipeHostConnector(
                 () => pipeName, NamedPipeHostConnector.OpenNamedPipeAsync);
 
-            Task<Stream> connecting = connector.ConnectAsync(CancellationToken.None);
+            Task<HostConnection> connecting = connector.ConnectAsync(CancellationToken.None);
 
             await Task.Delay(TimeSpan.FromMilliseconds(300));
             using NamedPipeServerStream listening = new NamedPipeServerStream(
                 pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             Task accepting = listening.WaitForConnectionAsync();
 
-            using Stream opened = await WithinTestWait(connecting);
+            using Stream opened = (await WithinTestWait(connecting)).Stream;
 
             await WithinTestWait(accepting);
             Assert.True(listening.IsConnected);
@@ -634,6 +634,76 @@ namespace PmxEditorMcp.Bridge.Tests
             return new HostIpcClient(new FakeHostConnector(host.PipeName), BudgetChars);
         }
 
+        [Fact]
+        public async Task 初めての知らせは接続先を名乗るだけとする()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = Connect(host);
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal("接続先: " + host.PipeName, response.TargetNotice);
+        }
+
+        [Fact]
+        public async Task 相手が同じなら知らせは名乗るだけのままとする()
+        {
+            // 変わっていないのに変わったと言えば、呼び出し元は起きていない切り替えを疑って
+            // 手を止める。毎回名乗るのは、その応答だけで相手が分かるようにするためである。
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = Connect(host);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal("接続先: " + host.PipeName, response.TargetNotice);
+        }
+
+        [Fact]
+        public async Task 相手が変わったら変わった事実と前の相手を伝える()
+        {
+            // 繋ぎ直しのたびに接続先を決め直すので、利用者がホストを動かすエディタを切り替えると
+            // 相手が入れ替わる。黙って続けると、呼び出し元は前の応答で作った前提のまま別の
+            // エディタを操作する。間に失敗を挟んでも、変わった事実は次に成功した応答で伝わる。
+            using FakeHost left = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Disconnect()
+                .Start();
+
+            using FakeHost right = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = new HostIpcClient(
+                new FakeHostConnector(left.PipeName, right.PipeName), BudgetChars);
+
+            HostCallResult first = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal("接続先: " + left.PipeName, first.TargetNotice);
+
+            await ThrowsWithin<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            HostCallResult moved = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(
+                "接続先が変わった: " + left.PipeName + " から " + right.PipeName
+                    + " へ。以前の応答は別のエディタのものである。",
+                moved.TargetNotice);
+        }
+
         /// <summary>ハンドシェイクの成功応答を、受け取った要求の識別子に合わせて組み立てる。</summary>
         private static Func<string, string> HandshakeResultOf(int budgetChars)
         {
@@ -678,33 +748,10 @@ namespace PmxEditorMcp.Bridge.Tests
             return (int)JsonNode.Parse(request).AsObject()["id"];
         }
 
-        /// <summary>1回目と2回目以降で別のホストへ繋ぐ接続役。</summary>
-        private sealed class SwitchingConnector : IHostConnector
-        {
-            private readonly FakeHostConnector _first;
-            private readonly FakeHostConnector _rest;
-
-            private int _opened;
-
-            public SwitchingConnector(string firstPipeName, string restPipeName)
-            {
-                _first = new FakeHostConnector(firstPipeName);
-                _rest = new FakeHostConnector(restPipeName);
-            }
-
-            public Task<Stream> ConnectAsync(CancellationToken cancellationToken)
-            {
-                _opened++;
-                return _opened == 1
-                    ? _first.ConnectAsync(cancellationToken)
-                    : _rest.ConnectAsync(cancellationToken);
-            }
-        }
-
         /// <summary>接続の確立に失敗したことを知らせる接続役。</summary>
         private sealed class RefusingConnector : IHostConnector
         {
-            public Task<Stream> ConnectAsync(CancellationToken cancellationToken)
+            public Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
             {
                 throw new BridgeException(BridgeErrorCodes.ConnectFailed, "接続を確立できない。");
             }

@@ -46,6 +46,10 @@ namespace PmxEditorMcp.Bridge
                     Description = description,
 
                     // ツールごとに作る。使い回すと、書き換えられる同じ木を全ツールが共有する。
+                    //
+                    // 宣言するのはホストの本文に与えた予算そのものとする。先頭へ置く接続先の
+                    // 行はブリッジの上乗せで、予算が抑えたいホストの応答の大きさではない。
+                    // 予算に足すと、上限まで設定したときに宣言できる値を超えてしまう。
                     Meta = new JsonObject { [ResultSizeMetaKey] = client.BudgetChars },
                 });
         }
@@ -55,12 +59,20 @@ namespace PmxEditorMcp.Bridge
         {
             try
             {
-                JsonNode result = await client.CallAsync(method, null, cancellationToken)
+                HostCallResult response = await client.CallAsync(method, null, cancellationToken)
                     .ConfigureAwait(false);
 
+                // 接続先は毎回名乗る。過去の知らせを覚えていることに頼ると、文脈が失われた
+                // 時点で、呼び出し元はどのエディタの応答かを確かめる手立てを失う。
                 return new CallToolResult
                 {
-                    Content = new List<ContentBlock> { new TextContentBlock { Text = Describe(result) } },
+                    Content = new List<ContentBlock>
+                    {
+                        new TextContentBlock
+                        {
+                            Text = response.TargetNotice + "\n" + Describe(response.Result),
+                        },
+                    },
                 };
             }
             catch (BridgeException error)

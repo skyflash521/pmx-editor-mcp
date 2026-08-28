@@ -8,6 +8,43 @@ using System.Threading.Tasks;
 
 namespace PmxEditorMcp.Bridge
 {
+    /// <summary>開いたホストへの接続と、その接続先。</summary>
+    public sealed class HostConnection
+    {
+        /// <summary>開いた通信路と、その相手のパイプ名を与えて生成する。</summary>
+        public HostConnection(Stream stream, string pipeName)
+        {
+            Stream = stream;
+            PipeName = pipeName;
+        }
+
+        /// <summary>ホストとの通信路。</summary>
+        public Stream Stream { get; }
+
+        /// <summary>繋いだ相手のパイプ名。</summary>
+        public string PipeName { get; }
+    }
+
+    /// <summary>ホストの応答と、それを返した接続先の知らせ。</summary>
+    public sealed class HostCallResult
+    {
+        /// <summary>結果と接続先の知らせを与えて生成する。</summary>
+        public HostCallResult(JsonNode result, string targetNotice)
+        {
+            Result = result;
+            TargetNotice = targetNotice;
+        }
+
+        /// <summary>ホストが返した結果。</summary>
+        public JsonNode Result { get; }
+
+        /// <summary>
+        /// この応答を返した相手を伝える一行。応答と一緒に確定させる——別々に取りに行くと、
+        /// 間に入った呼び出しが繋ぎ直したときに、応答と知らせの相手が食い違う。
+        /// </summary>
+        public string TargetNotice { get; }
+    }
+
     /// <summary>ホストへの接続を開く役。</summary>
     public interface IHostConnector
     {
@@ -15,7 +52,7 @@ namespace PmxEditorMcp.Bridge
         /// ホストへの接続を開く。接続先を決められないときと確立に失敗したときは
         /// <see cref="BridgeException"/> を投げる。
         /// </summary>
-        Task<Stream> ConnectAsync(CancellationToken cancellationToken);
+        Task<HostConnection> ConnectAsync(CancellationToken cancellationToken);
     }
 
     /// <summary>待ち受けているホストから決めた名前付きパイプへ接続する。</summary>
@@ -56,13 +93,14 @@ namespace PmxEditorMcp.Bridge
         /// 接続のたびに接続先を決め直してから開く。エディタの起動・終了でパイプ名は変わるので、
         /// 一度決めた名前を握り続けると、繋ぎ直しが消えたエディタを指したままになる。
         /// </summary>
-        public async Task<Stream> ConnectAsync(CancellationToken cancellationToken)
+        public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
         {
             string pipeName = _resolvePipeName();
 
             try
             {
-                return await _openPipe(pipeName, cancellationToken).ConfigureAwait(false);
+                Stream stream = await _openPipe(pipeName, cancellationToken).ConfigureAwait(false);
+                return new HostConnection(stream, pipeName);
             }
             catch (TimeoutException)
             {
@@ -152,6 +190,8 @@ namespace PmxEditorMcp.Bridge
         private Stream _stream;
         private BridgeMessageChannel _channel;
         private int _lastRequestId;
+        private string _connectedPipeName;
+        private string _reportedPipeName;
 
         /// <summary>
         /// 接続の開き方と、ホストと一致していなければならない応答サイズ予算の文字数を与えて生成する。
@@ -187,10 +227,10 @@ namespace PmxEditorMcp.Bridge
         public bool IsConnected => _channel != null;
 
         /// <summary>
-        /// ホストのメソッドを1件呼び、成功応答の結果を返す。未接続なら接続して handshake を
-        /// 済ませてから送る。失敗は <see cref="BridgeException"/> で返す。
+        /// ホストのメソッドを1件呼び、成功応答の結果と接続先の知らせを返す。未接続なら接続して
+        /// handshake を済ませてから送る。失敗は <see cref="BridgeException"/> で返す。
         /// </summary>
-        public async Task<JsonNode> CallAsync(string method, JsonObject parameters, CancellationToken cancellationToken)
+        public async Task<HostCallResult> CallAsync(string method, JsonObject parameters, CancellationToken cancellationToken)
         {
             await _queue.EnterAsync(cancellationToken).ConfigureAwait(false);
             try
@@ -228,7 +268,7 @@ namespace PmxEditorMcp.Bridge
             }
         }
 
-        private async Task<JsonNode> CallCoreAsync(
+        private async Task<HostCallResult> CallCoreAsync(
             string method, JsonObject parameters, CancellationToken cancellationToken)
         {
             if (!IsConnected)
@@ -252,7 +292,38 @@ namespace PmxEditorMcp.Bridge
                 throw new BridgeException(code, response.ErrorMessage);
             }
 
-            return response.Result;
+            // 知らせを確定させるのはこの直列区間の中に限る。応答を返した後で別に取りに行くと、
+            // 間に入った呼び出しが繋ぎ直したときに、応答と知らせの相手が食い違う。
+            return new HostCallResult(response.Result, TakeTargetNotice());
+        }
+
+        /// <summary>
+        /// 結果の先頭へ置く接続先の知らせを作り、名乗った相手として控える。前に名乗った相手と
+        /// 違えば、変わった事実と前の相手も添える——黙って繋ぎ替えると、呼び出し元は前の応答で
+        /// 作った前提のまま別のエディタを操作する。
+        /// </summary>
+        private string TakeTargetNotice()
+        {
+            string previous = _reportedPipeName;
+            _reportedPipeName = _connectedPipeName;
+
+            if (previous == null || previous == _connectedPipeName)
+            {
+                return DescribeTarget(_connectedPipeName);
+            }
+
+            return DescribeChangedTarget(previous, _connectedPipeName);
+        }
+
+        private static string DescribeTarget(string pipeName)
+        {
+            return "接続先: " + pipeName;
+        }
+
+        private static string DescribeChangedTarget(string previousPipeName, string pipeName)
+        {
+            return "接続先が変わった: " + previousPipeName + " から " + pipeName
+                + " へ。以前の応答は別のエディタのものである。";
         }
 
         /// <summary>保っている接続を閉じる。</summary>
@@ -263,9 +334,10 @@ namespace PmxEditorMcp.Bridge
 
         private async Task ConnectAndHandshakeAsync(CancellationToken cancellationToken)
         {
-            Stream stream = await _connector.ConnectAsync(cancellationToken).ConfigureAwait(false);
-            _stream = stream;
-            _channel = new BridgeMessageChannel(stream);
+            HostConnection connection = await _connector.ConnectAsync(cancellationToken).ConfigureAwait(false);
+            _stream = connection.Stream;
+            _connectedPipeName = connection.PipeName;
+            _channel = new BridgeMessageChannel(connection.Stream);
 
             JsonObject parameters = new JsonObject { ["protocol"] = Protocol };
             HostResponse response = await ExchangeAsync("handshake", parameters, true, cancellationToken)
@@ -440,6 +512,10 @@ namespace PmxEditorMcp.Bridge
         private void Close()
         {
             _channel = null;
+
+            // 名乗った相手は繋ぎ直しをまたいで覚えておく——忘れると、別のエディタへ移っても
+            // 初めての知らせに見えて、変わった事実が伝わらない。
+            _connectedPipeName = null;
 
             Stream stream = _stream;
             _stream = null;
