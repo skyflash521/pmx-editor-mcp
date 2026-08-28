@@ -522,6 +522,27 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void 構造の量が上限を超える要求は拒んで切断する()
+        {
+            // 解析していないので識別子は判別できない。切断まで含めて入力の上限超過と同じ扱いにする。
+            StringBuilder builder = new StringBuilder();
+            builder.Append("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\",\"params\":{\"a\":[{}");
+            for (int index = 1; index <= JsonRpcCodec.ParseStructureTokenLimit; index++)
+            {
+                builder.Append(",{}");
+            }
+
+            builder.Append("]}}");
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()), Handshake(), builder.ToString(), Request(3, "ping"));
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.RequestTooLarge, ErrorCodeOf(responses[1]));
+            Assert.Null(IdOf(responses[1]));
+        }
+
+        [Fact]
         public void 上限を超える入力は拒んで切断する()
         {
             // 区切りが来る前に上限を超えるので、識別子は判別できない。

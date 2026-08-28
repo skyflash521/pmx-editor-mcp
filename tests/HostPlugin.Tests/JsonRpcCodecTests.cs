@@ -7,6 +7,10 @@ namespace PmxEditorMcp.Tests
 {
     public class JsonRpcCodecTests
     {
+        private const string DoubleQuote = "\"";
+        private const string EscapedBackslash = "\\\\";
+        private const string EscapedQuote = "\\\"";
+
         private const string EmptyMethodRequest = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"\"}";
 
         private const string NullIdWithArrayParamsRequest =
@@ -300,6 +304,130 @@ namespace PmxEditorMcp.Tests
             looped["self"] = looped;
 
             Assert.ThrowsAny<Exception>(() => JsonRpcCodec.SerializeResult(1, looped));
+        }
+
+        [Fact]
+        public void 構造トークンの上限は20万である()
+        {
+            Assert.Equal(200000, JsonRpcCodec.ParseStructureTokenLimit);
+        }
+
+        [Fact]
+        public void 構造トークンが上限までの要求は解析できる()
+        {
+            Assert.True(JsonRpcCodec.ParseRequest(BuildFlatArray(ElementsForLimit)).IsValid);
+        }
+
+        [Fact]
+        public void 構造トークンが上限を1つ超える要求は入力の上限超過になる()
+        {
+            // 上限内の本文でも、空のオブジェクトを並べれば解析で大量のオブジェクトが作られる。
+            // 上限ちょうどの要求へ開き括弧を1つ足しただけの本文で、判定の向きを固定する。
+            JsonRpcParseResult result = JsonRpcCodec.ParseRequest(BuildFlatArray(ElementsForLimit, "[]"));
+
+            Assert.False(result.IsValid);
+            Assert.Equal(JsonRpcErrorCodes.RequestTooLarge, result.ErrorCode);
+            Assert.Null(result.Id);
+        }
+
+        [Fact]
+        public void 文字列の中の記号は構造トークンに数えない()
+        {
+            // 値として置かれた括弧やコンマはオブジェクトを作らない。
+            string commas = new string(',', JsonRpcCodec.ParseStructureTokenLimit + 100);
+            JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
+                BuildRequest(Quoted(commas)));
+
+            Assert.True(result.IsValid);
+        }
+
+        [Fact]
+        public void 逆斜線で終わる文字列のあとの構造トークンも数える()
+        {
+            // 末尾の逆斜線がエスケープ済みなら文字列はそこで終わる。取り違えると、あとに続く
+            // トークンを数え落として上限超過を見逃す。
+            StringBuilder builder = new StringBuilder();
+            builder.Append('[');
+            builder.Append(Quoted(EscapedBackslash));
+            for (int index = 0; index <= JsonRpcCodec.ParseStructureTokenLimit / 2; index++)
+            {
+                builder.Append(",{}");
+            }
+
+            builder.Append(']');
+            JsonRpcParseResult result = JsonRpcCodec.ParseRequest(BuildRequest(builder.ToString()));
+
+            Assert.False(result.IsValid);
+            Assert.Equal(JsonRpcErrorCodes.RequestTooLarge, result.ErrorCode);
+        }
+
+        [Fact]
+        public void エスケープされた引用符では文字列を閉じない()
+        {
+            // 閉じたと取り違えると、文字列の中のコンマを構造トークンに数えてしまう。
+            string commas = new string(',', JsonRpcCodec.ParseStructureTokenLimit + 100);
+            JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
+                BuildRequest(Quoted(EscapedQuote + commas)));
+
+            Assert.True(result.IsValid);
+        }
+
+        /// <summary>
+        /// 構造トークンがちょうど上限になる要素の数。要求を包む部分が6トークン(要求のオブジェクトの
+        /// 開き・項目の区切り3つ・params のオブジェクトの開き・params の2つ目の項目の区切り)、
+        /// 配列の開きが1トークン、要素が1つ増えるごとに2トークン(オブジェクトの開きと区切り)増える。
+        /// 区切りは要素の数より1つ少ないので、合計は要素の数の2倍に6を足した数になる。
+        /// </summary>
+        private static int ElementsForLimit
+        {
+            get { return (JsonRpcCodec.ParseStructureTokenLimit - 6) / 2; }
+        }
+
+        /// <summary>params に空のオブジェクトを並べた配列を置いた要求を作る。</summary>
+        private static string BuildFlatArray(int elements)
+        {
+            return BuildFlatArray(elements, "0");
+        }
+
+        /// <summary>
+        /// params に空のオブジェクトを並べた配列を置いた要求を作る。2つ目の項目の値でトークン数を
+        /// 微調整する(値が `0` なら1トークン、`[]` なら開き括弧の分で2トークン増える)。
+        /// </summary>
+        private static string BuildFlatArray(int elements, string extraMemberValue)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append("[{}");
+            for (int index = 1; index < elements; index++)
+            {
+                builder.Append(",{}");
+            }
+
+            builder.Append(']');
+            return BuildRequest(builder.ToString(), extraMemberValue);
+        }
+
+        private static string BuildRequest(string paramsValue)
+        {
+            return BuildRequest(paramsValue, null);
+        }
+
+        /// <summary>
+        /// params に値を1つ置いた要求を作る。2つ目の項目の値を与えると、区切りの1トークンと
+        /// その値が持つトークンが増える。
+        /// </summary>
+        private static string BuildRequest(string paramsValue, string extraMemberValue)
+        {
+            string extra = extraMemberValue == null
+                ? string.Empty
+                : "," + Quoted("b") + ":" + extraMemberValue;
+            return "{" + Quoted("jsonrpc") + ":" + Quoted("2.0") + "," + Quoted("id") + ":1,"
+                + Quoted("method") + ":" + Quoted("ping") + "," + Quoted("params") + ":{"
+                + Quoted("a") + ":" + paramsValue + extra + "}}";
+        }
+
+        private static string Quoted(string value)
+        {
+            return DoubleQuote + value + DoubleQuote;
         }
 
         [Fact]

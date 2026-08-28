@@ -227,7 +227,8 @@ namespace PmxEditorMcp
                 if (!parsed.IsValid)
                 {
                     Respond(channel, errors, parsed.Id, parsed.ErrorCode, parsed.ErrorMessage);
-                    if (parsed.ErrorCode == JsonRpcErrorCodes.ParseError)
+                    if (parsed.ErrorCode == JsonRpcErrorCodes.ParseError
+                        || parsed.ErrorCode == JsonRpcErrorCodes.RequestTooLarge)
                     {
                         return;
                     }

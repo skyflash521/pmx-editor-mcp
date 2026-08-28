@@ -31,7 +31,7 @@ namespace PmxEditorMcp
         /// <summary>ハンドシェイクの前に他の要求が来た。</summary>
         public const int HandshakeRequired = -32003;
 
-        /// <summary>入力のメッセージが上限のバイト数を超えた。</summary>
+        /// <summary>入力が上限を超えた(本文のバイト数、または解析前に数える構造トークン)。</summary>
         public const int RequestTooLarge = -32004;
 
         /// <summary>応答のメッセージが上限のバイト数を超えた。</summary>
@@ -140,6 +140,18 @@ namespace PmxEditorMcp
         /// </summary>
         public const int JsonRecursionLimit = 100;
 
+        /// <summary>
+        /// 解析の前に数える構造トークン(オブジェクトと配列の開き括弧、要素とメンバーの区切りの
+        /// コンマ。文字列の中にあるものは数えない)の上限。本文のバイト数の上限だけでは、要素の
+        /// 数に歯止めが無い——上限いっぱいの本文へ小さなメンバーを並べれば数百万のオブジェクトを
+        /// 作らせられ、エディタと同じプロセスのメモリを圧迫できる。値は解析で作るオブジェクトの
+        /// 量から決める: 1トークンあたりの取り分が最も大きいのはメンバーを1つだけ持つ辞書の鎖で、
+        /// 辞書本体・バケット配列・エントリ配列・キーの文字列でおおよそ240バイトを使う。この上限
+        /// なら50MB程度で頭打ちになり、バイト数の上限だけのときの500MB超からは1桁下がる。
+        /// ツール契約が定める要素数の上限は、この上限の内側で定める。
+        /// </summary>
+        public const int ParseStructureTokenLimit = 200000;
+
         /// <summary>要求と応答の jsonrpc に固定で置く値。</summary>
         private const string ProtocolVersion = "2.0";
 
@@ -149,6 +161,14 @@ namespace PmxEditorMcp
             if (line == null)
             {
                 throw new ArgumentNullException(nameof(line));
+            }
+
+            // 解析より前に構造の量を見る。解析してから数えると、数えるために作ったオブジェクトで
+            // すでにメモリを使ってしまう。
+            if (ExceedsStructureTokenLimit(line))
+            {
+                return JsonRpcParseResult.Rejected(
+                    null, JsonRpcErrorCodes.RequestTooLarge, "要求の構造の量が上限を超えている。");
             }
 
             // 空(空白のみのものを含む)の本文は、シリアライザからは null リテラルと同じ結果に
@@ -268,6 +288,54 @@ namespace PmxEditorMcp
                 || exception is FormatException
                 || exception is OverflowException
                 || exception is InvalidOperationException;
+        }
+
+        /// <summary>
+        /// 構造トークンの数が上限を超えるかを、解析せずに1回の走査で判定する。文字列の中の記号は
+        /// 数えない——値として置かれた括弧やコンマはオブジェクトを作らないため。
+        /// </summary>
+        private static bool ExceedsStructureTokenLimit(string line)
+        {
+            int tokens = 0;
+            bool inString = false;
+            bool escaped = false;
+
+            for (int index = 0; index < line.Length; index++)
+            {
+                char current = line[index];
+                if (inString)
+                {
+                    if (escaped)
+                    {
+                        escaped = false;
+                    }
+                    else if (current == '\\')
+                    {
+                        escaped = true;
+                    }
+                    else if (current == '"')
+                    {
+                        inString = false;
+                    }
+
+                    continue;
+                }
+
+                if (current == '"')
+                {
+                    inString = true;
+                }
+                else if (current == '{' || current == '[' || current == ',')
+                {
+                    tokens++;
+                    if (tokens > ParseStructureTokenLimit)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static JavaScriptSerializer CreateSerializer(int maxJsonLength)
