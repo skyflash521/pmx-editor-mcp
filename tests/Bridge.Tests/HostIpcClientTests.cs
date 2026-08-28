@@ -464,8 +464,8 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public async Task 待ち受けていないパイプは待ち続けずに接続の失敗として返す()
         {
-            // 接続先を決めた時点でエディタのプロセスは在るので、パイプが出てこないのは待って
-            // 解決する話ではない。待ち続けると要求全体の上限まで使い、原因も分からなくなる。
+            // 接続先を決めた時点でそのパイプは待ち受けていたので、開けないのは待って解決する
+            // 話ではない。待ち続けると要求全体の上限まで使い、原因も分からなくなる。
             Assert.Equal(TimeSpan.FromSeconds(5), NamedPipeHostConnector.ConnectWaitLimit);
 
             // 接続先の決定だけを固定し、パイプを開く処理は製品と同じものを通す。
@@ -500,6 +500,20 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public async Task OSが受け付けない名前を指していたら接続の失敗として返す()
+        {
+            // 明示指定は黙って自動発見へ落とさないので、空の名前もそのまま接続先になる。
+            // パイプを開く処理は製品と同じものを通し、OSの拒否がどう表れるかまで見る。
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                () => string.Empty, NamedPipeHostConnector.OpenNamedPipeAsync);
+
+            BridgeException error = await ThrowsWithin<BridgeException>(
+                () => connector.ConnectAsync(CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
+        }
+
+        [Fact]
         public async Task 接続中に取り消されたら接続の失敗ではなく取り消しとして返す()
         {
             // 上限による打ち切りと呼び出し側の取り消しは、どちらも同じ種類の例外で表れる。
@@ -520,8 +534,8 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public async Task 少し遅れて現れたパイプは上限のあいだ待って受け入れる()
         {
-            // プラグインの起動が間に合わずパイプが遅れて現れる場合まで落とさない。即座に諦める
-            // 作りだと、エディタの起動直後の呼び出しが理由もなく失敗する。
+            // 決めてから開くまでの短い隙にパイプが入れ替わる場合まで落とさない。即座に諦める
+            // 作りだと、ホストが繋ぎ直しの合間にいるだけで理由もなく失敗する。
             string pipeName = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
             NamedPipeHostConnector connector = new NamedPipeHostConnector(
                 () => pipeName, NamedPipeHostConnector.OpenNamedPipeAsync);
@@ -542,10 +556,11 @@ namespace PmxEditorMcp.Bridge.Tests
         [Theory]
         [InlineData(typeof(IOException))]
         [InlineData(typeof(UnauthorizedAccessException))]
+        [InlineData(typeof(ArgumentException))]
         public async Task パイプを開けなかった失敗は接続の失敗として返す(Type failure)
         {
-            // 接続先の決定も差し替える。実行環境にエディタが無い・複数あると、パイプを開く手前の
-            // 分岐で終わってしまい、確かめたい変換へ届かない。
+            // 接続先の決定も差し替える。実行環境に待ち受けているホストが無い・複数あると、パイプを
+            // 開く手前の分岐で終わってしまい、確かめたい変換へ届かない。
             NamedPipeHostConnector connector = new NamedPipeHostConnector(
                 () => "pmx-editor-mcp-0",
                 (pipeName, cancellationToken) =>

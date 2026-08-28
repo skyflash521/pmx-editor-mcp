@@ -6,19 +6,6 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class PipeTargetResolverTests
     {
-        /// <summary>
-        /// 環境変数名が本文に出るだけでは、それで指定できるという案内になっているとは限らない
-        /// (できない理由として名前を挙げる本文でも通ってしまう)。指定の手段までを一続きの
-        /// 語句として固定する。
-        /// </summary>
-        private const string PipeNameGuidance = "環境変数 PMX_EDITOR_MCP_PIPE で接続先のパイプ名を指定する";
-
-        private const string ResolvePending = "impl pending: 待ち受けているパイプの列挙から接続先を決める";
-
-        private const string ProcessIdPending = "impl pending: パイプディレクトリの項目からエディタのプロセスIDを読む";
-
-        private const string ComposePending = "impl pending: 環境変数の読み取りとパイプ・プロセスの列挙を接続先の決定へつなぐ";
-
         private const string MultipleHostsMessage =
             "ホストが 3 つ待ち受けているため接続先を1つに決められない。どのエディタを対象に"
                 + "するかを利用者に確かめる。待ち受けているホスト:\n"
@@ -50,16 +37,10 @@ namespace PmxEditorMcp.Bridge.Tests
         };
 
         [Fact]
-        public void 接続先の指定と発見に用いる名前は契約で定めた値である()
-        {
-            Assert.Equal("PMX_EDITOR_MCP_PIPE", PipeTargetResolver.EnvironmentVariableName);
-            Assert.Equal("PmxEditor_x64", PipeTargetResolver.EditorProcessName);
-        }
-
-        [Fact]
         public void 待受の発見に用いる名前は契約で定めた値である()
         {
             Assert.Equal("PMX_EDITOR_MCP_TEST_PIPE", PipeTargetResolver.TestPipeEnvironmentVariableName);
+            Assert.Equal("PmxEditor_x64", PipeTargetResolver.EditorProcessName);
             Assert.Equal("pmx-editor-mcp-", PipeTargetResolver.PipeNamePrefix);
             Assert.Equal(@"\\.\pipe\", PipeTargetResolver.PipeDirectory);
         }
@@ -71,67 +52,6 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 明示指定があればエディタを数えずにその名前を使う()
-        {
-            string resolved = PipeTargetResolver.Resolve("pmx-editor-mcp-9", new int[] { 1234, 5678 });
-
-            Assert.Equal("pmx-editor-mcp-9", resolved);
-        }
-
-        [Fact]
-        public void 自動発見へ落ちるのは明示指定が無いときだけとする()
-        {
-            // 空文字列は「指定が無い」ではなく「空の名前を指定した」として扱い、黙って
-            // 自動発見へ落とさない(設定の誤りを隠さないため)。
-            string resolved = PipeTargetResolver.Resolve(string.Empty, new int[] { 1234 });
-
-            Assert.Equal(string.Empty, resolved);
-        }
-
-        [Fact]
-        public void 明示指定が無くエディタが1つならそのプロセスIDで決める()
-        {
-            string resolved = PipeTargetResolver.Resolve(null, new int[] { 1234 });
-
-            Assert.Equal("pmx-editor-mcp-1234", resolved);
-        }
-
-        [Fact]
-        public void エディタが起動していなければ起動を促すエラーにする()
-        {
-            BridgeException error = Assert.Throws<BridgeException>(
-                () => PipeTargetResolver.Resolve(null, new int[0]));
-
-            Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
-            Assert.Contains("PMXエディタ", error.Message);
-            Assert.Contains("起動", error.Message);
-        }
-
-        [Fact]
-        public void エディタが複数なら明示指定の手段を案内するエラーにする()
-        {
-            BridgeException error = Assert.Throws<BridgeException>(
-                () => PipeTargetResolver.Resolve(null, new int[] { 5678, 1234 }));
-
-            Assert.Equal(BridgeErrorCodes.MultipleEditors, error.Code);
-            Assert.Contains(PipeNameGuidance, error.Message);
-        }
-
-        [Fact]
-        public void 複数起動のエラーは候補のパイプ名を1つずつ列挙する()
-        {
-            BridgeException error = Assert.Throws<BridgeException>(
-                () => PipeTargetResolver.Resolve(null, new int[] { 30, 10, 20 }));
-
-            string[] candidates = Array.FindAll(
-                error.Message.Split('\n'), line => line.StartsWith("pmx-editor-mcp-"));
-
-            Assert.Equal(
-                new string[] { "pmx-editor-mcp-10", "pmx-editor-mcp-20", "pmx-editor-mcp-30" },
-                candidates);
-        }
-
-        [Fact(Skip = ResolvePending)]
         public void 明示指定があれば待受を数えずにその名前を使う()
         {
             string resolved = PipeTargetResolver.Resolve(
@@ -140,7 +60,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pmx-editor-mcp-9", resolved);
         }
 
-        [Fact(Skip = ResolvePending)]
+        [Fact]
         public void 待受の列挙へ落ちるのは明示指定が無いときだけとする()
         {
             // 空文字列は「指定が無い」ではなく「空の名前を指定した」として扱い、黙って
@@ -151,7 +71,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(string.Empty, resolved);
         }
 
-        [Fact(Skip = ResolvePending)]
+        [Fact]
         public void 待ち受けているホストが1つならそれを接続先にする()
         {
             string resolved = PipeTargetResolver.Resolve(
@@ -160,7 +80,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pmx-editor-mcp-1234", resolved);
         }
 
-        [Fact(Skip = ResolvePending)]
+        [Fact]
         public void 接続先はディレクトリの項目でなくパイプ名で返す()
         {
             // 列挙で得られる項目はディレクトリを含む形なので、そのまま返すと接続に使えない。
@@ -170,7 +90,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.DoesNotContain(PipeTargetResolver.PipeDirectory, resolved);
         }
 
-        [Theory(Skip = ResolvePending)]
+        [Theory]
         [MemberData(nameof(ホストの待受でない名前))]
         public void 待受でない項目が並んでいてもホストの待受だけを候補にする(string notHostPipeName)
         {
@@ -183,7 +103,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pmx-editor-mcp-1234", resolved);
         }
 
-        [Fact(Skip = ResolvePending)]
+        [Fact]
         public void エディタが複数でも待ち受けているホストが1つなら接続先は決まる()
         {
             // 数えるべきは接続できる相手であって、エディタの数ではない。プラグインを配置して
@@ -194,7 +114,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pmx-editor-mcp-5678", resolved);
         }
 
-        [Fact(Skip = ResolvePending)]
+        [Fact]
         public void エディタも待受も無ければ起動を促すエラーにする()
         {
             BridgeException error = Assert.Throws<BridgeException>(
@@ -206,7 +126,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 error.Message);
         }
 
-        [Theory(Skip = ResolvePending)]
+        [Theory]
         [InlineData(new int[] { 1234 })]
         [InlineData(new int[] { 1234, 5678, 9012 })]
         public void エディタは在るのに待受が無ければ稼働状態を確かめるよう促す(int[] editorProcessIds)
@@ -225,7 +145,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 error.Message);
         }
 
-        [Fact(Skip = ResolvePending)]
+        [Fact]
         public void 待受が複数なら決められない事実と候補だけを伝えるエラーにする()
         {
             // 本文の全体を固定する。先頭だけを見る検査では、候補の後ろに設定作業を促す段落を
@@ -242,7 +162,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(MultipleHostsMessage, error.Message);
         }
 
-        [Theory(Skip = ResolvePending)]
+        [Theory]
         [InlineData("環境変数")]
         [InlineData("登録")]
         [InlineData("設定")]
@@ -260,7 +180,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.DoesNotContain(forbidden, error.Message);
         }
 
-        [Theory(Skip = ProcessIdPending)]
+        [Theory]
         [InlineData("pmx-editor-mcp-1", 1)]
         [InlineData("pmx-editor-mcp-1234", 1234)]
         [InlineData("pmx-editor-mcp-2147483647", int.MaxValue)]
@@ -269,20 +189,20 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(expected, PipeTargetResolver.ProcessIdOf(PipeTargetResolver.PipeDirectory + pipeName));
         }
 
-        [Theory(Skip = ProcessIdPending)]
+        [Theory]
         [MemberData(nameof(ホストの待受でない名前))]
         public void ホストの待受でない項目は候補にしない(string pipeName)
         {
             Assert.True(PipeTargetResolver.ProcessIdOf(PipeTargetResolver.PipeDirectory + pipeName) < 0);
         }
 
-        [Fact(Skip = ProcessIdPending)]
+        [Fact]
         public void パイプディレクトリの下にない名前は候補にしない()
         {
             Assert.True(PipeTargetResolver.ProcessIdOf("pmx-editor-mcp-1234") < 0);
         }
 
-        [Theory(Skip = ComposePending)]
+        [Theory]
         [InlineData("pmx-editor-mcp-9")]
         [InlineData("")]
         public void 接続先はテスト専用の環境変数だけで固定できる(string configured)
@@ -320,7 +240,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(countedEditors);
         }
 
-        [Fact(Skip = ComposePending)]
+        [Fact]
         public void 環境変数の指定が無ければ列挙した待受から接続先を決める()
         {
             string enumeratedDirectory = null;
@@ -349,7 +269,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(countedEditors);
         }
 
-        [Fact(Skip = ComposePending)]
+        [Fact]
         public void 待受が複数ならエディタを数えずに決められないエラーにする()
         {
             bool countedEditors = false;
@@ -372,7 +292,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(countedEditors);
         }
 
-        [Theory(Skip = ComposePending)]
+        [Theory]
         [InlineData(new int[0], BridgeErrorCodes.NoEditor)]
         [InlineData(new int[] { 1234 }, BridgeErrorCodes.NoHost)]
         [InlineData(new int[] { 1234, 5678 }, BridgeErrorCodes.NoHost)]
@@ -394,6 +314,30 @@ namespace PmxEditorMcp.Bridge.Tests
 
             // 検索するプロセス名を内部で固定した実装だと、別の名前を見ていても検出できない。
             Assert.Equal(PipeTargetResolver.EditorProcessName, searchedProcessName);
+        }
+
+        [Theory]
+        [InlineData("接続先の指定")]
+        [InlineData("待ち受けているパイプ")]
+        [InlineData("起動しているPMXエディタ")]
+        public void 材料を調べられなければ結果として返せる失敗にする(string material)
+        {
+            // 材料はOSから取るので、権限やハンドルの都合で失敗しうる。素通しすると要求元へ
+            // 返せない異常になり、呼び出し元は何が起きたか分からないまま止まる。
+            InvalidOperationException refused = new InvalidOperationException("調べられない。");
+
+            BridgeException error = Assert.Throws<BridgeException>(
+                () => PipeTargetResolver.ResolveFrom(
+                    name => material == "接続先の指定" ? throw refused : null,
+                    directory => material == "待ち受けているパイプ"
+                        ? throw refused
+                        : Entries("lsass"),
+                    processName => throw refused));
+
+            Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
+            Assert.Equal(
+                material + "を調べられなかったため接続先を決められない: " + refused.Message,
+                error.Message);
         }
 
         /// <summary>パイプ名の並びを、ディレクトリを列挙したときの項目の形へ直す。</summary>

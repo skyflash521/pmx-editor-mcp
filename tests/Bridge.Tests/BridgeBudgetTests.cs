@@ -191,7 +191,7 @@ namespace PmxEditorMcp.Bridge.Tests
             };
 
             startInfo.Environment[BridgeBudget.EnvironmentVariableName] = budgetRawValue;
-            startInfo.Environment[PipeTargetResolver.EnvironmentVariableName] = "pmx-editor-mcp-0";
+            startInfo.Environment[PipeTargetResolver.TestPipeEnvironmentVariableName] = "pmx-editor-mcp-0";
 
             return Process.Start(startInfo);
         }

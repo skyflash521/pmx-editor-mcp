@@ -52,7 +52,6 @@ namespace PmxEditorMcp.Bridge.Tests
         public void エラーコードは契約で定めた値である()
         {
             Assert.Equal("BRIDGE_NO_EDITOR", BridgeErrorCodes.NoEditor);
-            Assert.Equal("BRIDGE_MULTIPLE_EDITORS", BridgeErrorCodes.MultipleEditors);
             Assert.Equal("BRIDGE_NO_HOST", BridgeErrorCodes.NoHost);
             Assert.Equal("BRIDGE_MULTIPLE_HOSTS", BridgeErrorCodes.MultipleHosts);
             Assert.Equal("BRIDGE_CONNECT_FAILED", BridgeErrorCodes.ConnectFailed);

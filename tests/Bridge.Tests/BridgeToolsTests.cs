@@ -17,6 +17,12 @@ namespace PmxEditorMcp.Bridge.Tests
     /// </summary>
     public class BridgeToolsTests
     {
+        /// <summary>
+        /// 接続先として読んではならない環境変数の名前。接頭辞が同じで紛らわしいので、
+        /// 子プロセスへ渡す環境からは必ず消し、読まれていないことも確かめる。
+        /// </summary>
+        private const string IgnoredPipeEnvironmentVariableName = "PMX_EDITOR_MCP_PIPE";
+
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(60);
 
         [Fact]
@@ -128,7 +134,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Single(await client.ListToolsAsync(cancellationToken: limit.Token));
         }
 
-        [Fact(Skip = "impl pending: ブリッジの実行経路がテスト専用の環境変数で接続先を固定する")]
+        [Fact]
         public async Task テスト専用の環境変数で接続先を固定して中継できる()
         {
             // 接続先の決定は実行経路の入口にあるので、単体では組み合わせまでしか確かめられない。
@@ -153,7 +159,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(new string[] { "handshake", "ping" }, MethodsOf(host.Requests));
         }
 
-        [Fact(Skip = "impl pending: 接続先の指定が無ければ待ち受けているパイプを列挙して見つける")]
+        [Fact]
         public async Task 接続先の指定が無ければ待ち受けているホストを見つけて中継する()
         {
             // ホストの名乗り方どおりの名前で待ち受け、接続先の指定を与えずに起動する。実機の
@@ -171,7 +177,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 await client.CallToolAsync("ping", cancellationToken: limit.Token), host);
         }
 
-        [Fact(Skip = "impl pending: 接続先を指す環境変数はテスト専用の名前だけとする")]
+        [Fact]
         public async Task 接続先を指す環境変数はテスト専用の名前だけとする()
         {
             // 名前の似た別の環境変数まで接続先として読む実装だと、利用者が起動設定で接続先を
@@ -184,7 +190,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
             await using McpClient client = await StartBridgeWithAsync(
-                "PMX_EDITOR_MCP_PIPE",
+                IgnoredPipeEnvironmentVariableName,
                 "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N"),
                 null,
                 limit.Token);
@@ -231,7 +237,7 @@ namespace PmxEditorMcp.Bridge.Tests
             string pipeName, string budgetChars, CancellationToken cancellationToken)
         {
             return StartBridgeWithAsync(
-                PipeTargetResolver.EnvironmentVariableName, pipeName, budgetChars, cancellationToken);
+                PipeTargetResolver.TestPipeEnvironmentVariableName, pipeName, budgetChars, cancellationToken);
         }
 
         /// <summary>接続先を指定する環境変数の名前を選んでブリッジを起動する。</summary>
@@ -241,11 +247,11 @@ namespace PmxEditorMcp.Bridge.Tests
             string budgetChars,
             CancellationToken cancellationToken)
         {
-            // 接続先を指す環境変数はどちらも消してから、選んだほうだけを与える。親から
-            // 受け継いだ指定が残ると、この起動が何を指すかが呼び出し側の環境で変わる。
+            // 接続先として読まれうる名前を親の環境から消してから、選んだものだけを与える。
+            // 受け継いだ値が残ると、この起動が何を指すかが呼び出し側の環境で変わる。
             Dictionary<string, string> environment = new Dictionary<string, string>
             {
-                [PipeTargetResolver.EnvironmentVariableName] = null,
+                [IgnoredPipeEnvironmentVariableName] = null,
                 [PipeTargetResolver.TestPipeEnvironmentVariableName] = null,
                 [BridgeBudget.EnvironmentVariableName] = budgetChars,
             };

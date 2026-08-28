@@ -18,13 +18,13 @@ namespace PmxEditorMcp.Bridge
         Task<Stream> ConnectAsync(CancellationToken cancellationToken);
     }
 
-    /// <summary>環境変数と起動中のPMXエディタから決めた名前付きパイプへ接続する。</summary>
+    /// <summary>待ち受けているホストから決めた名前付きパイプへ接続する。</summary>
     public sealed class NamedPipeHostConnector : IHostConnector
     {
         /// <summary>
-        /// パイプが開くのを待つ上限。接続先を決めた時点でエディタのプロセスは在るので、パイプが
-        /// 出てこないのは待って解決する話ではない。プラグインの起動が間に合っていない場合だけを
-        /// 見込んだ短い値にし、待ち続けずに接続の失敗として返す。
+        /// パイプが開くのを待つ上限。接続先を決めた時点でそのパイプは待ち受けていたので、開けない
+        /// のは待って解決する話ではない。決めてから開くまでの短い隙だけを見込んだ値にし、待ち
+        /// 続けずに接続の失敗として返す。
         /// </summary>
         public static readonly TimeSpan ConnectWaitLimit = TimeSpan.FromSeconds(5);
 
@@ -32,10 +32,10 @@ namespace PmxEditorMcp.Bridge
         private readonly Func<string, CancellationToken, Task<Stream>> _openPipe;
 
         /// <summary>
-        /// 環境変数と起動中のPMXエディタから接続先を決め、名前付きパイプを開く既定の処理で生成する。
+        /// 待ち受けているホストから接続先を決め、名前付きパイプを開く既定の処理で生成する。
         /// </summary>
         public NamedPipeHostConnector()
-            : this(PipeTargetResolver.ResolveFromEnvironment, OpenNamedPipeAsync)
+            : this(PipeTargetResolver.ResolveFromRunningHosts, OpenNamedPipeAsync)
         {
         }
 
@@ -80,6 +80,12 @@ namespace PmxEditorMcp.Bridge
             }
             catch (UnauthorizedAccessException error)
             {
+                throw ConnectFailed(pipeName, error);
+            }
+            catch (ArgumentException error)
+            {
+                // 明示指定は黙って自動発見へ落とさないので、OSが名前として受け付けない値も
+                // そのまま接続先になる。指定の誤りであって異常ではないため、結果として返す。
                 throw ConnectFailed(pipeName, error);
             }
         }

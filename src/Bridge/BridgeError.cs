@@ -11,9 +11,6 @@ namespace PmxEditorMcp.Bridge
         /// <summary>PMXエディタが起動していない。</summary>
         public const string NoEditor = "BRIDGE_NO_EDITOR";
 
-        /// <summary>PMXエディタが複数起動していて接続先を1つに決められない。</summary>
-        public const string MultipleEditors = "BRIDGE_MULTIPLE_EDITORS";
-
         /// <summary>PMXエディタは起動しているが、待ち受けているホストがない。</summary>
         public const string NoHost = "BRIDGE_NO_HOST";
 
