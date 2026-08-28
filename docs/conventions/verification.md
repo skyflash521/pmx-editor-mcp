@@ -114,12 +114,16 @@
 ブリッジはMCPサーバーとしてClaude Codeから起動されるので、確認もClaude Code越しに行う。登録は
 一度だけで、以後エディタを起動し直しても登録し直さない。
 
-1. ブリッジを発行し、MCPサーバーとして登録する。パスは空白を含みうるので引用符で囲む。
+1. ブリッジをMCPサーバーとして登録する。パスは空白を含みうるので引用符で囲む。
 
    ```
    dotnet publish src/Bridge/PmxEditorMcp.Bridge.csproj
    claude mcp add pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶対パス>"
    ```
+
+   開発中は発行せず、ビルド成果物
+   `src/Bridge/bin/Debug/net10.0/PmxEditorMcp.Bridge.exe` を同じように登録してよい。
+   確認する内容は同じで、どちらの実行ファイルを指しても手順2以降は変わらない。
 
 2. 次の順で `ping` ツールを呼び、返る本文を見る。各手順の前に、
    [繰り返し使う待ち](#繰り返し使う待ち)をその手順が要求する分だけ行う。
