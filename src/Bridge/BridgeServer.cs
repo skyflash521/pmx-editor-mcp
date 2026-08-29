@@ -6,7 +6,7 @@ using ModelContextProtocol.Protocol;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>stdioで話すMCPサーバーとしてのブリッジの構成。</summary>
+    /// <summary>stdioを使うMCPサーバーとしてのブリッジの構成。</summary>
     public static class BridgeServer
     {
         /// <summary>MCPクライアントへ名乗るサーバー名。</summary>
