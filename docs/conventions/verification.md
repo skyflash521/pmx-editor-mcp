@@ -128,6 +128,7 @@ Get-ChildItem scripts/*.ps1 | ForEach-Object {
    開発中は発行せず、ビルド成果物
    `src/Bridge/bin/Debug/net10.0/PmxEditorMcp.Bridge.exe` を同じように登録してよい。
    確認する内容は同じで、どちらの実行ファイルを指しても手順2以降は変わらない。
+   登録を解くのは `claude mcp remove pmx-editor-mcp`。
 
 2. 次の順で `ping` ツールを呼び、返る本文を見る。手順に出てくるエディタとホストの操作は
    [エディタとホストの操作](#エディタとホストの操作)で行う。状態が落ち着くのを待つのは
