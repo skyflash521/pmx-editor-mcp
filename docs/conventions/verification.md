@@ -35,17 +35,8 @@ Get-ChildItem scripts/*.ps1 | ForEach-Object {
 
 ## 必要環境
 
-- .NET SDK: net48 のビルドと、上の検査表の各 `dotnet` コマンドが通るもの
-- Node.js: 22以上。確認クライアントの実行に用いる
-- PowerShell: `pwsh`。実機動作確認で用いる。Windows標準の `powershell.exe` は別物で、
-  DACLの確認に使う型を持たない
-- Windows x64 と、各自が導入した PMXエディタ配布物。その所在は `local.props` の `PmxEditorDir`
-  に定義する。ビルドの配置先と[操作役のスクリプト](../../scripts/host-control.ps1)の起動先は
-  どちらもこの定義を読む
-- ログオンした対話的なデスクトップセッション。実機動作確認はエディタの画面を操作して進めるので、
-  画面を操作できないセッションでは行えない
-- Windowsの表示言語が日本語であること。[操作役のスクリプト](../../scripts/host-control.ps1)は
-  メニューの文言と確認ボタンの表示名を手がかりに操作する
+[READMEの開発環境](../../README.md#開発環境)が正本。検査も実機動作確認も、そこが挙げる環境が
+揃っていることを前提にする。
 
 ## 実機動作確認
 

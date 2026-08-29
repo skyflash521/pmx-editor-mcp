@@ -24,7 +24,7 @@ pmx-editor-mcp を利用者へ配布できる形に整備する。配布パッ�
      同仕様書で確定している。ホストDLLはPEPlugin.dllを参照するのみで同梱しない
      (エディタが実行時に解決する)。
 3. **導入側の前提環境**
-   - 出典: 検証手順書の必要環境と、.NET Framework 4.8 がWindows 10
+   - 出典: READMEの開発環境と、.NET Framework 4.8 がWindows 10
      (バージョン1903以降)・Windows 11 にOSコンポーネントとして含まれるというOS仕様
    - 確かめた結果: Windows x64・PMXエディタ(x64版)・Claude Code CLI。ブリッジ
      (net10.0)は自己完結型(self-contained)で発行するため .NET ランタイムの追加導入は
@@ -144,8 +144,8 @@ IPC仕様書・実装計画書03〜04・検証手順書・能力台帳の全文�
   `scripts/` 配下の全 .ps1。各ファイルを
   System.Management.Automation.Language.Parser の ParseFile で解析し、パースエラーが
   1件でもあれば終了コード1)。合格条件は終了コード0。この検査も検証手順書へ登録し、
-  検証手順書の必要環境へ **PowerShell 7(pwsh)** を追記する(Windows標準の
-  powershell.exe とは別物のため)。
+  READMEの開発環境へ **PowerShell 7(pwsh)** を記す(Windows標準の powershell.exe とは
+  別物のため)。
 
 ### 導入手順書(`docs/guides/installation.md` を新設)
 
