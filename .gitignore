@@ -21,8 +21,6 @@ ehthumbs_vista.db
 # ビルド成果物
 bin/
 obj/
-# 環境依存のビルド設定。PMXエディタ導入ディレクトリ(PmxEditorDir)は各自の環境ごとに異なる。
-/local.props
 
 ### VisualStudioCode ###
 .vscode/*
@@ -37,6 +35,10 @@ obj/
 # 個人用設定。共有用の CLAUDE.md / .claude/settings.json はコミット対象
 CLAUDE.local.md
 .claude/settings.local.json
+
+### プロジェクト固有: 環境ごとの実体の置き場 ###
+# 環境依存のビルド設定。PMXエディタ導入ディレクトリ(PmxEditorDir)は各自の環境ごとに異なる。
+/local.props
 
 ### プロジェクト固有: 一時成果物置き場 ###
 # 使い捨てのスクリプト・一時ドキュメントの置き場。場所を問わず .scratch/ を置けば
