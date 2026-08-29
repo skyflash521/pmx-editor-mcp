@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -11,22 +12,38 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class OperationDirectionRule
     {
+        private const string VoidTypeName = "System.Void";
+
         public static readonly ReadOnlyCollection<string> ReadMethodPrefixes =
             Array.AsReadOnly(new[] { "Get", "Is", "Has", "Can", "Find", "Search" });
 
         public static OperationDirection ForMethod(string memberName, string returnType, bool hasOutOrRefParameter)
         {
-            throw new NotImplementedException();
+            if (memberName == null)
+            {
+                throw new ArgumentNullException(nameof(memberName));
+            }
+
+            if (returnType == null)
+            {
+                throw new ArgumentNullException(nameof(returnType));
+            }
+
+            bool isRead = returnType != VoidTypeName
+                && !hasOutOrRefParameter
+                && ReadMethodPrefixes.Any(prefix => memberName.StartsWith(prefix, StringComparison.Ordinal));
+
+            return isRead ? OperationDirection.Read : OperationDirection.Write;
         }
 
         public static OperationDirection ForProperty(bool hasPublicGetter)
         {
-            throw new NotImplementedException();
+            return hasPublicGetter ? OperationDirection.Read : OperationDirection.Write;
         }
 
         public static OperationDirection ForOtherMember()
         {
-            throw new NotImplementedException();
+            return OperationDirection.Write;
         }
     }
 }

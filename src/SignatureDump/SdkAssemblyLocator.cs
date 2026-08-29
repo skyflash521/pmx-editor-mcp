@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -11,15 +12,37 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class SdkAssemblyLocator
     {
+        private const string SdkDirectoryName = "PEPlugin";
+        private const string LibraryDirectoryName = "Lib";
+        private const string SdkAssemblyFileName = "PEPlugin.dll";
+        private const string DrawingLibraryDirectoryName = "SlimDX";
+        private const string DrawingLibraryPlatformName = "x64";
+
         public static string GetAssemblyPath(string editorDirectory)
         {
-            throw new NotImplementedException();
+            if (editorDirectory == null)
+            {
+                throw new ArgumentNullException(nameof(editorDirectory));
+            }
+
+            return Path.Combine(editorDirectory, LibraryDirectoryName, SdkDirectoryName, SdkAssemblyFileName);
         }
 
         /// <summary>探索する順に並べる。</summary>
         public static IList<string> GetProbeDirectories(string editorDirectory)
         {
-            throw new NotImplementedException();
+            if (editorDirectory == null)
+            {
+                throw new ArgumentNullException(nameof(editorDirectory));
+            }
+
+            return new List<string>
+            {
+                Path.Combine(editorDirectory, LibraryDirectoryName, SdkDirectoryName),
+                Path.Combine(
+                    editorDirectory, LibraryDirectoryName, DrawingLibraryDirectoryName, DrawingLibraryPlatformName),
+                editorDirectory,
+            };
         }
 
         /// <summary>
@@ -28,7 +51,26 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         public static string FindDependency(string simpleName, IList<string> probeDirectories)
         {
-            throw new NotImplementedException();
+            if (simpleName == null)
+            {
+                throw new ArgumentNullException(nameof(simpleName));
+            }
+
+            if (probeDirectories == null)
+            {
+                throw new ArgumentNullException(nameof(probeDirectories));
+            }
+
+            foreach (string directory in probeDirectories)
+            {
+                string candidate = Path.Combine(directory, simpleName + ".dll");
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
     }
 }

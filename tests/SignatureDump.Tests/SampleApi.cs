@@ -158,6 +158,18 @@ namespace PmxEditorMcp.SignatureDump.Tests.Sample
         public int X;
     }
 
+    // 入れ子の総称型。型引数がどの段のものかを表記が保てているかは、この形でしか確かめられない。
+    // 段をまたいで平らに並べる表記では、外側と内側の型引数が区別できなくなる。
+    public sealed class SampleOuterGeneric<TOuter>
+    {
+        public sealed class SampleInnerGeneric<TInner>
+        {
+            public TOuter Outer { get; set; }
+
+            public TInner Inner { get; set; }
+        }
+    }
+
     internal interface IHiddenApi
     {
         void Nope();

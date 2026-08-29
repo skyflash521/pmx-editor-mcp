@@ -9,7 +9,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string EditorDirectory = @"C:\editor";
 
-        [Fact(Skip = "impl pending: 導入ディレクトリから対象アセンブリのパスを組み立てる")]
+        [Fact]
         public void 対象アセンブリのパスを組み立てる()
         {
             Assert.Equal(
@@ -17,7 +17,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 SdkAssemblyLocator.GetAssemblyPath(EditorDirectory));
         }
 
-        [Fact(Skip = "impl pending: 依存の解決で探索するディレクトリを優先順に並べる")]
+        [Fact]
         public void 探索するディレクトリを優先順に並べる()
         {
             IList<string> directories = SdkAssemblyLocator.GetProbeDirectories(EditorDirectory);
@@ -32,7 +32,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 directories);
         }
 
-        [Fact(Skip = "impl pending: 依存アセンブリを探索するディレクトリの順に探す")]
+        [Fact]
         public void 依存アセンブリは探索する順に探される()
         {
             string root = Path.Combine(
@@ -59,7 +59,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        [Fact(Skip = "impl pending: 導入ディレクトリを渡さないときは例外にする")]
+        [Fact]
         public void 導入ディレクトリを渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(() => SdkAssemblyLocator.GetAssemblyPath(null));

@@ -40,7 +40,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return editorDirectory;
         }
 
-        [Fact(Skip = "impl pending: 導入ディレクトリと書き出し先を受け取って列挙結果を書き出す")]
+        [Fact]
         public void 列挙結果を書き出して成功で終わる()
         {
             string editorDirectory = CreateEditorDirectory();
@@ -58,7 +58,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("\"key\":\"PmxEditorMcp.SignatureDump.Tests.Sample.ISampleApi.GetCount()\"", json);
         }
 
-        [Fact(Skip = "impl pending: 同じ入力から同じバイト列を書き出す")]
+        [Fact]
+        public void 対象アセンブリを掴んだままにしない()
+        {
+            string editorDirectory = CreateEditorDirectory();
+            string outputPath = Path.Combine(_root, "signatures.json");
+
+            SignatureDumpRunner.Run(new[] { editorDirectory, outputPath }, new StringWriter(), new StringWriter());
+
+            // 対象アセンブリをパスから読み込むと掴んだままになり、呼び出し元は消せなくなる。
+            // 一時ディレクトリへ複製して渡す呼び出し元では、実行のたびに複製が溜まっていく。
+            // 依存アセンブリは導入ディレクトリの実体を指すので、この題材では読み込まれない。
+            Directory.Delete(editorDirectory, true);
+            Assert.False(Directory.Exists(editorDirectory));
+        }
+
+        [Fact]
         public void 同じ入力からは同じバイト列が書き出される()
         {
             string editorDirectory = CreateEditorDirectory();
@@ -73,7 +88,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(File.ReadAllBytes(first), File.ReadAllBytes(second));
         }
 
-        [Fact(Skip = "impl pending: 書き出しの符号化をBOMなしUTF-8に固定する")]
+        [Fact]
         public void 書き出しはBOMなしUTF8になる()
         {
             string editorDirectory = CreateEditorDirectory();
@@ -89,7 +104,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.EndsWith("\n", text);
         }
 
-        [Theory(Skip = "impl pending: 引数の数が違うときは説明を出して不正な引数の終了コードで終わる")]
+        [Theory]
         [InlineData(0)]
         [InlineData(1)]
         [InlineData(3)]
@@ -106,7 +121,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(string.Empty, output.ToString());
         }
 
-        [Fact(Skip = "impl pending: 対象アセンブリが無いときは説明を出して読み込み失敗の終了コードで終わる")]
+        [Fact]
         public void 対象アセンブリが無いと読み込み失敗で終わる()
         {
             string editorDirectory = Path.Combine(_root, "empty");
@@ -123,7 +138,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.False(File.Exists(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 引数を渡さないときは例外にする")]
+        [Fact]
+        public void 書き出せないと書き出し失敗で終わる()
+        {
+            string editorDirectory = CreateEditorDirectory();
+            string outputPath = Path.Combine(_root, "missing", "signatures.json");
+            StringWriter output = new StringWriter();
+            StringWriter error = new StringWriter();
+
+            int code = SignatureDumpRunner.Run(new[] { editorDirectory, outputPath }, output, error);
+
+            Assert.Equal(SignatureDumpRunner.ExitWriteFailed, code);
+            Assert.NotEqual(string.Empty, error.ToString());
+            Assert.Equal(string.Empty, output.ToString());
+            Assert.False(File.Exists(outputPath));
+        }
+
+        [Fact]
         public void 引数を渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(

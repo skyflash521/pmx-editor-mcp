@@ -24,6 +24,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Nested = N + "SampleOuter+SampleNested";
         private const string Proc = N + "SampleProc";
         private const string Value = N + "SampleValue";
+        private const string OuterGeneric = N + "SampleOuterGeneric<TOuter>";
+        private const string InnerGeneric = OuterGeneric + "+SampleInnerGeneric<TInner>";
 
         // 題材の名前空間について期待する型の全体を、型が持つ全項目まで書き下したもの。名前だけを
         // 照合すると、名前は合っているが中身の項目が誤っている実装が通る。
@@ -42,6 +44,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Nested + "|Class|nested|concrete|closed||",
             Proc + "|Delegate|top|concrete|closed||",
             Value + "|Struct|top|concrete|closed||",
+            OuterGeneric + "|Class|top|concrete|generic||",
+            InnerGeneric + "|Class|nested|concrete|generic||",
         };
 
         // 題材の名前空間について期待するシグネチャ行の全体を、行が持つ全項目まで書き下したもの。
@@ -103,6 +107,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Proc + ".Invoke(System.Int32)|" + Proc
                 + "|Invoke|Method|instance|0|System.Int32|--|Write|x:System.Int32:In:required",
             Value + ".X()|" + Value + "|X|Field|instance|0|System.Int32|rw|Write|",
+            OuterGeneric + "..ctor()|" + OuterGeneric + "|.ctor|Constructor|instance|0|"
+                + OuterGeneric + "|--|Write|",
+            InnerGeneric + "..ctor()|" + InnerGeneric + "|.ctor|Constructor|instance|0|"
+                + InnerGeneric + "|--|Write|",
+            InnerGeneric + ".Inner()|" + InnerGeneric + "|Inner|Property|instance|0|TInner|rw|Read|",
+            InnerGeneric + ".Outer()|" + InnerGeneric + "|Outer|Property|instance|0|TOuter|rw|Read|",
         };
 
         private static InventoryRecord Enumerate()
@@ -157,7 +167,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return inventory.Signatures.Where(s => s.DeclaringType.StartsWith(N, StringComparison.Ordinal));
         }
 
-        [Fact(Skip = "impl pending: 公開型を全項目まで含めて過不足なく列挙する")]
+        [Fact]
         public void 題材の公開型を全項目まで含めて過不足なく列挙する()
         {
             InventoryRecord inventory = Enumerate();
@@ -169,7 +179,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(inventory.Types, t => t.Name == N + "HiddenOuter+VisibleNested");
         }
 
-        [Fact(Skip = "impl pending: 公開メンバーのシグネチャ行を全項目まで含めて過不足なく列挙する")]
+        [Fact]
         public void 題材のシグネチャ行を全項目まで含めて過不足なく列挙する()
         {
             InventoryRecord inventory = Enumerate();
@@ -177,7 +187,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Sorted(ExpectedSignatureRows), Sorted(SampleSignatures(inventory).Select(Describe)));
         }
 
-        [Fact(Skip = "impl pending: 名前空間をまたいでアセンブリ全体を列挙する")]
+        [Fact]
         public void 別の名前空間の公開型も列挙される()
         {
             InventoryRecord inventory = Enumerate();
@@ -188,7 +198,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(inventory.Signatures, s => s.Key == Other + ".OtherValue()");
         }
 
-        [Fact(Skip = "impl pending: 同じメンバーを指す行を重複させない")]
+        [Fact]
         public void 同じメンバーを指す行は重複しない()
         {
             InventoryRecord inventory = Enumerate();
@@ -211,7 +221,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 inventory.Signatures.Select(s => s.Key).Distinct(StringComparer.Ordinal).Count());
         }
 
-        [Fact(Skip = "impl pending: 列挙型のフィールドを行にしない")]
+        [Fact]
         public void 列挙型は行を作らない()
         {
             InventoryRecord inventory = Enumerate();
@@ -219,7 +229,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(inventory.Signatures, s => s.DeclaringType == Kind);
         }
 
-        [Fact(Skip = "impl pending: デリゲート型は呼び出しの行だけを作る")]
+        [Fact]
         public void デリゲート型は呼び出しの行だけを作る()
         {
             InventoryRecord inventory = Enumerate();
@@ -230,7 +240,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 inventory.Signatures.Where(s => s.DeclaringType == Proc).Select(s => s.Key).ToArray());
         }
 
-        [Fact(Skip = "impl pending: プロパティやイベントのアクセサーを別の行にしない")]
+        [Fact]
         public void アクセサーのメソッドは行にならない()
         {
             InventoryRecord inventory = Enumerate();
@@ -250,7 +260,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(inventory.Signatures, s => s.MemberName == "op_Implicit");
         }
 
-        [Fact(Skip = "impl pending: 継承したメンバーを宣言型の行として重ねて数えない")]
+        [Fact]
         public void 継承したメンバーは宣言型の行にならない()
         {
             InventoryRecord inventory = Enumerate();
@@ -263,7 +273,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 inventory.Signatures, s => s.DeclaringType == Data && s.MemberName == "ToString");
         }
 
-        [Fact(Skip = "impl pending: 列挙結果の並びを行キーと型名の昇順に固定する")]
+        [Fact]
         public void 列挙結果は昇順に並ぶ()
         {
             InventoryRecord inventory = Enumerate();
@@ -275,7 +285,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 inventory.Signatures.Select(s => s.Key).ToArray());
         }
 
-        [Fact(Skip = "impl pending: アセンブリの識別を列挙結果に載せる")]
+        [Fact]
         public void アセンブリの識別が載る()
         {
             InventoryRecord inventory = Enumerate();
@@ -285,7 +295,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(name.Version.ToString(), inventory.AssemblyVersion);
         }
 
-        [Fact(Skip = "impl pending: アセンブリを渡さないときは例外にする")]
+        [Fact]
         public void アセンブリを渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(() => AssemblyEnumerator.Enumerate(null));

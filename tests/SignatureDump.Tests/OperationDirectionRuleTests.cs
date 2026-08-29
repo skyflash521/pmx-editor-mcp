@@ -4,7 +4,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class OperationDirectionRuleTests
     {
-        [Theory(Skip = "impl pending: 取得を表す名前で始まる戻り値つきメソッドを読み取りと判定する")]
+        [Theory]
         [InlineData("GetCount")]
         [InlineData("IsVisible")]
         [InlineData("HasChild")]
@@ -18,7 +18,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 OperationDirectionRule.ForMethod(memberName, "System.Int32", false));
         }
 
-        [Fact(Skip = "impl pending: 戻り値のないメソッドを書き込みと判定する")]
+        [Fact]
         public void 戻り値がないメソッドは書き込みになる()
         {
             Assert.Equal(
@@ -26,7 +26,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 OperationDirectionRule.ForMethod("GetCount", "System.Void", false));
         }
 
-        [Fact(Skip = "impl pending: 出力引数を持つメソッドを書き込みと判定する")]
+        [Fact]
         public void 出力引数を持つメソッドは書き込みになる()
         {
             Assert.Equal(
@@ -34,7 +34,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 OperationDirectionRule.ForMethod("GetValue", "System.Boolean", true));
         }
 
-        [Theory(Skip = "impl pending: 取得を表す名前で始まらないメソッドを書き込みと判定する")]
+        [Theory]
         [InlineData("SetThing")]
         [InlineData("Update")]
         [InlineData("Apply")]
@@ -46,7 +46,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 OperationDirectionRule.ForMethod(memberName, "System.Int32", false));
         }
 
-        [Theory(Skip = "impl pending: 取得を表す名前の判定を前方一致で行う")]
+        [Theory]
         [InlineData("Getter")]
         [InlineData("Issue")]
         public void 名前の判定は前方一致で行う(string memberName)
@@ -59,14 +59,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 OperationDirectionRule.ForMethod(memberName, "System.Int32", false));
         }
 
-        [Fact(Skip = "impl pending: 取得アクセサーを持つプロパティを読み取りと判定する")]
+        [Fact]
         public void 取得アクセサーの有無でプロパティの向きが決まる()
         {
             Assert.Equal(OperationDirection.Read, OperationDirectionRule.ForProperty(true));
             Assert.Equal(OperationDirection.Write, OperationDirectionRule.ForProperty(false));
         }
 
-        [Fact(Skip = "impl pending: プロパティとメソッド以外のメンバーを書き込みと判定する")]
+        [Fact]
         public void プロパティとメソッド以外は書き込みになる()
         {
             Assert.Equal(OperationDirection.Write, OperationDirectionRule.ForOtherMember());

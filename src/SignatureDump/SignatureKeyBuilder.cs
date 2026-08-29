@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -29,7 +31,53 @@ namespace PmxEditorMcp.SignatureDump
             IList<ParameterRecord> parameters,
             string valueType)
         {
-            throw new NotImplementedException();
+            if (declaringType == null)
+            {
+                throw new ArgumentNullException(nameof(declaringType));
+            }
+
+            if (memberName == null)
+            {
+                throw new ArgumentNullException(nameof(memberName));
+            }
+
+            if (parameters == null)
+            {
+                throw new ArgumentNullException(nameof(parameters));
+            }
+
+            if (valueType == null)
+            {
+                throw new ArgumentNullException(nameof(valueType));
+            }
+
+            if (genericArity < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(genericArity));
+            }
+
+            string arity = genericArity == 0
+                ? string.Empty
+                : "<" + genericArity.ToString(CultureInfo.InvariantCulture) + ">";
+            string arguments = string.Join(",", parameters.Select(Render));
+            string conversion = ConversionOperatorNames.Contains(memberName) ? ":" + valueType : string.Empty;
+
+            return declaringType + "." + memberName + arity + "(" + arguments + ")" + conversion;
+        }
+
+        private static string Render(ParameterRecord parameter)
+        {
+            switch (parameter.Direction)
+            {
+                case ParameterDirection.Out:
+                    return "out " + parameter.TypeName;
+
+                case ParameterDirection.Ref:
+                    return "ref " + parameter.TypeName;
+
+                default:
+                    return parameter.TypeName;
+            }
         }
     }
 }

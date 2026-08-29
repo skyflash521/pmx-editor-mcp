@@ -17,7 +17,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return SignatureKeyBuilder.Build("N.IThing", memberName, genericArity, parameters, valueType);
         }
 
-        [Fact(Skip = "impl pending: 引数のないメンバーの行キーを空の括弧つきで組み立てる")]
+        [Fact]
         public void 引数がないメンバーは空の括弧が付く()
         {
             Assert.Equal(
@@ -25,7 +25,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Build("Count", 0, new List<ParameterRecord>(), "System.Int32"));
         }
 
-        [Fact(Skip = "impl pending: 引数の型を宣言順にカンマ区切りで並べて行キーにする")]
+        [Fact]
         public void 引数の型は宣言順にカンマで並ぶ()
         {
             string key = Build(
@@ -41,7 +41,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("N.IThing.SetThing(System.Int32,System.String)", key);
         }
 
-        [Fact(Skip = "impl pending: 出力引数と入出力引数を向きの語つきで行キーへ表す")]
+        [Fact]
         public void 出力引数と入出力引数は向きの語が前に付く()
         {
             string key = Build(
@@ -58,7 +58,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("N.IThing.TryGet(System.Int32,out System.String,ref System.Int32)", key);
         }
 
-        [Fact(Skip = "impl pending: 総称型引数の数を行キーへ表す")]
+        [Fact]
         public void 総称型引数の数が行キーに現れる()
         {
             Assert.Equal(
@@ -66,7 +66,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Build("Apply", 2, new List<ParameterRecord>(), "System.Void"));
         }
 
-        [Fact(Skip = "impl pending: 引数の列が同じで総称型引数の数だけが違うオーバーロードを別の行キーにする")]
+        [Fact]
         public void 総称型引数の数だけが違うオーバーロードは別の行キーになる()
         {
             Assert.NotEqual(
@@ -74,7 +74,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Build("Apply", 1, new List<ParameterRecord>(), "System.Void"));
         }
 
-        [Fact(Skip = "impl pending: 引数の向きだけが異なるオーバーロードを別の行キーにする")]
+        [Fact]
         public void 向きだけが違うオーバーロードは別の行キーになる()
         {
             Assert.NotEqual(
@@ -90,7 +90,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "System.Void"));
         }
 
-        [Fact(Skip = "impl pending: 変換演算子の行キーへ戻り値の型を含める")]
+        [Fact]
         public void 変換演算子は戻り値の型が行キーに現れる()
         {
             List<ParameterRecord> parameters =
@@ -104,7 +104,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Build("op_Explicit", 0, parameters, "System.Int64"));
         }
 
-        [Fact(Skip = "impl pending: 戻り値の型だけが違う変換演算子を別の行キーにする")]
+        [Fact]
         public void 戻り値の型だけが違う変換演算子は別の行キーになる()
         {
             List<ParameterRecord> parameters =
@@ -115,7 +115,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Build("op_Implicit", 0, parameters, "System.Int64"));
         }
 
-        [Fact(Skip = "impl pending: 変換演算子でないメンバーの行キーへ戻り値の型を含めない")]
+        [Fact]
         public void 変換演算子でなければ戻り値の型は行キーに現れない()
         {
             List<ParameterRecord> parameters = new List<ParameterRecord>
@@ -132,7 +132,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Build("GetValue", 0, new List<ParameterRecord>(), "System.String"));
         }
 
-        [Fact(Skip = "impl pending: 引数名の違いが行キーに影響しないようにする")]
+        [Fact]
         public void 引数名は行キーに影響しない()
         {
             Assert.Equal(
@@ -148,7 +148,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "System.Void"));
         }
 
-        [Fact(Skip = "impl pending: 引数を渡さないときは例外にする")]
+        [Fact]
         public void 必須の引数を渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(
@@ -162,7 +162,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "N.IThing", "op_Implicit", 0, new List<ParameterRecord>(), null));
         }
 
-        [Fact(Skip = "impl pending: 負の総称型引数の数を例外にする")]
+        [Fact]
         public void 総称型引数の数が負なら例外になる()
         {
             Assert.Throws<ArgumentOutOfRangeException>(

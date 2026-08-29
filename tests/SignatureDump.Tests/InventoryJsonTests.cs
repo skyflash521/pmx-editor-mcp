@@ -193,13 +193,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new InventoryRecord("Sample", "1.2.3.4", types, signatures);
         }
 
-        [Fact(Skip = "impl pending: 列挙結果を項目の順序まで定まったJSONへ書き出す")]
+        [Fact]
         public void 期待どおりのJSONになる()
         {
             Assert.Equal(string.Join("\n", ExpectedLines), InventoryJson.Write(Sample()));
         }
 
-        [Fact(Skip = "impl pending: 書き出したJSONを解析できる形にする")]
+        [Fact]
         public void 書き出したJSONは解析できる()
         {
             JavaScriptSerializer serializer = new JavaScriptSerializer();
@@ -211,7 +211,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(7, ((object[])root["signatures"]).Length);
         }
 
-        [Fact(Skip = "impl pending: 要素のない配列を空の配列として書き出す")]
+        [Fact]
         public void 要素のない配列は空の配列になる()
         {
             InventoryRecord empty = new InventoryRecord(
@@ -230,7 +230,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 InventoryJson.Write(empty));
         }
 
-        [Fact(Skip = "impl pending: 制御文字と引用符をJSONの規則で逃がす")]
+        [Fact]
         public void 特殊な文字は逃がされる()
         {
             InventoryRecord inventory = new InventoryRecord(
@@ -243,7 +243,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "\"assemblyName\":\"a\\\"b\\\\c\\nd\\te\\u0001f\"", InventoryJson.Write(inventory));
         }
 
-        [Fact(Skip = "impl pending: 列挙結果を渡さないときは例外にする")]
+        [Fact]
         public void 列挙結果を渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(() => InventoryJson.Write(null));
