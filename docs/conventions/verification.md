@@ -11,6 +11,7 @@
 | テスト | `dotnet test PmxEditorMcp.sln` | 全テスト成功 |
 | スクリプト構文 | `node --check scripts/e2e-check.mjs` | エラー0 |
 | スクリプト構文(PowerShell) | [PowerShellスクリプトの構文検査](#powershellスクリプトの構文検査)のコマンド | エラー0 |
+| SDK公開APIの列挙 | [SDK公開APIの列挙](#sdk公開apiの列挙)のコマンド | 終了コード0 |
 | 実機動作確認 | [実機動作確認](#実機動作確認)の手順 | 手順内の各確認が期待どおり |
 | ブリッジの実機動作確認 | [ブリッジの実機動作確認](#ブリッジの実機動作確認)の手順 | 手順内の各確認が期待どおり |
 
@@ -33,6 +34,25 @@ Get-ChildItem scripts/*.ps1 | ForEach-Object {
 }
 ```
 
+## SDK公開APIの列挙
+
+PEPlugin SDK の公開APIをシグネチャ1件=1行として書き出す。ツールへの写像を確かめる後段の照合は、
+この出力を母集合にする。引数は [READMEの構築手順](../../README.md#構築手順) で定義する
+`PmxEditorDir` が指す導入ディレクトリと、書き出し先のパスの2つ。導入ディレクトリのパスは
+空白を含みうるので引用符で囲む。書き出し先は使い捨てなので `.scratch/` へ置く。このフォルダは
+追跡していないため、取得した直後には無い。無ければ作ってから実行する。
+
+```
+src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe "<PmxEditorDir>" .scratch/signatures.json
+```
+
+対象アセンブリは配布物の `Lib\PEPlugin\PEPlugin.dll` で、これが参照する描画ライブラリは
+`Lib\SlimDX\x64` から解決する。終了コード0は、対象アセンブリを読み込んで列挙まで通ったことを表す。
+描画ライブラリを解決できなければ列挙が失敗して終了コード3になるので、この検査は依存の解決も
+併せて確かめる。ただし、その描画ライブラリを実行環境の別の場所(実行ファイルの隣や共有の
+格納先)から解決できる環境では、導入ディレクトリを探す経路を通らずに0になりうる。書き出しに
+失敗した場合は終了コード4になる。
+
 ## 必要環境
 
 [READMEの開発環境](../../README.md#開発環境)が正本。検査も実機動作確認も、そこが挙げる環境が
@@ -54,7 +74,8 @@ Get-ChildItem scripts/*.ps1 | ForEach-Object {
    dotnet build src/HostPlugin/PmxEditorMcp.HostPlugin.csproj -t:Deploy
    ```
 
-   配置先は `local.props` の `PmxEditorDir` が指す配布物の `_plugin\User` フォルダ。
+   配置先は [READMEの構築手順](../../README.md#構築手順) で定義する `PmxEditorDir` が指す
+   配布物の `_plugin\User` フォルダ。
    `_plugin` 直下にホストDLLの複製があると2つ読み込まれるため、あれば取り除く。
    `_plugin\user.path` で外部の参照先を指定している場合は、そこにも複製が無いことを確かめる。
 2. エディタを起動する([エディタとホストの操作](#エディタとホストの操作)の `launch`)。
