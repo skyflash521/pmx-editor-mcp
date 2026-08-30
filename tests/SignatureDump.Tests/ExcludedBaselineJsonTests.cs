@@ -24,8 +24,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void シグネチャを1行ずつ並べる()
         {
-            // 1つの能力が数百のシグネチャを持つので、1行にまとめると行単位の差分でどれが動いたかを
-            // 追えなくなる。
             Assert.Equal(
                 "{\n"
                 + "\"capabilities\":[\n"
