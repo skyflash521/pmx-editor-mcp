@@ -37,13 +37,14 @@ Get-ChildItem scripts/*.ps1 | ForEach-Object {
 ## SDK公開APIの列挙
 
 PEPlugin SDK の公開APIをシグネチャ1件=1行として書き出す。ツールへの写像を確かめる後段の照合は、
-この出力を母集合にする。引数は [READMEの構築手順](../../README.md#構築手順) で定義する
+この出力を母集合にする。下位コマンド `signatures` の引数は
+[READMEの構築手順](../../README.md#構築手順) で定義する
 `PmxEditorDir` が指す導入ディレクトリと、書き出し先のパスの2つ。導入ディレクトリのパスは
 空白を含みうるので引用符で囲む。書き出し先は使い捨てなので `.scratch/` へ置く。このフォルダは
 追跡していないため、取得した直後には無い。無ければ作ってから実行する。
 
 ```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe "<PmxEditorDir>" .scratch/signatures.json
+src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe signatures "<PmxEditorDir>" .scratch/signatures.json
 ```
 
 対象アセンブリは配布物の `Lib\PEPlugin\PEPlugin.dll` で、これが参照する描画ライブラリは
@@ -52,6 +53,27 @@ src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe "<PmxEditorDir>
 併せて確かめる。ただし、その描画ライブラリを実行環境の別の場所(実行ファイルの隣や共有の
 格納先)から解決できる環境では、導入ディレクトリを探す経路を通らずに0になりうる。書き出しに
 失敗した場合は終了コード4になる。
+
+## 除外の凍結
+
+能力台帳がすでに非対応と記していた能力と、その能力が指す公開シグネチャの集合を
+[凍結した除外の正本](../specs/pmx-editor-mcp-excluded-baseline.json)へ書き出す。この正本は
+提供対象から除くシグネチャの一覧を整備するときの根拠になる。下位コマンド `excluded-baseline` の
+引数は導入ディレクトリ・能力台帳のパス・書き出し先のパスの3つ。
+
+```
+src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe excluded-baseline "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-baseline.json
+```
+
+台帳とその時点のSDKの公開シグネチャの両方を読んで確定するので、どちらかが欠けても読めなくても
+読み解けなくても書き出さず終了コード3になる。読み解けたうえで台帳の記載と列挙結果が食い違う
+ときは終了コード5になる。
+
+**このコマンドは常設の検査に入れない。** 書き出し先は追跡する正本で、実行すると上書きする。
+型や名前空間でまとめて指す記載は、その時点のSDKにある該当メンバーをすべて取り込むので、別の版の
+SDKで実行し直すと、凍結した時点には無かったシグネチャまで正本へ入る。凍結は一覧を整備する前の
+時点を固定するためのものなので、取得は一度きりとし、取り直すのは台帳の記載を直したときだけに
+する。取り直したときは、差分の行から台帳とSDKのどちらが動いたのかを確かめる。
 
 ## 必要環境
 

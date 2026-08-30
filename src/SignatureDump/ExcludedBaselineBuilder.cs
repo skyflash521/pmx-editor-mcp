@@ -47,6 +47,28 @@ namespace PmxEditorMcp.SignatureDump
             Selector.Namespace("CAP-466", "PEPlugin.SDX."),
         };
 
+        /// <summary>
+        /// 台帳がその能力をどう記していたか。凍結できるのは台帳がすでに非対応と記していた範囲
+        /// だけなので、能力があることに加えて、記し方が変わっていないことも確かめる。分類が提供の
+        /// 能力は、どのシグネチャを対象外とするかを備考が決めているので、備考も含めて見る。
+        /// </summary>
+        private static readonly Dictionary<string, Recording> Recorded =
+            new Dictionary<string, Recording>(StringComparer.Ordinal)
+            {
+                { "CAP-114", new Recording(CapabilityStatus.Provided, "IPXPmxViewConnector.BootupVmdView", "PMX+VMD版と引数なし版を対象。PMDを引数に取る版はレガシーのため対象外") },
+                { "CAP-269", new Recording(CapabilityStatus.Provided, "IPXSystemControl.GetCPluginInfo", "Int32版を提供。IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記") },
+                { "CAP-304", new Recording(CapabilityStatus.NotSupported, "IPXUIModel.SetAutoRelease", null) },
+                { "CAP-339", new Recording(CapabilityStatus.Provided, "IPXPmx", "全公開メンバー(型単位)。FromStream/ToStreamはファイルパス版で代替し対象外") },
+                { "CAP-390", new Recording(CapabilityStatus.Provided, "IPEBuilder.CreateVmd", "PMDを引数に取る版はレガシーのため対象外。他のオーバーロードを提供") },
+                { "CAP-398", new Recording(CapabilityStatus.Provided, "IPEBuilder.CreateVme", "PMDを引数に取る版はレガシーのため対象外。デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供") },
+                { "CAP-459", new Recording(CapabilityStatus.NotSupported, "IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult", null) },
+                { "CAP-461", new Recording(CapabilityStatus.NotSupported, "PEStaticBuilder / IPEShortBuilder", null) },
+                { "CAP-462", new Recording(CapabilityStatus.NotSupported, "IPECheckerPlugin / IPEImportPlugin / IPEExportPlugin", null) },
+                { "CAP-463", new Recording(CapabilityStatus.NotSupported, "PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成", null) },
+                { "CAP-465", new Recording(CapabilityStatus.NotSupported, "PXCPlugin.RegisterBase / IPXCPlugin / PXCPluginClass", null) },
+                { "CAP-466", new Recording(CapabilityStatus.NotSupported, "PEPlugin.SDX.*(M・Q・V2・V3・V4)", null) },
+            };
+
         public static IList<ExcludedBaselineEntry> Build(
             IList<CapabilityRecord> ledger, IList<SignatureRecord> signatures)
         {
@@ -60,7 +82,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(signatures));
             }
 
-            HashSet<string> capabilities = new HashSet<string>(ledger.Select(c => c.Id), StringComparer.Ordinal);
+            ILookup<string, CapabilityRecord> capabilities = ledger.ToLookup(c => c.Id, StringComparer.Ordinal);
             HashSet<string> taken = new HashSet<string>(StringComparer.Ordinal);
             List<ExcludedBaselineEntry> entries = new List<ExcludedBaselineEntry>();
 
@@ -68,10 +90,19 @@ namespace PmxEditorMcp.SignatureDump
                 .GroupBy(s => s.CapabilityId, StringComparer.Ordinal)
                 .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
-                if (!capabilities.Contains(group.Key))
+                CapabilityRecord[] recorded = capabilities[group.Key].ToArray();
+                if (recorded.Length == 0)
                 {
                     throw Malformed(group.Key, "台帳に無い", signatures.Count);
                 }
+
+                if (recorded.Length > 1)
+                {
+                    // 同じ能力が何度も書かれていると、どの記載を根拠にしたのかが定まらない。
+                    throw Malformed(group.Key, "台帳に何度も現れる", signatures.Count);
+                }
+
+                RequireRecorded(recorded[0], signatures.Count);
 
                 SortedSet<string> keys = new SortedSet<string>(StringComparer.Ordinal);
                 foreach (Selector selector in group)
@@ -102,6 +133,27 @@ namespace PmxEditorMcp.SignatureDump
             return entries.AsReadOnly();
         }
 
+        private static void RequireRecorded(CapabilityRecord capability, int count)
+        {
+            Recording recording = Recorded[capability.Id];
+            if (capability.Status != recording.Status)
+            {
+                throw Malformed(
+                    capability.Id, "台帳の分類が凍結の前提と違う: " + capability.Status, count);
+            }
+
+            if (!string.Equals(capability.Target, recording.Target, StringComparison.Ordinal))
+            {
+                throw Malformed(capability.Id, "台帳の対象が凍結の前提と違う: " + capability.Target, count);
+            }
+
+            if (recording.Remarks != null
+                && !string.Equals(capability.Remarks, recording.Remarks, StringComparison.Ordinal))
+            {
+                throw Malformed(capability.Id, "台帳の備考が凍結の前提と違う: " + capability.Remarks, count);
+            }
+        }
+
         /// <summary>
         /// 突き合わせた件数を添える。台帳の側が合わないのか、渡された公開シグネチャが空なのかで
         /// 直し方が違うのに、能力と理由だけでは読み手が区別できない。
@@ -114,6 +166,23 @@ namespace PmxEditorMcp.SignatureDump
                 capabilityId,
                 reason,
                 count));
+        }
+
+        private sealed class Recording
+        {
+            public Recording(CapabilityStatus status, string target, string remarks)
+            {
+                Status = status;
+                Target = target;
+                Remarks = remarks;
+            }
+
+            public CapabilityStatus Status { get; }
+
+            public string Target { get; }
+
+            /// <summary>分類が提供の能力だけが持つ。非対応の能力は備考を根拠にしない。</summary>
+            public string Remarks { get; }
         }
 
         private sealed class Selector

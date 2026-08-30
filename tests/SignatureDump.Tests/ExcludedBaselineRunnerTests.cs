@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -10,24 +11,41 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ExcludedBaselineRunnerTests : IDisposable
     {
-        // 凍結の対象になる能力と、実物と同じ分類・担当。一部のシグネチャだけを対象外とする能力は
-        // 分類が提供なので、非対応の行だけを渡す作りでは実物で取りこぼす。能力が欠けていると、
-        // 列挙結果と突き合わせる前に台帳の側の欠落で止まり、突き合わせの結果を見られない。
+        // 凍結の対象になる能力の行を、実台帳からそのまま採る。凍結が前提にするのは分類と対象の欄、
+        // それに分類が提供の能力の備考で、そのいずれかが違えば実物では止まる。
         private static readonly string[][] LedgerRows =
         {
-            new[] { "CAP-114", "提供", "変形・モーション" },
-            new[] { "CAP-269", "提供", "セッション" },
-            new[] { "CAP-304", "非対応", string.Empty },
-            new[] { "CAP-339", "提供", "モデル" },
-            new[] { "CAP-390", "提供", "変形・モーション" },
-            new[] { "CAP-398", "提供", "変形・モーション" },
-            new[] { "CAP-459", "非対応", string.Empty },
-            new[] { "CAP-461", "非対応", string.Empty },
-            new[] { "CAP-462", "非対応", string.Empty },
-            new[] { "CAP-463", "非対応", string.Empty },
-            new[] { "CAP-465", "非対応", string.Empty },
-            new[] { "CAP-466", "非対応", string.Empty },
+            new[] { "CAP-114", "PmxView", "IPXPmxViewConnector.BootupVmdView", "提供", "変形・モーション" },
+            new[] { "CAP-269", "Cプラグイン連携", "IPXSystemControl.GetCPluginInfo", "提供", "セッション" },
+            new[] { "CAP-304", "Cプラグイン連携", "IPXUIModel.SetAutoRelease", "非対応", "" },
+            new[] { "CAP-339", "モデルデータ型", "IPXPmx", "提供", "モデル" },
+            new[] { "CAP-390", "VMD/VMEビルダ", "IPEBuilder.CreateVmd", "提供", "変形・モーション" },
+            new[] { "CAP-398", "VMD/VMEビルダ", "IPEBuilder.CreateVme", "提供", "変形・モーション" },
+            new[] { "CAP-459", "プラグイン機構", "IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult", "非対応", "" },
+            new[] { "CAP-461", "ビルダ別経路", "PEStaticBuilder / IPEShortBuilder", "非対応", "" },
+            new[] { "CAP-462", "プラグイン拡張点", "IPECheckerPlugin / IPEImportPlugin / IPEExportPlugin", "非対応", "" },
+            new[] { "CAP-463", "PMDレガシー", "PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成", "非対応", "" },
+            new[] { "CAP-465", "Cプラグイン実装拡張点", "PXCPlugin.RegisterBase / IPXCPlugin / PXCPluginClass", "非対応", "" },
+            new[] { "CAP-466", "SDX数値型", "PEPlugin.SDX.*(M・Q・V2・V3・V4)", "非対応", "" },
         };
+
+        /// <summary>行ごとの備考。台帳の本文をそのまま使う。</summary>
+        private static readonly Dictionary<string, string> LedgerRemarks =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+            { "CAP-114", "PMX+VMD版と引数なし版を対象。PMDを引数に取る版はレガシーのため対象外" },
+            { "CAP-269", "Int32版を提供。IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記" },
+            { "CAP-304", "引数のIPXCPlugin(実装拡張点・非対応)を取得経路から得られないため" },
+            { "CAP-339", "全公開メンバー(型単位)。FromStream/ToStreamはファイルパス版で代替し対象外" },
+            { "CAP-390", "PMDを引数に取る版はレガシーのため対象外。他のオーバーロードを提供" },
+            { "CAP-398", "PMDを引数に取る版はレガシーのため対象外。デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供" },
+            { "CAP-459", "プラグイン自身がホストに登録されるための実装専用API" },
+            { "CAP-461", "IPXPmxBuilder等の提供経路と重複する短絡経路のため" },
+            { "CAP-462", "プラグインDLL側の拡張点(MCPからの呼び出し対象ではない)" },
+            { "CAP-463", "PMX系に同等機能。PMDファイル入出力はFormコネクタの能力として提供" },
+            { "CAP-465", "Cプラグインを実装する側の基底クラス・エントリポイント(実装専用)" },
+            { "CAP-466", "SlimDX数値型の橋渡し型。演算メンバーはモデル状態に作用せずクライアント側で完結する数値計算のため対象外。値の受け渡しはJSON数値配列(共通契約仕様書が定める)" },
+            };
 
         /// <summary>先に置いた書き出し先が、失敗した実行で変わっていないことを見るための内容。</summary>
         private const string Existing = "{\"capabilities\":[]}\n";
@@ -76,7 +94,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n|---|---|---|---|---|---|\n"
                 + string.Concat(rows.Select(
-                    r => "| " + r[0] + " | SDK | IPXThing | " + r[1] + " | " + r[2] + " | 実装専用 |\n"));
+                    r => "| " + string.Join(" | ", r) + " | " + LedgerRemarks[r[0]] + " |\n"));
         }
 
         private string CreateLedger()
@@ -93,7 +111,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return path;
         }
 
-        [Fact(Skip = "impl pending: 引数の数を確かめる")]
+        [Fact]
         public void 引数が3つでなければ引数の誤りで終わる()
         {
             // 足りない場合だけを見ると、余った場合に後ろを黙って捨てる作りを見逃す。
@@ -116,7 +134,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        [Fact(Skip = "impl pending: 対象アセンブリが無いときは入力を読めないとして終わる")]
+        [Fact]
         public void 対象アセンブリが無ければ入力を読めない()
         {
             string outputPath = CreateExistingOutput();
@@ -132,7 +150,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 台帳が無いときは入力を読めないとして終わる")]
+        [Fact]
         public void 台帳が無ければ入力を読めない()
         {
             string outputPath = CreateExistingOutput();
@@ -148,7 +166,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 台帳と列挙が食い違うときは確定できないとして終わる")]
+        [Fact]
         public void 台帳と列挙が食い違えば確定できない()
         {
             // 台帳が非対応と記した能力の指す先が列挙結果に無い状態。空の結果を書き出すと、
@@ -174,7 +192,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 int.Parse(counted.Groups[1].Value, CultureInfo.InvariantCulture));
         }
 
-        [Fact(Skip = "impl pending: 読み込めない対象アセンブリを入力を読めないとして扱う")]
+        [Fact]
         public void 読み込めない対象アセンブリは入力を読めない()
         {
             // 在ることだけを見て中身を読まない作りだと、SDKを列挙しないまま結果を出せてしまう。
@@ -192,7 +210,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 読めない対象アセンブリを入力を読めないとして扱う")]
+        [Fact]
         public void 読めない対象アセンブリは入力を読めない()
         {
             // 読み解けない中身と、そもそもファイルを読めないことは別の失敗。後者を通すと、
@@ -217,7 +235,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 読めない台帳を入力を読めないとして扱う")]
+        [Fact]
         public void 読み込めない台帳は入力を読めない()
         {
             // 在ることだけを見て読めない場合を通すと、読み取りの失敗がそのまま外へ漏れる。
@@ -237,7 +255,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 失敗したときは書き出し先を作らない")]
+        [Fact]
         public void 失敗しても書き出し先を作らない()
         {
             // すでにある正本を守るだけでなく、無いところへ空の結果を置かないことも要る。
@@ -284,7 +302,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return File.Exists(outputPath);
         }
 
-        [Fact(Skip = "impl pending: 読み解けない台帳を入力を読めないとして扱う")]
+        [Fact]
         public void 読み解けない台帳は入力を読めない()
         {
             // 読めたうえでの食い違いと、そもそも読み解けないことは、呼び出し元の直し方が違う。
@@ -301,7 +319,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 台帳の中身を突き合わせへ反映する")]
+        [Fact]
         public void 台帳の中身が突き合わせに効く()
         {
             // 在ることだけを見て中身を読まない作りだと、台帳が何を記していても同じ結果になる。
@@ -320,7 +338,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 引数や報告先を渡さないときは例外にする")]
+        [Fact]
         public void 引数や報告先を渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(

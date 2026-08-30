@@ -838,6 +838,46 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 (string)row[6]);
         }
 
+        private static CapabilityRecord WithStatus(
+            CapabilityRecord capability, CapabilityStatus status, string owner)
+        {
+            return new CapabilityRecord(
+                capability.Id,
+                capability.Category,
+                capability.Target,
+                capability.TargetKind,
+                capability.TargetNames,
+                status,
+                (CapabilityOwner)Enum.Parse(typeof(CapabilityOwner), owner == "モデル" ? "Model" : "None"),
+                capability.Remarks);
+        }
+
+        private static CapabilityRecord WithTarget(CapabilityRecord capability, string target)
+        {
+            return new CapabilityRecord(
+                capability.Id,
+                capability.Category,
+                target,
+                capability.TargetKind,
+                capability.TargetNames,
+                capability.Status,
+                capability.Owner,
+                capability.Remarks);
+        }
+
+        private static CapabilityRecord WithRemarks(CapabilityRecord capability, string remarks)
+        {
+            return new CapabilityRecord(
+                capability.Id,
+                capability.Category,
+                capability.Target,
+                capability.TargetKind,
+                capability.TargetNames,
+                capability.Status,
+                capability.Owner,
+                remarks);
+        }
+
         private static IList<SignatureRecord> Signatures()
         {
             return SignatureRows.Select(Signature).ToList();
@@ -934,6 +974,48 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Where(s => s.Key != "PEPlugin.Pmx.IPXPmx.ToStream(System.IO.Stream)").ToList();
 
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
+        }
+
+        [Fact]
+        public void 台帳の記し方が凍結の前提と違えば例外になる()
+        {
+            // 凍結できるのは台帳がすでに非対応と記していた範囲だけ。能力IDだけを見る作りだと、
+            // 台帳の記載を書き換えても同じ組を凍結でき、根拠にならない。
+            IList<CapabilityRecord> provided = Ledger()
+                .Select(c => c.Id == "CAP-459" ? WithStatus(c, CapabilityStatus.Provided, "モデル") : c)
+                .ToList();
+            InvalidOperationException status = Assert.Throws<InvalidOperationException>(
+                () => ExcludedBaselineBuilder.Build(provided, Signatures()));
+            Assert.Contains("CAP-459", status.Message, StringComparison.Ordinal);
+
+            // 分類が提供の能力は、どのシグネチャを対象外とするかを備考が決めているので備考も見る。
+            IList<CapabilityRecord> silent = Ledger()
+                .Select(c => c.Id == "CAP-114" ? WithRemarks(c, "PMX+VMD版と引数なし版を対象") : c)
+                .ToList();
+            InvalidOperationException remarks = Assert.Throws<InvalidOperationException>(
+                () => ExcludedBaselineBuilder.Build(silent, Signatures()));
+            Assert.Contains("CAP-114", remarks.Message, StringComparison.Ordinal);
+
+            // 対象の欄が変われば、同じ分類・備考でも指している先が変わる。
+            IList<CapabilityRecord> moved = Ledger()
+                .Select(c => c.Id == "CAP-459" ? WithTarget(c, "IPEPlugin / PEPluginClass") : c)
+                .ToList();
+            InvalidOperationException target = Assert.Throws<InvalidOperationException>(
+                () => ExcludedBaselineBuilder.Build(moved, Signatures()));
+            Assert.Contains("CAP-459", target.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void 同じ能力が台帳に何度もあれば例外になる()
+        {
+            // どの記載を根拠にしたのかが定まらないまま凍結すると、後から根拠をたどれない。
+            IList<CapabilityRecord> ledger = Ledger();
+            ledger.Add(WithTarget(ledger.Single(c => c.Id == "CAP-459"), "IPEPlugin"));
+
+            InvalidOperationException doubled = Assert.Throws<InvalidOperationException>(
+                () => ExcludedBaselineBuilder.Build(ledger, Signatures()));
+
+            Assert.Contains("CAP-459", doubled.Message, StringComparison.Ordinal);
         }
 
         [Fact]

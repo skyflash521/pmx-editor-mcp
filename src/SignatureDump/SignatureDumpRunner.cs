@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Text;
 
 namespace PmxEditorMcp.SignatureDump
@@ -15,11 +13,6 @@ namespace PmxEditorMcp.SignatureDump
         /// BOMなしUTF-8で書く。成功したときは要約を <paramref name="output"/> へ書き、
         /// <paramref name="error"/> には何も書かない。失敗したときはその説明を
         /// <paramref name="error"/> へ書き、<paramref name="output"/> には何も書かない。
-        ///
-        /// 対象アセンブリはバイト列から読み込むので、実行が終わってもそのファイルは掴まない。
-        /// 依存アセンブリはパスから読み込むため掴んだままになる——混在モードのアセンブリは
-        /// バイト列から読み込めず、SDKが参照する描画ライブラリがこれに当たるためである。依存は
-        /// 導入ディレクトリの実体を指すので、呼び出し元が消す対象にはならない。
         /// </summary>
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
@@ -54,28 +47,16 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
-            IList<string> probeDirectories = SdkAssemblyLocator.GetProbeDirectories(editorDirectory);
-            ResolveEventHandler resolver = (sender, e) =>
-            {
-                string found = SdkAssemblyLocator.FindDependency(new AssemblyName(e.Name).Name, probeDirectories);
-                return found == null ? null : Assembly.LoadFrom(found);
-            };
-
             InventoryRecord inventory;
-            AppDomain.CurrentDomain.AssemblyResolve += resolver;
             try
             {
-                inventory = AssemblyEnumerator.Enumerate(Assembly.Load(File.ReadAllBytes(assemblyPath)));
+                inventory = SdkInventory.Load(editorDirectory, assemblyPath);
             }
             catch (Exception exception)
             {
                 error.WriteLine("対象のアセンブリを列挙できない: " + assemblyPath);
                 error.WriteLine(exception.Message);
                 return ExitCodes.InputUnavailable;
-            }
-            finally
-            {
-                AppDomain.CurrentDomain.AssemblyResolve -= resolver;
             }
 
             try

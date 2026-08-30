@@ -6,7 +6,7 @@ namespace PmxEditorMcp.SignatureDump
     {
         public static int Main(string[] args)
         {
-            return SignatureDumpRunner.Run(args, Console.Out, Console.Error);
+            return CommandRunner.Run(args, Console.Out, Console.Error);
         }
     }
 }

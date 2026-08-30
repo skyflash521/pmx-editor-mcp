@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using PmxEditorMcp.SignatureDump.Tests.Sample;
@@ -8,23 +9,41 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class CommandRunnerTests : IDisposable
     {
-        // 凍結の対象になる能力と、実物と同じ分類・担当。一部のシグネチャだけを対象外とする能力は
-        // 分類が提供なので、非対応の行だけを渡す作りでは実物で取りこぼす。
+        // 凍結の対象になる能力の行を、実台帳からそのまま採る。凍結が前提にするのは分類と対象の欄、
+        // それに分類が提供の能力の備考で、そのいずれかが違えば実物では止まる。
         private static readonly string[][] LedgerRows =
         {
-            new[] { "CAP-114", "提供", "変形・モーション" },
-            new[] { "CAP-269", "提供", "セッション" },
-            new[] { "CAP-304", "非対応", string.Empty },
-            new[] { "CAP-339", "提供", "モデル" },
-            new[] { "CAP-390", "提供", "変形・モーション" },
-            new[] { "CAP-398", "提供", "変形・モーション" },
-            new[] { "CAP-459", "非対応", string.Empty },
-            new[] { "CAP-461", "非対応", string.Empty },
-            new[] { "CAP-462", "非対応", string.Empty },
-            new[] { "CAP-463", "非対応", string.Empty },
-            new[] { "CAP-465", "非対応", string.Empty },
-            new[] { "CAP-466", "非対応", string.Empty },
+            new[] { "CAP-114", "PmxView", "IPXPmxViewConnector.BootupVmdView", "提供", "変形・モーション" },
+            new[] { "CAP-269", "Cプラグイン連携", "IPXSystemControl.GetCPluginInfo", "提供", "セッション" },
+            new[] { "CAP-304", "Cプラグイン連携", "IPXUIModel.SetAutoRelease", "非対応", "" },
+            new[] { "CAP-339", "モデルデータ型", "IPXPmx", "提供", "モデル" },
+            new[] { "CAP-390", "VMD/VMEビルダ", "IPEBuilder.CreateVmd", "提供", "変形・モーション" },
+            new[] { "CAP-398", "VMD/VMEビルダ", "IPEBuilder.CreateVme", "提供", "変形・モーション" },
+            new[] { "CAP-459", "プラグイン機構", "IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult", "非対応", "" },
+            new[] { "CAP-461", "ビルダ別経路", "PEStaticBuilder / IPEShortBuilder", "非対応", "" },
+            new[] { "CAP-462", "プラグイン拡張点", "IPECheckerPlugin / IPEImportPlugin / IPEExportPlugin", "非対応", "" },
+            new[] { "CAP-463", "PMDレガシー", "PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成", "非対応", "" },
+            new[] { "CAP-465", "Cプラグイン実装拡張点", "PXCPlugin.RegisterBase / IPXCPlugin / PXCPluginClass", "非対応", "" },
+            new[] { "CAP-466", "SDX数値型", "PEPlugin.SDX.*(M・Q・V2・V3・V4)", "非対応", "" },
         };
+
+        /// <summary>行ごとの備考。台帳の本文をそのまま使う。</summary>
+        private static readonly Dictionary<string, string> LedgerRemarks =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+            { "CAP-114", "PMX+VMD版と引数なし版を対象。PMDを引数に取る版はレガシーのため対象外" },
+            { "CAP-269", "Int32版を提供。IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記" },
+            { "CAP-304", "引数のIPXCPlugin(実装拡張点・非対応)を取得経路から得られないため" },
+            { "CAP-339", "全公開メンバー(型単位)。FromStream/ToStreamはファイルパス版で代替し対象外" },
+            { "CAP-390", "PMDを引数に取る版はレガシーのため対象外。他のオーバーロードを提供" },
+            { "CAP-398", "PMDを引数に取る版はレガシーのため対象外。デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供" },
+            { "CAP-459", "プラグイン自身がホストに登録されるための実装専用API" },
+            { "CAP-461", "IPXPmxBuilder等の提供経路と重複する短絡経路のため" },
+            { "CAP-462", "プラグインDLL側の拡張点(MCPからの呼び出し対象ではない)" },
+            { "CAP-463", "PMX系に同等機能。PMDファイル入出力はFormコネクタの能力として提供" },
+            { "CAP-465", "Cプラグインを実装する側の基底クラス・エントリポイント(実装専用)" },
+            { "CAP-466", "SlimDX数値型の橋渡し型。演算メンバーはモデル状態に作用せずクライアント側で完結する数値計算のため対象外。値の受け渡しはJSON数値配列(共通契約仕様書が定める)" },
+            };
 
         /// <summary>題材のアセンブリが必ず持つシグネチャ。列挙が実際に走ったことを見分ける。</summary>
         private const string SampleSignature =
@@ -75,11 +94,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 path,
                 "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n|---|---|---|---|---|---|\n"
                 + string.Concat(LedgerRows.Select(
-                    r => "| " + r[0] + " | SDK | IPXThing | " + r[1] + " | " + r[2] + " | 実装専用 |\n")));
+                    r => "| " + string.Join(" | ", r) + " | " + LedgerRemarks[r[0]] + " |\n")));
             return path;
         }
 
-        [Fact(Skip = "impl pending: 下位コマンドの名前で実行を振り分ける")]
+        [Fact]
         public void 下位コマンドを渡さないと引数の誤りで終わる()
         {
             StringWriter error = new StringWriter();
@@ -90,7 +109,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.False(string.IsNullOrWhiteSpace(error.ToString()));
         }
 
-        [Fact(Skip = "impl pending: 下位コマンドの名前を決める")]
+        [Fact]
         public void 下位コマンドの名前は呼び出し側との約束である()
         {
             // 名前は外から打つ文字列そのものなので、定数と実装を揃えて変えても気づけるようにする。
@@ -98,7 +117,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("excluded-baseline", CommandRunner.ExcludedBaselineCommand);
         }
 
-        [Fact(Skip = "impl pending: 終了コードの値を決める")]
+        [Fact]
         public void 終了コードの値は呼び出し側との約束である()
         {
             // 値は呼び出し元が見分けに使うものそのもの。重ねてしまうと、直し方の違う失敗が同じに見える。
@@ -109,7 +128,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(5, ExitCodes.Unresolved);
         }
 
-        [Fact(Skip = "impl pending: 知らない下位コマンドを引数の誤りとする")]
+        [Fact]
         public void 知らない下位コマンドは引数の誤りで終わる()
         {
             // 後ろの引数は列挙として正しい形にする。名前を見ずに引数の数で振り分ける作りでは、
@@ -138,7 +157,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = "impl pending: 列挙の下位コマンドを列挙の実行へ渡す")]
+        [Fact]
         public void 列挙の下位コマンドは列挙を実行する()
         {
             string outputPath = Path.Combine(_root, "signatures.json");
@@ -168,7 +187,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.False(string.IsNullOrWhiteSpace(failedError.ToString()));
         }
 
-        [Fact(Skip = "impl pending: 凍結の下位コマンドを凍結の実行へ渡す")]
+        [Fact]
         public void 凍結の下位コマンドは凍結を実行する()
         {
             // 題材のアセンブリには台帳が指す先が無いので、突き合わせで止まるところまでを見る。
@@ -197,7 +216,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(missing, missingError.ToString(), StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 実行ファイルの入口から列挙へ通す")]
+        [Fact]
         public void 実行ファイルの入口が列挙を通す()
         {
             string outputPath = Path.Combine(_root, "from-main.json");
@@ -220,7 +239,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(SampleSignature, File.ReadAllText(outputPath), StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 実行ファイルの入口から凍結へ通す")]
+        [Fact]
         public void 実行ファイルの入口が凍結を通す()
         {
             // 入口が下位コマンドを1つだけ特別に扱っていると、他の下位コマンドへ実行ファイルから
@@ -248,7 +267,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("指す先が無い", error.ToString(), StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 実行ファイルの入口でも入力の違いが結果に出る")]
+        [Fact]
         public void 実行ファイルの入口でも入力の違いが結果に出る()
         {
             // 入口が決まった終了コードを返すだけでは、導入ディレクトリを変えても同じ結果になる。
