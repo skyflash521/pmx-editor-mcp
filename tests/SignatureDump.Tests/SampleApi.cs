@@ -49,6 +49,8 @@ namespace PmxEditorMcp.SignatureDump.Tests.Sample
 
         void Apply();
 
+        void Walk(SampleProc step);
+
         string this[Guid key] { get; }
 
         // 引数の列が同じで総称型引数の数だけが違うオーバーロード。行キーが両者を区別できる

@@ -16,6 +16,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>台帳の非対応記載を公開シグネチャの集合として凍結して書き出す。</summary>
         public const string ExcludedBaselineCommand = "excluded-baseline";
 
+        /// <summary>凍結した組と列挙から除外一覧を確定して書き出す。</summary>
+        public const string ExcludedSignaturesCommand = "excluded-signatures";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)

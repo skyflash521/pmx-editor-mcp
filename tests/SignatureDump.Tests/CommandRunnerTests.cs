@@ -115,6 +115,61 @@ namespace PmxEditorMcp.SignatureDump.Tests
             // 名前は外から打つ文字列そのものなので、定数と実装を揃えて変えても気づけるようにする。
             Assert.Equal("signatures", CommandRunner.SignaturesCommand);
             Assert.Equal("excluded-baseline", CommandRunner.ExcludedBaselineCommand);
+            Assert.Equal("excluded-signatures", CommandRunner.ExcludedSignaturesCommand);
+        }
+
+        [Fact(Skip = "CommandRunner の excluded-signatures への振り分けが未実装")]
+        public void 除外一覧の下位コマンドは除外一覧の書き出しを実行する()
+        {
+            string baselinePath = Path.Combine(_root, "excluded-baseline.json");
+            File.WriteAllText(
+                baselinePath,
+                "{\"capabilities\":[{\"capabilityId\":\"CAP-1\",\"signatures\":[\"T.Removed()\"]}]}");
+            string outputPath = Path.Combine(_root, "excluded-signatures.json");
+
+            int code = CommandRunner.Run(
+                new[] { CommandRunner.ExcludedSignaturesCommand, CreateEditorDirectory(), baselinePath, outputPath },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+
+            int missingCode = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.ExcludedSignaturesCommand,
+                    Path.Combine(_root, "none"),
+                    baselinePath,
+                    outputPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, missingCode);
+        }
+
+        [Fact(Skip = "CommandRunner の使用法への excluded-signatures 追加が未実装")]
+        public void 使用法はすべての下位コマンドと引数の並びを示す()
+        {
+            StringWriter error = new StringWriter();
+
+            CommandRunner.Run(new string[0], new StringWriter(), error);
+            string usage = error.ToString();
+
+            Assert.Contains(
+                CommandRunner.SignaturesCommand + " <PMXエディタ導入ディレクトリ> <書き出し先パス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ExcludedBaselineCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <書き出し先パス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ExcludedSignaturesCommand
+                    + " <PMXエディタ導入ディレクトリ> <ベースライン正本のパス> <書き出し先パス>",
+                usage,
+                StringComparison.Ordinal);
         }
 
         [Fact]

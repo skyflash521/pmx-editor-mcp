@@ -76,6 +76,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + "|TryGet|Method|instance|0|System.Boolean|--|Write|"
                 + "index:System.Int32:In:required;text:System.String:Out:required",
             Api + ".Value()|" + Api + "|Value|Property|instance|0|System.Int32|rw|Read|",
+            Api + ".Walk(" + Proc + ")|" + Api
+                + "|Walk|Method|instance|0|System.Void|--|Write|step:" + Proc + ":In:required",
             Api + ".WriteOnlyLevel()|" + Api + "|WriteOnlyLevel|Property|instance|0|System.Int32|-w|Write|",
             Aux + ".AuxValue()|" + Aux + "|AuxValue|Property|instance|0|System.Int32|r-|Read|",
             Base + ".BaseValue()|" + Base + "|BaseValue|Property|instance|0|System.Int32|r-|Read|",
