@@ -10,15 +10,6 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>実行1回ぶんの配線。引数の検査・アセンブリの読み込み・列挙・書き出しを順に行う。</summary>
     public static class SignatureDumpRunner
     {
-        public const int ExitSuccess = 0;
-
-        /// <summary>引数が足りない・多いときの終了コード。</summary>
-        public const int ExitInvalidArguments = 2;
-
-        public const int ExitAssemblyUnavailable = 3;
-
-        public const int ExitWriteFailed = 4;
-
         /// <summary>
         /// 実行する。引数はPMXエディタ導入ディレクトリと書き出し先パスの2つ。結果は書き出し先へ
         /// BOMなしUTF-8で書く。成功したときは要約を <paramref name="output"/> へ書き、
@@ -50,7 +41,7 @@ namespace PmxEditorMcp.SignatureDump
             if (args.Length != 2)
             {
                 error.WriteLine("引数は2つ: <PMXエディタ導入ディレクトリ> <書き出し先パス>");
-                return ExitInvalidArguments;
+                return ExitCodes.InvalidArguments;
             }
 
             string editorDirectory = args[0];
@@ -60,7 +51,7 @@ namespace PmxEditorMcp.SignatureDump
             if (!File.Exists(assemblyPath))
             {
                 error.WriteLine("対象のアセンブリが無い: " + assemblyPath);
-                return ExitAssemblyUnavailable;
+                return ExitCodes.InputUnavailable;
             }
 
             IList<string> probeDirectories = SdkAssemblyLocator.GetProbeDirectories(editorDirectory);
@@ -80,7 +71,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 error.WriteLine("対象のアセンブリを列挙できない: " + assemblyPath);
                 error.WriteLine(exception.Message);
-                return ExitAssemblyUnavailable;
+                return ExitCodes.InputUnavailable;
             }
             finally
             {
@@ -96,7 +87,7 @@ namespace PmxEditorMcp.SignatureDump
                 error.WriteLine("結果を書き出せない: " + outputPath);
                 error.WriteLine(exception.Message);
                 Discard(outputPath);
-                return ExitWriteFailed;
+                return ExitCodes.WriteFailed;
             }
 
             output.WriteLine(string.Format(
@@ -106,7 +97,7 @@ namespace PmxEditorMcp.SignatureDump
                 inventory.Types.Count,
                 inventory.Signatures.Count));
 
-            return ExitSuccess;
+            return ExitCodes.Success;
         }
 
         // 途中まで書けたファイルを残すと、読み手が完全な結果と区別できない。取り除けないときは

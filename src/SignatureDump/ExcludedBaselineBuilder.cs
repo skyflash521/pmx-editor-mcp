@@ -70,7 +70,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 if (!capabilities.Contains(group.Key))
                 {
-                    throw Malformed(group.Key, "台帳に無い");
+                    throw Malformed(group.Key, "台帳に無い", signatures.Count);
                 }
 
                 SortedSet<string> keys = new SortedSet<string>(StringComparer.Ordinal);
@@ -79,7 +79,7 @@ namespace PmxEditorMcp.SignatureDump
                     string[] found = signatures.Where(selector.Matches).Select(s => s.Key).ToArray();
                     if (found.Length == 0)
                     {
-                        throw Malformed(group.Key, "指す先が無い: " + selector.Value);
+                        throw Malformed(group.Key, "指す先が無い: " + selector.Value, signatures.Count);
                     }
 
                     foreach (string key in found)
@@ -92,7 +92,7 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     if (!taken.Add(key))
                     {
-                        throw Malformed(group.Key, "他の能力と重なる: " + key);
+                        throw Malformed(group.Key, "他の能力と重なる: " + key, signatures.Count);
                     }
                 }
 
@@ -102,10 +102,18 @@ namespace PmxEditorMcp.SignatureDump
             return entries.AsReadOnly();
         }
 
-        private static InvalidOperationException Malformed(string capabilityId, string reason)
+        /// <summary>
+        /// 突き合わせた件数を添える。台帳の側が合わないのか、渡された公開シグネチャが空なのかで
+        /// 直し方が違うのに、能力と理由だけでは読み手が区別できない。
+        /// </summary>
+        private static InvalidOperationException Malformed(string capabilityId, string reason, int count)
         {
             return new InvalidOperationException(string.Format(
-                CultureInfo.InvariantCulture, "{0} の非対応記載が{1}", capabilityId, reason));
+                CultureInfo.InvariantCulture,
+                "{0} の非対応記載が{1}(突き合わせたシグネチャ: {2} 件)",
+                capabilityId,
+                reason,
+                count));
         }
 
         private sealed class Selector

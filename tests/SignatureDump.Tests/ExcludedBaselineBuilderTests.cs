@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using Xunit;
 
@@ -933,6 +934,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Where(s => s.Key != "PEPlugin.Pmx.IPXPmx.ToStream(System.IO.Stream)").ToList();
 
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
+        }
+
+        [Fact]
+        public void 止まった理由に突き合わせた件数を添える()
+        {
+            // 台帳の側が合わないのか、渡された公開シグネチャが空なのかで直し方が違う。
+            InvalidOperationException empty = Assert.Throws<InvalidOperationException>(
+                () => ExcludedBaselineBuilder.Build(Ledger(), new List<SignatureRecord>()));
+            Assert.Contains("突き合わせたシグネチャ: 0 件", empty.Message, StringComparison.Ordinal);
+
+            IList<CapabilityRecord> ledger = Ledger().Where(c => c.Id != "CAP-114").ToList();
+            InvalidOperationException missing = Assert.Throws<InvalidOperationException>(
+                () => ExcludedBaselineBuilder.Build(ledger, Signatures()));
+            Assert.Contains(
+                "突き合わせたシグネチャ: " + SignatureRows.Length.ToString(CultureInfo.InvariantCulture) + " 件",
+                missing.Message,
+                StringComparison.Ordinal);
         }
 
         [Fact]

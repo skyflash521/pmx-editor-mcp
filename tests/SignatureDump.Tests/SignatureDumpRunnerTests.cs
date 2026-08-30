@@ -50,8 +50,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             int code = SignatureDumpRunner.Run(new[] { editorDirectory, outputPath }, output, error);
 
-            Assert.Equal(SignatureDumpRunner.ExitSuccess, code);
-            Assert.NotEqual(string.Empty, output.ToString());
+            Assert.Equal(ExitCodes.Success, code);
+            Assert.False(string.IsNullOrWhiteSpace(output.ToString()));
             Assert.Equal(string.Empty, error.ToString());
             Assert.True(File.Exists(outputPath));
             string json = File.ReadAllText(outputPath);
@@ -116,8 +116,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             int code = SignatureDumpRunner.Run(args, output, error);
 
-            Assert.Equal(SignatureDumpRunner.ExitInvalidArguments, code);
-            Assert.NotEqual(string.Empty, error.ToString());
+            Assert.Equal(ExitCodes.InvalidArguments, code);
+            Assert.False(string.IsNullOrWhiteSpace(error.ToString()));
             Assert.Equal(string.Empty, output.ToString());
         }
 
@@ -132,7 +132,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             int code = SignatureDumpRunner.Run(new[] { editorDirectory, outputPath }, output, error);
 
-            Assert.Equal(SignatureDumpRunner.ExitAssemblyUnavailable, code);
+            Assert.Equal(ExitCodes.InputUnavailable, code);
             Assert.Contains(SdkAssemblyLocator.GetAssemblyPath(editorDirectory), error.ToString());
             Assert.Equal(string.Empty, output.ToString());
             Assert.False(File.Exists(outputPath));
@@ -148,8 +148,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             int code = SignatureDumpRunner.Run(new[] { editorDirectory, outputPath }, output, error);
 
-            Assert.Equal(SignatureDumpRunner.ExitWriteFailed, code);
-            Assert.NotEqual(string.Empty, error.ToString());
+            Assert.Equal(ExitCodes.WriteFailed, code);
+            Assert.False(string.IsNullOrWhiteSpace(error.ToString()));
             Assert.Equal(string.Empty, output.ToString());
             Assert.False(File.Exists(outputPath));
         }
