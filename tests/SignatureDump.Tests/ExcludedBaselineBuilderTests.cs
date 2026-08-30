@@ -880,13 +880,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .ToArray();
         }
 
-        [Fact(Skip = "impl pending: 台帳の非対応記載を公開シグネチャの集合として確定する")]
+        [Fact]
         public void 凍結する組を能力ごとに確定する()
         {
             Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(Ledger(), Signatures())));
         }
 
-        [Fact(Skip = "impl pending: 凍結する組の並びを入力の並びから決めない")]
+        [Fact]
         public void 台帳の並びが変わっても同じ組になる()
         {
             // 台帳へ行を挿し込んだだけで凍結の並びが変わると、行単位の差分が実際の変化を指さなくなる。
@@ -896,7 +896,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(reversed, shuffled)));
         }
 
-        [Fact(Skip = "impl pending: 能力の間でシグネチャを重ならせない")]
+        [Fact]
         public void 同じシグネチャが2つの能力に入らない()
         {
             // 重なると、除外一覧の照合でどちらの根拠にも通ってしまい、件数の一致も崩れる。
@@ -906,7 +906,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(all.Count, all.Distinct(StringComparer.Ordinal).Count());
         }
 
-        [Fact(Skip = "impl pending: 台帳に無い能力を指すときは例外にする")]
+        [Fact]
         public void 台帳に無い能力を指していれば例外になる()
         {
             // 台帳を正としない集合を凍結すると、根拠の無い除外がそのまま正本になる。
@@ -915,7 +915,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(ledger, Signatures()));
         }
 
-        [Fact(Skip = "impl pending: 挙げた名前ごとに指す先があることを確かめる")]
+        [Fact]
         public void 挙げた名前の1つでも指す先が無ければ例外になる()
         {
             // 能力の単位で1件でも残れば通す作りだと、並べた名前のうち1つが指す先を失っても気づけない。
@@ -925,7 +925,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
         }
 
-        [Fact(Skip = "impl pending: 名前を挙げたシグネチャが欠けるときは例外にする")]
+        [Fact]
         public void 名前を挙げたシグネチャが欠けていれば例外になる()
         {
             // 1件でも欠けたまま凍結すると、以後その1件は資格を失ったことに気づけない。
@@ -935,7 +935,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
         }
 
-        [Fact(Skip = "impl pending: 台帳や列挙を渡さないときは例外にする")]
+        [Fact]
         public void 台帳や列挙を渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(() => ExcludedBaselineBuilder.Build(null, Signatures()));

@@ -21,7 +21,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new ExcludedBaselineEntry(id, new ReadOnlyCollection<string>(new List<string>(signatures)));
         }
 
-        [Fact(Skip = "impl pending: 凍結した除外の組を決まった形のJSONへ書き出す")]
+        [Fact]
         public void シグネチャを1行ずつ並べる()
         {
             // 1つの能力が数百のシグネチャを持つので、1行にまとめると行単位の差分でどれが動いたかを
@@ -41,13 +41,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ExcludedBaselineJson.Write(Entries()));
         }
 
-        [Fact(Skip = "impl pending: 空の並びでも形を崩さずに書き出す")]
+        [Fact]
         public void 空の並びを渡しても形は崩れない()
         {
             Assert.Equal("{\n\"capabilities\":[]\n}\n", ExcludedBaselineJson.Write(new List<ExcludedBaselineEntry>()));
         }
 
-        [Fact(Skip = "impl pending: 並びを渡さないときは例外にする")]
+        [Fact]
         public void 並びを渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(() => ExcludedBaselineJson.Write(null));
