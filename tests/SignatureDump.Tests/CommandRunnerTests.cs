@@ -118,7 +118,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("excluded-signatures", CommandRunner.ExcludedSignaturesCommand);
         }
 
-        [Fact(Skip = "CommandRunner の excluded-signatures への振り分けが未実装")]
+        [Fact]
         public void 除外一覧の下位コマンドは除外一覧の書き出しを実行する()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
@@ -148,7 +148,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(ExitCodes.InputUnavailable, missingCode);
         }
 
-        [Fact(Skip = "CommandRunner の使用法への excluded-signatures 追加が未実装")]
+        [Fact]
         public void 使用法はすべての下位コマンドと引数の並びを示す()
         {
             StringWriter error = new StringWriter();

@@ -54,6 +54,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ExcludedBaselineRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], ExcludedSignaturesCommand, StringComparison.Ordinal))
+            {
+                return ExcludedSignatureRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -64,6 +69,9 @@ namespace PmxEditorMcp.SignatureDump
             error.WriteLine(SignaturesCommand + " <PMXエディタ導入ディレクトリ> <書き出し先パス>");
             error.WriteLine(
                 ExcludedBaselineCommand + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <書き出し先パス>");
+            error.WriteLine(
+                ExcludedSignaturesCommand
+                    + " <PMXエディタ導入ディレクトリ> <ベースライン正本のパス> <書き出し先パス>");
         }
     }
 }

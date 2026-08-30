@@ -95,8 +95,6 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.Unresolved;
             }
 
-            // 書き出し先は追跡する正本なので、直接上書きすると途中で失敗したときに前の内容を失う。
-            // 隣へ書き切ってから置き換える。
             string writing = outputPath + ".writing";
             try
             {
@@ -134,8 +132,6 @@ namespace PmxEditorMcp.SignatureDump
             return ExitCodes.Success;
         }
 
-        // 書きかけを残すと、次の実行が置き換えに使う名前を塞ぐ。取り除けないときは追加の報告を
-        // せず書き出し失敗の結果をそのまま返すので、書きかけは残る。
         private static void Discard(string path)
         {
             try

@@ -8,7 +8,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ExcludedSignatureRunnerTests : IDisposable
     {
-        private const string Pending = "ExcludedSignatureRunner.Run が未実装";
 
         private const string Known = "PmxEditorMcp.SignatureDump.Tests.Sample.SampleData..ctor()";
 
@@ -82,7 +81,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return ExcludedSignatureJson.Write(ExcludedSignatureBuilder.Build(baseline, inventory));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 引数が3つでなければ引数の誤りで終わる()
         {
             string[][] wrong =
@@ -104,7 +103,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 対象アセンブリが無ければ入力を読めない()
         {
             string outputPath = CreateExistingOutput();
@@ -118,7 +117,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ベースライン正本が無ければ入力を読めない()
         {
             string outputPath = CreateExistingOutput();
@@ -132,7 +131,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ベースライン正本を読み解けなければ入力を読めない()
         {
             string outputPath = CreateExistingOutput();
@@ -146,7 +145,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData("{\"capabilities\":{}}")]
         [InlineData("{\"capabilities\":[],\"extra\":1}")]
         [InlineData("{\"capabilities\":[{\"capabilityId\":\"CAP-1\"}]}")]
@@ -165,7 +164,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 凍結した組が列挙と食い違えば確定できない()
         {
             string outputPath = CreateExistingOutput();
@@ -181,7 +180,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 書き出せなければ書き出しの失敗で終わる()
         {
             string outputPath = Path.Combine(_root, "busy");
@@ -195,7 +194,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(ExitCodes.WriteFailed, code);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 書き出しの途中で失敗しても既存の正本は変わらない()
         {
             string outputPath = CreateExistingOutput();
@@ -210,7 +209,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 読めない対象アセンブリは入力を読めない()
         {
             string editorDirectory = CreateEditorDirectory();
@@ -233,7 +232,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void アセンブリでない対象は入力を読めない()
         {
             string editorDirectory = Path.Combine(_root, "broken");
@@ -251,7 +250,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 読み込めないベースライン正本は入力を読めない()
         {
             string baselinePath = CreateBaseline();
@@ -270,7 +269,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 凍結した組と列挙が揃えば書き出す()
         {
             string outputPath = CreateExistingOutput();
@@ -296,7 +295,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Expected(), written);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 書き出しはBOMを付けず改行をLFだけにする()
         {
             string outputPath = Path.Combine(_root, "excluded-signatures.json");
@@ -312,7 +311,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain((byte)'\r', bytes);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 引数や報告先を渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(
