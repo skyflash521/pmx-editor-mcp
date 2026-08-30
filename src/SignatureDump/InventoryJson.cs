@@ -26,6 +26,8 @@ namespace PmxEditorMcp.SignatureDump
             builder.Append(Member("assemblyVersion", Text(inventory.AssemblyVersion))).Append(",\n");
             AppendArray(builder, "types", inventory.Types.Select(WriteType));
             builder.Append(",\n");
+            AppendArray(builder, "referencedTypes", inventory.ReferencedTypes.Select(WriteType));
+            builder.Append(",\n");
             AppendArray(builder, "signatures", inventory.Signatures.Select(WriteSignature));
             builder.Append("\n}\n");
 
@@ -72,7 +74,8 @@ namespace PmxEditorMcp.SignatureDump
                 + Member("valueType", Text(signature.ValueType)) + ","
                 + Member("canRead", Flag(signature.CanRead)) + ","
                 + Member("canWrite", Flag(signature.CanWrite)) + ","
-                + Member("operationDirection", Text(Word(signature.OperationDirection.ToString())))
+                + Member("operationDirection", Text(Word(signature.OperationDirection.ToString()))) + ","
+                + Member("valueTypeIsTypeArgument", Flag(signature.ValueTypeIsTypeArgument))
                 + "}";
         }
 
@@ -82,7 +85,8 @@ namespace PmxEditorMcp.SignatureDump
                 + Member("name", Text(parameter.Name)) + ","
                 + Member("typeName", Text(parameter.TypeName)) + ","
                 + Member("direction", Text(Word(parameter.Direction.ToString()))) + ","
-                + Member("isOptional", Flag(parameter.IsOptional))
+                + Member("isOptional", Flag(parameter.IsOptional)) + ","
+                + Member("isTypeArgument", Flag(parameter.IsTypeArgument))
                 + "}";
         }
 
@@ -114,56 +118,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private static string Text(string value)
         {
-            StringBuilder builder = new StringBuilder();
-            builder.Append('"');
-            foreach (char c in value)
-            {
-                switch (c)
-                {
-                    case '"':
-                        builder.Append("\\\"");
-                        break;
-
-                    case '\\':
-                        builder.Append("\\\\");
-                        break;
-
-                    case '\b':
-                        builder.Append("\\b");
-                        break;
-
-                    case '\f':
-                        builder.Append("\\f");
-                        break;
-
-                    case '\n':
-                        builder.Append("\\n");
-                        break;
-
-                    case '\r':
-                        builder.Append("\\r");
-                        break;
-
-                    case '\t':
-                        builder.Append("\\t");
-                        break;
-
-                    default:
-                        if (c < ' ')
-                        {
-                            builder.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
-                        }
-                        else
-                        {
-                            builder.Append(c);
-                        }
-
-                        break;
-                }
-            }
-
-            builder.Append('"');
-            return builder.ToString();
+            return JsonText.Quote(value);
         }
     }
 }

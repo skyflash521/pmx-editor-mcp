@@ -29,41 +29,46 @@ namespace PmxEditorMcp.SignatureDump.Tests
             "{\"name\":\"N.Proc\",\"kind\":\"delegate\",\"isNested\":false,\"isAbstract\":false,"
                 + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],\"enumMembers\":[]}",
             "],",
+            "\"referencedTypes\":[",
+            "{\"name\":\"System.EventHandler\",\"kind\":\"delegate\",\"isNested\":false,"
+                + "\"isAbstract\":false,\"isGenericTypeDefinition\":false,\"baseTypes\":[],"
+                + "\"enumMembers\":[]}",
+            "],",
             "\"signatures\":[",
             "{\"key\":\"N.Holder..ctor(System.Int32)\",\"declaringType\":\"N.Holder\","
                 + "\"memberKind\":\"constructor\",\"memberName\":\".ctor\",\"isStatic\":false,"
                 + "\"genericArity\":0,\"parameters\":["
-                + "{\"name\":\"seed\",\"typeName\":\"System.Int32\",\"direction\":\"in\",\"isOptional\":false}"
+                + "{\"name\":\"seed\",\"typeName\":\"System.Int32\",\"direction\":\"in\",\"isOptional\":false,\"isTypeArgument\":false}"
                 + "],\"valueType\":\"N.Holder\",\"canRead\":false,\"canWrite\":false,"
-                + "\"operationDirection\":\"write\"},",
+                + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.Holder.Count()\",\"declaringType\":\"N.Holder\",\"memberKind\":\"field\","
                 + "\"memberName\":\"Count\",\"isStatic\":true,\"genericArity\":0,\"parameters\":[],"
                 + "\"valueType\":\"System.Int32\",\"canRead\":true,\"canWrite\":true,"
-                + "\"operationDirection\":\"write\"},",
+                + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.IThing.Changed()\",\"declaringType\":\"N.IThing\",\"memberKind\":\"event\","
                 + "\"memberName\":\"Changed\",\"isStatic\":false,\"genericArity\":0,\"parameters\":[],"
                 + "\"valueType\":\"System.EventHandler\",\"canRead\":false,\"canWrite\":false,"
-                + "\"operationDirection\":\"write\"},",
+                + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.IThing.Level()\",\"declaringType\":\"N.IThing\",\"memberKind\":\"property\","
                 + "\"memberName\":\"Level\",\"isStatic\":false,\"genericArity\":0,\"parameters\":[],"
                 + "\"valueType\":\"System.Int32\",\"canRead\":false,\"canWrite\":true,"
-                + "\"operationDirection\":\"write\"},",
+                + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.IThing.Name()\",\"declaringType\":\"N.IThing\",\"memberKind\":\"property\","
                 + "\"memberName\":\"Name\",\"isStatic\":false,\"genericArity\":0,\"parameters\":[],"
                 + "\"valueType\":\"System.String\",\"canRead\":true,\"canWrite\":false,"
-                + "\"operationDirection\":\"read\"},",
+                + "\"operationDirection\":\"read\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.IThing.Swap<1>(ref T)\",\"declaringType\":\"N.IThing\",\"memberKind\":\"method\","
                 + "\"memberName\":\"Swap\",\"isStatic\":false,\"genericArity\":1,\"parameters\":["
-                + "{\"name\":\"value\",\"typeName\":\"T\",\"direction\":\"ref\",\"isOptional\":false}"
-                + "],\"valueType\":\"System.Void\",\"canRead\":false,\"canWrite\":false,"
-                + "\"operationDirection\":\"write\"},",
+                + "{\"name\":\"value\",\"typeName\":\"T\",\"direction\":\"ref\",\"isOptional\":false,\"isTypeArgument\":true}"
+                + "],\"valueType\":\"T\",\"canRead\":false,\"canWrite\":false,"
+                + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":true},",
             "{\"key\":\"N.IThing.TryGet(System.Int32,out System.String)\",\"declaringType\":\"N.IThing\","
                 + "\"memberKind\":\"method\",\"memberName\":\"TryGet\",\"isStatic\":false,"
                 + "\"genericArity\":0,\"parameters\":["
-                + "{\"name\":\"index\",\"typeName\":\"System.Int32\",\"direction\":\"in\",\"isOptional\":false},"
-                + "{\"name\":\"text\",\"typeName\":\"System.String\",\"direction\":\"out\",\"isOptional\":true}"
+                + "{\"name\":\"index\",\"typeName\":\"System.Int32\",\"direction\":\"in\",\"isOptional\":false,\"isTypeArgument\":false},"
+                + "{\"name\":\"text\",\"typeName\":\"System.String\",\"direction\":\"out\",\"isOptional\":true,\"isTypeArgument\":false}"
                 + "],\"valueType\":\"System.Boolean\",\"canRead\":false,\"canWrite\":false,"
-                + "\"operationDirection\":\"write\"}",
+                + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false}",
             "]",
             "}",
             string.Empty,
@@ -167,11 +172,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "Swap",
                     false,
                     1,
-                    new List<ParameterRecord> { new ParameterRecord("value", "T", ParameterDirection.Ref, false) },
-                    "System.Void",
+                    new List<ParameterRecord>
+                    {
+                        new ParameterRecord("value", "T", ParameterDirection.Ref, false, true),
+                    },
+                    "T",
                     false,
                     false,
-                    OperationDirection.Write),
+                    OperationDirection.Write,
+                    true),
                 new SignatureRecord(
                     "N.IThing.TryGet(System.Int32,out System.String)",
                     "N.IThing",
@@ -190,7 +199,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     OperationDirection.Write),
             };
 
-            return new InventoryRecord("Sample", "1.2.3.4", types, signatures);
+            List<TypeRecord> referencedTypes = new List<TypeRecord>
+            {
+                new TypeRecord(
+                    "System.EventHandler",
+                    TypeKind.Delegate,
+                    false,
+                    false,
+                    false,
+                    new List<string>(),
+                    new List<string>()),
+            };
+
+            return new InventoryRecord("Sample", "1.2.3.4", types, referencedTypes, signatures);
         }
 
         [Fact]
@@ -208,6 +229,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal("Sample", root["assemblyName"]);
             Assert.Equal(6, ((object[])root["types"]).Length);
+            Assert.Single((object[])root["referencedTypes"]);
             Assert.Equal(7, ((object[])root["signatures"]).Length);
         }
 
@@ -215,7 +237,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void 要素のない配列は空の配列になる()
         {
             InventoryRecord empty = new InventoryRecord(
-                "Sample", "1.0", new List<TypeRecord>(), new List<SignatureRecord>());
+                "Sample", "1.0", new List<TypeRecord>(), new List<TypeRecord>(), new List<SignatureRecord>());
 
             Assert.Equal(
                 string.Join(
@@ -224,6 +246,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "\"assemblyName\":\"Sample\",",
                     "\"assemblyVersion\":\"1.0\",",
                     "\"types\":[],",
+                    "\"referencedTypes\":[],",
                     "\"signatures\":[]",
                     "}",
                     string.Empty),
@@ -236,6 +259,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             InventoryRecord inventory = new InventoryRecord(
                 "a\"b\\c\nd\te\u0001f",
                 "1.0",
+                new List<TypeRecord>(),
                 new List<TypeRecord>(),
                 new List<SignatureRecord>());
 

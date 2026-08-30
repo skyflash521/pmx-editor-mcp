@@ -41,28 +41,129 @@ namespace PmxEditorMcp.SignatureDump
             Type[] types = assembly.GetTypes().Where(t => t.IsVisible).ToArray();
             List<TypeRecord> typeRecords = new List<TypeRecord>();
             List<SignatureRecord> signatures = new List<SignatureRecord>();
+            HashSet<Type> referenced = new HashSet<Type>();
 
             foreach (Type type in types)
             {
                 TypeKind kind = ClassifyType(type);
-                typeRecords.Add(new TypeRecord(
-                    TypeNameFormatter.Format(type),
-                    kind,
-                    type.IsNested,
-                    type.IsAbstract,
-                    type.IsGenericTypeDefinition,
-                    CollectBaseTypes(type, kind),
-                    CollectEnumMembers(type, kind)));
-
+                typeRecords.Add(Describe(type, kind));
                 signatures.AddRange(CollectSignatures(type, kind));
+
+                foreach (Type used in CollectReferencedTypes(type, kind))
+                {
+                    if (used != null && used != typeof(void))
+                    {
+                        referenced.Add(used);
+                    }
+                }
             }
+
+            HashSet<string> declared = new HashSet<string>(
+                typeRecords.Select(t => t.Name), StringComparer.Ordinal);
+            List<TypeRecord> referencedRecords = referenced
+                .Select(t => Describe(t, ClassifyType(t)))
+                .Where(t => !declared.Contains(t.Name))
+                .ToList();
 
             AssemblyName name = assembly.GetName();
             return new InventoryRecord(
                 name.Name,
                 name.Version.ToString(),
                 typeRecords.OrderBy(t => t.Name, StringComparer.Ordinal).ToList(),
+                referencedRecords.OrderBy(t => t.Name, StringComparer.Ordinal).ToList(),
                 signatures.OrderBy(s => s.Key, StringComparer.Ordinal).ToList());
+        }
+
+        private static TypeRecord Describe(Type type, TypeKind kind)
+        {
+            return new TypeRecord(
+                TypeNameFormatter.Format(type),
+                kind,
+                type.IsNested,
+                type.IsAbstract,
+                type.IsGenericTypeDefinition,
+                CollectBaseTypes(type, kind),
+                CollectEnumMembers(type, kind));
+        }
+
+        /// <summary>
+        /// メンバーが引数・戻り値・値の型として指している型。行の表記に使うものと同じ型を返すので、
+        /// 型の種類を表記から引ける。
+        /// </summary>
+        private static IEnumerable<Type> CollectReferencedTypes(Type type, TypeKind kind)
+        {
+            if (kind == TypeKind.Enum)
+            {
+                yield break;
+            }
+
+            foreach (MethodInfo method in DeclaredMethods(type, kind))
+            {
+                foreach (Type used in Used(method.GetParameters()))
+                {
+                    yield return used;
+                }
+
+                yield return Element(method.ReturnType);
+            }
+
+            if (kind == TypeKind.Delegate)
+            {
+                yield break;
+            }
+
+            foreach (PropertyInfo property in type.GetProperties(DeclaredPublic))
+            {
+                foreach (Type used in Used(property.GetIndexParameters()))
+                {
+                    yield return used;
+                }
+
+                yield return Element(property.PropertyType);
+            }
+
+            foreach (FieldInfo field in type.GetFields(DeclaredPublic))
+            {
+                yield return Element(field.FieldType);
+            }
+
+            foreach (EventInfo declaredEvent in type.GetEvents(DeclaredPublic))
+            {
+                yield return Element(declaredEvent.EventHandlerType);
+            }
+
+            foreach (ConstructorInfo constructor in type.GetConstructors(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                foreach (Type used in Used(constructor.GetParameters()))
+                {
+                    yield return used;
+                }
+            }
+        }
+
+        private static IEnumerable<MethodInfo> DeclaredMethods(Type type, TypeKind kind)
+        {
+            if (kind == TypeKind.Delegate)
+            {
+                MethodInfo invoke = type.GetMethod(DelegateInvokeName, DeclaredPublic);
+                return invoke == null ? new MethodInfo[0] : new[] { invoke };
+            }
+
+            HashSet<MethodInfo> accessors = CollectAccessors(type);
+            return type.GetMethods(DeclaredPublic).Where(m => !accessors.Contains(m));
+        }
+
+        private static IEnumerable<Type> Used(ParameterInfo[] parameters)
+        {
+            return parameters.Select(p => Element(p.ParameterType));
+        }
+
+        // 総称型引数は宣言ごとに別の型になり、分類の対象にならない。
+        private static Type Element(Type type)
+        {
+            Type element = type.IsByRef ? type.GetElementType() : type;
+            return element.IsGenericParameter ? null : element;
         }
 
         // 列挙型は値型でもあり、デリゲートはクラスでもあるので、狭い分類から先に見る。
@@ -132,22 +233,14 @@ namespace PmxEditorMcp.SignatureDump
                 yield break;
             }
 
-            if (kind == TypeKind.Delegate)
-            {
-                MethodInfo invoke = type.GetMethod(DelegateInvokeName, DeclaredPublic);
-                if (invoke != null)
-                {
-                    yield return FromMethod(type, invoke);
-                }
-
-                yield break;
-            }
-
-            HashSet<MethodInfo> accessors = CollectAccessors(type);
-
-            foreach (MethodInfo method in type.GetMethods(DeclaredPublic).Where(m => !accessors.Contains(m)))
+            foreach (MethodInfo method in DeclaredMethods(type, kind))
             {
                 yield return FromMethod(type, method);
+            }
+
+            if (kind == TypeKind.Delegate)
+            {
+                yield break;
             }
 
             foreach (PropertyInfo property in type.GetProperties(DeclaredPublic))
@@ -225,7 +318,8 @@ namespace PmxEditorMcp.SignatureDump
                 valueType,
                 false,
                 false,
-                OperationDirectionRule.ForMethod(method.Name, valueType, hasOutOrRef));
+                OperationDirectionRule.ForMethod(method.Name, valueType, hasOutOrRef),
+                IsTypeArgument(method.ReturnType));
         }
 
         private static SignatureRecord FromProperty(Type type, PropertyInfo property)
@@ -243,7 +337,8 @@ namespace PmxEditorMcp.SignatureDump
                 TypeNameFormatter.Format(property.PropertyType),
                 getter != null,
                 setter != null,
-                OperationDirectionRule.ForProperty(getter != null));
+                OperationDirectionRule.ForProperty(getter != null),
+                IsTypeArgument(property.PropertyType));
         }
 
         private static SignatureRecord FromField(Type type, FieldInfo field)
@@ -258,7 +353,8 @@ namespace PmxEditorMcp.SignatureDump
                 TypeNameFormatter.Format(field.FieldType),
                 true,
                 !field.IsInitOnly && !field.IsLiteral,
-                OperationDirectionRule.ForOtherMember());
+                OperationDirectionRule.ForOtherMember(),
+                IsTypeArgument(field.FieldType));
         }
 
         private static SignatureRecord FromEvent(Type type, EventInfo declaredEvent)
@@ -275,7 +371,8 @@ namespace PmxEditorMcp.SignatureDump
                 TypeNameFormatter.Format(declaredEvent.EventHandlerType),
                 false,
                 false,
-                OperationDirectionRule.ForOtherMember());
+                OperationDirectionRule.ForOtherMember(),
+                IsTypeArgument(declaredEvent.EventHandlerType));
         }
 
         private static SignatureRecord FromConstructor(Type type, ConstructorInfo constructor)
@@ -303,7 +400,8 @@ namespace PmxEditorMcp.SignatureDump
             string valueType,
             bool canRead,
             bool canWrite,
-            OperationDirection direction)
+            OperationDirection direction,
+            bool valueTypeIsTypeArgument = false)
         {
             string declaringType = TypeNameFormatter.Format(type);
             string key = SignatureKeyBuilder.Build(declaringType, memberName, genericArity, parameters, valueType);
@@ -319,7 +417,13 @@ namespace PmxEditorMcp.SignatureDump
                 valueType,
                 canRead,
                 canWrite,
-                direction);
+                direction,
+                valueTypeIsTypeArgument);
+        }
+
+        private static bool IsTypeArgument(Type type)
+        {
+            return (type.IsByRef ? type.GetElementType() : type).IsGenericParameter;
         }
 
         private static IList<ParameterRecord> ToParameters(ParameterInfo[] parameters)
@@ -332,7 +436,12 @@ namespace PmxEditorMcp.SignatureDump
                     ? (p.IsOut ? ParameterDirection.Out : ParameterDirection.Ref)
                     : ParameterDirection.In;
 
-                return new ParameterRecord(p.Name, TypeNameFormatter.Format(valueType), direction, p.IsOptional);
+                return new ParameterRecord(
+                    p.Name,
+                    TypeNameFormatter.Format(valueType),
+                    direction,
+                    p.IsOptional,
+                    valueType.IsGenericParameter);
             }).ToList();
         }
     }

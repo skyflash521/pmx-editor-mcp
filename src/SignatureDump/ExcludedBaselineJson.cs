@@ -49,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private static string Text(string value)
         {
-            return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+            return JsonText.Quote(value);
         }
     }
 }

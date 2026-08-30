@@ -8,7 +8,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ExcludedSignatureBuilderTests
     {
-        private const string Pending = "ExcludedSignatureBuilder.Build が未実装";
 
         private const string FrozenConstructor = "PEPlugin.SDX.M..ctor()";
 
@@ -106,6 +105,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string CloneMember = "PEPlugin.Vme.PEVmePreviewOption.Clone()";
 
+        private const string StreamDerivedArgument = "PEPlugin.Pmx.IPXPmx.WriteTo(PEPlugin.Pmx.PXStream)";
+
+        private const string ExternalDelegateOverload =
+            "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Func<System.Double,System.Double>)";
+
+        private const string PmdConstructor = "PEPlugin.Vmd.PEVmdKey..ctor(PEPlugin.Pmd.IPEPmd)";
+
+        private const string PmxConstructor = "PEPlugin.Vmd.PEVmdKey..ctor(PEPlugin.Pmx.IPXPmx)";
+
+        private const string KeyFactory = "PEPlugin.Vmd.IPEVmd.CreateKey()";
+
+        private const string ConstructorWithPmdFactory = "PXCPlugin.PXPmdInfo..ctor()";
+
+        private const string PmdFactory = "PXCPlugin.IPXSystemControl.GetPmdInfo(PEPlugin.Pmd.IPEPmd)";
+
+        private const string ConstructorWithDelegateFactory = "PXCPlugin.PXDelegateInfo..ctor()";
+
+        private const string DelegateFactory =
+            "PXCPlugin.IPXSystemControl.GetDelegateInfo(System.Func<System.Double,System.Double>)";
+
+        private const string ConstructorNamedLikeTypeArgument = "T..ctor()";
+
+        private const string TypeArgumentFactory = "PEPlugin.Vmd.IPEVmd.Make<1>()";
+
+        private const string PmdWithTypeArgument = "PEPlugin.Vmd.IPEVmd.Bind<1>(PEPlugin.Pmd.IPEPmd,T)";
+
+        private const string PmxWithRealTypeNamedT = "PEPlugin.Vmd.IPEVmd.Bind<1>(PEPlugin.Pmx.IPXPmx,T)";
+
         private const string OutsideEveryCategory = "PEPlugin.Pmx.IPXBone.Name()";
 
         private static InventoryRecord Inventory()
@@ -119,7 +146,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Type("PEPlugin.Pmx.IPXBone", TypeKind.Interface),
                 Type("PEPlugin.Form.IPEFormConnector", TypeKind.Interface),
                 Type("PEPlugin.IPEConnector", TypeKind.Interface),
+                Type("PEPlugin.Pmx.PXStream", TypeKind.Class, "System.IO.Stream"),
+                Type("T", TypeKind.Class),
+                Type("PEPlugin.Vmd.PEVmdKey", TypeKind.Class),
+                Type("PXCPlugin.PXPmdInfo", TypeKind.Class),
+                Type("PXCPlugin.PXDelegateInfo", TypeKind.Class),
                 Type("PEPlugin.Vme.IPEVme", TypeKind.Interface),
+                Type("PEPlugin.Vme.IPEVmePath", TypeKind.Interface),
                 Type("PEPlugin.Vme.IPEVmeSingleValueEventOperator", TypeKind.Interface),
                 Type("PEPlugin.Vme.StateValueProc", TypeKind.Delegate),
                 Type("PEPlugin.Vme.PEVmePreviewOption", TypeKind.Class),
@@ -187,6 +220,32 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Method("PEPlugin.Pmx.IPXPmx", "OpenStream", "System.IO.Stream"),
                 Method("PEPlugin.Pmx.IPXPmx", "FromFile", "System.Boolean", Arg("path", "System.String")),
                 Method("PEPlugin.Pmx.IPXPmx", "ToFile", "System.Boolean", Arg("path", "System.String")),
+                Method(
+                    "PEPlugin.Pmx.IPXPmx", "WriteTo", "System.Boolean", Arg("s", "PEPlugin.Pmx.PXStream")),
+
+                Method(
+                    "PEPlugin.Vme.IPEVmePath",
+                    "GetPathPoints",
+                    "System.Void",
+                    Arg("f", "System.Func<System.Double,System.Double>")),
+
+                Constructor("PEPlugin.Vmd.PEVmdKey", Arg("pmd", "PEPlugin.Pmd.IPEPmd")),
+                Constructor("PEPlugin.Vmd.PEVmdKey", Arg("pmx", "PEPlugin.Pmx.IPXPmx")),
+                Method("PEPlugin.Vmd.IPEVmd", "CreateKey", "PEPlugin.Vmd.PEVmdKey"),
+
+                Constructor("PXCPlugin.PXPmdInfo"),
+                Method(
+                    "PXCPlugin.IPXSystemControl",
+                    "GetPmdInfo",
+                    "PXCPlugin.PXPmdInfo",
+                    Arg("pmd", "PEPlugin.Pmd.IPEPmd")),
+
+                Constructor("PXCPlugin.PXDelegateInfo"),
+                Method(
+                    "PXCPlugin.IPXSystemControl",
+                    "GetDelegateInfo",
+                    "PXCPlugin.PXDelegateInfo",
+                    Arg("f", "System.Func<System.Double,System.Double>")),
 
                 Method(
                     "PEPlugin.Vme.IPEVmeSingleValueEventOperator",
@@ -248,18 +307,44 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Constructor("PEPlugin.Vme.PEVmeFilter"),
                 StaticMethod("PEPlugin.Vme.PEVmeFilter", "Create", "PEPlugin.Vme.PEVmeFilter"),
 
+                Constructor("T"),
+                GenericMethod("PEPlugin.Vmd.IPEVmd", "Make", 1, "T", true),
+                GenericMethod(
+                    "PEPlugin.Vmd.IPEVmd",
+                    "Bind",
+                    1,
+                    "System.Void",
+                    false,
+                    Arg("pmd", "PEPlugin.Pmd.IPEPmd"),
+                    TypeArgument("value", "T")),
+                GenericMethod(
+                    "PEPlugin.Vmd.IPEVmd",
+                    "Bind",
+                    1,
+                    "System.Void",
+                    false,
+                    Arg("pmx", "PEPlugin.Pmx.IPXPmx"),
+                    Arg("value", "T")),
+
                 Property("PEPlugin.Pmx.IPXBone", "Name", "System.String"),
+            };
+
+            List<TypeRecord> referencedTypes = new List<TypeRecord>
+            {
+                Type("System.Func<System.Double,System.Double>", TypeKind.Delegate),
+                Type("System.IO.MemoryStream", TypeKind.Class, "System.IO.Stream"),
             };
 
             return new InventoryRecord(
                 "PEPlugin",
                 "0.0.8.9",
                 new ReadOnlyCollection<TypeRecord>(types),
+                new ReadOnlyCollection<TypeRecord>(referencedTypes),
                 new ReadOnlyCollection<SignatureRecord>(
                     signatures.OrderBy(s => s.Key, StringComparer.Ordinal).ToList()));
         }
 
-        private static TypeRecord Type(string name, TypeKind kind)
+        private static TypeRecord Type(string name, TypeKind kind, params string[] baseTypes)
         {
             return new TypeRecord(
                 name,
@@ -267,7 +352,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 false,
                 false,
                 false,
-                new ReadOnlyCollection<string>(new List<string>()),
+                new ReadOnlyCollection<string>(baseTypes.ToList()),
                 new ReadOnlyCollection<string>(new List<string>()));
         }
 
@@ -279,6 +364,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static ParameterRecord RefArg(string name, string typeName)
         {
             return new ParameterRecord(name, typeName, ParameterDirection.Ref, false);
+        }
+
+        private static ParameterRecord TypeArgument(string name, string typeName)
+        {
+            return new ParameterRecord(name, typeName, ParameterDirection.In, false, true);
         }
 
         private static SignatureRecord Method(
@@ -294,9 +384,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string returnType,
             params ParameterRecord[] parameters)
         {
+            return GenericMethod(declaringType, memberName, genericArity, returnType, false, parameters);
+        }
+
+        private static SignatureRecord GenericMethod(
+            string declaringType,
+            string memberName,
+            int genericArity,
+            string returnType,
+            bool returnTypeIsTypeArgument,
+            params ParameterRecord[] parameters)
+        {
             return Signature(
                 declaringType, MemberKind.Method, memberName, genericArity, parameters, returnType,
-                false, false, false, OperationDirection.Write);
+                false, false, false, OperationDirection.Write, returnTypeIsTypeArgument);
         }
 
         private static SignatureRecord StaticMethod(
@@ -307,10 +408,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 true, false, false, OperationDirection.Write);
         }
 
-        private static SignatureRecord Constructor(string declaringType)
+        private static SignatureRecord Constructor(string declaringType, params ParameterRecord[] parameters)
         {
             return Signature(
-                declaringType, MemberKind.Constructor, ".ctor", 0, new ParameterRecord[0], declaringType,
+                declaringType, MemberKind.Constructor, ".ctor", 0, parameters, declaringType,
                 false, false, false, OperationDirection.Write);
         }
 
@@ -338,7 +439,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             bool isStatic,
             bool canRead,
             bool canWrite,
-            OperationDirection operationDirection)
+            OperationDirection operationDirection,
+            bool valueTypeIsTypeArgument = false)
         {
             ReadOnlyCollection<ParameterRecord> declared =
                 new ReadOnlyCollection<ParameterRecord>(parameters.ToList());
@@ -354,7 +456,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 valueType,
                 canRead,
                 canWrite,
-                operationDirection);
+                operationDirection,
+                valueTypeIsTypeArgument);
         }
 
         private static ExcludedBaselineEntry Entry(string capabilityId, params string[] signatures)
@@ -368,7 +471,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new List<ExcludedBaselineEntry>
             {
                 Entry("CAP-269", CPluginArgumentOverload, FrozenFactory),
-                Entry("CAP-339", FromStream, StreamInValueType, ToStream),
+                Entry("CAP-339", FromStream, StreamDerivedArgument, StreamInValueType, ToStream),
                 Entry("CAP-390", FrozenPmxSave),
                 Entry("CAP-466", FrozenConstructor),
             };
@@ -419,13 +522,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     ConstructorWithStaticFactory, StaticFactory, ConstructorWithPropertyOnly, OptionProperty,
                     ConstructorWithFactoryOnSameType, StaticFactoryOnSameType,
                     CPluginArgumentOverload, CPluginConnectorMember, CPluginConnectorArgument,
-                    CPluginInValueType, DelegateInValueType,
+                    CPluginInValueType, DelegateInValueType, StreamDerivedArgument, ExternalDelegateOverload,
+                    PmdConstructor, PmxConstructor, KeyFactory, ConstructorWithPmdFactory, PmdFactory,
+                    ConstructorNamedLikeTypeArgument, TypeArgumentFactory, PmdWithTypeArgument,
+                    PmxWithRealTypeNamedT,
+                    ConstructorWithDelegateFactory, DelegateFactory,
                     CloneOnlyConstructor, CloneMember, OutsideEveryCategory,
                 },
                 key => Assert.Contains(key, keys));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 凍結した組はベースラインを根拠に載る()
         {
             ExcludedSignatureRecord record = Find(FrozenConstructor);
@@ -436,7 +543,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(string.Empty, record.Alternative);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 代替のあるPMD版はカテゴリを根拠に載る()
         {
             ExcludedSignatureRecord record = Find(PmdInit);
@@ -447,73 +554,73 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(string.Empty, record.CapabilityId);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 代替の無いPMD版は除外しない()
         {
             Assert.DoesNotContain(PmdWithoutAlternative, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 引数の個数が違うPMX版しか無いPMD版は除外しない()
         {
             Assert.DoesNotContain(PmdReset, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 戻り値が違うPMX版しか無いPMD版は除外しない()
         {
             Assert.DoesNotContain(PmdMerge, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 対応表に無い型を取るPMX版しか無いPMD版は除外しない()
         {
             Assert.DoesNotContain(PmdApply, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 総称型引数の数が違うPMX版しか無いPMD版は除外しない()
         {
             Assert.DoesNotContain(PmdLoad, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 引数の向きが違うPMX版しか無いPMD版は除外しない()
         {
             Assert.DoesNotContain(PmdStore, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 宣言型が違うPMX版しか無いPMD版は除外しない()
         {
             Assert.DoesNotContain(PmdInitOnOtherType, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 凍結されたPMX版は代替にならない()
         {
             Assert.DoesNotContain(PmdSave, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 代替には引数の個数が同じPMX版を選ぶ()
         {
             Assert.Equal(PmxInit, Find(PmdInit).Alternative);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void メンバー名だけがPMDを含むシグネチャは除外しない()
         {
             Assert.DoesNotContain(PmdInMemberNameOnly, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 戻り値だけがPMD型で代替の無いシグネチャは除外しない()
         {
             Assert.DoesNotContain(PmdInValueType, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void デリゲートを取る版はカテゴリを根拠に載る()
         {
             ExcludedSignatureRecord record = Find(DelegateOverload);
@@ -524,7 +631,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(ValueOverload, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void Cプラグイン実装本体を取る版はカテゴリを根拠に載る()
         {
             IList<ExcludedSignatureRecord> records = ExcludedSignatureBuilder.Build(
@@ -536,31 +643,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(string.Empty, record.Alternative);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 接続用インターフェースのメンバーは除外しない()
         {
             Assert.DoesNotContain(CPluginConnectorMember, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 接続用インターフェースを引数に取るシグネチャは除外しない()
         {
             Assert.DoesNotContain(CPluginConnectorArgument, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 戻り値だけがCプラグイン実装本体のシグネチャは除外しない()
         {
             Assert.DoesNotContain(CPluginInValueType, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void デリゲート型をハンドラに持つイベントは除外しない()
         {
             Assert.DoesNotContain(DelegateInValueType, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 生成メンバーのある公開コンストラクタはカテゴリを根拠に載る()
         {
             ExcludedSignatureRecord record = Find(DuplicatedConstructor);
@@ -570,13 +677,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(PluginInfoFactory, record.Alternative);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 自分自身を返すメンバーは代替にならない()
         {
             Assert.DoesNotContain(CloneOnlyConstructor, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 静的な生成メンバーのある公開コンストラクタもカテゴリを根拠に載る()
         {
             ExcludedSignatureRecord record = Find(ConstructorWithStaticFactory);
@@ -585,28 +692,73 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(StaticFactory, record.Alternative);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 同じ型を返すプロパティは生成メンバーに数えない()
         {
             Assert.DoesNotContain(ConstructorWithPropertyOnly, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void 対象アセンブリの外のデリゲート型を取る版もカテゴリを根拠に載る()
+        {
+            ExcludedSignatureRecord record = Find(ExternalDelegateOverload);
+
+            Assert.Equal(ExclusionCategory.Delegate, record.Category);
+        }
+
+        [Fact]
+        public void PMD型を取る公開コンストラクタも生成メンバーが在れば載る()
+        {
+            ExcludedSignatureRecord record = Find(PmdConstructor);
+
+            Assert.Equal(ExclusionCategory.ConstructorDuplicate, record.Category);
+            Assert.Equal(KeyFactory, record.Alternative);
+        }
+
+        [Fact]
+        public void PMD型を取る生成メンバーでも除外されないなら代替に数える()
+        {
+            ExcludedSignatureRecord record = Find(ConstructorWithPmdFactory);
+
+            Assert.Equal(ExclusionCategory.ConstructorDuplicate, record.Category);
+            Assert.Equal(PmdFactory, record.Alternative);
+        }
+
+        [Fact]
+        public void カテゴリで除外される生成メンバーは代替に数えない()
+        {
+            Assert.DoesNotContain(ConstructorWithDelegateFactory, Build().Select(r => r.Key));
+        }
+
+        [Fact]
+        public void 総称型引数を返すメソッドは生成メンバーに数えない()
+        {
+            Assert.DoesNotContain(ConstructorNamedLikeTypeArgument, Build().Select(r => r.Key));
+        }
+
+        [Fact]
+        public void 総称型引数と同じ名前の実型は代替の照合で別の型として扱う()
+        {
+            Assert.DoesNotContain(PmdWithTypeArgument, Build().Select(r => r.Key));
+        }
+
+        [Fact]
         public void 同じ宣言型の静的メソッドは生成メンバーに数えない()
         {
             Assert.DoesNotContain(ConstructorWithFactoryOnSameType, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 凍結された生成メンバーは代替にならない()
         {
             Assert.DoesNotContain(FrozenFactoryConstructor, Build().Select(r => r.Key));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(FromStream)]
         [InlineData(ToStream)]
         [InlineData(StreamInValueType)]
+        [InlineData(StreamDerivedArgument)]
         public void 凍結されていないStream版が在ると例外になる(string key)
         {
             // 形式が同じかどうかは一次資料でしか決まらないので、除外するか残すかを機械で決められない。
@@ -616,7 +768,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(key, error.Message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void Stream版がすべて凍結されていれば止まらない()
         {
             string[] keys = Build().Select(r => r.Key).ToArray();
@@ -626,13 +778,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(StreamInValueType, keys);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void どの根拠も無いシグネチャは載らない()
         {
             Assert.DoesNotContain(OutsideEveryCategory, Build().Select(r => r.Key));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 行キーの昇順で重複なく並ぶ()
         {
             string[] keys = Build().Select(r => r.Key).ToArray();
@@ -641,20 +793,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(
                 new[]
                 {
-                    FrozenConstructor, FromStream, ToStream, StreamInValueType, CPluginArgumentOverload,
-                    FrozenFactory, FrozenPmxSave, PmdInit, DelegateOverload, DuplicatedConstructor,
-                    ConstructorWithStaticFactory,
+                    FrozenConstructor, FromStream, ToStream, StreamInValueType, StreamDerivedArgument,
+                    CPluginArgumentOverload, FrozenFactory, FrozenPmxSave, PmdInit, DelegateOverload,
+                    ExternalDelegateOverload, DelegateFactory, DuplicatedConstructor,
+                    ConstructorWithStaticFactory, ConstructorWithPmdFactory, PmdConstructor, PmxConstructor,
                 }.OrderBy(k => k, StringComparer.Ordinal).ToArray(),
                 keys);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void カテゴリの述語も満たす凍結した組は1件だけ載る()
         {
             IList<ExcludedSignatureRecord> records = ExcludedSignatureBuilder.Build(
                 BaselineOf(
                     Entry("CAP-269", CPluginArgumentOverload),
-                    Entry("CAP-339", FromStream, StreamInValueType, ToStream),
+                    Entry("CAP-339", FromStream, StreamDerivedArgument, StreamInValueType, ToStream),
                     Entry("CAP-390", PmdInit),
                     Entry("CAP-459", DuplicatedConstructor),
                     Entry("CAP-461", DelegateOverload)),
@@ -669,7 +822,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 凍結した組が列挙と食い違うと例外になる()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -679,7 +832,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("PEPlugin.SDX.M.Removed()", error.Message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void 凍結した組や列挙を渡さないと例外になる()
         {
             Assert.Throws<ArgumentNullException>(() => ExcludedSignatureBuilder.Build(null, Inventory()));

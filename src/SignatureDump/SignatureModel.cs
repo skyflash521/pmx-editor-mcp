@@ -36,12 +36,18 @@ namespace PmxEditorMcp.SignatureDump
 
     public sealed class ParameterRecord
     {
-        public ParameterRecord(string name, string typeName, ParameterDirection direction, bool isOptional)
+        public ParameterRecord(
+            string name,
+            string typeName,
+            ParameterDirection direction,
+            bool isOptional,
+            bool isTypeArgument = false)
         {
             Name = name;
             TypeName = typeName;
             Direction = direction;
             IsOptional = isOptional;
+            IsTypeArgument = isTypeArgument;
         }
 
         public string Name { get; }
@@ -52,6 +58,12 @@ namespace PmxEditorMcp.SignatureDump
         public ParameterDirection Direction { get; }
 
         public bool IsOptional { get; }
+
+        /// <summary>
+        /// 型が総称型引数かどうか。表記は宣言ごとの名前そのままで、名前空間を持たない型と同じ形に
+        /// なりうるので、型の分類を引く側はこの印で見分ける。
+        /// </summary>
+        public bool IsTypeArgument { get; }
     }
 
     public sealed class SignatureRecord
@@ -67,7 +79,8 @@ namespace PmxEditorMcp.SignatureDump
             string valueType,
             bool canRead,
             bool canWrite,
-            OperationDirection operationDirection)
+            OperationDirection operationDirection,
+            bool valueTypeIsTypeArgument = false)
         {
             Key = key;
             DeclaringType = declaringType;
@@ -80,6 +93,7 @@ namespace PmxEditorMcp.SignatureDump
             CanRead = canRead;
             CanWrite = canWrite;
             OperationDirection = operationDirection;
+            ValueTypeIsTypeArgument = valueTypeIsTypeArgument;
         }
 
         /// <summary>
@@ -123,6 +137,9 @@ namespace PmxEditorMcp.SignatureDump
         public bool CanWrite { get; }
 
         public OperationDirection OperationDirection { get; }
+
+        /// <summary><see cref="ValueType"/> が総称型引数かどうか。</summary>
+        public bool ValueTypeIsTypeArgument { get; }
     }
 
     public sealed class TypeRecord
@@ -173,11 +190,13 @@ namespace PmxEditorMcp.SignatureDump
             string assemblyName,
             string assemblyVersion,
             IList<TypeRecord> types,
+            IList<TypeRecord> referencedTypes,
             IList<SignatureRecord> signatures)
         {
             AssemblyName = assemblyName;
             AssemblyVersion = assemblyVersion;
             Types = types;
+            ReferencedTypes = referencedTypes;
             Signatures = signatures;
         }
 
@@ -187,6 +206,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>表記の昇順。</summary>
         public IList<TypeRecord> Types { get; }
+
+        /// <summary>
+        /// シグネチャが参照する、対象アセンブリの外で宣言された型。表記の昇順。型の種類を名前から
+        /// 推し量らずに済ませるために持つ。
+        /// </summary>
+        public IList<TypeRecord> ReferencedTypes { get; }
 
         /// <summary>行キーの昇順。</summary>
         public IList<SignatureRecord> Signatures { get; }

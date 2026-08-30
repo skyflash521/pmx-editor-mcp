@@ -54,12 +54,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Api + ".Apply()|" + Api + "|Apply|Method|instance|0|System.Void|--|Write|",
             Api + ".Apply<1>()|" + Api + "|Apply|Method|instance|1|System.Void|--|Write|",
             Api + ".Changed()|" + Api + "|Changed|Event|instance|0|System.EventHandler|--|Write|",
-            Api + ".Convert<1>(T)|" + Api + "|Convert|Method|instance|1|T|--|Write|value:T:In:required",
+            Api + ".Convert<1>(T)|" + Api
+                + "|Convert|Method|instance|1|T:typeArgument|--|Write|value:T:In:required:typeArgument",
             Api + ".Fill(System.Int32[],System.Collections.Generic.IList<System.String>)|" + Api
                 + "|Fill|Method|instance|0|System.Void|--|Write|"
                 + "values:System.Int32[]:In:required"
                 + ";names:System.Collections.Generic.IList<System.String>:In:required",
             Api + ".GetCount()|" + Api + "|GetCount|Method|instance|0|System.Int32|--|Read|",
+            Api + ".Item(System.Guid)|" + Api
+                + "|Item|Property|instance|0|System.String|r-|Read|key:System.Guid:In:required",
             Api + ".GetState(ref System.Int32)|" + Api
                 + "|GetState|Method|instance|0|System.Boolean|--|Write|value:System.Int32:Ref:required",
             Api + ".ReadOnlyName()|" + Api + "|ReadOnlyName|Property|instance|0|System.String|r-|Read|",
@@ -101,7 +104,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Derived + "..ctor()|" + Derived + "|.ctor|Constructor|instance|0|" + Derived + "|--|Write|",
             Derived + ".AuxValue()|" + Derived + "|AuxValue|Property|instance|0|System.Int32|r-|Read|",
             Generic + "..ctor()|" + Generic + "|.ctor|Constructor|instance|0|" + Generic + "|--|Write|",
-            Generic + ".Value()|" + Generic + "|Value|Property|instance|0|T|rw|Read|",
+            Generic + ".Value()|" + Generic + "|Value|Property|instance|0|T:typeArgument|rw|Read|",
             Nested + "..ctor()|" + Nested + "|.ctor|Constructor|instance|0|" + Nested + "|--|Write|",
             Nested + ".Nested()|" + Nested + "|Nested|Property|instance|0|System.Int32|rw|Read|",
             Proc + ".Invoke(System.Int32)|" + Proc
@@ -111,13 +114,52 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + OuterGeneric + "|--|Write|",
             InnerGeneric + "..ctor()|" + InnerGeneric + "|.ctor|Constructor|instance|0|"
                 + InnerGeneric + "|--|Write|",
-            InnerGeneric + ".Inner()|" + InnerGeneric + "|Inner|Property|instance|0|TInner|rw|Read|",
-            InnerGeneric + ".Outer()|" + InnerGeneric + "|Outer|Property|instance|0|TOuter|rw|Read|",
+            InnerGeneric + ".Inner()|" + InnerGeneric
+                + "|Inner|Property|instance|0|TInner:typeArgument|rw|Read|",
+            InnerGeneric + ".Outer()|" + InnerGeneric
+                + "|Outer|Property|instance|0|TOuter:typeArgument|rw|Read|",
         };
 
         private static InventoryRecord Enumerate()
         {
             return AssemblyEnumerator.Enumerate(typeof(ISampleApi).Assembly);
+        }
+
+        [Fact]
+        public void 行が指す型はすべて分類を持つ()
+        {
+            InventoryRecord inventory = Enumerate();
+            HashSet<string> classified = new HashSet<string>(
+                inventory.Types.Concat(inventory.ReferencedTypes).Select(t => t.Name), StringComparer.Ordinal);
+
+            string[] unclassified = inventory.Signatures
+                .SelectMany(Classifiable)
+                .Where(n => n != "System.Void" && !classified.Contains(n))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .ToArray();
+
+            Assert.Equal(new string[0], unclassified);
+        }
+
+        /// <summary>総称型引数は宣言ごとに別の型で、分類を持たない。</summary>
+        private static IEnumerable<string> Classifiable(SignatureRecord signature)
+        {
+            IEnumerable<string> parameters = signature.Parameters
+                .Where(p => !p.IsTypeArgument)
+                .Select(p => p.TypeName);
+            IEnumerable<string> value = signature.ValueTypeIsTypeArgument
+                ? new string[0]
+                : new[] { Element(signature.ValueType) };
+
+            return parameters.Concat(value);
+        }
+
+        private static string Element(string typeName)
+        {
+            return typeName.EndsWith("&", StringComparison.Ordinal)
+                ? typeName.Substring(0, typeName.Length - 1)
+                : typeName;
         }
 
         private static string Describe(TypeRecord type)
@@ -143,13 +185,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 signature.MemberKind.ToString(),
                 signature.IsStatic ? "static" : "instance",
                 signature.GenericArity.ToString(CultureInfo.InvariantCulture),
-                signature.ValueType,
+                signature.ValueType + (signature.ValueTypeIsTypeArgument ? ":typeArgument" : string.Empty),
                 (signature.CanRead ? "r" : "-") + (signature.CanWrite ? "w" : "-"),
                 signature.OperationDirection.ToString(),
-                string.Join(
-                    ";",
-                    signature.Parameters.Select(p => string.Join(
-                        ":", p.Name, p.TypeName, p.Direction.ToString(), p.IsOptional ? "optional" : "required"))));
+                string.Join(";", signature.Parameters.Select(Describe)));
+        }
+
+        private static string Describe(ParameterRecord parameter)
+        {
+            return string.Join(
+                ":",
+                parameter.Name,
+                parameter.TypeName,
+                parameter.Direction.ToString(),
+                parameter.IsOptional ? "optional" : "required")
+                + (parameter.IsTypeArgument ? ":typeArgument" : string.Empty);
         }
 
         private static string[] Sorted(IEnumerable<string> values)
