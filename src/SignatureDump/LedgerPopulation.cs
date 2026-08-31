@@ -151,9 +151,13 @@ namespace PmxEditorMcp.SignatureDump
             string type = index.FindType(name, row);
             if (type != null)
             {
-                types.Add(type);
                 foreach (string declaring in index.Closure(type))
                 {
+                    if (index.IsPublicType(declaring))
+                    {
+                        types.Add(declaring);
+                    }
+
                     foreach (SignatureRecord signature in index.Declared(declaring))
                     {
                         Own(owners, signature.Key, row.Id);
@@ -176,10 +180,14 @@ namespace PmxEditorMcp.SignatureDump
                 throw Unresolved(row, "指す先が無い: " + name);
             }
 
-            types.Add(owner);
             bool found = false;
             foreach (string declaring in index.Closure(owner))
             {
+                if (index.IsPublicType(declaring))
+                {
+                    types.Add(declaring);
+                }
+
                 foreach (SignatureRecord signature in index.Declared(declaring))
                 {
                     if (string.Equals(signature.MemberName, member, StringComparison.Ordinal))
@@ -265,6 +273,12 @@ namespace PmxEditorMcp.SignatureDump
             internal IEnumerable<TypeRecord> Types
             {
                 get { return _types.Values; }
+            }
+
+            /// <summary>対象アセンブリの公開型かどうか。基底の並びは外部の型も含む。</summary>
+            internal bool IsPublicType(string name)
+            {
+                return _types.ContainsKey(name);
             }
 
             internal IEnumerable<SignatureRecord> Declared(string type)

@@ -27,6 +27,50 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void 引いた型の基底型も指す型に入る()
+        {
+            LedgerPopulation population = Resolve(
+                Inventory(
+                    Types(
+                        Type("N.IBase", TypeKind.Interface),
+                        Type("N.IMiddle", TypeKind.Interface, "N.IBase"),
+                        Type("N.IDerived", TypeKind.Interface, "N.IMiddle", "N.IBase")),
+                    Signatures(Signature("N.IBase.Visible()", "N.IBase", "Visible"))),
+                Row("CAP-001", "IDerived"));
+
+            Assert.Equal(
+                new[] { "N.IBase", "N.IDerived", "N.IMiddle" },
+                population.Types.OrderBy(n => n, StringComparer.Ordinal).ToArray());
+        }
+
+        [Fact]
+        public void メンバー名で引いた行でも基底型が指す型に入る()
+        {
+            LedgerPopulation population = Resolve(
+                Inventory(
+                    Types(
+                        Type("N.IBase", TypeKind.Interface),
+                        Type("N.IDerived", TypeKind.Interface, "N.IBase")),
+                    Signatures(Signature("N.IBase.Visible()", "N.IBase", "Visible"))),
+                Row("CAP-001", "IDerived.Visible"));
+
+            Assert.Contains("N.IBase", population.Types);
+            Assert.Contains("N.IDerived", population.Types);
+        }
+
+        [Fact]
+        public void 基底の並びに在る対象アセンブリ外の型は指す型に入らない()
+        {
+            LedgerPopulation population = Resolve(
+                Inventory(
+                    Types(Type("N.IDerived", TypeKind.Interface, "System.ICloneable", "N.IMissing<System.Int32>")),
+                    Signatures(Signature("N.IDerived.Run()", "N.IDerived", "Run"))),
+                Row("CAP-001", "IDerived"));
+
+            Assert.Equal(new[] { "N.IDerived" }, population.Types.ToArray());
+        }
+
+        [Fact]
         public void 型とメンバー名の組で引いた行は同じ名前のシグネチャだけを指す()
         {
             LedgerPopulation population = Resolve(

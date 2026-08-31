@@ -116,6 +116,53 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("signatures", CommandRunner.SignaturesCommand);
             Assert.Equal("excluded-baseline", CommandRunner.ExcludedBaselineCommand);
             Assert.Equal("excluded-signatures", CommandRunner.ExcludedSignaturesCommand);
+            Assert.Equal("ledger-coverage", CommandRunner.LedgerCoverageCommand);
+        }
+
+        [Fact]
+        public void 照合の下位コマンドは台帳と正本の照合を実行する()
+        {
+            string ledgerPath = Path.Combine(_root, "ledger.md");
+            File.WriteAllText(
+                ledgerPath,
+                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
+                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+            string baselinePath = Path.Combine(_root, "excluded-baseline.json");
+            File.WriteAllText(baselinePath, "{\"capabilities\":[]}");
+            string excludedPath = Path.Combine(_root, "excluded-signatures.json");
+            File.WriteAllText(excludedPath, "{\"signatures\":[]}");
+            string outOfScopePath = Path.Combine(_root, "out-of-scope.json");
+            File.WriteAllText(outOfScopePath, "{\"types\":[],\"signatures\":[]}");
+
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.LedgerCoverageCommand,
+                    CreateEditorDirectory(),
+                    ledgerPath,
+                    baselinePath,
+                    excludedPath,
+                    outOfScopePath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+
+            int missingCode = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.LedgerCoverageCommand,
+                    Path.Combine(_root, "none"),
+                    ledgerPath,
+                    baselinePath,
+                    excludedPath,
+                    outOfScopePath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, missingCode);
         }
 
         [Fact]
@@ -168,6 +215,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 CommandRunner.ExcludedSignaturesCommand
                     + " <PMXエディタ導入ディレクトリ> <ベースライン正本のパス> <書き出し先パス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.LedgerCoverageCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <ベースライン正本のパス>"
+                    + " <除外一覧のパス> <対象外一覧のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

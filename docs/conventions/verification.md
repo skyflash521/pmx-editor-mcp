@@ -12,6 +12,7 @@
 | スクリプト構文 | `node --check scripts/e2e-check.mjs` | エラー0 |
 | スクリプト構文(PowerShell) | [PowerShellスクリプトの構文検査](#powershellスクリプトの構文検査)のコマンド | エラー0 |
 | SDK公開APIの列挙 | [SDK公開APIの列挙](#sdk公開apiの列挙)のコマンド | 終了コード0 |
+| 台帳と正本の照合 | [台帳と正本の照合](#台帳と正本の照合)のコマンド | 終了コード0 |
 | 実機動作確認 | [実機動作確認](#実機動作確認)の手順 | 手順内の各確認が期待どおり |
 | ブリッジの実機動作確認 | [ブリッジの実機動作確認](#ブリッジの実機動作確認)の手順 | 手順内の各確認が期待どおり |
 
@@ -94,6 +95,25 @@ src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe excluded-signat
 **このコマンドは常設の検査に入れない。** 書き出し先は追跡する正本で、実行すると上書きする。
 SDKの公開シグネチャが変わると結果も変わりうるので、取り直すのはベースライン正本かSDKを意図して更新した
 ときだけにする。取り直したときは、差分の行からどちらが動いたのかを確かめる。
+
+## 台帳と正本の照合
+
+SDKの公開型と公開シグネチャが、能力台帳が指す集合か
+[対象外一覧の正本](../specs/pmx-editor-mcp-ledger-out-of-scope.json)のどちらかに過不足なく
+現れることと、[除外一覧の正本](../specs/pmx-editor-mcp-excluded-signatures.json)が算出した期待
+集合と一致することを照合する。下位コマンド `ledger-coverage` の引数は導入ディレクトリ・能力台帳・
+ベースライン正本・除外一覧・対象外一覧のパスの5つ。
+
+```
+src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe ledger-coverage "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-baseline.json docs/specs/pmx-editor-mcp-excluded-signatures.json docs/specs/pmx-editor-mcp-ledger-out-of-scope.json
+```
+
+**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
+読み解けなくても終了コード3、照合が合わなければ終了コード5になる。合わなかったときは、どの集合の
+どの識別子が余ったか足りないかが標準エラー出力に出る。
+
+台帳へ能力を足したとき、SDKを更新したとき、除外一覧や対象外一覧を取り直したときは、この照合が
+通ることで台帳と正本が公開APIを覆い切っていることを確かめる。
 
 ## 必要環境
 

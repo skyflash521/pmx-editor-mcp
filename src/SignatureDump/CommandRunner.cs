@@ -19,6 +19,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>凍結した組と列挙から除外一覧を確定して書き出す。</summary>
         public const string ExcludedSignaturesCommand = "excluded-signatures";
 
+        /// <summary>台帳と正本が公開APIを過不足なく覆っていることを照合する。</summary>
+        public const string LedgerCoverageCommand = "ledger-coverage";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -59,6 +62,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ExcludedSignatureRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], LedgerCoverageCommand, StringComparison.Ordinal))
+            {
+                return LedgerCoverageRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -72,6 +80,10 @@ namespace PmxEditorMcp.SignatureDump
             error.WriteLine(
                 ExcludedSignaturesCommand
                     + " <PMXエディタ導入ディレクトリ> <ベースライン正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                LedgerCoverageCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <ベースライン正本のパス>"
+                    + " <除外一覧のパス> <対象外一覧のパス>");
         }
     }
 }
