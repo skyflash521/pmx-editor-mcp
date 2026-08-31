@@ -23,7 +23,7 @@ namespace PmxEditorMcp.Bridge.Tests
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(30);
 
         [Fact]
-        public void 待つ上限は契約で定めた値である()
+        public void WaitLimitMatchesContract()
         {
             Assert.Equal(TimeSpan.FromSeconds(125), HostIpcClient.DefaultWaitLimit);
 
@@ -33,7 +33,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 応答が返らなければ上限で打ち切り接続を捨てる()
+        public async Task MissingResponseIsCutAtLimitAndConnectionDropped()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -56,7 +56,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイクの応答が返らなくても上限で打ち切る()
+        public async Task MissingHandshakeResponseIsCutAtLimit()
         {
             using FakeHost host = new FakeHost().Stall().Start();
             using HostIpcClient client = new HostIpcClient(
@@ -70,7 +70,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 接続が開き終わらなくても上限で打ち切る()
+        public async Task ConnectionThatNeverOpensIsCutAtLimit()
         {
             // 待つ上限は送受信だけでなく接続の確立にも掛かる。掛かっていないと、開かないパイプを
             // いつまでも待ち続ける。
@@ -85,7 +85,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイクの途中で取り消したら接続を捨てる()
+        public async Task CancellingDuringHandshakeDropsConnection()
         {
             using FakeHost host = new FakeHost()
                 .Stall()
@@ -111,7 +111,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 接続とハンドシェイクの最中に呼んでも接続をやり直さない()
+        public async Task CallsDuringConnectAndHandshakeDoNotReconnect()
         {
             // 排他の区間は接続の確立から始まる。要求の送受信だけを直列化する作りだと、
             // 並行した最初の呼び出しがそれぞれ接続とhandshakeを始めてしまう。
@@ -150,7 +150,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 並行して呼んでも要求を重ねずに1件ずつ送る()
+        public async Task ConcurrentCallsAreSentOneAtATime()
         {
             // 到着順に譲ること自体は順番待ちのテストが決定的に押さえる。ここでは、並行して
             // 呼んでもホストが見る要求が重ならず、どれも取りこぼされないことを確かめる。
@@ -190,7 +190,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 送っていない呼び出しの取り消しは先行の要求を巻き添えにしない()
+        public async Task CancellingAnUnsentCallDoesNotAffectEarlierRequests()
         {
             using SemaphoreSlim holding = new SemaphoreSlim(0, 1);
             using FakeHost host = new FakeHost()
@@ -224,7 +224,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 要求を送ったあとの取り消しは接続を捨てて再送しない()
+        public async Task CancellingAfterSendDropsConnectionWithoutResend()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -256,7 +256,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 接続の途中で取り消したら部分的な接続を残さない()
+        public async Task CancellingDuringConnectLeavesNoPartialConnection()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))

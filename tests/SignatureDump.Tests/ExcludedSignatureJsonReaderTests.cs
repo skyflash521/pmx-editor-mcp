@@ -16,7 +16,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Delegated = "PEPlugin.Vme.IPEVmeFrameEvent.RemoveEvent(PEPlugin.Vme.PEVmeEvent)";
 
         [Fact]
-        public void 書き出したものを読み戻すと同じ内容になる()
+        public void WrittenJsonIsReadBackAsTheSameContent()
         {
             IList<ExcludedSignatureRecord> written = Records();
 
@@ -35,7 +35,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void カテゴリの4つの綴りをすべて読める()
+        public void AllFourCategorySpellingsAreRead()
         {
             string json = "{\"signatures\":["
                 + "{\"key\":\"A\",\"qualification\":\"category\",\"category\":\"cPluginArgument\"},"
@@ -59,45 +59,45 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 空の並びを読める()
+        public void ReadsAnEmptyCollection()
         {
             Assert.Empty(ExcludedSignatureJsonReader.Read("{\"signatures\":[]}"));
         }
 
         [Fact]
-        public void JSONとして読めないと例外になる()
+        public void BodyThatIsNotJsonThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read("{"));
         }
 
         [Fact]
-        public void 引数がnullだと例外になる()
+        public void NullArgumentThrows()
         {
             Assert.Throws<ArgumentNullException>(() => ExcludedSignatureJsonReader.Read(null));
         }
 
         [Fact]
-        public void 最上位の項目が欠けていると例外になる()
+        public void MissingTopLevelMemberThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read("{}"));
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read("{\"items\":[]}"));
         }
 
         [Fact]
-        public void 最上位に知らない項目があると例外になる()
+        public void UnknownTopLevelMemberThrows()
         {
             Assert.Throws<FormatException>(
                 () => ExcludedSignatureJsonReader.Read("{\"signatures\":[],\"items\":[]}"));
         }
 
         [Fact]
-        public void 並びでない値を渡すと例外になる()
+        public void NonArrayValueThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read("{\"signatures\":{}}"));
         }
 
         [Fact]
-        public void 並びの項目が項目の組でないと例外になる()
+        public void ArrayItemThatIsNotAnObjectThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read("{\"signatures\":[null]}"));
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read("{\"signatures\":[\"A\"]}"));
@@ -105,7 +105,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 資格が欠けているか知らない値だと例外になる()
+        public void MissingOrUnknownQualificationThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read(
                 "{\"signatures\":[{\"key\":\"A\",\"capabilityId\":\"CAP-1\"}]}"));
@@ -114,7 +114,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 資格に応じた項目が欠けていると例外になる()
+        public void MemberRequiredByQualificationMissingThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read(
                 "{\"signatures\":[{\"key\":\"A\",\"qualification\":\"baseline\"}]}"));
@@ -123,7 +123,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 資格に合わない項目があると例外になる()
+        public void MemberNotAllowedByQualificationThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read(
                 "{\"signatures\":[{\"key\":\"A\",\"qualification\":\"baseline\",\"capabilityId\":\"CAP-1\""
@@ -134,14 +134,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 知らないカテゴリだと例外になる()
+        public void UnknownCategoryThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read(
                 "{\"signatures\":[{\"key\":\"A\",\"qualification\":\"category\",\"category\":\"stream\"}]}"));
         }
 
         [Fact]
-        public void 代替の有無がカテゴリと噛み合わないと例外になる()
+        public void AlternativePresenceNotMatchingCategoryThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read(
                 "{\"signatures\":[{\"key\":\"A\",\"qualification\":\"category\",\"category\":\"pmd\"}]}"));
@@ -151,7 +151,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 値の型が違うか空だと例外になる()
+        public void WrongValueTypeOrEmptyValueThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read(
                 "{\"signatures\":[{\"key\":1,\"qualification\":\"baseline\",\"capabilityId\":\"CAP-1\"}]}"));
@@ -160,7 +160,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 序数の昇順で並んでいないと例外になる()
+        public void OrderThatIsNotAscendingThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read(
                 "{\"signatures\":[{\"key\":\"B\",\"qualification\":\"baseline\",\"capabilityId\":\"CAP-1\"}"
@@ -168,7 +168,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 同じ行キーが二度現れると例外になる()
+        public void DuplicateKeyThrows()
         {
             Assert.Throws<FormatException>(() => ExcludedSignatureJsonReader.Read(
                 "{\"signatures\":[{\"key\":\"A\",\"qualification\":\"baseline\",\"capabilityId\":\"CAP-1\"}"

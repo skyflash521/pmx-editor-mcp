@@ -19,13 +19,13 @@ namespace PmxEditorMcp.Bridge.Tests
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(30);
 
         [Fact]
-        public void ハンドシェイクのプロトコル番号は契約で定めた値である()
+        public void HandshakeProtocolNumberMatchesContract()
         {
             Assert.Equal(1, HostIpcClient.Protocol);
         }
 
         [Fact]
-        public async Task 最初の呼び出しで接続しハンドシェイクを済ませてから要求を送る()
+        public async Task FirstCallConnectsAndHandshakesBeforeSendingRequest()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -47,7 +47,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 続けての呼び出しは同じ接続を使いハンドシェイクをやり直さない()
+        public async Task SubsequentCallsReuseConnectionWithoutHandshake()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -65,7 +65,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 引数を与えた呼び出しはそのまま要求へ載せる()
+        public async Task ArgumentsArePassedThroughToRequest()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -84,7 +84,7 @@ namespace PmxEditorMcp.Bridge.Tests
         // プロトコル番号の不一致は、ホストが切断を伴うエラーとして返す。
         [InlineData(-32001, "プロトコル番号が一致しない")]
         [InlineData(-32602, "引数が不正")]
-        public async Task ハンドシェイクでホストがエラーを返すと不成立として接続を閉じる(
+        public async Task HostErrorDuringHandshakeFailsAndClosesConnection(
             int hostErrorCode, string hostMessage)
         {
             using FakeHost host = new FakeHost()
@@ -110,7 +110,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("{\"protocol\":1,\"hostVersion\":5,\"budgetChars\":100000}")]
         [InlineData("{\"protocol\":1,\"hostVersion\":\"1.0.0.0\"}")]
         [InlineData("{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":\"100000\"}")]
-        public async Task ハンドシェイクの成功応答が契約に沿わなければ不成立として接続を閉じる(string result)
+        public async Task HandshakeSuccessOutsideContractFailsAndClosesConnection(string result)
         {
             using FakeHost host = new FakeHost()
                 .Reply(request => Result(request, result))
@@ -129,7 +129,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":OTHER_ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
         [InlineData("{\"jsonrpc\":\"1.0\",\"id\":ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
         [InlineData("これはJSONではない")]
-        public async Task ハンドシェイクの応答の包絡が契約に沿わなければ不成立として接続を閉じる(string response)
+        public async Task HandshakeEnvelopeOutsideContractFailsAndClosesConnection(string response)
         {
             using FakeHost host = new FakeHost().Reply(WithRequestId(response)).Start();
             using HostIpcClient client = Connect(host);
@@ -142,7 +142,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイクの応答が不正なUTF8なら不成立として接続を閉じる()
+        public async Task HandshakeResponseWithInvalidUtf8FailsAndClosesConnection()
         {
             // 同じ不正でも、handshakeが成立する前なら不成立として区分する。
             using FakeHost host = new FakeHost()
@@ -158,7 +158,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイクの応答が上限を超えたら不成立として接続を閉じる()
+        public async Task HandshakeResponseOverLimitFailsAndClosesConnection()
         {
             using FakeHost host = new FakeHost().ReplyBytes(OversizedResponse()).Start();
             using HostIpcClient client = Connect(host);
@@ -171,7 +171,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイクの応答を待っている間の切断は切断として返す()
+        public async Task DisconnectWhileAwaitingHandshakeIsReturnedAsDisconnect()
         {
             // 応答を受け取る前に相手が消えただけなので、版やプロトコルの食い違いを示唆する
             // 不成立ではなく切断として区分する。
@@ -186,7 +186,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 応答サイズ予算が一致しなければ両方の値を示して接続を閉じる()
+        public async Task BudgetMismatchClosesConnectionShowingBothValues()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(200000))
@@ -203,7 +203,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 応答サイズ予算が一致するホストへ繋ぎ直せば通常の動作へ戻る()
+        public async Task ReconnectingToMatchingBudgetHostRestoresNormalOperation()
         {
             // 予算の不一致でプロセスを終えないので、設定を直したホストへ繋ぎ直せば回復する。
             using FakeHost mismatched = new FakeHost().Reply(HandshakeResultOf(200000)).Start();
@@ -225,7 +225,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイクが不成立でも次の呼び出しは新しい接続からやり直す()
+        public async Task CallAfterFailedHandshakeStartsFromNewConnection()
         {
             using FakeHost host = new FakeHost()
                 .Reply(request => Error(request, -32001, "プロトコル番号が一致しない"))
@@ -243,7 +243,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイク後のホストのエラーはホスト由来のコードで返し接続を保つ()
+        public async Task HostErrorAfterHandshakeKeepsConnectionAndReturnsHostCode()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -269,7 +269,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData(-32001)]
         [InlineData(-32003)]
         [InlineData(-32004)]
-        public async Task ホストが切断を伴うエラーを返したら接続を捨てる(int hostErrorCode)
+        public async Task HostErrorRequiringDisconnectDropsConnection(int hostErrorCode)
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -292,7 +292,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 応答を待っている間に切断されたら切断として返す()
+        public async Task DisconnectWhileAwaitingResponseIsReturnedAsDisconnect()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -308,7 +308,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 切断されたあとの呼び出しは新しい接続からやり直す()
+        public async Task CallAfterDisconnectStartsFromNewConnection()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -333,7 +333,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":ID,\"result\":1,\"error\":{\"code\":-1,\"message\":\"x\"}}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":ID}")]
         [InlineData("これはJSONではない")]
-        public async Task ハンドシェイク後の応答が契約に沿わなければ通信規約の違反として接続を閉じる(string response)
+        public async Task ResponseOutsideContractAfterHandshakeClosesConnectionAsProtocolViolation(string response)
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -349,7 +349,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイク後の不正なUTF8は通信規約の違反として接続を閉じる()
+        public async Task InvalidUtf8AfterHandshakeClosesConnectionAsProtocolViolation()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -365,7 +365,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ハンドシェイク後の応答が上限を超えたら通信規約の違反として接続を閉じる()
+        public async Task ResponseOverLimitAfterHandshakeClosesConnectionAsProtocolViolation()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -381,7 +381,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 通信規約の違反のあとの呼び出しは新しい接続からやり直す()
+        public async Task CallAfterProtocolViolationStartsFromNewConnection()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -400,7 +400,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 上限を超える要求は送らずに知らせて接続を保つ()
+        public async Task OversizedRequestIsReportedWithoutSendingAndKeepsConnection()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -427,7 +427,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 破棄すると保っていた接続を手放す()
+        public async Task DisposeReleasesHeldConnection()
         {
             // パイプの同時接続は1本なので、破棄が接続を手放していなければ次の接続は成立しない。
             using FakeHost host = new FakeHost()
@@ -448,7 +448,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 接続役が返した失敗はそのまま要求元へ返す()
+        public async Task ConnectorFailureIsReturnedToCaller()
         {
             // 接続を確立できたかどうかを判断するのは接続役で、こちらはその結果を包み直さない。
             RefusingConnector connector = new RefusingConnector();
@@ -462,7 +462,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 待ち受けていないパイプは待ち続けずに接続の失敗として返す()
+        public async Task PipeThatIsNotListeningFailsToConnectWithoutWaiting()
         {
             // 接続先を決めた時点でそのパイプは待ち受けていたので、開けないのは待って解決する
             // 話ではない。待ち続けると要求全体の上限まで使い、原因も分からなくなる。
@@ -500,7 +500,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task OSが受け付けない名前を指していたら接続の失敗として返す()
+        public async Task NameRejectedByOsFailsToConnect()
         {
             // 明示指定は黙って自動発見へ落とさないので、空の名前もそのまま接続先になる。
             // パイプを開く処理は製品と同じものを通し、OSの拒否がどう表れるかまで見る。
@@ -514,7 +514,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 接続中に取り消されたら接続の失敗ではなく取り消しとして返す()
+        public async Task CancellationDuringConnectIsReturnedAsCancellationNotFailure()
         {
             // 上限による打ち切りと呼び出し側の取り消しは、どちらも同じ種類の例外で表れる。
             // 取り消しまで接続の失敗へ変えると、呼び出し側が自分で止めたことが分からなくなる。
@@ -532,7 +532,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 少し遅れて現れたパイプは上限のあいだ待って受け入れる()
+        public async Task PipeAppearingSlightlyLateIsAcceptedWithinLimit()
         {
             // 決めてから開くまでの短い隙にパイプが入れ替わる場合まで落とさない。即座に諦める
             // 作りだと、ホストが繋ぎ直しの合間にいるだけで理由もなく失敗する。
@@ -557,7 +557,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData(typeof(IOException))]
         [InlineData(typeof(UnauthorizedAccessException))]
         [InlineData(typeof(ArgumentException))]
-        public async Task パイプを開けなかった失敗は接続の失敗として返す(Type failure)
+        public async Task PipeThatCannotBeOpenedIsReturnedAsConnectFailure(Type failure)
         {
             // 接続先の決定も差し替える。実行環境に待ち受けているホストが無い・複数あると、パイプを
             // 開く手前の分岐で終わってしまい、確かめたい変換へ届かない。
@@ -573,7 +573,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 接続のたびに接続先を決め直して開く()
+        public async Task TargetIsResolvedAgainOnEveryConnect()
         {
             // エディタを起動し直すとパイプ名は変わる。決め直さずに握り続けると、繋ぎ直しが
             // 消えたエディタを指したままになる。
@@ -635,7 +635,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 初めての知らせは接続先を名乗るだけとする()
+        public async Task FirstNoticeOnlyAnnouncesTarget()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
@@ -650,7 +650,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 相手が同じなら知らせは名乗るだけのままとする()
+        public async Task NoticeKeepsOnlyAnnouncingWhenTargetIsUnchanged()
         {
             // 変わっていないのに変わったと言えば、呼び出し元は起きていない切り替えを疑って
             // 手を止める。毎回名乗るのは、その応答だけで相手が分かるようにするためである。
@@ -669,7 +669,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 相手が変わったら変わった事実と前の相手を伝える()
+        public async Task ChangedTargetIsReportedWithPreviousTarget()
         {
             // 繋ぎ直しのたびに接続先を決め直すので、利用者がホストを動かすエディタを切り替えると
             // 相手が入れ替わる。黙って続けると、呼び出し元は前の応答で作った前提のまま別の

@@ -17,7 +17,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + "]}";
 
         [Fact]
-        public void 型とシグネチャの両方を書かれた順に読む()
+        public void ReadsBothTypesAndSignaturesInWrittenOrder()
         {
             LedgerOutOfScopeRecord record = LedgerOutOfScopeJsonReader.Read(Sample);
 
@@ -34,7 +34,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 空の並びを読める()
+        public void ReadsEmptyCollections()
         {
             LedgerOutOfScopeRecord record =
                 LedgerOutOfScopeJsonReader.Read("{\"types\":[],\"signatures\":[]}");
@@ -44,26 +44,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void JSONとして読めないと例外になる()
+        public void BodyThatIsNotJsonThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read("{"));
         }
 
         [Fact]
-        public void 引数がnullだと例外になる()
+        public void NullArgumentThrows()
         {
             Assert.Throws<ArgumentNullException>(() => LedgerOutOfScopeJsonReader.Read(null));
         }
 
         [Fact]
-        public void 最上位の項目が欠けていると例外になる()
+        public void MissingTopLevelMemberThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read("{\"types\":[]}"));
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read("{\"signatures\":[]}"));
         }
 
         [Fact]
-        public void 並びの項目の必須の項目が欠けていると例外になる()
+        public void ArrayItemMissingARequiredMemberThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[{\"reason\":\"route\"}],\"signatures\":[]}"));
@@ -76,7 +76,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 並びの項目が項目の組でないと例外になる()
+        public void ArrayItemThatIsNotAnObjectThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[null],\"signatures\":[]}"));
@@ -93,7 +93,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 知らない項目があると例外になる()
+        public void UnknownMemberThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[],\"signatures\":[],\"note\":\"\"}"));
@@ -104,7 +104,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 並びでない値を渡すと例外になる()
+        public void NonArrayValueThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":{},\"signatures\":[]}"));
@@ -113,7 +113,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 項目の型が違うと例外になる()
+        public void WrongMemberTypeThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[{\"name\":1,\"reason\":\"route\"}],\"signatures\":[]}"));
@@ -122,7 +122,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 名前や行キーが空だと例外になる()
+        public void EmptyNameOrKeyThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[{\"name\":\"\",\"reason\":\"route\"}],\"signatures\":[]}"));
@@ -131,21 +131,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 閉集合に無い理由だと例外になる()
+        public void ReasonOutsideTheClosedSetThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[{\"name\":\"A\",\"reason\":\"pluginMechanism\"}],\"signatures\":[]}"));
         }
 
         [Fact]
-        public void 型ごと対象外になる理由をシグネチャへ書くと例外になる()
+        public void TypeOnlyReasonWrittenOnASignatureThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[],\"signatures\":[{\"key\":\"A\",\"reason\":\"enumType\"}]}"));
         }
 
         [Fact]
-        public void 序数の昇順で並んでいないと例外になる()
+        public void OrderThatIsNotAscendingThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[{\"name\":\"B\",\"reason\":\"route\"},{\"name\":\"A\",\"reason\":\"route\"}]"
@@ -153,7 +153,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 同じ識別子が二度現れると例外になる()
+        public void DuplicateIdentifierThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[{\"name\":\"A\",\"reason\":\"route\"},{\"name\":\"A\",\"reason\":\"route\"}]"

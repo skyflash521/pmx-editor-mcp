@@ -16,7 +16,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Route = "N.IHub.Thing()";
 
         [Fact]
-        public void 型もシグネチャも過不足が無ければ内訳を返す()
+        public void MatchingTypesAndSignaturesReturnTheBreakdown()
         {
             LedgerCoverageResult result = LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
@@ -36,7 +36,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 足りない識別子は打ち切らず序数順で並べる()
+        public void MissingIdentifiersAreListedInOrdinalOrderWithoutTruncation()
         {
             string[] names = { "N.G", "N.F", "N.E", "N.D", "N.C", "N.B", "N.A" };
             IList<TypeRecord> types = names.Select(Type).ToList();
@@ -61,7 +61,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 台帳にも対象外一覧にも無い型があると照合できない()
+        public void TypeInNeitherLedgerNorOutOfScopeFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
@@ -72,7 +72,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 台帳と対象外一覧の両方に在る型があると照合できない()
+        public void TypeInBothLedgerAndOutOfScopeFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
@@ -83,7 +83,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 公開型に無い型が対象外一覧に在ると照合できない()
+        public void TypeAbsentFromPublicTypesInOutOfScopeFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
@@ -94,7 +94,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型の理由が算出値と違うと照合できない()
+        public void TypeReasonDifferentFromTheComputedOneFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
@@ -105,7 +105,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 対象外にできる理由が無い型を一覧へ載せると照合できない()
+        public void TypeWithoutAnyOutOfScopeReasonFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Hub)),
@@ -116,7 +116,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 母集合にも対象外にも無いシグネチャがあると照合できない()
+        public void SignatureInNeitherPopulationNorOutOfScopeFailsCollation()
         {
             IList<TypeRecord> types = new List<TypeRecord> { Type(Thing), Type(Hub) };
             IList<SignatureRecord> signatures = new List<SignatureRecord>
@@ -135,7 +135,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 行が指す型のメンバーはシグネチャ単位の対象外にできる()
+        public void MemberOfALedgerTypeCanBeOutOfScopePerSignature()
         {
             LedgerCoverageResult result = LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", "IHub.Name")),
@@ -151,7 +151,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void シグネチャの理由が算出値と違うと照合できない()
+        public void SignatureReasonDifferentFromTheComputedOneFailsCollation()
         {
             IList<OutOfScopeSignatureEntry> signatures = new List<OutOfScopeSignatureEntry>
             {
@@ -167,7 +167,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 公開シグネチャに無い行キーを一覧へ載せると照合できない()
+        public void KeyAbsentFromPublicSignaturesInOutOfScopeFailsCollation()
         {
             IList<OutOfScopeSignatureEntry> signatures = new List<OutOfScopeSignatureEntry>
             {
@@ -183,7 +183,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 同じ能力IDが台帳に二度あると照合できない()
+        public void DuplicateCapabilityIdInLedgerFailsCollation()
         {
             IList<CapabilityRecord> ledger = new List<CapabilityRecord>
             {
@@ -198,7 +198,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型ごと対象外の型が宣言するシグネチャを一覧へ重ねて書くと照合できない()
+        public void SignatureDeclaredByAnOutOfScopeTypeListedAgainFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
@@ -211,7 +211,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 除外一覧が算出した期待集合と違うと照合できない()
+        public void ExclusionListDifferentFromTheComputedExpectationFailsCollation()
         {
             IList<ExcludedSignatureRecord> wrong = new List<ExcludedSignatureRecord>
             {
@@ -227,7 +227,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 凍結した組を除外一覧が落としていると照合できない()
+        public void ExclusionListMissingAFrozenPairFailsCollation()
         {
             IList<ExcludedBaselineEntry> baseline = new List<ExcludedBaselineEntry>
             {
@@ -243,7 +243,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 備考の非対応件数が除外一覧と合うと照合できる()
+        public void RemarkExcludedCountMatchingTheExclusionListPasses()
         {
             IList<ExcludedBaselineEntry> baseline = Frozen();
 
@@ -274,7 +274,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 備考の非対応件数が除外一覧と合わないと照合できない()
+        public void RemarkExcludedCountNotMatchingTheExclusionListFailsCollation()
         {
             IList<ExcludedBaselineEntry> baseline = Frozen();
 
@@ -287,7 +287,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 除外があるのに非対応件数を書いていないと照合できない()
+        public void MissingExcludedCountWhenExclusionsExistFailsCollation()
         {
             IList<ExcludedBaselineEntry> baseline = Frozen();
 
@@ -300,7 +300,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 除外が無いのに非対応件数を書くと照合できない()
+        public void ExcludedCountWrittenWithoutExclusionsFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1")),
@@ -311,7 +311,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 除外が無い行に0を書いても照合できない()
+        public void ZeroExcludedCountWrittenWithoutExclusionsFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 0")),
@@ -322,7 +322,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 分類が提供でない行は正しい件数を書いても照合できない()
+        public void NonProvidedRowFailsCollationEvenWithTheCorrectCount()
         {
             IList<ExcludedBaselineEntry> baseline = Frozen("CAP-002");
             IList<ExcludedSignatureRecord> excluded =
@@ -356,7 +356,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 非対応件数が数で終わっていないと照合できない()
+        public void ExcludedCountNotEndingWithADigitFailsCollation()
         {
             IList<ExcludedBaselineEntry> baseline = Frozen();
 
@@ -369,7 +369,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 備考に非対応件数が二度現れると照合できない()
+        public void ExcludedCountAppearingTwiceInRemarksFailsCollation()
         {
             IList<ExcludedBaselineEntry> baseline = Frozen();
 
@@ -382,7 +382,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 基底型から継いだ除外も非対応件数に数える()
+        public void ExclusionsInheritedFromBaseTypesAreCounted()
         {
             IList<TypeRecord> types = new List<TypeRecord>
             {
@@ -424,7 +424,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 非対応件数が数になっていないと照合できない()
+        public void ExcludedCountThatIsNotANumberFailsCollation()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 多数")),
@@ -435,7 +435,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 非対応件数は備考の先頭にあるものだけを読む()
+        public void OnlyAnExcludedCountAtTheStartOfRemarksIsRead()
         {
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "契約注記: 非対応件数: 1")),
@@ -446,7 +446,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 提供対象の担当が2つに分かれると照合できない()
+        public void ProvidedSignatureBelongingToTwoOwnersFailsCollation()
         {
             IList<CapabilityRecord> ledger = new List<CapabilityRecord>
             {
@@ -465,7 +465,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数がnullだと例外になる()
+        public void NullArgumentThrows()
         {
             IList<CapabilityRecord> ledger = Ledger(Row("CAP-001", Thing));
             LedgerOutOfScopeRecord outOfScope = OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route));

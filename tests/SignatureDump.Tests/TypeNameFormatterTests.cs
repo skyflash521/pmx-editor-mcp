@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class TypeNameFormatterTests
     {
         [Fact]
-        public void 組み込み型は名前空間つきの表記になる()
+        public void BuiltInTypesAreWrittenWithTheirNamespace()
         {
             Assert.Equal("System.Int32", TypeNameFormatter.Format(typeof(int)));
             Assert.Equal("System.String", TypeNameFormatter.Format(typeof(string)));
@@ -16,7 +16,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 配列は要素型に角括弧が付く()
+        public void ArraysAppendBracketsToTheElementType()
         {
             Assert.Equal("System.Int32[]", TypeNameFormatter.Format(typeof(int[])));
             Assert.Equal("System.Int32[][]", TypeNameFormatter.Format(typeof(int[][])));
@@ -24,7 +24,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 参照渡しは末尾にアンパサンドが付く()
+        public void ByReferenceAppendsAnAmpersand()
         {
             Type byRef = typeof(int).MakeByRefType();
 
@@ -32,7 +32,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型は山括弧で型引数を並べる()
+        public void GenericTypesListTypeArgumentsInAngleBrackets()
         {
             Assert.Equal(
                 "System.Collections.Generic.IList<System.String>",
@@ -43,7 +43,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型の定義は型引数の名前を並べる()
+        public void GenericDefinitionsListTypeParameterNames()
         {
             Assert.Equal(
                 "System.Collections.Generic.IList<T>",
@@ -51,7 +51,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 入れ子の型は外側と内側をプラスでつなぐ()
+        public void NestedTypesJoinOuterAndInnerWithPlus()
         {
             Assert.Equal(
                 "PmxEditorMcp.SignatureDump.Tests.Sample.SampleOuter+SampleNested",
@@ -59,7 +59,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 利用者定義の総称型の定義も型引数の名前を並べる()
+        public void UserDefinedGenericDefinitionsAlsoListTypeParameterNames()
         {
             Assert.Equal(
                 "PmxEditorMcp.SignatureDump.Tests.Sample.SampleGeneric<T>",
@@ -67,7 +67,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型引数は名前で表す()
+        public void GenericParametersAreWrittenByName()
         {
             Type parameter = typeof(SampleGeneric<>).GetGenericArguments()[0];
 
@@ -75,7 +75,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型の引数にも同じ規則が再帰する()
+        public void TheSameRuleRecursesIntoTypeArguments()
         {
             Assert.Equal(
                 "System.Collections.Generic.IList<System.Int32[]>",
@@ -83,7 +83,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型を渡さないと例外になる()
+        public void MissingTypeThrows()
         {
             Assert.Throws<ArgumentNullException>(() => TypeNameFormatter.Format(null));
         }

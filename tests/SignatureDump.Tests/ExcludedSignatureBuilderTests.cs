@@ -517,7 +517,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 題材の行キーが行キーの組み立て規則と一致する()
+        public void SampleKeysMatchTheKeyBuildingRule()
         {
             string[] keys = Inventory().Signatures.Select(s => s.Key).ToArray();
 
@@ -545,7 +545,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 凍結した組はベースラインを根拠に載る()
+        public void FrozenPairsAreListedOnBaselineGrounds()
         {
             ExcludedSignatureRecord record = Find(FrozenConstructor);
 
@@ -556,7 +556,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 代替のあるPMD版はカテゴリを根拠に載る()
+        public void PmdOverloadWithAlternativeIsListedOnCategoryGrounds()
         {
             ExcludedSignatureRecord record = Find(PmdInit);
 
@@ -567,73 +567,73 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 代替の無いPMD版は除外しない()
+        public void PmdOverloadWithoutAlternativeIsNotExcluded()
         {
             Assert.DoesNotContain(PmdWithoutAlternative, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 引数の個数が違うPMX版しか無いPMD版は除外しない()
+        public void PmdOverloadWhosePmxVersionDiffersInArgumentCountIsNotExcluded()
         {
             Assert.DoesNotContain(PmdReset, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 戻り値が違うPMX版しか無いPMD版は除外しない()
+        public void PmdOverloadWhosePmxVersionDiffersInReturnTypeIsNotExcluded()
         {
             Assert.DoesNotContain(PmdMerge, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 対応表に無い型を取るPMX版しか無いPMD版は除外しない()
+        public void PmdOverloadTakingATypeOutsideTheMapIsNotExcluded()
         {
             Assert.DoesNotContain(PmdApply, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 総称型引数の数が違うPMX版しか無いPMD版は除外しない()
+        public void PmdOverloadWhosePmxVersionDiffersInGenericArityIsNotExcluded()
         {
             Assert.DoesNotContain(PmdLoad, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 引数の向きが違うPMX版しか無いPMD版は除外しない()
+        public void PmdOverloadWhosePmxVersionDiffersInArgumentDirectionIsNotExcluded()
         {
             Assert.DoesNotContain(PmdStore, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 宣言型が違うPMX版しか無いPMD版は除外しない()
+        public void PmdOverloadWhosePmxVersionHasAnotherDeclaringTypeIsNotExcluded()
         {
             Assert.DoesNotContain(PmdInitOnOtherType, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 凍結されたPMX版は代替にならない()
+        public void FrozenPmxOverloadIsNotAnAlternative()
         {
             Assert.DoesNotContain(PmdSave, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 代替には引数の個数が同じPMX版を選ぶ()
+        public void AlternativeMustHaveTheSameArgumentCount()
         {
             Assert.Equal(PmxInit, Find(PmdInit).Alternative);
         }
 
         [Fact]
-        public void メンバー名だけがPMDを含むシグネチャは除外しない()
+        public void SignatureWhoseOnlyPmdIsInTheMemberNameIsNotExcluded()
         {
             Assert.DoesNotContain(PmdInMemberNameOnly, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 戻り値だけがPMD型で代替の無いシグネチャは除外しない()
+        public void SignatureWithPmdOnlyInReturnTypeAndNoAlternativeIsNotExcluded()
         {
             Assert.DoesNotContain(PmdInValueType, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void デリゲートを取る版はカテゴリを根拠に載る()
+        public void OverloadTakingADelegateIsListedOnCategoryGrounds()
         {
             ExcludedSignatureRecord record = Find(DelegateOverload);
 
@@ -644,7 +644,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void Cプラグイン実装本体を取る版はカテゴリを根拠に載る()
+        public void OverloadTakingTheCPluginImplementationIsListedOnCategoryGrounds()
         {
             IList<ExcludedSignatureRecord> records = ExcludedSignatureBuilder.Build(
                 BaselineExcept(CPluginArgumentOverload), Inventory());
@@ -656,31 +656,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 接続用インターフェースのメンバーは除外しない()
+        public void MembersOfTheConnectionInterfaceAreNotExcluded()
         {
             Assert.DoesNotContain(CPluginConnectorMember, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 接続用インターフェースを引数に取るシグネチャは除外しない()
+        public void SignaturesTakingTheConnectionInterfaceAreNotExcluded()
         {
             Assert.DoesNotContain(CPluginConnectorArgument, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 戻り値だけがCプラグイン実装本体のシグネチャは除外しない()
+        public void SignatureWithCPluginImplementationOnlyInReturnTypeIsNotExcluded()
         {
             Assert.DoesNotContain(CPluginInValueType, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void デリゲート型をハンドラに持つイベントは除外しない()
+        public void EventWhoseHandlerIsADelegateTypeIsNotExcluded()
         {
             Assert.DoesNotContain(DelegateInValueType, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 生成メンバーのある公開コンストラクタはカテゴリを根拠に載る()
+        public void PublicConstructorWithAFactoryMemberIsListedOnCategoryGrounds()
         {
             ExcludedSignatureRecord record = Find(DuplicatedConstructor);
 
@@ -690,13 +690,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 自分自身を返すメンバーは代替にならない()
+        public void MemberReturningItsOwnTypeIsNotAnAlternative()
         {
             Assert.DoesNotContain(CloneOnlyConstructor, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 静的な生成メンバーのある公開コンストラクタもカテゴリを根拠に載る()
+        public void PublicConstructorWithAStaticFactoryMemberIsAlsoListed()
         {
             ExcludedSignatureRecord record = Find(ConstructorWithStaticFactory);
 
@@ -705,13 +705,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 同じ型を返すプロパティは生成メンバーに数えない()
+        public void PropertyReturningTheSameTypeIsNotCountedAsAFactory()
         {
             Assert.DoesNotContain(ConstructorWithPropertyOnly, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 対象アセンブリの外のデリゲート型を取る版もカテゴリを根拠に載る()
+        public void OverloadTakingADelegateDeclaredOutsideTheAssemblyIsAlsoListed()
         {
             ExcludedSignatureRecord record = Find(ExternalDelegateOverload);
 
@@ -720,7 +720,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 代替の有無を問わずデリゲートを取る版は載る()
+        public void OverloadsTakingDelegatesAreListedRegardlessOfAlternatives()
         {
             ExcludedSignatureRecord record = Find(DelegateWithoutPlain);
 
@@ -728,7 +728,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void PMD型を取る公開コンストラクタも生成メンバーが在れば載る()
+        public void PublicConstructorTakingPmdIsListedWhenAFactoryExists()
         {
             ExcludedSignatureRecord record = Find(PmdConstructor);
 
@@ -737,7 +737,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void PMD型を取る生成メンバーでも除外されないなら代替に数える()
+        public void FactoryTakingPmdCountsAsAnAlternativeUnlessExcluded()
         {
             ExcludedSignatureRecord record = Find(ConstructorWithPmdFactory);
 
@@ -746,31 +746,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void カテゴリで除外される生成メンバーは代替に数えない()
+        public void FactoryExcludedByCategoryIsNotCountedAsAnAlternative()
         {
             Assert.DoesNotContain(ConstructorWithDelegateFactory, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 総称型引数を返すメソッドは生成メンバーに数えない()
+        public void MethodReturningAGenericParameterIsNotCountedAsAFactory()
         {
             Assert.DoesNotContain(ConstructorNamedLikeTypeArgument, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 総称型引数と同じ名前の実型は代替の照合で別の型として扱う()
+        public void ConcreteTypeNamedLikeAGenericParameterIsTreatedAsAnotherType()
         {
             Assert.DoesNotContain(PmdWithTypeArgument, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 同じ宣言型の静的メソッドは生成メンバーに数えない()
+        public void StaticMethodOnTheSameDeclaringTypeIsNotCountedAsAFactory()
         {
             Assert.DoesNotContain(ConstructorWithFactoryOnSameType, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 凍結された生成メンバーは代替にならない()
+        public void FrozenFactoryIsNotAnAlternative()
         {
             Assert.DoesNotContain(FrozenFactoryConstructor, Build().Select(r => r.Key));
         }
@@ -780,7 +780,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(ToStream)]
         [InlineData(StreamInValueType)]
         [InlineData(StreamDerivedArgument)]
-        public void 凍結されていないStream版が在ると例外になる(string key)
+        public void UnfrozenStreamOverloadThrows(string key)
         {
             // 形式が同じかどうかは一次資料でしか決まらないので、除外するか残すかを機械で決められない。
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -790,7 +790,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void Stream版がすべて凍結されていれば止まらない()
+        public void AllStreamOverloadsFrozenDoesNotStop()
         {
             string[] keys = Build().Select(r => r.Key).ToArray();
 
@@ -800,13 +800,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void どの根拠も無いシグネチャは載らない()
+        public void SignatureWithoutAnyGroundsIsNotListed()
         {
             Assert.DoesNotContain(OutsideEveryCategory, Build().Select(r => r.Key));
         }
 
         [Fact]
-        public void 行キーの昇順で重複なく並ぶ()
+        public void EntriesAreOrderedByKeyWithoutDuplicates()
         {
             string[] keys = Build().Select(r => r.Key).ToArray();
 
@@ -823,7 +823,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void カテゴリの述語も満たす凍結した組は1件だけ載る()
+        public void FrozenPairAlsoMatchingACategoryIsListedOnce()
         {
             IList<ExcludedSignatureRecord> records = ExcludedSignatureBuilder.Build(
                 BaselineOf(
@@ -844,7 +844,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 凍結した組が列挙と食い違うと例外になる()
+        public void FrozenPairConflictingWithEnumerationThrows()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => ExcludedSignatureBuilder.Build(
@@ -854,7 +854,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 凍結した組や列挙を渡さないと例外になる()
+        public void MissingFrozenPairsOrEnumerationThrows()
         {
             Assert.Throws<ArgumentNullException>(() => ExcludedSignatureBuilder.Build(null, Inventory()));
             Assert.Throws<ArgumentNullException>(() => ExcludedSignatureBuilder.Build(Baseline(), null));

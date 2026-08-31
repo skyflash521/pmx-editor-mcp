@@ -18,7 +18,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数がないメンバーは空の括弧が付く()
+        public void MemberWithoutArgumentsGetsEmptyParentheses()
         {
             Assert.Equal(
                 "N.IThing.Count()",
@@ -26,7 +26,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数の型は宣言順にカンマで並ぶ()
+        public void ArgumentTypesAreListedInDeclarationOrderSeparatedByCommas()
         {
             string key = Build(
                 "SetThing",
@@ -42,7 +42,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 出力引数と入出力引数は向きの語が前に付く()
+        public void OutAndRefArgumentsArePrefixedWithTheirDirection()
         {
             string key = Build(
                 "TryGet",
@@ -59,7 +59,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型引数の数が行キーに現れる()
+        public void GenericArityAppearsInTheKey()
         {
             Assert.Equal(
                 "N.IThing.Apply<2>()",
@@ -67,7 +67,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型引数の数だけが違うオーバーロードは別の行キーになる()
+        public void OverloadsDifferingOnlyInGenericArityGetDifferentKeys()
         {
             Assert.NotEqual(
                 Build("Apply", 0, new List<ParameterRecord>(), "System.Void"),
@@ -75,7 +75,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 向きだけが違うオーバーロードは別の行キーになる()
+        public void OverloadsDifferingOnlyInDirectionGetDifferentKeys()
         {
             Assert.NotEqual(
                 Build(
@@ -91,7 +91,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 変換演算子は戻り値の型が行キーに現れる()
+        public void ConversionOperatorsIncludeTheReturnTypeInTheKey()
         {
             List<ParameterRecord> parameters =
                 new List<ParameterRecord> { Param("value", "N.IThing", ParameterDirection.In) };
@@ -105,7 +105,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 戻り値の型だけが違う変換演算子は別の行キーになる()
+        public void ConversionOperatorsDifferingOnlyInReturnTypeGetDifferentKeys()
         {
             List<ParameterRecord> parameters =
                 new List<ParameterRecord> { Param("value", "N.IThing", ParameterDirection.In) };
@@ -116,7 +116,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 変換演算子でなければ戻り値の型は行キーに現れない()
+        public void NonConversionMembersDoNotIncludeTheReturnTypeInTheKey()
         {
             List<ParameterRecord> parameters = new List<ParameterRecord>
             {
@@ -133,7 +133,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数名は行キーに影響しない()
+        public void ArgumentNamesDoNotAffectTheKey()
         {
             Assert.Equal(
                 Build(
@@ -149,7 +149,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 必須の引数を渡さないと例外になる()
+        public void MissingRequiredArgumentsThrow()
         {
             Assert.Throws<ArgumentNullException>(
                 () => SignatureKeyBuilder.Build(null, "M", 0, new List<ParameterRecord>(), "System.Void"));
@@ -163,7 +163,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型引数の数が負なら例外になる()
+        public void NegativeGenericArityThrows()
         {
             Assert.Throws<ArgumentOutOfRangeException>(
                 () => SignatureKeyBuilder.Build("N.IThing", "M", -1, new List<ParameterRecord>(), "System.Void"));

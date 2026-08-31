@@ -128,7 +128,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 行が指す型はすべて分類を持つ()
+        public void EverySignatureTypeHasAClassification()
         {
             InventoryRecord inventory = Enumerate();
             HashSet<string> classified = new HashSet<string>(
@@ -220,7 +220,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 題材の公開型を全項目まで含めて過不足なく列挙する()
+        public void EnumeratesSamplePublicTypesExactlyWithAllFields()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -232,7 +232,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 題材のシグネチャ行を全項目まで含めて過不足なく列挙する()
+        public void EnumeratesSampleSignaturesExactlyWithAllFields()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -240,7 +240,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 別の名前空間の公開型も列挙される()
+        public void PublicTypesInOtherNamespacesAreEnumerated()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -251,7 +251,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 同じメンバーを指す行は重複しない()
+        public void SignaturesForTheSameMemberAreNotDuplicated()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -274,7 +274,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 列挙型は行を作らない()
+        public void EnumTypesProduceNoSignatures()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -282,7 +282,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void デリゲート型は呼び出しの行だけを作る()
+        public void DelegateTypesProduceOnlyTheInvokeSignature()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -293,7 +293,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void アクセサーのメソッドは行にならない()
+        public void AccessorMethodsDoNotBecomeSignatures()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -313,7 +313,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 継承したメンバーは宣言型の行にならない()
+        public void InheritedMembersDoNotBecomeSignaturesOfTheDerivedType()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -326,7 +326,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 列挙結果は昇順に並ぶ()
+        public void EnumerationIsSortedAscending()
         {
             InventoryRecord inventory = Enumerate();
 
@@ -338,7 +338,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void アセンブリの識別が載る()
+        public void AssemblyIdentityIsIncluded()
         {
             InventoryRecord inventory = Enumerate();
             AssemblyName name = typeof(ISampleApi).Assembly.GetName();
@@ -348,7 +348,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void アセンブリを渡さないと例外になる()
+        public void MissingAssemblyThrows()
         {
             Assert.Throws<ArgumentNullException>(() => AssemblyEnumerator.Enumerate(null));
         }

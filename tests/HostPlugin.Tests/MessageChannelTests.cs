@@ -20,7 +20,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void LFで区切られた本文を読み取る()
+        public void ReadsLfSeparatedBody()
         {
             MessageChannel channel = FromText("いち\n");
 
@@ -30,7 +30,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void CRLFで区切られた本文も受理する()
+        public void AcceptsCrlfSeparatedBody()
         {
             MessageChannel channel = FromText("いち\r\n");
 
@@ -40,7 +40,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 複数の本文を順に読み取る()
+        public void ReadsMultipleBodiesInOrder()
         {
             MessageChannel channel = FromText("いち\nに\r\nさん\n");
 
@@ -56,7 +56,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 空の本文を読み取れる()
+        public void ReadsEmptyBody()
         {
             MessageChannel channel = FromText("\n");
 
@@ -66,7 +66,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 相手が切断したら終端を返す()
+        public void PeerCloseReturnsEndOfStream()
         {
             MessageChannel channel = FromText(string.Empty);
 
@@ -76,7 +76,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 区切りの無いまま終端に達したら終端を返す()
+        public void EndOfStreamWithoutSeparatorReturnsEndOfStream()
         {
             MessageChannel channel = FromText("区切りが来ない");
 
@@ -85,7 +85,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限ちょうどの本文は受理する()
+        public void BodyAtLimitIsAccepted()
         {
             MessageChannel channel = new MessageChannel(new MemoryStream(Utf8WithoutBom.GetBytes(new string('a', 16) + "\n")), 16);
 
@@ -95,7 +95,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限ちょうどの本文にCRLFが続いても受理する()
+        public void BodyAtLimitFollowedByCrlfIsAccepted()
         {
             MessageChannel channel = new MessageChannel(new MemoryStream(Utf8WithoutBom.GetBytes(new string('a', 16) + "\r\n")), 16);
 
@@ -105,7 +105,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限を超える本文は上限超過として返す()
+        public void BodyOverLimitIsReturnedAsLimitExceeded()
         {
             MessageChannel channel = new MessageChannel(new MemoryStream(Utf8WithoutBom.GetBytes(new string('a', 17) + "\n")), 16);
 
@@ -115,7 +115,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限を1バイト超えた本文は区切りを待たずに上限超過として返す()
+        public void BodyOneByteOverLimitExceedsWithoutWaitingForSeparator()
         {
             // 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
             MessageChannel channel = new MessageChannel(
@@ -127,7 +127,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限ちょうどの本文はCRとLFが別の読み取りに分かれても受理する()
+        public void BodyAtLimitIsAcceptedWhenCrAndLfArriveApart()
         {
             ChunkedStream source = new ChunkedStream(
                 Utf8WithoutBom.GetBytes(new string('a', 16) + "\r"),
@@ -140,7 +140,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 区切りが来なくても上限を超えた時点で読み取りを打ち切る()
+        public void ReadStopsOnceLimitIsExceededWithoutSeparator()
         {
             // 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
             CountingStream source = new CountingStream(Utf8WithoutBom.GetBytes(new string('a', 1000000)));
@@ -152,7 +152,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限は文字数でなくバイト数で測る()
+        public void ReadLimitIsMeasuredInBytesNotCharacters()
         {
             // 「あ」はUTF-8で3バイトなので、6文字は18バイトで上限16を超える。
             MessageChannel channel = new MessageChannel(new MemoryStream(Utf8WithoutBom.GetBytes(new string('あ', 6) + "\n")), 16);
@@ -162,7 +162,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void UTF8として解釈できないバイト列は不正な符号化として返す()
+        public void BytesThatAreNotValidUtf8AreReturnedAsEncodingError()
         {
             MessageChannel channel = FromBytes(new byte[] { 0x82, 0xA0, (byte)'\n' });
 
@@ -172,7 +172,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 書き出しはBOMなしUTF8でLFを付す()
+        public void WriteUsesUtf8WithoutBomAndAppendsLf()
         {
             MemoryStream stream = new MemoryStream();
             MessageChannel channel = new MessageChannel(stream);
@@ -185,7 +185,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void バイト数はUTF8で数える()
+        public void ByteCountIsMeasuredInUtf8()
         {
             Assert.Equal(0, MessageChannel.MeasureBytes(string.Empty));
             Assert.Equal(3, MessageChannel.MeasureBytes("あ"));
@@ -193,20 +193,20 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限は生成時に指定した値を返す()
+        public void LimitReturnsTheValueGivenAtConstruction()
         {
             Assert.Equal(MessageChannel.DefaultMaxMessageBytes, new MessageChannel(new MemoryStream()).MaxMessageBytes);
             Assert.Equal(16, new MessageChannel(new MemoryStream(), 16).MaxMessageBytes);
         }
 
         [Fact]
-        public void 既定の上限は16MiBである()
+        public void DefaultLimitIsSixteenMebibytes()
         {
             Assert.Equal(16777216, MessageChannel.DefaultMaxMessageBytes);
         }
 
         [Fact]
-        public void 上限を超える本文は書き出さない()
+        public void BodyOverLimitIsNotWritten()
         {
             MemoryStream stream = new MemoryStream();
             MessageChannel channel = new MessageChannel(stream, 16);
@@ -220,7 +220,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 書き出しの上限も文字数でなくバイト数で測る()
+        public void WriteLimitIsMeasuredInBytesNotCharacters()
         {
             MemoryStream stream = new MemoryStream();
             MessageChannel channel = new MessageChannel(stream, 16);
@@ -234,7 +234,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限ちょうどの本文は書き出す()
+        public void BodyAtLimitIsWritten()
         {
             MemoryStream stream = new MemoryStream();
             MessageChannel channel = new MessageChannel(stream, 16);

@@ -215,13 +215,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 期待どおりのJSONになる()
+        public void ProducesTheExpectedJson()
         {
             Assert.Equal(string.Join("\n", ExpectedLines), InventoryJson.Write(Sample()));
         }
 
         [Fact]
-        public void 書き出したJSONは解析できる()
+        public void WrittenJsonCanBeParsed()
         {
             JavaScriptSerializer serializer = new JavaScriptSerializer();
             Dictionary<string, object> root =
@@ -234,7 +234,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 要素のない配列は空の配列になる()
+        public void ArrayWithoutElementsBecomesAnEmptyArray()
         {
             InventoryRecord empty = new InventoryRecord(
                 "Sample", "1.0", new List<TypeRecord>(), new List<TypeRecord>(), new List<SignatureRecord>());
@@ -254,7 +254,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 特殊な文字は逃がされる()
+        public void SpecialCharactersAreEscaped()
         {
             InventoryRecord inventory = new InventoryRecord(
                 "a\"b\\c\nd\te\u0001f",
@@ -268,7 +268,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 列挙結果を渡さないと例外になる()
+        public void MissingEnumerationThrows()
         {
             Assert.Throws<ArgumentNullException>(() => InventoryJson.Write(null));
         }

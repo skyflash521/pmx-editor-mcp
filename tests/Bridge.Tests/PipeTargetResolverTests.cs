@@ -16,7 +16,7 @@ namespace PmxEditorMcp.Bridge.Tests
         /// 十進で書くだけなので、符号・空白・桁区切り・先頭の0・ASCII以外の数字はホストが作る
         /// 名前には現れない。プロセスIDに0は割り当てられない。
         /// </summary>
-        public static TheoryData<string> ホストの待受でない名前 => new TheoryData<string>
+        public static TheoryData<string> NamesThatAreNotHostListeners => new TheoryData<string>
         {
             "pmx-editor-mcp-",
             "pmx-editor-mcp-abc",
@@ -37,7 +37,7 @@ namespace PmxEditorMcp.Bridge.Tests
         };
 
         [Fact]
-        public void 待受の発見に用いる名前は契約で定めた値である()
+        public void ListeningDiscoveryNameMatchesContract()
         {
             Assert.Equal("PMX_EDITOR_MCP_TEST_PIPE", PipeTargetResolver.TestPipeEnvironmentVariableName);
             Assert.Equal("PmxEditor_x64", PipeTargetResolver.EditorProcessName);
@@ -46,13 +46,13 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void パイプ名はエディタのプロセスIDで決まる()
+        public void PipeNameIsDerivedFromEditorProcessId()
         {
             Assert.Equal("pmx-editor-mcp-1234", PipeTargetResolver.PipeNameForProcess(1234));
         }
 
         [Fact]
-        public void 明示指定があれば待受を数えずにその名前を使う()
+        public void ExplicitTargetIsUsedWithoutEnumeratingListeners()
         {
             string resolved = PipeTargetResolver.Resolve(
                 "pmx-editor-mcp-9", Entries("pmx-editor-mcp-1234", "pmx-editor-mcp-5678"), new int[] { 1234, 5678 });
@@ -61,7 +61,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 待受の列挙へ落ちるのは明示指定が無いときだけとする()
+        public void ListenerEnumerationHappensOnlyWithoutExplicitTarget()
         {
             // 空文字列は「指定が無い」ではなく「空の名前を指定した」として扱い、黙って
             // 自動発見へ落とさない(設定の誤りを隠さないため)。
@@ -72,7 +72,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 待ち受けているホストが1つならそれを接続先にする()
+        public void SingleListeningHostBecomesTarget()
         {
             string resolved = PipeTargetResolver.Resolve(
                 null, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
@@ -81,7 +81,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 接続先はディレクトリの項目でなくパイプ名で返す()
+        public void TargetIsReturnedAsPipeNameNotDirectoryEntry()
         {
             // 列挙で得られる項目はディレクトリを含む形なので、そのまま返すと接続に使えない。
             string resolved = PipeTargetResolver.Resolve(
@@ -91,8 +91,8 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Theory]
-        [MemberData(nameof(ホストの待受でない名前))]
-        public void 待受でない項目が並んでいてもホストの待受だけを候補にする(string notHostPipeName)
+        [MemberData(nameof(NamesThatAreNotHostListeners))]
+        public void OnlyHostListenersAreCandidatesAmongOtherEntries(string notHostPipeName)
         {
             // パイプディレクトリには無関係な名前が多数並ぶ。落とさなければ、ホストが1つしか
             // 待ち受けていなくても複数と数えてしまう。接頭辞を見るだけの絞り込みでは、続きが
@@ -104,7 +104,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void エディタが複数でも待ち受けているホストが1つなら接続先は決まる()
+        public void TargetIsResolvedWithMultipleEditorsButOneListener()
         {
             // 数えるべきは接続できる相手であって、エディタの数ではない。プラグインを配置して
             // いないエディタや、ホストを停止したエディタは接続先の候補にならない。
@@ -115,7 +115,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void エディタも待受も無ければ起動を促すエラーにする()
+        public void NoEditorAndNoListenerYieldsStartupPromptError()
         {
             BridgeException error = Assert.Throws<BridgeException>(
                 () => PipeTargetResolver.Resolve(null, Entries("lsass"), new int[0]));
@@ -129,7 +129,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Theory]
         [InlineData(new int[] { 1234 })]
         [InlineData(new int[] { 1234, 5678, 9012 })]
-        public void エディタは在るのに待受が無ければ稼働状態を確かめるよう促す(int[] editorProcessIds)
+        public void EditorWithoutListenerYieldsStatusCheckPrompt(int[] editorProcessIds)
         {
             // エディタが起動していないという案内は、この状況では事実に反する。プラグインが
             // 配置されていない・停止されている・設定が不正で開始しなかった、を区別できる
@@ -146,7 +146,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 待受が複数なら決められない事実と候補だけを伝えるエラーにする()
+        public void MultipleListenersYieldErrorStatingAmbiguityAndCandidates()
         {
             // 本文の全体を固定する。先頭だけを見る検査では、候補の後ろに設定作業を促す段落を
             // 足した本文も通ってしまう。候補はプロセスIDの昇順に並べる——パイプの列挙順は
@@ -166,7 +166,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("環境変数")]
         [InlineData("登録")]
         [InlineData("設定")]
-        public void 待受が複数のときの案内は設定作業を求めない(string forbidden)
+        public void MultipleListenerGuidanceDoesNotDemandConfiguration(string forbidden)
         {
             // この本文を読むのは呼び出し元のエージェントで、ブリッジの起動設定を書き換える
             // 立場にない。設定作業を促す案内は、その場で実行できない指示になる。本文全体の
@@ -184,20 +184,20 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("pmx-editor-mcp-1", 1)]
         [InlineData("pmx-editor-mcp-1234", 1234)]
         [InlineData("pmx-editor-mcp-2147483647", int.MaxValue)]
-        public void ホストの待受パイプの項目からはプロセスIDを読める(string pipeName, int expected)
+        public void ProcessIdIsReadFromHostListenerEntry(string pipeName, int expected)
         {
             Assert.Equal(expected, PipeTargetResolver.ProcessIdOf(PipeTargetResolver.PipeDirectory + pipeName));
         }
 
         [Theory]
-        [MemberData(nameof(ホストの待受でない名前))]
-        public void ホストの待受でない項目は候補にしない(string pipeName)
+        [MemberData(nameof(NamesThatAreNotHostListeners))]
+        public void NonHostListenerEntryIsNotACandidate(string pipeName)
         {
             Assert.True(PipeTargetResolver.ProcessIdOf(PipeTargetResolver.PipeDirectory + pipeName) < 0);
         }
 
         [Fact]
-        public void パイプディレクトリの下にない名前は候補にしない()
+        public void NameOutsidePipeDirectoryIsNotACandidate()
         {
             Assert.True(PipeTargetResolver.ProcessIdOf("pmx-editor-mcp-1234") < 0);
         }
@@ -205,7 +205,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Theory]
         [InlineData("pmx-editor-mcp-9")]
         [InlineData("")]
-        public void 接続先はテスト専用の環境変数だけで固定できる(string configured)
+        public void TargetIsPinnedOnlyByTestOnlyEnvironmentVariable(string configured)
         {
             // 空の名前も「指定が無い」ではなく指定として扱い、黙って待受の列挙へ落とさない。
             List<string> readNames = new List<string>();
@@ -241,7 +241,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 環境変数の指定が無ければ列挙した待受から接続先を決める()
+        public void WithoutEnvironmentVariableTargetComesFromEnumeratedListeners()
         {
             string enumeratedDirectory = null;
             bool countedEditors = false;
@@ -270,7 +270,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 待受が複数ならエディタを数えずに決められないエラーにする()
+        public void MultipleListenersYieldAmbiguityErrorWithoutCountingEditors()
         {
             bool countedEditors = false;
 
@@ -296,7 +296,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData(new int[0], BridgeErrorCodes.NoEditor)]
         [InlineData(new int[] { 1234 }, BridgeErrorCodes.NoHost)]
         [InlineData(new int[] { 1234, 5678 }, BridgeErrorCodes.NoHost)]
-        public void 待受が無ければエディタを数えて案内を分ける(int[] editorProcessIds, string expectedCode)
+        public void NoListenerCountsEditorsToChooseGuidance(int[] editorProcessIds, string expectedCode)
         {
             string searchedProcessName = null;
 
@@ -320,7 +320,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("接続先の指定")]
         [InlineData("待ち受けているパイプ")]
         [InlineData("起動しているPMXエディタ")]
-        public void 材料を調べられなければ結果として返せる失敗にする(string material)
+        public void UnreadableSourcesBecomeReturnableFailure(string material)
         {
             // 材料はOSから取るので、権限やハンドルの都合で失敗しうる。素通しすると要求元へ
             // 返せない異常になり、呼び出し元は何が起きたか分からないまま止まる。

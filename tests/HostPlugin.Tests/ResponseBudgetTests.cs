@@ -5,7 +5,7 @@ namespace PmxEditorMcp.Tests
     public class ResponseBudgetTests
     {
         [Fact]
-        public void 未設定なら既定の文字数で有効になる()
+        public void UnsetBudgetIsValidWithDefaultCharacterCount()
         {
             ResponseBudget budget = ResponseBudget.Read(null);
 
@@ -17,7 +17,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("10000", 10000)]
         [InlineData("100000", 100000)]
         [InlineData("500000", 500000)]
-        public void 範囲内の10進表記はその値で有効になる(string rawValue, int expected)
+        public void DecimalValueInRangeIsValid(string rawValue, int expected)
         {
             ResponseBudget budget = ResponseBudget.Read(rawValue);
 
@@ -30,7 +30,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("500001")]
         [InlineData("0")]
         [InlineData("99999999999999999999")]
-        public void 範囲外の値は無効になり理由を持つ(string rawValue)
+        public void ValueOutOfRangeIsInvalidWithReason(string rawValue)
         {
             ResponseBudget budget = ResponseBudget.Read(rawValue);
 
@@ -49,7 +49,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("100_000")]
         [InlineData("1e5")]
         [InlineData("100000a")]
-        public void 構文に反する値は無効になり理由を持つ(string rawValue)
+        public void MalformedValueIsInvalidWithReason(string rawValue)
         {
             ResponseBudget budget = ResponseBudget.Read(rawValue);
 
@@ -58,7 +58,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 無効な理由は値に含まれる制御文字をそのまま載せない()
+        public void InvalidReasonDoesNotEchoControlCharacters()
         {
             const char CarriageReturn = (char)13;
             const char LineFeed = (char)10;
@@ -71,7 +71,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 無効な理由は長大な値をそのまま載せない()
+        public void InvalidReasonDoesNotEchoOverlongValue()
         {
             // 長さは受理範囲の境界値と一致させない(範囲の説明文と区別できなくなるため)。
             string rawValue = new string('9', 12345);
@@ -84,7 +84,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 無効な設定は既定の文字数へ落とさない()
+        public void InvalidSettingDoesNotFallBackToDefault()
         {
             ResponseBudget budget = ResponseBudget.Read("9999");
 

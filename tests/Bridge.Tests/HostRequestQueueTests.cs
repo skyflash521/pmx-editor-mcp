@@ -7,7 +7,7 @@ namespace PmxEditorMcp.Bridge.Tests
     public class HostRequestQueueTests
     {
         [Fact]
-        public void 待つ相手がいなければ直ちに通す()
+        public void PassesImmediatelyWhenNobodyIsWaiting()
         {
             HostRequestQueue queue = new HostRequestQueue();
 
@@ -17,7 +17,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 先客がいるあいだは通さない()
+        public void DoesNotPassWhileAnEarlierHolderRemains()
         {
             HostRequestQueue queue = new HostRequestQueue();
             queue.EnterAsync(CancellationToken.None);
@@ -28,7 +28,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 到着した順に通す()
+        public async Task PassesInArrivalOrder()
         {
             HostRequestQueue queue = new HostRequestQueue();
             await queue.EnterAsync(CancellationToken.None);
@@ -50,7 +50,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 待っているあいだの取り消しはその待ちだけを取り消す()
+        public async Task CancellingWhileWaitingCancelsOnlyThatWait()
         {
             HostRequestQueue queue = new HostRequestQueue();
             await queue.EnterAsync(CancellationToken.None);
@@ -72,7 +72,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 譲ったあとに待つ相手がいなければ次の相手を直ちに通す()
+        public async Task NextWaiterPassesImmediatelyWhenNobodyElseWaits()
         {
             HostRequestQueue queue = new HostRequestQueue();
             await queue.EnterAsync(CancellationToken.None);
@@ -85,7 +85,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 取り消し済みの合図なら先客がいなくても通さない()
+        public void AlreadyCancelledTokenDoesNotPassWithoutHolder()
         {
             // 待つ相手がいないときに取り消しを見ずに通す作りだと、取り消した呼び出しが
             // そのまま順番を握り、以後の呼び出しを塞いでしまう。
@@ -103,7 +103,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 取り消し済みの合図なら先客がいるときも通さない()
+        public void AlreadyCancelledTokenDoesNotPassWithHolder()
         {
             HostRequestQueue queue = new HostRequestQueue();
             queue.EnterAsync(CancellationToken.None);

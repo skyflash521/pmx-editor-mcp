@@ -26,13 +26,13 @@ namespace PmxEditorMcp.Bridge.Tests
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(60);
 
         [Fact]
-        public void 結果の大きさを宣言する鍵は契約で定めた値である()
+        public void ResultSizeDeclarationKeyMatchesContract()
         {
             Assert.Equal("anthropic/maxResultSizeChars", BridgeTools.ResultSizeMetaKey);
         }
 
         [Fact]
-        public async Task サーバーは契約で定めた名前とブリッジのバージョンを名乗る()
+        public async Task ServerAnnouncesContractNameAndBridgeVersion()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
             await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
@@ -44,7 +44,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 登録するツールはホストへ中継する1件だけである()
+        public async Task OnlyOneToolIsRegisteredForHostRelay()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
             await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
@@ -56,7 +56,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ツール定義は応答サイズ予算の既定値を宣言する()
+        public async Task ToolDefinitionDeclaresDefaultResponseBudget()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
             await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
@@ -67,7 +67,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ツール定義は環境変数で上書きした応答サイズ予算を宣言する()
+        public async Task ToolDefinitionDeclaresBudgetOverriddenByEnvironmentVariable()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
             await using McpClient client = await StartBridgeAsync(null, "250000", limit.Token);
@@ -78,7 +78,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ツール定義はホストへ接続していなくても得られる()
+        public async Task ToolDefinitionIsAvailableWithoutHostConnection()
         {
             // 接続は最初のツール呼び出しまで行わないので、待ち受けていないパイプを指していても
             // 一覧はブリッジ自身の設定値から答えられる。
@@ -92,7 +92,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ツールの呼び出しはホストへ中継して応答を返す()
+        public async Task ToolCallRelaysToHostAndReturnsResponse()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
@@ -114,7 +114,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 中継に失敗してもプロセスは落ちずエラーとしてツール結果で返す()
+        public async Task RelayFailureReturnsToolErrorWithoutCrashing()
         {
             // ホストの応答サイズ予算をブリッジと食い違わせる。待ちに入らず決まった失敗になる。
             using FakeHost host = new FakeHost()
@@ -135,7 +135,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task テスト専用の環境変数で接続先を固定して中継できる()
+        public async Task TestOnlyEnvironmentVariablePinsRelayTarget()
         {
             // 接続先の決定は実行経路の入口にあるので、単体では組み合わせまでしか確かめられない。
             // 実行ファイルを起動して、指した相手から応答が返るところまでを見る。
@@ -160,7 +160,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 接続先の指定が無ければ待ち受けているホストを見つけて中継する()
+        public async Task WithoutTargetSettingListeningHostIsDiscovered()
         {
             // ホストの名乗り方どおりの名前で待ち受け、接続先の指定を与えずに起動する。実機の
             // ホストが同時に待ち受けていると候補が増えるので、その場合は候補として挙がるところ
@@ -178,7 +178,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 接続先を指す環境変数はテスト専用の名前だけとする()
+        public async Task OnlyTestOnlyEnvironmentVariableNamesTheTarget()
         {
             // 名前の似た別の環境変数まで接続先として読む実装だと、利用者が起動設定で接続先を
             // 選べる余地が残る。読まないはずの名前へ待ち受けていない名前を与えても、待受の
@@ -200,7 +200,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 成功した結果は先頭行で接続先を名乗る()
+        public async Task SuccessfulResultAnnouncesTargetOnFirstLine()
         {
             // どのエディタの応答かを、その応答だけを見て分かるようにする。過去の知らせを
             // 覚えていることに頼ると、文脈が失われた時点で相手が分からなくなる。
@@ -221,7 +221,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 二度目以降の成功した結果も毎回接続先を名乗る()
+        public async Task LaterSuccessfulResultsAlsoAnnounceTarget()
         {
             // 一度きりの知らせだと、呼び出し元がそれを覚えていることに頼ることになる。文脈が
             // 失われた後の応答からも相手が分かるよう、同じ相手のままでも毎回名乗る。
@@ -244,7 +244,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 失敗した結果はコードと説明だけを返す()
+        public async Task FailedResultReturnsOnlyCodeAndDescription()
         {
             // 失敗の本文は「コード: 説明」の形で読まれるので、接続先の行を足して形を崩さない。
             // 接続先が変わった事実は、次に成功した結果で必ず伝わる。

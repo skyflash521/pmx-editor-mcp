@@ -42,7 +42,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 書いた内容が順に追記される()
+        public void WrittenLinesAreAppendedInOrder()
         {
             HostLog log = new HostLog(PathIn("host.log"));
 
@@ -56,7 +56,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ローテーション先は書き込み先と同名に1世代ぶんの接尾辞を付けたパスになる()
+        public void RotationTargetIsWriteTargetWithOneGenerationSuffix()
         {
             HostLog log = new HostLog(PathIn("host.log"));
 
@@ -64,7 +64,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 閾値ちょうどではローテーションせず同じファイルへ追記する()
+        public void AtThresholdItAppendsToSameFileWithoutRotating()
         {
             string path = PathIn("host.log");
             Prefill(path, HostLog.RotateThresholdBytes);
@@ -77,7 +77,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 閾値を超えるとローテーションして新しいファイルへ書き続ける()
+        public void AboveThresholdItRotatesAndKeepsWritingToNewFile()
         {
             string path = PathIn("host.log");
             Prefill(path, HostLog.RotateThresholdBytes + 1);
@@ -91,7 +91,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ローテーションは1世代だけ残し古いローテーション先を上書きする()
+        public void RotationKeepsOneGenerationAndOverwritesOlderTarget()
         {
             string path = PathIn("host.log");
             HostLog log = new HostLog(path);
@@ -104,7 +104,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ローテーションに失敗しても追記は続く()
+        public void AppendContinuesAfterRotationFails()
         {
             string path = PathIn("host.log");
             HostLog log = new HostLog(path);
@@ -120,7 +120,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 書き込めないファイルでも例外を投げない()
+        public void UnwritableFileDoesNotThrow()
         {
             string path = PathIn("host.log");
             HostLog log = new HostLog(path);
@@ -133,7 +133,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 例外はスタックトレース付きで記録される()
+        public void ExceptionsAreRecordedWithStackTrace()
         {
             HostLog log = new HostLog(PathIn("host.log"));
             Exception captured;
@@ -151,11 +151,11 @@ namespace PmxEditorMcp.Tests
             string content = File.ReadAllText(log.FilePath, Encoding.UTF8);
             Assert.Contains("要求処理で例外", content);
             Assert.Contains("記録される原因", content);
-            Assert.Contains(nameof(例外はスタックトレース付きで記録される), content);
+            Assert.Contains(nameof(ExceptionsAreRecordedWithStackTrace), content);
         }
 
         [Fact]
-        public void 複数スレッドから書いても全行が失われない()
+        public void NoLineIsLostWhenManyThreadsWrite()
         {
             const int ThreadCount = 4;
             const int LinesPerThread = 250;
@@ -213,7 +213,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 既定の書き込み先はプロセスごとに分かれる()
+        public void DefaultWriteTargetIsPerProcess()
         {
             string first = HostLog.BuildDefaultFilePath(1234);
             string second = HostLog.BuildDefaultFilePath(5678);

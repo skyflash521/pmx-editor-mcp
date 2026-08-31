@@ -35,7 +35,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数が5つでなければ引数の誤りで終わる()
+        public void WrongArgumentCountEndsWithInvalidArguments()
         {
             foreach (int count in new[] { 0, 1, 2, 3, 4, 6 })
             {
@@ -50,7 +50,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 対象アセンブリが無ければ入力を読めない()
+        public void MissingTargetAssemblyIsInputUnavailable()
         {
             StringWriter error = new StringWriter();
 
@@ -63,7 +63,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 入力のどれかが無ければ入力を読めない()
+        public void AnyMissingInputIsInputUnavailable()
         {
             string editor = CreateEditorDirectory();
             string[] good =
@@ -89,7 +89,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 入力の形が違えば入力を読めない()
+        public void InputWithWrongShapeIsInputUnavailable()
         {
             StringWriter error = new StringWriter();
 
@@ -102,7 +102,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 過不足が無ければ内訳を1行書いて正常に終わる()
+        public void MatchingSetsWriteOneSummaryLineAndSucceed()
         {
             InventoryRecord inventory = Inventory();
             StringWriter output = new StringWriter();
@@ -126,7 +126,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 不一致は余った識別子をすべて序数順で示す()
+        public void MismatchListsEveryExtraIdentifierInOrdinalOrder()
         {
             string outOfScope = "{\"types\":["
                 + "{\"name\":\"ZZZ.Alpha\",\"reason\":\"route\"},"
@@ -148,7 +148,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 正常に終わるときも入力を書き換えない()
+        public void SuccessfulRunDoesNotModifyInputs()
         {
             string editor = CreateEditorDirectory();
             string[] inputs =
@@ -170,7 +170,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 台帳から行を落とすと足りない型を示して照合の不一致で終わる()
+        public void DroppingALedgerRowReportsTheMissingTypeAndFailsCollation()
         {
             string dropped = WithoutTypeArguments(Inventory().Types[0].Name);
             StringWriter error = new StringWriter();
@@ -185,7 +185,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 除外一覧から項目を落とすとその行キーを示して照合の不一致で終わる()
+        public void DroppingAnExclusionReportsItsKeyAndFailsCollation()
         {
             ExcludedSignatureRecord removed = Records()[0];
             string trimmed = ExcludedSignatureJson.Write(Records().Skip(1).ToList());

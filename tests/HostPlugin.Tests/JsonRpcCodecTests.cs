@@ -28,7 +28,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 妥当な要求を解析する()
+        public void ParsesValidRequest()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest("{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"ping\"}");
 
@@ -44,7 +44,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 文字列の識別子を受理する()
+        public void AcceptsStringId()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest("{\"jsonrpc\":\"2.0\",\"id\":\"a-1\",\"method\":\"ping\"}");
 
@@ -53,7 +53,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 引数を解析する()
+        public void ParsesArguments()
         {
             IDictionary<string, object> parameters = ParseObject("{\"protocol\":1,\"name\":\"あ\"}");
 
@@ -72,7 +72,7 @@ namespace PmxEditorMcp.Tests
         // 数値の桁あふれと壊れた数値も、シリアライザからは解釈の失敗として返る。
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1e999999,\"method\":\"ping\"}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"m\",\"params\":{\"x\":1.2.3}}")]
-        public void JSONとして解釈できない本文は構文不正になる(string line)
+        public void BodyThatIsNotJsonIsSyntaxError(string line)
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(line);
 
@@ -87,7 +87,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("\"文字列\"")]
         [InlineData("5")]
         [InlineData("null")]
-        public void トップレベルがオブジェクトでない要求は構造不正になる(string line)
+        public void RequestWhoseTopLevelIsNotObjectIsStructureError(string line)
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(line);
 
@@ -102,7 +102,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("{\"jsonrpc\":2.0,\"id\":1,\"method\":\"ping\"}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":5}")]
-        public void 判別できる識別子を持つ構造不正は識別子を返す(string line)
+        public void StructureErrorWithReadableIdReturnsThatId(string line)
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(line);
 
@@ -117,7 +117,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":true,\"method\":\"ping\"}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":[1],\"method\":\"ping\"}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":{\"v\":1},\"method\":\"ping\"}")]
-        public void 識別子が欠けるか許容外の型なら構造不正で識別子はnullになる(string line)
+        public void MissingOrUnsupportedIdTypeYieldsStructureErrorWithNullId(string line)
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(line);
 
@@ -131,7 +131,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\",\"params\":\"文字列\"}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\",\"params\":5}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\",\"params\":null}")]
-        public void 引数がオブジェクト以外でも解析は通り取り出しだけが失敗する(string line)
+        public void NonObjectArgumentsStillParseAndOnlyExtractionFails(string line)
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(line);
 
@@ -145,7 +145,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 空のメソッド名は構造不正にしない()
+        public void EmptyMethodNameIsNotStructureError()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(EmptyMethodRequest);
 
@@ -155,7 +155,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 識別子と引数がともに不正なら構造不正を先に判定する()
+        public void StructureErrorIsDecidedBeforeInvalidArguments()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(NullIdWithArrayParamsRequest);
 
@@ -165,7 +165,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 入れ子の深さが上限までの要求は解析できる()
+        public void RequestAtDepthLimitIsParsed()
         {
             // 要求のオブジェクトと params のオブジェクトで2段、残りを空配列で埋めて上限ちょうどにする。
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
@@ -175,7 +175,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 入れ子の深さが上限を超える要求は構文不正になる()
+        public void RequestDeeperThanLimitIsSyntaxError()
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
                 BuildNested(JsonRpcCodec.JsonRecursionLimit - 1));
@@ -205,7 +205,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void シリアライザの既定より大きい本文を解析できる()
+        public void BodyLargerThanSerializerDefaultIsParsed()
         {
             // 既定の上限は約200万文字。それを超えても16MiB以下なら受理する。
             string large = new string('a', 3000000);
@@ -219,7 +219,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 成功の応答を組み立てる()
+        public void BuildsSuccessResponse()
         {
             string line = JsonRpcCodec.SerializeResult(7, "pong");
 
@@ -230,7 +230,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 文字列の識別子を持つ応答を組み立てる()
+        public void BuildsResponseWithStringId()
         {
             string line = JsonRpcCodec.SerializeResult("a-1", "pong");
 
@@ -238,7 +238,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void オブジェクトの結果を組み立てる()
+        public void BuildsObjectResult()
         {
             Dictionary<string, object> result = new Dictionary<string, object>
             {
@@ -256,7 +256,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void エラーの応答を組み立てる()
+        public void BuildsErrorResponse()
         {
             string line = JsonRpcCodec.SerializeError(null, JsonRpcErrorCodes.ParseError, "解釈できない");
 
@@ -269,7 +269,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void エラーの応答の本文に改行を含めない()
+        public void ErrorResponseBodyContainsNoNewline()
         {
             string line = JsonRpcCodec.SerializeError(1, JsonRpcErrorCodes.InternalError, "改行\r\nを含む説明");
 
@@ -278,7 +278,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 成功の応答の本文に改行を含めない()
+        public void SuccessResponseBodyContainsNoNewline()
         {
             string line = JsonRpcCodec.SerializeResult(1, "改行\r\nを含む結果");
 
@@ -287,7 +287,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void シリアライザの既定より大きい結果も組み立てる()
+        public void BuildsResultLargerThanSerializerDefault()
         {
             // シリアライザの既定の上限は約200万文字。組み立てには上限を課さない。
             string large = new string('a', 3000000);
@@ -298,7 +298,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void シリアライズできない結果は例外になる()
+        public void UnserializableResultThrows()
         {
             Dictionary<string, object> looped = new Dictionary<string, object>();
             looped["self"] = looped;
@@ -307,19 +307,19 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 構造トークンの上限は20万である()
+        public void StructureTokenLimitIsTwoHundredThousand()
         {
             Assert.Equal(200000, JsonRpcCodec.ParseStructureTokenLimit);
         }
 
         [Fact]
-        public void 構造トークンが上限までの要求は解析できる()
+        public void RequestAtStructureTokenLimitIsParsed()
         {
             Assert.True(JsonRpcCodec.ParseRequest(BuildFlatArray(ElementsForLimit)).IsValid);
         }
 
         [Fact]
-        public void 構造トークンが上限を1つ超える要求は入力の上限超過になる()
+        public void RequestOneTokenOverLimitIsInputLimitExceeded()
         {
             // 上限内の本文でも、空のオブジェクトを並べれば解析で大量のオブジェクトが作られる。
             // 上限ちょうどの要求へ開き括弧を1つ足しただけの本文で、判定の向きを固定する。
@@ -331,7 +331,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 文字列の中の記号は構造トークンに数えない()
+        public void SymbolsInsideStringsAreNotCountedAsStructureTokens()
         {
             // 値として置かれた括弧やコンマはオブジェクトを作らない。
             string commas = new string(',', JsonRpcCodec.ParseStructureTokenLimit + 100);
@@ -342,7 +342,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 逆斜線で終わる文字列のあとの構造トークンも数える()
+        public void StructureTokensAfterStringEndingWithBackslashAreCounted()
         {
             // 末尾の逆斜線がエスケープ済みなら文字列はそこで終わる。取り違えると、あとに続く
             // トークンを数え落として上限超過を見逃す。
@@ -362,7 +362,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void エスケープされた引用符では文字列を閉じない()
+        public void EscapedQuoteDoesNotCloseString()
         {
             // 閉じたと取り違えると、文字列の中のコンマを構造トークンに数えてしまう。
             string commas = new string(',', JsonRpcCodec.ParseStructureTokenLimit + 100);
@@ -431,13 +431,13 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 入れ子の深さの上限は100段である()
+        public void NestingDepthLimitIsOneHundred()
         {
             Assert.Equal(100, JsonRpcCodec.JsonRecursionLimit);
         }
 
         [Fact]
-        public void 末端の値も1段として数える()
+        public void LeafValueCountsAsOneLevel()
         {
             // 配列97段の内側に数値を置くと、要求と params の2段と合わせて上限ちょうどになる。
             Assert.True(JsonRpcCodec.ParseRequest(BuildNested(97, "1")).IsValid);
@@ -445,13 +445,13 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 解析の文字数の上限は3355万文字である()
+        public void ParseCharacterLimitMatchesContract()
         {
             Assert.Equal(33554432, JsonRpcCodec.ParseMaxJsonLength);
         }
 
         [Fact]
-        public void エラーコードは契約で定めた値である()
+        public void ErrorCodesMatchContract()
         {
             Assert.Equal(-32700, JsonRpcErrorCodes.ParseError);
             Assert.Equal(-32600, JsonRpcErrorCodes.InvalidRequest);

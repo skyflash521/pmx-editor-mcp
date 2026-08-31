@@ -10,7 +10,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string EditorDirectory = @"C:\editor";
 
         [Fact]
-        public void 対象アセンブリのパスを組み立てる()
+        public void BuildsTheTargetAssemblyPath()
         {
             Assert.Equal(
                 Path.Combine(EditorDirectory, "Lib", "PEPlugin", "PEPlugin.dll"),
@@ -18,7 +18,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 探索するディレクトリを優先順に並べる()
+        public void OrdersProbeDirectoriesByPriority()
         {
             IList<string> directories = SdkAssemblyLocator.GetProbeDirectories(EditorDirectory);
 
@@ -33,7 +33,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 依存アセンブリは探索する順に探される()
+        public void DependenciesAreProbedInOrder()
         {
             string root = Path.Combine(
                 Path.GetTempPath(), "pmx-editor-mcp-probe-" + Guid.NewGuid().ToString("N"));
@@ -60,7 +60,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 導入ディレクトリを渡さないと例外になる()
+        public void MissingInstallDirectoryThrows()
         {
             Assert.Throws<ArgumentNullException>(() => SdkAssemblyLocator.GetAssemblyPath(null));
             Assert.Throws<ArgumentNullException>(() => SdkAssemblyLocator.GetProbeDirectories(null));

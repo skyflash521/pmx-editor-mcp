@@ -14,20 +14,20 @@ namespace PmxEditorMcp.Bridge.Tests
         private static readonly Encoding Utf8WithoutBom = new UTF8Encoding(false);
 
         [Fact]
-        public void 本文のバイト数はUTF8で数える()
+        public void BodySizeIsCountedInUtf8Bytes()
         {
             Assert.Equal(3, BridgeMessageChannel.MeasureBytes("あ"));
             Assert.Equal(0, BridgeMessageChannel.MeasureBytes(string.Empty));
         }
 
         [Fact]
-        public void 入出力の上限は契約で定めた値である()
+        public void IoLimitMatchesContract()
         {
             Assert.Equal(16 * 1024 * 1024, BridgeMessageChannel.DefaultMaxMessageBytes);
         }
 
         [Fact]
-        public async Task 書き出した本文はBOMなしUTF8でLFを付けて並ぶ()
+        public async Task WrittenBodiesAreUtf8WithoutBomAndEndWithLf()
         {
             using MemoryStream stream = new MemoryStream();
             BridgeMessageChannel channel = new BridgeMessageChannel(stream);
@@ -41,7 +41,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 上限を超える本文は書き出さずに知らせる()
+        public async Task OversizedBodyIsReportedInsteadOfWritten()
         {
             using MemoryStream stream = new MemoryStream();
             BridgeMessageChannel channel = new BridgeMessageChannel(stream, 4);
@@ -55,7 +55,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 上限ちょうどの本文は書き出せる()
+        public async Task BodyAtLimitIsWritten()
         {
             using MemoryStream stream = new MemoryStream();
             BridgeMessageChannel channel = new BridgeMessageChannel(stream, 4);
@@ -66,7 +66,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 書き出しの上限は文字数でなくバイト数で測る()
+        public async Task WriteLimitIsMeasuredInBytesNotCharacters()
         {
             // 「あ」はUTF-8で3バイトなので、2文字は6バイトで上限4を超える。
             using MemoryStream stream = new MemoryStream();
@@ -79,7 +79,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task LF区切りの本文を順に読み取る()
+        public async Task ReadsLfSeparatedBodiesInOrder()
         {
             BridgeMessageChannel channel = ReadingChannel("first\nsecond\n");
 
@@ -88,7 +88,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task CRLF区切りの本文は末尾のCRを含めない()
+        public async Task CrlfSeparatedBodyExcludesTrailingCr()
         {
             BridgeMessageChannel channel = ReadingChannel("first\r\nsecond\r\n");
 
@@ -97,7 +97,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 区切りのCRとLFが別々に届いても本文へ混ぜない()
+        public async Task SeparatorCrAndLfArrivingApartAreNotMixedIntoBody()
         {
             // パイプは境界を保証しないので、CRが1回の読み取りの末尾に、LFが次の先頭に来うる。
             BridgeMessageChannel channel = new BridgeMessageChannel(
@@ -112,7 +112,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 本文の途中に現れるCRはそのまま残す()
+        public async Task CrInsideBodyIsKept()
         {
             // 区切りを決めるのはLFなので、単独のCRは本文の一部である。
             BridgeMessageChannel channel = ReadingChannel("a\rb\n");
@@ -121,7 +121,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 空の本文も1件として読み取る()
+        public async Task EmptyBodyIsReadAsOneMessage()
         {
             BridgeMessageChannel channel = ReadingChannel("\n");
 
@@ -129,7 +129,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task ホストが閉じたら切断として返す()
+        public async Task HostCloseIsReturnedAsDisconnect()
         {
             BridgeMessageChannel channel = ReadingChannel(string.Empty);
 
@@ -140,7 +140,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 区切りの来ないまま切断されたら読みかけの本文を捨てる()
+        public async Task DisconnectWithoutSeparatorDropsPartialBody()
         {
             BridgeMessageChannel channel = ReadingChannel("区切りが来ない");
 
@@ -151,7 +151,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 区切りが来なくても上限を超えた時点で読み取りを打ち切る()
+        public async Task ReadStopsOnceLimitIsExceededWithoutSeparator()
         {
             // 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
             CountingStream source = new CountingStream(Utf8WithoutBom.GetBytes(new string('a', 1000000)));
@@ -164,7 +164,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 上限ちょうどの本文は読み取れる()
+        public async Task BodyAtLimitIsRead()
         {
             BridgeMessageChannel channel = ReadingChannel("1234\n", 4);
 
@@ -172,7 +172,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 上限を1バイト超えた本文は打ち切る()
+        public async Task BodyOneByteOverLimitIsCut()
         {
             BridgeMessageChannel channel = ReadingChannel("12345\n", 4);
 
@@ -182,7 +182,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 読み取りの上限は文字数でなくバイト数で測る()
+        public async Task ReadLimitIsMeasuredInBytesNotCharacters()
         {
             // 「あ」はUTF-8で3バイトなので、6文字は18バイトで上限16を超える。
             BridgeMessageChannel channel = ReadingChannel(new string('あ', 6) + "\n", 16);
@@ -193,7 +193,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 上限ちょうどの本文はCRLF区切りでも読み取れる()
+        public async Task BodyAtLimitIsReadWithCrlfSeparator()
         {
             // 区切りのCRは本文から外れるので、上限の判定には数えない。
             BridgeMessageChannel channel = ReadingChannel("1234\r\n", 4);
@@ -202,7 +202,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 上限ちょうどの本文はCRとLFが別の読み取りに分かれても読み取れる()
+        public async Task BodyAtLimitIsReadWhenCrAndLfArriveApart()
         {
             // 上限を1バイト超えた時点で打ち切る作りだと、続くLFで本文から外れるCRを待てずに
             // 上限超過にしてしまう。
@@ -216,7 +216,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 上限を超えた末尾がCRでなければ区切りを待たずに打ち切る()
+        public async Task OverLimitBodyNotEndingWithCrIsCutWithoutWaitingForSeparator()
         {
             // 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
             BridgeMessageChannel channel = ReadingChannel("12345", 4);
@@ -227,7 +227,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task UTF8として解釈できない本文は符号化の不正として返す()
+        public async Task BodyThatIsNotValidUtf8IsReturnedAsEncodingError()
         {
             BridgeMessageChannel channel = new BridgeMessageChannel(
                 new MemoryStream(new byte[] { 0x82, 0xA0, LineFeed }),
@@ -240,7 +240,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task 多バイト文字を含む本文も区切りごとに読み取る()
+        public async Task BodiesWithMultiByteCharactersAreReadPerSeparator()
         {
             BridgeMessageChannel channel = ReadingChannel("あい\nうえ\n");
 

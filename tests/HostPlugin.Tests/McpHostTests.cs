@@ -124,14 +124,14 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void パイプ名はエディタのプロセスIDで決まる()
+        public void PipeNameIsDerivedFromEditorProcessId()
         {
             Assert.Equal("pmx-editor-mcp-1234", McpHost.BuildPipeName(1234));
             Assert.NotEqual(McpHost.BuildPipeName(1234), McpHost.BuildPipeName(5678));
         }
 
         [Fact]
-        public void 予算設定が不正なら待受を開始せず理由を返す()
+        public void InvalidBudgetSettingReturnsReasonWithoutListening()
         {
             McpHost host = CreateHost(Ignore, "9999");
 
@@ -151,7 +151,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 状態表示に使う値をそのまま返す()
+        public void StatusValuesAreReturnedAsIs()
         {
             McpHost host = CreateHost(Ignore);
 
@@ -162,7 +162,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 開始すると稼働中になりクライアントが接続できる()
+        public void StartingMakesItRunningAndAcceptsClient()
         {
             McpHost host = CreateHost(Ignore);
 
@@ -174,7 +174,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 切断されたら待受に戻る()
+        public void DisconnectReturnsToListening()
         {
             McpHost host = CreateHost(Ignore);
             string reason;
@@ -185,7 +185,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 接続は同時に1本までしか受けない()
+        public void OnlyOneConnectionIsAcceptedAtATime()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             using (ManualResetEventSlim release = new ManualResetEventSlim())
@@ -210,7 +210,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 接続処理が例外で終わっても待受は続く()
+        public void ListeningContinuesAfterConnectionHandlerThrows()
         {
             using (ManualResetEventSlim failed = new ManualResetEventSlim())
             using (ManualResetEventSlim handled = new ManualResetEventSlim())
@@ -245,7 +245,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 読み取りでブロックしていても停止で解ける()
+        public void StopUnblocksAThreadBlockedOnRead()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             using (ManualResetEventSlim finished = new ManualResetEventSlim())
@@ -282,7 +282,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 未開始と停止済みでの停止は何も変えない()
+        public void StopChangesNothingWhenNotStartedOrAlreadyStopped()
         {
             McpHost host = CreateHost(Ignore);
 
@@ -300,7 +300,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 稼働中の開始は拒否する()
+        public void StartIsRejectedWhileRunning()
         {
             McpHost host = CreateHost(Ignore);
             string reason;
@@ -312,7 +312,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 停止すると待受が無くなり停止済みになる()
+        public void StopRemovesListenerAndMarksStopped()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             {
@@ -335,7 +335,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 開始直後に停止してもパイプインスタンスが待受へ残らない()
+        public void StoppingRightAfterStartLeavesNoPipeInstanceListening()
         {
             McpHost host = CreateHost(Ignore);
 
@@ -350,7 +350,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 接続処理の最中に停止しても呼び出しスレッドをブロックしない()
+        public void StoppingDuringConnectionHandlingDoesNotBlockCaller()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             using (ManualResetEventSlim release = new ManualResetEventSlim())
@@ -381,7 +381,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 停止した稼働世代ではUIディスパッチを行わない()
+        public void StoppedGenerationDoesNotDispatchToUi()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             using (ManualResetEventSlim release = new ManualResetEventSlim())
@@ -414,7 +414,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 待受を担うスレッドが終了する前は停止処理中と判定して開始を拒否する()
+        public void StartIsRejectedWhileListenerThreadHasNotExited()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             using (ManualResetEventSlim release = new ManualResetEventSlim())
@@ -445,7 +445,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 停止から開始すると同じパイプ名の待受へ戻る()
+        public void StartAfterStopReturnsToSamePipeName()
         {
             McpHost host = CreateHost(Ignore);
             string reason;
@@ -461,7 +461,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 新しい稼働世代は前の稼働世代のUIディスパッチ禁止を引き継がない()
+        public void NewGenerationDoesNotInheritUiDispatchBanFromPrevious()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             {
@@ -512,7 +512,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 委譲がUIスレッドへ届くまでに停止したら実行しない()
+        public void DelegateIsNotRunWhenStopHappensBeforeItReachesUiThread()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             using (ManualResetEventSlim finished = new ManualResetEventSlim())
@@ -548,7 +548,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 待受の準備に失敗し続けても記録は繰り返さない()
+        public void RepeatedListenerSetupFailuresAreRecordedOnce()
         {
             using (new NamedPipeServerStream(_pipeName, PipeDirection.InOut, 1))
             {
@@ -576,7 +576,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 接続中は接続状態を返す()
+        public void ConnectedStateIsReturnedWhileConnected()
         {
             using (ManualResetEventSlim connected = new ManualResetEventSlim())
             using (ManualResetEventSlim release = new ManualResetEventSlim())

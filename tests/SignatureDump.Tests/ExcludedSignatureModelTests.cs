@@ -10,7 +10,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Alternative = "PEPlugin.Vmd.IPEVmd.Init(PEPlugin.Pmx.IPXPmx)";
 
         [Fact]
-        public void ベースラインを根拠にする1件は能力IDだけを持つ()
+        public void BaselineGroundsCarryOnlyTheCapabilityId()
         {
             ExcludedSignatureRecord record = ExcludedSignatureRecord.FromBaseline(Key, "CAP-390");
 
@@ -22,7 +22,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ベースラインを根拠にするのに行キーか能力IDが空だと例外になる()
+        public void BaselineGroundsWithEmptyKeyOrCapabilityIdThrow()
         {
             Assert.Throws<ArgumentException>(() => ExcludedSignatureRecord.FromBaseline(string.Empty, "CAP-390"));
             Assert.Throws<ArgumentException>(() => ExcludedSignatureRecord.FromBaseline(Key, string.Empty));
@@ -31,7 +31,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void カテゴリを根拠にする1件は能力IDを持たない()
+        public void CategoryGroundsCarryNoCapabilityId()
         {
             ExcludedSignatureRecord record =
                 ExcludedSignatureRecord.FromCategory(Key, ExclusionCategory.Pmd, Alternative);
@@ -43,7 +43,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 代替の存在を条件とするカテゴリで代替が空だと例外になる()
+        public void CategoryRequiringAnAlternativeThrowsWhenItIsEmpty()
         {
             Assert.Throws<ArgumentException>(
                 () => ExcludedSignatureRecord.FromCategory(Key, ExclusionCategory.Pmd, string.Empty));
@@ -53,7 +53,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 閉集合の外のカテゴリを渡すと例外になる()
+        public void CategoryOutsideTheClosedSetThrows()
         {
             // 列挙型は定義外の整数からも作れるので、既知の値の並びで受けて残りは弾く。
             Assert.Throws<ArgumentException>(
@@ -61,7 +61,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 代替の存在を条件としないカテゴリに代替を与えると例外になる()
+        public void CategoryNotRequiringAnAlternativeThrowsWhenGivenOne()
         {
             Assert.Throws<ArgumentException>(
                 () => ExcludedSignatureRecord.FromCategory(Key, ExclusionCategory.Delegate, Alternative));
@@ -70,14 +70,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void カテゴリを根拠にするのにカテゴリが無いと例外になる()
+        public void CategoryGroundsWithoutACategoryThrow()
         {
             Assert.Throws<ArgumentException>(
                 () => ExcludedSignatureRecord.FromCategory(Key, ExclusionCategory.None, string.Empty));
         }
 
         [Fact]
-        public void 空白だけの行キーや能力IDや代替は例外になる()
+        public void WhitespaceOnlyKeyCapabilityIdOrAlternativeThrows()
         {
             Assert.Throws<ArgumentException>(() => ExcludedSignatureRecord.FromBaseline(" ", "CAP-390"));
             Assert.Throws<ArgumentException>(() => ExcludedSignatureRecord.FromBaseline(Key, " "));
@@ -90,14 +90,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 除外するシグネチャ自身を代替にすると例外になる()
+        public void TheExcludedSignatureItselfCannotBeTheAlternative()
         {
             Assert.Throws<ArgumentException>(
                 () => ExcludedSignatureRecord.FromCategory(Key, ExclusionCategory.Pmd, Key));
         }
 
         [Fact]
-        public void カテゴリを根拠にするのに行キーか代替を渡さないと例外になる()
+        public void CategoryGroundsWithNullKeyOrAlternativeThrow()
         {
             Assert.Throws<ArgumentNullException>(
                 () => ExcludedSignatureRecord.FromCategory(null, ExclusionCategory.Delegate, string.Empty));

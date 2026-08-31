@@ -56,7 +56,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 表の行だけを拾う()
+        public void PicksUpOnlyTableRows()
         {
             Assert.Equal(
                 new[]
@@ -68,7 +68,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 名前が1つの対象は1件の名前になる()
+        public void SingleNameTargetYieldsOneName()
         {
             CapabilityRecord bare = Find("CAP-003");
             Assert.Equal(CapabilityTargetKind.Single, bare.TargetKind);
@@ -82,7 +82,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 区切りの点で分割しない()
+        public void DoesNotSplitOnTheDotSeparator()
         {
             // 入れ子の型はメンバーと同じ書き方になるので、字面で分けると型を型とメンバーへ
             // 読み違える。どちらかは公開APIの一覧と突き合わせて決まる。
@@ -93,7 +93,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 並べた対象は名前ごとに分かれる()
+        public void ListedTargetsAreSplitPerName()
         {
             // 実物に現れる要素の数は2・3・5と幅があるので、どれも固定する。
             CapabilityRecord two = Find("CAP-011");
@@ -122,7 +122,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void まとめて指す対象は名前を持たず原文を残す()
+        public void PatternTargetHasNoNamesAndKeepsTheRawText()
         {
             // どの名前を指すかが字面から決まらないので、推測で埋めると実在しない名前を指す行が
             // できる。判断の材料は原文だけなので、原文はそのまま残す。
@@ -139,7 +139,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型の接尾辞は名前から落ちるが原文には残る()
+        public void GenericAritySuffixIsDroppedFromNamesButKeptInRawText()
         {
             CapabilityRecord record = Find("CAP-005");
 
@@ -161,7 +161,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型引数の数になり得ない接尾辞は落とさない()
+        public void SuffixThatCannotBeAGenericArityIsNotDropped()
         {
             // 落とすと、台帳の誤記が実在する非総称型の名前へ化けて照合に通ってしまう。
             IList<CapabilityRecord> records = LedgerParser.Parse(Compose(
@@ -176,7 +176,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 分類を読み取る()
+        public void ReadsTheStatusColumn()
         {
             Assert.Equal(CapabilityStatus.Provided, Find("CAP-001").Status);
             Assert.Equal(CapabilityStatus.NotSupported, Find("CAP-007").Status);
@@ -184,7 +184,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 担当を読み取る()
+        public void ReadsTheOwnerColumn()
         {
             Assert.Equal(CapabilityOwner.Model, Find("CAP-001").Owner);
             Assert.Equal(CapabilityOwner.Session, Find("CAP-002").Owner);
@@ -194,7 +194,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 大分類と備考を読み取る()
+        public void ReadsTheCategoryAndRemarksColumns()
         {
             CapabilityRecord withRemarks = Find("CAP-002");
             Assert.Equal("本体フォーム", withRemarks.Category);
@@ -204,19 +204,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 台帳を渡さないと例外になる()
+        public void MissingLedgerThrows()
         {
             Assert.Throws<ArgumentNullException>(() => LedgerParser.Parse(null));
         }
 
         [Fact]
-        public void 表の行が無ければ空になる()
+        public void NoTableRowsYieldAnEmptyResult()
         {
             Assert.Empty(LedgerParser.Parse("見出しと散文だけの文書。"));
         }
 
         [Fact]
-        public void 能力の表の見出しが無ければ行の形をしていても拾わない()
+        public void RowsWithoutTheCapabilityHeaderAreNotPickedUp()
         {
             // 同じ列の数を持つ別の表や、表を作らない単独の行を能力として数えないため。
             Assert.Empty(LedgerParser.Parse(Compose(
@@ -228,7 +228,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 見出しに区切りの行が続かなければ例外になる()
+        public void HeaderWithoutASeparatorRowThrows()
         {
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
                 HeaderRow,
@@ -236,7 +236,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 列の数が合わない行は読み飛ばさず例外になる()
+        public void RowWithWrongColumnCountThrowsInsteadOfBeingSkipped()
         {
             // 読み飛ばすと、その能力に対する突き合わせが行われないまま検査が通ってしまう。
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
@@ -251,7 +251,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 逃がした縦棒はセルの中身になる()
+        public void EscapedPipeBecomesCellContent()
         {
             CapabilityRecord record = LedgerParser.Parse(Compose(
                 HeaderRow,
@@ -263,7 +263,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 逃がしたバックスラッシュは1文字になる()
+        public void EscapedBackslashBecomesOneCharacter()
         {
             IList<CapabilityRecord> records = LedgerParser.Parse(Compose(
                 HeaderRow,
@@ -274,7 +274,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 逃がす対象でないバックスラッシュはそのまま残る()
+        public void BackslashThatIsNotAnEscapeIsKept()
         {
             // バックスラッシュを無条件に落とすと、記号を含む名前が別の名前へ化けて後段の照合に通る。
             CapabilityRecord record = LedgerParser.Parse(Compose(
@@ -287,7 +287,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 行の端の縦棒は省かれていてもよい()
+        public void EdgePipesMayBeOmitted()
         {
             // 端の縦棒が無い行を表の終わりと見なすと、そこから先の能力を黙って読み落とす。
             IList<CapabilityRecord> records = LedgerParser.Parse(Compose(
@@ -301,7 +301,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 知らない分類や担当は例外になる()
+        public void UnknownStatusOrOwnerThrows()
         {
             // 知らない語を既知の値へ黙って倒す誤りと区別するため、止まった理由がその語であることまで
             // 見る。行そのものは、語を取り違えても分類と担当が食い違わない組み合わせにしてある。
@@ -319,7 +319,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 表の中に縦棒を持たない行があれば例外になる()
+        public void RowWithoutAnyPipeInsideTheTableThrows()
         {
             // 表が終わったことにすると、そこから先の能力が検査されないまま通ってしまう。
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
@@ -331,7 +331,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 別の構造が始まる行で表は終わる()
+        public void TableEndsAtTheRowWhereAnotherBlockStarts()
         {
             // Markdownの表は空行を挟まなくても、次の構造が始まればそこで終わる。
             string capability = "| CAP-001 | PMXデータ | IPXPmxConnector.GetCurrentState | 提供 | モデル |  |";
@@ -369,7 +369,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 区切りの行の形が違えば例外になる()
+        public void SeparatorRowWithAWrongShapeThrows()
         {
             // 区切りでない行を区切りとして受けると、その次から能力の行として読み進めてしまう。
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
@@ -379,7 +379,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 区切りの行は寄せの指定や短い形でも受ける()
+        public void SeparatorRowAcceptsAlignmentMarkersAndShortForms()
         {
             // Markdownの表の区切りはハイフン1つで成立し、コロンで寄せを指定できる。
             IList<CapabilityRecord> records = LedgerParser.Parse(Compose(
@@ -391,7 +391,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 分類と担当が食い違う行は例外になる()
+        public void RowWhoseStatusAndOwnerDisagreeThrows()
         {
             // 台帳は担当を、分類が提供の能力を担当するツール契約仕様書として定めている。
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(

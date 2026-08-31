@@ -134,7 +134,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ハンドシェイクに成功すると契約の値を返す()
+        public void SuccessfulHandshakeReturnsContractValues()
         {
             IList<IDictionary<string, object>> responses = Exchange(CreateConnection(new McpMethodTable()), Handshake());
 
@@ -149,13 +149,13 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void プロトコル番号は1である()
+        public void ProtocolNumberIsOne()
         {
             Assert.Equal(1, JsonRpcConnection.Protocol);
         }
 
         [Fact]
-        public void 要求処理の時間の上限の既定は120秒である()
+        public void DefaultRequestTimeLimitIsOneHundredTwentySeconds()
         {
             Assert.Equal(TimeSpan.FromSeconds(120), JsonRpcConnection.DefaultRequestTimeout);
         }
@@ -164,7 +164,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("ping")]
         [InlineData("unknown")]
         [InlineData("")]
-        public void ハンドシェイクの前の他の要求は拒んで切断する(string method)
+        public void OtherRequestBeforeHandshakeIsRejectedAndDisconnects(string method)
         {
             // メソッドの検索より先に判定するので、既知・未知・空のいずれでも同じ扱いになる。
             IList<IDictionary<string, object>> responses =
@@ -176,7 +176,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ハンドシェイクの前の引数不正も引数の検査より先に拒んで切断する()
+        public void InvalidArgumentsBeforeHandshakeAreRejectedBeforeArgumentCheck()
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()), RequestWithArrayParams(1, "ping"), Request(2, "ping"));
@@ -186,7 +186,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ハンドシェイクの前の構造不正は要求構造の判定が先で接続を保つ()
+        public void StructureErrorBeforeHandshakeIsJudgedFirstAndKeepsConnection()
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()), "{\"id\":1,\"method\":\"ping\"}", Handshake());
@@ -198,7 +198,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void プロトコル番号が合わないハンドシェイクは拒んで切断する()
+        public void HandshakeWithMismatchedProtocolNumberIsRejectedAndDisconnects()
         {
             IList<IDictionary<string, object>> responses =
                 Exchange(CreateConnection(new McpMethodTable()), Handshake(1, 2), Request(2, "ping"));
@@ -213,7 +213,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{}}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{\"protocol\":\"1\"}}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":[1]}")]
-        public void 数値のプロトコル番号を伴わないハンドシェイクは引数不正として接続を保つ(string request)
+        public void HandshakeWithoutNumericProtocolIsInvalidArgumentsAndKeepsConnection(string request)
         {
             IList<IDictionary<string, object>> responses =
                 Exchange(CreateConnection(new McpMethodTable()), request, Handshake(2, 1));
@@ -224,7 +224,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ハンドシェイク済みの接続で再びハンドシェイクを受けても同じ内容を返す()
+        public void SecondHandshakeOnHandshakenConnectionReturnsSameContent()
         {
             IList<IDictionary<string, object>> responses =
                 Exchange(CreateConnection(new McpMethodTable()), Handshake(1, 1), Handshake(7, 1), Request(8, "ping"));
@@ -243,7 +243,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ハンドシェイクの成否は接続をまたいで持ち越さない()
+        public void HandshakeOutcomeIsNotCarriedAcrossConnections()
         {
             JsonRpcConnection connection = CreateConnection(new McpMethodTable());
 
@@ -259,7 +259,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void pingは決まった文字列を返す()
+        public void PingReturnsFixedString()
         {
             IList<IDictionary<string, object>> responses =
                 Exchange(CreateConnection(new McpMethodTable()), Handshake(), Request(2, "ping"));
@@ -272,7 +272,7 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData("unknown")]
         [InlineData("")]
-        public void 対応する処理が無いメソッドは未知として接続を保つ(string method)
+        public void MethodWithoutHandlerIsUnknownAndKeepsConnection(string method)
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()), Handshake(), Request(2, method), Request(3, "ping"));
@@ -283,7 +283,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 未知のメソッドは引数の検査より先に判定する()
+        public void UnknownMethodIsJudgedBeforeArgumentCheck()
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()), Handshake(), RequestWithArrayParams(2, "unknown"));
@@ -293,7 +293,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 引数がオブジェクトでない要求は引数不正として接続を保つ()
+        public void RequestWithNonObjectArgumentsIsInvalidArgumentsAndKeepsConnection()
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()), Handshake(), RequestWithArrayParams(2, "ping"), Request(3, "ping"));
@@ -304,7 +304,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 処理が引数不正を投げたら説明を添えて引数不正として返す()
+        public void HandlerInvalidArgumentsAreReturnedWithDescription()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("reject", context => throw new InvalidParamsException("index が足りない。"));
@@ -319,7 +319,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 処理には引数とUIへの委譲と応答サイズ予算を渡す()
+        public void HandlerReceivesArgumentsUiDispatchAndResponseBudget()
         {
             int observedBudget = 0;
             IUiInvoker observedUi = null;
@@ -349,7 +349,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 引数を省略した要求の引数は空になる()
+        public void OmittedArgumentsBecomeEmpty()
         {
             IDictionary<string, object> observed = null;
 
@@ -367,7 +367,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 処理が予期しない例外で終わったら内部エラーとして接続を保つ()
+        public void UnexpectedHandlerExceptionIsInternalErrorAndKeepsConnection()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("boom", context => throw new InvalidOperationException("処理の失敗"));
@@ -384,7 +384,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 処理の例外はスタックトレース付きで記録する()
+        public void HandlerExceptionIsRecordedWithStackTrace()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("boom", context => throw new InvalidOperationException("記録される原因"));
@@ -398,7 +398,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 返したエラー応答はコードを記録する()
+        public void ReturnedErrorResponseCodeIsRecorded()
         {
             Exchange(
                 CreateConnection(new McpMethodTable()), Handshake(), Request(2, "しらないめそっど"),
@@ -411,7 +411,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void エラー応答の説明は記録しない()
+        public void ErrorResponseDescriptionIsNotRecorded()
         {
             // 不正な引数の説明は要求の値を指しうるので、記録するのはコードだけにする。
             Exchange(
@@ -430,7 +430,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 同じコードのエラー応答は最初の1回だけ記録し合計を残す()
+        public void RepeatedErrorCodeIsRecordedOnceWithRunningTotal()
         {
             // 相手はエラーをいくらでも起こせる。毎回記録すると有用な履歴が押し流される。
             Exchange(
@@ -464,7 +464,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 要求の内容は記録しない()
+        public void RequestContentIsNotRecorded()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("boom", context => throw new InvalidOperationException("処理の失敗"));
@@ -480,7 +480,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 構文不正の本文は拒んで切断する()
+        public void SyntaxErrorBodyIsRejectedAndDisconnects()
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()), Handshake(), "これはJSONではない", Request(3, "ping"));
@@ -491,7 +491,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void UTF8として解釈できない本文は拒んで切断する()
+        public void BodyThatIsNotValidUtf8IsRejectedAndDisconnects()
         {
             List<byte> input = new List<byte>();
             input.AddRange(Lines(Handshake()));
@@ -507,7 +507,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 構造不正の要求は識別子を返して接続を保つ()
+        public void StructureErrorRequestReturnsIdAndKeepsConnection()
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()),
@@ -522,7 +522,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 構造の量が上限を超える要求は拒んで切断する()
+        public void RequestOverStructureLimitIsRejectedAndDisconnects()
         {
             // 解析していないので識別子は判別できない。切断まで含めて入力の上限超過と同じ扱いにする。
             StringBuilder builder = new StringBuilder();
@@ -543,7 +543,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限を超える入力は拒んで切断する()
+        public void InputOverLimitIsRejectedAndDisconnects()
         {
             // 区切りが来る前に上限を超えるので、識別子は判別できない。
             List<byte> input = new List<byte>();
@@ -560,7 +560,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 上限を超える応答は捨てて上限超過を返す()
+        public void ResponseOverLimitIsDroppedAndReportsLimitExceeded()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("large", context => new string('a', 4096));
@@ -578,7 +578,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 応答の上限は文字数でなくバイト数で測る()
+        public void ResponseLimitIsMeasuredInBytesNotCharacters()
         {
             // 「あ」はUTF-8で3バイト。400文字は400字だが1200バイトで、上限1024を超える。
             McpMethodTable methods = new McpMethodTable();
@@ -596,7 +596,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 組み立てられない結果は上限超過でなく内部エラーになる()
+        public void UnbuildableResultIsInternalErrorNotLimitExceeded()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("looped", context =>
@@ -615,7 +615,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 入れ子の深さが上限までの結果は組み立てて返す()
+        public void ResultAtDepthLimitIsBuiltAndReturned()
         {
             McpMethodTable methods = new McpMethodTable();
             // 応答の包絡(トップレベルのオブジェクト)で1段、最も内側の文字列で1段使うため、
@@ -631,7 +631,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 入れ子の深さが上限を超える結果は内部エラーになり接続を保つ()
+        public void ResultDeeperThanLimitIsInternalErrorAndKeepsConnection()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("deep", context => Nest(JsonRpcCodec.JsonRecursionLimit - 1));
@@ -657,7 +657,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 時間切れの応答は処理の完了を待たずに返し完了まで次を読まない()
+        public void TimeoutResponseIsReturnedWithoutWaitingAndNextReadWaitsForCompletion()
         {
             using (ManualResetEventSlim started = new ManualResetEventSlim())
             using (ManualResetEventSlim release = new ManualResetEventSlim())
@@ -713,7 +713,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 書けなかったエラー応答は記録しない()
+        public void ErrorResponseThatCouldNotBeWrittenIsNotRecorded()
         {
             using (ExchangeStream stream = new ExchangeStream(
                 Lines(Handshake(), Request(2, "しらないめそっど"))))
@@ -742,7 +742,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 時間切れの応答を書けなくても処理の完了を待ってから抜ける()
+        public void UnwritableTimeoutResponseStillWaitsForHandlerCompletion()
         {
             using (ManualResetEventSlim started = new ManualResetEventSlim())
             using (ManualResetEventSlim release = new ManualResetEventSlim())
@@ -798,7 +798,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("99999999999999999999")]
         [InlineData("1e300")]
         [InlineData("1.4")]
-        public void 桁あふれする番号のハンドシェイクも不一致として応答する(string protocol)
+        public void OverflowingProtocolNumberIsAnsweredAsMismatch(string protocol)
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()),
@@ -810,7 +810,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 説明が上限に入らないときもエラーコードだけは返して接続を保つ()
+        public void DescriptionTooLongStillReturnsErrorCodeAndKeepsConnection()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("verbose", context => throw new InvalidParamsException(new string('a', 4096)));
@@ -828,7 +828,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 同じ名前の処理は二度登録できない()
+        public void SameHandlerNameCannotBeRegisteredTwice()
         {
             McpMethodTable methods = new McpMethodTable();
             methods.Add("same", context => null);
@@ -839,7 +839,7 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData("handshake")]
         [InlineData("ping")]
-        public void 基盤メソッドの名前は登録できない(string name)
+        public void BuiltInMethodNamesCannotBeRegistered(string name)
         {
             McpMethodTable methods = new McpMethodTable();
 
@@ -847,7 +847,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void 基盤メソッドの名前を数え上げられる()
+        public void BuiltInMethodNamesCanBeEnumerated()
         {
             Assert.Equal(2, JsonRpcConnection.BaseMethodNames.Count);
             Assert.Contains("handshake", JsonRpcConnection.BaseMethodNames);

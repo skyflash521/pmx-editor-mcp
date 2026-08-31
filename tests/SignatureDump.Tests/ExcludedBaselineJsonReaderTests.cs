@@ -42,13 +42,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 書き出したものを読み戻すと同じ組になる()
+        public void WrittenJsonIsReadBackAsTheSameSet()
         {
             AssertSame(Entries(), ExcludedBaselineJsonReader.Read(ExcludedBaselineJson.Write(Entries())));
         }
 
         [Fact]
-        public void 能力IDと行キーの昇順で返す()
+        public void ReturnsCapabilityIdsAndKeysInAscendingOrder()
         {
             string json = ExcludedBaselineJson.Write(new List<ExcludedBaselineEntry>
             {
@@ -62,7 +62,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 空の組を読める()
+        public void ReadsAnEmptySet()
         {
             Assert.Empty(ExcludedBaselineJsonReader.Read("{\"capabilities\":[]}\n"));
         }
@@ -82,13 +82,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData("{\"capabilities\":[\"CAP-1\"]}")]
         [InlineData("{\"capabilities\":[],\"extra\":1}")]
         [InlineData("{\"capabilities\":[{\"capabilityId\":\"CAP-1\",\"signatures\":[\"T.A()\"],\"extra\":1}]}")]
-        public void 形が違えば例外になる(string json)
+        public void MalformedShapeThrows(string json)
         {
             Assert.Throws<FormatException>(() => ExcludedBaselineJsonReader.Read(json));
         }
 
         [Fact]
-        public void 同じ能力IDが二度現れると例外になる()
+        public void DuplicateCapabilityIdThrows()
         {
             string json = "{\"capabilities\":["
                 + "{\"capabilityId\":\"CAP-1\",\"signatures\":[\"T.A()\"]},"
@@ -98,7 +98,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 同じ行キーが二度現れるのは列挙との食い違いでなく入力の誤りである()
+        public void DuplicateKeyIsAnInputErrorNotAnEnumerationMismatch()
         {
             string inOneCapability = "{\"capabilities\":["
                 + "{\"capabilityId\":\"CAP-1\",\"signatures\":[\"T.A()\",\"T.A()\"]}]}";
@@ -111,7 +111,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 読む内容を渡さないと例外になる()
+        public void MissingContentThrows()
         {
             Assert.Throws<ArgumentNullException>(() => ExcludedBaselineJsonReader.Read(null));
         }

@@ -14,7 +14,7 @@ namespace PmxEditorMcp.Bridge.Tests
         private const int HostRecursionLimit = 100;
 
         [Fact]
-        public void 引数のない要求を組み立てる()
+        public void BuildsRequestWithoutArguments()
         {
             string request = BridgeJsonRpc.SerializeRequest(1, "ping", null);
 
@@ -28,7 +28,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 引数のある要求を組み立てる()
+        public void BuildsRequestWithArguments()
         {
             JsonObject parameters = new JsonObject { ["protocol"] = 1 };
 
@@ -41,7 +41,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 組み立てた要求は改行を含まない()
+        public void BuiltRequestContainsNoNewline()
         {
             // 本文は1行として送るので、区切りと紛れる文字がそのまま入ってはならない。
             JsonObject parameters = new JsonObject { ["name"] = "1行目\n2行目\r" };
@@ -53,7 +53,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 成功応答を解析する()
+        public void ParsesSuccessResponse()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 "{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":\"pong\"}", 3);
@@ -64,7 +64,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 結果がnullの成功応答も受理する()
+        public void AcceptsSuccessResponseWithNullResult()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 "{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":null}", 3);
@@ -75,7 +75,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void エラー応答を解析する()
+        public void ParsesErrorResponse()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 "{\"jsonrpc\":\"2.0\",\"id\":3,\"error\":{\"code\":-32601,\"message\":\"未知のメソッド\"}}", 3);
@@ -87,7 +87,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void エラー応答は識別子がnullでも受理する()
+        public void AcceptsErrorResponseWithNullId()
         {
             // ホストは要求の識別子を判別できないときや応答が上限を超えたときにnullを載せる。
             // ここで弾くと、ホストが返した理由がブリッジ側の不正として塗り潰される。
@@ -104,7 +104,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData(-32700)]
         [InlineData(-32004)]
         [InlineData(-32601)]
-        public void 識別子がnullのエラー応答はコードを問わず受理する(int hostErrorCode)
+        public void AcceptsErrorResponseWithNullIdForAnyCode(int hostErrorCode)
         {
             // 応答が上限を超えたときは、どのコードでもホストが識別子をnullへ落とす契約である。
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
@@ -115,7 +115,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void エラー応答でも識別子の項目が無ければ不正とする()
+        public void RejectsErrorResponseMissingIdMember()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"x\"}}", 3);
@@ -125,7 +125,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void エラー応答の識別子が別の要求のものなら不正とする()
+        public void RejectsErrorResponseWhoseIdBelongsToAnotherRequest()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 "{\"jsonrpc\":\"2.0\",\"id\":9,\"error\":{\"code\":-32601,\"message\":\"x\"}}", 3);
@@ -162,7 +162,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"error\":{\"code\":-1.5,\"message\":\"x\"}}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"error\":{\"code\":-1}}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":3,\"error\":{\"code\":-1,\"message\":5}}")]
-        public void 契約に沿わない応答は理由を持って不正になる(string message)
+        public void ResponseOutsideContractIsInvalidWithReason(string message)
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(message, 3);
 
@@ -171,13 +171,13 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 解析で許す深さの上限は契約で定めた値である()
+        public void ParseDepthLimitMatchesContract()
         {
             Assert.Equal(100, BridgeJsonRpc.MaxDepth);
         }
 
         [Fact]
-        public void 最も内側が空の配列でもホストの上限までの深さを受理する()
+        public void AcceptsHostDepthLimitWithEmptyInnermostArray()
         {
             // 末端が数値などのスカラー値でなく空の配列のときは、その配列自体が末端の1段になるので、包絡の1段と
             // 合わせて配列を上限より1段少なくしたところがホストの数え方で上限ちょうどになる。
@@ -188,7 +188,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void ホストが返しうる最も深い応答を受理する()
+        public void AcceptsDeepestResponseHostCanReturn()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 NestedResponse(HostRecursionLimit - 2), 3);
@@ -197,7 +197,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 深さの上限を超える応答は不正とする()
+        public void RejectsResponseDeeperThanLimit()
         {
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 NestedResponse(BridgeJsonRpc.MaxDepth + 1), 3);

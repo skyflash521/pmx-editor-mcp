@@ -112,7 +112,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数が3つでなければ引数の誤りで終わる()
+        public void WrongArgumentCountEndsWithInvalidArguments()
         {
             // 足りない場合だけを見ると、余った場合に後ろを黙って捨てる作りを見逃す。
             string[][] wrong =
@@ -135,7 +135,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 対象アセンブリが無ければ入力を読めない()
+        public void MissingTargetAssemblyIsInputUnavailable()
         {
             string outputPath = CreateExistingOutput();
             StringWriter error = new StringWriter();
@@ -151,7 +151,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 台帳が無ければ入力を読めない()
+        public void MissingLedgerIsInputUnavailable()
         {
             string outputPath = CreateExistingOutput();
             StringWriter error = new StringWriter();
@@ -167,7 +167,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 台帳と列挙が食い違えば確定できない()
+        public void LedgerConflictingWithEnumerationCannotBeResolved()
         {
             // 台帳が非対応と記した能力の指す先が列挙結果に無い状態。空の結果を書き出すと、
             // 凍結したはずの除外が黙って消える。すでに正本があるときは、それも壊さない。
@@ -193,7 +193,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 読み込めない対象アセンブリは入力を読めない()
+        public void UnloadableTargetAssemblyIsInputUnavailable()
         {
             // 在ることだけを見て中身を読まない作りだと、SDKを列挙しないまま結果を出せてしまう。
             string editorDirectory = CreateEditorDirectory();
@@ -211,7 +211,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 読めない対象アセンブリは入力を読めない()
+        public void UnreadableTargetAssemblyIsInputUnavailable()
         {
             // 読み解けない中身と、そもそもファイルを読めないことは別の失敗。後者を通すと、
             // 読み取りの失敗がそのまま外へ漏れる。
@@ -236,7 +236,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 読み込めない台帳は入力を読めない()
+        public void UnreadableLedgerIsInputUnavailable()
         {
             // 在ることだけを見て読めない場合を通すと、読み取りの失敗がそのまま外へ漏れる。
             string ledgerPath = CreateLedger();
@@ -256,7 +256,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 失敗しても書き出し先を作らない()
+        public void FailureLeavesNoOutputFile()
         {
             // すでにある正本を守るだけでなく、無いところへ空の結果を置かないことも要る。
             // 中身の無いファイルが残ると、読み手は結果が空だったのか失敗したのか区別できない。
@@ -303,7 +303,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 読み解けない台帳は入力を読めない()
+        public void UnparsableLedgerIsInputUnavailable()
         {
             // 読めたうえでの食い違いと、そもそも読み解けないことは、呼び出し元の直し方が違う。
             string path = Path.Combine(_root, "broken-ledger.md");
@@ -320,7 +320,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 台帳の中身が突き合わせに効く()
+        public void LedgerContentAffectsTheComparison()
         {
             // 在ることだけを見て中身を読まない作りだと、台帳が何を記していても同じ結果になる。
             // 最初に見る能力を落とした台帳では、止まる理由が指す先ではなく台帳の側になる。
@@ -339,7 +339,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数や報告先を渡さないと例外になる()
+        public void MissingArgumentsOrWritersThrow()
         {
             Assert.Throws<ArgumentNullException>(
                 () => ExcludedBaselineRunner.Run(null, new StringWriter(), new StringWriter()));

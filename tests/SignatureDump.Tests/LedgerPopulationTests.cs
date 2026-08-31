@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class LedgerPopulationTests
     {
         [Fact]
-        public void 型の名前で引いた行はその型と基底型の全公開シグネチャを指す()
+        public void RowNamedByTypeCoversAllPublicSignaturesOfThatTypeAndItsBases()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -27,7 +27,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引いた型の基底型も指す型に入る()
+        public void BaseTypesOfTheResolvedTypeAreIncludedInTheTypeSet()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -44,7 +44,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void メンバー名で引いた行でも基底型が指す型に入る()
+        public void BaseTypesAreIncludedInTheTypeSetForMemberNamedRowsToo()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -59,7 +59,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 基底の並びに在る対象アセンブリ外の型は指す型に入らない()
+        public void BaseNamesOutsideTheTargetAssemblyAreNotIncludedInTheTypeSet()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -71,7 +71,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型とメンバー名の組で引いた行は同じ名前のシグネチャだけを指す()
+        public void RowNamedByTypeAndMemberCoversOnlySignaturesWithThatName()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -88,7 +88,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 完全修飾の名前でも名前空間を落とした名前でも引ける()
+        public void BothFullyQualifiedAndNamespaceStrippedNamesResolve()
         {
             IList<TypeRecord> types = Types(Type("N.M.IThing", TypeKind.Interface));
             IList<SignatureRecord> signatures =
@@ -99,7 +99,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 入れ子の型は点で区切った名前で引ける()
+        public void NestedTypesResolveByDotSeparatedName()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -114,7 +114,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 総称型は型引数を落とした名前で引ける()
+        public void GenericTypesResolveByNameWithoutTypeArguments()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -126,7 +126,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 外側も内側も総称型である入れ子の型を引ける()
+        public void NestedTypeWithGenericOuterAndInnerResolves()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -140,7 +140,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 名前空間を持たない型も引ける()
+        public void TypeWithoutANamespaceResolves()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -152,7 +152,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型引数の数だけが違う同名の型は解決できない()
+        public void TypesDifferingOnlyInGenericArityCannotBeResolved()
         {
             Assert.Throws<InvalidOperationException>(() => Resolve(
                 Inventory(
@@ -164,7 +164,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void まとめた行は挙げた名前をすべて解決する()
+        public void GroupedRowResolvesEveryListedName()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -188,7 +188,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 指す先が2つ以上ある名前は解決できない()
+        public void NameMatchingMoreThanOneTypeCannotBeResolved()
         {
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => Resolve(
                 Inventory(
@@ -200,7 +200,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 指す先が無い名前は解決できない()
+        public void NameMatchingNothingCannotBeResolved()
         {
             Assert.Throws<InvalidOperationException>(() => Resolve(
                 Inventory(Types(Type("N.IThing", TypeKind.Interface)), Signatures()),
@@ -208,7 +208,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型として引けた名前をメンバーとして読み直さない()
+        public void NameResolvedAsATypeIsNotRereadAsAMember()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -224,7 +224,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void その名前の公開メンバーが無い行は解決できない()
+        public void RowNamingAMissingPublicMemberCannotBeResolved()
         {
             Assert.Throws<InvalidOperationException>(() => Resolve(
                 Inventory(
@@ -234,7 +234,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 公開メンバーを宣言しない型の行は0件に解決してよい()
+        public void RowForATypeWithoutPublicMembersMayResolveToNothing()
         {
             LedgerPopulation population = Resolve(
                 Inventory(Types(Type("N.IMarker", TypeKind.Interface)), Signatures()),
@@ -245,7 +245,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 同じシグネチャが複数の行に属してよい()
+        public void TheSameSignatureMayBelongToSeveralRows()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -263,7 +263,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void まとめて指す行は名前空間の非列挙型を指し列挙型は指さない()
+        public void PatternRowCoversNonEnumTypesOfItsNamespaceOnly()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -284,7 +284,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void PMDの行は生成側の戻り値がその名前空間のシグネチャも指す()
+        public void PmdRowAlsoCoversBuilderMembersReturningThatNamespace()
         {
             LedgerPopulation population = Resolve(
                 Inventory(
@@ -310,7 +310,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 解決規則の無いまとめて指す行があると解決できない()
+        public void PatternRowWithoutAResolutionRuleCannotBeResolved()
         {
             Assert.Throws<InvalidOperationException>(() => Resolve(
                 Inventory(Types(), Signatures()),
@@ -320,7 +320,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 解決規則に対応する行が台帳に無いと解決できない()
+        public void MissingRowForAResolutionRuleCannotBeResolved()
         {
             Assert.Throws<InvalidOperationException>(() => Resolve(
                 Inventory(Types(), Signatures()),
@@ -328,7 +328,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数がnullだと例外になる()
+        public void NullArgumentThrows()
         {
             Assert.Throws<ArgumentNullException>(
                 () => LedgerPopulation.Resolve(null, Inventory(Types(), Signatures())));

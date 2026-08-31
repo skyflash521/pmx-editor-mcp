@@ -20,7 +20,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 除外を1行ずつ並べる()
+        public void WritesOneExclusionPerLine()
         {
             Assert.Equal(
                 "{\n"
@@ -36,7 +36,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 代替を持たないカテゴリでは代替の欄を書かない()
+        public void CategoryWithoutAlternativeOmitsTheAlternativeField()
         {
             IList<ExcludedSignatureRecord> records = new List<ExcludedSignatureRecord>
             {
@@ -57,7 +57,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void カテゴリは閉集合の綴りで書く()
+        public void CategoryIsWrittenWithTheClosedSetSpelling()
         {
             Assert.Contains("\"category\":\"cPluginArgument\"", WithoutAlternative(ExclusionCategory.CPluginArgument));
             Assert.Contains("\"category\":\"delegate\"", WithoutAlternative(ExclusionCategory.Delegate));
@@ -83,13 +83,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 空の並びを渡しても形は崩れない()
+        public void EmptyCollectionKeepsTheShape()
         {
             Assert.Equal("{\n\"signatures\":[]\n}\n", ExcludedSignatureJson.Write(new List<ExcludedSignatureRecord>()));
         }
 
         [Fact]
-        public void 並びを渡さないと例外になる()
+        public void MissingCollectionThrows()
         {
             Assert.Throws<ArgumentNullException>(() => ExcludedSignatureJson.Write(null));
         }

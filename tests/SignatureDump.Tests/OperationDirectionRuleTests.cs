@@ -11,7 +11,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData("CanApply")]
         [InlineData("FindBone")]
         [InlineData("SearchMorph")]
-        public void 取得の名前で始まり戻り値を持てば読み取りになる(string memberName)
+        public void GetterNamedMethodWithAReturnValueIsRead(string memberName)
         {
             Assert.Equal(
                 OperationDirection.Read,
@@ -19,7 +19,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 戻り値がないメソッドは書き込みになる()
+        public void MethodWithoutAReturnValueIsWrite()
         {
             Assert.Equal(
                 OperationDirection.Write,
@@ -27,7 +27,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 出力引数を持つメソッドは書き込みになる()
+        public void MethodWithAnOutputArgumentIsWrite()
         {
             Assert.Equal(
                 OperationDirection.Write,
@@ -39,7 +39,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData("Update")]
         [InlineData("Apply")]
         [InlineData("Remove")]
-        public void 取得の名前で始まらなければ書き込みになる(string memberName)
+        public void MethodNotStartingWithAGetterNameIsWrite(string memberName)
         {
             Assert.Equal(
                 OperationDirection.Write,
@@ -49,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData("Getter")]
         [InlineData("Issue")]
-        public void 名前の判定は前方一致で行う(string memberName)
+        public void NameIsJudgedByPrefixMatch(string memberName)
         {
             // 語の区切りを見ない前方一致であるため、取得を表さない名前も読み取りへ寄る。
             // 書き込みを読み取りと誤ると、対になる書き込み行が見つからず効果が導出されなく
@@ -60,14 +60,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 取得アクセサーの有無でプロパティの向きが決まる()
+        public void PropertyDirectionFollowsTheGetAccessor()
         {
             Assert.Equal(OperationDirection.Read, OperationDirectionRule.ForProperty(true));
             Assert.Equal(OperationDirection.Write, OperationDirectionRule.ForProperty(false));
         }
 
         [Fact]
-        public void プロパティとメソッド以外は書き込みになる()
+        public void MembersOtherThanPropertiesAndMethodsAreWrite()
         {
             Assert.Equal(OperationDirection.Write, OperationDirectionRule.ForOtherMember());
         }

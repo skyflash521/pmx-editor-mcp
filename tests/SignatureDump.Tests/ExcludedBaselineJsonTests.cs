@@ -22,7 +22,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void シグネチャを1行ずつ並べる()
+        public void WritesOneSignaturePerLine()
         {
             Assert.Equal(
                 "{\n"
@@ -40,13 +40,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 空の並びを渡しても形は崩れない()
+        public void EmptyCollectionKeepsTheShape()
         {
             Assert.Equal("{\n\"capabilities\":[]\n}\n", ExcludedBaselineJson.Write(new List<ExcludedBaselineEntry>()));
         }
 
         [Fact]
-        public void 並びを渡さないと例外になる()
+        public void MissingCollectionThrows()
         {
             Assert.Throws<ArgumentNullException>(() => ExcludedBaselineJson.Write(null));
         }

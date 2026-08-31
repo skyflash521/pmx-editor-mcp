@@ -11,7 +11,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Key = "PEPlugin.IPEBuilder.Pmx()";
 
         [Fact]
-        public void 型の項目は名前と理由を持つ()
+        public void TypeEntryCarriesNameAndReason()
         {
             OutOfScopeTypeEntry entry = new OutOfScopeTypeEntry(TypeName, OutOfScopeReason.Route);
 
@@ -20,7 +20,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型の項目の名前が空だと例外になる()
+        public void TypeEntryWithEmptyNameThrows()
         {
             Assert.Throws<ArgumentNullException>(
                 () => new OutOfScopeTypeEntry(null, OutOfScopeReason.Route));
@@ -31,7 +31,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 理由はこの4つだけからなる()
+        public void ReasonsConsistOfExactlyTheseFour()
         {
             OutOfScopeReason[] expected =
             {
@@ -45,7 +45,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型の項目は閉集合の4つの理由をすべて採れる()
+        public void TypeEntryAcceptsAllFourClosedSetReasons()
         {
             Assert.Equal(
                 OutOfScopeReason.EnumType,
@@ -62,14 +62,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 閉集合に無い理由は型の項目にも採れない()
+        public void ReasonOutsideTheClosedSetIsRejectedForTypeEntries()
         {
             Assert.Throws<ArgumentException>(
                 () => new OutOfScopeTypeEntry(TypeName, (OutOfScopeReason)(-1)));
         }
 
         [Fact]
-        public void シグネチャの項目は行キーと理由を持つ()
+        public void SignatureEntryCarriesKeyAndReason()
         {
             OutOfScopeSignatureEntry entry = new OutOfScopeSignatureEntry(Key, OutOfScopeReason.Route);
 
@@ -78,7 +78,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void シグネチャの項目の行キーが空だと例外になる()
+        public void SignatureEntryWithEmptyKeyThrows()
         {
             Assert.Throws<ArgumentNullException>(
                 () => new OutOfScopeSignatureEntry(null, OutOfScopeReason.Route));
@@ -87,7 +87,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 型ごと対象外になる理由はシグネチャの項目に採れない()
+        public void TypeOnlyReasonIsRejectedForSignatureEntries()
         {
             Assert.Throws<ArgumentException>(
                 () => new OutOfScopeSignatureEntry(Key, OutOfScopeReason.EnumType));
@@ -98,7 +98,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 一覧は型とシグネチャの並びをそのまま持つ()
+        public void RecordKeepsTypeAndSignatureCollectionsAsGiven()
         {
             LedgerOutOfScopeRecord record = new LedgerOutOfScopeRecord(
                 Types(
@@ -114,7 +114,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 一覧は空の並びを受け取れる()
+        public void RecordAcceptsEmptyCollections()
         {
             LedgerOutOfScopeRecord record = new LedgerOutOfScopeRecord(
                 new List<OutOfScopeTypeEntry>(), new List<OutOfScopeSignatureEntry>());
@@ -124,7 +124,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 一覧の並びは序数の昇順でないと例外になる()
+        public void CollectionsNotInAscendingOrdinalOrderThrow()
         {
             Assert.Throws<ArgumentException>(() => new LedgerOutOfScopeRecord(
                 Types(
@@ -138,7 +138,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 一覧に同じ識別子が二度現れると例外になる()
+        public void DuplicateIdentifierInACollectionThrows()
         {
             Assert.Throws<ArgumentException>(() => new LedgerOutOfScopeRecord(
                 Types(
@@ -152,7 +152,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 一覧に並びとしてnullを渡すと例外になる()
+        public void NullCollectionThrows()
         {
             Assert.Throws<ArgumentNullException>(
                 () => new LedgerOutOfScopeRecord(null, Signatures()));
@@ -161,7 +161,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 一覧に中身のない項目を混ぜると例外になる()
+        public void NullEntryInACollectionThrows()
         {
             Assert.Throws<ArgumentException>(() => new LedgerOutOfScopeRecord(
                 new List<OutOfScopeTypeEntry> { null }, Signatures()));
@@ -170,7 +170,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 一覧が公開する並びは後から変えられない()
+        public void PublishedCollectionsCannotBeChangedAfterwards()
         {
             LedgerOutOfScopeRecord record = new LedgerOutOfScopeRecord(
                 Types(Type("PEPlugin.IPEConnector", OutOfScopeReason.Route)),
@@ -189,7 +189,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 一覧に渡した並びを後から変えても中身は変わらない()
+        public void ChangingTheGivenCollectionsAfterwardsDoesNotAffectTheRecord()
         {
             List<OutOfScopeTypeEntry> types = new List<OutOfScopeTypeEntry>
             {

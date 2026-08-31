@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class OutOfScopeClassifierTests
     {
         [Fact]
-        public void 列挙型は列挙型の理由になる()
+        public void EnumTypeYieldsTheEnumTypeReason()
         {
             Assert.Equal(
                 OutOfScopeReason.EnumType,
@@ -16,7 +16,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void デリゲート型はデリゲート型の理由になる()
+        public void DelegateTypeYieldsTheDelegateTypeReason()
         {
             Assert.Equal(
                 OutOfScopeReason.DelegateType,
@@ -27,7 +27,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 公開メンバーがすべて経路である型は経路の理由になる()
+        public void TypeWhoseMembersAreAllRoutesYieldsTheRouteReason()
         {
             Assert.Equal(
                 OutOfScopeReason.Route,
@@ -38,7 +38,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void プロパティとフィールドも経路になる()
+        public void PropertiesAndFieldsCanAlsoBeRoutes()
         {
             Assert.Equal(
                 OutOfScopeReason.Route,
@@ -58,7 +58,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 公開引数を持つメンバーは経路にならない()
+        public void MemberWithPublicArgumentsIsNotARoute()
         {
             Assert.Null(Classify(
                 Types(Type("N.IHub", TypeKind.Interface), Type("N.IThing", TypeKind.Interface)),
@@ -82,7 +82,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 値の型が対象アセンブリの外なら経路にならない()
+        public void MemberWhoseValueTypeIsOutsideTheAssemblyIsNotARoute()
         {
             Assert.Null(Classify(
                 Types(Type("N.IHub", TypeKind.Interface)),
@@ -92,7 +92,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 経路でないメンバーが1つでもあれば経路にならない()
+        public void TypeWithASingleNonRouteMemberIsNotARoute()
         {
             Assert.Null(Classify(
                 Types(Type("N.IHub", TypeKind.Interface), Type("N.IThing", TypeKind.Interface)),
@@ -103,7 +103,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 自分の型を返すメンバーは経路にならない()
+        public void MemberReturningItsOwnTypeIsNotARoute()
         {
             Assert.Null(Classify(
                 Types(Type("N.IThing", TypeKind.Interface)),
@@ -113,7 +113,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void イベントとコンストラクタは経路にならない()
+        public void EventsAndConstructorsAreNotRoutes()
         {
             Assert.Null(Classify(
                 Types(Type("N.Holder", TypeKind.Class), Type("N.Proc", TypeKind.Delegate)),
@@ -129,7 +129,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 公開メンバーを宣言しない型は基底型がすべて経路なら経路になる()
+        public void TypeWithoutPublicMembersIsARouteWhenAllBasesAre()
         {
             Assert.Equal(
                 OutOfScopeReason.Route,
@@ -143,14 +143,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 公開メンバーを宣言せず基底型が無い型は経路にならない()
+        public void TypeWithoutPublicMembersOrBasesIsNotARoute()
         {
             Assert.Null(Classify(
                 Types(Type("N.IEmpty", TypeKind.Interface)), Signatures(), "N.IEmpty"));
         }
 
         [Fact]
-        public void 基底型の一つでも経路でなければ経路にならない()
+        public void TypeWithASingleNonRouteBaseIsNotARoute()
         {
             Assert.Null(Classify(
                 Types(
@@ -165,7 +165,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数の型としてだけ現れる型は引数専用型の理由になる()
+        public void TypeAppearingOnlyAsAnArgumentYieldsTheArgumentOnlyReason()
         {
             Assert.Equal(
                 OutOfScopeReason.ArgumentOnly,
@@ -178,7 +178,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 戻り値の型としても現れる型は引数専用型にならない()
+        public void TypeAlsoAppearingAsAReturnValueIsNotArgumentOnly()
         {
             Assert.Null(Classify(
                 Types(Type("N.Option", TypeKind.Class), Type("N.IThing", TypeKind.Interface)),
@@ -190,7 +190,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void どこにも現れない型は引数専用型にならない()
+        public void TypeAppearingNowhereIsNotArgumentOnly()
         {
             Assert.Null(Classify(
                 Types(Type("N.Option", TypeKind.Class)),
@@ -200,7 +200,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 母集合に自分のシグネチャがある型は引数専用型にならない()
+        public void TypeWithItsOwnSignatureInThePopulationIsNotArgumentOnly()
         {
             IList<TypeRecord> types = Types(Type("N.Option", TypeKind.Class), Type("N.IThing", TypeKind.Interface));
             IList<SignatureRecord> signatures = Signatures(
@@ -214,7 +214,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 参照渡しの引数でも引数専用型として数える()
+        public void ByReferenceArgumentsCountForArgumentOnly()
         {
             Assert.Equal(
                 OutOfScopeReason.ArgumentOnly,
@@ -227,7 +227,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 参照渡しで返る型は引数専用型にならない()
+        public void TypeReturnedByReferenceIsNotArgumentOnly()
         {
             Assert.Null(Classify(
                 Types(Type("N.Option", TypeKind.Class), Type("N.IThing", TypeKind.Interface)),
@@ -239,7 +239,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 列挙型はほかの理由より先に採られる()
+        public void EnumTypeIsChosenBeforeOtherReasons()
         {
             Assert.Equal(
                 OutOfScopeReason.EnumType,
@@ -250,7 +250,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void デリゲート型は経路や引数専用型より先に採られる()
+        public void DelegateTypeIsChosenBeforeRouteAndArgumentOnly()
         {
             Assert.Equal(
                 OutOfScopeReason.DelegateType,
@@ -263,7 +263,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 経路は引数専用型より先に採られる()
+        public void RouteIsChosenBeforeArgumentOnly()
         {
             Assert.Equal(
                 OutOfScopeReason.Route,
@@ -276,7 +276,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void シグネチャは経路だけを理由に採れる()
+        public void SignaturesCanOnlyTakeTheRouteReason()
         {
             IList<TypeRecord> types = Types(Type("N.IHub", TypeKind.Interface), Type("N.IThing", TypeKind.Interface));
             SignatureRecord route =
@@ -292,7 +292,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 公開型でない名前を渡すと例外になる()
+        public void NameThatIsNotAPublicTypeThrows()
         {
             OutOfScopeClassifier classifier = new OutOfScopeClassifier(
                 Inventory(Types(), Signatures()), new HashSet<string>(StringComparer.Ordinal));
@@ -303,7 +303,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数がnullだと例外になる()
+        public void NullArgumentThrows()
         {
             Assert.Throws<ArgumentNullException>(
                 () => new OutOfScopeClassifier(null, new HashSet<string>(StringComparer.Ordinal)));

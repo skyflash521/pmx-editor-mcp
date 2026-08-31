@@ -13,7 +13,7 @@ namespace PmxEditorMcp.Bridge.Tests
         private static readonly TimeSpan ExitWait = TimeSpan.FromSeconds(30);
 
         [Fact]
-        public void 未設定なら既定の文字数で有効になる()
+        public void UnsetBudgetIsValidWithDefaultCharacterCount()
         {
             BridgeBudget budget = BridgeBudget.Read(null);
 
@@ -22,7 +22,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 応答サイズ予算の設定は契約で定めた値である()
+        public void BudgetEnvironmentVariableNameMatchesContract()
         {
             Assert.Equal("PMX_EDITOR_MCP_BUDGET_CHARS", BridgeBudget.EnvironmentVariableName);
             Assert.Equal(100000, BridgeBudget.DefaultChars);
@@ -35,7 +35,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("10000", 10000)]
         [InlineData("100000", 100000)]
         [InlineData("500000", 500000)]
-        public void 範囲内の10進表記はその値で有効になる(string rawValue, int expected)
+        public void DecimalValueInRangeIsValid(string rawValue, int expected)
         {
             BridgeBudget budget = BridgeBudget.Read(rawValue);
 
@@ -48,7 +48,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("500001")]
         [InlineData("0")]
         [InlineData("99999999999999999999")]
-        public void 範囲外の値は無効になり理由を持つ(string rawValue)
+        public void ValueOutOfRangeIsInvalidWithReason(string rawValue)
         {
             BridgeBudget budget = BridgeBudget.Read(rawValue);
 
@@ -67,7 +67,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("100_000")]
         [InlineData("1e5")]
         [InlineData("100000a")]
-        public void 構文に反する値は無効になり理由を持つ(string rawValue)
+        public void MalformedValueIsInvalidWithReason(string rawValue)
         {
             BridgeBudget budget = BridgeBudget.Read(rawValue);
 
@@ -76,7 +76,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 無効な理由は値に含まれる制御文字をそのまま載せない()
+        public void InvalidReasonDoesNotEchoControlCharacters()
         {
             const char CarriageReturn = (char)13;
             const char LineFeed = (char)10;
@@ -89,7 +89,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 無効な理由は制御文字に分類されない行区切りもそのまま載せない()
+        public void InvalidReasonDoesNotEchoLineSeparatorsOutsideControlCategory()
         {
             const char LineSeparator = (char)0x2028;
             const char ParagraphSeparator = (char)0x2029;
@@ -102,7 +102,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 無効な理由は長大な値をそのまま載せない()
+        public void InvalidReasonDoesNotEchoOverlongValue()
         {
             // 長さは受理範囲の境界値と一致させない(範囲の説明文と区別できなくなるため)。
             string rawValue = new string('9', 12345);
@@ -115,7 +115,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void 無効な設定は既定の文字数へ落とさない()
+        public void InvalidSettingDoesNotFallBackToDefault()
         {
             BridgeBudget budget = BridgeBudget.Read("9999");
 
@@ -127,7 +127,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("+100000")]
         [InlineData("0100000")]
         [InlineData("9999")]
-        public async Task 受理できない設定では理由を1行出して終了コード2で終わる(string rawValue)
+        public async Task RejectedSettingWritesSingleReasonAndExitsWithTwo(string rawValue)
         {
             using Process bridge = StartBridge(rawValue);
 

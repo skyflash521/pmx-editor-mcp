@@ -7,7 +7,7 @@ namespace PmxEditorMcp.Bridge.Tests
     public class BridgeErrorTests
     {
         [Fact]
-        public void 本文はエラーコードとメッセージをコロンで連ねる()
+        public void TextJoinsErrorCodeAndMessageWithColon()
         {
             BridgeException error = new BridgeException(BridgeErrorCodes.Timeout, "待機上限を超えた。");
 
@@ -20,13 +20,13 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData(-32601, "HOST_-32601")]
         [InlineData(-32002, "HOST_-32002")]
         [InlineData(0, "HOST_0")]
-        public void ホストのエラーコードは符号を保ったまま写す(int hostErrorCode, string expected)
+        public void HostErrorCodeKeepsItsSign(int hostErrorCode, string expected)
         {
             Assert.Equal(expected, BridgeErrorCodes.ForHostError(hostErrorCode));
         }
 
         [Fact]
-        public void ホストのエラーは本文へメッセージをそのまま載せる()
+        public void HostErrorTextCarriesMessageVerbatim()
         {
             BridgeException error = new BridgeException(
                 BridgeErrorCodes.ForHostError(-32601), "未知のメソッド");
@@ -35,7 +35,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void ツール結果はエラーであることを示しテキスト1件を持つ()
+        public void ToolResultMarksErrorAndCarriesSingleText()
         {
             BridgeException error = new BridgeException(BridgeErrorCodes.NoEditor, "起動していない。");
 
@@ -49,7 +49,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void エラーコードは契約で定めた値である()
+        public void ErrorCodesMatchContract()
         {
             Assert.Equal("BRIDGE_NO_EDITOR", BridgeErrorCodes.NoEditor);
             Assert.Equal("BRIDGE_NO_HOST", BridgeErrorCodes.NoHost);

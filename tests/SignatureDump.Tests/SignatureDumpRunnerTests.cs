@@ -41,7 +41,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 列挙結果を書き出して成功で終わる()
+        public void WritesTheEnumerationAndSucceeds()
         {
             string editorDirectory = CreateEditorDirectory();
             string outputPath = Path.Combine(_root, "signatures.json");
@@ -59,7 +59,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 対象アセンブリを掴んだままにしない()
+        public void DoesNotKeepHoldingTheTargetAssembly()
         {
             string editorDirectory = CreateEditorDirectory();
             string outputPath = Path.Combine(_root, "signatures.json");
@@ -74,7 +74,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 同じ入力からは同じバイト列が書き出される()
+        public void TheSameInputProducesTheSameBytes()
         {
             string editorDirectory = CreateEditorDirectory();
             string first = Path.Combine(_root, "first.json");
@@ -89,7 +89,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 書き出しはBOMなしUTF8になる()
+        public void OutputIsUtf8WithoutBom()
         {
             string editorDirectory = CreateEditorDirectory();
             string outputPath = Path.Combine(_root, "signatures.json");
@@ -108,7 +108,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(0)]
         [InlineData(1)]
         [InlineData(3)]
-        public void 引数の数が違うと不正な引数で終わる(int count)
+        public void WrongArgumentCountEndsWithInvalidArguments(int count)
         {
             StringWriter output = new StringWriter();
             StringWriter error = new StringWriter();
@@ -122,7 +122,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 対象アセンブリが無いと読み込み失敗で終わる()
+        public void MissingTargetAssemblyEndsWithInputUnavailable()
         {
             string editorDirectory = Path.Combine(_root, "empty");
             Directory.CreateDirectory(editorDirectory);
@@ -139,7 +139,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 書き出せないと書き出し失敗で終わる()
+        public void UnwritableTargetEndsWithWriteFailure()
         {
             string editorDirectory = CreateEditorDirectory();
             string outputPath = Path.Combine(_root, "missing", "signatures.json");
@@ -155,7 +155,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数を渡さないと例外になる()
+        public void MissingArgumentsThrow()
         {
             Assert.Throws<ArgumentNullException>(
                 () => SignatureDumpRunner.Run(null, new StringWriter(), new StringWriter()));

@@ -82,7 +82,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数が3つでなければ引数の誤りで終わる()
+        public void WrongArgumentCountEndsWithInvalidArguments()
         {
             string[][] wrong =
             {
@@ -104,7 +104,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 対象アセンブリが無ければ入力を読めない()
+        public void MissingTargetAssemblyIsInputUnavailable()
         {
             string outputPath = CreateExistingOutput();
 
@@ -118,7 +118,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ベースライン正本が無ければ入力を読めない()
+        public void MissingBaselineCanonicalFileIsInputUnavailable()
         {
             string outputPath = CreateExistingOutput();
 
@@ -132,7 +132,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ベースライン正本を読み解けなければ入力を読めない()
+        public void UnparsableBaselineCanonicalFileIsInputUnavailable()
         {
             string outputPath = CreateExistingOutput();
 
@@ -149,7 +149,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData("{\"capabilities\":{}}")]
         [InlineData("{\"capabilities\":[],\"extra\":1}")]
         [InlineData("{\"capabilities\":[{\"capabilityId\":\"CAP-1\"}]}")]
-        public void 形が違うベースライン正本は入力を読めない(string json)
+        public void BaselineCanonicalFileWithWrongShapeIsInputUnavailable(string json)
         {
             string outputPath = CreateExistingOutput();
             StringWriter error = new StringWriter();
@@ -165,7 +165,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 凍結した組が列挙と食い違えば確定できない()
+        public void FrozenPairsConflictingWithEnumerationCannotBeResolved()
         {
             string outputPath = CreateExistingOutput();
             string baseline = CreateBaseline(
@@ -181,7 +181,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 書き出せなければ書き出しの失敗で終わる()
+        public void UnwritableTargetEndsWithWriteFailure()
         {
             string outputPath = Path.Combine(_root, "busy");
             Directory.CreateDirectory(outputPath);
@@ -195,7 +195,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 書き出しの途中で失敗しても既存の正本は変わらない()
+        public void FailureDuringWriteLeavesTheExistingFileUnchanged()
         {
             string outputPath = CreateExistingOutput();
             Directory.CreateDirectory(outputPath + ".writing");
@@ -210,7 +210,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 読めない対象アセンブリは入力を読めない()
+        public void UnreadableTargetAssemblyIsInputUnavailable()
         {
             string editorDirectory = CreateEditorDirectory();
             string outputPath = CreateExistingOutput();
@@ -233,7 +233,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void アセンブリでない対象は入力を読めない()
+        public void TargetThatIsNotAnAssemblyIsInputUnavailable()
         {
             string editorDirectory = Path.Combine(_root, "broken");
             string assemblyPath = SdkAssemblyLocator.GetAssemblyPath(editorDirectory);
@@ -251,7 +251,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 読み込めないベースライン正本は入力を読めない()
+        public void UnloadableBaselineCanonicalFileIsInputUnavailable()
         {
             string baselinePath = CreateBaseline();
             string outputPath = CreateExistingOutput();
@@ -270,7 +270,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 凍結した組と列挙が揃えば書き出す()
+        public void MatchingFrozenPairsAndEnumerationAreWritten()
         {
             string outputPath = CreateExistingOutput();
             StringWriter output = new StringWriter();
@@ -296,7 +296,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 書き出しはBOMを付けず改行をLFだけにする()
+        public void OutputHasNoBomAndUsesLfOnly()
         {
             string outputPath = Path.Combine(_root, "excluded-signatures.json");
 
@@ -312,7 +312,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 引数や報告先を渡さないと例外になる()
+        public void MissingArgumentsOrWritersThrow()
         {
             Assert.Throws<ArgumentNullException>(
                 () => ExcludedSignatureRunner.Run(null, new StringWriter(), new StringWriter()));

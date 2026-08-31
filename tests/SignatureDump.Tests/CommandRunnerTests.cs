@@ -99,7 +99,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 下位コマンドを渡さないと引数の誤りで終わる()
+        public void MissingSubcommandEndsWithInvalidArguments()
         {
             StringWriter error = new StringWriter();
 
@@ -110,7 +110,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 下位コマンドの名前は呼び出し側との約束である()
+        public void SubcommandNamesAreACallerContract()
         {
             // 名前は外から打つ文字列そのものなので、定数と実装を揃えて変えても気づけるようにする。
             Assert.Equal("signatures", CommandRunner.SignaturesCommand);
@@ -120,7 +120,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 照合の下位コマンドは台帳と正本の照合を実行する()
+        public void CoverageSubcommandRunsLedgerAndCanonicalCollation()
         {
             string ledgerPath = Path.Combine(_root, "ledger.md");
             File.WriteAllText(
@@ -166,7 +166,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 除外一覧の下位コマンドは除外一覧の書き出しを実行する()
+        public void ExcludedSignaturesSubcommandRunsTheWrite()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
             File.WriteAllText(
@@ -196,7 +196,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 使用法はすべての下位コマンドと引数の並びを示す()
+        public void UsageShowsEverySubcommandAndItsArguments()
         {
             StringWriter error = new StringWriter();
 
@@ -226,7 +226,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 終了コードの値は呼び出し側との約束である()
+        public void ExitCodeValuesAreACallerContract()
         {
             // 値は呼び出し元が見分けに使うものそのもの。重ねてしまうと、直し方の違う失敗が同じに見える。
             Assert.Equal(0, ExitCodes.Success);
@@ -237,7 +237,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 知らない下位コマンドは引数の誤りで終わる()
+        public void UnknownSubcommandEndsWithInvalidArguments()
         {
             // 後ろの引数は列挙として正しい形にする。名前を見ずに引数の数で振り分ける作りでは、
             // これが列挙として実行されてしまう。
@@ -266,7 +266,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 列挙の下位コマンドは列挙を実行する()
+        public void SignaturesSubcommandRunsEnumeration()
         {
             string outputPath = Path.Combine(_root, "signatures.json");
             StringWriter output = new StringWriter();
@@ -296,7 +296,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 凍結の下位コマンドは凍結を実行する()
+        public void ExcludedBaselineSubcommandRunsTheFreeze()
         {
             // 題材のアセンブリには台帳が指す先が無いので、突き合わせで止まるところまでを見る。
             string outputPath = Path.Combine(_root, "excluded-baseline.json");
@@ -325,7 +325,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 実行ファイルの入口が列挙を通す()
+        public void ExecutableEntryPointRunsEnumeration()
         {
             string outputPath = Path.Combine(_root, "from-main.json");
             StringWriter summary = new StringWriter();
@@ -348,7 +348,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 実行ファイルの入口が凍結を通す()
+        public void ExecutableEntryPointRunsTheFreeze()
         {
             // 入口が下位コマンドを1つだけ特別に扱っていると、他の下位コマンドへ実行ファイルから
             // 到達できない。列挙の経路とは別に見るので、片方が落ちてももう片方の結果が分かる。
@@ -376,7 +376,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void 実行ファイルの入口でも入力の違いが結果に出る()
+        public void ExecutableEntryPointAlsoReflectsInputDifferencesInResults()
         {
             // 入口が決まった終了コードを返すだけでは、導入ディレクトリを変えても同じ結果になる。
             string missing = Path.Combine(_root, "none");
