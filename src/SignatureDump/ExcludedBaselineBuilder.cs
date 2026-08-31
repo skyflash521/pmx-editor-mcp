@@ -58,7 +58,7 @@ namespace PmxEditorMcp.SignatureDump
                 { "CAP-114", new Recording(CapabilityStatus.Provided, "IPXPmxViewConnector.BootupVmdView", "非対応件数: 1。PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外") },
                 { "CAP-269", new Recording(CapabilityStatus.Provided, "IPXSystemControl.GetCPluginInfo", "非対応件数: 1。Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨") },
                 { "CAP-304", new Recording(CapabilityStatus.NotSupported, "IPXUIModel.SetAutoRelease", null) },
-                { "CAP-339", new Recording(CapabilityStatus.Provided, "IPXPmx", "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外") },
+                { "CAP-339", new Recording(CapabilityStatus.Provided, "IPXPmx", "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は現在のモデルを対象に呼ぶ Clear() で、対象を指定して呼ぶ場合は当たらない。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る") },
                 { "CAP-390", new Recording(CapabilityStatus.Provided, "IPEBuilder.CreateVmd", "非対応件数: 2。他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外") },
                 { "CAP-398", new Recording(CapabilityStatus.Provided, "IPEBuilder.CreateVme", "非対応件数: 1。契約注記: PMDを引数に取る版はレガシーのため対象外") },
                 { "CAP-459", new Recording(CapabilityStatus.NotSupported, "IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult", null) },

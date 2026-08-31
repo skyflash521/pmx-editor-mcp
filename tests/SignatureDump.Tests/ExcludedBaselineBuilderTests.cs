@@ -635,7 +635,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 "CAP-339", "モデルデータ型", "IPXPmx",
                 CapabilityTargetKind.Single, CapabilityStatus.Provided, CapabilityOwner.Model,
-                "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外",
+                "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は現在のモデルを対象に呼ぶ Clear() で、対象を指定して呼ぶ場合は当たらない。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る",
             },
             new object[]
             {
