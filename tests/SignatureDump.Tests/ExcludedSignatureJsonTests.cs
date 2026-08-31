@@ -62,6 +62,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("\"category\":\"cPluginArgument\"", WithoutAlternative(ExclusionCategory.CPluginArgument));
             Assert.Contains("\"category\":\"delegate\"", WithoutAlternative(ExclusionCategory.Delegate));
             Assert.Contains("\"category\":\"pmd\"", WithAlternative(ExclusionCategory.Pmd));
+            Assert.Contains("\"category\":\"pmdModel\"", WithoutAlternative(ExclusionCategory.PmdModel));
             Assert.Contains(
                 "\"category\":\"constructorDuplicate\"", WithAlternative(ExclusionCategory.ConstructorDuplicate));
         }

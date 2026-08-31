@@ -17,6 +17,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string PmdNamespacePart = ".Pmd.";
 
+        private const string PmdModelTypeName = "PEPlugin.Pmd.IPEPmd";
+
         /// <summary>PMD型に対応するPMX型。一次資料で対応を確かめた組だけを持つ。</summary>
         private static readonly Dictionary<string, string> PmxCounterparts =
             new Dictionary<string, string>(StringComparer.Ordinal)
@@ -128,7 +130,8 @@ namespace PmxEditorMcp.SignatureDump
             public void RequireStreamsFrozen()
             {
                 SignatureRecord found = inventory.Signatures.FirstOrDefault(
-                    s => !frozen.ContainsKey(s.Key) && ClassifiableTypes(s).Any(streams.Contains));
+                    s => !frozen.ContainsKey(s.Key)
+                        && ClassifiableTypes(s).Select(WithoutArrayMark).Any(streams.Contains));
 
                 if (found != null)
                 {
@@ -178,7 +181,7 @@ namespace PmxEditorMcp.SignatureDump
                         signature.Key, ExclusionCategory.CPluginArgument, string.Empty);
                 }
 
-                if (TakesDelegate(signature))
+                if (UsesDelegateValue(signature))
                 {
                     return ExcludedSignatureRecord.FromCategory(
                         signature.Key, ExclusionCategory.Delegate, string.Empty);
@@ -192,6 +195,12 @@ namespace PmxEditorMcp.SignatureDump
                         return ExcludedSignatureRecord.FromCategory(
                             signature.Key, ExclusionCategory.Pmd, alternative);
                     }
+                }
+
+                if (TakesOrReturnsPmdModel(signature))
+                {
+                    return ExcludedSignatureRecord.FromCategory(
+                        signature.Key, ExclusionCategory.PmdModel, string.Empty);
                 }
 
                 if (signature.MemberKind == MemberKind.Constructor)
@@ -240,9 +249,21 @@ namespace PmxEditorMcp.SignatureDump
                 return found == null ? null : found.Key;
             }
 
-            private bool TakesDelegate(SignatureRecord signature)
+            /// <summary>
+            /// イベントはハンドラ型がデリゲートでも購読の仕組みで扱うので、宣言そのものは対象に
+            /// しない。値としてデリゲートを受け渡すシグネチャだけを見る。
+            /// </summary>
+            private bool UsesDelegateValue(SignatureRecord signature)
             {
-                return signature.Parameters.Any(p => !p.IsTypeArgument && delegates.Contains(p.TypeName));
+                if (signature.MemberKind == MemberKind.Event)
+                {
+                    return signature.Parameters
+                        .Where(p => !p.IsTypeArgument)
+                        .Select(p => WithoutArrayMark(WithoutByReferenceMark(p.TypeName)))
+                        .Any(delegates.Contains);
+                }
+
+                return ClassifiableTypes(signature).Select(WithoutArrayMark).Any(delegates.Contains);
             }
         }
 
@@ -267,9 +288,13 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
+                string declaredElement = WithoutArrayMark(declared[i].TypeName);
+                string candidateElement = WithoutArrayMark(candidate[i].TypeName);
                 string counterpart;
-                if (!PmxCounterparts.TryGetValue(declared[i].TypeName, out counterpart)
-                    || counterpart != candidate[i].TypeName)
+                if (declared[i].TypeName.Substring(declaredElement.Length)
+                        != candidate[i].TypeName.Substring(candidateElement.Length)
+                    || !PmxCounterparts.TryGetValue(declaredElement, out counterpart)
+                    || counterpart != candidateElement)
                 {
                     return false;
                 }
@@ -290,7 +315,21 @@ namespace PmxEditorMcp.SignatureDump
 
         private static bool TakesCPlugin(SignatureRecord signature)
         {
-            return signature.Parameters.Any(p => !p.IsTypeArgument && p.TypeName == CPluginTypeName);
+            return signature.Parameters
+                .Where(p => !p.IsTypeArgument)
+                .Select(p => WithoutArrayMark(WithoutByReferenceMark(p.TypeName)))
+                .Any(t => string.Equals(t, CPluginTypeName, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// PMDモデル本体は非対応なので、値の表現も、実体を得る提供対象の経路も無い。配列で受け渡す
+        /// 形も同じ理由で扱えない。
+        /// </summary>
+        private static bool TakesOrReturnsPmdModel(SignatureRecord signature)
+        {
+            return ValueAndParameterTypes(signature)
+                .Select(WithoutArrayMark)
+                .Any(t => string.Equals(t, PmdModelTypeName, StringComparison.Ordinal));
         }
 
         private static bool TouchesPmd(SignatureRecord signature)
@@ -307,7 +346,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             IEnumerable<string> parameters = signature.Parameters
                 .Where(p => !p.IsTypeArgument)
-                .Select(p => p.TypeName);
+                .Select(p => WithoutByReferenceMark(p.TypeName));
             IEnumerable<string> value = signature.ValueTypeIsTypeArgument
                 ? new string[0]
                 : new[] { WithoutByReferenceMark(signature.ValueType) };
@@ -320,6 +359,24 @@ namespace PmxEditorMcp.SignatureDump
             return signature.Parameters.Select(p => p.TypeName)
                 .Concat(new[] { signature.ValueType })
                 .Select(WithoutByReferenceMark);
+        }
+
+        /// <summary>要素の型で分類するので、配列の次元は落とす。</summary>
+        private static string WithoutArrayMark(string typeName)
+        {
+            string name = typeName;
+            while (name.EndsWith("]", StringComparison.Ordinal))
+            {
+                int open = name.LastIndexOf('[');
+                if (open < 0 || name.Skip(open + 1).Take(name.Length - open - 2).Any(c => c != ','))
+                {
+                    break;
+                }
+
+                name = name.Substring(0, open);
+            }
+
+            return name;
         }
 
         private static string WithoutByReferenceMark(string typeName)

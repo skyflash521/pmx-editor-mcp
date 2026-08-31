@@ -67,6 +67,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => ExcludedSignatureRecord.FromCategory(Key, ExclusionCategory.Delegate, Alternative));
             Assert.Throws<ArgumentException>(
                 () => ExcludedSignatureRecord.FromCategory(Key, ExclusionCategory.CPluginArgument, Alternative));
+            Assert.Throws<ArgumentException>(
+                () => ExcludedSignatureRecord.FromCategory(Key, ExclusionCategory.PmdModel, Alternative));
         }
 
         [Fact]

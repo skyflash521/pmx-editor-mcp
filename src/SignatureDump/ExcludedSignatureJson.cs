@@ -82,6 +82,8 @@ namespace PmxEditorMcp.SignatureDump
             {
                 case ExclusionCategory.Pmd:
                     return "pmd";
+                case ExclusionCategory.PmdModel:
+                    return "pmdModel";
                 case ExclusionCategory.CPluginArgument:
                     return "cPluginArgument";
                 case ExclusionCategory.Delegate:

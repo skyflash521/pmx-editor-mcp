@@ -29,6 +29,7 @@ namespace PmxEditorMcp.SignatureDump
             new Dictionary<string, ExclusionCategory>(StringComparer.Ordinal)
             {
                 { "pmd", ExclusionCategory.Pmd },
+                { "pmdModel", ExclusionCategory.PmdModel },
                 { "cPluginArgument", ExclusionCategory.CPluginArgument },
                 { "delegate", ExclusionCategory.Delegate },
                 { "constructorDuplicate", ExclusionCategory.ConstructorDuplicate },

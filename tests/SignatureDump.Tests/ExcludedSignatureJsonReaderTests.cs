@@ -35,14 +35,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AllFourCategorySpellingsAreRead()
+        public void AllCategorySpellingsAreRead()
         {
             string json = "{\"signatures\":["
                 + "{\"key\":\"A\",\"qualification\":\"category\",\"category\":\"cPluginArgument\"},"
                 + "{\"key\":\"B\",\"qualification\":\"category\",\"category\":\"constructorDuplicate\""
                 + ",\"alternative\":\"X\"},"
                 + "{\"key\":\"C\",\"qualification\":\"category\",\"category\":\"delegate\"},"
-                + "{\"key\":\"D\",\"qualification\":\"category\",\"category\":\"pmd\",\"alternative\":\"Y\"}"
+                + "{\"key\":\"D\",\"qualification\":\"category\",\"category\":\"pmd\",\"alternative\":\"Y\"},"
+                + "{\"key\":\"E\",\"qualification\":\"category\",\"category\":\"pmdModel\"}"
                 + "]}";
 
             IList<ExcludedSignatureRecord> read = ExcludedSignatureJsonReader.Read(json);
@@ -54,6 +55,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     ExclusionCategory.ConstructorDuplicate,
                     ExclusionCategory.Delegate,
                     ExclusionCategory.Pmd,
+                    ExclusionCategory.PmdModel,
                 },
                 read.Select(r => r.Category).ToArray());
         }

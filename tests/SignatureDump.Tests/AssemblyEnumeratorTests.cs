@@ -61,6 +61,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + "values:System.Int32[]:In:required"
                 + ";names:System.Collections.Generic.IList<System.String>:In:required",
             Api + ".GetCount()|" + Api + "|GetCount|Method|instance|0|System.Int32|--|Read|",
+            Api + ".Pack(System.Byte[])|" + Api + "|Pack|Method|instance|0|System.Void|--|Write|"
+                + "data:System.Byte[]:In:required",
             Api + ".Item(System.Guid)|" + Api
                 + "|Item|Property|instance|0|System.String|r-|Read|key:System.Guid:In:required",
             Api + ".GetState(ref System.Int32)|" + Api
@@ -128,6 +130,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ArrayTypesAreRecordedByTheirElementType()
+        {
+            InventoryRecord inventory = Enumerate();
+
+            Assert.DoesNotContain(
+                inventory.Types.Concat(inventory.ReferencedTypes).Select(t => t.Name),
+                n => n.EndsWith("]", StringComparison.Ordinal));
+            Assert.Contains("System.Byte", inventory.ReferencedTypes.Select(t => t.Name));
+        }
+
+        [Fact]
         public void EverySignatureTypeHasAClassification()
         {
             InventoryRecord inventory = Enumerate();
@@ -144,12 +157,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new string[0], unclassified);
         }
 
-        /// <summary>総称型引数は宣言ごとに別の型で、分類を持たない。</summary>
+        /// <summary>
+        /// 総称型引数は宣言ごとに別の型で、分類を持たない。配列は要素の型で分類する。
+        /// </summary>
         private static IEnumerable<string> Classifiable(SignatureRecord signature)
         {
             IEnumerable<string> parameters = signature.Parameters
                 .Where(p => !p.IsTypeArgument)
-                .Select(p => p.TypeName);
+                .Select(p => Element(p.TypeName));
             IEnumerable<string> value = signature.ValueTypeIsTypeArgument
                 ? new string[0]
                 : new[] { Element(signature.ValueType) };
@@ -159,9 +174,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static string Element(string typeName)
         {
-            return typeName.EndsWith("&", StringComparison.Ordinal)
+            string name = typeName.EndsWith("&", StringComparison.Ordinal)
                 ? typeName.Substring(0, typeName.Length - 1)
                 : typeName;
+
+            while (name.EndsWith("]", StringComparison.Ordinal))
+            {
+                name = name.Substring(0, name.LastIndexOf('['));
+            }
+
+            return name;
         }
 
         private static string Describe(TypeRecord type)

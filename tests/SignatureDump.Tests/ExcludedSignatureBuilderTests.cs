@@ -107,6 +107,33 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string StreamDerivedArgument = "PEPlugin.Pmx.IPXPmx.WriteTo(PEPlugin.Pmx.PXStream)";
 
+        private const string StreamArrayArgument =
+            "PEPlugin.Pmx.IPXPmx.WriteToAll(PEPlugin.Pmx.PXStream[])";
+
+        private const string StreamMatrixArgument =
+            "PEPlugin.Pmx.IPXPmx.WriteToGrid(PEPlugin.Pmx.PXStream[,])";
+
+        private const string CPluginArrayOverload =
+            "PXCPlugin.IPXSystemControl.GetCPluginInfos(PXCPlugin.IPXCPlugin[])";
+
+        private const string PmdArrayOverload = "PEPlugin.Vmd.IPEVmd.Attach(PEPlugin.Pmd.IPEPmd[])";
+
+        private const string PmxArrayOverload = "PEPlugin.Vmd.IPEVmd.Attach(PEPlugin.Pmx.IPXPmx[])";
+
+        private const string PmdRankSpreadOverload =
+            "PEPlugin.Vmd.IPEVmd.Mount(PEPlugin.Pmd.IPEPmd[][,,])";
+
+        private const string PmxRankSpreadOverload =
+            "PEPlugin.Vmd.IPEVmd.Mount(PEPlugin.Pmx.IPXPmx[,][,])";
+
+        private const string PmdJaggedOverload = "PEPlugin.Vmd.IPEVmd.Pair(PEPlugin.Pmd.IPEPmd[][])";
+
+        private const string PmxThreeDimOverload = "PEPlugin.Vmd.IPEVmd.Pair(PEPlugin.Pmx.IPXPmx[,,])";
+
+        private const string PmdRankOrderOverload = "PEPlugin.Vmd.IPEVmd.Link(PEPlugin.Pmd.IPEPmd[][,])";
+
+        private const string PmxRankOrderOverload = "PEPlugin.Vmd.IPEVmd.Link(PEPlugin.Pmx.IPXPmx[,][])";
+
         private const string ExternalDelegateOverload =
             "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Func<System.Double,System.Double>)";
 
@@ -123,7 +150,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string ConstructorWithPmdFactory = "PXCPlugin.PXPmdInfo..ctor()";
 
-        private const string PmdFactory = "PXCPlugin.IPXSystemControl.GetPmdInfo(PEPlugin.Pmd.IPEPmd)";
+        private const string PmdFactory = "PXCPlugin.IPXSystemControl.GetPmdInfo(PEPlugin.Pmd.IPEVertex)";
 
         private const string ConstructorWithDelegateFactory = "PXCPlugin.PXDelegateInfo..ctor()";
 
@@ -135,6 +162,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string TypeArgumentFactory = "PEPlugin.Vmd.IPEVmd.Make<1>()";
 
         private const string PmdWithTypeArgument = "PEPlugin.Vmd.IPEVmd.Bind<1>(PEPlugin.Pmd.IPEPmd,T)";
+
+        private const string DelegateArrayInValueType = "PEPlugin.Vme.IPEVmeGroup.GetEvents()";
+
+        private const string PmdModelArrayInValueType = "PEPlugin.Vmd.IPEVmd.Sources()";
+
+        private const string EventWithDelegateHandler =
+            "PEPlugin.Vme.IPEVmeSingleValueEventOperator.Changed()";
+
+        private const string PmdModelMatrixInValueType = "PEPlugin.Vmd.IPEVmd.Grid()";
+
+        private const string ExternalDelegateArrayInValueType = "PEPlugin.Vme.IPEVmeGroup.Filters()";
 
         private const string PmxWithRealTypeNamedT = "PEPlugin.Vmd.IPEVmd.Bind<1>(PEPlugin.Pmx.IPXPmx,T)";
 
@@ -228,6 +266,37 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Method("PEPlugin.Pmx.IPXPmx", "ToFile", "System.Boolean", Arg("path", "System.String")),
                 Method(
                     "PEPlugin.Pmx.IPXPmx", "WriteTo", "System.Boolean", Arg("s", "PEPlugin.Pmx.PXStream")),
+                Method(
+                    "PEPlugin.Pmx.IPXPmx",
+                    "WriteToAll",
+                    "System.Boolean",
+                    Arg("s", "PEPlugin.Pmx.PXStream[]")),
+                Method(
+                    "PEPlugin.Pmx.IPXPmx",
+                    "WriteToGrid",
+                    "System.Boolean",
+                    Arg("s", "PEPlugin.Pmx.PXStream[,]")),
+                Method(
+                    "PXCPlugin.IPXSystemControl",
+                    "GetCPluginInfos",
+                    "PXCPlugin.PXPluginInfo",
+                    Arg("plugins", "PXCPlugin.IPXCPlugin[]")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd", "Attach", "System.Void", Arg("pmd", "PEPlugin.Pmd.IPEPmd[]")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd", "Attach", "System.Void", Arg("pmx", "PEPlugin.Pmx.IPXPmx[]")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd", "Mount", "System.Void", Arg("pmd", "PEPlugin.Pmd.IPEPmd[][,,]")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd", "Mount", "System.Void", Arg("pmx", "PEPlugin.Pmx.IPXPmx[,][,]")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd", "Pair", "System.Void", Arg("pmd", "PEPlugin.Pmd.IPEPmd[][]")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd", "Pair", "System.Void", Arg("pmx", "PEPlugin.Pmx.IPXPmx[,,]")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd", "Link", "System.Void", Arg("pmd", "PEPlugin.Pmd.IPEPmd[][,]")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd", "Link", "System.Void", Arg("pmx", "PEPlugin.Pmx.IPXPmx[,][]")),
 
                 Method(
                     "PEPlugin.Vme.IPEVmePath",
@@ -250,7 +319,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "PXCPlugin.IPXSystemControl",
                     "GetPmdInfo",
                     "PXCPlugin.PXPmdInfo",
-                    Arg("pmd", "PEPlugin.Pmd.IPEPmd")),
+                    Arg("vertex", "PEPlugin.Pmd.IPEVertex")),
 
                 Constructor("PXCPlugin.PXDelegateInfo"),
                 Method(
@@ -273,6 +342,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Arg("value", "System.Single")),
                 Event(
                     "PEPlugin.Vme.IPEVmeSingleValueEventOperator", "Changed", "PEPlugin.Vme.StateValueProc"),
+                Method("PEPlugin.Vme.IPEVmeGroup", "GetEvents", "PEPlugin.Vme.StateValueProc[]"),
+                Method("PEPlugin.Vmd.IPEVmd", "Sources", "PEPlugin.Pmd.IPEPmd[]"),
+                Method("PEPlugin.Vmd.IPEVmd", "Grid", "PEPlugin.Pmd.IPEPmd[,]"),
+                Method(
+                    "PEPlugin.Vme.IPEVmeGroup",
+                    "Filters",
+                    "System.Func<System.Double,System.Double>[]"),
 
                 Constructor("PXCPlugin.PXPluginInfo"),
                 Method(
@@ -483,7 +559,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new List<ExcludedBaselineEntry>
             {
                 Entry("CAP-269", CPluginArgumentOverload, FrozenFactory),
-                Entry("CAP-339", FromStream, StreamDerivedArgument, StreamInValueType, ToStream),
+                Entry(
+                "CAP-339",
+                FromStream,
+                StreamArrayArgument,
+                StreamDerivedArgument,
+                StreamInValueType,
+                StreamMatrixArgument,
+                ToStream),
                 Entry("CAP-390", FrozenPmxSave),
                 Entry("CAP-466", FrozenConstructor),
             };
@@ -514,6 +597,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ExcludedSignatureRecord found = Build().SingleOrDefault(r => r.Key == key);
             Assert.True(found != null, "除外されていない: " + key);
             return found;
+        }
+
+        private static void AssertPmdModel(string key)
+        {
+            ExcludedSignatureRecord record = Find(key);
+
+            Assert.Equal(ExclusionQualification.Category, record.Qualification);
+            Assert.Equal(ExclusionCategory.PmdModel, record.Category);
+            Assert.Equal(string.Empty, record.Alternative);
         }
 
         [Fact]
@@ -567,51 +659,51 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void PmdOverloadWithoutAlternativeIsNotExcluded()
+        public void PmdOverloadWithoutAPmxVersionIsListedOnPmdModelGrounds()
         {
-            Assert.DoesNotContain(PmdWithoutAlternative, Build().Select(r => r.Key));
+            AssertPmdModel(PmdWithoutAlternative);
         }
 
         [Fact]
-        public void PmdOverloadWhosePmxVersionDiffersInArgumentCountIsNotExcluded()
+        public void PmxVersionWithMoreArgumentsIsNotAnAlternative()
         {
-            Assert.DoesNotContain(PmdReset, Build().Select(r => r.Key));
+            AssertPmdModel(PmdReset);
         }
 
         [Fact]
-        public void PmdOverloadWhosePmxVersionDiffersInReturnTypeIsNotExcluded()
+        public void PmxVersionWithAnotherReturnTypeIsNotAnAlternative()
         {
-            Assert.DoesNotContain(PmdMerge, Build().Select(r => r.Key));
+            AssertPmdModel(PmdMerge);
         }
 
         [Fact]
-        public void PmdOverloadTakingATypeOutsideTheMapIsNotExcluded()
+        public void PmxVersionTakingATypeOutsideTheMapIsNotAnAlternative()
         {
-            Assert.DoesNotContain(PmdApply, Build().Select(r => r.Key));
+            AssertPmdModel(PmdApply);
         }
 
         [Fact]
-        public void PmdOverloadWhosePmxVersionDiffersInGenericArityIsNotExcluded()
+        public void PmxVersionWithAnotherGenericArityIsNotAnAlternative()
         {
-            Assert.DoesNotContain(PmdLoad, Build().Select(r => r.Key));
+            AssertPmdModel(PmdLoad);
         }
 
         [Fact]
-        public void PmdOverloadWhosePmxVersionDiffersInArgumentDirectionIsNotExcluded()
+        public void PmxVersionWithAnotherArgumentDirectionIsNotAnAlternative()
         {
-            Assert.DoesNotContain(PmdStore, Build().Select(r => r.Key));
+            AssertPmdModel(PmdStore);
         }
 
         [Fact]
-        public void PmdOverloadWhosePmxVersionHasAnotherDeclaringTypeIsNotExcluded()
+        public void PmxVersionOnAnotherDeclaringTypeIsNotAnAlternative()
         {
-            Assert.DoesNotContain(PmdInitOnOtherType, Build().Select(r => r.Key));
+            AssertPmdModel(PmdInitOnOtherType);
         }
 
         [Fact]
         public void FrozenPmxOverloadIsNotAnAlternative()
         {
-            Assert.DoesNotContain(PmdSave, Build().Select(r => r.Key));
+            AssertPmdModel(PmdSave);
         }
 
         [Fact]
@@ -627,9 +719,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void SignatureWithPmdOnlyInReturnTypeAndNoAlternativeIsNotExcluded()
+        public void PropertyReturningThePmdModelIsListedOnPmdModelGrounds()
         {
-            Assert.DoesNotContain(PmdInValueType, Build().Select(r => r.Key));
+            AssertPmdModel(PmdInValueType);
         }
 
         [Fact]
@@ -728,12 +820,81 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void PublicConstructorTakingPmdIsListedWhenAFactoryExists()
+        public void PublicConstructorTakingThePmdModelIsListedOnPmdModelGrounds()
         {
-            ExcludedSignatureRecord record = Find(PmdConstructor);
+            AssertPmdModel(PmdConstructor);
+        }
 
-            Assert.Equal(ExclusionCategory.ConstructorDuplicate, record.Category);
-            Assert.Equal(KeyFactory, record.Alternative);
+        [Fact]
+        public void MethodReturningAnArrayOfThePmdModelIsListedOnPmdModelGrounds()
+        {
+            AssertPmdModel(PmdModelArrayInValueType);
+        }
+
+        [Fact]
+        public void OverloadTakingAnArrayOfTheCPluginImplementationIsListedOnCategoryGrounds()
+        {
+            ExcludedSignatureRecord record = Find(CPluginArrayOverload);
+
+            Assert.Equal(ExclusionCategory.CPluginArgument, record.Category);
+            Assert.Equal(string.Empty, record.Alternative);
+        }
+
+        [Fact]
+        public void ArrayOfThePmdModelHasTheArrayOfThePmxCounterpartAsItsAlternative()
+        {
+            ExcludedSignatureRecord record = Find(PmdArrayOverload);
+
+            Assert.Equal(ExclusionCategory.Pmd, record.Category);
+            Assert.Equal(PmxArrayOverload, record.Alternative);
+        }
+
+        [Fact]
+        public void PmxArrayWithAnotherRankSpreadAcrossTheSameNestingIsNotAnAlternative()
+        {
+            AssertPmdModel(PmdRankSpreadOverload);
+        }
+
+        [Fact]
+        public void PmxArrayWithAnotherNestingDepthIsNotAnAlternativeAtTheSameNotationLength()
+        {
+            AssertPmdModel(PmdJaggedOverload);
+        }
+
+        [Fact]
+        public void PmxArrayWithTheSameRanksInAnotherOrderIsNotAnAlternative()
+        {
+            AssertPmdModel(PmdRankOrderOverload);
+        }
+
+        [Fact]
+        public void MethodReturningAMultiDimensionalArrayOfThePmdModelIsListedOnPmdModelGrounds()
+        {
+            AssertPmdModel(PmdModelMatrixInValueType);
+        }
+
+        [Fact]
+        public void MethodReturningAnArrayOfDelegatesIsListedOnDelegateGrounds()
+        {
+            ExcludedSignatureRecord record = Find(DelegateArrayInValueType);
+
+            Assert.Equal(ExclusionCategory.Delegate, record.Category);
+            Assert.Equal(string.Empty, record.Alternative);
+        }
+
+        [Fact]
+        public void MethodReturningAnArrayOfDelegatesDeclaredOutsideTheAssemblyIsAlsoListed()
+        {
+            ExcludedSignatureRecord record = Find(ExternalDelegateArrayInValueType);
+
+            Assert.Equal(ExclusionCategory.Delegate, record.Category);
+            Assert.Equal(string.Empty, record.Alternative);
+        }
+
+        [Fact]
+        public void EventDeclaringADelegateHandlerIsNotExcluded()
+        {
+            Assert.DoesNotContain(EventWithDelegateHandler, Build().Select(r => r.Key));
         }
 
         [Fact]
@@ -760,7 +921,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ConcreteTypeNamedLikeAGenericParameterIsTreatedAsAnotherType()
         {
-            Assert.DoesNotContain(PmdWithTypeArgument, Build().Select(r => r.Key));
+            AssertPmdModel(PmdWithTypeArgument);
         }
 
         [Fact]
@@ -780,6 +941,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(ToStream)]
         [InlineData(StreamInValueType)]
         [InlineData(StreamDerivedArgument)]
+        [InlineData(StreamArrayArgument)]
+        [InlineData(StreamMatrixArgument)]
         public void UnfrozenStreamOverloadThrows(string key)
         {
             // 形式が同じかどうかは一次資料でしか決まらないので、除外するか残すかを機械で決められない。
@@ -818,6 +981,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CPluginArgumentOverload, FrozenFactory, FrozenPmxSave, PmdInit, DelegateOverload,
                     ExternalDelegateOverload, DelegateWithoutPlain, ExcludedFactory, DuplicatedConstructor,
                     ConstructorWithStaticFactory, ConstructorWithPmdFactory, PmdConstructor, PmxConstructor,
+                    PmdReset, PmdMerge, PmdApply, PmdLoad, PmdStore, PmdSave, PmdInitOnOtherType,
+                    PmdWithoutAlternative, PmdInValueType, PmdWithTypeArgument,
+                    DelegateArrayInValueType, PmdModelArrayInValueType, PmdModelMatrixInValueType,
+                    ExternalDelegateArrayInValueType, StreamArrayArgument, StreamMatrixArgument,
+                    CPluginArrayOverload, PmdArrayOverload, PmdRankSpreadOverload, PmdJaggedOverload,
+                    PmdRankOrderOverload,
                 }.OrderBy(k => k, StringComparer.Ordinal).ToArray(),
                 keys);
         }
@@ -828,7 +997,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IList<ExcludedSignatureRecord> records = ExcludedSignatureBuilder.Build(
                 BaselineOf(
                     Entry("CAP-269", CPluginArgumentOverload),
-                    Entry("CAP-339", FromStream, StreamDerivedArgument, StreamInValueType, ToStream),
+                    Entry(
+                        "CAP-339",
+                        FromStream,
+                        StreamArrayArgument,
+                        StreamDerivedArgument,
+                        StreamInValueType,
+                        StreamMatrixArgument,
+                        ToStream),
                     Entry("CAP-390", PmdInit),
                     Entry("CAP-459", DuplicatedConstructor),
                     Entry("CAP-461", DelegateOverload)),

@@ -450,16 +450,16 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-399 | VMD/VMEビルダ | IPEBuilder.CreateVmeGroup | 提供 | 変形・モーション |  |
 | CAP-400 | VMD/VMEビルダ | IPEBuilder.CreateVmePath | 提供 | 変形・モーション |  |
 | CAP-401 | VMEデータ型 | IPEVmeElement | 提供 | 変形・モーション |  |
-| CAP-402 | VMEデータ型 | IPEVmeEventElement | 提供 | 変形・モーション | 非対応件数: 5 |
+| CAP-402 | VMEデータ型 | IPEVmeEventElement | 提供 | 変形・モーション | 非対応件数: 6 |
 | CAP-403 | VMEデータ型 | IPEVmeObject | 提供 | 変形・モーション |  |
-| CAP-404 | VMEデータ型 | IPEVme | 提供 | 変形・モーション | 非対応件数: 1 |
-| CAP-405 | VMEデータ型 | IPEVmeFrameEvent | 提供 | 変形・モーション | 非対応件数: 5。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-404 | VMEデータ型 | IPEVme | 提供 | 変形・モーション | 非対応件数: 3。契約注記: PMDモデルを要するシグネチャは非対応 |
+| CAP-405 | VMEデータ型 | IPEVmeFrameEvent | 提供 | 変形・モーション | 非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応 |
 | CAP-406 | VMEデータ型 | IPEVmeEventState | 提供 | 変形・モーション |  |
 | CAP-407 | VMEデータ型 | IPEVmeSingleValueState | 提供 | 変形・モーション |  |
-| CAP-408 | VMEデータ型 | IPEVmeSingleValueElement | 提供 | 変形・モーション | 非対応件数: 5 |
-| CAP-409 | VMEデータ型 | IPEVmeGroup | 提供 | 変形・モーション | 非対応件数: 7。契約注記: デリゲートを要するシグネチャは非対応 |
-| CAP-410 | VMEデータ型 | IPEVmeGroupBone | 提供 | 変形・モーション | 非対応件数: 7 |
-| CAP-411 | VMEデータ型 | IPEVmeGroupMorph | 提供 | 変形・モーション | 非対応件数: 7 |
+| CAP-408 | VMEデータ型 | IPEVmeSingleValueElement | 提供 | 変形・モーション | 非対応件数: 6 |
+| CAP-409 | VMEデータ型 | IPEVmeGroup | 提供 | 変形・モーション | 非対応件数: 8。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-410 | VMEデータ型 | IPEVmeGroupBone | 提供 | 変形・モーション | 非対応件数: 8 |
+| CAP-411 | VMEデータ型 | IPEVmeGroupMorph | 提供 | 変形・モーション | 非対応件数: 8 |
 | CAP-412 | VMEデータ型 | IPEVmePrimaryValue`1 | 提供 | 変形・モーション |  |
 | CAP-413 | VMEデータ型 | IPEVmeSingleValue | 提供 | 変形・モーション |  |
 | CAP-414 | VMEデータ型 | IPEVmeVectorValue | 提供 | 変形・モーション |  |
@@ -479,21 +479,21 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-428 | VMEデータ型 | IPEVmePositionEventOperator | 提供 | 変形・モーション | 非対応件数: 5。契約注記: デリゲートを要するシグネチャは非対応 |
 | CAP-429 | VMEデータ型 | IPEVmeDirectionEventOperator | 提供 | 変形・モーション | 非対応件数: 2。契約注記: デリゲートを要するシグネチャは非対応 |
 | CAP-430 | VMEデータ型 | IPEVmeScalingEventOperator | 提供 | 変形・モーション | 非対応件数: 12。契約注記: デリゲートを要するシグネチャは非対応 |
-| CAP-431 | VMEデータ型 | IPEVmePath | 提供 | 変形・モーション | 非対応件数: 3。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-431 | VMEデータ型 | IPEVmePath | 提供 | 変形・モーション | 非対応件数: 5。契約注記: デリゲートまたはPMDモデルを要するシグネチャは非対応 |
 | CAP-432 | VMEデータ型 | IPEVmeBoneState | 提供 | 変形・モーション |  |
-| CAP-433 | VMEデータ型 | IPEVmeBone | 提供 | 変形・モーション | 非対応件数: 5 |
+| CAP-433 | VMEデータ型 | IPEVmeBone | 提供 | 変形・モーション | 非対応件数: 6 |
 | CAP-434 | VMEデータ型 | IPEVmeCameraState | 提供 | 変形・モーション |  |
-| CAP-435 | VMEデータ型 | IPEVmeCameraPosition | 提供 | 変形・モーション | 非対応件数: 5 |
+| CAP-435 | VMEデータ型 | IPEVmeCameraPosition | 提供 | 変形・モーション | 非対応件数: 6 |
 | CAP-436 | VMEデータ型 | IPEVmeCamera | 提供 | 変形・モーション |  |
-| CAP-437 | VMEデータ型 | IPEVmeResult | 提供 | 変形・モーション |  |
+| CAP-437 | VMEデータ型 | IPEVmeResult | 提供 | 変形・モーション | 非対応件数: 1。契約注記: PMDモデルを要するシグネチャは非対応 |
 | CAP-438 | VMEデータ型 | IPEVmeBoneResult | 提供 | 変形・モーション |  |
 | CAP-439 | VMEデータ型 | IPEVmeMorphResult | 提供 | 変形・モーション |  |
 | CAP-440 | VMEデータ型 | IPEVmeCameraResult | 提供 | 変形・モーション |  |
 | CAP-441 | VMEデータ型 | IPEVmeLightResult | 提供 | 変形・モーション |  |
 | CAP-442 | VMEデータ型 | IPEVmeLightState | 提供 | 変形・モーション |  |
-| CAP-443 | VMEデータ型 | IPEVmeLight | 提供 | 変形・モーション | 非対応件数: 5 |
+| CAP-443 | VMEデータ型 | IPEVmeLight | 提供 | 変形・モーション | 非対応件数: 6 |
 | CAP-444 | VMDデータ型 | IPEVmdBonePoseState | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-445 | VMDデータ型 | IPEVmd | 提供 | 変形・モーション | 非対応件数: 1。全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ。危険操作(上書き保存)。該当は ToFile(System.String,System.Boolean)。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
+| CAP-445 | VMDデータ型 | IPEVmd | 提供 | 変形・モーション | 非対応件数: 2。全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ。PMDモデルを要するシグネチャは非対応。危険操作(上書き保存)。該当は ToFile(System.String,System.Boolean)。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
 | CAP-446 | VMDデータ型 | IPEVmdFrameKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
 | CAP-447 | VMDデータ型 | IPEVmdIPL | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
 | CAP-448 | VMDデータ型 | IPEVmdBoneKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |

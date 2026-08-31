@@ -87,8 +87,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// メンバーが引数・戻り値・値の型として指している型。行の表記に使うものと同じ型を返すので、
-        /// 型の種類を表記から引ける。
+        /// メンバーが引数・戻り値・値の型として指している型。配列は要素の型へ落として返すので、
+        /// 引く側も同じ形へ落としてから型の種類を引く。
         /// </summary>
         private static IEnumerable<Type> CollectReferencedTypes(Type type, TypeKind kind)
         {
@@ -159,10 +159,16 @@ namespace PmxEditorMcp.SignatureDump
             return parameters.Select(p => Element(p.ParameterType));
         }
 
-        // 総称型引数は宣言ごとに別の型になり、分類の対象にならない。
+        // 総称型引数は宣言ごとに別の型になり、分類の対象にならない。配列は要素の型で分類するので、
+        // 次元に依らず要素まで辿る。
         private static Type Element(Type type)
         {
-            Type element = type.IsByRef ? type.GetElementType() : type;
+            Type element = type;
+            while (element.IsByRef || element.IsArray)
+            {
+                element = element.GetElementType();
+            }
+
             return element.IsGenericParameter ? null : element;
         }
 

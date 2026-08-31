@@ -24,10 +24,13 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>PMDデータ型を扱い、同じ操作のPMX版が提供対象に在る。</summary>
         Pmd,
 
+        /// <summary>PMDモデル本体を受け渡し、値の表現も入手経路も持たない。</summary>
+        PmdModel,
+
         /// <summary>Cプラグイン実装本体のインターフェースを引数に取る。</summary>
         CPluginArgument,
 
-        /// <summary>デリゲート型を引数に取る。</summary>
+        /// <summary>デリゲート型を引数または戻り値に持つ。</summary>
         Delegate,
 
         /// <summary>同じ型を返す生成メンバーが提供対象に在る公開コンストラクタ。</summary>
@@ -120,6 +123,7 @@ namespace PmxEditorMcp.SignatureDump
                     return true;
                 case ExclusionCategory.CPluginArgument:
                 case ExclusionCategory.Delegate:
+                case ExclusionCategory.PmdModel:
                     return false;
                 default:
                     throw new ArgumentException(
