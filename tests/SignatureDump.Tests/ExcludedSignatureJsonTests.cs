@@ -41,16 +41,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IList<ExcludedSignatureRecord> records = new List<ExcludedSignatureRecord>
             {
                 ExcludedSignatureRecord.FromCategory(
-                    "PEPlugin.Vme.IPEVmeEventOperator.Set(PEPlugin.Vme.StateValueProc)",
-                    ExclusionCategory.Delegate,
+                    "PXCPlugin.IPXSystemControl.SetAutoRelease(PXCPlugin.IPXCPlugin)",
+                    ExclusionCategory.CPluginArgument,
                     string.Empty),
             };
 
             Assert.Equal(
                 "{\n"
                 + "\"signatures\":[\n"
-                + "{\"key\":\"PEPlugin.Vme.IPEVmeEventOperator.Set(PEPlugin.Vme.StateValueProc)\","
-                + "\"qualification\":\"category\",\"category\":\"delegate\"}\n"
+                + "{\"key\":\"PXCPlugin.IPXSystemControl.SetAutoRelease(PXCPlugin.IPXCPlugin)\","
+                + "\"qualification\":\"category\",\"category\":\"cPluginArgument\"}\n"
                 + "]\n"
                 + "}\n",
                 ExcludedSignatureJson.Write(records));

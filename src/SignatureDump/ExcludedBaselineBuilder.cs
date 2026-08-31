@@ -55,12 +55,12 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly Dictionary<string, Recording> Recorded =
             new Dictionary<string, Recording>(StringComparer.Ordinal)
             {
-                { "CAP-114", new Recording(CapabilityStatus.Provided, "IPXPmxViewConnector.BootupVmdView", "PMX+VMD版と引数なし版を対象。PMDを引数に取る版はレガシーのため対象外") },
-                { "CAP-269", new Recording(CapabilityStatus.Provided, "IPXSystemControl.GetCPluginInfo", "Int32版を提供。IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記") },
+                { "CAP-114", new Recording(CapabilityStatus.Provided, "IPXPmxViewConnector.BootupVmdView", "PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外") },
+                { "CAP-269", new Recording(CapabilityStatus.Provided, "IPXSystemControl.GetCPluginInfo", "Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨") },
                 { "CAP-304", new Recording(CapabilityStatus.NotSupported, "IPXUIModel.SetAutoRelease", null) },
-                { "CAP-339", new Recording(CapabilityStatus.Provided, "IPXPmx", "全公開メンバー(型単位)。FromStream/ToStreamはファイルパス版で代替し対象外") },
-                { "CAP-390", new Recording(CapabilityStatus.Provided, "IPEBuilder.CreateVmd", "PMDを引数に取る版はレガシーのため対象外。他のオーバーロードを提供") },
-                { "CAP-398", new Recording(CapabilityStatus.Provided, "IPEBuilder.CreateVme", "PMDを引数に取る版はレガシーのため対象外。デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供") },
+                { "CAP-339", new Recording(CapabilityStatus.Provided, "IPXPmx", "全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外") },
+                { "CAP-390", new Recording(CapabilityStatus.Provided, "IPEBuilder.CreateVmd", "他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外") },
+                { "CAP-398", new Recording(CapabilityStatus.Provided, "IPEBuilder.CreateVme", "契約注記: PMDを引数に取る版はレガシーのため対象外") },
                 { "CAP-459", new Recording(CapabilityStatus.NotSupported, "IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult", null) },
                 { "CAP-461", new Recording(CapabilityStatus.NotSupported, "PEStaticBuilder / IPEShortBuilder", null) },
                 { "CAP-462", new Recording(CapabilityStatus.NotSupported, "IPECheckerPlugin / IPEImportPlugin / IPEExportPlugin", null) },

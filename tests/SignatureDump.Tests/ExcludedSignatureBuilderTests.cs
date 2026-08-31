@@ -110,6 +110,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string ExternalDelegateOverload =
             "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Func<System.Double,System.Double>)";
 
+        private const string PlainPathPoints = "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Double)";
+
+        private const string DelegateWithoutPlain =
+            "PEPlugin.Vme.IPEVmeGroup.ForEach(PEPlugin.Vme.StateValueProc)";
+
         private const string PmdConstructor = "PEPlugin.Vmd.PEVmdKey..ctor(PEPlugin.Pmd.IPEPmd)";
 
         private const string PmxConstructor = "PEPlugin.Vmd.PEVmdKey..ctor(PEPlugin.Pmx.IPXPmx)";
@@ -122,8 +127,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string ConstructorWithDelegateFactory = "PXCPlugin.PXDelegateInfo..ctor()";
 
-        private const string DelegateFactory =
-            "PXCPlugin.IPXSystemControl.GetDelegateInfo(System.Func<System.Double,System.Double>)";
+        private const string ExcludedFactory =
+            "PXCPlugin.IPXSystemControl.GetDelegateInfo(PXCPlugin.IPXCPlugin)";
 
         private const string ConstructorNamedLikeTypeArgument = "T..ctor()";
 
@@ -153,6 +158,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Type("PXCPlugin.PXDelegateInfo", TypeKind.Class),
                 Type("PEPlugin.Vme.IPEVme", TypeKind.Interface),
                 Type("PEPlugin.Vme.IPEVmePath", TypeKind.Interface),
+                Type("PEPlugin.Vme.IPEVmeGroup", TypeKind.Interface),
                 Type("PEPlugin.Vme.IPEVmeSingleValueEventOperator", TypeKind.Interface),
                 Type("PEPlugin.Vme.StateValueProc", TypeKind.Delegate),
                 Type("PEPlugin.Vme.PEVmePreviewOption", TypeKind.Class),
@@ -228,6 +234,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "GetPathPoints",
                     "System.Void",
                     Arg("f", "System.Func<System.Double,System.Double>")),
+                Method("PEPlugin.Vme.IPEVmePath", "GetPathPoints", "System.Void", Arg("step", "System.Double")),
+                Method(
+                    "PEPlugin.Vme.IPEVmeGroup",
+                    "ForEach",
+                    "System.Void",
+                    Arg("proc", "PEPlugin.Vme.StateValueProc")),
 
                 Constructor("PEPlugin.Vmd.PEVmdKey", Arg("pmd", "PEPlugin.Pmd.IPEPmd")),
                 Constructor("PEPlugin.Vmd.PEVmdKey", Arg("pmx", "PEPlugin.Pmx.IPXPmx")),
@@ -245,7 +257,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "PXCPlugin.IPXSystemControl",
                     "GetDelegateInfo",
                     "PXCPlugin.PXDelegateInfo",
-                    Arg("f", "System.Func<System.Double,System.Double>")),
+                    Arg("plugin", "PXCPlugin.IPXCPlugin")),
 
                 Method(
                     "PEPlugin.Vme.IPEVmeSingleValueEventOperator",
@@ -526,7 +538,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     PmdConstructor, PmxConstructor, KeyFactory, ConstructorWithPmdFactory, PmdFactory,
                     ConstructorNamedLikeTypeArgument, TypeArgumentFactory, PmdWithTypeArgument,
                     PmxWithRealTypeNamedT,
-                    ConstructorWithDelegateFactory, DelegateFactory,
+                    ConstructorWithDelegateFactory, ExcludedFactory,
                     CloneOnlyConstructor, CloneMember, OutsideEveryCategory,
                 },
                 key => Assert.Contains(key, keys));
@@ -704,6 +716,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ExcludedSignatureRecord record = Find(ExternalDelegateOverload);
 
             Assert.Equal(ExclusionCategory.Delegate, record.Category);
+            Assert.Equal(string.Empty, record.Alternative);
+        }
+
+        [Fact]
+        public void 代替の有無を問わずデリゲートを取る版は載る()
+        {
+            ExcludedSignatureRecord record = Find(DelegateWithoutPlain);
+
+            Assert.Equal(ExclusionCategory.Delegate, record.Category);
         }
 
         [Fact]
@@ -795,7 +816,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     FrozenConstructor, FromStream, ToStream, StreamInValueType, StreamDerivedArgument,
                     CPluginArgumentOverload, FrozenFactory, FrozenPmxSave, PmdInit, DelegateOverload,
-                    ExternalDelegateOverload, DelegateFactory, DuplicatedConstructor,
+                    ExternalDelegateOverload, DelegateWithoutPlain, ExcludedFactory, DuplicatedConstructor,
                     ConstructorWithStaticFactory, ConstructorWithPmdFactory, PmdConstructor, PmxConstructor,
                 }.OrderBy(k => k, StringComparer.Ordinal).ToArray(),
                 keys);

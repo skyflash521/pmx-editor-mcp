@@ -617,13 +617,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 "CAP-114", "PmxView", "IPXPmxViewConnector.BootupVmdView",
                 CapabilityTargetKind.Single, CapabilityStatus.Provided, CapabilityOwner.MotionTransform,
-                "PMX+VMD版と引数なし版を対象。PMDを引数に取る版はレガシーのため対象外",
+                "PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外",
             },
             new object[]
             {
                 "CAP-269", "Cプラグイン連携", "IPXSystemControl.GetCPluginInfo",
                 CapabilityTargetKind.Single, CapabilityStatus.Provided, CapabilityOwner.Session,
-                "Int32版を提供。IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨のため契約に明記",
+                "Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
             },
             new object[]
             {
@@ -635,19 +635,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 "CAP-339", "モデルデータ型", "IPXPmx",
                 CapabilityTargetKind.Single, CapabilityStatus.Provided, CapabilityOwner.Model,
-                "全公開メンバー(型単位)。FromStream/ToStreamはファイルパス版で代替し対象外",
+                "全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外",
             },
             new object[]
             {
                 "CAP-390", "VMD/VMEビルダ", "IPEBuilder.CreateVmd",
                 CapabilityTargetKind.Single, CapabilityStatus.Provided, CapabilityOwner.MotionTransform,
-                "PMDを引数に取る版はレガシーのため対象外。他のオーバーロードを提供",
+                "他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外",
             },
             new object[]
             {
                 "CAP-398", "VMD/VMEビルダ", "IPEBuilder.CreateVme",
                 CapabilityTargetKind.Single, CapabilityStatus.Provided, CapabilityOwner.MotionTransform,
-                "PMDを引数に取る版はレガシーのため対象外。デリゲートは直接渡せないため宣言的な記述からの変換設計を前提に提供",
+                "契約注記: PMDを引数に取る版はレガシーのため対象外",
             },
             new object[]
             {
