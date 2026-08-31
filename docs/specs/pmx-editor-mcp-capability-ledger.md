@@ -39,7 +39,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 - 危険な操作(エディタ終了・上書き保存等)も「技術的にツール化するか」で分類する。
   公開の可否・確認フローはアーキテクチャ仕様書の危険操作の公開方針が定める。
 
-集計: 提供 465 / 非対応 7 / 要調査 0(計 472)
+集計: 提供 467 / 非対応 9 / 要調査 0(計 476)
 
 | ID | 大分類 | 対象 | 分類 | 担当 | 備考 |
 |---|---|---|---|---|---|
@@ -515,3 +515,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-470 | Cプラグイン連携 | PXEventArgs.ViewObjectSelected | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-471 | Cプラグイン連携 | PXUIModelHelper.MaterialColorEvPara | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-472 | Cプラグイン連携 | PXUIModelHelper.TextControl | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
+| CAP-473 | VMDデータ型 | PEVmdBonePose | 提供 | 変形・モーション | 全公開メンバー(型単位)。契約注記: 取得は IPEVmdBonePoseState.GetPose で行い、コンストラクタは対象外 |
+| CAP-474 | Cプラグイン連携 | IPXCPluginRunArgs | 提供 | セッション | 全公開メンバー(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
+| CAP-475 | プラグイン機構 | IPEPluginHost | 非対応 |  | プラグインがホストから受け取る接続初期化の入口(実装専用) |
+| CAP-476 | Cプラグイン実装拡張点 | IPXConnector | 非対応 |  | Cプラグインを実装する側が実装する接続の入口(実装専用) |
