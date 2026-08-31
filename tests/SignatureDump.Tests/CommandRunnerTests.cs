@@ -31,12 +31,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static readonly Dictionary<string, string> LedgerRemarks =
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
-            { "CAP-114", "PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外" },
-            { "CAP-269", "Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨" },
+            { "CAP-114", "非対応件数: 1。PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外" },
+            { "CAP-269", "非対応件数: 1。Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨" },
             { "CAP-304", "引数のIPXCPlugin(実装拡張点・非対応)を取得経路から得られないため" },
-            { "CAP-339", "全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外" },
-            { "CAP-390", "他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外" },
-            { "CAP-398", "契約注記: PMDを引数に取る版はレガシーのため対象外" },
+            { "CAP-339", "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外" },
+            { "CAP-390", "非対応件数: 2。他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外" },
+            { "CAP-398", "非対応件数: 1。契約注記: PMDを引数に取る版はレガシーのため対象外" },
             { "CAP-459", "プラグイン自身がホストに登録されるための実装専用API" },
             { "CAP-461", "IPXPmxBuilder等の提供経路と重複する短絡経路のため" },
             { "CAP-462", "プラグインDLL側の拡張点(MCPからの呼び出し対象ではない)" },

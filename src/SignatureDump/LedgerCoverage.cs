@@ -105,6 +105,7 @@ namespace PmxEditorMcp.SignatureDump
                 inventory, population, declaredByOutOfScopeTypes, outOfScope, classifier);
 
             VerifyExcluded(baseline, inventory, excluded);
+            VerifyRecordedCounts(ledger, population, excluded);
 
             int provided = VerifyOwners(ledger, population, excluded);
 
@@ -242,6 +243,114 @@ namespace PmxEditorMcp.SignatureDump
             return string.Join(
                 "|", record.Key, record.Qualification.ToString(), record.CapabilityId,
                 record.Category.ToString(), record.Alternative);
+        }
+
+        /// <summary>
+        /// 台帳が備考へ書いた非対応件数と、その行が指すシグネチャのうち除外一覧に載る数を
+        /// 突き合わせる。件数を書けるのは、分類が提供でその数が1件以上の行だけとする。
+        /// </summary>
+        private static void VerifyRecordedCounts(
+            IList<CapabilityRecord> ledger,
+            LedgerPopulation population,
+            IList<ExcludedSignatureRecord> excluded)
+        {
+            ISet<string> removed = new HashSet<string>(
+                excluded.Select(e => e.Key), StringComparer.Ordinal);
+            Dictionary<string, int> actual = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, ISet<string>> owned in population.Owners)
+            {
+                if (!removed.Contains(owned.Key))
+                {
+                    continue;
+                }
+
+                foreach (string id in owned.Value)
+                {
+                    int current;
+                    actual[id] = actual.TryGetValue(id, out current) ? current + 1 : 1;
+                }
+            }
+
+            foreach (CapabilityRecord row in ledger)
+            {
+                int counted;
+                if (!actual.TryGetValue(row.Id, out counted))
+                {
+                    counted = 0;
+                }
+
+                int recorded;
+                bool written = TryReadCount(row, out recorded);
+                bool expected = row.Status == CapabilityStatus.Provided && counted > 0;
+
+                if (written != expected)
+                {
+                    throw Mismatch(string.Format(
+                        CultureInfo.InvariantCulture,
+                        expected
+                            ? "{0} は除外一覧に {1} 件あるのに非対応件数を書いていない"
+                            : "{0} は非対応件数を書ける行ではない",
+                        row.Id,
+                        counted));
+                }
+
+                if (written && recorded != counted)
+                {
+                    throw Mismatch(string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0} の非対応件数が除外一覧と合わない: 台帳={1} 除外一覧={2}",
+                        row.Id,
+                        recorded,
+                        counted));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 備考が非対応件数を書いていれば真とし、その数を返す。書いていなければ偽で、このとき
+        /// <paramref name="value"/> は0になる。接頭辞が先頭以外に現れる備考と、数を伴わない
+        /// 接頭辞は、書いたつもりで検査を素通りするので不合格にする。
+        /// </summary>
+        private static bool TryReadCount(CapabilityRecord row, out int value)
+        {
+            const string Prefix = "非対応件数:";
+            value = 0;
+            string remarks = row.Remarks ?? string.Empty;
+            if (!remarks.StartsWith(Prefix, StringComparison.Ordinal))
+            {
+                if (remarks.IndexOf(Prefix, StringComparison.Ordinal) >= 0)
+                {
+                    throw Mismatch(row.Id + " の非対応件数が備考の先頭にない: " + remarks);
+                }
+
+                return false;
+            }
+
+            string rest = remarks.Substring(Prefix.Length).TrimStart(' ');
+            int end = 0;
+            while (end < rest.Length && rest[end] >= '0' && rest[end] <= '9')
+            {
+                end++;
+            }
+
+            if (end == 0 || !int.TryParse(
+                    rest.Substring(0, end), NumberStyles.None, CultureInfo.InvariantCulture, out value))
+            {
+                throw Mismatch(row.Id + " の非対応件数が数になっていない: " + remarks);
+            }
+
+            string tail = rest.Substring(end);
+            if (tail.Length != 0 && tail[0] != '。')
+            {
+                throw Mismatch(row.Id + " の非対応件数が数で終わっていない: " + remarks);
+            }
+
+            if (tail.IndexOf(Prefix, StringComparison.Ordinal) >= 0)
+            {
+                throw Mismatch(row.Id + " の備考に非対応件数が二度現れる: " + remarks);
+            }
+
+            return true;
         }
 
         /// <summary>

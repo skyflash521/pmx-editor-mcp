@@ -263,20 +263,86 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// </summary>
         private static string Ledger(int skip = 0)
         {
+            List<CapabilityRecord> rows = Rows(skip);
+            IDictionary<string, int> counts = ExcludedCounts(rows);
             StringBuilder builder = new StringBuilder();
             builder.Append("| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n");
             builder.Append("|---|---|---|---|---|---|\n");
 
+            foreach (CapabilityRecord row in rows)
+            {
+                int count;
+                string remarks = counts.TryGetValue(row.Id, out count) && count > 0
+                    ? "非対応件数: " + count.ToString(CultureInfo.InvariantCulture)
+                    : string.Empty;
+                builder.Append(string.Format(
+                    "| {0} | 標本 | {1} | {2} | {3} | {4} |\n",
+                    row.Id,
+                    row.Target,
+                    row.Status == CapabilityStatus.Provided ? "提供" : "非対応",
+                    row.Status == CapabilityStatus.Provided ? "モデル" : string.Empty,
+                    remarks));
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>公開型ごとに1行を置き、まとめて指す2行を末尾へ足した行の並び。</summary>
+        private static List<CapabilityRecord> Rows(int skip)
+        {
+            List<CapabilityRecord> rows = new List<CapabilityRecord>();
             int id = 1;
             foreach (TypeRecord type in Inventory().Types.Skip(skip))
             {
-                builder.Append(string.Format(
-                    "| CAP-{0:D3} | 標本 | {1} | 提供 | モデル |  |\n", id++, WithoutTypeArguments(type.Name)));
+                string target = WithoutTypeArguments(type.Name);
+                rows.Add(new CapabilityRecord(
+                    string.Format(CultureInfo.InvariantCulture, "CAP-{0:D3}", id++),
+                    "標本",
+                    target,
+                    CapabilityTargetKind.Single,
+                    new List<string> { target },
+                    CapabilityStatus.Provided,
+                    CapabilityOwner.Model,
+                    string.Empty));
             }
 
-            builder.Append("| CAP-463 | PMDレガシー | PEPlugin.Pmd.* のまとめ | 非対応 |  |  |\n");
-            builder.Append("| CAP-466 | SDX数値型 | PEPlugin.SDX.* のまとめ | 非対応 |  |  |\n");
-            return builder.ToString();
+            foreach (string pattern in new[] { "CAP-463", "CAP-466" })
+            {
+                rows.Add(new CapabilityRecord(
+                    pattern,
+                    "標本",
+                    (pattern == "CAP-463" ? "PEPlugin.Pmd." : "PEPlugin.SDX.") + "* のまとめ",
+                    CapabilityTargetKind.Pattern,
+                    new List<string>(),
+                    CapabilityStatus.NotSupported,
+                    CapabilityOwner.None,
+                    string.Empty));
+            }
+
+            return rows;
+        }
+
+        private static IDictionary<string, int> ExcludedCounts(IList<CapabilityRecord> rows)
+        {
+            LedgerPopulation population = LedgerPopulation.Resolve(rows, Inventory());
+            ISet<string> removed = new HashSet<string>(
+                Records().Select(r => r.Key), StringComparer.Ordinal);
+            Dictionary<string, int> counts = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, ISet<string>> owned in population.Owners)
+            {
+                if (!removed.Contains(owned.Key))
+                {
+                    continue;
+                }
+
+                foreach (string id in owned.Value)
+                {
+                    int current;
+                    counts[id] = counts.TryGetValue(id, out current) ? current + 1 : 1;
+                }
+            }
+
+            return counts;
         }
 
         private static string WithoutTypeArguments(string name)

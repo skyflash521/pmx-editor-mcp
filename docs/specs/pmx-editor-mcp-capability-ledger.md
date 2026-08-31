@@ -29,6 +29,12 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
   同じ理由により一括分類する型群(プラグイン機構・PMDレガシー等)は1行にまとめる。
 - **分類**: 提供=ツール化する / 非対応=理由を備考に記載 / 要調査=実機確認(E2Eスパイク)で確定する
 - **担当**: 分類が「提供」の能力を担当するツール契約仕様書。モデル / セッション / ビュー / 変形・モーション
+- **非対応件数**: 分類が提供の能力のうち、その能力が指すシグネチャに除外一覧の項目を含むものは、
+  その件数を固定接頭辞「非対応件数:」に続けて備考の先頭に書く。数えるのはその能力が指す
+  シグネチャのうち除外一覧に載るものの数で、基底型から継いだものも含む。1件も無い能力には
+  書かない。契約注記より前に置くのは、契約注記が接頭辞から備考の末尾までを本文とするためである。
+  数字の後は備考の終わりか句点だけとし、続きを書くときは句点で区切る。接頭辞は備考に一度しか
+  書かない。
 - **契約注記**: 備考のうち、ツール説明文へ転記する利用上の制約は固定接頭辞「契約注記:」から
   始める。接頭辞から備考の末尾までが注記の本文で、複数あるときは句点で区切る。注記を持たない
   能力の備考には接頭辞を書かない。
@@ -156,7 +162,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-111 | PmxView | IPXPmxViewConnector.GetViewAxis | 提供 | ビュー |  |
 | CAP-112 | PmxView | IPXPmxViewConnector.EnableHandleEdit | 提供 | ビュー |  |
 | CAP-113 | PmxView | IPXPmxViewConnector.IsVmdViewBootup | 提供 | 変形・モーション |  |
-| CAP-114 | PmxView | IPXPmxViewConnector.BootupVmdView | 提供 | 変形・モーション | PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外 |
+| CAP-114 | PmxView | IPXPmxViewConnector.BootupVmdView | 提供 | 変形・モーション | 非対応件数: 1。PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外 |
 | CAP-115 | PmxView | IPXPmxViewConnector.PlayVmdView | 提供 | 変形・モーション |  |
 | CAP-116 | PmxView | IPXPmxViewConnector.StopVmdView | 提供 | 変形・モーション |  |
 | CAP-117 | PmxView | IPXPmxViewConnector.ShowBoneVmdView | 提供 | 変形・モーション |  |
@@ -311,7 +317,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-266 | Cプラグイン連携 | IPXSystemControl.RunPEPlugin | 提供 | セッション | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-267 | Cプラグイン連携 | IPXSystemControl.CPluginCount | 提供 | セッション | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-268 | Cプラグイン連携 | IPXSystemControl.FindCPlugins | 提供 | セッション | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
-| CAP-269 | Cプラグイン連携 | IPXSystemControl.GetCPluginInfo | 提供 | セッション | Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
+| CAP-269 | Cプラグイン連携 | IPXSystemControl.GetCPluginInfo | 提供 | セッション | 非対応件数: 1。Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-270 | Cプラグイン連携 | IPXSystemControl.RunCPlugin | 提供 | セッション | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-271 | Cプラグイン連携 | IPXSystemControl.SetShareData | 提供 | セッション | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-272 | Cプラグイン連携 | IPXSystemControl.GetShareValue | 提供 | セッション | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
@@ -381,7 +387,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-336 | Cプラグイン連携 | PXUIModelHelper.CreateTextControl | 提供 | ビュー | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-337 | Cプラグイン連携 | IPXEventConnector.CreateViewEventListener | 提供 | ビュー | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-338 | Cプラグイン連携 | IPXEventConnector.ReleaseViewEventListener | 提供 | ビュー | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
-| CAP-339 | モデルデータ型 | IPXPmx | 提供 | モデル | 全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外 |
+| CAP-339 | モデルデータ型 | IPXPmx | 提供 | モデル | 非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外 |
 | CAP-340 | モデルデータ型 | IPXHeader | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
 | CAP-341 | モデルデータ型 | IPXModelInfo | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
 | CAP-342 | モデルデータ型 | IPXVertex | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
@@ -432,7 +438,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-387 | プリミティブ | IPXPrimitiveBuilder.AddCylinder | 提供 | モデル |  |
 | CAP-388 | プリミティブ | IPXPrimitiveBuilder.AddTorus | 提供 | モデル |  |
 | CAP-389 | プリミティブ | IPXPrimitiveBuilder.AddText | 提供 | モデル |  |
-| CAP-390 | VMD/VMEビルダ | IPEBuilder.CreateVmd | 提供 | 変形・モーション | 他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外 |
+| CAP-390 | VMD/VMEビルダ | IPEBuilder.CreateVmd | 提供 | 変形・モーション | 非対応件数: 2。他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外 |
 | CAP-391 | VMD/VMEビルダ | IPEBuilder.CreateVmdIPL | 提供 | 変形・モーション |  |
 | CAP-392 | VMD/VMEビルダ | IPEBuilder.CreateVmdBoneKey | 提供 | 変形・モーション |  |
 | CAP-393 | VMD/VMEビルダ | IPEBuilder.CreateVmdMorphKey | 提供 | 変形・モーション |  |
@@ -440,20 +446,20 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-395 | VMD/VMEビルダ | IPEBuilder.CreateVmdLightKey | 提供 | 変形・モーション |  |
 | CAP-396 | VMD/VMEビルダ | IPEBuilder.CreateVmdSelfShadowKey | 提供 | 変形・モーション |  |
 | CAP-397 | VMD/VMEビルダ | IPEBuilder.CreateVmdBonePoseState | 提供 | 変形・モーション |  |
-| CAP-398 | VMD/VMEビルダ | IPEBuilder.CreateVme | 提供 | 変形・モーション | 契約注記: PMDを引数に取る版はレガシーのため対象外 |
+| CAP-398 | VMD/VMEビルダ | IPEBuilder.CreateVme | 提供 | 変形・モーション | 非対応件数: 1。契約注記: PMDを引数に取る版はレガシーのため対象外 |
 | CAP-399 | VMD/VMEビルダ | IPEBuilder.CreateVmeGroup | 提供 | 変形・モーション |  |
 | CAP-400 | VMD/VMEビルダ | IPEBuilder.CreateVmePath | 提供 | 変形・モーション |  |
 | CAP-401 | VMEデータ型 | IPEVmeElement | 提供 | 変形・モーション |  |
-| CAP-402 | VMEデータ型 | IPEVmeEventElement | 提供 | 変形・モーション |  |
+| CAP-402 | VMEデータ型 | IPEVmeEventElement | 提供 | 変形・モーション | 非対応件数: 5 |
 | CAP-403 | VMEデータ型 | IPEVmeObject | 提供 | 変形・モーション |  |
-| CAP-404 | VMEデータ型 | IPEVme | 提供 | 変形・モーション |  |
-| CAP-405 | VMEデータ型 | IPEVmeFrameEvent | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(5件) |
+| CAP-404 | VMEデータ型 | IPEVme | 提供 | 変形・モーション | 非対応件数: 1 |
+| CAP-405 | VMEデータ型 | IPEVmeFrameEvent | 提供 | 変形・モーション | 非対応件数: 5。契約注記: デリゲートを要するシグネチャは非対応 |
 | CAP-406 | VMEデータ型 | IPEVmeEventState | 提供 | 変形・モーション |  |
 | CAP-407 | VMEデータ型 | IPEVmeSingleValueState | 提供 | 変形・モーション |  |
-| CAP-408 | VMEデータ型 | IPEVmeSingleValueElement | 提供 | 変形・モーション |  |
-| CAP-409 | VMEデータ型 | IPEVmeGroup | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(2件) |
-| CAP-410 | VMEデータ型 | IPEVmeGroupBone | 提供 | 変形・モーション |  |
-| CAP-411 | VMEデータ型 | IPEVmeGroupMorph | 提供 | 変形・モーション |  |
+| CAP-408 | VMEデータ型 | IPEVmeSingleValueElement | 提供 | 変形・モーション | 非対応件数: 5 |
+| CAP-409 | VMEデータ型 | IPEVmeGroup | 提供 | 変形・モーション | 非対応件数: 7。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-410 | VMEデータ型 | IPEVmeGroupBone | 提供 | 変形・モーション | 非対応件数: 7 |
+| CAP-411 | VMEデータ型 | IPEVmeGroupMorph | 提供 | 変形・モーション | 非対応件数: 7 |
 | CAP-412 | VMEデータ型 | IPEVmePrimaryValue`1 | 提供 | 変形・モーション |  |
 | CAP-413 | VMEデータ型 | IPEVmeSingleValue | 提供 | 変形・モーション |  |
 | CAP-414 | VMEデータ型 | IPEVmeVectorValue | 提供 | 変形・モーション |  |
@@ -467,17 +473,17 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-422 | VMEデータ型 | IPEVmePositionOperator | 提供 | 変形・モーション |  |
 | CAP-423 | VMEデータ型 | IPEVmeDirectionOperator | 提供 | 変形・モーション |  |
 | CAP-424 | VMEデータ型 | IPEVmeScalingOperator | 提供 | 変形・モーション |  |
-| CAP-425 | VMEデータ型 | IPEVmeSingleValueEventOperator | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(6件) |
-| CAP-426 | VMEデータ型 | IPEVmeVectorValueEventOperator | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(10件) |
-| CAP-427 | VMEデータ型 | IPEVmeQuaternionValueEventOperator | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(6件) |
-| CAP-428 | VMEデータ型 | IPEVmePositionEventOperator | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(5件) |
-| CAP-429 | VMEデータ型 | IPEVmeDirectionEventOperator | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(2件) |
-| CAP-430 | VMEデータ型 | IPEVmeScalingEventOperator | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(2件) |
-| CAP-431 | VMEデータ型 | IPEVmePath | 提供 | 変形・モーション | 契約注記: デリゲートを要するシグネチャは非対応(3件) |
+| CAP-425 | VMEデータ型 | IPEVmeSingleValueEventOperator | 提供 | 変形・モーション | 非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-426 | VMEデータ型 | IPEVmeVectorValueEventOperator | 提供 | 変形・モーション | 非対応件数: 10。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-427 | VMEデータ型 | IPEVmeQuaternionValueEventOperator | 提供 | 変形・モーション | 非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-428 | VMEデータ型 | IPEVmePositionEventOperator | 提供 | 変形・モーション | 非対応件数: 5。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-429 | VMEデータ型 | IPEVmeDirectionEventOperator | 提供 | 変形・モーション | 非対応件数: 2。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-430 | VMEデータ型 | IPEVmeScalingEventOperator | 提供 | 変形・モーション | 非対応件数: 12。契約注記: デリゲートを要するシグネチャは非対応 |
+| CAP-431 | VMEデータ型 | IPEVmePath | 提供 | 変形・モーション | 非対応件数: 3。契約注記: デリゲートを要するシグネチャは非対応 |
 | CAP-432 | VMEデータ型 | IPEVmeBoneState | 提供 | 変形・モーション |  |
-| CAP-433 | VMEデータ型 | IPEVmeBone | 提供 | 変形・モーション |  |
+| CAP-433 | VMEデータ型 | IPEVmeBone | 提供 | 変形・モーション | 非対応件数: 5 |
 | CAP-434 | VMEデータ型 | IPEVmeCameraState | 提供 | 変形・モーション |  |
-| CAP-435 | VMEデータ型 | IPEVmeCameraPosition | 提供 | 変形・モーション |  |
+| CAP-435 | VMEデータ型 | IPEVmeCameraPosition | 提供 | 変形・モーション | 非対応件数: 5 |
 | CAP-436 | VMEデータ型 | IPEVmeCamera | 提供 | 変形・モーション |  |
 | CAP-437 | VMEデータ型 | IPEVmeResult | 提供 | 変形・モーション |  |
 | CAP-438 | VMEデータ型 | IPEVmeBoneResult | 提供 | 変形・モーション |  |
@@ -485,9 +491,9 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-440 | VMEデータ型 | IPEVmeCameraResult | 提供 | 変形・モーション |  |
 | CAP-441 | VMEデータ型 | IPEVmeLightResult | 提供 | 変形・モーション |  |
 | CAP-442 | VMEデータ型 | IPEVmeLightState | 提供 | 変形・モーション |  |
-| CAP-443 | VMEデータ型 | IPEVmeLight | 提供 | 変形・モーション |  |
+| CAP-443 | VMEデータ型 | IPEVmeLight | 提供 | 変形・モーション | 非対応件数: 5 |
 | CAP-444 | VMDデータ型 | IPEVmdBonePoseState | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-445 | VMDデータ型 | IPEVmd | 提供 | 変形・モーション | 全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ |
+| CAP-445 | VMDデータ型 | IPEVmd | 提供 | 変形・モーション | 非対応件数: 1。全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ |
 | CAP-446 | VMDデータ型 | IPEVmdFrameKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
 | CAP-447 | VMDデータ型 | IPEVmdIPL | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
 | CAP-448 | VMDデータ型 | IPEVmdBoneKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
@@ -497,7 +503,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-452 | VMDデータ型 | IPEVmdSelfShadowKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
 | CAP-453 | VMDデータ型 | IPEVmdVisibleIKKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
 | CAP-454 | VMDデータ型 | IPEVmdIKEnable | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-455 | Cプラグイン連携 | PXPluginInfo | 提供 | セッション | プラグイン情報の読み取り用データ(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
+| CAP-455 | Cプラグイン連携 | PXPluginInfo | 提供 | セッション | 非対応件数: 1。プラグイン情報の読み取り用データ(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-456 | Cプラグイン連携 | IPXViewEventListener | 提供 | ビュー | イベント通知の型(型単位)。契約注記: ホスト側がハンドラを登録してキューへ積む形で扱う。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-457 | Cプラグイン連携 | IPXUIModelEventListener | 提供 | ビュー | イベント通知の型(型単位)。契約注記: ホスト側がハンドラを登録してキューへ積む形で扱う。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-458 | Cプラグイン連携 | PXEventArgs | 提供 | ビュー | イベント引数の型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
@@ -514,8 +520,8 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-469 | Cプラグイン連携 | PXEventArgs.ViewMouse | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-470 | Cプラグイン連携 | PXEventArgs.ViewObjectSelected | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-471 | Cプラグイン連携 | PXUIModelHelper.MaterialColorEvPara | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
-| CAP-472 | Cプラグイン連携 | PXUIModelHelper.TextControl | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
-| CAP-473 | VMDデータ型 | PEVmdBonePose | 提供 | 変形・モーション | 全公開メンバー(型単位)。契約注記: 取得は IPEVmdBonePoseState.GetPose で行い、コンストラクタは対象外 |
+| CAP-472 | Cプラグイン連携 | PXUIModelHelper.TextControl | 提供 | ビュー | 非対応件数: 1。入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
+| CAP-473 | VMDデータ型 | PEVmdBonePose | 提供 | 変形・モーション | 非対応件数: 2。全公開メンバー(型単位)。契約注記: 取得は IPEVmdBonePoseState.GetPose で行い、コンストラクタは対象外 |
 | CAP-474 | Cプラグイン連携 | IPXCPluginRunArgs | 提供 | セッション | 全公開メンバー(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-475 | プラグイン機構 | IPEPluginHost | 非対応 |  | プラグインがホストから受け取る接続初期化の入口(実装専用) |
 | CAP-476 | Cプラグイン実装拡張点 | IPXConnector | 非対応 |  | Cプラグインを実装する側が実装する接続の入口(実装専用) |

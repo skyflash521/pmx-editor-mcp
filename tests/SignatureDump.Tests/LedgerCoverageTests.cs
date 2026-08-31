@@ -243,6 +243,209 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void 備考の非対応件数が除外一覧と合うと照合できる()
+        {
+            IList<ExcludedBaselineEntry> baseline = Frozen();
+
+            LedgerCoverageResult result = LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "非対応件数: 1")),
+                Inventory(),
+                baseline,
+                ExcludedSignatureBuilder.Build(baseline, Inventory()),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route)));
+
+            Assert.Equal(1, result.Excluded);
+            Assert.Equal(0, result.Provided);
+        }
+
+        [Fact]
+        public void ExcludedCountMayBeFollowedByRemarksAfterPeriod()
+        {
+            IList<ExcludedBaselineEntry> baseline = Frozen();
+
+            LedgerCoverageResult result = LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "非対応件数: 1。契約注記: 代替を使う")),
+                Inventory(),
+                baseline,
+                ExcludedSignatureBuilder.Build(baseline, Inventory()),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route)));
+
+            Assert.Equal(1, result.Excluded);
+        }
+
+        [Fact]
+        public void 備考の非対応件数が除外一覧と合わないと照合できない()
+        {
+            IList<ExcludedBaselineEntry> baseline = Frozen();
+
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "非対応件数: 2")),
+                Inventory(),
+                baseline,
+                ExcludedSignatureBuilder.Build(baseline, Inventory()),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+        }
+
+        [Fact]
+        public void 除外があるのに非対応件数を書いていないと照合できない()
+        {
+            IList<ExcludedBaselineEntry> baseline = Frozen();
+
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(Row("CAP-001", Thing)),
+                Inventory(),
+                baseline,
+                ExcludedSignatureBuilder.Build(baseline, Inventory()),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+        }
+
+        [Fact]
+        public void 除外が無いのに非対応件数を書くと照合できない()
+        {
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "非対応件数: 1")),
+                Inventory(),
+                Baseline(),
+                Excluded(),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+        }
+
+        [Fact]
+        public void 除外が無い行に0を書いても照合できない()
+        {
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "非対応件数: 0")),
+                Inventory(),
+                Baseline(),
+                Excluded(),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+        }
+
+        [Fact]
+        public void 分類が提供でない行は正しい件数を書いても照合できない()
+        {
+            IList<ExcludedBaselineEntry> baseline = Frozen("CAP-002");
+            IList<ExcludedSignatureRecord> excluded =
+                ExcludedSignatureBuilder.Build(baseline, Inventory());
+
+            foreach (CapabilityStatus status in
+                new[] { CapabilityStatus.NotSupported, CapabilityStatus.NeedsInvestigation })
+            {
+                IList<CapabilityRecord> ledger = new List<CapabilityRecord>
+                {
+                    new CapabilityRecord(
+                        "CAP-002",
+                        "大分類",
+                        Thing,
+                        CapabilityTargetKind.Single,
+                        new List<string> { Thing },
+                        status,
+                        CapabilityOwner.None,
+                        "非対応件数: 1"),
+                    Pattern("CAP-463"),
+                    Pattern("CAP-466"),
+                };
+
+                Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                    ledger,
+                    Inventory(),
+                    baseline,
+                    excluded,
+                    OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+            }
+        }
+
+        [Fact]
+        public void 非対応件数が数で終わっていないと照合できない()
+        {
+            IList<ExcludedBaselineEntry> baseline = Frozen();
+
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "非対応件数: 1件")),
+                Inventory(),
+                baseline,
+                ExcludedSignatureBuilder.Build(baseline, Inventory()),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+        }
+
+        [Fact]
+        public void 備考に非対応件数が二度現れると照合できない()
+        {
+            IList<ExcludedBaselineEntry> baseline = Frozen();
+
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "非対応件数: 1。非対応件数: 2")),
+                Inventory(),
+                baseline,
+                ExcludedSignatureBuilder.Build(baseline, Inventory()),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+        }
+
+        [Fact]
+        public void 基底型から継いだ除外も非対応件数に数える()
+        {
+            IList<TypeRecord> types = new List<TypeRecord>
+            {
+                Type("N.IBase"),
+                Derived("N.IDerived", "N.IBase"),
+            };
+            IList<SignatureRecord> signatures = new List<SignatureRecord>
+            {
+                Method("N.IBase.Legacy()", "N.IBase", "Legacy", "System.Void"),
+            };
+            InventoryRecord inventory =
+                new InventoryRecord("Sample", "1.0.0.0", types, new List<TypeRecord>(), signatures);
+            IList<ExcludedBaselineEntry> baseline = new List<ExcludedBaselineEntry>
+            {
+                new ExcludedBaselineEntry("CAP-001", new List<string> { "N.IBase.Legacy()" }),
+            };
+            IList<ExcludedSignatureRecord> excluded =
+                ExcludedSignatureBuilder.Build(baseline, inventory);
+
+            LedgerCoverageResult result = LedgerCoverage.Verify(
+                Ledger(
+                    Counted("CAP-001", "IBase", "非対応件数: 1"),
+                    Counted("CAP-002", "IDerived", "非対応件数: 1")),
+                inventory,
+                baseline,
+                excluded,
+                OutOfScope());
+
+            Assert.Equal(1, result.Excluded);
+
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(
+                    Counted("CAP-001", "IBase", "非対応件数: 1"),
+                    Row("CAP-002", "IDerived")),
+                inventory,
+                baseline,
+                excluded,
+                OutOfScope()));
+        }
+
+        [Fact]
+        public void 非対応件数が数になっていないと照合できない()
+        {
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "非対応件数: 多数")),
+                Inventory(),
+                Baseline(),
+                Excluded(),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+        }
+
+        [Fact]
+        public void 非対応件数は備考の先頭にあるものだけを読む()
+        {
+            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
+                Ledger(Counted("CAP-001", Thing, "契約注記: 非対応件数: 1")),
+                Inventory(),
+                Frozen2(),
+                ExcludedSignatureBuilder.Build(Frozen2(), Inventory()),
+                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+        }
+
+        [Fact]
         public void 提供対象の担当が2つに分かれると照合できない()
         {
             IList<CapabilityRecord> ledger = new List<CapabilityRecord>
@@ -311,6 +514,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 name, TypeKind.Interface, false, false, false, new List<string>(), new List<string>());
         }
 
+        private static TypeRecord Derived(string name, params string[] baseTypes)
+        {
+            return new TypeRecord(
+                name, TypeKind.Interface, false, false, false, baseTypes.ToList(), new List<string>());
+        }
+
         private static SignatureRecord Method(
             string key, string declaringType, string memberName, string valueType)
         {
@@ -350,6 +559,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 string.Empty);
         }
 
+        private static CapabilityRecord Counted(string id, string target, string remarks)
+        {
+            return new CapabilityRecord(
+                id,
+                "大分類",
+                target,
+                CapabilityTargetKind.Single,
+                new List<string> { target },
+                CapabilityStatus.Provided,
+                CapabilityOwner.Model,
+                remarks);
+        }
+
         private static CapabilityRecord Pattern(string id)
         {
             return new CapabilityRecord(
@@ -366,6 +588,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static IList<ExcludedBaselineEntry> Baseline()
         {
             return new List<ExcludedBaselineEntry>();
+        }
+
+        /// <summary>行が指すシグネチャを1件だけ凍結した組。</summary>
+        private static IList<ExcludedBaselineEntry> Frozen(string id = "CAP-001")
+        {
+            return new List<ExcludedBaselineEntry>
+            {
+                new ExcludedBaselineEntry(id, new List<string> { Run }),
+            };
+        }
+
+        private static IList<ExcludedBaselineEntry> Frozen2()
+        {
+            return Frozen();
         }
 
         private static IList<ExcludedSignatureRecord> Excluded()
