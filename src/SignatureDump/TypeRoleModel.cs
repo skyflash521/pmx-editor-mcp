@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ホストが単一インスタンスを常駐保持する、機能への接続点。</summary>
         Connector,
 
-        /// <summary>公開イベントのハンドラ引数に現れる型。</summary>
+        /// <summary>公開イベントのハンドラの型引数に現れる型。</summary>
         EventArgs,
 
         /// <summary>ハンドルでのみ操作する型。</summary>
