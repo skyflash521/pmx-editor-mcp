@@ -1,7 +1,74 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace PmxEditorMcp.SignatureDump
 {
+    /// <summary>型をどう写像するかを決める役割。判定はこの順に評価し、最初に当たったものにする。</summary>
+    public enum TypeRole
+    {
+        /// <summary>ホストが単一インスタンスを常駐保持する、機能への接続点。</summary>
+        Connector,
+
+        /// <summary>公開イベントのハンドラ引数に現れる型。</summary>
+        EventArgs,
+
+        /// <summary>ハンドルでのみ操作する型。</summary>
+        HandleTarget,
+
+        /// <summary>現在のPMX状態・エディタ状態の一部として編集・取得できる型。</summary>
+        OperationTarget,
+
+        /// <summary>上記以外で、入力または結果にのみ現れる型。</summary>
+        Dto,
+    }
+
+    /// <summary>型役割表の型ごとの項目1件。</summary>
+    public sealed class TypeRoleRecord
+    {
+        public TypeRoleRecord(string typeName, TypeRole role, string basis)
+        {
+            PropertyRecord.RequireText(typeName, nameof(typeName));
+            PropertyRecord.RequireText(basis, nameof(basis));
+
+            TypeName = typeName;
+            Role = role;
+            Basis = basis;
+        }
+
+        public string TypeName { get; }
+
+        public TypeRole Role { get; }
+
+        /// <summary>その役割と判じた根拠の一文。</summary>
+        public string Basis { get; }
+    }
+
+    /// <summary>型役割表の正本。接続の根と、型ごとの項目からなる。</summary>
+    public sealed class TypeRoleTable
+    {
+        public TypeRoleTable(IList<string> connectionRoots, IList<TypeRoleRecord> types)
+        {
+            if (connectionRoots == null)
+            {
+                throw new ArgumentNullException(nameof(connectionRoots));
+            }
+
+            if (types == null)
+            {
+                throw new ArgumentNullException(nameof(types));
+            }
+
+            ConnectionRoots = new ReadOnlyCollection<string>(connectionRoots);
+            Types = new ReadOnlyCollection<TypeRoleRecord>(types);
+        }
+
+        /// <summary>接続初期化がここから辿り始める型。</summary>
+        public IList<string> ConnectionRoots { get; }
+
+        public IList<TypeRoleRecord> Types { get; }
+    }
+
     /// <summary>日本語名をどう決めたか。</summary>
     public enum NameDecision
     {

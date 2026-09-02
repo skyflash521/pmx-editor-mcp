@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -76,6 +77,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentNullException>(
                 () => PropertyNameRecord.FromAuthored(
                     null, "大きさ", NameBasis.FromMemberShape(), "起こした。"));
+        }
+
+        [Fact]
+        public void ATypeRoleRecordRequiresANameAndABasis()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => new TypeRoleRecord(null, TypeRole.Dto, "根拠。"));
+            Assert.Throws<ArgumentException>(
+                () => new TypeRoleRecord(" ", TypeRole.Dto, "根拠。"));
+            Assert.Throws<ArgumentNullException>(
+                () => new TypeRoleRecord("N.IThing", TypeRole.Dto, null));
+            Assert.Throws<ArgumentException>(
+                () => new TypeRoleRecord("N.IThing", TypeRole.Dto, " "));
+        }
+
+        [Fact]
+        public void ATypeRoleTableRequiresBothParts()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => new TypeRoleTable(null, new List<TypeRoleRecord>()));
+            Assert.Throws<ArgumentNullException>(
+                () => new TypeRoleTable(new List<string>(), null));
         }
 
         [Fact]

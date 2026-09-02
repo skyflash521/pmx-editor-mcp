@@ -5,7 +5,7 @@ using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
 {
-    public sealed class TypeRoleJsonReaderTests
+    public sealed class PropertyNameJsonReaderTests
     {
         private const string Quoted =
             "{\"declaringType\":\"N.IThing\",\"memberName\":\"Size\","
@@ -214,14 +214,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnEmptyTableIsRead()
         {
-            Assert.Empty(TypeRoleJsonReader.ReadPropertyNames("{\"propertyNames\":[]}"));
+            Assert.Empty(PropertyNameJsonReader.ReadPropertyNames("{\"propertyNames\":[]}"));
         }
 
         [Fact]
         public void ARootWithoutTheTableStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleJsonReader.ReadPropertyNames("{}"));
+                () => PropertyNameJsonReader.ReadPropertyNames("{}"));
 
             Assert.Contains("propertyNames", error.Message);
         }
@@ -230,7 +230,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARootWithAnUnknownMemberStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleJsonReader.ReadPropertyNames("{\"propertyNames\":[],\"types\":[]}"));
+                () => PropertyNameJsonReader.ReadPropertyNames("{\"propertyNames\":[],\"types\":[]}"));
 
             Assert.Contains("types", error.Message);
         }
@@ -239,7 +239,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ATableThatIsNotAnArrayStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleJsonReader.ReadPropertyNames("{\"propertyNames\":{}}"));
+                () => PropertyNameJsonReader.ReadPropertyNames("{\"propertyNames\":{}}"));
 
             Assert.Contains("propertyNames", error.Message);
         }
@@ -248,19 +248,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnItemThatIsNotAnObjectStops()
         {
             Assert.Throws<FormatException>(
-                () => TypeRoleJsonReader.ReadPropertyNames("{\"propertyNames\":[\"大きさ\"]}"));
+                () => PropertyNameJsonReader.ReadPropertyNames("{\"propertyNames\":[\"大きさ\"]}"));
         }
 
         [Fact]
         public void TextThatIsNotJsonStops()
         {
-            Assert.Throws<FormatException>(() => TypeRoleJsonReader.ReadPropertyNames("大きさ"));
+            Assert.Throws<FormatException>(() => PropertyNameJsonReader.ReadPropertyNames("大きさ"));
         }
 
         [Fact]
         public void NullArgumentThrows()
         {
-            Assert.Throws<ArgumentNullException>(() => TypeRoleJsonReader.ReadPropertyNames(null));
+            Assert.Throws<ArgumentNullException>(() => PropertyNameJsonReader.ReadPropertyNames(null));
         }
 
         private static string DocumentSection(int firstLine, int lastLine)
@@ -281,7 +281,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static IList<PropertyNameRecord> Read(string items)
         {
-            return TypeRoleJsonReader.ReadPropertyNames("{\"propertyNames\":[" + items + "]}");
+            return PropertyNameJsonReader.ReadPropertyNames("{\"propertyNames\":[" + items + "]}");
         }
     }
 }

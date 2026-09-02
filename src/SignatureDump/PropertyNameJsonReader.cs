@@ -7,8 +7,8 @@ using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>型役割表の正本をJSONから読み取る。</summary>
-    public static class TypeRoleJsonReader
+    /// <summary>日本語名の正本をJSONから読み取る。</summary>
+    public static class PropertyNameJsonReader
     {
         private const string PropertyNamesName = "propertyNames";
 

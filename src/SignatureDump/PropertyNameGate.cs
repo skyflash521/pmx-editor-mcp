@@ -50,8 +50,10 @@ namespace PmxEditorMcp.SignatureDump
             RequireDistinctNamesWithinAType(listed);
         }
 
-        // 表の項目と列挙結果を一対一で突き合わせる。これが無いと、公開プロパティを丸ごと書き落として
-        // も、同じプロパティを別の名前で二重に載せても、残った項目だけが条件を満たして通る。
+        /// <summary>
+        /// 表の項目と列挙結果を一対一で突き合わせる。これが無いと、公開プロパティを丸ごと書き落として
+        /// も、同じプロパティを別の名前で二重に載せても、残った項目だけが条件を満たして通る。
+        /// </summary>
         private static void RequireSameItems(
             IList<PropertyNameRecord> records, IList<PropertyRecord> properties)
         {
@@ -82,8 +84,10 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        // 決め方は書き手が選べない。これを課さないと、一意な記載がある項目を勝手に起こしたり、同じ
-        // 記載を持つ項目群の1件だけを残して他へ別の名前を付けたりできてしまう。
+        /// <summary>
+        /// 決め方は書き手が選べない。これを課さないと、一意な記載がある項目を勝手に起こしたり、同じ
+        /// 記載を持つ項目群の1件だけを残して他へ別の名前を付けたりできてしまう。
+        /// </summary>
         private static void RequireDecisionMatchesTheNoteCount(
             IList<PropertyNameRecord> records, IDictionary<string, string> notes)
         {
