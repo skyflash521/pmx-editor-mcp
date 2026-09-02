@@ -681,8 +681,160 @@
   対象は値の表現を正、型役割対象は型役割表を正とする)。各項目は型名・役割に加え、規則(a)の集約に使う要素の名詞(単数形・複数形。
   例: vertex/vertices)と、その型を扱うCRUDツール名(list/update/add/remove。`get_<単数形>`
   は設けない)を持つ。コネクタ型の項目は、プロパティ集約ツール名2件(`get_`/`update_`)を持つ。
-  各項目は**公開プロパティごとの日本語名**も持つ(一次資料のドキュメントXMLの記載から採る。
-  説明文の索引語と検索の想定質問文がこれを正本とする。欠落をゲートで不合格とする)。
+  各項目は**読み取り可能な公開プロパティごとの日本語名**も持つ(説明文の索引語と検索の想定質問文が
+  これを正本とする)。**対象は宣言したプロパティに限らず、基底型から継いだものと、対象アセンブリ外の
+  型が持つものを含む**——役割対象にはイベント引数の外部型が入り、その型の項目も応答へ埋め込むため。
+  同じ宣言型の同じ名前は1件として数える。
+  各項目は**日本語名と、その名前をどう決めたか**を必須で持つ。決め方は次の2つだけとする。
+  - `quoted`(記載を採る): 配布物のドキュメントXMLに、その型の中で他の項目と重ならない記載がある項目。
+    位置としてその member 名を持つ。名前はその記載をそのまま採る。
+  - `authored`(名前を起こす): **使える記載が無い項目**——記載自体が無いものと、記載はあるが同じ型の
+    別項目と同じ名前になるもの(頂点の追加UVなど)の両方を含む。位置の代わりに**意味の根拠**を持つ。
+    根拠は次のどちらかで、あわせて名前の由来を一文で書く。
+    - `documentSection`: 配布物の資料が意味を説明している場合。配布物からの相対パスと、**開始行と
+      終了行**(どちらも1から数え、両端を含む)を持つ。綴りで探す形にしないのは、同じ綴りが資料の別の
+      箇所にも現れる項目(ソフトボディの反復回数や材質係数など)と、資料に一度も現れない項目(対象
+      アセンブリ外のイベント引数など)の両方があるためで、綴りの出現では位置が一意にならない。
+    - `memberShape`: 資料が意味を説明していない場合。宣言型・メンバー名・プロパティの型を持つ。
+      対象アセンブリ外の型の項目はこれを使う。実行環境の外部文書へは依存しない——版と言語が固定できず、
+      配布物の中で解決できないためである。
+  **記載を取り出す操作を一つの手順で定める**。名前を採るのも、下の分類のために数えるのも同じ文字列を
+  見るので、別々に定めると食い違う。手順は、ドキュメントXMLのその member の summary を取り、行ごとに
+  前後の空白を落として空行を捨て、**最初の行だけ**を採り、その行を空白で区切った**末尾の1トークン**が
+  `get`・`set`・`get/set` のいずれかに一致したら、そのトークンとその直前の空白を除く(一致しなければ
+  何も除かない)、である。残った文字列をその member の記載と呼ぶ。末尾を1トークンとして見るのは、
+  末尾の文字列だけを見て除くと `get/set` から `set` だけが落ちて `get/` が残り、除いた後の空白も
+  残るためである。最初の行だけを採るのは、
+  summary が複数行の項目では2行目以降が値の意味の補足であって名前ではなく、行を絞らないと接尾辞が
+  末尾に来ないので除去も効かないためである(実測では下記609件のうち複数行の summary を持つのは
+  `IPXBody.BoxSize` の1件だけで、この手順によって記載は「Boxサイズ」になる)。
+  **数える単位の「同一型」はリフレクションの宣言型を指し、数える母集合は下記609件のうち記載が取れた
+  ものに限る**。同じ宣言型にあっても609件に入らない member(読み取れないプロパティや、この表の
+  対象外の member)の記載は数に入れない——数えた結果が分類を決めるので、母集合が違えば同じ項目の
+  分類が変わる。
+  **ゲートは次を検査する**。名前が空でないこと。決め方が上記2つのいずれかであること。`quoted` は
+  member 名が実在し、名前が上の手順で取り出したその記載と一致すること。`authored` は根拠の種別が
+  上記2つのいずれかで、`documentSection` なら相対パスの資料が実在して開始行と終了行がその資料の行数に
+  収まり開始行が終了行を超えないこと、`memberShape` なら宣言型・メンバー名・プロパティの型の3つが
+  列挙結果の同じ項目と一致すること、そして由来の一文が空でないこと。
+  **決め方そのものも検査する**。上の手順で取り出した記載を同一型内で数え、その数が1のときだけ
+  `quoted` を認め、0または2以上のときは `authored` を要求する。これを課さないと、
+  一意な記載がある項目を勝手に `authored` にしたり、同じ記載を持つ項目群の1件だけを `quoted` に残して
+  残りへ別の名前を付けたりできてしまい、名前が重ならないので下の重複の検査にも掛からない。
+  **項目の集合そのものも検査する**。列挙で得た宣言型・メンバー名・プロパティの型の組と、表が持つ項目の
+  組が**一対一で一致すること**を課す。これが無いと、公開プロパティを丸ごと書き落としても、同じ
+  プロパティを別の名前で二重に載せても、残った項目だけが条件を満たして通ってしまう。3つ目に型を入れる
+  のは、型を検査するのが `memberShape` の根拠だけだと、`quoted` と `documentSection` の項目で型を
+  取り違えても通ってしまうためである。
+  最後に、**同一型内で日本語名が重複しないこと**。
+  **機械で確かめられるのはここまでである**。起こした名前が的確かどうかを測る検査は置かない——検索の
+  想定質問文の検査は質問文へこの日本語名を埋めて引くので、名前が不適切でも文字列が一致すれば通り、
+  名前の良否を測る検査にならない。だから `authored` の名前は規則からは決まらない。**決まらない値を
+  実装へ残さないため、57件すべての名前と根拠をこの計画で下表に確定する**。実装はこの表を写すだけで、
+  名前を新たに判断しない。**この転記が表のとおりかは、型役割表を作る段のレビューで1行ずつ突き合わせて
+  確かめる**。ゲートでは確かめない——ゲートが計画書を読むと、役目を終えて捨てる計画書と残り続ける
+  型役割表の両方が日本語名の正本になり、以後ずっと二重に保守することになるためである。
+  **実測**(この計画が対象とする配布物 PmxEditor_0273 の PEPlugin 0.0.8.9 に対して、型役割表の
+  母集合121型それぞれの読み取り可能な公開プロパティをリフレクションで列挙し、宣言型と名前の組で
+  重複を除いて数えた。ドキュメントXMLの member 名は、入れ子の区切りと総称型の引数の数の表記を
+  列挙側の表記へそろえてから突き合わせた): 609件のうち560件がドキュメントXMLに記載を持ち、
+  49件は記載が無い。内訳は `IPXSoftBody` 23件、`System.Windows.Forms.KeyEventArgs` 9件、
+  `PXUIModelHelper+MaterialColorEvPara` 6件、`System.Windows.Forms.MouseEventArgs` 6件、
+  `PXEventArgs+ViewObjectSelected` 5件である。記載のある560件のうち8件は、同一型内で別の項目と同じ名前に
+  なる(`IPXBone` の IK と IsIK、`IPXVertex` の追加UV4件、`IPEViewSettingConnector` の剛体の表示2件)。
+  したがって決め方の内訳は `quoted` 552件・`authored` 57件になる。
+  `authored` 57件の根拠の内訳は `documentSection` 34件・`memberShape` 23件で、下表のとおり確定する。
+  表の各行は、`authored` の項目が持つ値をそのまま並べたものである——`documentSection` の根拠は配布物
+  からの相対パスと行範囲、`memberShape` の根拠は宣言型・メンバー名・プロパティの型の3つで、宣言型は
+  列挙結果と同じ完全名で書く。由来の一文は下表の由来欄が指す群の文をそのまま用いる(同じ群の項目は
+  同じ一文を持つ)。
+
+  | 宣言型 | メンバー名 | プロパティの型 | 日本語名 | 根拠 | 由来 |
+  |---|---|---|---|---|---|
+  | `PEPlugin.Pmx.IPXSoftBody` | `DP` | `System.Single` | 減衰係数 | `Lib/PMX仕様/PMX仕様.txt` 1441-1441 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `DG` | `System.Single` | 抗力係数 | `Lib/PMX仕様/PMX仕様.txt` 1442-1442 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `LF` | `System.Single` | 揚力係数 | `Lib/PMX仕様/PMX仕様.txt` 1443-1443 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `PR` | `System.Single` | 圧力係数 | `Lib/PMX仕様/PMX仕様.txt` 1444-1444 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `VC` | `System.Single` | 体積保存係数 | `Lib/PMX仕様/PMX仕様.txt` 1445-1445 | ソフトボディの体積保存 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `DF` | `System.Single` | 動摩擦係数 | `Lib/PMX仕様/PMX仕様.txt` 1446-1446 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `MT` | `System.Single` | 姿勢維持係数 | `Lib/PMX仕様/PMX仕様.txt` 1447-1447 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `CHR` | `System.Single` | 剛体接触の硬さ | `Lib/PMX仕様/PMX仕様.txt` 1448-1448 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `KHR` | `System.Single` | 運動体接触の硬さ | `Lib/PMX仕様/PMX仕様.txt` 1449-1449 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `SHR` | `System.Single` | ソフトボディ接触の硬さ | `Lib/PMX仕様/PMX仕様.txt` 1450-1450 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `AHR` | `System.Single` | アンカーの硬さ | `Lib/PMX仕様/PMX仕様.txt` 1451-1451 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `SRHR_CL` | `System.Single` | クラスタのソフトボディ対剛体の硬さ | `Lib/PMX仕様/PMX仕様.txt` 1454-1454 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `SKHR_CL` | `System.Single` | クラスタのソフトボディ対運動体の硬さ | `Lib/PMX仕様/PMX仕様.txt` 1455-1455 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `SSHR_CL` | `System.Single` | クラスタのソフトボディ対ソフトボディの硬さ | `Lib/PMX仕様/PMX仕様.txt` 1456-1456 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `SR_SPLT_CL` | `System.Single` | クラスタのソフトボディ対剛体の力積分配 | `Lib/PMX仕様/PMX仕様.txt` 1457-1457 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `V_IT` | `System.Int32` | 速度計算の反復回数 | `Lib/PMX仕様/PMX仕様.txt` 1462-1462 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `P_IT` | `System.Int32` | 位置計算の反復回数 | `Lib/PMX仕様/PMX仕様.txt` 1463-1463 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `D_IT` | `System.Int32` | ずれ補正の反復回数 | `Lib/PMX仕様/PMX仕様.txt` 1464-1464 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `C_IT` | `System.Int32` | クラスタ計算の反復回数 | `Lib/PMX仕様/PMX仕様.txt` 1465-1465 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `AST` | `System.Single` | 面積・角度の剛性係数 | `Lib/PMX仕様/PMX仕様.txt` 1469-1469 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `VST` | `System.Single` | 体積剛性係数 | `Lib/PMX仕様/PMX仕様.txt` 1470-1470 | ソフトボディの設定 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `SK_SPLT_CL` | `System.Single` | クラスタのソフトボディ対運動体の力積分配 | `memberShape` | ソフトボディの力積分配 |
+  | `PEPlugin.Pmx.IPXSoftBody` | `SS_SPLT_CL` | `System.Single` | クラスタのソフトボディ対ソフトボディの力積分配 | `memberShape` | ソフトボディの力積分配 |
+  | `PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara` | `AmbientA` | `PEPlugin.SDX.V3` | 環境色(変化前) | `Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt` 214-214 | 材質色の変化 |
+  | `PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara` | `AmbientB` | `PEPlugin.SDX.V3` | 環境色(変化後) | `Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt` 214-214 | 材質色の変化 |
+  | `PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara` | `DiffuseA` | `PEPlugin.SDX.V4` | 拡散色(変化前) | `Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt` 214-214 | 材質色の変化 |
+  | `PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara` | `DiffuseB` | `PEPlugin.SDX.V4` | 拡散色(変化後) | `Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt` 214-214 | 材質色の変化 |
+  | `PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara` | `SpecularA` | `PEPlugin.SDX.V4` | 反射色(変化前) | `Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt` 214-214 | 材質色の変化 |
+  | `PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara` | `SpecularB` | `PEPlugin.SDX.V4` | 反射色(変化後) | `Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt` 214-214 | 材質色の変化 |
+  | `PEPlugin.View.IPEViewSettingConnector` | `Visible_Body` | `System.Boolean` | 追加表示-剛体(線) | `readme.txt` 1530-1530 | 剛体の追加表示 |
+  | `PEPlugin.View.IPEViewSettingConnector` | `Visible_SolidBody` | `System.Boolean` | 追加表示-剛体(形) | `readme.txt` 1531-1531 | 剛体の追加表示 |
+  | `PXCPlugin.Event.PXEventArgs+ViewObjectSelected` | `Vertex` | `System.Boolean` | 頂点が変更対象か | `Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt` 143-143 | 選択状態の変更対象 |
+  | `PXCPlugin.Event.PXEventArgs+ViewObjectSelected` | `Face` | `System.Boolean` | 面が変更対象か | `Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt` 143-143 | 選択状態の変更対象 |
+  | `PXCPlugin.Event.PXEventArgs+ViewObjectSelected` | `Bone` | `System.Boolean` | ボーンが変更対象か | `Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt` 143-143 | 選択状態の変更対象 |
+  | `PXCPlugin.Event.PXEventArgs+ViewObjectSelected` | `Body` | `System.Boolean` | 剛体が変更対象か | `Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt` 143-143 | 選択状態の変更対象 |
+  | `PXCPlugin.Event.PXEventArgs+ViewObjectSelected` | `Joint` | `System.Boolean` | Jointが変更対象か | `Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt` 143-143 | 選択状態の変更対象 |
+  | `System.Windows.Forms.KeyEventArgs` | `KeyCode` | `System.Windows.Forms.Keys` | キーコード | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.KeyEventArgs` | `KeyData` | `System.Windows.Forms.Keys` | 修飾キーを含むキーコード | `memberShape` | 対象アセンブリ外のイベント引数の意味 |
+  | `System.Windows.Forms.KeyEventArgs` | `KeyValue` | `System.Int32` | キーコードの整数値 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.KeyEventArgs` | `Modifiers` | `System.Windows.Forms.Keys` | 修飾キー | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.KeyEventArgs` | `Alt` | `System.Boolean` | Altキーの押下 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.KeyEventArgs` | `Control` | `System.Boolean` | Ctrlキーの押下 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.KeyEventArgs` | `Shift` | `System.Boolean` | Shiftキーの押下 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.KeyEventArgs` | `Handled` | `System.Boolean` | イベントの処理済み | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.KeyEventArgs` | `SuppressKeyPress` | `System.Boolean` | キー入力の抑止 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.MouseEventArgs` | `Button` | `System.Windows.Forms.MouseButtons` | 押されたボタン | `memberShape` | 対象アセンブリ外のイベント引数の意味 |
+  | `System.Windows.Forms.MouseEventArgs` | `Clicks` | `System.Int32` | クリック回数 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.MouseEventArgs` | `Delta` | `System.Int32` | ホイールの回転量 | `memberShape` | 対象アセンブリ外のイベント引数の意味 |
+  | `System.Windows.Forms.MouseEventArgs` | `Location` | `System.Drawing.Point` | カーソル位置 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.MouseEventArgs` | `X` | `System.Int32` | カーソルのX座標 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `System.Windows.Forms.MouseEventArgs` | `Y` | `System.Int32` | カーソルのY座標 | `memberShape` | 対象アセンブリ外のイベント引数 |
+  | `PEPlugin.Pmx.IPXBone` | `IK` | `PEPlugin.Pmx.IPXIK` | IK設定 | `memberShape` | ボーンのIK |
+  | `PEPlugin.Pmx.IPXBone` | `IsIK` | `System.Boolean` | IKボーンかどうか | `memberShape` | ボーンのIK |
+  | `PEPlugin.Pmx.IPXVertex` | `UVA1` | `PEPlugin.SDX.V4` | 追加UV1座標 | `memberShape` | 頂点の追加UV |
+  | `PEPlugin.Pmx.IPXVertex` | `UVA2` | `PEPlugin.SDX.V4` | 追加UV2座標 | `memberShape` | 頂点の追加UV |
+  | `PEPlugin.Pmx.IPXVertex` | `UVA3` | `PEPlugin.SDX.V4` | 追加UV3座標 | `memberShape` | 頂点の追加UV |
+  | `PEPlugin.Pmx.IPXVertex` | `UVA4` | `PEPlugin.SDX.V4` | 追加UV4座標 | `memberShape` | 頂点の追加UV |
+
+  **由来の一文は群ごとに次のとおり確定する**。表の由来欄が指す群の文を、その群のどの項目も同じ文字列
+  として持つ。
+  - ソフトボディの設定(20件): PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ
+    移した。
+  - ソフトボディの体積保存(1件): 資料の綴り conversation は体積の係数の説明として文脈に合わず、
+    綴りの近い conservation なら意味が通るので誤記と判断し、体積を保つ係数と読んで名付けた。誤記であることを示す記載は配布物の中に無く、
+    この一文がその判断の記録である。
+  - ソフトボディの力積分配(2件): 同じ資料が力積分配の3行とも剛体との対の説明を写していて区別が
+    付かないので、メンバー名の SK・SS が硬さ側の `SKHR_CL`・`SSHR_CL` と対応することから起こした。
+  - 材質色の変化(6件): UIモデルの解説が色Aから色Bへ変える設定だと述べているので、AとBを変化前と
+    変化後に当てた。
+  - 剛体の追加表示(2件): 配布物のreadmeが表示設定の項目として線の表示と形の表示を並べているので、
+    記載が同じ2件をその別で分けた。
+  - 選択状態の変更対象(5件): Cプラグインの解説が、このイベントは選択状態が変わった対象を通知する
+    ものだと述べているので、各真偽値をその種別が変更対象かどうかとして読んだ。
+  - 対象アセンブリ外のイベント引数(12件): 宣言型・メンバー名・プロパティの型が示す対象をそのまま
+    日本語にした。宣言型を含めるのは、位置や座標がキー入力ではなくマウス操作のものだという区別が、
+    メンバー名と型だけでは付かないためである。
+  - 対象アセンブリ外のイベント引数の意味(3件): メンバー名と型だけでは対象が定まらないので、宣言型が
+    キー入力とマウス操作のイベント引数であることを踏まえ、キーの値に修飾キーを含む側と含まない側が
+    あること・マウスの変化量がホイールの回転であること・ボタンが押されたボタンを指すことを当てた。
+    これらを裏付ける記載は配布物の中に無く、この一文がその判断の記録である。
+  - ボーンのIK(2件): 片方がIKの設定そのものを返し、もう片方が真偽値でIKボーンかどうかを表すという
+    型の別で分けた。
+  - 頂点の追加UV(4件): メンバー名の連番をそのまま名前へ移した。
+
   **ハンドル発行能力**も型役割表が持つ: 各シグネチャへ `issuanceKind`(`constructor` /
   `factory` / `receiverBound` の3値)と**判定根拠**を記録し、この集合の全シグネチャへ集合生成の
   規則を適用する。生成ツールだけを対象にすると、ビルダのファクトリが単数のまま取り残される。
@@ -1940,14 +2092,11 @@ SDKの型名・メンバー名・ツール名を含めない。上位5つに満�
 追加UVのように同型の項目が並ぶ型があるため、タイブレークを置かないと選定が一意にならない)、
 定型文「モデルの<要素名詞>の<項目の日本語名>を調べるにはどうすればよいか」へ当てる。
 質問文にはSDKのメンバー名・ツール名を含めない。期待ツールはその要素型の取得ツールである。
-**項目の日本語名は型役割表の日本語名フィールドを正本とし、次の規則で確定する**:
-一次資料のドキュメントXMLの記載から機械抽出し、**アクセサの別を表す接尾辞(get・set・
-get/set)を除いて**採る。欠落はゲートで不合格。加えて**同一型内で日本語名が重複したら
-ゲートで不合格**とする——一次資料には同じ日本語名が別項目へ付いている箇所があり
-(頂点の追加UVの記載)、欠落だけを見るゲートでは誤った索引語を素通りさせるためである。
-重複を検出した項目は、型役割表へ**補正した日本語名と補正根拠**(一次資料の当該記載と、
-それが誤りであることを示す一次資料——PMX仕様——の該当記載)を必須で持たせ、根拠の欠落も
-ゲートで不合格とする。期待するツール名は写像規則から一意に決まる(各文に対応付けて
+**項目の日本語名は型役割表の日本語名フィールドを正本とする**(名前の決め方・根拠の種別・解決の規則・
+重複の禁止はすべて上記「型役割表」が定める)。ドキュメントXMLには同じ日本語名が別項目へ付いている
+箇所があり(頂点の追加UVなど)、そのままでは誤った索引語になるが、上記の規則がその項目を名前を
+起こす側へ回すので、ここで重ねて定めることはない。
+期待するツール名は写像規則から一意に決まる(各文に対応付けて
 `docs/specs/pmx-editor-mcp-search-probes.json` へ記録する。**質問文と期待ツール名は、その群の
 実装に着手する前に確定して記録し、以後変更しない**——検査結果を見てから質問文を選べると、
 発見可能性の独立した検査にならない。不合格時に見直してよいのはツールの説明文だけで、質問文を
@@ -2218,7 +2367,7 @@ handshake を行い、**前提5が実測した7経路**(`PXCBridge.BuilderInitia
    Unlock失敗時の残留記録と回収を含む)・各エラーコード・エンベロープ変換)。シグネチャ行の機械生成・照合スクリプト
    (プロセス内リフレクション列挙。置き場所は上記の分けかたに従う)と型役割表
    `docs/specs/pmx-editor-mcp-type-roles.json`(全公開型の役割・要素名詞・CRUDツール名・
-   公開プロパティごとの日本語名・参照コレクションの参照先の要素型とリストの所在・親の所有経路
+   公開プロパティごとの日本語名とその出所・参照コレクションの参照先の要素型とリストの所在・親の所有経路
    (走査段階の列)・ハンドル発行能力の `issuanceKind` と判定根拠)と
    特別規則の表 `docs/specs/pmx-editor-mcp-common-assignments.json`(共通契約割当の期待値。
    シグネチャ単位の識別子・`assignment` の分岐と対象名・`slotBinding` の期待スロット)を
