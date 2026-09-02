@@ -13,6 +13,7 @@
 | スクリプト構文(PowerShell) | [PowerShellスクリプトの構文検査](#powershellスクリプトの構文検査)のコマンド | エラー0 |
 | SDK公開APIの列挙 | [SDK公開APIの列挙](#sdk公開apiの列挙)のコマンド | 終了コード0 |
 | 台帳と正本の照合 | [台帳と正本の照合](#台帳と正本の照合)のコマンド | 終了コード0 |
+| 日本語名の照合 | [日本語名の照合](#日本語名の照合)のコマンド | 終了コード0 |
 | 実機動作確認 | [実機動作確認](#実機動作確認)の手順 | 手順内の各確認が期待どおり |
 | ブリッジの実機動作確認 | [ブリッジの実機動作確認](#ブリッジの実機動作確認)の手順 | 手順内の各確認が期待どおり |
 
@@ -114,6 +115,22 @@ src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe ledger-coverage
 
 台帳へ能力を足したとき、SDKを更新したとき、除外一覧や対象外一覧を取り直したときは、この照合が
 通ることで台帳と正本が公開APIを覆い切っていることを確かめる。
+
+## 日本語名の照合
+
+[日本語名の正本](../specs/pmx-editor-mcp-property-names.json)が、
+[日本語名仕様書](../specs/pmx-editor-mcp-property-names.md)の規則どおりに付いていることを照合する。
+下位コマンド `property-names` の引数は導入ディレクトリ・能力台帳・除外一覧・日本語名の正本のパスの
+4つ。ドキュメントXMLと根拠の資料は導入ディレクトリからの相対で解決する。
+
+```
+src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe property-names "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-signatures.json docs/specs/pmx-editor-mcp-property-names.json
+```
+
+**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
+読み解けなくても終了コード3、規則に合わなければ終了コード5になる。台帳とSDKが食い違って母集合を
+決められないときも終了コード5になる。合わなかったときは、どちらで止まったかと、どの項目がどの条件に
+反したかが標準エラー出力に出る。
 
 ## 必要環境
 

@@ -22,6 +22,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>台帳と正本が公開APIを過不足なく覆っていることを照合する。</summary>
         public const string LedgerCoverageCommand = "ledger-coverage";
 
+        /// <summary>日本語名の正本が規則どおりに付いていることを照合する。</summary>
+        public const string PropertyNamesCommand = "property-names";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -67,6 +70,11 @@ namespace PmxEditorMcp.SignatureDump
                 return LedgerCoverageRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], PropertyNamesCommand, StringComparison.Ordinal))
+            {
+                return PropertyNameRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -84,6 +92,10 @@ namespace PmxEditorMcp.SignatureDump
                 LedgerCoverageCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <ベースライン正本のパス>"
                     + " <除外一覧のパス> <対象外一覧のパス>");
+            error.WriteLine(
+                PropertyNamesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <日本語名の正本のパス>");
         }
     }
 }

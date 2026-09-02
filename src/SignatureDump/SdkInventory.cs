@@ -16,6 +16,15 @@ namespace PmxEditorMcp.SignatureDump
     {
         public static InventoryRecord Load(string editorDirectory, string assemblyPath)
         {
+            return Read(editorDirectory, assemblyPath, AssemblyEnumerator.Enumerate);
+        }
+
+        /// <summary>
+        /// 依存を解決できる状態で対象アセンブリを読み込み、<paramref name="read"/> へ渡す。型の
+        /// メンバーを辿ると依存の解決が起きるので、辿り終えるまでこの中に居ること。
+        /// </summary>
+        public static T Read<T>(string editorDirectory, string assemblyPath, Func<Assembly, T> read)
+        {
             if (editorDirectory == null)
             {
                 throw new ArgumentNullException(nameof(editorDirectory));
@@ -24,6 +33,11 @@ namespace PmxEditorMcp.SignatureDump
             if (assemblyPath == null)
             {
                 throw new ArgumentNullException(nameof(assemblyPath));
+            }
+
+            if (read == null)
+            {
+                throw new ArgumentNullException(nameof(read));
             }
 
             IList<string> probeDirectories = SdkAssemblyLocator.GetProbeDirectories(editorDirectory);
@@ -36,7 +50,7 @@ namespace PmxEditorMcp.SignatureDump
             AppDomain.CurrentDomain.AssemblyResolve += resolver;
             try
             {
-                return AssemblyEnumerator.Enumerate(Assembly.Load(File.ReadAllBytes(assemblyPath)));
+                return read(Assembly.Load(File.ReadAllBytes(assemblyPath)));
             }
             finally
             {

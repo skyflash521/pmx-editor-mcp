@@ -15,6 +15,7 @@ namespace PmxEditorMcp.SignatureDump
         private const string SdkDirectoryName = "PEPlugin";
         private const string LibraryDirectoryName = "Lib";
         private const string SdkAssemblyFileName = "PEPlugin.dll";
+        private const string SdkDocumentFileName = "PEPlugin.XML";
         private const string DrawingLibraryDirectoryName = "SlimDX";
         private const string DrawingLibraryPlatformName = "x64";
 
@@ -26,6 +27,17 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return Path.Combine(editorDirectory, LibraryDirectoryName, SdkDirectoryName, SdkAssemblyFileName);
+        }
+
+        /// <summary>対象アセンブリのドキュメントXML。アセンブリと同じ場所に置かれている。</summary>
+        public static string GetDocumentPath(string editorDirectory)
+        {
+            if (editorDirectory == null)
+            {
+                throw new ArgumentNullException(nameof(editorDirectory));
+            }
+
+            return Path.Combine(editorDirectory, LibraryDirectoryName, SdkDirectoryName, SdkDocumentFileName);
         }
 
         /// <summary>探索する順に並べる。</summary>

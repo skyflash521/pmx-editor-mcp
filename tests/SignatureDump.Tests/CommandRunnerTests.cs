@@ -117,6 +117,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("excluded-baseline", CommandRunner.ExcludedBaselineCommand);
             Assert.Equal("excluded-signatures", CommandRunner.ExcludedSignaturesCommand);
             Assert.Equal("ledger-coverage", CommandRunner.LedgerCoverageCommand);
+            Assert.Equal("property-names", CommandRunner.PropertyNamesCommand);
         }
 
         [Fact]
@@ -158,6 +159,51 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     baselinePath,
                     excludedPath,
                     outOfScopePath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, missingCode);
+        }
+
+        [Fact]
+        public void PropertyNamesSubcommandRunsTheCollation()
+        {
+            string ledgerPath = Path.Combine(_root, "names-ledger.md");
+            File.WriteAllText(
+                ledgerPath,
+                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
+                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+            string excludedPath = Path.Combine(_root, "names-excluded.json");
+            File.WriteAllText(excludedPath, "{\"signatures\":[]}");
+            string namesPath = Path.Combine(_root, "property-names.json");
+            File.WriteAllText(namesPath, "{\"propertyNames\":[]}");
+            string editorDirectory = CreateEditorDirectory();
+            File.WriteAllText(
+                SdkAssemblyLocator.GetDocumentPath(editorDirectory), "<doc><members /></doc>");
+
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.PropertyNamesCommand,
+                    editorDirectory,
+                    ledgerPath,
+                    excludedPath,
+                    namesPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+
+            int missingCode = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.PropertyNamesCommand,
+                    Path.Combine(_root, "none"),
+                    ledgerPath,
+                    excludedPath,
+                    namesPath,
                 },
                 new StringWriter(),
                 new StringWriter());
@@ -221,6 +267,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.LedgerCoverageCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <ベースライン正本のパス>"
                     + " <除外一覧のパス> <対象外一覧のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.PropertyNamesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <日本語名の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

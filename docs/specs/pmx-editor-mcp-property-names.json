@@ -1,0 +1,4597 @@
+{
+  "propertyNames": [
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "BodyItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "剛体リストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "BoneItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "ボーンリストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "EnableFacePage",
+      "propertyType": "System.Boolean",
+      "japaneseName": "面頂点タブの編集有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "EnableTexUpdateWatch",
+      "propertyType": "System.Boolean",
+      "japaneseName": "外部テクスチャの更新監視状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "ExpressionItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "表情リストの要素数取得(PMD互換)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "ExpressionOffsetItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "表情オフセットリストの要素数取得(PMD互換)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "FaceItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "面頂点リストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "FrameBoneItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "表示枠リストの要素数取得(PMD互換",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "FrameBone_BoneItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "表示枠(対象ボーン)リストの要素数取得(PMD互換",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "FrameExpressionItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "表情枠リストの要素数取得(PMD互換:PMX表示枠-\"表情\"対象)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "IKItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "IKリストの要素数取得(PMD互換)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "IKLinkItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "IK影響下リストの要素数取得(PMD互換:PMD-IKLink)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "JointItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "Jointリストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "Location",
+      "propertyType": "System.Drawing.Point",
+      "japaneseName": "フォーム表示位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "MaterialItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "材質リストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "MorphItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "PMXモーフ要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "NodeElementItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "PMX表示枠内要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "NodeItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "PMX表示枠要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "PmxFormActivate",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Pmx編集の有効状態(PMX-PMD編集切り替え)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "RedoCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "Redo可能回数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedBodyIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "剛体リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedBoneIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "ボーンリストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedExpressionIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "表情リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedExpressionOffsetIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "表情オフセットリストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedFaceIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "面頂点リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedFrameBoneIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "表示枠リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedFrameBone_BoneIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "表示枠ボーンリストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedFrameExpressionIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "表情枠リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedIKIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "IKリストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedIKLinkIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "IKリンクリストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedJointIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "Jointリストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedMaterialIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "材質リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedTabPage",
+      "propertyType": "System.Int32",
+      "japaneseName": "選択表示中のタブIndex",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "SelectedVertexIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "頂点リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "TopMost",
+      "propertyType": "System.Boolean",
+      "japaneseName": "最前面表示",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "UndoCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "Undo可能回数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Form.IPEFormConnector",
+      "memberName": "VertexItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "頂点リストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEBuilder",
+      "memberName": "Pmx",
+      "propertyType": "PEPlugin.IPXPmxBuilder",
+      "japaneseName": "PMX系ビルダインターフェース",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEBuilder",
+      "memberName": "SC",
+      "propertyType": "PEPlugin.IPEShortBuilder",
+      "japaneseName": "短絡系ビルダインターフェース",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEPluginOption",
+      "memberName": "Bootup",
+      "propertyType": "System.Boolean",
+      "japaneseName": "起動時実行",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEPluginOption",
+      "memberName": "RegisterMenu",
+      "propertyType": "System.Boolean",
+      "japaneseName": "プラグインメニューへの登録",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEPluginOption",
+      "memberName": "RegisterMenuText",
+      "propertyType": "System.String",
+      "japaneseName": "プラグインメニューへの登録テキスト(空の場合はプラグイン名を使用)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERegisteredPluginInfo",
+      "memberName": "AssemblyPath",
+      "propertyType": "System.String",
+      "japaneseName": "アセンブリファイルのパス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERegisteredPluginInfo",
+      "memberName": "ClassName",
+      "propertyType": "System.String",
+      "japaneseName": "クラスの名前",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERegisteredPluginInfo",
+      "memberName": "Description",
+      "propertyType": "System.String",
+      "japaneseName": "説明",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERegisteredPluginInfo",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "プラグイン名(メニュー登録名ではないので注意:メニューテキストは Option.RegisterMenuText)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERegisteredPluginInfo",
+      "memberName": "Option",
+      "propertyType": "PEPlugin.IPEPluginOption",
+      "japaneseName": "起動オプション",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERegisteredPluginInfo",
+      "memberName": "Version",
+      "propertyType": "System.String",
+      "japaneseName": "バージョン情報",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPESystemConnector",
+      "memberName": "DefaultPluginFolderPath",
+      "propertyType": "System.String",
+      "japaneseName": "プラグインDLLの標準格納フォルダパス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPESystemConnector",
+      "memberName": "HostApplicationPath",
+      "propertyType": "System.String",
+      "japaneseName": "プラグインホストのアプリケーションパス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPESystemConnector",
+      "memberName": "PEPluginAssemblyPath",
+      "propertyType": "System.String",
+      "japaneseName": "PEプラグインアセンブリのDLLパス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPESystemConnector",
+      "memberName": "PEPluginAssemblyVersion",
+      "propertyType": "System.Version",
+      "japaneseName": "PEプラグインのアセンブリバージョン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPESystemConnector",
+      "memberName": "RegisteredCPluginCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "登録されているCプラグイン数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPESystemConnector",
+      "memberName": "RegisteredPluginCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "登録されているプラグイン数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPESystemConnector",
+      "memberName": "SlimDXAssemblyPath",
+      "propertyType": "System.String",
+      "japaneseName": "SlimDXアセンブリのDLLパス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Bone",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "ボーン null:関連なし",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "BoxKind",
+      "propertyType": "PEPlugin.Pmd.BodyBoxKind",
+      "japaneseName": "形状種類",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "BoxSize",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "Boxサイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Friction",
+      "propertyType": "System.Single",
+      "japaneseName": "摩擦力",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Group",
+      "propertyType": "System.Int32",
+      "japaneseName": "グループNo 0~15",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Mass",
+      "propertyType": "System.Single",
+      "japaneseName": "質量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Mode",
+      "propertyType": "PEPlugin.Pmd.BodyMode",
+      "japaneseName": "剛体モード",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "剛体名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "NameE",
+      "propertyType": "System.String",
+      "japaneseName": "剛体名(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "PassGroup",
+      "propertyType": "System.Boolean[]",
+      "japaneseName": "非衝突グループ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "PositionDamping",
+      "propertyType": "System.Single",
+      "japaneseName": "移動減衰",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Restitution",
+      "propertyType": "System.Single",
+      "japaneseName": "反発力",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "Rotation",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "回転(ラジアン角)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBody",
+      "memberName": "RotationDamping",
+      "propertyType": "System.Single",
+      "japaneseName": "回転減衰",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "AppendParent",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "付与親ボーン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "AppendRatio",
+      "propertyType": "System.Single",
+      "japaneseName": "付与率",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "Controllable",
+      "propertyType": "System.Boolean",
+      "japaneseName": "操作可",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "ExternalKey",
+      "propertyType": "System.Int32",
+      "japaneseName": "外部Key",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "FixAxis",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "制限軸",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IK",
+      "propertyType": "PEPlugin.Pmx.IPXIK",
+      "japaneseName": "IK設定",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "片方がIKの設定そのものを返し、もう片方が真偽値でIKボーンかどうかを表すという型の別で分けた。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsAfterPhysics",
+      "propertyType": "System.Boolean",
+      "japaneseName": "物理演算後変形",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsAppendLocal",
+      "propertyType": "System.Boolean",
+      "japaneseName": "親付与ローカル",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsAppendRotation",
+      "propertyType": "System.Boolean",
+      "japaneseName": "回転付与",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsAppendTranslation",
+      "propertyType": "System.Boolean",
+      "japaneseName": "移動付与",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsExternal",
+      "propertyType": "System.Boolean",
+      "japaneseName": "外部変形",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsFixAxis",
+      "propertyType": "System.Boolean",
+      "japaneseName": "軸制限",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsIK",
+      "propertyType": "System.Boolean",
+      "japaneseName": "IKボーンかどうか",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "片方がIKの設定そのものを返し、もう片方が真偽値でIKボーンかどうかを表すという型の別で分けた。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsLocalFrame",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ローカル軸設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsRotation",
+      "propertyType": "System.Boolean",
+      "japaneseName": "回転可",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsTranslation",
+      "propertyType": "System.Boolean",
+      "japaneseName": "移動可",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "Level",
+      "propertyType": "System.Int32",
+      "japaneseName": "変形階層",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "ボーン名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "NameE",
+      "propertyType": "System.String",
+      "japaneseName": "ボーン名(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "Parent",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "親ボーン(親なし:null)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "ボーン座標",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "ToBone",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "表示先(ボーン指定:設定時にTo_Bone/To_Offset一方のみ有効選択)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "ToOffset",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "表示先(オフセット座標指定:設定時にTo_Bone/To_Offset一方のみ有効選択)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "Visible",
+      "propertyType": "System.Boolean",
+      "japaneseName": "表示／非表示",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBoneMorphOffset",
+      "memberName": "Bone",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "対象ボーン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBoneMorphOffset",
+      "memberName": "Rotation",
+      "propertyType": "PEPlugin.SDX.Q",
+      "japaneseName": "回転オフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBoneMorphOffset",
+      "memberName": "Translation",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "移動オフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBoneNodeItem",
+      "memberName": "Bone",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "対象ボーン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXFace",
+      "memberName": "Vertex1",
+      "propertyType": "PEPlugin.Pmx.IPXVertex",
+      "japaneseName": "頂点1",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXFace",
+      "memberName": "Vertex2",
+      "propertyType": "PEPlugin.Pmx.IPXVertex",
+      "japaneseName": "頂点2",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXFace",
+      "memberName": "Vertex3",
+      "propertyType": "PEPlugin.Pmx.IPXVertex",
+      "japaneseName": "頂点3",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXGroupMorphOffset",
+      "memberName": "Morph",
+      "propertyType": "PEPlugin.Pmx.IPXMorph",
+      "japaneseName": "対象モーフ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXGroupMorphOffset",
+      "memberName": "Ratio",
+      "propertyType": "System.Single",
+      "japaneseName": "モーフ倍率",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXHeader",
+      "memberName": "StringEncode",
+      "propertyType": "System.Int32",
+      "japaneseName": "文字エンコード(0:UFT16 1:UTF8)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXHeader",
+      "memberName": "UVACount",
+      "propertyType": "System.Int32",
+      "japaneseName": "追加UV数(0～4)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXHeader",
+      "memberName": "Version",
+      "propertyType": "System.Single",
+      "japaneseName": "PMXバージョン(2.0/2.1有効)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXIK",
+      "memberName": "Angle",
+      "propertyType": "System.Single",
+      "japaneseName": "IK処理での単位角(ラジアン角)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXIK",
+      "memberName": "Links",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXIKLink>",
+      "japaneseName": "IKリンクリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXIK",
+      "memberName": "LoopCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "IKループ回数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXIK",
+      "memberName": "Target",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "接続先ボーン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXIKLink",
+      "memberName": "Bone",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "リンクボーン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXIKLink",
+      "memberName": "High",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "制限角大",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXIKLink",
+      "memberName": "IsLimit",
+      "propertyType": "System.Boolean",
+      "japaneseName": "制限",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXIKLink",
+      "memberName": "Low",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "制限角小",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXImpulseMorphOffset",
+      "memberName": "Body",
+      "propertyType": "PEPlugin.Pmx.IPXBody",
+      "japaneseName": "対象剛体",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXImpulseMorphOffset",
+      "memberName": "Local",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ローカル設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXImpulseMorphOffset",
+      "memberName": "Torque",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "トルクオフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXImpulseMorphOffset",
+      "memberName": "Velocity",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "速度オフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "BodyA",
+      "propertyType": "PEPlugin.Pmx.IPXBody",
+      "japaneseName": "接続剛体1",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "BodyB",
+      "propertyType": "PEPlugin.Pmx.IPXBody",
+      "japaneseName": "接続剛体2",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "Kind",
+      "propertyType": "PEPlugin.Pmx.JointKind",
+      "japaneseName": "Joint種類",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "Limit_AngleHigh",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "回転上限",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "Limit_AngleLow",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "回転下限",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "Limit_MoveHigh",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "移動上限",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "Limit_MoveLow",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "移動下限",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "Joint名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "NameE",
+      "propertyType": "System.String",
+      "japaneseName": "Joint名(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "Rotation",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "回転(ラジアン角)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "SpringConst_Move",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "バネ定数-移動",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXJoint",
+      "memberName": "SpringConst_Rotate",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "バネ定数-回転",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Ambient",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "Ambient",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "BothDraw",
+      "propertyType": "System.Boolean",
+      "japaneseName": "両面描画",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Diffuse",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "Diffuse",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Edge",
+      "propertyType": "System.Boolean",
+      "japaneseName": "エッジフラグ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "EdgeColor",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "エッジ色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "EdgeSize",
+      "propertyType": "System.Single",
+      "japaneseName": "エッジサイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Faces",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXFace>",
+      "japaneseName": "材質内の面リスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Memo",
+      "propertyType": "System.String",
+      "japaneseName": "メモ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "材質名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "NameE",
+      "propertyType": "System.String",
+      "japaneseName": "材質名(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Power",
+      "propertyType": "System.Single",
+      "japaneseName": "反射強度",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "PrimitiveType",
+      "propertyType": "PEPlugin.Pmx.PrimitiveType",
+      "japaneseName": "描画プリミティブタイプ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "SelfShadow",
+      "propertyType": "System.Boolean",
+      "japaneseName": "セルフシャドウ描画",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "SelfShadowMap",
+      "propertyType": "System.Boolean",
+      "japaneseName": "シャドウマップへの描画",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Shadow",
+      "propertyType": "System.Boolean",
+      "japaneseName": "地面影描画",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Specular",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "Specular",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Sphere",
+      "propertyType": "System.String",
+      "japaneseName": "スフィアテクスチャ名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "SphereMode",
+      "propertyType": "PEPlugin.Pmx.SphereType",
+      "japaneseName": "スフィアモード",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Tex",
+      "propertyType": "System.String",
+      "japaneseName": "テクスチャ名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "Toon",
+      "propertyType": "System.String",
+      "japaneseName": "Toonテクスチャ名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterial",
+      "memberName": "VertexColor",
+      "propertyType": "System.Boolean",
+      "japaneseName": "頂点カラー",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Ambient",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "Ambient",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Diffuse",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "Diffuse",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "EdgeColor",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "エッジ色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "EdgeSize",
+      "propertyType": "System.Single",
+      "japaneseName": "エッジサイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Material",
+      "propertyType": "PEPlugin.Pmx.IPXMaterial",
+      "japaneseName": "対象材質",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Op",
+      "propertyType": "System.Int32",
+      "japaneseName": "演算タイプ 0:乗算 1:加算",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Power",
+      "propertyType": "System.Single",
+      "japaneseName": "反射強度",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Specular",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "Specular",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Sphere",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "スフィアオフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Tex",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "テクスチャオフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMaterialMorphOffset",
+      "memberName": "Toon",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "Toonオフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXModelInfo",
+      "memberName": "Comment",
+      "propertyType": "System.String",
+      "japaneseName": "コメント",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXModelInfo",
+      "memberName": "CommentE",
+      "propertyType": "System.String",
+      "japaneseName": "コメント(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXModelInfo",
+      "memberName": "ModelName",
+      "propertyType": "System.String",
+      "japaneseName": "モデル名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXModelInfo",
+      "memberName": "ModelNameE",
+      "propertyType": "System.String",
+      "japaneseName": "モデル名(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "IsBone",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ボーンモーフ判定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "IsFlip",
+      "propertyType": "System.Boolean",
+      "japaneseName": "フリップモーフ判定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "IsGroup",
+      "propertyType": "System.Boolean",
+      "japaneseName": "グループモーフ判定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "IsImpulse",
+      "propertyType": "System.Boolean",
+      "japaneseName": "インパルスモーフ判定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "IsMaterial",
+      "propertyType": "System.Boolean",
+      "japaneseName": "材質モーフ判定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "IsUV",
+      "propertyType": "System.Boolean",
+      "japaneseName": "UVモーフ判定(UVモーフ全てが対象)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "IsVertex",
+      "propertyType": "System.Boolean",
+      "japaneseName": "頂点モーフ判定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "Kind",
+      "propertyType": "PEPlugin.Pmx.MorphKind",
+      "japaneseName": "モーフ種類",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "モーフ名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "NameE",
+      "propertyType": "System.String",
+      "japaneseName": "モーフ名(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "Offsets",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXMorphOffset>",
+      "japaneseName": "モーフオフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorph",
+      "memberName": "Panel",
+      "propertyType": "System.Int32",
+      "japaneseName": "モーフパネル 0:システム予約 1:眉(左下) 2:目(左上) 3:口(右上) 4:その他(右下)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXMorphNodeItem",
+      "memberName": "Morph",
+      "propertyType": "PEPlugin.Pmx.IPXMorph",
+      "japaneseName": "対象モーフ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXNode",
+      "memberName": "Items",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXNodeItem>",
+      "japaneseName": "表示枠要素リスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXNode",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "フレームカテゴリ名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXNode",
+      "memberName": "NameE",
+      "propertyType": "System.String",
+      "japaneseName": "フレームカテゴリ名(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXNodeItem",
+      "memberName": "BoneItem",
+      "propertyType": "PEPlugin.Pmx.IPXBoneNodeItem",
+      "japaneseName": "ボーン要素への参照",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXNodeItem",
+      "memberName": "IsBone",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ボーン要素判定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXNodeItem",
+      "memberName": "IsMorph",
+      "propertyType": "System.Boolean",
+      "japaneseName": "モーフ要素判定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXNodeItem",
+      "memberName": "MorphItem",
+      "propertyType": "PEPlugin.Pmx.IPXMorphNodeItem",
+      "japaneseName": "モーフ要素への参照",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Body",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXBody>",
+      "japaneseName": "剛体リスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Bone",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXBone>",
+      "japaneseName": "ボーンリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "ExpressionNode",
+      "propertyType": "PEPlugin.Pmx.IPXNode",
+      "japaneseName": "表情枠(システム管理用)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "FilePath",
+      "propertyType": "System.String",
+      "japaneseName": "ファイルパス(FromFile()で読み込む場合自動設定:各プレビュー処理に使用)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Header",
+      "propertyType": "PEPlugin.Pmx.IPXHeader",
+      "japaneseName": "ヘッダ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Joint",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXJoint>",
+      "japaneseName": "Jointリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Material",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXMaterial>",
+      "japaneseName": "材質リスト(各材質内に対応した面リストを格納)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "ModelInfo",
+      "propertyType": "PEPlugin.Pmx.IPXModelInfo",
+      "japaneseName": "モデル情報",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Morph",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXMorph>",
+      "japaneseName": "モーフリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Node",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXNode>",
+      "japaneseName": "表示枠リスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Primitive",
+      "propertyType": "PEPlugin.Pmx.IPXPrimitiveBuilder",
+      "japaneseName": "プリミティブ作成／Cプラグインからは利用不可",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "RootNode",
+      "propertyType": "PEPlugin.Pmx.IPXNode",
+      "japaneseName": "ルート用表示枠(システム管理用)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "SoftBody",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXSoftBody>",
+      "japaneseName": "SoftBodyリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmx",
+      "memberName": "Vertex",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXVertex>",
+      "japaneseName": "頂点リスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXPmxConnector",
+      "memberName": "CurrentPath",
+      "propertyType": "System.String",
+      "japaneseName": "現在オープン中のPMXファイルのパス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "AHR",
+      "propertyType": "System.Single",
+      "japaneseName": "アンカーの硬さ",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1451,
+        "lastLine": 1451
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "AST",
+      "propertyType": "System.Single",
+      "japaneseName": "面積・角度の剛性係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1469,
+        "lastLine": 1469
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "AeroModel",
+      "propertyType": "System.Int32",
+      "japaneseName": "風圧計算モデル",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "Anchors",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXSoftBodyAnchor>",
+      "japaneseName": "剛体アンカーリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "BendingLinkDistance",
+      "propertyType": "System.Int32",
+      "japaneseName": "BendingLink 生成距離",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "CHR",
+      "propertyType": "System.Single",
+      "japaneseName": "剛体接触の硬さ",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1448,
+        "lastLine": 1448
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "C_IT",
+      "propertyType": "System.Int32",
+      "japaneseName": "クラスタ計算の反復回数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1465,
+        "lastLine": 1465
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "ClusterCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "生成クラスタ数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "DF",
+      "propertyType": "System.Single",
+      "japaneseName": "動摩擦係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1446,
+        "lastLine": 1446
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "DG",
+      "propertyType": "System.Single",
+      "japaneseName": "抗力係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1442,
+        "lastLine": 1442
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "DP",
+      "propertyType": "System.Single",
+      "japaneseName": "減衰係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1441,
+        "lastLine": 1441
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "D_IT",
+      "propertyType": "System.Int32",
+      "japaneseName": "ずれ補正の反復回数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1464,
+        "lastLine": 1464
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "GenerateBendingLinks",
+      "propertyType": "System.Boolean",
+      "japaneseName": "BendingLink 生成",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "GenerateClusters",
+      "propertyType": "System.Boolean",
+      "japaneseName": "クラスタ生成",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "Group",
+      "propertyType": "System.Int32",
+      "japaneseName": "グループNo 0~15",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "KHR",
+      "propertyType": "System.Single",
+      "japaneseName": "運動体接触の硬さ",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1449,
+        "lastLine": 1449
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "LF",
+      "propertyType": "System.Single",
+      "japaneseName": "揚力係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1443,
+        "lastLine": 1443
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "LST",
+      "propertyType": "System.Single",
+      "japaneseName": "MaterialConfig系",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "MT",
+      "propertyType": "System.Single",
+      "japaneseName": "姿勢維持係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1447,
+        "lastLine": 1447
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "Margin",
+      "propertyType": "System.Single",
+      "japaneseName": "衝突マージン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "Material",
+      "propertyType": "PEPlugin.Pmx.IPXMaterial",
+      "japaneseName": "対応材質 null:関連なし",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "SoftBody名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "NameE",
+      "propertyType": "System.String",
+      "japaneseName": "SoftBody名(英)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "PR",
+      "propertyType": "System.Single",
+      "japaneseName": "圧力係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1444,
+        "lastLine": 1444
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "P_IT",
+      "propertyType": "System.Int32",
+      "japaneseName": "位置計算の反復回数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1463,
+        "lastLine": 1463
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "PassGroup",
+      "propertyType": "System.Boolean[]",
+      "japaneseName": "非衝突グループ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "Pins",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Pmx.IPXVertex>",
+      "japaneseName": "Pin頂点リスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "RandomizeConstraints",
+      "propertyType": "System.Boolean",
+      "japaneseName": "リンク交雑",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SHR",
+      "propertyType": "System.Single",
+      "japaneseName": "ソフトボディ接触の硬さ",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1450,
+        "lastLine": 1450
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SKHR_CL",
+      "propertyType": "System.Single",
+      "japaneseName": "クラスタのソフトボディ対運動体の硬さ",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1455,
+        "lastLine": 1455
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SK_SPLT_CL",
+      "propertyType": "System.Single",
+      "japaneseName": "クラスタのソフトボディ対運動体の力積分配",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "PMX仕様書 Lib/PMX仕様/PMX仕様.txt の1458行と1459行は、この2件にも剛体との対の説明を写していて区別が付かないので、メンバー名の SK・SS が硬さ側の SKHR_CL・SSHR_CL と対応することから名前を起こした。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SRHR_CL",
+      "propertyType": "System.Single",
+      "japaneseName": "クラスタのソフトボディ対剛体の硬さ",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1454,
+        "lastLine": 1454
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SR_SPLT_CL",
+      "propertyType": "System.Single",
+      "japaneseName": "クラスタのソフトボディ対剛体の力積分配",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1457,
+        "lastLine": 1457
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SSHR_CL",
+      "propertyType": "System.Single",
+      "japaneseName": "クラスタのソフトボディ対ソフトボディの硬さ",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1456,
+        "lastLine": 1456
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SS_SPLT_CL",
+      "propertyType": "System.Single",
+      "japaneseName": "クラスタのソフトボディ対ソフトボディの力積分配",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "PMX仕様書 Lib/PMX仕様/PMX仕様.txt の1458行と1459行は、この2件にも剛体との対の説明を写していて区別が付かないので、メンバー名の SK・SS が硬さ側の SKHR_CL・SSHR_CL と対応することから名前を起こした。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "Shape",
+      "propertyType": "PEPlugin.Pmx.SoftBodyShape",
+      "japaneseName": "形状",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "TotalMass",
+      "propertyType": "System.Single",
+      "japaneseName": "総質量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "VC",
+      "propertyType": "System.Single",
+      "japaneseName": "体積保存係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1445,
+        "lastLine": 1445
+      },
+      "origin": "資料の綴り conversation は体積の係数の説明として文脈に合わず、綴りの近い conservation なら意味が通るので誤記と判断し、体積を保つ係数と読んで名付けた。誤記であることを示す記載は配布物の中に無く、この一文がその判断の記録である。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "VCF",
+      "propertyType": "System.Single",
+      "japaneseName": "Config系",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "VST",
+      "propertyType": "System.Single",
+      "japaneseName": "体積剛性係数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1470,
+        "lastLine": 1470
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "V_IT",
+      "propertyType": "System.Int32",
+      "japaneseName": "速度計算の反復回数",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1462,
+        "lastLine": 1462
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBodyAnchor",
+      "memberName": "Body",
+      "propertyType": "PEPlugin.Pmx.IPXBody",
+      "japaneseName": "剛体",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBodyAnchor",
+      "memberName": "Near",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Nearモード",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBodyAnchor",
+      "memberName": "Vertex",
+      "propertyType": "PEPlugin.Pmx.IPXVertex",
+      "japaneseName": "対応頂点",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXUVMorphOffset",
+      "memberName": "Offset",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "UVオフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXUVMorphOffset",
+      "memberName": "Vertex",
+      "propertyType": "PEPlugin.Pmx.IPXVertex",
+      "japaneseName": "対象頂点",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Bone1",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "ウェイト関連ボーン1",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Bone2",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "ウェイト関連ボーン2",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Bone3",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "ウェイト関連ボーン3",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Bone4",
+      "propertyType": "PEPlugin.Pmx.IPXBone",
+      "japaneseName": "ウェイト関連ボーン4",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "EdgeScale",
+      "propertyType": "System.Single",
+      "japaneseName": "エッジ倍率",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Normal",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "法線",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "座標",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "QDEF",
+      "propertyType": "System.Boolean",
+      "japaneseName": "QDEF状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "SDEF",
+      "propertyType": "System.Boolean",
+      "japaneseName": "SDEF状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "SDEF_C",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "SDEF-C:回転中心",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "SDEF_R0",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "SDEF-R0",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "SDEF_R1",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "SDEF-R1",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UV",
+      "propertyType": "PEPlugin.SDX.V2",
+      "japaneseName": "TexUV座標",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UVA1",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "追加UV1座標",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名の連番をそのまま名前へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UVA2",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "追加UV2座標",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名の連番をそのまま名前へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UVA3",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "追加UV3座標",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名の連番をそのまま名前へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UVA4",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "追加UV4座標",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名の連番をそのまま名前へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Weight1",
+      "propertyType": "System.Single",
+      "japaneseName": "ウェイト1",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Weight2",
+      "propertyType": "System.Single",
+      "japaneseName": "ウェイト2",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Weight3",
+      "propertyType": "System.Single",
+      "japaneseName": "ウェイト3",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "Weight4",
+      "propertyType": "System.Single",
+      "japaneseName": "ウェイト4",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertexMorphOffset",
+      "memberName": "Offset",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "座標オフセット",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertexMorphOffset",
+      "memberName": "Vertex",
+      "propertyType": "PEPlugin.Pmx.IPXVertex",
+      "japaneseName": "対象頂点",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEBaseWindowConnector",
+      "memberName": "Location",
+      "propertyType": "System.Drawing.Point",
+      "japaneseName": "ウィンドウ表示位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEBaseWindowConnector",
+      "memberName": "Visible",
+      "propertyType": "System.Boolean",
+      "japaneseName": "表示状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "BodyVisible",
+      "propertyType": "System.Boolean[]",
+      "japaneseName": "個別剛体の表示状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "CameraPosition",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "視点位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "CameraRotateCenter",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "視点(回転中心)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "CameraTarget",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "視点対象",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "CameraUpVector",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "視点(上方向)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "EnableCameraVmdView",
+      "propertyType": "System.Boolean",
+      "japaneseName": "VMDViewのカメラ／照明有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "EnableHandleEdit",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ハンドル編集の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "IsShaderMode",
+      "propertyType": "System.Boolean",
+      "japaneseName": "true プログラマブルシェーダ使用環境",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "IsVmdViewBootup",
+      "propertyType": "System.Boolean",
+      "japaneseName": "VMDViewの起動状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "SelectedBodyIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "選択対象剛体(Index)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "SelectedJointIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "選択対象Joint(Index)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewConnector",
+      "memberName": "ShowBoneVmdView",
+      "propertyType": "System.Boolean",
+      "japaneseName": "VMDViewのボーン表示状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "BoneItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "ボーンリストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "BoneSelected",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ボーン選択での同時ボーン選択",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "ExpressionItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "表情リストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "MaterialItemsCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "材質リストの要素数取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "RangeBegin",
+      "propertyType": "System.Int32",
+      "japaneseName": "範囲開始",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "RangeEnd",
+      "propertyType": "System.Int32",
+      "japaneseName": "範囲終了",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "SelectObject",
+      "propertyType": "PEPlugin.View.PartsSelectObject",
+      "japaneseName": "表示対象",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "SelectedBoneIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "ボーンリストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "SelectedExpressionIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "表情リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "SelectedMaterialIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "材質リストの選択Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
+      "memberName": "SelectedPartsVisible",
+      "propertyType": "System.Boolean",
+      "japaneseName": "材質選択での個別パーツ表示ON／OFF",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPESizableWindowConnector",
+      "memberName": "Size",
+      "propertyType": "System.Drawing.Size",
+      "japaneseName": "ウィンドウサイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPESizableWindowConnector",
+      "memberName": "WindowState",
+      "propertyType": "System.Windows.Forms.FormWindowState",
+      "japaneseName": "ウィンドウの表示状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPETransformViewConnector",
+      "memberName": "BoneRotate_XYZ",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "ボーン回転 - 値指定(XYZ)のみ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPETransformViewConnector",
+      "memberName": "BoneScale_XYZ",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "ボーンスケール - 値指定(XYZ)のみ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPETransformViewConnector",
+      "memberName": "BoneTranslate_XYZ",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "ボーン移動 - 値指定(XYZ)のみ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPETransformViewConnector",
+      "memberName": "MorphChecker",
+      "propertyType": "System.Boolean",
+      "japaneseName": "個別モーフ確認",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPETransformViewConnector",
+      "memberName": "MorphValue",
+      "propertyType": "System.Single",
+      "japaneseName": "モーフ値(設定時に変形状態を更新)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPETransformViewConnector",
+      "memberName": "SelectedBoneIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "選択ボーンIndex",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPETransformViewConnector",
+      "memberName": "SelectedMorphIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "選択モーフIndex",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "CenterOrigin",
+      "propertyType": "System.Boolean",
+      "japaneseName": "重心座標中心",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "CenterValue",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "値指定 中心座標",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "ControlYDirection",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Y軸縦方向操作(Y軸縦チェック)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "EditObject",
+      "propertyType": "PEPlugin.View.VertexEditObject",
+      "japaneseName": "編集対象(設定不可)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "MirrorMode",
+      "propertyType": "System.Boolean",
+      "japaneseName": "鏡像編集モード",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "MoveNormalAxisValue",
+      "propertyType": "System.Single",
+      "japaneseName": "値指定 法線軸移動量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "MoveOffset",
+      "propertyType": "System.Single",
+      "japaneseName": "移動単位量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "MoveValue",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "値指定 移動量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "NormalAxisMoveOffset",
+      "propertyType": "System.Single",
+      "japaneseName": "法線軸移動単位量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "NormalControlXDirection",
+      "propertyType": "System.Boolean",
+      "japaneseName": "法線でのX軸縦方向操作(X軸縦チェック)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "RotateNormalOffset",
+      "propertyType": "System.Single",
+      "japaneseName": "法線回転単位量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "RotateNormalValue",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "値指定 法線回転量(deg)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "RotateOffset",
+      "propertyType": "System.Single",
+      "japaneseName": "回転単位量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "RotateValue",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "値指定 回転量(deg)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "ScaleOffset",
+      "propertyType": "System.Single",
+      "japaneseName": "スケール単位量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEVertexEditConnector",
+      "memberName": "ScaleValue",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "値指定 スケール量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "AAType",
+      "propertyType": "PEPlugin.View.AntiAliasingType",
+      "japaneseName": "アンチエイリアス(環境によっては機能しません)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "AmbientColor",
+      "propertyType": "System.Drawing.Color",
+      "japaneseName": "環境色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "BackColor",
+      "propertyType": "System.Drawing.Color",
+      "japaneseName": "背景色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "ColorBlending",
+      "propertyType": "System.Boolean",
+      "japaneseName": "調色形式 true:MMD風 false:DirectX形式",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Edge",
+      "propertyType": "System.Boolean",
+      "japaneseName": "エッジの表示／非表示(環境によっては機能しません)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "EdgeSize",
+      "propertyType": "System.Single",
+      "japaneseName": "エッジサイズ(環境によっては機能しません)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "FillMode",
+      "propertyType": "PEPlugin.View.FillMode",
+      "japaneseName": "塗りつぶし形式",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "JointPointSize",
+      "propertyType": "System.Single",
+      "japaneseName": "Joint表示サイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "LightColor",
+      "propertyType": "System.Drawing.Color",
+      "japaneseName": "照明色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "LightDirection",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "照明方向",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "ModelSize",
+      "propertyType": "System.Single",
+      "japaneseName": "モデルの表示サイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "NonWeightingVertexColor",
+      "propertyType": "System.Drawing.Color",
+      "japaneseName": "比ウェイト頂点色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "NormalColor",
+      "propertyType": "System.Drawing.Color",
+      "japaneseName": "法線表示色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "NormalLength",
+      "propertyType": "System.Single",
+      "japaneseName": "法線表示サイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "OnlyWeighting",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ウェイトMAP表示-影響頂点のみ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Perspective",
+      "propertyType": "System.Single",
+      "japaneseName": "パース",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "SelectedNormalColor",
+      "propertyType": "System.Drawing.Color",
+      "japaneseName": "選択法線表示色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "SelectedTabPage",
+      "propertyType": "System.Int32",
+      "japaneseName": "選択表示中のタブIndex",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "SelectedVertexPointColor",
+      "propertyType": "System.Drawing.Color",
+      "japaneseName": "選択頂点ポイント表示色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "ToonType",
+      "propertyType": "PEPlugin.View.ToonType",
+      "japaneseName": "Toon形式(環境によっては機能しません)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "VertexPointColor",
+      "propertyType": "System.Drawing.Color",
+      "japaneseName": "頂点ポイント表示色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "VertexPointSize",
+      "propertyType": "System.Single",
+      "japaneseName": "頂点ポイント表示サイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_Body",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-剛体(線)",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "readme.txt",
+        "firstLine": 1530,
+        "lastLine": 1530
+      },
+      "origin": "配布物のreadmeが表示設定の項目として線の表示と形の表示を並べているので、記載が同じ2件をその別で分けた。"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_Bone",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-ボーン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_Joint",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-Joint",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_Normal",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-法線",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_SelectedFace",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-選択面",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_SelectedNormal",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-選択法線",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_SelectedVertex",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-選択頂点",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_SolidBody",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-剛体(形)",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "readme.txt",
+        "firstLine": 1531,
+        "lastLine": 1531
+      },
+      "origin": "配布物のreadmeが表示設定の項目として線の表示と形の表示を並べているので、記載が同じ2件をその別で分けた。"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_UnvisibleVertex",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-非表示頂点",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_Vertex",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-頂点",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_WeightMap",
+      "propertyType": "System.Boolean",
+      "japaneseName": "追加表示-ウェイトMAP表示",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEWeightEditConnector",
+      "memberName": "DrawSize",
+      "propertyType": "System.Int32",
+      "japaneseName": "描画サイズ(半径のポイントサイズ)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEWeightEditConnector",
+      "memberName": "Drawing",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ウェイト描画状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEWeightEditConnector",
+      "memberName": "IsGradation",
+      "propertyType": "System.Boolean",
+      "japaneseName": "true:グラデーション false:ベタ塗り",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEWeightEditConnector",
+      "memberName": "Spray",
+      "propertyType": "System.Boolean",
+      "japaneseName": "スプレーモード",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEWeightEditConnector",
+      "memberName": "SprayInterval",
+      "propertyType": "System.Int32",
+      "japaneseName": "スプレー間隔",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEWeightEditConnector",
+      "memberName": "SprayOffset",
+      "propertyType": "System.Boolean",
+      "japaneseName": "スプレーモード true:加算 false:減算",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEWeightEditConnector",
+      "memberName": "SprayPower",
+      "propertyType": "System.Int32",
+      "japaneseName": "スプレー強度(1～30)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEWeightEditConnector",
+      "memberName": "WeightValue",
+      "propertyType": "System.Int32",
+      "japaneseName": "描画ウェイト値",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmd",
+      "memberName": "Bone",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdBoneKey>",
+      "japaneseName": "ボーンキーリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmd",
+      "memberName": "Camera",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdCameraKey>",
+      "japaneseName": "カメラキーリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmd",
+      "memberName": "FilePath",
+      "propertyType": "System.String",
+      "japaneseName": "VMDファイルパス(FromFile()で読み込む場合自動設定:各プレビュー処理に使用)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmd",
+      "memberName": "Light",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdLightKey>",
+      "japaneseName": "照明キーリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmd",
+      "memberName": "ModelName",
+      "propertyType": "System.String",
+      "japaneseName": "モデル名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmd",
+      "memberName": "Morph",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdMorphKey>",
+      "japaneseName": "モーフ(表情)キーリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmd",
+      "memberName": "SelfShadow",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdSelfShadowKey>",
+      "japaneseName": "セルフ影キーリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmd",
+      "memberName": "VisibleIK",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdVisibleIKKey>",
+      "japaneseName": "表示／IKキーリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdBoneKey",
+      "memberName": "BoneIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "ボーンIndex",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdBoneKey",
+      "memberName": "IplR",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:回転",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdBoneKey",
+      "memberName": "IplX",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:移動X",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdBoneKey",
+      "memberName": "IplY",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:移動Y",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdBoneKey",
+      "memberName": "IplZ",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:移動Z",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdBoneKey",
+      "memberName": "PhysicsOff",
+      "propertyType": "System.Boolean",
+      "japaneseName": "物理OFF",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdBoneKey",
+      "memberName": "Rotation",
+      "propertyType": "PEPlugin.Pmd.IPEQuaternion",
+      "japaneseName": "回転量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdBoneKey",
+      "memberName": "Translation",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "移動量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "Angle",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "カメラ方向(X/Y/Z-3軸制御 rad)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "Distance",
+      "propertyType": "System.Single",
+      "japaneseName": "視点までの距離(MMDの表示とは符号が逆になるので注意)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "FOV",
+      "propertyType": "System.Int32",
+      "japaneseName": "視野角(X角 deg)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "IplD",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:距離",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "IplFOV",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:視野角",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "IplR",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:回転",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "IplX",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:移動X",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "IplY",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:移動Y",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "IplZ",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIPL",
+      "japaneseName": "補間:移動Z",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "IsPers",
+      "propertyType": "System.Boolean",
+      "japaneseName": "パースON／OFF",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdCameraKey",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "注視点位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdFrameKey",
+      "memberName": "FrameIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "フレームIndex",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdIKEnable",
+      "memberName": "Enable",
+      "propertyType": "System.Boolean",
+      "japaneseName": "IK有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdIKEnable",
+      "memberName": "IKBoneIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "IKボーンIndex",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdIPL",
+      "memberName": "X1",
+      "propertyType": "System.Int32",
+      "japaneseName": "左下X(0-127)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdIPL",
+      "memberName": "X2",
+      "propertyType": "System.Int32",
+      "japaneseName": "右上X(0-127)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdIPL",
+      "memberName": "Y1",
+      "propertyType": "System.Int32",
+      "japaneseName": "左下Y(0-127)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdIPL",
+      "memberName": "Y2",
+      "propertyType": "System.Int32",
+      "japaneseName": "右上Y(0-127)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdLightKey",
+      "memberName": "Color",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "照明色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdLightKey",
+      "memberName": "Direction",
+      "propertyType": "PEPlugin.Pmd.IPEVector3",
+      "japaneseName": "照明方向",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdMorphKey",
+      "memberName": "MorphIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "モーフ(表情)Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdMorphKey",
+      "memberName": "Value",
+      "propertyType": "System.Single",
+      "japaneseName": "変化量 0～1",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdSelfShadowKey",
+      "memberName": "Distance",
+      "propertyType": "System.Single",
+      "japaneseName": "距離 - 0.1 - (d * 0.00001) ?",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdSelfShadowKey",
+      "memberName": "Mode",
+      "propertyType": "System.Int32",
+      "japaneseName": "モード - 0:OFF 1:Mode1 2:Mode2",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdVisibleIKKey",
+      "memberName": "IK",
+      "propertyType": "PEPlugin.Vmd.IPEVmdIKEnable[]",
+      "japaneseName": "IK有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vmd.IPEVmdVisibleIKKey",
+      "memberName": "Visible",
+      "propertyType": "System.Boolean",
+      "japaneseName": "表示",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVme",
+      "memberName": "EnablePmd",
+      "propertyType": "System.Boolean",
+      "japaneseName": "有効なPMDから初期化した場合true",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVme",
+      "memberName": "EnablePmx",
+      "propertyType": "System.Boolean",
+      "japaneseName": "有効なPMXから初期化した場合true",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVme",
+      "memberName": "GroupBone",
+      "propertyType": "PEPlugin.Vme.IPEVmeGroupBone",
+      "japaneseName": "ボーンのグループ参照(全ボーン:内部で自動作成)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVme",
+      "memberName": "GroupMorph",
+      "propertyType": "PEPlugin.Vme.IPEVmeGroupMorph",
+      "japaneseName": "モーフのグループ参照(全モーフ:内部で自動作成)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVme",
+      "memberName": "LastFrame",
+      "propertyType": "System.Int32",
+      "japaneseName": "登録されている最後のフレームを取得",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVme",
+      "memberName": "Pmd",
+      "propertyType": "PEPlugin.Pmd.IPEPmd",
+      "japaneseName": "対象PMD(PMDから初期した場合のみ有効)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVme",
+      "memberName": "Pmx",
+      "propertyType": "PEPlugin.Pmx.IPXPmx",
+      "japaneseName": "対象PMX(PMXから初期した場合のみ有効)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "BS",
+      "propertyType": "PEPlugin.Vme.IPEVmeBoneState",
+      "japaneseName": "現在のボーン状態(短絡)(state as IPEVmeBoneState)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "D",
+      "propertyType": "PEPlugin.Vme.IPEVmeDirectionEventOperator",
+      "japaneseName": "方向イベント設定(Direction短絡 get)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "Direction",
+      "propertyType": "PEPlugin.Vme.IPEVmeDirectionEventOperator",
+      "japaneseName": "方向イベント設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "InitialPosition",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "初期位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "IsTransformed",
+      "propertyType": "System.Boolean",
+      "japaneseName": "true:変形対象ボーン",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "P",
+      "propertyType": "PEPlugin.Vme.IPEVmePositionEventOperator",
+      "japaneseName": "位置イベント設定(Position短絡 get)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.Vme.IPEVmePositionEventOperator",
+      "japaneseName": "位置イベント設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "R",
+      "propertyType": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator",
+      "japaneseName": "回転量イベント設定(Rotate短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "Rotate",
+      "propertyType": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator",
+      "japaneseName": "回転量イベント設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "S",
+      "propertyType": "PEPlugin.Vme.IPEVmeScalingEventOperator",
+      "japaneseName": "スケールイベント設定(Scale短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "Scale",
+      "propertyType": "PEPlugin.Vme.IPEVmeScalingEventOperator",
+      "japaneseName": "スケールイベント設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "T",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
+      "japaneseName": "移動量イベント設定(Translate短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBone",
+      "memberName": "Translate",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
+      "japaneseName": "移動量イベント設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneResult",
+      "memberName": "R",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "回転量(Rotation短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneResult",
+      "memberName": "Rotation",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "回転量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneResult",
+      "memberName": "S",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "スケール(Scale短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneResult",
+      "memberName": "Scale",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "スケール",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneResult",
+      "memberName": "T",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "移動量(Translation短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneResult",
+      "memberName": "Translation",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "移動量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "D",
+      "propertyType": "PEPlugin.Vme.IPEVmeDirection",
+      "japaneseName": "方向(Direction短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "Direction",
+      "propertyType": "PEPlugin.Vme.IPEVmeDirection",
+      "japaneseName": "方向",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "P",
+      "propertyType": "PEPlugin.Vme.IPEVmePosition",
+      "japaneseName": "位置(Position短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.Vme.IPEVmePosition",
+      "japaneseName": "位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "R",
+      "propertyType": "PEPlugin.Vme.IPEVmeQuaternionValue",
+      "japaneseName": "回転量(Rotation短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "Rotation",
+      "propertyType": "PEPlugin.Vme.IPEVmeQuaternionValue",
+      "japaneseName": "回転量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "S",
+      "propertyType": "PEPlugin.Vme.IPEVmeScale",
+      "japaneseName": "スケール(Scale短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "Scale",
+      "propertyType": "PEPlugin.Vme.IPEVmeScale",
+      "japaneseName": "スケール",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "T",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "japaneseName": "移動量(Translation短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeBoneState",
+      "memberName": "Translation",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "japaneseName": "移動量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCamera",
+      "memberName": "Enable",
+      "propertyType": "System.Boolean",
+      "japaneseName": "カメラの有効状態(登録イベントがあればtrue)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCamera",
+      "memberName": "FOV",
+      "propertyType": "PEPlugin.Vme.IPEVmeSingleValueElement",
+      "japaneseName": "FOV(パース角度)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCamera",
+      "memberName": "Pos",
+      "propertyType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "japaneseName": "カメラ位置(Position短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCamera",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "japaneseName": "カメラ位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCamera",
+      "memberName": "Target",
+      "propertyType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "japaneseName": "カメラ注視点",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCamera",
+      "memberName": "Tgt",
+      "propertyType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "japaneseName": "カメラ注視点(Target短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCamera",
+      "memberName": "Up",
+      "propertyType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "japaneseName": "カメラの上方向位置(カメラ位置に関係なく原点中心での方向指定)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "memberName": "CS",
+      "propertyType": "PEPlugin.Vme.IPEVmeCameraState",
+      "japaneseName": "現在のカメラ位置状態(短絡)(state as IPEVmeCameraState)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "memberName": "InitialPosition",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "初期位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "memberName": "P",
+      "propertyType": "PEPlugin.Vme.IPEVmePositionEventOperator",
+      "japaneseName": "位置イベント設定(Position短絡 get)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.Vme.IPEVmePositionEventOperator",
+      "japaneseName": "位置イベント設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "memberName": "T",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
+      "japaneseName": "移動量イベント設定(Translate短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraPosition",
+      "memberName": "Translate",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
+      "japaneseName": "移動量イベント設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraResult",
+      "memberName": "FOV",
+      "propertyType": "System.Single",
+      "japaneseName": "FOV(パース角度)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraResult",
+      "memberName": "Pos",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "カメラ位置(Position短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraResult",
+      "memberName": "Position",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "カメラ位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraResult",
+      "memberName": "Target",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "カメラ注視点",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraResult",
+      "memberName": "Tgt",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "カメラ注視点(Target短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraResult",
+      "memberName": "Up",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "上方向ベクトル",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraState",
+      "memberName": "P",
+      "propertyType": "PEPlugin.Vme.IPEVmePosition",
+      "japaneseName": "位置(Position短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraState",
+      "memberName": "Position",
+      "propertyType": "PEPlugin.Vme.IPEVmePosition",
+      "japaneseName": "位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraState",
+      "memberName": "T",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "japaneseName": "移動量(Translation短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeCameraState",
+      "memberName": "Translation",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "japaneseName": "移動量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeDirection",
+      "memberName": "D",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "方向(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeDirection",
+      "memberName": "Direction",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "方向",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeElement",
+      "memberName": "Enable",
+      "propertyType": "System.Boolean",
+      "japaneseName": "有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeElement",
+      "memberName": "Extern",
+      "propertyType": "PEPlugin.Vme.IPEVmeObject",
+      "japaneseName": "VMDオブジェクトの外部参照(呼び出し先からの書き換えによりデータ構造を破壊することも可能なので使用には注意)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeElement",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "要素名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeEventState",
+      "memberName": "Extern",
+      "propertyType": "PEPlugin.Vme.IPEVmeObject",
+      "japaneseName": "VME要素の外部参照(呼び出し先からの書き換えによりデータ構造を破壊することも可能なので注意)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeEventState",
+      "memberName": "Frame",
+      "propertyType": "System.Int32",
+      "japaneseName": "呼び出し時のフレーム",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeEventState",
+      "memberName": "StartFrame",
+      "propertyType": "System.Int32",
+      "japaneseName": "開始フレーム",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeFrameEvent",
+      "memberName": "EventCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "登録済みイベント数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeFrameEvent",
+      "memberName": "IsRunning",
+      "propertyType": "System.Boolean",
+      "japaneseName": "イベント実行中",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeFrameEvent",
+      "memberName": "LastFrame",
+      "propertyType": "System.Int32",
+      "japaneseName": "登録イベントの最終フレーム",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeGroup",
+      "memberName": "GroupCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "グループの要素数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLight",
+      "memberName": "C",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
+      "japaneseName": "色ト設定(Color短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLight",
+      "memberName": "Color",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
+      "japaneseName": "色設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLight",
+      "memberName": "D",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
+      "japaneseName": "方向設定(Direction短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLight",
+      "memberName": "Direction",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
+      "japaneseName": "方向設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLight",
+      "memberName": "LS",
+      "propertyType": "PEPlugin.Vme.IPEVmeLightState",
+      "japaneseName": "現在の照明状態(短絡)(state as IPEVmeLightState)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLightResult",
+      "memberName": "C",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "色(Color短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLightResult",
+      "memberName": "Color",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLightResult",
+      "memberName": "D",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "方向(Direction短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLightResult",
+      "memberName": "Direction",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "方向",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLightState",
+      "memberName": "C",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "japaneseName": "色(Color短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLightState",
+      "memberName": "Color",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "japaneseName": "色",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLightState",
+      "memberName": "D",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "japaneseName": "方向(Direction短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeLightState",
+      "memberName": "Direction",
+      "propertyType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "japaneseName": "方向",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeMorphResult",
+      "memberName": "V",
+      "propertyType": "System.Single",
+      "japaneseName": "モーフ量(Value短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeMorphResult",
+      "memberName": "Value",
+      "propertyType": "System.Single",
+      "japaneseName": "モーフ量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeObject",
+      "memberName": "Bone",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Vme.IPEVmeBone>",
+      "japaneseName": "ボーンリスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeObject",
+      "memberName": "Camera",
+      "propertyType": "PEPlugin.Vme.IPEVmeCamera",
+      "japaneseName": "カメラ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeObject",
+      "memberName": "Light",
+      "propertyType": "PEPlugin.Vme.IPEVmeLight",
+      "japaneseName": "照明",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeObject",
+      "memberName": "Morph",
+      "propertyType": "System.Collections.Generic.IList<PEPlugin.Vme.IPEVmeSingleValueElement>",
+      "japaneseName": "モーフ(表情)リスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePath",
+      "memberName": "PathType",
+      "propertyType": "PEPlugin.Vme.PEVmePathType",
+      "japaneseName": "空間パスの補間タイプ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePath",
+      "memberName": "RangeMax",
+      "propertyType": "System.Double",
+      "japaneseName": "距離範囲の最大値",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePath",
+      "memberName": "RangeMin",
+      "propertyType": "System.Double",
+      "japaneseName": "距離範囲の最小値(0固定)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePosition",
+      "memberName": "IP",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "初期位置(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePosition",
+      "memberName": "InitialPosition",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "初期位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePosition",
+      "memberName": "P",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "位置(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePosition",
+      "memberName": "Position",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePrimaryValue<SlimDX.Quaternion>",
+      "memberName": "PV",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "代表値(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePrimaryValue<SlimDX.Quaternion>",
+      "memberName": "PrimaryValue",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "代表値",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePrimaryValue<SlimDX.Vector3>",
+      "memberName": "PV",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "代表値(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePrimaryValue<SlimDX.Vector3>",
+      "memberName": "PrimaryValue",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "代表値",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePrimaryValue<System.Single>",
+      "memberName": "PV",
+      "propertyType": "System.Single",
+      "japaneseName": "代表値(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePrimaryValue<System.Single>",
+      "memberName": "PrimaryValue",
+      "propertyType": "System.Single",
+      "japaneseName": "代表値",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePrimaryValue<TValue>",
+      "memberName": "PV",
+      "propertyType": "TValue",
+      "japaneseName": "代表値(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmePrimaryValue<TValue>",
+      "memberName": "PrimaryValue",
+      "propertyType": "TValue",
+      "japaneseName": "代表値",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeQuaternionValue",
+      "memberName": "A",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "回転量-加速度(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeQuaternionValue",
+      "memberName": "Acceleration",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "回転量-加速度",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeQuaternionValue",
+      "memberName": "V",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "回転量-速度(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeQuaternionValue",
+      "memberName": "Velocity",
+      "propertyType": "SlimDX.Quaternion",
+      "japaneseName": "回転量-速度",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeResult",
+      "memberName": "BoneCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "ボーン数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeResult",
+      "memberName": "EnableBone",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ボーン結果の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeResult",
+      "memberName": "EnableCamera",
+      "propertyType": "System.Boolean",
+      "japaneseName": "カメラ結果の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeResult",
+      "memberName": "EnableLight",
+      "propertyType": "System.Boolean",
+      "japaneseName": "照明結果の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeResult",
+      "memberName": "EnableMorph",
+      "propertyType": "System.Boolean",
+      "japaneseName": "モーフ結果の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeResult",
+      "memberName": "FrameCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "記録フレーム数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeResult",
+      "memberName": "MorphCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "モーフ数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeResult",
+      "memberName": "StartFrame",
+      "propertyType": "System.Int32",
+      "japaneseName": "開始フレーム",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeScale",
+      "memberName": "GS",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "グローバルスケール(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeScale",
+      "memberName": "GlobalScale",
+      "propertyType": "SlimDX.Vector3",
+      "japaneseName": "グローバルスケール",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValue",
+      "memberName": "A",
+      "propertyType": "System.Single",
+      "japaneseName": "加速度(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValue",
+      "memberName": "Acceleration",
+      "propertyType": "System.Single",
+      "japaneseName": "加速度",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValue",
+      "memberName": "V",
+      "propertyType": "System.Single",
+      "japaneseName": "速度(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValue",
+      "memberName": "Velocity",
+      "propertyType": "System.Single",
+      "japaneseName": "速度",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValueElement",
+      "memberName": "V",
+      "propertyType": "PEPlugin.Vme.IPEVmeSingleValueEventOperator",
+      "japaneseName": "イベント設定(Value短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValueElement",
+      "memberName": "VS",
+      "propertyType": "PEPlugin.Vme.IPEVmeSingleValueState",
+      "japaneseName": "現在の値状態(短絡)(state as IPEVmeValueState)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValueElement",
+      "memberName": "Value",
+      "propertyType": "PEPlugin.Vme.IPEVmeSingleValueEventOperator",
+      "japaneseName": "イベント設定",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValueState",
+      "memberName": "V",
+      "propertyType": "PEPlugin.Vme.IPEVmeSingleValue",
+      "japaneseName": "値(Value短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeSingleValueState",
+      "memberName": "Value",
+      "propertyType": "PEPlugin.Vme.IPEVmeSingleValue",
+      "japaneseName": "値",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "memberName": "A",
+      "propertyType": "SlimDX.Matrix",
+      "japaneseName": "加速度(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "memberName": "Acceleration",
+      "propertyType": "SlimDX.Matrix",
+      "japaneseName": "加速度",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "memberName": "V",
+      "propertyType": "SlimDX.Matrix",
+      "japaneseName": "速度(短絡)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.IPEVmeVectorValue",
+      "memberName": "Velocity",
+      "propertyType": "SlimDX.Matrix",
+      "japaneseName": "速度",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.PEVmePreviewOption",
+      "memberName": "BeginFrame",
+      "propertyType": "System.Int32",
+      "japaneseName": "開始フレーム",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.PEVmePreviewOption",
+      "memberName": "EndFrame",
+      "propertyType": "System.Int32",
+      "japaneseName": "終了フレーム",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.Vme.PEVmePreviewOption",
+      "memberName": "ShowBone",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ボーン表示",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag",
+      "memberName": "StX",
+      "propertyType": "System.Int32",
+      "japaneseName": "ドラッグ開始位置 : X",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag",
+      "memberName": "StY",
+      "propertyType": "System.Int32",
+      "japaneseName": "ドラッグ開始位置 : Y",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag",
+      "memberName": "VDrag",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "仮想軸上での移動量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewMouse",
+      "memberName": "VPoint",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "仮想座標",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Body",
+      "propertyType": "System.Boolean",
+      "japaneseName": "剛体が変更対象か",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Bone",
+      "propertyType": "System.Boolean",
+      "japaneseName": "ボーンが変更対象か",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Face",
+      "propertyType": "System.Boolean",
+      "japaneseName": "面が変更対象か",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Joint",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Jointが変更対象か",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Vertex",
+      "propertyType": "System.Boolean",
+      "japaneseName": "頂点が変更対象か",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXCPluginRunArgs",
+      "memberName": "Connector",
+      "propertyType": "PXCPlugin.IPXCPluginConnector",
+      "japaneseName": "接続インターフェイス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXCPluginRunArgs",
+      "memberName": "ModulePath",
+      "propertyType": "System.String",
+      "japaneseName": "プラグインDLLパス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXSystemControl",
+      "memberName": "CPluginCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "登録されているCプラグイン数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXSystemControl",
+      "memberName": "PEPluginCount",
+      "propertyType": "System.Int32",
+      "japaneseName": "登録されているPEプラグイン数",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "CameraPosition",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "カメラ位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "CameraRotateCenter",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "視点(回転中心)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "CameraTarget",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "カメラ対象",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "CameraUpVector",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "カメラ上方向",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "ClientSize",
+      "propertyType": "System.Drawing.Size",
+      "japaneseName": "画面サイズ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "EnableVAxis",
+      "propertyType": "System.Boolean",
+      "japaneseName": "仮想軸有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "ProjectionMatrix",
+      "propertyType": "PEPlugin.SDX.M",
+      "japaneseName": "Projection行列",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "ScreenPosition",
+      "propertyType": "System.Drawing.Point",
+      "japaneseName": "View画面のスクリーン座標",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "VAxisOrigin",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "仮想軸中心",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "VCursorPosition",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "仮想カーソル位置",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "ViewAxis",
+      "propertyType": "PEPlugin.SDX.V3[]",
+      "japaneseName": "スクリーン軸取得(X/Y/Z)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "ViewMatrix",
+      "propertyType": "PEPlugin.SDX.M",
+      "japaneseName": "View行列",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.IPXViewControl",
+      "memberName": "Viewport",
+      "propertyType": "System.Drawing.Size",
+      "japaneseName": "Viewport(サイズのみ)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.PXCBridge",
+      "memberName": "Builder",
+      "propertyType": "PEPlugin.IPXPmxBuilder",
+      "japaneseName": "PMXビルダ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.PXCBridge",
+      "memberName": "PrimitiveBuilder",
+      "propertyType": "PXCPlugin.IPXCPrimitiveBuilder",
+      "japaneseName": "プリミティブ作成",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.PXPluginInfo",
+      "memberName": "AssemblyPath",
+      "propertyType": "System.String",
+      "japaneseName": "アセンブリ(DLL)ファイルパス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.PXPluginInfo",
+      "memberName": "ClassName",
+      "propertyType": "System.String",
+      "japaneseName": "クラス名称",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.PXPluginInfo",
+      "memberName": "Description",
+      "propertyType": "System.String",
+      "japaneseName": "説明",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.PXPluginInfo",
+      "memberName": "MenuText",
+      "propertyType": "System.String",
+      "japaneseName": "メニュー登録テキスト",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.PXPluginInfo",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "プラグイン名称",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.PXPluginInfo",
+      "memberName": "Version",
+      "propertyType": "System.String",
+      "japaneseName": "バージョン情報",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.IPXUIModel",
+      "memberName": "Depth",
+      "propertyType": "System.Boolean",
+      "japaneseName": "深度(Z)の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.IPXUIModel",
+      "memberName": "DrawMode",
+      "propertyType": "System.Int32",
+      "japaneseName": "描画モード",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.IPXUIModel",
+      "memberName": "FixedDrawScale",
+      "propertyType": "System.Boolean",
+      "japaneseName": "カメラからの距離に関わらず一定の大きさで描画(パースOFFとは異なります)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.IPXUIModel",
+      "memberName": "Light",
+      "propertyType": "System.Boolean",
+      "japaneseName": "照明の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.IPXUIModel",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "登録名称",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.IPXUIModel",
+      "memberName": "TopMost",
+      "propertyType": "System.Boolean",
+      "japaneseName": "最前面描画",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.IPXUIModel",
+      "memberName": "Visible",
+      "propertyType": "System.Boolean",
+      "japaneseName": "表示状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "AmbientA",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "環境色(変化前)",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "AmbientB",
+      "propertyType": "PEPlugin.SDX.V3",
+      "japaneseName": "環境色(変化後)",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "DiffuseA",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "拡散色(変化前)",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "DiffuseB",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "拡散色(変化後)",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "EnableAmbient",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Ambien色の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "EnableDiffuse",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Diffuse色の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "EnableSpecular",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Specular色の有効状態",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "MaterialIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "材質Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "SpecularA",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "反射色(変化前)",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "SpecularB",
+      "propertyType": "PEPlugin.SDX.V4",
+      "japaneseName": "反射色(変化後)",
+      "decision": "authored",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+TextControl",
+      "memberName": "Font",
+      "propertyType": "System.Drawing.Font",
+      "japaneseName": "フォント",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+TextControl",
+      "memberName": "Image",
+      "propertyType": "System.Drawing.Bitmap",
+      "japaneseName": "Bitmapテクスチャデータ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+TextControl",
+      "memberName": "MaterialIndex",
+      "propertyType": "System.Int32",
+      "japaneseName": "材質Index",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+TextControl",
+      "memberName": "UIModel",
+      "propertyType": "PXCPlugin.UIModel.IPXUIModel",
+      "japaneseName": "UIモデル",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Alt",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Altキーの押下",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Control",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Ctrlキーの押下",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Handled",
+      "propertyType": "System.Boolean",
+      "japaneseName": "イベントの処理済み",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "KeyCode",
+      "propertyType": "System.Windows.Forms.Keys",
+      "japaneseName": "キーコード",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "KeyData",
+      "propertyType": "System.Windows.Forms.Keys",
+      "japaneseName": "修飾キーを含むキーコード",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名と型だけでは対象が定まらないので、宣言型がキー入力とマウス操作のイベント引数であることを踏まえ、キーの値に修飾キーを含む側と含まない側があること・マウスの変化量がホイールの回転であること・ボタンが押されたボタンを指すことを当てた。これらを裏付ける記載は配布物の中に無く、この一文がその判断の記録である。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "KeyValue",
+      "propertyType": "System.Int32",
+      "japaneseName": "キーコードの整数値",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Modifiers",
+      "propertyType": "System.Windows.Forms.Keys",
+      "japaneseName": "修飾キー",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Shift",
+      "propertyType": "System.Boolean",
+      "japaneseName": "Shiftキーの押下",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "SuppressKeyPress",
+      "propertyType": "System.Boolean",
+      "japaneseName": "キー入力の抑止",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Button",
+      "propertyType": "System.Windows.Forms.MouseButtons",
+      "japaneseName": "押されたボタン",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名と型だけでは対象が定まらないので、宣言型がキー入力とマウス操作のイベント引数であることを踏まえ、キーの値に修飾キーを含む側と含まない側があること・マウスの変化量がホイールの回転であること・ボタンが押されたボタンを指すことを当てた。これらを裏付ける記載は配布物の中に無く、この一文がその判断の記録である。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Clicks",
+      "propertyType": "System.Int32",
+      "japaneseName": "クリック回数",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Delta",
+      "propertyType": "System.Int32",
+      "japaneseName": "ホイールの回転量",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名と型だけでは対象が定まらないので、宣言型がキー入力とマウス操作のイベント引数であることを踏まえ、キーの値に修飾キーを含む側と含まない側があること・マウスの変化量がホイールの回転であること・ボタンが押されたボタンを指すことを当てた。これらを裏付ける記載は配布物の中に無く、この一文がその判断の記録である。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Location",
+      "propertyType": "System.Drawing.Point",
+      "japaneseName": "カーソル位置",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "X",
+      "propertyType": "System.Int32",
+      "japaneseName": "カーソルのX座標",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Y",
+      "propertyType": "System.Int32",
+      "japaneseName": "カーソルのY座標",
+      "decision": "authored",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    }
+  ]
+}

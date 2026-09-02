@@ -18,6 +18,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void BuildsTheDocumentPath()
+        {
+            Assert.Equal(
+                Path.Combine(EditorDirectory, "Lib", "PEPlugin", "PEPlugin.XML"),
+                SdkAssemblyLocator.GetDocumentPath(EditorDirectory));
+        }
+
+        [Fact]
         public void OrdersProbeDirectoriesByPriority()
         {
             IList<string> directories = SdkAssemblyLocator.GetProbeDirectories(EditorDirectory);
@@ -63,6 +71,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void MissingInstallDirectoryThrows()
         {
             Assert.Throws<ArgumentNullException>(() => SdkAssemblyLocator.GetAssemblyPath(null));
+            Assert.Throws<ArgumentNullException>(() => SdkAssemblyLocator.GetDocumentPath(null));
             Assert.Throws<ArgumentNullException>(() => SdkAssemblyLocator.GetProbeDirectories(null));
             Assert.Throws<ArgumentNullException>(
                 () => SdkAssemblyLocator.FindDependency(null, new List<string>()));
