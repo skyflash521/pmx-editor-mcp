@@ -306,9 +306,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TheBaseTypesOfAReachedTypeAreIncluded()
+        public void TheBaseTypesOfAReachedTypeAreCandidates()
         {
-            ISet<string> reached = TypeRoleEvidence.ReachableWithBaseTypes(
+            ISet<string> reached = TypeRoleEvidence.ConnectorCandidates(
                 Records(
                     new[]
                     {
@@ -329,22 +329,51 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ARootWithoutMembersStopsTheWalkWithBaseTypesToo()
+        public void ATypeThatDeclaresOnlyStaticMembersIsACandidate()
+        {
+            ISet<string> reached = TypeRoleEvidence.ConnectorCandidates(
+                Records(
+                    new[] { Type(Root), Type("N.IHelper"), Type("N.IApart") },
+                    Property(Root, "Value", "System.Int32"),
+                    Static("N.IHelper", "Assist", "System.Int32"),
+                    Property("N.IApart", "Value", "System.Int32")),
+                new[] { Root });
+
+            Assert.Contains("N.IHelper", reached);
+            Assert.DoesNotContain("N.IApart", reached);
+        }
+
+        [Fact]
+        public void ATypeWithOneMemberThatIsNotStaticIsNotACandidate()
+        {
+            ISet<string> reached = TypeRoleEvidence.ConnectorCandidates(
+                Records(
+                    new[] { Type(Root), Type("N.IHelper") },
+                    Property(Root, "Value", "System.Int32"),
+                    Static("N.IHelper", "Assist", "System.Int32"),
+                    Property("N.IHelper", "Value", "System.Int32")),
+                new[] { Root });
+
+            Assert.DoesNotContain("N.IHelper", reached);
+        }
+
+        [Fact]
+        public void ARootWithoutMembersStopsTheCandidatesToo()
         {
             ArgumentException error = Assert.Throws<ArgumentException>(
-                () => TypeRoleEvidence.ReachableWithBaseTypes(
+                () => TypeRoleEvidence.ConnectorCandidates(
                     Inventory(Property(Root, "Value", "System.Int32")), new[] { "N.IAbsent" }));
 
             Assert.Contains("N.IAbsent", error.Message);
         }
 
         [Fact]
-        public void EveryArgumentOfTheWalkWithBaseTypesIsRequired()
+        public void EveryArgumentOfTheCandidatesIsRequired()
         {
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleEvidence.ReachableWithBaseTypes(null, new[] { Root }));
+                () => TypeRoleEvidence.ConnectorCandidates(null, new[] { Root }));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleEvidence.ReachableWithBaseTypes(Inventory(), null));
+                () => TypeRoleEvidence.ConnectorCandidates(Inventory(), null));
         }
 
         private static InventoryRecord Records(
@@ -378,6 +407,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static SignatureRecord Property(string declaringType, string memberName, string valueType)
         {
             return Signature(declaringType, MemberKind.Property, memberName, valueType, true);
+        }
+
+        private static SignatureRecord Static(string declaringType, string memberName, string valueType)
+        {
+            ParameterRecord[] parameters = new ParameterRecord[0];
+
+            return new SignatureRecord(
+                SignatureKeyBuilder.Build(declaringType, memberName, 0, parameters, valueType),
+                declaringType,
+                MemberKind.Method,
+                memberName,
+                true,
+                0,
+                parameters,
+                valueType,
+                false,
+                false,
+                OperationDirection.Read,
+                false);
         }
 
         private static SignatureRecord WriteOnly(string declaringType, string memberName, string valueType)

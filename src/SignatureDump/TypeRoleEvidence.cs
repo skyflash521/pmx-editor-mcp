@@ -69,11 +69,13 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 接続の根から辿り着ける型と、その基底型。基底型は自分では辿り着く先にならないが、辿り着ける
-        /// 型の実体はその基底型の実体でもあるので、ホストが常駐保持する側に立つ。根の扱いは
-        /// <see cref="ReachableFromRoots"/> と同じ。
+        /// コネクタ型になりうる型。呼び出し側が実体を用意せずに呼べる型がこれに当たり、次の3つから
+        /// なる。接続の根から辿り着ける型。その基底型——基底型は自分では辿り着く先にならないが、
+        /// 辿り着ける型の実体はその基底型の実体でもある。そして宣言するメンバーがすべて静的な型——
+        /// 実体を持たないので保持する先が要らない。根の扱いは <see cref="ReachableFromRoots"/> と
+        /// 同じ。
         /// </summary>
-        public static ISet<string> ReachableWithBaseTypes(
+        public static ISet<string> ConnectorCandidates(
             InventoryRecord inventory, IEnumerable<string> roots)
         {
             RequireInventory(inventory);
@@ -96,7 +98,18 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
+            types.UnionWith(StaticOnlyTypes(inventory));
+
             return types;
+        }
+
+        /// <summary>宣言するメンバーが1件以上あり、そのすべてが静的な型。</summary>
+        private static IEnumerable<string> StaticOnlyTypes(InventoryRecord inventory)
+        {
+            return inventory.Signatures
+                .GroupBy(s => TypeDefinitionName.Of(s.DeclaringType), StringComparer.Ordinal)
+                .Where(g => g.All(s => s.IsStatic))
+                .Select(g => g.Key);
         }
 
         /// <summary>

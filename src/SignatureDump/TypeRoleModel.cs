@@ -5,7 +5,7 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>型をどう写像するかを決める役割。判定はこの順に評価し、最初に当たったものにする。</summary>
     public enum TypeRole
     {
-        /// <summary>ホストが単一インスタンスを常駐保持する、機能への接続点。</summary>
+        /// <summary>呼び出し側が実体を用意せずに呼べる、機能への接続点。</summary>
         Connector,
 
         /// <summary>公開イベントのハンドラの型引数に現れる型。</summary>

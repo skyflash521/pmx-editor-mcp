@@ -7,23 +7,23 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>
     /// 型ごとの役割が、規則どおりに割り当てられているかを検査する。役割の意味そのものは測れないので、
     /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型を
-    /// ホストが常駐保持しうること——に限る。
+    /// 呼び出し側が実体を用意せずに呼べること——に限る。
     /// </summary>
     public static class TypeRoleGate
     {
         /// <summary>
         /// 規則に反していれば <see cref="InvalidOperationException"/>。<paramref name="roleTypes"/> は
         /// 表が覆うべき型の集合で、接続の根とその経路上の型を含めて渡すこと。
-        /// <paramref name="reachableWithBaseTypes"/> には
-        /// <see cref="TypeRoleEvidence.ReachableWithBaseTypes"/> の結果を渡すこと——コネクタ型が
-        /// ホストの常駐保持しうるものかは、この集合に在るかどうかで見る。
+        /// <paramref name="connectorCandidates"/> には
+        /// <see cref="TypeRoleEvidence.ConnectorCandidates"/> の結果を渡すこと——コネクタ型に
+        /// なりうるかは、この集合に在るかどうかで見る。
         /// </summary>
         public static void Require(
             IList<TypeRoleRecord> records,
             ISet<string> roleTypes,
             IEnumerable<string> connectionRoots,
             ISet<string> eventArgumentTypes,
-            ICollection<string> reachableWithBaseTypes)
+            ICollection<string> connectorCandidates)
         {
             if (records == null)
             {
@@ -45,15 +45,15 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(eventArgumentTypes));
             }
 
-            if (reachableWithBaseTypes == null)
+            if (connectorCandidates == null)
             {
-                throw new ArgumentNullException(nameof(reachableWithBaseTypes));
+                throw new ArgumentNullException(nameof(connectorCandidates));
             }
 
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
             RequireEventArgumentsMatchTheEvidence(records, eventArgumentTypes);
-            RequireConnectorsCanBeHostHeld(records, reachableWithBaseTypes);
+            RequireConnectorsNeedNoInstanceFromTheCaller(records, connectorCandidates);
         }
 
         /// <summary>
@@ -87,7 +87,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 接続の根は、ホストが常駐保持するものそのものなので、表がコネクタ型として持つことを課す。
+        /// 接続の根は、接続初期化が最初に触る接続点そのものなので、表がコネクタ型として持つことを
+        /// 課す。
         /// </summary>
         private static void RequireRootsAreConnectors(
             IList<TypeRoleRecord> records, IEnumerable<string> connectionRoots)
@@ -134,18 +135,19 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// コネクタ型は、接続の根から辿り着ける型か、その基底型でなければならない。この集合に在ること
-        /// はホストが常駐保持するための必要条件で、在るからといって常駐保持するとは限らない。
+        /// コネクタ型は、呼び出し側が実体を用意せずに呼べる型でなければならない。この集合に在ること
+        /// はその必要条件で、在るからといってコネクタ型とは限らない。
         /// </summary>
-        private static void RequireConnectorsCanBeHostHeld(
-            IList<TypeRoleRecord> records, ICollection<string> reachableWithBaseTypes)
+        private static void RequireConnectorsNeedNoInstanceFromTheCaller(
+            IList<TypeRoleRecord> records, ICollection<string> connectorCandidates)
         {
             foreach (TypeRoleRecord record in records
                 .Where(r => r.Role == TypeRole.Connector
-                    && !reachableWithBaseTypes.Contains(r.TypeName)))
+                    && !connectorCandidates.Contains(r.TypeName)))
             {
                 throw new InvalidOperationException(
-                    "ホストが常駐保持しない型をコネクタ型にしている: " + record.TypeName);
+                    "呼び出し側が実体を用意しなければ呼べない型をコネクタ型にしている: "
+                        + record.TypeName);
             }
         }
     }
