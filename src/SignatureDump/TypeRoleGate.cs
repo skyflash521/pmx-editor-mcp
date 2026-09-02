@@ -6,21 +6,24 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 型ごとの役割が、規則どおりに割り当てられているかを検査する。役割の意味そのものは測れないので、
-    /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型の到達性
-    /// ——に限る。
+    /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型を
+    /// ホストが常駐保持しうること——に限る。
     /// </summary>
     public static class TypeRoleGate
     {
         /// <summary>
         /// 規則に反していれば <see cref="InvalidOperationException"/>。<paramref name="roleTypes"/> は
         /// 表が覆うべき型の集合で、接続の根とその経路上の型を含めて渡すこと。
+        /// <paramref name="reachableWithBaseTypes"/> には
+        /// <see cref="TypeRoleEvidence.ReachableWithBaseTypes"/> の結果を渡すこと——コネクタ型が
+        /// ホストの常駐保持しうるものかは、この集合に在るかどうかで見る。
         /// </summary>
         public static void Require(
             IList<TypeRoleRecord> records,
             ISet<string> roleTypes,
             IEnumerable<string> connectionRoots,
             ISet<string> eventArgumentTypes,
-            ICollection<string> reachableTypes)
+            ICollection<string> reachableWithBaseTypes)
         {
             if (records == null)
             {
@@ -42,15 +45,15 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(eventArgumentTypes));
             }
 
-            if (reachableTypes == null)
+            if (reachableWithBaseTypes == null)
             {
-                throw new ArgumentNullException(nameof(reachableTypes));
+                throw new ArgumentNullException(nameof(reachableWithBaseTypes));
             }
 
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
             RequireEventArgumentsMatchTheEvidence(records, eventArgumentTypes);
-            RequireConnectorsAreReachable(records, reachableTypes);
+            RequireConnectorsCanBeHostHeld(records, reachableWithBaseTypes);
         }
 
         /// <summary>
@@ -130,14 +133,19 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        private static void RequireConnectorsAreReachable(
-            IList<TypeRoleRecord> records, ICollection<string> reachableTypes)
+        /// <summary>
+        /// コネクタ型は、接続の根から辿り着ける型か、その基底型でなければならない。この集合に在ること
+        /// はホストが常駐保持するための必要条件で、在るからといって常駐保持するとは限らない。
+        /// </summary>
+        private static void RequireConnectorsCanBeHostHeld(
+            IList<TypeRoleRecord> records, ICollection<string> reachableWithBaseTypes)
         {
             foreach (TypeRoleRecord record in records
-                .Where(r => r.Role == TypeRole.Connector && !reachableTypes.Contains(r.TypeName)))
+                .Where(r => r.Role == TypeRole.Connector
+                    && !reachableWithBaseTypes.Contains(r.TypeName)))
             {
                 throw new InvalidOperationException(
-                    "接続の根から辿り着けない型をコネクタ型にしている: " + record.TypeName);
+                    "ホストが常駐保持しない型をコネクタ型にしている: " + record.TypeName);
             }
         }
     }

@@ -305,6 +305,48 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleEvidence.ReachableFromRoots(Inventory(), new[] { " " }));
         }
 
+        [Fact]
+        public void TheBaseTypesOfAReachedTypeAreIncluded()
+        {
+            ISet<string> reached = TypeRoleEvidence.ReachableWithBaseTypes(
+                Records(
+                    new[]
+                    {
+                        Type(Root),
+                        Type("N.IWindow", "N.ISizable"),
+                        Type("N.ISizable", "N.IBase"),
+                        Type("N.IBase"),
+                        Type("N.IApart", "N.IApartBase"),
+                        Type("N.IApartBase"),
+                    },
+                    Property(Root, "Window", "N.IWindow"),
+                    Property("N.IWindow", "Value", "System.Int32")),
+                new[] { Root });
+
+            Assert.Equal(
+                new[] { "N.IBase", Root, "N.ISizable", "N.IWindow" },
+                reached.OrderBy(n => n, StringComparer.Ordinal));
+        }
+
+        [Fact]
+        public void ARootWithoutMembersStopsTheWalkWithBaseTypesToo()
+        {
+            ArgumentException error = Assert.Throws<ArgumentException>(
+                () => TypeRoleEvidence.ReachableWithBaseTypes(
+                    Inventory(Property(Root, "Value", "System.Int32")), new[] { "N.IAbsent" }));
+
+            Assert.Contains("N.IAbsent", error.Message);
+        }
+
+        [Fact]
+        public void EveryArgumentOfTheWalkWithBaseTypesIsRequired()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleEvidence.ReachableWithBaseTypes(null, new[] { Root }));
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleEvidence.ReachableWithBaseTypes(Inventory(), null));
+        }
+
         private static InventoryRecord Records(
             IEnumerable<TypeRecord> types, params SignatureRecord[] signatures)
         {

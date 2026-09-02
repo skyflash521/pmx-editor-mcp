@@ -69,6 +69,37 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 接続の根から辿り着ける型と、その基底型。基底型は自分では辿り着く先にならないが、辿り着ける
+        /// 型の実体はその基底型の実体でもあるので、ホストが常駐保持する側に立つ。根の扱いは
+        /// <see cref="ReachableFromRoots"/> と同じ。
+        /// </summary>
+        public static ISet<string> ReachableWithBaseTypes(
+            InventoryRecord inventory, IEnumerable<string> roots)
+        {
+            RequireInventory(inventory);
+
+            IDictionary<string, IList<string>> bases = BaseTypes(inventory);
+            HashSet<string> types = new HashSet<string>(
+                Walk(inventory, roots).Paths.Keys, StringComparer.Ordinal);
+            Queue<string> pending = new Queue<string>(types);
+            while (pending.Count != 0)
+            {
+                IList<string> inherited;
+                if (!bases.TryGetValue(pending.Dequeue(), out inherited))
+                {
+                    continue;
+                }
+
+                foreach (string baseType in inherited.Where(types.Add))
+                {
+                    pending.Enqueue(baseType);
+                }
+            }
+
+            return types;
+        }
+
+        /// <summary>
         /// 接続の根から辿り着け、かつそこから <paramref name="targets"/> のいずれかへ辿り着ける型。
         /// 根そのものと途中の型を返し、<paramref name="targets"/> 自身は入れない。どの目的地へも
         /// 至らない枝は入らない。根の扱いは <see cref="ReachableFromRoots"/> と同じで、列挙に

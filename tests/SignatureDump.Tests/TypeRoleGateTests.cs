@@ -147,7 +147,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AConnectorThatIsNotReachableStops()
+        public void AConnectorTheHostDoesNotHoldStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => TypeRoleGate.Require(
@@ -161,7 +161,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AReachableTypeMayTakeAnotherRole()
+        public void ATypeReachedFromARootMayTakeAnotherRole()
         {
             TypeRoleGate.Require(
                 Table(Record(Root, TypeRole.Connector), Record("N.IThing", TypeRole.OperationTarget)),
