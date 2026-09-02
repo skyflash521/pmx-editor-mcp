@@ -455,6 +455,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "System.Collections.Generic.IList<" + ArgumentOnlyWithoutNamespace + ">"),
             };
 
+            foreach (string root in TypeRoleEvidence.ConnectionRoots)
+            {
+                types.Add(Type(root, TypeKind.Interface));
+                signatures.Add(Property(root, "Version", "System.String"));
+            }
+
             return new InventoryRecord("PEPlugin", "0.0.0.0", types, referenced, signatures);
         }
 

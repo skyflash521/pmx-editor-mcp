@@ -8,8 +8,8 @@ namespace PmxEditorMcp.SignatureDump
     /// 型役割表が受け持つ型の母集合を機械導出する。提供対象のシグネチャに現れる型を推移的に
     /// 辿り、値の表現で写せる型を除いた残りが型役割表の母集合になる。
     ///
-    /// どちらの集合にも入らないのは、総称型引数と、イベントのハンドラ型として現れるデリゲート型で
-    /// ある。前者は宣言ごとに別の型で役割を持たず、後者は購読の仕組みが受け持つ。
+    /// どちらの集合にも入らないのは、総称型引数とデリゲート型である。前者は宣言ごとに別の型で役割を
+    /// 持たず、後者は呼び出し側が実装を渡すもので、値としても操作の対象としても写せない。
     /// </summary>
     public sealed class TypeRolePopulation
     {
@@ -58,8 +58,28 @@ namespace PmxEditorMcp.SignatureDump
 
             InventoryAmbiguity.Require(inventory);
             LedgerPopulation population = LedgerPopulation.Resolve(ledger, inventory);
+            TypeRolePopulation provided =
+                new Walk(inventory, Provided(ledger, population, excluded)).Run();
 
-            return new Walk(inventory, Provided(ledger, population, excluded)).Run();
+            return WithConnectionRoutes(provided, inventory);
+        }
+
+        /// <summary>
+        /// 接続の根から提供対象の型へ至る経路の上にある型を母集合へ足す。これらは台帳が能力の行を
+        /// 作らないので提供対象のシグネチャには現れないが、接続の初期化がここを通るので役割を持つ。
+        /// 値の表現で写せる型は足さない。
+        /// </summary>
+        private static TypeRolePopulation WithConnectionRoutes(
+            TypeRolePopulation provided, InventoryRecord inventory)
+        {
+            ValueRepresentationRule rule = ValueRepresentationRule.Create(inventory);
+            ValueRepresentation representation;
+            HashSet<string> roleTypes = new HashSet<string>(provided.RoleTypes, StringComparer.Ordinal);
+            roleTypes.UnionWith(TypeRoleEvidence
+                .RouteTypesToward(inventory, TypeRoleEvidence.ConnectionRoots, provided.RoleTypes)
+                .Where(t => !ValueContainers.Contains(t) && !rule.TryClassify(t, out representation)));
+
+            return new TypeRolePopulation(provided.Signatures, provided.ValueMapped, roleTypes);
         }
 
         private static HashSet<string> Provided(

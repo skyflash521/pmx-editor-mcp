@@ -18,6 +18,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Record("N.IArgs", TypeRole.EventArgs),
                     Record("N.IThing", TypeRole.OperationTarget)),
                 Set(Root, "N.IArgs", "N.IThing"),
+                Roots(Root),
                 Set("N.IArgs"),
                 Set(Root));
         }
@@ -29,6 +30,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleGate.Require(
                     Table(Record(Root, TypeRole.Connector)),
                     Set(Root, "N.IOther"),
+                    Roots(Root),
                     Set(),
                     Set(Root)));
 
@@ -42,6 +44,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleGate.Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.IExtra", TypeRole.Dto)),
                     Set(Root),
+                    Roots(Root),
                     Set(),
                     Set(Root)));
 
@@ -55,6 +58,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleGate.Require(
                     Table(Record(Root, TypeRole.Connector), Record(Root, TypeRole.Dto)),
                     Set(Root),
+                    Roots(Root),
                     Set(),
                     Set(Root)));
 
@@ -66,10 +70,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => TypeRoleGate.Require(
-                    new TypeRoleTable(
-                        new[] { Root },
-                        new List<TypeRoleRecord> { Record("N.IThing", TypeRole.Dto) }),
+                    Table(Record("N.IThing", TypeRole.Dto)),
                     Set("N.IThing"),
+                    Roots(Root),
                     Set(),
                     Set(Root)));
 
@@ -81,7 +84,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => TypeRoleGate.Require(
-                    Table(Record(Root, TypeRole.Dto)), Set(Root), Set(), Set(Root)));
+                    Table(Record(Root, TypeRole.Dto)),
+                    Set(Root),
+                    Roots(Root),
+                    Set(),
+                    Set(Root)));
 
             Assert.Contains("コネクタ型", error.Message);
         }
@@ -91,14 +98,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => TypeRoleGate.Require(
-                    new TypeRoleTable(
-                        new[] { Root, "N.ISecond" },
-                        new List<TypeRoleRecord>
-                        {
-                            Record(Root, TypeRole.Connector),
-                            Record("N.ISecond", TypeRole.Dto),
-                        }),
+                    Table(Record(Root, TypeRole.Connector), Record("N.ISecond", TypeRole.Dto)),
                     Set(Root, "N.ISecond"),
+                    Roots(Root, "N.ISecond"),
                     Set(),
                     Set(Root, "N.ISecond")));
 
@@ -112,6 +114,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleGate.Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.IArgs", TypeRole.Dto)),
                     Set(Root, "N.IArgs"),
+                    Roots(Root),
                     Set("N.IArgs"),
                     Set(Root)));
 
@@ -125,6 +128,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleGate.Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.IThing", TypeRole.EventArgs)),
                     Set(Root, "N.IThing"),
+                    Roots(Root),
                     Set(),
                     Set(Root)));
 
@@ -137,6 +141,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             TypeRoleGate.Require(
                 Table(Record(Root, TypeRole.Connector)),
                 Set(Root),
+                Roots(Root),
                 Set("N.IOutside"),
                 Set(Root));
         }
@@ -148,6 +153,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleGate.Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.IThing", TypeRole.Connector)),
                     Set(Root, "N.IThing"),
+                    Roots(Root),
                     Set(),
                     Set(Root)));
 
@@ -160,6 +166,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             TypeRoleGate.Require(
                 Table(Record(Root, TypeRole.Connector), Record("N.IThing", TypeRole.OperationTarget)),
                 Set(Root, "N.IThing"),
+                Roots(Root),
                 Set(),
                 Set(Root, "N.IThing"));
         }
@@ -167,21 +174,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void EveryArgumentIsRequired()
         {
-            TypeRoleTable table = Table(Record(Root, TypeRole.Connector));
+            IList<TypeRoleRecord> table = Table(Record(Root, TypeRole.Connector));
 
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(null, Set(Root), Set(), Set(Root)));
+                () => TypeRoleGate.Require(null, Set(Root), Roots(Root), Set(), Set(Root)));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, null, Set(), Set(Root)));
+                () => TypeRoleGate.Require(table, null, Roots(Root), Set(), Set(Root)));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), null, Set(Root)));
+                () => TypeRoleGate.Require(table, Set(Root), null, Set(), Set(Root)));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Set(), null));
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), null, Set(Root)));
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), null));
         }
 
-        private static TypeRoleTable Table(params TypeRoleRecord[] records)
+        private static IList<TypeRoleRecord> Table(params TypeRoleRecord[] records)
         {
-            return new TypeRoleTable(new[] { Root }, records.ToList());
+            return records.ToList();
+        }
+
+        private static IEnumerable<string> Roots(params string[] names)
+        {
+            return names;
         }
 
         private static TypeRoleRecord Record(string typeName, TypeRole role)

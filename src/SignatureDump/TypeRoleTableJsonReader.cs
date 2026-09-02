@@ -8,8 +8,6 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>型ごとの役割を書いた正本を読む。</summary>
     public static class TypeRoleTableJsonReader
     {
-        private const string RootsName = "connectionRoots";
-
         private const string TypesName = "types";
 
         private const string TypeNameName = "typeName";
@@ -29,38 +27,17 @@ namespace PmxEditorMcp.SignatureDump
             };
 
         /// <summary>
-        /// 接続の根と型ごとの役割を、書かれた順に返す。根は1件以上で、根も型名も序数の昇順に重複なく
-        /// 並ぶことを求める。形が違えば <see cref="FormatException"/>。
+        /// 型ごとの役割を、書かれた順に返す。型名が序数の昇順に重複なく並ぶことを求める。形が違えば
+        /// <see cref="FormatException"/>。
         /// </summary>
-        public static TypeRoleTable Read(string json)
+        public static IList<TypeRoleRecord> ReadTypeRoles(string json)
         {
             if (json == null)
             {
                 throw new ArgumentNullException(nameof(json));
             }
 
-            Dictionary<string, object> members = Members(Parse(json), RootsName, TypesName);
-
-            return new TypeRoleTable(ReadRoots(members[RootsName]), ReadTypes(members[TypesName]));
-        }
-
-        private static IList<string> ReadRoots(object value)
-        {
-            object[] items = Array(value, RootsName);
-            if (items.Length == 0)
-            {
-                throw new FormatException(RootsName + " は1件以上でなければならない。");
-            }
-
-            List<string> roots = new List<string>();
-            foreach (object item in items)
-            {
-                string root = Text(item, RootsName);
-                RequireAscending(roots.Count == 0 ? null : roots[roots.Count - 1], root, "根");
-                roots.Add(root);
-            }
-
-            return roots;
+            return ReadTypes(Members(Parse(json), TypesName)[TypesName]);
         }
 
         private static IList<TypeRoleRecord> ReadTypes(object value)

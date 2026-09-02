@@ -7,8 +7,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class TypeRoleTableJsonReaderTests
     {
-        private const string Roots = "\"connectionRoots\":[\"N.IRoot\"]";
-
         [Fact]
         public void ATypeIsReadWithItsRoleAndBasis()
         {
@@ -105,82 +103,32 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnEmptyTableIsRead()
         {
-            Assert.Empty(TypeRoleTableJsonReader.Read("{" + Roots + ",\"types\":[]}").Types);
+            Assert.Empty(TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[]}"));
         }
 
         [Fact]
-        public void TheConnectionRootsAreRead()
-        {
-            TypeRoleTable table = TypeRoleTableJsonReader.Read(
-                "{\"connectionRoots\":[\"N.IAlpha\",\"N.IBeta\"],\"types\":[]}");
-
-            Assert.Equal(new[] { "N.IAlpha", "N.IBeta" }, table.ConnectionRoots);
-        }
-
-        [Fact]
-        public void RootsOutOfOrdinalOrderStop()
+        public void ATableWithoutTheTypesStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read(
-                    "{\"connectionRoots\":[\"N.IBeta\",\"N.IAlpha\"],\"types\":[]}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{}"));
 
-            Assert.Contains("昇順", error.Message);
+            Assert.Contains("types", error.Message);
         }
 
         [Fact]
-        public void TheSameRootTwiceStops()
+        public void TypesThatAreNotAListStop()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read(
-                    "{\"connectionRoots\":[\"N.IAlpha\",\"N.IAlpha\"],\"types\":[]}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":\"x\"}"));
 
-            Assert.Contains("二度", error.Message);
-        }
-
-        [Fact]
-        public void ARootThatIsBlankStops()
-        {
-            Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read(
-                    "{\"connectionRoots\":[\"  \"],\"types\":[]}"));
-        }
-
-        [Fact]
-        public void AnEmptyListOfRootsStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read("{\"connectionRoots\":[],\"types\":[]}"));
-
-            Assert.Contains("connectionRoots", error.Message);
-        }
-
-        [Fact]
-        public void ABrokenHalfIsSeenWhenReadingTheOther()
-        {
-            FormatException byTypes = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read(
-                    "{\"connectionRoots\":5,\"types\":[" + Item("N.A", "dto") + "]}"));
-            FormatException byRoots = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read("{" + Roots + ",\"types\":\"x\"}"));
-
-            Assert.Contains("connectionRoots", byTypes.Message);
-            Assert.Contains("types", byRoots.Message);
-        }
-
-        [Fact]
-        public void ATableWithoutTheRootsStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read("{\"types\":[]}"));
-
-            Assert.Contains("connectionRoots", error.Message);
+            Assert.Contains("types", error.Message);
         }
 
         [Fact]
         public void AnUnknownMemberAtTheRootStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read("{" + Roots + ",\"types\":[],\"note\":1}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[],\"note\":1}"));
 
             Assert.Contains("note", error.Message);
         }
@@ -188,47 +136,36 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AValueThatIsNotAStringStops()
         {
-            FormatException byRoot = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read("{\"connectionRoots\":[5],\"types\":[]}"));
-            FormatException byRole = Assert.Throws<FormatException>(
+            FormatException error = Assert.Throws<FormatException>(
                 () => ReadTypes("{\"typeName\":\"N.A\",\"role\":1,\"basis\":\"根拠。\"}"));
 
-            Assert.Contains("文字列", byRoot.Message);
-            Assert.Contains("文字列", byRole.Message);
-        }
-
-        [Fact]
-        public void ARootWithoutTheTableStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read("{" + Roots + "}"));
-
-            Assert.Contains("types", error.Message);
+            Assert.Contains("文字列", error.Message);
         }
 
         [Fact]
         public void AnItemThatIsNotAnObjectStops()
         {
             Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.Read("{" + Roots + ",\"types\":[\"N.A\"]}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[\"N.A\"]}"));
         }
 
         [Fact]
         public void TextThatIsNotJsonStops()
         {
-            Assert.Throws<FormatException>(() => TypeRoleTableJsonReader.Read("役割"));
+            Assert.Throws<FormatException>(() => TypeRoleTableJsonReader.ReadTypeRoles("役割"));
         }
 
         [Fact]
         public void NullArgumentThrows()
         {
-            Assert.Throws<ArgumentNullException>(() => TypeRoleTableJsonReader.Read(null));
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleTableJsonReader.ReadTypeRoles(null));
         }
 
         private static IList<TypeRoleRecord> ReadTypes(params string[] items)
         {
-            return TypeRoleTableJsonReader.Read(
-                "{" + Roots + ",\"types\":[" + string.Join(",", items) + "]}").Types;
+            return TypeRoleTableJsonReader.ReadTypeRoles(
+                "{\"types\":[" + string.Join(",", items) + "]}");
         }
 
         private static string Item(string typeName, string role)

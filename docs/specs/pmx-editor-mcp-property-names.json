@@ -274,6 +274,69 @@
       "decision": "quoted"
     },
     {
+      "declaringType": "PEPlugin.IPEConnector",
+      "memberName": "Form",
+      "propertyType": "PEPlugin.Form.IPEFormConnector",
+      "japaneseName": "Form操作コネクタ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEConnector",
+      "memberName": "Pmd",
+      "propertyType": "PEPlugin.Pmd.IPEPmdConnector",
+      "japaneseName": "PMD操作コネクタ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEConnector",
+      "memberName": "Pmx",
+      "propertyType": "PEPlugin.Pmx.IPXPmxConnector",
+      "japaneseName": "PMX操作コネクタ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEConnector",
+      "memberName": "System",
+      "propertyType": "PEPlugin.IPESystemConnector",
+      "japaneseName": "システム情報コネクタ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEConnector",
+      "memberName": "View",
+      "propertyType": "PEPlugin.View.IPEViewConnector",
+      "japaneseName": "View操作コネクタ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEPluginHost",
+      "memberName": "Builder",
+      "propertyType": "PEPlugin.IPEBuilder",
+      "japaneseName": "データビルダ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEPluginHost",
+      "memberName": "Connector",
+      "propertyType": "PEPlugin.IPEConnector",
+      "japaneseName": "操作コネクタ",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEPluginHost",
+      "memberName": "Name",
+      "propertyType": "System.String",
+      "japaneseName": "ホスト名",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPEPluginHost",
+      "memberName": "Version",
+      "propertyType": "System.String",
+      "japaneseName": "ホストバージョン",
+      "decision": "quoted"
+    },
+    {
       "declaringType": "PEPlugin.IPEPluginOption",
       "memberName": "Bootup",
       "propertyType": "System.Boolean",
@@ -334,6 +397,27 @@
       "memberName": "Version",
       "propertyType": "System.String",
       "japaneseName": "バージョン情報",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERunArgs",
+      "memberName": "Host",
+      "propertyType": "PEPlugin.IPEPluginHost",
+      "japaneseName": "ホストインターフェイス",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERunArgs",
+      "memberName": "IsBootup",
+      "propertyType": "System.Boolean",
+      "japaneseName": "true:Bootup起動 / false:メニュー起動",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.IPERunArgs",
+      "memberName": "ModulePath",
+      "propertyType": "System.String",
+      "japaneseName": "プラグインDLLパス",
       "decision": "quoted"
     },
     {
@@ -2175,6 +2259,62 @@
       "decision": "quoted"
     },
     {
+      "declaringType": "PEPlugin.View.IPEPMDViewHelper",
+      "memberName": "ExtensionEdit",
+      "propertyType": "PEPlugin.View.IPEExtensionEditConnector",
+      "japaneseName": "拡張編集操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewHelper",
+      "memberName": "ObjectSelect",
+      "propertyType": "PEPlugin.View.IPEObjectSelectConnector",
+      "japaneseName": "選択オブジェクト管理操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewHelper",
+      "memberName": "PartsSelect",
+      "propertyType": "PEPlugin.View.IPEPartsSelectConnector",
+      "japaneseName": "頂点表示／材質編集操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewHelper",
+      "memberName": "SubView",
+      "propertyType": "PEPlugin.View.IPESubViewConnector",
+      "japaneseName": "サブ画面操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewHelper",
+      "memberName": "SubViewSetting",
+      "propertyType": "PEPlugin.View.IPEViewSettingConnector",
+      "japaneseName": "サブ画面表示設定操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewHelper",
+      "memberName": "VertexEdit",
+      "propertyType": "PEPlugin.View.IPEVertexEditConnector",
+      "japaneseName": "頂点／ボーン編集操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewHelper",
+      "memberName": "VertexGuide",
+      "propertyType": "PEPlugin.View.IPEVertexGuideConnector",
+      "japaneseName": "選択頂点ガイド操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEPMDViewHelper",
+      "memberName": "WeightEdit",
+      "propertyType": "PEPlugin.View.IPEWeightEditConnector",
+      "japaneseName": "ウェイト描画操作",
+      "decision": "quoted"
+    },
+    {
       "declaringType": "PEPlugin.View.IPEPartsSelectConnector",
       "memberName": "BoneItemsCount",
       "propertyType": "System.Int32",
@@ -2424,6 +2564,62 @@
       "memberName": "ScaleValue",
       "propertyType": "PEPlugin.Pmd.IPEVector3",
       "japaneseName": "値指定 スケール量",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewConnector",
+      "memberName": "PMDView",
+      "propertyType": "PEPlugin.View.IPEPMDViewConnector",
+      "japaneseName": "PmxView操作(レガシー対応用)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewConnector",
+      "memberName": "PMDViewHelper",
+      "propertyType": "PEPlugin.View.IPEPMDViewHelper",
+      "japaneseName": "PmxViewヘルパ操作(レガシー対応用)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewConnector",
+      "memberName": "PMDViewSetting",
+      "propertyType": "PEPlugin.View.IPEViewSettingConnector",
+      "japaneseName": "PmxView表示設定操作(レガシー対応用)",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewConnector",
+      "memberName": "PmxView",
+      "propertyType": "PEPlugin.View.IPXPmxViewConnector",
+      "japaneseName": "PmxView操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewConnector",
+      "memberName": "PmxViewHelper",
+      "propertyType": "PEPlugin.View.IPXPmxViewHelper",
+      "japaneseName": "PmxViewヘルパ操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewConnector",
+      "memberName": "PmxViewSetting",
+      "propertyType": "PEPlugin.View.IPEViewSettingConnector",
+      "japaneseName": "PmxView表示設定操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewConnector",
+      "memberName": "TransformView",
+      "propertyType": "PEPlugin.View.IPETransformViewConnector",
+      "japaneseName": "TransformView操作",
+      "decision": "quoted"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewConnector",
+      "memberName": "TransformViewSetting",
+      "propertyType": "PEPlugin.View.IPEViewSettingConnector",
+      "japaneseName": "TransformView表示設定操作",
       "decision": "quoted"
     },
     {

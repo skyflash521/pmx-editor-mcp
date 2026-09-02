@@ -16,19 +16,25 @@ namespace PmxEditorMcp.SignatureDump
         /// 表が覆うべき型の集合で、接続の根とその経路上の型を含めて渡すこと。
         /// </summary>
         public static void Require(
-            TypeRoleTable table,
+            IList<TypeRoleRecord> records,
             ISet<string> roleTypes,
+            IEnumerable<string> connectionRoots,
             ISet<string> eventArgumentTypes,
             ICollection<string> reachableTypes)
         {
-            if (table == null)
+            if (records == null)
             {
-                throw new ArgumentNullException(nameof(table));
+                throw new ArgumentNullException(nameof(records));
             }
 
             if (roleTypes == null)
             {
                 throw new ArgumentNullException(nameof(roleTypes));
+            }
+
+            if (connectionRoots == null)
+            {
+                throw new ArgumentNullException(nameof(connectionRoots));
             }
 
             if (eventArgumentTypes == null)
@@ -41,10 +47,10 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(reachableTypes));
             }
 
-            RequireSameTypes(table.Types, roleTypes);
-            RequireRootsAreConnectors(table);
-            RequireEventArgumentsMatchTheEvidence(table.Types, eventArgumentTypes);
-            RequireConnectorsAreReachable(table.Types, reachableTypes);
+            RequireSameTypes(records, roleTypes);
+            RequireRootsAreConnectors(records, connectionRoots);
+            RequireEventArgumentsMatchTheEvidence(records, eventArgumentTypes);
+            RequireConnectorsAreReachable(records, reachableTypes);
         }
 
         /// <summary>
@@ -80,11 +86,12 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// 接続の根は、ホストが常駐保持するものそのものなので、表がコネクタ型として持つことを課す。
         /// </summary>
-        private static void RequireRootsAreConnectors(TypeRoleTable table)
+        private static void RequireRootsAreConnectors(
+            IList<TypeRoleRecord> records, IEnumerable<string> connectionRoots)
         {
-            IDictionary<string, TypeRole> roles = table.Types
+            IDictionary<string, TypeRole> roles = records
                 .ToDictionary(r => r.TypeName, r => r.Role, StringComparer.Ordinal);
-            foreach (string root in table.ConnectionRoots)
+            foreach (string root in connectionRoots)
             {
                 TypeRole role;
                 if (!roles.TryGetValue(root, out role))

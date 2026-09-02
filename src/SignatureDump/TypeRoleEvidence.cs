@@ -15,6 +15,13 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ホストが常駐保持するものへ辿り着くとき、引数として自動で注入されるコネクタ。</summary>
         public const string InjectedConnector = "PXCPlugin.IPXCPluginConnector";
 
+        /// <summary>
+        /// 接続初期化がここから辿り始める型。プラグインが受け取る起動引数と、Cプラグインの静的な
+        /// 橋渡しがこれに当たる。
+        /// </summary>
+        public static readonly IList<string> ConnectionRoots = new ReadOnlyCollection<string>(
+            new[] { "PEPlugin.IPERunArgs", "PXCPlugin.IPXCPluginRunArgs", "PXCPlugin.PXCBridge" });
+
         private const string Handler = "System.EventHandler";
 
         /// <summary>
@@ -58,6 +65,89 @@ namespace PmxEditorMcp.SignatureDump
         public static IDictionary<string, string> ReachableFromRoots(
             InventoryRecord inventory, IEnumerable<string> roots)
         {
+            return new ReadOnlyDictionary<string, string>(Walk(inventory, roots).Paths);
+        }
+
+        /// <summary>
+        /// 接続の根から辿り着け、かつそこから <paramref name="targets"/> のいずれかへ辿り着ける型。
+        /// 根そのものと途中の型を返し、<paramref name="targets"/> 自身は入れない。どの目的地へも
+        /// 至らない枝は入らない。根の扱いは <see cref="ReachableFromRoots"/> と同じで、列挙に
+        /// メンバーの無い根は <see cref="ArgumentException"/>。
+        /// </summary>
+        public static ISet<string> RouteTypesToward(
+            InventoryRecord inventory, IEnumerable<string> roots, ISet<string> targets)
+        {
+            RequireInventory(inventory);
+            if (targets == null)
+            {
+                throw new ArgumentNullException(nameof(targets));
+            }
+
+            Reach reach = Walk(inventory, roots);
+            IDictionary<string, ISet<string>> toward = Reversed(reach.Steps);
+            HashSet<string> route = new HashSet<string>(StringComparer.Ordinal);
+            Queue<string> pending = new Queue<string>(targets.Where(reach.Paths.ContainsKey));
+            while (pending.Count != 0)
+            {
+                ISet<string> before;
+                if (!toward.TryGetValue(pending.Dequeue(), out before))
+                {
+                    continue;
+                }
+
+                foreach (string type in before.Where(route.Add))
+                {
+                    pending.Enqueue(type);
+                }
+            }
+
+            route.ExceptWith(targets);
+
+            return route;
+        }
+
+        /// <summary>辿り着いた型と、そこへ一歩で進める型。</summary>
+        private static IDictionary<string, ISet<string>> Reversed(
+            IDictionary<string, ISet<string>> steps)
+        {
+            Dictionary<string, ISet<string>> reversed =
+                new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, ISet<string>> step in steps)
+            {
+                foreach (string next in step.Value)
+                {
+                    ISet<string> before;
+                    if (!reversed.TryGetValue(next, out before))
+                    {
+                        before = new HashSet<string>(StringComparer.Ordinal);
+                        reversed.Add(next, before);
+                    }
+
+                    before.Add(step.Key);
+                }
+            }
+
+            return reversed;
+        }
+
+        /// <summary>根から辿った結果。経路と、一歩で進める型を持つ。</summary>
+        private sealed class Reach
+        {
+            public Reach()
+            {
+                Paths = new Dictionary<string, string>(StringComparer.Ordinal);
+                Steps = new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
+            }
+
+            /// <summary>辿り着いた型と、根からの経路。根は空の経路を持つ。</summary>
+            public IDictionary<string, string> Paths { get; }
+
+            /// <summary>辿り着いた型と、そこから一歩で進める型。</summary>
+            public IDictionary<string, ISet<string>> Steps { get; }
+        }
+
+        private static Reach Walk(InventoryRecord inventory, IEnumerable<string> roots)
+        {
             RequireInventory(inventory);
             InventoryAmbiguity.Require(inventory);
             if (roots == null)
@@ -66,7 +156,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             IDictionary<string, IList<SignatureRecord>> members = MembersByType(inventory);
-            Dictionary<string, string> found = new Dictionary<string, string>(StringComparer.Ordinal);
+            Reach reach = new Reach();
             Queue<string> queue = new Queue<string>();
             foreach (string root in roots)
             {
@@ -77,12 +167,12 @@ namespace PmxEditorMcp.SignatureDump
                     throw new ArgumentException("列挙にメンバーの無い根が在る: " + root, nameof(roots));
                 }
 
-                if (found.ContainsKey(key))
+                if (reach.Paths.ContainsKey(key))
                 {
                     continue;
                 }
 
-                found.Add(key, string.Empty);
+                reach.Paths.Add(key, string.Empty);
                 queue.Enqueue(key);
             }
 
@@ -91,18 +181,36 @@ namespace PmxEditorMcp.SignatureDump
                 string type = queue.Dequeue();
                 foreach (KeyValuePair<string, string> step in Steps(members[type]))
                 {
-                    if (found.ContainsKey(step.Value) || !members.ContainsKey(step.Value))
+                    if (!members.ContainsKey(step.Value))
                     {
                         continue;
                     }
 
-                    string path = found[type];
-                    found.Add(step.Value, path.Length == 0 ? step.Key : path + "." + step.Key);
+                    Next(reach, type).Add(step.Value);
+                    if (reach.Paths.ContainsKey(step.Value))
+                    {
+                        continue;
+                    }
+
+                    string path = reach.Paths[type];
+                    reach.Paths.Add(step.Value, path.Length == 0 ? step.Key : path + "." + step.Key);
                     queue.Enqueue(step.Value);
                 }
             }
 
-            return new ReadOnlyDictionary<string, string>(found);
+            return reach;
+        }
+
+        private static ISet<string> Next(Reach reach, string type)
+        {
+            ISet<string> next;
+            if (!reach.Steps.TryGetValue(type, out next))
+            {
+                next = new HashSet<string>(StringComparer.Ordinal);
+                reach.Steps.Add(type, next);
+            }
+
+            return next;
         }
 
         /// <summary>

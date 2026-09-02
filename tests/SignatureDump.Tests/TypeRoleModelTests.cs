@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -90,15 +89,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => new TypeRoleRecord("N.IThing", TypeRole.Dto, null));
             Assert.Throws<ArgumentException>(
                 () => new TypeRoleRecord("N.IThing", TypeRole.Dto, " "));
-        }
-
-        [Fact]
-        public void ATypeRoleTableRequiresBothParts()
-        {
-            Assert.Throws<ArgumentNullException>(
-                () => new TypeRoleTable(null, new List<TypeRoleRecord>()));
-            Assert.Throws<ArgumentNullException>(
-                () => new TypeRoleTable(new List<string>(), null));
         }
 
         [Fact]

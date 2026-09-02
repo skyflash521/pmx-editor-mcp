@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -42,31 +40,6 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>その役割と判じた根拠の一文。</summary>
         public string Basis { get; }
-    }
-
-    /// <summary>型役割表の正本。接続の根と、型ごとの項目からなる。</summary>
-    public sealed class TypeRoleTable
-    {
-        public TypeRoleTable(IList<string> connectionRoots, IList<TypeRoleRecord> types)
-        {
-            if (connectionRoots == null)
-            {
-                throw new ArgumentNullException(nameof(connectionRoots));
-            }
-
-            if (types == null)
-            {
-                throw new ArgumentNullException(nameof(types));
-            }
-
-            ConnectionRoots = new ReadOnlyCollection<string>(connectionRoots);
-            Types = new ReadOnlyCollection<TypeRoleRecord>(types);
-        }
-
-        /// <summary>接続初期化がここから辿り始める型。</summary>
-        public IList<string> ConnectionRoots { get; }
-
-        public IList<TypeRoleRecord> Types { get; }
     }
 
     /// <summary>日本語名をどう決めたか。</summary>
