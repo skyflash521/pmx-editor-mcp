@@ -7,13 +7,12 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 | ホスト | エディタへ読み込ませるプラグイン。エディタのプロセス内に常駐して待ち受ける |
 | ブリッジ | MCPクライアントからの要求を受け、ホストへ中継する外部プロセス |
 
-設計の正本は次のとおり。
+正本の置き場は次のとおり。
 
-| 対象 | 文書 |
+| 対象 | 置き場 |
 |---|---|
-| 構成・ライフサイクル・運用 | [アーキテクチャ仕様書](docs/specs/pmx-editor-mcp-architecture.md) |
-| 両者が交わすプロトコル | [IPC仕様書](docs/specs/pmx-editor-mcp-ipc.md) |
-| PEPlugin SDK の能力一覧とツール化の可否 | [能力台帳](docs/specs/pmx-editor-mcp-capability-ledger.md) |
+| 何がどう動くか(仕様) | [docs/specs/](docs/specs/) |
+| どう作業するか(規約) | [docs/conventions/](docs/conventions/) |
 
 ## 開発環境
 
@@ -69,8 +68,7 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 | `src/HostPlugin/` | ホスト |
 | `src/Bridge/` | ブリッジ |
 | `tests/HostPlugin.Tests/`・`tests/Bridge.Tests/` | xUnit。UIスレッドとエディタ実機に依存する部分は対象外で、実機動作確認が担保する |
-| `docs/specs/` | 仕様の正本 |
-| `docs/conventions/` | 規約 |
+| `docs/` | 正本 |
 | `scripts/` | 実機動作確認で使う補助。用途と使い方は各スクリプト冒頭のコメントと検証手順 |
 | `PmxEditorMcp.sln` | ソリューション。リポジトリ直下のこの1本にすべてのプロジェクトを集約する |
 
