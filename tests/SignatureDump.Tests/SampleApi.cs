@@ -49,6 +49,8 @@ namespace PmxEditorMcp.SignatureDump.Tests.Sample
 
         void Pack(byte[] data);
 
+        IList<DateTime> Stamps();
+
         void Apply();
 
         void Walk(SampleProc step);

@@ -70,6 +70,7 @@ namespace PmxEditorMcp.SignatureDump
                 + Member("memberName", Text(signature.MemberName)) + ","
                 + Member("isStatic", Flag(signature.IsStatic)) + ","
                 + Member("genericArity", signature.GenericArity.ToString(CultureInfo.InvariantCulture)) + ","
+                + Member("typeParameters", Array(signature.TypeParameters.Select(Text))) + ","
                 + Member("parameters", Array(signature.Parameters.Select(WriteParameter))) + ","
                 + Member("valueType", Text(signature.ValueType)) + ","
                 + Member("canRead", Flag(signature.CanRead)) + ","

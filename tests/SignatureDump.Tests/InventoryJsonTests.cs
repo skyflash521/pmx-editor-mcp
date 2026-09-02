@@ -37,34 +37,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
             "\"signatures\":[",
             "{\"key\":\"N.Holder..ctor(System.Int32)\",\"declaringType\":\"N.Holder\","
                 + "\"memberKind\":\"constructor\",\"memberName\":\".ctor\",\"isStatic\":false,"
-                + "\"genericArity\":0,\"parameters\":["
+                + "\"genericArity\":0,\"typeParameters\":[],\"parameters\":["
                 + "{\"name\":\"seed\",\"typeName\":\"System.Int32\",\"direction\":\"in\",\"isOptional\":false,\"isTypeArgument\":false}"
                 + "],\"valueType\":\"N.Holder\",\"canRead\":false,\"canWrite\":false,"
                 + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.Holder.Count()\",\"declaringType\":\"N.Holder\",\"memberKind\":\"field\","
-                + "\"memberName\":\"Count\",\"isStatic\":true,\"genericArity\":0,\"parameters\":[],"
+                + "\"memberName\":\"Count\",\"isStatic\":true,\"genericArity\":0,\"typeParameters\":[],\"parameters\":[],"
                 + "\"valueType\":\"System.Int32\",\"canRead\":true,\"canWrite\":true,"
                 + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.IThing.Changed()\",\"declaringType\":\"N.IThing\",\"memberKind\":\"event\","
-                + "\"memberName\":\"Changed\",\"isStatic\":false,\"genericArity\":0,\"parameters\":[],"
+                + "\"memberName\":\"Changed\",\"isStatic\":false,\"genericArity\":0,\"typeParameters\":[],\"parameters\":[],"
                 + "\"valueType\":\"System.EventHandler\",\"canRead\":false,\"canWrite\":false,"
                 + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.IThing.Level()\",\"declaringType\":\"N.IThing\",\"memberKind\":\"property\","
-                + "\"memberName\":\"Level\",\"isStatic\":false,\"genericArity\":0,\"parameters\":[],"
+                + "\"memberName\":\"Level\",\"isStatic\":false,\"genericArity\":0,\"typeParameters\":[],\"parameters\":[],"
                 + "\"valueType\":\"System.Int32\",\"canRead\":false,\"canWrite\":true,"
                 + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.IThing.Name()\",\"declaringType\":\"N.IThing\",\"memberKind\":\"property\","
-                + "\"memberName\":\"Name\",\"isStatic\":false,\"genericArity\":0,\"parameters\":[],"
+                + "\"memberName\":\"Name\",\"isStatic\":false,\"genericArity\":0,\"typeParameters\":[],\"parameters\":[],"
                 + "\"valueType\":\"System.String\",\"canRead\":true,\"canWrite\":false,"
                 + "\"operationDirection\":\"read\",\"valueTypeIsTypeArgument\":false},",
             "{\"key\":\"N.IThing.Swap<1>(ref T)\",\"declaringType\":\"N.IThing\",\"memberKind\":\"method\","
-                + "\"memberName\":\"Swap\",\"isStatic\":false,\"genericArity\":1,\"parameters\":["
+                + "\"memberName\":\"Swap\",\"isStatic\":false,\"genericArity\":1,\"typeParameters\":[\"T\"],\"parameters\":["
                 + "{\"name\":\"value\",\"typeName\":\"T\",\"direction\":\"ref\",\"isOptional\":false,\"isTypeArgument\":true}"
                 + "],\"valueType\":\"T\",\"canRead\":false,\"canWrite\":false,"
                 + "\"operationDirection\":\"write\",\"valueTypeIsTypeArgument\":true},",
             "{\"key\":\"N.IThing.TryGet(System.Int32,out System.String)\",\"declaringType\":\"N.IThing\","
                 + "\"memberKind\":\"method\",\"memberName\":\"TryGet\",\"isStatic\":false,"
-                + "\"genericArity\":0,\"parameters\":["
+                + "\"genericArity\":0,\"typeParameters\":[],\"parameters\":["
                 + "{\"name\":\"index\",\"typeName\":\"System.Int32\",\"direction\":\"in\",\"isOptional\":false,\"isTypeArgument\":false},"
                 + "{\"name\":\"text\",\"typeName\":\"System.String\",\"direction\":\"out\",\"isOptional\":true,\"isTypeArgument\":false}"
                 + "],\"valueType\":\"System.Boolean\",\"canRead\":false,\"canWrite\":false,"
@@ -180,7 +180,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     false,
                     false,
                     OperationDirection.Write,
-                    true),
+                    true,
+                    new[] { "T" }),
                 new SignatureRecord(
                     "N.IThing.TryGet(System.Int32,out System.String)",
                     "N.IThing",

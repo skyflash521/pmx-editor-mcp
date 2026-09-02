@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using PmxEditorMcp.SignatureDump.Tests.Sample;
 using Xunit;
 
@@ -52,10 +53,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static readonly string[] ExpectedSignatureRows =
         {
             Api + ".Apply()|" + Api + "|Apply|Method|instance|0|System.Void|--|Write|",
-            Api + ".Apply<1>()|" + Api + "|Apply|Method|instance|1|System.Void|--|Write|",
+            Api + ".Apply<1>()|" + Api + "|Apply|Method|instance|1:T|System.Void|--|Write|",
             Api + ".Changed()|" + Api + "|Changed|Event|instance|0|System.EventHandler|--|Write|",
             Api + ".Convert<1>(T)|" + Api
-                + "|Convert|Method|instance|1|T:typeArgument|--|Write|value:T:In:required:typeArgument",
+                + "|Convert|Method|instance|1:T|T:typeArgument|--|Write|value:T:In:required:typeArgument",
             Api + ".Fill(System.Int32[],System.Collections.Generic.IList<System.String>)|" + Api
                 + "|Fill|Method|instance|0|System.Void|--|Write|"
                 + "values:System.Int32[]:In:required"
@@ -63,6 +64,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Api + ".GetCount()|" + Api + "|GetCount|Method|instance|0|System.Int32|--|Read|",
             Api + ".Pack(System.Byte[])|" + Api + "|Pack|Method|instance|0|System.Void|--|Write|"
                 + "data:System.Byte[]:In:required",
+            Api + ".Stamps()|" + Api
+                + "|Stamps|Method|instance|0|System.Collections.Generic.IList<System.DateTime>"
+                + "|--|Write|",
             Api + ".Item(System.Guid)|" + Api
                 + "|Item|Property|instance|0|System.String|r-|Read|key:System.Guid:In:required",
             Api + ".GetState(ref System.Int32)|" + Api
@@ -130,6 +134,140 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnAssemblyWithTwoTypesWritingTheSameNameStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AssemblyEnumerator.Enumerate(EmitAssemblyWithACollision()));
+
+            Assert.Contains("N.Collided", error.Message);
+        }
+
+        [Fact]
+        public void AnAssemblyWhereAReferencedTypeInheritsACollidingNameStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AssemblyEnumerator.Enumerate(EmitAssemblyWithACollisionBehindAReference()));
+
+            Assert.Contains("N.Collided", error.Message);
+        }
+
+        [Fact]
+        public void AnAssemblyWhereABaseTypeArgumentSharesATypeParameterNameStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AssemblyEnumerator.Enumerate(EmitAssemblyWhereABaseTypeSharesAName()));
+
+            Assert.Contains("TShared", error.Message);
+        }
+
+        /// <summary>
+        /// 名前空間を持たない具体型を、基底型の総称型引数としてだけ現れさせる。同じ名前の型引数を
+        /// 宣言型が持つので、名前で引くと取り違える。型の実体は重ならないので、表記の重複を見る
+        /// 検査では止まらない。
+        /// </summary>
+        private static Assembly EmitAssemblyWhereABaseTypeSharesAName()
+        {
+            Type shared = EmitInterface(EmitModule("OutsideShared"), "TShared", null);
+            ModuleBuilder module = EmitModule("InsideShared");
+            TypeBuilder builder = module.DefineType(
+                "N.Holder",
+                TypeAttributes.Public | TypeAttributes.Interface | TypeAttributes.Abstract);
+            builder.DefineGenericParameters("TShared");
+            builder.AddInterfaceImplementation(
+                typeof(IEnumerable<>).MakeGenericType(shared));
+            builder.CreateType();
+
+            return module.Assembly;
+        }
+
+        [Fact]
+        public void AnAssemblyWhereAGenericBaseTypeArgumentCollidesStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AssemblyEnumerator.Enumerate(EmitAssemblyWithACollisionInsideABaseType()));
+
+            Assert.Contains("N.Collided", error.Message);
+        }
+
+        /// <summary>
+        /// 衝突する型を、参照型の基底型としてだけ現れさせる。宣言型の基底型を辿るだけでは届かない。
+        /// </summary>
+        private static Assembly EmitAssemblyWithACollisionBehindAReference()
+        {
+            ModuleBuilder outside = EmitModule("OutsideBehind");
+            Type collided = EmitInterface(outside, "N.Collided", null);
+            Type derived = EmitInterface(outside, "N.Derived", collided);
+            ModuleBuilder module = EmitModule("InsideBehind");
+            EmitInterface(module, "N.Collided", null);
+            EmitInterfaceTaking(module, "N.IThing", derived);
+
+            return module.Assembly;
+        }
+
+        /// <summary>
+        /// 衝突する型を、閉じた総称基底型の引数としてだけ現れさせる。基底型そのものを見るだけでは
+        /// 届かない。
+        /// </summary>
+        private static Assembly EmitAssemblyWithACollisionInsideABaseType()
+        {
+            Type collided = EmitInterface(EmitModule("OutsideInside"), "N.Collided", null);
+            ModuleBuilder module = EmitModule("InsideInside");
+            EmitInterface(module, "N.Collided", null);
+            EmitInterface(
+                module, "N.IThing", typeof(IEnumerable<>).MakeGenericType(collided));
+
+            return module.Assembly;
+        }
+
+        private static Type EmitInterfaceTaking(ModuleBuilder module, string name, Type used)
+        {
+            TypeBuilder builder = module.DefineType(
+                name, TypeAttributes.Public | TypeAttributes.Interface | TypeAttributes.Abstract);
+            builder.DefineMethod(
+                "Use",
+                MethodAttributes.Public | MethodAttributes.Abstract | MethodAttributes.Virtual
+                    | MethodAttributes.NewSlot,
+                typeof(void),
+                new[] { used });
+
+            return builder.CreateType();
+        }
+
+        /// <summary>
+        /// 同じ完全名の型は1つのアセンブリには置けないので、外側の同名の型を継承させる形で
+        /// 2つのアセンブリを実行時に組み立てる。継承だけに現れるので、シグネチャから集める経路には
+        /// 入らない。
+        /// </summary>
+        private static Assembly EmitAssemblyWithACollision()
+        {
+            Type outside = EmitInterface(EmitModule("Outside"), "N.Collided", null);
+            ModuleBuilder module = EmitModule("Inside");
+            EmitInterface(module, "N.Collided", null);
+            EmitInterface(module, "N.IThing", outside);
+
+            return module.Assembly;
+        }
+
+        private static ModuleBuilder EmitModule(string name)
+        {
+            return AppDomain.CurrentDomain
+                .DefineDynamicAssembly(new AssemblyName(name), AssemblyBuilderAccess.Run)
+                .DefineDynamicModule(name);
+        }
+
+        private static Type EmitInterface(ModuleBuilder module, string name, Type inherited)
+        {
+            TypeBuilder builder = module.DefineType(
+                name, TypeAttributes.Public | TypeAttributes.Interface | TypeAttributes.Abstract);
+            if (inherited != null)
+            {
+                builder.AddInterfaceImplementation(inherited);
+            }
+
+            return builder.CreateType();
+        }
+
+        [Fact]
         public void ArrayTypesAreRecordedByTheirElementType()
         {
             InventoryRecord inventory = Enumerate();
@@ -138,6 +276,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 inventory.Types.Concat(inventory.ReferencedTypes).Select(t => t.Name),
                 n => n.EndsWith("]", StringComparison.Ordinal));
             Assert.Contains("System.Byte", inventory.ReferencedTypes.Select(t => t.Name));
+        }
+
+        [Fact]
+        public void TypeArgumentsAreRecordedAlongsideTheirClosedConstruction()
+        {
+            InventoryRecord inventory = Enumerate();
+            string[] names = inventory.ReferencedTypes.Select(t => t.Name).ToArray();
+
+            Assert.Contains("System.Collections.Generic.IList<System.DateTime>", names);
+            Assert.Contains("System.DateTime", names);
         }
 
         [Fact]
@@ -208,7 +356,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 signature.MemberName,
                 signature.MemberKind.ToString(),
                 signature.IsStatic ? "static" : "instance",
-                signature.GenericArity.ToString(CultureInfo.InvariantCulture),
+                signature.GenericArity.ToString(CultureInfo.InvariantCulture)
+                    + (signature.TypeParameters.Count == 0
+                        ? string.Empty
+                        : ":" + string.Join(",", signature.TypeParameters)),
                 signature.ValueType + (signature.ValueTypeIsTypeArgument ? ":typeArgument" : string.Empty),
                 (signature.CanRead ? "r" : "-") + (signature.CanWrite ? "w" : "-"),
                 signature.OperationDirection.ToString(),

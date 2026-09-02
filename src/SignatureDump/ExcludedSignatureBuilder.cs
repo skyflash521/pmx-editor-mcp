@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -42,6 +43,8 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new ArgumentNullException(nameof(inventory));
             }
+
+            InventoryAmbiguity.Require(inventory);
 
             Resolver resolver = new Resolver(inventory, Freeze(baseline, inventory));
             resolver.RequireStreamsFrozen();
@@ -131,7 +134,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 SignatureRecord found = inventory.Signatures.FirstOrDefault(
                     s => !frozen.ContainsKey(s.Key)
-                        && ClassifiableTypes(s).Select(WithoutArrayMark).Any(streams.Contains));
+                        && ClassifiableTypes(s).SelectMany(Components).Any(streams.Contains));
 
                 if (found != null)
                 {
@@ -259,11 +262,11 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     return signature.Parameters
                         .Where(p => !p.IsTypeArgument)
-                        .Select(p => WithoutArrayMark(WithoutByReferenceMark(p.TypeName)))
+                        .SelectMany(p => Components(p.TypeName))
                         .Any(delegates.Contains);
                 }
 
-                return ClassifiableTypes(signature).Select(WithoutArrayMark).Any(delegates.Contains);
+                return ClassifiableTypes(signature).SelectMany(Components).Any(delegates.Contains);
             }
         }
 
@@ -288,13 +291,8 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
-                string declaredElement = WithoutArrayMark(declared[i].TypeName);
-                string candidateElement = WithoutArrayMark(candidate[i].TypeName);
-                string counterpart;
-                if (declared[i].TypeName.Substring(declaredElement.Length)
-                        != candidate[i].TypeName.Substring(candidateElement.Length)
-                    || !PmxCounterparts.TryGetValue(declaredElement, out counterpart)
-                    || counterpart != candidateElement)
+                string substituted = WithCounterparts(declared[i].TypeName);
+                if (substituted == declared[i].TypeName || substituted != candidate[i].TypeName)
                 {
                     return false;
                 }
@@ -303,6 +301,73 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return replaced != 0;
+        }
+
+        /// <summary>
+        /// 対応表の組をPMX版へ置き換えた表記。閉じた総称型や配列の内側に現れるPMD型も置き換えるので、
+        /// 型を包んで受け渡す形でも同じ位置の対応が取れる。名前の一部が偶然一致するだけの型を
+        /// 巻き込まないよう、型名の区切りに挟まれた出現だけを置き換える。
+        /// </summary>
+        private static string WithCounterparts(string typeName)
+        {
+            string substituted = typeName;
+            foreach (KeyValuePair<string, string> pair in PmxCounterparts)
+            {
+                substituted = Substitute(substituted, pair.Key, pair.Value);
+            }
+
+            return substituted;
+        }
+
+        private static string Substitute(string typeName, string from, string to)
+        {
+            StringBuilder builder = new StringBuilder();
+            int index = 0;
+            while (index < typeName.Length)
+            {
+                int found = typeName.IndexOf(from, index, StringComparison.Ordinal);
+                if (found < 0)
+                {
+                    builder.Append(typeName, index, typeName.Length - index);
+                    break;
+                }
+
+                builder.Append(typeName, index, found - index);
+                bool bounded = IsLeftBoundary(typeName, found - 1)
+                    && IsRightBoundary(typeName, found + from.Length);
+                builder.Append(bounded ? to : from);
+                index = found + from.Length;
+            }
+
+            return builder.ToString();
+        }
+
+        private static bool IsLeftBoundary(string typeName, int index)
+        {
+            if (index < 0)
+            {
+                return true;
+            }
+
+            char c = typeName[index];
+
+            return c == '<' || c == ',';
+        }
+
+        /// <summary>
+        /// 右隣の山括弧はその型自身が総称型である印で、包みの区切りではない。対応表が持つのは
+        /// 非総称の組なので、総称型を巻き込まないよう境界として認めない。
+        /// </summary>
+        private static bool IsRightBoundary(string typeName, int index)
+        {
+            if (index >= typeName.Length)
+            {
+                return true;
+            }
+
+            char c = typeName[index];
+
+            return c == '>' || c == ',' || c == '[' || c == ']' || c == '&';
         }
 
         private static bool IsFactoryShape(SignatureRecord signature, string createdType)
@@ -317,7 +382,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             return signature.Parameters
                 .Where(p => !p.IsTypeArgument)
-                .Select(p => WithoutArrayMark(WithoutByReferenceMark(p.TypeName)))
+                .SelectMany(p => Components(p.TypeName))
                 .Any(t => string.Equals(t, CPluginTypeName, StringComparison.Ordinal));
         }
 
@@ -328,7 +393,7 @@ namespace PmxEditorMcp.SignatureDump
         private static bool TakesOrReturnsPmdModel(SignatureRecord signature)
         {
             return ValueAndParameterTypes(signature)
-                .Select(WithoutArrayMark)
+                .SelectMany(Components)
                 .Any(t => string.Equals(t, PmdModelTypeName, StringComparison.Ordinal));
         }
 
@@ -359,6 +424,80 @@ namespace PmxEditorMcp.SignatureDump
             return signature.Parameters.Select(p => p.TypeName)
                 .Concat(new[] { signature.ValueType })
                 .Select(WithoutByReferenceMark);
+        }
+
+        /// <summary>
+        /// 包みを外した型名と、閉じた総称型の各段の引数を再帰的に集める。総称型そのものの表記は
+        /// 列挙が記録する形なので残し、引数の数を落とした定義名は別の型と当たるので加えない。
+        /// </summary>
+        private static IEnumerable<string> Components(string typeName)
+        {
+            string name = WithoutArrayMark(WithoutByReferenceMark(typeName));
+            List<string> names = new List<string> { name };
+            foreach (string argument in TypeArguments(name))
+            {
+                names.AddRange(Components(argument));
+            }
+
+            return names;
+        }
+
+        /// <summary>総称型の各段の引数。段ごとに引数を持つ入れ子の型では全段ぶんを返す。</summary>
+        private static IEnumerable<string> TypeArguments(string typeName)
+        {
+            List<string> arguments = new List<string>();
+            int depth = 0;
+            int start = 0;
+            for (int i = 0; i < typeName.Length; i++)
+            {
+                char c = typeName[i];
+                if (c == '<')
+                {
+                    depth++;
+                    if (depth == 1)
+                    {
+                        start = i + 1;
+                    }
+                }
+                else if (c == '>')
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        arguments.AddRange(SplitArguments(typeName.Substring(start, i - start)));
+                    }
+                }
+            }
+
+            return arguments;
+        }
+
+        private static IEnumerable<string> SplitArguments(string inner)
+        {
+            List<string> parts = new List<string>();
+            int depth = 0;
+            int start = 0;
+            for (int i = 0; i < inner.Length; i++)
+            {
+                char c = inner[i];
+                if (c == '<' || c == '[')
+                {
+                    depth++;
+                }
+                else if (c == '>' || c == ']')
+                {
+                    depth--;
+                }
+                else if (c == ',' && depth == 0)
+                {
+                    parts.Add(inner.Substring(start, i - start));
+                    start = i + 1;
+                }
+            }
+
+            parts.Add(inner.Substring(start));
+
+            return parts;
         }
 
         /// <summary>要素の型で分類するので、配列の次元は落とす。</summary>

@@ -8,6 +8,41 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class OutOfScopeClassifierTests
     {
         [Fact]
+        public void AnEnumerationWhereATypeSharesItsNameWithATypeParameterStops()
+        {
+            InventoryRecord inventory = new InventoryRecord(
+                "PEPlugin",
+                "0.0.8.9",
+                new List<TypeRecord>
+                {
+                    new TypeRecord(
+                        "TShared",
+                        TypeKind.Interface,
+                        false,
+                        true,
+                        false,
+                        new List<string>(),
+                        new List<string>()),
+                    new TypeRecord(
+                        "N.IHolder<TShared>",
+                        TypeKind.Interface,
+                        false,
+                        true,
+                        true,
+                        new List<string>(),
+                        new List<string>()),
+                },
+                new List<TypeRecord>(),
+                new List<SignatureRecord>());
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => new OutOfScopeClassifier(
+                    inventory, new HashSet<string>(StringComparer.Ordinal)));
+
+            Assert.Contains("TShared", error.Message);
+        }
+
+        [Fact]
         public void EnumTypeYieldsTheEnumTypeReason()
         {
             Assert.Equal(

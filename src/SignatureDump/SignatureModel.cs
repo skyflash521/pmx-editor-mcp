@@ -80,7 +80,8 @@ namespace PmxEditorMcp.SignatureDump
             bool canRead,
             bool canWrite,
             OperationDirection operationDirection,
-            bool valueTypeIsTypeArgument = false)
+            bool valueTypeIsTypeArgument = false,
+            IList<string> typeParameters = null)
         {
             Key = key;
             DeclaringType = declaringType;
@@ -94,6 +95,7 @@ namespace PmxEditorMcp.SignatureDump
             CanWrite = canWrite;
             OperationDirection = operationDirection;
             ValueTypeIsTypeArgument = valueTypeIsTypeArgument;
+            TypeParameters = typeParameters ?? new string[0];
         }
 
         /// <summary>
@@ -113,6 +115,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>総称メソッドの型引数の数。総称でなければ0。</summary>
         public int GenericArity { get; }
+
+        /// <summary>総称メソッドが宣言した型引数の名前。総称でなければ空。</summary>
+        public IList<string> TypeParameters { get; }
 
         /// <summary>宣言順の引数。</summary>
         public IList<ParameterRecord> Parameters { get; }

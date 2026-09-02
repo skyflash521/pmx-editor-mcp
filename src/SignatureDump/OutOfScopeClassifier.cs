@@ -31,6 +31,8 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(population));
             }
 
+            InventoryAmbiguity.Require(inventory);
+
             _types = inventory.Types.ToDictionary(t => t.Name, StringComparer.Ordinal);
             _declared = inventory.Signatures
                 .GroupBy(s => s.DeclaringType, StringComparer.Ordinal)

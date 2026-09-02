@@ -174,6 +174,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string ExternalDelegateArrayInValueType = "PEPlugin.Vme.IPEVmeGroup.Filters()";
 
+        private const string DelegateInsideANestedGenericArgument =
+            "PEPlugin.Vme.IPEVmeGroup.Nest(PEPlugin.Vme.PEVmePair<PEPlugin.Vme.StateValueProc>+PEVmeInner<System.Int32>)";
+
+        private const string DelegateInsideTheInnerGenericArgument =
+            "PEPlugin.Vme.IPEVmeGroup.NestInner(PEPlugin.Vme.PEVmePair<System.Int32>+PEVmeInner<PEPlugin.Vme.StateValueProc>)";
+
+        private const string GenericSharingItsNameWithADelegate =
+            "PEPlugin.Vme.IPEVmeGroup.Widen(PEPlugin.Vme.PEVmeFilter<System.Int32>)";
+
+        private const string StreamInsideAGenericArgument =
+            "PEPlugin.Pmx.IPXPmx.WriteAll(System.Collections.Generic.IList<PEPlugin.Pmx.PXStream>)";
+
+        private const string CPluginInsideAGenericArgument =
+            "PXCPlugin.IPXSystemControl.GetInfos(System.Collections.Generic.IList<PXCPlugin.IPXCPlugin>)";
+
+        private const string PmdInsideAGenericArgumentWithAnAlternative =
+            "PEPlugin.Vmd.IPEVmd.Wrap(System.Collections.Generic.IList<PEPlugin.Pmd.IPEPmd>)";
+
+        private const string GenericPmdSharingItsNameWithTheCounterpartKey =
+            "PEPlugin.Vmd.IPEVmd.Hold(PEPlugin.Pmd.IPEPmd<System.Int32>)";
+
+        private const string GenericPmxSharingItsNameWithTheCounterpartValue =
+            "PEPlugin.Vmd.IPEVmd.Hold(PEPlugin.Pmx.IPXPmx<System.Int32>)";
+
+        private const string PmxInsideAGenericArgument =
+            "PEPlugin.Vmd.IPEVmd.Wrap(System.Collections.Generic.IList<PEPlugin.Pmx.IPXPmx>)";
+
+        private const string PmdModelInsideAGenericArgument =
+            "PEPlugin.Vmd.IPEVmd.Bind(System.Collections.Generic.IList<PEPlugin.Pmd.IPEPmd>)";
+
+        private const string DelegateInsideAGenericArgument =
+            "PEPlugin.Vme.IPEVmeGroup.Steps(System.Collections.Generic.IList<PEPlugin.Vme.StateValueProc>)";
+
         private const string PmxWithRealTypeNamedT = "PEPlugin.Vmd.IPEVmd.Bind<1>(PEPlugin.Pmx.IPXPmx,T)";
 
         private const string OutsideEveryCategory = "PEPlugin.Pmx.IPXBone.Name()";
@@ -202,6 +235,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Type("PEPlugin.Vme.PEVmePreviewOption", TypeKind.Class),
                 Type("PEPlugin.Vme.PEVmeOption", TypeKind.Class),
                 Type("PEPlugin.Vme.PEVmeFilter", TypeKind.Class),
+                Type("PEPlugin.Vme.PEVmeFilter<System.Int32>", TypeKind.Class),
+                Type(
+                    "PEPlugin.Vme.PEVmePair<PEPlugin.Vme.StateValueProc>+PEVmeInner<System.Int32>",
+                    TypeKind.Class),
+                Type(
+                    "PEPlugin.Vme.PEVmePair<System.Int32>+PEVmeInner<PEPlugin.Vme.StateValueProc>",
+                    TypeKind.Class),
                 Type("PXCPlugin.UIModel.PXUIModelHelper", TypeKind.Class),
                 Type("PXCPlugin.UIModel.PXUIModelHelper+TextControl", TypeKind.Class),
                 Type("PXCPlugin.PXPluginInfo", TypeKind.Class),
@@ -343,6 +383,69 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Event(
                     "PEPlugin.Vme.IPEVmeSingleValueEventOperator", "Changed", "PEPlugin.Vme.StateValueProc"),
                 Method("PEPlugin.Vme.IPEVmeGroup", "GetEvents", "PEPlugin.Vme.StateValueProc[]"),
+                Method(
+                    "PEPlugin.Vme.IPEVmeGroup",
+                    "Steps",
+                    "System.Void",
+                    Arg(
+                        "steps",
+                        "System.Collections.Generic.IList<PEPlugin.Vme.StateValueProc>")),
+                Method(
+                    "PEPlugin.Vme.IPEVmeGroup",
+                    "Nest",
+                    "System.Void",
+                    Arg(
+                        "pair",
+                        "PEPlugin.Vme.PEVmePair<PEPlugin.Vme.StateValueProc>"
+                            + "+PEVmeInner<System.Int32>")),
+                Method(
+                    "PEPlugin.Vme.IPEVmeGroup",
+                    "NestInner",
+                    "System.Void",
+                    Arg(
+                        "pair",
+                        "PEPlugin.Vme.PEVmePair<System.Int32>"
+                            + "+PEVmeInner<PEPlugin.Vme.StateValueProc>")),
+                Method(
+                    "PEPlugin.Vme.IPEVmeGroup",
+                    "Widen",
+                    "System.Void",
+                    Arg("filter", "PEPlugin.Vme.PEVmeFilter<System.Int32>")),
+                Method(
+                    "PEPlugin.Pmx.IPXPmx",
+                    "WriteAll",
+                    "System.Void",
+                    Arg("streams", "System.Collections.Generic.IList<PEPlugin.Pmx.PXStream>")),
+                Method(
+                    "PXCPlugin.IPXSystemControl",
+                    "GetInfos",
+                    "System.Void",
+                    Arg("plugins", "System.Collections.Generic.IList<PXCPlugin.IPXCPlugin>")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd",
+                    "Bind",
+                    "System.Void",
+                    Arg("models", "System.Collections.Generic.IList<PEPlugin.Pmd.IPEPmd>")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd",
+                    "Wrap",
+                    "System.Void",
+                    Arg("models", "System.Collections.Generic.IList<PEPlugin.Pmd.IPEPmd>")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd",
+                    "Wrap",
+                    "System.Void",
+                    Arg("models", "System.Collections.Generic.IList<PEPlugin.Pmx.IPXPmx>")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd",
+                    "Hold",
+                    "System.Void",
+                    Arg("model", "PEPlugin.Pmd.IPEPmd<System.Int32>")),
+                Method(
+                    "PEPlugin.Vmd.IPEVmd",
+                    "Hold",
+                    "System.Void",
+                    Arg("model", "PEPlugin.Pmx.IPXPmx<System.Int32>")),
                 Method("PEPlugin.Vmd.IPEVmd", "Sources", "PEPlugin.Pmd.IPEPmd[]"),
                 Method("PEPlugin.Vmd.IPEVmd", "Grid", "PEPlugin.Pmd.IPEPmd[,]"),
                 Method(
@@ -562,6 +665,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Entry(
                 "CAP-339",
                 FromStream,
+                StreamInsideAGenericArgument,
                 StreamArrayArgument,
                 StreamDerivedArgument,
                 StreamInValueType,
@@ -883,6 +987,76 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void OverloadTakingADelegateInsideANestedGenericArgumentIsAlsoListed()
+        {
+            Assert.Equal(
+                ExclusionCategory.Delegate, Find(DelegateInsideANestedGenericArgument).Category);
+        }
+
+        [Fact]
+        public void OverloadTakingADelegateInsideTheInnerGenericArgumentIsAlsoListed()
+        {
+            Assert.Equal(
+                ExclusionCategory.Delegate, Find(DelegateInsideTheInnerGenericArgument).Category);
+        }
+
+        [Fact]
+        public void AGenericTypeSharingItsNameWithADelegateIsNotListed()
+        {
+            Assert.DoesNotContain(GenericSharingItsNameWithADelegate, Build().Select(r => r.Key));
+        }
+
+        [Fact]
+        public void ArgumentsTakingAStreamInsideAGenericArgumentStop()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ExcludedSignatureBuilder.Build(
+                    BaselineExcept(StreamInsideAGenericArgument), Inventory()));
+
+            Assert.Contains(StreamInsideAGenericArgument, error.Message);
+        }
+
+        [Fact]
+        public void OverloadTakingTheCPluginImplementationInsideAGenericArgumentIsAlsoListed()
+        {
+            Assert.Equal(
+                ExclusionCategory.CPluginArgument, Find(CPluginInsideAGenericArgument).Category);
+        }
+
+        [Fact]
+        public void AGenericTypeWritingTheNameOfACounterpartIsNotItsCounterpart()
+        {
+            Assert.DoesNotContain(
+                GenericPmdSharingItsNameWithTheCounterpartKey, Build().Select(r => r.Key));
+            Assert.DoesNotContain(
+                GenericPmxSharingItsNameWithTheCounterpartValue, Build().Select(r => r.Key));
+        }
+
+        [Fact]
+        public void ThePmxVersionInsideAGenericArgumentCountsAsAnAlternative()
+        {
+            ExcludedSignatureRecord record = Find(PmdInsideAGenericArgumentWithAnAlternative);
+
+            Assert.Equal(ExclusionCategory.Pmd, record.Category);
+            Assert.Equal(PmxInsideAGenericArgument, record.Alternative);
+        }
+
+        [Fact]
+        public void OverloadTakingThePmdModelInsideAGenericArgumentIsAlsoListed()
+        {
+            AssertPmdModel(PmdModelInsideAGenericArgument);
+        }
+
+        [Fact]
+        public void OverloadTakingADelegateInsideAGenericArgumentIsAlsoListed()
+        {
+            ExcludedSignatureRecord record = Find(DelegateInsideAGenericArgument);
+
+            Assert.Equal(ExclusionCategory.Delegate, record.Category);
+            Assert.Equal(string.Empty, record.Alternative);
+        }
+
+        [Fact]
         public void MethodReturningAnArrayOfDelegatesDeclaredOutsideTheAssemblyIsAlsoListed()
         {
             ExcludedSignatureRecord record = Find(ExternalDelegateArrayInValueType);
@@ -969,6 +1143,35 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnEnumerationWhereATypeSharesItsNameWithATypeParameterStops()
+        {
+            List<TypeRecord> types = new List<TypeRecord>(Inventory().Types)
+            {
+                Type("TShared", TypeKind.Interface),
+                GenericTypeDefinition("PEPlugin.Vme.IPEVmeHolder<TShared>"),
+            };
+            InventoryRecord inventory = new InventoryRecord(
+                "PEPlugin", "0.0.8.9", types, Inventory().ReferencedTypes, Inventory().Signatures);
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ExcludedSignatureBuilder.Build(Baseline(), inventory));
+
+            Assert.Contains("TShared", error.Message);
+        }
+
+        private static TypeRecord GenericTypeDefinition(string name)
+        {
+            return new TypeRecord(
+                name,
+                TypeKind.Interface,
+                false,
+                true,
+                true,
+                new List<string>(),
+                new List<string>());
+        }
+
+        [Fact]
         public void EntriesAreOrderedByKeyWithoutDuplicates()
         {
             string[] keys = Build().Select(r => r.Key).ToArray();
@@ -984,7 +1187,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     PmdReset, PmdMerge, PmdApply, PmdLoad, PmdStore, PmdSave, PmdInitOnOtherType,
                     PmdWithoutAlternative, PmdInValueType, PmdWithTypeArgument,
                     DelegateArrayInValueType, PmdModelArrayInValueType, PmdModelMatrixInValueType,
-                    ExternalDelegateArrayInValueType, StreamArrayArgument, StreamMatrixArgument,
+                    ExternalDelegateArrayInValueType, DelegateInsideAGenericArgument,
+                    DelegateInsideANestedGenericArgument, DelegateInsideTheInnerGenericArgument,
+                    CPluginInsideAGenericArgument,
+                    PmdModelInsideAGenericArgument, StreamInsideAGenericArgument,
+                    PmdInsideAGenericArgumentWithAnAlternative,
+                    StreamArrayArgument, StreamMatrixArgument,
                     CPluginArrayOverload, PmdArrayOverload, PmdRankSpreadOverload, PmdJaggedOverload,
                     PmdRankOrderOverload,
                 }.OrderBy(k => k, StringComparer.Ordinal).ToArray(),
@@ -1000,6 +1208,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Entry(
                         "CAP-339",
                         FromStream,
+                        StreamInsideAGenericArgument,
                         StreamArrayArgument,
                         StreamDerivedArgument,
                         StreamInValueType,
