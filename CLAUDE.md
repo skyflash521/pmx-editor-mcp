@@ -9,15 +9,13 @@
 
 ## 正本
 
-| 対象 | 文書 |
+| 対象 | 置き場 |
 |---|---|
-| 構成・ライフサイクル・運用 | [アーキテクチャ仕様書](docs/specs/pmx-editor-mcp-architecture.md) |
-| ホストとブリッジが交わすプロトコル | [IPC仕様書](docs/specs/pmx-editor-mcp-ipc.md) |
-| PEPlugin SDK の能力一覧とツール化の可否 | [能力台帳](docs/specs/pmx-editor-mcp-capability-ledger.md) |
-| 通す検査・実機動作確認 | [検証手順](docs/conventions/verification.md) |
+| 何がどう動くか(仕様) | [docs/specs/](docs/specs/) |
+| どう作業するか(規約) | [docs/conventions/](docs/conventions/) |
 | 開発環境と動かし方 | [README.md](README.md) |
 
-**設計値・手順をこの文書へ書き写さない。** 用があるものだけを開く。
+**設計値・手順をこの文書へ書き写さない。** 置き場を開き、題が合う文書だけを読む。
 
 ## 一時ファイル
 
