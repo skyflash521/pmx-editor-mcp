@@ -193,30 +193,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return level.Substring(0, open) + "`"
-                + ArgumentCount(level.Substring(open + 1, level.Length - open - 2));
-        }
-
-        private static int ArgumentCount(string arguments)
-        {
-            int count = 1;
-            int depth = 0;
-            foreach (char letter in arguments)
-            {
-                if (letter == '<' || letter == '[')
-                {
-                    depth++;
-                }
-                else if (letter == '>' || letter == ']')
-                {
-                    depth--;
-                }
-                else if (letter == ',' && depth == 0)
-                {
-                    count++;
-                }
-            }
-
-            return count;
+                + TypeDefinitionName.Arguments(level).Count();
         }
 
         private static XDocument Parse(string xml)

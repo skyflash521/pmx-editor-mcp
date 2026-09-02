@@ -434,70 +434,12 @@ namespace PmxEditorMcp.SignatureDump
         {
             string name = WithoutArrayMark(WithoutByReferenceMark(typeName));
             List<string> names = new List<string> { name };
-            foreach (string argument in TypeArguments(name))
+            foreach (string argument in TypeDefinitionName.Arguments(name))
             {
                 names.AddRange(Components(argument));
             }
 
             return names;
-        }
-
-        /// <summary>総称型の各段の引数。段ごとに引数を持つ入れ子の型では全段ぶんを返す。</summary>
-        private static IEnumerable<string> TypeArguments(string typeName)
-        {
-            List<string> arguments = new List<string>();
-            int depth = 0;
-            int start = 0;
-            for (int i = 0; i < typeName.Length; i++)
-            {
-                char c = typeName[i];
-                if (c == '<')
-                {
-                    depth++;
-                    if (depth == 1)
-                    {
-                        start = i + 1;
-                    }
-                }
-                else if (c == '>')
-                {
-                    depth--;
-                    if (depth == 0)
-                    {
-                        arguments.AddRange(SplitArguments(typeName.Substring(start, i - start)));
-                    }
-                }
-            }
-
-            return arguments;
-        }
-
-        private static IEnumerable<string> SplitArguments(string inner)
-        {
-            List<string> parts = new List<string>();
-            int depth = 0;
-            int start = 0;
-            for (int i = 0; i < inner.Length; i++)
-            {
-                char c = inner[i];
-                if (c == '<' || c == '[')
-                {
-                    depth++;
-                }
-                else if (c == '>' || c == ']')
-                {
-                    depth--;
-                }
-                else if (c == ',' && depth == 0)
-                {
-                    parts.Add(inner.Substring(start, i - start));
-                    start = i + 1;
-                }
-            }
-
-            parts.Add(inner.Substring(start));
-
-            return parts;
         }
 
         /// <summary>要素の型で分類するので、配列の次元は落とす。</summary>

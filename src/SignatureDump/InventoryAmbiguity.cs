@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -28,7 +26,7 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (IGrouping<string, Type> group in types
                 .Distinct()
-                .GroupBy(t => NormalizedName(TypeNameFormatter.Format(t)), StringComparer.Ordinal))
+                .GroupBy(t => TypeDefinitionName.Of(TypeNameFormatter.Format(t)), StringComparer.Ordinal))
             {
                 if (group.Select(GenericDefinition).Distinct().Count() > 1)
                 {
@@ -51,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump
                 inventory.Types.Concat(inventory.ReferencedTypes).Select(t => t.Name),
                 inventory.Types
                     .Where(t => t.IsGenericTypeDefinition)
-                    .SelectMany(t => TypeArguments(t.Name))
+                    .SelectMany(t => TypeDefinitionName.Arguments(t.Name))
                     .Concat(inventory.Signatures.SelectMany(s => s.TypeParameters)));
         }
 
@@ -88,7 +86,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(typeName));
             }
 
-            return TypeArguments(typeName);
+            return TypeDefinitionName.Arguments(typeName);
         }
 
         private static Type GenericDefinition(Type type)
@@ -96,103 +94,6 @@ namespace PmxEditorMcp.SignatureDump
             return type.IsGenericType && !type.IsGenericTypeDefinition
                 ? type.GetGenericTypeDefinition()
                 : type;
-        }
-
-        /// <summary>
-        /// 総称型引数を引数の数へ置き換えた表記。引数の数が違う同名の型は別の名前のままになる。
-        /// </summary>
-        private static string NormalizedName(string typeName)
-        {
-            StringBuilder builder = new StringBuilder();
-            int depth = 0;
-            int start = 0;
-            for (int i = 0; i < typeName.Length; i++)
-            {
-                char c = typeName[i];
-                if (c == '<')
-                {
-                    depth++;
-                    if (depth == 1)
-                    {
-                        start = i + 1;
-                    }
-                }
-                else if (c == '>')
-                {
-                    depth--;
-                    if (depth == 0)
-                    {
-                        builder.Append('<')
-                            .Append(Split(typeName.Substring(start, i - start)).Count()
-                                .ToString(CultureInfo.InvariantCulture))
-                            .Append('>');
-                    }
-                }
-                else if (depth == 0)
-                {
-                    builder.Append(c);
-                }
-            }
-
-            return builder.ToString();
-        }
-
-        /// <summary>総称型の各段の引数。段ごとに引数を持つ入れ子の型では全段ぶんを返す。</summary>
-        private static IEnumerable<string> TypeArguments(string typeName)
-        {
-            List<string> arguments = new List<string>();
-            int depth = 0;
-            int start = 0;
-            for (int i = 0; i < typeName.Length; i++)
-            {
-                char c = typeName[i];
-                if (c == '<')
-                {
-                    depth++;
-                    if (depth == 1)
-                    {
-                        start = i + 1;
-                    }
-                }
-                else if (c == '>')
-                {
-                    depth--;
-                    if (depth == 0)
-                    {
-                        arguments.AddRange(Split(typeName.Substring(start, i - start)));
-                    }
-                }
-            }
-
-            return arguments;
-        }
-
-        private static IEnumerable<string> Split(string inner)
-        {
-            List<string> parts = new List<string>();
-            int depth = 0;
-            int start = 0;
-            for (int i = 0; i < inner.Length; i++)
-            {
-                char c = inner[i];
-                if (c == '<' || c == '[')
-                {
-                    depth++;
-                }
-                else if (c == '>' || c == ']')
-                {
-                    depth--;
-                }
-                else if (c == ',' && depth == 0)
-                {
-                    parts.Add(inner.Substring(start, i - start));
-                    start = i + 1;
-                }
-            }
-
-            parts.Add(inner.Substring(start));
-
-            return parts;
         }
     }
 }

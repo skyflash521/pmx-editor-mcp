@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -82,109 +80,6 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
         }
 
-        /// <summary>
-        /// 総称型引数を引数の数へ置き換えた表記。開いた定義と閉じた総称型が同じ名前になり、引数の
-        /// 数が違う同名の型は別の名前のままになる。
-        /// </summary>
-        private static string Definition(string typeName)
-        {
-            if (typeName.IndexOf('<') < 0)
-            {
-                return typeName;
-            }
-
-            StringBuilder builder = new StringBuilder();
-            int depth = 0;
-            int start = 0;
-            for (int i = 0; i < typeName.Length; i++)
-            {
-                char c = typeName[i];
-                if (c == '<')
-                {
-                    depth++;
-                    if (depth == 1)
-                    {
-                        start = i + 1;
-                    }
-                }
-                else if (c == '>')
-                {
-                    depth--;
-                    if (depth == 0)
-                    {
-                        builder.Append('<')
-                            .Append(Split(typeName.Substring(start, i - start)).Count()
-                                .ToString(CultureInfo.InvariantCulture))
-                            .Append('>');
-                    }
-                }
-                else if (depth == 0)
-                {
-                    builder.Append(c);
-                }
-            }
-
-            return builder.ToString();
-        }
-
-        /// <summary>総称型の各段の引数。段ごとに引数を持つ入れ子の型では全段ぶんを返す。</summary>
-        private static IEnumerable<string> TypeArguments(string typeName)
-        {
-            List<string> arguments = new List<string>();
-            int depth = 0;
-            int start = 0;
-            for (int i = 0; i < typeName.Length; i++)
-            {
-                char c = typeName[i];
-                if (c == '<')
-                {
-                    depth++;
-                    if (depth == 1)
-                    {
-                        start = i + 1;
-                    }
-                }
-                else if (c == '>')
-                {
-                    depth--;
-                    if (depth == 0)
-                    {
-                        arguments.AddRange(Split(typeName.Substring(start, i - start)));
-                    }
-                }
-            }
-
-            return arguments;
-        }
-
-        private static IEnumerable<string> Split(string inner)
-        {
-            List<string> parts = new List<string>();
-            int depth = 0;
-            int start = 0;
-            for (int i = 0; i < inner.Length; i++)
-            {
-                char c = inner[i];
-                if (c == '<' || c == '[')
-                {
-                    depth++;
-                }
-                else if (c == '>' || c == ']')
-                {
-                    depth--;
-                }
-                else if (c == ',' && depth == 0)
-                {
-                    parts.Add(inner.Substring(start, i - start));
-                    start = i + 1;
-                }
-            }
-
-            parts.Add(inner.Substring(start));
-
-            return parts;
-        }
-
         private static string WithoutReferenceAndArrayMarks(string typeName)
         {
             string name = typeName.EndsWith("&", StringComparison.Ordinal)
@@ -235,22 +130,22 @@ namespace PmxEditorMcp.SignatureDump
                 this.inventory = inventory;
                 this.provided = provided;
                 rule = ValueRepresentationRule.Create(inventory);
-                declaredTypes = inventory.Types.ToDictionary(t => Definition(t.Name), StringComparer.Ordinal);
+                declaredTypes = inventory.Types.ToDictionary(t => TypeDefinitionName.Of(t.Name), StringComparer.Ordinal);
                 declaredMembers = inventory.Signatures
-                    .GroupBy(s => Definition(s.DeclaringType), StringComparer.Ordinal)
+                    .GroupBy(s => TypeDefinitionName.Of(s.DeclaringType), StringComparer.Ordinal)
                     .ToDictionary(
                         g => g.Key, g => (IList<SignatureRecord>)g.ToList(), StringComparer.Ordinal);
                 declaredParameters = inventory.Types
                     .Where(t => t.IsGenericTypeDefinition)
                     .ToDictionary(
-                        t => Definition(t.Name),
+                        t => TypeDefinitionName.Of(t.Name),
                         t => (ISet<string>)new HashSet<string>(
-                            TypeArguments(t.Name), StringComparer.Ordinal),
+                            TypeDefinitionName.Arguments(t.Name), StringComparer.Ordinal),
                         StringComparer.Ordinal);
                 delegates = new HashSet<string>(
                     inventory.Types.Concat(inventory.ReferencedTypes)
                         .Where(t => t.Kind == TypeKind.Delegate)
-                        .Select(t => Definition(t.Name)),
+                        .Select(t => TypeDefinitionName.Of(t.Name)),
                     StringComparer.Ordinal);
             }
 
@@ -330,7 +225,7 @@ namespace PmxEditorMcp.SignatureDump
             private void Collect(SignatureRecord signature, ISet<string> names)
             {
                 HashSet<string> parameters = new HashSet<string>(
-                    Parameters(Definition(signature.DeclaringType)), StringComparer.Ordinal);
+                    Parameters(TypeDefinitionName.Of(signature.DeclaringType)), StringComparer.Ordinal);
                 parameters.UnionWith(signature.TypeParameters);
 
                 Collect(signature.DeclaringType, names, parameters);
@@ -352,10 +247,10 @@ namespace PmxEditorMcp.SignatureDump
                 string name = WithoutReferenceAndArrayMarks(typeName);
                 if (!parameters.Contains(name))
                 {
-                    names.Add(Definition(name));
+                    names.Add(TypeDefinitionName.Of(name));
                 }
 
-                foreach (string argument in TypeArguments(name))
+                foreach (string argument in TypeDefinitionName.Arguments(name))
                 {
                     Collect(argument, names, parameters);
                 }
