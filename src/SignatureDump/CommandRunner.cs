@@ -25,6 +25,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>日本語名の正本が規則どおりに付いていることを照合する。</summary>
         public const string PropertyNamesCommand = "property-names";
 
+        /// <summary>型役割表の正本が規則どおりに割り当てられていることを照合する。</summary>
+        public const string TypeRolesCommand = "type-roles";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -75,6 +78,11 @@ namespace PmxEditorMcp.SignatureDump
                 return PropertyNameRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], TypeRolesCommand, StringComparison.Ordinal))
+            {
+                return TypeRoleRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -96,6 +104,10 @@ namespace PmxEditorMcp.SignatureDump
                 PropertyNamesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <日本語名の正本のパス>");
+            error.WriteLine(
+                TypeRolesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス>");
         }
     }
 }

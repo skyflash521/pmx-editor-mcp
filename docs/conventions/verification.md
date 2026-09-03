@@ -14,6 +14,7 @@
 | SDK公開APIの列挙 | [SDK公開APIの列挙](#sdk公開apiの列挙)のコマンド | 終了コード0 |
 | 台帳と正本の照合 | [台帳と正本の照合](#台帳と正本の照合)のコマンド | 終了コード0 |
 | 日本語名の照合 | [日本語名の照合](#日本語名の照合)のコマンド | 終了コード0 |
+| 型役割の照合 | [型役割の照合](#型役割の照合)のコマンド | 終了コード0 |
 | 実機動作確認 | [実機動作確認](#実機動作確認)の手順 | 手順内の各確認が期待どおり |
 | ブリッジの実機動作確認 | [ブリッジの実機動作確認](#ブリッジの実機動作確認)の手順 | 手順内の各確認が期待どおり |
 
@@ -131,6 +132,22 @@ src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe property-names 
 読み解けなくても終了コード3、規則に合わなければ終了コード5になる。台帳とSDKが食い違って母集合を
 決められないときも終了コード5になる。合わなかったときは、どちらで止まったかと、どの項目がどの条件に
 反したかが標準エラー出力に出る。
+
+## 型役割の照合
+
+[型役割表の正本](../specs/pmx-editor-mcp-type-roles.json)が、
+[型役割仕様書](../specs/pmx-editor-mcp-type-roles.md)の規則どおりに割り当てられていることを照合する。
+下位コマンド `type-roles` の引数は導入ディレクトリ・能力台帳・除外一覧・型役割表の正本のパスの4つ。
+
+```
+src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe type-roles "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-signatures.json docs/specs/pmx-editor-mcp-type-roles.json
+```
+
+**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
+読み解けなくても終了コード3、規則に合わなければ終了コード5になる。役割の根拠を決められないときも
+終了コード5で、これに当たるのは台帳とSDKが食い違って母集合を決められないとき、接続の根がSDKの列挙に
+無いとき、引数の型を取り出せないハンドラのイベントが在るときである。合わなかったときは、どちらで
+止まったかと、どの型がどの条件に反したかが標準エラー出力に出る。
 
 ## 必要環境
 

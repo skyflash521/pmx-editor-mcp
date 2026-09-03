@@ -118,6 +118,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("excluded-signatures", CommandRunner.ExcludedSignaturesCommand);
             Assert.Equal("ledger-coverage", CommandRunner.LedgerCoverageCommand);
             Assert.Equal("property-names", CommandRunner.PropertyNamesCommand);
+            Assert.Equal("type-roles", CommandRunner.TypeRolesCommand);
         }
 
         [Fact]
@@ -212,6 +213,49 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TypeRolesSubcommandRunsTheCollation()
+        {
+            string ledgerPath = Path.Combine(_root, "roles-ledger.md");
+            File.WriteAllText(
+                ledgerPath,
+                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
+                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+            string excludedPath = Path.Combine(_root, "roles-excluded.json");
+            File.WriteAllText(excludedPath, "{\"signatures\":[]}");
+            string rolesPath = Path.Combine(_root, "type-roles.json");
+            File.WriteAllText(rolesPath, "{\"types\":[]}");
+            string editorDirectory = CreateEditorDirectory();
+
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.TypeRolesCommand,
+                    editorDirectory,
+                    ledgerPath,
+                    excludedPath,
+                    rolesPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+
+            int missingCode = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.TypeRolesCommand,
+                    Path.Combine(_root, "none"),
+                    ledgerPath,
+                    excludedPath,
+                    rolesPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, missingCode);
+        }
+
+        [Fact]
         public void ExcludedSignaturesSubcommandRunsTheWrite()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
@@ -273,6 +317,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.PropertyNamesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <日本語名の正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.TypeRolesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }
