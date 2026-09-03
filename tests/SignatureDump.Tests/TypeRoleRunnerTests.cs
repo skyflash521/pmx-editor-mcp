@@ -193,14 +193,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
             HashSet<string> roots = new HashSet<string>(
                 TypeRoleEvidence.ConnectionRoots, StringComparer.Ordinal);
             StringBuilder builder = new StringBuilder("{\"types\":[");
-            bool first = true;
+            int index = 0;
             foreach (string name in Population().OrderBy(n => n, StringComparer.Ordinal))
             {
-                builder.Append(first ? string.Empty : ",");
-                first = false;
+                builder.Append(index == 0 ? string.Empty : ",");
                 builder.Append("{\"typeName\":\"").Append(name).Append("\",\"role\":\"")
                     .Append(roots.Contains(name) ? "connector" : "dto")
-                    .Append("\",\"basis\":\"題材の根拠。\"}");
+                    .Append("\",\"basis\":\"題材の根拠。\"");
+                if (roots.Contains(name))
+                {
+                    builder.Append(",\"elementNoun\":\"root_")
+                        .Append(index.ToString(CultureInfo.InvariantCulture)).Append("\"");
+                }
+
+                builder.Append("}");
+                index++;
             }
 
             return builder.Append("]}").ToString();

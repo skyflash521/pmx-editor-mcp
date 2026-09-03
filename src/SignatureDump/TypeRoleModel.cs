@@ -24,14 +24,30 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>型役割表の型ごとの項目1件。</summary>
     public sealed class TypeRoleRecord
     {
-        public TypeRoleRecord(string typeName, TypeRole role, string basis)
+        public TypeRoleRecord(
+            string typeName,
+            TypeRole role,
+            string basis,
+            string elementNoun = "",
+            string elementNounPlural = "")
         {
             PropertyRecord.RequireText(typeName, nameof(typeName));
             PropertyRecord.RequireText(basis, nameof(basis));
+            if (elementNoun == null)
+            {
+                throw new ArgumentNullException(nameof(elementNoun));
+            }
+
+            if (elementNounPlural == null)
+            {
+                throw new ArgumentNullException(nameof(elementNounPlural));
+            }
 
             TypeName = typeName;
             Role = role;
             Basis = basis;
+            ElementNoun = elementNoun;
+            ElementNounPlural = elementNounPlural;
         }
 
         public string TypeName { get; }
@@ -40,6 +56,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>その役割と判じた根拠の一文。</summary>
         public string Basis { get; }
+
+        /// <summary>ツール名と説明文が対象を指すのに使う名詞。持たない役割では空。</summary>
+        public string ElementNoun { get; }
+
+        /// <summary>集合を扱うツール名が使う複数形。持たない役割では空。</summary>
+        public string ElementNounPlural { get; }
     }
 
     /// <summary>日本語名をどう決めたか。</summary>

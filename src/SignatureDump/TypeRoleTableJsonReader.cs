@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
@@ -16,6 +17,13 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string BasisName = "basis";
 
+        private const string ElementNounName = "elementNoun";
+
+        private const string ElementNounPluralName = "elementNounPlural";
+
+        private static readonly Regex SnakeCase = new Regex(
+            "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
+
         private static readonly Dictionary<string, TypeRole> Roles =
             new Dictionary<string, TypeRole>(StringComparer.Ordinal)
             {
@@ -27,8 +35,8 @@ namespace PmxEditorMcp.SignatureDump
             };
 
         /// <summary>
-        /// 型ごとの役割を、書かれた順に返す。型名が序数の昇順に重複なく並ぶことを求める。形が違えば
-        /// <see cref="FormatException"/>。
+        /// 型ごとの役割を、書かれた順に返す。型名が序数の昇順に重複なく並び、要素名詞が表の中で
+        /// 重複しないことを求める。形が違えば <see cref="FormatException"/>。
         /// </summary>
         public static IList<TypeRoleRecord> ReadTypeRoles(string json)
         {
@@ -43,16 +51,31 @@ namespace PmxEditorMcp.SignatureDump
         private static IList<TypeRoleRecord> ReadTypes(object value)
         {
             List<TypeRoleRecord> records = new List<TypeRoleRecord>();
+            HashSet<string> nouns = new HashSet<string>(StringComparer.Ordinal);
             string previous = null;
             foreach (object item in Array(value, TypesName))
             {
                 TypeRoleRecord record = ReadRecord(item);
                 RequireAscending(previous, record.TypeName, "型");
+                RequireUnique(nouns, record.ElementNoun);
+                RequireUnique(nouns, record.ElementNounPlural);
                 previous = record.TypeName;
                 records.Add(record);
             }
 
             return records;
+        }
+
+        /// <summary>
+        /// 要素名詞はツール名と説明文が対象を指す語なので、単数形と複数形をまたいで表の中で一意に
+        /// する。二つの型が同じ語を名乗ると、どちらのツールかが名前から決まらない。
+        /// </summary>
+        private static void RequireUnique(ISet<string> nouns, string noun)
+        {
+            if (noun.Length != 0 && !nouns.Add(noun))
+            {
+                throw new FormatException("同じ要素名詞が二度現れる: " + noun);
+            }
         }
 
         private static void RequireAscending(string previous, string current, string what)
@@ -76,23 +99,85 @@ namespace PmxEditorMcp.SignatureDump
 
         private static TypeRoleRecord ReadRecord(object item)
         {
-            Dictionary<string, object> members = Members(item, TypeNameName, RoleName, BasisName);
-            string text = Text(members[RoleName], RoleName);
+            TypeRole role = ReadRole(item);
+            Dictionary<string, object> members = Members(item, NamesFor(role));
+            string noun = members.ContainsKey(ElementNounName)
+                ? Noun(members[ElementNounName], ElementNounName)
+                : string.Empty;
+            string plural = members.ContainsKey(ElementNounPluralName)
+                ? Noun(members[ElementNounPluralName], ElementNounPluralName)
+                : string.Empty;
+
+            try
+            {
+                return new TypeRoleRecord(
+                    Text(members[TypeNameName], TypeNameName),
+                    role,
+                    Text(members[BasisName], BasisName),
+                    noun,
+                    plural);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new FormatException(exception.Message, exception);
+            }
+        }
+
+        private static TypeRole ReadRole(object item)
+        {
+            Dictionary<string, object> members = item as Dictionary<string, object>;
+            if (members == null)
+            {
+                throw new FormatException("項目の組でなければならない。");
+            }
+
+            object value;
+            if (!members.TryGetValue(RoleName, out value))
+            {
+                throw new FormatException("項目が無い: " + RoleName);
+            }
+
+            string text = Text(value, RoleName);
             TypeRole role;
             if (!Roles.TryGetValue(text, out role))
             {
                 throw new FormatException("知らない役割: " + text);
             }
 
-            try
+            return role;
+        }
+
+        /// <summary>役割ごとに、項目が持つべき名前。持てない名前を書くと未知の項目として弾かれる。</summary>
+        private static string[] NamesFor(TypeRole role)
+        {
+            if (role == TypeRole.EventArgs || role == TypeRole.Dto)
             {
-                return new TypeRoleRecord(
-                    Text(members[TypeNameName], TypeNameName), role, Text(members[BasisName], BasisName));
+                return new[] { TypeNameName, RoleName, BasisName };
             }
-            catch (ArgumentException exception)
+
+            if (role == TypeRole.Connector)
             {
-                throw new FormatException(exception.Message, exception);
+                return new[] { TypeNameName, RoleName, BasisName, ElementNounName };
             }
+
+            return new[]
+            {
+                TypeNameName, RoleName, BasisName, ElementNounName, ElementNounPluralName,
+            };
+        }
+
+        /// <summary>要素名詞はツール名の一部になるので、小文字と数字と下線だけの語に限る。</summary>
+        private static string Noun(object value, string name)
+        {
+            string text = Text(value, name);
+            if (!SnakeCase.IsMatch(text))
+            {
+                throw new FormatException(
+                    name + " は小文字で始まり、小文字と数字と下線だけからなる語でなければならない: "
+                        + text);
+            }
+
+            return text;
         }
 
         private static object Parse(string json)

@@ -10,22 +10,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ATypeIsReadWithItsRoleAndBasis()
         {
-            TypeRoleRecord record = Assert.Single(ReadTypes(Item("N.IThing", "connector")));
+            TypeRoleRecord record = Assert.Single(
+                ReadTypes(Noun("N.IThing", "connector", "\"elementNoun\":\"thing\"")));
 
             Assert.Equal("N.IThing", record.TypeName);
             Assert.Equal(TypeRole.Connector, record.Role);
             Assert.Equal("N.IThing の根拠。", record.Basis);
+            Assert.Equal("thing", record.ElementNoun);
         }
 
         [Fact]
         public void EveryRoleNameIsRead()
         {
             IList<TypeRoleRecord> records = ReadTypes(
-                Item("N.A", "connector"),
+                Noun("N.A", "connector", "\"elementNoun\":\"alpha\""),
                 Item("N.B", "dto"),
                 Item("N.C", "eventArgs"),
-                Item("N.D", "handleTarget"),
-                Item("N.E", "operationTarget"));
+                Noun("N.D", "handleTarget",
+                    "\"elementNoun\":\"delta\",\"elementNounPlural\":\"deltas\""),
+                Noun("N.E", "operationTarget",
+                    "\"elementNoun\":\"epsilon\",\"elementNounPlural\":\"epsilons\""));
 
             Assert.Equal(
                 new[]
@@ -101,6 +105,137 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheElementNounsAreRead()
+        {
+            IList<TypeRoleRecord> records = ReadTypes(
+                Noun("N.A", "connector", "\"elementNoun\":\"alpha\""),
+                Noun("N.B", "handleTarget",
+                    "\"elementNoun\":\"beta\",\"elementNounPlural\":\"betas\""),
+                Item("N.C", "dto"));
+
+            Assert.Equal(new[] { "alpha", "beta", string.Empty }, records.Select(r => r.ElementNoun));
+            Assert.Equal(
+                new[] { string.Empty, "betas", string.Empty },
+                records.Select(r => r.ElementNounPlural));
+        }
+
+        [Fact]
+        public void ARoleThatNeedsAnElementNounWithoutOneStops()
+        {
+            foreach (string role in new[] { "connector", "handleTarget", "operationTarget" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(Item("N.A", role)));
+
+                Assert.Contains("elementNoun", error.Message);
+            }
+        }
+
+        [Fact]
+        public void ARoleThatNeedsAPluralWithoutOneStops()
+        {
+            foreach (string role in new[] { "handleTarget", "operationTarget" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(Noun("N.A", role, "\"elementNoun\":\"alpha\"")));
+
+                Assert.Contains("elementNounPlural", error.Message);
+            }
+        }
+
+        [Fact]
+        public void ARoleThatTakesNoElementNounWithAPluralStops()
+        {
+            foreach (string role in new[] { "eventArgs", "dto" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(Noun("N.A", role, "\"elementNounPlural\":\"alphas\"")));
+
+                Assert.Contains("elementNounPlural", error.Message);
+            }
+        }
+
+        [Fact]
+        public void APluralThatIsNotASnakeCaseWordStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(Noun(
+                    "N.A",
+                    "handleTarget",
+                    "\"elementNoun\":\"alpha\",\"elementNounPlural\":\"Alphas\"")));
+
+            Assert.Contains("elementNounPlural", error.Message);
+        }
+
+        [Fact]
+        public void AnItemThatIsNotAnObjectStopsBeforeTheRole()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[\"N.A\"]}"));
+
+            Assert.Contains("項目の組", error.Message);
+        }
+
+        [Fact]
+        public void AConnectorWithAPluralStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(Noun(
+                    "N.A",
+                    "connector",
+                    "\"elementNoun\":\"alpha\",\"elementNounPlural\":\"alphas\"")));
+
+            Assert.Contains("elementNounPlural", error.Message);
+        }
+
+        [Fact]
+        public void ARoleThatTakesNoElementNounWithOneStops()
+        {
+            foreach (string role in new[] { "eventArgs", "dto" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(Noun("N.A", role, "\"elementNoun\":\"alpha\"")));
+
+                Assert.Contains("elementNoun", error.Message);
+            }
+        }
+
+        [Fact]
+        public void AnElementNounThatIsNotASnakeCaseWordStops()
+        {
+            foreach (string noun in new[] { "Alpha", "alpha-beta", "_alpha", "alpha__beta", "1alpha", "alpha " })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(Noun("N.A", "connector", "\"elementNoun\":\"" + noun + "\"")));
+
+                Assert.Contains("elementNoun", error.Message);
+            }
+        }
+
+        [Fact]
+        public void TheSameElementNounTwiceStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(
+                    Noun("N.A", "connector", "\"elementNoun\":\"alpha\""),
+                    Noun("N.B", "connector", "\"elementNoun\":\"alpha\"")));
+
+            Assert.Contains("alpha", error.Message);
+        }
+
+        [Fact]
+        public void ASingularThatRepeatsAnotherPluralStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(
+                    Noun("N.A", "handleTarget",
+                        "\"elementNoun\":\"alpha\",\"elementNounPlural\":\"betas\""),
+                    Noun("N.B", "connector", "\"elementNoun\":\"betas\"")));
+
+            Assert.Contains("betas", error.Message);
+        }
+
+        [Fact]
         public void AnEmptyTableIsRead()
         {
             Assert.Empty(TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[]}"));
@@ -172,6 +307,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return "{\"typeName\":\"" + typeName + "\",\"role\":\"" + role
                 + "\",\"basis\":\"" + typeName + " の根拠。\"}";
+        }
+
+        private static string Noun(string typeName, string role, string nouns)
+        {
+            return "{\"typeName\":\"" + typeName + "\",\"role\":\"" + role
+                + "\",\"basis\":\"" + typeName + " の根拠。\"," + nouns + "}";
         }
     }
 }
