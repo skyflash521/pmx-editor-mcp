@@ -168,7 +168,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CultureInfo.InvariantCulture,
                     "照合した: 型 {0} 件(コネクタ {1}・イベント引数 0・ハンドル操作 0・操作対象 0"
                         + "・DTO {2})・ハンドルを返しうる行 0 件(発行 0)"
-                        + "・要素のリスト 1 件(所有 1)・ツール名 {3} 件",
+                        + "・要素のリスト 1 件(所有 1・許容する具象型 0)・ツール名 {3} 件",
                     population.Count,
                     TypeRoleEvidence.ConnectionRoots.Count,
                     population.Count - TypeRoleEvidence.ConnectionRoots.Count,

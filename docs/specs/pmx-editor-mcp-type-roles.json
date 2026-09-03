@@ -1803,6 +1803,14 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXMorph.Offsets()",
       "owns": true,
+      "concreteTypes": [
+        "PEPlugin.Pmx.IPXBoneMorphOffset",
+        "PEPlugin.Pmx.IPXGroupMorphOffset",
+        "PEPlugin.Pmx.IPXImpulseMorphOffset",
+        "PEPlugin.Pmx.IPXMaterialMorphOffset",
+        "PEPlugin.Pmx.IPXUVMorphOffset",
+        "PEPlugin.Pmx.IPXVertexMorphOffset"
+      ],
       "ownerPath": [
         "PEPlugin.Pmx.IPXPmx.Morph()",
         "PEPlugin.Pmx.IPXMorph.Offsets()"
@@ -1812,6 +1820,10 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXNode.Items()",
       "owns": true,
+      "concreteTypes": [
+        "PEPlugin.Pmx.IPXBoneNodeItem",
+        "PEPlugin.Pmx.IPXMorphNodeItem"
+      ],
       "ownerPath": [
         "PEPlugin.Pmx.IPXPmx.Node()",
         "PEPlugin.Pmx.IPXNode.Items()"

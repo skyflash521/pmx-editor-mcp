@@ -19,6 +19,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string OwnerPathName = "ownerPath";
 
+        private const string ConcreteTypesName = "concreteTypes";
+
         private const string SignatureKeyName = "signatureKey";
 
         private const string IssuesName = "issues";
@@ -105,7 +107,7 @@ namespace PmxEditorMcp.SignatureDump
                     owns
                         ? new[] { SignatureKeyName, OwnsName, BasisName, OwnerPathName }
                         : new[] { SignatureKeyName, OwnsName, BasisName },
-                    new string[0]);
+                    new[] { ConcreteTypesName });
                 ElementCollectionRecord record;
                 try
                 {
@@ -113,7 +115,10 @@ namespace PmxEditorMcp.SignatureDump
                         Text(members[SignatureKeyName], SignatureKeyName),
                         owns,
                         Text(members[BasisName], BasisName),
-                        owns ? ReadPath(members[OwnerPathName]) : null);
+                        owns ? ReadPath(members[OwnerPathName]) : null,
+                        members.ContainsKey(ConcreteTypesName)
+                            ? ReadConcreteTypes(members[ConcreteTypesName])
+                            : null);
                 }
                 catch (ArgumentException exception)
                 {
@@ -205,6 +210,29 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return items.Select(i => Text(i, OwnerPathName)).ToList();
+        }
+
+        /// <summary>
+        /// 許容する具象型。要素の型を継承する型が在るかどうかは他の項目を見なければ決まらないので、
+        /// 在ってもよい形にする。書くなら1件以上を序数の昇順で重複なく並べる。
+        /// </summary>
+        private static IList<string> ReadConcreteTypes(object value)
+        {
+            object[] items = Array(value, ConcreteTypesName);
+            if (items.Length == 0)
+            {
+                throw new FormatException(ConcreteTypesName + " は1件以上でなければならない。");
+            }
+
+            List<string> names = items.Select(i => Text(i, ConcreteTypesName)).ToList();
+            string previous = null;
+            foreach (string name in names)
+            {
+                RequireAscending(previous, name, ConcreteTypesName + " の型");
+                previous = name;
+            }
+
+            return names;
         }
 
         private static bool Flag(object item)

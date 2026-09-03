@@ -9,7 +9,8 @@ namespace PmxEditorMcp.SignatureDump
     /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型を
     /// 呼び出し側が実体を用意せずに呼べること、接続の経路、ハンドルを返しうるシグネチャの
     /// 過不足と発行の種別、要素を並べるリストの過不足と所有の一意、担当群と台帳の担当の一致、
-    /// ツール名と要素名詞の一致、入れる・出すツールと所有するリストの要素の一致——に限る。
+    /// ツール名と要素名詞の一致、入れる・出すツールと所有するリストの要素の一致、許容する具象型と
+    /// 列挙の一致——に限る。
     /// </summary>
     public static class TypeRoleGate
     {
@@ -25,7 +26,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <paramref name="collectionCandidates"/> には
         /// <see cref="ElementCollectionEvidence.Candidates"/> の結果を、
         /// <paramref name="ledgerOwners"/> には
-        /// <see cref="TypeGroupEvidence.OwnersByType"/> の結果を渡すこと。
+        /// <see cref="TypeGroupEvidence.OwnersByType"/> の結果を、
+        /// <paramref name="concreteTypes"/> には
+        /// <see cref="ElementCollectionEvidence.ConcreteTypes"/> の結果を渡すこと。
         /// </summary>
         public static void Require(
             TypeRoleTable table,
@@ -36,7 +39,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> connectionPaths,
             IDictionary<string, HandleIssuanceKind> issuanceCandidates,
             IDictionary<string, string> collectionCandidates,
-            IDictionary<string, ISet<CapabilityOwner>> ledgerOwners)
+            IDictionary<string, ISet<CapabilityOwner>> ledgerOwners,
+            IDictionary<string, IList<string>> concreteTypes)
         {
             if (table == null)
             {
@@ -83,6 +87,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(ledgerOwners));
             }
 
+            if (concreteTypes == null)
+            {
+                throw new ArgumentNullException(nameof(concreteTypes));
+            }
+
             IList<TypeRoleRecord> records = table.Types;
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
@@ -95,6 +104,8 @@ namespace PmxEditorMcp.SignatureDump
             RequireToolNamesFollowTheNouns(records);
             RequireAddAndRemoveMatchTheOwnedElements(
                 records, table.Collections, collectionCandidates);
+            RequireConcreteTypesMatchTheEvidence(
+                table.Collections, collectionCandidates, concreteTypes);
         }
 
         /// <summary>
@@ -305,6 +316,44 @@ namespace PmxEditorMcp.SignatureDump
                                 + record.TypeName);
                 }
             }
+        }
+
+        /// <summary>
+        /// 許容する具象型が、要素の型を継承する葉の型と一致することを求める。継承する型が無い要素の型の
+        /// リストは持たない。
+        /// </summary>
+        private static void RequireConcreteTypesMatchTheEvidence(
+            IList<ElementCollectionRecord> records,
+            IDictionary<string, string> candidates,
+            IDictionary<string, IList<string>> concreteTypes)
+        {
+            foreach (ElementCollectionRecord record in records)
+            {
+                string element;
+                if (!candidates.TryGetValue(record.SignatureKey, out element))
+                {
+                    continue;
+                }
+
+                IList<string> leaves;
+                string[] expected = concreteTypes.TryGetValue(element, out leaves)
+                    ? leaves.ToArray()
+                    : new string[0];
+                if (!expected.SequenceEqual(record.ConcreteTypes, StringComparer.Ordinal))
+                {
+                    throw new InvalidOperationException(
+                        "許容する具象型が列挙と合わない: " + record.SignatureKey
+                            + "(表: " + Listed(record.ConcreteTypes)
+                            + " / 列挙: " + Listed(expected) + ")");
+                }
+            }
+        }
+
+        private static string Listed(IEnumerable<string> names)
+        {
+            string joined = string.Join("・", names);
+
+            return joined.Length == 0 ? "無し" : joined;
         }
 
         private static string Shown(string path)

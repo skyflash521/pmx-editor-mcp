@@ -211,7 +211,11 @@ namespace PmxEditorMcp.SignatureDump
     public sealed class ElementCollectionRecord
     {
         public ElementCollectionRecord(
-            string signatureKey, bool owns, string basis, IList<string> ownerPath = null)
+            string signatureKey,
+            bool owns,
+            string basis,
+            IList<string> ownerPath = null,
+            IList<string> concreteTypes = null)
         {
             PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
             PropertyRecord.RequireText(basis, nameof(basis));
@@ -226,6 +230,7 @@ namespace PmxEditorMcp.SignatureDump
             Owns = owns;
             Basis = basis;
             OwnerPath = new ReadOnlyCollection<string>(path);
+            ConcreteTypes = new ReadOnlyCollection<string>(concreteTypes ?? new List<string>());
         }
 
         public string SignatureKey { get; }
@@ -238,6 +243,11 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>そのリストへ至る段の列。所有しないリストでは空。</summary>
         public IList<string> OwnerPath { get; }
+
+        /// <summary>
+        /// 要素の型を継承する葉の型の名前。要素の型を継承する型が無いリストでは空。
+        /// </summary>
+        public IList<string> ConcreteTypes { get; }
     }
 
     /// <summary>

@@ -71,6 +71,102 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheConcreteTypesOfABaseAreItsLeaves()
+        {
+            IDictionary<string, IList<string>> kinds = ElementCollectionEvidence.ConcreteTypes(
+                Inventory(Type(Element), Type("N.IMiddle", Element), Type("N.ILeaf", "N.IMiddle")),
+                Kinds(Element, "N.IMiddle", "N.ILeaf"));
+
+            Assert.Equal(new[] { "N.ILeaf" }, kinds[Element]);
+            Assert.Equal(new[] { "N.ILeaf" }, kinds["N.IMiddle"]);
+        }
+
+        [Fact]
+        public void ATypeNoRoleTypeInheritsHasNoConcreteTypes()
+        {
+            IDictionary<string, IList<string>> kinds = ElementCollectionEvidence.ConcreteTypes(
+                Inventory(Type(Element), Type("N.ILeaf", Element)),
+                Kinds(Element, "N.ILeaf"));
+
+            Assert.False(kinds.ContainsKey("N.ILeaf"));
+        }
+
+        [Fact]
+        public void AClassIsNotAConcreteType()
+        {
+            IDictionary<string, IList<string>> kinds = ElementCollectionEvidence.ConcreteTypes(
+                Inventory(Type(Element), Class("N.Thing", Element)),
+                Kinds(Element, "N.Thing"));
+
+            Assert.Empty(kinds);
+        }
+
+        [Fact]
+        public void ATypeOutsideTheTableIsNotAConcreteType()
+        {
+            IDictionary<string, IList<string>> kinds = ElementCollectionEvidence.ConcreteTypes(
+                Inventory(Type(Element), Type("N.IOutside", Element)),
+                Kinds(Element));
+
+            Assert.Empty(kinds);
+        }
+
+        [Fact]
+        public void BothArgumentsOfTheConcreteTypesAreRequired()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => ElementCollectionEvidence.ConcreteTypes(null, Kinds(Element)));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementCollectionEvidence.ConcreteTypes(Inventory(Type(Element)), null));
+        }
+
+        private static IDictionary<string, TypeRole> Kinds(params string[] names)
+        {
+            Dictionary<string, TypeRole> roles =
+                new Dictionary<string, TypeRole>(StringComparer.Ordinal);
+            foreach (string name in names)
+            {
+                roles.Add(name, TypeRole.OperationTarget);
+            }
+
+            return roles;
+        }
+
+        private static TypeRecord Class(string name, params string[] baseTypes)
+        {
+            return new TypeRecord(
+                name,
+                TypeKind.Class,
+                false,
+                false,
+                false,
+                baseTypes.ToList(),
+                new List<string>());
+        }
+
+        private static TypeRecord Type(string name, params string[] baseTypes)
+        {
+            return new TypeRecord(
+                name,
+                TypeKind.Interface,
+                false,
+                false,
+                false,
+                baseTypes.ToList(),
+                new List<string>());
+        }
+
+        private static InventoryRecord Inventory(params TypeRecord[] types)
+        {
+            return new InventoryRecord(
+                "PEPlugin",
+                "0.0.0.0",
+                types.ToList(),
+                new List<TypeRecord>(),
+                new List<SignatureRecord>());
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             InventoryRecord inventory = Inventory(Property(Owner, "Items", ElementList));

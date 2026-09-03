@@ -755,6 +755,54 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheConcreteTypesAreRead()
+        {
+            IList<ElementCollectionRecord> records = ReadCollections(
+                "{\"signatureKey\":\"N.A.Items()\",\"owns\":true"
+                    + ",\"ownerPath\":[\"N.A.Items()\"]"
+                    + ",\"concreteTypes\":[\"N.IFirst\",\"N.ISecond\"],\"basis\":\"根拠。\"}",
+                Collection("N.B.Refs()", false));
+
+            Assert.Equal(new[] { "N.IFirst", "N.ISecond" }, records[0].ConcreteTypes);
+            Assert.Empty(records[1].ConcreteTypes);
+        }
+
+        [Fact]
+        public void AnEmptyListOfConcreteTypesStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(
+                    "{\"signatureKey\":\"N.B.Refs()\",\"owns\":false"
+                        + ",\"concreteTypes\":[],\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("concreteTypes", error.Message);
+        }
+
+        [Fact]
+        public void ConcreteTypesOutOfOrdinalOrderStop()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(
+                    "{\"signatureKey\":\"N.B.Refs()\",\"owns\":false"
+                        + ",\"concreteTypes\":[\"N.ISecond\",\"N.IFirst\"]"
+                        + ",\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("昇順", error.Message);
+        }
+
+        [Fact]
+        public void TheSameConcreteTypeTwiceStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(
+                    "{\"signatureKey\":\"N.B.Refs()\",\"owns\":false"
+                        + ",\"concreteTypes\":[\"N.IFirst\",\"N.IFirst\"]"
+                        + ",\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("二度", error.Message);
+        }
+
+        [Fact]
         public void AnOwnershipFlagThatIsNotABooleanStops()
         {
             FormatException error = Assert.Throws<FormatException>(
