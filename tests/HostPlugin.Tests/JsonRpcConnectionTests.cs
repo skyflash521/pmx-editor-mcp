@@ -730,10 +730,7 @@ namespace PmxEditorMcp.Tests
                 {
                 }
 
-                // 記録が1件も無ければファイル自体ができない。
-                string log = File.Exists(_log.FilePath)
-                    ? File.ReadAllText(_log.FilePath, Encoding.UTF8)
-                    : string.Empty;
+                string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
                 Assert.DoesNotContain(
                     "エラー応答: code="
                         + JsonRpcErrorCodes.MethodNotFound.ToString(CultureInfo.InvariantCulture),
@@ -852,6 +849,80 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, JsonRpcConnection.BaseMethodNames.Count);
             Assert.Contains("handshake", JsonRpcConnection.BaseMethodNames);
             Assert.Contains("ping", JsonRpcConnection.BaseMethodNames);
+        }
+
+        [Fact]
+        public void TheRequestsOfOneConnectionSeeTheSameLedgerAndQueue()
+        {
+            List<McpMethodContext> seen = new List<McpMethodContext>();
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("note", context => { seen.Add(context); return "ok"; });
+
+            Exchange(CreateConnection(methods), Handshake(), Request(2, "note"), Request(3, "note"));
+
+            Assert.Equal(2, seen.Count);
+            Assert.Same(seen[0].Handles, seen[1].Handles);
+            Assert.Same(seen[0].Events, seen[1].Events);
+        }
+
+        [Fact]
+        public void TheHandlesOfAConnectionAreReleasedWhenItEnds()
+        {
+            int released = 0;
+            HandleLedger ledger = null;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("issue", context =>
+            {
+                ledger = context.Handles;
+                return context.Handles.Issue("test", new object(), () => released++);
+            });
+
+            Exchange(CreateConnection(methods), Handshake(), Request(2, "issue"));
+
+            Assert.Equal(1, released);
+            Assert.True(ledger.IsClosed);
+            Assert.Equal(0, ledger.Count);
+        }
+
+        [Fact]
+        public void TheHandlesAreReleasedWhenTheConnectionFailsToWrite()
+        {
+            int released = 0;
+            HandleLedger ledger = null;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("issue", context =>
+            {
+                ledger = context.Handles;
+                return context.Handles.Issue("test", new object(), () => released++);
+            });
+
+            using (ExchangeStream stream = new ExchangeStream(Lines(Handshake(), Request(2, "issue"))))
+            {
+                // ハンドシェイクの応答だけ通し、ハンドルを発行したあとの応答は書けなくする。
+                stream.FailWritesAfter(1);
+
+                JsonRpcConnection connection = CreateConnection(methods);
+                Assert.Throws<IOException>(() => connection.Handle(stream, new InlineInvoker()));
+            }
+
+            Assert.Equal(1, released);
+            Assert.True(ledger.IsClosed);
+        }
+
+        [Fact]
+        public void EachConnectionGetsItsOwnLedgerAndQueue()
+        {
+            List<McpMethodContext> seen = new List<McpMethodContext>();
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("note", context => { seen.Add(context); return "ok"; });
+            JsonRpcConnection connection = CreateConnection(methods);
+
+            Exchange(connection, Handshake(), Request(2, "note"));
+            Exchange(connection, Handshake(), Request(2, "note"));
+
+            Assert.Equal(2, seen.Count);
+            Assert.NotSame(seen[0].Handles, seen[1].Handles);
+            Assert.NotSame(seen[0].Events, seen[1].Events);
         }
 
         /// <summary>UIスレッドを持たないため、委譲された処理はその場で実行する。</summary>

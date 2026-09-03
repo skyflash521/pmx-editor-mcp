@@ -20,8 +20,15 @@ namespace PmxEditorMcp
     /// <summary>メソッドを呼ぶときに渡す一式。</summary>
     public sealed class McpMethodContext
     {
-        /// <summary>引数・UIスレッドへの委譲・応答サイズ予算を与えて生成する。</summary>
-        public McpMethodContext(IDictionary<string, object> parameters, IUiInvoker ui, int budgetChars)
+        /// <summary>
+        /// 引数・UIスレッドへの委譲・応答サイズ予算・接続が保つ台帳とキューを与えて生成する。
+        /// </summary>
+        public McpMethodContext(
+            IDictionary<string, object> parameters,
+            IUiInvoker ui,
+            int budgetChars,
+            HandleLedger handles,
+            EventQueue events)
         {
             if (parameters == null)
             {
@@ -33,9 +40,21 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(ui));
             }
 
+            if (handles == null)
+            {
+                throw new ArgumentNullException(nameof(handles));
+            }
+
+            if (events == null)
+            {
+                throw new ArgumentNullException(nameof(events));
+            }
+
             Params = parameters;
             Ui = ui;
             BudgetChars = budgetChars;
+            Handles = handles;
+            Events = events;
         }
 
         /// <summary>要求の引数。省略されていたときは空。</summary>
@@ -46,6 +65,12 @@ namespace PmxEditorMcp
 
         /// <summary>ホストが読んだ応答サイズ予算の文字数。結果の量を抑える判定に用いる。</summary>
         public int BudgetChars { get; }
+
+        /// <summary>この接続が保つ長寿命オブジェクトの台帳。</summary>
+        public HandleLedger Handles { get; }
+
+        /// <summary>この接続が溜めている購読中のイベント。</summary>
+        public EventQueue Events { get; }
     }
 
     /// <summary>ホストが公開する処理。戻り値がそのまま応答の result になる。</summary>
@@ -185,6 +210,7 @@ namespace PmxEditorMcp
 
             // 接続ごとに独立させるため、この呼び出しのローカルに持つ。
             bool handshaked = false;
+            ConnectionScope scope = new ConnectionScope(ui, _log);
 
             // エラー応答の数はコードごとに数え、記録は最初の1回と、接続が切れたときの合計に限る。
             // 同じ記録の反復でローテーションが有用な履歴を押し流すのを避けるため。数え上げは接続ごとに
@@ -193,16 +219,23 @@ namespace PmxEditorMcp
 
             try
             {
-                HandleRequests(channel, errors, ui, handshaked);
+                HandleRequests(channel, errors, scope, handshaked);
             }
             finally
             {
-                errors.WriteSummary(_log);
+                try
+                {
+                    scope.Handles.ReleaseAll();
+                }
+                finally
+                {
+                    errors.WriteSummary(_log);
+                }
             }
         }
 
         private void HandleRequests(
-            MessageChannel channel, ErrorResponseCounter errors, IUiInvoker ui, bool handshaked)
+            MessageChannel channel, ErrorResponseCounter errors, ConnectionScope scope, bool handshaked)
         {
             while (true)
             {
@@ -285,7 +318,7 @@ namespace PmxEditorMcp
                 {
                     result = "pong";
                 }
-                else if (!TryInvoke(channel, errors, request, method, parameters, ui, out result))
+                else if (!TryInvoke(channel, errors, request, method, parameters, scope, out result))
                 {
                     continue;
                 }
@@ -395,12 +428,13 @@ namespace PmxEditorMcp
             JsonRpcRequest request,
             McpMethod method,
             IDictionary<string, object> parameters,
-            IUiInvoker ui,
+            ConnectionScope scope,
             out object result)
         {
             result = null;
 
-            McpMethodContext context = new McpMethodContext(parameters, ui, _budgetChars);
+            McpMethodContext context = new McpMethodContext(
+                parameters, scope.Ui, _budgetChars, scope.Handles, scope.Events);
             Task<object> running = Task.Factory.StartNew(() => method(context), TaskCreationOptions.LongRunning);
 
             try
@@ -502,6 +536,26 @@ namespace PmxEditorMcp
 
             channel.Write(line);
             errors.Note(_log, code);
+        }
+
+        /// <summary>
+        /// 接続1本の間だけ生きるもの。要求ごとの文脈はここから作るので、ハンドルもイベントも
+        /// 接続をまたがない。
+        /// </summary>
+        private sealed class ConnectionScope
+        {
+            public ConnectionScope(IUiInvoker ui, HostLog log)
+            {
+                Ui = ui;
+                Handles = new HandleLedger(log);
+                Events = new EventQueue();
+            }
+
+            public IUiInvoker Ui { get; }
+
+            public HandleLedger Handles { get; }
+
+            public EventQueue Events { get; }
         }
 
         /// <summary>
