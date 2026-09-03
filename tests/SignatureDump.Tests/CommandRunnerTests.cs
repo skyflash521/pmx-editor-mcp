@@ -120,6 +120,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("property-names", CommandRunner.PropertyNamesCommand);
             Assert.Equal("type-roles", CommandRunner.TypeRolesCommand);
             Assert.Equal("common-assignments", CommandRunner.CommonAssignmentsCommand);
+            Assert.Equal("value-shapes", CommandRunner.ValueShapesCommand);
         }
 
         [Fact]
@@ -308,6 +309,54 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ValueShapesSubcommandRunsTheCollation()
+        {
+            string ledgerPath = Path.Combine(_root, "shapes-ledger.md");
+            File.WriteAllText(
+                ledgerPath,
+                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
+                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+            string excludedPath = Path.Combine(_root, "shapes-excluded.json");
+            File.WriteAllText(excludedPath, "{\"signatures\":[]}");
+            string documentPath = Path.Combine(_root, "shapes-contract.md");
+            File.WriteAllText(
+                documentPath,
+                ValueShapeDocument.SectionHeading + Environment.NewLine + Environment.NewLine
+                    + "| 型 | 表現 |" + Environment.NewLine
+                    + "|---|---|" + Environment.NewLine
+                    + "| `System.Int32` | `number` |" + Environment.NewLine);
+            string editorDirectory = CreateEditorDirectory();
+
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.ValueShapesCommand,
+                    editorDirectory,
+                    ledgerPath,
+                    excludedPath,
+                    documentPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+
+            int missingCode = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.ValueShapesCommand,
+                    Path.Combine(_root, "none"),
+                    ledgerPath,
+                    excludedPath,
+                    documentPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, missingCode);
+        }
+
+        [Fact]
         public void ExcludedSignaturesSubcommandRunsTheWrite()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
@@ -381,6 +430,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.CommonAssignmentsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <型役割表の正本のパス> <共通契約割当の正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ValueShapesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <共通契約仕様書のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

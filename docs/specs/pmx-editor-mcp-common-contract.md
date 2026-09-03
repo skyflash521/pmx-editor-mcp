@@ -1,7 +1,7 @@
 # 共通契約仕様書
 
-すべてのツールが共有する契約を定める。**ツールの結果をどう返すか**・**長寿命のオブジェクトをどう
-指すか**・**イベントをどう渡すか**と、個別のツールを持たず共通契約の側が受け持つSDKのシグネチャについて**どこへ割り当てるか**・
+すべてのツールが共有する契約を定める。**ツールの結果をどう返すか**・**値をどうJSONへ写すか**・
+**長寿命のオブジェクトをどう指すか**・**イベントをどう渡すか**と、個別のツールを持たず共通契約の側が受け持つSDKのシグネチャについて**どこへ割り当てるか**・
 **引数・戻り値・レシーバーを何へ束縛するか**を持つ。割当の値の正本は
 [共通契約割当の正本](pmx-editor-mcp-common-assignments.json)で、規則と検査はこの文書が持つ。
 
@@ -63,6 +63,113 @@
 - **包みとして読めない応答は、ホストの応答が契約から外れているものとして扱い、接続を捨てる**
   ——成否を持たない、成功なのに値が無い、失敗なのに誤りの内容が空、警告が空でない文字列の並びで
   ない、のいずれもここで落ちる。契約から外れた応答を返す相手とは、次の要求の応答も対応づけられない。
+
+## 値の表現
+
+ツールの引数と応答に現れる型のうち、**値そのものとしてJSONへ写す型**の写し方をここで定める。
+役割を持つ型は載らない——それらは値として写さず、
+[型役割仕様書](pmx-editor-mcp-type-roles.md)が定める役割ごとの扱いに従う。
+**下記の型ごとの表に載るのは値として写せる型のすべて**で、載っていない型を値として写す道は無い。
+
+### 表現の綴り
+
+| 綴り | JSONの形 |
+|---|---|
+| `boolean` | 真偽 |
+| `number` | 数値 |
+| `text` | 文字列。`System.Version` は標準の表記とする |
+| `base64` | バイト列をBase64で詰めた文字列 |
+| `enum_name` | 列挙子名の文字列 |
+| `number_array` | 成分を順に並べた数値の配列。並びは下記のとおり型で決まる |
+| `color` | `[r, g, b]` または `[r, g, b, a]`。成分は0以上1以下の数値とする |
+| `size` | `[幅, 高さ]` |
+| `point` | `[x, y]` |
+| `rectangle` | `[x, y, 幅, 高さ]` |
+| `font` | `family`(書体名の文字列)・`size`(数値)・`style`(列挙子名)を持つ組 |
+| `brush` | 色の配列。ホストはその色の単色ブラシを組み立てる |
+| `image` | PNGをBase64で詰めた文字列 |
+| `json` | 任意のJSON値。null・真偽・数値・文字列・配列・組を再帰的に組み合わせた形を許す |
+| `null_value` | JSONの null |
+
+`number_array` の並びは型で決まる。`PEPlugin.SDX.V2` は `[x, y]`、`PEPlugin.SDX.V3` と
+`PEPlugin.Pmd.IPEVector3` と `SlimDX.Vector3` は `[x, y, z]`、`PEPlugin.SDX.V4` と
+`PEPlugin.SDX.Q` と `PEPlugin.Pmd.IPEQuaternion` と `SlimDX.Quaternion` は `[x, y, z, w]`、
+`PEPlugin.SDX.M` と `SlimDX.Matrix` は**行優先の16要素**とする。
+
+### 包む型
+
+配列と `System.Collections.Generic.IList<1>` は、要素の表現を `array_of_` で包む。ただし
+**一列に並ぶバイトは `base64`** とする——多次元では各次元の長さが失われるので、そこは包む規則へ
+倒す。`System.Nullable<1>` は、要素の表現を `nullable_` で包む。
+
+### 型ごとの表現
+
+型の綴りで山括弧の中に置いた数は、型引数の個数である。
+
+| 型 | 表現 |
+|---|---|
+| `PEPlugin.Pmd.BodyBoxKind` | `enum_name` |
+| `PEPlugin.Pmd.BodyMode` | `enum_name` |
+| `PEPlugin.Pmd.BoneKind` | `enum_name` |
+| `PEPlugin.Pmd.IPEQuaternion` | `number_array` |
+| `PEPlugin.Pmd.IPEVector3` | `number_array` |
+| `PEPlugin.Pmd.UpdateObject` | `enum_name` |
+| `PEPlugin.Pmx.JointKind` | `enum_name` |
+| `PEPlugin.Pmx.MorphKind` | `enum_name` |
+| `PEPlugin.Pmx.PmxUpdateObject` | `enum_name` |
+| `PEPlugin.Pmx.PrimitiveType` | `enum_name` |
+| `PEPlugin.Pmx.SoftBodyShape` | `enum_name` |
+| `PEPlugin.Pmx.SphereType` | `enum_name` |
+| `PEPlugin.SDX.M` | `number_array` |
+| `PEPlugin.SDX.Q` | `number_array` |
+| `PEPlugin.SDX.V2` | `number_array` |
+| `PEPlugin.SDX.V3` | `number_array` |
+| `PEPlugin.SDX.V4` | `number_array` |
+| `PEPlugin.View.AntiAliasingType` | `enum_name` |
+| `PEPlugin.View.FillMode` | `enum_name` |
+| `PEPlugin.View.PartsSelectObject` | `enum_name` |
+| `PEPlugin.View.ToonType` | `enum_name` |
+| `PEPlugin.View.VertexEditObject` | `enum_name` |
+| `PEPlugin.Vme.OpType` | `enum_name` |
+| `PEPlugin.Vme.PEVmePathType` | `enum_name` |
+| `SlimDX.Matrix` | `number_array` |
+| `SlimDX.Quaternion` | `number_array` |
+| `SlimDX.Vector3` | `number_array` |
+| `System.Boolean` | `boolean` |
+| `System.Byte` | `number` |
+| `System.Collections.Generic.IList<1>` | array_of_… / base64 |
+| `System.Double` | `number` |
+| `System.Drawing.Bitmap` | `image` |
+| `System.Drawing.Brush` | `brush` |
+| `System.Drawing.Color` | `color` |
+| `System.Drawing.Font` | `font` |
+| `System.Drawing.Point` | `point` |
+| `System.Drawing.Rectangle` | `rectangle` |
+| `System.Drawing.Size` | `size` |
+| `System.Int32` | `number` |
+| `System.Nullable<1>` | nullable_… |
+| `System.Object` | `json` |
+| `System.Single` | `number` |
+| `System.String` | `text` |
+| `System.Version` | `text` |
+| `System.Void` | `null_value` |
+| `System.Windows.Forms.FormWindowState` | `enum_name` |
+| `System.Windows.Forms.MouseButtons` | `enum_name` |
+
+### 表の形
+
+行は**2列**とし、型の欄は綴りを `` ` `` で囲む。表現の欄は、綴りが1つに決まる型ではその綴りを同じく
+囲み、要素の表現を包む型では囲まない——囲んだ綴りだけを表現として読むので、包む型に綴りを書けば
+その1つに決めたことになる。同じ型は二度現れない。
+
+### 表の検査
+
+値の表現の照合が、次を検査する。
+
+- 表の型が、**値として写せる型と過不足なく一致すること**。載せ落とした型も、値として写せない型を
+  足したのも、ここで落ちる。
+- 綴りが1つに決まる型の表現が、**規則が導く綴りと一致すること**。
+- **要素の表現を包む型に綴りが書かれていないこと**。
 
 ## ハンドル
 

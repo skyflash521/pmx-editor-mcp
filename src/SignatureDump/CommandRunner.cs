@@ -31,6 +31,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>共通契約割当の正本が規則どおりに割り当てられていることを照合する。</summary>
         public const string CommonAssignmentsCommand = "common-assignments";
 
+        /// <summary>値の表現の表が、値として写せる型を過不足なく覆っていることを照合する。</summary>
+        public const string ValueShapesCommand = "value-shapes";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -91,6 +94,11 @@ namespace PmxEditorMcp.SignatureDump
                 return CommonAssignmentRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], ValueShapesCommand, StringComparison.Ordinal))
+            {
+                return ValueShapeRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -120,6 +128,10 @@ namespace PmxEditorMcp.SignatureDump
                 CommonAssignmentsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <型役割表の正本のパス> <共通契約割当の正本のパス>");
+            error.WriteLine(
+                ValueShapesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <共通契約仕様書のパス>");
         }
     }
 }
