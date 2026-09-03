@@ -7,7 +7,8 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>
     /// 型ごとの役割が、規則どおりに割り当てられているかを検査する。役割の意味そのものは測れないので、
     /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型を
-    /// 呼び出し側が実体を用意せずに呼べること、接続の経路——に限る。
+    /// 呼び出し側が実体を用意せずに呼べること、接続の経路、ハンドルを返しうるシグネチャの
+    /// 過不足と発行の種別——に限る。
     /// </summary>
     public static class TypeRoleGate
     {
@@ -17,19 +18,22 @@ namespace PmxEditorMcp.SignatureDump
         /// <paramref name="connectorCandidates"/> には
         /// <see cref="TypeRoleEvidence.ConnectorCandidates"/> の結果を渡すこと——コネクタ型に
         /// なりうるかは、この集合に在るかどうかで見る。<paramref name="connectionPaths"/> には
-        /// <see cref="TypeRoleEvidence.ReachableFromRoots"/> の結果を渡すこと。
+        /// <see cref="TypeRoleEvidence.ReachableFromRoots"/> の結果を、
+        /// <paramref name="issuanceCandidates"/> には
+        /// <see cref="HandleIssuanceEvidence.Candidates"/> の結果を渡すこと。
         /// </summary>
         public static void Require(
-            IList<TypeRoleRecord> records,
+            TypeRoleTable table,
             ISet<string> roleTypes,
             IEnumerable<string> connectionRoots,
             ISet<string> eventArgumentTypes,
             ICollection<string> connectorCandidates,
-            IDictionary<string, string> connectionPaths)
+            IDictionary<string, string> connectionPaths,
+            IDictionary<string, HandleIssuanceKind> issuanceCandidates)
         {
-            if (records == null)
+            if (table == null)
             {
-                throw new ArgumentNullException(nameof(records));
+                throw new ArgumentNullException(nameof(table));
             }
 
             if (roleTypes == null)
@@ -57,11 +61,18 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(connectionPaths));
             }
 
+            if (issuanceCandidates == null)
+            {
+                throw new ArgumentNullException(nameof(issuanceCandidates));
+            }
+
+            IList<TypeRoleRecord> records = table.Types;
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
             RequireEventArgumentsMatchTheEvidence(records, eventArgumentTypes);
             RequireConnectorsNeedNoInstanceFromTheCaller(records, connectorCandidates);
             RequireConnectionPathsMatchTheEvidence(records, connectionPaths);
+            RequireIssuancesMatchTheEvidence(table.Issuances, issuanceCandidates);
         }
 
         /// <summary>
@@ -185,6 +196,46 @@ namespace PmxEditorMcp.SignatureDump
         private static string Shown(string path)
         {
             return path.Length == 0 ? "無し" : path;
+        }
+
+        /// <summary>
+        /// ハンドルを返しうるシグネチャの集合が列挙と一対一で、発行するとしたものの種別が
+        /// レシーバーから導いた種別と一致することを求める。
+        /// </summary>
+        private static void RequireIssuancesMatchTheEvidence(
+            IList<HandleIssuanceRecord> records,
+            IDictionary<string, HandleIssuanceKind> candidates)
+        {
+            HashSet<string> listed = new HashSet<string>(StringComparer.Ordinal);
+            foreach (HandleIssuanceRecord record in records)
+            {
+                if (!listed.Add(record.SignatureKey))
+                {
+                    throw new InvalidOperationException(
+                        "表に同じ行キーが二度在る: " + record.SignatureKey);
+                }
+
+                HandleIssuanceKind derived;
+                if (!candidates.TryGetValue(record.SignatureKey, out derived))
+                {
+                    throw new InvalidOperationException(
+                        "ハンドルを返さないシグネチャが表に在る: " + record.SignatureKey);
+                }
+
+                if (record.Issues && record.Kind != derived)
+                {
+                    throw new InvalidOperationException(
+                        "発行の種別がレシーバーと合わない: " + record.SignatureKey
+                            + "(表: " + record.Kind + " / 列挙: " + derived + ")");
+                }
+            }
+
+            string missing = candidates.Keys.Except(listed, StringComparer.Ordinal)
+                .OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault();
+            if (missing != null)
+            {
+                throw new InvalidOperationException("表に無いシグネチャが在る: " + missing);
+            }
         }
     }
 }

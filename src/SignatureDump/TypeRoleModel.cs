@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -72,6 +74,75 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>接続の根からその型へ至る経路。根と、経路を持たない型では空。</summary>
         public string ConnectionPath { get; }
+    }
+
+    /// <summary>ハンドルをどこから発行するか。</summary>
+    public enum HandleIssuanceKind
+    {
+        /// <summary>公開コンストラクタ。レシーバーを持たない。</summary>
+        Constructor,
+
+        /// <summary>コネクタ型のメソッド。</summary>
+        Factory,
+
+        /// <summary>ハンドル操作型のメソッド。レシーバーのハンドルに対して発行する。</summary>
+        ReceiverBound,
+    }
+
+    /// <summary>ハンドルを返しうるシグネチャ1件の判定。</summary>
+    public sealed class HandleIssuanceRecord
+    {
+        public HandleIssuanceRecord(
+            string signatureKey, bool issues, HandleIssuanceKind? kind, string basis)
+        {
+            PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
+            PropertyRecord.RequireText(basis, nameof(basis));
+            if (issues != kind.HasValue)
+            {
+                throw new ArgumentException(
+                    "発行するときだけ種別を持つ。", issues ? nameof(kind) : nameof(issues));
+            }
+
+            SignatureKey = signatureKey;
+            Issues = issues;
+            Kind = kind;
+            Basis = basis;
+        }
+
+        public string SignatureKey { get; }
+
+        /// <summary>新しいハンドルを発行するか。既にあるものを返すだけなら偽。</summary>
+        public bool Issues { get; }
+
+        /// <summary><see cref="Issues"/> が偽のときは持たない。</summary>
+        public HandleIssuanceKind? Kind { get; }
+
+        /// <summary>そう判じた根拠の一文。</summary>
+        public string Basis { get; }
+    }
+
+    /// <summary>型役割表の正本。型ごとの役割と、ハンドル発行の判定からなる。</summary>
+    public sealed class TypeRoleTable
+    {
+        public TypeRoleTable(IList<TypeRoleRecord> types, IList<HandleIssuanceRecord> issuances)
+        {
+            if (types == null)
+            {
+                throw new ArgumentNullException(nameof(types));
+            }
+
+            if (issuances == null)
+            {
+                throw new ArgumentNullException(nameof(issuances));
+            }
+
+            Types = new ReadOnlyCollection<TypeRoleRecord>(types);
+            Issuances = new ReadOnlyCollection<HandleIssuanceRecord>(issuances);
+        }
+
+        public IList<TypeRoleRecord> Types { get; }
+
+        public IList<HandleIssuanceRecord> Issuances { get; }
     }
 
     /// <summary>日本語名をどう決めたか。</summary>

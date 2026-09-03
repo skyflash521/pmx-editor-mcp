@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -89,6 +90,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => new TypeRoleRecord("N.IThing", TypeRole.Dto, null));
             Assert.Throws<ArgumentException>(
                 () => new TypeRoleRecord("N.IThing", TypeRole.Dto, " "));
+        }
+
+        [Fact]
+        public void AHandleIssuanceHasAKindOnlyWhenItIssues()
+        {
+            Assert.Throws<ArgumentException>(
+                () => new HandleIssuanceRecord("N.A.Make()", true, null, "根拠。"));
+            Assert.Throws<ArgumentException>(
+                () => new HandleIssuanceRecord(
+                    "N.A.Get()", false, HandleIssuanceKind.Factory, "根拠。"));
+            Assert.Throws<ArgumentNullException>(
+                () => new HandleIssuanceRecord(null, false, null, "根拠。"));
+            Assert.Throws<ArgumentException>(
+                () => new HandleIssuanceRecord(" ", false, null, "根拠。"));
+            Assert.Throws<ArgumentException>(
+                () => new HandleIssuanceRecord("N.A.Get()", false, null, " "));
+        }
+
+        [Fact]
+        public void ATypeRoleTableRequiresBothParts()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => new TypeRoleTable(null, new List<HandleIssuanceRecord>()));
+            Assert.Throws<ArgumentNullException>(
+                () => new TypeRoleTable(new List<TypeRoleRecord>(), null));
         }
 
         [Fact]

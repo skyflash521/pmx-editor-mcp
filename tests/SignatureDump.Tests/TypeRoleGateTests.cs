@@ -180,7 +180,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Roots(),
                 Set(),
                 Set(Root),
-                Paths(Root, "Host.Connector"));
+                Paths(Root, "Host.Connector"),
+                Issuances());
         }
 
         [Fact]
@@ -193,7 +194,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Roots(),
                     Set(),
                     Set(Root),
-                    Paths(Root, "Host.Connector")));
+                    Paths(Root, "Host.Connector"),
+                    Issuances()));
 
             Assert.Contains("Host.Other", error.Message);
             Assert.Contains("Host.Connector", error.Message);
@@ -209,7 +211,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Roots(),
                     Set(),
                     Set(Root),
-                    Paths(Root, "Host.Connector")));
+                    Paths(Root, "Host.Connector"),
+                    Issuances()));
 
             Assert.Contains("無し", error.Message);
         }
@@ -224,7 +227,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Roots(),
                     Set(),
                     Set(Root),
-                    Paths()));
+                    Paths(),
+                    Issuances()));
 
             Assert.Contains("無し", error.Message);
         }
@@ -239,40 +243,129 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Roots(Root),
                     Set(),
                     Set(Root),
-                    Paths(Root, string.Empty)));
+                    Paths(Root, string.Empty),
+                    Issuances()));
 
             Assert.Contains(Root, error.Message);
         }
 
         [Fact]
+        public void IssuancesThatMatchTheEvidencePass()
+        {
+            TypeRoleGate.Require(
+                Issued(Issuance("N.A.Make()", true, HandleIssuanceKind.Factory)),
+                Set(Root),
+                Roots(),
+                Set(),
+                Set(Root),
+                Paths(),
+                Candidates("N.A.Make()", HandleIssuanceKind.Factory));
+        }
+
+        [Fact]
+        public void AnIssuanceTheEvidenceDoesNotHaveStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Issued(Issuance("N.A.Get()", false, null)),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Candidates()));
+
+            Assert.Contains("N.A.Get()", error.Message);
+        }
+
+        [Fact]
+        public void AnIssuanceTheEvidenceHasButTheTableOmitsStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Issued(),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Candidates("N.A.Make()", HandleIssuanceKind.Factory)));
+
+            Assert.Contains("N.A.Make()", error.Message);
+        }
+
+        [Fact]
+        public void AKindThatDiffersFromTheReceiverStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Issued(Issuance("N.A.Make()", true, HandleIssuanceKind.ReceiverBound)),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Candidates("N.A.Make()", HandleIssuanceKind.Factory)));
+
+            Assert.Contains("Factory", error.Message);
+        }
+
+        [Fact]
+        public void TheSameIssuanceTwiceInTheTableStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Issued(
+                        Issuance("N.A.Make()", true, HandleIssuanceKind.Factory),
+                        Issuance("N.A.Make()", true, HandleIssuanceKind.Factory)),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Candidates("N.A.Make()", HandleIssuanceKind.Factory)));
+
+            Assert.Contains("二度", error.Message);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
-            IList<TypeRoleRecord> table = Table(Record(Root, TypeRole.Connector));
+            TypeRoleTable table = Table(Record(Root, TypeRole.Connector));
 
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(null, Set(Root), Roots(Root), Set(), Set(Root), Paths()));
+                () => TypeRoleGate.Require(null, Set(Root), Roots(Root), Set(), Set(Root), Paths(), Issuances()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, null, Roots(Root), Set(), Set(Root), Paths()));
+                () => TypeRoleGate.Require(table, null, Roots(Root), Set(), Set(Root), Paths(), Issuances()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), null, Set(), Set(Root), Paths()));
+                () => TypeRoleGate.Require(table, Set(Root), null, Set(), Set(Root), Paths(), Issuances()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), null, Set(Root), Paths()));
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), null, Set(Root), Paths(), Issuances()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), null, Paths()));
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), null, Paths(), Issuances()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), Set(Root), null));
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), Set(Root), null, Issuances()));
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleGate.Require(
+                    table, Set(Root), Roots(Root), Set(), Set(Root), Paths(), null));
         }
 
         /// <summary>接続の経路を持たない題材のための呼び出し。</summary>
         private static void Require(
-            IList<TypeRoleRecord> records,
+            TypeRoleTable records,
             ISet<string> roleTypes,
             IEnumerable<string> connectionRoots,
             ISet<string> eventArgumentTypes,
             ICollection<string> connectorCandidates)
         {
             TypeRoleGate.Require(
-                records, roleTypes, connectionRoots, eventArgumentTypes, connectorCandidates, Paths());
+                records,
+                roleTypes,
+                connectionRoots,
+                eventArgumentTypes,
+                connectorCandidates,
+                Paths(),
+                Issuances());
         }
 
         private static IDictionary<string, string> Paths(string typeName = null, string path = null)
@@ -286,9 +379,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return paths;
         }
 
-        private static IList<TypeRoleRecord> Table(params TypeRoleRecord[] records)
+        private static TypeRoleTable Table(params TypeRoleRecord[] records)
         {
-            return records.ToList();
+            return new TypeRoleTable(records.ToList(), new List<HandleIssuanceRecord>());
+        }
+
+        private static TypeRoleTable Issued(params HandleIssuanceRecord[] issuances)
+        {
+            return new TypeRoleTable(
+                new List<TypeRoleRecord> { Record(Root, TypeRole.Connector) }, issuances.ToList());
+        }
+
+        private static HandleIssuanceRecord Issuance(
+            string signatureKey, bool issues, HandleIssuanceKind? kind)
+        {
+            return new HandleIssuanceRecord(signatureKey, issues, kind, signatureKey + " の根拠。");
+        }
+
+        private static IDictionary<string, HandleIssuanceKind> Candidates(
+            string signatureKey = null, HandleIssuanceKind kind = HandleIssuanceKind.Factory)
+        {
+            Dictionary<string, HandleIssuanceKind> candidates =
+                new Dictionary<string, HandleIssuanceKind>(StringComparer.Ordinal);
+            if (signatureKey != null)
+            {
+                candidates.Add(signatureKey, kind);
+            }
+
+            return candidates;
+        }
+
+        private static IDictionary<string, HandleIssuanceKind> Issuances()
+        {
+            return new Dictionary<string, HandleIssuanceKind>(StringComparer.Ordinal);
         }
 
         private static IEnumerable<string> Roots(params string[] names)

@@ -46,12 +46,12 @@ namespace PmxEditorMcp.SignatureDump
 
             IList<CapabilityRecord> ledger;
             IList<ExcludedSignatureRecord> excluded;
-            IList<TypeRoleRecord> records;
+            TypeRoleTable table;
             try
             {
                 ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
                 excluded = ExcludedSignatureJsonReader.Read(Read(args[2], "除外一覧"));
-                records = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
+                table = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
             }
             catch (Exception exception)
             {
@@ -75,6 +75,7 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> eventArgumentTypes;
             ISet<string> connectorCandidates;
             IDictionary<string, string> connectionPaths;
+            IDictionary<string, HandleIssuanceKind> issuanceCandidates;
             try
             {
                 population = TypeRolePopulation.Resolve(ledger, inventory, excluded);
@@ -83,6 +84,10 @@ namespace PmxEditorMcp.SignatureDump
                     inventory, TypeRoleEvidence.ConnectionRoots);
                 connectionPaths = TypeRoleEvidence.ReachableFromRoots(
                     inventory, TypeRoleEvidence.ConnectionRoots);
+                issuanceCandidates = HandleIssuanceEvidence.Candidates(
+                    inventory,
+                    table.Types.ToDictionary(r => r.TypeName, r => r.Role, StringComparer.Ordinal),
+                    population.Signatures);
             }
             catch (Exception exception)
                 when (exception is InvalidOperationException || exception is ArgumentException)
@@ -95,12 +100,13 @@ namespace PmxEditorMcp.SignatureDump
             try
             {
                 TypeRoleGate.Require(
-                    records,
+                    table,
                     population.RoleTypes,
                     TypeRoleEvidence.ConnectionRoots,
                     eventArgumentTypes,
                     connectorCandidates,
-                    connectionPaths);
+                    connectionPaths,
+                    issuanceCandidates);
             }
             catch (InvalidOperationException exception)
             {
@@ -112,13 +118,15 @@ namespace PmxEditorMcp.SignatureDump
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
                 "照合した: 型 {0} 件(コネクタ {1}・イベント引数 {2}・ハンドル操作 {3}・操作対象 {4}"
-                    + "・DTO {5})",
-                records.Count,
-                records.Count(r => r.Role == TypeRole.Connector),
-                records.Count(r => r.Role == TypeRole.EventArgs),
-                records.Count(r => r.Role == TypeRole.HandleTarget),
-                records.Count(r => r.Role == TypeRole.OperationTarget),
-                records.Count(r => r.Role == TypeRole.Dto)));
+                    + "・DTO {5})・ハンドルを返しうる行 {6} 件(発行 {7})",
+                table.Types.Count,
+                table.Types.Count(r => r.Role == TypeRole.Connector),
+                table.Types.Count(r => r.Role == TypeRole.EventArgs),
+                table.Types.Count(r => r.Role == TypeRole.HandleTarget),
+                table.Types.Count(r => r.Role == TypeRole.OperationTarget),
+                table.Types.Count(r => r.Role == TypeRole.Dto),
+                table.Issuances.Count,
+                table.Issuances.Count(r => r.Issues)));
 
             return ExitCodes.Success;
         }

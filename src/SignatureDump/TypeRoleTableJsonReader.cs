@@ -11,6 +11,14 @@ namespace PmxEditorMcp.SignatureDump
     {
         private const string TypesName = "types";
 
+        private const string IssuancesName = "issuances";
+
+        private const string SignatureKeyName = "signatureKey";
+
+        private const string IssuesName = "issues";
+
+        private const string KindName = "kind";
+
         private const string TypeNameName = "typeName";
 
         private const string RoleName = "role";
@@ -26,6 +34,14 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly Regex SnakeCase = new Regex(
             "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
 
+        private static readonly Dictionary<string, HandleIssuanceKind> Kinds =
+            new Dictionary<string, HandleIssuanceKind>(StringComparer.Ordinal)
+            {
+                { "constructor", HandleIssuanceKind.Constructor },
+                { "factory", HandleIssuanceKind.Factory },
+                { "receiverBound", HandleIssuanceKind.ReceiverBound },
+            };
+
         private static readonly Dictionary<string, TypeRole> Roles =
             new Dictionary<string, TypeRole>(StringComparer.Ordinal)
             {
@@ -37,17 +53,93 @@ namespace PmxEditorMcp.SignatureDump
             };
 
         /// <summary>
-        /// 型ごとの役割を、書かれた順に返す。型名が序数の昇順に重複なく並び、要素名詞が表の中で
-        /// 重複しないことを求める。形が違えば <see cref="FormatException"/>。
+        /// 型ごとの役割とハンドル発行の判定を、書かれた順に返す。型名と行キーが序数の昇順に重複なく
+        /// 並び、要素名詞が表の中で重複しないことを求める。形が違えば <see cref="FormatException"/>。
         /// </summary>
-        public static IList<TypeRoleRecord> ReadTypeRoles(string json)
+        public static TypeRoleTable ReadTypeRoles(string json)
         {
             if (json == null)
             {
                 throw new ArgumentNullException(nameof(json));
             }
 
-            return ReadTypes(Members(Parse(json), TypesName)[TypesName]);
+            Dictionary<string, object> members = Members(Parse(json), TypesName, IssuancesName);
+
+            return new TypeRoleTable(
+                ReadTypes(members[TypesName]), ReadIssuances(members[IssuancesName]));
+        }
+
+        private static IList<HandleIssuanceRecord> ReadIssuances(object value)
+        {
+            List<HandleIssuanceRecord> records = new List<HandleIssuanceRecord>();
+            string previous = null;
+            foreach (object item in Array(value, IssuancesName))
+            {
+                HandleIssuanceRecord record = ReadIssuance(item);
+                RequireAscending(previous, record.SignatureKey, "行キー");
+                previous = record.SignatureKey;
+                records.Add(record);
+            }
+
+            return records;
+        }
+
+        private static HandleIssuanceRecord ReadIssuance(object item)
+        {
+            bool issues = Flag(item);
+            Dictionary<string, object> members = Members(
+                item,
+                issues
+                    ? new[] { SignatureKeyName, IssuesName, KindName, BasisName }
+                    : new[] { SignatureKeyName, IssuesName, BasisName },
+                new string[0]);
+            HandleIssuanceKind? kind = null;
+            if (issues)
+            {
+                string text = Text(members[KindName], KindName);
+                HandleIssuanceKind read;
+                if (!Kinds.TryGetValue(text, out read))
+                {
+                    throw new FormatException("知らない発行の種別: " + text);
+                }
+
+                kind = read;
+            }
+
+            try
+            {
+                return new HandleIssuanceRecord(
+                    Text(members[SignatureKeyName], SignatureKeyName),
+                    issues,
+                    kind,
+                    Text(members[BasisName], BasisName));
+            }
+            catch (ArgumentException exception)
+            {
+                throw new FormatException(exception.Message, exception);
+            }
+        }
+
+        private static bool Flag(object item)
+        {
+            Dictionary<string, object> members = item as Dictionary<string, object>;
+            if (members == null)
+            {
+                throw new FormatException("項目の組でなければならない。");
+            }
+
+            object value;
+            if (!members.TryGetValue(IssuesName, out value))
+            {
+                throw new FormatException("項目が無い: " + IssuesName);
+            }
+
+            if (!(value is bool))
+            {
+                throw new FormatException(IssuesName + " は真偽でなければならない。");
+            }
+
+            return (bool)value;
         }
 
         private static IList<TypeRoleRecord> ReadTypes(object value)

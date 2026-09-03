@@ -171,7 +171,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnItemThatIsNotAnObjectStopsBeforeTheRole()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[\"N.A\"]}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles(
+                    "{\"types\":[\"N.A\"],\"issuances\":[]}"));
 
             Assert.Contains("項目の組", error.Message);
         }
@@ -286,14 +287,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnEmptyTableIsRead()
         {
-            Assert.Empty(TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[]}"));
+            TypeRoleTable table = TypeRoleTableJsonReader.ReadTypeRoles(
+                "{\"types\":[],\"issuances\":[]}");
+
+            Assert.Empty(table.Types);
+            Assert.Empty(table.Issuances);
         }
 
         [Fact]
         public void ATableWithoutTheTypesStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.ReadTypeRoles("{}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"issuances\":[]}"));
 
             Assert.Contains("types", error.Message);
         }
@@ -302,7 +307,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TypesThatAreNotAListStop()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":\"x\"}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles(
+                    "{\"types\":\"x\",\"issuances\":[]}"));
 
             Assert.Contains("types", error.Message);
         }
@@ -311,7 +317,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnUnknownMemberAtTheRootStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[],\"note\":1}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles(
+                    "{\"types\":[],\"issuances\":[],\"note\":1}"));
 
             Assert.Contains("note", error.Message);
         }
@@ -333,6 +340,113 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnIssuanceIsReadWithItsKindAndBasis()
+        {
+            IList<HandleIssuanceRecord> records = ReadIssuances(
+                Issuance("N.A.Make()", "\"issues\":true,\"kind\":\"factory\""),
+                Issuance("N.B.Get()", "\"issues\":false"));
+
+            Assert.Equal(new[] { "N.A.Make()", "N.B.Get()" }, records.Select(r => r.SignatureKey));
+            Assert.Equal(new[] { true, false }, records.Select(r => r.Issues));
+            Assert.Equal(HandleIssuanceKind.Factory, records[0].Kind);
+            Assert.Null(records[1].Kind);
+            Assert.Equal("N.B.Get() の根拠。", records[1].Basis);
+        }
+
+        [Fact]
+        public void EveryIssuanceKindNameIsRead()
+        {
+            IList<HandleIssuanceRecord> records = ReadIssuances(
+                Issuance("N.A", "\"issues\":true,\"kind\":\"constructor\""),
+                Issuance("N.B", "\"issues\":true,\"kind\":\"factory\""),
+                Issuance("N.C", "\"issues\":true,\"kind\":\"receiverBound\""));
+
+            Assert.Equal(
+                new HandleIssuanceKind?[]
+                {
+                    HandleIssuanceKind.Constructor,
+                    HandleIssuanceKind.Factory,
+                    HandleIssuanceKind.ReceiverBound,
+                },
+                records.Select(r => r.Kind));
+        }
+
+        [Fact]
+        public void IssuancesOutOfOrdinalOrderStop()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadIssuances(
+                    Issuance("N.B", "\"issues\":false"), Issuance("N.A", "\"issues\":false")));
+
+            Assert.Contains("昇順", error.Message);
+        }
+
+        [Fact]
+        public void TheSameIssuanceTwiceStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadIssuances(
+                    Issuance("N.A", "\"issues\":false"), Issuance("N.A", "\"issues\":false")));
+
+            Assert.Contains("二度", error.Message);
+        }
+
+        [Fact]
+        public void AnIssuanceThatIssuesWithoutAKindStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadIssuances(Issuance("N.A", "\"issues\":true")));
+
+            Assert.Contains("kind", error.Message);
+        }
+
+        [Fact]
+        public void AnIssuanceThatDoesNotIssueWithAKindStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadIssuances(
+                    Issuance("N.A", "\"issues\":false,\"kind\":\"factory\"")));
+
+            Assert.Contains("kind", error.Message);
+        }
+
+        [Fact]
+        public void AnUnknownIssuanceKindStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadIssuances(Issuance("N.A", "\"issues\":true,\"kind\":\"builder\"")));
+
+            Assert.Contains("builder", error.Message);
+        }
+
+        [Fact]
+        public void AnIssuanceFlagThatIsNotABooleanStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadIssuances(Issuance("N.A", "\"issues\":\"true\"")));
+
+            Assert.Contains("issues", error.Message);
+        }
+
+        [Fact]
+        public void AnIssuanceWithoutTheFlagStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadIssuances("{\"signatureKey\":\"N.A\",\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("issues", error.Message);
+        }
+
+        [Fact]
+        public void ATableWithoutTheIssuancesStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[]}"));
+
+            Assert.Contains("issuances", error.Message);
+        }
+
+        [Fact]
         public void TextThatIsNotJsonStops()
         {
             Assert.Throws<FormatException>(() => TypeRoleTableJsonReader.ReadTypeRoles("役割"));
@@ -347,14 +461,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static IList<TypeRoleRecord> ReadTypes(params string[] items)
         {
+            return Read(items, new string[0]).Types;
+        }
+
+        private static IList<HandleIssuanceRecord> ReadIssuances(params string[] items)
+        {
+            return Read(new string[0], items).Issuances;
+        }
+
+        private static TypeRoleTable Read(string[] types, string[] issuances)
+        {
             return TypeRoleTableJsonReader.ReadTypeRoles(
-                "{\"types\":[" + string.Join(",", items) + "]}");
+                "{\"types\":[" + string.Join(",", types)
+                    + "],\"issuances\":[" + string.Join(",", issuances) + "]}");
         }
 
         private static string Item(string typeName, string role)
         {
             return "{\"typeName\":\"" + typeName + "\",\"role\":\"" + role
                 + "\",\"basis\":\"" + typeName + " の根拠。\"}";
+        }
+
+        private static string Issuance(string signatureKey, string flag)
+        {
+            return "{\"signatureKey\":\"" + signatureKey + "\"," + flag
+                + ",\"basis\":\"" + signatureKey + " の根拠。\"}";
         }
 
         private static string Noun(string typeName, string role, string nouns)

@@ -859,5 +859,303 @@
       "role": "eventArgs",
       "basis": "実行環境が備えるキー入力のイベント引数で、公開イベントのハンドラの型引数に現れる。"
     }
+  ],
+  "issuances": [
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmd()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmd(System.String[],System.String[])",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBasCameraKey()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdCameraKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBoneKey()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdBoneKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdBonePoseStateインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd,System.Int32)",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdBonePoseStateインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd,System.Int32[])",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdBonePoseStateインスタンスの一括生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdIPL()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdIPLインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdLightKey()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdLightKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdMorphKey()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdMorphKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdSelfShadowKey()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmdSelfShadowKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVme()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmeインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmeGroup()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmeGroupインスタンス生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmePath()",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「IPEVmePathインスタンス(空間パス)の作成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.ToBoneKeyArray(System.Int32,System.Int32)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「全フレーム配置のVmdBoneKey列へ変換(補間設定は直線形状)」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.AddBone(System.String,SlimDX.Vector3)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「ボーン追加(PMDから初期化した場合は例外終了)」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.AddMorph(System.String)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「モーフ追加(PMDから初期化した場合は例外終了)」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupBone(System.Boolean)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「グループボーンの作成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupBone(System.Int32[])",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「グループボーンの作成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupMorph(System.Boolean)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「グループモーフの作成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupMorph(System.Int32[])",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「グループモーフの作成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.Run()",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「イベント実行(登録されたイベントのフレーム範囲) - 登録したイベントによりフレームの各状態を生成／出力」と記す操作で、実行のたびに結果の実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.Run(System.Int32,System.Int32)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「イベント実行 - 登録したイベントによりフレームの各状態を生成／出力」と記す操作で、実行のたびに結果の実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.ToBS(PEPlugin.Vme.IPEVmeEventState)",
+      "issues": false,
+      "basis": "配布物が「イベント状態からボーン状態を取得(ToBoneState短絡) - 取得できない場合はnull」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.ToBoneState(PEPlugin.Vme.IPEVmeEventState)",
+      "issues": false,
+      "basis": "配布物が「イベント状態からボーン状態を取得 - 取得できない場合はnull」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.ToCS(PEPlugin.Vme.IPEVmeEventState)",
+      "issues": false,
+      "basis": "配布物が「イベント状態からカメラ位置状態を取得(短絡) - 取得できない場合はnull」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.ToCameraState(PEPlugin.Vme.IPEVmeEventState)",
+      "issues": false,
+      "basis": "配布物が「イベント状態からカメラ位置状態を取得 - 取得できない場合はnull」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GetElement(System.Int32)",
+      "issues": false,
+      "basis": "配布物が「グループ要素の取得」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GetGroupElements()",
+      "issues": false,
+      "basis": "配布物が「グループ要素の列取得」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetBone(System.Int32)",
+      "issues": false,
+      "basis": "配布物が「ボーン要素の取得」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetGroupBones()",
+      "issues": false,
+      "basis": "配布物が「グループボーン要素の取得」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.GetGroupMorphs()",
+      "issues": false,
+      "basis": "配布物が「グループモーフ要素の取得」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.GetMorph(System.Int32)",
+      "issues": false,
+      "basis": "配布物が「モーフ要素の取得」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeLight.ToLS(PEPlugin.Vme.IPEVmeEventState)",
+      "issues": false,
+      "basis": "配布物が「イベント状態から状態変数を取得(ToLightState短絡) - 取得できない場合はnull」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeLight.ToLightState(PEPlugin.Vme.IPEVmeEventState)",
+      "issues": false,
+      "basis": "配布物が「イベント状態から状態変数を取得 - 取得できない場合はnull」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Bone(System.Int32,System.Int32)",
+      "issues": false,
+      "basis": "配布物が「ボーン結果の取得(GetBoneResult()短絡) - 取得できない場合null」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Camera(System.Int32)",
+      "issues": false,
+      "basis": "配布物が「カメラ結果の取得(GetCameraResult()短絡) - 取得できない場合null」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetBoneResult(System.Int32,System.Int32)",
+      "issues": false,
+      "basis": "配布物が「ボーン結果の取得 - 取得できない場合null」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetCameraResult(System.Int32)",
+      "issues": false,
+      "basis": "配布物が「カメラ結果の取得 - 取得できない場合null」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetLightResult(System.Int32)",
+      "issues": false,
+      "basis": "配布物が「照明結果の取得 - 取得できない場合null」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetMorphResult(System.Int32,System.Int32)",
+      "issues": false,
+      "basis": "配布物が「モーフ結果の取得 - 取得できない場合null」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Light(System.Int32)",
+      "issues": false,
+      "basis": "配布物が「照明結果の取得(GetLightResult()短絡) - 取得できない場合null」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Morph(System.Int32,System.Int32)",
+      "issues": false,
+      "basis": "配布物が「モーフ結果の取得(GetMorphResult()短絡) - 取得できない場合null」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToCameraVmd(System.Boolean,System.Boolean)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「カメラ出力結果をVMDへ変換」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToLightVmd(System.Boolean)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「照明出力結果をVMDへ変換」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToMotionVmd(System.Boolean)",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「ボーン／モーフ出力結果をVMDへ変換」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToVS(PEPlugin.Vme.IPEVmeEventState)",
+      "issues": false,
+      "basis": "配布物が「イベント状態から値状態を取得(ToValueState短絡) - 取得できない場合はnull」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToValueState(PEPlugin.Vme.IPEVmeEventState)",
+      "issues": false,
+      "basis": "配布物が「イベント状態から値状態を取得 - 取得できない場合はnull」と記す操作で、既にある実体を返すだけである。"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXEventConnector.CreateViewEventListener()",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「Viewイベントリスナ生成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.CreateEventConnector(PXCPlugin.IPXCPluginConnector)",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「イベントコネクタの作成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.RegisterUIModel(PXCPlugin.IPXCPluginConnector,PEPlugin.Pmx.IPXPmx,System.String,PEPlugin.SDX.M,System.Boolean,System.Boolean)",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物は「UIモデルの登録」と記すだけだが、登録は解放の対のある操作で、返るUIモデルは登録のたびに作られる別の実体である。"
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.CreateEventListener(PXCPlugin.Event.IPXEventConnector,System.Int32[])",
+      "issues": true,
+      "kind": "receiverBound",
+      "basis": "配布物が「イベントリスナ作成」と記す操作で、新しい実体を作って返す。"
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper.CreateTextControl(PXCPlugin.UIModel.IPXUIModel,System.Int32,System.Int32,System.Int32,System.Drawing.Color,System.Drawing.Font)",
+      "issues": true,
+      "kind": "factory",
+      "basis": "配布物が「テキスト制御クラスの生成 | 文字のアスペクト比は描画テクスチャと対象面のサイズ比により変化するので注意」と記す操作で、新しい実体を作って返す。"
+    }
   ]
 }
