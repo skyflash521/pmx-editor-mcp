@@ -137,8 +137,8 @@ src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe property-names 
 
 [型役割表の正本](../specs/pmx-editor-mcp-type-roles.json)が、
 [型役割仕様書](../specs/pmx-editor-mcp-type-roles.md)の規則どおりに割り当てられていることと、
-ハンドル発行の判定が列挙で決まる母集合と一対一で一致し、発行の種別がレシーバーと合っていることを
-照合する。
+ハンドル発行の判定と要素を並べるリストの判定が列挙で決まる母集合と一対一で一致し、発行の種別が
+レシーバーと合っていることを照合する。
 下位コマンド `type-roles` の引数は導入ディレクトリ・能力台帳・除外一覧・型役割表の正本のパスの4つ。
 
 ```

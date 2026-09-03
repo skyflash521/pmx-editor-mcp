@@ -109,12 +109,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ATypeRoleTableRequiresBothParts()
+        public void ATypeRoleTableRequiresEveryPart()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new TypeRoleTable(null, new List<HandleIssuanceRecord>()));
+                () => new TypeRoleTable(
+                    null, new List<HandleIssuanceRecord>(), new List<ElementCollectionRecord>()));
             Assert.Throws<ArgumentNullException>(
-                () => new TypeRoleTable(new List<TypeRoleRecord>(), null));
+                () => new TypeRoleTable(
+                    new List<TypeRoleRecord>(), null, new List<ElementCollectionRecord>()));
+            Assert.Throws<ArgumentNullException>(
+                () => new TypeRoleTable(
+                    new List<TypeRoleRecord>(), new List<HandleIssuanceRecord>(), null));
+        }
+
+        [Fact]
+        public void AnElementCollectionRequiresItsKeyAndBasis()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => new ElementCollectionRecord(null, true, "根拠。"));
+            Assert.Throws<ArgumentException>(
+                () => new ElementCollectionRecord(" ", true, "根拠。"));
+            Assert.Throws<ArgumentException>(
+                () => new ElementCollectionRecord("N.A.Items()", true, " "));
         }
 
         [Fact]

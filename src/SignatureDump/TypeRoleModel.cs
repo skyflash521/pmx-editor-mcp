@@ -121,10 +121,37 @@ namespace PmxEditorMcp.SignatureDump
         public string Basis { get; }
     }
 
-    /// <summary>型役割表の正本。型ごとの役割と、ハンドル発行の判定からなる。</summary>
+    /// <summary>要素を並べるリスト1件の判定。</summary>
+    public sealed class ElementCollectionRecord
+    {
+        public ElementCollectionRecord(string signatureKey, bool owns, string basis)
+        {
+            PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
+            PropertyRecord.RequireText(basis, nameof(basis));
+
+            SignatureKey = signatureKey;
+            Owns = owns;
+            Basis = basis;
+        }
+
+        public string SignatureKey { get; }
+
+        /// <summary>要素を所有するか。他所が所有する要素を指すだけなら偽。</summary>
+        public bool Owns { get; }
+
+        /// <summary>そう判じた根拠の一文。</summary>
+        public string Basis { get; }
+    }
+
+    /// <summary>
+    /// 型役割表の正本。型ごとの役割と、ハンドル発行の判定と、要素を並べるリストの判定からなる。
+    /// </summary>
     public sealed class TypeRoleTable
     {
-        public TypeRoleTable(IList<TypeRoleRecord> types, IList<HandleIssuanceRecord> issuances)
+        public TypeRoleTable(
+            IList<TypeRoleRecord> types,
+            IList<HandleIssuanceRecord> issuances,
+            IList<ElementCollectionRecord> collections)
         {
             if (types == null)
             {
@@ -136,13 +163,21 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(issuances));
             }
 
+            if (collections == null)
+            {
+                throw new ArgumentNullException(nameof(collections));
+            }
+
             Types = new ReadOnlyCollection<TypeRoleRecord>(types);
             Issuances = new ReadOnlyCollection<HandleIssuanceRecord>(issuances);
+            Collections = new ReadOnlyCollection<ElementCollectionRecord>(collections);
         }
 
         public IList<TypeRoleRecord> Types { get; }
 
         public IList<HandleIssuanceRecord> Issuances { get; }
+
+        public IList<ElementCollectionRecord> Collections { get; }
     }
 
     /// <summary>日本語名をどう決めたか。</summary>

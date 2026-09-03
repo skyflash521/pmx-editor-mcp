@@ -13,6 +13,10 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string IssuancesName = "issuances";
 
+        private const string CollectionsName = "collections";
+
+        private const string OwnsName = "owns";
+
         private const string SignatureKeyName = "signatureKey";
 
         private const string IssuesName = "issues";
@@ -53,8 +57,9 @@ namespace PmxEditorMcp.SignatureDump
             };
 
         /// <summary>
-        /// 型ごとの役割とハンドル発行の判定を、書かれた順に返す。型名と行キーが序数の昇順に重複なく
-        /// 並び、要素名詞が表の中で重複しないことを求める。形が違えば <see cref="FormatException"/>。
+        /// 型ごとの役割と、ハンドル発行の判定と、要素を並べるリストの判定を、書かれた順に返す。
+        /// 型名と行キーが序数の昇順に重複なく並び、要素名詞が表の中で重複しないことを求める。形が
+        /// 違えば <see cref="FormatException"/>。
         /// </summary>
         public static TypeRoleTable ReadTypeRoles(string json)
         {
@@ -63,10 +68,42 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            Dictionary<string, object> members = Members(Parse(json), TypesName, IssuancesName);
+            Dictionary<string, object> members = Members(
+                Parse(json), TypesName, IssuancesName, CollectionsName);
 
             return new TypeRoleTable(
-                ReadTypes(members[TypesName]), ReadIssuances(members[IssuancesName]));
+                ReadTypes(members[TypesName]),
+                ReadIssuances(members[IssuancesName]),
+                ReadCollections(members[CollectionsName]));
+        }
+
+        private static IList<ElementCollectionRecord> ReadCollections(object value)
+        {
+            List<ElementCollectionRecord> records = new List<ElementCollectionRecord>();
+            string previous = null;
+            foreach (object item in Array(value, CollectionsName))
+            {
+                Dictionary<string, object> members = Members(
+                    item, SignatureKeyName, OwnsName, BasisName);
+                ElementCollectionRecord record;
+                try
+                {
+                    record = new ElementCollectionRecord(
+                        Text(members[SignatureKeyName], SignatureKeyName),
+                        Flag(members[OwnsName], OwnsName),
+                        Text(members[BasisName], BasisName));
+                }
+                catch (ArgumentException exception)
+                {
+                    throw new FormatException(exception.Message, exception);
+                }
+
+                RequireAscending(previous, record.SignatureKey, "行キー");
+                previous = record.SignatureKey;
+                records.Add(record);
+            }
+
+            return records;
         }
 
         private static IList<HandleIssuanceRecord> ReadIssuances(object value)
@@ -134,9 +171,14 @@ namespace PmxEditorMcp.SignatureDump
                 throw new FormatException("項目が無い: " + IssuesName);
             }
 
+            return Flag(value, IssuesName);
+        }
+
+        private static bool Flag(object value, string name)
+        {
             if (!(value is bool))
             {
-                throw new FormatException(IssuesName + " は真偽でなければならない。");
+                throw new FormatException(name + " は真偽でなければならない。");
             }
 
             return (bool)value;

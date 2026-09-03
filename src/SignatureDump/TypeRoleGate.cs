@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump
     /// 型ごとの役割が、規則どおりに割り当てられているかを検査する。役割の意味そのものは測れないので、
     /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型を
     /// 呼び出し側が実体を用意せずに呼べること、接続の経路、ハンドルを返しうるシグネチャの
-    /// 過不足と発行の種別——に限る。
+    /// 過不足と発行の種別、要素を並べるリストの過不足と所有の一意——に限る。
     /// </summary>
     public static class TypeRoleGate
     {
@@ -20,7 +20,9 @@ namespace PmxEditorMcp.SignatureDump
         /// なりうるかは、この集合に在るかどうかで見る。<paramref name="connectionPaths"/> には
         /// <see cref="TypeRoleEvidence.ReachableFromRoots"/> の結果を、
         /// <paramref name="issuanceCandidates"/> には
-        /// <see cref="HandleIssuanceEvidence.Candidates"/> の結果を渡すこと。
+        /// <see cref="HandleIssuanceEvidence.Candidates"/> の結果を、
+        /// <paramref name="collectionCandidates"/> には
+        /// <see cref="ElementCollectionEvidence.Candidates"/> の結果を渡すこと。
         /// </summary>
         public static void Require(
             TypeRoleTable table,
@@ -29,7 +31,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> eventArgumentTypes,
             ICollection<string> connectorCandidates,
             IDictionary<string, string> connectionPaths,
-            IDictionary<string, HandleIssuanceKind> issuanceCandidates)
+            IDictionary<string, HandleIssuanceKind> issuanceCandidates,
+            IDictionary<string, string> collectionCandidates)
         {
             if (table == null)
             {
@@ -66,6 +69,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(issuanceCandidates));
             }
 
+            if (collectionCandidates == null)
+            {
+                throw new ArgumentNullException(nameof(collectionCandidates));
+            }
+
             IList<TypeRoleRecord> records = table.Types;
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
@@ -73,6 +81,7 @@ namespace PmxEditorMcp.SignatureDump
             RequireConnectorsNeedNoInstanceFromTheCaller(records, connectorCandidates);
             RequireConnectionPathsMatchTheEvidence(records, connectionPaths);
             RequireIssuancesMatchTheEvidence(table.Issuances, issuanceCandidates);
+            RequireCollectionsMatchTheEvidence(table.Collections, collectionCandidates);
         }
 
         /// <summary>
@@ -235,6 +244,62 @@ namespace PmxEditorMcp.SignatureDump
             if (missing != null)
             {
                 throw new InvalidOperationException("表に無いシグネチャが在る: " + missing);
+            }
+        }
+
+        /// <summary>
+        /// 要素を並べるリストの集合が列挙と一対一で、要素の型ごとに所有するリストが1つを超えず、
+        /// 指すだけのリストの要素に所有するリストが在ることを求める。
+        /// </summary>
+        private static void RequireCollectionsMatchTheEvidence(
+            IList<ElementCollectionRecord> records, IDictionary<string, string> candidates)
+        {
+            HashSet<string> listed = new HashSet<string>(StringComparer.Ordinal);
+            Dictionary<string, string> ownerOf = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (ElementCollectionRecord record in records)
+            {
+                if (!listed.Add(record.SignatureKey))
+                {
+                    throw new InvalidOperationException(
+                        "表に同じ行キーが二度在る: " + record.SignatureKey);
+                }
+
+                string element;
+                if (!candidates.TryGetValue(record.SignatureKey, out element))
+                {
+                    throw new InvalidOperationException(
+                        "要素を並べるリストでないシグネチャが表に在る: " + record.SignatureKey);
+                }
+
+                if (!record.Owns)
+                {
+                    continue;
+                }
+
+                string other;
+                if (ownerOf.TryGetValue(element, out other))
+                {
+                    throw new InvalidOperationException(
+                        "同じ要素の型を所有するリストが二つ在る: " + other + " と " + record.SignatureKey
+                            + "(" + element + ")");
+                }
+
+                ownerOf.Add(element, record.SignatureKey);
+            }
+
+            string missing = candidates.Keys.Except(listed, StringComparer.Ordinal)
+                .OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault();
+            if (missing != null)
+            {
+                throw new InvalidOperationException("表に無いリストが在る: " + missing);
+            }
+
+            foreach (ElementCollectionRecord record in records
+                .Where(r => !r.Owns && !ownerOf.ContainsKey(candidates[r.SignatureKey])))
+            {
+                throw new InvalidOperationException(
+                    "所有するリストの無い要素を指すリストが在る: " + record.SignatureKey
+                        + "(" + candidates[record.SignatureKey] + ")");
             }
         }
     }

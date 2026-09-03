@@ -76,6 +76,7 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> connectorCandidates;
             IDictionary<string, string> connectionPaths;
             IDictionary<string, HandleIssuanceKind> issuanceCandidates;
+            IDictionary<string, string> collectionCandidates;
             try
             {
                 population = TypeRolePopulation.Resolve(ledger, inventory, excluded);
@@ -84,10 +85,12 @@ namespace PmxEditorMcp.SignatureDump
                     inventory, TypeRoleEvidence.ConnectionRoots);
                 connectionPaths = TypeRoleEvidence.ReachableFromRoots(
                     inventory, TypeRoleEvidence.ConnectionRoots);
+                IDictionary<string, TypeRole> roles = table.Types.ToDictionary(
+                    r => r.TypeName, r => r.Role, StringComparer.Ordinal);
                 issuanceCandidates = HandleIssuanceEvidence.Candidates(
-                    inventory,
-                    table.Types.ToDictionary(r => r.TypeName, r => r.Role, StringComparer.Ordinal),
-                    population.Signatures);
+                    inventory, roles, population.Signatures);
+                collectionCandidates = ElementCollectionEvidence.Candidates(
+                    inventory, roles, population.Signatures);
             }
             catch (Exception exception)
                 when (exception is InvalidOperationException || exception is ArgumentException)
@@ -106,7 +109,8 @@ namespace PmxEditorMcp.SignatureDump
                     eventArgumentTypes,
                     connectorCandidates,
                     connectionPaths,
-                    issuanceCandidates);
+                    issuanceCandidates,
+                    collectionCandidates);
             }
             catch (InvalidOperationException exception)
             {
@@ -118,7 +122,8 @@ namespace PmxEditorMcp.SignatureDump
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
                 "照合した: 型 {0} 件(コネクタ {1}・イベント引数 {2}・ハンドル操作 {3}・操作対象 {4}"
-                    + "・DTO {5})・ハンドルを返しうる行 {6} 件(発行 {7})",
+                    + "・DTO {5})・ハンドルを返しうる行 {6} 件(発行 {7})"
+                    + "・要素のリスト {8} 件(所有 {9})",
                 table.Types.Count,
                 table.Types.Count(r => r.Role == TypeRole.Connector),
                 table.Types.Count(r => r.Role == TypeRole.EventArgs),
@@ -126,7 +131,9 @@ namespace PmxEditorMcp.SignatureDump
                 table.Types.Count(r => r.Role == TypeRole.OperationTarget),
                 table.Types.Count(r => r.Role == TypeRole.Dto),
                 table.Issuances.Count,
-                table.Issuances.Count(r => r.Issues)));
+                table.Issuances.Count(r => r.Issues),
+                table.Collections.Count,
+                table.Collections.Count(r => r.Owns)));
 
             return ExitCodes.Success;
         }

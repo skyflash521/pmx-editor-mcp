@@ -223,7 +223,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string excludedPath = Path.Combine(_root, "roles-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string rolesPath = Path.Combine(_root, "type-roles.json");
-            File.WriteAllText(rolesPath, "{\"types\":[],\"issuances\":[]}");
+            File.WriteAllText(rolesPath, "{\"types\":[],\"issuances\":[],\"collections\":[]}");
             string editorDirectory = CreateEditorDirectory();
 
             int code = CommandRunner.Run(

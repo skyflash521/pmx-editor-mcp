@@ -172,7 +172,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             FormatException error = Assert.Throws<FormatException>(
                 () => TypeRoleTableJsonReader.ReadTypeRoles(
-                    "{\"types\":[\"N.A\"],\"issuances\":[]}"));
+                    "{\"types\":[\"N.A\"],\"issuances\":[],\"collections\":[]}"));
 
             Assert.Contains("項目の組", error.Message);
         }
@@ -288,7 +288,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnEmptyTableIsRead()
         {
             TypeRoleTable table = TypeRoleTableJsonReader.ReadTypeRoles(
-                "{\"types\":[],\"issuances\":[]}");
+                "{\"types\":[],\"issuances\":[],\"collections\":[]}");
 
             Assert.Empty(table.Types);
             Assert.Empty(table.Issuances);
@@ -298,7 +298,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ATableWithoutTheTypesStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"issuances\":[]}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"issuances\":[],\"collections\":[]}"));
 
             Assert.Contains("types", error.Message);
         }
@@ -308,7 +308,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             FormatException error = Assert.Throws<FormatException>(
                 () => TypeRoleTableJsonReader.ReadTypeRoles(
-                    "{\"types\":\"x\",\"issuances\":[]}"));
+                    "{\"types\":\"x\",\"issuances\":[],\"collections\":[]}"));
 
             Assert.Contains("types", error.Message);
         }
@@ -318,7 +318,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             FormatException error = Assert.Throws<FormatException>(
                 () => TypeRoleTableJsonReader.ReadTypeRoles(
-                    "{\"types\":[],\"issuances\":[],\"note\":1}"));
+                    "{\"types\":[],\"issuances\":[],\"collections\":[],\"note\":1}"));
 
             Assert.Contains("note", error.Message);
         }
@@ -441,9 +441,67 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ATableWithoutTheIssuancesStops()
         {
             FormatException error = Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[]}"));
+                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[],\"collections\":[]}"));
 
             Assert.Contains("issuances", error.Message);
+        }
+
+        [Fact]
+        public void ACollectionIsReadWithItsOwnershipAndBasis()
+        {
+            IList<ElementCollectionRecord> records = ReadCollections(
+                Collection("N.A.Items()", true), Collection("N.B.Refs()", false));
+
+            Assert.Equal(new[] { "N.A.Items()", "N.B.Refs()" }, records.Select(r => r.SignatureKey));
+            Assert.Equal(new[] { true, false }, records.Select(r => r.Owns));
+            Assert.Equal("N.B.Refs() の根拠。", records[1].Basis);
+        }
+
+        [Fact]
+        public void CollectionsOutOfOrdinalOrderStop()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(Collection("N.B", true), Collection("N.A", true)));
+
+            Assert.Contains("昇順", error.Message);
+        }
+
+        [Fact]
+        public void TheSameCollectionTwiceStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(Collection("N.A", true), Collection("N.A", true)));
+
+            Assert.Contains("二度", error.Message);
+        }
+
+        [Fact]
+        public void AnOwnershipFlagThatIsNotABooleanStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(
+                    "{\"signatureKey\":\"N.A\",\"owns\":\"true\",\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("owns", error.Message);
+        }
+
+        [Fact]
+        public void ACollectionWithoutTheFlagStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections("{\"signatureKey\":\"N.A\",\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("owns", error.Message);
+        }
+
+        [Fact]
+        public void ATableWithoutTheCollectionsStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => TypeRoleTableJsonReader.ReadTypeRoles(
+                    "{\"types\":[],\"issuances\":[]}"));
+
+            Assert.Contains("collections", error.Message);
         }
 
         [Fact]
@@ -469,17 +527,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return Read(new string[0], items).Issuances;
         }
 
+        private static IList<ElementCollectionRecord> ReadCollections(params string[] items)
+        {
+            return TypeRoleTableJsonReader.ReadTypeRoles(
+                "{\"types\":[],\"issuances\":[],\"collections\":["
+                    + string.Join(",", items) + "]}").Collections;
+        }
+
         private static TypeRoleTable Read(string[] types, string[] issuances)
         {
             return TypeRoleTableJsonReader.ReadTypeRoles(
                 "{\"types\":[" + string.Join(",", types)
-                    + "],\"issuances\":[" + string.Join(",", issuances) + "]}");
+                    + "],\"issuances\":[" + string.Join(",", issuances)
+                    + "],\"collections\":[]}");
         }
 
         private static string Item(string typeName, string role)
         {
             return "{\"typeName\":\"" + typeName + "\",\"role\":\"" + role
                 + "\",\"basis\":\"" + typeName + " の根拠。\"}";
+        }
+
+        private static string Collection(string signatureKey, bool owns)
+        {
+            return "{\"signatureKey\":\"" + signatureKey + "\",\"owns\":"
+                + (owns ? "true" : "false") + ",\"basis\":\"" + signatureKey + " の根拠。\"}";
         }
 
         private static string Issuance(string signatureKey, string flag)

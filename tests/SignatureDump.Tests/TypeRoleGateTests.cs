@@ -181,7 +181,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Set(),
                 Set(Root),
                 Paths(Root, "Host.Connector"),
-                Issuances());
+                Issuances(),
+                Collections());
         }
 
         [Fact]
@@ -195,7 +196,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Paths(Root, "Host.Connector"),
-                    Issuances()));
+                    Issuances(),
+                    Collections()));
 
             Assert.Contains("Host.Other", error.Message);
             Assert.Contains("Host.Connector", error.Message);
@@ -212,7 +214,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Paths(Root, "Host.Connector"),
-                    Issuances()));
+                    Issuances(),
+                    Collections()));
 
             Assert.Contains("無し", error.Message);
         }
@@ -228,7 +231,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Paths(),
-                    Issuances()));
+                    Issuances(),
+                    Collections()));
 
             Assert.Contains("無し", error.Message);
         }
@@ -244,7 +248,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Paths(Root, string.Empty),
-                    Issuances()));
+                    Issuances(),
+                    Collections()));
 
             Assert.Contains(Root, error.Message);
         }
@@ -259,7 +264,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Set(),
                 Set(Root),
                 Paths(),
-                Candidates("N.A.Make()", HandleIssuanceKind.Factory));
+                Candidates("N.A.Make()", HandleIssuanceKind.Factory),
+                Collections());
         }
 
         [Fact]
@@ -273,7 +279,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Paths(),
-                    Candidates()));
+                    Candidates(),
+                    Collections()));
 
             Assert.Contains("N.A.Get()", error.Message);
         }
@@ -289,7 +296,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Paths(),
-                    Candidates("N.A.Make()", HandleIssuanceKind.Factory)));
+                    Candidates("N.A.Make()", HandleIssuanceKind.Factory),
+                    Collections()));
 
             Assert.Contains("N.A.Make()", error.Message);
         }
@@ -305,7 +313,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Paths(),
-                    Candidates("N.A.Make()", HandleIssuanceKind.Factory)));
+                    Candidates("N.A.Make()", HandleIssuanceKind.Factory),
+                    Collections()));
 
             Assert.Contains("Factory", error.Message);
         }
@@ -323,7 +332,107 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Paths(),
-                    Candidates("N.A.Make()", HandleIssuanceKind.Factory)));
+                    Candidates("N.A.Make()", HandleIssuanceKind.Factory),
+                    Collections()));
+
+            Assert.Contains("二度", error.Message);
+        }
+
+        [Fact]
+        public void CollectionsThatMatchTheEvidencePass()
+        {
+            TypeRoleGate.Require(
+                Listed(Collection("N.A.Items()", true), Collection("N.B.Refs()", false)),
+                Set(Root),
+                Roots(),
+                Set(),
+                Set(Root),
+                Paths(),
+                Issuances(),
+                Both());
+        }
+
+        [Fact]
+        public void ACollectionTheEvidenceDoesNotHaveStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Listed(Collection("N.A.Items()", true)),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Issuances(),
+                    Collections()));
+
+            Assert.Contains("N.A.Items()", error.Message);
+        }
+
+        [Fact]
+        public void ACollectionTheEvidenceHasButTheTableOmitsStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Listed(),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Issuances(),
+                    Collections("N.A.Items()", "N.IThing")));
+
+            Assert.Contains("N.A.Items()", error.Message);
+        }
+
+        [Fact]
+        public void TwoOwningListsOfTheSameElementStop()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Listed(Collection("N.A.Items()", true), Collection("N.B.Refs()", true)),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Issuances(),
+                    Both()));
+
+            Assert.Contains("N.IThing", error.Message);
+        }
+
+        [Fact]
+        public void AReferencingListWithoutAnOwningListStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Listed(Collection("N.B.Refs()", false)),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Issuances(),
+                    Collections("N.B.Refs()", "N.IThing")));
+
+            Assert.Contains("N.B.Refs()", error.Message);
+        }
+
+        [Fact]
+        public void TheSameCollectionTwiceInTheTableStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Listed(Collection("N.A.Items()", true), Collection("N.A.Items()", true)),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(),
+                    Issuances(),
+                    Collections("N.A.Items()", "N.IThing")));
 
             Assert.Contains("二度", error.Message);
         }
@@ -334,20 +443,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
             TypeRoleTable table = Table(Record(Root, TypeRole.Connector));
 
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(null, Set(Root), Roots(Root), Set(), Set(Root), Paths(), Issuances()));
+                () => TypeRoleGate.Require(null, Set(Root), Roots(Root), Set(), Set(Root), Paths(), Issuances(), Collections()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, null, Roots(Root), Set(), Set(Root), Paths(), Issuances()));
+                () => TypeRoleGate.Require(table, null, Roots(Root), Set(), Set(Root), Paths(), Issuances(), Collections()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), null, Set(), Set(Root), Paths(), Issuances()));
+                () => TypeRoleGate.Require(table, Set(Root), null, Set(), Set(Root), Paths(), Issuances(), Collections()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), null, Set(Root), Paths(), Issuances()));
-            Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), null, Paths(), Issuances()));
-            Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), Set(Root), null, Issuances()));
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), null, Set(Root), Paths(), Issuances(), Collections()));
             Assert.Throws<ArgumentNullException>(
                 () => TypeRoleGate.Require(
-                    table, Set(Root), Roots(Root), Set(), Set(Root), Paths(), null));
+                    table, Set(Root), Roots(Root), Set(), null, Paths(), Issuances(), Collections()));
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), Set(Root), null, Issuances(), Collections()));
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleGate.Require(
+                    table, Set(Root), Roots(Root), Set(), Set(Root), Paths(), null, Collections()));
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleGate.Require(
+                    table, Set(Root), Roots(Root), Set(), Set(Root), Paths(), Issuances(), null));
         }
 
         /// <summary>接続の経路を持たない題材のための呼び出し。</summary>
@@ -365,7 +478,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 eventArgumentTypes,
                 connectorCandidates,
                 Paths(),
-                Issuances());
+                Issuances(),
+                Collections());
         }
 
         private static IDictionary<string, string> Paths(string typeName = null, string path = null)
@@ -381,13 +495,53 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static TypeRoleTable Table(params TypeRoleRecord[] records)
         {
-            return new TypeRoleTable(records.ToList(), new List<HandleIssuanceRecord>());
+            return new TypeRoleTable(
+                records.ToList(),
+                new List<HandleIssuanceRecord>(),
+                new List<ElementCollectionRecord>());
+        }
+
+        private static IDictionary<string, string> Both()
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { "N.A.Items()", "N.IThing" },
+                { "N.B.Refs()", "N.IThing" },
+            };
+        }
+
+        private static IDictionary<string, string> Collections(
+            string signatureKey = null, string elementType = null)
+        {
+            Dictionary<string, string> candidates =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            if (signatureKey != null)
+            {
+                candidates.Add(signatureKey, elementType);
+            }
+
+            return candidates;
+        }
+
+        private static TypeRoleTable Listed(params ElementCollectionRecord[] collections)
+        {
+            return new TypeRoleTable(
+                new List<TypeRoleRecord> { Record(Root, TypeRole.Connector) },
+                new List<HandleIssuanceRecord>(),
+                collections.ToList());
+        }
+
+        private static ElementCollectionRecord Collection(string signatureKey, bool owns)
+        {
+            return new ElementCollectionRecord(signatureKey, owns, signatureKey + " の根拠。");
         }
 
         private static TypeRoleTable Issued(params HandleIssuanceRecord[] issuances)
         {
             return new TypeRoleTable(
-                new List<TypeRoleRecord> { Record(Root, TypeRole.Connector) }, issuances.ToList());
+                new List<TypeRoleRecord> { Record(Root, TypeRole.Connector) },
+                issuances.ToList(),
+                new List<ElementCollectionRecord>());
         }
 
         private static HandleIssuanceRecord Issuance(

@@ -14,7 +14,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string EmptyExcluded = "{\"signatures\":[]}\n";
 
-        private const string EmptyTable = "{\"types\":[],\"issuances\":[]}\n";
+        private const string EmptyTable = "{\"types\":[],\"issuances\":[],\"collections\":[]}\n";
 
         private readonly string _root;
 
@@ -149,7 +149,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 string.Format(
                     CultureInfo.InvariantCulture,
                     "照合した: 型 {0} 件(コネクタ {1}・イベント引数 0・ハンドル操作 0・操作対象 0"
-                        + "・DTO {2})・ハンドルを返しうる行 0 件(発行 0)",
+                        + "・DTO {2})・ハンドルを返しうる行 0 件(発行 0)"
+                        + "・要素のリスト 0 件(所有 0)",
                     population.Count,
                     TypeRoleEvidence.ConnectionRoots.Count,
                     population.Count - TypeRoleEvidence.ConnectionRoots.Count),
@@ -210,7 +211,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 index++;
             }
 
-            return builder.Append("],\"issuances\":[]}").ToString();
+            return builder.Append("],\"issuances\":[],\"collections\":[]}").ToString();
         }
 
         private static ISet<string> Population()
