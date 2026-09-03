@@ -34,7 +34,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             { "CAP-114", "非対応件数: 1。PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外" },
             { "CAP-269", "非対応件数: 1。Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨" },
             { "CAP-304", "引数のIPXCPlugin(実装拡張点・非対応)を取得経路から得られないため" },
-            { "CAP-339", "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は現在のモデルを対象に呼ぶ Clear() で、対象を指定して呼ぶ場合は当たらない。呼び出しには確認が要る" },
+            { "CAP-339", "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は Clear()。現在のモデルを対象に呼ぶ場合に限って当たり、対象を指定して呼ぶ場合は当たらない。呼び出しには確認が要る" },
             { "CAP-390", "非対応件数: 2。他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外" },
             { "CAP-398", "非対応件数: 1。契約注記: PMDを引数に取る版はレガシーのため対象外" },
             { "CAP-459", "プラグイン自身がホストに登録されるための実装専用API" },
@@ -121,6 +121,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("type-roles", CommandRunner.TypeRolesCommand);
             Assert.Equal("common-assignments", CommandRunner.CommonAssignmentsCommand);
             Assert.Equal("value-shapes", CommandRunner.ValueShapesCommand);
+            Assert.Equal("dangerous-operations", CommandRunner.DangerousOperationsCommand);
         }
 
         [Fact]
@@ -357,6 +358,47 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void DangerousOperationsSubcommandRunsTheCollation()
+        {
+            string ledgerPath = Path.Combine(_root, "danger-ledger.md");
+            File.WriteAllText(
+                ledgerPath,
+                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
+                    + "|---|---|---|---|---|---|" + Environment.NewLine
+                    + "| CAP-001 | 標本 | N.Absent | 提供 | モデル |"
+                    + " 危険操作(エディタ終了)。該当は Close()。 |" + Environment.NewLine);
+            string excludedPath = Path.Combine(_root, "danger-excluded.json");
+            File.WriteAllText(excludedPath, "{\"signatures\":[]}");
+            string editorDirectory = CreateEditorDirectory();
+
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.DangerousOperationsCommand,
+                    editorDirectory,
+                    ledgerPath,
+                    excludedPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+
+            int missingCode = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.DangerousOperationsCommand,
+                    Path.Combine(_root, "none"),
+                    ledgerPath,
+                    excludedPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, missingCode);
+        }
+
+        [Fact]
         public void ExcludedSignaturesSubcommandRunsTheWrite()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
@@ -436,6 +478,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.ValueShapesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <共通契約仕様書のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.DangerousOperationsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

@@ -34,6 +34,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>値の表現の表が、値として写せる型を過不足なく覆っていることを照合する。</summary>
         public const string ValueShapesCommand = "value-shapes";
 
+        /// <summary>危険操作に当たるシグネチャが、決め方と台帳で一致していることを照合する。</summary>
+        public const string DangerousOperationsCommand = "dangerous-operations";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -99,6 +102,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ValueShapeRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], DangerousOperationsCommand, StringComparison.Ordinal))
+            {
+                return DangerousOperationRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -132,6 +140,9 @@ namespace PmxEditorMcp.SignatureDump
                 ValueShapesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <共通契約仕様書のパス>");
+            error.WriteLine(
+                DangerousOperationsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>");
         }
     }
 }
