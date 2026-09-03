@@ -20,6 +20,7 @@ namespace PmxEditorMcp
         private HostLog _log;
         private McpHost _host;
         private JsonRpcConnection _connection;
+        private ResidentConnection _resident;
 
         /// <summary>起動時実行とメニュー登録を有効にして生成する。</summary>
         public PmxEditorMcpPlugin()
@@ -62,7 +63,7 @@ namespace PmxEditorMcp
             {
                 if (args != null && args.IsBootup)
                 {
-                    StartOnBootup();
+                    StartOnBootup(args);
                 }
                 else
                 {
@@ -93,6 +94,12 @@ namespace PmxEditorMcp
                         _host.Stop();
                     }
 
+                    if (_resident != null)
+                    {
+                        _resident.Dispose();
+                        _resident = null;
+                    }
+
                     if (_uiAnchor != null)
                     {
                         _uiAnchor.Close();
@@ -114,7 +121,7 @@ namespace PmxEditorMcp
             }
         }
 
-        private void StartOnBootup()
+        private void StartOnBootup(IPERunArgs args)
         {
             lock (_operationGate)
             {
@@ -146,11 +153,30 @@ namespace PmxEditorMcp
                     new FormUiDispatcher(_uiAnchor),
                     (stream, generation) => _connection.Handle(stream, generation));
 
+                HoldResidentConnection(args);
+
                 string reason;
                 if (!_host.TryStart(out reason))
                 {
                     _log.Write("起動時に待受を開始しなかった: " + reason);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 接続の根を常駐保持し、Cプラグイン連携のコネクタを一度だけ得る。要求を受ける前に済ませる。
+        /// コネクタを得られなくても根は保ち、待受も続けるので、失敗は記録にとどめる。
+        /// </summary>
+        private void HoldResidentConnection(IPERunArgs args)
+        {
+            _resident = ResidentConnection.Hold(args, _log);
+            try
+            {
+                _resident.TakeCPluginConnector();
+            }
+            catch (Exception exception)
+            {
+                _log.WriteException("Cプラグインコネクタを取得できなかった。", exception);
             }
         }
 
