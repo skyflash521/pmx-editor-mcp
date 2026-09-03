@@ -635,7 +635,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 "CAP-339", "モデルデータ型", "IPXPmx",
                 CapabilityTargetKind.Single, CapabilityStatus.Provided, CapabilityOwner.Model,
-                "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は現在のモデルを対象に呼ぶ Clear() で、対象を指定して呼ぶ場合は当たらない。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る",
+                "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は現在のモデルを対象に呼ぶ Clear() で、対象を指定して呼ぶ場合は当たらない。呼び出しには確認が要る",
             },
             new object[]
             {
@@ -689,7 +689,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 "CAP-466", "SDX数値型", "PEPlugin.SDX.*(M・Q・V2・V3・V4)",
                 CapabilityTargetKind.Pattern, CapabilityStatus.NotSupported, CapabilityOwner.None,
-                "SlimDX数値型の橋渡し型。演算メンバーはモデル状態に作用せずクライアント側で完結する数値計算のため対象外。値の受け渡しはJSON数値配列(共通契約仕様書が定める)",
+                "SlimDX数値型の橋渡し型。演算メンバーはモデル状態に作用せずクライアント側で完結する数値計算のため対象外。値の受け渡し方はこの台帳では定めない",
             },
         };
 

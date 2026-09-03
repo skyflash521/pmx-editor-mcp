@@ -22,18 +22,29 @@ namespace PmxEditorMcp.Bridge
 
         private const string WarningPrefix = "警告: ";
 
+        /// <summary>予算を超えた本文の代わりに返す誤り。</summary>
+        private const string TooLargeCode = "TOOL_RESPONSE_TOO_LARGE";
+
         /// <summary>
         /// 包みをツール結果へ写す。成功なら値を、失敗なら「コード: メッセージ」を本文にし、警告が
-        /// あれば同じ本文の末尾へ行として足す。包みとして読めなければ
-        /// <see cref="FormatException"/>——ホストの応答が契約から外れている。**呼び出し側は、これを
-        /// 受けたら接続を捨てて `BRIDGE_PROTOCOL_ERROR` にする**。契約から外れた応答を返す相手とは、
-        /// 次の要求の応答も対応づけられない。
+        /// あれば同じ本文の末尾へ行として足す。本文が <paramref name="budgetChars"/> を超えるときは
+        /// 本文を返さず、大きすぎる旨の誤りにする。包みとして読めなければ
+        /// <see cref="FormatException"/>——ホストの応答が契約から外れている。呼び出し側は、これを
+        /// 受けたら接続を捨てて `BRIDGE_PROTOCOL_ERROR` にする。
         /// </summary>
-        public static CallToolResult From(JsonNode result, string targetNotice)
+        public static CallToolResult From(JsonNode result, string targetNotice, int budgetChars)
         {
             if (targetNotice == null)
             {
                 throw new ArgumentNullException(nameof(targetNotice));
+            }
+
+            if (budgetChars < BridgeBudget.MinimumChars)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(budgetChars),
+                    budgetChars,
+                    BridgeBudget.MinimumChars + " 以上でなければならない。");
             }
 
             JsonObject envelope = result as JsonObject;
@@ -47,6 +58,13 @@ namespace PmxEditorMcp.Bridge
             foreach (string warning in Warnings(envelope))
             {
                 body += "\n" + WarningPrefix + warning;
+            }
+
+            if (body.Length > budgetChars)
+            {
+                ok = false;
+                body = TooLargeCode + ": 応答が応答サイズ予算 " + budgetChars
+                    + " 文字に収まらない(" + body.Length + " 文字)。";
             }
 
             return new CallToolResult

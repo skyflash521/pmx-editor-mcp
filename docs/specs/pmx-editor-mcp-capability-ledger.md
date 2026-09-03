@@ -43,7 +43,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
   デリゲート・ラムダを要するシグネチャと任意式の評価はシグネチャ単位で非対応とする。
   重複経路やプラグイン機構専用のように、設計しても意味を持たないものも非対応とする。
 - 危険な操作(エディタ終了・上書き保存等)も「技術的にツール化するか」で分類する。
-  公開の可否・確認フローはアーキテクチャ仕様書の危険操作の公開方針が定める。
+  公開の可否・確認フローはこの台帳では定めない。
 
 集計: 提供 467 / 非対応 9 / 要調査 0(計 476)
 
@@ -54,17 +54,17 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-003 | PMXデータ | IPXPmxConnector.Update | 提供 | モデル | 全体更新と部分更新(単一/複数Index)のオーバーロードを含む |
 | CAP-004 | PMXデータ | IPXPmxConnector.LockUndo | 提供 | セッション | Undo記録の制御 |
 | CAP-005 | PMXデータ | IPXPmxConnector.UnlockUndo | 提供 | セッション | Undo記録の制御 |
-| CAP-006 | 本体フォーム | IPEFormConnector.Close | 提供 | セッション | 契約注記: 危険操作(エディタ終了)。該当は Close()。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
-| CAP-007 | 本体フォーム | IPEFormConnector.InitializePMD | 提供 | セッション | 契約注記: 危険操作(モデル初期化)。該当は InitializePMD()。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
+| CAP-006 | 本体フォーム | IPEFormConnector.Close | 提供 | セッション | 契約注記: 危険操作(エディタ終了)。該当は Close()。呼び出しには確認が要る |
+| CAP-007 | 本体フォーム | IPEFormConnector.InitializePMD | 提供 | セッション | 契約注記: 危険操作(モデル初期化)。該当は InitializePMD()。呼び出しには確認が要る |
 | CAP-008 | 本体フォーム | IPEFormConnector.OpenPMDFile | 提供 | セッション |  |
 | CAP-009 | 本体フォーム | IPEFormConnector.ImportXFile | 提供 | セッション |  |
 | CAP-010 | 本体フォーム | IPEFormConnector.AppendPMDFile | 提供 | セッション |  |
 | CAP-011 | 本体フォーム | IPEFormConnector.AppendXFile | 提供 | セッション |  |
-| CAP-012 | 本体フォーム | IPEFormConnector.SavePMDFile | 提供 | セッション | 契約注記: 危険操作(上書き保存)。該当は SavePMDFile(System.String)。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
-| CAP-013 | 本体フォーム | IPEFormConnector.SaveMaterialName | 提供 | セッション | 保存材質名ファイルパスを取る。契約注記: 危険操作(上書き保存)。該当は SaveMaterialName(System.String)。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
-| CAP-014 | 本体フォーム | IPEFormConnector.InitializePMX | 提供 | セッション | 契約注記: 危険操作(モデル初期化)。該当は InitializePMX()。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
+| CAP-012 | 本体フォーム | IPEFormConnector.SavePMDFile | 提供 | セッション | 契約注記: 危険操作(上書き保存)。該当は SavePMDFile(System.String)。呼び出しには確認が要る |
+| CAP-013 | 本体フォーム | IPEFormConnector.SaveMaterialName | 提供 | セッション | 保存材質名ファイルパスを取る。契約注記: 危険操作(上書き保存)。該当は SaveMaterialName(System.String)。呼び出しには確認が要る |
+| CAP-014 | 本体フォーム | IPEFormConnector.InitializePMX | 提供 | セッション | 契約注記: 危険操作(モデル初期化)。該当は InitializePMX()。呼び出しには確認が要る |
 | CAP-015 | 本体フォーム | IPEFormConnector.OpenPMXFile | 提供 | セッション | PMXファイルパスを取り真偽値を返す |
-| CAP-016 | 本体フォーム | IPEFormConnector.SavePMXFile | 提供 | セッション | 契約注記: 危険操作(上書き保存)。該当は SavePMXFile(System.String)。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
+| CAP-016 | 本体フォーム | IPEFormConnector.SavePMXFile | 提供 | セッション | 契約注記: 危険操作(上書き保存)。該当は SavePMXFile(System.String)。呼び出しには確認が要る |
 | CAP-017 | 本体フォーム | IPEFormConnector.UpdateList | 提供 | ビュー | リスト表示更新 |
 | CAP-018 | 本体フォーム | IPEFormConnector.VertexItemsCount | 提供 | ビュー |  |
 | CAP-019 | 本体フォーム | IPEFormConnector.FaceItemsCount | 提供 | ビュー |  |
@@ -214,7 +214,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-163 | ビュー設定 | IPEViewSettingConnector.EdgeSize | 提供 | ビュー |  |
 | CAP-164 | ビュー設定 | IPEViewSettingConnector.InitializeViewSetting | 提供 | ビュー |  |
 | CAP-165 | ビュー設定 | IPEViewSettingConnector.LoadViewSetting | 提供 | ビュー |  |
-| CAP-166 | ビュー設定 | IPEViewSettingConnector.SaveViewSetting | 提供 | ビュー | 設定ファイルパスを取る。契約注記: 危険操作(上書き保存)。該当は SaveViewSetting(System.String)。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
+| CAP-166 | ビュー設定 | IPEViewSettingConnector.SaveViewSetting | 提供 | ビュー | 設定ファイルパスを取る。契約注記: 危険操作(上書き保存)。該当は SaveViewSetting(System.String)。呼び出しには確認が要る |
 | CAP-167 | TransformView | IPETransformViewConnector.UpdateView | 提供 | 変形・モーション |  |
 | CAP-168 | TransformView | IPETransformViewConnector.GetClientImage | 提供 | 変形・モーション |  |
 | CAP-169 | TransformView | IPETransformViewConnector.ResetTransform | 提供 | 変形・モーション |  |
@@ -387,7 +387,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-336 | Cプラグイン連携 | PXUIModelHelper.CreateTextControl | 提供 | ビュー | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-337 | Cプラグイン連携 | IPXEventConnector.CreateViewEventListener | 提供 | ビュー | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-338 | Cプラグイン連携 | IPXEventConnector.ReleaseViewEventListener | 提供 | ビュー | 契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
-| CAP-339 | モデルデータ型 | IPXPmx | 提供 | モデル | 非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は現在のモデルを対象に呼ぶ Clear() で、対象を指定して呼ぶ場合は当たらない。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
+| CAP-339 | モデルデータ型 | IPXPmx | 提供 | モデル | 非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は現在のモデルを対象に呼ぶ Clear() で、対象を指定して呼ぶ場合は当たらない。呼び出しには確認が要る |
 | CAP-340 | モデルデータ型 | IPXHeader | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
 | CAP-341 | モデルデータ型 | IPXModelInfo | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
 | CAP-342 | モデルデータ型 | IPXVertex | 提供 | モデル | 全公開メンバーへのアクセス(型単位) |
@@ -493,7 +493,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-442 | VMEデータ型 | IPEVmeLightState | 提供 | 変形・モーション |  |
 | CAP-443 | VMEデータ型 | IPEVmeLight | 提供 | 変形・モーション | 非対応件数: 6 |
 | CAP-444 | VMDデータ型 | IPEVmdBonePoseState | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
-| CAP-445 | VMDデータ型 | IPEVmd | 提供 | 変形・モーション | 非対応件数: 2。全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ。PMDモデルを要するシグネチャは非対応。危険操作(上書き保存)。該当は ToFile(System.String,System.Boolean)。呼び出しにはアーキテクチャ仕様書の危険操作の公開方針が定める確認が要る |
+| CAP-445 | VMDデータ型 | IPEVmd | 提供 | 変形・モーション | 非対応件数: 2。全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ。PMDモデルを要するシグネチャは非対応。危険操作(上書き保存)。該当は ToFile(System.String,System.Boolean)。呼び出しには確認が要る |
 | CAP-446 | VMDデータ型 | IPEVmdFrameKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
 | CAP-447 | VMDデータ型 | IPEVmdIPL | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
 | CAP-448 | VMDデータ型 | IPEVmdBoneKey | 提供 | 変形・モーション | 全公開メンバーへのアクセス(型単位) |
@@ -514,7 +514,7 @@ PMXエディタ配布物(PmxEditor_0273)の PEPlugin.dll(v0.0.8.9、.NET Framewo
 | CAP-463 | PMDレガシー | PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成 | 非対応 |  | PMX系に同等機能。PMDファイル入出力はFormコネクタの能力として提供 |
 | CAP-464 | ビューヘルパ | IPEObjectSelectConnector / IPEExtensionEditConnector | 提供 | ビュー | 固有メンバーなし。契約注記: 基底のウィンドウ表示制御(Visible・Location・Focus)のみ |
 | CAP-465 | Cプラグイン実装拡張点 | PXCPlugin.RegisterBase / IPXCPlugin / PXCPluginClass | 非対応 |  | Cプラグインを実装する側の基底クラス・エントリポイント(実装専用) |
-| CAP-466 | SDX数値型 | PEPlugin.SDX.*(M・Q・V2・V3・V4) | 非対応 |  | SlimDX数値型の橋渡し型。演算メンバーはモデル状態に作用せずクライアント側で完結する数値計算のため対象外。値の受け渡しはJSON数値配列(共通契約仕様書が定める) |
+| CAP-466 | SDX数値型 | PEPlugin.SDX.*(M・Q・V2・V3・V4) | 非対応 |  | SlimDX数値型の橋渡し型。演算メンバーはモデル状態に作用せずクライアント側で完結する数値計算のため対象外。値の受け渡し方はこの台帳では定めない |
 | CAP-467 | Cプラグイン連携 | PXEventArgs.UIModelMouse | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-468 | Cプラグイン連携 | PXEventArgs.UIModelMouseDrag | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
 | CAP-469 | Cプラグイン連携 | PXEventArgs.ViewMouse | 提供 | ビュー | 入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨 |
