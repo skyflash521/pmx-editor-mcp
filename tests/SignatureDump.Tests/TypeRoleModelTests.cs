@@ -126,11 +126,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnElementCollectionRequiresItsKeyAndBasis()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new ElementCollectionRecord(null, true, "根拠。"));
+                () => new ElementCollectionRecord(null, false, "根拠。"));
             Assert.Throws<ArgumentException>(
-                () => new ElementCollectionRecord(" ", true, "根拠。"));
+                () => new ElementCollectionRecord(" ", false, "根拠。"));
             Assert.Throws<ArgumentException>(
-                () => new ElementCollectionRecord("N.A.Items()", true, " "));
+                () => new ElementCollectionRecord("N.A.Items()", false, " "));
+            Assert.Throws<ArgumentException>(
+                () => new ElementCollectionRecord("N.A.Items()", true, "根拠。"));
+            Assert.Throws<ArgumentException>(
+                () => new ElementCollectionRecord(
+                    "N.A.Refs()", false, "根拠。", new List<string> { "N.A.Refs()" }));
         }
 
         [Fact]

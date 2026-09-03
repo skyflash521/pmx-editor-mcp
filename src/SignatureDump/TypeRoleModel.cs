@@ -124,14 +124,22 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>要素を並べるリスト1件の判定。</summary>
     public sealed class ElementCollectionRecord
     {
-        public ElementCollectionRecord(string signatureKey, bool owns, string basis)
+        public ElementCollectionRecord(
+            string signatureKey, bool owns, string basis, IList<string> ownerPath = null)
         {
             PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
             PropertyRecord.RequireText(basis, nameof(basis));
+            IList<string> path = ownerPath ?? new List<string>();
+            if (owns != (path.Count != 0))
+            {
+                throw new ArgumentException(
+                    "所有するときだけ段の列を持つ。", owns ? nameof(ownerPath) : nameof(owns));
+            }
 
             SignatureKey = signatureKey;
             Owns = owns;
             Basis = basis;
+            OwnerPath = new ReadOnlyCollection<string>(path);
         }
 
         public string SignatureKey { get; }
@@ -141,6 +149,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>そう判じた根拠の一文。</summary>
         public string Basis { get; }
+
+        /// <summary>そのリストへ至る段の列。所有しないリストでは空。</summary>
+        public IList<string> OwnerPath { get; }
     }
 
     /// <summary>

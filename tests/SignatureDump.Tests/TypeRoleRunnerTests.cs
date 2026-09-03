@@ -16,6 +16,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string EmptyTable = "{\"types\":[],\"issuances\":[],\"collections\":[]}\n";
 
+        private const string Vertices = "PEPlugin.Pmx.IPXPmx.Vertex()";
+
         private readonly string _root;
 
         public TypeRoleRunnerTests()
@@ -134,6 +136,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnOwnerPathThatDoesNotStartAtARootIsUnresolved()
+        {
+            StringWriter error = new StringWriter();
+
+            int code = TypeRoleRunner.Run(
+                Arguments(Sdk(), Table("PEPlugin.Pmx.IPXVertex.Index()", Vertices)),
+                new StringWriter(),
+                error);
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+            Assert.Contains(
+                "所有の経路が規則に合わない。", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("所有の根", error.ToString(), StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AMatchingTableWritesOneSummaryLineAndSucceeds()
         {
             ISet<string> population = Population();
@@ -150,7 +168,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CultureInfo.InvariantCulture,
                     "照合した: 型 {0} 件(コネクタ {1}・イベント引数 0・ハンドル操作 0・操作対象 0"
                         + "・DTO {2})・ハンドルを返しうる行 0 件(発行 0)"
-                        + "・要素のリスト 0 件(所有 0)",
+                        + "・要素のリスト 1 件(所有 1)",
                     population.Count,
                     TypeRoleEvidence.ConnectionRoots.Count,
                     population.Count - TypeRoleEvidence.ConnectionRoots.Count),
@@ -189,7 +207,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>題材の母集合へ、規則を満たす役割を割り当てた正本。</summary>
-        private static string Table()
+        private static string Table(params string[] ownerPath)
         {
             HashSet<string> roots = new HashSet<string>(
                 TypeRoleEvidence.ConnectionRoots, StringComparer.Ordinal);
@@ -211,7 +229,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 index++;
             }
 
-            return builder.Append("],\"issuances\":[],\"collections\":[]}").ToString();
+            return builder.Append("],\"issuances\":[],\"collections\":[")
+                .Append("{\"signatureKey\":\"").Append(Vertices)
+                .Append("\",\"owns\":true,\"ownerPath\":[\"")
+                .Append(string.Join("\",\"", ownerPath.Length == 0 ? new[] { Vertices } : ownerPath))
+                .Append("\"],\"basis\":\"題材の根拠。\"}]}")
+                .ToString();
         }
 
         private static ISet<string> Population()

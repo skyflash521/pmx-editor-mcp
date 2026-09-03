@@ -11,6 +11,10 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class ElementCollectionEvidence
     {
+        /// <summary>所有の経路が始まる型。</summary>
+        public static readonly IList<string> OwnershipRoots = new ReadOnlyCollection<string>(
+            new[] { "PEPlugin.Pmx.IPXPmx", "PEPlugin.Vmd.IPEVmd", "PEPlugin.Vme.IPEVmeObject" });
+
         private const string ListHead = "System.Collections.Generic.IList<";
 
         /// <summary>

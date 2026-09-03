@@ -533,7 +533,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static ElementCollectionRecord Collection(string signatureKey, bool owns)
         {
-            return new ElementCollectionRecord(signatureKey, owns, signatureKey + " の根拠。");
+            return new ElementCollectionRecord(
+                signatureKey,
+                owns,
+                signatureKey + " の根拠。",
+                owns ? new List<string> { signatureKey } : null);
         }
 
         private static TypeRoleTable Issued(params HandleIssuanceRecord[] issuances)

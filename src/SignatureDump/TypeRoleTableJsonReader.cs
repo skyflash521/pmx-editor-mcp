@@ -17,6 +17,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string OwnsName = "owns";
 
+        private const string OwnerPathName = "ownerPath";
+
         private const string SignatureKeyName = "signatureKey";
 
         private const string IssuesName = "issues";
@@ -83,15 +85,21 @@ namespace PmxEditorMcp.SignatureDump
             string previous = null;
             foreach (object item in Array(value, CollectionsName))
             {
+                bool owns = Owned(item);
                 Dictionary<string, object> members = Members(
-                    item, SignatureKeyName, OwnsName, BasisName);
+                    item,
+                    owns
+                        ? new[] { SignatureKeyName, OwnsName, BasisName, OwnerPathName }
+                        : new[] { SignatureKeyName, OwnsName, BasisName },
+                    new string[0]);
                 ElementCollectionRecord record;
                 try
                 {
                     record = new ElementCollectionRecord(
                         Text(members[SignatureKeyName], SignatureKeyName),
-                        Flag(members[OwnsName], OwnsName),
-                        Text(members[BasisName], BasisName));
+                        owns,
+                        Text(members[BasisName], BasisName),
+                        owns ? ReadPath(members[OwnerPathName]) : null);
                 }
                 catch (ArgumentException exception)
                 {
@@ -155,6 +163,34 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new FormatException(exception.Message, exception);
             }
+        }
+
+        private static bool Owned(object item)
+        {
+            Dictionary<string, object> members = item as Dictionary<string, object>;
+            if (members == null)
+            {
+                throw new FormatException("項目の組でなければならない。");
+            }
+
+            object value;
+            if (!members.TryGetValue(OwnsName, out value))
+            {
+                throw new FormatException("項目が無い: " + OwnsName);
+            }
+
+            return Flag(value, OwnsName);
+        }
+
+        private static IList<string> ReadPath(object value)
+        {
+            object[] items = Array(value, OwnerPathName);
+            if (items.Length == 0)
+            {
+                throw new FormatException(OwnerPathName + " は1件以上でなければならない。");
+            }
+
+            return items.Select(i => Text(i, OwnerPathName)).ToList();
         }
 
         private static bool Flag(object item)

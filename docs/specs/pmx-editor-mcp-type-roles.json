@@ -1162,66 +1162,111 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXIK.Links()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Bone()",
+        "PEPlugin.Pmx.IPXBone.IK()",
+        "PEPlugin.Pmx.IPXIK.Links()"
+      ],
       "basis": "配布物が「IKリンクリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXMaterial.Faces()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Material()",
+        "PEPlugin.Pmx.IPXMaterial.Faces()"
+      ],
       "basis": "配布物が「材質内の面リスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXMorph.Offsets()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Morph()",
+        "PEPlugin.Pmx.IPXMorph.Offsets()"
+      ],
       "basis": "配布物が「モーフオフセット get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXNode.Items()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Node()",
+        "PEPlugin.Pmx.IPXNode.Items()"
+      ],
       "basis": "配布物が「表示枠要素リスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Body()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Body()"
+      ],
       "basis": "配布物が「剛体リスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Bone()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Bone()"
+      ],
       "basis": "配布物が「ボーンリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Joint()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Joint()"
+      ],
       "basis": "配布物が「Jointリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Material()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Material()"
+      ],
       "basis": "配布物が「材質リスト(各材質内に対応した面リストを格納) get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Morph()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Morph()"
+      ],
       "basis": "配布物が「モーフリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Node()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Node()"
+      ],
       "basis": "配布物が「表示枠リスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.SoftBody()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.SoftBody()"
+      ],
       "basis": "配布物が「SoftBodyリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Vertex()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.Vertex()"
+      ],
       "basis": "配布物が「頂点リスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Anchors()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Pmx.IPXPmx.SoftBody()",
+        "PEPlugin.Pmx.IPXSoftBody.Anchors()"
+      ],
       "basis": "配布物が「剛体アンカーリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
@@ -1232,41 +1277,65 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.Bone()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Vmd.IPEVmd.Bone()"
+      ],
       "basis": "配布物が「ボーンキーリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.Camera()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Vmd.IPEVmd.Camera()"
+      ],
       "basis": "配布物が「カメラキーリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.Light()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Vmd.IPEVmd.Light()"
+      ],
       "basis": "配布物が「照明キーリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.Morph()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Vmd.IPEVmd.Morph()"
+      ],
       "basis": "配布物が「モーフ(表情)キーリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.SelfShadow()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Vmd.IPEVmd.SelfShadow()"
+      ],
       "basis": "配布物が「セルフ影キーリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.VisibleIK()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Vmd.IPEVmd.VisibleIK()"
+      ],
       "basis": "配布物が「表示／IKキーリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeObject.Bone()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Vme.IPEVmeObject.Bone()"
+      ],
       "basis": "配布物が「ボーンリスト get」と記すリストで、並ぶ要素をここが所有する。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeObject.Morph()",
       "owns": true,
+      "ownerPath": [
+        "PEPlugin.Vme.IPEVmeObject.Morph()"
+      ],
       "basis": "配布物が「モーフ(表情)リスト」と記すリストで、並ぶ要素をここが所有する。"
     }
   ]

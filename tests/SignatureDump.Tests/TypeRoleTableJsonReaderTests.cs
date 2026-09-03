@@ -476,6 +476,61 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheOwnerPathIsRead()
+        {
+            IList<ElementCollectionRecord> records = ReadCollections(
+                "{\"signatureKey\":\"N.A.Items()\",\"owns\":true"
+                    + ",\"ownerPath\":[\"N.R.As()\",\"N.A.Items()\"],\"basis\":\"根拠。\"}",
+                Collection("N.B.Refs()", false));
+
+            Assert.Equal(new[] { "N.R.As()", "N.A.Items()" }, records[0].OwnerPath);
+            Assert.Empty(records[1].OwnerPath);
+        }
+
+        [Fact]
+        public void AnOwningCollectionWithoutAnOwnerPathStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(
+                    "{\"signatureKey\":\"N.A.Items()\",\"owns\":true,\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("ownerPath", error.Message);
+        }
+
+        [Fact]
+        public void AReferencingCollectionWithAnOwnerPathStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(
+                    "{\"signatureKey\":\"N.B.Refs()\",\"owns\":false"
+                        + ",\"ownerPath\":[\"N.B.Refs()\"],\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("ownerPath", error.Message);
+        }
+
+        [Fact]
+        public void AnEmptyOwnerPathStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(
+                    "{\"signatureKey\":\"N.A.Items()\",\"owns\":true"
+                        + ",\"ownerPath\":[],\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("ownerPath", error.Message);
+        }
+
+        [Fact]
+        public void AnOwnerPathStageThatIsNotAStringStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadCollections(
+                    "{\"signatureKey\":\"N.A.Items()\",\"owns\":true"
+                        + ",\"ownerPath\":[5],\"basis\":\"根拠。\"}"));
+
+            Assert.Contains("ownerPath", error.Message);
+        }
+
+        [Fact]
         public void AnOwnershipFlagThatIsNotABooleanStops()
         {
             FormatException error = Assert.Throws<FormatException>(
@@ -551,7 +606,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Collection(string signatureKey, bool owns)
         {
             return "{\"signatureKey\":\"" + signatureKey + "\",\"owns\":"
-                + (owns ? "true" : "false") + ",\"basis\":\"" + signatureKey + " の根拠。\"}";
+                + (owns ? "true" : "false")
+                + (owns ? ",\"ownerPath\":[\"" + signatureKey + "\"]" : string.Empty)
+                + ",\"basis\":\"" + signatureKey + " の根拠。\"}";
         }
 
         private static string Issuance(string signatureKey, string flag)

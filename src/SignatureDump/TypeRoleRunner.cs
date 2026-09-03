@@ -119,6 +119,22 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.Unresolved;
             }
 
+            try
+            {
+                OwnerPathGate.Require(
+                    table.Collections,
+                    inventory.Signatures
+                        .Where(s => population.Signatures.Contains(s.Key))
+                        .ToDictionary(s => s.Key, StringComparer.Ordinal),
+                    ElementCollectionEvidence.OwnershipRoots);
+            }
+            catch (InvalidOperationException exception)
+            {
+                error.WriteLine("所有の経路が規則に合わない。");
+                error.WriteLine(exception.Message);
+                return ExitCodes.Unresolved;
+            }
+
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
                 "照合した: 型 {0} 件(コネクタ {1}・イベント引数 {2}・ハンドル操作 {3}・操作対象 {4}"
