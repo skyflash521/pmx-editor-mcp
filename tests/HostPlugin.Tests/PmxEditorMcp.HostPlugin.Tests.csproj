@@ -19,6 +19,8 @@
   <ItemGroup>
     <!-- 応答の照合で、ホストと同じシリアライザを使ってJSONを読み解くため。 -->
     <Reference Include="System.Web.Extensions" />
+    <!-- 画像の受け渡しの題材を組み立て、返った画像の形式と大きさを読むため。 -->
+    <Reference Include="System.Drawing" />
     <!-- 接続初期化の題材がSDKのインターフェースを実装するため。参照は推移しないのでここでも指す。
          テストは配布物と別のプロセスで動くので、読み込めるよう出力へ複製する(出力は配布しない)。 -->
     <Reference Include="PEPlugin">
