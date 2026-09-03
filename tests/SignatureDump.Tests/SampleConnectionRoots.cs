@@ -11,12 +11,12 @@ namespace PXCPlugin
 {
     public interface IPXCPluginRunArgs
     {
-        string Version { get; }
+        string CPluginVersion { get; }
     }
 
     public static class PXCBridge
     {
-        public static string Version
+        public static string BridgeVersion
         {
             get { return string.Empty; }
         }

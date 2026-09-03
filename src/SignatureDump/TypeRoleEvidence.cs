@@ -60,12 +60,71 @@ namespace PmxEditorMcp.SignatureDump
         /// 1つ以上取りそれ以外の引数を取らない戻り値ありのメソッドで、経路はその名前を点でつないだ
         /// もの(メソッドは丸括弧を付ける)。根そのものは経路が空の項目として入る。同じ型へ道が
         /// 複数あるときは、根の並びと列挙の並びで先に見つかった短い方を返す。メンバーを宣言も継承も
-        /// しない根は <see cref="ArgumentException"/>。
+        /// しない根は <see cref="ArgumentException"/>。名前から一つの先を選べない段が在る列挙は
+        /// <see cref="InvalidOperationException"/>。
         /// </summary>
         public static IDictionary<string, string> ReachableFromRoots(
             InventoryRecord inventory, IEnumerable<string> roots)
         {
-            return new ReadOnlyDictionary<string, string>(Walk(inventory, roots).Paths);
+            Reach reach = Walk(inventory, roots);
+            RequireStepsSelectOneTarget(MembersByType(inventory), roots, reach);
+
+            return new ReadOnlyDictionary<string, string>(reach.Paths);
+        }
+
+        /// <summary>
+        /// 経路を辿り直す側が、各段で名前から一つの先を選べることを求める。接続の根の並びは一つの段
+        /// として数える——経路の先頭の名前は、どれか一つの根のものでなければならない。
+        /// </summary>
+        private static void RequireStepsSelectOneTarget(
+            IDictionary<string, IList<SignatureRecord>> members,
+            IEnumerable<string> roots,
+            Reach reach)
+        {
+            Dictionary<string, string> rootOf = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (string root in roots)
+            {
+                string source = TypeDefinitionName.Of(root);
+                foreach (string step in FollowableSteps(members, source).Select(s => s.Key))
+                {
+                    string other;
+                    if (rootOf.TryGetValue(step, out other)
+                        && !string.Equals(other, source, StringComparison.Ordinal))
+                    {
+                        throw new InvalidOperationException(
+                            "同じ名前の一歩を持つ根の組が在る: " + other + " と " + source
+                                + "(" + step + ")");
+                    }
+
+                    rootOf[step] = source;
+                }
+            }
+
+            foreach (string source in reach.Paths.Keys.OrderBy(n => n, StringComparer.Ordinal))
+            {
+                Dictionary<string, string> targetOf =
+                    new Dictionary<string, string>(StringComparer.Ordinal);
+                foreach (KeyValuePair<string, string> step in FollowableSteps(members, source))
+                {
+                    string other;
+                    if (targetOf.TryGetValue(step.Key, out other)
+                        && !string.Equals(other, step.Value, StringComparison.Ordinal))
+                    {
+                        throw new InvalidOperationException(
+                            "同じ名前の一歩が二つの型を指す: " + source + "." + step.Key
+                                + "(" + other + " と " + step.Value + ")");
+                    }
+
+                    targetOf[step.Key] = step.Value;
+                }
+            }
+        }
+
+        /// <summary>その型の一歩のうち、先が列挙の中に在るもの。</summary>
+        private static IEnumerable<KeyValuePair<string, string>> FollowableSteps(
+            IDictionary<string, IList<SignatureRecord>> members, string type)
+        {
+            return Steps(members[type]).Where(s => members.ContainsKey(s.Value));
         }
 
         /// <summary>

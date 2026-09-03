@@ -29,7 +29,8 @@ namespace PmxEditorMcp.SignatureDump
             TypeRole role,
             string basis,
             string elementNoun = "",
-            string elementNounPlural = "")
+            string elementNounPlural = "",
+            string connectionPath = "")
         {
             PropertyRecord.RequireText(typeName, nameof(typeName));
             PropertyRecord.RequireText(basis, nameof(basis));
@@ -43,11 +44,17 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(elementNounPlural));
             }
 
+            if (connectionPath == null)
+            {
+                throw new ArgumentNullException(nameof(connectionPath));
+            }
+
             TypeName = typeName;
             Role = role;
             Basis = basis;
             ElementNoun = elementNoun;
             ElementNounPlural = elementNounPlural;
+            ConnectionPath = connectionPath;
         }
 
         public string TypeName { get; }
@@ -62,6 +69,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>集合を扱うツール名が使う複数形。持たない役割では空。</summary>
         public string ElementNounPlural { get; }
+
+        /// <summary>接続の根からその型へ至る経路。根と、経路を持たない型では空。</summary>
+        public string ConnectionPath { get; }
     }
 
     /// <summary>日本語名をどう決めたか。</summary>

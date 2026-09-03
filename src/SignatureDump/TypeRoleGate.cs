@@ -7,7 +7,7 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>
     /// 型ごとの役割が、規則どおりに割り当てられているかを検査する。役割の意味そのものは測れないので、
     /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型を
-    /// 呼び出し側が実体を用意せずに呼べること——に限る。
+    /// 呼び出し側が実体を用意せずに呼べること、接続の経路——に限る。
     /// </summary>
     public static class TypeRoleGate
     {
@@ -16,14 +16,16 @@ namespace PmxEditorMcp.SignatureDump
         /// 表が覆うべき型の集合で、接続の根とその経路上の型を含めて渡すこと。
         /// <paramref name="connectorCandidates"/> には
         /// <see cref="TypeRoleEvidence.ConnectorCandidates"/> の結果を渡すこと——コネクタ型に
-        /// なりうるかは、この集合に在るかどうかで見る。
+        /// なりうるかは、この集合に在るかどうかで見る。<paramref name="connectionPaths"/> には
+        /// <see cref="TypeRoleEvidence.ReachableFromRoots"/> の結果を渡すこと。
         /// </summary>
         public static void Require(
             IList<TypeRoleRecord> records,
             ISet<string> roleTypes,
             IEnumerable<string> connectionRoots,
             ISet<string> eventArgumentTypes,
-            ICollection<string> connectorCandidates)
+            ICollection<string> connectorCandidates,
+            IDictionary<string, string> connectionPaths)
         {
             if (records == null)
             {
@@ -50,10 +52,16 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(connectorCandidates));
             }
 
+            if (connectionPaths == null)
+            {
+                throw new ArgumentNullException(nameof(connectionPaths));
+            }
+
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
             RequireEventArgumentsMatchTheEvidence(records, eventArgumentTypes);
             RequireConnectorsNeedNoInstanceFromTheCaller(records, connectorCandidates);
+            RequireConnectionPathsMatchTheEvidence(records, connectionPaths);
         }
 
         /// <summary>
@@ -149,6 +157,34 @@ namespace PmxEditorMcp.SignatureDump
                     "呼び出し側が実体を用意しなければ呼べない型をコネクタ型にしている: "
                         + record.TypeName);
             }
+        }
+
+        /// <summary>
+        /// コネクタ型の接続の経路は、列挙から辿った経路と一致しなければならない。列挙が経路を持たない
+        /// 型は、表も持たないことを求める。
+        /// </summary>
+        private static void RequireConnectionPathsMatchTheEvidence(
+            IList<TypeRoleRecord> records, IDictionary<string, string> connectionPaths)
+        {
+            foreach (TypeRoleRecord record in records.Where(r => r.Role == TypeRole.Connector))
+            {
+                string reached;
+                string expected = connectionPaths.TryGetValue(record.TypeName, out reached)
+                    ? reached
+                    : string.Empty;
+                if (!string.Equals(record.ConnectionPath, expected, StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException(
+                        "接続の経路が列挙と合わない: " + record.TypeName
+                            + "(表: " + Shown(record.ConnectionPath)
+                            + " / 列挙: " + Shown(expected) + ")");
+                }
+            }
+        }
+
+        private static string Shown(string path)
+        {
+            return path.Length == 0 ? "無し" : path;
         }
     }
 }

@@ -21,6 +21,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string ElementNounPluralName = "elementNounPlural";
 
+        private const string ConnectionPathName = "connectionPath";
+
         private static readonly Regex SnakeCase = new Regex(
             "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
 
@@ -100,12 +102,16 @@ namespace PmxEditorMcp.SignatureDump
         private static TypeRoleRecord ReadRecord(object item)
         {
             TypeRole role = ReadRole(item);
-            Dictionary<string, object> members = Members(item, NamesFor(role));
+            Dictionary<string, object> members = Members(
+                item, NamesFor(role), OptionalNamesFor(role));
             string noun = members.ContainsKey(ElementNounName)
                 ? Noun(members[ElementNounName], ElementNounName)
                 : string.Empty;
             string plural = members.ContainsKey(ElementNounPluralName)
                 ? Noun(members[ElementNounPluralName], ElementNounPluralName)
+                : string.Empty;
+            string path = members.ContainsKey(ConnectionPathName)
+                ? Text(members[ConnectionPathName], ConnectionPathName)
                 : string.Empty;
 
             try
@@ -115,7 +121,8 @@ namespace PmxEditorMcp.SignatureDump
                     role,
                     Text(members[BasisName], BasisName),
                     noun,
-                    plural);
+                    plural,
+                    path);
             }
             catch (ArgumentException exception)
             {
@@ -147,7 +154,7 @@ namespace PmxEditorMcp.SignatureDump
             return role;
         }
 
-        /// <summary>役割ごとに、項目が持つべき名前。持てない名前を書くと未知の項目として弾かれる。</summary>
+        /// <summary>役割ごとに、項目が持つべき名前。欠けると項目が無いとして弾かれる。</summary>
         private static string[] NamesFor(TypeRole role)
         {
             if (role == TypeRole.EventArgs || role == TypeRole.Dto)
@@ -164,6 +171,17 @@ namespace PmxEditorMcp.SignatureDump
             {
                 TypeNameName, RoleName, BasisName, ElementNounName, ElementNounPluralName,
             };
+        }
+
+        /// <summary>
+        /// 役割ごとに、持つべき名前に加えて項目が持ってもよい名前。接続の経路は在るかどうかが読む時点
+        /// では決まらないので、必須にせずここへ置く。
+        /// </summary>
+        private static string[] OptionalNamesFor(TypeRole role)
+        {
+            return role == TypeRole.Connector
+                ? new[] { ConnectionPathName }
+                : new string[0];
         }
 
         /// <summary>要素名詞はツール名の一部になるので、小文字と数字と下線だけの語に限る。</summary>
@@ -209,6 +227,12 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private static Dictionary<string, object> Members(object value, params string[] names)
         {
+            return Members(value, names, new string[0]);
+        }
+
+        private static Dictionary<string, object> Members(
+            object value, string[] names, string[] optional)
+        {
             Dictionary<string, object> members = value as Dictionary<string, object>;
             if (members == null)
             {
@@ -225,7 +249,8 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (string name in members.Keys)
             {
-                if (!names.Contains(name, StringComparer.Ordinal))
+                if (!names.Contains(name, StringComparer.Ordinal)
+                    && !optional.Contains(name, StringComparer.Ordinal))
                 {
                     throw new FormatException("知らない項目がある: " + name);
                 }

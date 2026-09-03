@@ -306,6 +306,107 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void RootsThatShareAStepNameStop()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleEvidence.ReachableFromRoots(
+                    Inventory(
+                        Property(Root, "Host", "N.IAlpha"),
+                        Property("N.ISecond", "Host", "N.IBeta"),
+                        Property("N.IAlpha", "Value", "System.Int32"),
+                        Property("N.IBeta", "Value", "System.Int32")),
+                    new[] { Root, "N.ISecond" }));
+
+            Assert.Contains("Host", error.Message);
+        }
+
+        [Fact]
+        public void RootsThatShareAStepNameStopWhenTheOtherTargetIsAlreadyReached()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleEvidence.ReachableFromRoots(
+                    Inventory(
+                        Property(Root, "X", "N.IBeta"),
+                        Property("N.ISecond", "Host", "N.IAlpha"),
+                        Property("N.IThird", "Host", "N.IBeta"),
+                        Property("N.IAlpha", "Value", "System.Int32"),
+                        Property("N.IBeta", "Value", "System.Int32")),
+                    new[] { Root, "N.ISecond", "N.IThird" }));
+
+            Assert.Contains("Host", error.Message);
+        }
+
+        [Fact]
+        public void TwoTypesThatWouldShareOnePathStop()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleEvidence.ReachableFromRoots(
+                    Inventory(
+                        Method(Root, "Make", "N.IAlpha", Arg("c", TypeRoleEvidence.InjectedConnector)),
+                        Method(
+                            Root,
+                            "Make",
+                            "N.IBeta",
+                            Arg("c", TypeRoleEvidence.InjectedConnector),
+                            Arg("d", TypeRoleEvidence.InjectedConnector)),
+                        Property("N.IAlpha", "Value", "System.Int32"),
+                        Property("N.IBeta", "Value", "System.Int32")),
+                    new[] { Root }));
+
+            Assert.Contains("Make()", error.Message);
+            Assert.Contains(Root, error.Message);
+        }
+
+        [Fact]
+        public void ATypeBeyondARootThatWouldShareOnePathStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleEvidence.ReachableFromRoots(
+                    Inventory(
+                        Property(Root, "Host", "N.IHost"),
+                        Method(
+                            "N.IHost", "Make", "N.IAlpha", Arg("c", TypeRoleEvidence.InjectedConnector)),
+                        Method(
+                            "N.IHost",
+                            "Make",
+                            "N.IBeta",
+                            Arg("c", TypeRoleEvidence.InjectedConnector),
+                            Arg("d", TypeRoleEvidence.InjectedConnector)),
+                        Property("N.IAlpha", "Value", "System.Int32"),
+                        Property("N.IBeta", "Value", "System.Int32")),
+                    new[] { Root }));
+
+            Assert.Contains("N.IHost.Make()", error.Message);
+        }
+
+        [Fact]
+        public void RootsThatShareAStepThatLeadsNowherePass()
+        {
+            IDictionary<string, string> reached = TypeRoleEvidence.ReachableFromRoots(
+                Inventory(
+                    Property(Root, "ModulePath", "System.String"),
+                    Property("N.ISecond", "ModulePath", "System.String")),
+                new[] { Root, "N.ISecond" });
+
+            Assert.Equal(new[] { Root, "N.ISecond" }, reached.Keys.OrderBy(n => n, StringComparer.Ordinal));
+        }
+
+        [Fact]
+        public void RootsWithDifferentStepNamesPass()
+        {
+            IDictionary<string, string> reached = TypeRoleEvidence.ReachableFromRoots(
+                Inventory(
+                    Property(Root, "Host", "N.IAlpha"),
+                    Property("N.ISecond", "Bridge", "N.IBeta"),
+                    Property("N.IAlpha", "Value", "System.Int32"),
+                    Property("N.IBeta", "Value", "System.Int32")),
+                new[] { Root, "N.ISecond" });
+
+            Assert.Equal("Host", reached["N.IAlpha"]);
+            Assert.Equal("Bridge", reached["N.IBeta"]);
+        }
+
+        [Fact]
         public void TheBaseTypesOfAReachedTypeAreCandidates()
         {
             ISet<string> reached = TypeRoleEvidence.ConnectorCandidates(

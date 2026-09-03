@@ -74,11 +74,14 @@ namespace PmxEditorMcp.SignatureDump
             TypeRolePopulation population;
             ISet<string> eventArgumentTypes;
             ISet<string> connectorCandidates;
+            IDictionary<string, string> connectionPaths;
             try
             {
                 population = TypeRolePopulation.Resolve(ledger, inventory, excluded);
                 eventArgumentTypes = TypeRoleEvidence.EventArgumentTypes(inventory);
                 connectorCandidates = TypeRoleEvidence.ConnectorCandidates(
+                    inventory, TypeRoleEvidence.ConnectionRoots);
+                connectionPaths = TypeRoleEvidence.ReachableFromRoots(
                     inventory, TypeRoleEvidence.ConnectionRoots);
             }
             catch (Exception exception)
@@ -96,7 +99,8 @@ namespace PmxEditorMcp.SignatureDump
                     population.RoleTypes,
                     TypeRoleEvidence.ConnectionRoots,
                     eventArgumentTypes,
-                    connectorCandidates);
+                    connectorCandidates,
+                    connectionPaths);
             }
             catch (InvalidOperationException exception)
             {

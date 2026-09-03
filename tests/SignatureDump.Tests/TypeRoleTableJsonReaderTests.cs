@@ -236,6 +236,54 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheConnectionPathIsRead()
+        {
+            IList<TypeRoleRecord> records = ReadTypes(
+                Noun("N.A", "connector",
+                    "\"elementNoun\":\"alpha\",\"connectionPath\":\"Host.Alpha\""),
+                Noun("N.B", "connector", "\"elementNoun\":\"beta\""));
+
+            Assert.Equal(new[] { "Host.Alpha", string.Empty }, records.Select(r => r.ConnectionPath));
+        }
+
+        [Fact]
+        public void ARoleThatIsNotAConnectorWithAConnectionPathStops()
+        {
+            foreach (string nouns in new[]
+            {
+                "\"role\":\"eventArgs\"",
+                "\"role\":\"dto\"",
+                "\"role\":\"handleTarget\",\"elementNoun\":\"alpha\""
+                    + ",\"elementNounPlural\":\"alphas\"",
+                "\"role\":\"operationTarget\",\"elementNoun\":\"alpha\""
+                    + ",\"elementNounPlural\":\"alphas\"",
+            })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(
+                        "{\"typeName\":\"N.A\"," + nouns
+                            + ",\"basis\":\"根拠。\",\"connectionPath\":\"Host.Alpha\"}"));
+
+                Assert.Contains("connectionPath", error.Message);
+            }
+        }
+
+        [Fact]
+        public void AConnectionPathThatIsBlankStops()
+        {
+            foreach (string path in new[] { string.Empty, "  " })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(Noun(
+                        "N.A",
+                        "connector",
+                        "\"elementNoun\":\"alpha\",\"connectionPath\":\"" + path + "\"")));
+
+                Assert.Contains("connectionPath", error.Message);
+            }
+        }
+
+        [Fact]
         public void AnEmptyTableIsRead()
         {
             Assert.Empty(TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[]}"));

@@ -12,7 +12,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ATableThatMatchesTheEvidencePasses()
         {
-            TypeRoleGate.Require(
+            Require(
                 Table(
                     Record(Root, TypeRole.Connector),
                     Record("N.IArgs", TypeRole.EventArgs),
@@ -27,7 +27,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ATypeMissingFromTheTableStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record(Root, TypeRole.Connector)),
                     Set(Root, "N.IOther"),
                     Roots(Root),
@@ -41,7 +41,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ATypeThatIsNotARoleTypeStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.IExtra", TypeRole.Dto)),
                     Set(Root),
                     Roots(Root),
@@ -55,7 +55,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TheSameTypeListedTwiceStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record(Root, TypeRole.Connector), Record(Root, TypeRole.Dto)),
                     Set(Root),
                     Roots(Root),
@@ -69,7 +69,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARootThatIsNotInTheTableStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record("N.IThing", TypeRole.Dto)),
                     Set("N.IThing"),
                     Roots(Root),
@@ -83,7 +83,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARootThatIsGivenAnotherRoleStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record(Root, TypeRole.Dto)),
                     Set(Root),
                     Roots(Root),
@@ -97,7 +97,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARootAfterTheFirstIsCheckedToo()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.ISecond", TypeRole.Dto)),
                     Set(Root, "N.ISecond"),
                     Roots(Root, "N.ISecond"),
@@ -111,7 +111,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnEventArgumentThatIsGivenAnotherRoleStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.IArgs", TypeRole.Dto)),
                     Set(Root, "N.IArgs"),
                     Roots(Root),
@@ -125,7 +125,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ATypeThatIsNotAnEventArgumentCannotTakeThatRole()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.IThing", TypeRole.EventArgs)),
                     Set(Root, "N.IThing"),
                     Roots(Root),
@@ -138,7 +138,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void EvidenceForATypeOutsideTheTableIsIgnored()
         {
-            TypeRoleGate.Require(
+            Require(
                 Table(Record(Root, TypeRole.Connector)),
                 Set(Root),
                 Roots(Root),
@@ -150,7 +150,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AConnectorTheHostDoesNotHoldStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
+                () => Require(
                     Table(Record(Root, TypeRole.Connector), Record("N.IThing", TypeRole.Connector)),
                     Set(Root, "N.IThing"),
                     Roots(Root),
@@ -163,7 +163,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ATypeReachedFromARootMayTakeAnotherRole()
         {
-            TypeRoleGate.Require(
+            Require(
                 Table(Record(Root, TypeRole.Connector), Record("N.IThing", TypeRole.OperationTarget)),
                 Set(Root, "N.IThing"),
                 Roots(Root),
@@ -172,20 +172,118 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AConnectionPathThatMatchesTheEvidencePasses()
+        {
+            TypeRoleGate.Require(
+                Table(Connector(Root, "Host.Connector")),
+                Set(Root),
+                Roots(),
+                Set(),
+                Set(Root),
+                Paths(Root, "Host.Connector"));
+        }
+
+        [Fact]
+        public void AConnectionPathThatDiffersFromTheEvidenceStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Table(Connector(Root, "Host.Other")),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(Root, "Host.Connector")));
+
+            Assert.Contains("Host.Other", error.Message);
+            Assert.Contains("Host.Connector", error.Message);
+        }
+
+        [Fact]
+        public void AConnectorThatOmitsThePathTheEvidenceHasStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Table(Record(Root, TypeRole.Connector)),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths(Root, "Host.Connector")));
+
+            Assert.Contains("無し", error.Message);
+        }
+
+        [Fact]
+        public void AConnectorWithAPathTheEvidenceDoesNotHaveStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Table(Connector(Root, "Host.Connector")),
+                    Set(Root),
+                    Roots(),
+                    Set(),
+                    Set(Root),
+                    Paths()));
+
+            Assert.Contains("無し", error.Message);
+        }
+
+        [Fact]
+        public void ARootThatCarriesAPathStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleGate.Require(
+                    Table(Connector(Root, "Host")),
+                    Set(Root),
+                    Roots(Root),
+                    Set(),
+                    Set(Root),
+                    Paths(Root, string.Empty)));
+
+            Assert.Contains(Root, error.Message);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             IList<TypeRoleRecord> table = Table(Record(Root, TypeRole.Connector));
 
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(null, Set(Root), Roots(Root), Set(), Set(Root)));
+                () => TypeRoleGate.Require(null, Set(Root), Roots(Root), Set(), Set(Root), Paths()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, null, Roots(Root), Set(), Set(Root)));
+                () => TypeRoleGate.Require(table, null, Roots(Root), Set(), Set(Root), Paths()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), null, Set(), Set(Root)));
+                () => TypeRoleGate.Require(table, Set(Root), null, Set(), Set(Root), Paths()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), null, Set(Root)));
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), null, Set(Root), Paths()));
             Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), null));
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), null, Paths()));
+            Assert.Throws<ArgumentNullException>(
+                () => TypeRoleGate.Require(table, Set(Root), Roots(Root), Set(), Set(Root), null));
+        }
+
+        /// <summary>接続の経路を持たない題材のための呼び出し。</summary>
+        private static void Require(
+            IList<TypeRoleRecord> records,
+            ISet<string> roleTypes,
+            IEnumerable<string> connectionRoots,
+            ISet<string> eventArgumentTypes,
+            ICollection<string> connectorCandidates)
+        {
+            TypeRoleGate.Require(
+                records, roleTypes, connectionRoots, eventArgumentTypes, connectorCandidates, Paths());
+        }
+
+        private static IDictionary<string, string> Paths(string typeName = null, string path = null)
+        {
+            Dictionary<string, string> paths = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (typeName != null)
+            {
+                paths.Add(typeName, path);
+            }
+
+            return paths;
         }
 
         private static IList<TypeRoleRecord> Table(params TypeRoleRecord[] records)
@@ -201,6 +299,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static TypeRoleRecord Record(string typeName, TypeRole role)
         {
             return new TypeRoleRecord(typeName, role, typeName + " の根拠。");
+        }
+
+        private static TypeRoleRecord Connector(string typeName, string connectionPath)
+        {
+            return new TypeRoleRecord(
+                typeName, TypeRole.Connector, typeName + " の根拠。", "thing", string.Empty, connectionPath);
         }
 
         private static ISet<string> Set(params string[] names)
