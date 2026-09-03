@@ -6,6 +6,10 @@
       "basis": "PmxForm操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "form_connector",
       "group": "session",
+      "tools": {
+        "get": "session_get_form_connector",
+        "update": "session_update_form_connector"
+      },
       "connectionPath": "Host.Connector.Form"
     },
     {
@@ -14,6 +18,10 @@
       "basis": "ビルダインターフェースで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "builder",
       "group": "motion",
+      "tools": {
+        "get": "motion_get_builder",
+        "update": "motion_update_builder"
+      },
       "connectionPath": "Host.Builder"
     },
     {
@@ -22,6 +30,10 @@
       "basis": "操作コネクタインターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "operation_connector",
       "group": "session",
+      "tools": {
+        "get": "session_get_operation_connector",
+        "update": "session_update_operation_connector"
+      },
       "connectionPath": "Host.Connector"
     },
     {
@@ -30,6 +42,10 @@
       "basis": "ホスト用プラグインインターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "plugin_host",
       "group": "session",
+      "tools": {
+        "get": "session_get_plugin_host",
+        "update": "session_update_plugin_host"
+      },
       "connectionPath": "Host"
     },
     {
@@ -47,7 +63,11 @@
       "role": "connector",
       "basis": "プラグインが受け取る実行パラメータで、接続初期化がここから辿り始め、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "run_args",
-      "group": "session"
+      "group": "session",
+      "tools": {
+        "get": "session_get_run_args",
+        "update": "session_update_run_args"
+      }
     },
     {
       "typeName": "PEPlugin.IPESystemConnector",
@@ -55,6 +75,10 @@
       "basis": "プラグインシステム情報インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "system_connector",
       "group": "session",
+      "tools": {
+        "get": "session_get_system_connector",
+        "update": "session_update_system_connector"
+      },
       "connectionPath": "Host.Connector.System"
     },
     {
@@ -63,6 +87,10 @@
       "basis": "PMX系ビルダインターフェースで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmx_builder",
       "group": "model",
+      "tools": {
+        "get": "model_get_pmx_builder",
+        "update": "model_update_pmx_builder"
+      },
       "connectionPath": "Builder"
     },
     {
@@ -71,7 +99,13 @@
       "basis": "PMX剛体インターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "body",
       "elementNounPlural": "bodies",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_bodies",
+        "update": "model_update_bodies",
+        "add": "model_add_bodies",
+        "remove": "model_remove_bodies"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXBone",
@@ -79,7 +113,13 @@
       "basis": "PMXボーンインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "bone",
       "elementNounPlural": "bones",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_bones",
+        "update": "model_update_bones",
+        "add": "model_add_bones",
+        "remove": "model_remove_bones"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXBoneMorphOffset",
@@ -87,7 +127,11 @@
       "basis": "PMXボーンモーフオフセットインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "bone_morph_offset",
       "elementNounPlural": "bone_morph_offsets",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_bone_morph_offsets",
+        "update": "model_update_bone_morph_offsets"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXBoneNodeItem",
@@ -95,7 +139,11 @@
       "basis": "PMX表示枠ボーン要素で、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "bone_node_item",
       "elementNounPlural": "bone_node_items",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_bone_node_items",
+        "update": "model_update_bone_node_items"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXFace",
@@ -103,7 +151,13 @@
       "basis": "PMX面インターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "face",
       "elementNounPlural": "faces",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_faces",
+        "update": "model_update_faces",
+        "add": "model_add_faces",
+        "remove": "model_remove_faces"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXGroupMorphOffset",
@@ -111,7 +165,11 @@
       "basis": "PMXグループ／フリップモーフオフセットインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "group_morph_offset",
       "elementNounPlural": "group_morph_offsets",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_group_morph_offsets",
+        "update": "model_update_group_morph_offsets"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXHeader",
@@ -119,7 +177,11 @@
       "basis": "PMXヘッダインターフェイスで、PMXコネクタが返すのは現在のPMX状態の複製なので常駐する実体ではなく、その複製の構成要素として編集・取得する。",
       "elementNoun": "header",
       "elementNounPlural": "headers",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_headers",
+        "update": "model_update_headers"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXIK",
@@ -127,7 +189,11 @@
       "basis": "PMX IKインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "ik",
       "elementNounPlural": "iks",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_iks",
+        "update": "model_update_iks"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXIKLink",
@@ -135,7 +201,13 @@
       "basis": "PMX IKLinkインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "ik_link",
       "elementNounPlural": "ik_links",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_ik_links",
+        "update": "model_update_ik_links",
+        "add": "model_add_ik_links",
+        "remove": "model_remove_ik_links"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXImpulseMorphOffset",
@@ -143,7 +215,11 @@
       "basis": "PMXインパルスモーフオフセットインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "impulse_morph_offset",
       "elementNounPlural": "impulse_morph_offsets",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_impulse_morph_offsets",
+        "update": "model_update_impulse_morph_offsets"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXJoint",
@@ -151,7 +227,13 @@
       "basis": "PMXJointインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "joint",
       "elementNounPlural": "joints",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_joints",
+        "update": "model_update_joints",
+        "add": "model_add_joints",
+        "remove": "model_remove_joints"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXMaterial",
@@ -159,7 +241,13 @@
       "basis": "PMX材質インターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "material",
       "elementNounPlural": "materials",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_materials",
+        "update": "model_update_materials",
+        "add": "model_add_materials",
+        "remove": "model_remove_materials"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXMaterialMorphOffset",
@@ -167,7 +255,11 @@
       "basis": "PMX材質モーフオフセットインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "material_morph_offset",
       "elementNounPlural": "material_morph_offsets",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_material_morph_offsets",
+        "update": "model_update_material_morph_offsets"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXModelInfo",
@@ -175,7 +267,11 @@
       "basis": "モデル情報インターフェイスで、PMXコネクタが返すのは現在のPMX状態の複製なので常駐する実体ではなく、その複製の構成要素として編集・取得する。",
       "elementNoun": "model_info",
       "elementNounPlural": "model_infos",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_model_infos",
+        "update": "model_update_model_infos"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXMorph",
@@ -183,7 +279,13 @@
       "basis": "PMXモーフインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "morph",
       "elementNounPlural": "morphs",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_morphs",
+        "update": "model_update_morphs",
+        "add": "model_add_morphs",
+        "remove": "model_remove_morphs"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXMorphNodeItem",
@@ -191,7 +293,11 @@
       "basis": "PMX表示枠モーフ要素で、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "morph_node_item",
       "elementNounPlural": "morph_node_items",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_morph_node_items",
+        "update": "model_update_morph_node_items"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXMorphOffset",
@@ -199,7 +305,13 @@
       "basis": "PMXモーフオフセット基底インターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "morph_offset",
       "elementNounPlural": "morph_offsets",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_morph_offsets",
+        "update": "model_update_morph_offsets",
+        "add": "model_add_morph_offsets",
+        "remove": "model_remove_morph_offsets"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXNode",
@@ -207,7 +319,13 @@
       "basis": "PMX表示枠インターフェイスで、PMXコネクタが返すのは現在のPMX状態の複製なので常駐する実体ではなく、その複製の構成要素として編集・取得する。",
       "elementNoun": "node",
       "elementNounPlural": "nodes",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_nodes",
+        "update": "model_update_nodes",
+        "add": "model_add_nodes",
+        "remove": "model_remove_nodes"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXNodeItem",
@@ -215,7 +333,13 @@
       "basis": "PMX表示枠基底要素で、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "node_item",
       "elementNounPlural": "node_items",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_node_items",
+        "update": "model_update_node_items",
+        "add": "model_add_node_items",
+        "remove": "model_remove_node_items"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXPmx",
@@ -223,7 +347,11 @@
       "basis": "プラグイン用PMXインターフェイスで、PMXコネクタが返すのは現在のPMX状態の複製なので常駐する実体ではなく、その複製を編集・取得する。",
       "elementNoun": "pmx",
       "elementNounPlural": "pmxes",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_pmxes",
+        "update": "model_update_pmxes"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXPmxConnector",
@@ -231,6 +359,10 @@
       "basis": "プラグインPMX操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmx_connector",
       "group": "model",
+      "tools": {
+        "get": "model_get_pmx_connector",
+        "update": "model_update_pmx_connector"
+      },
       "connectionPath": "Host.Connector.Pmx"
     },
     {
@@ -239,7 +371,11 @@
       "basis": "PMXプリミティブ作成で、PMXコネクタが返すのは現在のPMX状態の複製なので常駐する実体ではなく、その複製へプリミティブを足す窓口である。",
       "elementNoun": "primitive_builder",
       "elementNounPlural": "primitive_builders",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_primitive_builders",
+        "update": "model_update_primitive_builders"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXSoftBody",
@@ -247,7 +383,13 @@
       "basis": "PMX SoftBodyインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "soft_body",
       "elementNounPlural": "soft_bodies",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_soft_bodies",
+        "update": "model_update_soft_bodies",
+        "add": "model_add_soft_bodies",
+        "remove": "model_remove_soft_bodies"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXSoftBodyAnchor",
@@ -255,7 +397,13 @@
       "basis": "PMX SoftBody剛体アンカーインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "soft_body_anchor",
       "elementNounPlural": "soft_body_anchors",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_soft_body_anchors",
+        "update": "model_update_soft_body_anchors",
+        "add": "model_add_soft_body_anchors",
+        "remove": "model_remove_soft_body_anchors"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXUVMorphOffset",
@@ -263,7 +411,11 @@
       "basis": "PMXUVモーフオフセットインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "uv_morph_offset",
       "elementNounPlural": "uv_morph_offsets",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_uv_morph_offsets",
+        "update": "model_update_uv_morph_offsets"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXVertex",
@@ -271,7 +423,13 @@
       "basis": "PMX頂点インターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "vertex",
       "elementNounPlural": "vertices",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_vertices",
+        "update": "model_update_vertices",
+        "add": "model_add_vertices",
+        "remove": "model_remove_vertices"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXVertexMorphOffset",
@@ -279,14 +437,22 @@
       "basis": "PMX頂点モーフオフセットインターフェイスで、PMXコネクタから得た現在のPMX状態の複製の構成要素として編集・取得する。",
       "elementNoun": "vertex_morph_offset",
       "elementNounPlural": "vertex_morph_offsets",
-      "group": "model"
+      "group": "model",
+      "tools": {
+        "list": "model_list_vertex_morph_offsets",
+        "update": "model_update_vertex_morph_offsets"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEBaseWindowConnector",
       "role": "connector",
       "basis": "Window表示基底インターフェイスで、ビューの各コネクタが継ぐ基底なので、実体は派生側のものになる。",
       "elementNoun": "base_window_connector",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "get": "view_get_base_window_connector",
+        "update": "view_update_base_window_connector"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEPMDViewConnector",
@@ -294,6 +460,10 @@
       "basis": "PMDView操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmd_view_connector",
       "group": "view",
+      "tools": {
+        "get": "view_get_pmd_view_connector",
+        "update": "view_update_pmd_view_connector"
+      },
       "connectionPath": "Host.Connector.View.PMDView"
     },
     {
@@ -302,6 +472,10 @@
       "basis": "PMDView関連ヘルパ操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmd_view_helper",
       "group": "view",
+      "tools": {
+        "get": "view_get_pmd_view_helper",
+        "update": "view_update_pmd_view_helper"
+      },
       "connectionPath": "Host.Connector.View.PMDViewHelper"
     },
     {
@@ -310,6 +484,10 @@
       "basis": "頂点表示／材質編集操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "parts_select_connector",
       "group": "view",
+      "tools": {
+        "get": "view_get_parts_select_connector",
+        "update": "view_update_parts_select_connector"
+      },
       "connectionPath": "Host.Connector.View.PMDViewHelper.PartsSelect"
     },
     {
@@ -317,7 +495,11 @@
       "role": "connector",
       "basis": "Window表示基底インターフェイスで、大きさを持つビューの各コネクタが継ぐ基底なので、実体は派生側のものになる。",
       "elementNoun": "sizable_window_connector",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "get": "view_get_sizable_window_connector",
+        "update": "view_update_sizable_window_connector"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPESubViewConnector",
@@ -325,6 +507,10 @@
       "basis": "サブView操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "sub_view_connector",
       "group": "view",
+      "tools": {
+        "get": "view_get_sub_view_connector",
+        "update": "view_update_sub_view_connector"
+      },
       "connectionPath": "Host.Connector.View.PMDViewHelper.SubView"
     },
     {
@@ -333,6 +519,10 @@
       "basis": "TransformView操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "transform_view_connector",
       "group": "motion",
+      "tools": {
+        "get": "motion_get_transform_view_connector",
+        "update": "motion_update_transform_view_connector"
+      },
       "connectionPath": "Host.Connector.View.TransformView"
     },
     {
@@ -341,6 +531,10 @@
       "basis": "頂点／ボーン編集View操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "vertex_edit_connector",
       "group": "model",
+      "tools": {
+        "get": "model_get_vertex_edit_connector",
+        "update": "model_update_vertex_edit_connector"
+      },
       "connectionPath": "Host.Connector.View.PMDViewHelper.VertexEdit"
     },
     {
@@ -349,6 +543,10 @@
       "basis": "選択頂点ガイド操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "vertex_guide_connector",
       "group": "view",
+      "tools": {
+        "get": "view_get_vertex_guide_connector",
+        "update": "view_update_vertex_guide_connector"
+      },
       "connectionPath": "Host.Connector.View.PMDViewHelper.VertexGuide"
     },
     {
@@ -357,6 +555,10 @@
       "basis": "View操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "view_connector",
       "group": "view",
+      "tools": {
+        "get": "view_get_view_connector",
+        "update": "view_update_view_connector"
+      },
       "connectionPath": "Host.Connector.View"
     },
     {
@@ -365,6 +567,10 @@
       "basis": "表示設定View操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "view_setting_connector",
       "group": "view",
+      "tools": {
+        "get": "view_get_view_setting_connector",
+        "update": "view_update_view_setting_connector"
+      },
       "connectionPath": "Host.Connector.View.PMDViewSetting"
     },
     {
@@ -373,6 +579,10 @@
       "basis": "ウェイト描画操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "weight_edit_connector",
       "group": "model",
+      "tools": {
+        "get": "model_get_weight_edit_connector",
+        "update": "model_update_weight_edit_connector"
+      },
       "connectionPath": "Host.Connector.View.PMDViewHelper.WeightEdit"
     },
     {
@@ -380,7 +590,11 @@
       "role": "connector",
       "basis": "剛体／Joint 表示インターフェイスで、剛体とJointを描くビューの各コネクタが継ぐ基底なので、実体は派生側のものになる。",
       "elementNoun": "body_joint_visibility",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "get": "view_get_body_joint_visibility",
+        "update": "view_update_body_joint_visibility"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPXPmxViewConnector",
@@ -388,6 +602,10 @@
       "basis": "PmxView操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmx_view_connector",
       "group": "view",
+      "tools": {
+        "get": "view_get_pmx_view_connector",
+        "update": "view_update_pmx_view_connector"
+      },
       "connectionPath": "Host.Connector.View.PmxView"
     },
     {
@@ -396,6 +614,10 @@
       "basis": "PmxView関連ヘルパ操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmx_view_helper",
       "group": "view",
+      "tools": {
+        "get": "view_get_pmx_view_helper",
+        "update": "view_update_pmx_view_helper"
+      },
       "connectionPath": "Host.Connector.View.PmxViewHelper"
     },
     {
@@ -404,7 +626,11 @@
       "basis": "プラグイン用VMDで、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd",
       "elementNounPlural": "vmds",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmds",
+        "update": "motion_update_vmds"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdBoneKey",
@@ -412,7 +638,13 @@
       "basis": "VMDボーンキーで、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_bone_key",
       "elementNounPlural": "vmd_bone_keys",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_bone_keys",
+        "update": "motion_update_vmd_bone_keys",
+        "add": "motion_add_vmd_bone_keys",
+        "remove": "motion_remove_vmd_bone_keys"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdBonePoseState",
@@ -420,7 +652,11 @@
       "basis": "ボーンの変形状態を管理する型で、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_bone_pose_state",
       "elementNounPlural": "vmd_bone_pose_states",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_bone_pose_states",
+        "update": "motion_update_vmd_bone_pose_states"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdCameraKey",
@@ -428,7 +664,13 @@
       "basis": "VMDカメラキーで、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_camera_key",
       "elementNounPlural": "vmd_camera_keys",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_camera_keys",
+        "update": "motion_update_vmd_camera_keys",
+        "add": "motion_add_vmd_camera_keys",
+        "remove": "motion_remove_vmd_camera_keys"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdFrameKey",
@@ -436,7 +678,11 @@
       "basis": "VMDキー管理基底インターフェイスで、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_frame_key",
       "elementNounPlural": "vmd_frame_keys",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_frame_keys",
+        "update": "motion_update_vmd_frame_keys"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdIKEnable",
@@ -444,7 +690,11 @@
       "basis": "VMD IK有効状態で、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_ik_enable",
       "elementNounPlural": "vmd_ik_enables",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_ik_enables",
+        "update": "motion_update_vmd_ik_enables"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdIPL",
@@ -452,7 +702,11 @@
       "basis": "VMD補間値で、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_ipl",
       "elementNounPlural": "vmd_ipls",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_ipls",
+        "update": "motion_update_vmd_ipls"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdLightKey",
@@ -460,7 +714,13 @@
       "basis": "VMD照明キーで、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_light_key",
       "elementNounPlural": "vmd_light_keys",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_light_keys",
+        "update": "motion_update_vmd_light_keys",
+        "add": "motion_add_vmd_light_keys",
+        "remove": "motion_remove_vmd_light_keys"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdMorphKey",
@@ -468,7 +728,13 @@
       "basis": "VMDモーフで、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_morph_key",
       "elementNounPlural": "vmd_morph_keys",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_morph_keys",
+        "update": "motion_update_vmd_morph_keys",
+        "add": "motion_add_vmd_morph_keys",
+        "remove": "motion_remove_vmd_morph_keys"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdSelfShadowKey",
@@ -476,7 +742,13 @@
       "basis": "VMDセルフ影キーで、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_self_shadow_key",
       "elementNounPlural": "vmd_self_shadow_keys",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_self_shadow_keys",
+        "update": "motion_update_vmd_self_shadow_keys",
+        "add": "motion_add_vmd_self_shadow_keys",
+        "remove": "motion_remove_vmd_self_shadow_keys"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmdVisibleIKKey",
@@ -484,7 +756,13 @@
       "basis": "VMD表示／IKキーで、VMDデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vmd_visible_ik_key",
       "elementNounPlural": "vmd_visible_ik_keys",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmd_visible_ik_keys",
+        "update": "motion_update_vmd_visible_ik_keys",
+        "add": "motion_add_vmd_visible_ik_keys",
+        "remove": "motion_remove_vmd_visible_ik_keys"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.PEVmdBonePose",
@@ -497,7 +775,11 @@
       "basis": "プラグイン用VMEインターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme",
       "elementNounPlural": "vmes",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vmes",
+        "update": "motion_update_vmes"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeBone",
@@ -505,7 +787,13 @@
       "basis": "VMEボーンインターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_bone",
       "elementNounPlural": "vme_bones",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_bones",
+        "update": "motion_update_vme_bones",
+        "add": "motion_add_vme_bones",
+        "remove": "motion_remove_vme_bones"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeBoneResult",
@@ -513,7 +801,11 @@
       "basis": "ボーン演算結果で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_bone_result",
       "elementNounPlural": "vme_bone_results",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_bone_results",
+        "update": "motion_update_vme_bone_results"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeBoneState",
@@ -521,7 +813,11 @@
       "basis": "ボーンの状態変数で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_bone_state",
       "elementNounPlural": "vme_bone_states",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_bone_states",
+        "update": "motion_update_vme_bone_states"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeCamera",
@@ -529,7 +825,11 @@
       "basis": "VMEカメラで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_camera",
       "elementNounPlural": "vme_cameras",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_cameras",
+        "update": "motion_update_vme_cameras"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeCameraPosition",
@@ -537,7 +837,11 @@
       "basis": "VMEカメラ位置インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_camera_position",
       "elementNounPlural": "vme_camera_positions",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_camera_positions",
+        "update": "motion_update_vme_camera_positions"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeCameraResult",
@@ -545,7 +849,11 @@
       "basis": "カメラ演算結果で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_camera_result",
       "elementNounPlural": "vme_camera_results",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_camera_results",
+        "update": "motion_update_vme_camera_results"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeCameraState",
@@ -553,7 +861,11 @@
       "basis": "カメラ位置で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_camera_state",
       "elementNounPlural": "vme_camera_states",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_camera_states",
+        "update": "motion_update_vme_camera_states"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeDirection",
@@ -561,7 +873,11 @@
       "basis": "方向で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_direction",
       "elementNounPlural": "vme_directions",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_directions",
+        "update": "motion_update_vme_directions"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeDirectionEventOperator",
@@ -569,7 +885,11 @@
       "basis": "イベント設定用の方向演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_direction_event_operator",
       "elementNounPlural": "vme_direction_event_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_direction_event_operators",
+        "update": "motion_update_vme_direction_event_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeDirectionOperator",
@@ -577,7 +897,11 @@
       "basis": "方向演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_direction_operator",
       "elementNounPlural": "vme_direction_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_direction_operators",
+        "update": "motion_update_vme_direction_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeElement",
@@ -585,7 +909,11 @@
       "basis": "VME要素で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_element",
       "elementNounPlural": "vme_elements",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_elements",
+        "update": "motion_update_vme_elements"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeEventElement",
@@ -593,7 +921,11 @@
       "basis": "VMEイベント要素で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_event_element",
       "elementNounPlural": "vme_event_elements",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_event_elements",
+        "update": "motion_update_vme_event_elements"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeEventState",
@@ -601,7 +933,11 @@
       "basis": "イベント処理の状態インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_event_state",
       "elementNounPlural": "vme_event_states",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_event_states",
+        "update": "motion_update_vme_event_states"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeFrameEvent",
@@ -609,7 +945,11 @@
       "basis": "指定フレームでの駆動イベント用インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_frame_event",
       "elementNounPlural": "vme_frame_events",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_frame_events",
+        "update": "motion_update_vme_frame_events"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeGroup",
@@ -617,7 +957,11 @@
       "basis": "グループ用イベント処理で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_group",
       "elementNounPlural": "vme_groups",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_groups",
+        "update": "motion_update_vme_groups"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeGroupBone",
@@ -625,7 +969,11 @@
       "basis": "ボーングループ用イベント処理で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_group_bone",
       "elementNounPlural": "vme_group_bones",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_group_bones",
+        "update": "motion_update_vme_group_bones"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeGroupMorph",
@@ -633,7 +981,11 @@
       "basis": "モーフグループ用イベント処理で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_group_morph",
       "elementNounPlural": "vme_group_morphs",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_group_morphs",
+        "update": "motion_update_vme_group_morphs"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeLight",
@@ -641,7 +993,11 @@
       "basis": "VME照明で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_light",
       "elementNounPlural": "vme_lights",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_lights",
+        "update": "motion_update_vme_lights"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeLightResult",
@@ -649,7 +1005,11 @@
       "basis": "照明演算結果で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_light_result",
       "elementNounPlural": "vme_light_results",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_light_results",
+        "update": "motion_update_vme_light_results"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeLightState",
@@ -657,7 +1017,11 @@
       "basis": "照明の状態変数で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_light_state",
       "elementNounPlural": "vme_light_states",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_light_states",
+        "update": "motion_update_vme_light_states"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeMorphResult",
@@ -665,7 +1029,11 @@
       "basis": "モーフ演算結果で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_morph_result",
       "elementNounPlural": "vme_morph_results",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_morph_results",
+        "update": "motion_update_vme_morph_results"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeObject",
@@ -673,7 +1041,11 @@
       "basis": "VMEに標準登録されているオブジェクトを指すVME要素で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_object",
       "elementNounPlural": "vme_objects",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_objects",
+        "update": "motion_update_vme_objects"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmePath",
@@ -681,7 +1053,11 @@
       "basis": "空間パス設定用の型で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_path",
       "elementNounPlural": "vme_paths",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_paths",
+        "update": "motion_update_vme_paths"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmePosition",
@@ -689,7 +1065,11 @@
       "basis": "位置で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_position",
       "elementNounPlural": "vme_positions",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_positions",
+        "update": "motion_update_vme_positions"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmePositionEventOperator",
@@ -697,7 +1077,11 @@
       "basis": "イベント設定用の位置演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_position_event_operator",
       "elementNounPlural": "vme_position_event_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_position_event_operators",
+        "update": "motion_update_vme_position_event_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmePositionOperator",
@@ -705,7 +1089,11 @@
       "basis": "位置演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_position_operator",
       "elementNounPlural": "vme_position_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_position_operators",
+        "update": "motion_update_vme_position_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmePrimaryValue<1>",
@@ -713,7 +1101,11 @@
       "basis": "代表値で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_primary_value",
       "elementNounPlural": "vme_primary_values",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_primary_values",
+        "update": "motion_update_vme_primary_values"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeQuaternionValue",
@@ -721,7 +1113,11 @@
       "basis": "回転量で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_quaternion_value",
       "elementNounPlural": "vme_quaternion_values",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_quaternion_values",
+        "update": "motion_update_vme_quaternion_values"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator",
@@ -729,7 +1125,11 @@
       "basis": "イベント設定用の回転量演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_quaternion_value_event_operator",
       "elementNounPlural": "vme_quaternion_value_event_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_quaternion_value_event_operators",
+        "update": "motion_update_vme_quaternion_value_event_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeQuaternionValueOperator",
@@ -737,7 +1137,11 @@
       "basis": "回転量演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_quaternion_value_operator",
       "elementNounPlural": "vme_quaternion_value_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_quaternion_value_operators",
+        "update": "motion_update_vme_quaternion_value_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeResult",
@@ -745,7 +1149,11 @@
       "basis": "VME実行後の結果データを管理する型で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_result",
       "elementNounPlural": "vme_results",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_results",
+        "update": "motion_update_vme_results"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeScale",
@@ -753,7 +1161,11 @@
       "basis": "スケールで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_scale",
       "elementNounPlural": "vme_scales",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_scales",
+        "update": "motion_update_vme_scales"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeScalingEventOperator",
@@ -761,7 +1173,11 @@
       "basis": "イベント設定用のスケール演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_scaling_event_operator",
       "elementNounPlural": "vme_scaling_event_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_scaling_event_operators",
+        "update": "motion_update_vme_scaling_event_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeScalingOperator",
@@ -769,7 +1185,11 @@
       "basis": "スケール演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_scaling_operator",
       "elementNounPlural": "vme_scaling_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_scaling_operators",
+        "update": "motion_update_vme_scaling_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeSingleValue",
@@ -777,7 +1197,11 @@
       "basis": "単一値で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_single_value",
       "elementNounPlural": "vme_single_values",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_single_values",
+        "update": "motion_update_vme_single_values"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeSingleValueElement",
@@ -785,7 +1209,13 @@
       "basis": "VME単一値インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_single_value_element",
       "elementNounPlural": "vme_single_value_elements",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_single_value_elements",
+        "update": "motion_update_vme_single_value_elements",
+        "add": "motion_add_vme_single_value_elements",
+        "remove": "motion_remove_vme_single_value_elements"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeSingleValueEventOperator",
@@ -793,7 +1223,11 @@
       "basis": "イベント設定用の単一値演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_single_value_event_operator",
       "elementNounPlural": "vme_single_value_event_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_single_value_event_operators",
+        "update": "motion_update_vme_single_value_event_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeSingleValueOperator",
@@ -801,7 +1235,11 @@
       "basis": "値演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_single_value_operator",
       "elementNounPlural": "vme_single_value_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_single_value_operators",
+        "update": "motion_update_vme_single_value_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeSingleValueState",
@@ -809,7 +1247,11 @@
       "basis": "単一値の状態変数で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_single_value_state",
       "elementNounPlural": "vme_single_value_states",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_single_value_states",
+        "update": "motion_update_vme_single_value_states"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeVectorValue",
@@ -817,7 +1259,11 @@
       "basis": "ベクトル量で、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_vector_value",
       "elementNounPlural": "vme_vector_values",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_vector_values",
+        "update": "motion_update_vme_vector_values"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeVectorValueEventOperator",
@@ -825,7 +1271,11 @@
       "basis": "イベント設定用のベクトル量演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_vector_value_event_operator",
       "elementNounPlural": "vme_vector_value_event_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_vector_value_event_operators",
+        "update": "motion_update_vme_vector_value_event_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.IPEVmeVectorValueOperator",
@@ -833,7 +1283,11 @@
       "basis": "ベクトル量演算インターフェイスで、VMEデータの構成要素として、ビルダが発行したハンドルを介して操作する。",
       "elementNoun": "vme_vector_value_operator",
       "elementNounPlural": "vme_vector_value_operators",
-      "group": "motion"
+      "group": "motion",
+      "tools": {
+        "list": "motion_list_vme_vector_value_operators",
+        "update": "motion_update_vme_vector_value_operators"
+      }
     },
     {
       "typeName": "PEPlugin.Vme.PEVmePreviewOption",
@@ -846,7 +1300,11 @@
       "basis": "イベントコネクタで、橋渡しの CreateEventConnector が発行したハンドルを介して操作し、ReleaseEventConnector で解放する。",
       "elementNoun": "event_connector",
       "elementNounPlural": "event_connectors",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "list": "view_list_event_connectors",
+        "update": "view_update_event_connectors"
+      }
     },
     {
       "typeName": "PXCPlugin.Event.IPXUIModelEventListener",
@@ -854,7 +1312,11 @@
       "basis": "UIモデル_イベントリスナインターフェイスで、UIモデルの CreateEventListener が発行したハンドルを介して操作し、ReleaseEventListener で解放する。",
       "elementNoun": "ui_model_event_listener",
       "elementNounPlural": "ui_model_event_listeners",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "list": "view_list_ui_model_event_listeners",
+        "update": "view_update_ui_model_event_listeners"
+      }
     },
     {
       "typeName": "PXCPlugin.Event.IPXViewEventListener",
@@ -862,7 +1324,11 @@
       "basis": "View_イベントリスナインターフェイスで、イベントコネクタの CreateViewEventListener が発行したハンドルを介して操作し、ReleaseViewEventListener で解放する。",
       "elementNoun": "view_event_listener",
       "elementNounPlural": "view_event_listeners",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "list": "view_list_view_event_listeners",
+        "update": "view_update_view_event_listeners"
+      }
     },
     {
       "typeName": "PXCPlugin.Event.PXEventArgs+UIModelMouse",
@@ -890,6 +1356,10 @@
       "basis": "Cプラグイン接続インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "c_plugin_connector",
       "group": "view",
+      "tools": {
+        "get": "view_get_c_plugin_connector",
+        "update": "view_update_c_plugin_connector"
+      },
       "connectionPath": "Connector"
     },
     {
@@ -897,7 +1367,11 @@
       "role": "connector",
       "basis": "Cプラグインが受け取る実行パラメータで、接続初期化がここから辿り始め、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "c_plugin_run_args",
-      "group": "session"
+      "group": "session",
+      "tools": {
+        "get": "session_get_c_plugin_run_args",
+        "update": "session_update_c_plugin_run_args"
+      }
     },
     {
       "typeName": "PXCPlugin.IPXCPrimitiveBuilder",
@@ -905,6 +1379,10 @@
       "basis": "Cプラグイン用プリミティブ作成で、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "c_primitive_builder",
       "group": "model",
+      "tools": {
+        "get": "model_get_c_primitive_builder",
+        "update": "model_update_c_primitive_builder"
+      },
       "connectionPath": "PrimitiveBuilder"
     },
     {
@@ -912,7 +1390,11 @@
       "role": "connector",
       "basis": "基本接続インターフェイスで、Cプラグインの接続と、イベントコネクタが継ぐ基底なので、実体は派生側のものになる。",
       "elementNoun": "base_connector",
-      "group": "session"
+      "group": "session",
+      "tools": {
+        "get": "session_get_base_connector",
+        "update": "session_update_base_connector"
+      }
     },
     {
       "typeName": "PXCPlugin.IPXSystemControl",
@@ -920,6 +1402,10 @@
       "basis": "System制御で、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "system_control",
       "group": "session",
+      "tools": {
+        "get": "session_get_system_control",
+        "update": "session_update_system_control"
+      },
       "connectionPath": "SystemCtrl()"
     },
     {
@@ -928,6 +1414,10 @@
       "basis": "View制御で、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "view_control",
       "group": "view",
+      "tools": {
+        "get": "view_get_view_control",
+        "update": "view_update_view_control"
+      },
       "connectionPath": "ViewCtrl()"
     },
     {
@@ -935,7 +1425,11 @@
       "role": "connector",
       "basis": "Cプラグインの静的な橋渡しで、接続初期化がここから辿り始め、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "c_plugin_bridge",
-      "group": "session"
+      "group": "session",
+      "tools": {
+        "get": "session_get_c_plugin_bridge",
+        "update": "session_update_c_plugin_bridge"
+      }
     },
     {
       "typeName": "PXCPlugin.PXPluginInfo",
@@ -948,14 +1442,22 @@
       "basis": "UIモデルインターフェイスで、橋渡しの RegisterUIModel が発行したハンドルを介して操作する。",
       "elementNoun": "ui_model",
       "elementNounPlural": "ui_models",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "list": "view_list_ui_models",
+        "update": "view_update_ui_models"
+      }
     },
     {
       "typeName": "PXCPlugin.UIModel.PXUIModelHelper",
       "role": "connector",
       "basis": "UIモデル補助処理で、宣言するメンバーがすべて静的なので、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "ui_model_helper",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "get": "view_get_ui_model_helper",
+        "update": "view_update_ui_model_helper"
+      }
     },
     {
       "typeName": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
@@ -968,7 +1470,11 @@
       "basis": "テキスト制御クラスで、UIモデル補助処理の CreateTextControl が発行したハンドルを介して操作する。",
       "elementNoun": "text_control",
       "elementNounPlural": "text_controls",
-      "group": "view"
+      "group": "view",
+      "tools": {
+        "list": "view_list_text_controls",
+        "update": "view_update_text_controls"
+      }
     },
     {
       "typeName": "System.Windows.Forms.KeyEventArgs",

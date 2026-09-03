@@ -142,7 +142,7 @@ namespace PmxEditorMcp.SignatureDump
                 CultureInfo.InvariantCulture,
                 "照合した: 型 {0} 件(コネクタ {1}・イベント引数 {2}・ハンドル操作 {3}・操作対象 {4}"
                     + "・DTO {5})・ハンドルを返しうる行 {6} 件(発行 {7})"
-                    + "・要素のリスト {8} 件(所有 {9})",
+                    + "・要素のリスト {8} 件(所有 {9})・ツール名 {10} 件",
                 table.Types.Count,
                 table.Types.Count(r => r.Role == TypeRole.Connector),
                 table.Types.Count(r => r.Role == TypeRole.EventArgs),
@@ -152,7 +152,8 @@ namespace PmxEditorMcp.SignatureDump
                 table.Issuances.Count,
                 table.Issuances.Count(r => r.Issues),
                 table.Collections.Count,
-                table.Collections.Count(r => r.Owns)));
+                table.Collections.Count(r => r.Owns),
+                table.Types.Sum(r => r.Tools.Count)));
 
             return ExitCodes.Success;
         }

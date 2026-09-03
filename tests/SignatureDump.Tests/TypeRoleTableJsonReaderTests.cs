@@ -90,9 +90,164 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     () => ReadTypes(
                         "{\"typeName\":\"N.A\",\"role\":\"" + role
                             + "\",\"basis\":\"根拠。\",\"elementNoun\":\"alpha\""
-                            + ",\"elementNounPlural\":\"alphas\"}"));
+                            + ",\"elementNounPlural\":\"alphas\"," + Tools(role) + "}"));
 
                 Assert.Contains("group", error.Message);
+            }
+        }
+
+        [Fact]
+        public void TheToolNamesAreRead()
+        {
+            IList<TypeRoleRecord> records = ReadTypes(
+                Noun("N.A", "connector", "\"elementNoun\":\"alpha\""),
+                Noun("N.B", "operationTarget",
+                    "\"elementNoun\":\"beta\",\"elementNounPlural\":\"betas\""));
+
+            Assert.Equal(
+                new[] { ToolVerb.Get, ToolVerb.Update },
+                records[0].Tools.Keys.OrderBy(v => v.ToString(), StringComparer.Ordinal));
+            Assert.Equal("model_get_thing", records[0].Tools[ToolVerb.Get]);
+            Assert.Equal(
+                new[] { ToolVerb.List, ToolVerb.Update },
+                records[1].Tools.Keys.OrderBy(v => v.ToString(), StringComparer.Ordinal));
+            Assert.Equal("model_list_things", records[1].Tools[ToolVerb.List]);
+        }
+
+        [Fact]
+        public void ARoleWithoutAnIndependentToolHasNoToolNames()
+        {
+            IList<TypeRoleRecord> records = ReadTypes(Item("N.A", "dto"), Item("N.B", "eventArgs"));
+
+            Assert.All(records, r => Assert.Empty(r.Tools));
+        }
+
+        [Fact]
+        public void TheToolNamesToAddAndRemoveAreRead()
+        {
+            IList<TypeRoleRecord> records = ReadTypes(
+                "{\"typeName\":\"N.A\",\"role\":\"operationTarget\",\"basis\":\"根拠。\""
+                    + ",\"elementNoun\":\"alpha\",\"elementNounPlural\":\"alphas\""
+                    + ",\"group\":\"model\",\"tools\":{\"list\":\"model_list_alphas\""
+                    + ",\"update\":\"model_update_alphas\",\"add\":\"model_add_alphas\""
+                    + ",\"remove\":\"model_remove_alphas\"}}");
+
+            Assert.Equal("model_add_alphas", records[0].Tools[ToolVerb.Add]);
+            Assert.Equal("model_remove_alphas", records[0].Tools[ToolVerb.Remove]);
+        }
+
+        [Fact]
+        public void AToolNameToAddWithoutOneToRemoveStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(
+                    "{\"typeName\":\"N.A\",\"role\":\"operationTarget\",\"basis\":\"根拠。\""
+                        + ",\"elementNoun\":\"alpha\",\"elementNounPlural\":\"alphas\""
+                        + ",\"group\":\"model\",\"tools\":{\"list\":\"model_list_alphas\""
+                        + ",\"update\":\"model_update_alphas\""
+                        + ",\"add\":\"model_add_alphas\"}}"));
+
+            Assert.Contains("add", error.Message);
+        }
+
+        [Fact]
+        public void AConnectorWithToolNamesToAddAndRemoveStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(
+                    "{\"typeName\":\"N.A\",\"role\":\"connector\",\"basis\":\"根拠。\""
+                        + ",\"elementNoun\":\"alpha\",\"group\":\"model\""
+                        + ",\"tools\":{\"get\":\"model_get_alpha\""
+                        + ",\"update\":\"model_update_alpha\""
+                        + ",\"add\":\"model_add_alphas\""
+                        + ",\"remove\":\"model_remove_alphas\"}}"));
+
+            Assert.Contains("add", error.Message);
+        }
+
+        [Fact]
+        public void ARoleWithAnIndependentToolWithAToolNameOfAnotherRoleStops()
+        {
+            foreach (string role in new[] { "handleTarget", "operationTarget" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(
+                        "{\"typeName\":\"N.A\",\"role\":\"" + role
+                            + "\",\"basis\":\"根拠。\",\"elementNoun\":\"alpha\""
+                            + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\""
+                            + ",\"tools\":{\"list\":\"model_list_alphas\""
+                            + ",\"update\":\"model_update_alphas\""
+                            + ",\"get\":\"model_get_alpha\"}}"));
+
+                Assert.Contains("get", error.Message);
+            }
+        }
+
+        [Fact]
+        public void AConnectorWithAToolNameToListStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(
+                    "{\"typeName\":\"N.A\",\"role\":\"connector\",\"basis\":\"根拠。\""
+                        + ",\"elementNoun\":\"alpha\",\"group\":\"model\""
+                        + ",\"tools\":{\"get\":\"model_get_alpha\""
+                        + ",\"update\":\"model_update_alpha\""
+                        + ",\"list\":\"model_list_alphas\"}}"));
+
+            Assert.Contains("list", error.Message);
+        }
+
+        [Fact]
+        public void AMissingToolNameStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(
+                    "{\"typeName\":\"N.A\",\"role\":\"connector\",\"basis\":\"根拠。\""
+                        + ",\"elementNoun\":\"alpha\",\"group\":\"model\""
+                        + ",\"tools\":{\"get\":\"model_get_alpha\"}}"));
+
+            Assert.Contains("update", error.Message);
+        }
+
+        [Fact]
+        public void AToolNameThatIsNotASnakeCaseWordStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(
+                    "{\"typeName\":\"N.A\",\"role\":\"connector\",\"basis\":\"根拠。\""
+                        + ",\"elementNoun\":\"alpha\",\"group\":\"model\""
+                        + ",\"tools\":{\"get\":\"Model_Get_Alpha\""
+                        + ",\"update\":\"model_update_alpha\"}}"));
+
+            Assert.Contains("tools", error.Message);
+        }
+
+        [Fact]
+        public void ARoleWithAnIndependentToolWithoutToolNamesStops()
+        {
+            foreach (string role in new[] { "connector", "handleTarget", "operationTarget" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(
+                        "{\"typeName\":\"N.A\",\"role\":\"" + role
+                            + "\",\"basis\":\"根拠。\",\"elementNoun\":\"alpha\""
+                            + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\"}"));
+
+                Assert.Contains("tools", error.Message);
+            }
+        }
+
+        [Fact]
+        public void ARoleWithoutAnIndependentToolWithToolNamesStops()
+        {
+            foreach (string role in new[] { "dto", "eventArgs" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(
+                        "{\"typeName\":\"N.A\",\"role\":\"" + role
+                            + "\",\"basis\":\"根拠。\"," + Tools("dto") + "}"));
+
+                Assert.Contains("tools", error.Message);
             }
         }
 
@@ -322,9 +477,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "\"role\":\"eventArgs\"",
                 "\"role\":\"dto\"",
                 "\"role\":\"handleTarget\",\"elementNoun\":\"alpha\""
-                    + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\"",
+                    + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\","
+                    + Tools("handleTarget"),
                 "\"role\":\"operationTarget\",\"elementNoun\":\"alpha\""
-                    + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\"",
+                    + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\","
+                    + Tools("operationTarget"),
             })
             {
                 FormatException error = Assert.Throws<FormatException>(
@@ -668,7 +825,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return "{\"typeName\":\"" + typeName + "\",\"role\":\"connector\",\"basis\":\""
                 + typeName + " の根拠。\",\"elementNoun\":\"" + typeName.Substring(2).ToLowerInvariant()
-                + "\",\"group\":\"" + group + "\"}";
+                + "\",\"group\":\"" + group + "\"," + Tools("connector") + "}";
         }
 
         private static string Item(string typeName, string role)
@@ -691,15 +848,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + ",\"basis\":\"" + signatureKey + " の根拠。\"}";
         }
 
-        /// <summary>担当群は独立したツールを持つ役割が必ず持つので、題材の側で補う。</summary>
+        /// <summary>
+        /// 担当群とツール名は独立したツールを持つ役割が必ず持つので、題材の側で補う。
+        /// </summary>
         private static string Noun(string typeName, string role, string nouns)
         {
-            string group = role == "eventArgs" || role == "dto"
+            string rest = role == "eventArgs" || role == "dto"
                 ? string.Empty
-                : ",\"group\":\"model\"";
+                : ",\"group\":\"model\"," + Tools(role);
 
             return "{\"typeName\":\"" + typeName + "\",\"role\":\"" + role
-                + "\",\"basis\":\"" + typeName + " の根拠。\"," + nouns + group + "}";
+                + "\",\"basis\":\"" + typeName + " の根拠。\"," + nouns + rest + "}";
+        }
+
+        private static string Tools(string role)
+        {
+            return role == "connector"
+                ? "\"tools\":{\"get\":\"model_get_thing\""
+                    + ",\"update\":\"model_update_thing\"}"
+                : "\"tools\":{\"list\":\"model_list_things\""
+                    + ",\"update\":\"model_update_things\"}";
         }
     }
 }

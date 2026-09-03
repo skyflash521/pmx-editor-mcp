@@ -23,6 +23,58 @@ namespace PmxEditorMcp.SignatureDump
         Dto,
     }
 
+    /// <summary>担当群の書き方。正本へ書く値であり、ツール名の接頭辞でもある。</summary>
+    public static class ToolGroups
+    {
+        private static readonly Dictionary<string, CapabilityOwner> Tokens =
+            new Dictionary<string, CapabilityOwner>(StringComparer.Ordinal)
+            {
+                { "model", CapabilityOwner.Model },
+                { "session", CapabilityOwner.Session },
+                { "view", CapabilityOwner.View },
+                { "motion", CapabilityOwner.MotionTransform },
+            };
+
+        /// <summary>書き方から担当を引く表。</summary>
+        public static IDictionary<string, CapabilityOwner> ByToken
+        {
+            get { return new ReadOnlyDictionary<string, CapabilityOwner>(Tokens); }
+        }
+
+        /// <summary>担当の書き方。担当を持たないものは書き方を持たない。</summary>
+        public static string TokenOf(CapabilityOwner owner)
+        {
+            foreach (KeyValuePair<string, CapabilityOwner> pair in Tokens)
+            {
+                if (pair.Value == owner)
+                {
+                    return pair.Key;
+                }
+            }
+
+            throw new ArgumentException("担当群の書き方が無い。", nameof(owner));
+        }
+    }
+
+    /// <summary>型ごとのツールのはたらき。ツール名の動詞句はこの語と要素名詞からなる。</summary>
+    public enum ToolVerb
+    {
+        /// <summary>コネクタ型のプロパティを1つに集めた取得。</summary>
+        Get,
+
+        /// <summary>対象集合の要素を並べる取得。</summary>
+        List,
+
+        /// <summary>プロパティの更新。</summary>
+        Update,
+
+        /// <summary>所有するリストへ要素を入れる。</summary>
+        Add,
+
+        /// <summary>所有するリストから要素を出す。</summary>
+        Remove,
+    }
+
     /// <summary>型役割表の型ごとの項目1件。</summary>
     public sealed class TypeRoleRecord
     {
@@ -33,7 +85,8 @@ namespace PmxEditorMcp.SignatureDump
             string elementNoun = "",
             string elementNounPlural = "",
             string connectionPath = "",
-            CapabilityOwner group = CapabilityOwner.None)
+            CapabilityOwner group = CapabilityOwner.None,
+            IDictionary<ToolVerb, string> tools = null)
         {
             PropertyRecord.RequireText(typeName, nameof(typeName));
             PropertyRecord.RequireText(basis, nameof(basis));
@@ -59,10 +112,20 @@ namespace PmxEditorMcp.SignatureDump
                     HasIndependentTool(role) ? nameof(group) : nameof(role));
             }
 
+            IDictionary<ToolVerb, string> named = tools ?? new Dictionary<ToolVerb, string>();
+            if (HasIndependentTool(role) != (named.Count != 0))
+            {
+                throw new ArgumentException(
+                    "独立したツールを持つ役割だけがツール名を持つ。",
+                    HasIndependentTool(role) ? nameof(tools) : nameof(role));
+            }
+
             TypeName = typeName;
             Role = role;
             Basis = basis;
             Group = group;
+            Tools = new ReadOnlyDictionary<ToolVerb, string>(
+                new Dictionary<ToolVerb, string>(named));
             ElementNoun = elementNoun;
             ElementNounPlural = elementNounPlural;
             ConnectionPath = connectionPath;
@@ -88,6 +151,9 @@ namespace PmxEditorMcp.SignatureDump
         /// その型のツールが属する担当群。持たない役割では <see cref="CapabilityOwner.None"/>。
         /// </summary>
         public CapabilityOwner Group { get; }
+
+        /// <summary>はたらきから引くその型のツール名。持たない役割では空。</summary>
+        public IDictionary<ToolVerb, string> Tools { get; }
 
         /// <summary>その役割が、対象を名指しする独立したツールを持つか。</summary>
         public static bool HasIndependentTool(TypeRole role)
