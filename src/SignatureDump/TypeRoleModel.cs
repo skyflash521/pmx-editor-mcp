@@ -32,7 +32,8 @@ namespace PmxEditorMcp.SignatureDump
             string basis,
             string elementNoun = "",
             string elementNounPlural = "",
-            string connectionPath = "")
+            string connectionPath = "",
+            CapabilityOwner group = CapabilityOwner.None)
         {
             PropertyRecord.RequireText(typeName, nameof(typeName));
             PropertyRecord.RequireText(basis, nameof(basis));
@@ -51,9 +52,17 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(connectionPath));
             }
 
+            if (HasIndependentTool(role) != (group != CapabilityOwner.None))
+            {
+                throw new ArgumentException(
+                    "独立したツールを持つ役割だけが担当群を持つ。",
+                    HasIndependentTool(role) ? nameof(group) : nameof(role));
+            }
+
             TypeName = typeName;
             Role = role;
             Basis = basis;
+            Group = group;
             ElementNoun = elementNoun;
             ElementNounPlural = elementNounPlural;
             ConnectionPath = connectionPath;
@@ -74,6 +83,17 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>接続の根からその型へ至る経路。根と、経路を持たない型では空。</summary>
         public string ConnectionPath { get; }
+
+        /// <summary>
+        /// その型のツールが属する担当群。持たない役割では <see cref="CapabilityOwner.None"/>。
+        /// </summary>
+        public CapabilityOwner Group { get; }
+
+        /// <summary>その役割が、対象を名指しする独立したツールを持つか。</summary>
+        public static bool HasIndependentTool(TypeRole role)
+        {
+            return role != TypeRole.EventArgs && role != TypeRole.Dto;
+        }
     }
 
     /// <summary>ハンドルをどこから発行するか。</summary>

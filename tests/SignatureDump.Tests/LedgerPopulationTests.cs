@@ -336,6 +336,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => LedgerPopulation.Resolve(new List<CapabilityRecord>(), null));
         }
 
+        [Fact]
+        public void NamedTypesRecordsTheResolvedTypeButNotItsBasesOrItsMembersOwner()
+        {
+            LedgerPopulation population = Resolve(
+                Inventory(
+                    Types(
+                        Type("N.IBase", TypeKind.Interface),
+                        Type("N.IDerived", TypeKind.Interface, "N.IBase"),
+                        Type("N.IOther", TypeKind.Interface)),
+                    Signatures(
+                        Signature("N.IBase.Visible()", "N.IBase", "Visible"),
+                        Signature("N.IOther.Update()", "N.IOther", "Update"))),
+                Row("CAP-001", "IDerived"),
+                Row("CAP-002", "IOther.Update"));
+
+            Assert.Equal(
+                new[] { "N.IDerived" },
+                population.NamedTypes.Keys.OrderBy(n => n, StringComparer.Ordinal).ToArray());
+            Assert.Equal(new[] { "CAP-001" }, population.NamedTypes["N.IDerived"].ToArray());
+        }
+
         private static LedgerPopulation Resolve(InventoryRecord inventory, params CapabilityRecord[] rows)
         {
             List<CapabilityRecord> ledger = new List<CapabilityRecord>(rows);

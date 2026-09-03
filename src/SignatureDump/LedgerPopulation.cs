@@ -30,15 +30,25 @@ namespace PmxEditorMcp.SignatureDump
             };
 
         private LedgerPopulation(
-            ISet<string> types, ISet<string> signatures, IDictionary<string, ISet<string>> owners)
+            ISet<string> types,
+            ISet<string> signatures,
+            IDictionary<string, ISet<string>> owners,
+            IDictionary<string, ISet<string>> namedTypes)
         {
             Types = types;
             Signatures = signatures;
             Owners = owners;
+            NamedTypes = namedTypes;
         }
 
         /// <summary>台帳のどれかの行が指す公開型の名前。</summary>
         public ISet<string> Types { get; }
+
+        /// <summary>
+        /// 公開型の名前から、その型を名前で指す行の能力ID。名前がその型として解決された行だけを
+        /// 数えるので、その型を継承する型を指す行も、その型のメンバーを指す行も含まない。
+        /// </summary>
+        public IDictionary<string, ISet<string>> NamedTypes { get; }
 
         /// <summary>母集合。台帳のどれかの行が指す公開シグネチャの行キー。</summary>
         public ISet<string> Signatures { get; }
@@ -66,6 +76,8 @@ namespace PmxEditorMcp.SignatureDump
             HashSet<string> types = new HashSet<string>(StringComparer.Ordinal);
             Dictionary<string, ISet<string>> owners =
                 new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
+            Dictionary<string, ISet<string>> named =
+                new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
             HashSet<string> patternRows = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (CapabilityRecord row in ledger)
@@ -73,13 +85,13 @@ namespace PmxEditorMcp.SignatureDump
                 if (row.TargetKind == CapabilityTargetKind.Pattern)
                 {
                     patternRows.Add(row.Id);
-                    ResolvePattern(row, index, types, owners);
+                    ResolvePattern(row, index, types, owners, named);
                     continue;
                 }
 
                 foreach (string name in row.TargetNames)
                 {
-                    ResolveName(row, name, index, types, owners);
+                    ResolveName(row, name, index, types, owners, named);
                 }
             }
 
@@ -88,14 +100,16 @@ namespace PmxEditorMcp.SignatureDump
             return new LedgerPopulation(
                 types,
                 new HashSet<string>(owners.Keys, StringComparer.Ordinal),
-                new ReadOnlyDictionary<string, ISet<string>>(owners));
+                new ReadOnlyDictionary<string, ISet<string>>(owners),
+                new ReadOnlyDictionary<string, ISet<string>>(named));
         }
 
         private static void ResolvePattern(
             CapabilityRecord row,
             Index index,
             ISet<string> types,
-            IDictionary<string, ISet<string>> owners)
+            IDictionary<string, ISet<string>> owners,
+            IDictionary<string, ISet<string>> named)
         {
             string prefix;
             if (!PatternNamespaces.TryGetValue(row.Id, out prefix))
@@ -113,6 +127,7 @@ namespace PmxEditorMcp.SignatureDump
                 if (type.Kind != TypeKind.Enum)
                 {
                     types.Add(type.Name);
+                    Own(named, type.Name, row.Id);
                 }
 
                 foreach (SignatureRecord signature in index.Declared(type.Name))
@@ -146,11 +161,17 @@ namespace PmxEditorMcp.SignatureDump
             string name,
             Index index,
             ISet<string> types,
-            IDictionary<string, ISet<string>> owners)
+            IDictionary<string, ISet<string>> owners,
+            IDictionary<string, ISet<string>> named)
         {
             string type = index.FindType(name, row);
             if (type != null)
             {
+                if (index.IsPublicType(type))
+                {
+                    Own(named, type, row.Id);
+                }
+
                 foreach (string declaring in index.Closure(type))
                 {
                     if (index.IsPublicType(declaring))

@@ -44,6 +44,73 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void EveryGroupNameIsRead()
+        {
+            IList<TypeRoleRecord> records = ReadTypes(
+                Grouped("N.A", "model"),
+                Grouped("N.B", "motion"),
+                Grouped("N.C", "session"),
+                Grouped("N.D", "view"));
+
+            Assert.Equal(
+                new[]
+                {
+                    CapabilityOwner.Model,
+                    CapabilityOwner.MotionTransform,
+                    CapabilityOwner.Session,
+                    CapabilityOwner.View,
+                },
+                records.Select(r => r.Group));
+        }
+
+        [Fact]
+        public void ARoleWithoutAnIndependentToolHasNoGroup()
+        {
+            IList<TypeRoleRecord> records = ReadTypes(Item("N.A", "dto"), Item("N.B", "eventArgs"));
+
+            Assert.Equal(
+                new[] { CapabilityOwner.None, CapabilityOwner.None }, records.Select(r => r.Group));
+        }
+
+        [Fact]
+        public void AnUnknownGroupStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ReadTypes(Grouped("N.A", "変形・モーション")));
+
+            Assert.Contains("担当群", error.Message);
+        }
+
+        [Fact]
+        public void ARoleWithAnIndependentToolWithoutAGroupStops()
+        {
+            foreach (string role in new[] { "connector", "handleTarget", "operationTarget" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(
+                        "{\"typeName\":\"N.A\",\"role\":\"" + role
+                            + "\",\"basis\":\"根拠。\",\"elementNoun\":\"alpha\""
+                            + ",\"elementNounPlural\":\"alphas\"}"));
+
+                Assert.Contains("group", error.Message);
+            }
+        }
+
+        [Fact]
+        public void ARoleWithoutAnIndependentToolWithAGroupStops()
+        {
+            foreach (string role in new[] { "dto", "eventArgs" })
+            {
+                FormatException error = Assert.Throws<FormatException>(
+                    () => ReadTypes(
+                        "{\"typeName\":\"N.A\",\"role\":\"" + role
+                            + "\",\"basis\":\"根拠。\",\"group\":\"model\"}"));
+
+                Assert.Contains("group", error.Message);
+            }
+        }
+
+        [Fact]
         public void TypesOutOfOrdinalOrderStop()
         {
             FormatException error = Assert.Throws<FormatException>(
@@ -255,9 +322,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "\"role\":\"eventArgs\"",
                 "\"role\":\"dto\"",
                 "\"role\":\"handleTarget\",\"elementNoun\":\"alpha\""
-                    + ",\"elementNounPlural\":\"alphas\"",
+                    + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\"",
                 "\"role\":\"operationTarget\",\"elementNoun\":\"alpha\""
-                    + ",\"elementNounPlural\":\"alphas\"",
+                    + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\"",
             })
             {
                 FormatException error = Assert.Throws<FormatException>(
@@ -597,6 +664,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + "],\"collections\":[]}");
         }
 
+        private static string Grouped(string typeName, string group)
+        {
+            return "{\"typeName\":\"" + typeName + "\",\"role\":\"connector\",\"basis\":\""
+                + typeName + " の根拠。\",\"elementNoun\":\"" + typeName.Substring(2).ToLowerInvariant()
+                + "\",\"group\":\"" + group + "\"}";
+        }
+
         private static string Item(string typeName, string role)
         {
             return "{\"typeName\":\"" + typeName + "\",\"role\":\"" + role
@@ -617,10 +691,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + ",\"basis\":\"" + signatureKey + " の根拠。\"}";
         }
 
+        /// <summary>担当群は独立したツールを持つ役割が必ず持つので、題材の側で補う。</summary>
         private static string Noun(string typeName, string role, string nouns)
         {
+            string group = role == "eventArgs" || role == "dto"
+                ? string.Empty
+                : ",\"group\":\"model\"";
+
             return "{\"typeName\":\"" + typeName + "\",\"role\":\"" + role
-                + "\",\"basis\":\"" + typeName + " の根拠。\"," + nouns + "}";
+                + "\",\"basis\":\"" + typeName + " の根拠。\"," + nouns + group + "}";
         }
     }
 }

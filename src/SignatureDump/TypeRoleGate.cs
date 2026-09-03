@@ -8,7 +8,8 @@ namespace PmxEditorMcp.SignatureDump
     /// 型ごとの役割が、規則どおりに割り当てられているかを検査する。役割の意味そのものは測れないので、
     /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型を
     /// 呼び出し側が実体を用意せずに呼べること、接続の経路、ハンドルを返しうるシグネチャの
-    /// 過不足と発行の種別、要素を並べるリストの過不足と所有の一意——に限る。
+    /// 過不足と発行の種別、要素を並べるリストの過不足と所有の一意、担当群と台帳の担当の一致
+    /// ——に限る。
     /// </summary>
     public static class TypeRoleGate
     {
@@ -22,7 +23,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <paramref name="issuanceCandidates"/> には
         /// <see cref="HandleIssuanceEvidence.Candidates"/> の結果を、
         /// <paramref name="collectionCandidates"/> には
-        /// <see cref="ElementCollectionEvidence.Candidates"/> の結果を渡すこと。
+        /// <see cref="ElementCollectionEvidence.Candidates"/> の結果を、
+        /// <paramref name="ledgerOwners"/> には
+        /// <see cref="TypeGroupEvidence.OwnersByType"/> の結果を渡すこと。
         /// </summary>
         public static void Require(
             TypeRoleTable table,
@@ -32,7 +35,8 @@ namespace PmxEditorMcp.SignatureDump
             ICollection<string> connectorCandidates,
             IDictionary<string, string> connectionPaths,
             IDictionary<string, HandleIssuanceKind> issuanceCandidates,
-            IDictionary<string, string> collectionCandidates)
+            IDictionary<string, string> collectionCandidates,
+            IDictionary<string, ISet<CapabilityOwner>> ledgerOwners)
         {
             if (table == null)
             {
@@ -74,6 +78,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(collectionCandidates));
             }
 
+            if (ledgerOwners == null)
+            {
+                throw new ArgumentNullException(nameof(ledgerOwners));
+            }
+
             IList<TypeRoleRecord> records = table.Types;
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
@@ -82,6 +91,7 @@ namespace PmxEditorMcp.SignatureDump
             RequireConnectionPathsMatchTheEvidence(records, connectionPaths);
             RequireIssuancesMatchTheEvidence(table.Issuances, issuanceCandidates);
             RequireCollectionsMatchTheEvidence(table.Collections, collectionCandidates);
+            RequireGroupsMatchTheLedger(records, ledgerOwners);
         }
 
         /// <summary>
@@ -198,6 +208,37 @@ namespace PmxEditorMcp.SignatureDump
                         "接続の経路が列挙と合わない: " + record.TypeName
                             + "(表: " + Shown(record.ConnectionPath)
                             + " / 列挙: " + Shown(expected) + ")");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 担当群が、台帳がその型へ与える担当と食い違わないことを求める。担当が一つに決まる型では
+        /// 表の値が書き手の判断でなく台帳の写しになるので、そこだけを突き合わせる。
+        /// </summary>
+        private static void RequireGroupsMatchTheLedger(
+            IList<TypeRoleRecord> records, IDictionary<string, ISet<CapabilityOwner>> ledgerOwners)
+        {
+            foreach (TypeRoleRecord record in records.Where(
+                r => TypeRoleRecord.HasIndependentTool(r.Role)))
+            {
+                ISet<CapabilityOwner> owners;
+                if (!ledgerOwners.TryGetValue(record.TypeName, out owners))
+                {
+                    continue;
+                }
+
+                if (owners.Count != 1)
+                {
+                    continue;
+                }
+
+                CapabilityOwner only = owners.First();
+                if (record.Group != only)
+                {
+                    throw new InvalidOperationException(
+                        "担当群が台帳の担当と合わない: " + record.TypeName
+                            + "(表: " + record.Group + " / 台帳: " + only + ")");
                 }
             }
         }

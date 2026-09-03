@@ -37,6 +37,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string ConnectionPathName = "connectionPath";
 
+        private const string GroupName = "group";
+
         private static readonly Regex SnakeCase = new Regex(
             "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
 
@@ -46,6 +48,15 @@ namespace PmxEditorMcp.SignatureDump
                 { "constructor", HandleIssuanceKind.Constructor },
                 { "factory", HandleIssuanceKind.Factory },
                 { "receiverBound", HandleIssuanceKind.ReceiverBound },
+            };
+
+        private static readonly Dictionary<string, CapabilityOwner> Groups =
+            new Dictionary<string, CapabilityOwner>(StringComparer.Ordinal)
+            {
+                { "model", CapabilityOwner.Model },
+                { "session", CapabilityOwner.Session },
+                { "view", CapabilityOwner.View },
+                { "motion", CapabilityOwner.MotionTransform },
             };
 
         private static readonly Dictionary<string, TypeRole> Roles =
@@ -283,6 +294,9 @@ namespace PmxEditorMcp.SignatureDump
             string path = members.ContainsKey(ConnectionPathName)
                 ? Text(members[ConnectionPathName], ConnectionPathName)
                 : string.Empty;
+            CapabilityOwner group = members.ContainsKey(GroupName)
+                ? ReadGroup(members[GroupName])
+                : CapabilityOwner.None;
 
             try
             {
@@ -292,7 +306,8 @@ namespace PmxEditorMcp.SignatureDump
                     Text(members[BasisName], BasisName),
                     noun,
                     plural,
-                    path);
+                    path,
+                    group);
             }
             catch (ArgumentException exception)
             {
@@ -334,12 +349,13 @@ namespace PmxEditorMcp.SignatureDump
 
             if (role == TypeRole.Connector)
             {
-                return new[] { TypeNameName, RoleName, BasisName, ElementNounName };
+                return new[] { TypeNameName, RoleName, BasisName, ElementNounName, GroupName };
             }
 
             return new[]
             {
                 TypeNameName, RoleName, BasisName, ElementNounName, ElementNounPluralName,
+                GroupName,
             };
         }
 
@@ -352,6 +368,18 @@ namespace PmxEditorMcp.SignatureDump
             return role == TypeRole.Connector
                 ? new[] { ConnectionPathName }
                 : new string[0];
+        }
+
+        private static CapabilityOwner ReadGroup(object value)
+        {
+            string text = Text(value, GroupName);
+            CapabilityOwner group;
+            if (!Groups.TryGetValue(text, out group))
+            {
+                throw new FormatException("知らない担当群: " + text);
+            }
+
+            return group;
         }
 
         /// <summary>要素名詞はツール名の一部になるので、小文字と数字と下線だけの語に限る。</summary>
