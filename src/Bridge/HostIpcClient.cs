@@ -326,6 +326,20 @@ namespace PmxEditorMcp.Bridge
                 + " へ。以前の応答は別のエディタのものである。";
         }
 
+        /// <summary>
+        /// ホストの応答が契約から外れているとブリッジが判じたときに、接続を捨てて誤りを作る。
+        /// 契約から外れた応答を返す相手とは、次の要求の応答も対応づけられない。
+        /// </summary>
+        public BridgeException Reject(string message)
+        {
+            if (message == null)
+            {
+                throw new ArgumentNullException(nameof(message));
+            }
+
+            return FailAndClose(BridgeErrorCodes.ProtocolError, message);
+        }
+
         /// <summary>保っている接続を閉じる。</summary>
         public void Dispose()
         {

@@ -629,6 +629,33 @@ namespace PmxEditorMcp.Bridge.Tests
             await pending;
         }
 
+        [Fact]
+        public async Task RejectClosesTheConnectionAndReportsAProtocolError()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            using HostIpcClient client = Connect(host);
+            await client.CallAsync("ping", null, CancellationToken.None);
+            Assert.True(client.IsConnected);
+
+            BridgeException error = client.Reject("ツールの応答が包みの形でない。");
+
+            Assert.Equal(BridgeErrorCodes.ProtocolError, error.Code);
+            Assert.Equal("ツールの応答が包みの形でない。", error.Message);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public void RejectRequiresAMessage()
+        {
+            using FakeHost host = new FakeHost().Start();
+            using HostIpcClient client = Connect(host);
+
+            Assert.Throws<ArgumentNullException>(() => client.Reject(null));
+        }
+
         private static HostIpcClient Connect(FakeHost host)
         {
             return new HostIpcClient(new FakeHostConnector(host.PipeName), BudgetChars);
