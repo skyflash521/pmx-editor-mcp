@@ -1,0 +1,245 @@
+{
+  "assignments": [
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.GetCPluginRunArgsClone(System.String)",
+      "assignment": "internalFlow",
+      "target": "connect",
+      "slotBinding": {
+        "return": "runArgsClone",
+        "receiver": "owningObject",
+        "parameters": {
+          "modulePath": "modulePath"
+        }
+      },
+      "basis": "Cプラグイン連携の入口になる接続の根の複製で、取得経路が一次資料で利用非推奨なのでホストが起動時に一度だけ得て常駐保持する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()",
+      "assignment": "internalFlow",
+      "target": "stateRead",
+      "slotBinding": {
+        "return": "pmxClone",
+        "receiver": "owningObject",
+        "parameters": {}
+      },
+      "basis": "現在のPMXの複製を得る呼び出しそのもので、読み取りのツールが内部で使う。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.LockUndo()",
+      "assignment": "commonArg",
+      "target": "suppressUndo",
+      "slotBinding": {
+        "receiver": "owningObject",
+        "parameters": {}
+      },
+      "basis": "Undoの抑止の指定を受けて対で呼ぶので、ツールの共通引数として現れる。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.UnlockUndo()",
+      "assignment": "commonArg",
+      "target": "suppressUndo",
+      "slotBinding": {
+        "receiver": "owningObject",
+        "parameters": {}
+      },
+      "basis": "Undoの抑止の指定を受けて対で呼ぶので、ツールの共通引数として現れる。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx)",
+      "assignment": "internalFlow",
+      "target": "duplicateEdit",
+      "slotBinding": {
+        "receiver": "owningObject",
+        "parameters": {
+          "px": "pmxClone"
+        }
+      },
+      "basis": "複製したPMXを反映する呼び出しそのもので、編集のツールが内部で使う。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32)",
+      "assignment": "internalFlow",
+      "target": "duplicateEdit",
+      "slotBinding": {
+        "receiver": "owningObject",
+        "parameters": {
+          "px": "pmxClone",
+          "obj": "updateKind",
+          "index": "updateIndices"
+        }
+      },
+      "basis": "複製したPMXを反映する呼び出しそのもので、編集のツールが内部で使う。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32[])",
+      "assignment": "internalFlow",
+      "target": "duplicateEdit",
+      "slotBinding": {
+        "receiver": "owningObject",
+        "parameters": {
+          "px": "pmxClone",
+          "obj": "updateKind",
+          "indices": "updateIndices"
+        }
+      },
+      "basis": "複製したPMXを反映する呼び出しそのもので、編集のツールが内部で使う。"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXEventConnector.ReleaseViewEventListener(PXCPlugin.Event.IPXViewEventListener)",
+      "assignment": "tool",
+      "target": "session_release_handle",
+      "slotBinding": {
+        "receiver": "owningObject",
+        "parameters": {
+          "l": "targetHandle"
+        }
+      },
+      "basis": "ハンドルの解放そのもので、解放のツールが台帳の失効と合わせて呼ぶ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginRunArgs.Connector()",
+      "assignment": "internalFlow",
+      "target": "connect",
+      "slotBinding": {
+        "return": "residentObject",
+        "receiver": "owningObject",
+        "parameters": {}
+      },
+      "basis": "コネクタ型の実体を返すので、ホストが起動時に一度得て常駐保持し、そのメンバーは型ごとのツールが受け持つ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.Builder()",
+      "assignment": "internalFlow",
+      "target": "connect",
+      "slotBinding": {
+        "return": "residentObject",
+        "parameters": {}
+      },
+      "basis": "コネクタ型の実体を返すので、ホストが起動時に一度得て常駐保持し、そのメンバーは型ごとのツールが受け持つ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.BuilderInitialize(PXCPlugin.IPXCPluginConnector)",
+      "assignment": "internalFlow",
+      "target": "connect",
+      "slotBinding": {
+        "parameters": {
+          "c": "injectedConnector"
+        }
+      },
+      "basis": "ビルダを使う前に一次資料が求める初期化で、ホストが起動時に内部実行する。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.GetCurrentPmx(PXCPlugin.IPXCPluginConnector)",
+      "assignment": "internalFlow",
+      "target": "stateRead",
+      "slotBinding": {
+        "return": "pmxClone",
+        "parameters": {
+          "c": "injectedConnector"
+        }
+      },
+      "basis": "Cプラグイン側から現在のPMXの複製を得る呼び出しで、読み取りのツールが内部で使う。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.PrimitiveBuilder()",
+      "assignment": "internalFlow",
+      "target": "connect",
+      "slotBinding": {
+        "return": "residentObject",
+        "parameters": {}
+      },
+      "basis": "コネクタ型の実体を返すので、ホストが起動時に一度得て常駐保持し、そのメンバーは型ごとのツールが受け持つ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.PrimitiveBuilderInitialize(PXCPlugin.IPXCPluginConnector)",
+      "assignment": "internalFlow",
+      "target": "connect",
+      "slotBinding": {
+        "parameters": {
+          "c": "injectedConnector"
+        }
+      },
+      "basis": "ビルダを使う前に一次資料が求める初期化で、ホストが起動時に内部実行する。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.ReleaseEventConnector(PXCPlugin.Event.IPXEventConnector)",
+      "assignment": "tool",
+      "target": "session_release_handle",
+      "slotBinding": {
+        "parameters": {
+          "ev": "targetHandle"
+        }
+      },
+      "basis": "ハンドルの解放そのもので、解放のツールが台帳の失効と合わせて呼ぶ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.SystemCtrl(PXCPlugin.IPXCPluginConnector)",
+      "assignment": "internalFlow",
+      "target": "connect",
+      "slotBinding": {
+        "return": "residentObject",
+        "parameters": {
+          "c": "injectedConnector"
+        }
+      },
+      "basis": "コネクタ型の実体を返すので、ホストが起動時に一度得て常駐保持し、そのメンバーは型ごとのツールが受け持つ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.UpdatePmx(PXCPlugin.IPXCPluginConnector,PEPlugin.Pmx.IPXPmx,System.Boolean)",
+      "assignment": "internalFlow",
+      "target": "duplicateEdit",
+      "slotBinding": {
+        "parameters": {
+          "c": "injectedConnector",
+          "pmx": "pmxClone",
+          "lockUndo": "undoLock"
+        }
+      },
+      "basis": "Cプラグイン側から複製したPMXを反映する呼び出しで、編集のツールが内部で使う。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.ViewCtrl(PXCPlugin.IPXCPluginConnector)",
+      "assignment": "internalFlow",
+      "target": "connect",
+      "slotBinding": {
+        "return": "residentObject",
+        "parameters": {
+          "c": "injectedConnector"
+        }
+      },
+      "basis": "コネクタ型の実体を返すので、ホストが起動時に一度得て常駐保持し、そのメンバーは型ごとのツールが受け持つ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Release()",
+      "assignment": "tool",
+      "target": "session_release_handle",
+      "slotBinding": {
+        "receiver": "targetHandle",
+        "parameters": {}
+      },
+      "basis": "ハンドルの解放そのもので、解放のツールが台帳の失効と合わせて呼ぶ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.ReleaseEventListener(PXCPlugin.Event.IPXUIModelEventListener)",
+      "assignment": "tool",
+      "target": "session_release_handle",
+      "slotBinding": {
+        "receiver": "owningObject",
+        "parameters": {
+          "listener": "targetHandle"
+        }
+      },
+      "basis": "ハンドルの解放そのもので、解放のツールが台帳の失効と合わせて呼ぶ。"
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Dispose()",
+      "assignment": "tool",
+      "target": "session_release_handle",
+      "slotBinding": {
+        "receiver": "targetHandle",
+        "parameters": {}
+      },
+      "basis": "ハンドルの解放そのもので、解放のツールが台帳の失効と合わせて呼ぶ。"
+    }
+  ]
+}

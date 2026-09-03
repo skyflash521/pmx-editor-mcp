@@ -28,6 +28,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>型役割表の正本が規則どおりに割り当てられていることを照合する。</summary>
         public const string TypeRolesCommand = "type-roles";
 
+        /// <summary>共通契約割当の正本が規則どおりに割り当てられていることを照合する。</summary>
+        public const string CommonAssignmentsCommand = "common-assignments";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -83,6 +86,11 @@ namespace PmxEditorMcp.SignatureDump
                 return TypeRoleRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], CommonAssignmentsCommand, StringComparison.Ordinal))
+            {
+                return CommonAssignmentRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -108,6 +116,10 @@ namespace PmxEditorMcp.SignatureDump
                 TypeRolesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <型役割表の正本のパス>");
+            error.WriteLine(
+                CommonAssignmentsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス> <共通契約割当の正本のパス>");
         }
     }
 }
