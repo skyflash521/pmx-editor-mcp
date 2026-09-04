@@ -105,8 +105,41 @@ namespace PmxEditorMcp.SignatureDump
         {
             Dictionary<string, object> members = Members(
                 item, SignatureKeyName, AssignmentName, TargetName, SlotBindingName, BasisName);
-            CommonAssignmentKind assignment = ReadKind(members[AssignmentName]);
-            string target = Text(members[TargetName], TargetName);
+            CommonAssignmentKind assignment = ReadAssignmentKind(members[AssignmentName]);
+            string target = ReadAssignmentTarget(members[TargetName], assignment);
+
+            try
+            {
+                return new CommonAssignmentRecord(
+                    Text(members[SignatureKeyName], SignatureKeyName),
+                    assignment,
+                    target,
+                    ReadSlotBinding(members[SlotBindingName]),
+                    Text(members[BasisName], BasisName));
+            }
+            catch (ArgumentException exception)
+            {
+                throw new FormatException(exception.Message, exception);
+            }
+        }
+
+        /// <summary>割当の種別を読む。能力対応表の共通契約割当行も同じ形で持つ。</summary>
+        internal static CommonAssignmentKind ReadAssignmentKind(object value)
+        {
+            string text = Text(value, AssignmentName);
+            CommonAssignmentKind kind;
+            if (!Kinds.TryGetValue(text, out kind))
+            {
+                throw new FormatException("知らない割当: " + text);
+            }
+
+            return kind;
+        }
+
+        /// <summary>割当の対象名を読む。能力対応表の共通契約割当行も同じ形で持つ。</summary>
+        internal static string ReadAssignmentTarget(object value, CommonAssignmentKind assignment)
+        {
+            string target = Text(value, TargetName);
             if (assignment == CommonAssignmentKind.InternalFlow)
             {
                 if (!Flows.ContainsKey(target))
@@ -128,34 +161,11 @@ namespace PmxEditorMcp.SignatureDump
                         + target);
             }
 
-            try
-            {
-                return new CommonAssignmentRecord(
-                    Text(members[SignatureKeyName], SignatureKeyName),
-                    assignment,
-                    target,
-                    ReadBinding(members[SlotBindingName]),
-                    Text(members[BasisName], BasisName));
-            }
-            catch (ArgumentException exception)
-            {
-                throw new FormatException(exception.Message, exception);
-            }
+            return target;
         }
 
-        private static CommonAssignmentKind ReadKind(object value)
-        {
-            string text = Text(value, AssignmentName);
-            CommonAssignmentKind kind;
-            if (!Kinds.TryGetValue(text, out kind))
-            {
-                throw new FormatException("知らない割当: " + text);
-            }
-
-            return kind;
-        }
-
-        private static SlotBinding ReadBinding(object value)
+        /// <summary>束縛を読む。能力対応表の共通契約割当行も同じ形で持つ。</summary>
+        internal static SlotBinding ReadSlotBinding(object value)
         {
             Dictionary<string, object> members = Members(
                 value, new[] { ParametersName }, new[] { ReturnName, ReceiverName });

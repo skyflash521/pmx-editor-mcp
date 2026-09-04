@@ -21,6 +21,13 @@ namespace PEPlugin.Pmx
     {
         int Index { get; }
     }
+
+    // 反映を一部に限るときの指定が引く列挙型も、同じ理由でSDKと同じ名前で持つ。
+    public enum PmxUpdateObject
+    {
+        Vertex,
+        Bone,
+    }
 }
 
 namespace PXCPlugin

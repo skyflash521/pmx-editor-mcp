@@ -8,7 +8,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ExcludedBaselineJsonReaderTests
     {
-
         private static IList<ExcludedBaselineEntry> Entries()
         {
             return new List<ExcludedBaselineEntry>

@@ -37,6 +37,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>危険操作に当たるシグネチャが、決め方と台帳で一致していることを照合する。</summary>
         public const string DangerousOperationsCommand = "dangerous-operations";
 
+        /// <summary>能力対応表の行が、シグネチャと台帳と特別規則の表に合うことを照合する。</summary>
+        public const string ToolMapCommand = "tool-map";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -107,6 +110,11 @@ namespace PmxEditorMcp.SignatureDump
                 return DangerousOperationRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], ToolMapCommand, StringComparison.Ordinal))
+            {
+                return ToolMapRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -143,6 +151,10 @@ namespace PmxEditorMcp.SignatureDump
             error.WriteLine(
                 DangerousOperationsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>");
+            error.WriteLine(
+                ToolMapCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>");
         }
     }
 }

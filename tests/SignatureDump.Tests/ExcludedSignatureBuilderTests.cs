@@ -8,7 +8,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ExcludedSignatureBuilderTests
     {
-
         private const string FrozenConstructor = "PEPlugin.SDX.M..ctor()";
 
         private const string PmdInit = "PEPlugin.Vmd.IPEVmd.Init(PEPlugin.Pmd.IPEPmd)";

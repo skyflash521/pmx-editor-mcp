@@ -122,6 +122,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("common-assignments", CommandRunner.CommonAssignmentsCommand);
             Assert.Equal("value-shapes", CommandRunner.ValueShapesCommand);
             Assert.Equal("dangerous-operations", CommandRunner.DangerousOperationsCommand);
+            Assert.Equal("tool-map", CommandRunner.ToolMapCommand);
         }
 
         [Fact]
@@ -395,6 +396,64 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ToolMapSubcommandRunsTheCollation()
+        {
+            string ledgerPath = Path.Combine(_root, "map-ledger.md");
+            File.WriteAllText(
+                ledgerPath,
+                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
+                    + "|---|---|---|---|---|---|" + Environment.NewLine
+                    + "| CAP-001 | 標本 | N.Absent | 提供 | モデル |  |" + Environment.NewLine);
+            string excludedPath = Path.Combine(_root, "map-excluded.json");
+            File.WriteAllText(excludedPath, "{\"signatures\":[]}");
+            string rolesPath = Path.Combine(_root, "map-roles.json");
+            File.WriteAllText(
+                rolesPath, "{\"types\":[],\"issuances\":[],\"collections\":[]}");
+            string assignmentsPath = Path.Combine(_root, "map-assignments.json");
+            File.WriteAllText(assignmentsPath, "{\"assignments\":[]}");
+            string mapPath = Path.Combine(_root, "map-rows.json");
+            File.WriteAllText(
+                mapPath,
+                "{\"rows\":[{\"signatureKey\":\"N.A.Absent()\",\"capabilityIds\":[\"CAP-001\"]"
+                    + ",\"rowKind\":\"eventBranch\",\"editKind\":\"read\""
+                    + ",\"direction\":\"read\",\"basis\":\"題材の根拠。\""
+                    + ",\"eventType\":\"view.click\"}]}");
+            string editorDirectory = CreateEditorDirectory();
+
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.ToolMapCommand,
+                    editorDirectory,
+                    ledgerPath,
+                    excludedPath,
+                    rolesPath,
+                    assignmentsPath,
+                    mapPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+
+            int missingCode = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.ToolMapCommand,
+                    Path.Combine(_root, "none"),
+                    ledgerPath,
+                    excludedPath,
+                    rolesPath,
+                    assignmentsPath,
+                    mapPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, missingCode);
+        }
+
+        [Fact]
         public void ExcludedSignaturesSubcommandRunsTheWrite()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
@@ -479,6 +538,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 CommandRunner.DangerousOperationsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ToolMapCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

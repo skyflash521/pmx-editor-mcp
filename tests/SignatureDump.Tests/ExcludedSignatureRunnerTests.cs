@@ -8,7 +8,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ExcludedSignatureRunnerTests : IDisposable
     {
-
         private const string Known = "PmxEditorMcp.SignatureDump.Tests.Sample.SampleData..ctor()";
 
         private const string Categorized =

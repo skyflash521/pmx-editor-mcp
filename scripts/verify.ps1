@@ -20,6 +20,7 @@ $outOfScope = "$specs/pmx-editor-mcp-ledger-out-of-scope.json"
 $roles = "$specs/pmx-editor-mcp-type-roles.json"
 $names = "$specs/pmx-editor-mcp-property-names.json"
 $assignments = "$specs/pmx-editor-mcp-common-assignments.json"
+$toolMap = "$specs/pmx-editor-mcp-tool-map.json"
 $contract = "$specs/pmx-editor-mcp-common-contract.md"
 $procedure = 'docs/conventions/verification.md'
 
@@ -137,6 +138,10 @@ try {
     $checks['危険操作の照合'] = @{
         Needs = $exclusionList
         Body = { & $dump dangerous-operations $editorDir $ledger $excluded }
+    }
+    $checks['能力対応表の照合'] = @{
+        Needs = $exclusionList
+        Body = { & $dump tool-map $editorDir $ledger $excluded $roles $assignments $toolMap }
     }
 
     $listed = @(Get-ListedChecks)
