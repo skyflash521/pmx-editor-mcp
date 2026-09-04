@@ -2,7 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <!-- 値の題材にSDKの座標型を使い、その実体はビット数ごとに置かれた描画ライブラリを参照する。
+         ホスト自身は呼び出し側のビット数に依存しないが、テストは実体を読み込むので、実行対象の
+         エディタ(PmxEditor_x64.exe)と同じ64ビットへそろえる。 -->
+    <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>PmxEditorMcp.HostPlugin.Tests</AssemblyName>
     <RootNamespace>PmxEditorMcp.Tests</RootNamespace>
     <LangVersion>latest</LangVersion>
@@ -25,6 +28,12 @@
          テストは配布物と別のプロセスで動くので、読み込めるよう出力へ複製する(出力は配布しない)。 -->
     <Reference Include="PEPlugin">
       <HintPath>$(PmxEditorDir)\Lib\PEPlugin\PEPlugin.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <!-- SDKの座標型が内部で参照する描画ライブラリ。エディタのプロセスでは読み込み済みだが、
+         テストのプロセスには無いので出力へ複製する。 -->
+    <Reference Include="SlimDX">
+      <HintPath>$(PmxEditorDir)\Lib\SlimDX\x64\SlimDX.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup>

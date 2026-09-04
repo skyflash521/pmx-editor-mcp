@@ -182,17 +182,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ListsOfMultiDimensionalArraysWrapEachLevel()
+        public void ListsOfMultiDimensionalArraysAreNotValuesEither()
         {
-            Assert.Equal(
-                "array_of_array_of_number",
-                Classify("System.Collections.Generic.IList<System.Byte[,]>").Identifier);
-        }
-
-        [Fact]
-        public void MultiDimensionalByteArraysKeepTheirShapeAsArraysOfNumbers()
-        {
-            Assert.Equal("array_of_number", Classify("System.Byte[,]").Identifier);
+            Assert.False(Rule().TryClassify(
+                "System.Collections.Generic.IList<System.Byte[,]>", out ValueRepresentation _));
         }
 
         [Fact]
@@ -211,10 +204,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("array_of_number", representation.Identifier);
         }
 
-        [Fact]
-        public void MultiDimensionalArraysWrapTheirElementTheSameWay()
+        [Theory]
+        [InlineData("System.Byte[,]")]
+        [InlineData("System.String[,]")]
+        [InlineData("System.Int32[,,]")]
+        [InlineData("System.Byte[,]&")]
+        public void MultiDimensionalArraysAreNotValues(string typeName)
         {
-            Assert.Equal("array_of_text", Classify("System.String[,]").Identifier);
+            Assert.False(Rule().TryClassify(typeName, out ValueRepresentation _));
         }
 
         [Fact]
@@ -245,7 +242,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData("System.Int32&", "number")]
         [InlineData("System.Byte[]&", "base64")]
-        [InlineData("System.Byte[,]&", "array_of_number")]
         [InlineData("System.Collections.Generic.IList<System.Byte>&", "base64")]
         [InlineData("System.Nullable<System.Int32>&", "nullable_number")]
         [InlineData("System.Nullable<System.Int32>[]&", "array_of_nullable_number")]

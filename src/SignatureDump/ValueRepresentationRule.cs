@@ -105,7 +105,7 @@ namespace PmxEditorMcp.SignatureDump
 
             if (TryGenericArgument(typeName, ListTypeName, out argument))
             {
-                return ForSequence(argument, true);
+                return ForSequence(argument);
             }
 
             if (enums.Contains(typeName))
@@ -127,21 +127,18 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             int separators = typeName.Skip(open + 1).Take(typeName.Length - open - 2).Count(c => c == ',');
-            if (separators != typeName.Length - open - 2)
+            if (separators != typeName.Length - open - 2 || separators != 0)
             {
                 return null;
             }
 
-            return ForSequence(typeName.Substring(0, open), separators == 0);
+            return ForSequence(typeName.Substring(0, open));
         }
 
-        /// <summary>
-        /// バイト列をBase64へ詰められるのは一列に並ぶときだけで、多次元の配列では各次元の長さが
-        /// 失われるので、要素の表現を包む一般の規則へ倒す。
-        /// </summary>
-        private ValueRepresentation ForSequence(string elementTypeName, bool isLinear)
+        /// <summary>一列に並ぶバイトはBase64へ詰め、それ以外は要素の表現を包む。</summary>
+        private ValueRepresentation ForSequence(string elementTypeName)
         {
-            if (isLinear && string.Equals(elementTypeName, ByteTypeName, StringComparison.Ordinal))
+            if (string.Equals(elementTypeName, ByteTypeName, StringComparison.Ordinal))
             {
                 return ValueRepresentation.Of(ValueRepresentationKind.Base64);
             }
