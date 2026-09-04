@@ -123,6 +123,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("value-shapes", CommandRunner.ValueShapesCommand);
             Assert.Equal("dangerous-operations", CommandRunner.DangerousOperationsCommand);
             Assert.Equal("tool-map", CommandRunner.ToolMapCommand);
+            Assert.Equal("tool-schemas", CommandRunner.ToolSchemasCommand);
         }
 
         [Fact]
@@ -454,6 +455,47 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ToolSchemasSubcommandRunsTheCollation()
+        {
+            string contractPath = Path.Combine(_root, "schemas-contract.md");
+            File.WriteAllText(
+                contractPath,
+                "### 表現の綴り" + Environment.NewLine
+                    + Environment.NewLine
+                    + "| 綴り | JSONの形 |" + Environment.NewLine
+                    + "|---|---|" + Environment.NewLine
+                    + "| `number` | 数値 |" + Environment.NewLine);
+            string mapPath = Path.Combine(_root, "schemas-map.json");
+            File.WriteAllText(mapPath, "{\"rows\":[]}");
+            string schemasPath = Path.Combine(_root, "schemas-tools.json");
+            File.WriteAllText(
+                schemasPath,
+                "{\"tools\":[{\"tool\":\"model_list_vertices\""
+                    + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
+                    + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}}]}");
+
+            int code = CommandRunner.Run(
+                new[] { CommandRunner.ToolSchemasCommand, contractPath, mapPath, schemasPath },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+
+            int missingCode = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.ToolSchemasCommand,
+                    Path.Combine(_root, "none.md"),
+                    mapPath,
+                    schemasPath,
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, missingCode);
+        }
+
+        [Fact]
         public void ExcludedSignaturesSubcommandRunsTheWrite()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
@@ -544,6 +586,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.ToolMapCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <型役割表の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ToolSchemasCommand
+                    + " <共通契約仕様書のパス> <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

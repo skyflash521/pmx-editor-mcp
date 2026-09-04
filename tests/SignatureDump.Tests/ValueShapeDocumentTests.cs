@@ -42,6 +42,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheSpellingsAreReadFromTheirOwnSection()
+        {
+            Assert.Equal(new[] { "number" }, ValueShapeDocument.ReadSpellings(Document));
+        }
+
+        [Fact]
+        public void ADocumentWithoutTheSpellingSectionStops()
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => ValueShapeDocument.ReadSpellings("## 値の表現\n"));
+        }
+
+        [Fact]
+        public void ASpellingSectionWithoutRowsStops()
+        {
+            Assert.Throws<InvalidOperationException>(() => ValueShapeDocument.ReadSpellings(
+                "### 表現の綴り\n\n| 綴り | JSONの形 |\n|---|---|\n\n### 次\n"));
+        }
+
+        [Fact]
+        public void ASpellingThatIsNotQuotedStops()
+        {
+            Assert.Throws<InvalidOperationException>(() => ValueShapeDocument.ReadSpellings(
+                "### 表現の綴り\n\n| 綴り | JSONの形 |\n|---|---|\n| number | 数値 |\n"));
+        }
+
+        [Fact]
+        public void TheDocumentIsRequiredToReadTheSpellings()
+        {
+            Assert.Throws<ArgumentNullException>(() => ValueShapeDocument.ReadSpellings(null));
+        }
+
+        [Fact]
         public void AWrappingTypeHasNoSpelling()
         {
             IList<ValueShapeRow> rows = ValueShapeDocument.Read(Document);

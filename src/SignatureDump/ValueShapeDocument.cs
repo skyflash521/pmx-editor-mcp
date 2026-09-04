@@ -35,6 +35,34 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>型ごとの表現の表を置く節の見出し。</summary>
         public const string SectionHeading = "### 型ごとの表現";
 
+        /// <summary>表現の綴りの表を置く節の見出し。</summary>
+        public const string SpellingHeading = "### 表現の綴り";
+
+        /// <summary>
+        /// 仕様書の本文から表現の綴りを読む。綴りの閉じた集合はこの表が持つので、綴りを名乗る
+        /// 値はここに実在するかで確かめる。
+        /// </summary>
+        public static ISet<string> ReadSpellings(string text)
+        {
+            if (text == null)
+            {
+                throw new ArgumentNullException(nameof(text));
+            }
+
+            HashSet<string> spellings = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string[] cells in Rows(text, SpellingHeading))
+            {
+                spellings.Add(Quoted(cells[0], string.Join(" | ", cells)));
+            }
+
+            if (spellings.Count == 0)
+            {
+                throw new InvalidOperationException("表に行が無い: " + SpellingHeading);
+            }
+
+            return spellings;
+        }
+
         /// <summary>仕様書の本文から表を読む。表が無いか行が読めなければ例外。</summary>
         public static IList<ValueShapeRow> Read(string text)
         {
@@ -43,15 +71,31 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(text));
             }
 
-            string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            int start = Array.FindIndex(
-                lines, l => string.Equals(l.Trim(), SectionHeading, StringComparison.Ordinal));
-            if (start < 0)
+            List<ValueShapeRow> rows = new List<ValueShapeRow>();
+            foreach (string[] cells in Rows(text, SectionHeading))
             {
-                throw new InvalidOperationException("節が無い: " + SectionHeading);
+                rows.Add(new ValueShapeRow(
+                    Quoted(cells[0], string.Join(" | ", cells)), Shape(cells[1])));
             }
 
-            List<ValueShapeRow> rows = new List<ValueShapeRow>();
+            if (rows.Count == 0)
+            {
+                throw new InvalidOperationException("表に行が無い: " + SectionHeading);
+            }
+
+            return new ReadOnlyCollection<ValueShapeRow>(rows);
+        }
+
+        /// <summary>見出しで場所を決め、そこから続く2列の表の本文の行を返す。</summary>
+        private static IEnumerable<string[]> Rows(string text, string heading)
+        {
+            string[] lines = text.Replace("\r\n", "\n").Split('\n');
+            int start = Array.FindIndex(
+                lines, l => string.Equals(l.Trim(), heading, StringComparison.Ordinal));
+            if (start < 0)
+            {
+                throw new InvalidOperationException("節が無い: " + heading);
+            }
 
             bool inBody = false;
             for (int index = start + 1; index < lines.Length; index++)
@@ -79,20 +123,11 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
-                if (!inBody)
+                if (inBody)
                 {
-                    continue;
+                    yield return cells;
                 }
-
-                rows.Add(new ValueShapeRow(Quoted(cells[0], line), Shape(cells[1])));
             }
-
-            if (rows.Count == 0)
-            {
-                throw new InvalidOperationException("表に行が無い: " + SectionHeading);
-            }
-
-            return new ReadOnlyCollection<ValueShapeRow>(rows);
         }
 
         private static string[] Cells(string line)

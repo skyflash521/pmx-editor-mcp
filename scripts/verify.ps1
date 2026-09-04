@@ -21,6 +21,7 @@ $roles = "$specs/pmx-editor-mcp-type-roles.json"
 $names = "$specs/pmx-editor-mcp-property-names.json"
 $assignments = "$specs/pmx-editor-mcp-common-assignments.json"
 $toolMap = "$specs/pmx-editor-mcp-tool-map.json"
+$toolSchemas = "$specs/pmx-editor-mcp-tool-schemas.json"
 $contract = "$specs/pmx-editor-mcp-common-contract.md"
 $procedure = 'docs/conventions/verification.md'
 
@@ -142,6 +143,10 @@ try {
     $checks['能力対応表の照合'] = @{
         Needs = $exclusionList
         Body = { & $dump tool-map $editorDir $ledger $excluded $roles $assignments $toolMap }
+    }
+    $checks['スキーマ正本の照合'] = @{
+        Needs = $buildOutput
+        Body = { & $dump tool-schemas $contract $toolMap $toolSchemas }
     }
 
     $listed = @(Get-ListedChecks)

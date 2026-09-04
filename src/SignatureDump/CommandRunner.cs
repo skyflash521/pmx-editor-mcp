@@ -40,6 +40,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>能力対応表の行が、シグネチャと台帳と特別規則の表に合うことを照合する。</summary>
         public const string ToolMapCommand = "tool-map";
 
+        /// <summary>スキーマ正本が、能力対応表と表現の綴りに合うことを照合する。</summary>
+        public const string ToolSchemasCommand = "tool-schemas";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -115,6 +118,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ToolMapRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], ToolSchemasCommand, StringComparison.Ordinal))
+            {
+                return ToolSchemaRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -155,6 +163,9 @@ namespace PmxEditorMcp.SignatureDump
                 ToolMapCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <型役割表の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>");
+            error.WriteLine(
+                ToolSchemasCommand
+                    + " <共通契約仕様書のパス> <能力対応表の正本のパス> <スキーマ正本のパス>");
         }
     }
 }
