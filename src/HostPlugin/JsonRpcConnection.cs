@@ -313,6 +313,7 @@ namespace PmxEditorMcp
                     continue;
                 }
 
+                int issuedBefore = scope.Handles.LastIssuedId;
                 object result;
                 if (isPing)
                 {
@@ -320,10 +321,14 @@ namespace PmxEditorMcp
                 }
                 else if (!TryInvoke(channel, errors, request, method, parameters, scope, out result))
                 {
+                    DiscardHandles(scope, issuedBefore);
                     continue;
                 }
 
-                WriteResult(channel, errors, request.Id, result);
+                if (!WriteResult(channel, errors, request.Id, result))
+                {
+                    DiscardHandles(scope, issuedBefore);
+                }
             }
         }
 
@@ -492,7 +497,8 @@ namespace PmxEditorMcp
             Respond(channel, errors, request.Id, JsonRpcErrorCodes.InternalError, "要求の処理で例外が起きた。");
         }
 
-        private void WriteResult(
+        /// <summary>結果を書き出せたときは真。書き出せずに誤りへ寄せたときは偽。</summary>
+        private bool WriteResult(
             MessageChannel channel, ErrorResponseCounter errors, object id, object result)
         {
             string line;
@@ -504,17 +510,31 @@ namespace PmxEditorMcp
             {
                 _log.WriteException("応答の組み立てで例外が起きた。", exception);
                 Respond(channel, errors, id, JsonRpcErrorCodes.InternalError, "応答を組み立てられなかった。");
-                return;
+                return false;
             }
 
             if (MessageChannel.MeasureBytes(line) > channel.MaxMessageBytes)
             {
                 Respond(channel, errors, id, JsonRpcErrorCodes.ResponseTooLarge,
                     "応答のメッセージが上限のバイト数を超えた。");
-                return;
+                return false;
             }
 
             channel.Write(line);
+
+            return true;
+        }
+
+        /// <summary>結果が呼び出し側へ届かなかったときに、その処理が発行したハンドルを失効させる。</summary>
+        private void DiscardHandles(ConnectionScope scope, int issuedBefore)
+        {
+            HandleReleaseResult discarded = scope.Handles.ReleaseIssuedAfter(issuedBefore);
+            if (discarded.Invalidated.Count > 0)
+            {
+                _log.Write(
+                    "届かなかった結果のハンドルの解放: 件数=" + discarded.Invalidated.Count
+                        + " 失敗=" + discarded.Failed.Count);
+            }
         }
 
         private void Respond(

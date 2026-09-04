@@ -657,6 +657,148 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void HandlesAreInvalidatedWhenTheResultCannotBeBuilt()
+        {
+            int issued = 0;
+            bool validAfterwards = true;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("looped", context =>
+            {
+                issued = context.Handles.Issue("uiModel", new object(), () => { });
+                Dictionary<string, object> looped = new Dictionary<string, object>();
+                looped["self"] = looped;
+
+                return looped;
+            });
+            methods.Add("check", context =>
+            {
+                validAfterwards = context.Handles.IsValid(issued);
+
+                return "ok";
+            });
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "looped"), Request(3, "check"));
+
+            Assert.Equal(JsonRpcErrorCodes.InternalError, ErrorCodeOf(responses[1]));
+            Assert.True(issued > 0);
+            Assert.False(validAfterwards);
+        }
+
+        [Fact]
+        public void HandlesAreInvalidatedWhenTheMethodEndsWithAnException()
+        {
+            int issued = 0;
+            bool validAfterwards = true;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("boom", context =>
+            {
+                issued = context.Handles.Issue("uiModel", new object(), () => { });
+
+                throw new InvalidOperationException("失敗した。");
+            });
+            methods.Add("check", context =>
+            {
+                validAfterwards = context.Handles.IsValid(issued);
+
+                return "ok";
+            });
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "boom"), Request(3, "check"));
+
+            Assert.Equal(JsonRpcErrorCodes.InternalError, ErrorCodeOf(responses[1]));
+            Assert.True(issued > 0);
+            Assert.False(validAfterwards);
+        }
+
+        [Fact]
+        public void HandlesAreInvalidatedWhenTheResultIsTooLargeToSend()
+        {
+            using (ExchangeStream stream = new ExchangeStream(
+                Lines(Handshake(), Request(2, "big"), Request(3, "check"))))
+            {
+                int issued = 0;
+                bool validAfterwards = true;
+                McpMethodTable methods = new McpMethodTable();
+                methods.Add("big", context =>
+                {
+                    issued = context.Handles.Issue("uiModel", new object(), () => { });
+
+                    return new string('a', 4096);
+                });
+
+                methods.Add("check", context =>
+                {
+                    validAfterwards = context.Handles.IsValid(issued);
+
+                    return "ok";
+                });
+
+                CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024)
+                    .Handle(stream, new InlineInvoker());
+
+                IList<IDictionary<string, object>> responses = stream.ReadResponses();
+                Assert.Equal(JsonRpcErrorCodes.ResponseTooLarge, ErrorCodeOf(responses[1]));
+                Assert.True(issued > 0);
+                Assert.False(validAfterwards);
+            }
+        }
+
+        [Fact]
+        public void HandlesIssuedByADiscardedRequestAreInvalidated()
+        {
+            using (ManualResetEventSlim started = new ManualResetEventSlim())
+            using (ManualResetEventSlim release = new ManualResetEventSlim())
+            using (ExchangeStream stream = new ExchangeStream(
+                Lines(Handshake(), Request(2, "slow"), Request(3, "check"))))
+            {
+                int issued = 0;
+                bool validAfterwards = true;
+                McpMethodTable methods = new McpMethodTable();
+                methods.Add("slow", context =>
+                {
+                    issued = context.Handles.Issue("uiModel", new object(), () => { });
+                    started.Set();
+                    release.Wait(WaitLimit);
+
+                    return issued;
+                });
+
+                methods.Add("check", context =>
+                {
+                    validAfterwards = context.Handles.IsValid(issued);
+
+                    return "ok";
+                });
+
+                JsonRpcConnection connection = CreateConnection(
+                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes);
+
+                Thread worker = new Thread(() => connection.Handle(stream, new InlineInvoker()));
+                worker.IsBackground = true;
+                worker.Start();
+
+                try
+                {
+                    Assert.True(started.Wait(WaitLimit));
+                    Assert.True(stream.WaitForMessages(2, WaitLimit));
+                }
+                finally
+                {
+                    release.Set();
+                    worker.Join(WaitLimit);
+                }
+
+                Assert.True(issued > 0);
+                Assert.False(validAfterwards);
+
+                string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+                Assert.Contains("届かなかった結果のハンドルの解放", log);
+            }
+        }
+
+        [Fact]
         public void TimeoutResponseIsReturnedWithoutWaitingAndNextReadWaitsForCompletion()
         {
             using (ManualResetEventSlim started = new ManualResetEventSlim())

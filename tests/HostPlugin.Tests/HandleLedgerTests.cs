@@ -318,6 +318,89 @@ namespace PmxEditorMcp.Tests
             Assert.Throws<ArgumentNullException>(() => _ledger.TryGet(1, null, out found));
         }
 
+        [Fact]
+        public void NothingIssuedYetMeansTheLastIdIsZero()
+        {
+            Assert.Equal(0, _ledger.LastIssuedId);
+        }
+
+        [Fact]
+        public void TheLastIdFollowsTheHandlesThatWereIssued()
+        {
+            int first = Issue(UiModel);
+
+            Assert.Equal(first, _ledger.LastIssuedId);
+
+            int second = Issue(UiModel);
+
+            Assert.Equal(second, _ledger.LastIssuedId);
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterAnIdLeavesTheEarlierHandlesAlone()
+        {
+            int kept = Issue(UiModel);
+            int mark = _ledger.LastIssuedId;
+            int later = Issue(UiModel);
+
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(mark);
+
+            Assert.Equal(new[] { later }, result.Invalidated);
+            Assert.Empty(result.Failed);
+            Assert.True(_ledger.IsValid(kept));
+            Assert.False(_ledger.IsValid(later));
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterAnIdGoesFromTheChildToWhatItDependsOn()
+        {
+            int mark = _ledger.LastIssuedId;
+            int model = Issue(UiModel);
+            int listener = Issue(Listener, model);
+
+            _ledger.ReleaseIssuedAfter(mark);
+
+            Assert.Equal(new[] { listener, model }, _releases);
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterAnIdTakesAChildOfAHandleIssuedEarlier()
+        {
+            int model = Issue(UiModel);
+            int mark = _ledger.LastIssuedId;
+            int listener = Issue(Listener, model);
+
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(mark);
+
+            Assert.Equal(new[] { listener }, result.Invalidated);
+            Assert.False(_ledger.IsValid(listener));
+            Assert.True(_ledger.IsValid(model));
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterTheLastIdReleasesNothing()
+        {
+            Issue(UiModel);
+
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(_ledger.LastIssuedId);
+
+            Assert.Empty(result.Invalidated);
+            Assert.Empty(result.Failed);
+            Assert.Empty(_releases);
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterAnIdDoesNotCloseTheLedger()
+        {
+            int mark = _ledger.LastIssuedId;
+            Issue(UiModel);
+
+            _ledger.ReleaseIssuedAfter(mark);
+
+            Assert.False(_ledger.IsClosed);
+            Assert.True(Issue(UiModel) > 0);
+        }
+
         private int Issue(string type, int? dependency = null)
         {
             int id = 0;

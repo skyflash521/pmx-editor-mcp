@@ -74,6 +74,18 @@ namespace PmxEditorMcp
             }
         }
 
+        /// <summary>最後に発行したハンドルのID。まだ1件も発行していなければ0。</summary>
+        public int LastIssuedId
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return _lastId;
+                }
+            }
+        }
+
         /// <summary>
         /// ハンドルを発行する。<paramref name="dependencies"/> は生成に関与したハンドルで、
         /// この実体はそれらより先に解放される。有効でない依存元を渡すのは呼び出し側の誤り。
@@ -182,6 +194,33 @@ namespace PmxEditorMcp
             result = ReleaseInOrder(taken);
 
             return true;
+        }
+
+        /// <summary>
+        /// 指定したIDより後に発行したハンドルを解放し、失効させる。解放の順はまとめて解放するときと
+        /// 同じく子から依存元へ。結果を破棄する呼び出しの後始末に使うもので、台帳は閉じない。
+        /// </summary>
+        public HandleReleaseResult ReleaseIssuedAfter(int id)
+        {
+            List<Taken> taken;
+            lock (_gate)
+            {
+                List<int> order = new List<int>();
+                foreach (int issued in _entries.Keys.Where(i => i > id).OrderByDescending(i => i))
+                {
+                    foreach (int dependent in Dependents(issued).Concat(new[] { issued }))
+                    {
+                        if (!order.Contains(dependent))
+                        {
+                            order.Add(dependent);
+                        }
+                    }
+                }
+
+                taken = Take(order);
+            }
+
+            return ReleaseInOrder(taken);
         }
 
         /// <summary>
