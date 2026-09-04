@@ -149,9 +149,16 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 値として写せる型かどうか。要素の表現が決まらない並びも写せないので、要素まで見て決める。
+        /// 参照渡しと値が無いことを許す形は、包まれた側で決まる。
         /// </summary>
-        private static bool IsValue(Type target)
+        public static bool IsValue(Type declared)
         {
+            if (declared == null)
+            {
+                throw new ArgumentNullException(nameof(declared));
+            }
+
+            Type target = declared.IsByRef ? declared.GetElementType() : declared;
             Type underlying = Nullable.GetUnderlyingType(target);
             if (underlying != null)
             {
@@ -168,6 +175,31 @@ namespace PmxEditorMcp
                 || target == typeof(object)
                 || Components.ContainsKey(FullName(target))
                 || Fixed.Contains(target);
+        }
+
+        /// <summary>成分を並べる型なら、並べる順の成分名を渡す。</summary>
+        public static bool TryComponentNames(Type declared, out IList<string> components)
+        {
+            if (declared == null)
+            {
+                throw new ArgumentNullException(nameof(declared));
+            }
+
+            string[] names;
+            components = Components.TryGetValue(FullName(declared), out names) ? names : null;
+
+            return components != null;
+        }
+
+        /// <summary>一列に並ぶ配列とリストなら、その要素の型を渡す。</summary>
+        public static bool TryElementTypeOf(Type declared, out Type element)
+        {
+            if (declared == null)
+            {
+                throw new ArgumentNullException(nameof(declared));
+            }
+
+            return TryElementType(declared, out element);
         }
 
         private static bool TryFixed(
