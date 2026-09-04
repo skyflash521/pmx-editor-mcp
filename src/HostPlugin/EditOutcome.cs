@@ -2,6 +2,22 @@ using System;
 
 namespace PmxEditorMcp
 {
+    /// <summary>呼び出しがエディタの状態か外部へどう作用するかの分類。</summary>
+    public enum EditKind
+    {
+        /// <summary>どちらへも作用しない。</summary>
+        Read,
+
+        /// <summary>いまの状態を複製して変え、まとめて反映する。</summary>
+        DuplicateEdit,
+
+        /// <summary>モデルのデータ・長寿命のオブジェクト・ファイルへ直に作用する。</summary>
+        DirectChange,
+
+        /// <summary>表示と設定とセッションだけを動かす。</summary>
+        ViewSession,
+    }
+
     /// <summary>反映を確定させる呼び出しを境にした、失敗した位置。</summary>
     public enum EditStage
     {
