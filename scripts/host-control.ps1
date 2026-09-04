@@ -1,6 +1,6 @@
 # 実機動作確認で使うホストの操作役。
 # PMXエディタの起動と終了、プラグインメニューからの稼働状態の確認・停止・開始、
-# 待ち受けているホストのパイプの一覧を、画面を人手で操作せずに行う。
+# 待ち受けているホストのパイプの一覧と権限を、画面を人手で操作せずに行う。
 # メニューはWinFormsのToolStripでWin32のHMENUではないため、UI Automationで辿る。
 # メニューの文言と確認ボタンの表示名を手がかりにするので、Windowsの表示言語が日本語である
 # ことを前提にする。
@@ -20,8 +20,9 @@ param(
     #   status プラグインメニューの稼働状態を表示させ、本文を読んで閉じる
     #   stop   稼働中のホストを停止し、待受の消失と状態区分が停止済みになるまで待つ
     #   start  停止済みのホストを開始し、待受が現れるまで待つ
+    #   acl    指定したエディタの待受のパイプに掛かっている権限の規則を表示する
     [Parameter(Mandatory = $true)]
-    [ValidateSet("pipes", "launch", "close", "status", "stop", "start")]
+    [ValidateSet("pipes", "launch", "close", "status", "stop", "start", "acl")]
     [string]$Action,
 
     # 操作の対象にするエディタのプロセスID。pipes と launch では使わない。
@@ -34,6 +35,8 @@ param(
 )
 
 Set-StrictMode -Version Latest
+
+. (Join-Path $PSScriptRoot 'editor-dir.ps1')
 $ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName UIAutomationClient
@@ -128,46 +131,6 @@ function Get-EditorProcess {
     }
 
     $process
-}
-
-function Get-EditorDirectory {
-    <#
-        .SYNOPSIS
-        PMXエディタの導入先を local.props から読む。ビルドが参照するのと同じ定義を使う。
-        XMLとして読むのは、値に含まれる実体参照を元の文字へ戻すため。
-    #>
-    $propsPath = Join-Path (Split-Path -Parent $PSScriptRoot) "local.props"
-    if (-not (Test-Path $propsPath)) {
-        throw "local.props が無い。PmxEditorDir を定義する必要がある: $propsPath"
-    }
-
-    $document = New-Object System.Xml.XmlDocument
-    $document.Load((Resolve-Path $propsPath))
-    $nodes = @($document.GetElementsByTagName("PmxEditorDir"))
-    if ($nodes.Count -eq 0) { throw "local.props に PmxEditorDir が無い: $propsPath" }
-    if ($nodes.Count -gt 1) {
-        throw "local.props の PmxEditorDir が $($nodes.Count) 個ある。ビルドがどれを採る" +
-            "かはMSBuildの評価に依るので、この操作役では決められない: $propsPath"
-    }
-
-    # 条件や選択の構造の下にあると、ビルドが採る値はMSBuildの評価に依る。祖先まで遡って見る。
-    $node = $nodes[0]
-    for ($ancestor = $node; $ancestor -is [System.Xml.XmlElement]; $ancestor = $ancestor.ParentNode) {
-        if ($ancestor.HasAttribute("Condition")) {
-            throw "PmxEditorDir が条件付きの $($ancestor.Name) の下にあって、この操作役では" +
-                "解決できない: $propsPath"
-        }
-        if (@("Choose", "When", "Otherwise") -contains $ancestor.Name) {
-            throw "PmxEditorDir が $($ancestor.Name) の下にあって、この操作役では解決できない: $propsPath"
-        }
-    }
-
-    $value = $node.InnerText.Trim()
-    if ($value -match "\`$\(") {
-        throw "PmxEditorDir がMSBuildの式を含んでいて、この操作役では解決できない: $value"
-    }
-
-    $value
 }
 
 function Get-ProcessElements {
@@ -682,5 +645,23 @@ switch ($Action) {
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         Invoke-HostOperation -OwnerProcessId $ProcessId -Operation "start"
         Wait-HostPipe -OwnerProcessId $ProcessId -Until Present
+    }
+    "acl" {
+        Assert-ProcessId
+        $pipe = New-Object System.IO.Pipes.NamedPipeClientStream(
+            ".",
+            "pmx-editor-mcp-$ProcessId",
+            [System.IO.Pipes.PipeAccessRights]"ReadWrite, ReadPermissions",
+            [System.IO.Pipes.PipeOptions]::None,
+            [System.Security.Principal.TokenImpersonationLevel]::None,
+            [System.IO.HandleInheritability]::None)
+        try {
+            $pipe.Connect($TimeoutSeconds * 1000)
+            [System.IO.Pipes.PipesAclExtensions]::GetAccessControl($pipe).GetAccessRules(
+                $true, $true, [System.Security.Principal.NTAccount])
+        }
+        finally {
+            $pipe.Dispose()
+        }
     }
 }

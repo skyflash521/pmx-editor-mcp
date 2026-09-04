@@ -21,7 +21,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             LedgerCoverageResult result = LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route)));
 
@@ -50,7 +49,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => LedgerCoverage.Verify(
                     Ledger(Row("CAP-001", Thing)),
                     new InventoryRecord("Sample", "1.0.0.0", types, new List<TypeRecord>(), signatures),
-                    Baseline(),
                     Excluded(),
                     OutOfScope()));
 
@@ -66,7 +64,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope()));
         }
@@ -77,7 +74,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -88,7 +84,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry("N.IMissing", OutOfScopeReason.Route))));
         }
@@ -99,7 +94,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.ArgumentOnly))));
         }
@@ -110,7 +104,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Hub)),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry(Thing, OutOfScopeReason.Route))));
         }
@@ -129,7 +122,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
                 new InventoryRecord("Sample", "1.0.0.0", types, new List<TypeRecord>(), signatures),
-                Baseline(),
                 Excluded(),
                 OutOfScope()));
         }
@@ -140,7 +132,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             LedgerCoverageResult result = LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", "IHub.Name")),
                 WithNamedMember(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(new OutOfScopeTypeEntry[0], new[] { SignatureEntry(Route) }));
 
@@ -161,7 +152,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", "IHub.Thing")),
                 WithNamedMember(),
-                Baseline(),
                 Excluded(),
                 new LedgerOutOfScopeRecord(new List<OutOfScopeTypeEntry>(), signatures)));
         }
@@ -177,7 +167,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 new LedgerOutOfScopeRecord(new List<OutOfScopeTypeEntry>(), signatures)));
         }
@@ -194,7 +183,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             };
 
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
-                ledger, Inventory(), Baseline(), Excluded(), OutOfScope()));
+                ledger, Inventory(), Excluded(), OutOfScope()));
         }
 
         [Fact]
@@ -203,43 +192,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(
                     new[] { TypeEntry(Hub, OutOfScopeReason.Route) },
                     new[] { SignatureEntry(Route) })));
-        }
-
-        [Fact]
-        public void ExclusionListDifferentFromTheComputedExpectationFailsCollation()
-        {
-            IList<ExcludedSignatureRecord> wrong = new List<ExcludedSignatureRecord>
-            {
-                ExcludedSignatureRecord.FromBaseline(Run, "CAP-001"),
-            };
-
-            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
-                Ledger(Row("CAP-001", Thing)),
-                Inventory(),
-                Baseline(),
-                wrong,
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
-        }
-
-        [Fact]
-        public void ExclusionListMissingAFrozenPairFailsCollation()
-        {
-            IList<ExcludedBaselineEntry> baseline = new List<ExcludedBaselineEntry>
-            {
-                new ExcludedBaselineEntry("CAP-001", new List<string> { Run }),
-            };
-
-            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
-                Ledger(Row("CAP-001", Thing)),
-                Inventory(),
-                baseline,
-                Excluded(),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
 
         [Fact]
@@ -250,7 +206,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             LedgerCoverageResult result = LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1")),
                 Inventory(),
-                baseline,
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route)));
 
@@ -266,7 +221,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             LedgerCoverageResult result = LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1。契約注記: 代替を使う")),
                 Inventory(),
-                baseline,
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route)));
 
@@ -281,7 +235,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 2")),
                 Inventory(),
-                baseline,
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -294,7 +247,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Row("CAP-001", Thing)),
                 Inventory(),
-                baseline,
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -305,7 +257,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1")),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -316,7 +267,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 0")),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -349,7 +299,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                     ledger,
                     Inventory(),
-                    baseline,
                     excluded,
                     OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
             }
@@ -363,7 +312,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1件")),
                 Inventory(),
-                baseline,
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -376,7 +324,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1。非対応件数: 2")),
                 Inventory(),
-                baseline,
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -407,7 +354,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Counted("CAP-001", "IBase", "非対応件数: 1"),
                     Counted("CAP-002", "IDerived", "非対応件数: 1")),
                 inventory,
-                baseline,
                 excluded,
                 OutOfScope());
 
@@ -418,7 +364,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Counted("CAP-001", "IBase", "非対応件数: 1"),
                     Row("CAP-002", "IDerived")),
                 inventory,
-                baseline,
                 excluded,
                 OutOfScope()));
         }
@@ -429,7 +374,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 多数")),
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -440,7 +384,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 Ledger(Counted("CAP-001", Thing, "契約注記: 非対応件数: 1")),
                 Inventory(),
-                Frozen2(),
                 ExcludedSignatureBuilder.Build(Frozen2(), Inventory()),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -459,7 +402,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
                 ledger,
                 Inventory(),
-                Baseline(),
                 Excluded(),
                 OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
         }
@@ -471,15 +413,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             LedgerOutOfScopeRecord outOfScope = OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route));
 
             Assert.Throws<ArgumentNullException>(() => LedgerCoverage.Verify(
-                null, Inventory(), Baseline(), Excluded(), outOfScope));
+                null, Inventory(), Excluded(), outOfScope));
             Assert.Throws<ArgumentNullException>(() => LedgerCoverage.Verify(
-                ledger, null, Baseline(), Excluded(), outOfScope));
+                ledger, null, Excluded(), outOfScope));
             Assert.Throws<ArgumentNullException>(() => LedgerCoverage.Verify(
-                ledger, Inventory(), null, Excluded(), outOfScope));
+                ledger, Inventory(), null, outOfScope));
             Assert.Throws<ArgumentNullException>(() => LedgerCoverage.Verify(
-                ledger, Inventory(), Baseline(), null, outOfScope));
-            Assert.Throws<ArgumentNullException>(() => LedgerCoverage.Verify(
-                ledger, Inventory(), Baseline(), Excluded(), null));
+                ledger, Inventory(), Excluded(), null));
         }
 
         private static InventoryRecord Inventory()
@@ -583,11 +523,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CapabilityStatus.NotSupported,
                 CapabilityOwner.None,
                 string.Empty);
-        }
-
-        private static IList<ExcludedBaselineEntry> Baseline()
-        {
-            return new List<ExcludedBaselineEntry>();
         }
 
         /// <summary>行が指すシグネチャを1件だけ凍結した組。</summary>

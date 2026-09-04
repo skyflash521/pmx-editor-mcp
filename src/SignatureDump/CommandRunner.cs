@@ -122,8 +122,8 @@ namespace PmxEditorMcp.SignatureDump
                     + " <PMXエディタ導入ディレクトリ> <ベースライン正本のパス> <書き出し先パス>");
             error.WriteLine(
                 LedgerCoverageCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <ベースライン正本のパス>"
-                    + " <除外一覧のパス> <対象外一覧のパス>");
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <対象外一覧のパス>");
             error.WriteLine(
                 PropertyNamesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"

@@ -11,8 +11,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class LedgerCoverageRunnerTests : IDisposable
     {
-        private const string EmptyBaseline = "{\"capabilities\":[]}\n";
-
         private const string EmptyOutOfScope = "{\"types\":[],\"signatures\":[]}\n";
 
         private readonly string _root;
@@ -37,7 +35,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 4, 6 })
+            foreach (int count in new[] { 0, 1, 2, 3, 5 })
             {
                 StringWriter error = new StringWriter();
 
@@ -55,7 +53,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = LedgerCoverageRunner.Run(
-                new[] { Path.Combine(_root, "missing"), Write("l.md", Ledger()), Write("b.json", EmptyBaseline), Write("e.json", Excluded()), Write("o.json", EmptyOutOfScope) },
+                new[] { Path.Combine(_root, "missing"), Write("l.md", Ledger()), Write("e.json", Excluded()), Write("o.json", EmptyOutOfScope) },
                 new StringWriter(),
                 error);
 
@@ -70,7 +68,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 editor,
                 Write("l.md", Ledger()),
-                Write("b.json", EmptyBaseline),
                 Write("e.json", Excluded()),
                 Write("o.json", EmptyOutOfScope),
             };
@@ -94,7 +91,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = LedgerCoverageRunner.Run(
-                new[] { CreateEditorDirectory(), Write("l.md", Ledger()), Write("b.json", "{"), Write("e.json", Excluded()), Write("o.json", EmptyOutOfScope) },
+                new[] { CreateEditorDirectory(), Write("l.md", Ledger()), Write("e.json", "{"), Write("o.json", EmptyOutOfScope) },
                 new StringWriter(),
                 error);
 
@@ -108,7 +105,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter output = new StringWriter();
 
             int code = LedgerCoverageRunner.Run(
-                new[] { CreateEditorDirectory(), Write("l.md", Ledger()), Write("b.json", EmptyBaseline), Write("e.json", Excluded()), Write("o.json", EmptyOutOfScope) },
+                new[] { CreateEditorDirectory(), Write("l.md", Ledger()), Write("e.json", Excluded()), Write("o.json", EmptyOutOfScope) },
                 output,
                 new StringWriter());
 
@@ -136,7 +133,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = LedgerCoverageRunner.Run(
-                new[] { CreateEditorDirectory(), Write("l.md", Ledger()), Write("b.json", EmptyBaseline), Write("e.json", Excluded()), Write("o.json", outOfScope) },
+                new[] { CreateEditorDirectory(), Write("l.md", Ledger()), Write("e.json", Excluded()), Write("o.json", outOfScope) },
                 new StringWriter(),
                 error);
 
@@ -154,14 +151,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string[] inputs =
             {
                 Write("l.md", Ledger()),
-                Write("b.json", EmptyBaseline),
                 Write("e.json", Excluded()),
                 Write("o.json", EmptyOutOfScope),
             };
             string[] before = Fingerprints();
 
             int code = LedgerCoverageRunner.Run(
-                new[] { editor, inputs[0], inputs[1], inputs[2], inputs[3] },
+                new[] { editor, inputs[0], inputs[1], inputs[2] },
                 new StringWriter(),
                 new StringWriter());
 
@@ -176,28 +172,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = LedgerCoverageRunner.Run(
-                new[] { CreateEditorDirectory(), Write("l.md", Ledger(1)), Write("b.json", EmptyBaseline), Write("e.json", Excluded()), Write("o.json", EmptyOutOfScope) },
+                new[] { CreateEditorDirectory(), Write("l.md", Ledger(1)), Write("e.json", Excluded()), Write("o.json", EmptyOutOfScope) },
                 new StringWriter(),
                 error);
 
             Assert.Equal(ExitCodes.Unresolved, code);
             Assert.Contains(dropped, error.ToString(), StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void DroppingAnExclusionReportsItsKeyAndFailsCollation()
-        {
-            ExcludedSignatureRecord removed = Records()[0];
-            string trimmed = ExcludedSignatureJson.Write(Records().Skip(1).ToList());
-            StringWriter error = new StringWriter();
-
-            int code = LedgerCoverageRunner.Run(
-                new[] { CreateEditorDirectory(), Write("l.md", Ledger()), Write("b.json", EmptyBaseline), Write("e.json", trimmed), Write("o.json", EmptyOutOfScope) },
-                new StringWriter(),
-                error);
-
-            Assert.Equal(ExitCodes.Unresolved, code);
-            Assert.Contains(removed.Key, error.ToString(), StringComparison.Ordinal);
         }
 
         /// <summary>

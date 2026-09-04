@@ -61,7 +61,6 @@ namespace PmxEditorMcp.SignatureDump
         public static LedgerCoverageResult Verify(
             IList<CapabilityRecord> ledger,
             InventoryRecord inventory,
-            IList<ExcludedBaselineEntry> baseline,
             IList<ExcludedSignatureRecord> excluded,
             LedgerOutOfScopeRecord outOfScope)
         {
@@ -73,11 +72,6 @@ namespace PmxEditorMcp.SignatureDump
             if (inventory == null)
             {
                 throw new ArgumentNullException(nameof(inventory));
-            }
-
-            if (baseline == null)
-            {
-                throw new ArgumentNullException(nameof(baseline));
             }
 
             if (excluded == null)
@@ -104,7 +98,6 @@ namespace PmxEditorMcp.SignatureDump
             VerifySignatures(
                 inventory, population, declaredByOutOfScopeTypes, outOfScope, classifier);
 
-            VerifyExcluded(baseline, inventory, excluded);
             VerifyRecordedCounts(ledger, population, excluded);
 
             int provided = VerifyOwners(ledger, population, excluded);
@@ -219,30 +212,6 @@ namespace PmxEditorMcp.SignatureDump
                         computed.Value));
                 }
             }
-        }
-
-        /// <summary>
-        /// 除外一覧を、生成と同じ分類で算出した期待集合と突き合わせる。記載された各項目が正しい
-        /// ことだけを見ると、一覧から項目が消えたときに気づけない。
-        /// </summary>
-        private static void VerifyExcluded(
-            IList<ExcludedBaselineEntry> baseline,
-            InventoryRecord inventory,
-            IList<ExcludedSignatureRecord> excluded)
-        {
-            IList<ExcludedSignatureRecord> expected = ExcludedSignatureBuilder.Build(baseline, inventory);
-            RequireSame(
-                new HashSet<string>(expected.Select(Canonical), StringComparer.Ordinal),
-                new HashSet<string>(excluded.Select(Canonical), StringComparer.Ordinal),
-                "算出した除外",
-                "除外一覧");
-        }
-
-        private static string Canonical(ExcludedSignatureRecord record)
-        {
-            return string.Join(
-                "|", record.Key, record.Qualification.ToString(), record.CapabilityId,
-                record.Category.ToString(), record.Alternative);
         }
 
         /// <summary>

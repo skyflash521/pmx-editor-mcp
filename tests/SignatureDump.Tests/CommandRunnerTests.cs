@@ -132,8 +132,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ledgerPath,
                 "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
                     + "|---|---|---|---|---|---|" + Environment.NewLine);
-            string baselinePath = Path.Combine(_root, "excluded-baseline.json");
-            File.WriteAllText(baselinePath, "{\"capabilities\":[]}");
             string excludedPath = Path.Combine(_root, "excluded-signatures.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string outOfScopePath = Path.Combine(_root, "out-of-scope.json");
@@ -145,7 +143,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CommandRunner.LedgerCoverageCommand,
                     CreateEditorDirectory(),
                     ledgerPath,
-                    baselinePath,
                     excludedPath,
                     outOfScopePath,
                 },
@@ -160,7 +157,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CommandRunner.LedgerCoverageCommand,
                     Path.Combine(_root, "none"),
                     ledgerPath,
-                    baselinePath,
                     excludedPath,
                     outOfScopePath,
                 },
@@ -452,8 +448,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.LedgerCoverageCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <ベースライン正本のパス>"
-                    + " <除外一覧のパス> <対象外一覧のパス>",
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <対象外一覧のパス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(

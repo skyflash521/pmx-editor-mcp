@@ -1,222 +1,43 @@
 # 検証手順
 
-変更を確定させる前に通す検査の一覧と合格条件の正本。
+変更を確定させる前に通す検査の正本。書き方は[この文書の規約](#この文書の規約)が定める。
 
-## 実行する検査
-
-| 検査 | コマンド | 合格条件 |
-|---|---|---|
-| ビルド | `dotnet build PmxEditorMcp.sln -warnaserror` | 警告・エラー0 |
-| 整形 | `dotnet format PmxEditorMcp.sln --verify-no-changes` | 差分0 |
-| テスト | `dotnet test PmxEditorMcp.sln` | 全テスト成功 |
-| スクリプト構文 | `node --check scripts/e2e-check.mjs` | エラー0 |
-| スクリプト構文(PowerShell) | [PowerShellスクリプトの構文検査](#powershellスクリプトの構文検査)のコマンド | エラー0 |
-| SDK公開APIの列挙 | [SDK公開APIの列挙](#sdk公開apiの列挙)のコマンド | 終了コード0 |
-| 台帳と正本の照合 | [台帳と正本の照合](#台帳と正本の照合)のコマンド | 終了コード0 |
-| 日本語名の照合 | [日本語名の照合](#日本語名の照合)のコマンド | 終了コード0 |
-| 型役割の照合 | [型役割の照合](#型役割の照合)のコマンド | 終了コード0 |
-| 共通契約割当の照合 | [共通契約割当の照合](#共通契約割当の照合)のコマンド | 終了コード0 |
-| 値の表現の照合 | [値の表現の照合](#値の表現の照合)のコマンド | 終了コード0 |
-| 危険操作の照合 | [危険操作の照合](#危険操作の照合)のコマンド | 終了コード0 |
-| 実機動作確認 | [実機動作確認](#実機動作確認)の手順 | 手順内の各確認が期待どおり |
-| ブリッジの実機動作確認 | [ブリッジの実機動作確認](#ブリッジの実機動作確認)の手順 | 手順内の各確認が期待どおり |
-
-- ソリューションはリポジトリ直下の [PmxEditorMcp.sln](../../PmxEditorMcp.sln)(sln形式)の1本とし、
-  すべてのプロジェクトをここに集約する。
-- net48 プロジェクトの参照アセンブリは `Microsoft.NETFramework.ReferenceAssemblies` 1.0.3 の
-  PackageReference で解決し、.NET Framework Developer Pack の導入に依存させない。
-- テストは xUnit を用いる。UIスレッドやエディタ実機に依存する部分は単体テストの対象外とし、
-  [実機動作確認](#実機動作確認)で担保する。
-
-### PowerShellスクリプトの構文検査
-
-`scripts/` の PowerShell スクリプトを解析して構文の誤りを見る。`pwsh` で実行する。
+## 常設の検査
 
 ```
-$errors = $null
-Get-ChildItem scripts/*.ps1 | ForEach-Object {
-    [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errors)
-    if ($errors) { throw ($_.Name + ": " + ($errors.Message -join "; ")) }
-}
+pwsh -File scripts/verify.ps1
 ```
 
-## SDK公開APIの列挙
+これ1本ですべて走る。**落ちた検査も走らせていない検査も無ければ終了コード0**、あれば1で、その名前を
+並べる(要る出来上がりが揃わなかった検査は走らせない)。PMXエディタの導入ディレクトリは
+`local.props` の `PmxEditorDir` から読む(定義は[READMEの構築手順](../../README.md#構築手順))。
 
-PEPlugin SDK の公開APIをシグネチャ1件=1行として書き出す。ツールへの写像を確かめる後段の照合は、
-この出力を母集合にする。下位コマンド `signatures` の引数は
-[READMEの構築手順](../../README.md#構築手順) で定義する
-`PmxEditorDir` が指す導入ディレクトリと、書き出し先のパスの2つ。導入ディレクトリのパスは
-空白を含みうるので引用符で囲む。書き出し先は使い捨てなので `.scratch/` へ置く。このフォルダは
-追跡していないため、取得した直後には無い。無ければ作ってから実行する。
+| 検査 | 合格条件 |
+|---|---|
+| ビルド | 警告・エラー0 |
+| スクリプト構文 | エラー0 |
+| スクリプト構文(PowerShell) | エラー0 |
+| 除外一覧の導出 | 終了コード0 |
+| 整形 | 差分0 |
+| テスト | 全テスト成功 |
+| 台帳と正本の照合 | 終了コード0 |
+| 日本語名の照合 | 終了コード0 |
+| 型役割の照合 | 終了コード0 |
+| 共通契約割当の照合 | 終了コード0 |
+| 値の表現の照合 | 終了コード0 |
+| 危険操作の照合 | 終了コード0 |
 
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe signatures "<PmxEditorDir>" .scratch/signatures.json
-```
+**この表は[実行器](../../scripts/verify.ps1)が読む**ので、行を足すときはスクリプトの側にも足す(片方だけを
+足せば落ちる)。照合はどれも、入力のどれかが欠けても読めなくても読み解けなくても終了コード3、
+規則に合わなければ5を返し、5のときは何がどう合わないかを標準エラー出力に書く。環境の前提は
+[READMEの開発環境](../../README.md#開発環境)が正本。
 
-対象アセンブリは配布物の `Lib\PEPlugin\PEPlugin.dll` で、これが参照する描画ライブラリは
-`Lib\SlimDX\x64` から解決する。終了コード0は、対象アセンブリを読み込んで列挙まで通ったことを表す。
-描画ライブラリを解決できなければ列挙が失敗して終了コード3になるので、この検査は依存の解決も
-併せて確かめる。ただし、その描画ライブラリを実行環境の別の場所(実行ファイルの隣や共有の
-格納先)から解決できる環境では、導入ディレクトリを探す経路を通らずに0になりうる。書き出しに
-失敗した場合は終了コード4になる。
+## 実機に触る検査
 
-## 除外の凍結
+**エディタかMCPクライアントに触る変更のときに通す。** 手順内の各確認が期待どおりであることを合格
+条件とし、常設の検査と違って自動では走らない。
 
-能力台帳がすでに非対応と記していた能力と、その能力が指す公開シグネチャの集合を
-[凍結した除外の正本](../specs/pmx-editor-mcp-excluded-baseline.json)へ書き出す。この正本は
-提供対象から除くシグネチャの一覧を整備するときの根拠になる。下位コマンド `excluded-baseline` の
-引数は導入ディレクトリ・能力台帳のパス・書き出し先のパスの3つ。
-
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe excluded-baseline "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-baseline.json
-```
-
-台帳とその時点のSDKの公開シグネチャの両方を読んで確定するので、どちらかが欠けても読めなくても
-読み解けなくても書き出さず終了コード3になる。読み解けたうえで台帳の記載と列挙結果が食い違う
-ときは終了コード5になる。
-
-**このコマンドは常設の検査に入れない。** 書き出し先は追跡する正本で、実行すると上書きする。
-型や名前空間でまとめて指す記載は、その時点のSDKにある該当メンバーをすべて取り込むので、別の版の
-SDKで実行し直すと、凍結した時点には無かったシグネチャまで正本へ入りうる。凍結は一覧を整備する前の
-時点を固定するためのものなので、取得は一度きりとし、取り直すのは台帳の記載を直したときだけに
-する。取り直したときは、差分の行から台帳とSDKのどちらが動いたのかを確かめる。
-
-## 除外一覧の書き出し
-
-提供対象から除く公開シグネチャを
-[除外一覧の正本](../specs/pmx-editor-mcp-excluded-signatures.json)へ書き出す。生成側も対応表側も
-この一覧だけを見るので、除外の判断が二重にならない。下位コマンド `excluded-signatures` の引数は
-導入ディレクトリ・ベースライン正本のパス・書き出し先のパスの3つ。
-
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe excluded-signatures "<PmxEditorDir>" docs/specs/pmx-editor-mcp-excluded-baseline.json docs/specs/pmx-editor-mcp-excluded-signatures.json
-```
-
-凍結した組とその時点のSDKの公開シグネチャの両方を読んで確定するので、どちらかが欠けても読めなくても
-読み解けなくても書き出さず終了コード3になる。凍結した組の行キーが列挙に無いときは終了コード5になる。
-ベースライン正本に無いStreamシグネチャを見つけたときも同じく終了コード5で、これは形式が一次資料でしか
-決まらず機械では除外の可否を判断できないという合図なので、止まった行キーの形式を一次資料で確かめる。
-ファイルパス版の代替があれば、能力台帳の該当能力の備考の非対応件数を直したうえで、凍結の対象と
-凍結が保持する備考の写しをあわせて更新し、[除外の凍結](#除外の凍結)を取り直す。代替が無ければ、
-その行キーを生成器が持つ「除外しないStream」の一覧へ加えて提供対象として残す。
-
-**このコマンドは常設の検査に入れない。** 書き出し先は追跡する正本で、実行すると上書きする。
-SDKの公開シグネチャが変わると結果も変わりうるので、取り直すのはベースライン正本かSDKを意図して更新した
-ときだけにする。取り直したときは、差分の行からどちらが動いたのかを確かめる。
-
-## 台帳と正本の照合
-
-SDKの公開型と公開シグネチャが、能力台帳が指す集合か
-[対象外一覧の正本](../specs/pmx-editor-mcp-ledger-out-of-scope.json)のどちらかに過不足なく
-現れることと、[除外一覧の正本](../specs/pmx-editor-mcp-excluded-signatures.json)が算出した期待
-集合と一致することを照合する。下位コマンド `ledger-coverage` の引数は導入ディレクトリ・能力台帳・
-ベースライン正本・除外一覧・対象外一覧のパスの5つ。
-
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe ledger-coverage "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-baseline.json docs/specs/pmx-editor-mcp-excluded-signatures.json docs/specs/pmx-editor-mcp-ledger-out-of-scope.json
-```
-
-**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
-読み解けなくても終了コード3、照合が合わなければ終了コード5になる。合わなかったときは、どの集合の
-どの識別子が余ったか足りないかが標準エラー出力に出る。
-
-台帳へ能力を足したとき、SDKを更新したとき、除外一覧や対象外一覧を取り直したときは、この照合が
-通ることで台帳と正本が公開APIを覆い切っていることを確かめる。
-
-## 日本語名の照合
-
-[日本語名の正本](../specs/pmx-editor-mcp-property-names.json)が、
-[日本語名仕様書](../specs/pmx-editor-mcp-property-names.md)の規則どおりに付いていることを照合する。
-下位コマンド `property-names` の引数は導入ディレクトリ・能力台帳・除外一覧・日本語名の正本のパスの
-4つ。ドキュメントXMLと根拠の資料は導入ディレクトリからの相対で解決する。
-
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe property-names "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-signatures.json docs/specs/pmx-editor-mcp-property-names.json
-```
-
-**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
-読み解けなくても終了コード3、規則に合わなければ終了コード5になる。台帳とSDKが食い違って母集合を
-決められないときも終了コード5になる。合わなかったときは、どちらで止まったかと、どの項目がどの条件に
-反したかが標準エラー出力に出る。
-
-## 型役割の照合
-
-[型役割表の正本](../specs/pmx-editor-mcp-type-roles.json)が、
-[型役割仕様書](../specs/pmx-editor-mcp-type-roles.md)の規則どおりに割り当てられていることと、
-ハンドル発行の判定と要素を並べるリストの判定が列挙で決まる母集合と一対一で一致し、発行の種別が
-レシーバーと合っていること、所有するリストへ至る所有の経路が列挙のメンバーの並びとしてつながっている
-こと、担当群が台帳の担当と食い違わないこと、ツール名が担当群と要素名詞から決まる名前と一致し、
-所有するリストへ入れる・から出すツールを持つ型が所有するリストの要素と一対一で一致すること、
-リストが許容する具象型が要素の型を継承する葉の型と一致することを照合する。
-下位コマンド `type-roles` の引数は導入ディレクトリ・能力台帳・除外一覧・型役割表の正本のパスの4つ。
-
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe type-roles "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-signatures.json docs/specs/pmx-editor-mcp-type-roles.json
-```
-
-**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
-読み解けなくても終了コード3、規則に合わなければ終了コード5になる。役割の根拠を決められないときも
-終了コード5で、これに当たるのは台帳とSDKが食い違って母集合を決められないとき、接続の根がSDKの列挙に
-無いとき、接続の経路の一つの段で名前から一つの先を選べないとき、レシーバーからハンドル発行の種別を
-決められないシグネチャが在るとき、引数の型を取り出せないハンドラのイベントが在るときである。合わなかったときは、どちらで止まったかと、どの型がどの条件に反したかが
-標準エラー出力に出る。
-
-## 共通契約割当の照合
-
-[共通契約割当の正本](../specs/pmx-editor-mcp-common-assignments.json)が、
-[共通契約仕様書](../specs/pmx-editor-mcp-common-contract.md)の規則どおりに割り当てられていることと、
-各項目の行キーが提供対象のシグネチャに実在すること、
-常駐アクセスオブジェクトを返すシグネチャが漏れなく接続初期化へ割り当てられていること、解放・破棄が
-漏れなく表に在ること、束縛が列挙から決まるものと一致すること、束縛したスロットがその割当で使える
-ものであること、解放がツールへの束縛で対象名が揃っていることを照合する。
-下位コマンド `common-assignments` の引数は導入ディレクトリ・能力台帳・除外一覧・型役割表の正本・
-共通契約割当の正本のパスの5つ。
-
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe common-assignments "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-signatures.json docs/specs/pmx-editor-mcp-type-roles.json docs/specs/pmx-editor-mcp-common-assignments.json
-```
-
-**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
-読み解けなくても終了コード3、規則に合わなければ終了コード5になる。割当の根拠を決められないときも
-終了コード5で、これに当たるのは台帳とSDKが食い違って提供対象を決められないときと、束縛先のスロットを
-決められない引数・戻り値が在るときである。
-
-## 値の表現の照合
-
-[共通契約仕様書](../specs/pmx-editor-mcp-common-contract.md)の型ごとの表現の表が、値として
-写せる型を過不足なく覆っていることと、各行の表現が規則の導く綴りと一致することを照合する。要素の表現を包む型は綴りが1つに決まらないので、表に在ることだけを見る。
-下位コマンド `value-shapes` の引数は導入ディレクトリ・能力台帳・除外一覧・共通契約仕様書のパスの
-4つ。
-
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe value-shapes "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-signatures.json docs/specs/pmx-editor-mcp-common-contract.md
-```
-
-**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
-読み解けなくても終了コード3、表が規則に合わなければ終了コード5になる。台帳とSDKが食い違って
-提供対象を決められないときも終了コード5になる。
-
-## 危険操作の照合
-
-[共通契約仕様書](../specs/pmx-editor-mcp-common-contract.md)の危険操作の決め方が導くシグネチャと、
-[能力台帳](../specs/pmx-editor-mcp-capability-ledger.md)の備考が記すシグネチャが、集合としても
-種別としても一致することを照合する。下位コマンド `dangerous-operations` の引数は導入ディレクトリ・
-能力台帳・除外一覧のパスの3つ。
-
-```
-src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe dangerous-operations "<PmxEditorDir>" docs/specs/pmx-editor-mcp-capability-ledger.md docs/specs/pmx-editor-mcp-excluded-signatures.json
-```
-
-**このコマンドはファイルを書き出さないので常設の検査に入れる。** 入力のどれかが欠けても読めなくても
-読み解けなくても終了コード3、記した側と決め方が食い違えば終了コード5になる。備考が知らない種別を
-記しているときと、備考が指す該当をその能力の中で1つに決められないときも終了コード5になる。
-
-## 必要環境
-
-[READMEの開発環境](../../README.md#開発環境)が正本。検査も実機動作確認も、そこが挙げる環境が
-揃っていることを前提にする。
-
-## 実機動作確認
+### 実機動作確認
 
 ホストはエディタ1つにつき名前付きパイプ `pmx-editor-mcp-<エディタのプロセスID>` を1本だけ
 待受に使う。確認はこのパイプへ接続して行う。ホストは応答サイズ予算の環境変数
@@ -263,23 +84,10 @@ src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe dangerous-opera
      `node scripts/e2e-check.mjs <エディタのプロセスID> handshake '{"protocol":2}'` と打つ。
      切断されたことは、確認クライアントが次を書いて終了コード0になることで分かる。
      「切断が要るエラー応答(-32001)のあと、ホストが契約どおり接続を切りました。」
-   - パイプのDACLに現在ユーザーのFullControlだけがあること。`AccessControlType` が `Allow`、
+   - パイプのDACLに現在ユーザーのFullControlだけがあること
+     ([エディタとホストの操作](#エディタとホストの操作)の `acl`)。`AccessControlType` が `Allow`、
      `IdentityReference` が現在ユーザー、`PipeAccessRights` が `FullControl` の規則が1件だけ
      出れば期待どおり。
-
-     ```
-     $name = "pmx-editor-mcp-<エディタのプロセスID>"
-     $pipe = New-Object System.IO.Pipes.NamedPipeClientStream(".", $name,
-         [System.IO.Pipes.PipeAccessRights]"ReadWrite, ReadPermissions",
-         [System.IO.Pipes.PipeOptions]::None,
-         [System.Security.Principal.TokenImpersonationLevel]::None,
-         [System.IO.HandleInheritability]::None)
-     $pipe.Connect(5000)
-     [System.IO.Pipes.PipesAclExtensions]::GetAccessControl($pipe).GetAccessRules(
-         $true, $true, [System.Security.Principal.NTAccount])
-     $pipe.Dispose()
-     ```
-
    - エディタを終了するとパイプが消えること(`close` が待受の消失を待って戻る)。`--hold` で
      接続を保ったまま終了しても、エディタがハング・クラッシュせず、確認クライアントが
      「ホストが接続を切りました。」で終了コード0になること。パイプの有無は `pipes` で見る。
@@ -292,7 +100,7 @@ src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe dangerous-opera
      確認クライアントが「ホストが接続を切りました。」で終了コード0になり、`status` の
      状態区分が「停止済み」であること。
 
-## ブリッジの実機動作確認
+### ブリッジの実機動作確認
 
 ブリッジはMCPサーバーとしてClaude Codeから起動されるので、確認もClaude Code越しに行う。登録は
 一度だけで、以後エディタを起動し直しても登録し直さない。
@@ -344,8 +152,8 @@ src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe dangerous-opera
 
 ### エディタとホストの操作
 
-手順に出てくるエディタの起動・終了と、プラグインメニューからの稼働状態の確認・停止・開始は
-[操作役のスクリプト](../../scripts/host-control.ps1)で行う。`pwsh` で実行する。
+手順に出てくるエディタの起動・終了、プラグインメニューからの稼働状態の確認・停止・開始、
+パイプの権限の表示は[操作役のスクリプト](../../scripts/host-control.ps1)で行う。`pwsh` で実行する。
 
 ```
 pwsh -File scripts/host-control.ps1 -Action pipes
@@ -354,11 +162,12 @@ pwsh -File scripts/host-control.ps1 -Action status -ProcessId <エディタの�
 pwsh -File scripts/host-control.ps1 -Action stop   -ProcessId <エディタのプロセスID>
 pwsh -File scripts/host-control.ps1 -Action start  -ProcessId <エディタのプロセスID>
 pwsh -File scripts/host-control.ps1 -Action close  -ProcessId <エディタのプロセスID>
+pwsh -File scripts/host-control.ps1 -Action acl    -ProcessId <エディタのプロセスID>
 ```
 
 `pipes` は待ち受けているホストのパイプ名を一覧する。`launch` は起動したエディタのプロセスIDを
 返す。`status`・`stop`・`start` は稼働状態の本文(状態区分・パイプ名・接続・応答サイズ予算・
-ログの所在)を表示してから操作する。
+ログの所在)を表示してから操作する。`acl` はそのエディタのパイプの権限の規則を表示する。
 
 **状態を変える操作は、その結果が観測できるようになるまで待ってから戻る。** `start` と `launch`
 は待受のパイプが現れるまで、`stop` と `close` はそれが消えるまで待つ。待受の公開も停止処理も
@@ -367,11 +176,21 @@ pwsh -File scripts/host-control.ps1 -Action close  -ProcessId <エディタの�
 
 ## 不合格時の対応
 
-- ビルド・整形・テスト・スクリプト構文の不合格: 修正して再実行するまで変更を確定させない。
+- 常設の検査の不合格: 修正して再実行するまで変更を確定させない。
 - [実機動作確認](#実機動作確認)の不合格: ホストのログを確認し、原因を修正して手順を再実行する。
-  ホストのログの所在は、[エディタとホストの操作](#エディタとホストの操作)の `status` が表示する
-  状態表示で確認できる。
+  ホストのログの所在は `status` が表示する。
 - [ブリッジの実機動作確認](#ブリッジの実機動作確認)の不合格: 原因を修正したうえで、全エディタを
   終了し、登録は変えずにClaude Codeのセッションを開始し直してから操作列の先頭へ戻る。**セッションを
   開始し直すのは、ブリッジが保っている接続を確実に捨てさせるためである**——操作列は未接続の状態を
   開始条件にしているので、接続が残っていると先頭の呼び出しが切断の検出になって開始条件が崩れる。
+
+## この文書の規約
+
+- 置いてよいのは**実行するコマンド・合格条件・自動化できない手順・不合格時の対応**だけとする。
+  検査が何を見るかは、それが照合する仕様書の検査の節が持つ。
+- **常設の検査はリポジトリへ何も書き出さず、1つのコマンドから走る。** 表の1行を超えて書かない。
+- **他の検査から必ず従う検査は置かない。** 落ちる場面が無い。
+- **入力から導ける値を追跡下の正本にしない。** 同じ入力から生成器を走らせて一致するなら導ける値で、
+  置けば取り直し忘れがずれになる。要るときにその場で導く。
+- 反する差分は不適合とし、レビューの指摘対象とする。解消は**削る**か**移す**かのどちらかで、
+  ここへ書き足しても書き直しても解消しない。

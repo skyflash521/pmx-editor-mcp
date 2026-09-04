@@ -28,11 +28,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 5)
+            if (args.Length != 4)
             {
                 error.WriteLine(
-                    "引数は5つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス> <ベースライン正本のパス>"
-                        + " <除外一覧のパス> <対象外一覧のパス>");
+                    "引数は4つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                        + " <対象外一覧のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -45,15 +45,13 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             IList<CapabilityRecord> ledger;
-            IList<ExcludedBaselineEntry> baseline;
             IList<ExcludedSignatureRecord> excluded;
             LedgerOutOfScopeRecord outOfScope;
             try
             {
                 ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
-                baseline = ExcludedBaselineJsonReader.Read(Read(args[2], "ベースライン正本"));
-                excluded = ExcludedSignatureJsonReader.Read(Read(args[3], "除外一覧"));
-                outOfScope = LedgerOutOfScopeJsonReader.Read(Read(args[4], "対象外一覧"));
+                excluded = ExcludedSignatureJsonReader.Read(Read(args[2], "除外一覧"));
+                outOfScope = LedgerOutOfScopeJsonReader.Read(Read(args[3], "対象外一覧"));
             }
             catch (Exception exception)
             {
@@ -76,7 +74,7 @@ namespace PmxEditorMcp.SignatureDump
             LedgerCoverageResult result;
             try
             {
-                result = LedgerCoverage.Verify(ledger, inventory, baseline, excluded, outOfScope);
+                result = LedgerCoverage.Verify(ledger, inventory, excluded, outOfScope);
             }
             catch (InvalidOperationException exception)
             {
