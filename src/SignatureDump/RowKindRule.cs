@@ -8,8 +8,11 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class RowKindRule
     {
-        /// <summary>その行が採る種別。</summary>
-        public static ToolMapRowKind Of(MemberKind memberKind, bool assigned)
+        /// <summary>
+        /// その行が採る種別。<paramref name="embedded"/> は、宣言型が独立したツールを持たない役割
+        /// (イベント引数型・DTO型)かどうか。
+        /// </summary>
+        public static ToolMapRowKind Of(MemberKind memberKind, bool assigned, bool embedded)
         {
             if (assigned)
             {
@@ -25,8 +28,12 @@ namespace PmxEditorMcp.SignatureDump
                 case MemberKind.Field:
                     return ToolMapRowKind.SchemaEmbedded;
 
-                case MemberKind.Method:
                 case MemberKind.Constructor:
+                    return embedded
+                        ? ToolMapRowKind.SchemaEmbedded
+                        : ToolMapRowKind.DirectDispatch;
+
+                case MemberKind.Method:
                     return ToolMapRowKind.DirectDispatch;
 
                 default:

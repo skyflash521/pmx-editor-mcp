@@ -59,7 +59,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ISet<string> elementNouns = null,
             ISet<string> typeNames = null,
             IList<ParameterRecord> parameters = null,
-            MemberKind memberKind = MemberKind.Method)
+            MemberKind memberKind = MemberKind.Method,
+            ISet<string> embeddedTypes = null)
         {
             ToolMapGate.Require(
                 ToolMapJsonReader.Read(mapJson),
@@ -80,7 +81,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     elementNouns ?? new HashSet<string>(
                         new[] { "vertex" }, StringComparer.Ordinal),
                     typeNames ?? new HashSet<string>(
-                        new[] { "PEPlugin.SDX.V3" }, StringComparer.Ordinal)),
+                        new[] { "PEPlugin.SDX.V3" }, StringComparer.Ordinal),
+                    embeddedTypes ?? new HashSet<string>(StringComparer.Ordinal)),
                 CommonAssignmentJsonReader.Read(assignmentsJson));
         }
 
@@ -250,6 +252,29 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 mapJson: Embedded(),
                 assignmentsJson: @"{ ""assignments"": [] }",
                 memberKind: MemberKind.Property);
+        }
+
+        [Fact]
+        public void AcceptsASchemaEmbeddedRowForAConstructorOfATypeWithoutItsOwnTool()
+        {
+            Require(
+                mapJson: Embedded(),
+                assignmentsJson: @"{ ""assignments"": [] }",
+                memberKind: MemberKind.Constructor,
+                embeddedTypes: new HashSet<string>(
+                    new[] { "PEPlugin.Pmx.IPXPmxConnector" }, StringComparer.Ordinal));
+        }
+
+        [Fact]
+        public void RejectsASchemaEmbeddedRowForAConstructorOfATypeWithItsOwnTool()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: Embedded(),
+                    assignmentsJson: @"{ ""assignments"": [] }",
+                    memberKind: MemberKind.Constructor));
+
+            Assert.Contains("導いた種別と合わない", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]

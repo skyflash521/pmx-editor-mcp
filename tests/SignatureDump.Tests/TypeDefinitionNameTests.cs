@@ -20,6 +20,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("N.Pair<2>", TypeDefinitionName.Of("N.Pair<System.Int32,System.String>"));
         }
 
+        /// <summary>
+        /// 鍵へ写したものをもう一度写しても同じ鍵になる。正本が鍵の形で持つ型名を引き当ての側と
+        /// そろえるとき、写しが二度掛かる。
+        /// </summary>
+        [Fact]
+        public void AKeyIsUnchangedByWritingItAgain()
+        {
+            Assert.Equal("N.Box<1>", TypeDefinitionName.Of("N.Box<1>"));
+            Assert.Equal("N.Pair<2>", TypeDefinitionName.Of("N.Pair<2>"));
+            Assert.Equal("N.Many<12>", TypeDefinitionName.Of("N.Many<12>"));
+            Assert.Equal("N.Pair<2>", TypeDefinitionName.OfElement("N.Pair<2>[]"));
+        }
+
         [Fact]
         public void TheOpenDefinitionAndAClosedTypeShareTheSameKey()
         {

@@ -24,7 +24,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> notes,
             ISet<string> updateKinds,
             ISet<string> elementNouns,
-            ISet<string> typeNames)
+            ISet<string> typeNames,
+            ISet<string> embeddedTypes)
         {
             if (provided == null)
             {
@@ -66,6 +67,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(typeNames));
             }
 
+            if (embeddedTypes == null)
+            {
+                throw new ArgumentNullException(nameof(embeddedTypes));
+            }
+
             Provided = provided;
             Owners = new ReadOnlyDictionary<string, ISet<string>>(
                 new Dictionary<string, ISet<string>>(owners, StringComparer.Ordinal));
@@ -78,6 +84,7 @@ namespace PmxEditorMcp.SignatureDump
             UpdateKinds = updateKinds;
             ElementNouns = elementNouns;
             TypeNames = typeNames;
+            EmbeddedTypes = embeddedTypes;
         }
 
         /// <summary>提供対象のシグネチャの行キー。</summary>
@@ -103,6 +110,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>サンプル値を引ける型の名前。</summary>
         public ISet<string> TypeNames { get; }
+
+        /// <summary>独立したツールを持たない役割の型の名前。総称と配列の印を外した鍵で持つ。</summary>
+        public ISet<string> EmbeddedTypes { get; }
 
         /// <summary>導けないものがあれば <see cref="InvalidOperationException"/>。</summary>
         public static ToolMapEvidence Collect(
@@ -150,7 +160,25 @@ namespace PmxEditorMcp.SignatureDump
                 new HashSet<string>(
                     roles.Types.Where(r => r.ElementNoun != null).Select(r => r.ElementNoun),
                     StringComparer.Ordinal),
-                new HashSet<string>(types.Select(t => t.Name), StringComparer.Ordinal));
+                new HashSet<string>(types.Select(t => t.Name), StringComparer.Ordinal),
+                EmbeddedTypeNames(roles));
+        }
+
+        /// <summary>
+        /// 独立したツールを持たない役割の型の名前。引き当てと同じ鍵にするため、総称と配列の印を
+        /// 外して持つ。
+        /// </summary>
+        public static ISet<string> EmbeddedTypeNames(TypeRoleTable roles)
+        {
+            if (roles == null)
+            {
+                throw new ArgumentNullException(nameof(roles));
+            }
+
+            return new HashSet<string>(
+                roles.Types.Where(r => !TypeRoleRecord.HasIndependentTool(r.Role))
+                    .Select(r => TypeDefinitionName.OfElement(r.TypeName)),
+                StringComparer.Ordinal);
         }
 
         /// <summary>

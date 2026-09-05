@@ -61,8 +61,7 @@ namespace PmxEditorMcp.SignatureDump
                     if (depth == 0)
                     {
                         builder.Append('<')
-                            .Append(Split(typeName.Substring(start, i - start)).Count
-                                .ToString(CultureInfo.InvariantCulture))
+                            .Append(Counted(typeName.Substring(start, i - start)))
                             .Append('>');
                     }
                 }
@@ -73,6 +72,22 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return builder.ToString();
+        }
+
+        /// <summary>
+        /// 山括弧の中が表す引数の数。既に数で書かれている形はその数のまま返す——鍵へ写したものを
+        /// もう一度写しても同じ鍵になるようにする。
+        /// </summary>
+        private static string Counted(string arguments)
+        {
+            int written;
+            if (int.TryParse(
+                    arguments, NumberStyles.None, CultureInfo.InvariantCulture, out written))
+            {
+                return written.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return Split(arguments).Count.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>総称型の各段の引数。段ごとに引数を持つ入れ子の型では全段ぶんを返す。</summary>

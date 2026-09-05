@@ -253,9 +253,12 @@ namespace PmxEditorMcp.SignatureDump
         private static void RequireRowKind(
             ToolMapRow row, ToolMapEvidence evidence, ISet<string> assigned)
         {
+            SignatureRecord signature = evidence.Signatures[row.SignatureKey];
             ToolMapRowKind derived = RowKindRule.Of(
-                evidence.Signatures[row.SignatureKey].MemberKind,
-                assigned.Contains(row.SignatureKey));
+                signature.MemberKind,
+                assigned.Contains(row.SignatureKey),
+                evidence.EmbeddedTypes.Contains(
+                    TypeDefinitionName.OfElement(signature.DeclaringType)));
             if (row.RowKind != derived)
             {
                 throw new InvalidOperationException(
