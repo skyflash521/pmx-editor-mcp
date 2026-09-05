@@ -101,10 +101,9 @@ namespace PmxEditorMcp.SignatureDump
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: 行 {0} 件(合成 {1}・共通契約割当 {2}・イベント {3}・スキーマ埋め込み {4}"
-                    + "・直接ディスパッチ {5})・提供対象 {6} 件",
+                "照合した: 行 {0} 件(共通契約割当 {1}・イベント {2}・スキーマ埋め込み {3}"
+                    + "・直接ディスパッチ {4})・提供対象 {5} 件",
                 map.Rows.Count,
-                Count(map, ToolMapRowKind.Composed),
                 Count(map, ToolMapRowKind.CommonContract),
                 Count(map, ToolMapRowKind.EventBranch),
                 Count(map, ToolMapRowKind.SchemaEmbedded),

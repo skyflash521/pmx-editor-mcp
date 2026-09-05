@@ -1,3 +1,27 @@
 {
-  "tools": []
+  "tools": [
+    {
+      "tool": "session_release_handle",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": { "origin": "hostInput", "shape": "number" },
+              "required": true,
+              "minItems": 1,
+              "maxItems": 8166
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": { "origin": "hostOutput", "shape": "number" },
+        "maxItems": 8166
+      }
+    }
+  ]
 }

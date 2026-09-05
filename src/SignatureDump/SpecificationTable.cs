@@ -1,20 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 仕様書の本文に置かれた2列の表を読む。正本は本文なので、節の見出しで場所を決め、そこから
-    /// 続く表だけを読む。
+    /// 仕様書の本文に置かれた表を読む。正本は本文なので、節の見出しで場所を決め、そこから続く表
+    /// だけを読む。
     /// </summary>
     public static class SpecificationTable
     {
         /// <summary>
-        /// 見出しで場所を決め、そこから続く2列の表の本文の行を返す。引数の不備は呼んだ時点で
-        /// 知らせる——数え上げるまで遅らせると、呼び出し元を見ても誤りの出どころが分からない。
+        /// 見出しで場所を決め、そこから続く表の本文の行を返す。列数は呼ぶ側が渡す。引数の不備は
+        /// 呼んだ時点で知らせる——数え上げるまで遅らせると、呼び出し元を見ても誤りの出どころが
+        /// 分からない。
         /// </summary>
-        public static IEnumerable<string[]> Rows(string text, string heading)
+        public static IEnumerable<string[]> Rows(string text, string heading, int columns = 2)
         {
             if (text == null)
             {
@@ -26,10 +28,16 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(heading));
             }
 
-            return Scan(text, heading);
+            if (columns < 2)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(columns), columns, "表は2列以上である。");
+            }
+
+            return Scan(text, heading, columns);
         }
 
-        private static IEnumerable<string[]> Scan(string text, string heading)
+        private static IEnumerable<string[]> Scan(string text, string heading, int columns)
         {
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
             int start = Array.FindIndex(
@@ -54,9 +62,11 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 string[] cells = Cells(line);
-                if (cells.Length != 2)
+                if (cells.Length != columns)
                 {
-                    throw new InvalidOperationException("表の行が2列でない: " + line);
+                    throw new InvalidOperationException(
+                        "表の行が" + columns.ToString(CultureInfo.InvariantCulture) + "列でない: "
+                            + line);
                 }
 
                 if (IsSeparator(cells))

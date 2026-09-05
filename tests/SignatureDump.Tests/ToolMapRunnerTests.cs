@@ -192,7 +192,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    "照合した: 行 {0} 件(合成 0・共通契約割当 {0}・イベント 0・スキーマ埋め込み 0"
+                    "照合した: 行 {0} 件(共通契約割当 {0}・イベント 0・スキーマ埋め込み 0"
                         + "・直接ディスパッチ 0)",
                     Releases().Count),
                 line,

@@ -19,7 +19,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             ISet<string> spellings,
             IDictionary<string, int> lengths,
-            int budgetChars)
+            int budgetChars,
+            IDictionary<string, ComposedTool> composedTools)
         {
             if (schemas == null)
             {
@@ -41,8 +42,15 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(lengths));
             }
 
+            if (composedTools == null)
+            {
+                throw new ArgumentNullException(nameof(composedTools));
+            }
+
             RequireSameSpellings(spellings, lengths);
-            RequireSameTools(schemas, map);
+            RequireNoComposedRow(map, composedTools);
+            RequireSameTools(schemas, map, composedTools);
+            RequireSameBranching(schemas, composedTools);
             RequireOnePollingTool(schemas);
             RequireSamePayloads(schemas, map);
             AssumedLength assumed = new AssumedLength(lengths);
@@ -54,30 +62,76 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 表が持つツールが、能力対応表がツールを持つ行のツールと一致することを求める。片方にしか
-        /// 無いツールは、入出力の形か割り当て先のどちらかを失う。
+        /// 能力対応表の行が合成ツールの名前を割り当てていないことを求める。合成ツールは行を持たない
+        /// ので、割り当てると同じ名前のツールが行と合成ツールの表の両方から現れる。
         /// </summary>
-        private static void RequireSameTools(ToolSchemaTable schemas, ToolMap map)
+        private static void RequireNoComposedRow(
+            ToolMap map, IDictionary<string, ComposedTool> composedTools)
+        {
+            string assigned = map.Rows.Where(r => r.Tool != null && composedTools.ContainsKey(r.Tool))
+                .Select(r => r.Tool).OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
+            if (assigned != null)
+            {
+                throw new InvalidOperationException(
+                    "合成ツールの名前を割り当てた行がある: " + assigned);
+            }
+        }
+
+        /// <summary>
+        /// 能力対応表がツールを持つ行のツールと合成ツールに入出力の形が在ること、および表が持つ
+        /// ツールがそのどちらかに在ることを求める。分岐を持つ合成ツールの形は、その分岐の出どころで
+        /// あるイベント行が無ければ書けないので、イベント行が在るときだけ求める。
+        /// </summary>
+        private static void RequireSameTools(
+            ToolSchemaTable schemas,
+            ToolMap map,
+            IDictionary<string, ComposedTool> composedTools)
         {
             HashSet<string> assigned = new HashSet<string>(
                 map.Rows.Where(r => r.Tool != null).Select(r => r.Tool), StringComparer.Ordinal);
             HashSet<string> described = new HashSet<string>(
                 schemas.Tools.Select(t => t.Tool), StringComparer.Ordinal);
+            bool hasEvents = map.Rows.Any(r => r.EventType != null);
 
-            string missing = assigned.Except(described, StringComparer.Ordinal)
+            HashSet<string> wanted = new HashSet<string>(assigned, StringComparer.Ordinal);
+            wanted.UnionWith(
+                composedTools.Where(t => hasEvents || !t.Value.Branching).Select(t => t.Key));
+            string missing = wanted.Except(described, StringComparer.Ordinal)
                 .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
             if (missing != null)
             {
-                throw new InvalidOperationException(
-                    "能力対応表が割り当てたツールの入出力の形が無い: " + missing);
+                throw new InvalidOperationException("入出力の形が無いツールがある: " + missing);
             }
 
-            string extra = described.Except(assigned, StringComparer.Ordinal)
+            HashSet<string> allowed = new HashSet<string>(assigned, StringComparer.Ordinal);
+            allowed.UnionWith(composedTools.Keys);
+            string extra = described.Except(allowed, StringComparer.Ordinal)
                 .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
             if (extra != null)
             {
                 throw new InvalidOperationException(
                     "能力対応表がどの行にも割り当てていないツールの形がある: " + extra);
+            }
+        }
+
+        /// <summary>
+        /// 在る合成ツールの形について、イベントの分岐の有無が仕様書の分岐の欄と合うことを求める。
+        /// 欄は形を求めるかどうかを決めるので、形と照らさないと書き換えだけで検査を外せる。
+        /// </summary>
+        private static void RequireSameBranching(
+            ToolSchemaTable schemas, IDictionary<string, ComposedTool> composedTools)
+        {
+            foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
+            {
+                ComposedTool composed;
+                if (!composedTools.TryGetValue(schema.Tool, out composed)
+                    || composed.Branching == (schema.Payloads != null))
+                {
+                    continue;
+                }
+
+                throw new InvalidOperationException(
+                    "分岐の欄が入出力の形と合わない: " + schema.Tool);
             }
         }
 

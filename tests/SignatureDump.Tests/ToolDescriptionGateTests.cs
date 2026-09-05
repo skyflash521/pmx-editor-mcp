@@ -123,18 +123,77 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AComposedToolWithADescriptionPasses()
+        {
+            ToolDescriptionMaterial material = Material("model_list_vertices", "model", "list", "vertices");
+            Dictionary<string, ToolDescription> descriptions = Composed(material);
+            descriptions.Add("session_release_handle", new ToolDescription("解放する", null));
+
+            ToolDescriptionGate.Require(
+                new[] { material }, descriptions, new[] { "session_release_handle" });
+        }
+
+        [Fact]
+        public void AComposedToolWithoutADescriptionStops()
+        {
+            ToolDescriptionMaterial material = Material("model_list_vertices", "model", "list", "vertices");
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ToolDescriptionGate.Require(
+                    new[] { material }, Composed(material), new[] { "session_release_handle" }));
+
+            Assert.Contains("説明文が無い", error.Message, StringComparison.Ordinal);
+            Assert.Contains("session_release_handle", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ARowThatAssignsAComposedToolNameStops()
+        {
+            ToolDescriptionMaterial material = Material(
+                "session_release_handle", "session", "release_handle", null);
+            Dictionary<string, ToolDescription> descriptions = Composed(material);
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ToolDescriptionGate.Require(
+                    new[] { material }, descriptions, new[] { "session_release_handle" }));
+
+            Assert.Contains(
+                "合成ツールの名前を割り当てた行がある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AComposedToolDescriptionOverTheLimitStops()
+        {
+            ToolDescriptionMaterial material = Material("model_list_vertices", "model", "list", "vertices");
+            Dictionary<string, ToolDescription> descriptions = Composed(material);
+            descriptions.Add(
+                "session_release_handle",
+                new ToolDescription(new string('あ', ToolDescriptionRule.LimitBytes), null));
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ToolDescriptionGate.Require(
+                    new[] { material }, descriptions, new[] { "session_release_handle" }));
+
+            Assert.Contains("上限のバイト数を超える", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheArgumentsAreChecked()
         {
+            Dictionary<string, ToolDescription> descriptions =
+                new Dictionary<string, ToolDescription>(StringComparer.Ordinal);
+
             Assert.Throws<ArgumentNullException>(
-                () => ToolDescriptionGate.Require(
-                    null, new Dictionary<string, ToolDescription>(StringComparer.Ordinal)));
+                () => ToolDescriptionGate.Require(null, descriptions, new string[0]));
             Assert.Throws<ArgumentNullException>(
-                () => ToolDescriptionGate.Require(new ToolDescriptionMaterial[0], null));
+                () => ToolDescriptionGate.Require(new ToolDescriptionMaterial[0], null, new string[0]));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolDescriptionGate.Require(new ToolDescriptionMaterial[0], descriptions, null));
         }
 
         private static void Accepts(params ToolDescriptionMaterial[] materials)
         {
-            ToolDescriptionGate.Require(materials, Composed(materials));
+            ToolDescriptionGate.Require(materials, Composed(materials), new string[0]);
         }
 
         private static void Rejects(
@@ -143,7 +202,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, ToolDescription> descriptions)
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolDescriptionGate.Require(materials, descriptions));
+                () => ToolDescriptionGate.Require(materials, descriptions, new string[0]));
 
             Assert.Contains(fragment, error.Message, StringComparison.Ordinal);
         }

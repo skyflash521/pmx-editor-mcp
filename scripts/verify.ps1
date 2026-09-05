@@ -152,7 +152,7 @@ try {
     }
     $checks['ツールの説明文の照合'] = @{
         Needs = $buildOutput
-        Body = { & $dump tool-descriptions $editorDir $roles $names $toolMap }
+        Body = { & $dump tool-descriptions $editorDir $contract $roles $names $toolMap }
     }
     $checks['サンプル値の照合'] = @{
         Needs = $buildOutput

@@ -11,7 +11,6 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class AssumedLengthDocument
     {
-        /// <summary>想定文字数の表を置く節の見出し。</summary>
         public const string SectionHeading = "#### 想定文字数";
 
         /// <summary>節が無いか行が読めなければ <see cref="InvalidOperationException"/>。</summary>

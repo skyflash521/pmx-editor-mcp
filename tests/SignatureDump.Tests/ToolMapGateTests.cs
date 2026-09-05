@@ -31,12 +31,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 ] }";
 
         private static SignatureRecord Signature(
-            OperationDirection direction, IList<ParameterRecord> parameters)
+            OperationDirection direction, IList<ParameterRecord> parameters, MemberKind memberKind)
         {
             return new SignatureRecord(
                 Key,
                 "PEPlugin.Pmx.IPXPmxConnector",
-                MemberKind.Method,
+                memberKind,
                 "GetCurrentState",
                 false,
                 0,
@@ -58,7 +58,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ISet<string> updateKinds = null,
             ISet<string> elementNouns = null,
             ISet<string> typeNames = null,
-            IList<ParameterRecord> parameters = null)
+            IList<ParameterRecord> parameters = null,
+            MemberKind memberKind = MemberKind.Method)
         {
             ToolMapGate.Require(
                 ToolMapJsonReader.Read(mapJson),
@@ -70,7 +71,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     },
                     new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
                     {
-                        { Key, Signature(direction, parameters) },
+                        { Key, Signature(direction, parameters, memberKind) },
                     },
                     dangers ?? new Dictionary<string, DangerKind>(StringComparer.Ordinal),
                     notes ?? new Dictionary<string, string>(StringComparer.Ordinal),
@@ -81,6 +82,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     typeNames ?? new HashSet<string>(
                         new[] { "PEPlugin.SDX.V3" }, StringComparer.Ordinal)),
                 CommonAssignmentJsonReader.Read(assignmentsJson));
+        }
+
+        /// <summary>埋め込み先を1つ持つスキーマ埋め込み行の表。</summary>
+        private static string Embedded()
+        {
+            return @"{ ""rows"": [
+  { ""signatureKey"": """ + Key + @""",
+    ""capabilityIds"": [""CAP-001""],
+    ""rowKind"": ""schemaEmbedded"",
+    ""editKind"": ""read"",
+    ""direction"": ""read"",
+    ""basis"": ""現在のPMXの複製を返すだけである。"",
+    ""embeddedIn"": [""model_list_vertices""] }
+] }";
         }
 
         /// <summary>判定を1つだけ持つ直接ディスパッチ行の表。</summary>
@@ -203,6 +218,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AcceptsARowThatAgreesWithEveryCanon()
         {
             Require();
+        }
+
+        [Fact]
+        public void RejectsARowKindThatTheMappingRuleDoesNotDerive()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(assignmentsJson: @"{ ""assignments"": [] }"));
+
+            Assert.Contains("導いた種別と合わない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsADirectDispatchRowForAPropertySignature()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: Dispatch(
+                        @"{ ""effectType"": ""none"", ""effectKey"": """",
+                            ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }"),
+                    assignmentsJson: @"{ ""assignments"": [] }",
+                    memberKind: MemberKind.Property));
+
+            Assert.Contains("導いた種別と合わない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AcceptsASchemaEmbeddedRowForAPropertySignature()
+        {
+            Require(
+                mapJson: Embedded(),
+                assignmentsJson: @"{ ""assignments"": [] }",
+                memberKind: MemberKind.Property);
         }
 
         [Fact]
@@ -332,13 +379,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AcceptsARowThatReflectsTheWholeModel()
         {
             Require(mapJson: WithUpdateSpec(null));
-        }
-
-        [Fact]
-        public void RejectsACommonContractRowThatTheSpecialRuleTableDoesNotHave()
-        {
-            Assert.Throws<InvalidOperationException>(
-                () => Require(assignmentsJson: @"{ ""assignments"": [] }"));
         }
 
         [Fact]

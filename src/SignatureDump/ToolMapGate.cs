@@ -12,7 +12,9 @@ namespace PmxEditorMcp.SignatureDump
     {
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
-            ToolMap map, ToolMapEvidence evidence, CommonAssignmentTable assignments)
+            ToolMap map,
+            ToolMapEvidence evidence,
+            CommonAssignmentTable assignments)
         {
             if (map == null)
             {
@@ -29,9 +31,12 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(assignments));
             }
 
+            ISet<string> assigned = new HashSet<string>(
+                assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal);
             foreach (ToolMapRow row in map.Rows)
             {
                 RequireProvided(row, evidence);
+                RequireRowKind(row, evidence, assigned);
                 RequireCapabilities(row, evidence);
                 RequireDirection(row, evidence);
                 RequireDangerKind(row, evidence);
@@ -242,6 +247,24 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 行の種別が、行の外の材料から導いた種別と一致することを求める。書き手が種別を選べると、
+        /// 種別ごとの必須項目の検査そのものを取り違えた種別へ逃がせる。
+        /// </summary>
+        private static void RequireRowKind(
+            ToolMapRow row, ToolMapEvidence evidence, ISet<string> assigned)
+        {
+            ToolMapRowKind derived = RowKindRule.Of(
+                evidence.Signatures[row.SignatureKey].MemberKind,
+                assigned.Contains(row.SignatureKey));
+            if (row.RowKind != derived)
+            {
+                throw new InvalidOperationException(
+                    "行の種別が導いた種別と合わない: " + row.SignatureKey
+                        + "(表: " + row.RowKind + " / 規則: " + derived + ")");
+            }
+        }
+
+        /// <summary>
         /// 共通契約割当行が、特別規則の表と行キーで完全一致し、割当も束縛も同じであることを求める。
         /// 対象名の実在を見るだけでは割当の取り違えを防げない。
         /// </summary>
@@ -254,13 +277,7 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (ToolMapRow row in rows)
             {
-                CommonAssignmentRecord assignment;
-                if (!expected.TryGetValue(row.SignatureKey, out assignment))
-                {
-                    throw new InvalidOperationException(
-                        "特別規則の表に無いシグネチャが共通契約割当行になっている: " + row.SignatureKey);
-                }
-
+                CommonAssignmentRecord assignment = expected[row.SignatureKey];
                 if (row.Assignment != assignment.Assignment)
                 {
                     throw new InvalidOperationException(

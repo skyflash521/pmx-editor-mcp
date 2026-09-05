@@ -472,7 +472,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + Environment.NewLine
                     + "| 綴り | 想定文字数 |" + Environment.NewLine
                     + "|---|---|" + Environment.NewLine
-                    + "| `number` | 11 |" + Environment.NewLine);
+                    + "| `number` | 11 |" + Environment.NewLine
+                    + Environment.NewLine
+                    + "### 合成ツール" + Environment.NewLine
+                    + Environment.NewLine
+                    + "| ツール | 分岐 | 受け持つこと |" + Environment.NewLine
+                    + "|---|---|---|" + Environment.NewLine
+                    + "| `session_release_handle` | 持たない | 解放する |" + Environment.NewLine
+                    + "| `view_poll_events` | 持つ | 取り出す |" + Environment.NewLine);
             string architecturePath = Path.Combine(_root, "schemas-architecture.md");
             File.WriteAllText(
                 architecturePath,
@@ -549,6 +556,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     CommandRunner.ToolDescriptionsCommand,
                     Path.Combine(_root, "no-editor"),
+                    Path.Combine(_root, "contract.md"),
                     Path.Combine(_root, "roles.json"),
                     Path.Combine(_root, "names.json"),
                     Path.Combine(_root, "map.json"),
@@ -667,7 +675,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ToolDescriptionsCommand
-                    + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
+                    + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス> <型役割表の正本のパス>"
                     + " <日本語名の正本のパス> <能力対応表の正本のパス>",
                 usage,
                 StringComparison.Ordinal);

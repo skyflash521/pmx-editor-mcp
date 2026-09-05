@@ -10,7 +10,6 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class BudgetDocument
     {
-        /// <summary>予算の設定を置く節の見出し。</summary>
         public const string SectionHeading = "## 応答サイズ予算の設定";
 
         private static readonly Regex Default = new Regex(

@@ -32,13 +32,10 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class ValueShapeDocument
     {
-        /// <summary>型ごとの表現の表を置く節の見出し。</summary>
         public const string SectionHeading = "### 型ごとの表現";
 
-        /// <summary>表現の綴りの表を置く節の見出し。</summary>
         public const string SpellingHeading = "### 表現の綴り";
 
-        /// <summary>成分の数の表を置く節の見出し。</summary>
         public const string ComponentHeading = "### 成分の並び";
 
         /// <summary>

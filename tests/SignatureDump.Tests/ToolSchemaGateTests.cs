@@ -86,19 +86,129 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static void Require(
             string schemas, string map, params string[] spellings)
         {
+            Require(None, schemas, map, spellings);
+        }
+
+        private static void Require(
+            IDictionary<string, ComposedTool> composedTools,
+            string schemas,
+            string map,
+            params string[] spellings)
+        {
             ToolSchemaGate.Require(
                 ToolSchemaJsonReader.Read(schemas),
                 ToolMapJsonReader.Read(map),
                 new HashSet<string>(
                     spellings.Length == 0 ? Known : spellings, StringComparer.Ordinal),
                 Lengths(spellings.Length == 0 ? Known : spellings),
-                Budget);
+                Budget,
+                composedTools);
         }
 
         [Fact]
         public void AcceptsATableThatCoversExactlyTheAssignedTools()
         {
             Require(SchemaJson(), MapJson());
+        }
+
+        [Fact]
+        public void AcceptsAComposedToolThatHasNoRow()
+        {
+            Require(Composed(false), SchemaJson("session_release_handle"), @"{ ""rows"": [] }");
+        }
+
+        [Fact]
+        public void RejectsAComposedToolWithoutASchema()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(Composed(false), @"{ ""tools"": [] }", @"{ ""rows"": [] }"));
+
+            Assert.Contains("入出力の形が無いツール", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ABranchingComposedToolWithoutASchemaIsNotDemandedWithoutEventRows()
+        {
+            Require(Composed(true), @"{ ""tools"": [] }", @"{ ""rows"": [] }");
+        }
+
+        [Fact]
+        public void RejectsABranchingComposedToolWithoutASchemaWhenEventRowsExist()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    Composed(true), @"{ ""tools"": [] }", MapJson(eventType: "view.click")));
+
+            Assert.Contains("入出力の形が無いツール", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsARowThatAssignsAComposedToolName()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    Composed(false),
+                    SchemaJson("session_release_handle"),
+                    MapJson("session_release_handle")));
+
+            Assert.Contains(
+                "合成ツールの名前を割り当てた行がある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsAComposedToolWhoseBranchingDoesNotMatchItsSchema()
+        {
+            IDictionary<string, ComposedTool> composed =
+                new Dictionary<string, ComposedTool>(StringComparer.Ordinal)
+                {
+                    { "session_release_handle", new ComposedTool(true, "受け持つこと。") },
+                };
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    composed, SchemaJson("session_release_handle"), @"{ ""rows"": [] }"));
+
+            Assert.Contains(
+                "分岐の欄が入出力の形と合わない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsAToolThatIsNeitherAssignedNorComposed()
+        {
+            string both = @"{ ""tools"": ["
+                + Described("model_clear_pmx") + "," + Described("session_release_handle") + "] }";
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(Composed(false), both, @"{ ""rows"": [] }"));
+
+            Assert.Contains(
+                "どの行にも割り当てていないツール", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>入出力の形を1件だけ持つツールの項目。</summary>
+        private static string Described(string tool)
+        {
+            return @"{ ""tool"": """ + tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }";
+        }
+
+        /// <summary>合成ツールを1件だけ持つ表。分岐の有無を選べる。</summary>
+        private static IDictionary<string, ComposedTool> Composed(bool branching)
+        {
+            return new Dictionary<string, ComposedTool>(StringComparer.Ordinal)
+            {
+                {
+                    branching ? "view_poll_events" : "session_release_handle",
+                    new ComposedTool(branching, "受け持つこと。")
+                },
+            };
+        }
+
+        /// <summary>合成ツールを1件も持たない表。</summary>
+        private static IDictionary<string, ComposedTool> None
+        {
+            get { return new Dictionary<string, ComposedTool>(StringComparer.Ordinal); }
         }
 
         [Fact]
@@ -159,7 +269,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     ToolMapJsonReader.Read(MapJson()),
                     new HashSet<string>(Known, StringComparer.Ordinal),
                     Lengths(new[] { "number", "text" }),
-                    Budget));
+                    Budget,
+                    None));
 
             Assert.Contains("想定文字数を持たない綴り", error.Message, StringComparison.Ordinal);
         }
@@ -173,7 +284,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     ToolMapJsonReader.Read(MapJson()),
                     new HashSet<string>(new[] { "number" }, StringComparer.Ordinal),
                     Lengths(Known),
-                    Budget));
+                    Budget,
+                    None));
 
             Assert.Contains("綴りの表に無い想定文字数", error.Message, StringComparison.Ordinal);
         }
@@ -278,14 +390,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             IDictionary<string, int> lengths = Lengths(Known);
 
+            IDictionary<string, ComposedTool> composed = None;
+
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(null, map, spellings, lengths, Budget));
+                () => ToolSchemaGate.Require(null, map, spellings, lengths, Budget, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(schemas, null, spellings, lengths, Budget));
+                () => ToolSchemaGate.Require(schemas, null, spellings, lengths, Budget, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(schemas, map, null, lengths, Budget));
+                () => ToolSchemaGate.Require(schemas, map, null, lengths, Budget, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(schemas, map, spellings, null, Budget));
+                () => ToolSchemaGate.Require(schemas, map, spellings, null, Budget, composed));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolSchemaGate.Require(schemas, map, spellings, lengths, Budget, null));
         }
     }
 }

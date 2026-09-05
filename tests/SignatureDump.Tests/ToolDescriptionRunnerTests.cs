@@ -21,6 +21,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string EmptyNames = "{\"propertyNames\":[]}\n";
 
+        private const string Contract =
+            "### 合成ツール\n\n| ツール | 分岐 | 受け持つこと |\n|---|---|---|\n"
+            + "| `session_release_handle` | 持たない | 解放する |\n";
+
         private const string EmptyMap = "{\"rows\":[]}\n";
 
         private readonly string _root;
@@ -46,7 +50,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 5 })
+            foreach (int count in new[] { 0, 1, 2, 3, 4, 6 })
             {
                 StringWriter error = new StringWriter();
 
@@ -64,8 +68,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ToolDescriptionRunner.Run(
-                new[] { Path.Combine(_root, "missing"), Write("r.json", Roles),
-                    Write("n.json", EmptyNames), Write("m.json", EmptyMap) },
+                new[] { Path.Combine(_root, "missing"), Write("c.md", Contract),
+                    Write("r.json", Roles), Write("n.json", EmptyNames),
+                    Write("m.json", EmptyMap) },
                 new StringWriter(),
                 error);
 
@@ -76,7 +81,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AMissingInputFileIsInputUnavailable()
         {
-            foreach (int missing in new[] { 1, 2, 3 })
+            foreach (int missing in new[] { 1, 2, 3, 4 })
             {
                 string[] args = Arguments(EmptyMap);
                 args[missing] = Path.Combine(_root, "gone");
@@ -134,7 +139,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             int code = ToolDescriptionRunner.Run(Arguments(EmptyMap), output, new StringWriter());
 
             Assert.Equal(ExitCodes.Success, code);
-            Assert.Contains("ツール 0 件", output.ToString(), StringComparison.Ordinal);
+            Assert.Contains("ツール 1 件", output.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -151,10 +156,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("規則に合わない", error.ToString(), StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void ARowThatAssignsAComposedToolNameIsUnresolved()
+        {
+            StringWriter error = new StringWriter();
+
+            int code = ToolDescriptionRunner.Run(
+                Arguments(Map(Vertex + ".Index()", "session_release_handle")),
+                new StringWriter(),
+                error);
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+            Assert.Contains(
+                "合成ツールの名前を割り当てた行がある", error.ToString(), StringComparison.Ordinal);
+        }
+
         private static string Map(string signatureKey, string tool)
         {
             return "{\"rows\":[{\"signatureKey\":\"" + signatureKey + "\""
-                + ",\"capabilityIds\":[\"C1\"],\"rowKind\":\"composed\",\"editKind\":\"read\""
+                + ",\"capabilityIds\":[\"C1\"],\"rowKind\":\"directDispatch\",\"editKind\":\"read\""
                 + ",\"direction\":\"read\",\"basis\":\"題材の根拠。\",\"tool\":\"" + tool + "\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
                 + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}\n";
@@ -165,6 +185,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new[]
             {
                 EditorDirectory(),
+                Write("contract.md", Contract),
                 Write("roles.json", Roles),
                 Write("names.json", EmptyNames),
                 Write("map.json", map),

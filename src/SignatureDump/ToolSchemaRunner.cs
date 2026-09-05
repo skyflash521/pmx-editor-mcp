@@ -38,6 +38,7 @@ namespace PmxEditorMcp.SignatureDump
 
             ISet<string> spellings;
             IDictionary<string, int> lengths;
+            IDictionary<string, ComposedTool> composedTools;
             int budgetChars;
             ToolMap map;
             ToolSchemaTable schemas;
@@ -46,6 +47,7 @@ namespace PmxEditorMcp.SignatureDump
                 string contract = Read(args[0], "共通契約仕様書");
                 spellings = ValueShapeDocument.ReadSpellings(contract);
                 lengths = AssumedLengthDocument.Read(contract);
+                composedTools = ComposedToolDocument.Read(contract);
                 budgetChars = BudgetDocument.ReadDefault(Read(args[1], "アーキテクチャ仕様書"));
                 map = ToolMapJsonReader.Read(Read(args[2], "能力対応表の正本"));
                 schemas = ToolSchemaJsonReader.Read(Read(args[3], "スキーマ正本"));
@@ -58,7 +60,7 @@ namespace PmxEditorMcp.SignatureDump
 
             try
             {
-                ToolSchemaGate.Require(schemas, map, spellings, lengths, budgetChars);
+                ToolSchemaGate.Require(schemas, map, spellings, lengths, budgetChars, composedTools);
             }
             catch (InvalidOperationException exception)
             {

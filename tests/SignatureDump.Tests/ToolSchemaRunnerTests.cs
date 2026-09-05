@@ -14,7 +14,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             "### 表現の綴り\n\n| 綴り | JSONの形 |\n|---|---|\n| `number` | 数値 |\n";
 
         private const string Contract = Spellings
-            + "\n#### 想定文字数\n\n| 綴り | 想定文字数 |\n|---|---|\n| `number` | 11 |\n";
+            + "\n#### 想定文字数\n\n| 綴り | 想定文字数 |\n|---|---|\n| `number` | 11 |\n"
+            + "\n### 合成ツール\n\n| ツール | 分岐 | 受け持つこと |\n|---|---|---|\n"
+            + "| `view_poll_events` | 持つ | 取り出す |\n";
 
         private const string Architecture =
             "## 応答サイズ予算の設定\n\n- 未設定時の既定は **100,000**——題材。\n";

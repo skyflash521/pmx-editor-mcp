@@ -30,11 +30,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 4)
+            if (args.Length != 5)
             {
                 error.WriteLine(
-                    "引数は4つ: <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
-                        + " <日本語名の正本のパス> <能力対応表の正本のパス>");
+                    "引数は5つ: <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
+                        + " <型役割表の正本のパス> <日本語名の正本のパス> <能力対応表の正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -49,13 +49,15 @@ namespace PmxEditorMcp.SignatureDump
             TypeRoleTable roles;
             IList<PropertyNameRecord> names;
             ToolMap map;
+            IDictionary<string, ComposedTool> composedTools;
             IDictionary<string, string> methodNotes;
             IDictionary<string, string> propertyNotes;
             try
             {
-                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[1], "型役割表の正本"));
-                names = PropertyNameJsonReader.ReadPropertyNames(Read(args[2], "日本語名の正本"));
-                map = ToolMapJsonReader.Read(Read(args[3], "能力対応表の正本"));
+                composedTools = ComposedToolDocument.Read(Read(args[1], "共通契約仕様書"));
+                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[2], "型役割表の正本"));
+                names = PropertyNameJsonReader.ReadPropertyNames(Read(args[3], "日本語名の正本"));
+                map = ToolMapJsonReader.Read(Read(args[4], "能力対応表の正本"));
                 string document = Read(
                     SdkAssemblyLocator.GetDocumentPath(editorDirectory), "ドキュメントXML");
                 methodNotes = DocumentNoteReader.ReadMethods(document);
@@ -91,7 +93,12 @@ namespace PmxEditorMcp.SignatureDump
                     descriptions.Add(material.Tool, ToolDescriptionRule.Compose(material));
                 }
 
-                ToolDescriptionGate.Require(materials, descriptions);
+                foreach (KeyValuePair<string, ComposedTool> composed in composedTools)
+                {
+                    descriptions[composed.Key] = new ToolDescription(composed.Value.Duty, null);
+                }
+
+                ToolDescriptionGate.Require(materials, descriptions, composedTools.Keys);
             }
             catch (InvalidOperationException exception)
             {
@@ -112,7 +119,7 @@ namespace PmxEditorMcp.SignatureDump
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
                 "照合した: ツール {0} 件・索引語 {1} 件・最大 {2} バイト",
-                materials.Count,
+                descriptions.Count,
                 materials.Sum(m => m.IndexTerms.Count),
                 descriptions.Count == 0
                     ? 0

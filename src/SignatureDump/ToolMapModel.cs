@@ -8,9 +8,6 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>能力対応表の行の種別。</summary>
     public enum ToolMapRowKind
     {
-        /// <summary>SDKのメンバーへの1対1の中継ではないツールの行。</summary>
-        Composed,
-
         /// <summary>個別のツールを持たず、共通契約の側が受け持つ行。</summary>
         CommonContract,
 
@@ -389,10 +386,10 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>編集の分類と反映の指定をそう決めた根拠の一文。</summary>
         public string Basis { get; }
 
-        /// <summary>ツールの名前。合成ツールと直接ディスパッチの行だけが持つ。</summary>
+        /// <summary>ツールの名前。直接ディスパッチの行だけが持つ。</summary>
         public string Tool { get; }
 
-        /// <summary>事後条件。合成ツールと直接ディスパッチの行だけが持つ。</summary>
+        /// <summary>事後条件。直接ディスパッチの行だけが持つ。</summary>
         public IList<Postcondition> Postcondition { get; }
 
         /// <summary>共通契約割当行だけが持つ割当の種別。</summary>

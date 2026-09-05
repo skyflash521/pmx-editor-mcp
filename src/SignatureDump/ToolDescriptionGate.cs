@@ -13,7 +13,9 @@ namespace PmxEditorMcp.SignatureDump
     {
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
-            IList<ToolDescriptionMaterial> materials, IDictionary<string, ToolDescription> descriptions)
+            IList<ToolDescriptionMaterial> materials,
+            IDictionary<string, ToolDescription> descriptions,
+            ICollection<string> composedTools)
         {
             if (materials == null)
             {
@@ -25,25 +27,53 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(descriptions));
             }
 
-            RequireSameTools(materials, descriptions);
-            RequireLimit(materials, descriptions);
+            if (composedTools == null)
+            {
+                throw new ArgumentNullException(nameof(composedTools));
+            }
+
+            RequireNoComposedMaterial(materials, composedTools);
+            RequireSameTools(materials, descriptions, composedTools);
+            RequireLimit(descriptions);
             RequireSourceQualifier(materials, descriptions);
         }
 
-        /// <summary>説明文が材料と同じツールを覆うことを求める。</summary>
-        private static void RequireSameTools(
-            IList<ToolDescriptionMaterial> materials, IDictionary<string, ToolDescription> descriptions)
+        /// <summary>
+        /// 合成ツールの名前を持つ材料が無いことを求める。合成ツールは行を持たないので、行から材料が
+        /// 出れば同じ名前の説明文が2つの出所から現れ、どちらを載せるかが決まらない。
+        /// </summary>
+        private static void RequireNoComposedMaterial(
+            IList<ToolDescriptionMaterial> materials, ICollection<string> composedTools)
         {
-            foreach (ToolDescriptionMaterial material in materials.OrderBy(m => m.Tool, StringComparer.Ordinal))
+            string collided = materials.Select(m => m.Tool).Where(composedTools.Contains)
+                .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
+            if (collided != null)
             {
-                if (!descriptions.ContainsKey(material.Tool))
-                {
-                    throw new InvalidOperationException("説明文が無いツールがある: " + material.Tool);
-                }
+                throw new InvalidOperationException(
+                    "合成ツールの名前を割り当てた行がある: " + collided);
             }
+        }
 
+        /// <summary>
+        /// 説明文が、材料を持つツールと合成ツールを合わせたものを覆うことを求める。合成ツールは行を
+        /// 持たないので材料からは現れない。
+        /// </summary>
+        private static void RequireSameTools(
+            IList<ToolDescriptionMaterial> materials,
+            IDictionary<string, ToolDescription> descriptions,
+            ICollection<string> composedTools)
+        {
             HashSet<string> known = new HashSet<string>(
                 materials.Select(m => m.Tool), StringComparer.Ordinal);
+            known.UnionWith(composedTools);
+
+            string missing = known.Where(t => !descriptions.ContainsKey(t))
+                .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
+            if (missing != null)
+            {
+                throw new InvalidOperationException("説明文が無いツールがある: " + missing);
+            }
+
             string extra = descriptions.Keys.Where(t => !known.Contains(t))
                 .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
             if (extra != null)
@@ -53,16 +83,17 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>説明文がUTF-8で上限のバイト数に収まることを求める。</summary>
-        private static void RequireLimit(
-            IList<ToolDescriptionMaterial> materials, IDictionary<string, ToolDescription> descriptions)
+        private static void RequireLimit(IDictionary<string, ToolDescription> descriptions)
         {
-            foreach (ToolDescriptionMaterial material in materials.OrderBy(m => m.Tool, StringComparer.Ordinal))
+            foreach (KeyValuePair<string, ToolDescription> description in descriptions
+                .OrderBy(d => d.Key, StringComparer.Ordinal))
             {
-                int bytes = Encoding.UTF8.GetByteCount(descriptions[material.Tool].Text);
+                int bytes = Encoding.UTF8.GetByteCount(description.Value.Text);
                 if (bytes > ToolDescriptionRule.LimitBytes)
                 {
                     throw new InvalidOperationException(
-                        "説明文が上限のバイト数を超える: " + material.Tool + "(" + bytes + "バイト)");
+                        "説明文が上限のバイト数を超える: " + description.Key
+                            + "(" + bytes + "バイト)");
                 }
             }
         }

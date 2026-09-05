@@ -105,7 +105,6 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly Dictionary<string, ToolMapRowKind> RowKinds =
             new Dictionary<string, ToolMapRowKind>(StringComparer.Ordinal)
             {
-                { "composed", ToolMapRowKind.Composed },
                 { "commonContract", ToolMapRowKind.CommonContract },
                 { "eventBranch", ToolMapRowKind.EventBranch },
                 { "schemaEmbedded", ToolMapRowKind.SchemaEmbedded },
@@ -286,8 +285,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>行の種別ごとに、持たなければならない項目と持ってはならない項目。</summary>
         private static IEnumerable<KeyValuePair<string, bool>> FieldsOf(ToolMapRowKind rowKind)
         {
-            bool hasTool = rowKind == ToolMapRowKind.Composed
-                || rowKind == ToolMapRowKind.DirectDispatch;
+            bool hasTool = rowKind == ToolMapRowKind.DirectDispatch;
             yield return new KeyValuePair<string, bool>(ToolName, hasTool);
             yield return new KeyValuePair<string, bool>(PostconditionName, hasTool);
             bool isCommon = rowKind == ToolMapRowKind.CommonContract;
