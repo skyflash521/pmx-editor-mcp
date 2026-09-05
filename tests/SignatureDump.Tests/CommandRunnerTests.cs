@@ -125,6 +125,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("tool-map", CommandRunner.ToolMapCommand);
             Assert.Equal("tool-schemas", CommandRunner.ToolSchemasCommand);
             Assert.Equal("tool-descriptions", CommandRunner.ToolDescriptionsCommand);
+            Assert.Equal("sample-values", CommandRunner.SampleValuesCommand);
         }
 
         [Fact]
@@ -517,6 +518,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void SampleValuesSubcommandRunsTheCollation()
+        {
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.SampleValuesCommand,
+                    Path.Combine(_root, "no-editor"),
+                    Path.Combine(_root, "contract.md"),
+                    Path.Combine(_root, "samples.json"),
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, code);
+
+            int argumentCode = CommandRunner.Run(
+                new[] { CommandRunner.SampleValuesCommand },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InvalidArguments, argumentCode);
+        }
+
+        [Fact]
         public void ToolDescriptionsSubcommandRunsTheCollation()
         {
             int code = CommandRunner.Run(
@@ -644,6 +669,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.ToolDescriptionsCommand
                     + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
                     + " <日本語名の正本のパス> <能力対応表の正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.SampleValuesCommand
+                    + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
+                    + " <サンプル値の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

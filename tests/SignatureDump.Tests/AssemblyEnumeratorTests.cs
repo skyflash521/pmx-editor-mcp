@@ -25,6 +25,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Nested = N + "SampleOuter+SampleNested";
         private const string Proc = N + "SampleProc";
         private const string Value = N + "SampleValue";
+        private const string Flags = N + "SampleFlags";
+
         private const string OuterGeneric = N + "SampleOuterGeneric<TOuter>";
         private const string InnerGeneric = OuterGeneric + "+SampleInnerGeneric<TInner>";
 
@@ -40,7 +42,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Data + "|Class|top|concrete|closed||",
             Derived + "|Class|top|concrete|closed|" + Aux + ";" + Root + ";" + BaseClass + "|",
             Generic + "|Class|top|concrete|generic||",
-            Kind + "|Enum|top|concrete|closed||Second;First",
+            Flags + "|Enum|top|concrete|closed||None;Left;Right|combinable",
+            Kind + "|Enum|top|concrete|closed||Second;First|single",
             N + "SampleOuter|Class|top|abstract|closed||",
             Nested + "|Class|nested|concrete|closed||",
             Proc + "|Delegate|top|concrete|closed||",
@@ -344,7 +347,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 type.IsAbstract ? "abstract" : "concrete",
                 type.IsGenericTypeDefinition ? "generic" : "closed",
                 string.Join(";", type.BaseTypes),
-                string.Join(";", type.EnumMembers));
+                type.Kind == TypeKind.Enum
+                    ? string.Join(";", type.EnumMembers)
+                        + (type.IsCombinable ? "|combinable" : "|single")
+                    : string.Join(";", type.EnumMembers));
         }
 
         private static string Describe(SignatureRecord signature)

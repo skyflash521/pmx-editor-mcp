@@ -16,23 +16,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
             "\"assemblyVersion\":\"1.2.3.4\",",
             "\"types\":[",
             "{\"name\":\"N.Holder\",\"kind\":\"class\",\"isNested\":false,\"isAbstract\":false,"
-                + "\"isGenericTypeDefinition\":true,\"baseTypes\":[],\"enumMembers\":[]},",
+                + "\"isGenericTypeDefinition\":true,\"baseTypes\":[],\"enumMembers\":[],\"isCombinable\":false},",
             "{\"name\":\"N.Holder+Inner\",\"kind\":\"struct\",\"isNested\":true,\"isAbstract\":false,"
-                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],\"enumMembers\":[]},",
+                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],\"enumMembers\":[],\"isCombinable\":false},",
             "{\"name\":\"N.IBase\",\"kind\":\"interface\",\"isNested\":false,\"isAbstract\":true,"
-                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],\"enumMembers\":[]},",
+                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],\"enumMembers\":[],\"isCombinable\":false},",
             "{\"name\":\"N.IThing\",\"kind\":\"interface\",\"isNested\":false,\"isAbstract\":true,"
-                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[\"N.IBase\"],\"enumMembers\":[]},",
+                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[\"N.IBase\"],\"enumMembers\":[],\"isCombinable\":false},",
+            "{\"name\":\"N.Flags\",\"kind\":\"enum\",\"isNested\":false,\"isAbstract\":false,"
+                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],"
+                + "\"enumMembers\":[\"Left\",\"Right\"],\"isCombinable\":true},",
             "{\"name\":\"N.Kind\",\"kind\":\"enum\",\"isNested\":false,\"isAbstract\":false,"
                 + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],"
-                + "\"enumMembers\":[\"Second\",\"First\"]},",
+                + "\"enumMembers\":[\"Second\",\"First\"],\"isCombinable\":false},",
             "{\"name\":\"N.Proc\",\"kind\":\"delegate\",\"isNested\":false,\"isAbstract\":false,"
-                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],\"enumMembers\":[]}",
+                + "\"isGenericTypeDefinition\":false,\"baseTypes\":[],\"enumMembers\":[],\"isCombinable\":false}",
             "],",
             "\"referencedTypes\":[",
             "{\"name\":\"System.EventHandler\",\"kind\":\"delegate\",\"isNested\":false,"
                 + "\"isAbstract\":false,\"isGenericTypeDefinition\":false,\"baseTypes\":[],"
-                + "\"enumMembers\":[]}",
+                + "\"enumMembers\":[],\"isCombinable\":false}",
             "],",
             "\"signatures\":[",
             "{\"key\":\"N.Holder..ctor(System.Int32)\",\"declaringType\":\"N.Holder\","
@@ -81,9 +84,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
             bool isAbstract,
             bool isGenericTypeDefinition,
             IList<string> baseTypes,
-            IList<string> enumMembers)
+            IList<string> enumMembers,
+            bool isCombinable = false)
         {
-            return new TypeRecord(name, kind, isNested, isAbstract, isGenericTypeDefinition, baseTypes, enumMembers);
+            return new TypeRecord(
+                name,
+                kind,
+                isNested,
+                isAbstract,
+                isGenericTypeDefinition,
+                baseTypes,
+                enumMembers,
+                isCombinable);
         }
 
         private static InventoryRecord Sample()
@@ -96,6 +108,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Type("N.Holder+Inner", TypeKind.Struct, true, false, false, none, none),
                 Type("N.IBase", TypeKind.Interface, false, true, false, none, none),
                 Type("N.IThing", TypeKind.Interface, false, true, false, new List<string> { "N.IBase" }, none),
+                Type("N.Flags", TypeKind.Enum, false, false, false, none,
+                    new List<string> { "Left", "Right" }, true),
                 Type("N.Kind", TypeKind.Enum, false, false, false, none, new List<string> { "Second", "First" }),
                 Type("N.Proc", TypeKind.Delegate, false, false, false, none, none),
             };
@@ -229,7 +243,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 (Dictionary<string, object>)serializer.DeserializeObject(InventoryJson.Write(Sample()));
 
             Assert.Equal("Sample", root["assemblyName"]);
-            Assert.Equal(6, ((object[])root["types"]).Length);
+            Assert.Equal(7, ((object[])root["types"]).Length);
             Assert.Single((object[])root["referencedTypes"]);
             Assert.Equal(7, ((object[])root["signatures"]).Length);
         }

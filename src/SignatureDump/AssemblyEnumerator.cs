@@ -119,7 +119,8 @@ namespace PmxEditorMcp.SignatureDump
                 type.IsAbstract,
                 type.IsGenericTypeDefinition,
                 CollectBaseTypes(type, kind),
-                CollectEnumMembers(type, kind));
+                CollectEnumMembers(type, kind),
+                kind == TypeKind.Enum && type.IsDefined(typeof(FlagsAttribute), false));
         }
 
         /// <summary>

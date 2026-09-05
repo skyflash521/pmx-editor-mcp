@@ -1,0 +1,417 @@
+{
+  "types": [
+    {
+      "typeName": "PEPlugin.Pmd.BodyBoxKind",
+      "default": "Sphere",
+      "second": "Box"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.BodyMode",
+      "default": "Static",
+      "second": "Dynamic"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.BoneKind",
+      "default": "Rotate",
+      "second": "RotateMove"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.IPEQuaternion",
+      "default": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "second": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "typeName": "PEPlugin.Pmd.IPEVector3",
+      "default": [
+        1,
+        2,
+        3
+      ],
+      "second": [
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "typeName": "PEPlugin.Pmd.UpdateObject",
+      "default": "None",
+      "second": "Vertex"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.JointKind",
+      "default": "Sp6DOF",
+      "second": "P2P"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.MorphKind",
+      "default": "Group",
+      "second": "Vertex"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.PmxUpdateObject",
+      "default": "None",
+      "second": "Vertex"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.PrimitiveType",
+      "default": "Tri",
+      "second": "Line"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.SoftBodyShape",
+      "default": "TriMesh",
+      "second": "Rope"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.SphereType",
+      "default": "None",
+      "second": "Mul"
+    },
+    {
+      "typeName": "PEPlugin.SDX.M",
+      "default": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "second": [
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "typeName": "PEPlugin.SDX.Q",
+      "default": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "second": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "typeName": "PEPlugin.SDX.V2",
+      "default": [
+        1,
+        2
+      ],
+      "second": [
+        3,
+        4
+      ]
+    },
+    {
+      "typeName": "PEPlugin.SDX.V3",
+      "default": [
+        1,
+        2,
+        3
+      ],
+      "second": [
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "typeName": "PEPlugin.SDX.V4",
+      "default": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "second": [
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "typeName": "PEPlugin.View.AntiAliasingType",
+      "default": "None",
+      "second": "x4"
+    },
+    {
+      "typeName": "PEPlugin.View.FillMode",
+      "default": "Solid",
+      "second": "WireFrame"
+    },
+    {
+      "typeName": "PEPlugin.View.PartsSelectObject",
+      "default": "All",
+      "second": "Material"
+    },
+    {
+      "typeName": "PEPlugin.View.ToonType",
+      "default": "None",
+      "second": "Type1"
+    },
+    {
+      "typeName": "PEPlugin.View.VertexEditObject",
+      "default": "Vertex",
+      "second": "Bone"
+    },
+    {
+      "typeName": "PEPlugin.Vme.OpType",
+      "default": "Set",
+      "second": "Add"
+    },
+    {
+      "typeName": "PEPlugin.Vme.PEVmePathType",
+      "default": "Linear",
+      "second": "Spline"
+    },
+    {
+      "typeName": "SlimDX.Matrix",
+      "default": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "second": [
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "typeName": "SlimDX.Quaternion",
+      "default": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "second": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "typeName": "SlimDX.Vector3",
+      "default": [
+        1,
+        2,
+        3
+      ],
+      "second": [
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "typeName": "System.Boolean",
+      "default": true,
+      "second": false
+    },
+    {
+      "typeName": "System.Byte",
+      "default": 1,
+      "second": 2
+    },
+    {
+      "typeName": "System.Double",
+      "default": 1.5,
+      "second": 2.5
+    },
+    {
+      "typeName": "System.Drawing.Bitmap",
+      "default": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4z8AAAAMBAQD3A0FDAAAAAElFTkSuQmCC",
+      "second": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mNgYPgPAAEDAQA2dBFAAAAAAElFTkSuQmCC"
+    },
+    {
+      "typeName": "System.Drawing.Brush",
+      "default": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "second": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "typeName": "System.Drawing.Color",
+      "default": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "second": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "typeName": "System.Drawing.Font",
+      "default": {
+        "family": "MS Gothic",
+        "size": 9,
+        "style": "Regular"
+      },
+      "second": {
+        "family": "Meiryo",
+        "size": 12,
+        "style": "Bold"
+      }
+    },
+    {
+      "typeName": "System.Drawing.Point",
+      "default": [
+        1,
+        2
+      ],
+      "second": [
+        3,
+        4
+      ]
+    },
+    {
+      "typeName": "System.Drawing.Rectangle",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "second": [
+        1,
+        1,
+        2,
+        2
+      ]
+    },
+    {
+      "typeName": "System.Drawing.Size",
+      "default": [
+        1,
+        2
+      ],
+      "second": [
+        3,
+        4
+      ]
+    },
+    {
+      "typeName": "System.Int32",
+      "default": 1,
+      "second": 2
+    },
+    {
+      "typeName": "System.Object",
+      "default": {
+        "sample": 1
+      },
+      "second": [
+        1,
+        "sample"
+      ]
+    },
+    {
+      "typeName": "System.Single",
+      "default": 0.5,
+      "second": 1.5
+    },
+    {
+      "typeName": "System.String",
+      "default": "サンプル",
+      "second": "サンプル2"
+    },
+    {
+      "typeName": "System.Version",
+      "default": "1.0",
+      "second": "2.0"
+    },
+    {
+      "typeName": "System.Windows.Forms.FormWindowState",
+      "default": "Normal",
+      "second": "Maximized"
+    },
+    {
+      "typeName": "System.Windows.Forms.MouseButtons",
+      "default": "Left",
+      "second": "Right"
+    }
+  ]
+}

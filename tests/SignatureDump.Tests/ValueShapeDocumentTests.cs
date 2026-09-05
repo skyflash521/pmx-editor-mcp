@@ -126,5 +126,48 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Throws<ArgumentNullException>(() => ValueShapeDocument.Read(null));
         }
+
+        [Fact]
+        public void TheComponentCountsAreRead()
+        {
+            IDictionary<string, int> components = ValueShapeDocument.ReadComponents(
+                "### 成分の並び\n\n| 型 | 成分 |\n|---|---|\n| `A` | 2 |\n| `B` | 16 |\n");
+
+            Assert.Equal(2, components["A"]);
+            Assert.Equal(16, components["B"]);
+        }
+
+        [Theory]
+        [InlineData("0")]
+        [InlineData("-1")]
+        [InlineData("2.5")]
+        [InlineData("two")]
+        public void AComponentCountThatIsNotAPositiveIntegerStops(string count)
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ValueShapeDocument.ReadComponents(
+                    "### 成分の並び\n\n| 型 | 成分 |\n|---|---|\n| `A` | " + count + " |\n"));
+
+            Assert.Contains("1以上の整数でない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheSameTypeTwiceInTheComponentTableStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ValueShapeDocument.ReadComponents(
+                    "### 成分の並び\n\n| 型 | 成分 |\n|---|---|\n| `A` | 2 |\n| `A` | 3 |\n"));
+
+            Assert.Contains("二度現れる", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AComponentTableWithoutRowsStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ValueShapeDocument.ReadComponents("### 成分の並び\n\n本文だけ。\n"));
+
+            Assert.Contains("表に行が無い", error.Message, StringComparison.Ordinal);
+        }
     }
 }

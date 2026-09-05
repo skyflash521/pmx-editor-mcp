@@ -46,6 +46,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>組み立てたツールの説明文が、上限と出所修飾の規則に合うことを照合する。</summary>
         public const string ToolDescriptionsCommand = "tool-descriptions";
 
+        /// <summary>型ごとのサンプル値が、値を写す型と表現に合うことを照合する。</summary>
+        public const string SampleValuesCommand = "sample-values";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -131,6 +134,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ToolDescriptionRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], SampleValuesCommand, StringComparison.Ordinal))
+            {
+                return SampleValueRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -179,6 +187,10 @@ namespace PmxEditorMcp.SignatureDump
                 ToolDescriptionsCommand
                     + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
                     + " <日本語名の正本のパス> <能力対応表の正本のパス>");
+            error.WriteLine(
+                SampleValuesCommand
+                    + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
+                    + " <サンプル値の正本のパス>");
         }
     }
 }

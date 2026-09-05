@@ -145,6 +145,15 @@ namespace PmxEditorMcp.SignatureDump.Tests.Sample
         First = 1,
     }
 
+    // 組み合わせを許す列挙。許さない SampleKind と並べておかないと、可否を見ない実装が通る。
+    [Flags]
+    public enum SampleFlags
+    {
+        None = 0,
+        Left = 1,
+        Right = 2,
+    }
+
     public delegate int SampleProc(int x);
 
     public static class SampleOuter

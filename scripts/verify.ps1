@@ -22,6 +22,7 @@ $names = "$specs/pmx-editor-mcp-property-names.json"
 $assignments = "$specs/pmx-editor-mcp-common-assignments.json"
 $toolMap = "$specs/pmx-editor-mcp-tool-map.json"
 $toolSchemas = "$specs/pmx-editor-mcp-tool-schemas.json"
+$sampleValues = "$specs/pmx-editor-mcp-sample-values.json"
 $contract = "$specs/pmx-editor-mcp-common-contract.md"
 $architecture = "$specs/pmx-editor-mcp-architecture.md"
 $procedure = 'docs/conventions/verification.md'
@@ -152,6 +153,10 @@ try {
     $checks['ツールの説明文の照合'] = @{
         Needs = $buildOutput
         Body = { & $dump tool-descriptions $editorDir $roles $names $toolMap }
+    }
+    $checks['サンプル値の照合'] = @{
+        Needs = $buildOutput
+        Body = { & $dump sample-values $editorDir $contract $sampleValues }
     }
 
     $listed = @(Get-ListedChecks)

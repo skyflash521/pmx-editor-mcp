@@ -57,7 +57,8 @@ namespace PmxEditorMcp.SignatureDump
                 + Member("isAbstract", Flag(type.IsAbstract)) + ","
                 + Member("isGenericTypeDefinition", Flag(type.IsGenericTypeDefinition)) + ","
                 + Member("baseTypes", TextArray(type.BaseTypes)) + ","
-                + Member("enumMembers", TextArray(type.EnumMembers))
+                + Member("enumMembers", TextArray(type.EnumMembers)) + ","
+                + Member("isCombinable", Flag(type.IsCombinable))
                 + "}";
         }
 

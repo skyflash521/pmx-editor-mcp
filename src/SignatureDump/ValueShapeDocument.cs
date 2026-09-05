@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Collections.ObjectModel;
 
 namespace PmxEditorMcp.SignatureDump
@@ -37,6 +38,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>表現の綴りの表を置く節の見出し。</summary>
         public const string SpellingHeading = "### 表現の綴り";
 
+        /// <summary>成分の数の表を置く節の見出し。</summary>
+        public const string ComponentHeading = "### 成分の並び";
+
         /// <summary>
         /// 仕様書の本文から表現の綴りを読む。綴りの閉じた集合はこの表が持つので、綴りを名乗る
         /// 値はここに実在するかで確かめる。
@@ -55,6 +59,40 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return spellings;
+        }
+
+        /// <summary>
+        /// 仕様書の本文から成分の数を読む。並びの長さは型ごとに決まるので、この表が持つ。
+        /// </summary>
+        public static IDictionary<string, int> ReadComponents(string text)
+        {
+            Dictionary<string, int> components = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (string[] cells in SpecificationTable.Rows(text, ComponentHeading))
+            {
+                string line = string.Join(" | ", cells);
+                string typeName = SpecificationTable.Quoted(cells[0], line);
+                int count;
+                if (!int.TryParse(
+                        cells[1], NumberStyles.None, CultureInfo.InvariantCulture, out count)
+                    || count < 1)
+                {
+                    throw new InvalidOperationException("成分の数が1以上の整数でない: " + line);
+                }
+
+                if (components.ContainsKey(typeName))
+                {
+                    throw new InvalidOperationException("同じ型が二度現れる: " + typeName);
+                }
+
+                components.Add(typeName, count);
+            }
+
+            if (components.Count == 0)
+            {
+                throw new InvalidOperationException("表に行が無い: " + ComponentHeading);
+            }
+
+            return components;
         }
 
         /// <summary>仕様書の本文から表を読む。表が無いか行が読めなければ例外。</summary>

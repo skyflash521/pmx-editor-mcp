@@ -156,7 +156,8 @@ namespace PmxEditorMcp.SignatureDump
             bool isAbstract,
             bool isGenericTypeDefinition,
             IList<string> baseTypes,
-            IList<string> enumMembers)
+            IList<string> enumMembers,
+            bool isCombinable = false)
         {
             Name = name;
             Kind = kind;
@@ -165,6 +166,7 @@ namespace PmxEditorMcp.SignatureDump
             IsGenericTypeDefinition = isGenericTypeDefinition;
             BaseTypes = baseTypes;
             EnumMembers = enumMembers;
+            IsCombinable = isCombinable;
         }
 
         public string Name { get; }
@@ -187,6 +189,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>列挙型の列挙子名。宣言順。列挙型でなければ空。</summary>
         public IList<string> EnumMembers { get; }
+
+        /// <summary>
+        /// 列挙子を組み合わせた値を許す列挙かどうか。許す列挙だけが、列挙子の名前を連ねた綴りを
+        /// 受け取れる。列挙型でなければ偽。
+        /// </summary>
+        public bool IsCombinable { get; }
     }
 
     public sealed class InventoryRecord
