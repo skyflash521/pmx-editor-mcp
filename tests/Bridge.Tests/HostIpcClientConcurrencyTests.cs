@@ -69,11 +69,13 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
+        /// <summary>
+        /// 待つ上限は送受信だけでなく接続の確立にも掛かる。掛かっていないと、開かないパイプを
+        /// いつまでも待ち続ける。
+        /// </summary>
         [Fact]
         public async Task ConnectionThatNeverOpensIsCutAtLimit()
         {
-            // 待つ上限は送受信だけでなく接続の確立にも掛かる。掛かっていないと、開かないパイプを
-            // いつまでも待ち続ける。
             using HostIpcClient client = new HostIpcClient(
                 new NeverOpeningConnector(), BudgetChars, ShortWaitLimit);
 
@@ -110,11 +112,13 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, connector.ConnectCount);
         }
 
+        /// <summary>
+        /// 排他の区間は接続の確立から始まる。要求の送受信だけを直列化する作りだと、
+        /// 並行した最初の呼び出しがそれぞれ接続とhandshakeを始めてしまう。
+        /// </summary>
         [Fact]
         public async Task CallsDuringConnectAndHandshakeDoNotReconnect()
         {
-            // 排他の区間は接続の確立から始まる。要求の送受信だけを直列化する作りだと、
-            // 並行した最初の呼び出しがそれぞれ接続とhandshakeを始めてしまう。
             using SemaphoreSlim holding = new SemaphoreSlim(0, 1);
             using FakeHost host = new FakeHost()
                 .ReplyAsync(async (request, stopping) =>
@@ -149,11 +153,13 @@ namespace PmxEditorMcp.Bridge.Tests
                 MethodsOf(host.Requests));
         }
 
+        /// <summary>
+        /// 到着順に譲ること自体は順番待ちのテストが決定的に押さえる。ここでは、並行して
+        /// 呼んでもホストが見る要求が重ならず、どれも取りこぼされないことを確かめる。
+        /// </summary>
         [Fact]
         public async Task ConcurrentCallsAreSentOneAtATime()
         {
-            // 到着順に譲ること自体は順番待ちのテストが決定的に押さえる。ここでは、並行して
-            // 呼んでもホストが見る要求が重ならず、どれも取りこぼされないことを確かめる。
             using SemaphoreSlim holding = new SemaphoreSlim(0, 1);
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))

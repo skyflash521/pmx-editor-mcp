@@ -144,7 +144,9 @@ namespace PmxEditorMcp
                 ResponseBudget budget = ResponseBudget.ReadFromEnvironment();
 
                 // ツールに対応する処理は無く、基盤メソッドは接続が受け持つ。
-                _connection = new JsonRpcConnection(_log, new McpMethodTable(), HostVersion, budget.Chars);
+                McpMethodTable methods = new McpMethodTable();
+                DebugEventInjection.AddTo(methods, DebugHooks.ReadFromEnvironment());
+                _connection = new JsonRpcConnection(_log, methods, HostVersion, budget.Chars);
 
                 _host = new McpHost(
                     McpHost.BuildPipeName(editorProcessId),

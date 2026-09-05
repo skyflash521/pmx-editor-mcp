@@ -318,11 +318,13 @@ namespace PmxEditorMcp.Tests
             Assert.True(JsonRpcCodec.ParseRequest(BuildFlatArray(ElementsForLimit)).IsValid);
         }
 
+        /// <summary>
+        /// 上限内の本文でも、空のオブジェクトを並べれば解析で大量のオブジェクトが作られる。
+        /// 上限ちょうどの要求へ開き括弧を1つ足しただけの本文で、判定の向きを固定する。
+        /// </summary>
         [Fact]
         public void RequestOneTokenOverLimitIsInputLimitExceeded()
         {
-            // 上限内の本文でも、空のオブジェクトを並べれば解析で大量のオブジェクトが作られる。
-            // 上限ちょうどの要求へ開き括弧を1つ足しただけの本文で、判定の向きを固定する。
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(BuildFlatArray(ElementsForLimit, "[]"));
 
             Assert.False(result.IsValid);
@@ -330,10 +332,12 @@ namespace PmxEditorMcp.Tests
             Assert.Null(result.Id);
         }
 
+        /// <summary>
+        /// 値として置かれた括弧やコンマはオブジェクトを作らない。
+        /// </summary>
         [Fact]
         public void SymbolsInsideStringsAreNotCountedAsStructureTokens()
         {
-            // 値として置かれた括弧やコンマはオブジェクトを作らない。
             string commas = new string(',', JsonRpcCodec.ParseStructureTokenLimit + 100);
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
                 BuildRequest(Quoted(commas)));
@@ -341,11 +345,13 @@ namespace PmxEditorMcp.Tests
             Assert.True(result.IsValid);
         }
 
+        /// <summary>
+        /// 末尾の逆斜線がエスケープ済みなら文字列はそこで終わる。取り違えると、あとに続く
+        /// トークンを数え落として上限超過を見逃す。
+        /// </summary>
         [Fact]
         public void StructureTokensAfterStringEndingWithBackslashAreCounted()
         {
-            // 末尾の逆斜線がエスケープ済みなら文字列はそこで終わる。取り違えると、あとに続く
-            // トークンを数え落として上限超過を見逃す。
             StringBuilder builder = new StringBuilder();
             builder.Append('[');
             builder.Append(Quoted(EscapedBackslash));
@@ -361,10 +367,12 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(JsonRpcErrorCodes.RequestTooLarge, result.ErrorCode);
         }
 
+        /// <summary>
+        /// 閉じたと取り違えると、文字列の中のコンマを構造トークンに数えてしまう。
+        /// </summary>
         [Fact]
         public void EscapedQuoteDoesNotCloseString()
         {
-            // 閉じたと取り違えると、文字列の中のコンマを構造トークンに数えてしまう。
             string commas = new string(',', JsonRpcCodec.ParseStructureTokenLimit + 100);
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
                 BuildRequest(Quoted(EscapedQuote + commas)));

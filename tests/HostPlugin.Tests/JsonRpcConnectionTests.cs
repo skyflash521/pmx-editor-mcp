@@ -160,13 +160,15 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(TimeSpan.FromSeconds(120), JsonRpcConnection.DefaultRequestTimeout);
         }
 
+        /// <summary>
+        /// メソッドの検索より先に判定するので、既知・未知・空のいずれでも同じ扱いになる。
+        /// </summary>
         [Theory]
         [InlineData("ping")]
         [InlineData("unknown")]
         [InlineData("")]
         public void OtherRequestBeforeHandshakeIsRejectedAndDisconnects(string method)
         {
-            // メソッドの検索より先に判定するので、既知・未知・空のいずれでも同じ扱いになる。
             IList<IDictionary<string, object>> responses =
                 Exchange(CreateConnection(new McpMethodTable()), Request(1, method), Request(2, "ping"));
 
@@ -410,10 +412,12 @@ namespace PmxEditorMcp.Tests
                 log);
         }
 
+        /// <summary>
+        /// 不正な引数の説明は要求の値を指しうるので、記録するのはコードだけにする。
+        /// </summary>
         [Fact]
         public void ErrorResponseDescriptionIsNotRecorded()
         {
-            // 不正な引数の説明は要求の値を指しうるので、記録するのはコードだけにする。
             Exchange(
                 CreateConnection(new McpMethodTable()),
                 Handshake(),
@@ -429,10 +433,12 @@ namespace PmxEditorMcp.Tests
             Assert.DoesNotContain("params はオブジェクトでなければならない。", log);
         }
 
+        /// <summary>
+        /// 相手はエラーをいくらでも起こせる。毎回記録すると有用な履歴が押し流される。
+        /// </summary>
         [Fact]
         public void RepeatedErrorCodeIsRecordedOnceWithRunningTotal()
         {
-            // 相手はエラーをいくらでも起こせる。毎回記録すると有用な履歴が押し流される。
             Exchange(
                 CreateConnection(new McpMethodTable()),
                 Handshake(),
@@ -521,10 +527,12 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("pong", ResultOf(responses[2]));
         }
 
+        /// <summary>
+        /// 解析していないので識別子は判別できない。切断まで含めて入力の上限超過と同じ扱いにする。
+        /// </summary>
         [Fact]
         public void RequestOverStructureLimitIsRejectedAndDisconnects()
         {
-            // 解析していないので識別子は判別できない。切断まで含めて入力の上限超過と同じ扱いにする。
             StringBuilder builder = new StringBuilder();
             builder.Append("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\",\"params\":{\"a\":[{}");
             for (int index = 1; index <= JsonRpcCodec.ParseStructureTokenLimit; index++)
@@ -542,10 +550,12 @@ namespace PmxEditorMcp.Tests
             Assert.Null(IdOf(responses[1]));
         }
 
+        /// <summary>
+        /// 区切りが来る前に上限を超えるので、識別子は判別できない。
+        /// </summary>
         [Fact]
         public void InputOverLimitIsRejectedAndDisconnects()
         {
-            // 区切りが来る前に上限を超えるので、識別子は判別できない。
             List<byte> input = new List<byte>();
             input.AddRange(Lines(Handshake()));
             input.AddRange(Utf8WithoutBom.GetBytes(new string('a', 4096)));

@@ -615,7 +615,8 @@ namespace PmxEditorMcp
             field.SetValue(built, number);
         }
 
-        private static bool IsNumber(object json)
+        /// <summary>JSONの値が数値かどうか。文字列や真偽値を変換で数値へ化けさせないために先に見る。</summary>
+        internal static bool IsNumber(object json)
         {
             switch (Convert.GetTypeCode(json))
             {

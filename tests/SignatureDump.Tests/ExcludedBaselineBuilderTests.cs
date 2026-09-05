@@ -927,60 +927,72 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(Ledger(), Signatures())));
         }
 
+        /// <summary>
+        /// 台帳へ行を挿し込んだだけで凍結の並びが変わると、行単位の差分が実際の変化を指さなくなる。
+        /// </summary>
         [Fact]
         public void LedgerOrderDoesNotChangeTheFrozenSet()
         {
-            // 台帳へ行を挿し込んだだけで凍結の並びが変わると、行単位の差分が実際の変化を指さなくなる。
             IList<CapabilityRecord> reversed = Ledger().Reverse().ToList();
             IList<SignatureRecord> shuffled = Signatures().Reverse().ToList();
 
             Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(reversed, shuffled)));
         }
 
+        /// <summary>
+        /// 重なると、除外一覧の照合でどちらの根拠にも通ってしまい、件数の一致も崩れる。
+        /// </summary>
         [Fact]
         public void TheSameSignatureIsNotPlacedUnderTwoCapabilities()
         {
-            // 重なると、除外一覧の照合でどちらの根拠にも通ってしまい、件数の一致も崩れる。
             IList<string> all = ExcludedBaselineBuilder.Build(Ledger(), Signatures())
                 .SelectMany(e => e.Signatures).ToList();
 
             Assert.Equal(all.Count, all.Distinct(StringComparer.Ordinal).Count());
         }
 
+        /// <summary>
+        /// 台帳を正としない集合を凍結すると、根拠の無い除外がそのまま正本になる。
+        /// </summary>
         [Fact]
         public void CapabilityMissingFromLedgerThrows()
         {
-            // 台帳を正としない集合を凍結すると、根拠の無い除外がそのまま正本になる。
             IList<CapabilityRecord> ledger = Ledger().Where(c => c.Id != "CAP-459").ToList();
 
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(ledger, Signatures()));
         }
 
+        /// <summary>
+        /// 能力の単位で1件でも残れば通す作りだと、並べた名前のうち1つが指す先を失っても気づけない。
+        /// </summary>
         [Fact]
         public void NameWithoutAnyTargetThrows()
         {
-            // 能力の単位で1件でも残れば通す作りだと、並べた名前のうち1つが指す先を失っても気づけない。
             IList<SignatureRecord> signatures = Signatures()
                 .Where(s => s.DeclaringType != "PEPlugin.PECheckResult").ToList();
 
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
         }
 
+        /// <summary>
+        /// 1件でも欠けたまま凍結すると、以後その1件は資格を失ったことに気づけない。
+        /// </summary>
         [Fact]
         public void MissingNamedSignatureThrows()
         {
-            // 1件でも欠けたまま凍結すると、以後その1件は資格を失ったことに気づけない。
             IList<SignatureRecord> signatures = Signatures()
                 .Where(s => s.Key != "PEPlugin.Pmx.IPXPmx.ToStream(System.IO.Stream)").ToList();
 
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
         }
 
+        /// <summary>
+        /// 凍結できるのは台帳がすでに非対応と記していた範囲だけ。能力IDだけを見る作りだと、
+        /// 台帳の記載を書き換えても同じ組を凍結でき、根拠にならない。
+        /// </summary>
         [Fact]
         public void LedgerWordingDifferentFromFreezePremiseThrows()
         {
-            // 凍結できるのは台帳がすでに非対応と記していた範囲だけ。能力IDだけを見る作りだと、
-            // 台帳の記載を書き換えても同じ組を凍結でき、根拠にならない。
             IList<CapabilityRecord> provided = Ledger()
                 .Select(c => c.Id == "CAP-459" ? WithStatus(c, CapabilityStatus.Provided, "モデル") : c)
                 .ToList();
@@ -1005,10 +1017,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("CAP-459", target.Message, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// どの記載を根拠にしたのかが定まらないまま凍結すると、後から根拠をたどれない。
+        /// </summary>
         [Fact]
         public void CapabilityAppearingTwiceInLedgerThrows()
         {
-            // どの記載を根拠にしたのかが定まらないまま凍結すると、後から根拠をたどれない。
             IList<CapabilityRecord> ledger = Ledger();
             ledger.Add(WithTarget(ledger.Single(c => c.Id == "CAP-459"), "IPEPlugin"));
 
@@ -1018,10 +1032,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("CAP-459", doubled.Message, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// 台帳の側が合わないのか、渡された公開シグネチャが空なのかで直し方が違う。
+        /// </summary>
         [Fact]
         public void FailureReasonCarriesTheComparedSignatureCount()
         {
-            // 台帳の側が合わないのか、渡された公開シグネチャが空なのかで直し方が違う。
             InvalidOperationException empty = Assert.Throws<InvalidOperationException>(
                 () => ExcludedBaselineBuilder.Build(Ledger(), new List<SignatureRecord>()));
             Assert.Contains("突き合わせたシグネチャ: 0 件", empty.Message, StringComparison.Ordinal);

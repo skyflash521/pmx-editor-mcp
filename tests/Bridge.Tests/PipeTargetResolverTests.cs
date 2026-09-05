@@ -60,11 +60,13 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pmx-editor-mcp-9", resolved);
         }
 
+        /// <summary>
+        /// 空文字列は「指定が無い」ではなく「空の名前を指定した」として扱い、黙って
+        /// 自動発見へ落とさない(設定の誤りを隠さないため)。
+        /// </summary>
         [Fact]
         public void ListenerEnumerationHappensOnlyWithoutExplicitTarget()
         {
-            // 空文字列は「指定が無い」ではなく「空の名前を指定した」として扱い、黙って
-            // 自動発見へ落とさない(設定の誤りを隠さないため)。
             string resolved = PipeTargetResolver.Resolve(
                 string.Empty, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
 
@@ -80,34 +82,40 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pmx-editor-mcp-1234", resolved);
         }
 
+        /// <summary>
+        /// 列挙で得られる項目はディレクトリを含む形なので、そのまま返すと接続に使えない。
+        /// </summary>
         [Fact]
         public void TargetIsReturnedAsPipeNameNotDirectoryEntry()
         {
-            // 列挙で得られる項目はディレクトリを含む形なので、そのまま返すと接続に使えない。
             string resolved = PipeTargetResolver.Resolve(
                 null, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
 
             Assert.DoesNotContain(PipeTargetResolver.PipeDirectory, resolved);
         }
 
+        /// <summary>
+        /// パイプディレクトリには無関係な名前が多数並ぶ。落とさなければ、ホストが1つしか
+        /// 待ち受けていなくても複数と数えてしまう。接頭辞を見るだけの絞り込みでは、続きが
+        /// プロセスIDになっていない紛らわしい名前を落とせない。
+        /// </summary>
         [Theory]
         [MemberData(nameof(NamesThatAreNotHostListeners))]
         public void OnlyHostListenersAreCandidatesAmongOtherEntries(string notHostPipeName)
         {
-            // パイプディレクトリには無関係な名前が多数並ぶ。落とさなければ、ホストが1つしか
-            // 待ち受けていなくても複数と数えてしまう。接頭辞を見るだけの絞り込みでは、続きが
-            // プロセスIDになっていない紛らわしい名前を落とせない。
             string resolved = PipeTargetResolver.Resolve(
                 null, Entries(notHostPipeName, "pmx-editor-mcp-1234"), new int[] { 1234 });
 
             Assert.Equal("pmx-editor-mcp-1234", resolved);
         }
 
+        /// <summary>
+        /// 数えるべきは接続できる相手であって、エディタの数ではない。プラグインを配置して
+        /// いないエディタや、ホストを停止したエディタは接続先の候補にならない。
+        /// </summary>
         [Fact]
         public void TargetIsResolvedWithMultipleEditorsButOneListener()
         {
-            // 数えるべきは接続できる相手であって、エディタの数ではない。プラグインを配置して
-            // いないエディタや、ホストを停止したエディタは接続先の候補にならない。
             string resolved = PipeTargetResolver.Resolve(
                 null, Entries("pmx-editor-mcp-5678"), new int[] { 1234, 5678, 9012 });
 
@@ -126,15 +134,17 @@ namespace PmxEditorMcp.Bridge.Tests
                 error.Message);
         }
 
+        /// <summary>
+        /// エディタが起動していないという案内は、この状況では事実に反する。プラグインが
+        /// 配置されていない・停止されている・設定が不正で開始しなかった、を区別できる
+        /// 唯一の場所はエディタのメニューなので、そこへ導く。エディタの数はこの判断に
+        /// 関わらない——何個起動していても、待ち受けていなければ確かめる先は同じである。
+        /// </summary>
         [Theory]
         [InlineData(new int[] { 1234 })]
         [InlineData(new int[] { 1234, 5678, 9012 })]
         public void EditorWithoutListenerYieldsStatusCheckPrompt(int[] editorProcessIds)
         {
-            // エディタが起動していないという案内は、この状況では事実に反する。プラグインが
-            // 配置されていない・停止されている・設定が不正で開始しなかった、を区別できる
-            // 唯一の場所はエディタのメニューなので、そこへ導く。エディタの数はこの判断に
-            // 関わらない——何個起動していても、待ち受けていなければ確かめる先は同じである。
             BridgeException error = Assert.Throws<BridgeException>(
                 () => PipeTargetResolver.Resolve(null, Entries("lsass"), editorProcessIds));
 
@@ -145,13 +155,15 @@ namespace PmxEditorMcp.Bridge.Tests
                 error.Message);
         }
 
+        /// <summary>
+        /// 本文の全体を固定する。先頭だけを見る検査では、候補の後ろに設定作業を促す段落を
+        /// 足した本文も通ってしまう。候補はプロセスIDの昇順に並べる——パイプの列挙順は
+        /// 保証されないので、並べ替えないと同じ状況でも本文が呼び出しごとに変わる。
+        /// </summary>
         [Fact]
         public void MultipleListenersYieldErrorStatingAmbiguityAndCandidates()
         {
-            // 本文の全体を固定する。先頭だけを見る検査では、候補の後ろに設定作業を促す段落を
-            // 足した本文も通ってしまう。候補はプロセスIDの昇順に並べる——パイプの列挙順は
-            // 保証されないので、並べ替えないと同じ状況でも本文が呼び出しごとに変わる。桁数の
-            // 違う値を混ぜる。同じ桁数だけでは、名前の文字列順に並べる実装と区別できない。
+            // 桁数の違う値を混ぜる。同じ桁数だけでは、名前の文字列順に並べる実装と区別できない。
             BridgeException error = Assert.Throws<BridgeException>(
                 () => PipeTargetResolver.Resolve(
                     null,
@@ -162,15 +174,17 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(MultipleHostsMessage, error.Message);
         }
 
+        /// <summary>
+        /// この本文を読むのは呼び出し元のエージェントで、ブリッジの起動設定を書き換える
+        /// 立場にない。設定作業を促す案内は、その場で実行できない指示になる。本文全体の
+        /// 一致とは別に置く——本文を書き直すときに、期待値ごと設定の案内へ戻すのを防ぐ。
+        /// </summary>
         [Theory]
         [InlineData("環境変数")]
         [InlineData("登録")]
         [InlineData("設定")]
         public void MultipleListenerGuidanceDoesNotDemandConfiguration(string forbidden)
         {
-            // この本文を読むのは呼び出し元のエージェントで、ブリッジの起動設定を書き換える
-            // 立場にない。設定作業を促す案内は、その場で実行できない指示になる。本文全体の
-            // 一致とは別に置く——本文を書き直すときに、期待値ごと設定の案内へ戻すのを防ぐ。
             BridgeException error = Assert.Throws<BridgeException>(
                 () => PipeTargetResolver.Resolve(
                     null,
@@ -202,12 +216,14 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(PipeTargetResolver.ProcessIdOf("pmx-editor-mcp-1234") < 0);
         }
 
+        /// <summary>
+        /// 空の名前も「指定が無い」ではなく指定として扱い、黙って待受の列挙へ落とさない。
+        /// </summary>
         [Theory]
         [InlineData("pmx-editor-mcp-9")]
         [InlineData("")]
         public void TargetIsPinnedOnlyByTestOnlyEnvironmentVariable(string configured)
         {
-            // 空の名前も「指定が無い」ではなく指定として扱い、黙って待受の列挙へ落とさない。
             List<string> readNames = new List<string>();
             bool enumerated = false;
             bool countedEditors = false;
@@ -316,14 +332,16 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(PipeTargetResolver.EditorProcessName, searchedProcessName);
         }
 
+        /// <summary>
+        /// 材料はOSから取るので、権限やハンドルの都合で失敗しうる。素通しすると要求元へ
+        /// 返せない異常になり、呼び出し元は何が起きたか分からないまま止まる。
+        /// </summary>
         [Theory]
         [InlineData("接続先の指定")]
         [InlineData("待ち受けているパイプ")]
         [InlineData("起動しているPMXエディタ")]
         public void UnreadableSourcesBecomeReturnableFailure(string material)
         {
-            // 材料はOSから取るので、権限やハンドルの都合で失敗しうる。素通しすると要求元へ
-            // 返せない異常になり、呼び出し元は何が起きたか分からないまま止まる。
             InvalidOperationException refused = new InvalidOperationException("調べられない。");
 
             BridgeException error = Assert.Throws<BridgeException>(

@@ -81,11 +81,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("IPXPmxConnector.GetCurrentState", dotted.Target);
         }
 
+        /// <summary>
+        /// 入れ子の型はメンバーと同じ書き方になるので、字面で分けると型を型とメンバーへ
+        /// 読み違える。どちらかは公開APIの一覧と突き合わせて決まる。
+        /// </summary>
         [Fact]
         public void DoesNotSplitOnTheDotSeparator()
         {
-            // 入れ子の型はメンバーと同じ書き方になるので、字面で分けると型を型とメンバーへ
-            // 読み違える。どちらかは公開APIの一覧と突き合わせて決まる。
             CapabilityRecord nested = Find("CAP-006");
 
             Assert.Equal(CapabilityTargetKind.Single, nested.TargetKind);
@@ -121,11 +123,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult", five.Target);
         }
 
+        /// <summary>
+        /// どの名前を指すかが字面から決まらないので、推測で埋めると実在しない名前を指す行が
+        /// できる。判断の材料は原文だけなので、原文はそのまま残す。
+        /// </summary>
         [Fact]
         public void PatternTargetHasNoNamesAndKeepsTheRawText()
         {
-            // どの名前を指すかが字面から決まらないので、推測で埋めると実在しない名前を指す行が
-            // できる。判断の材料は原文だけなので、原文はそのまま残す。
             CapabilityRecord parenthesized = Find("CAP-008");
             Assert.Equal(CapabilityTargetKind.Pattern, parenthesized.TargetKind);
             Assert.Empty(parenthesized.TargetNames);
@@ -160,10 +164,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 others.Select(r => r.TargetNames.Single()).ToArray());
         }
 
+        /// <summary>
+        /// 落とすと、台帳の誤記が実在する非総称型の名前へ化けて照合に通ってしまう。
+        /// </summary>
         [Fact]
         public void SuffixThatCannotBeAGenericArityIsNotDropped()
         {
-            // 落とすと、台帳の誤記が実在する非総称型の名前へ化けて照合に通ってしまう。
             IList<CapabilityRecord> records = LedgerParser.Parse(Compose(
                 HeaderRow,
                 SeparatorRow,
@@ -215,10 +221,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(LedgerParser.Parse("見出しと散文だけの文書。"));
         }
 
+        /// <summary>
+        /// 同じ列の数を持つ別の表や、表を作らない単独の行を能力として数えないため。
+        /// </summary>
         [Fact]
         public void RowsWithoutTheCapabilityHeaderAreNotPickedUp()
         {
-            // 同じ列の数を持つ別の表や、表を作らない単独の行を能力として数えないため。
             Assert.Empty(LedgerParser.Parse(Compose(
                 "| 名前 | 版 |",
                 "|---|---|",
@@ -235,10 +243,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "| CAP-001 | PMXデータ | IPXPmxConnector.GetCurrentState | 提供 | モデル |  |")));
         }
 
+        /// <summary>
+        /// 読み飛ばすと、その能力に対する突き合わせが行われないまま検査が通ってしまう。
+        /// </summary>
         [Fact]
         public void RowWithWrongColumnCountThrowsInsteadOfBeingSkipped()
         {
-            // 読み飛ばすと、その能力に対する突き合わせが行われないまま検査が通ってしまう。
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
                 HeaderRow,
                 SeparatorRow,
@@ -273,10 +283,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("末尾は \\", records.Single().Remarks);
         }
 
+        /// <summary>
+        /// バックスラッシュを無条件に落とすと、記号を含む名前が別の名前へ化けて後段の照合に通る。
+        /// </summary>
         [Fact]
         public void BackslashThatIsNotAnEscapeIsKept()
         {
-            // バックスラッシュを無条件に落とすと、記号を含む名前が別の名前へ化けて後段の照合に通る。
             CapabilityRecord record = LedgerParser.Parse(Compose(
                 HeaderRow,
                 SeparatorRow,
@@ -286,10 +298,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("配置先は _plugin\\PmxEditorMcp", record.Remarks);
         }
 
+        /// <summary>
+        /// 端の縦棒が無い行を表の終わりと見なすと、そこから先の能力を黙って読み落とす。
+        /// </summary>
         [Fact]
         public void EdgePipesMayBeOmitted()
         {
-            // 端の縦棒が無い行を表の終わりと見なすと、そこから先の能力を黙って読み落とす。
             IList<CapabilityRecord> records = LedgerParser.Parse(Compose(
                 HeaderRow,
                 SeparatorRow,
@@ -300,11 +314,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new[] { "CAP-001", "CAP-002", "CAP-003" }, records.Select(r => r.Id).ToArray());
         }
 
+        /// <summary>
+        /// 知らない語を既知の値へ黙って倒す誤りと区別するため、止まった理由がその語であることまで
+        /// 見る。行そのものは、語を取り違えても分類と担当が食い違わない組み合わせにしてある。
+        /// </summary>
         [Fact]
         public void UnknownStatusOrOwnerThrows()
         {
-            // 知らない語を既知の値へ黙って倒す誤りと区別するため、止まった理由がその語であることまで
-            // 見る。行そのものは、語を取り違えても分類と担当が食い違わない組み合わせにしてある。
             FormatException status = Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
                 HeaderRow,
                 SeparatorRow,
@@ -318,10 +334,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("物理", owner.Message, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// 表が終わったことにすると、そこから先の能力が検査されないまま通ってしまう。
+        /// </summary>
         [Fact]
         public void RowWithoutAnyPipeInsideTheTableThrows()
         {
-            // 表が終わったことにすると、そこから先の能力が検査されないまま通ってしまう。
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
                 HeaderRow,
                 SeparatorRow,
@@ -368,10 +386,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("CAP-001", beforeUnderline.Single().Id);
         }
 
+        /// <summary>
+        /// 区切りでない行を区切りとして受けると、その次から能力の行として読み進めてしまう。
+        /// </summary>
         [Fact]
         public void SeparatorRowWithAWrongShapeThrows()
         {
-            // 区切りでない行を区切りとして受けると、その次から能力の行として読み進めてしまう。
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
                 HeaderRow,
                 "|:|:|:|:|:|:|",
@@ -390,10 +410,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("CAP-001", records.Single().Id);
         }
 
+        /// <summary>
+        /// 台帳は担当を、分類が提供の能力を担当するツール契約仕様書として定めている。
+        /// </summary>
         [Fact]
         public void RowWhoseStatusAndOwnerDisagreeThrows()
         {
-            // 台帳は担当を、分類が提供の能力を担当するツール契約仕様書として定めている。
             Assert.Throws<FormatException>(() => LedgerParser.Parse(Compose(
                 HeaderRow,
                 SeparatorRow,

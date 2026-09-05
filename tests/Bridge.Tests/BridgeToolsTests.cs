@@ -78,10 +78,41 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public async Task ToolDefinitionDropsTheDeclarationWhenBothVariablesAreGiven()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeAsync(
+                null, null, limit.Token, "1", "0");
+
+            IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
+
+            Assert.Null(Assert.Single(tools).ProtocolTool.Meta);
+        }
+
+        [Theory]
+        [InlineData(null, "0")]
+        [InlineData("0", "0")]
+        [InlineData("1", null)]
+        [InlineData("1", "1")]
+        public async Task ToolDefinitionKeepsTheDeclarationWithoutBothVariables(
+            string debugHooks, string declareMeta)
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeAsync(
+                null, null, limit.Token, debugHooks, declareMeta);
+
+            IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
+
+            Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Assert.Single(tools)));
+        }
+
+        /// <summary>
+        /// 接続は最初のツール呼び出しまで行わないので、待ち受けていないパイプを指していても
+        /// 一覧はブリッジ自身の設定値から答えられる。
+        /// </summary>
+        [Fact]
         public async Task ToolDefinitionIsAvailableWithoutHostConnection()
         {
-            // 接続は最初のツール呼び出しまで行わないので、待ち受けていないパイプを指していても
-            // 一覧はブリッジ自身の設定値から答えられる。
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
             await using McpClient client = await StartBridgeAsync(
                 "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N"), null, limit.Token);
@@ -134,11 +165,13 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Single(await client.ListToolsAsync(cancellationToken: limit.Token));
         }
 
+        /// <summary>
+        /// 接続先の決定は実行経路の入口にあるので、単体では組み合わせまでしか確かめられない。
+        /// 実行ファイルを起動して、指した相手から応答が返るところまでを見る。
+        /// </summary>
         [Fact]
         public async Task TestOnlyEnvironmentVariablePinsRelayTarget()
         {
-            // 接続先の決定は実行経路の入口にあるので、単体では組み合わせまでしか確かめられない。
-            // 実行ファイルを起動して、指した相手から応答が返るところまでを見る。
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
@@ -177,12 +210,14 @@ namespace PmxEditorMcp.Bridge.Tests
                 await client.CallToolAsync("ping", cancellationToken: limit.Token), host);
         }
 
+        /// <summary>
+        /// 名前の似た別の環境変数まで接続先として読む実装だと、利用者が起動設定で接続先を
+        /// 選べる余地が残る。読まないはずの名前へ待ち受けていない名前を与えても、待受の
+        /// 列挙で決めることを見る。読んでいれば、その名前へ繋ごうとして失敗する。
+        /// </summary>
         [Fact]
         public async Task OnlyTestOnlyEnvironmentVariableNamesTheTarget()
         {
-            // 名前の似た別の環境変数まで接続先として読む実装だと、利用者が起動設定で接続先を
-            // 選べる余地が残る。読まないはずの名前へ待ち受けていない名前を与えても、待受の
-            // 列挙で決めることを見る。読んでいれば、その名前へ繋ごうとして失敗する。
             using FakeHost host = new FakeHost(PipeTargetResolver.PipeNameForProcess(Environment.ProcessId))
                 .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
@@ -199,11 +234,13 @@ namespace PmxEditorMcp.Bridge.Tests
                 await client.CallToolAsync("ping", cancellationToken: limit.Token), host);
         }
 
+        /// <summary>
+        /// どのエディタの応答かを、その応答だけを見て分かるようにする。過去の知らせを
+        /// 覚えていることに頼ると、文脈が失われた時点で相手が分からなくなる。
+        /// </summary>
         [Fact]
         public async Task SuccessfulResultAnnouncesTargetOnFirstLine()
         {
-            // どのエディタの応答かを、その応答だけを見て分かるようにする。過去の知らせを
-            // 覚えていることに頼ると、文脈が失われた時点で相手が分からなくなる。
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
@@ -220,11 +257,13 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("接続先: " + host.PipeName + "\npong", TextOf(result));
         }
 
+        /// <summary>
+        /// 一度きりの知らせだと、呼び出し元がそれを覚えていることに頼ることになる。文脈が
+        /// 失われた後の応答からも相手が分かるよう、同じ相手のままでも毎回名乗る。
+        /// </summary>
         [Fact]
         public async Task LaterSuccessfulResultsAlsoAnnounceTarget()
         {
-            // 一度きりの知らせだと、呼び出し元がそれを覚えていることに頼ることになる。文脈が
-            // 失われた後の応答からも相手が分かるよう、同じ相手のままでも毎回名乗る。
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
@@ -243,11 +282,13 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(second));
         }
 
+        /// <summary>
+        /// 失敗の本文は「コード: 説明」の形で読まれるので、接続先の行を足して形を崩さない。
+        /// 接続先が変わった事実は、次に成功した結果で必ず伝わる。
+        /// </summary>
         [Fact]
         public async Task FailedResultReturnsOnlyCodeAndDescription()
         {
-            // 失敗の本文は「コード: 説明」の形で読まれるので、接続先の行を足して形を崩さない。
-            // 接続先が変わった事実は、次に成功した結果で必ず伝わる。
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BridgeBudget.MaximumChars))
                 .Start();
@@ -301,10 +342,19 @@ namespace PmxEditorMcp.Bridge.Tests
         /// 呼び出し側の環境に左右されないよう明示して渡す。
         /// </summary>
         private static Task<McpClient> StartBridgeAsync(
-            string pipeName, string budgetChars, CancellationToken cancellationToken)
+            string pipeName,
+            string budgetChars,
+            CancellationToken cancellationToken,
+            string debugHooks = null,
+            string declareMeta = null)
         {
             return StartBridgeWithAsync(
-                PipeTargetResolver.TestPipeEnvironmentVariableName, pipeName, budgetChars, cancellationToken);
+                PipeTargetResolver.TestPipeEnvironmentVariableName,
+                pipeName,
+                budgetChars,
+                cancellationToken,
+                debugHooks,
+                declareMeta);
         }
 
         /// <summary>接続先を指定する環境変数の名前を選んでブリッジを起動する。</summary>
@@ -312,7 +362,9 @@ namespace PmxEditorMcp.Bridge.Tests
             string pipeEnvironmentVariableName,
             string pipeName,
             string budgetChars,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            string debugHooks = null,
+            string declareMeta = null)
         {
             // 接続先として読まれうる名前を親の環境から消してから、選んだものだけを与える。
             // 受け継いだ値が残ると、この起動が何を指すかが呼び出し側の環境で変わる。
@@ -321,6 +373,8 @@ namespace PmxEditorMcp.Bridge.Tests
                 [IgnoredPipeEnvironmentVariableName] = null,
                 [PipeTargetResolver.TestPipeEnvironmentVariableName] = null,
                 [BridgeBudget.EnvironmentVariableName] = budgetChars,
+                [BridgeDeclaration.DebugHooksVariableName] = debugHooks,
+                [BridgeDeclaration.EnvironmentVariableName] = declareMeta,
             };
 
             if (pipeEnvironmentVariableName != null)

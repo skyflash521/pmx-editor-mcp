@@ -114,10 +114,12 @@ namespace PmxEditorMcp.Tests
             Assert.Null(message);
         }
 
+        /// <summary>
+        /// 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
+        /// </summary>
         [Fact]
         public void BodyOneByteOverLimitExceedsWithoutWaitingForSeparator()
         {
-            // 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
             MessageChannel channel = new MessageChannel(
                 new MemoryStream(Utf8WithoutBom.GetBytes(new string('a', 17))), 16);
 
@@ -139,10 +141,12 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new string('a', 16), message);
         }
 
+        /// <summary>
+        /// 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
+        /// </summary>
         [Fact]
         public void ReadStopsOnceLimitIsExceededWithoutSeparator()
         {
-            // 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
             CountingStream source = new CountingStream(Utf8WithoutBom.GetBytes(new string('a', 1000000)));
             MessageChannel channel = new MessageChannel(source, 16);
 

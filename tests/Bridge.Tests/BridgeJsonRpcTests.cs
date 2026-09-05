@@ -40,10 +40,12 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(1, (int)parsed["params"]["protocol"]);
         }
 
+        /// <summary>
+        /// 本文は1行として送るので、区切りと紛れる文字がそのまま入ってはならない。
+        /// </summary>
         [Fact]
         public void BuiltRequestContainsNoNewline()
         {
-            // 本文は1行として送るので、区切りと紛れる文字がそのまま入ってはならない。
             JsonObject parameters = new JsonObject { ["name"] = "1行目\n2行目\r" };
 
             string request = BridgeJsonRpc.SerializeRequest(1, "m", parameters);
@@ -86,11 +88,13 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("未知のメソッド", result.Response.ErrorMessage);
         }
 
+        /// <summary>
+        /// ホストは要求の識別子を判別できないときや応答が上限を超えたときにnullを載せる。
+        /// ここで弾くと、ホストが返した理由がブリッジ側の不正として塗り潰される。
+        /// </summary>
         [Fact]
         public void AcceptsErrorResponseWithNullId()
         {
-            // ホストは要求の識別子を判別できないときや応答が上限を超えたときにnullを載せる。
-            // ここで弾くと、ホストが返した理由がブリッジ側の不正として塗り潰される。
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"\"}}", 3);
 
@@ -100,13 +104,15 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(string.Empty, result.Response.ErrorMessage);
         }
 
+        /// <summary>
+        /// 応答が上限を超えたときは、どのコードでもホストが識別子をnullへ落とす契約である。
+        /// </summary>
         [Theory]
         [InlineData(-32700)]
         [InlineData(-32004)]
         [InlineData(-32601)]
         public void AcceptsErrorResponseWithNullIdForAnyCode(int hostErrorCode)
         {
-            // 応答が上限を超えたときは、どのコードでもホストが識別子をnullへ落とす契約である。
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":" + hostErrorCode + ",\"message\":\"\"}}", 3);
 

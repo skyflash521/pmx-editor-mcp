@@ -1109,6 +1109,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(FrozenFactoryConstructor, Build().Select(r => r.Key));
         }
 
+        /// <summary>
+        /// 形式が同じかどうかは一次資料でしか決まらないので、除外するか残すかを機械で決められない。
+        /// </summary>
         [Theory]
         [InlineData(FromStream)]
         [InlineData(ToStream)]
@@ -1118,7 +1121,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(StreamMatrixArgument)]
         public void UnfrozenStreamOverloadThrows(string key)
         {
-            // 形式が同じかどうかは一次資料でしか決まらないので、除外するか残すかを機械で決められない。
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => ExcludedSignatureBuilder.Build(BaselineExcept(key), Inventory()));
 

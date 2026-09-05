@@ -109,10 +109,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.False(string.IsNullOrWhiteSpace(error.ToString()));
         }
 
+        /// <summary>名前は外から打つ文字列そのものなので、定数と実装を揃えて変えても気づける。</summary>
         [Fact]
         public void SubcommandNamesAreACallerContract()
         {
-            // 名前は外から打つ文字列そのものなので、定数と実装を揃えて変えても気づけるようにする。
             Assert.Equal("signatures", CommandRunner.SignaturesCommand);
             Assert.Equal("excluded-baseline", CommandRunner.ExcludedBaselineCommand);
             Assert.Equal("excluded-signatures", CommandRunner.ExcludedSignaturesCommand);
@@ -648,10 +648,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>値は呼び出し元が見分けに使うものそのもの。重ねると、直し方の違う失敗が同じに見える。</summary>
         [Fact]
         public void ExitCodeValuesAreACallerContract()
         {
-            // 値は呼び出し元が見分けに使うものそのもの。重ねてしまうと、直し方の違う失敗が同じに見える。
             Assert.Equal(0, ExitCodes.Success);
             Assert.Equal(2, ExitCodes.InvalidArguments);
             Assert.Equal(3, ExitCodes.InputUnavailable);
@@ -659,11 +659,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(5, ExitCodes.Unresolved);
         }
 
+        /// <summary>
+        /// 名前を見ずに引数の数で振り分ける作りでは、知らない下位コマンドが列挙として実行される。
+        /// </summary>
         [Fact]
         public void UnknownSubcommandEndsWithInvalidArguments()
         {
-            // 後ろの引数は列挙として正しい形にする。名前を見ずに引数の数で振り分ける作りでは、
-            // これが列挙として実行されてしまう。
+            // 後ろの引数は列挙として正しい形にする。
             string outputPath = Path.Combine(_root, "signatures.json");
             File.WriteAllText(outputPath, Existing);
             StringWriter error = new StringWriter();
@@ -770,11 +772,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(SampleSignature, File.ReadAllText(outputPath), StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// 入口が下位コマンドを1つだけ特別に扱っていると、他の下位コマンドへ実行ファイルから
+        /// 到達できない。列挙の経路とは別に見るので、片方が落ちてももう片方の結果が分かる。
+        /// </summary>
         [Fact]
         public void ExecutableEntryPointRunsTheFreeze()
         {
-            // 入口が下位コマンドを1つだけ特別に扱っていると、他の下位コマンドへ実行ファイルから
-            // 到達できない。列挙の経路とは別に見るので、片方が落ちてももう片方の結果が分かる。
             StringWriter error = new StringWriter();
             TextWriter previous = Console.Error;
             int code;
@@ -798,10 +802,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("指す先が無い", error.ToString(), StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// 入口が決まった終了コードを返すだけでは、導入ディレクトリを変えても同じ結果になる。
+        /// </summary>
         [Fact]
         public void ExecutableEntryPointAlsoReflectsInputDifferencesInResults()
         {
-            // 入口が決まった終了コードを返すだけでは、導入ディレクトリを変えても同じ結果になる。
             string missing = Path.Combine(_root, "none");
             StringWriter error = new StringWriter();
             TextWriter previous = Console.Error;

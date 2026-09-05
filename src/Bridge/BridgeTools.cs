@@ -22,7 +22,7 @@ namespace PmxEditorMcp.Bridge
         /// ホストと照合するのと同じ値をクライアントから取る——別々に受け取ると、宣言した値と
         /// 照合する値を食い違わせられる。
         /// </summary>
-        public static IReadOnlyList<McpServerTool> Create(HostIpcClient client)
+        public static IReadOnlyList<McpServerTool> Create(HostIpcClient client, bool declared)
         {
             if (client == null)
             {
@@ -31,12 +31,13 @@ namespace PmxEditorMcp.Bridge
 
             return new McpServerTool[]
             {
-                Relay(client, "ping", "ホストが応答することを確かめる。"),
+                Relay(client, declared, "ping", "ホストが応答することを確かめる。"),
             };
         }
 
         /// <summary>ホストの同名のメソッドへ中継するツールを作る。</summary>
-        private static McpServerTool Relay(HostIpcClient client, string method, string description)
+        private static McpServerTool Relay(
+            HostIpcClient client, bool declared, string method, string description)
         {
             return McpServerTool.Create(
                 (CancellationToken cancellationToken) => RelayAsync(client, method, cancellationToken),
@@ -50,7 +51,9 @@ namespace PmxEditorMcp.Bridge
                     // 宣言するのはホストの本文に与えた予算そのものとする。先頭へ置く接続先の
                     // 行はブリッジの上乗せで、予算が抑えたいホストの応答の大きさではない。
                     // 予算に足すと、上限まで設定したときに宣言できる値を超えてしまう。
-                    Meta = new JsonObject { [ResultSizeMetaKey] = client.BudgetChars },
+                    Meta = declared
+                        ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
+                        : null,
                 });
         }
 

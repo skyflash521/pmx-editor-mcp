@@ -111,10 +111,12 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("second", await ReadMessage(channel));
         }
 
+        /// <summary>
+        /// 区切りを決めるのはLFなので、単独のCRは本文の一部である。
+        /// </summary>
         [Fact]
         public async Task CrInsideBodyIsKept()
         {
-            // 区切りを決めるのはLFなので、単独のCRは本文の一部である。
             BridgeMessageChannel channel = ReadingChannel("a\rb\n");
 
             Assert.Equal("a\rb", await ReadMessage(channel));
@@ -150,10 +152,12 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Null(read.Message);
         }
 
+        /// <summary>
+        /// 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
+        /// </summary>
         [Fact]
         public async Task ReadStopsOnceLimitIsExceededWithoutSeparator()
         {
-            // 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
             CountingStream source = new CountingStream(Utf8WithoutBom.GetBytes(new string('a', 1000000)));
             BridgeMessageChannel channel = new BridgeMessageChannel(source, 16);
 
@@ -192,20 +196,24 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeMessageOutcome.TooLarge, read.Outcome);
         }
 
+        /// <summary>
+        /// 区切りのCRは本文から外れるので、上限の判定には数えない。
+        /// </summary>
         [Fact]
         public async Task BodyAtLimitIsReadWithCrlfSeparator()
         {
-            // 区切りのCRは本文から外れるので、上限の判定には数えない。
             BridgeMessageChannel channel = ReadingChannel("1234\r\n", 4);
 
             Assert.Equal("1234", await ReadMessage(channel));
         }
 
+        /// <summary>
+        /// 上限を1バイト超えた時点で打ち切る作りだと、続くLFで本文から外れるCRを待てずに
+        /// 上限超過にしてしまう。
+        /// </summary>
         [Fact]
         public async Task BodyAtLimitIsReadWhenCrAndLfArriveApart()
         {
-            // 上限を1バイト超えた時点で打ち切る作りだと、続くLFで本文から外れるCRを待てずに
-            // 上限超過にしてしまう。
             BridgeMessageChannel channel = new BridgeMessageChannel(
                 new ChunkedStream(
                     Utf8WithoutBom.GetBytes("1234\r"),
@@ -215,10 +223,12 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("1234", await ReadMessage(channel));
         }
 
+        /// <summary>
+        /// 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
+        /// </summary>
         [Fact]
         public async Task OverLimitBodyNotEndingWithCrIsCutWithoutWaitingForSeparator()
         {
-            // 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
             BridgeMessageChannel channel = ReadingChannel("12345", 4);
 
             BridgeMessageRead read = await channel.ReadAsync(CancellationToken.None);

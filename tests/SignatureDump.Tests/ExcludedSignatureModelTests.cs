@@ -52,10 +52,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Key, ExclusionCategory.ConstructorDuplicate, string.Empty));
         }
 
+        /// <summary>
+        /// 列挙型は定義外の整数からも作れるので、既知の値の並びで受けて残りは弾く。
+        /// </summary>
         [Fact]
         public void CategoryOutsideTheClosedSetThrows()
         {
-            // 列挙型は定義外の整数からも作れるので、既知の値の並びで受けて残りは弾く。
             Assert.Throws<ArgumentException>(
                 () => ExcludedSignatureRecord.FromCategory(Key, (ExclusionCategory)999, string.Empty));
         }

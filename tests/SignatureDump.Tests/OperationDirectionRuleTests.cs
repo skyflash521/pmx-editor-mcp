@@ -46,14 +46,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 OperationDirectionRule.ForMethod(memberName, "System.Int32", false));
         }
 
+        /// <summary>
+        /// 語の区切りを見ない前方一致であるため、取得を表さない名前も読み取りへ寄る。
+        /// 書き込みを読み取りと誤ると、対になる書き込み行が見つからず効果が導出されなく
+        /// なるだけで、誤って合格にはならない。
+        /// </summary>
         [Theory]
         [InlineData("Getter")]
         [InlineData("Issue")]
         public void NameIsJudgedByPrefixMatch(string memberName)
         {
-            // 語の区切りを見ない前方一致であるため、取得を表さない名前も読み取りへ寄る。
-            // 書き込みを読み取りと誤ると、対になる書き込み行が見つからず効果が導出されなく
-            // なるだけで、誤って合格にはならない。
             Assert.Equal(
                 OperationDirection.Read,
                 OperationDirectionRule.ForMethod(memberName, "System.Int32", false));

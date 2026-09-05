@@ -111,10 +111,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return path;
         }
 
+        /// <summary>
+        /// 足りない場合だけを見ると、余った場合に後ろを黙って捨てる作りを見逃す。
+        /// </summary>
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            // 足りない場合だけを見ると、余った場合に後ろを黙って捨てる作りを見逃す。
             string[][] wrong =
             {
                 new string[0],
@@ -166,11 +168,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
+        /// <summary>
+        /// 台帳が非対応と記した能力の指す先が列挙結果に無い状態。空の結果を書き出すと、
+        /// 凍結したはずの除外が黙って消える。すでに正本があるときは、それも壊さない。
+        /// </summary>
         [Fact]
         public void LedgerConflictingWithEnumerationCannotBeResolved()
         {
-            // 台帳が非対応と記した能力の指す先が列挙結果に無い状態。空の結果を書き出すと、
-            // 凍結したはずの除外が黙って消える。すでに正本があるときは、それも壊さない。
             string outputPath = CreateExistingOutput();
             StringWriter error = new StringWriter();
 
@@ -192,10 +196,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 int.Parse(counted.Groups[1].Value, CultureInfo.InvariantCulture));
         }
 
+        /// <summary>
+        /// 在ることだけを見て中身を読まない作りだと、SDKを列挙しないまま結果を出せてしまう。
+        /// </summary>
         [Fact]
         public void UnloadableTargetAssemblyIsInputUnavailable()
         {
-            // 在ることだけを見て中身を読まない作りだと、SDKを列挙しないまま結果を出せてしまう。
             string editorDirectory = CreateEditorDirectory();
             File.WriteAllText(SdkAssemblyLocator.GetAssemblyPath(editorDirectory), "アセンブリではない");
             string outputPath = CreateExistingOutput();
@@ -210,11 +216,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
+        /// <summary>
+        /// 読み解けない中身と、そもそもファイルを読めないことは別の失敗。後者を通すと、
+        /// 読み取りの失敗がそのまま外へ漏れる。
+        /// </summary>
         [Fact]
         public void UnreadableTargetAssemblyIsInputUnavailable()
         {
-            // 読み解けない中身と、そもそもファイルを読めないことは別の失敗。後者を通すと、
-            // 読み取りの失敗がそのまま外へ漏れる。
             string editorDirectory = CreateEditorDirectory();
             string outputPath = CreateExistingOutput();
             StringWriter error = new StringWriter();
@@ -235,10 +243,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
+        /// <summary>
+        /// 在ることだけを見て読めない場合を通すと、読み取りの失敗がそのまま外へ漏れる。
+        /// </summary>
         [Fact]
         public void UnreadableLedgerIsInputUnavailable()
         {
-            // 在ることだけを見て読めない場合を通すと、読み取りの失敗がそのまま外へ漏れる。
             string ledgerPath = CreateLedger();
             string outputPath = CreateExistingOutput();
             StringWriter error = new StringWriter();
@@ -255,12 +265,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
+        /// <summary>
+        /// すでにある正本を守るだけでなく、無いところへ空の結果を置かないことも要る。
+        /// 中身の無いファイルが残ると、読み手は結果が空だったのか失敗したのか区別できない。
+        /// 途中で止まる場所ごとに別の経路なので、どの止まり方でも置かないことを見る。
+        /// </summary>
         [Fact]
         public void FailureLeavesNoOutputFile()
         {
-            // すでにある正本を守るだけでなく、無いところへ空の結果を置かないことも要る。
-            // 中身の無いファイルが残ると、読み手は結果が空だったのか失敗したのか区別できない。
-            // 途中で止まる場所ごとに別の経路なので、どの止まり方でも置かないことを見る。
             Assert.False(RunAndFindOutput("mismatch", CreateEditorDirectory(), CreateLedger()));
             Assert.False(RunAndFindOutput("no-editor", Path.Combine(_root, "empty"), CreateLedger()));
             Assert.False(RunAndFindOutput("no-ledger", CreateEditorDirectory(), Path.Combine(_root, "none.md")));
@@ -302,10 +314,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return File.Exists(outputPath);
         }
 
+        /// <summary>
+        /// 読めたうえでの食い違いと、そもそも読み解けないことは、呼び出し元の直し方が違う。
+        /// </summary>
         [Fact]
         public void UnparsableLedgerIsInputUnavailable()
         {
-            // 読めたうえでの食い違いと、そもそも読み解けないことは、呼び出し元の直し方が違う。
             string path = Path.Combine(_root, "broken-ledger.md");
             File.WriteAllText(path, LedgerText(new[] { new[] { "CAP-114", "保留", "モデル" } }));
             string outputPath = CreateExistingOutput();
@@ -319,11 +333,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Existing, File.ReadAllText(outputPath));
         }
 
+        /// <summary>
+        /// 在ることだけを見て中身を読まない作りだと、台帳が何を記していても同じ結果になる。
+        /// 最初に見る能力を落とした台帳では、止まる理由が指す先ではなく台帳の側になる。
+        /// </summary>
         [Fact]
         public void LedgerContentAffectsTheComparison()
         {
-            // 在ることだけを見て中身を読まない作りだと、台帳が何を記していても同じ結果になる。
-            // 最初に見る能力を落とした台帳では、止まる理由が指す先ではなく台帳の側になる。
             string path = Path.Combine(_root, "short-ledger.md");
             File.WriteAllText(path, LedgerText(LedgerRows.Where(r => r[0] != "CAP-114").ToArray()));
             string outputPath = CreateExistingOutput();
