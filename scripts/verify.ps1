@@ -162,6 +162,10 @@ try {
         Needs = $buildOutput
         Body = { & $dump schema-correspondence $editorDir $roles $toolMap $toolSchemas }
     }
+    $checks['ツールの名前の照合'] = @{
+        Needs = $buildOutput
+        Body = { & $dump tool-names $editorDir $roles $toolMap }
+    }
 
     $listed = @(Get-ListedChecks)
     $missing = @($checks.Keys | Where-Object { $listed -notcontains $_ })

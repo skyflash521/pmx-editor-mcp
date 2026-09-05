@@ -127,6 +127,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("tool-descriptions", CommandRunner.ToolDescriptionsCommand);
             Assert.Equal("sample-values", CommandRunner.SampleValuesCommand);
             Assert.Equal("schema-correspondence", CommandRunner.SchemaCorrespondenceCommand);
+            Assert.Equal("tool-names", CommandRunner.ToolNamesCommand);
         }
 
         [Fact]
@@ -576,6 +577,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ToolNamesSubcommandRunsTheCollation()
+        {
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.ToolNamesCommand,
+                    Path.Combine(_root, "no-editor"),
+                    Path.Combine(_root, "roles.json"),
+                    Path.Combine(_root, "map.json"),
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, code);
+
+            int argumentCode = CommandRunner.Run(
+                new[] { CommandRunner.ToolNamesCommand },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InvalidArguments, argumentCode);
+        }
+
+        [Fact]
         public void SchemaCorrespondenceSubcommandRunsTheCollation()
         {
             int code = CommandRunner.Run(
@@ -715,6 +740,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.SchemaCorrespondenceCommand
                     + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
                     + " <能力対応表の正本のパス> <スキーマ正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ToolNamesCommand
+                    + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
+                    + " <能力対応表の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

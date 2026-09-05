@@ -11,6 +11,31 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class TypeDefinitionName
     {
+        /// <summary>
+        /// 参照と配列の印を外し、総称型引数を引数の数へ置き換えた鍵。値の型は参照渡しでも配列でも
+        /// 同じ型を指すので、型を引くときはこちらを使う。
+        /// </summary>
+        public static string OfElement(string typeName)
+        {
+            RequireText(typeName);
+
+            string name = typeName.EndsWith("&", StringComparison.Ordinal)
+                ? typeName.Substring(0, typeName.Length - 1)
+                : typeName;
+            while (name.EndsWith("]", StringComparison.Ordinal))
+            {
+                int open = name.LastIndexOf('[');
+                if (open < 0)
+                {
+                    break;
+                }
+
+                name = name.Substring(0, open);
+            }
+
+            return Of(name);
+        }
+
         /// <summary>総称型引数を引数の数へ置き換えた鍵。</summary>
         public static string Of(string typeName)
         {

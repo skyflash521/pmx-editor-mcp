@@ -52,7 +52,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ToolSchema> byTool = schemas.Tools.ToDictionary(
                 t => t.Tool, t => t, StringComparer.Ordinal);
             IDictionary<string, TypeRole> byType = roles.Types.ToDictionary(
-                t => t.TypeName, t => t.Role, StringComparer.Ordinal);
+                t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
 
             foreach (ToolMapRow row in map.Rows.Where(r => r.Tool != null)
                 .OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
@@ -109,7 +109,8 @@ namespace PmxEditorMcp.SignatureDump
             TypeRole role;
             if (signature.IsStatic
                 || signature.MemberKind == MemberKind.Constructor
-                || !byType.TryGetValue(signature.DeclaringType, out role))
+                || !byType.TryGetValue(
+                    TypeDefinitionName.OfElement(signature.DeclaringType), out role))
             {
                 return;
             }

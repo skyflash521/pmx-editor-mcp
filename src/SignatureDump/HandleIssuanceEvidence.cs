@@ -103,21 +103,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>配列の印を外した型の名前。ハンドルは配列で返ることがある。</summary>
         private static string ElementTypeName(string typeName)
         {
-            string name = typeName.EndsWith("&", StringComparison.Ordinal)
-                ? typeName.Substring(0, typeName.Length - 1)
-                : typeName;
-            while (name.EndsWith("]", StringComparison.Ordinal))
-            {
-                int open = name.LastIndexOf('[');
-                if (open < 0)
-                {
-                    break;
-                }
-
-                name = name.Substring(0, open);
-            }
-
-            return TypeDefinitionName.Of(name);
+            return TypeDefinitionName.OfElement(typeName);
         }
     }
 }

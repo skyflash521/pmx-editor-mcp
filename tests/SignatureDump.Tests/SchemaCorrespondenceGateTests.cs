@@ -361,6 +361,63 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 SchemaJson(shape: "null_value"), signatures: Signatures(valueType: "System.Void"));
         }
 
+        /// <summary>
+        /// 型役割表は総称型を引数の数で書き、列挙は型引数の名前で書くので、役割の引き当ては同じ鍵へ
+        /// 写してから行う。写さずに引くと、受け手の検査が黙って素通りする。
+        /// </summary>
+        [Fact]
+        public void AGenericDeclaringTypeIsFoundByItsDefinitionName()
+        {
+            const string Open = "PEPlugin.Vme.IPEValue<T>";
+            const string Closed = "PEPlugin.Vme.IPEValue<1>";
+            string key = Open + ".Move(System.Single)";
+            SignatureRecord signature = new SignatureRecord(
+                key,
+                Open,
+                MemberKind.Method,
+                "Move",
+                false,
+                0,
+                new[]
+                {
+                    new ParameterRecord("distance", "System.Single", ParameterDirection.In, false),
+                },
+                "System.Single",
+                false,
+                false,
+                OperationDirection.Read);
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => SchemaCorrespondenceGate.Require(
+                    ToolMapJsonReader.Read(MapJson(signatureKey: key)),
+                    ToolSchemaJsonReader.Read(SchemaJson()),
+                    new TypeRoleTable(
+                        new[]
+                        {
+                            new TypeRoleRecord(
+                                Closed,
+                                TypeRole.OperationTarget,
+                                "根拠。",
+                                "value",
+                                "values",
+                                "接続の経路。",
+                                CapabilityOwner.Model,
+                                new Dictionary<ToolVerb, string>
+                                {
+                                    { ToolVerb.List, "model_list_values" },
+                                }),
+                        },
+                        new HandleIssuanceRecord[0],
+                        new ElementCollectionRecord[0]),
+                    new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
+                    {
+                        { key, signature },
+                    }));
+
+            Assert.Contains(
+                "操作対象型の受け手を指す入力が無い", error.Message, StringComparison.Ordinal);
+        }
+
         [Fact]
         public void ARowWithoutAToolIsNotChecked()
         {

@@ -52,6 +52,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>行のシグネチャの引数・受け手・戻り値がスキーマ正本と対応することを照合する。</summary>
         public const string SchemaCorrespondenceCommand = "schema-correspondence";
 
+        /// <summary>能力対応表のツールの名前が規則から導いた名前と一致することを照合する。</summary>
+        public const string ToolNamesCommand = "tool-names";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -147,6 +150,11 @@ namespace PmxEditorMcp.SignatureDump
                 return SchemaCorrespondenceRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], ToolNamesCommand, StringComparison.Ordinal))
+            {
+                return ToolNameRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -203,6 +211,10 @@ namespace PmxEditorMcp.SignatureDump
                 SchemaCorrespondenceCommand
                     + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
                     + " <能力対応表の正本のパス> <スキーマ正本のパス>");
+            error.WriteLine(
+                ToolNamesCommand
+                    + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
+                    + " <能力対応表の正本のパス>");
         }
     }
 }

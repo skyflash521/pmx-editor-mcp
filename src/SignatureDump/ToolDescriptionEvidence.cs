@@ -53,7 +53,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, SignatureRecord> signatures = inventory.Signatures
                 .ToDictionary(s => s.Key, StringComparer.Ordinal);
             IDictionary<string, TypeRoleRecord> byType = roles.Types
-                .ToDictionary(t => t.TypeName, StringComparer.Ordinal);
+                .ToDictionary(t => TypeDefinitionName.OfElement(t.TypeName), StringComparer.Ordinal);
             IDictionary<string, string> japanese = JapaneseNames(names);
 
             List<ToolDescriptionMaterial> materials = new List<ToolDescriptionMaterial>();
@@ -233,7 +233,7 @@ namespace PmxEditorMcp.SignatureDump
             string typeName, IDictionary<string, TypeRoleRecord> byType, string tool)
         {
             TypeRoleRecord role;
-            if (!byType.TryGetValue(typeName, out role))
+            if (!byType.TryGetValue(TypeDefinitionName.OfElement(typeName), out role))
             {
                 throw new InvalidOperationException(
                     "型役割表に無い型のツールがある: " + tool + "(" + typeName + ")");

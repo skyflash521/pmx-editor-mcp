@@ -167,7 +167,7 @@
   毎回導く。日本語名の正本と型役割表の規則は、役割対象仕様書・
   型役割仕様書・日本語名仕様書が持つ。照合は `ledger-coverage`・`property-names`・`type-roles`・
   `common-assignments`・`value-shapes`・`dangerous-operations`・`tool-map`・`tool-schemas`・
-  `tool-descriptions`・`sample-values` として
+  `tool-descriptions`・`sample-values`・`schema-correspondence`・`tool-names` として
   配線し、検証手順書へ登録済み。台帳の備考更新も済んでいる。型役割表は、計画書がステップ1で求める
   項目をすべて持つ。共通契約は、仕様書とツールの応答の包み・ハンドル台帳・イベントキュー・値の表現と
   値の入力・返す項目の選択・対象の解決・確認要求・要求サイズ予算・Undoの抑止まで入っており、台帳と

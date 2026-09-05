@@ -241,6 +241,83 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Map(), Roles(), Names(), Inventory(), MethodNotes(), null));
         }
 
+        /// <summary>
+        /// 型役割表は総称型を引数の数で書き、列挙は型引数の名前で書くので、引き当ては同じ鍵へ写して
+        /// から行う。写さずに引くと、正しく書いた行が「型役割表に無い」で落ちる。
+        /// </summary>
+        [Fact]
+        public void AGenericDeclaringTypeIsFoundByItsDefinitionName()
+        {
+            const string Open = "PEPlugin.Vme.IPEValue<T>";
+            const string Closed = "PEPlugin.Vme.IPEValue<1>";
+            string key = SignatureKeyBuilder.Build(
+                Open, "Draw", 0, new ParameterRecord[0], "System.Int32");
+            ToolMapRow row = new ToolMapRow(
+                key,
+                new[] { "C1" },
+                ToolMapRowKind.DirectDispatch,
+                ToolMapEditKind.Read,
+                OperationDirection.Read,
+                null,
+                null,
+                null,
+                "根拠。",
+                "model_draw_value",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+            InventoryRecord inventory = new InventoryRecord(
+                "PEPlugin",
+                "0.0.0.0",
+                new List<TypeRecord>(),
+                new List<TypeRecord>(),
+                new List<SignatureRecord>
+                {
+                    new SignatureRecord(
+                        key,
+                        Open,
+                        MemberKind.Method,
+                        "Draw",
+                        false,
+                        0,
+                        new ParameterRecord[0],
+                        "System.Int32",
+                        true,
+                        false,
+                        OperationDirection.Read),
+                });
+
+            IList<ToolDescriptionMaterial> materials = ToolDescriptionEvidence.Collect(
+                new ToolMap(new List<ToolMapRow> { row }),
+                new TypeRoleTable(
+                    new List<TypeRoleRecord>
+                    {
+                        new TypeRoleRecord(
+                            Closed,
+                            TypeRole.OperationTarget,
+                            "題材の根拠。",
+                            "value",
+                            "values",
+                            "接続の経路。",
+                            CapabilityOwner.Model,
+                            new Dictionary<ToolVerb, string>
+                            {
+                                { ToolVerb.List, "model_list_values" },
+                            }),
+                    },
+                    new List<HandleIssuanceRecord>(),
+                    new List<ElementCollectionRecord>()),
+                Names(),
+                inventory,
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                new Dictionary<string, string>(StringComparer.Ordinal));
+
+            Assert.Equal(Open, Assert.Single(materials).TypeName);
+        }
+
         private static ToolDescriptionMaterial Only(ToolMap map)
         {
             return Assert.Single(Collect(map));
