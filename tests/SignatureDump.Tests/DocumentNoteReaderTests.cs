@@ -217,6 +217,179 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentException>(() => DocumentNoteReader.MemberName("N.Box", " "));
         }
 
+        [Fact]
+        public void AMethodNoteIsReadUnderItsMemberName()
+        {
+            IDictionary<string, string> notes = DocumentNoteReader.ReadMethods(Document(
+                "<member name=\"M:N.IThing.Draw\"><summary>描く</summary></member>"
+                + "<member name=\"P:N.IThing.Size\"><summary>大きさ</summary></member>"));
+
+            Assert.Equal(new[] { "N.IThing.Draw" }, notes.Keys);
+            Assert.Equal("描く", notes["N.IThing.Draw"]);
+        }
+
+        [Fact]
+        public void TheAccessorSuffixIsKeptInAMethodNote()
+        {
+            IDictionary<string, string> notes = DocumentNoteReader.ReadMethods(Document(
+                "<member name=\"M:N.IThing.Draw\"><summary>描く set</summary></member>"));
+
+            Assert.Equal("描く set", notes["N.IThing.Draw"]);
+        }
+
+        [Fact]
+        public void TheVerticalBarIsStillCutFromAMethodNote()
+        {
+            IDictionary<string, string> notes = DocumentNoteReader.ReadMethods(Document(
+                "<member name=\"M:N.IThing.Draw\"><summary>描く | 補足</summary></member>"));
+
+            Assert.Equal("描く", notes["N.IThing.Draw"]);
+        }
+
+        [Fact]
+        public void AMethodWithoutArgumentsCarriesNoParentheses()
+        {
+            Assert.Equal("N.IThing.Draw", DocumentNoteReader.MemberName(Method("Draw")));
+        }
+
+        [Fact]
+        public void TheArgumentTypesArePlacedInParentheses()
+        {
+            Assert.Equal(
+                "N.IThing.Draw(System.String,System.Int32)",
+                DocumentNoteReader.MemberName(Method(
+                    "Draw", Parameter("System.String"), Parameter("System.Int32"))));
+        }
+
+        [Fact]
+        public void APassedBackArgumentCarriesTheAtSign()
+        {
+            Assert.Equal(
+                "N.IThing.Draw(N.V3@,N.V3@)",
+                DocumentNoteReader.MemberName(Method(
+                    "Draw",
+                    Parameter("N.V3", ParameterDirection.Out),
+                    Parameter("N.V3", ParameterDirection.Ref))));
+        }
+
+        [Fact]
+        public void AClosedGenericArgumentIsWrittenWithBraces()
+        {
+            Assert.Equal(
+                "N.IThing.Draw(System.Func{System.Int32,System.Double})",
+                DocumentNoteReader.MemberName(Method(
+                    "Draw", Parameter("System.Func<System.Int32,System.Double>"))));
+        }
+
+        [Fact]
+        public void ANestedGenericArgumentKeepsItsInnerBraces()
+        {
+            Assert.Equal(
+                "N.IThing.Draw(System.Func{System.Action{System.Int32}})",
+                DocumentNoteReader.MemberName(Method(
+                    "Draw", Parameter("System.Func<System.Action<System.Int32>>"))));
+        }
+
+        [Fact]
+        public void AnArrayArgumentKeepsItsBrackets()
+        {
+            Assert.Equal(
+                "N.IThing.Draw(System.Int32[][])",
+                DocumentNoteReader.MemberName(Method("Draw", Parameter("System.Int32[][]"))));
+        }
+
+        [Fact]
+        public void ANestedArgumentTypeIsSeparatedByADot()
+        {
+            Assert.Equal(
+                "N.IThing.Draw(N.Helper.Para[])",
+                DocumentNoteReader.MemberName(Method("Draw", Parameter("N.Helper+Para[]"))));
+        }
+
+        [Fact]
+        public void AMethodTypeParameterBecomesItsPositionWithTwoBackticks()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                "N.IThing.ForEach<1>(System.Action<T>)",
+                "N.IThing",
+                MemberKind.Method,
+                "ForEach",
+                false,
+                1,
+                new[] { Parameter("System.Action<T>") },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Read,
+                false,
+                new[] { "T" });
+
+            Assert.Equal(
+                "N.IThing.ForEach``1(System.Action{``0})",
+                DocumentNoteReader.MemberName(signature));
+        }
+
+        [Fact]
+        public void ADeclaringTypeParameterBecomesItsPositionWithOneBacktick()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                "N.Proc<T,TState>.Invoke(TState)",
+                "N.Proc<T,TState>",
+                MemberKind.Method,
+                "Invoke",
+                false,
+                0,
+                new[] { Parameter("TState") },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Read);
+
+            Assert.Equal("N.Proc`2.Invoke(`1)", DocumentNoteReader.MemberName(signature));
+        }
+
+        [Fact]
+        public void MemberNameTakesMethodsAlone()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => DocumentNoteReader.MemberName((SignatureRecord)null));
+            Assert.Throws<ArgumentException>(() => DocumentNoteReader.MemberName(
+                new SignatureRecord(
+                    "N.IThing.Size()",
+                    "N.IThing",
+                    MemberKind.Property,
+                    "Size",
+                    false,
+                    0,
+                    new ParameterRecord[0],
+                    "System.Int32",
+                    true,
+                    false,
+                    OperationDirection.Read)));
+        }
+
+        private static SignatureRecord Method(string memberName, params ParameterRecord[] parameters)
+        {
+            return new SignatureRecord(
+                SignatureKeyBuilder.Build("N.IThing", memberName, 0, parameters, "System.Void"),
+                "N.IThing",
+                MemberKind.Method,
+                memberName,
+                false,
+                0,
+                parameters,
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Read);
+        }
+
+        private static ParameterRecord Parameter(
+            string typeName, ParameterDirection direction = ParameterDirection.In)
+        {
+            return new ParameterRecord("value", typeName, direction, false, false);
+        }
+
         private static string Document(string members)
         {
             return "<?xml version=\"1.0\"?><doc><assembly><name>PEPlugin</name></assembly>"

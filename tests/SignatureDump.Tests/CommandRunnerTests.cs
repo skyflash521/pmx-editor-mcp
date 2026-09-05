@@ -124,6 +124,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("dangerous-operations", CommandRunner.DangerousOperationsCommand);
             Assert.Equal("tool-map", CommandRunner.ToolMapCommand);
             Assert.Equal("tool-schemas", CommandRunner.ToolSchemasCommand);
+            Assert.Equal("tool-descriptions", CommandRunner.ToolDescriptionsCommand);
         }
 
         [Fact]
@@ -516,6 +517,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ToolDescriptionsSubcommandRunsTheCollation()
+        {
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.ToolDescriptionsCommand,
+                    Path.Combine(_root, "no-editor"),
+                    Path.Combine(_root, "roles.json"),
+                    Path.Combine(_root, "names.json"),
+                    Path.Combine(_root, "map.json"),
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, code);
+
+            int argumentCode = CommandRunner.Run(
+                new[] { CommandRunner.ToolDescriptionsCommand },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InvalidArguments, argumentCode);
+        }
+
+        [Fact]
         public void ExcludedSignaturesSubcommandRunsTheWrite()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
@@ -612,6 +638,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.ToolSchemasCommand
                     + " <共通契約仕様書のパス> <アーキテクチャ仕様書のパス>"
                     + " <能力対応表の正本のパス> <スキーマ正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ToolDescriptionsCommand
+                    + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
+                    + " <日本語名の正本のパス> <能力対応表の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

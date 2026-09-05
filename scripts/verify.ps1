@@ -149,6 +149,10 @@ try {
         Needs = $buildOutput
         Body = { & $dump tool-schemas $contract $architecture $toolMap $toolSchemas }
     }
+    $checks['ツールの説明文の照合'] = @{
+        Needs = $buildOutput
+        Body = { & $dump tool-descriptions $editorDir $roles $names $toolMap }
+    }
 
     $listed = @(Get-ListedChecks)
     $missing = @($checks.Keys | Where-Object { $listed -notcontains $_ })

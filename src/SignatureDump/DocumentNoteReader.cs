@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,12 +11,14 @@ using System.Xml.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 配布物のドキュメントXMLから、公開プロパティの記載を取り出す。名前を採るのも、決め方を
-    /// 分けるために同一型内で数えるのも同じ文字列を見るので、取り出し方をここ1つに置く。
+    /// 配布物のドキュメントXMLから、公開プロパティとメソッドの記載を取り出す。名前を採るのも、
+    /// 決め方を分けるために同一型内で数えるのも同じ文字列を見るので、取り出し方をここ1つに置く。
     /// </summary>
     public static class DocumentNoteReader
     {
-        private const string MemberPrefix = "P:";
+        private const string PropertyPrefix = "P:";
+
+        private const string MethodPrefix = "M:";
 
         private static readonly string[] AccessorSuffixes = { "get/set", "get", "set" };
 
@@ -24,6 +27,20 @@ namespace PmxEditorMcp.SignatureDump
         /// member は入れない。形が違えば <see cref="FormatException"/>。
         /// </summary>
         public static IDictionary<string, string> Read(string xml)
+        {
+            return Read(xml, PropertyPrefix, true);
+        }
+
+        /// <summary>
+        /// member 名(接頭辞 <c>M:</c> を除いたもの)から記載への対応を返す。取り出し方は
+        /// プロパティと同じだが、get/set の後置はプロパティの記載の書き方なので落とさない。
+        /// </summary>
+        public static IDictionary<string, string> ReadMethods(string xml)
+        {
+            return Read(xml, MethodPrefix, false);
+        }
+
+        private static IDictionary<string, string> Read(string xml, string prefix, bool accessor)
         {
             if (xml == null)
             {
@@ -39,18 +56,18 @@ namespace PmxEditorMcp.SignatureDump
                     throw new FormatException("member に name が無い。");
                 }
 
-                if (!name.Value.StartsWith(MemberPrefix, StringComparison.Ordinal))
+                if (!name.Value.StartsWith(prefix, StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                string key = name.Value.Substring(MemberPrefix.Length);
+                string key = name.Value.Substring(prefix.Length);
                 if (key.Length == 0)
                 {
                     throw new FormatException("member の name が接頭辞だけになっている。");
                 }
 
-                string note = NoteOf(member, key);
+                string note = NoteOf(member, key, accessor);
                 if (note.Length == 0)
                 {
                     continue;
@@ -90,7 +107,175 @@ namespace PmxEditorMcp.SignatureDump
             return built.Append('.').Append(propertyName).ToString();
         }
 
-        private static string NoteOf(XElement member, string key)
+        /// <summary>
+        /// メソッドのシグネチャから、ドキュメントXMLの member 名を組み立てる。XMLは総称型引数を
+        /// その段自身の数で表し、閉じた総称型を波括弧で、型引数を位置で、参照渡しをアットマークで
+        /// 表すので、その表記へそろえる。
+        /// </summary>
+        public static string MemberName(SignatureRecord signature)
+        {
+            if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
+            if (signature.MemberKind != MemberKind.Method)
+            {
+                throw new ArgumentException("メソッド以外は組み立てられない。", nameof(signature));
+            }
+
+            IList<string> declaring = Split(Inner(signature.DeclaringType), ',');
+            StringBuilder built = new StringBuilder();
+            foreach (string level in Levels(signature.DeclaringType))
+            {
+                if (built.Length != 0)
+                {
+                    built.Append('.');
+                }
+
+                built.Append(WithArity(level));
+            }
+
+            built.Append('.').Append(signature.MemberName);
+            if (signature.GenericArity != 0)
+            {
+                built.Append("``").Append(signature.GenericArity.ToString(CultureInfo.InvariantCulture));
+            }
+
+            if (signature.Parameters.Count == 0)
+            {
+                return built.ToString();
+            }
+
+            built.Append('(');
+            for (int index = 0; index < signature.Parameters.Count; index++)
+            {
+                if (index != 0)
+                {
+                    built.Append(',');
+                }
+
+                ParameterRecord parameter = signature.Parameters[index];
+                built.Append(Written(parameter.TypeName, declaring, signature.TypeParameters));
+                if (parameter.Direction != ParameterDirection.In)
+                {
+                    built.Append('@');
+                }
+            }
+
+            return built.Append(')').ToString();
+        }
+
+        // 引数の型の表記。配列の括弧は外して付け直し、型引数は位置へ、閉じた総称型は波括弧へ写す。
+        private static string Written(string typeName, IList<string> declaring, IList<string> method)
+        {
+            string arrays = string.Empty;
+            while (typeName.EndsWith("[]", StringComparison.Ordinal))
+            {
+                arrays = "[]" + arrays;
+                typeName = typeName.Substring(0, typeName.Length - 2);
+            }
+
+            int inMethod = IndexOf(method, typeName);
+            if (inMethod >= 0)
+            {
+                return "``" + inMethod.ToString(CultureInfo.InvariantCulture) + arrays;
+            }
+
+            int inDeclaring = IndexOf(declaring, typeName);
+            if (inDeclaring >= 0)
+            {
+                return "`" + inDeclaring.ToString(CultureInfo.InvariantCulture) + arrays;
+            }
+
+            StringBuilder built = new StringBuilder();
+            foreach (string level in Levels(typeName))
+            {
+                if (built.Length != 0)
+                {
+                    built.Append('.');
+                }
+
+                string inner = Inner(level);
+                if (inner.Length == 0)
+                {
+                    built.Append(level);
+                    continue;
+                }
+
+                built.Append(level.Substring(0, level.IndexOf('<'))).Append('{');
+                IList<string> arguments = Split(inner, ',');
+                for (int index = 0; index < arguments.Count; index++)
+                {
+                    if (index != 0)
+                    {
+                        built.Append(',');
+                    }
+
+                    built.Append(Written(arguments[index].Trim(), declaring, method));
+                }
+
+                built.Append('}');
+            }
+
+            return built.Append(arrays).ToString();
+        }
+
+        // 一番外側の山括弧の中身。山括弧が無ければ空。
+        private static string Inner(string typeName)
+        {
+            int open = typeName.IndexOf('<');
+            return open < 0 || !typeName.EndsWith(">", StringComparison.Ordinal)
+                ? string.Empty
+                : typeName.Substring(open + 1, typeName.Length - open - 2);
+        }
+
+        private static IList<string> Split(string inner, char separator)
+        {
+            List<string> parts = new List<string>();
+            if (inner.Length == 0)
+            {
+                return parts;
+            }
+
+            int depth = 0;
+            int start = 0;
+            for (int index = 0; index < inner.Length; index++)
+            {
+                char letter = inner[index];
+                if (letter == '<')
+                {
+                    depth++;
+                }
+                else if (letter == '>')
+                {
+                    depth--;
+                }
+                else if (letter == separator && depth == 0)
+                {
+                    parts.Add(inner.Substring(start, index - start));
+                    start = index + 1;
+                }
+            }
+
+            parts.Add(inner.Substring(start));
+            return parts;
+        }
+
+        private static int IndexOf(IList<string> names, string typeName)
+        {
+            for (int index = 0; index < names.Count; index++)
+            {
+                if (string.Equals(names[index].Trim(), typeName, StringComparison.Ordinal))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        private static string NoteOf(XElement member, string key, bool accessor)
         {
             List<XElement> summaries = member.Elements("summary").ToList();
             if (summaries.Count == 0)
@@ -108,18 +293,19 @@ namespace PmxEditorMcp.SignatureDump
                 throw new FormatException("summary が子要素を持つ: " + key);
             }
 
-            return NoteOf(summaries[0].Value);
+            return NoteOf(summaries[0].Value, accessor);
         }
 
         // 配布物のXMLは、名前に続けて意味の補足を書く箇所を、改行と縦棒の両方で作る。
-        private static string NoteOf(string summary)
+        private static string NoteOf(string summary, bool accessor)
         {
             foreach (string line in summary.Split('\n'))
             {
                 string trimmed = line.Trim();
                 if (trimmed.Length != 0)
                 {
-                    return WithoutAccessorSuffix(BeforeVerticalBar(trimmed));
+                    string note = BeforeVerticalBar(trimmed);
+                    return accessor ? WithoutAccessorSuffix(note) : note;
                 }
             }
 
