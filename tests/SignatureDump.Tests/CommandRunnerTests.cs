@@ -127,7 +127,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("tool-descriptions", CommandRunner.ToolDescriptionsCommand);
             Assert.Equal("sample-values", CommandRunner.SampleValuesCommand);
             Assert.Equal("schema-correspondence", CommandRunner.SchemaCorrespondenceCommand);
-            Assert.Equal("tool-names", CommandRunner.ToolNamesCommand);
+            Assert.Equal("tool-mapping", CommandRunner.ToolMappingCommand);
         }
 
         [Fact]
@@ -577,15 +577,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ToolNamesSubcommandRunsTheCollation()
+        public void ToolMappingSubcommandRunsTheCollation()
         {
             int code = CommandRunner.Run(
                 new[]
                 {
-                    CommandRunner.ToolNamesCommand,
+                    CommandRunner.ToolMappingCommand,
                     Path.Combine(_root, "no-editor"),
                     Path.Combine(_root, "roles.json"),
                     Path.Combine(_root, "map.json"),
+                    Path.Combine(_root, "schemas.json"),
                 },
                 new StringWriter(),
                 new StringWriter());
@@ -593,7 +594,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(ExitCodes.InputUnavailable, code);
 
             int argumentCode = CommandRunner.Run(
-                new[] { CommandRunner.ToolNamesCommand },
+                new[] { CommandRunner.ToolMappingCommand },
                 new StringWriter(),
                 new StringWriter());
 
@@ -743,9 +744,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
-                CommandRunner.ToolNamesCommand
+                CommandRunner.ToolMappingCommand
                     + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
-                    + " <能力対応表の正本のパス>",
+                    + " <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

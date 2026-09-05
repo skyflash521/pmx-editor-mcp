@@ -162,9 +162,9 @@ try {
         Needs = $buildOutput
         Body = { & $dump schema-correspondence $editorDir $roles $toolMap $toolSchemas }
     }
-    $checks['ツールの名前の照合'] = @{
+    $checks['規則適合検査'] = @{
         Needs = $buildOutput
-        Body = { & $dump tool-names $editorDir $roles $toolMap }
+        Body = { & $dump tool-mapping $editorDir $roles $toolMap $toolSchemas }
     }
 
     $listed = @(Get-ListedChecks)

@@ -6,7 +6,7 @@ using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
 {
-    public sealed class ToolNameRunnerTests : IDisposable
+    public sealed class ToolMappingRunnerTests : IDisposable
     {
         private const string Vertex = "PEPlugin.Pmx.IPXVertex";
 
@@ -29,10 +29,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private readonly string _root;
 
-        public ToolNameRunnerTests()
+        public ToolMappingRunnerTests()
         {
             _root = Path.Combine(
-                Path.GetTempPath(), "pmx-editor-mcp-tool-names-" + Guid.NewGuid().ToString("N"));
+                Path.GetTempPath(), "pmx-editor-mcp-tool-mapping-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_root);
         }
 
@@ -50,11 +50,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 4 })
+            foreach (int count in new[] { 0, 1, 2, 3, 5 })
             {
                 StringWriter error = new StringWriter();
 
-                int code = ToolNameRunner.Run(
+                int code = ToolMappingRunner.Run(
                     Enumerable.Repeat("a", count).ToArray(), new StringWriter(), error);
 
                 Assert.Equal(ExitCodes.InvalidArguments, code);
@@ -69,7 +69,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             args[0] = Path.Combine(_root, "missing");
             StringWriter error = new StringWriter();
 
-            int code = ToolNameRunner.Run(args, new StringWriter(), error);
+            int code = ToolMappingRunner.Run(args, new StringWriter(), error);
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
             Assert.Contains("PEPlugin.dll", error.ToString(), StringComparison.Ordinal);
@@ -78,13 +78,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AMissingInputFileIsInputUnavailable()
         {
-            foreach (int missing in new[] { 1, 2 })
+            foreach (int missing in new[] { 1, 2, 3 })
             {
                 string[] args = Arguments(EmptyMap);
                 args[missing] = Path.Combine(_root, "gone");
                 StringWriter error = new StringWriter();
 
-                int code = ToolNameRunner.Run(args, new StringWriter(), error);
+                int code = ToolMappingRunner.Run(args, new StringWriter(), error);
 
                 Assert.Equal(ExitCodes.InputUnavailable, code);
                 Assert.Contains("gone", error.ToString(), StringComparison.Ordinal);
@@ -96,7 +96,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             StringWriter error = new StringWriter();
 
-            int code = ToolNameRunner.Run(Arguments("{"), new StringWriter(), error);
+            int code = ToolMappingRunner.Run(Arguments("{"), new StringWriter(), error);
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
             Assert.False(string.IsNullOrWhiteSpace(error.ToString()));
@@ -110,7 +110,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 SdkAssemblyLocator.GetAssemblyPath(args[0]), new byte[] { 0x4D, 0x5A });
             StringWriter error = new StringWriter();
 
-            int code = ToolNameRunner.Run(args, new StringWriter(), error);
+            int code = ToolMappingRunner.Run(args, new StringWriter(), error);
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
             Assert.Contains("読めない", error.ToString(), StringComparison.Ordinal);
@@ -121,7 +121,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             StringWriter error = new StringWriter();
 
-            int code = ToolNameRunner.Run(
+            int code = ToolMappingRunner.Run(
                 Arguments(Assigned()), new StringWriter(), error);
 
             Assert.Equal(ExitCodes.Unresolved, code);
@@ -133,14 +133,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             StringWriter output = new StringWriter();
 
-            int code = ToolNameRunner.Run(
+            int code = ToolMappingRunner.Run(
                 Arguments(EmptyMap), output, new StringWriter());
 
             Assert.Equal(ExitCodes.Success, code);
             string line = Assert.Single(
                 output.ToString().Split(
                     new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
-            Assert.Equal("照合した: ツールを持つ行 0 件・埋め込み先 0 件", line);
+            Assert.Equal("照合した: ツールを持つ行 0 件・埋め込み先 0 件・呼び分け 0 件", line);
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             StringWriter output = new StringWriter();
 
-            int code = ToolNameRunner.Run(
+            int code = ToolMappingRunner.Run(
                 Arguments(CommonContract()), output, new StringWriter());
 
             Assert.Equal(ExitCodes.Success, code);
@@ -162,11 +162,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             StringWriter error = new StringWriter();
 
-            int code = ToolNameRunner.Run(Arguments(Embedded()), output, error);
+            int code = ToolMappingRunner.Run(Arguments(Embedded()), output, error);
 
             Assert.Equal(error.ToString(), string.Empty);
             Assert.Equal(ExitCodes.Success, code);
             Assert.Contains("埋め込み先 1 件", output.ToString(), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheSummaryCountsTheBranches()
+        {
+            string[] args = Arguments(EmptyMap);
+            args[3] = Write(
+                "branches.json",
+                "{\"tools\":[{\"tool\":\"model_list_samples\""
+                    + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
+                    + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}}]}\n");
+            StringWriter output = new StringWriter();
+
+            int code = ToolMappingRunner.Run(args, output, new StringWriter());
+
+            Assert.Equal(ExitCodes.Success, code);
+            Assert.Contains("呼び分け 1 件", output.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -177,7 +194,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(
                 ExitCodes.Success,
-                ToolNameRunner.Run(args, new StringWriter(), new StringWriter()));
+                ToolMappingRunner.Run(args, new StringWriter(), new StringWriter()));
             Assert.Equal(before, Fingerprints());
         }
 
@@ -246,6 +263,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 EditorDirectory(),
                 Write("roles.json", Roles),
                 Write("map.json", map),
+                Write("schemas.json", "{\"tools\":[]}\n"),
             };
         }
 
@@ -258,7 +276,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             if (!File.Exists(assemblyPath))
             {
                 File.Copy(
-                    new Uri(typeof(ToolNameRunnerTests).Assembly.CodeBase).LocalPath, assemblyPath);
+                    new Uri(typeof(ToolMappingRunnerTests).Assembly.CodeBase).LocalPath, assemblyPath);
             }
 
             return directory;

@@ -4,7 +4,7 @@ using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
 {
-    public sealed class ToolNameGateTests
+    public sealed class ToolMappingGateTests
     {
         private const string Vertex = "PEPlugin.Pmx.IPXVertex";
 
@@ -155,7 +155,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AcceptsAMethodNameWithTheSourceQualifier()
         {
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex")),
                 Roles(),
                 Signatures(Method(Key, Vertex, "NormalizePmx")));
@@ -165,7 +165,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void RejectsAMethodNameWithoutTheSourceQualifier()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(MapJson("model_normalize_pmx")),
                     Roles(),
                     Signatures(Method(Key, Vertex, "NormalizePmx"))));
@@ -178,7 +178,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AConnectorMethodTakesNoQualifierWithoutACollision()
         {
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(MapJson("model_save", Connector + ".Save()")),
                 Roles(TypeRole.Connector, Connector, "pmx_connector"),
                 Signatures(Method(Connector + ".Save()", Connector, "Save")));
@@ -189,7 +189,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             const string Other = "PEPlugin.Pmx.IPXOtherConnector";
 
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(
                     TwoRowMapJson("model_save_pmx_connector", "model_save_other_connector")),
                 Roles(
@@ -208,7 +208,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             const string Other = "PEPlugin.Pmx.IPXOtherConnector";
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(
                         TwoRowMapJson("model_save", "model_save_other_connector")),
                     Roles(
@@ -230,7 +230,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             const string Model = "PEPlugin.Form.IPXUIModel";
             string key = Model + "..ctor()";
 
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(MapJson("model_create_ui_model", key)),
                 Roles(
                     TypeRole.HandleTarget,
@@ -250,7 +250,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             const string Builder = "PEPlugin.IPEBuilder";
             string factory = Builder + ".CreateModel()";
 
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(MapJson("model_create_model", factory)),
                 Roles(
                     TypeRole.HandleTarget,
@@ -272,7 +272,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string key = Model + "..ctor()";
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(MapJson("view_create_ui_model", key)),
                     Roles(TypeRole.HandleTarget, Model, "ui_model"),
                     Signatures(Method(key, Model, ".ctor", Model, MemberKind.Constructor))));
@@ -285,7 +285,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             string key = Vertex + ".ToKeyArray()";
 
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(MapJson("model_to_key_array_vertex", key)),
                 Roles(),
                 Signatures(Method(key, Vertex, "ToKeyArray", Vertex + "[]")));
@@ -310,7 +310,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
 
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(map),
                 Roles(TypeRole.Connector, Connector, "pmx_connector"),
                 Signatures(
@@ -321,7 +321,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnEmbeddedNameMustBeAToolOfTheDeclaringType()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(EmbeddedMapJson("model_list_bones")),
                     Roles(),
                     Signatures(Property(Vertex + ".Index"))));
@@ -350,7 +350,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 });
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(EmbeddedMapJson("model_add_vertices")),
                     new TypeRoleTable(
                         new[] { vertex },
@@ -367,7 +367,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnEmbeddedNameOfTheDeclaringTypePasses()
         {
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(EmbeddedMapJson("model_list_vertex")),
                 Roles(),
                 Signatures(Property(Vertex + ".Index")));
@@ -387,7 +387,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                   ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
                   ""embeddedIn"": [""view.click""] }] }";
 
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(map),
                 Roles(more: new[] { Embedded(Args, TypeRole.EventArgs) }),
                 Signatures(
@@ -405,7 +405,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""embeddedIn"": [""model_list_vertex""] }] }";
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(map),
                     Roles(more: new[] { Embedded(Args, TypeRole.EventArgs) }),
                     Signatures(Property(Args + ".Index", Args))));
@@ -432,7 +432,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
 
-            ToolNameGate.Require(
+            Require(
                 ToolMapJsonReader.Read(map),
                 Roles(more: new[] { Embedded(Dto, TypeRole.Dto) }),
                 Signatures(
@@ -449,7 +449,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""embeddedIn"": [""model_list_vertex""] }] }";
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(map),
                     Roles(more: new[] { Embedded(Dto, TypeRole.Dto) }),
                     Signatures(Property(Dto + ".Index", Dto))));
@@ -464,7 +464,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void RejectsARowWhoseSignatureIsNotEnumerated()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex")),
                     Roles(),
                     Signatures()));
@@ -476,7 +476,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void RejectsAToolOnATypeWithoutARole()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex")),
                     Roles(typeName: "PEPlugin.Pmx.IPXOther"),
                     Signatures(Method(Key, Vertex, "NormalizePmx"))));
@@ -488,7 +488,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void RejectsAToolOnATypeWithoutAGroup()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolNameGate.Require(
+                () => Require(
                     ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex")),
                     new TypeRoleTable(
                         new[]
@@ -519,7 +519,284 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""assignment"": ""internalFlow"", ""target"": ""connect"",
                 ""slotBinding"": { ""return"": ""runArgsClone"", ""parameters"": {} } }] }";
 
-            ToolNameGate.Require(ToolMapJsonReader.Read(map), Roles(), Signatures());
+            Require(ToolMapJsonReader.Read(map), Roles(), Signatures());
+        }
+
+        [Fact]
+        public void RejectsTwoBranchesThatTakeTheSameRequiredInputs()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ToolMappingGate.Require(
+                    ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                    Roles(),
+                    Signatures(),
+                    ToolSchemaJsonReader.Read(TwoBranchSchemaJson("count"))));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void BranchesThatTakeDifferentRequiredInputsPass()
+        {
+            ToolMappingGate.Require(
+                ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                Roles(),
+                Signatures(),
+                ToolSchemaJsonReader.Read(TwoBranchSchemaJson("total")));
+        }
+
+        /// <summary>
+        /// 呼び分けを2つ持ち、どちらも必ず1つを渡すまとまりを持つ入出力の形。2つ目のまとまりの
+        /// 名前を差し替えられる。
+        /// </summary>
+        private static string ChoiceSchemaJson(string first, string second)
+        {
+            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
+                ""branches"": [
+                  { ""branch"": ""count"", ""inputs"": [
+                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"" },
+                    { ""name"": ""all"", ""origin"": ""hostInput"", ""shape"": ""boolean"" }],
+                    ""choices"": [{ ""names"": [""count"", ""all""], ""required"": true }] },
+                  { ""branch"": ""other"", ""inputs"": [
+                    { ""name"": """ + first + @""", ""origin"": ""hostInput"",
+                      ""shape"": ""number"" },
+                    { ""name"": """ + second + @""", ""origin"": ""hostInput"",
+                      ""shape"": ""boolean"" }],
+                    ""choices"": [{ ""names"": [""" + first + @""", """ + second + @"""],
+                      ""required"": true }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
+        /// <summary>
+        /// 呼び分けを2つ持ち、無くてもよいまとまりの中だけが違う入出力の形。渡らないことがあるので、
+        /// このまとまりでは呼び分けを見分けられない。
+        /// </summary>
+        private static string OptionalChoiceSchemaJson()
+        {
+            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
+                ""branches"": [
+                  { ""branch"": ""first"", ""inputs"": [
+                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": true },
+                    { ""name"": ""offset"", ""origin"": ""hostInput"", ""shape"": ""number"" },
+                    { ""name"": ""all"", ""origin"": ""hostInput"", ""shape"": ""boolean"" }],
+                    ""choices"": [{ ""names"": [""offset"", ""all""], ""required"": false }] },
+                  { ""branch"": ""second"", ""inputs"": [
+                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": true },
+                    { ""name"": ""total"", ""origin"": ""hostInput"", ""shape"": ""number"" },
+                    { ""name"": ""all"", ""origin"": ""hostInput"", ""shape"": ""boolean"" }],
+                    ""choices"": [{ ""names"": [""total"", ""all""], ""required"": false }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
+        /// <summary>
+        /// 呼び分けを2つ持ち、必ず渡す項目が同じで、無くてもよいまとまりだけが共通の名前を持たない
+        /// 入出力の形。渡らないことがあるので、このまとまりでは呼び分けを見分けられない。
+        /// </summary>
+        private static string OptionalApartSchemaJson()
+        {
+            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
+                ""branches"": [
+                  { ""branch"": ""first"", ""inputs"": [
+                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": true },
+                    { ""name"": ""offset"", ""origin"": ""hostInput"", ""shape"": ""number"" },
+                    { ""name"": ""span"", ""origin"": ""hostInput"", ""shape"": ""number"" }],
+                    ""choices"": [{ ""names"": [""offset"", ""span""], ""required"": false }] },
+                  { ""branch"": ""second"", ""inputs"": [
+                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": true },
+                    { ""name"": ""total"", ""origin"": ""hostInput"", ""shape"": ""number"" },
+                    { ""name"": ""all"", ""origin"": ""hostInput"", ""shape"": ""boolean"" }],
+                    ""choices"": [{ ""names"": [""total"", ""all""], ""required"": false }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
+        /// <summary>
+        /// 呼び分けを2つ持ち、必ず渡す項目が組の配列である入出力の形。要素の組の中と、配列を空に
+        /// できるかどうかを差し替えられる。
+        /// </summary>
+        private static string ElementMembersSchemaJson(string second, bool empty = false)
+        {
+            string least = empty ? string.Empty : @", ""minItems"": 1";
+            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
+                ""branches"": [
+                  { ""branch"": ""first"", ""inputs"": [
+                    { ""name"": ""argsList"", ""origin"": ""hostInput"", ""required"": true,
+                      ""maxItems"": 8166" + least + @",
+                      ""element"": { ""origin"": ""hostInput"", ""members"": [
+                        { ""name"": ""count"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                          ""required"": true }] } }] },
+                  { ""branch"": ""second"", ""inputs"": [
+                    { ""name"": ""argsList"", ""origin"": ""hostInput"", ""required"": true,
+                      ""maxItems"": 8166" + least + @",
+                      ""element"": { ""origin"": ""hostInput"", ""members"": [
+                        { ""name"": """ + second + @""", ""origin"": ""sdkIn"",
+                          ""shape"": ""number"", ""required"": true }] } }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
+        /// <summary>呼び分けを2つ持ち、必須の項目が組である入出力の形。組の中だけが違う。</summary>
+        private static string MembersSchemaJson(string second)
+        {
+            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
+                ""branches"": [
+                  { ""branch"": ""first"", ""inputs"": [
+                    { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
+                      ""members"": [{ ""name"": ""count"", ""origin"": ""sdkIn"",
+                        ""shape"": ""number"", ""required"": true }] }] },
+                  { ""branch"": ""second"", ""inputs"": [
+                    { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
+                      ""members"": [{ ""name"": """ + second + @""", ""origin"": ""sdkIn"",
+                        ""shape"": ""number"", ""required"": true }] }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
+        /// <summary>呼び分けを2つ持ち、値で分かれる入出力の形。選ぶ項目の値だけが違う。</summary>
+        private static string SelectorSchemaJson(string second)
+        {
+            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
+                ""branches"": [
+                  { ""branch"": ""first"", ""selector"": { ""name"": ""kind"", ""value"": ""a"" },
+                    ""inputs"": [
+                      { ""name"": ""kind"", ""origin"": ""hostInput"", ""shape"": ""text"",
+                        ""required"": true }] },
+                  { ""branch"": ""second"",
+                    ""selector"": { ""name"": ""kind"", ""value"": """ + second + @""" },
+                    ""inputs"": [
+                      { ""name"": ""kind"", ""origin"": ""hostInput"", ""shape"": ""text"",
+                        ""required"": true }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
+        /// <summary>呼び分けを2つ持つ入出力の形。2つ目の必須の入力の名前だけを差し替える。</summary>
+        private static string TwoBranchSchemaJson(string second)
+        {
+            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
+                ""branches"": [
+                  { ""branch"": ""count"", ""inputs"": [
+                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": true }] },
+                  { ""branch"": ""other"", ""inputs"": [
+                    { ""name"": """ + second + @""", ""origin"": ""hostInput"",
+                      ""shape"": ""number"", ""required"": true }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
+        [Fact]
+        public void RequiredChoicesWithoutACommonNameTellTwoBranchesApart()
+        {
+            RequireBranches(ChoiceSchemaJson("total", "span"));
+        }
+
+        [Fact]
+        public void RejectsRequiredChoicesThatShareAName()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireBranches(ChoiceSchemaJson("total", "all")));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsTwoBranchesWhoseRequiredChoicesAreTheSame()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireBranches(ChoiceSchemaJson("count", "all")));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AChoiceThatMayBeAbsentDoesNotTellTwoBranchesApart()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireBranches(OptionalChoiceSchemaJson()));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ChoicesThatMayBeAbsentDoNotTellTwoBranchesApartEvenWithoutACommonName()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireBranches(OptionalApartSchemaJson()));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheMembersOfTheElementOfARequiredArrayTellTwoBranchesApart()
+        {
+            RequireBranches(ElementMembersSchemaJson("total"));
+        }
+
+        [Fact]
+        public void TheMembersOfTheElementOfAnEmptiableArrayDoNotTellTwoBranchesApart()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireBranches(ElementMembersSchemaJson("total", empty: true)));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsTwoBranchesWhoseArrayElementsHaveTheSameMembers()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireBranches(ElementMembersSchemaJson("count")));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheMembersOfARequiredGroupTellTwoBranchesApart()
+        {
+            RequireBranches(MembersSchemaJson("total"));
+        }
+
+        [Fact]
+        public void RejectsTwoBranchesWhoseGroupsHaveTheSameMembers()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireBranches(MembersSchemaJson("count")));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheValueOfTheSelectorTellsTwoBranchesApart()
+        {
+            RequireBranches(SelectorSchemaJson("b"));
+        }
+
+        [Fact]
+        public void RejectsTwoBranchesThatSelectOnTheSameValue()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireBranches(SelectorSchemaJson("a")));
+
+            Assert.Contains(
+                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>呼び分けの見分けだけを見る呼び出し。行を持たない能力対応表を渡す。</summary>
+        private static void RequireBranches(string schemas)
+        {
+            ToolMappingGate.Require(
+                ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                Roles(),
+                Signatures(),
+                ToolSchemaJsonReader.Read(schemas));
         }
 
         [Fact]
@@ -529,13 +806,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
             TypeRoleTable roles = Roles();
             IDictionary<string, SignatureRecord> signatures =
                 Signatures(Method(Key, Vertex, "NormalizePmx"));
+            ToolSchemaTable schemas = ToolSchemaJsonReader.Read(NoTools);
 
             Assert.Throws<ArgumentNullException>(
-                () => ToolNameGate.Require(null, roles, signatures));
+                () => ToolMappingGate.Require(null, roles, signatures, schemas));
             Assert.Throws<ArgumentNullException>(
-                () => ToolNameGate.Require(map, null, signatures));
+                () => ToolMappingGate.Require(map, null, signatures, schemas));
             Assert.Throws<ArgumentNullException>(
-                () => ToolNameGate.Require(map, roles, null));
+                () => ToolMappingGate.Require(map, roles, null, schemas));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolMappingGate.Require(map, roles, signatures, null));
+        }
+
+        /// <summary>入出力の形を持たないスキーマ正本。名前の照合だけを見る試験が使う。</summary>
+        private const string NoTools = @"{ ""tools"": [] }";
+
+        /// <summary>名前の照合だけを見る呼び出し。呼び分けを持たないスキーマ正本を渡す。</summary>
+        private static void Require(
+            ToolMap map, TypeRoleTable roles, IDictionary<string, SignatureRecord> signatures)
+        {
+            ToolMappingGate.Require(map, roles, signatures, ToolSchemaJsonReader.Read(NoTools));
         }
     }
 }

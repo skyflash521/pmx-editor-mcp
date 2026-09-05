@@ -7,10 +7,10 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力対応表のツールの名前を規則と照合する配線。ファイルは書き出さず、合否だけを終了コードで
-    /// 返す。
+    /// 能力対応表とスキーマ正本を写像の規則と照合する配線。ファイルは書き出さず、合否だけを終了
+    /// コードで返す。
     /// </summary>
-    public static class ToolNameRunner
+    public static class ToolMappingRunner
     {
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
@@ -29,11 +29,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 3)
+            if (args.Length != 4)
             {
                 error.WriteLine(
-                    "引数は3つ: <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
-                        + " <能力対応表の正本のパス>");
+                    "引数は4つ: <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
+                        + " <能力対応表の正本のパス> <スキーマ正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -47,10 +47,12 @@ namespace PmxEditorMcp.SignatureDump
 
             TypeRoleTable roles;
             ToolMap map;
+            ToolSchemaTable schemas;
             try
             {
                 roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[1], "型役割表の正本"));
                 map = ToolMapJsonReader.Read(Read(args[2], "能力対応表の正本"));
+                schemas = ToolSchemaJsonReader.Read(Read(args[3], "スキーマ正本"));
             }
             catch (Exception exception)
             {
@@ -72,23 +74,25 @@ namespace PmxEditorMcp.SignatureDump
 
             try
             {
-                ToolNameGate.Require(
+                ToolMappingGate.Require(
                     map,
                     roles,
-                    inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal));
+                    inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
+                    schemas);
             }
             catch (InvalidOperationException exception)
             {
-                error.WriteLine("ツールの名前が規則に合わない。");
+                error.WriteLine("写像の規則に合わない。");
                 error.WriteLine(exception.Message);
                 return ExitCodes.Unresolved;
             }
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: ツールを持つ行 {0} 件・埋め込み先 {1} 件",
+                "照合した: ツールを持つ行 {0} 件・埋め込み先 {1} 件・呼び分け {2} 件",
                 map.Rows.Count(r => r.Tool != null),
-                map.Rows.Sum(r => r.EmbeddedIn == null ? 0 : r.EmbeddedIn.Count)));
+                map.Rows.Sum(r => r.EmbeddedIn == null ? 0 : r.EmbeddedIn.Count),
+                schemas.Tools.Sum(t => t.Branches.Count)));
 
             return ExitCodes.Success;
         }

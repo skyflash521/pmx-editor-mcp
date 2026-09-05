@@ -1,21 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力対応表が割り当てたツールの名前が、規則から導いた名前と一致することを確かめる。名前は
-    /// 機械で決まるので、書き手が別の名前を書けばここで落ちる。
+    /// 能力対応表とスキーマ正本が、ツール仕様書の写像の規則に合うことを確かめる。名前も埋め込み先も
+    /// 呼び分けの見分けも機械で決まるので、書き手が別のものを書けばここで落ちる。
     /// </summary>
-    public static class ToolNameGate
+    public static class ToolMappingGate
     {
         /// <summary>生成のツールの動作の語の頭。要素名詞を続けて動作の語にする。</summary>
         private const string CreatePrefix = "create_";
 
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
-            ToolMap map, TypeRoleTable roles, IDictionary<string, SignatureRecord> signatures)
+            ToolMap map,
+            TypeRoleTable roles,
+            IDictionary<string, SignatureRecord> signatures,
+            ToolSchemaTable schemas)
         {
             if (map == null)
             {
@@ -31,6 +35,13 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new ArgumentNullException(nameof(signatures));
             }
+
+            if (schemas == null)
+            {
+                throw new ArgumentNullException(nameof(schemas));
+            }
+
+            RequireTellableBranches(schemas);
 
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
@@ -60,6 +71,133 @@ namespace PmxEditorMcp.SignatureDump
                     RequireEmbedded(embedded, signature, byType, map);
                 }
             }
+        }
+
+        /// <summary>
+        /// 同じツールへ集めた呼び分けが、相互に見分けられることを求める。見分けられない呼び分けを
+        /// 残すと、どちらの呼び出しなのかがホストの側で決まらない。
+        /// </summary>
+        private static void RequireTellableBranches(ToolSchemaTable schemas)
+        {
+            foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
+            {
+                for (int first = 0; first < schema.Branches.Count; first++)
+                {
+                    for (int second = first + 1; second < schema.Branches.Count; second++)
+                    {
+                        if (Tellable(schema.Branches[first], schema.Branches[second]))
+                        {
+                            continue;
+                        }
+
+                        throw new InvalidOperationException(
+                            "入力で判別できない呼び分けがある: " + schema.Tool
+                                + "(" + schema.Branches[first].Branch + " と "
+                                + schema.Branches[second].Branch + ")");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 2つの呼び分けを見分けられるか。見分けられるのは、分岐を選ぶ項目が同じ名前で違う値を選ぶ
+        /// とき、片方が必ず渡す名前をもう片方がどの入力にも持たないとき、必ず1つを渡すまとまりが
+        /// 共通の名前を持たないときのいずれかで、入れ子の組の中にも同じ規則を当てる。
+        /// </summary>
+        private static bool Tellable(SchemaBranch first, SchemaBranch second)
+        {
+            if (first.SelectorName != null
+                && string.Equals(first.SelectorName, second.SelectorName, StringComparison.Ordinal)
+                && !string.Equals(Written(first.SelectorValue), Written(second.SelectorValue),
+                    StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            return Missing(first.Inputs, second.Inputs)
+                || Missing(second.Inputs, first.Inputs)
+                || Apart(first, second)
+                || Inside(first.Inputs, second.Inputs);
+        }
+
+        /// <summary>必ず渡す名前のうち、相手がどの入力にも持たないものがあるか。</summary>
+        private static bool Missing(IEnumerable<SchemaItem> from, IEnumerable<SchemaItem> other)
+        {
+            return from.Where(i => i.Required.HasValue && i.Required.Value)
+                .Any(i => !other.Any(
+                    o => string.Equals(o.Name, i.Name, StringComparison.Ordinal)));
+        }
+
+        /// <summary>必ず1つを渡すまとまりで、共通の名前を持たない組があるか。</summary>
+        private static bool Apart(SchemaBranch first, SchemaBranch second)
+        {
+            return first.Choices.Where(c => c.Required).Any(
+                one => second.Choices.Where(c => c.Required).Any(
+                    other => !one.Names.Intersect(other.Names, StringComparer.Ordinal).Any()));
+        }
+
+        /// <summary>両方が持つ同じ名前の組の中で、必ず渡す名前が食い違うか。</summary>
+        private static bool Inside(IList<SchemaItem> first, IList<SchemaItem> second)
+        {
+            foreach (SchemaItem item in first.Where(i => Grouped(i) != null))
+            {
+                SchemaItem twin = second.FirstOrDefault(
+                    o => string.Equals(o.Name, item.Name, StringComparison.Ordinal)
+                        && Grouped(o) != null);
+                if (twin == null)
+                {
+                    continue;
+                }
+
+                if (Missing(Grouped(item), Grouped(twin)) || Missing(Grouped(twin), Grouped(item)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// その項目が持つ組の中身。組と、空にできない組の配列が持つ。空にできる配列は、空の要求が
+        /// どちらの呼び分けにも当てはまるので見分けに使えない。
+        /// </summary>
+        private static IList<SchemaItem> Grouped(SchemaItem item)
+        {
+            if (item.Members != null)
+            {
+                return item.Members;
+            }
+
+            return item.Element == null || !item.MinItems.HasValue ? null : item.Element.Members;
+        }
+
+        /// <summary>分岐を選ぶ値を、JSONの形と型を保った文字列にしたもの。</summary>
+        private static string Written(object value)
+        {
+            if (value == null)
+            {
+                return "null";
+            }
+
+            IDictionary<string, object> members = value as IDictionary<string, object>;
+            if (members != null)
+            {
+                return "{" + string.Join(
+                    ",",
+                    members.OrderBy(m => m.Key, StringComparer.Ordinal)
+                        .Select(m => Written(m.Key) + ":" + Written(m.Value))
+                        .ToArray()) + "}";
+            }
+
+            IEnumerable<object> items = value as IEnumerable<object>;
+            if (items != null)
+            {
+                return "[" + string.Join(",", items.Select(Written).ToArray()) + "]";
+            }
+
+            return value.GetType().Name + ":"
+                + Convert.ToString(value, CultureInfo.InvariantCulture);
         }
 
         private static void RequireSame(string written, string expected)
