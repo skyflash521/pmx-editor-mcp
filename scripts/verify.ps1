@@ -158,6 +158,10 @@ try {
         Needs = $buildOutput
         Body = { & $dump sample-values $editorDir $contract $sampleValues }
     }
+    $checks['スキーマ対応の照合'] = @{
+        Needs = $buildOutput
+        Body = { & $dump schema-correspondence $editorDir $roles $toolMap $toolSchemas }
+    }
 
     $listed = @(Get-ListedChecks)
     $missing = @($checks.Keys | Where-Object { $listed -notcontains $_ })

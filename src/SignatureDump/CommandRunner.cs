@@ -49,6 +49,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>型ごとのサンプル値が、値を写す型と表現に合うことを照合する。</summary>
         public const string SampleValuesCommand = "sample-values";
 
+        /// <summary>行のシグネチャの引数・受け手・戻り値がスキーマ正本と対応することを照合する。</summary>
+        public const string SchemaCorrespondenceCommand = "schema-correspondence";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -139,6 +142,11 @@ namespace PmxEditorMcp.SignatureDump
                 return SampleValueRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], SchemaCorrespondenceCommand, StringComparison.Ordinal))
+            {
+                return SchemaCorrespondenceRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -191,6 +199,10 @@ namespace PmxEditorMcp.SignatureDump
                 SampleValuesCommand
                     + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
                     + " <サンプル値の正本のパス>");
+            error.WriteLine(
+                SchemaCorrespondenceCommand
+                    + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
+                    + " <能力対応表の正本のパス> <スキーマ正本のパス>");
         }
     }
 }

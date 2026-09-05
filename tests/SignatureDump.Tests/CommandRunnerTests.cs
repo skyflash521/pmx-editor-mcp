@@ -126,6 +126,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("tool-schemas", CommandRunner.ToolSchemasCommand);
             Assert.Equal("tool-descriptions", CommandRunner.ToolDescriptionsCommand);
             Assert.Equal("sample-values", CommandRunner.SampleValuesCommand);
+            Assert.Equal("schema-correspondence", CommandRunner.SchemaCorrespondenceCommand);
         }
 
         [Fact]
@@ -575,6 +576,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void SchemaCorrespondenceSubcommandRunsTheCollation()
+        {
+            int code = CommandRunner.Run(
+                new[]
+                {
+                    CommandRunner.SchemaCorrespondenceCommand,
+                    Path.Combine(_root, "no-editor"),
+                    Path.Combine(_root, "roles.json"),
+                    Path.Combine(_root, "map.json"),
+                    Path.Combine(_root, "schemas.json"),
+                },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InputUnavailable, code);
+
+            int argumentCode = CommandRunner.Run(
+                new[] { CommandRunner.SchemaCorrespondenceCommand },
+                new StringWriter(),
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.InvalidArguments, argumentCode);
+        }
+
+        [Fact]
         public void ExcludedSignaturesSubcommandRunsTheWrite()
         {
             string baselinePath = Path.Combine(_root, "excluded-baseline.json");
@@ -683,6 +709,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.SampleValuesCommand
                     + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
                     + " <サンプル値の正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.SchemaCorrespondenceCommand
+                    + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
+                    + " <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }
