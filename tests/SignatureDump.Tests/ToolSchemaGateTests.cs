@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -7,6 +8,29 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class ToolSchemaGateTests
     {
         private const string Tool = "model_list_vertices";
+
+        /// <summary>題材の応答サイズ予算。値の枠はここから警告の枠を引いたものになる。</summary>
+        private const int Budget = 100000;
+
+        /// <summary>題材が使う綴り。想定文字数の表もこの並びから作る。</summary>
+        private static readonly string[] Known = { "number", "text", "boolean" };
+
+        private static readonly Dictionary<string, int> BySpelling =
+            new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                { "number", 11 },
+                { "text", 256 },
+                { "boolean", 5 },
+            };
+
+        /// <summary>綴りの並びに対応する想定文字数の表。表に無い綴りは知らない値とする。</summary>
+        private static IDictionary<string, int> Lengths(string[] spellings)
+        {
+            return spellings.ToDictionary(
+                s => s,
+                s => BySpelling.ContainsKey(s) ? BySpelling[s] : 1,
+                StringComparer.Ordinal);
+        }
 
         /// <summary>ツールを1件持つ能力対応表。ツールの名前と分岐だけを差し替える。</summary>
         private static string MapJson(string tool = Tool, string eventType = null)
@@ -43,6 +67,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
     ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
       ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
 
+        /// <summary>一覧を返すツール。要素は選び方の外の1項目と、選べる2項目を持つ。</summary>
+        private static string ListingJson(int limitDefault, int limitMaximum)
+        {
+            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
+                ""output"": { ""origin"": ""hostOutput"", ""members"": [
+                  { ""name"": ""items"", ""origin"": ""hostOutput"", ""maxItems"": 100,
+                    ""element"": { ""origin"": ""hostOutput"", ""members"": [
+                      { ""name"": ""index"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
+                      { ""name"": ""name"", ""origin"": ""sdkReturn"", ""shape"": ""text"" },
+                      { ""name"": ""flag"", ""origin"": ""sdkReturn"",
+                        ""shape"": ""boolean"" }] } }] },
+                ""listing"": { ""limitDefault"": " + limitDefault + @",
+                               ""limitMaximum"": " + limitMaximum + @" } }] }";
+        }
+
         private static void Require(
             string schemas, string map, params string[] spellings)
         {
@@ -50,8 +90,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolSchemaJsonReader.Read(schemas),
                 ToolMapJsonReader.Read(map),
                 new HashSet<string>(
-                    spellings.Length == 0 ? new[] { "number", "text" } : spellings,
-                    StringComparer.Ordinal));
+                    spellings.Length == 0 ? Known : spellings, StringComparer.Ordinal),
+                Lengths(spellings.Length == 0 ? Known : spellings),
+                Budget);
         }
 
         [Fact]
@@ -76,6 +117,65 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => Require(SchemaJson(), @"{ ""rows"": [] }"));
 
             Assert.Contains("どの行にも割り当てていない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AcceptsListingCountsThatTheAssumedLengthsDerive()
+        {
+            // 値の枠は 100,000 − 2,000。一覧応答の枠を引いた 97,000 を、選び方の外の 19 と
+            // 選べる 264・13 で割る。
+            Require(
+                ListingJson(97000 / (19 + 264 + 13) / 2, 97000 / (19 + 13)),
+                MapJson(),
+                "number",
+                "text",
+                "boolean");
+        }
+
+        [Fact]
+        public void RejectsListingCountsThatDoNotMatchTheDerivedOnes()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    ListingJson(100, 97000 / (19 + 13)), MapJson(), "number", "text", "boolean"));
+
+            Assert.Contains("想定文字数から逆算した値と合わない", error.Message, StringComparison.Ordinal);
+
+            Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    ListingJson(97000 / (19 + 264 + 13) / 2, 97000 / (19 + 13) - 1),
+                    MapJson(),
+                    "number",
+                    "text",
+                    "boolean"));
+        }
+
+        [Fact]
+        public void RejectsASpellingWhoseAssumedLengthIsMissing()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ToolSchemaGate.Require(
+                    ToolSchemaJsonReader.Read(SchemaJson()),
+                    ToolMapJsonReader.Read(MapJson()),
+                    new HashSet<string>(Known, StringComparer.Ordinal),
+                    Lengths(new[] { "number", "text" }),
+                    Budget));
+
+            Assert.Contains("想定文字数を持たない綴り", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsAnAssumedLengthForASpellingTheDocumentDoesNotHave()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ToolSchemaGate.Require(
+                    ToolSchemaJsonReader.Read(SchemaJson()),
+                    ToolMapJsonReader.Read(MapJson()),
+                    new HashSet<string>(new[] { "number" }, StringComparer.Ordinal),
+                    Lengths(Known),
+                    Budget));
+
+            Assert.Contains("綴りの表に無い想定文字数", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -176,10 +276,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolMap map = ToolMapJsonReader.Read(@"{ ""rows"": [] }");
             HashSet<string> spellings = new HashSet<string>(StringComparer.Ordinal);
 
-            Assert.Throws<ArgumentNullException>(() => ToolSchemaGate.Require(null, map, spellings));
+            IDictionary<string, int> lengths = Lengths(Known);
+
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(schemas, null, spellings));
-            Assert.Throws<ArgumentNullException>(() => ToolSchemaGate.Require(schemas, map, null));
+                () => ToolSchemaGate.Require(null, map, spellings, lengths, Budget));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolSchemaGate.Require(schemas, null, spellings, lengths, Budget));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolSchemaGate.Require(schemas, map, null, lengths, Budget));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolSchemaGate.Require(schemas, map, spellings, null, Budget));
         }
     }
 }

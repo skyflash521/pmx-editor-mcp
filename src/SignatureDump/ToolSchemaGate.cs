@@ -4,11 +4,22 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>スキーマ正本を、能力対応表と仕様書の綴りの表と照合する。</summary>
+    /// <summary>
+    /// スキーマ正本を能力対応表と仕様書の表と照合し、あわせて仕様書の2つの表どうしが対応することを
+    /// 確かめる。
+    /// </summary>
     public static class ToolSchemaGate
     {
+        /// <summary>警告の枠。値の枠は予算からこれを引いたものになる。</summary>
+        private const int WarningRoom = 2000;
+
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
-        public static void Require(ToolSchemaTable schemas, ToolMap map, ISet<string> spellings)
+        public static void Require(
+            ToolSchemaTable schemas,
+            ToolMap map,
+            ISet<string> spellings,
+            IDictionary<string, int> lengths,
+            int budgetChars)
         {
             if (schemas == null)
             {
@@ -25,12 +36,20 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(spellings));
             }
 
+            if (lengths == null)
+            {
+                throw new ArgumentNullException(nameof(lengths));
+            }
+
+            RequireSameSpellings(spellings, lengths);
             RequireSameTools(schemas, map);
             RequireOnePollingTool(schemas);
             RequireSamePayloads(schemas, map);
+            AssumedLength assumed = new AssumedLength(lengths);
             foreach (ToolSchema schema in schemas.Tools)
             {
                 RequireShapes(schema, spellings);
+                RequireListing(schema, assumed, budgetChars - WarningRoom);
             }
         }
 
@@ -102,6 +121,54 @@ namespace PmxEditorMcp.SignatureDump
                 throw new InvalidOperationException(
                     "能力対応表にイベント行の無い分岐がある: " + extra);
             }
+        }
+
+        /// <summary>
+        /// 想定文字数の表が、綴りの表と過不足なく対応することを求める。綴りを増やして想定文字数を
+        /// 足し忘れると、その綴りを使う一覧が現れるまで表に出ない。
+        /// </summary>
+        private static void RequireSameSpellings(
+            ISet<string> spellings, IDictionary<string, int> lengths)
+        {
+            string missing = spellings.Except(lengths.Keys, StringComparer.Ordinal)
+                .OrderBy(s => s, StringComparer.Ordinal).FirstOrDefault();
+            if (missing != null)
+            {
+                throw new InvalidOperationException("想定文字数を持たない綴りがある: " + missing);
+            }
+
+            string extra = lengths.Keys.Except(spellings, StringComparer.Ordinal)
+                .OrderBy(s => s, StringComparer.Ordinal).FirstOrDefault();
+            if (extra != null)
+            {
+                throw new InvalidOperationException("綴りの表に無い想定文字数がある: " + extra);
+            }
+        }
+
+        /// <summary>
+        /// 件数は予算から決まるので、書かれた値が想定文字数から逆算した値と合うことまで求める。
+        /// </summary>
+        private static void RequireListing(
+            ToolSchema schema, AssumedLength lengths, int valueChars)
+        {
+            if (schema.Listing == null)
+            {
+                return;
+            }
+
+            ListingLimits derived = ListingLimitRule.Derive(schema, lengths, valueChars);
+            if (derived.LimitDefault != schema.Listing.LimitDefault
+                || derived.LimitMaximum != schema.Listing.LimitMaximum)
+            {
+                throw new InvalidOperationException(
+                    "件数が想定文字数から逆算した値と合わない: " + schema.Tool
+                        + "(表: " + Written(schema.Listing) + " / 逆算: " + Written(derived) + ")");
+            }
+        }
+
+        private static string Written(ListingLimits limits)
+        {
+            return "既定 " + limits.LimitDefault + "・最大 " + limits.LimitMaximum;
         }
 
         /// <summary>綴りの閉じた集合は仕様書が持つので、そこに実在することまで求める。</summary>

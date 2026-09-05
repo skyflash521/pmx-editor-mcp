@@ -464,7 +464,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + Environment.NewLine
                     + "| 綴り | JSONの形 |" + Environment.NewLine
                     + "|---|---|" + Environment.NewLine
-                    + "| `number` | 数値 |" + Environment.NewLine);
+                    + "| `number` | 数値 |" + Environment.NewLine
+                    + Environment.NewLine
+                    + "#### 想定文字数" + Environment.NewLine
+                    + Environment.NewLine
+                    + "| 綴り | 想定文字数 |" + Environment.NewLine
+                    + "|---|---|" + Environment.NewLine
+                    + "| `number` | 11 |" + Environment.NewLine);
+            string architecturePath = Path.Combine(_root, "schemas-architecture.md");
+            File.WriteAllText(
+                architecturePath,
+                "## 応答サイズ予算の設定" + Environment.NewLine
+                    + Environment.NewLine
+                    + "- 未設定時の既定は **100,000**——題材。" + Environment.NewLine);
             string mapPath = Path.Combine(_root, "schemas-map.json");
             File.WriteAllText(mapPath, "{\"rows\":[]}");
             string schemasPath = Path.Combine(_root, "schemas-tools.json");
@@ -475,7 +487,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}}]}");
 
             int code = CommandRunner.Run(
-                new[] { CommandRunner.ToolSchemasCommand, contractPath, mapPath, schemasPath },
+                new[]
+                {
+                    CommandRunner.ToolSchemasCommand,
+                    contractPath,
+                    architecturePath,
+                    mapPath,
+                    schemasPath,
+                },
                 new StringWriter(),
                 new StringWriter());
 
@@ -486,6 +505,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     CommandRunner.ToolSchemasCommand,
                     Path.Combine(_root, "none.md"),
+                    architecturePath,
                     mapPath,
                     schemasPath,
                 },
@@ -590,7 +610,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ToolSchemasCommand
-                    + " <共通契約仕様書のパス> <能力対応表の正本のパス> <スキーマ正本のパス>",
+                    + " <共通契約仕様書のパス> <アーキテクチャ仕様書のパス>"
+                    + " <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
         }

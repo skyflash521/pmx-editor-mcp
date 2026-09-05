@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -27,8 +26,8 @@ namespace PmxEditorMcp.SignatureDump
     }
 
     /// <summary>
-    /// 共通契約仕様書から型ごとの表現の表を読む。正本は仕様書の本文なので、節の見出しで場所を
-    /// 決め、そこから続く表だけを読む。
+    /// 共通契約仕様書から値の表現の表を読む。正本は仕様書の本文なので、節の見出しで場所を決め、
+    /// そこから続く表だけを読む。
     /// </summary>
     public static class ValueShapeDocument
     {
@@ -44,15 +43,10 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         public static ISet<string> ReadSpellings(string text)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException(nameof(text));
-            }
-
             HashSet<string> spellings = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string[] cells in Rows(text, SpellingHeading))
+            foreach (string[] cells in SpecificationTable.Rows(text, SpellingHeading))
             {
-                spellings.Add(Quoted(cells[0], string.Join(" | ", cells)));
+                spellings.Add(SpecificationTable.Quoted(cells[0], string.Join(" | ", cells)));
             }
 
             if (spellings.Count == 0)
@@ -66,16 +60,11 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>仕様書の本文から表を読む。表が無いか行が読めなければ例外。</summary>
         public static IList<ValueShapeRow> Read(string text)
         {
-            if (text == null)
-            {
-                throw new ArgumentNullException(nameof(text));
-            }
-
             List<ValueShapeRow> rows = new List<ValueShapeRow>();
-            foreach (string[] cells in Rows(text, SectionHeading))
+            foreach (string[] cells in SpecificationTable.Rows(text, SectionHeading))
             {
                 rows.Add(new ValueShapeRow(
-                    Quoted(cells[0], string.Join(" | ", cells)), Shape(cells[1])));
+                    SpecificationTable.Quoted(cells[0], string.Join(" | ", cells)), Shape(cells[1])));
             }
 
             if (rows.Count == 0)
@@ -84,66 +73,6 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new ReadOnlyCollection<ValueShapeRow>(rows);
-        }
-
-        /// <summary>見出しで場所を決め、そこから続く2列の表の本文の行を返す。</summary>
-        private static IEnumerable<string[]> Rows(string text, string heading)
-        {
-            string[] lines = text.Replace("\r\n", "\n").Split('\n');
-            int start = Array.FindIndex(
-                lines, l => string.Equals(l.Trim(), heading, StringComparison.Ordinal));
-            if (start < 0)
-            {
-                throw new InvalidOperationException("節が無い: " + heading);
-            }
-
-            bool inBody = false;
-            for (int index = start + 1; index < lines.Length; index++)
-            {
-                string line = lines[index].Trim();
-                if (line.StartsWith("#", StringComparison.Ordinal))
-                {
-                    break;
-                }
-
-                if (!line.StartsWith("|", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                string[] cells = Cells(line);
-                if (cells.Length != 2)
-                {
-                    throw new InvalidOperationException("表の行が2列でない: " + line);
-                }
-
-                if (IsSeparator(cells))
-                {
-                    inBody = true;
-                    continue;
-                }
-
-                if (inBody)
-                {
-                    yield return cells;
-                }
-            }
-        }
-
-        private static string[] Cells(string line)
-        {
-            string body = line.Substring(1);
-            if (body.EndsWith("|", StringComparison.Ordinal))
-            {
-                body = body.Substring(0, body.Length - 1);
-            }
-
-            return body.Split('|').Select(c => c.Trim()).ToArray();
-        }
-
-        private static bool IsSeparator(string[] cells)
-        {
-            return cells.All(c => c.Length != 0 && c.All(x => x == '-' || x == ':'));
         }
 
         /// <summary>表現の欄。綴りを1つ持つときだけその綴りを返す。</summary>
@@ -155,18 +84,6 @@ namespace PmxEditorMcp.SignatureDump
                 && cell.IndexOf('`', 1) == cell.Length - 1
                     ? cell.Substring(1, cell.Length - 2)
                     : null;
-        }
-
-        private static string Quoted(string cell, string line)
-        {
-            if (!cell.StartsWith("`", StringComparison.Ordinal)
-                || !cell.EndsWith("`", StringComparison.Ordinal)
-                || cell.Length <= 2)
-            {
-                throw new InvalidOperationException("型の欄が引用符で囲まれていない: " + line);
-            }
-
-            return cell.Substring(1, cell.Length - 2);
         }
     }
 }
