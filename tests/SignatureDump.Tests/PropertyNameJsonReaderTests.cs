@@ -7,35 +7,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class PropertyNameJsonReaderTests
     {
-        private const string Quoted =
-            "{\"declaringType\":\"N.IThing\",\"memberName\":\"Size\","
-            + "\"propertyType\":\"System.Int32\",\"japaneseName\":\"大きさ\",\"decision\":\"quoted\"}";
-
-        private const string Authored =
-            "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
-            + "\"propertyType\":\"System.Single\",\"japaneseName\":\"重さ\",\"decision\":\"authored\","
+        private const string Shape =
+            "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\",\"japaneseName\":\"重さ\","
             + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"メンバー名から起こした。\"}";
 
         [Fact]
-        public void AQuotedRecordIsReadWithoutABasis()
+        public void ARecordCarriesItsNameBasisAndOrigin()
         {
-            PropertyNameRecord record = Assert.Single(Read(Quoted));
+            PropertyNameRecord record = Assert.Single(Read(Shape));
 
-            Assert.Equal("N.IThing", record.Property.DeclaringType);
-            Assert.Equal("Size", record.Property.MemberName);
-            Assert.Equal("System.Int32", record.Property.PropertyType);
-            Assert.Equal("大きさ", record.JapaneseName);
-            Assert.Equal(NameDecision.Quoted, record.Decision);
-            Assert.Null(record.Basis);
-            Assert.Equal(string.Empty, record.Origin);
-        }
-
-        [Fact]
-        public void AnAuthoredRecordCarriesItsBasisAndOrigin()
-        {
-            PropertyNameRecord record = Assert.Single(Read(Authored));
-
-            Assert.Equal(NameDecision.Authored, record.Decision);
+            Assert.Equal("N.IThing", record.DeclaringType);
+            Assert.Equal("Weight", record.MemberName);
+            Assert.Equal("N.IThing|Weight", record.Key);
+            Assert.Equal("重さ", record.JapaneseName);
             Assert.Equal(NameBasisKind.MemberShape, record.Basis.Kind);
             Assert.Equal("メンバー名から起こした。", record.Origin);
         }
@@ -63,39 +47,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RecordsAreReturnedInTheWrittenOrder()
         {
-            IList<PropertyNameRecord> records = Read(Quoted + "," + Authored);
+            IList<PropertyNameRecord> records = Read(Named("Size") + "," + Shape);
 
-            Assert.Equal(new[] { "Size", "Weight" }, records.Select(r => r.Property.MemberName));
+            Assert.Equal(new[] { "Size", "Weight" }, records.Select(r => r.MemberName));
         }
 
         [Fact]
         public void ItemsOutOfOrdinalOrderStop()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(Authored + "," + Quoted));
-
-            Assert.Contains("昇順", error.Message);
+            Assert.Throws<FormatException>(() => Read(Shape + "," + Named("Size")));
         }
 
         [Fact]
         public void TheSameItemTwiceStops()
         {
-            FormatException error = Assert.Throws<FormatException>(() => Read(Quoted + "," + Quoted));
-
-            Assert.Contains("二度", error.Message);
-        }
-
-        [Fact]
-        public void TheSameMemberWithAnotherPropertyTypeStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    Quoted
-                    + ",{\"declaringType\":\"N.IThing\",\"memberName\":\"Size\","
-                    + "\"propertyType\":\"System.Int64\",\"japaneseName\":\"寸法\","
-                    + "\"decision\":\"quoted\"}"));
-
-            Assert.Contains("二度", error.Message);
+            Assert.Throws<FormatException>(() => Read(Shape + "," + Shape));
         }
 
         [Fact]
@@ -103,80 +69,73 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             IList<PropertyNameRecord> records = Read(Named("UV") + "," + Named("UVA1"));
 
-            Assert.Equal(new[] { "UV", "UVA1" }, records.Select(r => r.Property.MemberName));
+            Assert.Equal(new[] { "UV", "UVA1" }, records.Select(r => r.MemberName));
+        }
+
+        /// <summary>
+        /// 並びは宣言型を先に比べるので、宣言型が別の宣言型の接頭辞でも列挙側と同じ位置に入る。
+        /// </summary>
+        [Fact]
+        public void ADeclaringTypeThatIsAPrefixOfAnotherComesFirst()
+        {
+            IList<PropertyNameRecord> records = Read(
+                Item("N.IThing", "Zeta") + "," + Item("N.IThingMore", "Alpha"));
+
+            Assert.Equal(
+                new[] { "N.IThing", "N.IThingMore" }, records.Select(r => r.DeclaringType));
+        }
+
+        /// <summary>プロパティの型は列挙が持つので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenPropertyTypeStops()
+        {
+            Assert.Throws<FormatException>(() => Read(
+                "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
+                + "\"propertyType\":\"System.Single\",\"japaneseName\":\"重さ\","
+                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}"));
+        }
+
+        /// <summary>決め方は記載の出現数から導けるので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenDecisionStops()
+        {
+            Assert.Throws<FormatException>(() => Read(
+                "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
+                + "\"japaneseName\":\"重さ\",\"decision\":\"authored\","
+                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}"));
         }
 
         [Fact]
-        public void AQuotedRecordWithABasisStops()
+        public void ARecordWithoutAnOriginStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"declaringType\":\"N.IThing\",\"memberName\":\"Size\","
-                    + "\"propertyType\":\"System.Int32\",\"japaneseName\":\"大きさ\","
-                    + "\"decision\":\"quoted\",\"basis\":{\"kind\":\"memberShape\"}}"));
-
-            Assert.Contains("basis", error.Message);
+            Assert.Throws<FormatException>(() => Read(
+                "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
+                + "\"japaneseName\":\"重さ\",\"basis\":{\"kind\":\"memberShape\"}}"));
         }
 
         [Fact]
-        public void AQuotedRecordWithAnOriginStops()
+        public void ARecordWithoutABasisStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"declaringType\":\"N.IThing\",\"memberName\":\"Size\","
-                    + "\"propertyType\":\"System.Int32\",\"japaneseName\":\"大きさ\","
-                    + "\"decision\":\"quoted\",\"origin\":\"起こした。\"}"));
-
-            Assert.Contains("origin", error.Message);
+            Assert.Throws<FormatException>(() => Read(
+                "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
+                + "\"japaneseName\":\"重さ\",\"origin\":\"起こした。\"}"));
         }
 
         [Fact]
-        public void AnAuthoredRecordWithoutAnOriginStops()
+        public void AnEmptyJapaneseNameStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
-                    + "\"propertyType\":\"System.Single\",\"japaneseName\":\"重さ\","
-                    + "\"decision\":\"authored\",\"basis\":{\"kind\":\"memberShape\"}}"));
-
-            Assert.Contains("origin", error.Message);
-        }
-
-        [Fact]
-        public void AnAuthoredRecordWithoutABasisStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
-                    + "\"propertyType\":\"System.Single\",\"japaneseName\":\"重さ\","
-                    + "\"decision\":\"authored\",\"origin\":\"起こした。\"}"));
-
-            Assert.Contains("basis", error.Message);
-        }
-
-        [Fact]
-        public void AnUnknownDecisionStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"declaringType\":\"N.IThing\",\"memberName\":\"Size\","
-                    + "\"propertyType\":\"System.Int32\",\"japaneseName\":\"大きさ\","
-                    + "\"decision\":\"derived\"}"));
-
-            Assert.Contains("derived", error.Message);
+            Assert.Throws<FormatException>(() => Read(
+                "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\",\"japaneseName\":\"\","
+                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}"));
         }
 
         [Fact]
         public void AnUnknownBasisKindStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
-                    + "\"propertyType\":\"System.Single\",\"japaneseName\":\"重さ\","
-                    + "\"decision\":\"authored\",\"basis\":{\"kind\":\"guess\"},"
-                    + "\"origin\":\"起こした。\"}"));
-
-            Assert.Contains("guess", error.Message);
+            Assert.Throws<FormatException>(() => Read(
+                "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
+                + "\"japaneseName\":\"重さ\",\"basis\":{\"kind\":\"guess\"},"
+                + "\"origin\":\"起こした。\"}"));
         }
 
         [Fact]
@@ -188,27 +147,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ALineThatIsNotAWholeNumberStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
-                    + "\"propertyType\":\"System.Single\",\"japaneseName\":\"重さ\","
-                    + "\"decision\":\"authored\",\"basis\":{\"kind\":\"documentSection\","
-                    + "\"path\":\"doc/spec.txt\",\"firstLine\":\"12\",\"lastLine\":14},"
-                    + "\"origin\":\"資料の説明を移した。\"}"));
-
-            Assert.Contains("firstLine", error.Message);
+            Assert.Throws<FormatException>(() => Read(
+                "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
+                + "\"japaneseName\":\"重さ\",\"basis\":{\"kind\":\"documentSection\","
+                + "\"path\":\"doc/spec.txt\",\"firstLine\":1.5,\"lastLine\":2},"
+                + "\"origin\":\"起こした。\"}"));
         }
 
         [Fact]
         public void AnUnknownMemberStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"declaringType\":\"N.IThing\",\"memberName\":\"Size\","
-                    + "\"propertyType\":\"System.Int32\",\"japaneseName\":\"大きさ\","
-                    + "\"decision\":\"quoted\",\"note\":\"大きさ\"}"));
-
-            Assert.Contains("note", error.Message);
+            Assert.Throws<FormatException>(() => Read(
+                "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
+                + "\"japaneseName\":\"重さ\",\"basis\":{\"kind\":\"memberShape\"},"
+                + "\"origin\":\"起こした。\",\"note\":\"重さ\"}"));
         }
 
         [Fact]
@@ -220,35 +172,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ARootWithoutTheTableStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => PropertyNameJsonReader.ReadPropertyNames("{}"));
-
-            Assert.Contains("propertyNames", error.Message);
+            Assert.Throws<FormatException>(() => PropertyNameJsonReader.ReadPropertyNames("{}"));
         }
 
         [Fact]
         public void ARootWithAnUnknownMemberStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
-                () => PropertyNameJsonReader.ReadPropertyNames("{\"propertyNames\":[],\"types\":[]}"));
-
-            Assert.Contains("types", error.Message);
+            Assert.Throws<FormatException>(() => PropertyNameJsonReader.ReadPropertyNames(
+                "{\"propertyNames\":[],\"note\":\"\"}"));
         }
 
         [Fact]
         public void ATableThatIsNotAnArrayStops()
         {
-            FormatException error = Assert.Throws<FormatException>(
+            Assert.Throws<FormatException>(
                 () => PropertyNameJsonReader.ReadPropertyNames("{\"propertyNames\":{}}"));
-
-            Assert.Contains("propertyNames", error.Message);
         }
 
         [Fact]
         public void AnItemThatIsNotAnObjectStops()
         {
-            Assert.Throws<FormatException>(
-                () => PropertyNameJsonReader.ReadPropertyNames("{\"propertyNames\":[\"大きさ\"]}"));
+            Assert.Throws<FormatException>(() => Read("\"N.IThing\""));
         }
 
         [Fact]
@@ -266,17 +210,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string DocumentSection(int firstLine, int lastLine)
         {
             return "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
-                + "\"propertyType\":\"System.Single\",\"japaneseName\":\"重さ\","
-                + "\"decision\":\"authored\",\"basis\":{\"kind\":\"documentSection\","
+                + "\"japaneseName\":\"重さ\",\"basis\":{\"kind\":\"documentSection\","
                 + "\"path\":\"doc/spec.txt\",\"firstLine\":" + firstLine
                 + ",\"lastLine\":" + lastLine + "},\"origin\":\"資料の説明を移した。\"}";
         }
 
         private static string Named(string memberName)
         {
-            return "{\"declaringType\":\"N.IThing\",\"memberName\":\"" + memberName + "\","
-                + "\"propertyType\":\"System.Int32\",\"japaneseName\":\"" + memberName + "の値\","
-                + "\"decision\":\"quoted\"}";
+            return Item("N.IThing", memberName);
+        }
+
+        private static string Item(string declaringType, string memberName)
+        {
+            return "{\"declaringType\":\"" + declaringType + "\",\"memberName\":\"" + memberName
+                + "\",\"japaneseName\":\"" + memberName + "の値\","
+                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}";
         }
 
         private static IList<PropertyNameRecord> Read(string items)

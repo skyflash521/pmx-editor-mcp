@@ -54,7 +54,7 @@ namespace PmxEditorMcp.SignatureDump
                 .ToDictionary(s => s.Key, StringComparer.Ordinal);
             IDictionary<string, TypeRoleRecord> byType = roles.Types
                 .ToDictionary(t => TypeDefinitionName.OfElement(t.TypeName), StringComparer.Ordinal);
-            IDictionary<string, string> japanese = JapaneseNames(names);
+            IDictionary<string, string> japanese = JapaneseNames(names, signatures, propertyNotes);
 
             List<ToolDescriptionMaterial> materials = new List<ToolDescriptionMaterial>();
             foreach (IGrouping<string, ToolMapRow> tool in map.Rows
@@ -192,17 +192,33 @@ namespace PmxEditorMcp.SignatureDump
                 : null;
         }
 
-        private static IDictionary<string, string> JapaneseNames(IList<PropertyNameRecord> names)
+        /// <summary>
+        /// プロパティの行キーごとの日本語名。名前を起こした項目は正本から採り、ほかは記載から採る
+        /// ——正本に載るのは記載を引けない項目だけなので、載っていなければ記載が名前になる。
+        /// </summary>
+        private static IDictionary<string, string> JapaneseNames(
+            IList<PropertyNameRecord> names,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> propertyNotes)
         {
+            IDictionary<string, string> authored = names.ToDictionary(
+                n => n.DeclaringType + "|" + n.MemberName, n => n.JapaneseName, StringComparer.Ordinal);
             Dictionary<string, string> japanese = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (PropertyNameRecord name in names)
+            foreach (SignatureRecord signature in signatures.Values
+                .Where(s => s.MemberKind == MemberKind.Property))
             {
-                japanese[SignatureKeyBuilder.Build(
-                    name.Property.DeclaringType,
-                    name.Property.MemberName,
-                    0,
-                    new ParameterRecord[0],
-                    name.Property.PropertyType)] = name.JapaneseName;
+                string name;
+                if (!authored.TryGetValue(
+                        signature.DeclaringType + "|" + signature.MemberName, out name)
+                    && !propertyNotes.TryGetValue(
+                        DocumentNoteReader.MemberName(
+                            signature.DeclaringType, signature.MemberName),
+                        out name))
+                {
+                    continue;
+                }
+
+                japanese[signature.Key] = name;
             }
 
             return japanese;

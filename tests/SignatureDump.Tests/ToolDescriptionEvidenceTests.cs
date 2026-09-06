@@ -103,6 +103,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(material.IndexTerms);
         }
 
+        /// <summary>正本に載らない項目の日本語名は、記載から採る。</summary>
+        [Fact]
+        public void TheIndexTermOfAnItemOutsideTheTableComesFromTheNote()
+        {
+            IList<ToolDescriptionMaterial> materials = ToolDescriptionEvidence.Collect(
+                Map(Row("Draw", ListTool, null, null), Row("Depth", null, null, new[] { ListTool })),
+                Roles(),
+                Names(),
+                Inventory(),
+                MethodNotes(),
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { Owner + ".Depth", "奥行き" },
+                });
+
+            Assert.Equal(
+                new[] { "奥行き" },
+                Assert.Single(materials).IndexTerms.Select(t => t.JapaneseName).ToArray());
+        }
+
         [Fact]
         public void AnEmbeddedRowWithoutAJapaneseNameStops()
         {
@@ -513,10 +533,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return new List<PropertyNameRecord>
             {
-                PropertyNameRecord.FromQuoted(
-                    new PropertyRecord(Owner, "Index", "System.Int32"), "頂点の番号"),
-                PropertyNameRecord.FromQuoted(
-                    new PropertyRecord(Bone, "Index", "System.Int32"), "ボーンの番号"),
+                new PropertyNameRecord(
+                    Owner, "Index", "頂点の番号", NameBasis.FromMemberShape(), "起こした。"),
+                new PropertyNameRecord(
+                    Bone, "Index", "ボーンの番号", NameBasis.FromMemberShape(), "起こした。"),
             };
         }
     }

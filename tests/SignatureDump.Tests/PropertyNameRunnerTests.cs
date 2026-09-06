@@ -150,7 +150,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(ExitCodes.Unresolved, code);
             Assert.Contains("日本語名が規則に合わない。", error.ToString(), StringComparison.Ordinal);
-            Assert.Contains("表に無い項目が在る", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("名前を起こす項目が表に無い", error.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -165,7 +165,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    "照合した: 項目 {0} 件(記載を採る 0・名前を起こす {0})",
+                    "照合した: 対象 {0} 件(記載を採る 0・名前を起こす {0})",
                     Expected().Count),
                 output.ToString().Trim());
         }
@@ -193,7 +193,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Arguments(Sdk(Document(noted)), Names()), new StringWriter(), error);
 
             Assert.Equal(ExitCodes.Unresolved, code);
-            Assert.Contains("決め方が記載の出現数と合わない", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("記載を引ける項目は表に置かない", error.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -294,8 +294,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// 母集合の全項目へ、同じ型の中で重ならない名前を付けた正本。<paramref name="quoted"/> を
-        /// 渡した項目だけが記載を採る側になる。
+        /// 母集合の全項目へ、同じ型の中で重ならない名前を起こした正本。<paramref name="quoted"/> を
+        /// 渡した項目は記載を採る側になるので、正本に載らない。
         /// </summary>
         private static string Names(PropertyRecord quoted = null)
         {
@@ -303,18 +303,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string separator = string.Empty;
             foreach (PropertyRecord property in Expected())
             {
-                bool takesTheNote = quoted != null
-                    && string.Equals(property.Key, quoted.Key, StringComparison.Ordinal);
+                if (quoted != null
+                    && string.Equals(property.Key, quoted.Key, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
                 builder.Append(separator).Append(string.Format(
                     CultureInfo.InvariantCulture,
-                    "{{\"declaringType\":\"{0}\",\"memberName\":\"{1}\",\"propertyType\":\"{2}\","
-                        + "\"japaneseName\":\"{3}\",\"decision\":\"{4}\"{5}}}",
+                    "{{\"declaringType\":\"{0}\",\"memberName\":\"{1}\","
+                        + "\"japaneseName\":\"{2}\"{3}}}",
                     property.DeclaringType,
                     property.MemberName,
-                    property.PropertyType,
-                    takesTheNote ? NoteName : property.MemberName,
-                    takesTheNote ? "quoted" : "authored",
-                    takesTheNote ? string.Empty : Authored));
+                    property.MemberName,
+                    Authored));
                 separator = ",";
             }
 

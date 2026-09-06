@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -14,56 +13,51 @@ namespace PmxEditorMcp.SignatureDump.Tests
             new PropertyRecord("N.IThing", "Weight", "System.Single");
 
         [Fact]
-        public void ATableThatMatchesTheRulePasses()
+        public void ATableThatCarriesOnlyTheAuthoredItemsPasses()
         {
             Require(
-                new[]
-                {
-                    PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                    Authored(Weight, "重さ"),
-                },
+                new[] { Authored(Weight, "重さ") },
                 new[] { Size, Weight },
                 Notes("N.IThing.Size", "大きさ"));
         }
 
         [Fact]
-        public void APropertyMissingFromTheTableStops()
+        public void AnItemWhoseNoteCanBeQuotedIsRefusedInTheTable()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(
-                    new[] { PropertyNameRecord.FromQuoted(Size, "大きさ") },
+                    new[] { Authored(Size, "大きさ"), Authored(Weight, "重さ") },
                     new[] { Size, Weight },
                     Notes("N.IThing.Size", "大きさ")));
 
-            Assert.Contains("Weight", error.Message);
+            Assert.Contains("記載を引ける項目は表に置かない", error.Message, StringComparison.Ordinal);
+            Assert.Contains("Size", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
-        public void APropertyThatIsNotInTheEnumerationStops()
+        public void AnItemWithoutAQuotableNoteMissingFromTheTableStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(
-                    new[]
-                    {
-                        PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                        Authored(Weight, "重さ"),
-                    },
+                    new PropertyNameRecord[0],
+                    new[] { Size, Weight },
+                    Notes("N.IThing.Size", "大きさ")));
+
+            Assert.Contains("名前を起こす項目が表に無い", error.Message, StringComparison.Ordinal);
+            Assert.Contains("Weight", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnItemThatIsNotInTheEnumerationStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    new[] { Authored(Weight, "重さ") },
                     new[] { Size },
                     Notes("N.IThing.Size", "大きさ")));
 
-            Assert.Contains("Weight", error.Message);
-        }
-
-        [Fact]
-        public void APropertyTypeThatDiffersFromTheEnumerationStops()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    new[] { PropertyNameRecord.FromQuoted(Size, "大きさ") },
-                    new[] { new PropertyRecord("N.IThing", "Size", "System.Int64") },
-                    Notes("N.IThing.Size", "大きさ")));
-
-            Assert.Contains("Size", error.Message);
+            Assert.Contains("列挙結果に無い項目が在る", error.Message, StringComparison.Ordinal);
+            Assert.Contains("Weight", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -71,98 +65,55 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(
-                    new[]
-                    {
-                        PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                        PropertyNameRecord.FromQuoted(Size, "寸法"),
-                    },
-                    new[] { Size },
-                    Notes("N.IThing.Size", "大きさ")));
-
-            Assert.Contains("二度", error.Message);
-        }
-
-        [Fact]
-        public void AUniquelyNotedPropertyThatIsAuthoredStops()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    new[] { Authored(Size, "寸法") },
-                    new[] { Size },
-                    Notes("N.IThing.Size", "大きさ")));
-
-            Assert.Contains("出現数", error.Message);
-        }
-
-        [Fact]
-        public void APropertyWithoutANoteThatIsQuotedStops()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    new[] { PropertyNameRecord.FromQuoted(Size, "大きさ") },
-                    new[] { Size },
-                    Notes()));
-
-            Assert.Contains("出現数", error.Message);
-        }
-
-        [Fact]
-        public void OneOfTwoPropertiesSharingANoteCannotStayQuoted()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    new[]
-                    {
-                        PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                        Authored(Weight, "重さ"),
-                    },
+                    new[] { Authored(Weight, "重さ"), Authored(Weight, "重量") },
                     new[] { Size, Weight },
-                    Notes("N.IThing.Size", "大きさ", "N.IThing.Weight", "大きさ")));
+                    Notes("N.IThing.Size", "大きさ")));
 
-            Assert.Contains("出現数", error.Message);
+            Assert.Contains("表に同じ項目が二度在る", error.Message, StringComparison.Ordinal);
         }
 
+        /// <summary>同じ記載を持つ項目は、どちらも記載を引けないので両方が表に載る。</summary>
+        [Fact]
+        public void TwoItemsSharingANoteAreBothAuthored()
+        {
+            Require(
+                new[] { Authored(Size, "大きさ"), Authored(Weight, "重さ") },
+                new[] { Size, Weight },
+                Notes("N.IThing.Size", "同じ記載", "N.IThing.Weight", "同じ記載"));
+        }
+
+        /// <summary>数えるのは同じ宣言型の中だけなので、別の型の同じ記載は引ける。</summary>
         [Fact]
         public void TheSameNoteInAnotherTypeDoesNotForceAuthoring()
         {
             PropertyRecord other = new PropertyRecord("N.IOther", "Size", "System.Int32");
 
             Require(
-                new[]
-                {
-                    PropertyNameRecord.FromQuoted(other, "大きさ"),
-                    PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                    Authored(Weight, "重さ"),
-                },
+                new[] { Authored(Weight, "重さ") },
                 new[] { Size, Weight, other },
-                Notes("N.IThing.Size", "大きさ", "N.IOther.Size", "大きさ"));
+                Notes("N.IThing.Size", "同じ記載", "N.IOther.Size", "同じ記載"));
         }
 
         [Fact]
-        public void TwoPropertiesSharingANoteMayBothBeAuthored()
+        public void AnAuthoredNameThatRepeatsADerivedNameStops()
         {
-            Require(
-                new[] { Authored(Size, "大きさ"), Authored(Weight, "重さ") },
-                new[] { Size, Weight },
-                Notes("N.IThing.Size", "寸法", "N.IThing.Weight", "寸法"));
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    new[] { Authored(Weight, "大きさ") },
+                    new[] { Size, Weight },
+                    Notes("N.IThing.Size", "大きさ")));
+
+            Assert.Contains("同じ型の中で日本語名が重なる", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
         public void ADocumentSectionEndingOnTheLastLinePasses()
         {
             PropertyNameGate.Require(
-                new[]
-                {
-                    PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                    PropertyNameRecord.FromAuthored(
-                        Weight,
-                        "重さ",
-                        NameBasis.FromDocumentSection("doc/spec.txt", 5, 5),
-                        "資料の説明を移した。"),
-                },
+                new[] { Document(Weight, 3, 4) },
                 new[] { Size, Weight },
                 Notes("N.IThing.Size", "大きさ"),
-                path => 5);
+                path => 4);
         }
 
         [Fact]
@@ -170,32 +121,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => PropertyNameGate.Require(
-                    new[]
-                    {
-                        PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                        PropertyNameRecord.FromAuthored(
-                            Weight,
-                            "重さ",
-                            NameBasis.FromDocumentSection("doc/spec.txt", 5, 6),
-                            "資料の説明を移した。"),
-                    },
+                    new[] { Document(Weight, 3, 5) },
                     new[] { Size, Weight },
                     Notes("N.IThing.Size", "大きさ"),
-                    path => 5));
+                    path => 4));
 
-            Assert.Contains("行数を超える", error.Message);
-        }
-
-        [Fact]
-        public void AQuotedNameThatDiffersFromTheNoteStops()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    new[] { PropertyNameRecord.FromQuoted(Size, "寸法") },
-                    new[] { Size },
-                    Notes("N.IThing.Size", "大きさ")));
-
-            Assert.Contains("記載と違う", error.Message);
+            Assert.Contains("根拠の行が資料の行数を超える", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -203,82 +134,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => PropertyNameGate.Require(
-                    new[]
-                    {
-                        PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                        PropertyNameRecord.FromAuthored(
-                            Weight,
-                            "重さ",
-                            NameBasis.FromDocumentSection("doc/spec.txt", 1, 2),
-                            "資料の説明を移した。"),
-                    },
+                    new[] { Document(Weight, 1, 1) },
                     new[] { Size, Weight },
                     Notes("N.IThing.Size", "大きさ"),
                     path => -1));
 
-            Assert.Contains("doc/spec.txt", error.Message);
-        }
-
-        [Fact]
-        public void ADocumentSectionBeyondTheEndOfTheFileStops()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => PropertyNameGate.Require(
-                    new[]
-                    {
-                        PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                        PropertyNameRecord.FromAuthored(
-                            Weight,
-                            "重さ",
-                            NameBasis.FromDocumentSection("doc/spec.txt", 4, 9),
-                            "資料の説明を移した。"),
-                    },
-                    new[] { Size, Weight },
-                    Notes("N.IThing.Size", "大きさ"),
-                    path => 5));
-
-            Assert.Contains("行数を超える", error.Message);
-        }
-
-        [Fact]
-        public void ADocumentSectionInsideTheFilePasses()
-        {
-            PropertyNameGate.Require(
-                new[]
-                {
-                    PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                    PropertyNameRecord.FromAuthored(
-                        Weight,
-                        "重さ",
-                        NameBasis.FromDocumentSection("doc/spec.txt", 4, 5),
-                        "資料の説明を移した。"),
-                },
-                new[] { Size, Weight },
-                Notes("N.IThing.Size", "大きさ"),
-                path => 5);
-        }
-
-        [Fact]
-        public void TwoItemsOfOneTypeSharingAJapaneseNameStop()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    new[]
-                    {
-                        PropertyNameRecord.FromQuoted(Size, "大きさ"),
-                        Authored(Weight, "大きさ"),
-                    },
-                    new[] { Size, Weight },
-                    Notes("N.IThing.Size", "大きさ")));
-
-            Assert.Contains("重なる", error.Message);
+            Assert.Contains("根拠の資料が無い", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
         public void EveryArgumentIsRequired()
         {
-            IList<PropertyNameRecord> records = new[] { PropertyNameRecord.FromQuoted(Size, "大きさ") };
-            IList<PropertyRecord> properties = new[] { Size };
+            IList<PropertyNameRecord> records = new[] { Authored(Weight, "重さ") };
+            IList<PropertyRecord> properties = new[] { Size, Weight };
             IDictionary<string, string> notes = Notes("N.IThing.Size", "大きさ");
 
             Assert.Throws<ArgumentNullException>(
@@ -301,8 +169,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static PropertyNameRecord Authored(PropertyRecord property, string japaneseName)
         {
-            return PropertyNameRecord.FromAuthored(
-                property, japaneseName, NameBasis.FromMemberShape(), "メンバー名から起こした。");
+            return new PropertyNameRecord(
+                property.DeclaringType,
+                property.MemberName,
+                japaneseName,
+                NameBasis.FromMemberShape(),
+                "メンバー名から起こした。");
+        }
+
+        private static PropertyNameRecord Document(
+            PropertyRecord property, int firstLine, int lastLine)
+        {
+            return new PropertyNameRecord(
+                property.DeclaringType,
+                property.MemberName,
+                "重さ",
+                NameBasis.FromDocumentSection("Lib/資料.txt", firstLine, lastLine),
+                "資料の該当箇所を日本語へ移した。");
         }
 
         private static IDictionary<string, string> Notes(params string[] pairs)

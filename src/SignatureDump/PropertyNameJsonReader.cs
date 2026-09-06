@@ -16,11 +16,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string MemberNameName = "memberName";
 
-        private const string PropertyTypeName = "propertyType";
-
         private const string JapaneseNameName = "japaneseName";
-
-        private const string DecisionName = "decision";
 
         private const string BasisName = "basis";
 
@@ -34,17 +30,13 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string LastLineName = "lastLine";
 
-        private const string QuotedText = "quoted";
-
-        private const string AuthoredText = "authored";
-
         private const string DocumentSectionText = "documentSection";
 
         private const string MemberShapeText = "memberShape";
 
         /// <summary>
-        /// 日本語名を書かれた順に返す。並びは宣言型・メンバー名の序数の昇順で、重複が無いことを
-        /// 求める(<see cref="RoleTypeProperties"/> の並びと同じ定義)。形が違えば
+        /// 名前を起こした項目を書かれた順に返す。並びは宣言型・メンバー名の序数の昇順で、重複が
+        /// 無いことを求める(<see cref="RoleTypeProperties"/> の並びと同じ定義)。形が違えば
         /// <see cref="FormatException"/>。
         /// </summary>
         public static IList<PropertyNameRecord> ReadPropertyNames(string json)
@@ -56,95 +48,57 @@ namespace PmxEditorMcp.SignatureDump
 
             object[] items = Array(Members(Parse(json), PropertyNamesName)[PropertyNamesName]);
             List<PropertyNameRecord> records = new List<PropertyNameRecord>();
-            PropertyRecord previous = null;
+            PropertyNameRecord previous = null;
 
             foreach (object item in items)
             {
                 PropertyNameRecord record = ReadRecord(item);
                 if (previous != null)
                 {
-                    int order = Order(previous, record.Property);
+                    int order = Order(previous, record);
                     if (order == 0)
                     {
-                        throw new FormatException("同じ項目が二度現れる: " + record.Property.Key);
+                        throw new FormatException("同じ項目が二度現れる: " + record.Key);
                     }
 
                     if (order > 0)
                     {
-                        throw new FormatException("序数の昇順で並んでいない: " + record.Property.Key);
+                        throw new FormatException("序数の昇順で並んでいない: " + record.Key);
                     }
                 }
 
-                previous = record.Property;
+                previous = record;
                 records.Add(record);
             }
 
             return new ReadOnlyCollection<PropertyNameRecord>(records);
         }
 
-        private static int Order(PropertyRecord left, PropertyRecord right)
+        /// <summary>宣言型を先に比べ、同じときだけメンバー名を比べる。列挙側の並びと同じ定義。</summary>
+        private static int Order(PropertyNameRecord left, PropertyNameRecord right)
         {
             int order = string.CompareOrdinal(left.DeclaringType, right.DeclaringType);
+
             return order != 0 ? order : string.CompareOrdinal(left.MemberName, right.MemberName);
         }
 
         private static PropertyNameRecord ReadRecord(object item)
         {
-            Dictionary<string, object> members = Dictionary(item);
-            object decision;
-            if (!members.TryGetValue(DecisionName, out decision))
-            {
-                throw new FormatException("項目が無い: " + DecisionName);
-            }
-
-            string text = Text(decision, DecisionName);
+            Dictionary<string, object> members = Members(
+                item, DeclaringTypeName, MemberNameName, JapaneseNameName, BasisName, OriginName);
             try
             {
-                if (string.Equals(text, QuotedText, StringComparison.Ordinal))
-                {
-                    Members(
-                        item,
-                        DeclaringTypeName,
-                        MemberNameName,
-                        PropertyTypeName,
-                        JapaneseNameName,
-                        DecisionName);
-                    return PropertyNameRecord.FromQuoted(
-                        Property(members), Text(members[JapaneseNameName], JapaneseNameName));
-                }
-
-                if (string.Equals(text, AuthoredText, StringComparison.Ordinal))
-                {
-                    Members(
-                        item,
-                        DeclaringTypeName,
-                        MemberNameName,
-                        PropertyTypeName,
-                        JapaneseNameName,
-                        DecisionName,
-                        BasisName,
-                        OriginName);
-                    return PropertyNameRecord.FromAuthored(
-                        Property(members),
-                        Text(members[JapaneseNameName], JapaneseNameName),
-                        Basis(members[BasisName]),
-                        Text(members[OriginName], OriginName));
-                }
+                return new PropertyNameRecord(
+                    Text(members[DeclaringTypeName], DeclaringTypeName),
+                    Text(members[MemberNameName], MemberNameName),
+                    Text(members[JapaneseNameName], JapaneseNameName),
+                    Basis(members[BasisName]),
+                    Text(members[OriginName], OriginName));
             }
             catch (ArgumentException exception)
             {
                 throw new FormatException(exception.Message, exception);
             }
-
-            throw new FormatException("知らない決め方: " + text);
-        }
-
-        private static PropertyRecord Property(IDictionary<string, object> members)
-        {
-            return new PropertyRecord(
-                Text(members[DeclaringTypeName], DeclaringTypeName),
-                Text(members[MemberNameName], MemberNameName),
-                Text(members[PropertyTypeName], PropertyTypeName));
         }
 
         private static NameBasis Basis(object value)

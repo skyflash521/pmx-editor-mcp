@@ -287,16 +287,6 @@ namespace PmxEditorMcp.SignatureDump
         public IList<ElementCollectionRecord> Collections { get; }
     }
 
-    /// <summary>日本語名をどう決めたか。</summary>
-    public enum NameDecision
-    {
-        /// <summary>配布物のドキュメントXMLの記載を採る。</summary>
-        Quoted,
-
-        /// <summary>使える記載が無いので名前を起こす。</summary>
-        Authored,
-    }
-
     /// <summary>起こした名前が拠る意味の根拠の種類。</summary>
     public enum NameBasisKind
     {
@@ -402,50 +392,16 @@ namespace PmxEditorMcp.SignatureDump
         }
     }
 
-    /// <summary>型役割表の日本語名1件。決め方ごとのファクトリメソッドで作る。</summary>
+    /// <summary>
+    /// 日本語名を起こしたプロパティ1件。記載を引ける項目の名前は記載から導けるので、表に現れない。
+    /// </summary>
     public sealed class PropertyNameRecord
     {
-        private PropertyNameRecord(
-            PropertyRecord property,
-            string japaneseName,
-            NameDecision decision,
-            NameBasis basis,
-            string origin)
+        public PropertyNameRecord(
+            string declaringType, string memberName, string japaneseName, NameBasis basis, string origin)
         {
-            Property = property;
-            JapaneseName = japaneseName;
-            Decision = decision;
-            Basis = basis;
-            Origin = origin;
-        }
-
-        public PropertyRecord Property { get; }
-
-        public string JapaneseName { get; }
-
-        public NameDecision Decision { get; }
-
-        /// <summary><see cref="NameDecision.Quoted"/> では null。</summary>
-        public NameBasis Basis { get; }
-
-        /// <summary>名前の由来の一文。<see cref="NameDecision.Quoted"/> では空。</summary>
-        public string Origin { get; }
-
-        /// <summary>ドキュメントXMLの記載を採った1件を作る。</summary>
-        public static PropertyNameRecord FromQuoted(PropertyRecord property, string japaneseName)
-        {
-            RequireProperty(property);
-            PropertyRecord.RequireText(japaneseName, nameof(japaneseName));
-
-            return new PropertyNameRecord(
-                property, japaneseName, NameDecision.Quoted, null, string.Empty);
-        }
-
-        /// <summary>名前を起こした1件を作る。</summary>
-        public static PropertyNameRecord FromAuthored(
-            PropertyRecord property, string japaneseName, NameBasis basis, string origin)
-        {
-            RequireProperty(property);
+            PropertyRecord.RequireText(declaringType, nameof(declaringType));
+            PropertyRecord.RequireText(memberName, nameof(memberName));
             PropertyRecord.RequireText(japaneseName, nameof(japaneseName));
             if (basis == null)
             {
@@ -454,16 +410,29 @@ namespace PmxEditorMcp.SignatureDump
 
             PropertyRecord.RequireText(origin, nameof(origin));
 
-            return new PropertyNameRecord(
-                property, japaneseName, NameDecision.Authored, basis, origin);
+            DeclaringType = declaringType;
+            MemberName = memberName;
+            JapaneseName = japaneseName;
+            Basis = basis;
+            Origin = origin;
         }
 
-        private static void RequireProperty(PropertyRecord property)
+        public string DeclaringType { get; }
+
+        public string MemberName { get; }
+
+        /// <summary>列挙結果と表の項目を突き合わせる鍵。プロパティの型は列挙が持つので入れない。</summary>
+        public string Key
         {
-            if (property == null)
-            {
-                throw new ArgumentNullException(nameof(property));
-            }
+            get { return DeclaringType + "|" + MemberName; }
         }
+
+        public string JapaneseName { get; }
+
+        /// <summary>意味の根拠。</summary>
+        public NameBasis Basis { get; }
+
+        /// <summary>名前の由来の一文。</summary>
+        public string Origin { get; }
     }
 }

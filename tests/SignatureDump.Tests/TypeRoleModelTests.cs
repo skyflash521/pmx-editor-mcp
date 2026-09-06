@@ -60,23 +60,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AQuotedRecordRequiresAPropertyAndAName()
+        public void ANameRecordRequiresTheItemTheNameTheBasisAndTheOrigin()
         {
-            Assert.Throws<ArgumentNullException>(() => PropertyNameRecord.FromQuoted(null, "大きさ"));
-            Assert.Throws<ArgumentException>(() => PropertyNameRecord.FromQuoted(Size, " "));
+            Assert.Throws<ArgumentNullException>(() => Authored(null, "Size", "大きさ"));
+            Assert.Throws<ArgumentException>(() => Authored(" ", "Size", "大きさ"));
+            Assert.Throws<ArgumentNullException>(() => Authored("N.IThing", null, "大きさ"));
+            Assert.Throws<ArgumentException>(() => Authored("N.IThing", "Size", " "));
+            Assert.Throws<ArgumentNullException>(
+                () => new PropertyNameRecord("N.IThing", "Size", "大きさ", null, "起こした。"));
+            Assert.Throws<ArgumentException>(
+                () => new PropertyNameRecord(
+                    "N.IThing", "Size", "大きさ", NameBasis.FromMemberShape(), " "));
         }
 
         [Fact]
-        public void AnAuthoredRecordRequiresABasisAndAnOrigin()
+        public void ANameRecordKeepsTheItemAsItsKey()
         {
-            Assert.Throws<ArgumentNullException>(
-                () => PropertyNameRecord.FromAuthored(Size, "大きさ", null, "起こした。"));
-            Assert.Throws<ArgumentException>(
-                () => PropertyNameRecord.FromAuthored(
-                    Size, "大きさ", NameBasis.FromMemberShape(), " "));
-            Assert.Throws<ArgumentNullException>(
-                () => PropertyNameRecord.FromAuthored(
-                    null, "大きさ", NameBasis.FromMemberShape(), "起こした。"));
+            Assert.Equal("N.IThing|Size", Authored("N.IThing", "Size", "大きさ").Key);
+        }
+
+        private static PropertyNameRecord Authored(
+            string declaringType, string memberName, string japaneseName)
+        {
+            return new PropertyNameRecord(
+                declaringType, memberName, japaneseName, NameBasis.FromMemberShape(), "起こした。");
         }
 
         [Fact]

@@ -97,10 +97,10 @@ namespace PmxEditorMcp.SignatureDump
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: 項目 {0} 件(記載を採る {1}・名前を起こす {2})",
-                names.Count,
-                names.Count(n => n.Decision == NameDecision.Quoted),
-                names.Count(n => n.Decision == NameDecision.Authored)));
+                "照合した: 対象 {0} 件(記載を採る {1}・名前を起こす {2})",
+                properties.Count,
+                properties.Count - names.Count,
+                names.Count));
 
             return ExitCodes.Success;
         }
