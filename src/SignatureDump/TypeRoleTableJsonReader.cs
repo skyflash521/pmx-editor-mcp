@@ -35,20 +35,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string GroupName = "group";
 
-        private const string ToolsName = "tools";
-
         private static readonly Regex SnakeCase = new Regex(
             "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
-
-        private static readonly Dictionary<string, ToolVerb> Verbs =
-            new Dictionary<string, ToolVerb>(StringComparer.Ordinal)
-            {
-                { "get", ToolVerb.Get },
-                { "list", ToolVerb.List },
-                { "update", ToolVerb.Update },
-                { "add", ToolVerb.Add },
-                { "remove", ToolVerb.Remove },
-            };
 
         private static readonly Dictionary<string, TypeRole> Roles =
             new Dictionary<string, TypeRole>(StringComparer.Ordinal)
@@ -266,10 +254,6 @@ namespace PmxEditorMcp.SignatureDump
             CapabilityOwner group = members.ContainsKey(GroupName)
                 ? ReadGroup(members[GroupName])
                 : CapabilityOwner.None;
-            IDictionary<ToolVerb, string> tools = members.ContainsKey(ToolsName)
-                ? ReadTools(members[ToolsName], role)
-                : new Dictionary<ToolVerb, string>();
-
             try
             {
                 return new TypeRoleRecord(
@@ -278,8 +262,7 @@ namespace PmxEditorMcp.SignatureDump
                     Text(members[BasisName], BasisName),
                     noun,
                     plural,
-                    group,
-                    tools);
+                    group);
             }
             catch (ArgumentException exception)
             {
@@ -321,45 +304,14 @@ namespace PmxEditorMcp.SignatureDump
 
             if (role == TypeRole.Connector)
             {
-                return new[]
-                {
-                    TypeNameName, RoleName, BasisName, ElementNounName, GroupName, ToolsName,
-                };
+                return new[] { TypeNameName, RoleName, BasisName, ElementNounName, GroupName };
             }
 
             return new[]
             {
                 TypeNameName, RoleName, BasisName, ElementNounName, ElementNounPluralName,
-                GroupName, ToolsName,
+                GroupName,
             };
-        }
-
-        /// <summary>
-        /// はたらきごとのツール名。役割ごとに持つべきはたらきが決まり、所有するリストの要素かどうかで
-        /// 決まる2つは在ってもよい形にする——要素かどうかは他の項目を見なければ決まらない。
-        /// </summary>
-        private static IDictionary<ToolVerb, string> ReadTools(object value, TypeRole role)
-        {
-            string[] required = role == TypeRole.Connector
-                ? new[] { "get", "update" }
-                : new[] { "list", "update" };
-            string[] optional = role == TypeRole.Connector
-                ? new string[0]
-                : new[] { "add", "remove" };
-            Dictionary<string, object> members = Members(value, required, optional);
-            Dictionary<ToolVerb, string> tools = new Dictionary<ToolVerb, string>();
-            foreach (KeyValuePair<string, object> member in members)
-            {
-                tools.Add(Verbs[member.Key], Noun(member.Value, ToolsName));
-            }
-
-            if (tools.ContainsKey(ToolVerb.Add) != tools.ContainsKey(ToolVerb.Remove))
-            {
-                throw new FormatException(
-                    ToolsName + " の add と remove は揃って持つか、揃って持たないかにする。");
-            }
-
-            return tools;
         }
 
         private static CapabilityOwner ReadGroup(object value)

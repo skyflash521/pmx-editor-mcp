@@ -15,9 +15,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Roles =
             "{\"types\":[{\"typeName\":\"" + Vertex + "\",\"role\":\"operationTarget\""
                 + ",\"basis\":\"題材の根拠。\",\"elementNoun\":\"vertex\""
-                + ",\"elementNounPlural\":\"vertices\",\"group\":\"model\""
-                + ",\"tools\":{\"list\":\"" + ListTool + "\""
-                + ",\"update\":\"model_update_vertices\"}}]"
+                + ",\"elementNounPlural\":\"vertices\",\"group\":\"model\"}]"
                 + ",\"issuances\":[],\"collections\":[]}\n";
 
         private const string EmptyMap = "{\"rows\":[]}\n";

@@ -45,6 +45,27 @@ namespace PmxEditorMcp.SignatureDump
                 : composed + Separator + qualifier;
         }
 
+        /// <summary>
+        /// 役割対象の型が持つ、はたらきごとのツールの名前。単数と複数のどちらの名詞を採るかは
+        /// はたらきと役割で決まる——コネクタ型は自分1つを指すので、更新も単数を採る。
+        /// </summary>
+        public static string OfRole(TypeRoleRecord record, ToolVerb verb)
+        {
+            if (record == null)
+            {
+                throw new ArgumentNullException(nameof(record));
+            }
+
+            bool singular = verb == ToolVerb.Get
+                || (verb == ToolVerb.Update && record.Role == TypeRole.Connector);
+
+            return Compose(
+                ToolGroups.TokenOf(record.Group),
+                verb.ToString().ToLowerInvariant(),
+                null) + Separator
+                + (singular ? record.ElementNoun : record.ElementNounPlural);
+        }
+
         /// <summary>同じ群で2件以上に現れる動作の語を、群ごとに返す。</summary>
         public static IDictionary<string, ISet<string>> Colliding(
             IEnumerable<KeyValuePair<string, string>> actionWords)

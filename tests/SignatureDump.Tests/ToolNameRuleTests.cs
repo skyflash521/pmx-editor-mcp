@@ -6,6 +6,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ToolNameRuleTests
     {
+        /// <summary>コネクタ型は自分1つを指すので、取得も更新も単数の名詞を採る。</summary>
+        [Theory]
+        [InlineData(TypeRole.Connector, ToolVerb.Get, "view_get_pmx_view")]
+        [InlineData(TypeRole.Connector, ToolVerb.Update, "view_update_pmx_view")]
+        [InlineData(TypeRole.OperationTarget, ToolVerb.List, "view_list_pmx_views")]
+        [InlineData(TypeRole.OperationTarget, ToolVerb.Update, "view_update_pmx_views")]
+        [InlineData(TypeRole.OperationTarget, ToolVerb.Add, "view_add_pmx_views")]
+        [InlineData(TypeRole.HandleTarget, ToolVerb.Remove, "view_remove_pmx_views")]
+        public void TheToolNameTakesTheNounThatTheVerbAndTheRoleChoose(
+            TypeRole role, ToolVerb verb, string expected)
+        {
+            TypeRoleRecord record = new TypeRoleRecord(
+                "N.IPmxView",
+                role,
+                "題材の根拠。",
+                "pmx_view",
+                role == TypeRole.Connector ? string.Empty : "pmx_views",
+                CapabilityOwner.View);
+
+            Assert.Equal(expected, ToolNameRule.OfRole(record, verb));
+        }
+
+        [Fact]
+        public void TheToolNameRequiresARecord()
+        {
+            Assert.Throws<ArgumentNullException>(() => ToolNameRule.OfRole(null, ToolVerb.Get));
+        }
+
         [Theory]
         [InlineData("Clear", "clear")]
         [InlineData("Normalize", "normalize")]

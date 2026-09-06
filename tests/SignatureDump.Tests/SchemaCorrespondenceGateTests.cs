@@ -147,10 +147,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "根拠。",
                         "vertex",
                         "vertices",
-                        independent ? CapabilityOwner.Model : CapabilityOwner.None,
-                        independent
-                            ? new Dictionary<ToolVerb, string> { { ToolVerb.List, Tool } }
-                            : new Dictionary<ToolVerb, string>()),
+                        independent ? CapabilityOwner.Model : CapabilityOwner.None),
                 },
                 new[]
                 {
@@ -504,11 +501,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                                 "根拠。",
                                 "value",
                                 "values",
-                                CapabilityOwner.Model,
-                                new Dictionary<ToolVerb, string>
-                                {
-                                    { ToolVerb.List, "model_list_values" },
-                                }),
+                                CapabilityOwner.Model),
                         },
                         new HandleIssuanceRecord[0],
                         new ElementCollectionRecord[0]),

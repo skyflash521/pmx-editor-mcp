@@ -168,11 +168,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CultureInfo.InvariantCulture,
                     "照合した: 型 {0} 件(コネクタ {1}・イベント引数 0・ハンドル操作 0・操作対象 0"
                         + "・DTO {2})・ハンドルを返しうる行 0 件(発行 0)"
-                        + "・要素のリスト 1 件(所有 1)・ツール名 {3} 件",
+                        + "・要素のリスト 1 件(所有 1)",
                     population.Count,
                     TypeRoleEvidence.ConnectionRoots.Count,
-                    population.Count - TypeRoleEvidence.ConnectionRoots.Count,
-                    TypeRoleEvidence.ConnectionRoots.Count * 2),
+                    population.Count - TypeRoleEvidence.ConnectionRoots.Count),
                 line);
         }
 
@@ -224,9 +223,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     string noun = "root_" + index.ToString(CultureInfo.InvariantCulture);
                     builder.Append(",\"elementNoun\":\"").Append(noun)
-                        .Append("\",\"group\":\"model\",\"tools\":{\"get\":\"model_get_")
-                        .Append(noun).Append("\",\"update\":\"model_update_")
-                        .Append(noun).Append("\"}");
+                        .Append("\",\"group\":\"model\"");
                 }
 
                 builder.Append("}");

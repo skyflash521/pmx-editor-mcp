@@ -210,8 +210,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "題材の根拠。",
                     string.Empty,
                     string.Empty,
-                    CapabilityOwner.Model,
-                    new Dictionary<ToolVerb, string> { { ToolVerb.List, ListTool } })));
+                    CapabilityOwner.Model)));
 
             Assert.Contains("要素名詞を持たない型", error.Message, StringComparison.Ordinal);
         }
@@ -320,11 +319,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                             "題材の根拠。",
                             "value",
                             "values",
-                            CapabilityOwner.Model,
-                            new Dictionary<ToolVerb, string>
-                            {
-                                { ToolVerb.List, "model_list_values" },
-                            }),
+                            CapabilityOwner.Model),
                     },
                     new List<HandleIssuanceRecord>(),
                     new List<ElementCollectionRecord>()),
@@ -515,12 +510,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "題材の根拠。",
                         "vertex",
                         "vertices",
-                        CapabilityOwner.Model,
-                        new Dictionary<ToolVerb, string>
-                        {
-                            { ToolVerb.List, ListTool },
-                            { ToolVerb.Update, "model_update_vertices" },
-                        }),
+                        CapabilityOwner.Model),
                 },
                 new List<HandleIssuanceRecord>(),
                 new List<ElementCollectionRecord>());

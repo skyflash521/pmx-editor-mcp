@@ -84,8 +84,7 @@ namespace PmxEditorMcp.SignatureDump
             string basis,
             string elementNoun = "",
             string elementNounPlural = "",
-            CapabilityOwner group = CapabilityOwner.None,
-            IDictionary<ToolVerb, string> tools = null)
+            CapabilityOwner group = CapabilityOwner.None)
         {
             PropertyRecord.RequireText(typeName, nameof(typeName));
             PropertyRecord.RequireText(basis, nameof(basis));
@@ -106,20 +105,10 @@ namespace PmxEditorMcp.SignatureDump
                     HasIndependentTool(role) ? nameof(group) : nameof(role));
             }
 
-            IDictionary<ToolVerb, string> named = tools ?? new Dictionary<ToolVerb, string>();
-            if (HasIndependentTool(role) != (named.Count != 0))
-            {
-                throw new ArgumentException(
-                    "独立したツールを持つ役割だけがツール名を持つ。",
-                    HasIndependentTool(role) ? nameof(tools) : nameof(role));
-            }
-
             TypeName = typeName;
             Role = role;
             Basis = basis;
             Group = group;
-            Tools = new ReadOnlyDictionary<ToolVerb, string>(
-                new Dictionary<ToolVerb, string>(named));
             ElementNoun = elementNoun;
             ElementNounPlural = elementNounPlural;
         }
@@ -141,9 +130,6 @@ namespace PmxEditorMcp.SignatureDump
         /// その型のツールが属する担当群。持たない役割では <see cref="CapabilityOwner.None"/>。
         /// </summary>
         public CapabilityOwner Group { get; }
-
-        /// <summary>はたらきから引くその型のツール名。持たない役割では空。</summary>
-        public IDictionary<ToolVerb, string> Tools { get; }
 
         /// <summary>その役割が、対象を名指しする独立したツールを持つか。</summary>
         public static bool HasIndependentTool(TypeRole role)

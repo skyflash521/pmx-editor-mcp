@@ -264,14 +264,11 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>プロパティを集める先。取得と更新の2つで、追加と削除は集める先にならない。</summary>
         private static IEnumerable<string> Aggregated(TypeRoleRecord owner)
         {
-            foreach (ToolVerb verb in new[] { ToolVerb.Get, ToolVerb.List, ToolVerb.Update })
-            {
-                string named;
-                if (owner.Tools.TryGetValue(verb, out named))
-                {
-                    yield return named;
-                }
-            }
+            ToolVerb[] verbs = owner.Role == TypeRole.Connector
+                ? new[] { ToolVerb.Get, ToolVerb.Update }
+                : new[] { ToolVerb.List, ToolVerb.Update };
+
+            return verbs.Select(v => ToolNameRule.OfRole(owner, v));
         }
 
         /// <summary>そのシグネチャのツールに期待する名前。</summary>

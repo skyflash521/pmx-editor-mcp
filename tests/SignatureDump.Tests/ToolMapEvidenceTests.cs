@@ -58,10 +58,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 "element",
                 "elements",
-                independent ? CapabilityOwner.Model : CapabilityOwner.None,
-                independent
-                    ? new Dictionary<ToolVerb, string> { { ToolVerb.List, "model_list_elements" } }
-                    : new Dictionary<ToolVerb, string>());
+                independent ? CapabilityOwner.Model : CapabilityOwner.None);
         }
     }
 }

@@ -85,9 +85,6 @@ namespace PmxEditorMcp.SignatureDump
             RequireIssuancesMatchTheEvidence(table.Issuances, issuanceCandidates);
             RequireCollectionsMatchTheEvidence(table.Collections, collectionCandidates);
             RequireGroupsMatchTheLedger(records, ledgerOwners);
-            RequireToolNamesFollowTheNouns(records);
-            RequireAddAndRemoveMatchTheOwnedElements(
-                records, table.Collections, collectionCandidates);
         }
 
         /// <summary>
@@ -214,79 +211,6 @@ namespace PmxEditorMcp.SignatureDump
                             + "(表: " + record.Group + " / 台帳: " + only + ")");
                 }
             }
-        }
-
-        /// <summary>
-        /// ツール名が担当群と要素名詞から導いた名前と一致することを求める。名前は機械で決まるので、
-        /// 書き手が別の名前を書けばここで落ちる。
-        /// </summary>
-        private static void RequireToolNamesFollowTheNouns(IList<TypeRoleRecord> records)
-        {
-            foreach (TypeRoleRecord record in records.Where(
-                r => TypeRoleRecord.HasIndependentTool(r.Role)))
-            {
-                foreach (KeyValuePair<ToolVerb, string> tool in record.Tools)
-                {
-                    string expected = ToolName(record, tool.Key);
-                    if (!string.Equals(tool.Value, expected, StringComparison.Ordinal))
-                    {
-                        throw new InvalidOperationException(
-                            "ツール名が担当群と要素名詞から決まる名前と合わない: " + record.TypeName
-                                + "(表: " + tool.Value + " / 決まる名前: " + expected + ")");
-                    }
-                }
-            }
-        }
-
-        private static string ToolName(TypeRoleRecord record, ToolVerb verb)
-        {
-            string noun = verb == ToolVerb.Get ? record.ElementNoun : record.ElementNounPlural;
-            if (verb == ToolVerb.Update && record.Role == TypeRole.Connector)
-            {
-                noun = record.ElementNoun;
-            }
-
-            return ToolGroups.TokenOf(record.Group) + "_"
-                + verb.ToString().ToLowerInvariant() + "_" + noun;
-        }
-
-        /// <summary>
-        /// 所有するリストへ入れる・から出すツールを持つ型が、所有するリストの要素である型と一対一で
-        /// 一致することを求める。その操作はそのリストを持つ型の側にしか無い。
-        /// </summary>
-        private static void RequireAddAndRemoveMatchTheOwnedElements(
-            IList<TypeRoleRecord> records,
-            IList<ElementCollectionRecord> collections,
-            IDictionary<string, string> candidates)
-        {
-            HashSet<string> owned = new HashSet<string>(
-                collections.Where(c => c.Owns).Select(c => candidates[c.SignatureKey]),
-                StringComparer.Ordinal);
-            foreach (TypeRoleRecord record in records.Where(
-                r => TypeRoleRecord.HasIndependentTool(r.Role)))
-            {
-                bool listed = owned.Contains(record.TypeName);
-                if (listed != record.Tools.ContainsKey(ToolVerb.Add))
-                {
-                    throw new InvalidOperationException(
-                        listed
-                            ? "所有するリストの要素なのに入れる・出すツールが無い: " + record.TypeName
-                            : "所有するリストの要素でないのに入れる・出すツールが在る: "
-                                + record.TypeName);
-                }
-            }
-        }
-
-        private static string Listed(IEnumerable<string> names)
-        {
-            string joined = string.Join("・", names);
-
-            return joined.Length == 0 ? "無し" : joined;
-        }
-
-        private static string Shown(string path)
-        {
-            return path.Length == 0 ? "無し" : path;
         }
 
         /// <summary>

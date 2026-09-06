@@ -72,8 +72,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 elementNoun,
                 elementNoun + "es",
-                CapabilityOwner.Model,
-                new Dictionary<ToolVerb, string> { { ToolVerb.List, "model_list_" + elementNoun } });
+                CapabilityOwner.Model);
         }
 
         /// <summary>独立したツールを持たない役割の型。担当群もツールの名前も持たない。</summary>
@@ -85,8 +84,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 "embedded",
                 "embeddeds",
-                CapabilityOwner.None,
-                new Dictionary<ToolVerb, string>());
+                CapabilityOwner.None);
         }
 
         /// <summary>スキーマ埋め込み行を1件持つ能力対応表。</summary>
@@ -339,12 +337,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 "vertex",
                 "vertices",
-                CapabilityOwner.Model,
-                new Dictionary<ToolVerb, string>
-                {
-                    { ToolVerb.List, "model_list_vertices" },
-                    { ToolVerb.Add, "model_add_vertices" },
-                });
+                CapabilityOwner.Model);
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(
@@ -365,7 +358,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnEmbeddedNameOfTheDeclaringTypePasses()
         {
             Require(
-                ToolMapJsonReader.Read(EmbeddedMapJson("model_list_vertex")),
+                ToolMapJsonReader.Read(EmbeddedMapJson("model_list_vertexes")),
                 Roles(),
                 Signatures(Property(Vertex + ".Index")));
         }
@@ -399,7 +392,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Args + @".Index"",
                 ""capabilityIds"": [""CAP-001""], ""rowKind"": ""schemaEmbedded"",
                 ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
-                ""embeddedIn"": [""model_list_vertex""] }] }";
+                ""embeddedIn"": [""model_list_vertexes""] }] }";
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(
@@ -443,7 +436,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Dto + @".Index"",
                 ""capabilityIds"": [""CAP-001""], ""rowKind"": ""schemaEmbedded"",
                 ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
-                ""embeddedIn"": [""model_list_vertex""] }] }";
+                ""embeddedIn"": [""model_list_vertexes""] }] }";
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(
@@ -496,8 +489,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                                 "根拠。",
                                 "vertex",
                                 "vertexes",
-                                CapabilityOwner.None,
-                                new Dictionary<ToolVerb, string>()),
+                                CapabilityOwner.None),
                         },
                         new HandleIssuanceRecord[0],
                         new ElementCollectionRecord[0]),

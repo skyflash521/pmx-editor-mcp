@@ -443,88 +443,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Groups("N.IThing", CapabilityOwner.View));
         }
 
-        [Fact]
-        public void AToolNameThatDoesNotFollowTheNounStops()
-        {
-            TypeRoleRecord record = new TypeRoleRecord(
-                Root,
-                TypeRole.Connector,
-                "根拠。",
-                Singular,
-                string.Empty,
-                CapabilityOwner.Model,
-                new Dictionary<ToolVerb, string>
-                {
-                    { ToolVerb.Get, "model_get_other" },
-                    { ToolVerb.Update, "model_update_" + Singular },
-                });
-
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Table(record), Set(Root), Roots(), Set(), Set(Root)));
-
-            Assert.Contains("model_get_other", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AnElementOfAnOwningListWithoutAddAndRemoveStops()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
-                    Owning(Record("N.IThing", TypeRole.OperationTarget)),
-                    Set(Root, "N.IThing"),
-                    Roots(),
-                    Set(),
-                    Set(Root),
-                    Issuances(),
-                    Collections("N.A.Items()", "N.IThing"),
-                    Groups()));
-
-            Assert.Contains("N.IThing", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void ATypeThatIsNotAnElementOfAnOwningListWithAddAndRemoveStops()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    Table(
-                        Record(Root, TypeRole.Connector),
-                        Record("N.IThing", TypeRole.OperationTarget, CapabilityOwner.Model, true)),
-                    Set(Root, "N.IThing"),
-                    Roots(),
-                    Set(),
-                    Set(Root)));
-
-            Assert.Contains("N.IThing", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AnElementOfAnOwningListWithAddAndRemovePasses()
-        {
-            TypeRoleGate.Require(
-                Owning(Record("N.IThing", TypeRole.OperationTarget, CapabilityOwner.Model, true)),
-                Set(Root, "N.IThing"),
-                Roots(),
-                Set(),
-                Set(Root),
-                Issuances(),
-                Collections("N.A.Items()", "N.IThing"),
-                Groups());
-        }
-
-        /// <summary>所有するリスト1件と、その要素の型の項目を持つ表。</summary>
-        private static TypeRoleTable Owning(TypeRoleRecord element)
-        {
-            return new TypeRoleTable(
-                new List<TypeRoleRecord> { Record(Root, TypeRole.Connector), element },
-                new List<HandleIssuanceRecord>(),
-                new List<ElementCollectionRecord>
-                {
-                    new ElementCollectionRecord(
-                        "N.A.Items()", true, "根拠。", new List<string> { "N.A.Items()" }),
-                });
-        }
-
         /// <summary>接続の経路を持たない題材のための呼び出し。</summary>
         private static void Require(
             TypeRoleTable records,
@@ -643,8 +561,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static TypeRoleRecord Record(
             string typeName,
             TypeRole role,
-            CapabilityOwner group = CapabilityOwner.Model,
-            bool owned = false)
+            CapabilityOwner group = CapabilityOwner.Model)
         {
             if (!TypeRoleRecord.HasIndependentTool(role))
             {
@@ -657,36 +574,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 typeName + " の根拠。",
                 Singular,
                 role == TypeRole.Connector ? string.Empty : Plural,
-                group,
-                Tools(role, group, owned));
-        }
-
-        /// <summary>担当群と要素名詞から決まる名前をそのまま並べたもの。</summary>
-        private static IDictionary<ToolVerb, string> Tools(
-            TypeRole role, CapabilityOwner group, bool owned)
-        {
-            string prefix = ToolGroups.TokenOf(group) + "_";
-            if (role == TypeRole.Connector)
-            {
-                return new Dictionary<ToolVerb, string>
-                {
-                    { ToolVerb.Get, prefix + "get_" + Singular },
-                    { ToolVerb.Update, prefix + "update_" + Singular },
-                };
-            }
-
-            Dictionary<ToolVerb, string> tools = new Dictionary<ToolVerb, string>
-            {
-                { ToolVerb.List, prefix + "list_" + Plural },
-                { ToolVerb.Update, prefix + "update_" + Plural },
-            };
-            if (owned)
-            {
-                tools.Add(ToolVerb.Add, prefix + "add_" + Plural);
-                tools.Add(ToolVerb.Remove, prefix + "remove_" + Plural);
-            }
-
-            return tools;
+                group);
         }
 
         private const string Singular = "thing";
