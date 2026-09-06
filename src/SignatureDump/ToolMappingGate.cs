@@ -225,7 +225,7 @@ namespace PmxEditorMcp.SignatureDump
                 return item.Members;
             }
 
-            return item.Element == null || !item.MinItems.HasValue ? null : item.Element.Members;
+            return NonEmptyArrayRule.NonEmpty(item) ? item.Element.Members : null;
         }
 
         /// <summary>分岐を選ぶ値を、JSONの形と型を保った文字列にしたもの。</summary>

@@ -357,21 +357,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// 呼び分けを2つ持ち、必ず渡す項目が組の配列である入出力の形。要素の組の中と、配列を空に
-        /// できるかどうかを差し替えられる。
+        /// 呼び分けを2つ持ち、必ず渡す項目が組の並びである入出力の形。要素の組の中と、並びの名前を
+        /// 差し替えられる。
         /// </summary>
         private static string ElementMembersSchemaJson(string second, bool empty = false)
         {
-            string least = empty ? string.Empty : @", ""minItems"": 1";
+            string array = empty ? "argsList" : "handles";
             return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
                 ""branches"": [
                   { ""branch"": ""first"", ""inputs"": [
-                    { ""name"": ""argsList"", ""origin"": ""hostInput"", ""required"": true" + least + @",
+                    { ""name"": """ + array + @""", ""origin"": ""hostInput"", ""required"": true,
                       ""element"": { ""origin"": ""hostInput"", ""members"": [
                         { ""name"": ""count"", ""origin"": ""sdkIn"", ""shape"": ""number"",
                           ""required"": true }] } }] },
                   { ""branch"": ""second"", ""inputs"": [
-                    { ""name"": ""argsList"", ""origin"": ""hostInput"", ""required"": true" + least + @",
+                    { ""name"": """ + array + @""", ""origin"": ""hostInput"", ""required"": true,
                       ""element"": { ""origin"": ""hostInput"", ""members"": [
                         { ""name"": """ + second + @""", ""origin"": ""sdkIn"",
                           ""shape"": ""number"", ""required"": true }] } }] }],
@@ -472,13 +472,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TheMembersOfTheElementOfARequiredArrayTellTwoBranchesApart()
+        public void TheMembersOfTheElementOfAnArrayThatCannotBeEmptyTellTwoBranchesApart()
         {
             RequireBranches(ElementMembersSchemaJson("total"));
         }
 
         [Fact]
-        public void TheMembersOfTheElementOfAnEmptiableArrayDoNotTellTwoBranchesApart()
+        public void TheMembersOfTheElementOfAnArrayThatCanBeEmptyDoNotTellTwoBranchesApart()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => RequireBranches(ElementMembersSchemaJson("total", empty: true)));

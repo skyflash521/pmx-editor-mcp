@@ -91,7 +91,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
                       ""required"": true },
                     { ""name"": ""handles"", ""origin"": ""hostInput"", ""required"": true,
-                      ""minItems"": 1,
                       ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }] },
                   { ""branch"": ""list"", ""inputs"": [
                     { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",

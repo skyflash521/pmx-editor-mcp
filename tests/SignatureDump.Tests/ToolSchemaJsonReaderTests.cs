@@ -213,13 +213,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             SchemaItem input = OnlyInput(Table(Branch(
                 @"[{ ""name"": ""targets"", ""origin"": ""hostInput"", ""required"": true,
-                     ""maxItems"": 100, ""source"": ""配布文書の該当節"", ""minItems"": 1,
+                     ""maxItems"": 100, ""source"": ""配布文書の該当節"",
                      ""element"": { ""origin"": ""hostInput"",
                        ""members"": [{ ""name"": ""index"", ""origin"": ""hostInput"",
                          ""shape"": ""number"", ""required"": true }] } }]")));
 
             Assert.Equal(100, input.MaxItems);
-            Assert.Equal(1, input.MinItems);
             Assert.Null(input.Element.Name);
             Assert.Equal("index", Assert.Single(input.Element.Members).Name);
         }
@@ -380,13 +379,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
         }
 
+        /// <summary>空にできるかどうかは名前から決まるので、書けば知らない項目として落ちる。</summary>
         [Fact]
-        public void RejectsAMinimumItemCountThatIsNotOne()
+        public void AWrittenMinimumItemCountStops()
         {
-            Rejects("minItems は1でなければならない", Table(Branch(
-                @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true,
-                     ""maxItems"": 2, ""source"": ""配布文書の該当節"",
-                     ""minItems"": 2,
+            Rejects("知らない項目", Table(Branch(
+                @"[{ ""name"": ""handles"", ""origin"": ""hostInput"", ""required"": true,
+                     ""minItems"": 1,
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
         }
 

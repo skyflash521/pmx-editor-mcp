@@ -56,8 +56,6 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string MaxItemsName = "maxItems";
 
-        private const string MinItemsName = "minItems";
-
         private const string MinimumName = "minimum";
 
         private const string MaximumName = "maximum";
@@ -329,7 +327,7 @@ namespace PmxEditorMcp.SignatureDump
                 new[]
                 {
                     ShapeName, MembersName, ElementName, RequiredName, DefaultName, BoundsName,
-                    NullableName, SourceName, InjectedName, MaxItemsName, MinItemsName,
+                    NullableName, SourceName, InjectedName, MaxItemsName,
                 });
 
             string name = named ? Member(members[NameName], NameName) : null;
@@ -424,8 +422,9 @@ namespace PmxEditorMcp.SignatureDump
                     : (bool?)null,
                 members.ContainsKey(SourceName) ? Text(members[SourceName], SourceName) : null,
                 members.ContainsKey(InjectedName) && Flag(members[InjectedName], InjectedName),
-                members.ContainsKey(MaxItemsName) ? Count(members[MaxItemsName], MaxItemsName) : (int?)null,
-                members.ContainsKey(MinItemsName) ? Empty(members[MinItemsName]) : (int?)null);
+                members.ContainsKey(MaxItemsName)
+                    ? Count(members[MaxItemsName], MaxItemsName)
+                    : (int?)null);
         }
 
         private static ValueBounds ReadBounds(object value)
@@ -479,17 +478,6 @@ namespace PmxEditorMcp.SignatureDump
         {
             object value;
             return members.TryGetValue(name, out value) ? value as string ?? "名前無し" : "名前無し";
-        }
-
-        private static int Empty(object value)
-        {
-            int count = Count(value, MinItemsName);
-            if (count != 1)
-            {
-                throw new FormatException(MinItemsName + " は1でなければならない。");
-            }
-
-            return count;
         }
 
         private static int Count(object value, string name)

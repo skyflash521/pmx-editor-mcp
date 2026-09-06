@@ -70,21 +70,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return new SchemaItem(
                 shape, null, null, name, ItemOrigin.HostOutput, null, null, false,
-                null, null, null, false, null, null);
+                null, null, null, false, null);
         }
 
         private static SchemaItem Bounded(double maximum)
         {
             return new SchemaItem(
                 "number", null, null, null, ItemOrigin.SdkReturn, null, null, false,
-                new ValueBounds(null, maximum), null, "配布文書の該当節", false, null, null);
+                new ValueBounds(null, maximum), null, "配布文書の該当節", false, null);
         }
 
         private static SchemaItem Group(params SchemaItem[] members)
         {
             return new SchemaItem(
                 null, members, null, null, ItemOrigin.HostOutput, null, null, false,
-                null, null, null, false, null, null);
+                null, null, null, false, null);
         }
 
         /// <summary>要素数を一次資料が定めた並びは、転記元を伴う上限を持つ。</summary>
@@ -93,7 +93,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new SchemaItem(
                 null, null, element, null, ItemOrigin.SdkReturn, null, null, false,
                 null, null, fixedCount.HasValue ? "配布文書の該当節" : null, false,
-                fixedCount, null);
+                fixedCount);
         }
     }
 }

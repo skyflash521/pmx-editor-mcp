@@ -49,10 +49,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             SchemaItem inner = Item("number", "index");
             SchemaItem element = new SchemaItem(
                 null, new[] { inner }, null, null, ItemOrigin.HostInput, null, null, false,
-                null, null, null, false, null, null);
+                null, null, null, false, null);
             SchemaItem array = new SchemaItem(
                 null, null, element, "targets", ItemOrigin.HostInput, true, null, false,
-                null, null, "配布文書の該当節", false, 2, null);
+                null, null, "配布文書の該当節", false, 2);
 
             Assert.Equal(new[] { array, element, inner }, array.WithNested);
         }
@@ -61,7 +61,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return new SchemaItem(
                 shape, null, null, name, ItemOrigin.HostOutput, null, null, false,
-                null, null, null, false, null, null);
+                null, null, null, false, null);
         }
     }
 }
