@@ -244,7 +244,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             TypeRole role = ReadRole(item);
             Dictionary<string, object> members = Members(
-                item, NamesFor(role), new string[0]);
+                item, NamesFor(role), OptionalNamesFor(role));
             string noun = members.ContainsKey(ElementNounName)
                 ? Noun(members[ElementNounName], ElementNounName)
                 : string.Empty;
@@ -268,6 +268,17 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new FormatException(exception.Message, exception);
             }
+        }
+
+        /// <summary>
+        /// 役割ごとに、持つべき名前に加えて項目が持ってもよい名前。担当群は台帳が決める型では
+        /// 書かないので、必須にせずここへ置く。
+        /// </summary>
+        private static string[] OptionalNamesFor(TypeRole role)
+        {
+            return TypeRoleRecord.HasIndependentTool(role)
+                ? new[] { GroupName }
+                : new string[0];
         }
 
         private static TypeRole ReadRole(object item)
@@ -304,13 +315,12 @@ namespace PmxEditorMcp.SignatureDump
 
             if (role == TypeRole.Connector)
             {
-                return new[] { TypeNameName, RoleName, BasisName, ElementNounName, GroupName };
+                return new[] { TypeNameName, RoleName, BasisName, ElementNounName };
             }
 
             return new[]
             {
                 TypeNameName, RoleName, BasisName, ElementNounName, ElementNounPluralName,
-                GroupName,
             };
         }
 

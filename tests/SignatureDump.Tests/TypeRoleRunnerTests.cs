@@ -222,8 +222,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 if (roots.Contains(name))
                 {
                     string noun = "root_" + index.ToString(CultureInfo.InvariantCulture);
-                    builder.Append(",\"elementNoun\":\"").Append(noun)
-                        .Append("\",\"group\":\"model\"");
+                    builder.Append(",\"elementNoun\":\"").Append(noun).Append("\"");
                 }
 
                 builder.Append("}");

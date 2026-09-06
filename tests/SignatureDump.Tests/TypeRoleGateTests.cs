@@ -181,8 +181,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Set(),
                 Set(Root),
                 Candidates("N.A.Make()", HandleIssuanceKind.Factory),
-                Collections(),
-                Groups());
+                Collections());
         }
 
         [Fact]
@@ -196,8 +195,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Candidates(),
-                    Collections(),
-                    Groups()));
+                    Collections()));
 
             Assert.Contains("N.A.Get()", error.Message);
         }
@@ -213,8 +211,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Candidates("N.A.Make()", HandleIssuanceKind.Factory),
-                    Collections(),
-                    Groups()));
+                    Collections()));
 
             Assert.Contains("N.A.Make()", error.Message);
         }
@@ -232,8 +229,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Candidates("N.A.Make()", HandleIssuanceKind.Factory),
-                    Collections(),
-                    Groups()));
+                    Collections()));
 
             Assert.Contains("二度", error.Message);
         }
@@ -248,8 +244,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Set(),
                 Set(Root),
                 Issuances(),
-                Both(),
-                Groups());
+                Both());
         }
 
         [Fact]
@@ -263,8 +258,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Issuances(),
-                    Collections(),
-                    Groups()));
+                    Collections()));
 
             Assert.Contains("N.A.Items()", error.Message);
         }
@@ -280,8 +274,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Issuances(),
-                    Collections("N.A.Items()", "N.IThing"),
-                    Groups()));
+                    Collections("N.A.Items()", "N.IThing")));
 
             Assert.Contains("N.A.Items()", error.Message);
         }
@@ -297,8 +290,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Issuances(),
-                    Both(),
-                    Groups()));
+                    Both()));
 
             Assert.Contains("N.IThing", error.Message);
         }
@@ -314,8 +306,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Issuances(),
-                    Collections("N.B.Refs()", "N.IThing"),
-                    Groups()));
+                    Collections("N.B.Refs()", "N.IThing")));
 
             Assert.Contains("N.B.Refs()", error.Message);
         }
@@ -331,8 +322,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Set(),
                     Set(Root),
                     Issuances(),
-                    Collections("N.A.Items()", "N.IThing"),
-                    Groups()));
+                    Collections("N.A.Items()", "N.IThing")));
 
             Assert.Contains("二度", error.Message);
         }
@@ -345,102 +335,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentNullException>(
                 () => TypeRoleGate.Require(
                     null, Set(Root), Roots(Root), Set(), Set(Root), Issuances(),
-                    Collections(), Groups()));
+                    Collections()));
             Assert.Throws<ArgumentNullException>(
                 () => TypeRoleGate.Require(
                     table, null, Roots(Root), Set(), Set(Root), Issuances(),
-                    Collections(), Groups()));
+                    Collections()));
             Assert.Throws<ArgumentNullException>(
                 () => TypeRoleGate.Require(
                     table, Set(Root), null, Set(), Set(Root), Issuances(),
-                    Collections(), Groups()));
+                    Collections()));
             Assert.Throws<ArgumentNullException>(
                 () => TypeRoleGate.Require(
                     table, Set(Root), Roots(Root), null, Set(Root), Issuances(),
-                    Collections(), Groups()));
+                    Collections()));
             Assert.Throws<ArgumentNullException>(
                 () => TypeRoleGate.Require(
                     table, Set(Root), Roots(Root), Set(), null, Issuances(),
-                    Collections(), Groups()));
+                    Collections()));
             Assert.Throws<ArgumentNullException>(
                 () => TypeRoleGate.Require(
                     table, Set(Root), Roots(Root), Set(), Set(Root), null,
-                    Collections(), Groups()));
+                    Collections()));
             Assert.Throws<ArgumentNullException>(
                 () => TypeRoleGate.Require(
-                    table, Set(Root), Roots(Root), Set(), Set(Root), Issuances(), null,
-                    Groups()));
-            Assert.Throws<ArgumentNullException>(
-                () => TypeRoleGate.Require(
-                    table, Set(Root), Roots(Root), Set(), Set(Root), Issuances(),
-                    Collections(), null));
-        }
-
-        [Fact]
-        public void AGroupThatMatchesTheOnlyOwnerInTheLedgerPasses()
-        {
-            TypeRoleGate.Require(
-                Table(Record(Root, TypeRole.Connector, CapabilityOwner.View)),
-                Set(Root),
-                Roots(),
-                Set(),
-                Set(Root),
-                Issuances(),
-                Collections(),
-                Groups(Root, CapabilityOwner.View));
-        }
-
-        [Fact]
-        public void AGroupThatDiffersFromTheOnlyOwnerInTheLedgerStops()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleGate.Require(
-                    Table(Record(Root, TypeRole.Connector, CapabilityOwner.Model)),
-                    Set(Root),
-                    Roots(),
-                    Set(),
-                    Set(Root),
-                    Issuances(),
-                    Collections(),
-                    Groups(Root, CapabilityOwner.View)));
-
-            Assert.Contains(Root, error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AGroupIsTheAuthorsWhereTheLedgerDoesNotDecideOne()
-        {
-            foreach (IDictionary<string, ISet<CapabilityOwner>> ledger in new[]
-            {
-                Groups(Root, CapabilityOwner.View, CapabilityOwner.Session),
-                Groups(Root),
-                Groups(),
-            })
-            {
-                TypeRoleGate.Require(
-                    Table(Record(Root, TypeRole.Connector, CapabilityOwner.Model)),
-                    Set(Root),
-                    Roots(),
-                    Set(),
-                    Set(Root),
-                    Issuances(),
-                    Collections(),
-                    ledger);
-            }
-        }
-
-        [Fact]
-        public void ARoleWithoutAnIndependentToolIsNotCheckedAgainstTheLedger()
-        {
-            TypeRoleGate.Require(
-                Table(Record(Root, TypeRole.Connector), Record("N.IThing", TypeRole.Dto)),
-                Set(Root, "N.IThing"),
-                Roots(),
-                Set(),
-                Set(Root),
-                Issuances(),
-                Collections(),
-                Groups("N.IThing", CapabilityOwner.View));
+                    table, Set(Root), Roots(Root), Set(), Set(Root), Issuances(), null));
         }
 
         /// <summary>接続の経路を持たない題材のための呼び出し。</summary>
@@ -458,21 +376,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 eventArgumentTypes,
                 connectorCandidates,
                 Issuances(),
-                Collections(),
-                Groups());
-        }
-
-        private static IDictionary<string, ISet<CapabilityOwner>> Groups(
-            string typeName = null, params CapabilityOwner[] owners)
-        {
-            Dictionary<string, ISet<CapabilityOwner>> ledger =
-                new Dictionary<string, ISet<CapabilityOwner>>(StringComparer.Ordinal);
-            if (typeName != null)
-            {
-                ledger.Add(typeName, new HashSet<CapabilityOwner>(owners));
-            }
-
-            return ledger;
+                Collections());
         }
 
         private static TypeRoleTable Table(params TypeRoleRecord[] records)

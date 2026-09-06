@@ -30,10 +30,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 5)
+            if (args.Length != 6)
             {
                 error.WriteLine(
-                    "引数は5つ: <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
+                    "引数は6つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <共通契約仕様書のパス>"
                         + " <型役割表の正本のパス> <日本語名の正本のパス> <能力対応表の正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
@@ -46,6 +47,7 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
+            IList<CapabilityRecord> ledger;
             TypeRoleTable roles;
             IList<PropertyNameRecord> names;
             ToolMap map;
@@ -54,10 +56,11 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> propertyNotes;
             try
             {
-                composedTools = ComposedToolDocument.Read(Read(args[1], "共通契約仕様書"));
-                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[2], "型役割表の正本"));
-                names = PropertyNameJsonReader.ReadPropertyNames(Read(args[3], "日本語名の正本"));
-                map = ToolMapJsonReader.Read(Read(args[4], "能力対応表の正本"));
+                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                composedTools = ComposedToolDocument.Read(Read(args[2], "共通契約仕様書"));
+                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
+                names = PropertyNameJsonReader.ReadPropertyNames(Read(args[4], "日本語名の正本"));
+                map = ToolMapJsonReader.Read(Read(args[5], "能力対応表の正本"));
                 string document = Read(
                     SdkAssemblyLocator.GetDocumentPath(editorDirectory), "ドキュメントXML");
                 methodNotes = DocumentNoteReader.ReadMethods(document);
@@ -87,7 +90,13 @@ namespace PmxEditorMcp.SignatureDump
             try
             {
                 materials = ToolDescriptionEvidence.Collect(
-                    map, roles, names, inventory, methodNotes, propertyNotes);
+                    map,
+                    TypeGroupRule.Resolve(
+                        roles, TypeGroupEvidence.OwnersByType(ledger, inventory)),
+                    names,
+                    inventory,
+                    methodNotes,
+                    propertyNotes);
                 foreach (ToolDescriptionMaterial material in materials)
                 {
                     descriptions.Add(material.Tool, ToolDescriptionRule.Compose(material));

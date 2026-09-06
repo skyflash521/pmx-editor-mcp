@@ -76,7 +76,6 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> connectorCandidates;
             IDictionary<string, HandleIssuanceKind> issuanceCandidates;
             IDictionary<string, string> collectionCandidates;
-            IDictionary<string, ISet<CapabilityOwner>> ledgerOwners;
             try
             {
                 population = TypeRolePopulation.Resolve(ledger, inventory, excluded);
@@ -91,7 +90,8 @@ namespace PmxEditorMcp.SignatureDump
                     inventory, roles, population.Signatures);
                 collectionCandidates = ElementCollectionEvidence.Candidates(
                     inventory, roles, population.Signatures);
-                ledgerOwners = TypeGroupEvidence.OwnersByType(ledger, inventory);
+                table = TypeGroupRule.Resolve(
+                    table, TypeGroupEvidence.OwnersByType(ledger, inventory));
             }
             catch (Exception exception)
                 when (exception is InvalidOperationException || exception is ArgumentException)
@@ -110,8 +110,7 @@ namespace PmxEditorMcp.SignatureDump
                     eventArgumentTypes,
                     connectorCandidates,
                     issuanceCandidates,
-                    collectionCandidates,
-                    ledgerOwners);
+                    collectionCandidates);
             }
             catch (InvalidOperationException exception)
             {

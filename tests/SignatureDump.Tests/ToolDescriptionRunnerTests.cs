@@ -1,5 +1,8 @@
 using System;
 using System.IO;
+using System.Text;
+using System.Reflection;
+using System.Globalization;
 using System.Linq;
 using Xunit;
 
@@ -14,7 +17,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Roles =
             "{\"types\":[{\"typeName\":\"" + Vertex + "\",\"role\":\"operationTarget\""
                 + ",\"basis\":\"題材の根拠。\",\"elementNoun\":\"vertex\""
-                + ",\"elementNounPlural\":\"vertices\",\"group\":\"model\"}]"
+                + ",\"elementNounPlural\":\"vertices\"}]"
                 + ",\"issuances\":[],\"collections\":[]}\n";
 
         private const string EmptyNames = "{\"propertyNames\":[]}\n";
@@ -48,7 +51,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 4, 6 })
+            foreach (int count in new[] { 0, 1, 2, 3, 4, 5, 7 })
             {
                 StringWriter error = new StringWriter();
 
@@ -66,9 +69,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ToolDescriptionRunner.Run(
-                new[] { Path.Combine(_root, "missing"), Write("c.md", Contract),
-                    Write("r.json", Roles), Write("n.json", EmptyNames),
-                    Write("m.json", EmptyMap) },
+                new[] { Path.Combine(_root, "missing"), Write("l.md", Ledger(typeof(ToolDescriptionRunnerTests).Assembly)),
+                    Write("c.md", Contract), Write("r.json", Roles),
+                    Write("n.json", EmptyNames), Write("m.json", EmptyMap) },
                 new StringWriter(),
                 error);
 
@@ -183,11 +186,37 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new[]
             {
                 EditorDirectory(),
+                Write("ledger.md", Ledger(typeof(ToolDescriptionRunnerTests).Assembly)),
                 Write("contract.md", Contract),
                 Write("roles.json", Roles),
                 Write("names.json", EmptyNames),
                 Write("map.json", map),
             };
+        }
+
+        /// <summary>題材のアセンブリの公開型を提供として並べた台帳。担当はどれもモデルになる。</summary>
+        private static string Ledger(Assembly assembly)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append("| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n");
+            builder.Append("|---|---|---|---|---|---|\n");
+
+            int id = 1;
+            foreach (TypeRecord type in AssemblyEnumerator.Enumerate(assembly).Types)
+            {
+                string name = type.Name;
+                int open = name.IndexOf('<');
+                builder.Append(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "| CAP-{0:D3} | 標本 | {1} | 提供 | モデル |  |\n",
+                    id++,
+                    open < 0 ? name : name.Substring(0, open)));
+            }
+
+            builder.Append("| CAP-463 | 標本 | PEPlugin.Pmd.* のまとめ | 非対応 |  |  |\n");
+            builder.Append("| CAP-466 | 標本 | PEPlugin.SDX.* のまとめ | 非対応 |  |  |\n");
+
+            return builder.ToString();
         }
 
         /// <summary>題材のアセンブリと記載を対象として置いた導入ディレクトリを作る。</summary>

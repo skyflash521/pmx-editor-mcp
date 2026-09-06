@@ -151,7 +151,7 @@ try {
     }
     $checks['ツールの説明文の照合'] = @{
         Needs = $buildOutput
-        Body = { & $dump tool-descriptions $editorDir $contract $roles $names $toolMap }
+        Body = { & $dump tool-descriptions $editorDir $ledger $contract $roles $names $toolMap }
     }
     $checks['サンプル値の照合'] = @{
         Needs = $buildOutput
@@ -163,7 +163,7 @@ try {
     }
     $checks['規則適合検査'] = @{
         Needs = $buildOutput
-        Body = { & $dump tool-mapping $editorDir $roles $toolMap $toolSchemas }
+        Body = { & $dump tool-mapping $editorDir $ledger $roles $toolMap $toolSchemas }
     }
 
     $listed = @(Get-ListedChecks)

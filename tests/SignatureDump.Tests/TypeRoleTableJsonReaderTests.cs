@@ -81,18 +81,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("担当群", error.Message);
         }
 
+        /// <summary>担当群は台帳が決める型では書かないので、欠けていても読める。</summary>
         [Fact]
-        public void ARoleWithAnIndependentToolWithoutAGroupStops()
+        public void ARoleWithAnIndependentToolWithoutAGroupIsRead()
         {
             foreach (string role in new[] { "connector", "handleTarget", "operationTarget" })
             {
-                FormatException error = Assert.Throws<FormatException>(
-                    () => ReadTypes(
-                        "{\"typeName\":\"N.A\",\"role\":\"" + role
-                            + "\",\"basis\":\"根拠。\",\"elementNoun\":\"alpha\""
-                            + ",\"elementNounPlural\":\"alphas\"}"));
+                IList<TypeRoleRecord> records = ReadTypes(
+                    "{\"typeName\":\"N.A\",\"role\":\"" + role
+                        + "\",\"basis\":\"根拠。\",\"elementNoun\":\"alpha\""
+                        + (role == "connector" ? string.Empty : ",\"elementNounPlural\":\"alphas\"")
+                        + "}");
 
-                Assert.Contains("group", error.Message);
+                Assert.Equal(CapabilityOwner.None, Assert.Single(records).Group);
             }
         }
 

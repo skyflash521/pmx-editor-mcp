@@ -98,11 +98,10 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(elementNounPlural));
             }
 
-            if (HasIndependentTool(role) != (group != CapabilityOwner.None))
+            if (!HasIndependentTool(role) && group != CapabilityOwner.None)
             {
                 throw new ArgumentException(
-                    "独立したツールを持つ役割だけが担当群を持つ。",
-                    HasIndependentTool(role) ? nameof(group) : nameof(role));
+                    "独立したツールを持つ役割だけが担当群を持つ。", nameof(group));
             }
 
             TypeName = typeName;
@@ -127,7 +126,9 @@ namespace PmxEditorMcp.SignatureDump
         public string ElementNounPlural { get; }
 
         /// <summary>
-        /// その型のツールが属する担当群。持たない役割では <see cref="CapabilityOwner.None"/>。
+        /// その型のツールが属する担当群。持たない役割と、台帳が決めるので表が書かない型では
+        /// <see cref="CapabilityOwner.None"/>——後者は
+        /// <see cref="TypeGroupRule.Resolve"/> が解決する。
         /// </summary>
         public CapabilityOwner Group { get; }
 

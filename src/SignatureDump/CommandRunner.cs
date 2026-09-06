@@ -200,8 +200,8 @@ namespace PmxEditorMcp.SignatureDump
                     + " <共通契約仕様書のパス> <能力対応表の正本のパス> <スキーマ正本のパス>");
             error.WriteLine(
                 ToolDescriptionsCommand
-                    + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス> <型役割表の正本のパス>"
-                    + " <日本語名の正本のパス> <能力対応表の正本のパス>");
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス> <能力対応表の正本のパス>");
             error.WriteLine(
                 SampleValuesCommand
                     + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
@@ -212,8 +212,8 @@ namespace PmxEditorMcp.SignatureDump
                     + " <能力対応表の正本のパス> <スキーマ正本のパス>");
             error.WriteLine(
                 ToolMappingCommand
-                    + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
-                    + " <能力対応表の正本のパス> <スキーマ正本のパス>");
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
+                        + " <能力対応表の正本のパス> <スキーマ正本のパス>");
         }
     }
 }

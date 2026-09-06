@@ -23,9 +23,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <paramref name="issuanceCandidates"/> には
         /// <see cref="HandleIssuanceEvidence.Candidates"/> の結果を、
         /// <paramref name="collectionCandidates"/> には
-        /// <see cref="ElementCollectionEvidence.Candidates"/> の結果を、
-        /// <paramref name="ledgerOwners"/> には
-        /// <see cref="TypeGroupEvidence.OwnersByType"/> の結果を渡すこと。
+        /// <see cref="ElementCollectionEvidence.Candidates"/> の結果を渡すこと。
         /// </summary>
         public static void Require(
             TypeRoleTable table,
@@ -34,8 +32,7 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> eventArgumentTypes,
             ICollection<string> connectorCandidates,
             IDictionary<string, HandleIssuanceKind> issuanceCandidates,
-            IDictionary<string, string> collectionCandidates,
-            IDictionary<string, ISet<CapabilityOwner>> ledgerOwners)
+            IDictionary<string, string> collectionCandidates)
         {
             if (table == null)
             {
@@ -72,11 +69,6 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(collectionCandidates));
             }
 
-            if (ledgerOwners == null)
-            {
-                throw new ArgumentNullException(nameof(ledgerOwners));
-            }
-
             IList<TypeRoleRecord> records = table.Types;
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
@@ -84,7 +76,6 @@ namespace PmxEditorMcp.SignatureDump
             RequireConnectorsNeedNoInstanceFromTheCaller(records, connectorCandidates);
             RequireIssuancesMatchTheEvidence(table.Issuances, issuanceCandidates);
             RequireCollectionsMatchTheEvidence(table.Collections, collectionCandidates);
-            RequireGroupsMatchTheLedger(records, ledgerOwners);
         }
 
         /// <summary>
@@ -179,37 +170,6 @@ namespace PmxEditorMcp.SignatureDump
                 throw new InvalidOperationException(
                     "呼び出し側が実体を用意しなければ呼べない型をコネクタ型にしている: "
                         + record.TypeName);
-            }
-        }
-
-        /// <summary>
-        /// 担当群が、台帳がその型へ与える担当と食い違わないことを求める。担当が一つに決まる型では
-        /// 表の値が書き手の判断でなく台帳の写しになるので、そこだけを突き合わせる。
-        /// </summary>
-        private static void RequireGroupsMatchTheLedger(
-            IList<TypeRoleRecord> records, IDictionary<string, ISet<CapabilityOwner>> ledgerOwners)
-        {
-            foreach (TypeRoleRecord record in records.Where(
-                r => TypeRoleRecord.HasIndependentTool(r.Role)))
-            {
-                ISet<CapabilityOwner> owners;
-                if (!ledgerOwners.TryGetValue(record.TypeName, out owners))
-                {
-                    continue;
-                }
-
-                if (owners.Count != 1)
-                {
-                    continue;
-                }
-
-                CapabilityOwner only = owners.First();
-                if (record.Group != only)
-                {
-                    throw new InvalidOperationException(
-                        "担当群が台帳の担当と合わない: " + record.TypeName
-                            + "(表: " + record.Group + " / 台帳: " + only + ")");
-                }
             }
         }
 

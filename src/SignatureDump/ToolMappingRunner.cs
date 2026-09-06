@@ -29,11 +29,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 4)
+            if (args.Length != 5)
             {
                 error.WriteLine(
-                    "引数は4つ: <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
-                        + " <能力対応表の正本のパス> <スキーマ正本のパス>");
+                    "引数は5つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <型役割表の正本のパス> <能力対応表の正本のパス> <スキーマ正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -45,14 +45,16 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
+            IList<CapabilityRecord> ledger;
             TypeRoleTable roles;
             ToolMap map;
             ToolSchemaTable schemas;
             try
             {
-                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[1], "型役割表の正本"));
-                map = ToolMapJsonReader.Read(Read(args[2], "能力対応表の正本"));
-                schemas = ToolSchemaJsonReader.Read(Read(args[3], "スキーマ正本"));
+                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[2], "型役割表の正本"));
+                map = ToolMapJsonReader.Read(Read(args[3], "能力対応表の正本"));
+                schemas = ToolSchemaJsonReader.Read(Read(args[4], "スキーマ正本"));
             }
             catch (Exception exception)
             {
@@ -74,6 +76,8 @@ namespace PmxEditorMcp.SignatureDump
 
             try
             {
+                roles = TypeGroupRule.Resolve(
+                    roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
                 ToolMappingGate.Require(
                     map,
                     roles,
