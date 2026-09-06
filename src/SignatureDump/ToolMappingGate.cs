@@ -6,20 +6,19 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力対応表とスキーマ正本が、ツール仕様書の写像の規則に合うことを確かめる。名前も埋め込み先も
+    /// 能力対応表とスキーマ正本が、ツール仕様書の写像の規則に合うことを確かめる。埋め込み先も
     /// 呼び分けの見分けも機械で決まるので、書き手が別のものを書けばここで落ちる。
     /// </summary>
     public static class ToolMappingGate
     {
-        /// <summary>生成のツールの動作の語の頭。要素名詞を続けて動作の語にする。</summary>
-        private const string CreatePrefix = "create_";
-
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
             ToolMap map,
             TypeRoleTable roles,
             IDictionary<string, SignatureRecord> signatures,
-            ToolSchemaTable schemas)
+            ToolSchemaTable schemas,
+            IDictionary<string, string> toolNames,
+            IDictionary<string, ComposedTool> composedTools)
         {
             if (map == null)
             {
@@ -41,19 +40,27 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(schemas));
             }
 
+            if (toolNames == null)
+            {
+                throw new ArgumentNullException(nameof(toolNames));
+            }
+
+            if (composedTools == null)
+            {
+                throw new ArgumentNullException(nameof(composedTools));
+            }
+
+            RequireNoComposedName(toolNames, composedTools);
+            RequireSameTools(schemas, map, toolNames, composedTools);
             RequireTellableBranches(schemas);
 
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
-            IDictionary<string, ISet<string>> colliding = Colliding(map, byType, signatures);
 
-            foreach (ToolMapRow row in map.Rows.OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
+            foreach (ToolMapRow row in map.Rows
+                .Where(r => r.EmbeddedIn != null)
+                .OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
             {
-                if (row.Tool == null && row.EmbeddedIn == null)
-                {
-                    continue;
-                }
-
                 SignatureRecord signature;
                 if (!signatures.TryGetValue(row.SignatureKey, out signature))
                 {
@@ -61,15 +68,64 @@ namespace PmxEditorMcp.SignatureDump
                         "行キーのシグネチャが公開APIの列挙に無い: " + row.SignatureKey);
                 }
 
-                if (row.Tool != null)
+                foreach (string embedded in row.EmbeddedIn)
                 {
-                    RequireSame(row.Tool, Expected(signature, byType, colliding));
+                    RequireEmbedded(embedded, signature, byType, map, toolNames);
                 }
+            }
+        }
 
-                foreach (string embedded in row.EmbeddedIn ?? new string[0])
-                {
-                    RequireEmbedded(embedded, signature, byType, map);
-                }
+        /// <summary>
+        /// 導いた名前が合成ツールの名前にならないことを求める。合成ツールは行を持たないので、
+        /// 同じ名前になると1つのツールが行と合成ツールの表の両方から現れる。
+        /// </summary>
+        private static void RequireNoComposedName(
+            IDictionary<string, string> toolNames, IDictionary<string, ComposedTool> composedTools)
+        {
+            string named = toolNames.Values.Where(composedTools.ContainsKey)
+                .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
+            if (named != null)
+            {
+                throw new InvalidOperationException(
+                    "導いた名前が合成ツールと同じになる行がある: " + named);
+            }
+        }
+
+        /// <summary>
+        /// 行から導いた名前と合成ツールに入出力の形が在ること、およびスキーマ正本が持つツールが
+        /// そのどちらかに在ることを求める。分岐を持つ合成ツールの形は、その分岐の出どころで
+        /// あるイベント行が無ければ書けないので、イベント行が在るときだけ求める。
+        /// </summary>
+        private static void RequireSameTools(
+            ToolSchemaTable schemas,
+            ToolMap map,
+            IDictionary<string, string> toolNames,
+            IDictionary<string, ComposedTool> composedTools)
+        {
+            HashSet<string> assigned = new HashSet<string>(
+                toolNames.Values, StringComparer.Ordinal);
+            HashSet<string> described = new HashSet<string>(
+                schemas.Tools.Select(t => t.Tool), StringComparer.Ordinal);
+            bool hasEvents = map.Rows.Any(r => r.EventType != null);
+
+            HashSet<string> wanted = new HashSet<string>(assigned, StringComparer.Ordinal);
+            wanted.UnionWith(
+                composedTools.Where(t => hasEvents || !t.Value.Branching).Select(t => t.Key));
+            string missing = wanted.Except(described, StringComparer.Ordinal)
+                .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
+            if (missing != null)
+            {
+                throw new InvalidOperationException("入出力の形が無いツールがある: " + missing);
+            }
+
+            HashSet<string> allowed = new HashSet<string>(assigned, StringComparer.Ordinal);
+            allowed.UnionWith(composedTools.Keys);
+            string extra = described.Except(allowed, StringComparer.Ordinal)
+                .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
+            if (extra != null)
+            {
+                throw new InvalidOperationException(
+                    "どの行の名前にもならないツールの形がある: " + extra);
             }
         }
 
@@ -200,16 +256,6 @@ namespace PmxEditorMcp.SignatureDump
                 + Convert.ToString(value, CultureInfo.InvariantCulture);
         }
 
-        private static void RequireSame(string written, string expected)
-        {
-            if (!string.Equals(expected, written, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException(
-                    "ツールの名前が規則から導いた名前と合わない: " + written
-                        + "(導いた名前: " + expected + ")");
-            }
-        }
-
         /// <summary>
         /// 埋め込み先が、宣言型の役割に応じた先であることを求める。埋め込み先は名前でしか指せない
         /// ので、綴りの取り違えはここでしか出ない。
@@ -218,7 +264,8 @@ namespace PmxEditorMcp.SignatureDump
             string embedded,
             SignatureRecord signature,
             IDictionary<string, TypeRoleRecord> byType,
-            ToolMap map)
+            ToolMap map,
+            IDictionary<string, string> toolNames)
         {
             TypeRoleRecord owner;
             if (!byType.TryGetValue(
@@ -244,8 +291,7 @@ namespace PmxEditorMcp.SignatureDump
             if (owner.Role == TypeRole.Dto)
             {
                 if (!branch
-                    && !map.Rows.Any(
-                        r => string.Equals(r.Tool, embedded, StringComparison.Ordinal)))
+                    && !toolNames.Values.Contains(embedded, StringComparer.Ordinal))
                 {
                     throw new InvalidOperationException(
                         "DTO型の埋め込み先が表のツールにもイベントの分岐にも無い: " + embedded);
@@ -269,94 +315,6 @@ namespace PmxEditorMcp.SignatureDump
                 : new[] { ToolVerb.List, ToolVerb.Update };
 
             return verbs.Select(v => ToolNameRule.OfRole(owner, v));
-        }
-
-        /// <summary>そのシグネチャのツールに期待する名前。</summary>
-        private static string Expected(
-            SignatureRecord signature,
-            IDictionary<string, TypeRoleRecord> byType,
-            IDictionary<string, ISet<string>> colliding)
-        {
-            TypeRoleRecord owner = Role(byType, signature.DeclaringType);
-            string group = ToolGroups.TokenOf(owner.Group);
-            if (signature.MemberKind == MemberKind.Constructor)
-            {
-                return ToolNameRule.Compose(group, CreatePrefix + owner.ElementNoun, null);
-            }
-
-            string actionWord = ToolNameRule.ActionWord(signature.MemberName);
-            bool qualify = owner.Role != TypeRole.Connector || Collides(colliding, group, actionWord);
-
-            return ToolNameRule.Compose(
-                group, actionWord, qualify ? owner.ElementNoun : null);
-        }
-
-        /// <summary>
-        /// 同じ担当群で2つ以上のツールに現れる動作の語。コネクタ型の出所修飾の要否を決める。同名の
-        /// オーバーロードは1つのツールへ集まるので、宣言型と動作の語の組を1件として数える。
-        /// </summary>
-        private static IDictionary<string, ISet<string>> Colliding(
-            ToolMap map,
-            IDictionary<string, TypeRoleRecord> byType,
-            IDictionary<string, SignatureRecord> signatures)
-        {
-            HashSet<string> seen = new HashSet<string>(StringComparer.Ordinal);
-            List<KeyValuePair<string, string>> words = new List<KeyValuePair<string, string>>();
-            foreach (ToolMapRow row in map.Rows.Where(r => r.Tool != null))
-            {
-                SignatureRecord signature;
-                if (!signatures.TryGetValue(row.SignatureKey, out signature))
-                {
-                    continue;
-                }
-
-                TypeRoleRecord owner;
-                if (!byType.TryGetValue(
-                        TypeDefinitionName.OfElement(signature.DeclaringType), out owner)
-                    || owner.Group == CapabilityOwner.None)
-                {
-                    continue;
-                }
-
-                string actionWord = ToolNameRule.ActionWord(signature.MemberName);
-                if (!seen.Add(signature.DeclaringType + " " + actionWord))
-                {
-                    continue;
-                }
-
-                words.Add(new KeyValuePair<string, string>(
-                    ToolGroups.TokenOf(owner.Group), actionWord));
-            }
-
-            return ToolNameRule.Colliding(words);
-        }
-
-        private static bool Collides(
-            IDictionary<string, ISet<string>> colliding, string group, string actionWord)
-        {
-            ISet<string> inGroup;
-            return colliding.TryGetValue(group, out inGroup) && inGroup.Contains(actionWord);
-        }
-
-        /// <summary>その型の役割。表に無いか担当群を持たなければ例外。</summary>
-        private static TypeRoleRecord Role(
-            IDictionary<string, TypeRoleRecord> byType, string typeName)
-        {
-            TypeRoleRecord role;
-            if (typeName == null
-                || !byType.TryGetValue(TypeDefinitionName.OfElement(typeName), out role))
-            {
-                throw new InvalidOperationException(
-                    "ツールの名前を導く型が型役割表に無い: " + (typeName ?? "型名無し"));
-            }
-
-            if (role.Group == CapabilityOwner.None)
-            {
-                throw new InvalidOperationException(
-                    "担当群を持たない型のツールがある: " + typeName);
-            }
-
-            return role;
         }
     }
 }

@@ -18,12 +18,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return spellings.ToDictionary(s => s, s => 1, StringComparer.Ordinal);
         }
 
-        /// <summary>ツールを1件持つ能力対応表。ツールの名前と分岐だけを差し替える。</summary>
-        private static string MapJson(string tool = Tool, string eventType = null)
+        /// <summary>行を1件持つ能力対応表。ツールを持つ行かイベント行かを選べる。</summary>
+        private static string MapJson(string eventType = null)
         {
             string row = eventType == null
                 ? @"{ ""signatureKey"": ""T.M()"", ""editKind"": ""read"",
-                      ""basis"": ""根拠。"", ""tool"": """ + tool + @""",
+                      ""basis"": ""根拠。"",
                       ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                         ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }"
                 : @"{ ""signatureKey"": ""T.E()"", ""editKind"": ""read"",
@@ -68,10 +68,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""output"": " + output + @" }] }";
         }
 
-        /// <summary>ツールを割り当てた行とイベント行を1つずつ持つ能力対応表。</summary>
+        /// <summary>ツールを持つ行とイベント行を1つずつ持つ能力対応表。</summary>
         private const string ToolAndEvent = @"{ ""rows"": [
   { ""signatureKey"": ""T.E()"", ""editKind"": ""read"", ""basis"": ""根拠。"", ""eventType"": ""view.click"" },
-  { ""signatureKey"": ""T.M()"", ""editKind"": ""read"", ""basis"": ""根拠。"", ""tool"": """ + Tool + @""",
+  { ""signatureKey"": ""T.M()"", ""editKind"": ""read"", ""basis"": ""根拠。"",
     ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
       ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
 
@@ -149,56 +149,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AcceptsATableThatCoversExactlyTheAssignedTools()
-        {
-            Require(SchemaJson(), MapJson());
-        }
-
-        [Fact]
-        public void AcceptsAComposedToolThatHasNoRow()
-        {
-            Require(Composed(false), SchemaJson("session_release_handle"), @"{ ""rows"": [] }");
-        }
-
-        [Fact]
-        public void RejectsAComposedToolWithoutASchema()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Composed(false), @"{ ""tools"": [] }", @"{ ""rows"": [] }"));
-
-            Assert.Contains("入出力の形が無いツール", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void ABranchingComposedToolWithoutASchemaIsNotDemandedWithoutEventRows()
-        {
-            Require(Composed(true), @"{ ""tools"": [] }", @"{ ""rows"": [] }");
-        }
-
-        [Fact]
-        public void RejectsABranchingComposedToolWithoutASchemaWhenEventRowsExist()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    Composed(true), @"{ ""tools"": [] }", MapJson(eventType: "view.click")));
-
-            Assert.Contains("入出力の形が無いツール", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsARowThatAssignsAComposedToolName()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    Composed(false),
-                    SchemaJson("session_release_handle"),
-                    MapJson("session_release_handle")));
-
-            Assert.Contains(
-                "合成ツールの名前を割り当てた行がある", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
         public void RejectsAComposedToolWhoseBranchingDoesNotMatchItsSchema()
         {
             IDictionary<string, ComposedTool> composed =
@@ -215,61 +165,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "分岐の欄が入出力の形と合わない", error.Message, StringComparison.Ordinal);
         }
 
-        [Fact]
-        public void RejectsAToolThatIsNeitherAssignedNorComposed()
-        {
-            string both = @"{ ""tools"": ["
-                + Described("model_clear_pmx") + "," + Described("session_release_handle") + "] }";
-
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Composed(false), both, @"{ ""rows"": [] }"));
-
-            Assert.Contains(
-                "どの行にも割り当てていないツール", error.Message, StringComparison.Ordinal);
-        }
-
-        /// <summary>入出力の形を1件だけ持つツールの項目。</summary>
-        private static string Described(string tool)
-        {
-            return @"{ ""tool"": """ + tool + @""",
-                ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
-                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }";
-        }
-
-        /// <summary>合成ツールを1件だけ持つ表。分岐の有無を選べる。</summary>
-        private static IDictionary<string, ComposedTool> Composed(bool branching)
-        {
-            return new Dictionary<string, ComposedTool>(StringComparer.Ordinal)
-            {
-                {
-                    branching ? "view_poll_events" : "session_release_handle",
-                    new ComposedTool(branching, "受け持つこと。")
-                },
-            };
-        }
-
         /// <summary>合成ツールを1件も持たない表。</summary>
         private static IDictionary<string, ComposedTool> None
         {
             get { return new Dictionary<string, ComposedTool>(StringComparer.Ordinal); }
-        }
-
-        [Fact]
-        public void RejectsAnAssignedToolThatTheTableDoesNotDescribe()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(@"{ ""tools"": [] }", MapJson()));
-
-            Assert.Contains("入出力の形が無い", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsADescribedToolThatNoRowAssigns()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(SchemaJson(), @"{ ""rows"": [] }"));
-
-            Assert.Contains("どの行にも割り当てていない", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -350,7 +249,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         ""eventType"": ""view.click"" },
                       { ""signatureKey"": ""T.M()"", ""editKind"": ""read"",
                         ""basis"": ""根拠。"",
-                        ""tool"": """ + Tool + @""",
                         ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                           ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] },
                       { ""signatureKey"": ""T.V()"", ""editKind"": ""read"",
@@ -358,7 +256,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         ""eventType"": ""view.move"" },
                       { ""signatureKey"": ""T.W()"", ""editKind"": ""read"",
                         ""basis"": ""根拠。"",
-                        ""tool"": ""view_poll_events"",
                         ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                           ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }"));
 

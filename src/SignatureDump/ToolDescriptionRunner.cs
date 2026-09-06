@@ -30,12 +30,12 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 6)
+            if (args.Length != 7)
             {
                 error.WriteLine(
-                    "引数は6つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
-                        + " <共通契約仕様書のパス>"
-                        + " <型役割表の正本のパス> <日本語名の正本のパス> <能力対応表の正本のパス>");
+                    "引数は7つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <共通契約仕様書のパス> <型役割表の正本のパス> <日本語名の正本のパス>"
+                        + " <共通契約割当の正本のパス> <能力対応表の正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -50,6 +50,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<CapabilityRecord> ledger;
             TypeRoleTable roles;
             IList<PropertyNameRecord> names;
+            CommonAssignmentTable assignments;
             ToolMap map;
             IDictionary<string, ComposedTool> composedTools;
             IDictionary<string, string> methodNotes;
@@ -60,7 +61,8 @@ namespace PmxEditorMcp.SignatureDump
                 composedTools = ComposedToolDocument.Read(Read(args[2], "共通契約仕様書"));
                 roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
                 names = PropertyNameJsonReader.ReadPropertyNames(Read(args[4], "日本語名の正本"));
-                map = ToolMapJsonReader.Read(Read(args[5], "能力対応表の正本"));
+                assignments = CommonAssignmentJsonReader.Read(Read(args[5], "共通契約割当の正本"));
+                map = ToolMapJsonReader.Read(Read(args[6], "能力対応表の正本"));
                 string document = Read(
                     SdkAssemblyLocator.GetDocumentPath(editorDirectory), "ドキュメントXML");
                 methodNotes = DocumentNoteReader.ReadMethods(document);
@@ -89,12 +91,16 @@ namespace PmxEditorMcp.SignatureDump
                 new Dictionary<string, ToolDescription>(StringComparer.Ordinal);
             try
             {
+                TypeRoleTable owned = TypeGroupRule.Resolve(
+                    roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
+                IDictionary<string, SignatureRecord> signatures = inventory.Signatures
+                    .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
                 materials = ToolDescriptionEvidence.Collect(
                     map,
-                    TypeGroupRule.Resolve(
-                        roles, TypeGroupEvidence.OwnersByType(ledger, inventory)),
+                    owned,
                     names,
                     inventory,
+                    ToolNameEvidence.Resolve(map, owned, assignments, signatures),
                     ToolMapEvidence.ContractNotesBySignature(
                         ToolMapEvidence.ProvidedOwners(
                             LedgerPopulation.Resolve(ledger, inventory).Owners, ledger),

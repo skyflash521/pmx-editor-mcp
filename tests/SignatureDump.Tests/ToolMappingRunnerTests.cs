@@ -26,6 +26,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string EmptyMap = "{\"rows\":[]}\n";
 
+        /// <summary>合成ツールを1件だけ持つ共通契約仕様書。</summary>
+        private const string Contract =
+            "### 合成ツール\n\n| ツール | 分岐 | 受け持つこと |\n|---|---|---|\n"
+            + "| `session_release_handle` | 持たない | 解放する |\n";
+
+        /// <summary>行を持たない共通契約割当の正本。</summary>
+        private const string EmptyAssignments = "{\"assignments\":[]}\n";
+
+        /// <summary>合成ツールの形だけを持つスキーマ正本。</summary>
+        private const string ComposedSchemas =
+            "{\"tools\":[{\"tool\":\"session_release_handle\""
+            + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
+            + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}}]}\n";
+
         private readonly string _root;
 
         public ToolMappingRunnerTests()
@@ -49,7 +63,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 4, 6 })
+            foreach (int count in new[] { 0, 1, 2, 3, 4, 5, 6, 8 })
             {
                 StringWriter error = new StringWriter();
 
@@ -121,7 +135,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ToolMappingRunner.Run(
-                Arguments(Assigned()), new StringWriter(), error);
+                Arguments(EmbeddedGone()), new StringWriter(), error);
 
             Assert.Equal(ExitCodes.Unresolved, code);
             Assert.Contains("規則に合わない", error.ToString(), StringComparison.Ordinal);
@@ -139,7 +153,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string line = Assert.Single(
                 output.ToString().Split(
                     new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
-            Assert.Equal("照合した: ツールを持つ行 0 件・埋め込み先 0 件・呼び分け 0 件", line);
+            Assert.Equal("照合した: ツールを持つ行 0 件・埋め込み先 0 件・呼び分け 1 件", line);
         }
 
         [Fact]
@@ -172,17 +186,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TheSummaryCountsTheBranches()
         {
             string[] args = Arguments(EmptyMap);
-            args[4] = Write(
+            args[6] = Write(
                 "branches.json",
-                "{\"tools\":[{\"tool\":\"model_list_samples\""
-                    + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
+                "{\"tools\":[{\"tool\":\"session_release_handle\""
+                    + ",\"branches\":[{\"branch\":\"first\",\"inputs\":[]},"
+                    + "{\"branch\":\"second\",\"inputs\":["
+                    + "{\"name\":\"handles\",\"origin\":\"hostInput\""
+                    + ",\"shape\":\"number\",\"required\":true}]}]"
                     + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}}]}\n");
             StringWriter output = new StringWriter();
 
             int code = ToolMappingRunner.Run(args, output, new StringWriter());
 
             Assert.Equal(ExitCodes.Success, code);
-            Assert.Contains("呼び分け 1 件", output.ToString(), StringComparison.Ordinal);
+            Assert.Contains("呼び分け 2 件", output.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -216,15 +233,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        /// <summary>列挙に無い行キーへツールを割り当てた能力対応表。</summary>
-        private static string Assigned()
+        /// <summary>列挙に無い行キーが埋め込み先を持つ能力対応表。</summary>
+        private static string EmbeddedGone()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"editKind\":\"read\""
-                + ",\"basis\":\"題材の根拠。\""
-                + ",\"tool\":\"model_gone_vertex\""
-                + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
-                + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}\n";
+                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
+                + ",\"embeddedIn\":[\"model_list_samples\"]}]}\n";
         }
 
         /// <summary>
@@ -238,7 +252,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
                 + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}},"
                 + "{\"signatureKey\":\""
-                + "PmxEditorMcp.SignatureDump.Tests.Sample.ISampleApi.GetCount()\""
+                + "PmxEditorMcp.SignatureDump.Tests.Sample.ISampleApi.Value()\""
                 + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
                 + ",\"embeddedIn\":[\"model_list_samples\"]}]}\n";
         }
@@ -258,9 +272,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 EditorDirectory(),
                 Write("ledger.md", Ledger(typeof(ToolMappingRunnerTests).Assembly)),
+                Write("contract.md", Contract),
                 Write("roles.json", Roles),
+                Write("assignments.json", EmptyAssignments),
                 Write("map.json", map),
-                Write("schemas.json", "{\"tools\":[]}\n"),
+                Write("schemas.json", ComposedSchemas),
             };
         }
 

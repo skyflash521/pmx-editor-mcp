@@ -13,20 +13,32 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Key = Vertex + ".Move(System.Single)";
 
-        /// <summary>ツールを1件割り当てた行を持つ能力対応表。</summary>
-        private static string MapJson(string tool = Tool, string signatureKey = Key)
+        /// <summary>ツールを持つ行を1つだけ持つ能力対応表。</summary>
+        private static string MapJson(string signatureKey = Key)
         {
-            return @"{ ""rows"": [" + Row(tool, signatureKey) + "] }";
+            return @"{ ""rows"": [" + Row(signatureKey) + "] }";
         }
 
-        /// <summary>ツールを1件割り当てた行。</summary>
-        private static string Row(string tool, string signatureKey)
+        /// <summary>ツールを持つ行。名前は行が書かないので、引く表の側で与える。</summary>
+        private static string Row(string signatureKey)
         {
             return @"{ ""signatureKey"": """ + signatureKey + @""",
                 ""editKind"": ""read"", ""basis"": ""根拠。"",
-                ""tool"": """ + tool + @""",
                 ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                   ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }";
+        }
+
+        /// <summary>行キーからツールの名前を引く表。行キーと名前を交互に並べる。</summary>
+        private static IDictionary<string, string> Names(params string[] pairs)
+        {
+            Dictionary<string, string> names =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            for (int index = 0; index < pairs.Length; index += 2)
+            {
+                names.Add(pairs[index], pairs[index + 1]);
+            }
+
+            return names;
         }
 
         /// <summary>入力の名前と応答の綴りを差し替えられる入出力の形。</summary>
@@ -192,13 +204,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string map = null,
             TypeRole role = TypeRole.Dto,
             IDictionary<string, SignatureRecord> signatures = null,
-            bool issues = false)
+            bool issues = false,
+            IDictionary<string, string> toolNames = null)
         {
             SchemaCorrespondenceGate.Require(
                 ToolMapJsonReader.Read(map ?? MapJson()),
                 ToolSchemaJsonReader.Read(schemas),
                 Roles(role, issues),
-                signatures ?? Signatures());
+                signatures ?? Signatures(),
+                toolNames ?? Names(Key, Tool));
         }
 
         /// <summary>発行する数を受け取るツール1件。`count` の入力を差し替えられる。</summary>
@@ -226,7 +240,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             SchemaCorrespondenceGate.Require(
                 ToolMapJsonReader.Read(
-                    @"{ ""rows"": [" + Row(Tool, Key) + "," + Row(otherTool, otherKey) + "] }"),
+                    @"{ ""rows"": [" + Row(Key) + "," + Row(otherKey) + "] }"),
                 ToolSchemaJsonReader.Read(
                     @"{ ""tools"": ["
                         + IssuingTool(Tool, @", ""bounds"": { ""minimum"": 1 }") + ","
@@ -242,7 +256,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         new HandleIssuanceRecord(otherKey, false, "根拠。"),
                     },
                     new ElementCollectionRecord[0]),
-                signatures);
+                signatures,
+                Names(Key, Tool, otherKey, otherTool));
         }
 
         [Fact]
@@ -287,17 +302,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains("引数に対応する入力が無い", error.Message, StringComparison.Ordinal);
             Assert.Contains("distance", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsARowWhoseSignatureIsNotInTheEnumeration()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    SchemaJson(),
-                    signatures: new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)));
-
-            Assert.Contains("公開APIの列挙に無い", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -507,7 +511,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
                     {
                         { key, signature },
-                    }));
+                    },
+                    Names(key, Tool)));
 
             Assert.Contains(
                 "操作対象型の受け手を指す入力が無い", error.Message, StringComparison.Ordinal);
@@ -525,7 +530,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolMapJsonReader.Read(map),
                 ToolSchemaJsonReader.Read(@"{ ""tools"": [] }"),
                 Roles(TypeRole.OperationTarget),
-                Signatures());
+                Signatures(),
+                new Dictionary<string, string>(StringComparer.Ordinal));
         }
 
         [Fact]
@@ -535,15 +541,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolSchemaTable schemas = ToolSchemaJsonReader.Read(SchemaJson());
             TypeRoleTable roles = Roles(TypeRole.Dto);
             IDictionary<string, SignatureRecord> signatures = Signatures();
+            IDictionary<string, string> names = Names(Key, Tool);
 
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(null, schemas, roles, signatures));
+                () => SchemaCorrespondenceGate.Require(null, schemas, roles, signatures, names));
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(map, null, roles, signatures));
+                () => SchemaCorrespondenceGate.Require(map, null, roles, signatures, names));
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(map, schemas, null, signatures));
+                () => SchemaCorrespondenceGate.Require(map, schemas, null, signatures, names));
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(map, schemas, roles, null));
+                () => SchemaCorrespondenceGate.Require(map, schemas, roles, null, names));
+            Assert.Throws<ArgumentNullException>(
+                () => SchemaCorrespondenceGate.Require(map, schemas, roles, signatures, null));
         }
     }
 }

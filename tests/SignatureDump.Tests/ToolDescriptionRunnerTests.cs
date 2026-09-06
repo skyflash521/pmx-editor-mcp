@@ -12,7 +12,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Vertex = "PEPlugin.Pmx.IPXVertex";
 
-        private const string ListTool = "model_list_vertices";
+        /// <summary>題材のアセンブリが持つ、型役割表に載せない型。</summary>
+        private const string Sample = "PmxEditorMcp.SignatureDump.Tests.Sample.ISampleApi";
 
         private const string Roles =
             "{\"types\":[{\"typeName\":\"" + Vertex + "\",\"role\":\"operationTarget\""
@@ -27,6 +28,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             + "| `session_release_handle` | 持たない | 解放する |\n";
 
         private const string EmptyMap = "{\"rows\":[]}\n";
+
+        /// <summary>行を持たない共通契約割当の正本。</summary>
+        private const string EmptyAssignments = "{\"assignments\":[]}\n";
 
         private readonly string _root;
 
@@ -51,7 +55,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 4, 5, 7 })
+            foreach (int count in new[] { 0, 1, 2, 3, 4, 5, 6, 8 })
             {
                 StringWriter error = new StringWriter();
 
@@ -69,9 +73,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ToolDescriptionRunner.Run(
-                new[] { Path.Combine(_root, "missing"), Write("l.md", Ledger(typeof(ToolDescriptionRunnerTests).Assembly)),
-                    Write("c.md", Contract), Write("r.json", Roles),
-                    Write("n.json", EmptyNames), Write("m.json", EmptyMap) },
+                new[]
+                {
+                    Path.Combine(_root, "missing"),
+                    Write("l.md", Ledger(typeof(ToolDescriptionRunnerTests).Assembly)),
+                    Write("c.md", Contract),
+                    Write("r.json", Roles),
+                    Write("n.json", EmptyNames),
+                    Write("a.json", EmptyAssignments),
+                    Write("m.json", EmptyMap),
+                },
                 new StringWriter(),
                 error);
 
@@ -149,7 +160,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ToolDescriptionRunner.Run(
-                Arguments(Map("PEPlugin.Pmx.IPXBone.Index()", ListTool)),
+                Arguments(Map(Sample + ".GetCount()")),
                 new StringWriter(),
                 error);
 
@@ -157,26 +168,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("規則に合わない", error.ToString(), StringComparison.Ordinal);
         }
 
-        [Fact]
-        public void ARowThatAssignsAComposedToolNameIsUnresolved()
-        {
-            StringWriter error = new StringWriter();
-
-            int code = ToolDescriptionRunner.Run(
-                Arguments(Map(Vertex + ".Index()", "session_release_handle")),
-                new StringWriter(),
-                error);
-
-            Assert.Equal(ExitCodes.Unresolved, code);
-            Assert.Contains(
-                "合成ツールの名前を割り当てた行がある", error.ToString(), StringComparison.Ordinal);
-        }
-
-        private static string Map(string signatureKey, string tool)
+        private static string Map(string signatureKey)
         {
             return "{\"rows\":[{\"signatureKey\":\"" + signatureKey + "\""
                 + ",\"editKind\":\"read\""
-                + ",\"basis\":\"題材の根拠。\",\"tool\":\"" + tool + "\""
+                + ",\"basis\":\"題材の根拠。\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
                 + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}\n";
         }
@@ -190,6 +186,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Write("contract.md", Contract),
                 Write("roles.json", Roles),
                 Write("names.json", EmptyNames),
+                Write("assignments.json", EmptyAssignments),
                 Write("map.json", map),
             };
         }

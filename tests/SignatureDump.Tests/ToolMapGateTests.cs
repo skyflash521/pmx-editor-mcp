@@ -91,7 +91,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
   { ""signatureKey"": """ + Key + @""",
     ""editKind"": ""read"",
     ""basis"": ""現在のPMXの複製を返すだけである。"",
-    ""tool"": ""model_list_vertices"",
     ""postcondition"": [" + judgement + @"] }
 ] }";
         }

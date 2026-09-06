@@ -1,7 +1,10 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -10,17 +13,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Vertex = "PEPlugin.Pmx.IPXVertex";
 
-        private const string ListTool = "model_list_vertices";
+        /// <summary>題材のアセンブリが持つ型。担当群は台帳が決めるので表に書かない。</summary>
+        private const string Sample = "PmxEditorMcp.SignatureDump.Tests.Sample.ISampleApi";
 
         private const string Roles =
             "{\"types\":[{\"typeName\":\"" + Vertex + "\",\"role\":\"operationTarget\""
                 + ",\"basis\":\"題材の根拠。\",\"elementNoun\":\"vertex\""
-                + ",\"elementNounPlural\":\"vertices\",\"group\":\"model\"}]"
+                + ",\"elementNounPlural\":\"vertices\"},"
+                + "{\"typeName\":\"" + Sample + "\",\"role\":\"connector\""
+                + ",\"basis\":\"題材の根拠。\",\"elementNoun\":\"sample\"}]"
                 + ",\"issuances\":[],\"collections\":[]}\n";
 
         private const string EmptyMap = "{\"rows\":[]}\n";
 
         private const string EmptySchemas = "{\"tools\":[]}\n";
+
+        /// <summary>行を持たない共通契約割当の正本。</summary>
+        private const string EmptyAssignments = "{\"assignments\":[]}\n";
 
         private readonly string _root;
 
@@ -45,7 +54,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 5 })
+            foreach (int count in new[] { 0, 1, 2, 3, 4, 5, 7 })
             {
                 StringWriter error = new StringWriter();
 
@@ -112,16 +121,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("読めない", error.ToString(), StringComparison.Ordinal);
         }
 
+        /// <summary>担当群を台帳が決める型でも、名前を導いて入出力の形と突き合わせられる。</summary>
         [Fact]
-        public void ARowWhoseSignatureIsNotEnumeratedIsUnresolved()
+        public void AToolOnATypeWhoseGroupTheLedgerDecidesIsChecked()
         {
             StringWriter error = new StringWriter();
 
             int code = SchemaCorrespondenceRunner.Run(
-                Arguments(Map(), EmptySchemas), new StringWriter(), error);
+                Arguments(SampleMap(), SampleSchemas()), new StringWriter(), error);
 
-            Assert.Equal(ExitCodes.Unresolved, code);
-            Assert.Contains("規則に合わない", error.ToString(), StringComparison.Ordinal);
+            Assert.Equal(string.Empty, error.ToString());
+            Assert.Equal(ExitCodes.Success, code);
         }
 
         [Fact]
@@ -194,25 +204,59 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}}]}";
         }
 
-        /// <summary>列挙に無い行キーへツールを割り当てた能力対応表。</summary>
-        private static string Map()
-        {
-            return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"editKind\":\"read\""
-                + ",\"basis\":\"題材の根拠。\",\"tool\":\"" + ListTool + "\""
-                + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
-                + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}\n";
-        }
-
         private string[] Arguments(string map, string schemas)
         {
             return new[]
             {
                 EditorDirectory(),
+                Write("ledger.md", Ledger(typeof(SchemaCorrespondenceRunnerTests).Assembly)),
                 Write("roles.json", Roles),
+                Write("assignments.json", EmptyAssignments),
                 Write("map.json", map),
                 Write("schemas.json", schemas),
             };
+        }
+
+        /// <summary>担当群を台帳が決める型のツールを1件持つ能力対応表。</summary>
+        private static string SampleMap()
+        {
+            return "{\"rows\":[{\"signatureKey\":\"" + Sample + ".GetCount()\""
+                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
+                + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
+                + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}\n";
+        }
+
+        /// <summary>その行から導く名前の入出力の形。</summary>
+        private static string SampleSchemas()
+        {
+            return "{\"tools\":[{\"tool\":\"model_get_count\""
+                + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
+                + ",\"output\":{\"origin\":\"sdkReturn\",\"shape\":\"number\"}}]}\n";
+        }
+
+        /// <summary>題材のアセンブリの公開型を提供として並べた台帳。担当はどれもモデルになる。</summary>
+        private static string Ledger(Assembly assembly)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append("| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n");
+            builder.Append("|---|---|---|---|---|---|\n");
+
+            int id = 1;
+            foreach (TypeRecord type in AssemblyEnumerator.Enumerate(assembly).Types)
+            {
+                string name = type.Name;
+                int open = name.IndexOf('<');
+                builder.Append(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "| CAP-{0:D3} | 標本 | {1} | 提供 | モデル |  |\n",
+                    id++,
+                    open < 0 ? name : name.Substring(0, open)));
+            }
+
+            builder.Append("| CAP-463 | 標本 | PEPlugin.Pmd.* のまとめ | 非対応 |  |  |\n");
+            builder.Append("| CAP-466 | 標本 | PEPlugin.SDX.* のまとめ | 非対応 |  |  |\n");
+
+            return builder.ToString();
         }
 
         /// <summary>題材のアセンブリを対象として置いた導入ディレクトリを作る。</summary>

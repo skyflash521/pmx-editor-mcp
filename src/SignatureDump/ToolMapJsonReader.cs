@@ -202,7 +202,7 @@ namespace PmxEditorMcp.SignatureDump
                 new[] { SignatureKeyName, EditKindName, BasisName },
                 new[]
                 {
-                    UpdateSpecName, ToolName, PostconditionName,
+                    UpdateSpecName, PostconditionName,
                     AssignmentName, TargetName, SlotBindingName, EventTypeName, EmbeddedInName,
                 });
 
@@ -221,7 +221,6 @@ namespace PmxEditorMcp.SignatureDump
                 editKind,
                 members.ContainsKey(UpdateSpecName) ? ReadUpdateSpec(members[UpdateSpecName]) : null,
                 Text(members[BasisName], BasisName),
-                members.ContainsKey(ToolName) ? Name(members[ToolName], ToolName) : null,
                 members.ContainsKey(PostconditionName)
                     ? ReadPostcondition(members[PostconditionName])
                     : null,

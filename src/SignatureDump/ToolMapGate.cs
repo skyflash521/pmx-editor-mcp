@@ -70,21 +70,12 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(assignments));
             }
 
-            ISet<string> assigned = new HashSet<string>(
-                assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal);
-            Dictionary<string, ToolMapRowKind> kinds =
-                new Dictionary<string, ToolMapRowKind>(StringComparer.Ordinal);
-            foreach (ToolMapRow row in map.Rows)
-            {
-                SignatureRecord signature = evidence.Signatures[row.SignatureKey];
-                kinds.Add(row.SignatureKey, RowKindRule.Of(
-                    signature.MemberKind,
-                    assigned.Contains(row.SignatureKey),
-                    evidence.EmbeddedTypes.Contains(
-                        TypeDefinitionName.OfElement(signature.DeclaringType))));
-            }
-
-            return kinds;
+            return RowKindRule.Resolve(
+                map,
+                evidence.Signatures,
+                evidence.EmbeddedTypes,
+                new HashSet<string>(
+                    assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal));
         }
 
         private static void RequireProvided(ToolMapRow row, ToolMapEvidence evidence)
@@ -205,7 +196,6 @@ namespace PmxEditorMcp.SignatureDump
         private static void RequireFields(ToolMapRow row, ToolMapRowKind kind)
         {
             bool dispatch = kind == ToolMapRowKind.DirectDispatch;
-            RequireField(row, row.Tool != null, dispatch, "tool");
             RequireField(row, row.Postcondition != null, dispatch, "postcondition");
             bool common = kind == ToolMapRowKind.CommonContract;
             RequireField(row, row.Assignment != null, common, "assignment");

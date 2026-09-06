@@ -30,7 +30,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             ToolSchemaTable schemas,
             TypeRoleTable roles,
-            IDictionary<string, SignatureRecord> signatures)
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> toolNames)
         {
             if (map == null)
             {
@@ -52,6 +53,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(signatures));
             }
 
+            if (toolNames == null)
+            {
+                throw new ArgumentNullException(nameof(toolNames));
+            }
+
             IDictionary<string, ToolSchema> byTool = schemas.Tools.ToDictionary(
                 t => t.Tool, t => t, StringComparer.Ordinal);
             HashSet<string> issuing = new HashSet<string>(
@@ -60,21 +66,17 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRole> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
 
-            foreach (ToolMapRow row in map.Rows.Where(r => r.Tool != null)
+            foreach (ToolMapRow row in map.Rows
+                .Where(r => toolNames.ContainsKey(r.SignatureKey))
                 .OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
             {
-                SignatureRecord signature;
-                if (!signatures.TryGetValue(row.SignatureKey, out signature))
-                {
-                    throw new InvalidOperationException(
-                        "行キーのシグネチャが公開APIの列挙に無い: " + row.SignatureKey);
-                }
-
+                SignatureRecord signature = signatures[row.SignatureKey];
+                string tool = toolNames[row.SignatureKey];
                 ToolSchema schema;
-                if (!byTool.TryGetValue(row.Tool, out schema))
+                if (!byTool.TryGetValue(tool, out schema))
                 {
                     throw new InvalidOperationException(
-                        "行が割り当てたツールの入出力の形が無い: " + row.Tool);
+                        "行が持つツールの入出力の形が無い: " + tool);
                 }
 
                 RequireArguments(signature, schema);

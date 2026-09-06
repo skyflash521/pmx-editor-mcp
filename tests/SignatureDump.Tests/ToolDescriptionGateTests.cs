@@ -147,21 +147,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ARowThatAssignsAComposedToolNameStops()
-        {
-            ToolDescriptionMaterial material = Material(
-                "session_release_handle", "session", "release_handle", null);
-            Dictionary<string, ToolDescription> descriptions = Composed(material);
-
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolDescriptionGate.Require(
-                    new[] { material }, descriptions, new[] { "session_release_handle" }));
-
-            Assert.Contains(
-                "合成ツールの名前を割り当てた行がある", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
         public void AComposedToolDescriptionOverTheLimitStops()
         {
             ToolDescriptionMaterial material = Material("model_list_vertices", "model", "list", "vertices");

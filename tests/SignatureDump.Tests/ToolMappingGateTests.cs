@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -8,35 +9,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Vertex = "PEPlugin.Pmx.IPXVertex";
 
-        private const string Connector = "PEPlugin.Pmx.IPXPmxConnector";
-
         private const string Key = Vertex + ".NormalizePmx()";
 
-        /// <summary>ツールを1件割り当てた行を持つ能力対応表。</summary>
-        private static string MapJson(string tool, string signatureKey = Key)
-        {
-            return @"{ ""rows"": [{ ""signatureKey"": """ + signatureKey + @""",
-                ""editKind"": ""read"", ""basis"": ""根拠。"",
-                ""tool"": """ + tool + @""",
-                ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
-                  ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
-        }
-
-        /// <summary>行を2件持つ能力対応表。コネクタ型のメソッドの衝突を作る。</summary>
-        private static string TwoRowMapJson(string first, string second)
-        {
-            return @"{ ""rows"": [
-                { ""signatureKey"": ""PEPlugin.Pmx.IPXOtherConnector.Save()"",
-                  ""editKind"": ""read"", ""basis"": ""根拠。"",
-                  ""tool"": """ + second + @""",
-                  ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
-                    ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] },
-                { ""signatureKey"": """ + Connector + @".Save()"",
-                  ""editKind"": ""read"", ""basis"": ""根拠。"",
-                  ""tool"": """ + first + @""",
-                  ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
-                    ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
-        }
+        /// <summary>題材の合成ツールの名前。</summary>
+        private const string Release = "session_release_handle";
 
         /// <summary>型を1件だけ持つ型役割表。</summary>
         private static TypeRoleTable Roles(
@@ -145,169 +121,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AcceptsAMethodNameWithTheSourceQualifier()
-        {
-            Require(
-                ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex")),
-                Roles(),
-                Signatures(Method(Key, Vertex, "NormalizePmx")));
-        }
-
-        [Fact]
-        public void RejectsAMethodNameWithoutTheSourceQualifier()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    ToolMapJsonReader.Read(MapJson("model_normalize_pmx")),
-                    Roles(),
-                    Signatures(Method(Key, Vertex, "NormalizePmx"))));
-
-            Assert.Contains(
-                "規則から導いた名前と合わない", error.Message, StringComparison.Ordinal);
-            Assert.Contains("model_normalize_pmx_vertex", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AConnectorMethodTakesNoQualifierWithoutACollision()
-        {
-            Require(
-                ToolMapJsonReader.Read(MapJson("model_save", Connector + ".Save()")),
-                Roles(TypeRole.Connector, Connector, "pmx_connector"),
-                Signatures(Method(Connector + ".Save()", Connector, "Save")));
-        }
-
-        [Fact]
-        public void CollidingConnectorMethodsTakeTheQualifier()
-        {
-            const string Other = "PEPlugin.Pmx.IPXOtherConnector";
-
-            Require(
-                ToolMapJsonReader.Read(
-                    TwoRowMapJson("model_save_pmx_connector", "model_save_other_connector")),
-                Roles(
-                    TypeRole.Connector,
-                    Connector,
-                    "pmx_connector",
-                    more: new[] { Type(Other, TypeRole.Connector, "other_connector") }),
-                Signatures(
-                    Method(Connector + ".Save()", Connector, "Save"),
-                    Method(Other + ".Save()", Other, "Save")));
-        }
-
-        [Fact]
-        public void RejectsACollidingConnectorMethodWithoutTheQualifier()
-        {
-            const string Other = "PEPlugin.Pmx.IPXOtherConnector";
-
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    ToolMapJsonReader.Read(
-                        TwoRowMapJson("model_save", "model_save_other_connector")),
-                    Roles(
-                        TypeRole.Connector,
-                        Connector,
-                        "pmx_connector",
-                        more: new[] { Type(Other, TypeRole.Connector, "other_connector") }),
-                    Signatures(
-                        Method(Connector + ".Save()", Connector, "Save"),
-                        Method(Other + ".Save()", Other, "Save"))));
-
-            Assert.Contains(
-                "model_save_pmx_connector", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AConstructorOfAHandleTargetTakesTheCreateName()
-        {
-            const string Model = "PEPlugin.Form.IPXUIModel";
-            string key = Model + "..ctor()";
-
-            Require(
-                ToolMapJsonReader.Read(MapJson("model_create_ui_model", key)),
-                Roles(
-                    TypeRole.HandleTarget,
-                    Model,
-                    "ui_model",
-                    issuances: new[]
-                    {
-                        new HandleIssuanceRecord(key, true, "根拠。"),
-                    }),
-                Signatures(Method(key, Model, ".ctor", Model, MemberKind.Constructor)));
-        }
-
-        [Fact]
-        public void AMethodThatMakesAHandleTargetKeepsItsMemberName()
-        {
-            const string Model = "PEPlugin.Form.IPXUIModel";
-            const string Builder = "PEPlugin.IPEBuilder";
-            string factory = Builder + ".CreateModel()";
-
-            Require(
-                ToolMapJsonReader.Read(MapJson("model_create_model", factory)),
-                Roles(
-                    TypeRole.HandleTarget,
-                    Model,
-                    "ui_model",
-                    issuances: new[]
-                    {
-                        new HandleIssuanceRecord(
-                            factory, true, "根拠。"),
-                    },
-                    more: new[] { Type(Builder, TypeRole.Connector, "builder") }),
-                Signatures(Method(factory, Builder, "CreateModel", Model)));
-        }
-
-        [Fact]
-        public void AConstructorTakesTheGroupOfItsDeclaringType()
-        {
-            const string Model = "PEPlugin.Form.IPXUIModel";
-            string key = Model + "..ctor()";
-
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    ToolMapJsonReader.Read(MapJson("view_create_ui_model", key)),
-                    Roles(TypeRole.HandleTarget, Model, "ui_model"),
-                    Signatures(Method(key, Model, ".ctor", Model, MemberKind.Constructor))));
-
-            Assert.Contains("model_create_ui_model", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AnArrayReturnDoesNotChangeTheDeclaringTypeLookup()
-        {
-            string key = Vertex + ".ToKeyArray()";
-
-            Require(
-                ToolMapJsonReader.Read(MapJson("model_to_key_array_vertex", key)),
-                Roles(),
-                Signatures(Method(key, Vertex, "ToKeyArray", Vertex + "[]")));
-        }
-
-        [Fact]
-        public void OverloadsOfOneConnectorMethodDoNotCollide()
-        {
-            string first = Connector + ".Save()";
-            string second = Connector + ".Save(System.String)";
-            string map = @"{ ""rows"": [
-                { ""signatureKey"": """ + first + @""",
-                  ""editKind"": ""read"", ""basis"": ""根拠。"",
-                  ""tool"": ""model_save"",
-                  ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
-                    ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] },
-                { ""signatureKey"": """ + second + @""",
-                  ""editKind"": ""read"", ""basis"": ""根拠。"",
-                  ""tool"": ""model_save"",
-                  ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
-                    ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
-
-            Require(
-                ToolMapJsonReader.Read(map),
-                Roles(TypeRole.Connector, Connector, "pmx_connector"),
-                Signatures(
-                    Method(first, Connector, "Save"), Method(second, Connector, "Save")));
-        }
-
-        [Fact]
         public void AnEmbeddedNameMustBeAToolOfTheDeclaringType()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -407,7 +220,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                   ""embeddedIn"": [""model_normalize_pmx_vertex""] },
                 { ""signatureKey"": """ + Key + @""",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
-                  ""tool"": ""model_normalize_pmx_vertex"",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
 
@@ -415,7 +227,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolMapJsonReader.Read(map),
                 Roles(more: new[] { Embedded(Dto, TypeRole.Dto) }),
                 Signatures(
-                    Property(Dto + ".Index", Dto), Method(Key, Vertex, "NormalizePmx")));
+                    Property(Dto + ".Index", Dto), Method(Key, Vertex, "NormalizePmx")),
+                toolNames: Names(Key, "model_normalize_pmx_vertex"));
         }
 
         [Fact]
@@ -443,47 +256,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(
-                    ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex")),
+                    ToolMapJsonReader.Read(EmbeddedMapJson("model_list_vertexes")),
                     Roles(),
                     Signatures()));
 
             Assert.Contains("公開APIの列挙に無い", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsAToolOnATypeWithoutARole()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex")),
-                    Roles(typeName: "PEPlugin.Pmx.IPXOther"),
-                    Signatures(Method(Key, Vertex, "NormalizePmx"))));
-
-            Assert.Contains("型役割表に無い", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsAToolOnATypeWithoutAGroup()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex")),
-                    new TypeRoleTable(
-                        new[]
-                        {
-                            new TypeRoleRecord(
-                                Vertex,
-                                TypeRole.Dto,
-                                "根拠。",
-                                "vertex",
-                                "vertexes",
-                                CapabilityOwner.None),
-                        },
-                        new HandleIssuanceRecord[0],
-                        new ElementCollectionRecord[0]),
-                    Signatures(Method(Key, Vertex, "NormalizePmx"))));
-
-            Assert.Contains("担当群を持たない型のツール", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -501,11 +278,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void RejectsTwoBranchesThatTakeTheSameRequiredInputs()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolMappingGate.Require(
-                    ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
-                    Roles(),
-                    Signatures(),
-                    ToolSchemaJsonReader.Read(TwoBranchSchemaJson("count"))));
+                () => RequireBranches(TwoBranchSchemaJson("count")));
 
             Assert.Contains(
                 "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
@@ -514,11 +287,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void BranchesThatTakeDifferentRequiredInputsPass()
         {
-            ToolMappingGate.Require(
-                ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
-                Roles(),
-                Signatures(),
-                ToolSchemaJsonReader.Read(TwoBranchSchemaJson("total")));
+            RequireBranches(TwoBranchSchemaJson("total"));
         }
 
         /// <summary>
@@ -762,43 +531,192 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>呼び分けの見分けだけを見る呼び出し。行を持たない能力対応表を渡す。</summary>
+        /// <summary>呼び分けの見分けだけを見る呼び出し。形の名前を導いた名前として渡す。</summary>
         private static void RequireBranches(string schemas)
         {
-            ToolMappingGate.Require(
+            Require(
                 ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
                 Roles(),
                 Signatures(),
-                ToolSchemaJsonReader.Read(schemas));
+                schemas: schemas,
+                toolNames: Names(Key, "model_list_vertices"));
+        }
+
+        [Fact]
+        public void ARowNameThatIsAComposedToolNameStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                    Roles(),
+                    Signatures(),
+                    schemas: Schemas(Release),
+                    toolNames: Names(Key, Release),
+                    composedTools: Composed(false)));
+
+            Assert.Contains(
+                "導いた名前が合成ツールと同じになる", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AComposedToolThatNoRowNamesPasses()
+        {
+            Require(
+                ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                Roles(),
+                Signatures(),
+                schemas: Schemas(Release),
+                composedTools: Composed(false));
+        }
+
+        [Fact]
+        public void RejectsAComposedToolWithoutASchema()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                    Roles(),
+                    Signatures(),
+                    composedTools: Composed(false)));
+
+            Assert.Contains("入出力の形が無いツール", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>分岐を持つ合成ツールの形は、分岐の出どころのイベント行が無ければ書けない。</summary>
+        [Fact]
+        public void ABranchingComposedToolWithoutASchemaIsNotDemandedWithoutEventRows()
+        {
+            Require(
+                ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                Roles(),
+                Signatures(),
+                composedTools: Composed(true));
+        }
+
+        [Fact]
+        public void RejectsABranchingComposedToolWithoutASchemaWhenEventRowsExist()
+        {
+            string map = @"{ ""rows"": [{ ""signatureKey"": """ + Vertex + @".Changed"",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
+                ""eventType"": ""view.click"" }] }";
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    ToolMapJsonReader.Read(map),
+                    Roles(),
+                    Signatures(),
+                    composedTools: Composed(true)));
+
+            Assert.Contains("入出力の形が無いツール", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsAToolThatIsNeitherNamedNorComposed()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                    Roles(),
+                    Signatures(),
+                    schemas: Schemas("model_clear_pmx", Release),
+                    composedTools: Composed(false)));
+
+            Assert.Contains(
+                "どの行の名前にもならないツールの形がある",
+                error.Message,
+                StringComparison.Ordinal);
         }
 
         [Fact]
         public void TheArgumentsAreChecked()
         {
-            ToolMap map = ToolMapJsonReader.Read(MapJson("model_normalize_pmx_vertex"));
+            ToolMap map = ToolMapJsonReader.Read(EmbeddedMapJson("model_list_vertexes"));
             TypeRoleTable roles = Roles();
             IDictionary<string, SignatureRecord> signatures =
-                Signatures(Method(Key, Vertex, "NormalizePmx"));
+                Signatures(Property(Vertex + ".Index"));
             ToolSchemaTable schemas = ToolSchemaJsonReader.Read(NoTools);
+            IDictionary<string, string> names =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            IDictionary<string, ComposedTool> composed =
+                new Dictionary<string, ComposedTool>(StringComparer.Ordinal);
 
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(null, roles, signatures, schemas));
+                () => ToolMappingGate.Require(null, roles, signatures, schemas, names, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(map, null, signatures, schemas));
+                () => ToolMappingGate.Require(map, null, signatures, schemas, names, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(map, roles, null, schemas));
+                () => ToolMappingGate.Require(map, roles, null, schemas, names, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(map, roles, signatures, null));
+                () => ToolMappingGate.Require(map, roles, signatures, null, names, composed));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolMappingGate.Require(map, roles, signatures, schemas, null, composed));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolMappingGate.Require(map, roles, signatures, schemas, names, null));
         }
 
-        /// <summary>入出力の形を持たないスキーマ正本。名前の照合だけを見る試験が使う。</summary>
+        /// <summary>入出力の形を持たないスキーマ正本。埋め込み先だけを見る試験が使う。</summary>
         private const string NoTools = @"{ ""tools"": [] }";
 
-        /// <summary>名前の照合だけを見る呼び出し。呼び分けを持たないスキーマ正本を渡す。</summary>
+        /// <summary>埋め込み先だけを見る呼び出し。渡さない材料は空で埋める。</summary>
         private static void Require(
-            ToolMap map, TypeRoleTable roles, IDictionary<string, SignatureRecord> signatures)
+            ToolMap map,
+            TypeRoleTable roles,
+            IDictionary<string, SignatureRecord> signatures,
+            string schemas = null,
+            IDictionary<string, string> toolNames = null,
+            IDictionary<string, ComposedTool> composedTools = null)
         {
-            ToolMappingGate.Require(map, roles, signatures, ToolSchemaJsonReader.Read(NoTools));
+            IDictionary<string, string> names =
+                toolNames ?? new Dictionary<string, string>(StringComparer.Ordinal);
+            ToolMappingGate.Require(
+                map,
+                roles,
+                signatures,
+                ToolSchemaJsonReader.Read(schemas ?? Schemas(names.Values.ToArray())),
+                names,
+                composedTools ?? new Dictionary<string, ComposedTool>(StringComparer.Ordinal));
+        }
+
+        /// <summary>行キーからツールの名前を引く表。行キーと名前を交互に並べる。</summary>
+        private static IDictionary<string, string> Names(params string[] pairs)
+        {
+            Dictionary<string, string> names =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            for (int index = 0; index < pairs.Length; index += 2)
+            {
+                names.Add(pairs[index], pairs[index + 1]);
+            }
+
+            return names;
+        }
+
+        /// <summary>合成ツールを1件だけ持つ表。分岐の有無を選べる。</summary>
+        private static IDictionary<string, ComposedTool> Composed(bool branching)
+        {
+            return new Dictionary<string, ComposedTool>(StringComparer.Ordinal)
+            {
+                { Release, new ComposedTool(branching, "受け持つこと。") },
+            };
+        }
+
+        /// <summary>入出力の形を1件だけ持つツールの項目。</summary>
+        private static string Described(string tool)
+        {
+            return @"{ ""tool"": """ + tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }";
+        }
+
+        /// <summary>入出力の形を並べたスキーマ正本。</summary>
+        private static string Schemas(params string[] tools)
+        {
+            List<string> described = new List<string>();
+            foreach (string tool in tools)
+            {
+                described.Add(Described(tool));
+            }
+
+            return @"{ ""tools"": [" + string.Join(",", described.ToArray()) + "] }";
         }
     }
 }

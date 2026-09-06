@@ -32,26 +32,9 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(composedTools));
             }
 
-            RequireNoComposedMaterial(materials, composedTools);
             RequireSameTools(materials, descriptions, composedTools);
             RequireLimit(descriptions);
             RequireSourceQualifier(materials, descriptions);
-        }
-
-        /// <summary>
-        /// 合成ツールの名前を持つ材料が無いことを求める。合成ツールは行を持たないので、行から材料が
-        /// 出れば同じ名前の説明文が2つの出所から現れ、どちらを載せるかが決まらない。
-        /// </summary>
-        private static void RequireNoComposedMaterial(
-            IList<ToolDescriptionMaterial> materials, ICollection<string> composedTools)
-        {
-            string collided = materials.Select(m => m.Tool).Where(composedTools.Contains)
-                .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
-            if (collided != null)
-            {
-                throw new InvalidOperationException(
-                    "合成ツールの名前を割り当てた行がある: " + collided);
-            }
         }
 
         /// <summary>

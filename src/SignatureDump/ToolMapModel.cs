@@ -323,7 +323,6 @@ namespace PmxEditorMcp.SignatureDump
             ToolMapEditKind editKind,
             UpdateSpec updateSpec,
             string basis,
-            string tool,
             IList<Postcondition> postcondition,
             CommonAssignmentKind? assignment,
             string target,
@@ -338,7 +337,6 @@ namespace PmxEditorMcp.SignatureDump
             EditKind = editKind;
             UpdateSpec = updateSpec;
             Basis = basis;
-            Tool = tool;
             Postcondition = postcondition == null
                 ? null
                 : new ReadOnlyCollection<Postcondition>(postcondition);
@@ -358,9 +356,6 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>編集の分類と反映の指定をそう決めた根拠の一文。</summary>
         public string Basis { get; }
-
-        /// <summary>ツールの名前。直接ディスパッチの行だけが持つ。</summary>
-        public string Tool { get; }
 
         /// <summary>事後条件。直接ディスパッチの行だけが持つ。</summary>
         public IList<Postcondition> Postcondition { get; }

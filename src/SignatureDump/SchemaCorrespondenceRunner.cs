@@ -29,10 +29,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 4)
+            if (args.Length != 6)
             {
                 error.WriteLine(
-                    "引数は4つ: <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
+                    "引数は6つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <型役割表の正本のパス> <共通契約割当の正本のパス>"
                         + " <能力対応表の正本のパス> <スキーマ正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
@@ -45,14 +46,18 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
+            IList<CapabilityRecord> ledger;
             TypeRoleTable roles;
+            CommonAssignmentTable assignments;
             ToolMap map;
             ToolSchemaTable schemas;
             try
             {
-                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[1], "型役割表の正本"));
-                map = ToolMapJsonReader.Read(Read(args[2], "能力対応表の正本"));
-                schemas = ToolSchemaJsonReader.Read(Read(args[3], "スキーマ正本"));
+                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[2], "型役割表の正本"));
+                assignments = CommonAssignmentJsonReader.Read(Read(args[3], "共通契約割当の正本"));
+                map = ToolMapJsonReader.Read(Read(args[4], "能力対応表の正本"));
+                schemas = ToolSchemaJsonReader.Read(Read(args[5], "スキーマ正本"));
             }
             catch (Exception exception)
             {
@@ -72,13 +77,15 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
+            IDictionary<string, string> toolNames;
             try
             {
-                SchemaCorrespondenceGate.Require(
-                    map,
-                    schemas,
-                    roles,
-                    inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal));
+                IDictionary<string, SignatureRecord> signatures = inventory.Signatures
+                    .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+                TypeRoleTable owned = TypeGroupRule.Resolve(
+                    roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
+                toolNames = ToolNameEvidence.Resolve(map, owned, assignments, signatures);
+                SchemaCorrespondenceGate.Require(map, schemas, owned, signatures, toolNames);
             }
             catch (InvalidOperationException exception)
             {
@@ -90,7 +97,7 @@ namespace PmxEditorMcp.SignatureDump
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
                 "照合した: ツールを持つ行 {0} 件・入出力の形 {1} 件",
-                map.Rows.Count(r => r.Tool != null),
+                toolNames.Count,
                 schemas.Tools.Count));
 
             return ExitCodes.Success;

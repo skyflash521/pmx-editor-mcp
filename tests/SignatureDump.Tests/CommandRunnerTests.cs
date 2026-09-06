@@ -487,7 +487,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string schemasPath = Path.Combine(_root, "schemas-tools.json");
             File.WriteAllText(
                 schemasPath,
-                "{\"tools\":[{\"tool\":\"model_list_vertices\""
+                "{\"tools\":[{\"tool\":\"view_poll_events\""
                     + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
                     + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}}]}");
 
@@ -554,6 +554,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Path.Combine(_root, "contract.md"),
                     Path.Combine(_root, "roles.json"),
                     Path.Combine(_root, "names.json"),
+                    Path.Combine(_root, "assignments.json"),
                     Path.Combine(_root, "map.json"),
                 },
                 new StringWriter(),
@@ -578,7 +579,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CommandRunner.ToolMappingCommand,
                     Path.Combine(_root, "no-editor"),
                     Path.Combine(_root, "ledger.md"),
+                    Path.Combine(_root, "contract.md"),
                     Path.Combine(_root, "roles.json"),
+                    Path.Combine(_root, "assignments.json"),
                     Path.Combine(_root, "map.json"),
                     Path.Combine(_root, "schemas.json"),
                 },
@@ -603,7 +606,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     CommandRunner.SchemaCorrespondenceCommand,
                     Path.Combine(_root, "no-editor"),
+                    Path.Combine(_root, "ledger.md"),
                     Path.Combine(_root, "roles.json"),
+                    Path.Combine(_root, "assignments.json"),
                     Path.Combine(_root, "map.json"),
                     Path.Combine(_root, "schemas.json"),
                 },
@@ -721,7 +726,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 CommandRunner.ToolDescriptionsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
-                    + " <型役割表の正本のパス> <日本語名の正本のパス> <能力対応表の正本のパス>",
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
@@ -732,13 +738,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.SchemaCorrespondenceCommand
-                    + " <PMXエディタ導入ディレクトリ> <型役割表の正本のパス>"
-                    + " <能力対応表の正本のパス> <スキーマ正本のパス>",
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ToolMappingCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
+                        + " <型役割表の正本のパス> <共通契約割当の正本のパス>"
                         + " <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);

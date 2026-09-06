@@ -151,7 +151,10 @@ try {
     }
     $checks['ツールの説明文の照合'] = @{
         Needs = $buildOutput
-        Body = { & $dump tool-descriptions $editorDir $ledger $contract $roles $names $toolMap }
+        Body = {
+            & $dump tool-descriptions $editorDir $ledger $contract $roles $names `
+                $assignments $toolMap
+        }
     }
     $checks['サンプル値の照合'] = @{
         Needs = $buildOutput
@@ -159,11 +162,17 @@ try {
     }
     $checks['スキーマ対応の照合'] = @{
         Needs = $buildOutput
-        Body = { & $dump schema-correspondence $editorDir $roles $toolMap $toolSchemas }
+        Body = {
+            & $dump schema-correspondence $editorDir $ledger $roles $assignments `
+                $toolMap $toolSchemas
+        }
     }
     $checks['規則適合検査'] = @{
         Needs = $buildOutput
-        Body = { & $dump tool-mapping $editorDir $ledger $roles $toolMap $toolSchemas }
+        Body = {
+            & $dump tool-mapping $editorDir $ledger $contract $roles $assignments `
+                $toolMap $toolSchemas
+        }
     }
 
     $listed = @(Get-ListedChecks)

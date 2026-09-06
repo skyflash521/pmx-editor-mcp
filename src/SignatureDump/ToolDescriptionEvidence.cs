@@ -17,6 +17,7 @@ namespace PmxEditorMcp.SignatureDump
             TypeRoleTable roles,
             IList<PropertyNameRecord> names,
             InventoryRecord inventory,
+            IDictionary<string, string> toolNames,
             IDictionary<string, string> contractNotes,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes)
@@ -39,6 +40,11 @@ namespace PmxEditorMcp.SignatureDump
             if (inventory == null)
             {
                 throw new ArgumentNullException(nameof(inventory));
+            }
+
+            if (toolNames == null)
+            {
+                throw new ArgumentNullException(nameof(toolNames));
             }
 
             if (contractNotes == null)
@@ -64,8 +70,8 @@ namespace PmxEditorMcp.SignatureDump
 
             List<ToolDescriptionMaterial> materials = new List<ToolDescriptionMaterial>();
             foreach (IGrouping<string, ToolMapRow> tool in map.Rows
-                .Where(r => r.Tool != null)
-                .GroupBy(r => r.Tool, StringComparer.Ordinal)
+                .Where(r => toolNames.ContainsKey(r.SignatureKey))
+                .GroupBy(r => toolNames[r.SignatureKey], StringComparer.Ordinal)
                 .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 materials.Add(Material(

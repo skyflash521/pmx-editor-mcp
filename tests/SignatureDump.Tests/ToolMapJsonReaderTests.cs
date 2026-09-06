@@ -28,10 +28,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static string Dispatch(string postcondition, string members)
         {
-            return Row(
-                "T.N()",
-                "read",
-                @", ""tool"": ""model_list_vertices"", ""postcondition"": " + postcondition + members);
+            return Row("T.N()", "read", @", ""postcondition"": " + postcondition + members);
         }
 
         private static string Map(params string[] rows)
@@ -60,7 +57,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("stateRead", row.Target);
             Assert.Equal(BindingSlot.PmxClone, row.SlotBinding.Returned);
             Assert.Null(row.UpdateSpec);
-            Assert.Null(row.Tool);
             Assert.Null(row.Postcondition);
         }
 
@@ -69,7 +65,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             ToolMapRow row = Single(Dispatch(CallLogOnly, string.Empty));
 
-            Assert.Equal("model_list_vertices", row.Tool);
             Postcondition judgement = Assert.Single(row.Postcondition);
             Assert.Equal(EffectType.None, judgement.EffectType);
             Assert.Equal(string.Empty, judgement.EffectKey);
@@ -145,6 +140,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AWrittenRowKindStops()
         {
             Rejects(Common(@", ""rowKind"": ""commonContract"""));
+        }
+
+        /// <summary>ツールの名前は担当群と動作の語と要素名詞から決まるので、書けば落ちる。</summary>
+        [Fact]
+        public void AWrittenToolNameStops()
+        {
+            Rejects(Common(@", ""tool"": ""model_list_vertices"""));
         }
 
         /// <summary>対象名は割当が決める集合から採るので、割当を伴わない行は読み取りが落とす。</summary>
@@ -615,11 +617,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RejectsAToolNameThatIsNotOfTheToolNameForm()
         {
-            Rejects(Row(
-                "T.N()",
-                "read",
-                @", ""tool"": ""Model_List"", ""postcondition"": " + CallLogOnly));
-
             Rejects(Dispatch(
                 @"[{ ""effectType"": ""stateWritten"", ""effectKey"": ""name"",
                      ""kind"": ""readback"", ""observerTool"": ""ModelListVertices"",
