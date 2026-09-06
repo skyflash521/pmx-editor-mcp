@@ -9,7 +9,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         /// <summary>イベントの並びを返す応答。形の無い `payload` はこの中に置かれる。</summary>
         private const string PollOutput = @"{ ""origin"": ""hostOutput"", ""members"": [
-            { ""name"": ""events"", ""origin"": ""hostOutput"", ""maxItems"": 1000,
+            { ""name"": ""events"", ""origin"": ""hostOutput"",
               ""element"": { ""origin"": ""hostOutput"", ""members"": [
                 { ""name"": ""payload"", ""origin"": ""hostOutput"" }] } }] }";
 
@@ -73,7 +73,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("number", input.Shape);
             Assert.True(input.Required);
             Assert.False(input.Injected);
-            Assert.Null(schema.Listing);
             Assert.Null(schema.Payloads);
             Assert.Null(schema.Output.Name);
         }
@@ -173,7 +172,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects("呼び出す側が渡す項目だけが", Table(Branch(
                 @"[{ ""name"": ""indices"", ""origin"": ""hostInput"", ""shape"": ""number"" },
-                   { ""name"": ""targets"", ""origin"": ""hostInput"", ""maxItems"": 2,
+                   { ""name"": ""targets"", ""origin"": ""hostInput"",
                      ""element"": { ""origin"": ""hostInput"",
                        ""members"": [{ ""name"": ""indices"", ""origin"": ""hostInput"",
                          ""shape"": ""number"" }] } }]",
@@ -185,7 +184,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects("呼び出す側が渡す項目だけが", Table(Branch(
                 @"[{ ""name"": ""targets"", ""origin"": ""hostInput"", ""required"": true,
-                     ""maxItems"": 2,
                      ""element"": { ""origin"": ""hostInput"",
                        ""members"": [{ ""name"": ""index"", ""origin"": ""hostInput"",
                          ""shape"": ""number"" }] } }]")));
@@ -202,7 +200,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Rejects("呼び出す側が渡す項目だけが", Table(Branch(
                 @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true,
-                     ""maxItems"": 2,
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"",
                        ""required"": true } }]")));
 
@@ -216,7 +213,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             SchemaItem input = OnlyInput(Table(Branch(
                 @"[{ ""name"": ""targets"", ""origin"": ""hostInput"", ""required"": true,
-                     ""maxItems"": 100, ""minItems"": 1,
+                     ""maxItems"": 100, ""source"": ""配布文書の該当節"", ""minItems"": 1,
                      ""element"": { ""origin"": ""hostInput"",
                        ""members"": [{ ""name"": ""index"", ""origin"": ""hostInput"",
                          ""shape"": ""number"", ""required"": true }] } }]")));
@@ -230,7 +227,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData(@"""shape"": ""number"", ""members"": []")]
         [InlineData(@"""shape"": ""number"", ""element"": { ""origin"": ""hostInput"",
-            ""shape"": ""number"" }, ""maxItems"": 2")]
+            ""shape"": ""number"" }, ""maxItems"": 2, ""source"": ""配布文書の該当節""")]
         public void RejectsAnItemThatUsesMoreThanOneFormAtOnce(string forms)
         {
             Rejects("項目の形は3つのうち1つ", Table(Branch(
@@ -285,7 +282,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects("項目の形は3つのうち1つ", Table(
                 Branch(@"[]"),
                 @"{ ""origin"": ""hostOutput"", ""members"": [
-                    { ""name"": ""events"", ""origin"": ""hostOutput"", ""maxItems"": 1000,
+                    { ""name"": ""events"", ""origin"": ""hostOutput"",
                       ""element"": { ""origin"": ""hostOutput"", ""members"": [
                         { ""name"": ""payload"", ""origin"": ""hostOutput"",
                           ""shape"": ""json"" }] } }] }",
@@ -301,37 +298,73 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Rejects("入力の項目だけが", Table(Branch(
                 @"[{ ""name"": ""targets"", ""origin"": ""hostInput"", ""required"": true,
-                     ""maxItems"": 2,
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"",
                        ""injected"": true } }]")));
         }
 
         [Fact]
-        public void RejectsAToolThatHoldsBothAListingAndEventBranches()
+        public void ReadsAnArrayWhoseCountIsDerivedAndSoIsNotWritten()
         {
-            Rejects(
-                "一覧の規則の対象外",
-                Table(
-                    Branch(@"[]"),
-                    Output,
-                    @", ""listing"": { ""limitDefault"": 50, ""limitMaximum"": 200 },
-                       ""payloads"": [{ ""type"": ""view.click"", ""members"": [] }]"));
+            SchemaItem input = OnlyInput(Table(Branch(
+                @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true,
+                     ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
+
+            Assert.Null(input.MaxItems);
+            Assert.Null(input.Source);
+        }
+
+        /// <summary>共通契約が定める値は転記元を要さないので、一次資料の要素数と同居できる。</summary>
+        [Fact]
+        public void ReadsACountFromThePrimarySourceBesideAValueTheCommonContractDecides()
+        {
+            SchemaItem input = OnlyInput(Table(Branch(
+                @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true,
+                     ""maxItems"": 4, ""source"": ""配布文書の該当節"",
+                     ""bounds"": { ""minimum"": 1 },
+                     ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
+
+            Assert.Equal(4, input.MaxItems);
+            Assert.Equal(1.0, input.Bounds.Minimum);
         }
 
         [Fact]
-        public void RejectsAnArrayWithoutAnItemCountLimit()
+        public void ReadsACountFromThePrimarySourceOnAnArrayTheSdkDeclares()
         {
-            Rejects("要素を並べる項目だけが要素数の上限を持つ", Table(Branch(
+            SchemaItem input = OnlyInput(Table(Branch(
+                @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""required"": true,
+                     ""maxItems"": 4, ""source"": ""配布文書の該当節"",
+                     ""element"": { ""origin"": ""sdkIn"", ""shape"": ""number"" } }]")));
+
+            Assert.Equal(4, input.MaxItems);
+            Assert.Null(input.Bounds);
+            Assert.False(input.HasDefault);
+        }
+
+        [Fact]
+        public void RefusesAnItemThatHoldsBothACountAndAValueFromTheSdk()
+        {
+            Rejects("SDKに由来する値と要素数の上限を同じ項目に持たない", Table(Branch(
+                @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""required"": true,
+                     ""maxItems"": 4, ""source"": ""配布文書の該当節"",
+                     ""bounds"": { ""minimum"": 1 },
+                     ""element"": { ""origin"": ""sdkIn"", ""shape"": ""number"" } }]")));
+        }
+
+        [Fact]
+        public void RejectsAnItemCountLimitThatNoPrimarySourceBacks()
+        {
+            Rejects("一次資料が要素数を定めている並びだけが要素数の上限を持つ", Table(Branch(
                 @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true,
+                     ""maxItems"": 4,
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
         }
 
         [Fact]
         public void RejectsAnItemCountLimitOnSomethingThatIsNotAnArray()
         {
-            Rejects("要素を並べる項目だけが要素数の上限を持つ", Table(Branch(
+            Rejects("一次資料が要素数を定めている並びだけが要素数の上限を持つ", Table(Branch(
                 @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""shape"": ""number"",
-                     ""required"": true, ""maxItems"": 2 }]")));
+                     ""required"": true, ""maxItems"": 2, ""source"": ""配布文書の該当節"" }]")));
         }
 
         [Theory]
@@ -343,7 +376,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects(fragment, Table(Branch(
                 @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true,
-                     ""maxItems"": " + maxItems + @",
+                     ""maxItems"": " + maxItems + @", ""source"": ""配布文書の該当節"",
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
         }
 
@@ -352,7 +385,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects("minItems は1でなければならない", Table(Branch(
                 @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true,
-                     ""maxItems"": 2, ""minItems"": 2,
+                     ""maxItems"": 2, ""source"": ""配布文書の該当節"",
+                     ""minItems"": 2,
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
         }
 
@@ -382,9 +416,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void RefusesASourceOnAnSdkItemThatHasNeitherADefaultNorBounds()
+        public void RefusesASourceOnAnItemThatHasNeitherAValueNorACount()
         {
-            Rejects("SDKに由来する既定と範囲は転記元を伴う", Table(Branch(
+            Rejects("転記元は、SDKに由来する値か一次資料が定めた要素数に伴う", Table(Branch(
                 @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""shape"": ""number"",
                      ""required"": true, ""source"": ""配布文書の該当節"" }]")));
         }
@@ -413,25 +447,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(fragment, Table(Branch(
                 @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""shape"": ""number"",
                      ""required"": true, ""bounds"": " + bounds + "}]")));
-        }
-
-        [Fact]
-        public void ReadsTheLimitsOfAToolThatReturnsAListing()
-        {
-            ToolSchema schema = Single(Table(
-                Branch(@"[]"), Output, @", ""listing"": { ""limitDefault"": 50, ""limitMaximum"": 200 }"));
-
-            Assert.Equal(50, schema.Listing.LimitDefault);
-            Assert.Equal(200, schema.Listing.LimitMaximum);
-        }
-
-        [Theory]
-        [InlineData(@"{ ""limitDefault"": 0, ""limitMaximum"": 200 }", "1以上でなければならない")]
-        [InlineData(@"{ ""limitDefault"": 300, ""limitMaximum"": 200 }", "既定が最大を超えている")]
-        public void RejectsLimitsThatAreNotAPositiveDefaultWithinTheMaximum(
-            string listing, string fragment)
-        {
-            Rejects(fragment, Table(Branch(@"[]"), Output, @", ""listing"": " + listing));
         }
 
         [Fact]

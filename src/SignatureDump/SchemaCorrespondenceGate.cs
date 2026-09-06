@@ -22,6 +22,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ハンドルで操作する型の受け手の入力の名前。</summary>
         private const string HandleSelector = "handles";
 
+        /// <summary>発行する数を受け取る入力の名前。</summary>
+        private const string CountName = "count";
+
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
             ToolMap map,
@@ -51,6 +54,9 @@ namespace PmxEditorMcp.SignatureDump
 
             IDictionary<string, ToolSchema> byTool = schemas.Tools.ToDictionary(
                 t => t.Tool, t => t, StringComparer.Ordinal);
+            HashSet<string> issuing = new HashSet<string>(
+                roles.Issuances.Where(i => i.Issues).Select(i => i.SignatureKey),
+                StringComparer.Ordinal);
             IDictionary<string, TypeRole> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
 
@@ -74,6 +80,10 @@ namespace PmxEditorMcp.SignatureDump
                 RequireArguments(signature, schema);
                 RequireReceiver(signature, schema, byType);
                 RequireOutput(signature, schema);
+                if (issuing.Contains(row.SignatureKey))
+                {
+                    RequireDerivedIssuanceLimit(schema);
+                }
             }
         }
 
@@ -134,6 +144,26 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new InvalidOperationException(
                     "コネクタ型なのに受け手を指す入力がある: " + schema.Tool);
+            }
+        }
+
+        /// <summary>
+        /// ハンドルを発行するツールの `count` が、上限を書いていないことを求める。上限は要素数の
+        /// 上限の規則が分岐ごとに導く値なので、書けば導き直しを忘れたときにずれが残る。
+        /// </summary>
+        private static void RequireDerivedIssuanceLimit(ToolSchema schema)
+        {
+            foreach (SchemaBranch branch in schema.Branches)
+            {
+                SchemaItem count = branch.Inputs.FirstOrDefault(
+                    i => string.Equals(i.Name, CountName, StringComparison.Ordinal));
+                if (count == null || count.Bounds == null || count.Bounds.Maximum == null)
+                {
+                    continue;
+                }
+
+                throw new InvalidOperationException(
+                    "発行する数の上限は導く値なので書かない: " + schema.Tool);
             }
         }
 

@@ -63,13 +63,12 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 並びの想定要素数。一次資料が定めた要素数だけを採るので、逆算した上限は使わない。
+        /// 並びの想定要素数。上限を持つのは一次資料が要素数を定めた並びだけで、逆算した上限は
+        /// 正本に現れない。
         /// </summary>
         private static int Elements(SchemaItem item)
         {
-            return item.Source != null && item.MaxItems.HasValue
-                ? item.MaxItems.Value
-                : AssumedElements;
+            return item.MaxItems ?? AssumedElements;
         }
     }
 }

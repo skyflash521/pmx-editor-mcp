@@ -18,9 +18,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             + "\n### 合成ツール\n\n| ツール | 分岐 | 受け持つこと |\n|---|---|---|\n"
             + "| `view_poll_events` | 持つ | 取り出す |\n";
 
-        private const string Architecture =
-            "## 応答サイズ予算の設定\n\n- 未設定時の既定は **100,000**——題材。\n";
-
         private const string EmptyMap = "{\"rows\":[]}\n";
 
         private const string EmptySchemas = "{\"tools\":[]}\n";
@@ -48,7 +45,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 5 })
+            foreach (int count in new[] { 0, 1, 2, 4 })
             {
                 StringWriter error = new StringWriter();
 
@@ -63,7 +60,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AMissingInputFileIsInputUnavailable()
         {
-            foreach (int missing in new[] { 0, 1, 2, 3 })
+            foreach (int missing in new[] { 0, 1, 2 })
             {
                 string[] args = Arguments(EmptyMap, EmptySchemas);
                 args[missing] = Path.Combine(_root, "gone");
@@ -97,7 +94,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[]
                 {
                     Write("c2.md", "## 値の表現\n"),
-                    Write("a2.md", Architecture),
                     Write("m2.json", EmptyMap),
                     Write("s2.json", EmptySchemas),
                 },
@@ -119,19 +115,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
             Assert.Contains("想定文字数", error.ToString(), StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void ADocumentWithoutTheBudgetDefaultIsInputUnavailable()
-        {
-            string[] args = Arguments(EmptyMap, EmptySchemas);
-            args[1] = Write("a3.md", "## 応答サイズ予算の設定\n\n- 既定は無い。\n");
-            StringWriter error = new StringWriter();
-
-            int code = ToolSchemaRunner.Run(args, new StringWriter(), error);
-
-            Assert.Equal(ExitCodes.InputUnavailable, code);
-            Assert.Contains("既定の予算が読めない", error.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -160,8 +143,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 output.ToString().Split(
                     new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
             Assert.Equal(
-                "照合した: ツール 1 件(呼び分け 1・項目 1・イベントの分岐 0)"
-                    + "・綴り 1 種・予算 100000 文字",
+                "照合した: ツール 1 件(呼び分け 1・項目 1・イベントの分岐 0)・綴り 1 種",
                 line);
         }
 
@@ -217,7 +199,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new[]
             {
                 Write("c.md", Contract),
-                Write("a.md", Architecture),
                 Write("m.json", map),
                 Write("s.json", schemas),
             };

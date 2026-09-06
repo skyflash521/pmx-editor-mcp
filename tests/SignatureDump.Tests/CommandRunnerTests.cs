@@ -482,12 +482,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + "|---|---|---|" + Environment.NewLine
                     + "| `session_release_handle` | 持たない | 解放する |" + Environment.NewLine
                     + "| `view_poll_events` | 持つ | 取り出す |" + Environment.NewLine);
-            string architecturePath = Path.Combine(_root, "schemas-architecture.md");
-            File.WriteAllText(
-                architecturePath,
-                "## 応答サイズ予算の設定" + Environment.NewLine
-                    + Environment.NewLine
-                    + "- 未設定時の既定は **100,000**——題材。" + Environment.NewLine);
             string mapPath = Path.Combine(_root, "schemas-map.json");
             File.WriteAllText(mapPath, "{\"rows\":[]}");
             string schemasPath = Path.Combine(_root, "schemas-tools.json");
@@ -502,7 +496,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     CommandRunner.ToolSchemasCommand,
                     contractPath,
-                    architecturePath,
                     mapPath,
                     schemasPath,
                 },
@@ -516,7 +509,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     CommandRunner.ToolSchemasCommand,
                     Path.Combine(_root, "none.md"),
-                    architecturePath,
                     mapPath,
                     schemasPath,
                 },
@@ -721,8 +713,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ToolSchemasCommand
-                    + " <共通契約仕様書のパス> <アーキテクチャ仕様書のパス>"
-                    + " <能力対応表の正本のパス> <スキーマ正本のパス>",
+                    + " <共通契約仕様書のパス> <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(

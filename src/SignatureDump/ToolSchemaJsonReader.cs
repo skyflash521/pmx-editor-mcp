@@ -18,8 +18,6 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string OutputName = "output";
 
-        private const string ListingName = "listing";
-
         private const string PayloadsName = "payloads";
 
         private const string BranchName = "branch";
@@ -35,10 +33,6 @@ namespace PmxEditorMcp.SignatureDump
         private const string TypeName = "type";
 
         private const string MembersName = "members";
-
-        private const string LimitDefaultName = "limitDefault";
-
-        private const string LimitMaximumName = "limitMaximum";
 
         private const string ShapeName = "shape";
 
@@ -136,7 +130,7 @@ namespace PmxEditorMcp.SignatureDump
             Dictionary<string, object> members = Members(
                 item,
                 new[] { ToolName, BranchesName, OutputName },
-                new[] { ListingName, PayloadsName });
+                new[] { PayloadsName });
 
             List<SchemaBranch> branches = new List<SchemaBranch>();
             List<string> names = new List<string>();
@@ -158,19 +152,12 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             bool polls = members.ContainsKey(PayloadsName);
-            if (polls && members.ContainsKey(ListingName))
-            {
-                throw new FormatException(
-                    "イベントの取り出しは一覧の規則の対象外なので " + ListingName + " を持たない。");
-            }
-
             try
             {
                 return new ToolSchema(
                     Name(members[ToolName], ToolName),
                     branches,
                     ReadItem(members[OutputName], false, false, polls),
-                    members.ContainsKey(ListingName) ? ReadListing(members[ListingName]) : null,
                     members.ContainsKey(PayloadsName) ? ReadPayloads(members[PayloadsName]) : null);
             }
             catch (ArgumentException exception)
@@ -309,21 +296,6 @@ namespace PmxEditorMcp.SignatureDump
             return payloads;
         }
 
-        private static ListingLimits ReadListing(object value)
-        {
-            Dictionary<string, object> members = Members(value, LimitDefaultName, LimitMaximumName);
-            try
-            {
-                return new ListingLimits(
-                    Count(members[LimitDefaultName], LimitDefaultName),
-                    Count(members[LimitMaximumName], LimitMaximumName));
-            }
-            catch (ArgumentException exception)
-            {
-                throw new FormatException(exception.Message, exception);
-            }
-        }
-
         private static List<SchemaItem> ReadItems(
             object value, string name, bool input, bool polls = false)
         {
@@ -389,22 +361,39 @@ namespace PmxEditorMcp.SignatureDump
             ItemOrigin origin = Lookup(Origins, members[OriginName], OriginName);
             bool fromSdk = FromSdk.Contains(origin);
             bool hasValue = members.ContainsKey(DefaultName) || members.ContainsKey(BoundsName);
-            if (fromSdk && hasValue != members.ContainsKey(SourceName))
+            bool hasSource = members.ContainsKey(SourceName);
+            bool hasCount = members.ContainsKey(MaxItemsName);
+            if (fromSdk && hasValue && !hasSource)
             {
                 throw new FormatException(
                     "SDKに由来する既定と範囲は転記元を伴う: " + Written(members, NameName));
             }
 
-            if (!fromSdk && members.ContainsKey(SourceName))
+            if (hasSource && !hasValue && !hasCount)
+            {
+                throw new FormatException(
+                    "転記元は、SDKに由来する値か一次資料が定めた要素数に伴う: "
+                        + Written(members, NameName));
+            }
+
+            if (hasSource && hasValue && !fromSdk && !hasCount)
             {
                 throw new FormatException(
                     "共通契約が定める値は転記元を持たない: " + Written(members, NameName));
             }
 
-            if (members.ContainsKey(ElementName) != members.ContainsKey(MaxItemsName))
+            if (hasCount && fromSdk && hasValue)
             {
                 throw new FormatException(
-                    "要素を並べる項目だけが要素数の上限を持つ: " + Written(members, NameName));
+                    "転記元は1つなので、SDKに由来する値と要素数の上限を同じ項目に持たない: "
+                        + Written(members, NameName));
+            }
+
+            if (hasCount && (!members.ContainsKey(ElementName) || !hasSource))
+            {
+                throw new FormatException(
+                    "一次資料が要素数を定めている並びだけが要素数の上限を持つ: "
+                        + Written(members, NameName));
             }
 
             object defaultValue = null;

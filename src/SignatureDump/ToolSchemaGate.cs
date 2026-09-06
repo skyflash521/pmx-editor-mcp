@@ -10,8 +10,11 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class ToolSchemaGate
     {
-        /// <summary>警告の枠。値の枠は予算からこれを引いたものになる。</summary>
-        private const int WarningRoom = 2000;
+        /// <summary>一覧が何件返すかを受け取る入力の名前。</summary>
+        private const string LimitName = "limit";
+
+        /// <summary>一覧が切り出す前の総数を返す項目の名前。</summary>
+        private const string TotalName = "total";
 
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
@@ -19,7 +22,6 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             ISet<string> spellings,
             IDictionary<string, int> lengths,
-            int budgetChars,
             IDictionary<string, ComposedTool> composedTools)
         {
             if (schemas == null)
@@ -53,11 +55,10 @@ namespace PmxEditorMcp.SignatureDump
             RequireSameBranching(schemas, composedTools);
             RequireOnePollingTool(schemas);
             RequireSamePayloads(schemas, map);
-            AssumedLength assumed = new AssumedLength(lengths);
             foreach (ToolSchema schema in schemas.Tools)
             {
                 RequireShapes(schema, spellings);
-                RequireListing(schema, assumed, budgetChars - WarningRoom);
+                RequireDerivedListingLimits(schema);
             }
         }
 
@@ -200,29 +201,41 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 件数は予算から決まるので、書かれた値が想定文字数から逆算した値と合うことまで求める。
+        /// 一覧を返すツールの `limit` が、既定と上限を書いていないことを求める。どちらも一覧の
+        /// 件数の規則が導く値なので、書けば導き直しを忘れたときにずれが残る。
         /// </summary>
-        private static void RequireListing(
-            ToolSchema schema, AssumedLength lengths, int valueChars)
+        private static void RequireDerivedListingLimits(ToolSchema schema)
         {
-            if (schema.Listing == null)
+            if (!IsListing(schema))
             {
                 return;
             }
 
-            ListingLimits derived = ListingLimitRule.Derive(schema, lengths, valueChars);
-            if (derived.LimitDefault != schema.Listing.LimitDefault
-                || derived.LimitMaximum != schema.Listing.LimitMaximum)
+            foreach (SchemaBranch branch in schema.Branches)
             {
+                SchemaItem limit = branch.Inputs.FirstOrDefault(
+                    i => string.Equals(i.Name, LimitName, StringComparison.Ordinal));
+                if (limit == null
+                    || (!limit.HasDefault && (limit.Bounds == null || limit.Bounds.Maximum == null)))
+                {
+                    continue;
+                }
+
                 throw new InvalidOperationException(
-                    "件数が想定文字数から逆算した値と合わない: " + schema.Tool
-                        + "(表: " + Written(schema.Listing) + " / 逆算: " + Written(derived) + ")");
+                    "一覧の件数は導く値なので既定と上限を持たない: " + schema.Tool);
             }
         }
 
-        private static string Written(ListingLimits limits)
+        /// <summary>応答が総数と切り出した並びを返す形か。一覧を返すツールはこの形を取る。</summary>
+        private static bool IsListing(ToolSchema schema)
         {
-            return "既定 " + limits.LimitDefault + "・最大 " + limits.LimitMaximum;
+            IList<SchemaItem> members = schema.Output.Members;
+
+            return members != null
+                && members.Any(m => string.Equals(m.Name, TotalName, StringComparison.Ordinal))
+                && members.Any(
+                    m => string.Equals(m.Name, ListingLimitRule.ItemsName, StringComparison.Ordinal)
+                        && m.Element != null);
         }
 
         /// <summary>綴りの閉じた集合は仕様書が持つので、そこに実在することまで求める。</summary>

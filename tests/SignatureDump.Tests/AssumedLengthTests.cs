@@ -42,7 +42,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AnArrayIsItsElementTimesEightWhenNoSourceFixesTheCount()
+        public void AnArrayIsItsElementTimesEightWhenNothingFixesTheCount()
         {
             Assert.Equal(5 * 8, Lengths.Of(Array(Scalar("boolean"), null)));
         }
@@ -93,7 +93,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new SchemaItem(
                 null, null, element, null, ItemOrigin.SdkReturn, null, null, false,
                 null, null, fixedCount.HasValue ? "配布文書の該当節" : null, false,
-                fixedCount ?? 100, null);
+                fixedCount, null);
         }
     }
 }

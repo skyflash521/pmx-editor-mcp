@@ -28,18 +28,17 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 4)
+            if (args.Length != 3)
             {
                 error.WriteLine(
-                    "引数は4つ: <共通契約仕様書のパス> <アーキテクチャ仕様書のパス>"
-                        + " <能力対応表の正本のパス> <スキーマ正本のパス>");
+                    "引数は3つ: <共通契約仕様書のパス> <能力対応表の正本のパス>"
+                        + " <スキーマ正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
             ISet<string> spellings;
             IDictionary<string, int> lengths;
             IDictionary<string, ComposedTool> composedTools;
-            int budgetChars;
             ToolMap map;
             ToolSchemaTable schemas;
             try
@@ -48,9 +47,8 @@ namespace PmxEditorMcp.SignatureDump
                 spellings = ValueShapeDocument.ReadSpellings(contract);
                 lengths = AssumedLengthDocument.Read(contract);
                 composedTools = ComposedToolDocument.Read(contract);
-                budgetChars = BudgetDocument.ReadDefault(Read(args[1], "アーキテクチャ仕様書"));
-                map = ToolMapJsonReader.Read(Read(args[2], "能力対応表の正本"));
-                schemas = ToolSchemaJsonReader.Read(Read(args[3], "スキーマ正本"));
+                map = ToolMapJsonReader.Read(Read(args[1], "能力対応表の正本"));
+                schemas = ToolSchemaJsonReader.Read(Read(args[2], "スキーマ正本"));
             }
             catch (Exception exception)
             {
@@ -60,7 +58,7 @@ namespace PmxEditorMcp.SignatureDump
 
             try
             {
-                ToolSchemaGate.Require(schemas, map, spellings, lengths, budgetChars, composedTools);
+                ToolSchemaGate.Require(schemas, map, spellings, lengths, composedTools);
             }
             catch (InvalidOperationException exception)
             {
@@ -71,14 +69,12 @@ namespace PmxEditorMcp.SignatureDump
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: ツール {0} 件(呼び分け {1}・項目 {2}・イベントの分岐 {3})"
-                    + "・綴り {4} 種・予算 {5} 文字",
+                "照合した: ツール {0} 件(呼び分け {1}・項目 {2}・イベントの分岐 {3})・綴り {4} 種",
                 schemas.Tools.Count,
                 schemas.Tools.Sum(t => t.Branches.Count),
                 schemas.Tools.Sum(t => t.AllItems.Count()),
                 schemas.Tools.Sum(t => t.Payloads == null ? 0 : t.Payloads.Count),
-                spellings.Count,
-                budgetChars));
+                spellings.Count));
 
             return ExitCodes.Success;
         }

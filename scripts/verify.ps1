@@ -24,7 +24,6 @@ $toolMap = "$specs/pmx-editor-mcp-tool-map.json"
 $toolSchemas = "$specs/pmx-editor-mcp-tool-schemas.json"
 $sampleValues = "$specs/pmx-editor-mcp-sample-values.json"
 $contract = "$specs/pmx-editor-mcp-common-contract.md"
-$architecture = "$specs/pmx-editor-mcp-architecture.md"
 $procedure = 'docs/conventions/verification.md'
 
 $baseline = [System.IO.Path]::GetTempFileName()
@@ -148,7 +147,7 @@ try {
     }
     $checks['スキーマ正本の照合'] = @{
         Needs = $buildOutput
-        Body = { & $dump tool-schemas $contract $architecture $toolMap $toolSchemas }
+        Body = { & $dump tool-schemas $contract $toolMap $toolSchemas }
     }
     $checks['ツールの説明文の照合'] = @{
         Needs = $buildOutput

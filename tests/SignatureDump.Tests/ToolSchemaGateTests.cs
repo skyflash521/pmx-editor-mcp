@@ -9,27 +9,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Tool = "model_list_vertices";
 
-        /// <summary>題材の応答サイズ予算。値の枠はここから警告の枠を引いたものになる。</summary>
-        private const int Budget = 100000;
-
         /// <summary>題材が使う綴り。想定文字数の表もこの並びから作る。</summary>
         private static readonly string[] Known = { "number", "text", "boolean" };
 
-        private static readonly Dictionary<string, int> BySpelling =
-            new Dictionary<string, int>(StringComparer.Ordinal)
-            {
-                { "number", 11 },
-                { "text", 256 },
-                { "boolean", 5 },
-            };
-
-        /// <summary>綴りの並びに対応する想定文字数の表。表に無い綴りは知らない値とする。</summary>
+        /// <summary>綴りの並びに対応する想定文字数の表。値は照合に加わらない。</summary>
         private static IDictionary<string, int> Lengths(string[] spellings)
         {
-            return spellings.ToDictionary(
-                s => s,
-                s => BySpelling.ContainsKey(s) ? BySpelling[s] : 1,
-                StringComparer.Ordinal);
+            return spellings.ToDictionary(s => s, s => 1, StringComparer.Ordinal);
         }
 
         /// <summary>ツールを1件持つ能力対応表。ツールの名前と分岐だけを差し替える。</summary>
@@ -56,6 +42,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + extra + "}] }";
         }
 
+        /// <summary>一覧の応答。総数と、要素を並べた切り出しを返す。</summary>
+        private const string ListingOutput = @"{ ""origin"": ""hostOutput"", ""members"": [
+                  { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
+                  { ""name"": ""items"", ""origin"": ""hostOutput"",
+                    ""element"": { ""origin"": ""hostOutput"", ""members"": [
+                      { ""name"": ""index"", ""origin"": ""hostOutput"",
+                        ""shape"": ""number"" }] } }] }";
+
+        /// <summary>
+        /// `limit` を受け取る形。呼び分けを2つ持ち、応答と分岐ごとの `limit` を差し替えられる。
+        /// </summary>
+        private static string LimitSchemaJson(
+            string first, string second = "", string output = ListingOutput)
+        {
+            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                ""branches"": [
+                  { ""branch"": ""first"", ""inputs"": [
+                    { ""name"": ""offset"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": false, ""default"": 0,
+                      ""bounds"": { ""minimum"": 0, ""maximum"": 100 } },
+                    { ""name"": ""limit"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": false" + first + @" }] },
+                  { ""branch"": ""second"", ""inputs"": [
+                    { ""name"": ""limit"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": false" + second + @" }] }],
+                ""output"": " + output + @" }] }";
+        }
+
         /// <summary>ツールを割り当てた行とイベント行を1つずつ持つ能力対応表。</summary>
         private const string ToolAndEvent = @"{ ""rows"": [
   { ""signatureKey"": ""T.E()"", ""capabilityIds"": [""CAP-001""],
@@ -66,22 +80,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
     ""basis"": ""根拠。"", ""tool"": """ + Tool + @""",
     ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
       ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
-
-        /// <summary>一覧を返すツール。要素は選び方の外の1項目と、選べる2項目を持つ。</summary>
-        private static string ListingJson(int limitDefault, int limitMaximum)
-        {
-            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
-                ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
-                ""output"": { ""origin"": ""hostOutput"", ""members"": [
-                  { ""name"": ""items"", ""origin"": ""hostOutput"", ""maxItems"": 100,
-                    ""element"": { ""origin"": ""hostOutput"", ""members"": [
-                      { ""name"": ""index"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
-                      { ""name"": ""name"", ""origin"": ""sdkReturn"", ""shape"": ""text"" },
-                      { ""name"": ""flag"", ""origin"": ""sdkReturn"",
-                        ""shape"": ""boolean"" }] } }] },
-                ""listing"": { ""limitDefault"": " + limitDefault + @",
-                               ""limitMaximum"": " + limitMaximum + @" } }] }";
-        }
 
         private static void Require(
             string schemas, string map, params string[] spellings)
@@ -101,8 +99,59 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new HashSet<string>(
                     spellings.Length == 0 ? Known : spellings, StringComparer.Ordinal),
                 Lengths(spellings.Length == 0 ? Known : spellings),
-                Budget,
                 composedTools);
+        }
+
+        [Fact]
+        public void AcceptsAListingWhoseCountIsLeftToTheRule()
+        {
+            Require(LimitSchemaJson(@", ""bounds"": { ""minimum"": 1 }"), MapJson());
+        }
+
+        /// <summary>
+        /// 一覧でない応答は総数か切り出しのどちらかを欠く。イベントの取り出しの件数のように、
+        /// 共通契約が値を定める `limit` はこの検査に掛からない。
+        /// </summary>
+        [Theory]
+        [InlineData(@"{ ""origin"": ""hostOutput"", ""members"": [
+            { ""name"": ""items"", ""origin"": ""hostOutput"",
+              ""element"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }")]
+        [InlineData(@"{ ""origin"": ""hostOutput"", ""members"": [
+            { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }")]
+        [InlineData(@"{ ""origin"": ""hostOutput"", ""members"": [
+            { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
+            { ""name"": ""items"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }")]
+        [InlineData(@"{ ""origin"": ""hostOutput"", ""members"": [
+            { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
+            { ""name"": ""events"", ""origin"": ""hostOutput"",
+              ""element"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }")]
+        public void AcceptsAWrittenCountOnSomethingThatIsNotAListing(string output)
+        {
+            string written = @", ""default"": 100, ""bounds"": { ""minimum"": 1, ""maximum"": 1000 }";
+
+            Require(LimitSchemaJson(written, written, output), MapJson());
+        }
+
+        /// <summary>既定と上限のどちらでも、どの呼び分けに書いても落ちる。</summary>
+        [Theory]
+        [InlineData(@", ""default"": 100", true)]
+        [InlineData(@", ""bounds"": { ""minimum"": 1, ""maximum"": 100 }", true)]
+        [InlineData(@", ""default"": 100", false)]
+        [InlineData(@", ""bounds"": { ""minimum"": 1, ""maximum"": 100 }", false)]
+        public void RejectsAListingThatWritesTheCountTheRuleDerives(
+            string limit, bool inTheFirstBranch)
+        {
+            string schemas = inTheFirstBranch
+                ? LimitSchemaJson(limit)
+                : LimitSchemaJson(string.Empty, limit);
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(schemas, MapJson()));
+
+            Assert.Contains(
+                "一覧の件数は導く値なので既定と上限を持たない",
+                error.Message,
+                StringComparison.Ordinal);
         }
 
         [Fact]
@@ -230,37 +279,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AcceptsListingCountsThatTheAssumedLengthsDerive()
-        {
-            // 値の枠は 100,000 − 2,000。一覧応答の枠を引いた 97,000 を、選び方の外の 19 と
-            // 選べる 264・13 で割る。
-            Require(
-                ListingJson(97000 / (19 + 264 + 13) / 2, 97000 / (19 + 13)),
-                MapJson(),
-                "number",
-                "text",
-                "boolean");
-        }
-
-        [Fact]
-        public void RejectsListingCountsThatDoNotMatchTheDerivedOnes()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    ListingJson(100, 97000 / (19 + 13)), MapJson(), "number", "text", "boolean"));
-
-            Assert.Contains("想定文字数から逆算した値と合わない", error.Message, StringComparison.Ordinal);
-
-            Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    ListingJson(97000 / (19 + 264 + 13) / 2, 97000 / (19 + 13) - 1),
-                    MapJson(),
-                    "number",
-                    "text",
-                    "boolean"));
-        }
-
-        [Fact]
         public void RejectsASpellingWhoseAssumedLengthIsMissing()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -269,7 +287,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     ToolMapJsonReader.Read(MapJson()),
                     new HashSet<string>(Known, StringComparer.Ordinal),
                     Lengths(new[] { "number", "text" }),
-                    Budget,
                     None));
 
             Assert.Contains("想定文字数を持たない綴り", error.Message, StringComparison.Ordinal);
@@ -284,7 +301,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     ToolMapJsonReader.Read(MapJson()),
                     new HashSet<string>(new[] { "number" }, StringComparer.Ordinal),
                     Lengths(Known),
-                    Budget,
                     None));
 
             Assert.Contains("綴りの表に無い想定文字数", error.Message, StringComparison.Ordinal);
@@ -305,8 +321,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => Require(
                 SchemaJson(shape: "number", extra: @", ""payloads"": [{ ""type"": ""view.click"",
                     ""members"": [{ ""name"": ""x"", ""origin"": ""sdkOut"",
-                      ""element"": { ""origin"": ""sdkOut"", ""shape"": ""date"" },
-                      ""maxItems"": 2 }] }]"),
+                      ""element"": { ""origin"": ""sdkOut"", ""shape"": ""date"" } }] }]"),
                 ToolAndEvent,
                 "number"));
 
@@ -393,15 +408,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, ComposedTool> composed = None;
 
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(null, map, spellings, lengths, Budget, composed));
+                () => ToolSchemaGate.Require(null, map, spellings, lengths, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(schemas, null, spellings, lengths, Budget, composed));
+                () => ToolSchemaGate.Require(schemas, null, spellings, lengths, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(schemas, map, null, lengths, Budget, composed));
+                () => ToolSchemaGate.Require(schemas, map, null, lengths, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(schemas, map, spellings, null, Budget, composed));
+                () => ToolSchemaGate.Require(schemas, map, spellings, null, composed));
             Assert.Throws<ArgumentNullException>(
-                () => ToolSchemaGate.Require(schemas, map, spellings, lengths, Budget, null));
+                () => ToolSchemaGate.Require(schemas, map, spellings, lengths, null));
         }
     }
 }

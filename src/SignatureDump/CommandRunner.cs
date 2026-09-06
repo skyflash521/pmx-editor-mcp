@@ -197,8 +197,7 @@ namespace PmxEditorMcp.SignatureDump
                     + " <型役割表の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>");
             error.WriteLine(
                 ToolSchemasCommand
-                    + " <共通契約仕様書のパス> <アーキテクチャ仕様書のパス>"
-                    + " <能力対応表の正本のパス> <スキーマ正本のパス>");
+                    + " <共通契約仕様書のパス> <能力対応表の正本のパス> <スキーマ正本のパス>");
             error.WriteLine(
                 ToolDescriptionsCommand
                     + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス> <型役割表の正本のパス>"

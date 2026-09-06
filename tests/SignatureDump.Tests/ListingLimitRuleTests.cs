@@ -15,9 +15,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
                 ""output"": { ""origin"": ""hostOutput"", ""members"": [
                   { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
-                  { ""name"": ""items"", ""origin"": ""hostOutput"", ""maxItems"": 100,
-                    ""element"": { ""origin"": ""hostOutput"", ""members"": " + members + @" } }] },
-                ""listing"": { ""limitDefault"": 1, ""limitMaximum"": 1 } }] }";
+                  { ""name"": ""items"", ""origin"": ""hostOutput"",
+                    ""element"": { ""origin"": ""hostOutput"", ""members"": " + members + @" } }] } }] }";
         }
 
         private static ToolSchema Read(string table)
@@ -33,6 +32,32 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 { "text", 256 },
                 { "boolean", 5 },
             });
+
+        [Theory]
+        [InlineData(0, 200, "limitDefault")]
+        [InlineData(-1, 200, "limitDefault")]
+        [InlineData(50, 0, "limitMaximum")]
+        public void ListingLimitsAreOneOrMore(
+            int limitDefault, int limitMaximum, string parameter)
+        {
+            ArgumentException error = Assert.Throws<ArgumentException>(
+                () => new ListingLimits(limitDefault, limitMaximum));
+
+            Assert.Equal(parameter, error.ParamName);
+        }
+
+        [Fact]
+        public void ListingLimitsKeepTheDefaultWithinTheMaximum()
+        {
+            Assert.Equal(
+                "limitDefault",
+                Assert.Throws<ArgumentException>(() => new ListingLimits(300, 200)).ParamName);
+
+            ListingLimits limits = new ListingLimits(200, 200);
+
+            Assert.Equal(200, limits.LimitDefault);
+            Assert.Equal(200, limits.LimitMaximum);
+        }
 
         [Fact]
         public void TheMaximumTakesTheSmallestChosenItemAndTheDefaultTakesThemAll()
@@ -92,14 +117,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(@"""output"": { ""origin"": ""hostOutput"", ""members"": [
             { ""name"": ""items"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }")]
         [InlineData(@"""output"": { ""origin"": ""hostOutput"", ""members"": [
-            { ""name"": ""items"", ""origin"": ""hostOutput"", ""maxItems"": 100,
+            { ""name"": ""items"", ""origin"": ""hostOutput"",
               ""element"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }")]
         public void AnOutputWithoutTheSlicedArrayStops(string output)
         {
             ToolSchema schema = Read(
                 @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
-                    ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }], " + output + @",
-                    ""listing"": { ""limitDefault"": 1, ""limitMaximum"": 1 } }] }");
+                    ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }], " + output + @" }] }");
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => ListingLimitRule.Derive(schema, Lengths, 98000));

@@ -16,12 +16,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>ツールを1件割り当てた行を持つ能力対応表。</summary>
         private static string MapJson(string tool = Tool, string signatureKey = Key)
         {
-            return @"{ ""rows"": [{ ""signatureKey"": """ + signatureKey + @""",
+            return @"{ ""rows"": [" + Row(tool, signatureKey) + "] }";
+        }
+
+        /// <summary>ツールを1件割り当てた行。</summary>
+        private static string Row(string tool, string signatureKey)
+        {
+            return @"{ ""signatureKey"": """ + signatureKey + @""",
                 ""capabilityIds"": [""CAP-001""], ""rowKind"": ""directDispatch"",
                 ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
                 ""tool"": """ + tool + @""",
                 ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
-                  ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
+                  ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }";
         }
 
         /// <summary>入力の名前と応答の綴りを差し替えられる入出力の形。</summary>
@@ -74,7 +80,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
                       ""required"": true },
                     { ""name"": ""handles"", ""origin"": ""hostInput"", ""required"": true,
-                      ""minItems"": 1, ""maxItems"": 8166,
+                      ""minItems"": 1,
                       ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }] },
                   { ""branch"": ""list"", ""inputs"": [
                     { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
@@ -108,8 +114,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
         }
 
+        /// <summary>
+        /// 発行する数を受け取る形。呼び分けを2つ持ち、`count` の入力を分岐ごとに差し替えられる。
+        /// </summary>
+        private static string IssuingSchemaJson(string first, string second = "")
+        {
+            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                ""branches"": [
+                  { ""branch"": ""first"", ""inputs"": [
+                    { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                      ""required"": true },
+                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": true" + first + @" }] },
+                  { ""branch"": ""second"", ""inputs"": [
+                    { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                      ""required"": true },
+                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                      ""required"": true" + second + @" }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
         /// <summary>役割を1件だけ持つ型役割表。独立したツールを持つ役割だけが群とツール名を持つ。</summary>
-        private static TypeRoleTable Roles(TypeRole role)
+        private static TypeRoleTable Roles(TypeRole role, bool issues = false)
         {
             bool independent = TypeRoleRecord.HasIndependentTool(role);
             return new TypeRoleTable(
@@ -127,7 +153,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                             ? new Dictionary<ToolVerb, string> { { ToolVerb.List, Tool } }
                             : new Dictionary<ToolVerb, string>()),
                 },
-                new HandleIssuanceRecord[0],
+                new[]
+                {
+                    new HandleIssuanceRecord(
+                        Key,
+                        issues,
+                        issues ? HandleIssuanceKind.Constructor : (HandleIssuanceKind?)null,
+                        "根拠。"),
+                },
                 new ElementCollectionRecord[0]);
         }
 
@@ -164,13 +197,86 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string schemas,
             string map = null,
             TypeRole role = TypeRole.Dto,
-            IDictionary<string, SignatureRecord> signatures = null)
+            IDictionary<string, SignatureRecord> signatures = null,
+            bool issues = false)
         {
             SchemaCorrespondenceGate.Require(
                 ToolMapJsonReader.Read(map ?? MapJson()),
                 ToolSchemaJsonReader.Read(schemas),
-                Roles(role),
+                Roles(role, issues),
                 signatures ?? Signatures());
+        }
+
+        /// <summary>発行する数を受け取るツール1件。`count` の入力を差し替えられる。</summary>
+        private static string IssuingTool(string tool, string count)
+        {
+            return @"{ ""tool"": """ + tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                  { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                    ""required"": true },
+                  { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                    ""required"": true" + count + @" }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }";
+        }
+
+        /// <summary>
+        /// 発行の検査は行キーで掛かる先を選ぶ。発行しない行のツールは、上限を書いても落ちない。
+        /// </summary>
+        [Fact]
+        public void LeavesTheWrittenCountOfTheRowThatDoesNotIssue()
+        {
+            const string otherKey = Vertex + ".Scale(System.Single)";
+            const string otherTool = "model_scale_vertices";
+            IDictionary<string, SignatureRecord> signatures = Signatures();
+            signatures[otherKey] = signatures[Key];
+
+            SchemaCorrespondenceGate.Require(
+                ToolMapJsonReader.Read(
+                    @"{ ""rows"": [" + Row(Tool, Key) + "," + Row(otherTool, otherKey) + "] }"),
+                ToolSchemaJsonReader.Read(
+                    @"{ ""tools"": ["
+                        + IssuingTool(Tool, @", ""bounds"": { ""minimum"": 1 }") + ","
+                        + IssuingTool(
+                            otherTool, @", ""bounds"": { ""minimum"": 1, ""maximum"": 8166 }")
+                        + "] }"),
+                new TypeRoleTable(
+                    new TypeRoleRecord[0],
+                    new[]
+                    {
+                        new HandleIssuanceRecord(
+                            Key, true, HandleIssuanceKind.Constructor, "根拠。"),
+                        new HandleIssuanceRecord(otherKey, false, null, "根拠。"),
+                    },
+                    new ElementCollectionRecord[0]),
+                signatures);
+        }
+
+        [Fact]
+        public void AcceptsAnIssuingToolWhoseCountIsLeftToTheRule()
+        {
+            Require(IssuingSchemaJson(@", ""bounds"": { ""minimum"": 1 }"), issues: true);
+        }
+
+        /// <summary>上限を書いた呼び分けが2つ目でも落ちる。発行しない行のツールは落ちない。</summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void RejectsAnIssuingToolThatWritesTheCountTheRuleDerives(bool inTheFirstBranch)
+        {
+            string written = @", ""bounds"": { ""minimum"": 1, ""maximum"": 8166 }";
+            string schemas = inTheFirstBranch
+                ? IssuingSchemaJson(written)
+                : IssuingSchemaJson(@", ""bounds"": { ""minimum"": 1 }", written);
+
+            Require(schemas);
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(schemas, issues: true));
+
+            Assert.Contains(
+                "発行する数の上限は導く値なので書かない",
+                error.Message,
+                StringComparison.Ordinal);
         }
 
         [Fact]

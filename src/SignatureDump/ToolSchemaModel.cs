@@ -117,13 +117,15 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>null を許すか。書かない項目では null。</summary>
         public bool? Nullable { get; }
 
-        /// <summary>SDKに由来する既定か範囲の転記元。持たない項目では null。</summary>
+        /// <summary>
+        /// SDKに由来する既定か範囲、または一次資料が定めた要素数の転記元。持たない項目では null。
+        /// </summary>
         public string Source { get; }
 
         /// <summary>ホストが自分で入れる引数か。</summary>
         public bool Injected { get; }
 
-        /// <summary>要素数の上限。配列でなければ null。</summary>
+        /// <summary>一次資料が定めた要素数の上限。導ける上限は正本に無いので null。</summary>
         public int? MaxItems { get; }
 
         /// <summary>空にできない項目が持つ1。ほかでは null。</summary>
@@ -226,35 +228,6 @@ namespace PmxEditorMcp.SignatureDump
         public IList<SchemaItem> Members { get; }
     }
 
-    /// <summary>一覧を返すツールが持つ件数の既定と最大。</summary>
-    public sealed class ListingLimits
-    {
-        public ListingLimits(int limitDefault, int limitMaximum)
-        {
-            if (limitDefault < 1)
-            {
-                throw new ArgumentException("件数は1以上でなければならない。", nameof(limitDefault));
-            }
-
-            if (limitMaximum < 1)
-            {
-                throw new ArgumentException("件数は1以上でなければならない。", nameof(limitMaximum));
-            }
-
-            if (limitDefault > limitMaximum)
-            {
-                throw new ArgumentException("件数の既定が最大を超えている。", nameof(limitDefault));
-            }
-
-            LimitDefault = limitDefault;
-            LimitMaximum = limitMaximum;
-        }
-
-        public int LimitDefault { get; }
-
-        public int LimitMaximum { get; }
-    }
-
     /// <summary>スキーマ正本の項目1件。</summary>
     public sealed class ToolSchema
     {
@@ -262,7 +235,6 @@ namespace PmxEditorMcp.SignatureDump
             string tool,
             IList<SchemaBranch> branches,
             SchemaItem output,
-            ListingLimits listing,
             IList<SchemaPayload> payloads)
         {
             PropertyRecord.RequireText(tool, nameof(tool));
@@ -279,7 +251,6 @@ namespace PmxEditorMcp.SignatureDump
             Tool = tool;
             Branches = new ReadOnlyCollection<SchemaBranch>(branches);
             Output = output;
-            Listing = listing;
             Payloads = payloads == null ? null : new ReadOnlyCollection<SchemaPayload>(payloads);
         }
 
@@ -288,9 +259,6 @@ namespace PmxEditorMcp.SignatureDump
         public IList<SchemaBranch> Branches { get; }
 
         public SchemaItem Output { get; }
-
-        /// <summary>一覧を返すツールだけが持つ。</summary>
-        public ListingLimits Listing { get; }
 
         /// <summary>イベントの取り出しだけが持つ。</summary>
         public IList<SchemaPayload> Payloads { get; }

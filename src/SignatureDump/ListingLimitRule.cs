@@ -4,9 +4,38 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
+    /// <summary>一覧の件数の規則が導いた既定と最大。</summary>
+    public sealed class ListingLimits
+    {
+        public ListingLimits(int limitDefault, int limitMaximum)
+        {
+            if (limitDefault < 1)
+            {
+                throw new ArgumentException("件数は1以上でなければならない。", nameof(limitDefault));
+            }
+
+            if (limitMaximum < 1)
+            {
+                throw new ArgumentException("件数は1以上でなければならない。", nameof(limitMaximum));
+            }
+
+            if (limitDefault > limitMaximum)
+            {
+                throw new ArgumentException("件数の既定が最大を超えている。", nameof(limitDefault));
+            }
+
+            LimitDefault = limitDefault;
+            LimitMaximum = limitMaximum;
+        }
+
+        public int LimitDefault { get; }
+
+        public int LimitMaximum { get; }
+    }
+
     /// <summary>
     /// 一覧が返す件数の既定と最大を、要素1件の想定文字数から逆算する。予算を変えれば値も変わるので、
-    /// 正本へ書いた値はこの規則で導いたものと突き合わせる。
+    /// この値は正本へ書かず、スキーマを組み立てるときにここで導く。
     /// </summary>
     public static class ListingLimitRule
     {

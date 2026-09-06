@@ -9,18 +9,22 @@
             {
               "name": "handles",
               "origin": "hostInput",
-              "element": { "origin": "hostInput", "shape": "number" },
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
               "required": true,
-              "minItems": 1,
-              "maxItems": 8166
+              "minItems": 1
             }
           ]
         }
       ],
       "output": {
         "origin": "hostOutput",
-        "element": { "origin": "hostOutput", "shape": "number" },
-        "maxItems": 8166
+        "element": {
+          "origin": "hostOutput",
+          "shape": "number"
+        }
       }
     }
   ]

@@ -624,14 +624,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
                 ""branches"": [
                   { ""branch"": ""first"", ""inputs"": [
-                    { ""name"": ""argsList"", ""origin"": ""hostInput"", ""required"": true,
-                      ""maxItems"": 8166" + least + @",
+                    { ""name"": ""argsList"", ""origin"": ""hostInput"", ""required"": true" + least + @",
                       ""element"": { ""origin"": ""hostInput"", ""members"": [
                         { ""name"": ""count"", ""origin"": ""sdkIn"", ""shape"": ""number"",
                           ""required"": true }] } }] },
                   { ""branch"": ""second"", ""inputs"": [
-                    { ""name"": ""argsList"", ""origin"": ""hostInput"", ""required"": true,
-                      ""maxItems"": 8166" + least + @",
+                    { ""name"": ""argsList"", ""origin"": ""hostInput"", ""required"": true" + least + @",
                       ""element"": { ""origin"": ""hostInput"", ""members"": [
                         { ""name"": """ + second + @""", ""origin"": ""sdkIn"",
                           ""shape"": ""number"", ""required"": true }] } }] }],
