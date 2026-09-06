@@ -118,19 +118,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AToolWithoutAnAssignedRowIsUnresolved()
-        {
-            StringWriter error = new StringWriter();
-
-            int code = ToolSchemaRunner.Run(
-                Arguments(EmptyMap, Schemas()), new StringWriter(), error);
-
-            Assert.Equal(ExitCodes.Unresolved, code);
-            Assert.Contains("スキーマ正本が規則に合わない。", error.ToString(), StringComparison.Ordinal);
-            Assert.Contains(Tool, error.ToString(), StringComparison.Ordinal);
-        }
-
-        [Fact]
         public void AMatchingTableWritesOneSummaryLineAndSucceeds()
         {
             StringWriter output = new StringWriter();
@@ -182,7 +169,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return "{\"rows\":[{\"signatureKey\":\"T.M()\""
                 + ",\"editKind\":\"read\""
-                + ",\"basis\":\"題材の根拠。\",\"tool\":\"" + Tool + "\""
+                + ",\"basis\":\"題材の根拠。\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
                 + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}";
         }

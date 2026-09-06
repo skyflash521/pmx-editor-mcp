@@ -135,6 +135,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ARowWhoseToolHasNoSchemaIsUnresolved()
+        {
+            StringWriter error = new StringWriter();
+
+            int code = SchemaCorrespondenceRunner.Run(
+                Arguments(SampleMap(), EmptySchemas), new StringWriter(), error);
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+            Assert.Contains(
+                "シグネチャとスキーマの対応が規則に合わない。",
+                error.ToString(),
+                StringComparison.Ordinal);
+            Assert.Contains("model_get_count", error.ToString(), StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AnEmptyMapWritesOneSummaryLineAndSucceeds()
         {
             StringWriter output = new StringWriter();
