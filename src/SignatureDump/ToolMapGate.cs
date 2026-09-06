@@ -31,18 +31,60 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(assignments));
             }
 
-            ISet<string> assigned = new HashSet<string>(
-                assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal);
             foreach (ToolMapRow row in map.Rows)
             {
                 RequireProvided(row, evidence);
-                RequireRowKind(row, evidence, assigned);
+            }
+
+            IDictionary<string, ToolMapRowKind> kinds = RowKinds(map, evidence, assignments);
+            foreach (ToolMapRow row in map.Rows)
+            {
+                RequireFields(row, kinds[row.SignatureKey]);
                 RequireUpdateKind(row, evidence);
                 RequireSetup(row, evidence);
                 RequireSdkArguments(row, evidence);
             }
 
-            RequireCommonContract(map, assignments);
+            RequireCommonContract(map, kinds, assignments);
+        }
+
+        /// <summary>
+        /// 行キーから、その行が採る種別を引く表。行は種別を書かないので、照合も要約もここから引く。
+        /// 行キーが公開API列挙に在ることを前提とする。
+        /// </summary>
+        public static IDictionary<string, ToolMapRowKind> RowKinds(
+            ToolMap map, ToolMapEvidence evidence, CommonAssignmentTable assignments)
+        {
+            if (map == null)
+            {
+                throw new ArgumentNullException(nameof(map));
+            }
+
+            if (evidence == null)
+            {
+                throw new ArgumentNullException(nameof(evidence));
+            }
+
+            if (assignments == null)
+            {
+                throw new ArgumentNullException(nameof(assignments));
+            }
+
+            ISet<string> assigned = new HashSet<string>(
+                assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal);
+            Dictionary<string, ToolMapRowKind> kinds =
+                new Dictionary<string, ToolMapRowKind>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows)
+            {
+                SignatureRecord signature = evidence.Signatures[row.SignatureKey];
+                kinds.Add(row.SignatureKey, RowKindRule.Of(
+                    signature.MemberKind,
+                    assigned.Contains(row.SignatureKey),
+                    evidence.EmbeddedTypes.Contains(
+                        TypeDefinitionName.OfElement(signature.DeclaringType))));
+            }
+
+            return kinds;
         }
 
         private static void RequireProvided(ToolMapRow row, ToolMapEvidence evidence)
@@ -159,24 +201,35 @@ namespace PmxEditorMcp.SignatureDump
             return null;
         }
 
-        /// <summary>
-        /// 行の種別が、行の外の材料から導いた種別と一致することを求める。書き手が種別を選べると、
-        /// 種別ごとの必須項目の検査そのものを取り違えた種別へ逃がせる。
-        /// </summary>
-        private static void RequireRowKind(
-            ToolMapRow row, ToolMapEvidence evidence, ISet<string> assigned)
+        /// <summary>導いた種別ごとに、持たなければならない項目と持ってはならない項目を求める。</summary>
+        private static void RequireFields(ToolMapRow row, ToolMapRowKind kind)
         {
-            SignatureRecord signature = evidence.Signatures[row.SignatureKey];
-            ToolMapRowKind derived = RowKindRule.Of(
-                signature.MemberKind,
-                assigned.Contains(row.SignatureKey),
-                evidence.EmbeddedTypes.Contains(
-                    TypeDefinitionName.OfElement(signature.DeclaringType)));
-            if (row.RowKind != derived)
+            bool dispatch = kind == ToolMapRowKind.DirectDispatch;
+            RequireField(row, row.Tool != null, dispatch, "tool");
+            RequireField(row, row.Postcondition != null, dispatch, "postcondition");
+            bool common = kind == ToolMapRowKind.CommonContract;
+            RequireField(row, row.Assignment != null, common, "assignment");
+            RequireField(row, row.Target != null, common, "target");
+            RequireField(row, row.SlotBinding != null, common, "slotBinding");
+            RequireField(
+                row, row.EventType != null, kind == ToolMapRowKind.EventBranch, "eventType");
+            RequireField(
+                row, row.EmbeddedIn != null, kind == ToolMapRowKind.SchemaEmbedded, "embeddedIn");
+        }
+
+        private static void RequireField(
+            ToolMapRow row, bool written, bool required, string name)
+        {
+            if (required && !written)
             {
                 throw new InvalidOperationException(
-                    "行の種別が導いた種別と合わない: " + row.SignatureKey
-                        + "(表: " + row.RowKind + " / 規則: " + derived + ")");
+                    "導いた種別が求める項目が無い: " + row.SignatureKey + "(" + name + ")");
+            }
+
+            if (!required && written)
+            {
+                throw new InvalidOperationException(
+                    "導いた種別が持てない項目がある: " + row.SignatureKey + "(" + name + ")");
             }
         }
 
@@ -184,12 +237,15 @@ namespace PmxEditorMcp.SignatureDump
         /// 共通契約割当行が、特別規則の表と行キーで完全一致し、割当も束縛も同じであることを求める。
         /// 対象名の実在を見るだけでは割当の取り違えを防げない。
         /// </summary>
-        private static void RequireCommonContract(ToolMap map, CommonAssignmentTable assignments)
+        private static void RequireCommonContract(
+            ToolMap map,
+            IDictionary<string, ToolMapRowKind> kinds,
+            CommonAssignmentTable assignments)
         {
             Dictionary<string, CommonAssignmentRecord> expected = assignments.Assignments
                 .ToDictionary(a => a.SignatureKey, a => a, StringComparer.Ordinal);
             List<ToolMapRow> rows = map.Rows
-                .Where(r => r.RowKind == ToolMapRowKind.CommonContract).ToList();
+                .Where(r => kinds[r.SignatureKey] == ToolMapRowKind.CommonContract).ToList();
 
             foreach (ToolMapRow row in rows)
             {

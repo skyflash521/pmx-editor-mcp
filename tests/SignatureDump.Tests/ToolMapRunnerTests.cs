@@ -122,7 +122,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Arguments(
                     Sdk(),
                     Assignments(),
-                    Map("N.A.Absent()", "commonContract", AssignmentMembers("t"))),
+                    Map("N.A.Absent()", AssignmentMembers("t"))),
                 new StringWriter(),
                 error);
 
@@ -142,7 +142,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Assignments(),
                     Map(
                         Releases()[0],
-                        "commonContract",
                         AssignmentMembers(ReleaseTool)
                             + ",\"updateSpec\":{\"update\":\"Materiaru\",\"refresh\":[]}",
                         "duplicateEdit")),
@@ -235,10 +234,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + "\",\"slotBinding\":{\"receiver\":\"targetHandle\",\"parameters\":{}}";
         }
 
-        private static string Map(
-            string key, string rowKind, string members, string editKind = "read")
+        private static string Map(string key, string members, string editKind = "read")
         {
-            return "{\"rows\":[{\"signatureKey\":\"" + key + "\",\"rowKind\":\"" + rowKind + "\",\"editKind\":\"" + editKind
+            return "{\"rows\":[{\"signatureKey\":\"" + key + "\",\"editKind\":\"" + editKind
                 + "\",\"basis\":\"題材の根拠。\"," + members + "}]}";
         }
 
@@ -251,7 +249,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 builder.Append(index++ == 0 ? string.Empty : ",")
                     .Append("{\"signatureKey\":\"").Append(key)
-                    .Append("\",\"rowKind\":\"commonContract\",\"editKind\":\"directChange\"")
+                    .Append("\",\"editKind\":\"directChange\"")
                     .Append(",\"basis\":\"題材の根拠。\",")
                     .Append(AssignmentMembers(ReleaseTool)).Append("}");
             }

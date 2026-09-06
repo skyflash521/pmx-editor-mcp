@@ -220,7 +220,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Assigned()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"rowKind\":\"directDispatch\",\"editKind\":\"read\""
+                + ",\"editKind\":\"read\""
                 + ",\"basis\":\"題材の根拠。\""
                 + ",\"tool\":\"model_gone_vertex\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
@@ -234,13 +234,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Embedded()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"rowKind\":\"commonContract\""
                 + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
                 + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
                 + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}},"
                 + "{\"signatureKey\":\""
                 + "PmxEditorMcp.SignatureDump.Tests.Sample.ISampleApi.GetCount()\""
-                + ",\"rowKind\":\"schemaEmbedded\""
                 + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
                 + ",\"embeddedIn\":[\"model_list_samples\"]}]}\n";
         }
@@ -249,7 +247,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string CommonContract()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"rowKind\":\"commonContract\""
                 + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
                 + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
                 + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}}]}\n";

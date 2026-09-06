@@ -23,7 +23,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Row(string tool, string signatureKey)
         {
             return @"{ ""signatureKey"": """ + signatureKey + @""",
-                ""rowKind"": ""directDispatch"",
                 ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""tool"": """ + tool + @""",
                 ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
@@ -518,7 +517,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARowWithoutAToolIsNotChecked()
         {
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Key + @""",
-                ""rowKind"": ""commonContract"",
                 ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""assignment"": ""internalFlow"", ""target"": ""connect"",
                 ""slotBinding"": { ""return"": ""runArgsClone"", ""parameters"": {} } }] }";

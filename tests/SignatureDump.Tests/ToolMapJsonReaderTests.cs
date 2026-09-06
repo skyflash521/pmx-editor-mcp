@@ -14,23 +14,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
             @"[{ ""effectType"": ""none"", ""effectKey"": """", ""kind"": ""callLogOnly"",
                  ""comparison"": ""exists"" }]";
 
-        /// <summary>行の種別に依らない項目だけを持つ行。種別ごとの項目は呼ぶ側が足す。</summary>
-        private static string Row(string key, string rowKind, string editKind, string members)
+        /// <summary>どの行も持つ項目だけの行。種別ごとの項目は呼ぶ側が足す。</summary>
+        private static string Row(string key, string editKind, string members)
         {
-            return @"{ ""signatureKey"": """ + key + @""", ""rowKind"": """ + rowKind + @""", ""editKind"": """ + editKind + @""",
+            return @"{ ""signatureKey"": """ + key + @""", ""editKind"": """ + editKind + @""",
                        ""basis"": ""根拠。""" + members + "}";
         }
 
         private static string Common(string members)
         {
-            return Row("T.M()", "commonContract", "read", ", " + CommonMembers + members);
+            return Row("T.M()", "read", ", " + CommonMembers + members);
         }
 
         private static string Dispatch(string postcondition, string members)
         {
             return Row(
                 "T.N()",
-                "directDispatch",
                 "read",
                 @", ""tool"": ""model_list_vertices"", ""postcondition"": " + postcondition + members);
         }
@@ -56,7 +55,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolMapRow row = Single(Common(string.Empty));
 
             Assert.Equal("T.M()", row.SignatureKey);
-            Assert.Equal(ToolMapRowKind.CommonContract, row.RowKind);
             Assert.Equal(ToolMapEditKind.Read, row.EditKind);
             Assert.Equal(CommonAssignmentKind.InternalFlow, row.Assignment);
             Assert.Equal("stateRead", row.Target);
@@ -85,7 +83,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ReadsAnEventRow()
         {
             ToolMapRow row = Single(Row(
-                "T.E()", "eventBranch", "read", @", ""eventType"": ""view.mouse_click"""));
+                "T.E()", "read", @", ""eventType"": ""view.mouse_click"""));
 
             Assert.Equal("view.mouse_click", row.EventType);
         }
@@ -95,7 +93,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             ToolMapRow row = Single(Row(
                 "T.P()",
-                "schemaEmbedded",
                 "read",
                 @", ""embeddedIn"": [""model_list_vertices"", ""model_update_vertices""]"));
 
@@ -140,40 +137,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RejectsAMissingRequiredMember()
         {
-            Rejects(@"{ ""signatureKey"": ""T.M()"", ""rowKind"": ""commonContract"", ""editKind"": ""read"", " + CommonMembers + "}");
+            Rejects(@"{ ""signatureKey"": ""T.M()"", ""editKind"": ""read"", " + CommonMembers + "}");
         }
 
+        /// <summary>行の種別は行の外の材料から導くので、書けば知らない項目として落ちる。</summary>
         [Fact]
-        public void RejectsAMemberThatTheRowKindCannotHave()
+        public void AWrittenRowKindStops()
         {
-            Rejects(Common(@", ""tool"": ""model_clear_pmx"""));
-            Rejects(Common(@", ""eventType"": ""view.mouse_click"""));
-            Rejects(Dispatch(CallLogOnly, @", ""embeddedIn"": [""model_list_vertices""]"));
+            Rejects(Common(@", ""rowKind"": ""commonContract"""));
         }
 
+        /// <summary>対象名は割当が決める集合から採るので、割当を伴わない行は読み取りが落とす。</summary>
         [Fact]
-        public void RequiresTheToolAndThePostconditionOnADispatchRow()
+        public void RejectsATargetWithoutAnAssignment()
         {
-            Rejects(Row("T.N()", "directDispatch", "read", @", ""tool"": ""model_list_vertices"""));
-            Rejects(Row("T.N()", "directDispatch", "read", @", ""postcondition"": " + CallLogOnly));
-        }
-
-        [Fact]
-        public void RequiresTheEventTypeOnAnEventRow()
-        {
-            Rejects(Row("T.E()", "eventBranch", "read", string.Empty));
-        }
-
-        [Fact]
-        public void RequiresTheAssignmentOnACommonContractRow()
-        {
-            Rejects(Row("T.M()", "commonContract", "read", string.Empty));
+            Rejects(Row(
+                "T.M()",
+                "read",
+                @", ""target"": ""stateRead"", ""slotBinding"": { ""return"": ""pmxClone"",
+                   ""parameters"": {} }"));
         }
 
         [Fact]
         public void RequiresTheUpdateSpecOnlyOnADuplicateEditRow()
         {
-            Rejects(Row("T.M()", "commonContract", "duplicateEdit", ", " + CommonMembers));
+            Rejects(Row("T.M()", "duplicateEdit", ", " + CommonMembers));
             Rejects(Common(@", ""updateSpec"": { ""refresh"": [] }"));
         }
 
@@ -182,7 +170,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             ToolMapRow row = Single(Row(
                 "T.M()",
-                "commonContract",
                 "duplicateEdit",
                 ", " + CommonMembers
                     + @", ""updateSpec"": { ""update"": ""Vertex"", ""refresh"": [""model"", ""view""] }"));
@@ -196,7 +183,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             ToolMapRow row = Single(Row(
                 "T.M()",
-                "commonContract",
                 "duplicateEdit",
                 ", " + CommonMembers + @", ""updateSpec"": { ""refresh"": [] }"));
 
@@ -209,7 +195,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects(Row(
                 "T.M()",
-                "commonContract",
                 "duplicateEdit",
                 ", " + CommonMembers + @", ""updateSpec"": { ""refresh"": [""view"", ""view""] }"));
         }
@@ -231,7 +216,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RequiresAtLeastOneEmbeddingTarget()
         {
-            Rejects(Row("T.P()", "schemaEmbedded", "read", @", ""embeddedIn"": []"));
+            Rejects(Row("T.P()", "read", @", ""embeddedIn"": []"));
         }
 
         [Fact]
@@ -239,7 +224,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects(Row(
                 "T.P()",
-                "schemaEmbedded",
                 "read",
                 @", ""embeddedIn"": [""model_list_vertices"", ""model_list_vertices""]"));
         }
@@ -572,13 +556,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 string.Empty));
         }
 
-        [Theory]
-        [InlineData("embedded", "read")]
-        [InlineData("commonContract", "sessionOnly")]
-        public void RejectsAValueThatIsNotInItsClosedSet(string rowKind, string editKind)
+        [Fact]
+        public void RejectsAValueThatIsNotInItsClosedSet()
         {
-            Rejects(@"{ ""signatureKey"": ""T.M()"", ""rowKind"": """ + rowKind + @""", ""editKind"": """ + editKind + @""",
-                        ""basis"": ""根拠。"", " + CommonMembers + "}");
+            Rejects(Row("T.M()", "sessionOnly", ", " + CommonMembers));
         }
 
         [Theory]
@@ -588,7 +569,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects(Row(
                 "T.M()",
-                "commonContract",
                 "duplicateEdit",
                 ", " + CommonMembers + @", ""updateSpec"": { ""update"": """ + update
                     + @""", ""refresh"": [] }"));
@@ -637,7 +617,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects(Row(
                 "T.N()",
-                "directDispatch",
                 "read",
                 @", ""tool"": ""Model_List"", ""postcondition"": " + CallLogOnly));
 
@@ -679,14 +658,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Rejects(Row(
                 "T.M()",
-                "commonContract",
                 "read",
                 @", ""assignment"": ""tool"", ""target"": ""Model_List"",
                    ""slotBinding"": { ""parameters"": {} }"));
 
             Rejects(Row(
                 "T.M()",
-                "commonContract",
                 "read",
                 @", ""assignment"": ""internalFlow"", ""target"": ""release"",
                    ""slotBinding"": { ""parameters"": {} }"));

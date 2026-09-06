@@ -99,23 +99,25 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.Unresolved;
             }
 
+            IDictionary<string, ToolMapRowKind> kinds =
+                ToolMapGate.RowKinds(map, evidence, assignments);
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
                 "照合した: 行 {0} 件(共通契約割当 {1}・イベント {2}・スキーマ埋め込み {3}"
                     + "・直接ディスパッチ {4})・提供対象 {5} 件",
                 map.Rows.Count,
-                Count(map, ToolMapRowKind.CommonContract),
-                Count(map, ToolMapRowKind.EventBranch),
-                Count(map, ToolMapRowKind.SchemaEmbedded),
-                Count(map, ToolMapRowKind.DirectDispatch),
+                Count(kinds, ToolMapRowKind.CommonContract),
+                Count(kinds, ToolMapRowKind.EventBranch),
+                Count(kinds, ToolMapRowKind.SchemaEmbedded),
+                Count(kinds, ToolMapRowKind.DirectDispatch),
                 evidence.Provided.Count));
 
             return ExitCodes.Success;
         }
 
-        private static int Count(ToolMap map, ToolMapRowKind kind)
+        private static int Count(IDictionary<string, ToolMapRowKind> kinds, ToolMapRowKind kind)
         {
-            return map.Rows.Count(r => r.RowKind == kind);
+            return kinds.Values.Count(k => k == kind);
         }
 
         private static string Read(string path, string name)

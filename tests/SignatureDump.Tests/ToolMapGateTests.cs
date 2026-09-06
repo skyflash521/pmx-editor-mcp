@@ -10,7 +10,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string MapJson = @"{ ""rows"": [
   { ""signatureKey"": """ + Key + @""",
-    ""rowKind"": ""commonContract"",
     ""editKind"": ""read"",
     ""basis"": ""現在のPMXの複製を返すだけである。"",
     ""assignment"": ""internalFlow"",
@@ -79,7 +78,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""rows"": [
   { ""signatureKey"": """ + Key + @""",
-    ""rowKind"": ""schemaEmbedded"",
     ""editKind"": ""read"",
     ""basis"": ""現在のPMXの複製を返すだけである。"",
     ""embeddedIn"": [""model_list_vertices""] }
@@ -91,7 +89,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""rows"": [
   { ""signatureKey"": """ + Key + @""",
-    ""rowKind"": ""directDispatch"",
     ""editKind"": ""read"",
     ""basis"": ""現在のPMXの複製を返すだけである。"",
     ""tool"": ""model_list_vertices"",
@@ -190,12 +187,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void RejectsARowKindThatTheMappingRuleDoesNotDerive()
+        public void RejectsARowThatLacksWhatTheDerivedKindRequires()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(assignmentsJson: @"{ ""assignments"": [] }"));
 
-            Assert.Contains("導いた種別と合わない", error.Message, StringComparison.Ordinal);
+            Assert.Contains("導いた種別が求める項目が無い", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -209,7 +206,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     assignmentsJson: @"{ ""assignments"": [] }",
                     memberKind: MemberKind.Property));
 
-            Assert.Contains("導いた種別と合わない", error.Message, StringComparison.Ordinal);
+            Assert.Contains("導いた種別が持てない項目がある", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -241,7 +238,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     assignmentsJson: @"{ ""assignments"": [] }",
                     memberKind: MemberKind.Constructor));
 
-            Assert.Contains("導いた種別と合わない", error.Message, StringComparison.Ordinal);
+            Assert.Contains("導いた種別が求める項目が無い", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]

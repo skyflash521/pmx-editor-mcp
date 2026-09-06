@@ -164,7 +164,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             ToolMapRow row = new ToolMapRow(
                 "PEPlugin.Pmx.IPXVertex.Gone()",
-                ToolMapRowKind.DirectDispatch,
                 ToolMapEditKind.Read,
                 null,
                 "根拠。",
@@ -273,7 +272,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Open, "Draw", 0, new ParameterRecord[0], "System.Int32");
             ToolMapRow row = new ToolMapRow(
                 key,
-                ToolMapRowKind.DirectDispatch,
                 ToolMapEditKind.Read,
                 null,
                 "根拠。",
@@ -383,7 +381,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             bool property = !Methods.Contains(memberName);
             return new ToolMapRow(
                 Key(memberName),
-                embeddedIn == null ? ToolMapRowKind.DirectDispatch : ToolMapRowKind.SchemaEmbedded,
                 ToolMapEditKind.Read,
                 null,
                 "根拠。",
@@ -423,7 +420,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new ToolMapRow(
                 SignatureKeyBuilder.Build(
                     declaringType, memberName, 0, new ParameterRecord[0], "System.Int32"),
-                ToolMapRowKind.SchemaEmbedded,
                 ToolMapEditKind.Read,
                 null,
                 "根拠。",
@@ -441,7 +437,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return new ToolMapRow(
                 SignatureKeyBuilder.Build(Bone, "Draw", 0, new ParameterRecord[0], "System.Int32"),
-                ToolMapRowKind.DirectDispatch,
                 ToolMapEditKind.Read,
                 null,
                 "根拠。",

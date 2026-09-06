@@ -189,7 +189,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Assigned()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"rowKind\":\"commonContract\""
                 + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
                 + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
                 + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}}]}";
@@ -199,7 +198,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Map()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"rowKind\":\"directDispatch\",\"editKind\":\"read\""
+                + ",\"editKind\":\"read\""
                 + ",\"basis\":\"題材の根拠。\",\"tool\":\"" + ListTool + "\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
                 + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}\n";

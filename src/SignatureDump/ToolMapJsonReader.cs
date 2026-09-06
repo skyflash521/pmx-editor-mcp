@@ -13,8 +13,6 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string SignatureKeyName = "signatureKey";
 
-        private const string RowKindName = "rowKind";
-
         private const string EditKindName = "editKind";
 
         private const string UpdateSpecName = "updateSpec";
@@ -94,15 +92,6 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly Regex SampleReference = new Regex(
             "^sample2?:[A-Za-z][A-Za-z0-9_.+<>,\\[\\]]*$", RegexOptions.CultureInvariant);
 
-        private static readonly Dictionary<string, ToolMapRowKind> RowKinds =
-            new Dictionary<string, ToolMapRowKind>(StringComparer.Ordinal)
-            {
-                { "commonContract", ToolMapRowKind.CommonContract },
-                { "eventBranch", ToolMapRowKind.EventBranch },
-                { "schemaEmbedded", ToolMapRowKind.SchemaEmbedded },
-                { "directDispatch", ToolMapRowKind.DirectDispatch },
-            };
-
         private static readonly Dictionary<string, ToolMapEditKind> EditKinds =
             new Dictionary<string, ToolMapEditKind>(StringComparer.Ordinal)
             {
@@ -172,8 +161,9 @@ namespace PmxEditorMcp.SignatureDump
             };
 
         /// <summary>
-        /// 行を書かれた順に返す。行キーが序数の昇順に重複なく並ぶことと、行の種別ごとの項目が
-        /// そろっていることを求める。形が違えば <see cref="FormatException"/>。
+        /// 行を書かれた順に返す。行キーが序数の昇順に重複なく並ぶことと、行だけで決まる項目の
+        /// 要否——複製編集型の行の反映の指定と、対象名が割当を伴うこと——を求める。種別ごとの
+        /// 要否は行の外の材料が要るので照合が見る。形が違えば <see cref="FormatException"/>。
         /// </summary>
         public static ToolMap Read(string json)
         {
@@ -209,27 +199,25 @@ namespace PmxEditorMcp.SignatureDump
         {
             Dictionary<string, object> members = Members(
                 item,
-                new[] { SignatureKeyName, RowKindName, EditKindName, BasisName },
+                new[] { SignatureKeyName, EditKindName, BasisName },
                 new[]
                 {
                     UpdateSpecName, ToolName, PostconditionName,
                     AssignmentName, TargetName, SlotBindingName, EventTypeName, EmbeddedInName,
                 });
 
-            ToolMapRowKind rowKind = Lookup(RowKinds, members[RowKindName], RowKindName);
             ToolMapEditKind editKind = Lookup(EditKinds, members[EditKindName], EditKindName);
             CommonAssignmentKind? assignment = members.ContainsKey(AssignmentName)
                 ? CommonAssignmentJsonReader.ReadAssignmentKind(members[AssignmentName])
                 : (CommonAssignmentKind?)null;
             RequirePresence(members, UpdateSpecName, editKind == ToolMapEditKind.DuplicateEdit);
-            foreach (KeyValuePair<string, bool> pair in FieldsOf(rowKind))
+            if (members.ContainsKey(TargetName) && !members.ContainsKey(AssignmentName))
             {
-                RequirePresence(members, pair.Key, pair.Value);
+                throw new FormatException("割当を伴わない対象名がある: " + TargetName);
             }
 
             return new ToolMapRow(
                 Text(members[SignatureKeyName], SignatureKeyName),
-                rowKind,
                 editKind,
                 members.ContainsKey(UpdateSpecName) ? ReadUpdateSpec(members[UpdateSpecName]) : null,
                 Text(members[BasisName], BasisName),
@@ -247,22 +235,6 @@ namespace PmxEditorMcp.SignatureDump
                     : null,
                 members.ContainsKey(EventTypeName) ? Text(members[EventTypeName], EventTypeName) : null,
                 members.ContainsKey(EmbeddedInName) ? ReadEmbeddedIn(members[EmbeddedInName]) : null);
-        }
-
-        /// <summary>行の種別ごとに、持たなければならない項目と持ってはならない項目。</summary>
-        private static IEnumerable<KeyValuePair<string, bool>> FieldsOf(ToolMapRowKind rowKind)
-        {
-            bool hasTool = rowKind == ToolMapRowKind.DirectDispatch;
-            yield return new KeyValuePair<string, bool>(ToolName, hasTool);
-            yield return new KeyValuePair<string, bool>(PostconditionName, hasTool);
-            bool isCommon = rowKind == ToolMapRowKind.CommonContract;
-            yield return new KeyValuePair<string, bool>(AssignmentName, isCommon);
-            yield return new KeyValuePair<string, bool>(TargetName, isCommon);
-            yield return new KeyValuePair<string, bool>(SlotBindingName, isCommon);
-            yield return new KeyValuePair<string, bool>(
-                EventTypeName, rowKind == ToolMapRowKind.EventBranch);
-            yield return new KeyValuePair<string, bool>(
-                EmbeddedInName, rowKind == ToolMapRowKind.SchemaEmbedded);
         }
 
         private static void RequirePresence(

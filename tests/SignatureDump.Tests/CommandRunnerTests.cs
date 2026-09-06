@@ -420,7 +420,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             File.WriteAllText(
                 mapPath,
                 "{\"rows\":[{\"signatureKey\":\"N.A.Absent()\""
-                    + ",\"rowKind\":\"eventBranch\",\"editKind\":\"read\""
+                    + ",\"editKind\":\"read\""
                     + ",\"basis\":\"題材の根拠。\""
                     + ",\"eventType\":\"view.click\"}]}");
             string editorDirectory = CreateEditorDirectory();

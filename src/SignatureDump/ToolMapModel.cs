@@ -320,7 +320,6 @@ namespace PmxEditorMcp.SignatureDump
     {
         public ToolMapRow(
             string signatureKey,
-            ToolMapRowKind rowKind,
             ToolMapEditKind editKind,
             UpdateSpec updateSpec,
             string basis,
@@ -336,7 +335,6 @@ namespace PmxEditorMcp.SignatureDump
             PropertyRecord.RequireText(basis, nameof(basis));
 
             SignatureKey = signatureKey;
-            RowKind = rowKind;
             EditKind = editKind;
             UpdateSpec = updateSpec;
             Basis = basis;
@@ -352,8 +350,6 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         public string SignatureKey { get; }
-
-        public ToolMapRowKind RowKind { get; }
 
         public ToolMapEditKind EditKind { get; }
 

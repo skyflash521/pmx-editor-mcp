@@ -22,11 +22,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string MapJson(string tool = Tool, string eventType = null)
         {
             string row = eventType == null
-                ? @"{ ""signatureKey"": ""T.M()"", ""rowKind"": ""directDispatch"", ""editKind"": ""read"",
+                ? @"{ ""signatureKey"": ""T.M()"", ""editKind"": ""read"",
                       ""basis"": ""根拠。"", ""tool"": """ + tool + @""",
                       ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                         ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }"
-                : @"{ ""signatureKey"": ""T.E()"", ""rowKind"": ""eventBranch"", ""editKind"": ""read"",
+                : @"{ ""signatureKey"": ""T.E()"", ""editKind"": ""read"",
                       ""basis"": ""根拠。"",
                       ""eventType"": """ + eventType + @""" }";
             return @"{ ""rows"": [" + row + "] }";
@@ -70,8 +70,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         /// <summary>ツールを割り当てた行とイベント行を1つずつ持つ能力対応表。</summary>
         private const string ToolAndEvent = @"{ ""rows"": [
-  { ""signatureKey"": ""T.E()"", ""rowKind"": ""eventBranch"", ""editKind"": ""read"", ""basis"": ""根拠。"", ""eventType"": ""view.click"" },
-  { ""signatureKey"": ""T.M()"", ""rowKind"": ""directDispatch"", ""editKind"": ""read"", ""basis"": ""根拠。"", ""tool"": """ + Tool + @""",
+  { ""signatureKey"": ""T.E()"", ""editKind"": ""read"", ""basis"": ""根拠。"", ""eventType"": ""view.click"" },
+  { ""signatureKey"": ""T.M()"", ""editKind"": ""read"", ""basis"": ""根拠。"", ""tool"": """ + Tool + @""",
     ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
       ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
 
@@ -345,18 +345,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" },
                         ""payloads"": [{ ""type"": ""view.move"", ""members"": [] }] }] }",
                     @"{ ""rows"": [
-                      { ""signatureKey"": ""T.C()"", ""rowKind"": ""eventBranch"", ""editKind"": ""read"",
+                      { ""signatureKey"": ""T.C()"", ""editKind"": ""read"",
                         ""basis"": ""根拠。"",
                         ""eventType"": ""view.click"" },
-                      { ""signatureKey"": ""T.M()"", ""rowKind"": ""directDispatch"", ""editKind"": ""read"",
+                      { ""signatureKey"": ""T.M()"", ""editKind"": ""read"",
                         ""basis"": ""根拠。"",
                         ""tool"": """ + Tool + @""",
                         ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                           ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] },
-                      { ""signatureKey"": ""T.V()"", ""rowKind"": ""eventBranch"", ""editKind"": ""read"",
+                      { ""signatureKey"": ""T.V()"", ""editKind"": ""read"",
                         ""basis"": ""根拠。"",
                         ""eventType"": ""view.move"" },
-                      { ""signatureKey"": ""T.W()"", ""rowKind"": ""directDispatch"", ""editKind"": ""read"",
+                      { ""signatureKey"": ""T.W()"", ""editKind"": ""read"",
                         ""basis"": ""根拠。"",
                         ""tool"": ""view_poll_events"",
                         ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",

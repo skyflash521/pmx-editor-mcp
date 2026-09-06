@@ -175,7 +175,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Map(string signatureKey, string tool)
         {
             return "{\"rows\":[{\"signatureKey\":\"" + signatureKey + "\""
-                + ",\"rowKind\":\"directDispatch\",\"editKind\":\"read\""
+                + ",\"editKind\":\"read\""
                 + ",\"basis\":\"題材の根拠。\",\"tool\":\"" + tool + "\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
                 + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}\n";

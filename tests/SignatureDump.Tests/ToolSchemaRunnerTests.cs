@@ -181,7 +181,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Map()
         {
             return "{\"rows\":[{\"signatureKey\":\"T.M()\""
-                + ",\"rowKind\":\"directDispatch\",\"editKind\":\"read\""
+                + ",\"editKind\":\"read\""
                 + ",\"basis\":\"題材の根拠。\",\"tool\":\"" + Tool + "\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
                 + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}";

@@ -2,7 +2,6 @@
   "rows": [
     {
       "signatureKey": "PEPlugin.IPESystemConnector.GetCPluginRunArgsClone(System.String)",
-      "rowKind": "commonContract",
       "editKind": "read",
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。",
       "assignment": "internalFlow",
@@ -17,7 +16,6 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()",
-      "rowKind": "commonContract",
       "editKind": "read",
       "basis": "現在のPMXの複製を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
@@ -30,7 +28,6 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.LockUndo()",
-      "rowKind": "commonContract",
       "editKind": "viewSession",
       "basis": "Undoを記録するかどうかというセッションの設定を切り替えるだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。",
       "assignment": "commonArg",
@@ -42,7 +39,6 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.UnlockUndo()",
-      "rowKind": "commonContract",
       "editKind": "viewSession",
       "basis": "Undoを記録するかどうかというセッションの設定を切り替えるだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。",
       "assignment": "commonArg",
@@ -54,7 +50,6 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx)",
-      "rowKind": "commonContract",
       "editKind": "duplicateEdit",
       "updateSpec": {
         "refresh": []
@@ -71,7 +66,6 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32)",
-      "rowKind": "commonContract",
       "editKind": "duplicateEdit",
       "updateSpec": {
         "refresh": []
@@ -90,7 +84,6 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32[])",
-      "rowKind": "commonContract",
       "editKind": "duplicateEdit",
       "updateSpec": {
         "refresh": []
@@ -109,7 +102,6 @@
     },
     {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.ReleaseViewEventListener(PXCPlugin.Event.IPXViewEventListener)",
-      "rowKind": "commonContract",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるリスナへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
@@ -123,7 +115,6 @@
     },
     {
       "signatureKey": "PXCPlugin.IPXCPluginRunArgs.Connector()",
-      "rowKind": "commonContract",
       "editKind": "read",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
@@ -136,7 +127,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.Builder()",
-      "rowKind": "commonContract",
       "editKind": "read",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
@@ -148,7 +138,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.BuilderInitialize(PXCPlugin.IPXCPluginConnector)",
-      "rowKind": "commonContract",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるビルダへ直に作用して使える状態にするので、直接変更型に当たる。",
       "assignment": "internalFlow",
@@ -161,7 +150,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.GetCurrentPmx(PXCPlugin.IPXCPluginConnector)",
-      "rowKind": "commonContract",
       "editKind": "read",
       "basis": "現在のPMXの複製を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
@@ -175,7 +163,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.PrimitiveBuilder()",
-      "rowKind": "commonContract",
       "editKind": "read",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
@@ -187,7 +174,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.PrimitiveBuilderInitialize(PXCPlugin.IPXCPluginConnector)",
-      "rowKind": "commonContract",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるビルダへ直に作用して使える状態にするので、直接変更型に当たる。",
       "assignment": "internalFlow",
@@ -200,7 +186,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.ReleaseEventConnector(PXCPlugin.Event.IPXEventConnector)",
-      "rowKind": "commonContract",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるコネクタへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
@@ -213,7 +198,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.SystemCtrl(PXCPlugin.IPXCPluginConnector)",
-      "rowKind": "commonContract",
       "editKind": "read",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
@@ -227,7 +211,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.UpdatePmx(PXCPlugin.IPXCPluginConnector,PEPlugin.Pmx.IPXPmx,System.Boolean)",
-      "rowKind": "commonContract",
       "editKind": "duplicateEdit",
       "updateSpec": {
         "refresh": []
@@ -245,7 +228,6 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.ViewCtrl(PXCPlugin.IPXCPluginConnector)",
-      "rowKind": "commonContract",
       "editKind": "read",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
@@ -259,7 +241,6 @@
     },
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Release()",
-      "rowKind": "commonContract",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるUIモデルへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
@@ -271,7 +252,6 @@
     },
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.ReleaseEventListener(PXCPlugin.Event.IPXUIModelEventListener)",
-      "rowKind": "commonContract",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるリスナへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
@@ -285,7 +265,6 @@
     },
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Dispose()",
-      "rowKind": "commonContract",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるテキストコントロールへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",

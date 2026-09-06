@@ -16,7 +16,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string MapJson(string tool, string signatureKey = Key)
         {
             return @"{ ""rows"": [{ ""signatureKey"": """ + signatureKey + @""",
-                ""rowKind"": ""directDispatch"",
                 ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""tool"": """ + tool + @""",
                 ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
@@ -28,13 +27,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""rows"": [
                 { ""signatureKey"": ""PEPlugin.Pmx.IPXOtherConnector.Save()"",
-                  ""rowKind"": ""directDispatch"",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": """ + second + @""",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] },
                 { ""signatureKey"": """ + Connector + @".Save()"",
-                  ""rowKind"": ""directDispatch"",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": """ + first + @""",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
@@ -91,7 +88,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string EmbeddedMapJson(string embeddedIn)
         {
             return @"{ ""rows"": [{ ""signatureKey"": """ + Vertex + @".Index"",
-                ""rowKind"": ""schemaEmbedded"",
                 ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""embeddedIn"": [""" + embeddedIn + @"""] }] }";
         }
@@ -294,13 +290,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string second = Connector + ".Save(System.String)";
             string map = @"{ ""rows"": [
                 { ""signatureKey"": """ + first + @""",
-                  ""rowKind"": ""directDispatch"",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": ""model_save"",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] },
                 { ""signatureKey"": """ + second + @""",
-                  ""rowKind"": ""directDispatch"",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": ""model_save"",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
@@ -369,11 +363,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             const string Args = "PEPlugin.View.PXViewClickEventArgs";
             string map = @"{ ""rows"": [
                 { ""signatureKey"": """ + Vertex + @".Changed"",
-                  ""rowKind"": ""eventBranch"",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""eventType"": ""view.click"" },
                 { ""signatureKey"": """ + Args + @".Index"",
-                  ""rowKind"": ""schemaEmbedded"",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""embeddedIn"": [""view.click""] }] }";
 
@@ -390,7 +382,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             const string Args = "PEPlugin.View.PXViewClickEventArgs";
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Args + @".Index"",
-                ""rowKind"": ""schemaEmbedded"",
                 ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""embeddedIn"": [""model_list_vertexes""] }] }";
 
@@ -412,11 +403,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             const string Dto = "PEPlugin.PEVmePreviewOption";
             string map = @"{ ""rows"": [
                 { ""signatureKey"": """ + Dto + @".Index"",
-                  ""rowKind"": ""schemaEmbedded"",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""embeddedIn"": [""model_normalize_pmx_vertex""] },
                 { ""signatureKey"": """ + Key + @""",
-                  ""rowKind"": ""directDispatch"",
                   ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": ""model_normalize_pmx_vertex"",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
@@ -434,7 +423,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             const string Dto = "PEPlugin.PEVmePreviewOption";
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Dto + @".Index"",
-                ""rowKind"": ""schemaEmbedded"",
                 ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""embeddedIn"": [""model_list_vertexes""] }] }";
 
@@ -502,7 +490,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARowWithoutAToolIsNotChecked()
         {
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Key + @""",
-                ""rowKind"": ""commonContract"",
                 ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""assignment"": ""internalFlow"", ""target"": ""connect"",
                 ""slotBinding"": { ""return"": ""runArgsClone"", ""parameters"": {} } }] }";
