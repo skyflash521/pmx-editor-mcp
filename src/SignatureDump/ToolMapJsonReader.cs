@@ -13,19 +13,11 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string SignatureKeyName = "signatureKey";
 
-        private const string CapabilityIdsName = "capabilityIds";
-
         private const string RowKindName = "rowKind";
 
         private const string EditKindName = "editKind";
 
-        private const string DirectionName = "direction";
-
-        private const string DangerKindName = "dangerKind";
-
         private const string UpdateSpecName = "updateSpec";
-
-        private const string NoteName = "note";
 
         private const string BasisName = "basis";
 
@@ -118,21 +110,6 @@ namespace PmxEditorMcp.SignatureDump
                 { "directChange", ToolMapEditKind.DirectChange },
                 { "viewSession", ToolMapEditKind.ViewSession },
                 { "read", ToolMapEditKind.Read },
-            };
-
-        private static readonly Dictionary<string, OperationDirection> Directions =
-            new Dictionary<string, OperationDirection>(StringComparer.Ordinal)
-            {
-                { "read", OperationDirection.Read },
-                { "write", OperationDirection.Write },
-            };
-
-        private static readonly Dictionary<string, DangerKind> DangerKinds =
-            new Dictionary<string, DangerKind>(StringComparer.Ordinal)
-            {
-                { "shutdown", DangerKind.Shutdown },
-                { "overwrite", DangerKind.Overwrite },
-                { "reset", DangerKind.Reset },
             };
 
         private static readonly Dictionary<string, RefreshTarget> RefreshTargets =
@@ -232,14 +209,10 @@ namespace PmxEditorMcp.SignatureDump
         {
             Dictionary<string, object> members = Members(
                 item,
+                new[] { SignatureKeyName, RowKindName, EditKindName, BasisName },
                 new[]
                 {
-                    SignatureKeyName, CapabilityIdsName, RowKindName, EditKindName,
-                    DirectionName, BasisName,
-                },
-                new[]
-                {
-                    DangerKindName, UpdateSpecName, NoteName, ToolName, PostconditionName,
+                    UpdateSpecName, ToolName, PostconditionName,
                     AssignmentName, TargetName, SlotBindingName, EventTypeName, EmbeddedInName,
                 });
 
@@ -256,15 +229,9 @@ namespace PmxEditorMcp.SignatureDump
 
             return new ToolMapRow(
                 Text(members[SignatureKeyName], SignatureKeyName),
-                ReadCapabilityIds(members[CapabilityIdsName]),
                 rowKind,
                 editKind,
-                Lookup(Directions, members[DirectionName], DirectionName),
-                members.ContainsKey(DangerKindName)
-                    ? Lookup(DangerKinds, members[DangerKindName], DangerKindName)
-                    : (DangerKind?)null,
                 members.ContainsKey(UpdateSpecName) ? ReadUpdateSpec(members[UpdateSpecName]) : null,
-                members.ContainsKey(NoteName) ? Text(members[NoteName], NoteName) : null,
                 Text(members[BasisName], BasisName),
                 members.ContainsKey(ToolName) ? Name(members[ToolName], ToolName) : null,
                 members.ContainsKey(PostconditionName)
@@ -310,28 +277,6 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new FormatException("この行が持てない項目がある: " + name);
             }
-        }
-
-        private static IList<string> ReadCapabilityIds(object value)
-        {
-            List<string> ids = new List<string>();
-            foreach (object item in Array(value, CapabilityIdsName))
-            {
-                string id = Text(item, CapabilityIdsName);
-                if (ids.Contains(id, StringComparer.Ordinal))
-                {
-                    throw new FormatException("同じ提供能力のIDが二度現れる: " + id);
-                }
-
-                ids.Add(id);
-            }
-
-            if (ids.Count == 0)
-            {
-                throw new FormatException(CapabilityIdsName + " は1件以上でなければならない。");
-            }
-
-            return ids;
         }
 
         private static IList<string> ReadEmbeddedIn(object value)

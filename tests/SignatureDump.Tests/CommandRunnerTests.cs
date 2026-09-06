@@ -419,9 +419,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string mapPath = Path.Combine(_root, "map-rows.json");
             File.WriteAllText(
                 mapPath,
-                "{\"rows\":[{\"signatureKey\":\"N.A.Absent()\",\"capabilityIds\":[\"CAP-001\"]"
+                "{\"rows\":[{\"signatureKey\":\"N.A.Absent()\""
                     + ",\"rowKind\":\"eventBranch\",\"editKind\":\"read\""
-                    + ",\"direction\":\"read\",\"basis\":\"題材の根拠。\""
+                    + ",\"basis\":\"題材の根拠。\""
                     + ",\"eventType\":\"view.click\"}]}");
             string editorDirectory = CreateEditorDirectory();
 

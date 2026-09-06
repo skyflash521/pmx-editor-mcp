@@ -6,7 +6,8 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力対応表と突き合わせる側を、台帳・除外一覧・公開API列挙・型役割表から導いたもの。
+    /// 能力対応表と突き合わせる側を、台帳・除外一覧・公開API列挙・型役割表から導いたもの。表が
+    /// 書かない提供能力のIDと契約注記を導く入口も、同じ材料を読むのでここに持つ。
     /// </summary>
     public sealed class ToolMapEvidence
     {
@@ -18,10 +19,7 @@ namespace PmxEditorMcp.SignatureDump
 
         public ToolMapEvidence(
             ISet<string> provided,
-            IDictionary<string, ISet<string>> owners,
             IDictionary<string, SignatureRecord> signatures,
-            IDictionary<string, DangerKind> dangers,
-            IDictionary<string, string> notes,
             ISet<string> updateKinds,
             ISet<string> elementNouns,
             ISet<string> typeNames,
@@ -32,24 +30,9 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(provided));
             }
 
-            if (owners == null)
-            {
-                throw new ArgumentNullException(nameof(owners));
-            }
-
             if (signatures == null)
             {
                 throw new ArgumentNullException(nameof(signatures));
-            }
-
-            if (dangers == null)
-            {
-                throw new ArgumentNullException(nameof(dangers));
-            }
-
-            if (notes == null)
-            {
-                throw new ArgumentNullException(nameof(notes));
             }
 
             if (updateKinds == null)
@@ -73,14 +56,8 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             Provided = provided;
-            Owners = new ReadOnlyDictionary<string, ISet<string>>(
-                new Dictionary<string, ISet<string>>(owners, StringComparer.Ordinal));
             Signatures = new ReadOnlyDictionary<string, SignatureRecord>(
                 new Dictionary<string, SignatureRecord>(signatures, StringComparer.Ordinal));
-            Dangers = new ReadOnlyDictionary<string, DangerKind>(
-                new Dictionary<string, DangerKind>(dangers, StringComparer.Ordinal));
-            Notes = new ReadOnlyDictionary<string, string>(
-                new Dictionary<string, string>(notes, StringComparer.Ordinal));
             UpdateKinds = updateKinds;
             ElementNouns = elementNouns;
             TypeNames = typeNames;
@@ -90,17 +67,8 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>提供対象のシグネチャの行キー。</summary>
         public ISet<string> Provided { get; }
 
-        /// <summary>行キーから、それを指す提供能力のIDを引く表。</summary>
-        public IDictionary<string, ISet<string>> Owners { get; }
-
         /// <summary>行キーから公開API列挙の記録を引く表。</summary>
         public IDictionary<string, SignatureRecord> Signatures { get; }
-
-        /// <summary>危険操作に当たる行キーと、その種別。</summary>
-        public IDictionary<string, DangerKind> Dangers { get; }
-
-        /// <summary>契約注記を持つ提供能力のIDと、その注記の本文。</summary>
-        public IDictionary<string, string> Notes { get; }
 
         /// <summary>反映を一部に限るときに指せる列挙子の名前。</summary>
         public ISet<string> UpdateKinds { get; }
@@ -152,16 +120,48 @@ namespace PmxEditorMcp.SignatureDump
 
             return new ToolMapEvidence(
                 TypeRolePopulation.Resolve(ledger, inventory, excluded).Signatures,
-                ProvidedOwners(LedgerPopulation.Resolve(ledger, inventory).Owners, ledger),
                 inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
-                DangerousOperationRule.Classify(inventory.Signatures),
-                ContractNotes(ledger),
                 new HashSet<string>(updateKind.EnumMembers, StringComparer.Ordinal),
                 new HashSet<string>(
                     roles.Types.Where(r => r.ElementNoun != null).Select(r => r.ElementNoun),
                     StringComparer.Ordinal),
                 new HashSet<string>(types.Select(t => t.Name), StringComparer.Ordinal),
                 EmbeddedTypeNames(roles));
+        }
+
+        /// <summary>
+        /// シグネチャごとの契約注記。そのシグネチャを指す提供能力の注記を、IDの序数の昇順で重複を
+        /// 除いて句点でつないだもの。注記を持つ能力が1件も無いシグネチャは持たない。
+        /// </summary>
+        public static IDictionary<string, string> ContractNotesBySignature(
+            IDictionary<string, ISet<string>> owners, IDictionary<string, string> notes)
+        {
+            if (owners == null)
+            {
+                throw new ArgumentNullException(nameof(owners));
+            }
+
+            if (notes == null)
+            {
+                throw new ArgumentNullException(nameof(notes));
+            }
+
+            Dictionary<string, string> bySignature =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, ISet<string>> owned in owners)
+            {
+                string joined = string.Join("。", owned.Value
+                    .OrderBy(id => id, StringComparer.Ordinal)
+                    .Where(notes.ContainsKey)
+                    .Select(id => notes[id])
+                    .Distinct(StringComparer.Ordinal));
+                if (joined.Length != 0)
+                {
+                    bySignature[owned.Key] = joined;
+                }
+            }
+
+            return new ReadOnlyDictionary<string, string>(bySignature);
         }
 
         /// <summary>

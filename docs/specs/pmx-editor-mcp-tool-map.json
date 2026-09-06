@@ -2,13 +2,8 @@
   "rows": [
     {
       "signatureKey": "PEPlugin.IPESystemConnector.GetCPluginRunArgsClone(System.String)",
-      "capabilityIds": [
-        "CAP-078"
-      ],
       "rowKind": "commonContract",
       "editKind": "read",
-      "direction": "read",
-      "note": "一次資料で利用非推奨",
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。",
       "assignment": "internalFlow",
       "target": "connect",
@@ -22,12 +17,8 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()",
-      "capabilityIds": [
-        "CAP-001"
-      ],
       "rowKind": "commonContract",
       "editKind": "read",
-      "direction": "read",
       "basis": "現在のPMXの複製を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
       "target": "stateRead",
@@ -39,12 +30,8 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.LockUndo()",
-      "capabilityIds": [
-        "CAP-004"
-      ],
       "rowKind": "commonContract",
       "editKind": "viewSession",
-      "direction": "write",
       "basis": "Undoを記録するかどうかというセッションの設定を切り替えるだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。",
       "assignment": "commonArg",
       "target": "suppressUndo",
@@ -55,12 +42,8 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.UnlockUndo()",
-      "capabilityIds": [
-        "CAP-005"
-      ],
       "rowKind": "commonContract",
       "editKind": "viewSession",
-      "direction": "write",
       "basis": "Undoを記録するかどうかというセッションの設定を切り替えるだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。",
       "assignment": "commonArg",
       "target": "suppressUndo",
@@ -71,12 +54,8 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx)",
-      "capabilityIds": [
-        "CAP-003"
-      ],
       "rowKind": "commonContract",
       "editKind": "duplicateEdit",
-      "direction": "write",
       "updateSpec": {
         "refresh": []
       },
@@ -92,12 +71,8 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32)",
-      "capabilityIds": [
-        "CAP-003"
-      ],
       "rowKind": "commonContract",
       "editKind": "duplicateEdit",
-      "direction": "write",
       "updateSpec": {
         "refresh": []
       },
@@ -115,12 +90,8 @@
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32[])",
-      "capabilityIds": [
-        "CAP-003"
-      ],
       "rowKind": "commonContract",
       "editKind": "duplicateEdit",
-      "direction": "write",
       "updateSpec": {
         "refresh": []
       },
@@ -138,13 +109,8 @@
     },
     {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.ReleaseViewEventListener(PXCPlugin.Event.IPXViewEventListener)",
-      "capabilityIds": [
-        "CAP-338"
-      ],
       "rowKind": "commonContract",
       "editKind": "directChange",
-      "direction": "write",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "長寿命のオブジェクトであるリスナへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
       "target": "session_release_handle",
@@ -157,13 +123,8 @@
     },
     {
       "signatureKey": "PXCPlugin.IPXCPluginRunArgs.Connector()",
-      "capabilityIds": [
-        "CAP-474"
-      ],
       "rowKind": "commonContract",
       "editKind": "read",
-      "direction": "read",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
       "target": "connect",
@@ -175,13 +136,8 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.Builder()",
-      "capabilityIds": [
-        "CAP-240"
-      ],
       "rowKind": "commonContract",
       "editKind": "read",
-      "direction": "read",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
       "target": "connect",
@@ -192,13 +148,8 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.BuilderInitialize(PXCPlugin.IPXCPluginConnector)",
-      "capabilityIds": [
-        "CAP-241"
-      ],
       "rowKind": "commonContract",
       "editKind": "directChange",
-      "direction": "write",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "長寿命のオブジェクトであるビルダへ直に作用して使える状態にするので、直接変更型に当たる。",
       "assignment": "internalFlow",
       "target": "connect",
@@ -210,13 +161,8 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.GetCurrentPmx(PXCPlugin.IPXCPluginConnector)",
-      "capabilityIds": [
-        "CAP-244"
-      ],
       "rowKind": "commonContract",
       "editKind": "read",
-      "direction": "read",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "現在のPMXの複製を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
       "target": "stateRead",
@@ -229,13 +175,8 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.PrimitiveBuilder()",
-      "capabilityIds": [
-        "CAP-242"
-      ],
       "rowKind": "commonContract",
       "editKind": "read",
-      "direction": "read",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
       "target": "connect",
@@ -246,13 +187,8 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.PrimitiveBuilderInitialize(PXCPlugin.IPXCPluginConnector)",
-      "capabilityIds": [
-        "CAP-243"
-      ],
       "rowKind": "commonContract",
       "editKind": "directChange",
-      "direction": "write",
-      "note": "PrimitiveBuilderの利用前に呼ぶことが一次資料で必須。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "長寿命のオブジェクトであるビルダへ直に作用して使える状態にするので、直接変更型に当たる。",
       "assignment": "internalFlow",
       "target": "connect",
@@ -264,13 +200,8 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.ReleaseEventConnector(PXCPlugin.Event.IPXEventConnector)",
-      "capabilityIds": [
-        "CAP-251"
-      ],
       "rowKind": "commonContract",
       "editKind": "directChange",
-      "direction": "write",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "長寿命のオブジェクトであるコネクタへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
       "target": "session_release_handle",
@@ -282,13 +213,8 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.SystemCtrl(PXCPlugin.IPXCPluginConnector)",
-      "capabilityIds": [
-        "CAP-248"
-      ],
       "rowKind": "commonContract",
       "editKind": "read",
-      "direction": "write",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
       "target": "connect",
@@ -301,16 +227,11 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.UpdatePmx(PXCPlugin.IPXCPluginConnector,PEPlugin.Pmx.IPXPmx,System.Boolean)",
-      "capabilityIds": [
-        "CAP-245"
-      ],
       "rowKind": "commonContract",
       "editKind": "duplicateEdit",
-      "direction": "write",
       "updateSpec": {
         "refresh": []
       },
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲も反映の後の表示更新も、この流れを起こしたツールの行が決めるので、この行は持たない。",
       "assignment": "internalFlow",
       "target": "duplicateEdit",
@@ -324,13 +245,8 @@
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.ViewCtrl(PXCPlugin.IPXCPluginConnector)",
-      "capabilityIds": [
-        "CAP-247"
-      ],
       "rowKind": "commonContract",
       "editKind": "read",
-      "direction": "write",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。",
       "assignment": "internalFlow",
       "target": "connect",
@@ -343,13 +259,8 @@
     },
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Release()",
-      "capabilityIds": [
-        "CAP-303"
-      ],
       "rowKind": "commonContract",
       "editKind": "directChange",
-      "direction": "write",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "長寿命のオブジェクトであるUIモデルへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
       "target": "session_release_handle",
@@ -360,13 +271,8 @@
     },
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.ReleaseEventListener(PXCPlugin.Event.IPXUIModelEventListener)",
-      "capabilityIds": [
-        "CAP-333"
-      ],
       "rowKind": "commonContract",
       "editKind": "directChange",
-      "direction": "write",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "長寿命のオブジェクトであるリスナへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
       "target": "session_release_handle",
@@ -379,13 +285,8 @@
     },
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Dispose()",
-      "capabilityIds": [
-        "CAP-472"
-      ],
       "rowKind": "commonContract",
       "editKind": "directChange",
-      "direction": "write",
-      "note": "取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
       "basis": "長寿命のオブジェクトであるテキストコントロールへ直に作用して使えなくするので、直接変更型に当たる。",
       "assignment": "tool",
       "target": "session_release_handle",

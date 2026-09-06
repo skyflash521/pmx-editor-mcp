@@ -220,8 +220,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Assigned()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"capabilityIds\":[\"C1\"],\"rowKind\":\"directDispatch\",\"editKind\":\"read\""
-                + ",\"direction\":\"read\",\"basis\":\"題材の根拠。\""
+                + ",\"rowKind\":\"directDispatch\",\"editKind\":\"read\""
+                + ",\"basis\":\"題材の根拠。\""
                 + ",\"tool\":\"model_gone_vertex\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
                 + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}\n";
@@ -234,14 +234,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Embedded()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"capabilityIds\":[\"C2\"],\"rowKind\":\"commonContract\""
-                + ",\"editKind\":\"read\",\"direction\":\"read\",\"basis\":\"題材の根拠。\""
+                + ",\"rowKind\":\"commonContract\""
+                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
                 + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
                 + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}},"
                 + "{\"signatureKey\":\""
                 + "PmxEditorMcp.SignatureDump.Tests.Sample.ISampleApi.GetCount()\""
-                + ",\"capabilityIds\":[\"C1\"],\"rowKind\":\"schemaEmbedded\""
-                + ",\"editKind\":\"read\",\"direction\":\"read\",\"basis\":\"題材の根拠。\""
+                + ",\"rowKind\":\"schemaEmbedded\""
+                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
                 + ",\"embeddedIn\":[\"model_list_samples\"]}]}\n";
         }
 
@@ -249,8 +249,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string CommonContract()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"capabilityIds\":[\"C1\"],\"rowKind\":\"commonContract\""
-                + ",\"editKind\":\"read\",\"direction\":\"read\",\"basis\":\"題材の根拠。\""
+                + ",\"rowKind\":\"commonContract\""
+                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
                 + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
                 + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}}]}\n";
         }

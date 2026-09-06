@@ -37,10 +37,6 @@ namespace PmxEditorMcp.SignatureDump
             {
                 RequireProvided(row, evidence);
                 RequireRowKind(row, evidence, assigned);
-                RequireCapabilities(row, evidence);
-                RequireDirection(row, evidence);
-                RequireDangerKind(row, evidence);
-                RequireNote(row, evidence);
                 RequireUpdateKind(row, evidence);
                 RequireSetup(row, evidence);
                 RequireSdkArguments(row, evidence);
@@ -55,89 +51,6 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new InvalidOperationException(
                     "提供対象でないシグネチャの行がある: " + row.SignatureKey);
-            }
-        }
-
-        private static void RequireCapabilities(ToolMapRow row, ToolMapEvidence evidence)
-        {
-            ISet<string> expected;
-            if (!evidence.Owners.TryGetValue(row.SignatureKey, out expected))
-            {
-                throw new InvalidOperationException(
-                    "台帳のどの行も指していないシグネチャの行がある: " + row.SignatureKey);
-            }
-
-            if (!expected.SetEquals(row.CapabilityIds))
-            {
-                throw new InvalidOperationException(
-                    "提供能力のIDが台帳と合わない: " + row.SignatureKey
-                        + "(表: " + Join(row.CapabilityIds) + " / 台帳: " + Join(expected) + ")");
-            }
-        }
-
-        private static void RequireDirection(ToolMapRow row, ToolMapEvidence evidence)
-        {
-            SignatureRecord signature;
-            if (!evidence.Signatures.TryGetValue(row.SignatureKey, out signature))
-            {
-                throw new InvalidOperationException(
-                    "公開API列挙に無いシグネチャの行がある: " + row.SignatureKey);
-            }
-
-            if (signature.OperationDirection != row.Direction)
-            {
-                throw new InvalidOperationException(
-                    "操作の向きがシグネチャから決まる向きと合わない: " + row.SignatureKey
-                        + "(表: " + row.Direction + " / 決まる向き: "
-                        + signature.OperationDirection + ")");
-            }
-        }
-
-        private static void RequireDangerKind(ToolMapRow row, ToolMapEvidence evidence)
-        {
-            DangerKind kind;
-            bool dangerous = evidence.Dangers.TryGetValue(row.SignatureKey, out kind);
-            if (dangerous && row.DangerKind != kind)
-            {
-                throw new InvalidOperationException(
-                    "危険操作の種別が規則の判定と合わない: " + row.SignatureKey
-                        + "(表: " + Written(row.DangerKind) + " / 判定: " + kind + ")");
-            }
-
-            if (!dangerous && row.DangerKind.HasValue)
-            {
-                throw new InvalidOperationException(
-                    "危険操作でない行が種別を持つ: " + row.SignatureKey);
-            }
-        }
-
-        /// <summary>
-        /// 備考は台帳の契約注記の写しなので、内容まで突き合わせる。持たない能力しか指していない行は
-        /// 備考を任意とするので問わない。
-        /// </summary>
-        private static void RequireNote(ToolMapRow row, ToolMapEvidence evidence)
-        {
-            string expected = string.Join("。", row.CapabilityIds
-                .OrderBy(id => id, StringComparer.Ordinal)
-                .Where(evidence.Notes.ContainsKey)
-                .Select(id => evidence.Notes[id])
-                .Distinct(StringComparer.Ordinal));
-            if (expected.Length == 0)
-            {
-                return;
-            }
-
-            if (row.Note == null)
-            {
-                throw new InvalidOperationException(
-                    "契約注記を持つ提供能力から出た行に備考の転記が無い: " + row.SignatureKey);
-            }
-
-            if (!string.Equals(row.Note, expected, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException(
-                    "備考が台帳の契約注記と合わない: " + row.SignatureKey
-                        + "(表: " + row.Note + " / 台帳: " + expected + ")");
             }
         }
 
@@ -311,16 +224,6 @@ namespace PmxEditorMcp.SignatureDump
                 throw new InvalidOperationException(
                     "特別規則の表の項目に対応する共通契約割当行が無い: " + first);
             }
-        }
-
-        private static string Written(DangerKind? kind)
-        {
-            return kind.HasValue ? kind.Value.ToString() : "無し";
-        }
-
-        private static string Join(IEnumerable<string> values)
-        {
-            return string.Join("・", values.OrderBy(v => v, StringComparer.Ordinal));
         }
     }
 }

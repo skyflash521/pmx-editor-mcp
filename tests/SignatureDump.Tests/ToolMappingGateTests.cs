@@ -16,8 +16,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string MapJson(string tool, string signatureKey = Key)
         {
             return @"{ ""rows"": [{ ""signatureKey"": """ + signatureKey + @""",
-                ""capabilityIds"": [""CAP-001""], ""rowKind"": ""directDispatch"",
-                ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                ""rowKind"": ""directDispatch"",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""tool"": """ + tool + @""",
                 ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                   ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
@@ -28,14 +28,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""rows"": [
                 { ""signatureKey"": ""PEPlugin.Pmx.IPXOtherConnector.Save()"",
-                  ""capabilityIds"": [""CAP-002""], ""rowKind"": ""directDispatch"",
-                  ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                  ""rowKind"": ""directDispatch"",
+                  ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": """ + second + @""",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] },
                 { ""signatureKey"": """ + Connector + @".Save()"",
-                  ""capabilityIds"": [""CAP-001""], ""rowKind"": ""directDispatch"",
-                  ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                  ""rowKind"": ""directDispatch"",
+                  ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": """ + first + @""",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
@@ -91,8 +91,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string EmbeddedMapJson(string embeddedIn)
         {
             return @"{ ""rows"": [{ ""signatureKey"": """ + Vertex + @".Index"",
-                ""capabilityIds"": [""CAP-001""], ""rowKind"": ""schemaEmbedded"",
-                ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                ""rowKind"": ""schemaEmbedded"",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""embeddedIn"": [""" + embeddedIn + @"""] }] }";
         }
 
@@ -294,14 +294,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string second = Connector + ".Save(System.String)";
             string map = @"{ ""rows"": [
                 { ""signatureKey"": """ + first + @""",
-                  ""capabilityIds"": [""CAP-001""], ""rowKind"": ""directDispatch"",
-                  ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                  ""rowKind"": ""directDispatch"",
+                  ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": ""model_save"",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] },
                 { ""signatureKey"": """ + second + @""",
-                  ""capabilityIds"": [""CAP-002""], ""rowKind"": ""directDispatch"",
-                  ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                  ""rowKind"": ""directDispatch"",
+                  ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": ""model_save"",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
@@ -369,12 +369,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             const string Args = "PEPlugin.View.PXViewClickEventArgs";
             string map = @"{ ""rows"": [
                 { ""signatureKey"": """ + Vertex + @".Changed"",
-                  ""capabilityIds"": [""CAP-002""], ""rowKind"": ""eventBranch"",
-                  ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                  ""rowKind"": ""eventBranch"",
+                  ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""eventType"": ""view.click"" },
                 { ""signatureKey"": """ + Args + @".Index"",
-                  ""capabilityIds"": [""CAP-001""], ""rowKind"": ""schemaEmbedded"",
-                  ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                  ""rowKind"": ""schemaEmbedded"",
+                  ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""embeddedIn"": [""view.click""] }] }";
 
             Require(
@@ -390,8 +390,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             const string Args = "PEPlugin.View.PXViewClickEventArgs";
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Args + @".Index"",
-                ""capabilityIds"": [""CAP-001""], ""rowKind"": ""schemaEmbedded"",
-                ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                ""rowKind"": ""schemaEmbedded"",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""embeddedIn"": [""model_list_vertexes""] }] }";
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -412,12 +412,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             const string Dto = "PEPlugin.PEVmePreviewOption";
             string map = @"{ ""rows"": [
                 { ""signatureKey"": """ + Dto + @".Index"",
-                  ""capabilityIds"": [""CAP-001""], ""rowKind"": ""schemaEmbedded"",
-                  ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                  ""rowKind"": ""schemaEmbedded"",
+                  ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""embeddedIn"": [""model_normalize_pmx_vertex""] },
                 { ""signatureKey"": """ + Key + @""",
-                  ""capabilityIds"": [""CAP-002""], ""rowKind"": ""directDispatch"",
-                  ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                  ""rowKind"": ""directDispatch"",
+                  ""editKind"": ""read"", ""basis"": ""根拠。"",
                   ""tool"": ""model_normalize_pmx_vertex"",
                   ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                     ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }] }";
@@ -434,8 +434,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             const string Dto = "PEPlugin.PEVmePreviewOption";
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Dto + @".Index"",
-                ""capabilityIds"": [""CAP-001""], ""rowKind"": ""schemaEmbedded"",
-                ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                ""rowKind"": ""schemaEmbedded"",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""embeddedIn"": [""model_list_vertexes""] }] }";
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -502,8 +502,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARowWithoutAToolIsNotChecked()
         {
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Key + @""",
-                ""capabilityIds"": [""CAP-001""], ""rowKind"": ""commonContract"",
-                ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                ""rowKind"": ""commonContract"",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""assignment"": ""internalFlow"", ""target"": ""connect"",
                 ""slotBinding"": { ""return"": ""runArgsClone"", ""parameters"": {} } }] }";
 

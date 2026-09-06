@@ -14,7 +14,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AToolTakesItsTargetAndSourceFromTheRoleTableAndTheSignature()
         {
-            ToolDescriptionMaterial material = Only(Map(Row("Draw", ListTool, null, null)));
+            ToolDescriptionMaterial material = Only(Map(Row("Draw", ListTool, null)));
 
             Assert.Equal(ListTool, material.Tool);
             Assert.Equal("model", material.Group);
@@ -25,14 +25,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void TheQualifierIsTheElementNounAtTheEndOfTheName()
         {
-            Assert.Equal("vertices", Only(Map(Row("Draw", ListTool, null, null))).Qualifier);
-            Assert.Equal("vertex", Only(Map(Row("Draw", "model_clear_vertex", null, null))).Qualifier);
+            Assert.Equal("vertices", Only(Map(Row("Draw", ListTool, null))).Qualifier);
+            Assert.Equal("vertex", Only(Map(Row("Draw", "model_clear_vertex", null))).Qualifier);
         }
 
         [Fact]
         public void ANameWithoutTheElementNounHasNoQualifierAndKeepsTheWholeActionWord()
         {
-            ToolDescriptionMaterial material = Only(Map(Row("Draw", "model_clear", null, null)));
+            ToolDescriptionMaterial material = Only(Map(Row("Draw", "model_clear", null)));
 
             Assert.Null(material.Qualifier);
             Assert.Equal("clear", material.ActionWord);
@@ -41,42 +41,45 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void TheActionWordDropsTheGroupAndTheQualifier()
         {
-            Assert.Equal("list", Only(Map(Row("Draw", ListTool, null, null))).ActionWord);
+            Assert.Equal("list", Only(Map(Row("Draw", ListTool, null))).ActionWord);
         }
 
         [Fact]
         public void ANameThatIsNothingButTheGroupAndTheElementNounKeepsItsActionWord()
         {
-            ToolDescriptionMaterial material = Only(Map(Row("Draw", "model_vertex", null, null)));
+            ToolDescriptionMaterial material = Only(Map(Row("Draw", "model_vertex", null)));
 
             Assert.Null(material.Qualifier);
             Assert.Equal("vertex", material.ActionWord);
         }
 
         [Fact]
-        public void TheContractNoteComesFromTheRow()
+        public void TheContractNoteComesFromTheLedgerOfThatSignature()
         {
-            Assert.Equal("使うな。", Only(Map(Row("Draw", ListTool, "使うな。", null))).ContractNote);
+            ToolDescriptionMaterial material =
+                Only(Map(Row("Draw", ListTool, null)), ContractNotes("Draw"));
+
+            Assert.Equal("使うな。", material.ContractNote);
         }
 
         [Fact]
         public void TheSourceNoteComesFromTheDocumentOfThatMember()
         {
-            Assert.Equal("頂点を描く", Only(Map(Row("Draw", ListTool, null, null))).SourceNote);
+            Assert.Equal("頂点を描く", Only(Map(Row("Draw", ListTool, null))).SourceNote);
         }
 
         [Fact]
         public void AMemberTheDocumentDoesNotCarryHasNoSourceNote()
         {
-            Assert.Null(Only(Map(Row("Erase", ListTool, null, null))).SourceNote);
+            Assert.Null(Only(Map(Row("Erase", ListTool, null))).SourceNote);
         }
 
         [Fact]
         public void TheNotesOfSeveralRowsOfOneToolAreJoinedWithoutRepeating()
         {
-            ToolDescriptionMaterial material = Only(Map(
-                Row("Draw", ListTool, "使うな。", null),
-                Row("Erase", ListTool, "使うな。", null)));
+            ToolDescriptionMaterial material = Only(
+                Map(Row("Draw", ListTool, null), Row("Erase", ListTool, null)),
+                ContractNotes("Draw", "Erase"));
 
             Assert.Equal("使うな。", material.ContractNote);
         }
@@ -85,8 +88,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TheEmbeddedRowsBecomeTheIndexTerms()
         {
             ToolDescriptionMaterial material = Only(Map(
-                Row("Draw", ListTool, null, null),
-                Row("Index", null, null, new[] { ListTool })));
+                Row("Draw", ListTool, null),
+                Row("Index", null, new[] { ListTool })));
 
             Assert.Equal(new[] { "Index" }, material.IndexTerms.Select(t => t.Name).ToArray());
             Assert.Equal(
@@ -97,8 +100,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnEmbeddedRowOfAnotherToolIsNotAnIndexTerm()
         {
             ToolDescriptionMaterial material = Only(Map(
-                Row("Draw", ListTool, null, null),
-                Row("Index", null, null, new[] { "model_update_vertices" })));
+                Row("Draw", ListTool, null),
+                Row("Index", null, new[] { "model_update_vertices" })));
 
             Assert.Empty(material.IndexTerms);
         }
@@ -108,10 +111,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TheIndexTermOfAnItemOutsideTheTableComesFromTheNote()
         {
             IList<ToolDescriptionMaterial> materials = ToolDescriptionEvidence.Collect(
-                Map(Row("Draw", ListTool, null, null), Row("Depth", null, null, new[] { ListTool })),
+                Map(Row("Draw", ListTool, null), Row("Depth", null, new[] { ListTool })),
                 Roles(),
                 Names(),
                 Inventory(),
+                new Dictionary<string, string>(StringComparer.Ordinal),
                 MethodNotes(),
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
@@ -128,8 +132,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Collect(Map(
-                    Row("Draw", ListTool, null, null),
-                    Row("Depth", null, null, new[] { ListTool }))));
+                    Row("Draw", ListTool, null),
+                    Row("Depth", null, new[] { ListTool }))));
 
             Assert.Contains("日本語名が無い", error.Message, StringComparison.Ordinal);
         }
@@ -138,7 +142,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnEmbeddedRowOfAnotherDeclaringTypeIsStillAnIndexTerm()
         {
             ToolDescriptionMaterial material = Only(Map(
-                Row("Draw", ListTool, null, null), Embedded(Bone, "Index", ListTool)));
+                Row("Draw", ListTool, null), Embedded(Bone, "Index", ListTool)));
 
             Assert.Equal(new[] { "Index" }, material.IndexTerms.Select(t => t.Name).ToArray());
             Assert.Equal(Owner, material.TypeName);
@@ -149,7 +153,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Collect(Map(
-                    Row("Draw", ListTool, null, null),
+                    Row("Draw", ListTool, null),
                     OtherType(ListTool))));
 
             Assert.Contains("違う宣言型を指している", error.Message, StringComparison.Ordinal);
@@ -160,12 +164,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             ToolMapRow row = new ToolMapRow(
                 "PEPlugin.Pmx.IPXVertex.Gone()",
-                new[] { "C1" },
                 ToolMapRowKind.DirectDispatch,
                 ToolMapEditKind.Read,
-                OperationDirection.Read,
-                null,
-                null,
                 null,
                 "根拠。",
                 ListTool,
@@ -187,13 +187,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => ToolDescriptionEvidence.Collect(
-                    Map(Row("Draw", ListTool, null, null)),
+                    Map(Row("Draw", ListTool, null)),
                     new TypeRoleTable(
                         new List<TypeRoleRecord>(),
                         new List<HandleIssuanceRecord>(),
                         new List<ElementCollectionRecord>()),
                     Names(),
                     Inventory(),
+                    new Dictionary<string, string>(StringComparer.Ordinal),
                     MethodNotes(),
                     new Dictionary<string, string>(StringComparer.Ordinal)));
 
@@ -228,35 +229,35 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ARowWithoutAToolMakesNoMaterial()
         {
-            Assert.Empty(Collect(Map(Row("Draw", null, null, null))));
+            Assert.Empty(Collect(Map(Row("Draw", null, null))));
         }
 
         [Fact]
         public void TheArgumentsAreChecked()
         {
+            IDictionary<string, string> empty = new Dictionary<string, string>(StringComparer.Ordinal);
+
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    null, Roles(), Names(), Inventory(), MethodNotes(),
-                    new Dictionary<string, string>(StringComparer.Ordinal)));
+                    null, Roles(), Names(), Inventory(), empty, MethodNotes(), empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    Map(), null, Names(), Inventory(), MethodNotes(),
-                    new Dictionary<string, string>(StringComparer.Ordinal)));
+                    Map(), null, Names(), Inventory(), empty, MethodNotes(), empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    Map(), Roles(), null, Inventory(), MethodNotes(),
-                    new Dictionary<string, string>(StringComparer.Ordinal)));
+                    Map(), Roles(), null, Inventory(), empty, MethodNotes(), empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    Map(), Roles(), Names(), null, MethodNotes(),
-                    new Dictionary<string, string>(StringComparer.Ordinal)));
+                    Map(), Roles(), Names(), null, empty, MethodNotes(), empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    Map(), Roles(), Names(), Inventory(), null,
-                    new Dictionary<string, string>(StringComparer.Ordinal)));
+                    Map(), Roles(), Names(), Inventory(), null, MethodNotes(), empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    Map(), Roles(), Names(), Inventory(), MethodNotes(), null));
+                    Map(), Roles(), Names(), Inventory(), empty, null, empty));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolDescriptionEvidence.Collect(
+                    Map(), Roles(), Names(), Inventory(), empty, MethodNotes(), null));
         }
 
         /// <summary>
@@ -272,12 +273,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Open, "Draw", 0, new ParameterRecord[0], "System.Int32");
             ToolMapRow row = new ToolMapRow(
                 key,
-                new[] { "C1" },
                 ToolMapRowKind.DirectDispatch,
                 ToolMapEditKind.Read,
-                OperationDirection.Read,
-                null,
-                null,
                 null,
                 "根拠。",
                 "model_draw_value",
@@ -326,6 +323,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Names(),
                 inventory,
                 new Dictionary<string, string>(StringComparer.Ordinal),
+                new Dictionary<string, string>(StringComparer.Ordinal),
                 new Dictionary<string, string>(StringComparer.Ordinal));
 
             Assert.Equal(Open, Assert.Single(materials).TypeName);
@@ -336,27 +334,41 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return Assert.Single(Collect(map));
         }
 
+        private static ToolDescriptionMaterial Only(
+            ToolMap map, IDictionary<string, string> contractNotes)
+        {
+            return Assert.Single(Collect(map, contractNotes));
+        }
+
         private static IList<ToolDescriptionMaterial> CollectWith(TypeRoleRecord role)
         {
             return ToolDescriptionEvidence.Collect(
-                Map(Row("Draw", ListTool, null, null)),
+                Map(Row("Draw", ListTool, null)),
                 new TypeRoleTable(
                     new List<TypeRoleRecord> { role },
                     new List<HandleIssuanceRecord>(),
                     new List<ElementCollectionRecord>()),
                 Names(),
                 Inventory(),
+                new Dictionary<string, string>(StringComparer.Ordinal),
                 MethodNotes(),
                 new Dictionary<string, string>(StringComparer.Ordinal));
         }
 
         private static IList<ToolDescriptionMaterial> Collect(ToolMap map)
         {
+            return Collect(map, new Dictionary<string, string>(StringComparer.Ordinal));
+        }
+
+        private static IList<ToolDescriptionMaterial> Collect(
+            ToolMap map, IDictionary<string, string> contractNotes)
+        {
             return ToolDescriptionEvidence.Collect(
                 map,
                 Roles(),
                 Names(),
                 Inventory(),
+                contractNotes,
                 MethodNotes(),
                 new Dictionary<string, string>(StringComparer.Ordinal));
         }
@@ -366,19 +378,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new ToolMap(rows.ToList());
         }
 
-        private static ToolMapRow Row(
-            string memberName, string tool, string note, IList<string> embeddedIn)
+        private static ToolMapRow Row(string memberName, string tool, IList<string> embeddedIn)
         {
             bool property = !Methods.Contains(memberName);
             return new ToolMapRow(
-                SignatureKeyBuilder.Build(Owner, memberName, 0, new ParameterRecord[0], "System.Int32"),
-                new[] { "C1" },
+                Key(memberName),
                 embeddedIn == null ? ToolMapRowKind.DirectDispatch : ToolMapRowKind.SchemaEmbedded,
                 ToolMapEditKind.Read,
-                OperationDirection.Read,
                 null,
-                null,
-                note,
                 "根拠。",
                 tool,
                 null,
@@ -387,6 +394,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 null,
                 embeddedIn);
+        }
+
+        private static string Key(string memberName)
+        {
+            return SignatureKeyBuilder.Build(
+                Owner, memberName, 0, new ParameterRecord[0], "System.Int32");
+        }
+
+        private static IDictionary<string, string> ContractNotes(params string[] memberNames)
+        {
+            Dictionary<string, string> notes = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (string memberName in memberNames)
+            {
+                notes.Add(Key(memberName), "使うな。");
+            }
+
+            return notes;
         }
 
         private static readonly string[] Methods = { "Draw", "Erase" };
@@ -399,12 +423,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new ToolMapRow(
                 SignatureKeyBuilder.Build(
                     declaringType, memberName, 0, new ParameterRecord[0], "System.Int32"),
-                new[] { "C1" },
                 ToolMapRowKind.SchemaEmbedded,
                 ToolMapEditKind.Read,
-                OperationDirection.Read,
-                null,
-                null,
                 null,
                 "根拠。",
                 null,
@@ -421,12 +441,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return new ToolMapRow(
                 SignatureKeyBuilder.Build(Bone, "Draw", 0, new ParameterRecord[0], "System.Int32"),
-                new[] { "C1" },
                 ToolMapRowKind.DirectDispatch,
                 ToolMapEditKind.Read,
-                OperationDirection.Read,
-                null,
-                null,
                 null,
                 "根拠。",
                 tool,

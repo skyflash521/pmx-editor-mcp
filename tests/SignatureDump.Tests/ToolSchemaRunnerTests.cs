@@ -180,8 +180,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static string Map()
         {
-            return "{\"rows\":[{\"signatureKey\":\"T.M()\",\"capabilityIds\":[\"CAP-001\"]"
-                + ",\"rowKind\":\"directDispatch\",\"editKind\":\"read\",\"direction\":\"read\""
+            return "{\"rows\":[{\"signatureKey\":\"T.M()\""
+                + ",\"rowKind\":\"directDispatch\",\"editKind\":\"read\""
                 + ",\"basis\":\"題材の根拠。\",\"tool\":\"" + Tool + "\""
                 + ",\"postcondition\":[{\"effectType\":\"none\",\"effectKey\":\"\""
                 + ",\"kind\":\"callLogOnly\",\"comparison\":\"exists\"}]}]}";

@@ -95,6 +95,10 @@ namespace PmxEditorMcp.SignatureDump
                         roles, TypeGroupEvidence.OwnersByType(ledger, inventory)),
                     names,
                     inventory,
+                    ToolMapEvidence.ContractNotesBySignature(
+                        ToolMapEvidence.ProvidedOwners(
+                            LedgerPopulation.Resolve(ledger, inventory).Owners, ledger),
+                        ToolMapEvidence.ContractNotes(ledger)),
                     methodNotes,
                     propertyNotes);
                 foreach (ToolDescriptionMaterial material in materials)

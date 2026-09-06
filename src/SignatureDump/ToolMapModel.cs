@@ -320,13 +320,9 @@ namespace PmxEditorMcp.SignatureDump
     {
         public ToolMapRow(
             string signatureKey,
-            IList<string> capabilityIds,
             ToolMapRowKind rowKind,
             ToolMapEditKind editKind,
-            OperationDirection direction,
-            DangerKind? dangerKind,
             UpdateSpec updateSpec,
-            string note,
             string basis,
             string tool,
             IList<Postcondition> postcondition,
@@ -338,19 +334,11 @@ namespace PmxEditorMcp.SignatureDump
         {
             PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
             PropertyRecord.RequireText(basis, nameof(basis));
-            if (capabilityIds == null)
-            {
-                throw new ArgumentNullException(nameof(capabilityIds));
-            }
 
             SignatureKey = signatureKey;
-            CapabilityIds = new ReadOnlyCollection<string>(capabilityIds);
             RowKind = rowKind;
             EditKind = editKind;
-            Direction = direction;
-            DangerKind = dangerKind;
             UpdateSpec = updateSpec;
-            Note = note;
             Basis = basis;
             Tool = tool;
             Postcondition = postcondition == null
@@ -365,23 +353,12 @@ namespace PmxEditorMcp.SignatureDump
 
         public string SignatureKey { get; }
 
-        /// <summary>その行を出した提供能力のID。1件以上。</summary>
-        public IList<string> CapabilityIds { get; }
-
         public ToolMapRowKind RowKind { get; }
 
         public ToolMapEditKind EditKind { get; }
 
-        public OperationDirection Direction { get; }
-
-        /// <summary>危険操作に当たる行だけが持つ。</summary>
-        public DangerKind? DangerKind { get; }
-
         /// <summary>複製編集型の行だけが持つ。</summary>
         public UpdateSpec UpdateSpec { get; }
-
-        /// <summary>台帳の契約注記の転記。持たない行では null。</summary>
-        public string Note { get; }
 
         /// <summary>編集の分類と反映の指定をそう決めた根拠の一文。</summary>
         public string Basis { get; }

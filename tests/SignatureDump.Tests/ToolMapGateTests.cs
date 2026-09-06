@@ -10,10 +10,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string MapJson = @"{ ""rows"": [
   { ""signatureKey"": """ + Key + @""",
-    ""capabilityIds"": [""CAP-001""],
     ""rowKind"": ""commonContract"",
     ""editKind"": ""read"",
-    ""direction"": ""read"",
     ""basis"": ""現在のPMXの複製を返すだけである。"",
     ""assignment"": ""internalFlow"",
     ""target"": ""stateRead"",
@@ -31,7 +29,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 ] }";
 
         private static SignatureRecord Signature(
-            OperationDirection direction, IList<ParameterRecord> parameters, MemberKind memberKind)
+            IList<ParameterRecord> parameters, MemberKind memberKind)
         {
             return new SignatureRecord(
                 Key,
@@ -44,17 +42,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "PEPlugin.Pmx.IPXPmx",
                 false,
                 false,
-                direction);
+                OperationDirection.Read);
         }
 
         private static void Require(
             string mapJson = MapJson,
             string assignmentsJson = AssignmentsJson,
             ISet<string> provided = null,
-            IDictionary<string, ISet<string>> owners = null,
-            IDictionary<string, DangerKind> dangers = null,
-            OperationDirection direction = OperationDirection.Read,
-            IDictionary<string, string> notes = null,
             ISet<string> updateKinds = null,
             ISet<string> elementNouns = null,
             ISet<string> typeNames = null,
@@ -66,16 +60,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolMapJsonReader.Read(mapJson),
                 new ToolMapEvidence(
                     provided ?? new HashSet<string>(new[] { Key }, StringComparer.Ordinal),
-                    owners ?? new Dictionary<string, ISet<string>>(StringComparer.Ordinal)
-                    {
-                        { Key, new HashSet<string>(new[] { "CAP-001" }, StringComparer.Ordinal) },
-                    },
                     new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
                     {
-                        { Key, Signature(direction, parameters, memberKind) },
+                        { Key, Signature(parameters, memberKind) },
                     },
-                    dangers ?? new Dictionary<string, DangerKind>(StringComparer.Ordinal),
-                    notes ?? new Dictionary<string, string>(StringComparer.Ordinal),
                     updateKinds ?? new HashSet<string>(
                         new[] { "Vertex", "Bone" }, StringComparer.Ordinal),
                     elementNouns ?? new HashSet<string>(
@@ -91,10 +79,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""rows"": [
   { ""signatureKey"": """ + Key + @""",
-    ""capabilityIds"": [""CAP-001""],
     ""rowKind"": ""schemaEmbedded"",
     ""editKind"": ""read"",
-    ""direction"": ""read"",
     ""basis"": ""現在のPMXの複製を返すだけである。"",
     ""embeddedIn"": [""model_list_vertices""] }
 ] }";
@@ -105,10 +91,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""rows"": [
   { ""signatureKey"": """ + Key + @""",
-    ""capabilityIds"": [""CAP-001""],
     ""rowKind"": ""directDispatch"",
     ""editKind"": ""read"",
-    ""direction"": ""read"",
     ""basis"": ""現在のPMXの複製を返すだけである。"",
     ""tool"": ""model_list_vertices"",
     ""postcondition"": [" + judgement + @"] }
@@ -127,18 +111,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                       { ""tag"": ""callTool"", ""tool"": ""model_update_vertices"",
                         ""args"": { ""value"": ""sample:" + sample + @""" } }
                     ] }");
-        }
-
-        /// <summary>2つの能力が指す行。IDは昇順に並べず、並べ直しが効いているかを見る。</summary>
-        private static string TwoCapabilities(string note)
-        {
-            const string Anchor = @"""capabilityIds"": [""CAP-001""],";
-            Assert.Contains(Anchor, MapJson, StringComparison.Ordinal);
-            string rewritten = MapJson.Replace(
-                Anchor, @"""capabilityIds"": [""CAP-002"", ""CAP-001""],");
-            return note == null
-                ? rewritten
-                : rewritten.Replace(@"""basis"":", @"""note"": """ + note + @""", ""basis"":");
         }
 
         private static IDictionary<string, ISet<string>> Owners(params string[] ids)
@@ -190,11 +162,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static IList<ParameterRecord> Parameters(string name)
         {
             return new[] { new ParameterRecord(name, "System.Int32", ParameterDirection.In, false) };
-        }
-
-        private static IDictionary<string, string> Note(string text)
-        {
-            return new Dictionary<string, string>(StringComparer.Ordinal) { { "CAP-001", text } };
         }
 
         /// <summary>行の種別に依らない項目のうしろへ、書き足したい項目を挟んだ表を作る。</summary>
@@ -287,105 +254,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void RejectsCapabilityIdsThatDoNotMatchTheLedger()
-        {
-            Assert.Throws<InvalidOperationException>(() => Require(
-                owners: new Dictionary<string, ISet<string>>(StringComparer.Ordinal)
-                {
-                    { Key, new HashSet<string>(new[] { "CAP-002" }, StringComparer.Ordinal) },
-                }));
-        }
-
-        [Fact]
-        public void RejectsARowWhoseSignatureNoLedgerRowPointsAt()
-        {
-            Assert.Throws<InvalidOperationException>(() => Require(
-                owners: new Dictionary<string, ISet<string>>(StringComparer.Ordinal)));
-        }
-
-        [Fact]
-        public void RejectsADirectionThatTheSignatureDoesNotDecide()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(direction: OperationDirection.Write));
-
-            Assert.Contains("操作の向き", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsARowThatOmitsTheDangerKindOfADangerousSignature()
-        {
-            Assert.Throws<InvalidOperationException>(() => Require(
-                dangers: new Dictionary<string, DangerKind>(StringComparer.Ordinal)
-                {
-                    { Key, DangerKind.Reset },
-                }));
-        }
-
-        [Fact]
-        public void RejectsADangerKindOnASignatureThatIsNotDangerous()
-        {
-            Assert.Throws<InvalidOperationException>(
-                () => Require(mapJson: WithMember(@"""dangerKind"": ""reset""")));
-        }
-
-        [Fact]
-        public void RejectsADangerKindThatIsNotTheOneTheRuleDecides()
-        {
-            Assert.Throws<InvalidOperationException>(() => Require(
-                mapJson: WithMember(@"""dangerKind"": ""reset"""),
-                dangers: new Dictionary<string, DangerKind>(StringComparer.Ordinal)
-                {
-                    { Key, DangerKind.Overwrite },
-                }));
-        }
-
-        [Fact]
-        public void AcceptsADangerKindThatMatchesTheRule()
-        {
-            Require(
-                mapJson: WithMember(@"""dangerKind"": ""reset"""),
-                dangers: new Dictionary<string, DangerKind>(StringComparer.Ordinal)
-                {
-                    { Key, DangerKind.Reset },
-                });
-        }
-
-        [Fact]
-        public void RejectsAMissingNoteOnARowFromACapabilityThatHasOne()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(notes: Note("一次資料で利用非推奨")));
-
-            Assert.Contains("契約注記", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsANoteThatIsNotWhatTheLedgerWrites()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(
-                    mapJson: WithMember(@"""note"": ""利用非推奨"""),
-                    notes: Note("一次資料で利用非推奨")));
-
-            Assert.Contains("台帳の契約注記と合わない", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AcceptsANoteThatIsWhatTheLedgerWrites()
-        {
-            Require(
-                mapJson: WithMember(@"""note"": ""一次資料で利用非推奨"""),
-                notes: Note("一次資料で利用非推奨"));
-        }
-
-        [Fact]
-        public void LeavesTheNoteFreeOnARowWhoseCapabilitiesHaveNone()
-        {
-            Require(mapJson: WithMember(@"""note"": ""覚え書き"""));
-        }
-
-        [Fact]
         public void RejectsAnUpdateKindThatTheEnumerationDoesNotHave()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -471,39 +339,44 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void RequiresEveryCapabilityOfARowThatSeveralOfThemPointAt()
-        {
-            Assert.Throws<InvalidOperationException>(() => Require(
-                mapJson: TwoCapabilities(null),
-                owners: Owners("CAP-001")));
-
-            Require(mapJson: TwoCapabilities(null), owners: Owners("CAP-001", "CAP-002"));
-        }
-
-        [Fact]
         public void ConnectsTheNotesOfSeveralCapabilitiesInTheOrderOfTheirIds()
         {
-            Require(
-                mapJson: TwoCapabilities("一つ目。二つ目"),
-                owners: Owners("CAP-001", "CAP-002"),
-                notes: new Dictionary<string, string>(StringComparer.Ordinal)
+            IDictionary<string, string> notes = ToolMapEvidence.ContractNotesBySignature(
+                Owners("CAP-002", "CAP-001"),
+                new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { "CAP-002", "二つ目" },
                     { "CAP-001", "一つ目" },
                 });
+
+            Assert.Equal("一つ目。二つ目", notes[Key]);
         }
 
         [Fact]
-        public void WritesANoteThatSeveralCapabilitiesShareOnlyOnce()
+        public void TakesANoteThatSeveralCapabilitiesShareOnlyOnce()
         {
-            Require(
-                mapJson: TwoCapabilities("同じ制約"),
-                owners: Owners("CAP-001", "CAP-002"),
-                notes: new Dictionary<string, string>(StringComparer.Ordinal)
+            IDictionary<string, string> notes = ToolMapEvidence.ContractNotesBySignature(
+                Owners("CAP-001", "CAP-002"),
+                new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { "CAP-001", "同じ制約" },
                     { "CAP-002", "同じ制約" },
                 });
+
+            Assert.Equal("同じ制約", notes[Key]);
+        }
+
+        [Fact]
+        public void ASignatureWhoseCapabilitiesHaveNoNoteIsNotInTheTable()
+        {
+            IDictionary<string, string> notes = ToolMapEvidence.ContractNotesBySignature(
+                Owners("CAP-001"),
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { "CAP-002", "一次資料で利用非推奨" },
+                });
+
+            Assert.Empty(notes);
         }
 
         [Fact]

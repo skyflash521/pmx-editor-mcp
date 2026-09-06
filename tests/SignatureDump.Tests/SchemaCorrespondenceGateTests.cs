@@ -23,8 +23,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Row(string tool, string signatureKey)
         {
             return @"{ ""signatureKey"": """ + signatureKey + @""",
-                ""capabilityIds"": [""CAP-001""], ""rowKind"": ""directDispatch"",
-                ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                ""rowKind"": ""directDispatch"",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""tool"": """ + tool + @""",
                 ""postcondition"": [{ ""effectType"": ""none"", ""effectKey"": """",
                   ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }";
@@ -518,8 +518,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARowWithoutAToolIsNotChecked()
         {
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Key + @""",
-                ""capabilityIds"": [""CAP-001""], ""rowKind"": ""commonContract"",
-                ""editKind"": ""read"", ""direction"": ""read"", ""basis"": ""根拠。"",
+                ""rowKind"": ""commonContract"",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
                 ""assignment"": ""internalFlow"", ""target"": ""connect"",
                 ""slotBinding"": { ""return"": ""runArgsClone"", ""parameters"": {} } }] }";
 

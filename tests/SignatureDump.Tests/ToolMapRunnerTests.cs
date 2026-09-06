@@ -238,9 +238,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Map(
             string key, string rowKind, string members, string editKind = "read")
         {
-            return "{\"rows\":[{\"signatureKey\":\"" + key + "\",\"capabilityIds\":[\""
-                + Owner(key) + "\"],\"rowKind\":\"" + rowKind + "\",\"editKind\":\"" + editKind
-                + "\",\"direction\":\"write\",\"basis\":\"題材の根拠。\"," + members + "}]}";
+            return "{\"rows\":[{\"signatureKey\":\"" + key + "\",\"rowKind\":\"" + rowKind + "\",\"editKind\":\"" + editKind
+                + "\",\"basis\":\"題材の根拠。\"," + members + "}]}";
         }
 
         /// <summary>題材の解放・破棄を共通契約割当行として並べた対応表。</summary>
@@ -252,9 +251,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 builder.Append(index++ == 0 ? string.Empty : ",")
                     .Append("{\"signatureKey\":\"").Append(key)
-                    .Append("\",\"capabilityIds\":[\"").Append(Owner(key))
-                    .Append("\"],\"rowKind\":\"commonContract\",\"editKind\":\"directChange\"")
-                    .Append(",\"direction\":\"write\",\"basis\":\"題材の根拠。\",")
+                    .Append("\",\"rowKind\":\"commonContract\",\"editKind\":\"directChange\"")
+                    .Append(",\"basis\":\"題材の根拠。\",")
                     .Append(AssignmentMembers(ReleaseTool)).Append("}");
             }
 
@@ -290,17 +288,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return CommonAssignmentEvidence.ReleaseSignatures(inventory, provided)
                 .OrderBy(k => k, StringComparer.Ordinal)
                 .ToList();
-        }
-
-        /// <summary>その行キーを指す題材の能力のID。台帳は型ごとに1行を持つ。</summary>
-        private static string Owner(string key)
-        {
-            ISet<string> owners;
-            LedgerPopulation.Resolve(
-                LedgerParser.Parse(Ledger()), AssemblyEnumerator.Enumerate(Sample))
-                .Owners.TryGetValue(key, out owners);
-
-            return owners == null ? "CAP-999" : owners.OrderBy(o => o, StringComparer.Ordinal).First();
         }
 
         /// <summary>題材のアセンブリの公開型を提供として並べ、まとめて指す行を足した台帳。</summary>

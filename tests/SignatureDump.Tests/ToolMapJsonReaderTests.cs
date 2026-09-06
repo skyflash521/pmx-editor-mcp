@@ -17,9 +17,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>行の種別に依らない項目だけを持つ行。種別ごとの項目は呼ぶ側が足す。</summary>
         private static string Row(string key, string rowKind, string editKind, string members)
         {
-            return @"{ ""signatureKey"": """ + key + @""", ""capabilityIds"": [""CAP-001""],
-                       ""rowKind"": """ + rowKind + @""", ""editKind"": """ + editKind + @""",
-                       ""direction"": ""read"", ""basis"": ""根拠。""" + members + "}";
+            return @"{ ""signatureKey"": """ + key + @""", ""rowKind"": """ + rowKind + @""", ""editKind"": """ + editKind + @""",
+                       ""basis"": ""根拠。""" + members + "}";
         }
 
         private static string Common(string members)
@@ -57,15 +56,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolMapRow row = Single(Common(string.Empty));
 
             Assert.Equal("T.M()", row.SignatureKey);
-            Assert.Equal(new[] { "CAP-001" }, row.CapabilityIds);
             Assert.Equal(ToolMapRowKind.CommonContract, row.RowKind);
             Assert.Equal(ToolMapEditKind.Read, row.EditKind);
-            Assert.Equal(OperationDirection.Read, row.Direction);
             Assert.Equal(CommonAssignmentKind.InternalFlow, row.Assignment);
             Assert.Equal("stateRead", row.Target);
             Assert.Equal(BindingSlot.PmxClone, row.SlotBinding.Returned);
-            Assert.Null(row.Note);
-            Assert.Null(row.DangerKind);
             Assert.Null(row.UpdateSpec);
             Assert.Null(row.Tool);
             Assert.Null(row.Postcondition);
@@ -114,11 +109,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(Common(@", ""reason"": ""余分。"""));
         }
 
+        /// <summary>提供能力のIDは台帳から引けるので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenCapabilityIdStops()
+        {
+            Rejects(Common(@", ""capabilityIds"": [""CAP-001""]"));
+        }
+
+        /// <summary>操作の向きはシグネチャから決まるので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenDirectionStops()
+        {
+            Rejects(Common(@", ""direction"": ""read"""));
+        }
+
+        /// <summary>危険の種別は危険操作の規則が判定するので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenDangerKindStops()
+        {
+            Rejects(Common(@", ""dangerKind"": ""overwrite"""));
+        }
+
+        /// <summary>注記は台帳から引けるので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenNoteStops()
+        {
+            Rejects(Common(@", ""note"": ""一次資料で利用非推奨"""));
+        }
+
         [Fact]
         public void RejectsAMissingRequiredMember()
         {
-            Rejects(@"{ ""signatureKey"": ""T.M()"", ""capabilityIds"": [""CAP-001""],
-                        ""rowKind"": ""commonContract"", ""editKind"": ""read"", " + CommonMembers + "}");
+            Rejects(@"{ ""signatureKey"": ""T.M()"", ""rowKind"": ""commonContract"", ""editKind"": ""read"", " + CommonMembers + "}");
         }
 
         [Fact]
@@ -204,16 +226,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Throws<FormatException>(() => ToolMapJsonReader.Read(
                 Map(Common(string.Empty), Common(string.Empty))));
-        }
-
-        [Theory]
-        [InlineData("[]")]
-        [InlineData(@"[""CAP-001"", ""CAP-001""]")]
-        public void RejectsCapabilityIdsThatAreNotOneOrMoreDistinctIds(string ids)
-        {
-            Rejects(@"{ ""signatureKey"": ""T.M()"", ""capabilityIds"": " + ids + @",
-                        ""rowKind"": ""commonContract"", ""editKind"": ""read"",
-                        ""direction"": ""read"", ""basis"": ""根拠。"", " + CommonMembers + "}");
         }
 
         [Fact]
@@ -560,39 +572,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 string.Empty));
         }
 
-        [Fact]
-        public void ReadsTheDangerKind()
-        {
-            ToolMapRow row = Single(Common(@", ""dangerKind"": ""overwrite"""));
-
-            Assert.Equal(DangerKind.Overwrite, row.DangerKind);
-        }
-
-        [Fact]
-        public void ReadsTheNote()
-        {
-            ToolMapRow row = Single(Common(@", ""note"": ""一次資料で利用非推奨"""));
-
-            Assert.Equal("一次資料で利用非推奨", row.Note);
-        }
-
         [Theory]
-        [InlineData("embedded", "read", "read")]
-        [InlineData("commonContract", "sessionOnly", "read")]
-        [InlineData("commonContract", "read", "in")]
-        public void RejectsAValueThatIsNotInItsClosedSet(
-            string rowKind, string editKind, string direction)
+        [InlineData("embedded", "read")]
+        [InlineData("commonContract", "sessionOnly")]
+        public void RejectsAValueThatIsNotInItsClosedSet(string rowKind, string editKind)
         {
-            Rejects(@"{ ""signatureKey"": ""T.M()"", ""capabilityIds"": [""CAP-001""],
-                        ""rowKind"": """ + rowKind + @""", ""editKind"": """ + editKind + @""",
-                        ""direction"": """ + direction + @""", ""basis"": ""根拠。"", "
-                        + CommonMembers + "}");
-        }
-
-        [Fact]
-        public void RejectsADangerKindThatIsNotInItsClosedSet()
-        {
-            Rejects(Common(@", ""dangerKind"": ""delete"""));
+            Rejects(@"{ ""signatureKey"": ""T.M()"", ""rowKind"": """ + rowKind + @""", ""editKind"": """ + editKind + @""",
+                        ""basis"": ""根拠。"", " + CommonMembers + "}");
         }
 
         [Theory]

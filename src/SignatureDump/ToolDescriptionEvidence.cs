@@ -17,6 +17,7 @@ namespace PmxEditorMcp.SignatureDump
             TypeRoleTable roles,
             IList<PropertyNameRecord> names,
             InventoryRecord inventory,
+            IDictionary<string, string> contractNotes,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes)
         {
@@ -38,6 +39,11 @@ namespace PmxEditorMcp.SignatureDump
             if (inventory == null)
             {
                 throw new ArgumentNullException(nameof(inventory));
+            }
+
+            if (contractNotes == null)
+            {
+                throw new ArgumentNullException(nameof(contractNotes));
             }
 
             if (methodNotes == null)
@@ -63,7 +69,15 @@ namespace PmxEditorMcp.SignatureDump
                 .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 materials.Add(Material(
-                    tool.Key, tool.ToList(), map, byType, japanese, signatures, methodNotes, propertyNotes));
+                    tool.Key,
+                    tool.ToList(),
+                    map,
+                    byType,
+                    japanese,
+                    signatures,
+                    contractNotes,
+                    methodNotes,
+                    propertyNotes));
             }
 
             return new ReadOnlyCollection<ToolDescriptionMaterial>(materials);
@@ -76,6 +90,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, string> japanese,
             IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> contractNotes,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes)
         {
@@ -91,10 +106,18 @@ namespace PmxEditorMcp.SignatureDump
                 qualifier,
                 role.ElementNoun,
                 signature.DeclaringType,
-                Joined(rows.Select(r => r.Note)),
+                Joined(rows.Select(r => Contract(r.SignatureKey, contractNotes))),
                 Joined(rows.Select(r => Note(
                     Signature(r.SignatureKey, signatures), methodNotes, propertyNotes))),
                 IndexTerms(tool, map, japanese, signatures));
+        }
+
+        /// <summary>そのシグネチャの契約注記。持たなければ null。</summary>
+        private static string Contract(string signatureKey, IDictionary<string, string> notes)
+        {
+            string note;
+
+            return notes.TryGetValue(signatureKey, out note) ? note : null;
         }
 
         // 出所修飾は要素名詞を後置したもの。単数形と複数形のどちらでも後置になりうる。
