@@ -84,7 +84,6 @@ namespace PmxEditorMcp.SignatureDump
             string basis,
             string elementNoun = "",
             string elementNounPlural = "",
-            string connectionPath = "",
             CapabilityOwner group = CapabilityOwner.None,
             IDictionary<ToolVerb, string> tools = null)
         {
@@ -98,11 +97,6 @@ namespace PmxEditorMcp.SignatureDump
             if (elementNounPlural == null)
             {
                 throw new ArgumentNullException(nameof(elementNounPlural));
-            }
-
-            if (connectionPath == null)
-            {
-                throw new ArgumentNullException(nameof(connectionPath));
             }
 
             if (HasIndependentTool(role) != (group != CapabilityOwner.None))
@@ -128,7 +122,6 @@ namespace PmxEditorMcp.SignatureDump
                 new Dictionary<ToolVerb, string>(named));
             ElementNoun = elementNoun;
             ElementNounPlural = elementNounPlural;
-            ConnectionPath = connectionPath;
         }
 
         public string TypeName { get; }
@@ -143,9 +136,6 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>集合を扱うツール名が使う複数形。持たない役割では空。</summary>
         public string ElementNounPlural { get; }
-
-        /// <summary>接続の根からその型へ至る経路。根と、経路を持たない型では空。</summary>
-        public string ConnectionPath { get; }
 
         /// <summary>
         /// その型のツールが属する担当群。持たない役割では <see cref="CapabilityOwner.None"/>。
@@ -178,20 +168,13 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>ハンドルを返しうるシグネチャ1件の判定。</summary>
     public sealed class HandleIssuanceRecord
     {
-        public HandleIssuanceRecord(
-            string signatureKey, bool issues, HandleIssuanceKind? kind, string basis)
+        public HandleIssuanceRecord(string signatureKey, bool issues, string basis)
         {
             PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
             PropertyRecord.RequireText(basis, nameof(basis));
-            if (issues != kind.HasValue)
-            {
-                throw new ArgumentException(
-                    "発行するときだけ種別を持つ。", issues ? nameof(kind) : nameof(issues));
-            }
 
             SignatureKey = signatureKey;
             Issues = issues;
-            Kind = kind;
             Basis = basis;
         }
 
@@ -199,9 +182,6 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>新しいハンドルを発行するか。既にあるものを返すだけなら偽。</summary>
         public bool Issues { get; }
-
-        /// <summary><see cref="Issues"/> が偽のときは持たない。</summary>
-        public HandleIssuanceKind? Kind { get; }
 
         /// <summary>そう判じた根拠の一文。</summary>
         public string Basis { get; }
@@ -214,8 +194,7 @@ namespace PmxEditorMcp.SignatureDump
             string signatureKey,
             bool owns,
             string basis,
-            IList<string> ownerPath = null,
-            IList<string> concreteTypes = null)
+            IList<string> ownerPath = null)
         {
             PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
             PropertyRecord.RequireText(basis, nameof(basis));
@@ -230,7 +209,6 @@ namespace PmxEditorMcp.SignatureDump
             Owns = owns;
             Basis = basis;
             OwnerPath = new ReadOnlyCollection<string>(path);
-            ConcreteTypes = new ReadOnlyCollection<string>(concreteTypes ?? new List<string>());
         }
 
         public string SignatureKey { get; }
@@ -244,10 +222,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>そのリストへ至る段の列。所有しないリストでは空。</summary>
         public IList<string> OwnerPath { get; }
 
-        /// <summary>
-        /// 要素の型を継承する葉の型の名前。要素の型を継承する型が無いリストでは空。
-        /// </summary>
-        public IList<string> ConcreteTypes { get; }
     }
 
     /// <summary>

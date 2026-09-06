@@ -210,7 +210,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "題材の根拠。",
                     string.Empty,
                     string.Empty,
-                    string.Empty,
                     CapabilityOwner.Model,
                     new Dictionary<ToolVerb, string> { { ToolVerb.List, ListTool } })));
 
@@ -321,7 +320,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                             "題材の根拠。",
                             "value",
                             "values",
-                            "接続の経路。",
                             CapabilityOwner.Model,
                             new Dictionary<ToolVerb, string>
                             {
@@ -517,7 +515,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "題材の根拠。",
                         "vertex",
                         "vertices",
-                        string.Empty,
                         CapabilityOwner.Model,
                         new Dictionary<ToolVerb, string>
                         {

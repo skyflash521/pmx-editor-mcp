@@ -19,16 +19,13 @@ namespace PmxEditorMcp.SignatureDump
         /// 表が覆うべき型の集合で、接続の根とその経路上の型を含めて渡すこと。
         /// <paramref name="connectorCandidates"/> には
         /// <see cref="TypeRoleEvidence.ConnectorCandidates"/> の結果を渡すこと——コネクタ型に
-        /// なりうるかは、この集合に在るかどうかで見る。<paramref name="connectionPaths"/> には
-        /// <see cref="TypeRoleEvidence.ReachableFromRoots"/> の結果を、
+        /// なりうるかは、この集合に在るかどうかで見る。
         /// <paramref name="issuanceCandidates"/> には
         /// <see cref="HandleIssuanceEvidence.Candidates"/> の結果を、
         /// <paramref name="collectionCandidates"/> には
         /// <see cref="ElementCollectionEvidence.Candidates"/> の結果を、
         /// <paramref name="ledgerOwners"/> には
-        /// <see cref="TypeGroupEvidence.OwnersByType"/> の結果を、
-        /// <paramref name="concreteTypes"/> には
-        /// <see cref="ElementCollectionEvidence.ConcreteTypes"/> の結果を渡すこと。
+        /// <see cref="TypeGroupEvidence.OwnersByType"/> の結果を渡すこと。
         /// </summary>
         public static void Require(
             TypeRoleTable table,
@@ -36,11 +33,9 @@ namespace PmxEditorMcp.SignatureDump
             IEnumerable<string> connectionRoots,
             ISet<string> eventArgumentTypes,
             ICollection<string> connectorCandidates,
-            IDictionary<string, string> connectionPaths,
             IDictionary<string, HandleIssuanceKind> issuanceCandidates,
             IDictionary<string, string> collectionCandidates,
-            IDictionary<string, ISet<CapabilityOwner>> ledgerOwners,
-            IDictionary<string, IList<string>> concreteTypes)
+            IDictionary<string, ISet<CapabilityOwner>> ledgerOwners)
         {
             if (table == null)
             {
@@ -67,11 +62,6 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(connectorCandidates));
             }
 
-            if (connectionPaths == null)
-            {
-                throw new ArgumentNullException(nameof(connectionPaths));
-            }
-
             if (issuanceCandidates == null)
             {
                 throw new ArgumentNullException(nameof(issuanceCandidates));
@@ -87,25 +77,17 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(ledgerOwners));
             }
 
-            if (concreteTypes == null)
-            {
-                throw new ArgumentNullException(nameof(concreteTypes));
-            }
-
             IList<TypeRoleRecord> records = table.Types;
             RequireSameTypes(records, roleTypes);
             RequireRootsAreConnectors(records, connectionRoots);
             RequireEventArgumentsMatchTheEvidence(records, eventArgumentTypes);
             RequireConnectorsNeedNoInstanceFromTheCaller(records, connectorCandidates);
-            RequireConnectionPathsMatchTheEvidence(records, connectionPaths);
             RequireIssuancesMatchTheEvidence(table.Issuances, issuanceCandidates);
             RequireCollectionsMatchTheEvidence(table.Collections, collectionCandidates);
             RequireGroupsMatchTheLedger(records, ledgerOwners);
             RequireToolNamesFollowTheNouns(records);
             RequireAddAndRemoveMatchTheOwnedElements(
                 records, table.Collections, collectionCandidates);
-            RequireConcreteTypesMatchTheEvidence(
-                table.Collections, collectionCandidates, concreteTypes);
         }
 
         /// <summary>
@@ -204,29 +186,6 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// コネクタ型の接続の経路は、列挙から辿った経路と一致しなければならない。列挙が経路を持たない
-        /// 型は、表も持たないことを求める。
-        /// </summary>
-        private static void RequireConnectionPathsMatchTheEvidence(
-            IList<TypeRoleRecord> records, IDictionary<string, string> connectionPaths)
-        {
-            foreach (TypeRoleRecord record in records.Where(r => r.Role == TypeRole.Connector))
-            {
-                string reached;
-                string expected = connectionPaths.TryGetValue(record.TypeName, out reached)
-                    ? reached
-                    : string.Empty;
-                if (!string.Equals(record.ConnectionPath, expected, StringComparison.Ordinal))
-                {
-                    throw new InvalidOperationException(
-                        "接続の経路が列挙と合わない: " + record.TypeName
-                            + "(表: " + Shown(record.ConnectionPath)
-                            + " / 列挙: " + Shown(expected) + ")");
-                }
-            }
-        }
-
-        /// <summary>
         /// 担当群が、台帳がその型へ与える担当と食い違わないことを求める。担当が一つに決まる型では
         /// 表の値が書き手の判断でなく台帳の写しになるので、そこだけを突き合わせる。
         /// </summary>
@@ -318,37 +277,6 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 許容する具象型が、要素の型を継承する葉の型と一致することを求める。継承する型が無い要素の型の
-        /// リストは持たない。
-        /// </summary>
-        private static void RequireConcreteTypesMatchTheEvidence(
-            IList<ElementCollectionRecord> records,
-            IDictionary<string, string> candidates,
-            IDictionary<string, IList<string>> concreteTypes)
-        {
-            foreach (ElementCollectionRecord record in records)
-            {
-                string element;
-                if (!candidates.TryGetValue(record.SignatureKey, out element))
-                {
-                    continue;
-                }
-
-                IList<string> leaves;
-                string[] expected = concreteTypes.TryGetValue(element, out leaves)
-                    ? leaves.ToArray()
-                    : new string[0];
-                if (!expected.SequenceEqual(record.ConcreteTypes, StringComparer.Ordinal))
-                {
-                    throw new InvalidOperationException(
-                        "許容する具象型が列挙と合わない: " + record.SignatureKey
-                            + "(表: " + Listed(record.ConcreteTypes)
-                            + " / 列挙: " + Listed(expected) + ")");
-                }
-            }
-        }
-
         private static string Listed(IEnumerable<string> names)
         {
             string joined = string.Join("・", names);
@@ -362,8 +290,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// ハンドルを返しうるシグネチャの集合が列挙と一対一で、発行するとしたものの種別が
-        /// レシーバーから導いた種別と一致することを求める。
+        /// ハンドルを返しうるシグネチャの集合が、列挙と一対一であることを求める。
         /// </summary>
         private static void RequireIssuancesMatchTheEvidence(
             IList<HandleIssuanceRecord> records,
@@ -378,18 +305,10 @@ namespace PmxEditorMcp.SignatureDump
                         "表に同じ行キーが二度在る: " + record.SignatureKey);
                 }
 
-                HandleIssuanceKind derived;
-                if (!candidates.TryGetValue(record.SignatureKey, out derived))
+                if (!candidates.ContainsKey(record.SignatureKey))
                 {
                     throw new InvalidOperationException(
                         "ハンドルを返さないシグネチャが表に在る: " + record.SignatureKey);
-                }
-
-                if (record.Issues && record.Kind != derived)
-                {
-                    throw new InvalidOperationException(
-                        "発行の種別がレシーバーと合わない: " + record.SignatureKey
-                            + "(表: " + record.Kind + " / 列挙: " + derived + ")");
                 }
             }
 

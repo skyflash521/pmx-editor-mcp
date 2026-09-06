@@ -58,7 +58,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 "element",
                 "elements",
-                "接続の経路。",
                 independent ? CapabilityOwner.Model : CapabilityOwner.None,
                 independent
                     ? new Dictionary<ToolVerb, string> { { ToolVerb.List, "model_list_elements" } }

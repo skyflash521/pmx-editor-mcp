@@ -147,7 +147,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "根拠。",
                         "vertex",
                         "vertices",
-                        "接続の経路。",
                         independent ? CapabilityOwner.Model : CapabilityOwner.None,
                         independent
                             ? new Dictionary<ToolVerb, string> { { ToolVerb.List, Tool } }
@@ -158,7 +157,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     new HandleIssuanceRecord(
                         Key,
                         issues,
-                        issues ? HandleIssuanceKind.Constructor : (HandleIssuanceKind?)null,
                         "根拠。"),
                 },
                 new ElementCollectionRecord[0]);
@@ -244,8 +242,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     new[]
                     {
                         new HandleIssuanceRecord(
-                            Key, true, HandleIssuanceKind.Constructor, "根拠。"),
-                        new HandleIssuanceRecord(otherKey, false, null, "根拠。"),
+                            Key, true, "根拠。"),
+                        new HandleIssuanceRecord(otherKey, false, "根拠。"),
                     },
                     new ElementCollectionRecord[0]),
                 signatures);
@@ -506,7 +504,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                                 "根拠。",
                                 "value",
                                 "values",
-                                "接続の経路。",
                                 CapabilityOwner.Model,
                                 new Dictionary<ToolVerb, string>
                                 {

@@ -74,18 +74,16 @@ namespace PmxEditorMcp.SignatureDump
             TypeRolePopulation population;
             ISet<string> eventArgumentTypes;
             ISet<string> connectorCandidates;
-            IDictionary<string, string> connectionPaths;
             IDictionary<string, HandleIssuanceKind> issuanceCandidates;
             IDictionary<string, string> collectionCandidates;
             IDictionary<string, ISet<CapabilityOwner>> ledgerOwners;
-            IDictionary<string, IList<string>> concreteTypes;
             try
             {
                 population = TypeRolePopulation.Resolve(ledger, inventory, excluded);
                 eventArgumentTypes = TypeRoleEvidence.EventArgumentTypes(inventory);
                 connectorCandidates = TypeRoleEvidence.ConnectorCandidates(
                     inventory, TypeRoleEvidence.ConnectionRoots);
-                connectionPaths = TypeRoleEvidence.ReachableFromRoots(
+                TypeRoleEvidence.RequireStepsSelectOneTarget(
                     inventory, TypeRoleEvidence.ConnectionRoots);
                 IDictionary<string, TypeRole> roles = table.Types.ToDictionary(
                     r => r.TypeName, r => r.Role, StringComparer.Ordinal);
@@ -94,7 +92,6 @@ namespace PmxEditorMcp.SignatureDump
                 collectionCandidates = ElementCollectionEvidence.Candidates(
                     inventory, roles, population.Signatures);
                 ledgerOwners = TypeGroupEvidence.OwnersByType(ledger, inventory);
-                concreteTypes = ElementCollectionEvidence.ConcreteTypes(inventory, roles);
             }
             catch (Exception exception)
                 when (exception is InvalidOperationException || exception is ArgumentException)
@@ -112,11 +109,9 @@ namespace PmxEditorMcp.SignatureDump
                     TypeRoleEvidence.ConnectionRoots,
                     eventArgumentTypes,
                     connectorCandidates,
-                    connectionPaths,
                     issuanceCandidates,
                     collectionCandidates,
-                    ledgerOwners,
-                    concreteTypes);
+                    ledgerOwners);
             }
             catch (InvalidOperationException exception)
             {
@@ -145,7 +140,7 @@ namespace PmxEditorMcp.SignatureDump
                 CultureInfo.InvariantCulture,
                 "照合した: 型 {0} 件(コネクタ {1}・イベント引数 {2}・ハンドル操作 {3}・操作対象 {4}"
                     + "・DTO {5})・ハンドルを返しうる行 {6} 件(発行 {7})"
-                    + "・要素のリスト {8} 件(所有 {9}・許容する具象型 {11})・ツール名 {10} 件",
+                    + "・要素のリスト {8} 件(所有 {9})・ツール名 {10} 件",
                 table.Types.Count,
                 table.Types.Count(r => r.Role == TypeRole.Connector),
                 table.Types.Count(r => r.Role == TypeRole.EventArgs),
@@ -156,8 +151,7 @@ namespace PmxEditorMcp.SignatureDump
                 table.Issuances.Count(r => r.Issues),
                 table.Collections.Count,
                 table.Collections.Count(r => r.Owns),
-                table.Types.Sum(r => r.Tools.Count),
-                table.Collections.Sum(r => r.ConcreteTypes.Count)));
+                table.Types.Sum(r => r.Tools.Count)));
 
             return ExitCodes.Success;
         }

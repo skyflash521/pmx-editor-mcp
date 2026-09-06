@@ -459,56 +459,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TheConnectionPathIsRead()
-        {
-            IList<TypeRoleRecord> records = ReadTypes(
-                Noun("N.A", "connector",
-                    "\"elementNoun\":\"alpha\",\"connectionPath\":\"Host.Alpha\""),
-                Noun("N.B", "connector", "\"elementNoun\":\"beta\""));
-
-            Assert.Equal(new[] { "Host.Alpha", string.Empty }, records.Select(r => r.ConnectionPath));
-        }
-
-        [Fact]
-        public void ARoleThatIsNotAConnectorWithAConnectionPathStops()
-        {
-            foreach (string nouns in new[]
-            {
-                "\"role\":\"eventArgs\"",
-                "\"role\":\"dto\"",
-                "\"role\":\"handleTarget\",\"elementNoun\":\"alpha\""
-                    + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\","
-                    + Tools("handleTarget"),
-                "\"role\":\"operationTarget\",\"elementNoun\":\"alpha\""
-                    + ",\"elementNounPlural\":\"alphas\",\"group\":\"model\","
-                    + Tools("operationTarget"),
-            })
-            {
-                FormatException error = Assert.Throws<FormatException>(
-                    () => ReadTypes(
-                        "{\"typeName\":\"N.A\"," + nouns
-                            + ",\"basis\":\"根拠。\",\"connectionPath\":\"Host.Alpha\"}"));
-
-                Assert.Contains("connectionPath", error.Message);
-            }
-        }
-
-        [Fact]
-        public void AConnectionPathThatIsBlankStops()
-        {
-            foreach (string path in new[] { string.Empty, "  " })
-            {
-                FormatException error = Assert.Throws<FormatException>(
-                    () => ReadTypes(Noun(
-                        "N.A",
-                        "connector",
-                        "\"elementNoun\":\"alpha\",\"connectionPath\":\"" + path + "\"")));
-
-                Assert.Contains("connectionPath", error.Message);
-            }
-        }
-
-        [Fact]
         public void AnEmptyTableIsRead()
         {
             TypeRoleTable table = TypeRoleTableJsonReader.ReadTypeRoles(
@@ -535,6 +485,33 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "{\"types\":\"x\",\"issuances\":[],\"collections\":[]}"));
 
             Assert.Contains("types", error.Message);
+        }
+
+        /// <summary>接続の経路は列挙から辿れるので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenConnectionPathStops()
+        {
+            Assert.Throws<FormatException>(() => ReadTypes(
+                Noun("N.A", "connector",
+                    "\"elementNoun\":\"alpha\",\"connectionPath\":\"Host.Alpha\"")));
+        }
+
+        /// <summary>発行の種別はレシーバーから決まるので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenIssuanceKindStops()
+        {
+            Assert.Throws<FormatException>(() => ReadIssuances(
+                Issuance("N.A.Make()", "\"issues\":true,\"kind\":\"factory\"")));
+        }
+
+        /// <summary>許容する具象型は列挙から導けるので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenConcreteTypeStops()
+        {
+            Assert.Throws<FormatException>(() => ReadCollections(
+                "{\"signatureKey\":\"N.A.Items()\",\"owns\":true"
+                    + ",\"ownerPath\":[\"N.A.Items()\"]"
+                    + ",\"concreteTypes\":[\"N.IFirst\"],\"basis\":\"根拠。\"}"));
         }
 
         [Fact]
@@ -564,38 +541,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AnIssuanceIsReadWithItsKindAndBasis()
-        {
-            IList<HandleIssuanceRecord> records = ReadIssuances(
-                Issuance("N.A.Make()", "\"issues\":true,\"kind\":\"factory\""),
-                Issuance("N.B.Get()", "\"issues\":false"));
-
-            Assert.Equal(new[] { "N.A.Make()", "N.B.Get()" }, records.Select(r => r.SignatureKey));
-            Assert.Equal(new[] { true, false }, records.Select(r => r.Issues));
-            Assert.Equal(HandleIssuanceKind.Factory, records[0].Kind);
-            Assert.Null(records[1].Kind);
-            Assert.Equal("N.B.Get() の根拠。", records[1].Basis);
-        }
-
-        [Fact]
-        public void EveryIssuanceKindNameIsRead()
-        {
-            IList<HandleIssuanceRecord> records = ReadIssuances(
-                Issuance("N.A", "\"issues\":true,\"kind\":\"constructor\""),
-                Issuance("N.B", "\"issues\":true,\"kind\":\"factory\""),
-                Issuance("N.C", "\"issues\":true,\"kind\":\"receiverBound\""));
-
-            Assert.Equal(
-                new HandleIssuanceKind?[]
-                {
-                    HandleIssuanceKind.Constructor,
-                    HandleIssuanceKind.Factory,
-                    HandleIssuanceKind.ReceiverBound,
-                },
-                records.Select(r => r.Kind));
-        }
-
-        [Fact]
         public void IssuancesOutOfOrdinalOrderStop()
         {
             FormatException error = Assert.Throws<FormatException>(
@@ -613,34 +558,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Issuance("N.A", "\"issues\":false"), Issuance("N.A", "\"issues\":false")));
 
             Assert.Contains("二度", error.Message);
-        }
-
-        [Fact]
-        public void AnIssuanceThatIssuesWithoutAKindStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => ReadIssuances(Issuance("N.A", "\"issues\":true")));
-
-            Assert.Contains("kind", error.Message);
-        }
-
-        [Fact]
-        public void AnIssuanceThatDoesNotIssueWithAKindStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => ReadIssuances(
-                    Issuance("N.A", "\"issues\":false,\"kind\":\"factory\"")));
-
-            Assert.Contains("kind", error.Message);
-        }
-
-        [Fact]
-        public void AnUnknownIssuanceKindStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => ReadIssuances(Issuance("N.A", "\"issues\":true,\"kind\":\"builder\"")));
-
-            Assert.Contains("builder", error.Message);
         }
 
         [Fact]
@@ -752,54 +669,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         + ",\"ownerPath\":[5],\"basis\":\"根拠。\"}"));
 
             Assert.Contains("ownerPath", error.Message);
-        }
-
-        [Fact]
-        public void TheConcreteTypesAreRead()
-        {
-            IList<ElementCollectionRecord> records = ReadCollections(
-                "{\"signatureKey\":\"N.A.Items()\",\"owns\":true"
-                    + ",\"ownerPath\":[\"N.A.Items()\"]"
-                    + ",\"concreteTypes\":[\"N.IFirst\",\"N.ISecond\"],\"basis\":\"根拠。\"}",
-                Collection("N.B.Refs()", false));
-
-            Assert.Equal(new[] { "N.IFirst", "N.ISecond" }, records[0].ConcreteTypes);
-            Assert.Empty(records[1].ConcreteTypes);
-        }
-
-        [Fact]
-        public void AnEmptyListOfConcreteTypesStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => ReadCollections(
-                    "{\"signatureKey\":\"N.B.Refs()\",\"owns\":false"
-                        + ",\"concreteTypes\":[],\"basis\":\"根拠。\"}"));
-
-            Assert.Contains("concreteTypes", error.Message);
-        }
-
-        [Fact]
-        public void ConcreteTypesOutOfOrdinalOrderStop()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => ReadCollections(
-                    "{\"signatureKey\":\"N.B.Refs()\",\"owns\":false"
-                        + ",\"concreteTypes\":[\"N.ISecond\",\"N.IFirst\"]"
-                        + ",\"basis\":\"根拠。\"}"));
-
-            Assert.Contains("昇順", error.Message);
-        }
-
-        [Fact]
-        public void TheSameConcreteTypeTwiceStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => ReadCollections(
-                    "{\"signatureKey\":\"N.B.Refs()\",\"owns\":false"
-                        + ",\"concreteTypes\":[\"N.IFirst\",\"N.IFirst\"]"
-                        + ",\"basis\":\"根拠。\"}"));
-
-            Assert.Contains("二度", error.Message);
         }
 
         [Fact]

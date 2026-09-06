@@ -19,13 +19,9 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string OwnerPathName = "ownerPath";
 
-        private const string ConcreteTypesName = "concreteTypes";
-
         private const string SignatureKeyName = "signatureKey";
 
         private const string IssuesName = "issues";
-
-        private const string KindName = "kind";
 
         private const string TypeNameName = "typeName";
 
@@ -37,22 +33,12 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string ElementNounPluralName = "elementNounPlural";
 
-        private const string ConnectionPathName = "connectionPath";
-
         private const string GroupName = "group";
 
         private const string ToolsName = "tools";
 
         private static readonly Regex SnakeCase = new Regex(
             "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
-
-        private static readonly Dictionary<string, HandleIssuanceKind> Kinds =
-            new Dictionary<string, HandleIssuanceKind>(StringComparer.Ordinal)
-            {
-                { "constructor", HandleIssuanceKind.Constructor },
-                { "factory", HandleIssuanceKind.Factory },
-                { "receiverBound", HandleIssuanceKind.ReceiverBound },
-            };
 
         private static readonly Dictionary<string, ToolVerb> Verbs =
             new Dictionary<string, ToolVerb>(StringComparer.Ordinal)
@@ -107,7 +93,7 @@ namespace PmxEditorMcp.SignatureDump
                     owns
                         ? new[] { SignatureKeyName, OwnsName, BasisName, OwnerPathName }
                         : new[] { SignatureKeyName, OwnsName, BasisName },
-                    new[] { ConcreteTypesName });
+                    new string[0]);
                 ElementCollectionRecord record;
                 try
                 {
@@ -115,10 +101,7 @@ namespace PmxEditorMcp.SignatureDump
                         Text(members[SignatureKeyName], SignatureKeyName),
                         owns,
                         Text(members[BasisName], BasisName),
-                        owns ? ReadPath(members[OwnerPathName]) : null,
-                        members.ContainsKey(ConcreteTypesName)
-                            ? ReadConcreteTypes(members[ConcreteTypesName])
-                            : null);
+                        owns ? ReadPath(members[OwnerPathName]) : null);
                 }
                 catch (ArgumentException exception)
                 {
@@ -150,32 +133,13 @@ namespace PmxEditorMcp.SignatureDump
 
         private static HandleIssuanceRecord ReadIssuance(object item)
         {
-            bool issues = Flag(item);
             Dictionary<string, object> members = Members(
-                item,
-                issues
-                    ? new[] { SignatureKeyName, IssuesName, KindName, BasisName }
-                    : new[] { SignatureKeyName, IssuesName, BasisName },
-                new string[0]);
-            HandleIssuanceKind? kind = null;
-            if (issues)
-            {
-                string text = Text(members[KindName], KindName);
-                HandleIssuanceKind read;
-                if (!Kinds.TryGetValue(text, out read))
-                {
-                    throw new FormatException("知らない発行の種別: " + text);
-                }
-
-                kind = read;
-            }
-
+                item, new[] { SignatureKeyName, IssuesName, BasisName }, new string[0]);
             try
             {
                 return new HandleIssuanceRecord(
                     Text(members[SignatureKeyName], SignatureKeyName),
-                    issues,
-                    kind,
+                    Flag(item),
                     Text(members[BasisName], BasisName));
             }
             catch (ArgumentException exception)
@@ -210,29 +174,6 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return items.Select(i => Text(i, OwnerPathName)).ToList();
-        }
-
-        /// <summary>
-        /// 許容する具象型。要素の型を継承する型が在るかどうかは他の項目を見なければ決まらないので、
-        /// 在ってもよい形にする。書くなら1件以上を序数の昇順で重複なく並べる。
-        /// </summary>
-        private static IList<string> ReadConcreteTypes(object value)
-        {
-            object[] items = Array(value, ConcreteTypesName);
-            if (items.Length == 0)
-            {
-                throw new FormatException(ConcreteTypesName + " は1件以上でなければならない。");
-            }
-
-            List<string> names = items.Select(i => Text(i, ConcreteTypesName)).ToList();
-            string previous = null;
-            foreach (string name in names)
-            {
-                RequireAscending(previous, name, ConcreteTypesName + " の型");
-                previous = name;
-            }
-
-            return names;
         }
 
         private static bool Flag(object item)
@@ -315,15 +256,12 @@ namespace PmxEditorMcp.SignatureDump
         {
             TypeRole role = ReadRole(item);
             Dictionary<string, object> members = Members(
-                item, NamesFor(role), OptionalNamesFor(role));
+                item, NamesFor(role), new string[0]);
             string noun = members.ContainsKey(ElementNounName)
                 ? Noun(members[ElementNounName], ElementNounName)
                 : string.Empty;
             string plural = members.ContainsKey(ElementNounPluralName)
                 ? Noun(members[ElementNounPluralName], ElementNounPluralName)
-                : string.Empty;
-            string path = members.ContainsKey(ConnectionPathName)
-                ? Text(members[ConnectionPathName], ConnectionPathName)
                 : string.Empty;
             CapabilityOwner group = members.ContainsKey(GroupName)
                 ? ReadGroup(members[GroupName])
@@ -340,7 +278,6 @@ namespace PmxEditorMcp.SignatureDump
                     Text(members[BasisName], BasisName),
                     noun,
                     plural,
-                    path,
                     group,
                     tools);
             }
@@ -395,17 +332,6 @@ namespace PmxEditorMcp.SignatureDump
                 TypeNameName, RoleName, BasisName, ElementNounName, ElementNounPluralName,
                 GroupName, ToolsName,
             };
-        }
-
-        /// <summary>
-        /// 役割ごとに、持つべき名前に加えて項目が持ってもよい名前。接続の経路は在るかどうかが読む時点
-        /// では決まらないので、必須にせずここへ置く。
-        /// </summary>
-        private static string[] OptionalNamesFor(TypeRole role)
-        {
-            return role == TypeRole.Connector
-                ? new[] { ConnectionPathName }
-                : new string[0];
         }
 
         /// <summary>

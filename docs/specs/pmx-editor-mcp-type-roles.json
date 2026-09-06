@@ -9,8 +9,7 @@
       "tools": {
         "get": "session_get_form_connector",
         "update": "session_update_form_connector"
-      },
-      "connectionPath": "Host.Connector.Form"
+      }
     },
     {
       "typeName": "PEPlugin.IPEBuilder",
@@ -21,8 +20,7 @@
       "tools": {
         "get": "motion_get_builder",
         "update": "motion_update_builder"
-      },
-      "connectionPath": "Host.Builder"
+      }
     },
     {
       "typeName": "PEPlugin.IPEConnector",
@@ -33,8 +31,7 @@
       "tools": {
         "get": "session_get_operation_connector",
         "update": "session_update_operation_connector"
-      },
-      "connectionPath": "Host.Connector"
+      }
     },
     {
       "typeName": "PEPlugin.IPEPluginHost",
@@ -45,8 +42,7 @@
       "tools": {
         "get": "session_get_plugin_host",
         "update": "session_update_plugin_host"
-      },
-      "connectionPath": "Host"
+      }
     },
     {
       "typeName": "PEPlugin.IPEPluginOption",
@@ -78,8 +74,7 @@
       "tools": {
         "get": "session_get_system_connector",
         "update": "session_update_system_connector"
-      },
-      "connectionPath": "Host.Connector.System"
+      }
     },
     {
       "typeName": "PEPlugin.IPXPmxBuilder",
@@ -90,8 +85,7 @@
       "tools": {
         "get": "model_get_pmx_builder",
         "update": "model_update_pmx_builder"
-      },
-      "connectionPath": "Builder"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXBody",
@@ -362,8 +356,7 @@
       "tools": {
         "get": "model_get_pmx_connector",
         "update": "model_update_pmx_connector"
-      },
-      "connectionPath": "Host.Connector.Pmx"
+      }
     },
     {
       "typeName": "PEPlugin.Pmx.IPXPrimitiveBuilder",
@@ -463,8 +456,7 @@
       "tools": {
         "get": "view_get_pmd_view_connector",
         "update": "view_update_pmd_view_connector"
-      },
-      "connectionPath": "Host.Connector.View.PMDView"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEPMDViewHelper",
@@ -475,8 +467,7 @@
       "tools": {
         "get": "view_get_pmd_view_helper",
         "update": "view_update_pmd_view_helper"
-      },
-      "connectionPath": "Host.Connector.View.PMDViewHelper"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEPartsSelectConnector",
@@ -487,8 +478,7 @@
       "tools": {
         "get": "view_get_parts_select_connector",
         "update": "view_update_parts_select_connector"
-      },
-      "connectionPath": "Host.Connector.View.PMDViewHelper.PartsSelect"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPESizableWindowConnector",
@@ -510,8 +500,7 @@
       "tools": {
         "get": "view_get_sub_view_connector",
         "update": "view_update_sub_view_connector"
-      },
-      "connectionPath": "Host.Connector.View.PMDViewHelper.SubView"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPETransformViewConnector",
@@ -522,8 +511,7 @@
       "tools": {
         "get": "motion_get_transform_view_connector",
         "update": "motion_update_transform_view_connector"
-      },
-      "connectionPath": "Host.Connector.View.TransformView"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEVertexEditConnector",
@@ -534,8 +522,7 @@
       "tools": {
         "get": "model_get_vertex_edit_connector",
         "update": "model_update_vertex_edit_connector"
-      },
-      "connectionPath": "Host.Connector.View.PMDViewHelper.VertexEdit"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEVertexGuideConnector",
@@ -546,8 +533,7 @@
       "tools": {
         "get": "view_get_vertex_guide_connector",
         "update": "view_update_vertex_guide_connector"
-      },
-      "connectionPath": "Host.Connector.View.PMDViewHelper.VertexGuide"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEViewConnector",
@@ -558,8 +544,7 @@
       "tools": {
         "get": "view_get_view_connector",
         "update": "view_update_view_connector"
-      },
-      "connectionPath": "Host.Connector.View"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEViewSettingConnector",
@@ -570,8 +555,7 @@
       "tools": {
         "get": "view_get_view_setting_connector",
         "update": "view_update_view_setting_connector"
-      },
-      "connectionPath": "Host.Connector.View.PMDViewSetting"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPEWeightEditConnector",
@@ -582,8 +566,7 @@
       "tools": {
         "get": "model_get_weight_edit_connector",
         "update": "model_update_weight_edit_connector"
-      },
-      "connectionPath": "Host.Connector.View.PMDViewHelper.WeightEdit"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPXBodyJointVisibleChange",
@@ -605,8 +588,7 @@
       "tools": {
         "get": "view_get_pmx_view_connector",
         "update": "view_update_pmx_view_connector"
-      },
-      "connectionPath": "Host.Connector.View.PmxView"
+      }
     },
     {
       "typeName": "PEPlugin.View.IPXPmxViewHelper",
@@ -617,8 +599,7 @@
       "tools": {
         "get": "view_get_pmx_view_helper",
         "update": "view_update_pmx_view_helper"
-      },
-      "connectionPath": "Host.Connector.View.PmxViewHelper"
+      }
     },
     {
       "typeName": "PEPlugin.Vmd.IPEVmd",
@@ -1359,8 +1340,7 @@
       "tools": {
         "get": "view_get_c_plugin_connector",
         "update": "view_update_c_plugin_connector"
-      },
-      "connectionPath": "Connector"
+      }
     },
     {
       "typeName": "PXCPlugin.IPXCPluginRunArgs",
@@ -1382,8 +1362,7 @@
       "tools": {
         "get": "model_get_c_primitive_builder",
         "update": "model_update_c_primitive_builder"
-      },
-      "connectionPath": "PrimitiveBuilder"
+      }
     },
     {
       "typeName": "PXCPlugin.IPXConnector",
@@ -1405,8 +1384,7 @@
       "tools": {
         "get": "session_get_system_control",
         "update": "session_update_system_control"
-      },
-      "connectionPath": "SystemCtrl()"
+      }
     },
     {
       "typeName": "PXCPlugin.IPXViewControl",
@@ -1417,8 +1395,7 @@
       "tools": {
         "get": "view_get_view_control",
         "update": "view_update_view_control"
-      },
-      "connectionPath": "ViewCtrl()"
+      }
     },
     {
       "typeName": "PXCPlugin.PXCBridge",
@@ -1486,139 +1463,116 @@
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmd()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmd(System.String[],System.String[])",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBasCameraKey()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdCameraKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBoneKey()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdBoneKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdBonePoseStateインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd,System.Int32)",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdBonePoseStateインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd,System.Int32[])",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdBonePoseStateインスタンスの一括生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdIPL()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdIPLインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdLightKey()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdLightKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdMorphKey()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdMorphKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdSelfShadowKey()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmdSelfShadowKeyインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVme()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmeインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmeGroup()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmeGroupインスタンス生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmePath()",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「IPEVmePathインスタンス(空間パス)の作成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.ToBoneKeyArray(System.Int32,System.Int32)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「全フレーム配置のVmdBoneKey列へ変換(補間設定は直線形状)」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.AddBone(System.String,SlimDX.Vector3)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「ボーン追加(PMDから初期化した場合は例外終了)」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.AddMorph(System.String)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「モーフ追加(PMDから初期化した場合は例外終了)」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupBone(System.Boolean)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「グループボーンの作成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupBone(System.Int32[])",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「グループボーンの作成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupMorph(System.Boolean)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「グループモーフの作成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupMorph(System.Int32[])",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「グループモーフの作成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.Run()",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「イベント実行(登録されたイベントのフレーム範囲) - 登録したイベントによりフレームの各状態を生成／出力」と記す操作で、実行のたびに結果の実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.Run(System.Int32,System.Int32)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「イベント実行 - 登録したイベントによりフレームの各状態を生成／出力」と記す操作で、実行のたびに結果の実体を作って返す。"
     },
     {
@@ -1724,19 +1678,16 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToCameraVmd(System.Boolean,System.Boolean)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「カメラ出力結果をVMDへ変換」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToLightVmd(System.Boolean)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「照明出力結果をVMDへ変換」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToMotionVmd(System.Boolean)",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「ボーン／モーフ出力結果をVMDへ変換」と記す操作で、新しい実体を作って返す。"
     },
     {
@@ -1752,31 +1703,26 @@
     {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.CreateViewEventListener()",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「Viewイベントリスナ生成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.CreateEventConnector(PXCPlugin.IPXCPluginConnector)",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「イベントコネクタの作成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.RegisterUIModel(PXCPlugin.IPXCPluginConnector,PEPlugin.Pmx.IPXPmx,System.String,PEPlugin.SDX.M,System.Boolean,System.Boolean)",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物は「UIモデルの登録」と記すだけだが、登録は解放の対のある操作で、返るUIモデルは登録のたびに作られる別の実体である。"
     },
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.CreateEventListener(PXCPlugin.Event.IPXEventConnector,System.Int32[])",
       "issues": true,
-      "kind": "receiverBound",
       "basis": "配布物が「イベントリスナ作成」と記す操作で、新しい実体を作って返す。"
     },
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper.CreateTextControl(PXCPlugin.UIModel.IPXUIModel,System.Int32,System.Int32,System.Int32,System.Drawing.Color,System.Drawing.Font)",
       "issues": true,
-      "kind": "factory",
       "basis": "配布物が「テキスト制御クラスの生成 | 文字のアスペクト比は描画テクスチャと対象面のサイズ比により変化するので注意」と記す操作で、新しい実体を作って返す。"
     }
   ],
@@ -1803,14 +1749,6 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXMorph.Offsets()",
       "owns": true,
-      "concreteTypes": [
-        "PEPlugin.Pmx.IPXBoneMorphOffset",
-        "PEPlugin.Pmx.IPXGroupMorphOffset",
-        "PEPlugin.Pmx.IPXImpulseMorphOffset",
-        "PEPlugin.Pmx.IPXMaterialMorphOffset",
-        "PEPlugin.Pmx.IPXUVMorphOffset",
-        "PEPlugin.Pmx.IPXVertexMorphOffset"
-      ],
       "ownerPath": [
         "PEPlugin.Pmx.IPXPmx.Morph()",
         "PEPlugin.Pmx.IPXMorph.Offsets()"
@@ -1820,10 +1758,6 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXNode.Items()",
       "owns": true,
-      "concreteTypes": [
-        "PEPlugin.Pmx.IPXBoneNodeItem",
-        "PEPlugin.Pmx.IPXMorphNodeItem"
-      ],
       "ownerPath": [
         "PEPlugin.Pmx.IPXPmx.Node()",
         "PEPlugin.Pmx.IPXNode.Items()"

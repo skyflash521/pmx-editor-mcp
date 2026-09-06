@@ -72,7 +72,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 elementNoun,
                 elementNoun + "es",
-                "接続の経路。",
                 CapabilityOwner.Model,
                 new Dictionary<ToolVerb, string> { { ToolVerb.List, "model_list_" + elementNoun } });
         }
@@ -86,7 +85,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 "embedded",
                 "embeddeds",
-                "接続の経路。",
                 CapabilityOwner.None,
                 new Dictionary<ToolVerb, string>());
         }
@@ -238,7 +236,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "ui_model",
                     issuances: new[]
                     {
-                        new HandleIssuanceRecord(key, true, HandleIssuanceKind.Constructor, "根拠。"),
+                        new HandleIssuanceRecord(key, true, "根拠。"),
                     }),
                 Signatures(Method(key, Model, ".ctor", Model, MemberKind.Constructor)));
         }
@@ -259,7 +257,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     issuances: new[]
                     {
                         new HandleIssuanceRecord(
-                            factory, true, HandleIssuanceKind.Factory, "根拠。"),
+                            factory, true, "根拠。"),
                     },
                     more: new[] { Type(Builder, TypeRole.Connector, "builder") }),
                 Signatures(Method(factory, Builder, "CreateModel", Model)));
@@ -341,7 +339,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 "vertex",
                 "vertices",
-                "接続の経路。",
                 CapabilityOwner.Model,
                 new Dictionary<ToolVerb, string>
                 {
@@ -499,7 +496,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                                 "根拠。",
                                 "vertex",
                                 "vertexes",
-                                "接続の経路。",
                                 CapabilityOwner.None,
                                 new Dictionary<ToolVerb, string>()),
                         },

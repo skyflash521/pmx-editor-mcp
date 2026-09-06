@@ -100,19 +100,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AHandleIssuanceHasAKindOnlyWhenItIssues()
+        public void AHandleIssuanceRequiresItsKeyAndBasis()
         {
-            Assert.Throws<ArgumentException>(
-                () => new HandleIssuanceRecord("N.A.Make()", true, null, "根拠。"));
-            Assert.Throws<ArgumentException>(
-                () => new HandleIssuanceRecord(
-                    "N.A.Get()", false, HandleIssuanceKind.Factory, "根拠。"));
             Assert.Throws<ArgumentNullException>(
-                () => new HandleIssuanceRecord(null, false, null, "根拠。"));
+                () => new HandleIssuanceRecord(null, false, "根拠。"));
             Assert.Throws<ArgumentException>(
-                () => new HandleIssuanceRecord(" ", false, null, "根拠。"));
+                () => new HandleIssuanceRecord(" ", false, "根拠。"));
             Assert.Throws<ArgumentException>(
-                () => new HandleIssuanceRecord("N.A.Get()", false, null, " "));
+                () => new HandleIssuanceRecord("N.A.Get()", false, " "));
         }
 
         [Fact]

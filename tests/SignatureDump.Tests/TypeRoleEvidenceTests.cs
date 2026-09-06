@@ -305,6 +305,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleEvidence.ReachableFromRoots(Inventory(), new[] { " " }));
         }
 
+        /// <summary>経路を要らない側は、一歩の見分けだけを確かめる。</summary>
+        [Fact]
+        public void RequiringTheStepsAloneStopsOnTheSameAmbiguity()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => TypeRoleEvidence.RequireStepsSelectOneTarget(
+                    Inventory(
+                        Property(Root, "Host", "N.IAlpha"),
+                        Property("N.ISecond", "Host", "N.IBeta"),
+                        Property("N.IAlpha", "Value", "System.Int32"),
+                        Property("N.IBeta", "Value", "System.Int32")),
+                    new[] { Root, "N.ISecond" }));
+
+            Assert.Contains("Host", error.Message);
+
+            TypeRoleEvidence.RequireStepsSelectOneTarget(
+                Inventory(
+                    Property(Root, "Host", "N.IAlpha"),
+                    Property("N.IAlpha", "Value", "System.Int32")),
+                new[] { Root });
+        }
+
         [Fact]
         public void RootsThatShareAStepNameStop()
         {

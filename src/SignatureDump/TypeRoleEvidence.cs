@@ -73,6 +73,17 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 経路を辿り直す側が、各段で名前から一つの先を選べることだけを確かめる。経路そのものは
+        /// 要るときに <see cref="ReachableFromRoots"/> で導くので、ここでは捨てる。選べない段が
+        /// 在れば <see cref="InvalidOperationException"/>。
+        /// </summary>
+        public static void RequireStepsSelectOneTarget(
+            InventoryRecord inventory, IEnumerable<string> roots)
+        {
+            ReachableFromRoots(inventory, roots);
+        }
+
+        /// <summary>
         /// 経路を辿り直す側が、各段で名前から一つの先を選べることを求める。接続の根の並びは一つの段
         /// として数える——経路の先頭の名前は、どれか一つの根のものでなければならない。
         /// </summary>
