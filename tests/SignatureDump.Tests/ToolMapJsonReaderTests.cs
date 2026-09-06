@@ -6,10 +6,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ToolMapJsonReaderTests
     {
-        private const string CommonMembers =
-            @"""assignment"": ""internalFlow"", ""target"": ""stateRead"",
-              ""slotBinding"": { ""return"": ""pmxClone"", ""parameters"": {} }";
-
         private const string CallLogOnly =
             @"[{ ""effectType"": ""none"", ""effectKey"": """", ""kind"": ""callLogOnly"",
                  ""comparison"": ""exists"" }]";
@@ -23,7 +19,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static string Common(string members)
         {
-            return Row("T.M()", "read", ", " + CommonMembers + members);
+            return Row("T.M()", "read", members);
         }
 
         private static string Dispatch(string postcondition, string members)
@@ -53,9 +49,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal("T.M()", row.SignatureKey);
             Assert.Equal(ToolMapEditKind.Read, row.EditKind);
-            Assert.Equal(CommonAssignmentKind.InternalFlow, row.Assignment);
-            Assert.Equal("stateRead", row.Target);
-            Assert.Equal(BindingSlot.PmxClone, row.SlotBinding.Returned);
             Assert.Null(row.UpdateSpec);
             Assert.Null(row.Postcondition);
         }
@@ -132,7 +125,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RejectsAMissingRequiredMember()
         {
-            Rejects(@"{ ""signatureKey"": ""T.M()"", ""editKind"": ""read"", " + CommonMembers + "}");
+            Rejects(@"{ ""signatureKey"": ""T.M()"", ""editKind"": ""read"" }");
         }
 
         /// <summary>行の種別は行の外の材料から導くので、書けば知らない項目として落ちる。</summary>
@@ -149,21 +142,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(Common(@", ""tool"": ""model_list_vertices"""));
         }
 
-        /// <summary>対象名は割当が決める集合から採るので、割当を伴わない行は読み取りが落とす。</summary>
+        /// <summary>割当は共通契約割当の正本が持つので、書けば知らない項目として落ちる。</summary>
         [Fact]
-        public void RejectsATargetWithoutAnAssignment()
+        public void AWrittenAssignmentStops()
         {
-            Rejects(Row(
-                "T.M()",
-                "read",
-                @", ""target"": ""stateRead"", ""slotBinding"": { ""return"": ""pmxClone"",
-                   ""parameters"": {} }"));
+            Rejects(Common(@", ""assignment"": ""internalFlow"""));
+        }
+
+        /// <summary>割当の対象名も同じ正本が持つので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenTargetStops()
+        {
+            Rejects(Common(@", ""target"": ""stateRead"""));
+        }
+
+        /// <summary>束縛も同じ正本が持つので、書けば知らない項目として落ちる。</summary>
+        [Fact]
+        public void AWrittenSlotBindingStops()
+        {
+            Rejects(Common(@", ""slotBinding"": { ""return"": ""pmxClone"", ""parameters"": {} }"));
         }
 
         [Fact]
         public void RequiresTheUpdateSpecOnlyOnADuplicateEditRow()
         {
-            Rejects(Row("T.M()", "duplicateEdit", ", " + CommonMembers));
+            Rejects(Row("T.M()", "duplicateEdit", string.Empty));
             Rejects(Common(@", ""updateSpec"": { ""refresh"": [] }"));
         }
 
@@ -173,8 +176,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolMapRow row = Single(Row(
                 "T.M()",
                 "duplicateEdit",
-                ", " + CommonMembers
-                    + @", ""updateSpec"": { ""update"": ""Vertex"", ""refresh"": [""model"", ""view""] }"));
+                @", ""updateSpec"": { ""update"": ""Vertex"", ""refresh"": [""model"", ""view""] }"));
 
             Assert.Equal("Vertex", row.UpdateSpec.Update);
             Assert.Equal(new[] { RefreshTarget.Model, RefreshTarget.View }, row.UpdateSpec.Refresh);
@@ -186,7 +188,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolMapRow row = Single(Row(
                 "T.M()",
                 "duplicateEdit",
-                ", " + CommonMembers + @", ""updateSpec"": { ""refresh"": [] }"));
+                @", ""updateSpec"": { ""refresh"": [] }"));
 
             Assert.Null(row.UpdateSpec.Update);
             Assert.Empty(row.UpdateSpec.Refresh);
@@ -198,7 +200,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(Row(
                 "T.M()",
                 "duplicateEdit",
-                ", " + CommonMembers + @", ""updateSpec"": { ""refresh"": [""view"", ""view""] }"));
+                @", ""updateSpec"": { ""refresh"": [""view"", ""view""] }"));
         }
 
         [Fact]
@@ -561,7 +563,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RejectsAValueThatIsNotInItsClosedSet()
         {
-            Rejects(Row("T.M()", "sessionOnly", ", " + CommonMembers));
+            Rejects(Row("T.M()", "sessionOnly", string.Empty));
         }
 
         [Theory]
@@ -572,7 +574,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(Row(
                 "T.M()",
                 "duplicateEdit",
-                ", " + CommonMembers + @", ""updateSpec"": { ""update"": """ + update
+                @", ""updateSpec"": { ""update"": """ + update
                     + @""", ""refresh"": [] }"));
         }
 
@@ -648,22 +650,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 @"[{ ""effectType"": ""none"", ""effectKey"": 1, ""kind"": ""callLogOnly"",
                      ""comparison"": ""exists"" }]",
                 string.Empty));
-        }
-
-        [Fact]
-        public void RejectsATargetThatIsNotOfTheFormItsAssignmentRequires()
-        {
-            Rejects(Row(
-                "T.M()",
-                "read",
-                @", ""assignment"": ""tool"", ""target"": ""Model_List"",
-                   ""slotBinding"": { ""parameters"": {} }"));
-
-            Rejects(Row(
-                "T.M()",
-                "read",
-                @", ""assignment"": ""internalFlow"", ""target"": ""release"",
-                   ""slotBinding"": { ""parameters"": {} }"));
         }
 
         [Fact]

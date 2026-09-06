@@ -122,7 +122,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Arguments(
                     Sdk(),
                     Assignments(),
-                    Map("N.A.Absent()", AssignmentMembers("t"))),
+                    Map("N.A.Absent()")),
                 new StringWriter(),
                 error);
 
@@ -142,8 +142,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Assignments(),
                     Map(
                         Releases()[0],
-                        AssignmentMembers(ReleaseTool)
-                            + ",\"updateSpec\":{\"update\":\"Materiaru\",\"refresh\":[]}",
+                        ",\"updateSpec\":{\"update\":\"Materiaru\",\"refresh\":[]}",
                         "duplicateEdit")),
                 new StringWriter(),
                 error);
@@ -228,16 +227,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        private static string AssignmentMembers(string target)
-        {
-            return "\"assignment\":\"tool\",\"target\":\"" + target
-                + "\",\"slotBinding\":{\"receiver\":\"targetHandle\",\"parameters\":{}}";
-        }
-
-        private static string Map(string key, string members, string editKind = "read")
+        private static string Map(string key, string members = "", string editKind = "read")
         {
             return "{\"rows\":[{\"signatureKey\":\"" + key + "\",\"editKind\":\"" + editKind
-                + "\",\"basis\":\"題材の根拠。\"," + members + "}]}";
+                + "\",\"basis\":\"題材の根拠。\"" + members + "}]}";
         }
 
         /// <summary>題材の解放・破棄を共通契約割当行として並べた対応表。</summary>
@@ -250,8 +243,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 builder.Append(index++ == 0 ? string.Empty : ",")
                     .Append("{\"signatureKey\":\"").Append(key)
                     .Append("\",\"editKind\":\"directChange\"")
-                    .Append(",\"basis\":\"題材の根拠。\",")
-                    .Append(AssignmentMembers(ReleaseTool)).Append("}");
+                    .Append(",\"basis\":\"題材の根拠。\"}");
             }
 
             return builder.Append("]}").ToString();

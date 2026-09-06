@@ -522,9 +522,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARowWithoutAToolIsNotChecked()
         {
             string map = @"{ ""rows"": [{ ""signatureKey"": """ + Key + @""",
-                ""editKind"": ""read"", ""basis"": ""根拠。"",
-                ""assignment"": ""internalFlow"", ""target"": ""connect"",
-                ""slotBinding"": { ""return"": ""runArgsClone"", ""parameters"": {} } }] }";
+                ""editKind"": ""read"", ""basis"": ""根拠。"" }] }";
 
             SchemaCorrespondenceGate.Require(
                 ToolMapJsonReader.Read(map),

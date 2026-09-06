@@ -248,9 +248,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Embedded()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
-                + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
-                + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}},"
+                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\"},"
                 + "{\"signatureKey\":\""
                 + "PmxEditorMcp.SignatureDump.Tests.Sample.ISampleApi.Value()\""
                 + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
@@ -261,9 +259,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string CommonContract()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
-                + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
-                + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}}]}\n";
+                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\"}]}\n";
         }
 
         private string[] Arguments(string map)

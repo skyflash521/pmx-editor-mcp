@@ -215,9 +215,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Assigned()
         {
             return "{\"rows\":[{\"signatureKey\":\"" + Vertex + ".Gone()\""
-                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\""
-                + ",\"assignment\":\"internalFlow\",\"target\":\"connect\""
-                + ",\"slotBinding\":{\"return\":\"runArgsClone\",\"parameters\":{}}}]}";
+                + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\"}]}";
         }
 
         private string[] Arguments(string map, string schemas)

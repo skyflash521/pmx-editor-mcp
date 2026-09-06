@@ -324,9 +324,6 @@ namespace PmxEditorMcp.SignatureDump
             UpdateSpec updateSpec,
             string basis,
             IList<Postcondition> postcondition,
-            CommonAssignmentKind? assignment,
-            string target,
-            SlotBinding slotBinding,
             string eventType,
             IList<string> embeddedIn)
         {
@@ -340,9 +337,6 @@ namespace PmxEditorMcp.SignatureDump
             Postcondition = postcondition == null
                 ? null
                 : new ReadOnlyCollection<Postcondition>(postcondition);
-            Assignment = assignment;
-            Target = target;
-            SlotBinding = slotBinding;
             EventType = eventType;
             EmbeddedIn = embeddedIn == null ? null : new ReadOnlyCollection<string>(embeddedIn);
         }
@@ -359,15 +353,6 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>事後条件。直接ディスパッチの行だけが持つ。</summary>
         public IList<Postcondition> Postcondition { get; }
-
-        /// <summary>共通契約割当行だけが持つ割当の種別。</summary>
-        public CommonAssignmentKind? Assignment { get; }
-
-        /// <summary>共通契約割当行だけが持つ割当の対象名。</summary>
-        public string Target { get; }
-
-        /// <summary>共通契約割当行だけが持つ束縛。</summary>
-        public SlotBinding SlotBinding { get; }
 
         /// <summary>イベント行だけが持つ分岐の種別。</summary>
         public string EventType { get; }

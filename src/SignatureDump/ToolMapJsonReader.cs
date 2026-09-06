@@ -23,12 +23,6 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string PostconditionName = "postcondition";
 
-        private const string AssignmentName = "assignment";
-
-        private const string TargetName = "target";
-
-        private const string SlotBindingName = "slotBinding";
-
         private const string EventTypeName = "eventType";
 
         private const string EmbeddedInName = "embeddedIn";
@@ -162,8 +156,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 行を書かれた順に返す。行キーが序数の昇順に重複なく並ぶことと、行だけで決まる項目の
-        /// 要否——複製編集型の行の反映の指定と、対象名が割当を伴うこと——を求める。種別ごとの
-        /// 要否は行の外の材料が要るので照合が見る。形が違えば <see cref="FormatException"/>。
+        /// 要否——複製編集型の行が反映の指定を持つこと——を求める。種別ごとの要否は行の外の材料が
+        /// 要るので照合が見る。形が違えば <see cref="FormatException"/>。
         /// </summary>
         public static ToolMap Read(string json)
         {
@@ -202,19 +196,11 @@ namespace PmxEditorMcp.SignatureDump
                 new[] { SignatureKeyName, EditKindName, BasisName },
                 new[]
                 {
-                    UpdateSpecName, PostconditionName,
-                    AssignmentName, TargetName, SlotBindingName, EventTypeName, EmbeddedInName,
+                    UpdateSpecName, PostconditionName, EventTypeName, EmbeddedInName,
                 });
 
             ToolMapEditKind editKind = Lookup(EditKinds, members[EditKindName], EditKindName);
-            CommonAssignmentKind? assignment = members.ContainsKey(AssignmentName)
-                ? CommonAssignmentJsonReader.ReadAssignmentKind(members[AssignmentName])
-                : (CommonAssignmentKind?)null;
             RequirePresence(members, UpdateSpecName, editKind == ToolMapEditKind.DuplicateEdit);
-            if (members.ContainsKey(TargetName) && !members.ContainsKey(AssignmentName))
-            {
-                throw new FormatException("割当を伴わない対象名がある: " + TargetName);
-            }
 
             return new ToolMapRow(
                 Text(members[SignatureKeyName], SignatureKeyName),
@@ -223,14 +209,6 @@ namespace PmxEditorMcp.SignatureDump
                 Text(members[BasisName], BasisName),
                 members.ContainsKey(PostconditionName)
                     ? ReadPostcondition(members[PostconditionName])
-                    : null,
-                assignment,
-                members.ContainsKey(TargetName)
-                    ? CommonAssignmentJsonReader.ReadAssignmentTarget(
-                        members[TargetName], assignment.Value)
-                    : null,
-                members.ContainsKey(SlotBindingName)
-                    ? CommonAssignmentJsonReader.ReadSlotBinding(members[SlotBindingName])
                     : null,
                 members.ContainsKey(EventTypeName) ? Text(members[EventTypeName], EventTypeName) : null,
                 members.ContainsKey(EmbeddedInName) ? ReadEmbeddedIn(members[EmbeddedInName]) : null);

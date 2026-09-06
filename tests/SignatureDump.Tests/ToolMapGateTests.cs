@@ -11,11 +11,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string MapJson = @"{ ""rows"": [
   { ""signatureKey"": """ + Key + @""",
     ""editKind"": ""read"",
-    ""basis"": ""現在のPMXの複製を返すだけである。"",
-    ""assignment"": ""internalFlow"",
-    ""target"": ""stateRead"",
-    ""slotBinding"": { ""return"": ""pmxClone"", ""receiver"": ""owningObject"",
-                       ""parameters"": {} } }
+    ""basis"": ""現在のPMXの複製を返すだけである。"" }
 ] }";
 
         private const string AssignmentsJson = @"{ ""assignments"": [
@@ -277,35 +273,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => Require(mapJson: @"{ ""rows"": [] }"));
 
             Assert.Contains("対応する共通契約割当行が無い", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsAnAssignmentThatDoesNotMatchTheSpecialRuleTable()
-        {
-            Assert.Throws<InvalidOperationException>(() => Require(
-                mapJson: MapJson
-                    .Replace(@"""assignment"": ""internalFlow""", @"""assignment"": ""tool""")
-                    .Replace(@"""target"": ""stateRead""", @"""target"": ""model_list_vertices""")));
-        }
-
-        [Fact]
-        public void RejectsATargetThatDoesNotMatchTheSpecialRuleTable()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(mapJson: MapJson.Replace(
-                    @"""target"": ""stateRead""", @"""target"": ""connect""")));
-
-            Assert.Contains("対象名", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void RejectsABindingThatDoesNotMatchTheSpecialRuleTable()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(mapJson: MapJson.Replace(
-                    @"""return"": ""pmxClone""", @"""return"": ""residentObject""")));
-
-            Assert.Contains("束縛", error.Message, StringComparison.Ordinal);
         }
 
         [Theory]

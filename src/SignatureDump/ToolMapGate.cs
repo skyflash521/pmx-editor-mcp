@@ -197,10 +197,6 @@ namespace PmxEditorMcp.SignatureDump
         {
             bool dispatch = kind == ToolMapRowKind.DirectDispatch;
             RequireField(row, row.Postcondition != null, dispatch, "postcondition");
-            bool common = kind == ToolMapRowKind.CommonContract;
-            RequireField(row, row.Assignment != null, common, "assignment");
-            RequireField(row, row.Target != null, common, "target");
-            RequireField(row, row.SlotBinding != null, common, "slotBinding");
             RequireField(
                 row, row.EventType != null, kind == ToolMapRowKind.EventBranch, "eventType");
             RequireField(
@@ -224,46 +220,20 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 共通契約割当行が、特別規則の表と行キーで完全一致し、割当も束縛も同じであることを求める。
-        /// 対象名の実在を見るだけでは割当の取り違えを防げない。
+        /// 共通契約割当の正本の項目が、すべて行を持つことを求める。割当の内容はその正本が持つので、
+        /// ここで見るのは行の側に載っているかどうかだけである。
         /// </summary>
         private static void RequireCommonContract(
             ToolMap map,
             IDictionary<string, ToolMapRowKind> kinds,
             CommonAssignmentTable assignments)
         {
-            Dictionary<string, CommonAssignmentRecord> expected = assignments.Assignments
-                .ToDictionary(a => a.SignatureKey, a => a, StringComparer.Ordinal);
-            List<ToolMapRow> rows = map.Rows
-                .Where(r => kinds[r.SignatureKey] == ToolMapRowKind.CommonContract).ToList();
-
-            foreach (ToolMapRow row in rows)
-            {
-                CommonAssignmentRecord assignment = expected[row.SignatureKey];
-                if (row.Assignment != assignment.Assignment)
-                {
-                    throw new InvalidOperationException(
-                        "割当が特別規則の表と合わない: " + row.SignatureKey
-                            + "(表: " + row.Assignment + " / 正本: " + assignment.Assignment + ")");
-                }
-
-                if (!string.Equals(row.Target, assignment.Target, StringComparison.Ordinal))
-                {
-                    throw new InvalidOperationException(
-                        "割当の対象名が特別規則の表と合わない: " + row.SignatureKey
-                            + "(表: " + row.Target + " / 正本: " + assignment.Target + ")");
-                }
-
-                if (!row.SlotBinding.SameAs(assignment.SlotBinding))
-                {
-                    throw new InvalidOperationException(
-                        "束縛が特別規則の表と合わない: " + row.SignatureKey
-                            + "(表: " + row.SlotBinding + " / 正本: " + assignment.SlotBinding + ")");
-                }
-            }
-
-            IEnumerable<string> missing = expected.Keys.Except(
-                rows.Select(r => r.SignatureKey), StringComparer.Ordinal);
+            IEnumerable<string> assigned = map.Rows
+                .Where(r => kinds[r.SignatureKey] == ToolMapRowKind.CommonContract)
+                .Select(r => r.SignatureKey);
+            IEnumerable<string> missing = assignments.Assignments
+                .Select(a => a.SignatureKey)
+                .Except(assigned, StringComparer.Ordinal);
             string first = missing.OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault();
             if (first != null)
             {

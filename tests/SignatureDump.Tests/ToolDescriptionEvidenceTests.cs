@@ -171,9 +171,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "根拠。",
                 null,
                 null,
-                null,
-                null,
-                null,
                 null);
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -281,9 +278,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolMapEditKind.Read,
                 null,
                 "根拠。",
-                null,
-                null,
-                null,
                 null,
                 null,
                 null);
@@ -439,9 +433,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "根拠。",
                     null,
                     null,
-                    null,
-                    null,
-                    null,
                     embeddedIn),
                 tool);
         }
@@ -479,9 +470,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "根拠。",
                     null,
                     null,
-                    null,
-                    null,
-                    null,
                     new[] { tool }),
                 null);
         }
@@ -496,9 +484,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     ToolMapEditKind.Read,
                     null,
                     "根拠。",
-                    null,
-                    null,
-                    null,
                     null,
                     null,
                     null),

@@ -123,8 +123,8 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>割当の種別を読む。能力対応表の共通契約割当行も同じ形で持つ。</summary>
-        internal static CommonAssignmentKind ReadAssignmentKind(object value)
+        /// <summary>割当の種別を読む。</summary>
+        private static CommonAssignmentKind ReadAssignmentKind(object value)
         {
             string text = Text(value, AssignmentName);
             CommonAssignmentKind kind;
@@ -136,8 +136,9 @@ namespace PmxEditorMcp.SignatureDump
             return kind;
         }
 
-        /// <summary>割当の対象名を読む。能力対応表の共通契約割当行も同じ形で持つ。</summary>
-        internal static string ReadAssignmentTarget(object value, CommonAssignmentKind assignment)
+        /// <summary>割当の対象名を読む。</summary>
+        private static string ReadAssignmentTarget(
+            object value, CommonAssignmentKind assignment)
         {
             string target = Text(value, TargetName);
             if (assignment == CommonAssignmentKind.InternalFlow)
@@ -164,8 +165,8 @@ namespace PmxEditorMcp.SignatureDump
             return target;
         }
 
-        /// <summary>束縛を読む。能力対応表の共通契約割当行も同じ形で持つ。</summary>
-        internal static SlotBinding ReadSlotBinding(object value)
+        /// <summary>束縛を読む。</summary>
+        private static SlotBinding ReadSlotBinding(object value)
         {
             Dictionary<string, object> members = Members(
                 value, new[] { ParametersName }, new[] { ReturnName, ReceiverName });
