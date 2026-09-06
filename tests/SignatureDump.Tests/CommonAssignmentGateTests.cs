@@ -13,7 +13,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ATableThatMatchesTheEvidencePasses()
         {
             CommonAssignmentGate.Require(
-                Table(Record(Key, CommonAssignmentKind.InternalFlow, "connect", Bound())),
+                Table(Record(Key, CommonAssignmentKind.InternalFlow, "connect")),
                 Keys(Key),
                 Keys(Key),
                 Keys(),
@@ -25,7 +25,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "connect", Bound())),
+                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "connect")),
                     Keys(),
                     Keys(),
                     Keys(),
@@ -49,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "stateRead", Bound())),
+                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "stateRead")),
                     Keys(Key),
                     Keys(Key),
                     Keys(),
@@ -63,7 +63,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.Tool, "connect", Bound())),
+                    Table(Record(Key, CommonAssignmentKind.Tool, "connect")),
                     Keys(Key),
                     Keys(Key),
                     Keys(),
@@ -73,45 +73,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ABindingThatDiffersFromTheEvidenceStops()
-        {
-            SlotBinding written = new SlotBinding(
-                BindingSlot.PmxClone, BindingSlot.OwningObject, Empty());
-
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "connect", written)),
-                    Keys(Key),
-                    Keys(Key),
-                    Keys(),
-                    Bindings(Bound())));
-
-            Assert.Contains("束縛", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void ABindingWithAnExtraParameterStops()
-        {
-            SlotBinding written = new SlotBinding(
-                BindingSlot.ResidentObject,
-                BindingSlot.OwningObject,
-                new Dictionary<string, BindingSlot> { { "path", BindingSlot.ModulePath } });
-
-            Assert.Throws<InvalidOperationException>(
-                () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "connect", written)),
-                    Keys(Key),
-                    Keys(Key),
-                    Keys(),
-                    Bindings(Bound())));
-        }
-
-        [Fact]
         public void ABindingThatIsNotDerivedStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.Tool, "t", Bound())),
+                    Table(Record(Key, CommonAssignmentKind.Tool, "t")),
                     Keys(Key),
                     Keys(),
                     Keys(),
@@ -154,15 +120,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ASlotThatTheFlowDoesNotHaveStops()
         {
-            SlotBinding written = new SlotBinding(BindingSlot.RunArgsClone, null, Empty());
+            SlotBinding derived = new SlotBinding(BindingSlot.RunArgsClone, null, Empty());
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "stateRead", written)),
+                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "stateRead")),
                     Keys(Key),
                     Keys(),
                     Keys(),
-                    Bindings(written)));
+                    Bindings(derived)));
 
             Assert.Contains("使えないスロット", error.Message, StringComparison.Ordinal);
         }
@@ -178,29 +144,29 @@ namespace PmxEditorMcp.SignatureDump.Tests
             };
             foreach (KeyValuePair<string, BindingSlot> flow in flows)
             {
-                SlotBinding written = new SlotBinding(flow.Value, null, Empty());
+                SlotBinding derived = new SlotBinding(flow.Value, null, Empty());
 
                 CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, flow.Key, written)),
+                    Table(Record(Key, CommonAssignmentKind.InternalFlow, flow.Key)),
                     Keys(Key),
                     Keys(),
                     Keys(),
-                    Bindings(written));
+                    Bindings(derived));
             }
         }
 
         [Fact]
         public void ATargetHandleOutsideAToolStops()
         {
-            SlotBinding written = new SlotBinding(null, BindingSlot.TargetHandle, Empty());
+            SlotBinding derived = new SlotBinding(null, BindingSlot.TargetHandle, Empty());
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "stateRead", written)),
+                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "stateRead")),
                     Keys(Key),
                     Keys(),
                     Keys(),
-                    Bindings(written)));
+                    Bindings(derived)));
 
             Assert.Contains("使えないスロット", error.Message, StringComparison.Ordinal);
         }
@@ -208,15 +174,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AReleaseOutsideAToolStops()
         {
-            SlotBinding written = new SlotBinding(null, BindingSlot.OwningObject, Empty());
+            SlotBinding derived = new SlotBinding(null, BindingSlot.OwningObject, Empty());
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "stateRead", written)),
+                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "stateRead")),
                     Keys(Key),
                     Keys(),
                     Keys(Key),
-                    Bindings(written)));
+                    Bindings(derived)));
 
             Assert.Contains("ツールへの束縛でない", error.Message, StringComparison.Ordinal);
         }
@@ -224,15 +190,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnInternalFlowThatIsNotATargetNameStops()
         {
-            SlotBinding written = new SlotBinding(null, BindingSlot.OwningObject, Empty());
+            SlotBinding derived = new SlotBinding(null, BindingSlot.OwningObject, Empty());
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
-                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "releaseHandle", written)),
+                    Table(Record(Key, CommonAssignmentKind.InternalFlow, "releaseHandle")),
                     Keys(Key),
                     Keys(),
                     Keys(),
-                    Bindings(written)));
+                    Bindings(derived)));
 
             Assert.Contains("対象名でない", error.Message, StringComparison.Ordinal);
         }
@@ -240,23 +206,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void TargetNamesThatDifferAmongTheReleasesStop()
         {
-            SlotBinding written = new SlotBinding(null, BindingSlot.TargetHandle, Empty());
+            SlotBinding derived = new SlotBinding(null, BindingSlot.TargetHandle, Empty());
             Dictionary<string, SlotBinding> bindings =
                 new Dictionary<string, SlotBinding>(StringComparer.Ordinal)
                 {
-                    { Key, written },
-                    { "N.IOther.Release()", written },
+                    { Key, derived },
+                    { "N.IOther.Release()", derived },
                 };
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => CommonAssignmentGate.Require(
                     Table(
-                        Record(Key, CommonAssignmentKind.Tool, "session_release_handle", written),
+                        Record(Key, CommonAssignmentKind.Tool, "session_release_handle"),
                         Record(
                             "N.IOther.Release()",
                             CommonAssignmentKind.Tool,
-                            "session_release_handles",
-                            written)),
+                            "session_release_handles")),
                     Keys(Key, "N.IOther.Release()"),
                     Keys(),
                     Keys(),
@@ -294,13 +259,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         private static CommonAssignmentRecord Record(
-            string signatureKey,
-            CommonAssignmentKind assignment,
-            string target,
-            SlotBinding binding)
+            string signatureKey, CommonAssignmentKind assignment, string target)
         {
             return new CommonAssignmentRecord(
-                signatureKey, assignment, target, binding, signatureKey + " の根拠。");
+                signatureKey, assignment, target, signatureKey + " の根拠。");
         }
     }
 }

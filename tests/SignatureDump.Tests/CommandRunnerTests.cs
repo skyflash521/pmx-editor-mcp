@@ -277,7 +277,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 assignmentsPath,
                 "{\"assignments\":[{\"signatureKey\":\"N.A.Absent()\""
                     + ",\"assignment\":\"tool\",\"target\":\"t\""
-                    + ",\"slotBinding\":{\"parameters\":{}},\"basis\":\"根拠。\"}]}");
+                    + ",\"basis\":\"根拠。\"}]}");
             string editorDirectory = CreateEditorDirectory();
 
             int code = CommandRunner.Run(

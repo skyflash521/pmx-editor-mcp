@@ -118,7 +118,7 @@ namespace PmxEditorMcp.SignatureDump
                 table.Assignments.Count(a => a.Assignment == CommonAssignmentKind.Tool),
                 table.Assignments.Count(a => a.Assignment == CommonAssignmentKind.CommonArg),
                 table.Assignments.Count(a => a.Assignment == CommonAssignmentKind.InternalFlow),
-                table.Assignments.Sum(a => Bound(a.SlotBinding))));
+                table.Assignments.Sum(a => Bound(bindings[a.SignatureKey]))));
 
             return ExitCodes.Success;
         }

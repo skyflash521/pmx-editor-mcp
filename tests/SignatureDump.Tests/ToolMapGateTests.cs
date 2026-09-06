@@ -18,8 +18,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
   { ""signatureKey"": """ + Key + @""",
     ""assignment"": ""internalFlow"",
     ""target"": ""stateRead"",
-    ""slotBinding"": { ""return"": ""pmxClone"", ""receiver"": ""owningObject"",
-                       ""parameters"": {} },
     ""basis"": ""現在のPMXの複製を得る呼び出しそのものである。"" }
 ] }";
 

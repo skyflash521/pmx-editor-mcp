@@ -156,7 +156,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(Common(@", ""target"": ""stateRead"""));
         }
 
-        /// <summary>束縛も同じ正本が持つので、書けば知らない項目として落ちる。</summary>
+        /// <summary>束縛はシグネチャから導くので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenSlotBindingStops()
         {

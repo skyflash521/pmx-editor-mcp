@@ -229,7 +229,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""assignments"": [{ ""signatureKey"": """ + key + @""",
                 ""assignment"": ""internalFlow"", ""target"": ""connect"",
-                ""slotBinding"": { ""return"": ""runArgsClone"", ""parameters"": {} },
                 ""basis"": ""根拠。"" }] }";
         }
 

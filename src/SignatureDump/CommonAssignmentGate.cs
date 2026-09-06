@@ -7,8 +7,8 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>
     /// 共通契約割当が規則どおりかを検査する。割当の意味そのものは測れないので、機械で確かめられる
     /// 範囲——行キーが提供対象に実在すること、常駐アクセスオブジェクトの取得と解放・破棄が漏れなく
-    /// 表に在ること、束縛が列挙から導いたものと一致すること、束縛したスロットがその割当で使える
-    /// ものであること、解放がツールへの束縛で対象名が揃っていること——に限る。
+    /// 表に在ること、束縛を導けること、導いた束縛のスロットがその割当で使えるものであること、
+    /// 解放がツールへの束縛で対象名が揃っていること——に限る。
     /// </summary>
     public static class CommonAssignmentGate
     {
@@ -90,9 +90,8 @@ namespace PmxEditorMcp.SignatureDump
             RequireSignaturesAreProvided(table.Assignments, provided);
             RequireResidentObjectsAreConnectFlows(table.Assignments, residentObjects);
             RequireReleasesAreListed(table.Assignments, releases);
-            RequireBindingsMatchTheEvidence(table.Assignments, bindings);
-            RequireSlotsBelongToTheAssignment(table.Assignments);
-            RequireOneToolForTheReleases(table.Assignments, releases);
+            RequireSlotsBelongToTheAssignment(table.Assignments, bindings);
+            RequireOneToolForTheReleases(table.Assignments, releases, bindings);
         }
 
         private static void RequireSignaturesAreProvided(
@@ -158,7 +157,8 @@ namespace PmxEditorMcp.SignatureDump
         /// 割当ごとに使えるスロットを限る。フローの取り違えは、そのフローに無いスロットを束縛して
         /// いることで表に出る。
         /// </summary>
-        private static void RequireSlotsBelongToTheAssignment(IList<CommonAssignmentRecord> records)
+        private static void RequireSlotsBelongToTheAssignment(
+            IList<CommonAssignmentRecord> records, IDictionary<string, SlotBinding> bindings)
         {
             foreach (CommonAssignmentRecord record in records)
             {
@@ -181,7 +181,7 @@ namespace PmxEditorMcp.SignatureDump
                     flow = new BindingSlot[0];
                 }
 
-                foreach (BindingSlot slot in Slots(record.SlotBinding))
+                foreach (BindingSlot slot in Slots(Binding(record, bindings)))
                 {
                     if (!Shared.Contains(slot) && !flow.Contains(slot))
                     {
@@ -199,12 +199,14 @@ namespace PmxEditorMcp.SignatureDump
         /// 揺れを一つにそろえる。
         /// </summary>
         private static void RequireOneToolForTheReleases(
-            IList<CommonAssignmentRecord> records, ISet<string> releases)
+            IList<CommonAssignmentRecord> records,
+            ISet<string> releases,
+            IDictionary<string, SlotBinding> bindings)
         {
             string target = null;
             foreach (CommonAssignmentRecord record in records
                 .Where(r => releases.Contains(r.SignatureKey)
-                    || Slots(r.SlotBinding).Contains(BindingSlot.TargetHandle)))
+                    || Slots(Binding(r, bindings)).Contains(BindingSlot.TargetHandle)))
             {
                 if (record.Assignment != CommonAssignmentKind.Tool)
                 {
@@ -242,25 +244,18 @@ namespace PmxEditorMcp.SignatureDump
             return slots;
         }
 
-        private static void RequireBindingsMatchTheEvidence(
-            IList<CommonAssignmentRecord> records, IDictionary<string, SlotBinding> bindings)
+        /// <summary>その行の束縛。導けない行キーが在れば <see cref="InvalidOperationException"/>。</summary>
+        private static SlotBinding Binding(
+            CommonAssignmentRecord record, IDictionary<string, SlotBinding> bindings)
         {
-            foreach (CommonAssignmentRecord record in records)
+            SlotBinding binding;
+            if (!bindings.TryGetValue(record.SignatureKey, out binding))
             {
-                SlotBinding expected;
-                if (!bindings.TryGetValue(record.SignatureKey, out expected))
-                {
-                    throw new InvalidOperationException(
-                        "束縛を導けない行キーが在る: " + record.SignatureKey);
-                }
-
-                if (!record.SlotBinding.SameAs(expected))
-                {
-                    throw new InvalidOperationException(
-                        "束縛が列挙から決まるものと合わない: " + record.SignatureKey
-                            + "(表: " + record.SlotBinding + " / 決まる束縛: " + expected + ")");
-                }
+                throw new InvalidOperationException(
+                    "束縛を導けない行キーが在る: " + record.SignatureKey);
             }
+
+            return binding;
         }
     }
 }

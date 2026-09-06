@@ -112,78 +112,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Assert.Single(Read(Item("N.A.M()", "commonArg", "suppressUndo"))).Target);
         }
 
+        /// <summary>束縛はシグネチャから導くので、書けば知らない項目として落ちる。</summary>
         [Fact]
-        public void EverySlotNameIsRead()
-        {
-            Dictionary<string, BindingSlot> slots = new Dictionary<string, BindingSlot>
-            {
-                { "pmxClone", BindingSlot.PmxClone },
-                { "updateKind", BindingSlot.UpdateKind },
-                { "updateIndices", BindingSlot.UpdateIndices },
-                { "undoLock", BindingSlot.UndoLock },
-                { "runArgsClone", BindingSlot.RunArgsClone },
-                { "modulePath", BindingSlot.ModulePath },
-                { "residentObject", BindingSlot.ResidentObject },
-                { "targetHandle", BindingSlot.TargetHandle },
-                { "owningObject", BindingSlot.OwningObject },
-                { "injectedConnector", BindingSlot.InjectedConnector },
-            };
-            foreach (KeyValuePair<string, BindingSlot> slot in slots)
-            {
-                CommonAssignmentRecord record = Assert.Single(Read(
-                    "{\"signatureKey\":\"N.A.M()\",\"assignment\":\"internalFlow\""
-                        + ",\"target\":\"connect\",\"slotBinding\":{\"return\":\"" + slot.Key
-                        + "\",\"parameters\":{}},\"basis\":\"根拠。\"}"));
-
-                Assert.Equal(slot.Value, record.SlotBinding.Returned);
-            }
-        }
-
-        [Fact]
-        public void TheBindingOfEveryPlaceIsRead()
-        {
-            CommonAssignmentRecord record = Assert.Single(Read(
-                "{\"signatureKey\":\"N.A.M(System.String)\",\"assignment\":\"internalFlow\""
-                    + ",\"target\":\"connect\",\"slotBinding\":{\"return\":\"runArgsClone\""
-                    + ",\"receiver\":\"owningObject\",\"parameters\":{\"path\":\"modulePath\"}}"
-                    + ",\"basis\":\"根拠。\"}"));
-
-            Assert.Equal(BindingSlot.RunArgsClone, record.SlotBinding.Returned);
-            Assert.Equal(BindingSlot.OwningObject, record.SlotBinding.Receiver);
-            Assert.Equal(BindingSlot.ModulePath, record.SlotBinding.Parameters["path"]);
-        }
-
-        [Fact]
-        public void ABindingWithoutAReturnOrAReceiverIsRead()
-        {
-            CommonAssignmentRecord record = Assert.Single(Read(Item("N.A.M()", "tool", "t")));
-
-            Assert.Null(record.SlotBinding.Returned);
-            Assert.Null(record.SlotBinding.Receiver);
-            Assert.Empty(record.SlotBinding.Parameters);
-        }
-
-        [Fact]
-        public void ABindingWithoutTheParametersStops()
+        public void AWrittenSlotBindingStops()
         {
             FormatException error = Assert.Throws<FormatException>(
                 () => Read(
                     "{\"signatureKey\":\"N.A.M()\",\"assignment\":\"tool\",\"target\":\"t\""
-                        + ",\"slotBinding\":{},\"basis\":\"根拠。\"}"));
+                        + ",\"slotBinding\":{\"parameters\":{}},\"basis\":\"根拠。\"}"));
 
-            Assert.Contains("parameters", error.Message);
-        }
-
-        [Fact]
-        public void AnUnknownSlotStops()
-        {
-            FormatException error = Assert.Throws<FormatException>(
-                () => Read(
-                    "{\"signatureKey\":\"N.A.M()\",\"assignment\":\"tool\",\"target\":\"t\""
-                        + ",\"slotBinding\":{\"receiver\":\"holder\",\"parameters\":{}}"
-                        + ",\"basis\":\"根拠。\"}"));
-
-            Assert.Contains("スロット", error.Message);
+            Assert.Contains("slotBinding", error.Message);
         }
 
         [Fact]
@@ -192,7 +130,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             FormatException error = Assert.Throws<FormatException>(
                 () => Read(
                     "{\"signatureKey\":\"N.A.M()\",\"assignment\":\"tool\",\"target\":\"t\""
-                        + ",\"slotBinding\":{\"parameters\":{}},\"basis\":\"根拠。\",\"note\":\"x\"}"));
+                        + ",\"basis\":\"根拠。\",\"note\":\"x\"}"));
 
             Assert.Contains("note", error.Message);
         }
@@ -202,11 +140,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             foreach (string name in new[]
             {
-                "signatureKey", "assignment", "target", "slotBinding", "basis",
+                "signatureKey", "assignment", "target", "basis",
             })
             {
                 string item = "{\"signatureKey\":\"N.A.M()\",\"assignment\":\"tool\""
-                    + ",\"target\":\"t\",\"slotBinding\":{\"parameters\":{}},\"basis\":\"根拠。\"}";
+                    + ",\"target\":\"t\",\"basis\":\"根拠。\"}";
                 FormatException error = Assert.Throws<FormatException>(
                     () => Read(Without(item, name)));
 
@@ -274,8 +212,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static string Item(string signatureKey, string assignment, string target)
         {
             return "{\"signatureKey\":\"" + signatureKey + "\",\"assignment\":\"" + assignment
-                + "\",\"target\":\"" + target + "\",\"slotBinding\":{\"parameters\":{}}"
-                + ",\"basis\":\"" + signatureKey + " の根拠。\"}";
+                + "\",\"target\":\"" + target
+                + "\",\"basis\":\"" + signatureKey + " の根拠。\"}";
         }
 
         private static IList<CommonAssignmentRecord> Read(params string[] items)

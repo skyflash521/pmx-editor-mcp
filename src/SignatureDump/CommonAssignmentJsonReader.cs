@@ -17,15 +17,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string TargetName = "target";
 
-        private const string SlotBindingName = "slotBinding";
-
         private const string BasisName = "basis";
-
-        private const string ReturnName = "return";
-
-        private const string ReceiverName = "receiver";
-
-        private const string ParametersName = "parameters";
 
         private static readonly Regex ToolName = new Regex(
             "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
@@ -39,21 +31,6 @@ namespace PmxEditorMcp.SignatureDump
                 { "tool", CommonAssignmentKind.Tool },
                 { "commonArg", CommonAssignmentKind.CommonArg },
                 { "internalFlow", CommonAssignmentKind.InternalFlow },
-            };
-
-        private static readonly Dictionary<string, BindingSlot> Slots =
-            new Dictionary<string, BindingSlot>(StringComparer.Ordinal)
-            {
-                { "pmxClone", BindingSlot.PmxClone },
-                { "updateKind", BindingSlot.UpdateKind },
-                { "updateIndices", BindingSlot.UpdateIndices },
-                { "undoLock", BindingSlot.UndoLock },
-                { "runArgsClone", BindingSlot.RunArgsClone },
-                { "modulePath", BindingSlot.ModulePath },
-                { "residentObject", BindingSlot.ResidentObject },
-                { "targetHandle", BindingSlot.TargetHandle },
-                { "owningObject", BindingSlot.OwningObject },
-                { "injectedConnector", BindingSlot.InjectedConnector },
             };
 
         /// <summary>
@@ -104,7 +81,7 @@ namespace PmxEditorMcp.SignatureDump
         private static CommonAssignmentRecord ReadRecord(object item)
         {
             Dictionary<string, object> members = Members(
-                item, SignatureKeyName, AssignmentName, TargetName, SlotBindingName, BasisName);
+                item, SignatureKeyName, AssignmentName, TargetName, BasisName);
             CommonAssignmentKind assignment = ReadAssignmentKind(members[AssignmentName]);
             string target = ReadAssignmentTarget(members[TargetName], assignment);
 
@@ -114,7 +91,6 @@ namespace PmxEditorMcp.SignatureDump
                     Text(members[SignatureKeyName], SignatureKeyName),
                     assignment,
                     target,
-                    ReadSlotBinding(members[SlotBindingName]),
                     Text(members[BasisName], BasisName));
             }
             catch (ArgumentException exception)
@@ -165,45 +141,6 @@ namespace PmxEditorMcp.SignatureDump
             return target;
         }
 
-        /// <summary>束縛を読む。</summary>
-        private static SlotBinding ReadSlotBinding(object value)
-        {
-            Dictionary<string, object> members = Members(
-                value, new[] { ParametersName }, new[] { ReturnName, ReceiverName });
-            Dictionary<string, BindingSlot> parameters =
-                new Dictionary<string, BindingSlot>(StringComparer.Ordinal);
-            Dictionary<string, object> written = value as Dictionary<string, object>;
-            Dictionary<string, object> byName = members[ParametersName] as Dictionary<string, object>;
-            if (byName == null)
-            {
-                throw new FormatException(ParametersName + " は引数の名前の組でなければならない。");
-            }
-
-            foreach (KeyValuePair<string, object> pair in byName)
-            {
-                parameters.Add(pair.Key, ReadSlot(pair.Value));
-            }
-
-            return new SlotBinding(
-                written.ContainsKey(ReturnName) ? ReadSlot(written[ReturnName]) : (BindingSlot?)null,
-                written.ContainsKey(ReceiverName)
-                    ? ReadSlot(written[ReceiverName])
-                    : (BindingSlot?)null,
-                parameters);
-        }
-
-        private static BindingSlot ReadSlot(object value)
-        {
-            string text = Text(value, SlotBindingName);
-            BindingSlot slot;
-            if (!Slots.TryGetValue(text, out slot))
-            {
-                throw new FormatException("知らない束縛先のスロット: " + text);
-            }
-
-            return slot;
-        }
-
         private static void RequireAscending(string previous, string current)
         {
             if (previous == null)
@@ -234,17 +171,11 @@ namespace PmxEditorMcp.SignatureDump
             return items;
         }
 
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            return Members(value, names, new string[0]);
-        }
-
         /// <summary>
         /// 求める項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が崩れても
         /// 気づけない。
         /// </summary>
-        private static Dictionary<string, object> Members(
-            object value, string[] names, string[] optional)
+        private static Dictionary<string, object> Members(object value, params string[] names)
         {
             Dictionary<string, object> members = value as Dictionary<string, object>;
             if (members == null)
@@ -262,8 +193,7 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (string name in members.Keys)
             {
-                if (!names.Contains(name, StringComparer.Ordinal)
-                    && !optional.Contains(name, StringComparer.Ordinal))
+                if (!names.Contains(name, StringComparer.Ordinal))
                 {
                     throw new FormatException("知らない項目がある: " + name);
                 }

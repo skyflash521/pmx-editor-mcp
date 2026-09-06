@@ -259,8 +259,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 builder.Append(index++ == 0 ? string.Empty : ",")
                     .Append("{\"signatureKey\":\"").Append(key)
                     .Append("\",\"assignment\":\"tool\",\"target\":\"").Append(ReleaseTool)
-                    .Append("\",\"slotBinding\":{\"receiver\":\"targetHandle\"")
-                    .Append(",\"parameters\":{}},\"basis\":\"題材の根拠。\"}");
+                    .Append("\",\"basis\":\"題材の根拠。\"}");
             }
 
             return builder.Append("]}").ToString();

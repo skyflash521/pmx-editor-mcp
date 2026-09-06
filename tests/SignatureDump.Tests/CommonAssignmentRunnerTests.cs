@@ -114,7 +114,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Arguments(
                     Sdk(),
                     "{\"assignments\":[{\"signatureKey\":\"N.A.Absent()\",\"assignment\":\"tool\""
-                        + ",\"target\":\"t\",\"slotBinding\":{\"parameters\":{}}"
+                        + ",\"target\":\"t\""
                         + ",\"basis\":\"題材の根拠。\"}]}"),
                 new StringWriter(),
                 error);
@@ -192,8 +192,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 builder.Append(index++ == 0 ? string.Empty : ",")
                     .Append("{\"signatureKey\":\"").Append(key)
                     .Append("\",\"assignment\":\"tool\",\"target\":\"").Append(ReleaseTool)
-                    .Append("\",\"slotBinding\":{\"receiver\":\"targetHandle\"")
-                    .Append(",\"parameters\":{}},\"basis\":\"題材の根拠。\"}");
+                    .Append("\",\"basis\":\"題材の根拠。\"}");
             }
 
             return builder.Append("]}").ToString();

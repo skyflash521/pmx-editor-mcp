@@ -79,53 +79,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>入力引数の名前から引く束縛。</summary>
         public IDictionary<string, BindingSlot> Parameters { get; }
 
-        /// <summary>同じ束縛か。読む順に依らず中身で比べる。</summary>
-        public bool SameAs(SlotBinding other)
-        {
-            if (other == null)
-            {
-                throw new ArgumentNullException(nameof(other));
-            }
-
-            if (Returned != other.Returned || Receiver != other.Receiver
-                || Parameters.Count != other.Parameters.Count)
-            {
-                return false;
-            }
-
-            foreach (KeyValuePair<string, BindingSlot> pair in Parameters)
-            {
-                BindingSlot slot;
-                if (!other.Parameters.TryGetValue(pair.Key, out slot) || slot != pair.Value)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>読み手の誤りを指す文にするための書き出し。</summary>
-        public override string ToString()
-        {
-            List<string> parts = new List<string>();
-            if (Returned.HasValue)
-            {
-                parts.Add("戻り値=" + Returned.Value);
-            }
-
-            if (Receiver.HasValue)
-            {
-                parts.Add("レシーバー=" + Receiver.Value);
-            }
-
-            foreach (KeyValuePair<string, BindingSlot> pair in Parameters)
-            {
-                parts.Add(pair.Key + "=" + pair.Value);
-            }
-
-            return parts.Count == 0 ? "無し" : string.Join("・", parts);
-        }
     }
 
     /// <summary>共通契約割当の正本の項目1件。</summary>
@@ -135,21 +88,15 @@ namespace PmxEditorMcp.SignatureDump
             string signatureKey,
             CommonAssignmentKind assignment,
             string target,
-            SlotBinding slotBinding,
             string basis)
         {
             PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
             PropertyRecord.RequireText(target, nameof(target));
             PropertyRecord.RequireText(basis, nameof(basis));
-            if (slotBinding == null)
-            {
-                throw new ArgumentNullException(nameof(slotBinding));
-            }
 
             SignatureKey = signatureKey;
             Assignment = assignment;
             Target = target;
-            SlotBinding = slotBinding;
             Basis = basis;
         }
 
@@ -159,8 +106,6 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>割当の対象名。</summary>
         public string Target { get; }
-
-        public SlotBinding SlotBinding { get; }
 
         /// <summary>そう割り当てた根拠の一文。</summary>
         public string Basis { get; }
