@@ -171,6 +171,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
             get { return new Dictionary<string, ComposedTool>(StringComparer.Ordinal); }
         }
 
+        /// <summary>合成ツールは行を持たないので、出所を書かない項目は導く先を持てない。</summary>
+        [Fact]
+        public void RejectsAComposedToolItemWithoutAnOrigin()
+        {
+            IDictionary<string, ComposedTool> composed =
+                new Dictionary<string, ComposedTool>(StringComparer.Ordinal)
+                {
+                    { "session_release_handle", new ComposedTool(false, "受け持つこと。") },
+                };
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    composed,
+                    @"{ ""tools"": [{ ""tool"": ""session_release_handle"",
+                        ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                          { ""name"": ""handles"", ""required"": true,
+                            ""element"": { ""origin"": ""hostInput"",
+                              ""shape"": ""number"" } }] }],
+                        ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }",
+                    @"{ ""rows"": [] }"));
+
+            Assert.Contains(
+                "合成ツールの項目が出所を書いていない", error.Message, StringComparison.Ordinal);
+        }
+
         [Fact]
         public void RejectsASpellingWhoseAssumedLengthIsMissing()
         {
@@ -213,8 +238,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => Require(
                 SchemaJson(shape: "number", extra: @", ""payloads"": [{ ""type"": ""view.click"",
-                    ""members"": [{ ""name"": ""x"", ""origin"": ""sdkOut"",
-                      ""element"": { ""origin"": ""sdkOut"", ""shape"": ""date"" } }] }]"),
+                    ""members"": [{ ""name"": ""x"", ""origin"": ""hostOutput"",
+                      ""element"": { ""origin"": ""hostOutput"", ""shape"": ""date"" } }] }]"),
                 ToolAndEvent,
                 "number"));
 

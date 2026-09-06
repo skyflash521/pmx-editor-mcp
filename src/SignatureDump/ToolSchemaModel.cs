@@ -5,21 +5,9 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>項目がどこから来たか。</summary>
+    /// <summary>ホストが決める項目の出所。SDKに由来する項目は出所を持たない。</summary>
     public enum ItemOrigin
     {
-        /// <summary>SDKのシグネチャの入力の引数。</summary>
-        SdkIn,
-
-        /// <summary>SDKのシグネチャの出力の引数。</summary>
-        SdkOut,
-
-        /// <summary>SDKのシグネチャの入出力の引数。</summary>
-        SdkRef,
-
-        /// <summary>SDKの戻り値。</summary>
-        SdkReturn,
-
         /// <summary>ホストの側が決める入力。</summary>
         HostInput,
 
@@ -52,7 +40,8 @@ namespace PmxEditorMcp.SignatureDump
     }
 
     /// <summary>
-    /// 入出力の項目1件。形は綴り・組・要素の3つのうち1つで表し、取らない項目は null で置く。
+    /// 入出力の項目1件。ホストが決める項目は形を綴り・組・要素の3つのうち1つで表し、SDKに由来する
+    /// 項目は綴りを持たない。取らない項目は null で置く。
     /// </summary>
     public sealed class SchemaItem
     {
@@ -61,7 +50,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<SchemaItem> members,
             SchemaItem element,
             string name,
-            ItemOrigin origin,
+            ItemOrigin? origin,
             bool? required,
             object defaultValue,
             bool hasDefault,
@@ -86,7 +75,7 @@ namespace PmxEditorMcp.SignatureDump
             MaxItems = maxItems;
         }
 
-        /// <summary>値の表現の綴り。組と配列では null。</summary>
+        /// <summary>値の表現の綴り。組と配列、およびSDKに由来する項目では null。</summary>
         public string Shape { get; }
 
         /// <summary>組の中の項目。組でなければ null。</summary>
@@ -98,7 +87,8 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>項目の名前。応答の値そのものと配列の要素では null。</summary>
         public string Name { get; }
 
-        public ItemOrigin Origin { get; }
+        /// <summary>ホストが決める項目の出所。SDKに由来する項目は書かないので null。</summary>
+        public ItemOrigin? Origin { get; }
 
         /// <summary>入力に現れる項目が必須かどうか。まとまりに入る項目では null。</summary>
         public bool? Required { get; }

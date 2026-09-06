@@ -76,7 +76,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static SchemaItem Bounded(double maximum)
         {
             return new SchemaItem(
-                "number", null, null, null, ItemOrigin.SdkReturn, null, null, false,
+                "number", null, null, null, null, null, null, false,
                 new ValueBounds(null, maximum), null, "配布文書の該当節", false, null);
         }
 
@@ -91,7 +91,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static SchemaItem Array(SchemaItem element, int? fixedCount)
         {
             return new SchemaItem(
-                null, null, element, null, ItemOrigin.SdkReturn, null, null, false,
+                null, null, element, null, null, null, null, false,
                 null, null, fixedCount.HasValue ? "配布文書の該当節" : null, false,
                 fixedCount);
         }

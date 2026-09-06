@@ -50,6 +50,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             RequireSameSpellings(spellings, lengths);
+            RequireComposedOrigins(schemas, composedTools);
             RequireSameBranching(schemas, composedTools);
             RequireOnePollingTool(schemas);
             RequireSamePayloads(schemas, map);
@@ -57,6 +58,30 @@ namespace PmxEditorMcp.SignatureDump
             {
                 RequireShapes(schema, spellings);
                 RequireDerivedListingLimits(schema);
+            }
+        }
+
+        /// <summary>
+        /// 合成ツールの入力と応答の項目が出所を書くことを求める。合成ツールは行を持たないので、
+        /// 出所を書かない項目は導く先のシグネチャを持てない。`payloads` の項目は、イベント行と
+        /// スキーマ埋め込み行が導く先を持つので見ない。
+        /// </summary>
+        private static void RequireComposedOrigins(
+            ToolSchemaTable schemas, IDictionary<string, ComposedTool> composedTools)
+        {
+            foreach (ToolSchema schema in schemas.Tools
+                .Where(t => composedTools.ContainsKey(t.Tool))
+                .OrderBy(t => t.Tool, StringComparer.Ordinal))
+            {
+                IEnumerable<SchemaItem> items = schema.Output.WithNested.Concat(
+                    schema.Branches.SelectMany(b => b.Inputs.SelectMany(i => i.WithNested)));
+                SchemaItem missing = items.FirstOrDefault(i => i.Origin == null);
+                if (missing != null)
+                {
+                    throw new InvalidOperationException(
+                        "合成ツールの項目が出所を書いていない: " + schema.Tool
+                            + "(" + (missing.Name ?? "名前無し") + ")");
+                }
             }
         }
 

@@ -6,22 +6,50 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ListingLimitRuleTests
     {
-        /// <summary>
-        /// 一覧を返す題材。選べる項目2つと、選び方の外に置かれる項目1つを持つ。
-        /// </summary>
-        private static string Listing(string members)
+        /// <summary>一覧を返す題材。要素の項目を差し替えられる。</summary>
+        private static ToolSchema Listing(params SchemaItem[] members)
         {
-            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
-                ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
-                ""output"": { ""origin"": ""hostOutput"", ""members"": [
-                  { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
-                  { ""name"": ""items"", ""origin"": ""hostOutput"",
-                    ""element"": { ""origin"": ""hostOutput"", ""members"": " + members + @" } }] } }] }";
+            return Tool(Group(null, Value("total", "number"), Items(Group(null, members))));
         }
 
-        private static ToolSchema Read(string table)
+        /// <summary>切り出した並びを持つ項目。</summary>
+        private static SchemaItem Items(SchemaItem element)
         {
-            return Assert.Single(ToolSchemaJsonReader.Read(table).Tools);
+            return new SchemaItem(
+                null, null, element, "items", ItemOrigin.HostOutput, null, null, false,
+                null, null, null, false, null);
+        }
+
+        private static SchemaItem Group(string name, params SchemaItem[] members)
+        {
+            return new SchemaItem(
+                null, members, null, name, ItemOrigin.HostOutput, null, null, false,
+                null, null, null, false, null);
+        }
+
+        /// <summary>ホストが載せる項目。選び方の外に置かれる。</summary>
+        private static SchemaItem Value(string name, string shape)
+        {
+            return new SchemaItem(
+                shape, null, null, name, ItemOrigin.HostOutput, null, null, false,
+                null, null, null, false, null);
+        }
+
+        /// <summary>SDKに由来する項目。出所を持たず、選べる項目になる。</summary>
+        private static SchemaItem Chosen(string name, string shape)
+        {
+            return new SchemaItem(
+                shape, null, null, name, null, null, null, false,
+                null, null, null, false, null);
+        }
+
+        private static ToolSchema Tool(SchemaItem output)
+        {
+            return new ToolSchema(
+                "model_list_vertices",
+                new[] { new SchemaBranch("only", null, null, new SchemaItem[0], new SchemaChoice[0]) },
+                output,
+                null);
         }
 
         /// <summary>題材の表。実物の値は仕様書が持つ。</summary>
@@ -62,10 +90,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void TheMaximumTakesTheSmallestChosenItemAndTheDefaultTakesThemAll()
         {
-            ToolSchema schema = Read(Listing(
-                @"[{ ""name"": ""index"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
-                   { ""name"": ""name"", ""origin"": ""sdkReturn"", ""shape"": ""text"" },
-                   { ""name"": ""flag"", ""origin"": ""sdkReturn"", ""shape"": ""boolean"" }]"));
+            ToolSchema schema = Listing(
+                Value("index", "number"), Chosen("name", "text"), Chosen("flag", "boolean"));
 
             ListingLimits limits = ListingLimitRule.Derive(schema, Lengths, 98000);
 
@@ -77,8 +103,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void BothCountsStayAtOneWhenTheRoomIsSmallerThanOneItem()
         {
-            ToolSchema schema = Read(Listing(
-                @"[{ ""name"": ""name"", ""origin"": ""sdkReturn"", ""shape"": ""text"" }]"));
+            ToolSchema schema = Listing(Chosen("name", "text"));
 
             ListingLimits limits = ListingLimitRule.Derive(schema, Lengths, 1001);
 
@@ -89,8 +114,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RoomThatDoesNotCoverTheListingFrameStops()
         {
-            ToolSchema schema = Read(Listing(
-                @"[{ ""name"": ""name"", ""origin"": ""sdkReturn"", ""shape"": ""text"" }]"));
+            ToolSchema schema = Listing(Chosen("name", "text"));
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => ListingLimitRule.Derive(schema, Lengths, 1000));
@@ -101,8 +125,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnElementWithoutAChosenItemStops()
         {
-            ToolSchema schema = Read(Listing(
-                @"[{ ""name"": ""index"", ""origin"": ""hostOutput"", ""shape"": ""number"" }]"));
+            ToolSchema schema = Listing(Value("index", "number"));
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => ListingLimitRule.Derive(schema, Lengths, 98000));
@@ -110,23 +133,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("選べる項目が無い", error.Message, StringComparison.Ordinal);
         }
 
-        [Theory]
-        [InlineData(@"""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" }")]
-        [InlineData(@"""output"": { ""origin"": ""hostOutput"", ""members"": [
-            { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }")]
-        [InlineData(@"""output"": { ""origin"": ""hostOutput"", ""members"": [
-            { ""name"": ""items"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }")]
-        [InlineData(@"""output"": { ""origin"": ""hostOutput"", ""members"": [
-            { ""name"": ""items"", ""origin"": ""hostOutput"",
-              ""element"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }")]
-        public void AnOutputWithoutTheSlicedArrayStops(string output)
+        public static IEnumerable<object[]> OutputsWithoutTheSlicedArray()
         {
-            ToolSchema schema = Read(
-                @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
-                    ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }], " + output + @" }] }");
+            yield return new object[] { Value(null, "number") };
+            yield return new object[] { Group(null, Value("total", "number")) };
+            yield return new object[] { Group(null, Value("items", "number")) };
+            yield return new object[]
+            {
+                Group(null, Items(Value(null, "number"))),
+            };
+        }
 
+        [Theory]
+        [MemberData(nameof(OutputsWithoutTheSlicedArray))]
+        public void AnOutputWithoutTheSlicedArrayStops(SchemaItem output)
+        {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ListingLimitRule.Derive(schema, Lengths, 98000));
+                () => ListingLimitRule.Derive(Tool(output), Lengths, 98000));
 
             Assert.Contains("切り出した並びを持たない", error.Message, StringComparison.Ordinal);
         }
@@ -134,8 +157,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void TheSchemaAndTheTableAreRequired()
         {
-            ToolSchema schema = Read(Listing(
-                @"[{ ""name"": ""name"", ""origin"": ""sdkReturn"", ""shape"": ""text"" }]"));
+            ToolSchema schema = Listing(Chosen("name", "text"));
 
             Assert.Throws<ArgumentNullException>(() => ListingLimitRule.Derive(null, Lengths, 98000));
             Assert.Throws<ArgumentNullException>(() => ListingLimitRule.Derive(schema, null, 98000));

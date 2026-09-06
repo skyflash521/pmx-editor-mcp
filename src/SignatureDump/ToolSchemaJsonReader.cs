@@ -74,24 +74,15 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly Dictionary<string, ItemOrigin> Origins =
             new Dictionary<string, ItemOrigin>(StringComparer.Ordinal)
             {
-                { "sdkIn", ItemOrigin.SdkIn },
-                { "sdkOut", ItemOrigin.SdkOut },
-                { "sdkRef", ItemOrigin.SdkRef },
-                { "sdkReturn", ItemOrigin.SdkReturn },
                 { "hostInput", ItemOrigin.HostInput },
                 { "hostOutput", ItemOrigin.HostOutput },
             };
 
-        /// <summary>SDKに由来する既定と範囲。転記元の一次資料の記載を伴う。</summary>
-        private static readonly ItemOrigin[] FromSdk =
-        {
-            ItemOrigin.SdkIn, ItemOrigin.SdkOut, ItemOrigin.SdkRef, ItemOrigin.SdkReturn,
-        };
-
         /// <summary>
         /// ツールを書かれた順に返す。名前が昇順に重複なく並ぶことと、項目が形をちょうど1つで表す
-        /// ことを求める。例外は、イベントの取り出しの応答が持つ `payload` の項目だけで、そちらは
-        /// 形を持たず、`payloads` が種別ごとに定める。形が違えば <see cref="FormatException"/>。
+        /// ことを求める。例外は2つで、SDKに由来する項目は綴りを持たず組と配列の入れ子だけを表し、
+        /// イベントの取り出しの応答が持つ `payload` の項目は形を持たず `payloads` が種別ごとに
+        /// 定める。形が違えば <see cref="FormatException"/>。
         /// </summary>
         public static ToolSchemaTable Read(string json)
         {
@@ -323,22 +314,26 @@ namespace PmxEditorMcp.SignatureDump
         {
             Dictionary<string, object> members = Members(
                 item,
-                named ? new[] { NameName, OriginName } : new[] { OriginName },
+                named ? new[] { NameName } : new string[0],
                 new[]
                 {
-                    ShapeName, MembersName, ElementName, RequiredName, DefaultName, BoundsName,
-                    NullableName, SourceName, InjectedName, MaxItemsName,
+                    OriginName, ShapeName, MembersName, ElementName, RequiredName, DefaultName,
+                    BoundsName, NullableName, SourceName, InjectedName, MaxItemsName,
                 });
 
             string name = named ? Member(members[NameName], NameName) : null;
             string[] forms = { ShapeName, MembersName, ElementName };
             int shapes = forms.Count(members.ContainsKey);
             bool payload = polls && string.Equals(name, PayloadName, StringComparison.Ordinal);
-            if (shapes != (payload ? 0 : 1))
+            bool fromSdk = !members.ContainsKey(OriginName);
+            bool wrong = payload
+                ? shapes != 0
+                : fromSdk ? shapes > 1 || members.ContainsKey(ShapeName) : shapes != 1;
+            if (wrong)
             {
                 throw new FormatException(
-                    "項目の形は3つのうち1つでなければならない(イベントの `payload` だけが持たない): "
-                        + Written(members, NameName));
+                    "項目の形は3つのうち1つでなければならない(SDKに由来する項目は表現を書かず、"
+                        + "イベントの `payload` はどれも持たない): " + Written(members, NameName));
             }
 
             bool namedInput = named && input;
@@ -356,8 +351,9 @@ namespace PmxEditorMcp.SignatureDump
                         + Written(members, NameName));
             }
 
-            ItemOrigin origin = Lookup(Origins, members[OriginName], OriginName);
-            bool fromSdk = FromSdk.Contains(origin);
+            ItemOrigin? origin = fromSdk
+                ? (ItemOrigin?)null
+                : Lookup(Origins, members[OriginName], OriginName);
             bool hasValue = members.ContainsKey(DefaultName) || members.ContainsKey(BoundsName);
             bool hasSource = members.ContainsKey(SourceName);
             bool hasCount = members.ContainsKey(MaxItemsName);

@@ -330,9 +330,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ReadsACountFromThePrimarySourceOnAnArrayTheSdkDeclares()
         {
             SchemaItem input = OnlyInput(Table(Branch(
-                @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""required"": true,
+                @"[{ ""name"": ""a"", ""required"": true,
                      ""maxItems"": 4, ""source"": ""配布文書の該当節"",
-                     ""element"": { ""origin"": ""sdkIn"", ""shape"": ""number"" } }]")));
+                     ""element"": { } }]")));
 
             Assert.Equal(4, input.MaxItems);
             Assert.Null(input.Bounds);
@@ -343,10 +343,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void RefusesAnItemThatHoldsBothACountAndAValueFromTheSdk()
         {
             Rejects("SDKに由来する値と要素数の上限を同じ項目に持たない", Table(Branch(
-                @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""required"": true,
+                @"[{ ""name"": ""a"", ""required"": true,
                      ""maxItems"": 4, ""source"": ""配布文書の該当節"",
                      ""bounds"": { ""minimum"": 1 },
-                     ""element"": { ""origin"": ""sdkIn"", ""shape"": ""number"" } }]")));
+                     ""element"": { } }]")));
         }
 
         [Fact]
@@ -393,11 +393,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void RequiresTheSourceOfAValueTakenFromTheSdk()
         {
             Rejects("SDKに由来する既定と範囲は転記元を伴う", Table(Branch(
-                @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                @"[{ ""name"": ""a"",
                      ""required"": true, ""default"": 1 }]")));
 
             SchemaItem input = OnlyInput(Table(Branch(
-                @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                @"[{ ""name"": ""a"",
                      ""required"": true, ""default"": 1,
                      ""source"": ""配布文書の該当節"" }]")));
 
@@ -418,7 +418,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void RefusesASourceOnAnItemThatHasNeitherAValueNorACount()
         {
             Rejects("転記元は、SDKに由来する値か一次資料が定めた要素数に伴う", Table(Branch(
-                @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                @"[{ ""name"": ""a"",
                      ""required"": true, ""source"": ""配布文書の該当節"" }]")));
         }
 
@@ -455,8 +455,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Branch(@"[]"),
                 Output,
                 @", ""payloads"": [{ ""type"": ""view.click"",
-                     ""members"": [{ ""name"": ""x"", ""origin"": ""sdkOut"",
-                       ""shape"": ""number"" }] }]"));
+                     ""members"": [{ ""name"": ""x"" }] }]"));
 
             SchemaPayload payload = Assert.Single(schema.Payloads);
             Assert.Equal("view.click", payload.Type);
@@ -538,6 +537,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
                      ""required"": true, ""nullable"": true }]")));
 
             Assert.True(input.Nullable);
+        }
+
+        /// <summary>SDKに由来する項目の出所と表現は、シグネチャから決まるので書けば落ちる。</summary>
+        [Fact]
+        public void AWrittenSdkOriginStops()
+        {
+            Rejects("知らない origin", Table(Branch(
+                @"[{ ""name"": ""a"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                     ""required"": true }]")));
+        }
+
+        [Fact]
+        public void AWrittenShapeOnAnItemFromTheSdkStops()
+        {
+            Rejects("SDKに由来する項目は表現を書かず", Table(Branch(
+                @"[{ ""name"": ""a"", ""shape"": ""number"", ""required"": true }]")));
         }
 
         [Theory]

@@ -245,7 +245,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return "{\"tools\":[{\"tool\":\"model_get_count\""
                 + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
-                + ",\"output\":{\"origin\":\"sdkReturn\",\"shape\":\"number\"}}]}\n";
+                + ",\"output\":{}}]}\n";
         }
 
         /// <summary>題材のアセンブリの公開型を提供として並べた台帳。担当はどれもモデルになる。</summary>

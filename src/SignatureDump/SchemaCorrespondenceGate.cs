@@ -169,11 +169,20 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>値を返すシグネチャのツールが、値を返す形を持つことを求める。</summary>
+        /// <summary>
+        /// 値を返すシグネチャのツールが値を返す形を持ち、値を返さないシグネチャのツールの応答が
+        /// ホストの決める応答であることを求める。後者は導く先の戻り値を持たない。
+        /// </summary>
         private static void RequireOutput(SignatureRecord signature, ToolSchema schema)
         {
             if (string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal))
             {
+                if (schema.Output.Origin == null)
+                {
+                    throw new InvalidOperationException(
+                        "値を返さないシグネチャなのに応答が出所を書いていない: " + schema.Tool);
+                }
+
                 return;
             }
 

@@ -63,8 +63,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
                 ""branches"": [{ ""branch"": ""only"", ""inputs"": [
                   { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
-                    ""members"": [{ ""name"": ""distance"", ""origin"": ""sdkIn"",
-                      ""shape"": ""number"", ""required"": true }] }] }],
+                    ""members"": [{ ""name"": ""distance"", ""required"": true }] }] }],
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
         }
 
@@ -75,7 +74,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""branches"": [{ ""branch"": ""only"", ""inputs"": [
                   { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
                     ""members"": [
-                      { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                      { ""name"": ""distance"",
                         ""required"": true },
                       { ""name"": ""all"", ""origin"": ""hostInput"", ""shape"": ""boolean"",
                         ""required"": true }] }] }],
@@ -88,12 +87,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
                 ""branches"": [
                   { ""branch"": ""handles"", ""inputs"": [
-                    { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                    { ""name"": ""distance"",
                       ""required"": true },
                     { ""name"": ""handles"", ""origin"": ""hostInput"", ""required"": true,
                       ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }] },
                   { ""branch"": ""list"", ""inputs"": [
-                    { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                    { ""name"": ""distance"",
                       ""required"": true }] }],
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
         }
@@ -104,8 +103,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
                 ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
                 ""output"": { ""origin"": ""hostOutput"", ""members"": [
-                  { ""name"": """ + member + @""", ""origin"": ""sdkOut"",
-                    ""shape"": ""number"" }] } }] }";
+                  { ""name"": """ + member + @""" }] } }] }";
         }
 
         /// <summary>呼び分けを2つ持つ形。2つ目の呼び分けが持つ入力を差し替えられる。</summary>
@@ -114,12 +112,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
                 ""branches"": [
                   { ""branch"": ""args"", ""inputs"": [
-                    { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                    { ""name"": ""distance"",
                       ""required"": true },
                     { ""name"": ""all"", ""origin"": ""hostInput"", ""shape"": ""boolean"",
                       ""required"": true }] },
                   { ""branch"": ""list"", ""inputs"": [
-                    { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                    { ""name"": ""distance"",
                       ""required"": true }" + second + @"] }],
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
         }
@@ -132,12 +130,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
                 ""branches"": [
                   { ""branch"": ""first"", ""inputs"": [
-                    { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                    { ""name"": ""distance"",
                       ""required"": true },
                     { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
                       ""required"": true" + first + @" }] },
                   { ""branch"": ""second"", ""inputs"": [
-                    { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                    { ""name"": ""distance"",
                       ""required"": true },
                     { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
                       ""required"": true" + second + @" }] }],
@@ -219,7 +217,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""tool"": """ + tool + @""",
                 ""branches"": [{ ""branch"": ""only"", ""inputs"": [
-                  { ""name"": ""distance"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                  { ""name"": ""distance"",
                     ""required"": true },
                   { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
                     ""required"": true" + count + @" }] }],
@@ -301,6 +299,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains("引数に対応する入力が無い", error.Message, StringComparison.Ordinal);
             Assert.Contains("distance", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>値を返さない行の応答はホストが決めるので、出所を書かなければ落ちる。</summary>
+        [Fact]
+        public void RejectsAnOutputWithoutAnOriginOnAVoidSignature()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                        ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                          { ""name"": ""distance"", ""required"": true }] }],
+                        ""output"": { } }] }",
+                    signatures: Signatures(valueType: "System.Void")));
+
+            Assert.Contains(
+                "応答が出所を書いていない", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]

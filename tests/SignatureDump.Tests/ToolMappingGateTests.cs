@@ -368,13 +368,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                   { ""branch"": ""first"", ""inputs"": [
                     { ""name"": """ + array + @""", ""origin"": ""hostInput"", ""required"": true,
                       ""element"": { ""origin"": ""hostInput"", ""members"": [
-                        { ""name"": ""count"", ""origin"": ""sdkIn"", ""shape"": ""number"",
+                        { ""name"": ""count"",
                           ""required"": true }] } }] },
                   { ""branch"": ""second"", ""inputs"": [
                     { ""name"": """ + array + @""", ""origin"": ""hostInput"", ""required"": true,
                       ""element"": { ""origin"": ""hostInput"", ""members"": [
-                        { ""name"": """ + second + @""", ""origin"": ""sdkIn"",
-                          ""shape"": ""number"", ""required"": true }] } }] }],
+                        { ""name"": """ + second + @""", ""required"": true }] } }] }],
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
         }
 
@@ -385,12 +384,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""branches"": [
                   { ""branch"": ""first"", ""inputs"": [
                     { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
-                      ""members"": [{ ""name"": ""count"", ""origin"": ""sdkIn"",
-                        ""shape"": ""number"", ""required"": true }] }] },
+                      ""members"": [{ ""name"": ""count"", ""required"": true }] }] },
                   { ""branch"": ""second"", ""inputs"": [
                     { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
-                      ""members"": [{ ""name"": """ + second + @""", ""origin"": ""sdkIn"",
-                        ""shape"": ""number"", ""required"": true }] }] }],
+                      ""members"": [{ ""name"": """ + second + @""", ""required"": true }] }] }],
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
         }
 
