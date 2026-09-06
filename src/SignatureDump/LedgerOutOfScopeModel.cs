@@ -23,50 +23,37 @@ namespace PmxEditorMcp.SignatureDump
         ArgumentOnly,
     }
 
-    /// <summary>台帳が行を作らない公開型1件。</summary>
+    /// <summary>
+    /// 台帳が行を作らない公開型1件。理由は列挙から導けるので持たず、照合が導いて確かめる。
+    /// </summary>
     public sealed class OutOfScopeTypeEntry
     {
-        public OutOfScopeTypeEntry(string name, OutOfScopeReason reason)
+        public OutOfScopeTypeEntry(string name)
         {
             OutOfScopeText.Require(name, nameof(name));
-            OutOfScopeText.RequireDefined(reason, nameof(reason));
 
             Name = name;
-            Reason = reason;
         }
 
         /// <summary>公開API列挙が書き出した型名。</summary>
         public string Name { get; }
-
-        public OutOfScopeReason Reason { get; }
     }
 
     /// <summary>
-    /// 台帳が行を作る型に属しながら、台帳のどの行も指さない公開シグネチャ1件。理由を経路に
-    /// 限るのは、列挙型・デリゲート型・引数専用型が型ごと対象外になり、シグネチャ単位で現れ
-    /// ないためである。
+    /// 台帳が行を作る型に属しながら、台帳のどの行も指さない公開シグネチャ1件。型ごと対象外に
+    /// なる理由はシグネチャ単位で現れないので、ここに載るのは経路だけになる。
     /// </summary>
     public sealed class OutOfScopeSignatureEntry
     {
-        public OutOfScopeSignatureEntry(string key, OutOfScopeReason reason)
+        public OutOfScopeSignatureEntry(string key)
         {
             OutOfScopeText.Require(key, nameof(key));
-            OutOfScopeText.RequireDefined(reason, nameof(reason));
-
-            if (reason != OutOfScopeReason.Route)
-            {
-                throw new ArgumentException(
-                    "シグネチャ単位で採れない理由: " + reason, nameof(reason));
-            }
 
             Key = key;
-            Reason = reason;
         }
 
         /// <summary>宣言型・メンバー名・総称型引数の数・引数の型と方向の列で決まる行キー。</summary>
         public string Key { get; }
-
-        public OutOfScopeReason Reason { get; }
     }
 
     /// <summary>
@@ -167,14 +154,6 @@ namespace PmxEditorMcp.SignatureDump
             if (value.Trim().Length == 0)
             {
                 throw new ArgumentException("空にも空白だけにもできない。", name);
-            }
-        }
-
-        internal static void RequireDefined(OutOfScopeReason reason, string name)
-        {
-            if (!Enum.IsDefined(typeof(OutOfScopeReason), reason))
-            {
-                throw new ArgumentException("知らない理由: " + reason, name);
             }
         }
     }

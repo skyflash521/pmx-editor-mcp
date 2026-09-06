@@ -142,20 +142,9 @@ namespace PmxEditorMcp.SignatureDump
                     throw Mismatch("対象外一覧の型が公開型に無い: " + entry.Name);
                 }
 
-                OutOfScopeReason? computed = classifier.ClassifyType(entry.Name);
-                if (computed == null)
+                if (classifier.ClassifyType(entry.Name) == null)
                 {
                     throw Mismatch("対象外にできる理由が無い型: " + entry.Name);
-                }
-
-                if (computed.Value != entry.Reason)
-                {
-                    throw Mismatch(string.Format(
-                        CultureInfo.InvariantCulture,
-                        "型の理由が算出値と違う: {0} 記載={1} 算出={2}",
-                        entry.Name,
-                        entry.Reason,
-                        computed.Value));
                 }
             }
         }
@@ -196,20 +185,9 @@ namespace PmxEditorMcp.SignatureDump
                     throw Mismatch("対象外一覧のシグネチャが公開シグネチャに無い: " + entry.Key);
                 }
 
-                OutOfScopeReason? computed = classifier.ClassifySignature(signature);
-                if (computed == null)
+                if (classifier.ClassifySignature(signature) == null)
                 {
                     throw Mismatch("対象外にできる理由が無いシグネチャ: " + entry.Key);
-                }
-
-                if (computed.Value != entry.Reason)
-                {
-                    throw Mismatch(string.Format(
-                        CultureInfo.InvariantCulture,
-                        "シグネチャの理由が算出値と違う: {0} 記載={1} 算出={2}",
-                        entry.Key,
-                        entry.Reason,
-                        computed.Value));
                 }
             }
         }

@@ -22,7 +22,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Row("CAP-001", Thing)),
                 Inventory(),
                 Excluded(),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route)));
+                OutOfScope(TypeEntry(Hub)));
 
             Assert.Equal(2, result.PublicTypes);
             Assert.Equal(1, result.LedgerTypes);
@@ -75,7 +75,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
                 Inventory(),
                 Excluded(),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -85,17 +85,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
                 Inventory(),
                 Excluded(),
-                OutOfScope(TypeEntry("N.IMissing", OutOfScopeReason.Route))));
-        }
-
-        [Fact]
-        public void TypeReasonDifferentFromTheComputedOneFailsCollation()
-        {
-            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
-                Ledger(Row("CAP-001", Thing)),
-                Inventory(),
-                Excluded(),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.ArgumentOnly))));
+                OutOfScope(TypeEntry("N.IMissing"))));
         }
 
         [Fact]
@@ -105,7 +95,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Row("CAP-001", Hub)),
                 Inventory(),
                 Excluded(),
-                OutOfScope(TypeEntry(Thing, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Thing))));
         }
 
         [Fact]
@@ -142,11 +132,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void SignatureReasonDifferentFromTheComputedOneFailsCollation()
+        public void SignatureWithoutAnyOutOfScopeReasonFailsCollation()
         {
             IList<OutOfScopeSignatureEntry> signatures = new List<OutOfScopeSignatureEntry>
             {
-                new OutOfScopeSignatureEntry("N.IHub.Name()", OutOfScopeReason.Route),
+                new OutOfScopeSignatureEntry("N.IHub.Name()"),
             };
 
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
@@ -161,7 +151,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             IList<OutOfScopeSignatureEntry> signatures = new List<OutOfScopeSignatureEntry>
             {
-                new OutOfScopeSignatureEntry("N.IHub.Missing()", OutOfScopeReason.Route),
+                new OutOfScopeSignatureEntry("N.IHub.Missing()"),
             };
 
             Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
@@ -194,7 +184,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Inventory(),
                 Excluded(),
                 OutOfScope(
-                    new[] { TypeEntry(Hub, OutOfScopeReason.Route) },
+                    new[] { TypeEntry(Hub) },
                     new[] { SignatureEntry(Route) })));
         }
 
@@ -207,7 +197,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1")),
                 Inventory(),
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route)));
+                OutOfScope(TypeEntry(Hub)));
 
             Assert.Equal(1, result.Excluded);
             Assert.Equal(0, result.Provided);
@@ -222,7 +212,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1。契約注記: 代替を使う")),
                 Inventory(),
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route)));
+                OutOfScope(TypeEntry(Hub)));
 
             Assert.Equal(1, result.Excluded);
         }
@@ -236,7 +226,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 2")),
                 Inventory(),
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -248,7 +238,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Row("CAP-001", Thing)),
                 Inventory(),
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -258,7 +248,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1")),
                 Inventory(),
                 Excluded(),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -268,7 +258,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 0")),
                 Inventory(),
                 Excluded(),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -300,7 +290,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     ledger,
                     Inventory(),
                     excluded,
-                    OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                    OutOfScope(TypeEntry(Hub))));
             }
         }
 
@@ -313,7 +303,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1件")),
                 Inventory(),
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -325,7 +315,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 1。非対応件数: 2")),
                 Inventory(),
                 ExcludedSignatureBuilder.Build(baseline, Inventory()),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -375,7 +365,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "非対応件数: 多数")),
                 Inventory(),
                 Excluded(),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -385,7 +375,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Ledger(Counted("CAP-001", Thing, "契約注記: 非対応件数: 1")),
                 Inventory(),
                 ExcludedSignatureBuilder.Build(Frozen2(), Inventory()),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
@@ -403,14 +393,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ledger,
                 Inventory(),
                 Excluded(),
-                OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route))));
+                OutOfScope(TypeEntry(Hub))));
         }
 
         [Fact]
         public void NullArgumentThrows()
         {
             IList<CapabilityRecord> ledger = Ledger(Row("CAP-001", Thing));
-            LedgerOutOfScopeRecord outOfScope = OutOfScope(TypeEntry(Hub, OutOfScopeReason.Route));
+            LedgerOutOfScopeRecord outOfScope = OutOfScope(TypeEntry(Hub));
 
             Assert.Throws<ArgumentNullException>(() => LedgerCoverage.Verify(
                 null, Inventory(), Excluded(), outOfScope));
@@ -544,14 +534,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new List<ExcludedSignatureRecord>();
         }
 
-        private static OutOfScopeTypeEntry TypeEntry(string name, OutOfScopeReason reason)
+        private static OutOfScopeTypeEntry TypeEntry(string name)
         {
-            return new OutOfScopeTypeEntry(name, reason);
+            return new OutOfScopeTypeEntry(name);
         }
 
         private static OutOfScopeSignatureEntry SignatureEntry(string key)
         {
-            return new OutOfScopeSignatureEntry(key, OutOfScopeReason.Route);
+            return new OutOfScopeSignatureEntry(key);
         }
 
         private static LedgerOutOfScopeRecord OutOfScope(params OutOfScopeTypeEntry[] types)

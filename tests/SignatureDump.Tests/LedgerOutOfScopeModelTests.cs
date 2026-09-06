@@ -11,23 +11,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Key = "PEPlugin.IPEBuilder.Pmx()";
 
         [Fact]
-        public void TypeEntryCarriesNameAndReason()
+        public void TypeEntryCarriesTheNameAlone()
         {
-            OutOfScopeTypeEntry entry = new OutOfScopeTypeEntry(TypeName, OutOfScopeReason.Route);
-
-            Assert.Equal(TypeName, entry.Name);
-            Assert.Equal(OutOfScopeReason.Route, entry.Reason);
+            Assert.Equal(TypeName, new OutOfScopeTypeEntry(TypeName).Name);
         }
 
         [Fact]
         public void TypeEntryWithEmptyNameThrows()
         {
-            Assert.Throws<ArgumentNullException>(
-                () => new OutOfScopeTypeEntry(null, OutOfScopeReason.Route));
-            Assert.Throws<ArgumentException>(
-                () => new OutOfScopeTypeEntry(string.Empty, OutOfScopeReason.Route));
-            Assert.Throws<ArgumentException>(
-                () => new OutOfScopeTypeEntry("   ", OutOfScopeReason.Route));
+            Assert.Throws<ArgumentNullException>(() => new OutOfScopeTypeEntry(null));
+            Assert.Throws<ArgumentException>(() => new OutOfScopeTypeEntry(string.Empty));
+            Assert.Throws<ArgumentException>(() => new OutOfScopeTypeEntry("   "));
         }
 
         [Fact]
@@ -45,56 +39,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TypeEntryAcceptsAllFourClosedSetReasons()
+        public void SignatureEntryCarriesTheKeyAlone()
         {
-            Assert.Equal(
-                OutOfScopeReason.EnumType,
-                new OutOfScopeTypeEntry(TypeName, OutOfScopeReason.EnumType).Reason);
-            Assert.Equal(
-                OutOfScopeReason.DelegateType,
-                new OutOfScopeTypeEntry(TypeName, OutOfScopeReason.DelegateType).Reason);
-            Assert.Equal(
-                OutOfScopeReason.Route,
-                new OutOfScopeTypeEntry(TypeName, OutOfScopeReason.Route).Reason);
-            Assert.Equal(
-                OutOfScopeReason.ArgumentOnly,
-                new OutOfScopeTypeEntry(TypeName, OutOfScopeReason.ArgumentOnly).Reason);
-        }
-
-        [Fact]
-        public void ReasonOutsideTheClosedSetIsRejectedForTypeEntries()
-        {
-            Assert.Throws<ArgumentException>(
-                () => new OutOfScopeTypeEntry(TypeName, (OutOfScopeReason)(-1)));
-        }
-
-        [Fact]
-        public void SignatureEntryCarriesKeyAndReason()
-        {
-            OutOfScopeSignatureEntry entry = new OutOfScopeSignatureEntry(Key, OutOfScopeReason.Route);
-
-            Assert.Equal(Key, entry.Key);
-            Assert.Equal(OutOfScopeReason.Route, entry.Reason);
+            Assert.Equal(Key, new OutOfScopeSignatureEntry(Key).Key);
         }
 
         [Fact]
         public void SignatureEntryWithEmptyKeyThrows()
         {
-            Assert.Throws<ArgumentNullException>(
-                () => new OutOfScopeSignatureEntry(null, OutOfScopeReason.Route));
-            Assert.Throws<ArgumentException>(
-                () => new OutOfScopeSignatureEntry(string.Empty, OutOfScopeReason.Route));
-        }
-
-        [Fact]
-        public void TypeOnlyReasonIsRejectedForSignatureEntries()
-        {
-            Assert.Throws<ArgumentException>(
-                () => new OutOfScopeSignatureEntry(Key, OutOfScopeReason.EnumType));
-            Assert.Throws<ArgumentException>(
-                () => new OutOfScopeSignatureEntry(Key, OutOfScopeReason.DelegateType));
-            Assert.Throws<ArgumentException>(
-                () => new OutOfScopeSignatureEntry(Key, OutOfScopeReason.ArgumentOnly));
+            Assert.Throws<ArgumentNullException>(() => new OutOfScopeSignatureEntry(null));
+            Assert.Throws<ArgumentException>(() => new OutOfScopeSignatureEntry(string.Empty));
         }
 
         [Fact]
@@ -102,13 +56,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             LedgerOutOfScopeRecord record = new LedgerOutOfScopeRecord(
                 Types(
-                    Type("PEPlugin.IPEConnector", OutOfScopeReason.Route),
-                    Type("PEPlugin.Vme.OpType", OutOfScopeReason.EnumType)),
+                    Type("PEPlugin.IPEConnector"),
+                    Type("PEPlugin.Vme.OpType")),
                 Signatures(Signature("PEPlugin.IPEBuilder.Pmx()")));
 
             Assert.Equal(2, record.Types.Count);
             Assert.Equal("PEPlugin.IPEConnector", record.Types[0].Name);
-            Assert.Equal(OutOfScopeReason.EnumType, record.Types[1].Reason);
+            Assert.Equal("PEPlugin.Vme.OpType", record.Types[1].Name);
             Assert.Single(record.Signatures);
             Assert.Equal("PEPlugin.IPEBuilder.Pmx()", record.Signatures[0].Key);
         }
@@ -128,8 +82,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Throws<ArgumentException>(() => new LedgerOutOfScopeRecord(
                 Types(
-                    Type("PEPlugin.Vme.OpType", OutOfScopeReason.EnumType),
-                    Type("PEPlugin.IPEConnector", OutOfScopeReason.Route)),
+                    Type("PEPlugin.Vme.OpType"),
+                    Type("PEPlugin.IPEConnector")),
                 Signatures()));
 
             Assert.Throws<ArgumentException>(() => new LedgerOutOfScopeRecord(
@@ -142,8 +96,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Throws<ArgumentException>(() => new LedgerOutOfScopeRecord(
                 Types(
-                    Type("PEPlugin.IPEConnector", OutOfScopeReason.Route),
-                    Type("PEPlugin.IPEConnector", OutOfScopeReason.Route)),
+                    Type("PEPlugin.IPEConnector"),
+                    Type("PEPlugin.IPEConnector")),
                 Signatures()));
 
             Assert.Throws<ArgumentException>(() => new LedgerOutOfScopeRecord(
@@ -173,14 +127,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void PublishedCollectionsCannotBeChangedAfterwards()
         {
             LedgerOutOfScopeRecord record = new LedgerOutOfScopeRecord(
-                Types(Type("PEPlugin.IPEConnector", OutOfScopeReason.Route)),
+                Types(Type("PEPlugin.IPEConnector")),
                 Signatures(Signature(Key)));
 
             Assert.Throws<NotSupportedException>(
-                () => record.Types.Add(Type("PEPlugin.Vme.OpType", OutOfScopeReason.EnumType)));
+                () => record.Types.Add(Type("PEPlugin.Vme.OpType")));
             Assert.Throws<NotSupportedException>(() => record.Types.Clear());
             Assert.Throws<NotSupportedException>(
-                () => record.Types[0] = Type("PEPlugin.Vme.OpType", OutOfScopeReason.EnumType));
+                () => record.Types[0] = Type("PEPlugin.Vme.OpType"));
             Assert.Throws<NotSupportedException>(
                 () => record.Signatures.Add(Signature("PEPlugin.IPEBuilder.SC()")));
             Assert.Throws<NotSupportedException>(() => record.Signatures.RemoveAt(0));
@@ -193,7 +147,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             List<OutOfScopeTypeEntry> types = new List<OutOfScopeTypeEntry>
             {
-                Type("PEPlugin.IPEConnector", OutOfScopeReason.Route),
+                Type("PEPlugin.IPEConnector"),
             };
             List<OutOfScopeSignatureEntry> signatures = new List<OutOfScopeSignatureEntry>
             {
@@ -208,14 +162,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Single(record.Signatures);
         }
 
-        private static OutOfScopeTypeEntry Type(string name, OutOfScopeReason reason)
+        private static OutOfScopeTypeEntry Type(string name)
         {
-            return new OutOfScopeTypeEntry(name, reason);
+            return new OutOfScopeTypeEntry(name);
         }
 
         private static OutOfScopeSignatureEntry Signature(string key)
         {
-            return new OutOfScopeSignatureEntry(key, OutOfScopeReason.Route);
+            return new OutOfScopeSignatureEntry(key);
         }
 
         private static IList<OutOfScopeTypeEntry> Types(params OutOfScopeTypeEntry[] entries)

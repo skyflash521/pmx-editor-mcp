@@ -126,9 +126,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void MismatchListsEveryExtraIdentifierInOrdinalOrder()
         {
             string outOfScope = "{\"types\":["
-                + "{\"name\":\"ZZZ.Alpha\",\"reason\":\"route\"},"
-                + "{\"name\":\"ZZZ.Beta\",\"reason\":\"route\"},"
-                + "{\"name\":\"ZZZ.Gamma\",\"reason\":\"route\"}"
+                + "{\"name\":\"ZZZ.Alpha\"},"
+                + "{\"name\":\"ZZZ.Beta\"},"
+                + "{\"name\":\"ZZZ.Gamma\"}"
                 + "],\"signatures\":[]}\n";
             StringWriter error = new StringWriter();
 

@@ -7,13 +7,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Sample =
             "{\"types\":["
-                + "{\"name\":\"PEPlugin.IPEConnector\",\"reason\":\"route\"},"
-                + "{\"name\":\"PEPlugin.Vme.OpType\",\"reason\":\"enumType\"},"
-                + "{\"name\":\"PEPlugin.Vme.PEVmeEvent\",\"reason\":\"delegateType\"},"
-                + "{\"name\":\"PEPlugin.Vme.PEVmePreviewOption\",\"reason\":\"argumentOnly\"}"
+                + "{\"name\":\"PEPlugin.IPEConnector\"},"
+                + "{\"name\":\"PEPlugin.Vme.OpType\"},"
+                + "{\"name\":\"PEPlugin.Vme.PEVmeEvent\"},"
+                + "{\"name\":\"PEPlugin.Vme.PEVmePreviewOption\"}"
                 + "],\"signatures\":["
-                + "{\"key\":\"PEPlugin.IPEBuilder.Pmx()\",\"reason\":\"route\"},"
-                + "{\"key\":\"PEPlugin.IPEBuilder.SC()\",\"reason\":\"route\"}"
+                + "{\"key\":\"PEPlugin.IPEBuilder.Pmx()\"},"
+                + "{\"key\":\"PEPlugin.IPEBuilder.SC()\"}"
                 + "]}";
 
         [Fact]
@@ -23,10 +23,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(4, record.Types.Count);
             Assert.Equal("PEPlugin.IPEConnector", record.Types[0].Name);
-            Assert.Equal(OutOfScopeReason.Route, record.Types[0].Reason);
-            Assert.Equal(OutOfScopeReason.EnumType, record.Types[1].Reason);
-            Assert.Equal(OutOfScopeReason.DelegateType, record.Types[2].Reason);
-            Assert.Equal(OutOfScopeReason.ArgumentOnly, record.Types[3].Reason);
+            Assert.Equal("PEPlugin.Vme.OpType", record.Types[1].Name);
+            Assert.Equal("PEPlugin.Vme.PEVmeEvent", record.Types[2].Name);
+            Assert.Equal("PEPlugin.Vme.PEVmePreviewOption", record.Types[3].Name);
 
             Assert.Equal(2, record.Signatures.Count);
             Assert.Equal("PEPlugin.IPEBuilder.Pmx()", record.Signatures[0].Key);
@@ -66,13 +65,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ArrayItemMissingARequiredMemberThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[{\"reason\":\"route\"}],\"signatures\":[]}"));
+                "{\"types\":[{}],\"signatures\":[]}"));
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[{\"name\":\"A\"}],\"signatures\":[]}"));
-            Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[],\"signatures\":[{\"reason\":\"route\"}]}"));
-            Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[],\"signatures\":[{\"key\":\"A\"}]}"));
+                "{\"types\":[],\"signatures\":[{}]}"));
         }
 
         [Fact]
@@ -98,9 +93,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
                 "{\"types\":[],\"signatures\":[],\"note\":\"\"}"));
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[{\"name\":\"A\",\"reason\":\"route\",\"note\":\"\"}],\"signatures\":[]}"));
+                "{\"types\":[{\"name\":\"A\",\"note\":\"\"}],\"signatures\":[]}"));
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[],\"signatures\":[{\"key\":\"A\",\"reason\":\"route\",\"note\":\"\"}]}"));
+                "{\"types\":[],\"signatures\":[{\"key\":\"A\",\"note\":\"\"}]}"));
         }
 
         [Fact]
@@ -116,39 +111,35 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void WrongMemberTypeThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[{\"name\":1,\"reason\":\"route\"}],\"signatures\":[]}"));
+                "{\"types\":[{\"name\":1}],\"signatures\":[]}"));
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[],\"signatures\":[{\"key\":\"A\",\"reason\":2}]}"));
+                "{\"types\":[],\"signatures\":[{\"key\":1}]}"));
         }
 
         [Fact]
         public void EmptyNameOrKeyThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[{\"name\":\"\",\"reason\":\"route\"}],\"signatures\":[]}"));
+                "{\"types\":[{\"name\":\"\"}],\"signatures\":[]}"));
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[],\"signatures\":[{\"key\":\"\",\"reason\":\"route\"}]}"));
+                "{\"types\":[],\"signatures\":[{\"key\":\"\"}]}"));
         }
 
+        /// <summary>理由は導く値なので、書けば知らない項目として落ちる。</summary>
         [Fact]
-        public void ReasonOutsideTheClosedSetThrows()
+        public void AWrittenReasonThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[{\"name\":\"A\",\"reason\":\"pluginMechanism\"}],\"signatures\":[]}"));
-        }
-
-        [Fact]
-        public void TypeOnlyReasonWrittenOnASignatureThrows()
-        {
+                "{\"types\":[{\"name\":\"A\",\"reason\":\"route\"}],\"signatures\":[]}"));
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[],\"signatures\":[{\"key\":\"A\",\"reason\":\"enumType\"}]}"));
+                "{\"types\":[],\"signatures\":[{\"key\":\"A\",\"reason\":\"route\"}]}"));
         }
 
         [Fact]
         public void OrderThatIsNotAscendingThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[{\"name\":\"B\",\"reason\":\"route\"},{\"name\":\"A\",\"reason\":\"route\"}]"
+                "{\"types\":[{\"name\":\"B\"},{\"name\":\"A\"}]"
                     + ",\"signatures\":[]}"));
         }
 
@@ -156,11 +147,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void DuplicateIdentifierThrows()
         {
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[{\"name\":\"A\",\"reason\":\"route\"},{\"name\":\"A\",\"reason\":\"route\"}]"
+                "{\"types\":[{\"name\":\"A\"},{\"name\":\"A\"}]"
                     + ",\"signatures\":[]}"));
             Assert.Throws<FormatException>(() => LedgerOutOfScopeJsonReader.Read(
-                "{\"types\":[],\"signatures\":[{\"key\":\"A\",\"reason\":\"route\"}"
-                    + ",{\"key\":\"A\",\"reason\":\"route\"}]}"));
+                "{\"types\":[],\"signatures\":[{\"key\":\"A\"}"
+                    + ",{\"key\":\"A\"}]}"));
         }
     }
 }

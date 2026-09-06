@@ -16,17 +16,6 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string KeyName = "key";
 
-        private const string ReasonName = "reason";
-
-        private static readonly Dictionary<string, OutOfScopeReason> Reasons =
-            new Dictionary<string, OutOfScopeReason>(StringComparer.Ordinal)
-            {
-                { "enumType", OutOfScopeReason.EnumType },
-                { "delegateType", OutOfScopeReason.DelegateType },
-                { "route", OutOfScopeReason.Route },
-                { "argumentOnly", OutOfScopeReason.ArgumentOnly },
-            };
-
         /// <summary>形が違えば <see cref="FormatException"/>。</summary>
         public static LedgerOutOfScopeRecord Read(string json)
         {
@@ -44,17 +33,15 @@ namespace PmxEditorMcp.SignatureDump
                 List<OutOfScopeTypeEntry> types = new List<OutOfScopeTypeEntry>();
                 foreach (object item in typeItems)
                 {
-                    Dictionary<string, object> members = Members(item, NameName, ReasonName);
-                    types.Add(new OutOfScopeTypeEntry(
-                        Text(members[NameName], NameName), Reason(members[ReasonName])));
+                    Dictionary<string, object> members = Members(item, NameName);
+                    types.Add(new OutOfScopeTypeEntry(Text(members[NameName], NameName)));
                 }
 
                 List<OutOfScopeSignatureEntry> signatures = new List<OutOfScopeSignatureEntry>();
                 foreach (object item in signatureItems)
                 {
-                    Dictionary<string, object> members = Members(item, KeyName, ReasonName);
-                    signatures.Add(new OutOfScopeSignatureEntry(
-                        Text(members[KeyName], KeyName), Reason(members[ReasonName])));
+                    Dictionary<string, object> members = Members(item, KeyName);
+                    signatures.Add(new OutOfScopeSignatureEntry(Text(members[KeyName], KeyName)));
                 }
 
                 return new LedgerOutOfScopeRecord(types, signatures);
@@ -128,18 +115,6 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return text;
-        }
-
-        private static OutOfScopeReason Reason(object value)
-        {
-            string text = Text(value, ReasonName);
-            OutOfScopeReason reason;
-            if (!Reasons.TryGetValue(text, out reason))
-            {
-                throw new FormatException("知らない理由: " + text);
-            }
-
-            return reason;
         }
     }
 }

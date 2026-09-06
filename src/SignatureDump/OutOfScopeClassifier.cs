@@ -6,8 +6,7 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 台帳が行を作らない対象の理由を決める。理由は挙げた順に評価し、最初に該当した一つを採る。
-    /// 記録した理由の述語を満たすことだけを見ると、先に評価される理由にも当たる項目を見逃すので、
-    /// 照合の側はここが算出した値との一致を求める。
+    /// 対象外一覧はこの理由を持たないので、照合はここが理由を算出できるかどうかだけを見る。
     /// </summary>
     public sealed class OutOfScopeClassifier
     {
