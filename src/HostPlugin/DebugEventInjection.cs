@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace PmxEditorMcp
 {
@@ -47,40 +46,11 @@ namespace PmxEditorMcp
             object payload;
             context.Params.TryGetValue(PayloadParameterName, out payload);
             QueuedEvent queued = context.Events.Enqueue(
-                Text(context.Params, TypeParameterName),
-                Number(context.Params, SourceHandleParameterName),
+                RequestParameter.Text(context.Params, TypeParameterName),
+                RequestParameter.PositiveInteger(context.Params, SourceHandleParameterName),
                 payload);
 
             return new Dictionary<string, object>(StringComparer.Ordinal) { { "seq", queued.Seq } };
-        }
-
-        private static string Text(IDictionary<string, object> parameters, string name)
-        {
-            object value;
-            string text = parameters.TryGetValue(name, out value) ? value as string : null;
-            if (text == null || text.Trim().Length == 0)
-            {
-                throw new InvalidParamsException(name + " は空でない文字列でなければならない。");
-            }
-
-            return text;
-        }
-
-        private static int Number(IDictionary<string, object> parameters, string name)
-        {
-            object value;
-            if (!parameters.TryGetValue(name, out value) || !ValueInput.IsNumber(value))
-            {
-                throw new InvalidParamsException(name + " は正の整数でなければならない。");
-            }
-
-            double number = Convert.ToDouble(value, CultureInfo.InvariantCulture);
-            if (number != Math.Floor(number) || number < 1 || number > int.MaxValue)
-            {
-                throw new InvalidParamsException(name + " は正の整数でなければならない。");
-            }
-
-            return (int)number;
         }
     }
 }

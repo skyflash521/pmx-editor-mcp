@@ -30,9 +30,9 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void TheVariableNamesAreACallerContract()
         {
-            Assert.Equal("PMX_EDITOR_MCP_DEBUG_HOOKS", BridgeDeclaration.DebugHooksVariableName);
+            Assert.Equal("PMX_EDITOR_MCP_DEBUG_HOOKS", BridgeDebugHooks.EnvironmentVariableName);
             Assert.Equal("PMX_EDITOR_MCP_DECLARE_META", BridgeDeclaration.EnvironmentVariableName);
-            Assert.Equal("1", BridgeDeclaration.DebugHooksEnabledValue);
+            Assert.Equal("1", BridgeDebugHooks.EnabledValue);
             Assert.Equal("0", BridgeDeclaration.SuppressedValue);
         }
     }

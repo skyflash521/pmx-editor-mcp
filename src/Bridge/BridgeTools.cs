@@ -17,22 +17,58 @@ namespace PmxEditorMcp.Bridge
         /// </summary>
         public const string ResultSizeMetaKey = "anthropic/maxResultSizeChars";
 
+        /// <summary>指定した文字数のテキストを返す、検査からだけ使うホストのメソッドの名前。</summary>
+        public const string LargeTextMethod = "debug_large_text";
+
+        /// <summary>そのメソッドへ渡す、返すテキストの文字数の引数の名前。</summary>
+        public const string LargeTextCharsParameter = "chars";
+
         /// <summary>
         /// ブリッジが登録するツールを作る。ツール定義へ載せる応答サイズ予算は、handshake で
         /// ホストと照合するのと同じ値をクライアントから取る——別々に受け取ると、宣言した値と
         /// 照合する値を食い違わせられる。
         /// </summary>
-        public static IReadOnlyList<McpServerTool> Create(HostIpcClient client, bool declared)
+        public static IReadOnlyList<McpServerTool> Create(
+            HostIpcClient client, bool declared, bool debugHooks)
         {
             if (client == null)
             {
                 throw new ArgumentNullException(nameof(client));
             }
 
-            return new McpServerTool[]
+            List<McpServerTool> tools = new List<McpServerTool>
             {
                 Relay(client, declared, "ping", "ホストが応答することを確かめる。"),
             };
+
+            if (debugHooks)
+            {
+                tools.Add(LargeText(client, declared));
+            }
+
+            return tools;
+        }
+
+        /// <summary>
+        /// 指定した文字数のテキストを返すツールを作る。応答の大きさをMCPクライアントがどう扱うかを
+        /// 確かめるために要るもので、検査からだけ使う入口が開いているときだけ登録する。
+        /// </summary>
+        private static McpServerTool LargeText(HostIpcClient client, bool declared)
+        {
+            return McpServerTool.Create(
+                (int chars, CancellationToken cancellationToken) => RelayAsync(
+                    client,
+                    LargeTextMethod,
+                    new JsonObject { [LargeTextCharsParameter] = chars },
+                    cancellationToken),
+                new McpServerToolCreateOptions
+                {
+                    Name = LargeTextMethod,
+                    Description = "指定した文字数のテキストをホストから受け取る。検査に使う。",
+                    Meta = declared
+                        ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
+                        : null,
+                });
         }
 
         /// <summary>ホストの同名のメソッドへ中継するツールを作る。</summary>
@@ -40,7 +76,8 @@ namespace PmxEditorMcp.Bridge
             HostIpcClient client, bool declared, string method, string description)
         {
             return McpServerTool.Create(
-                (CancellationToken cancellationToken) => RelayAsync(client, method, cancellationToken),
+                (CancellationToken cancellationToken) =>
+                    RelayAsync(client, method, null, cancellationToken),
                 new McpServerToolCreateOptions
                 {
                     Name = method,
@@ -58,11 +95,15 @@ namespace PmxEditorMcp.Bridge
         }
 
         private static async Task<CallToolResult> RelayAsync(
-            HostIpcClient client, string method, CancellationToken cancellationToken)
+            HostIpcClient client,
+            string method,
+            JsonObject parameters,
+            CancellationToken cancellationToken)
         {
             try
             {
-                HostCallResult response = await client.CallAsync(method, null, cancellationToken)
+                HostCallResult response = await client
+                    .CallAsync(method, parameters, cancellationToken)
                     .ConfigureAwait(false);
 
                 // 接続先は毎回名乗る。過去の知らせを覚えていることに頼ると、文脈が失われた

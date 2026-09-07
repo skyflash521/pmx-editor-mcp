@@ -9,14 +9,8 @@ namespace PmxEditorMcp.Bridge
     /// </summary>
     public static class BridgeDeclaration
     {
-        /// <summary>検査からだけ使う入口を開くかどうかを与える環境変数の名前。</summary>
-        public const string DebugHooksVariableName = "PMX_EDITOR_MCP_DEBUG_HOOKS";
-
         /// <summary>宣言を付けるかどうかを与える環境変数の名前。</summary>
         public const string EnvironmentVariableName = "PMX_EDITOR_MCP_DECLARE_META";
-
-        /// <summary>入口を開く値。</summary>
-        public const string DebugHooksEnabledValue = "1";
 
         /// <summary>宣言を止める値。</summary>
         public const string SuppressedValue = "0";
@@ -25,7 +19,7 @@ namespace PmxEditorMcp.Bridge
         public static bool ReadFromEnvironment()
         {
             return IsDeclared(
-                Environment.GetEnvironmentVariable(DebugHooksVariableName),
+                Environment.GetEnvironmentVariable(BridgeDebugHooks.EnvironmentVariableName),
                 Environment.GetEnvironmentVariable(EnvironmentVariableName));
         }
 
@@ -35,7 +29,7 @@ namespace PmxEditorMcp.Bridge
         /// </summary>
         public static bool IsDeclared(string debugHooksValue, string declareValue)
         {
-            if (!string.Equals(debugHooksValue, DebugHooksEnabledValue, StringComparison.Ordinal))
+            if (!BridgeDebugHooks.IsEnabled(debugHooksValue))
             {
                 return true;
             }

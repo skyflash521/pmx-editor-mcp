@@ -145,7 +145,9 @@ namespace PmxEditorMcp
 
                 // ツールに対応する処理は無く、基盤メソッドは接続が受け持つ。
                 McpMethodTable methods = new McpMethodTable();
-                DebugEventInjection.AddTo(methods, DebugHooks.ReadFromEnvironment());
+                bool debugHooks = DebugHooks.ReadFromEnvironment();
+                DebugEventInjection.AddTo(methods, debugHooks);
+                DebugLargeText.AddTo(methods, debugHooks);
                 _connection = new JsonRpcConnection(_log, methods, HostVersion, budget.Chars);
 
                 _host = new McpHost(

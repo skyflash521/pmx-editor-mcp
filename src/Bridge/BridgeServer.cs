@@ -30,7 +30,10 @@ namespace PmxEditorMcp.Bridge
                     Version = typeof(BridgeServer).Assembly.GetName().Version.ToString(),
                 })
                 .WithStdioServerTransport()
-                .WithTools(BridgeTools.Create(client, BridgeDeclaration.ReadFromEnvironment()));
+                .WithTools(BridgeTools.Create(
+                    client,
+                    BridgeDeclaration.ReadFromEnvironment(),
+                    BridgeDebugHooks.ReadFromEnvironment()));
 
             await builder.Build().RunAsync().ConfigureAwait(false);
         }

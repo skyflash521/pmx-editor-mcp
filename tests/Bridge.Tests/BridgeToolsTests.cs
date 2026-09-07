@@ -55,6 +55,52 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("ping", only.Name);
         }
 
+        /// <summary>
+        /// 検査からだけ使う入口の下に置くので、開いた起動でだけ一覧に現れる。閉じた起動で現れると、
+        /// 通常の配布と運用で検査専用のツールが見えることになる。
+        /// </summary>
+        [Fact]
+        public async Task TheLargeTextToolAppearsOnlyWithTheDebugEntry()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient opened = await StartBridgeAsync(null, null, limit.Token, "1", null);
+
+            IList<McpClientTool> tools = await opened.ListToolsAsync(cancellationToken: limit.Token);
+
+            // ツールの一覧の並びは ModelContextProtocol のサーバーが決める。
+            Assert.Equal(
+                new string[] { BridgeTools.LargeTextMethod, "ping" },
+                tools.Select(tool => tool.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+        }
+
+        [Fact]
+        public async Task TheLargeTextToolRelaysTheRequestedNumberOfCharacters()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(request => Result(request, "\"xxx\""))
+                .Start();
+
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeAsync(
+                host.PipeName, null, limit.Token, "1", null);
+
+            CallToolResult result = await client.CallToolAsync(
+                BridgeTools.LargeTextMethod,
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    [BridgeTools.LargeTextCharsParameter] = 3,
+                },
+                cancellationToken: limit.Token);
+
+            Assert.NotEqual(true, result.IsError);
+            Assert.Equal(Relayed(host.PipeName, "xxx"), TextOf(result));
+            Assert.Equal(
+                new string[] { "handshake", BridgeTools.LargeTextMethod },
+                MethodsOf(host.Requests));
+            Assert.Equal(3, CharsOf(host.Requests[1]));
+        }
+
         [Fact]
         public async Task ToolDefinitionDeclaresDefaultResponseBudget()
         {
@@ -86,7 +132,8 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Null(Assert.Single(tools).ProtocolTool.Meta);
+            Assert.Equal(2, tools.Count);
+            Assert.All(tools, tool => Assert.Null(tool.ProtocolTool.Meta));
         }
 
         [Theory]
@@ -103,7 +150,10 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Assert.Single(tools)));
+            Assert.Equal(BridgeDebugHooks.IsEnabled(debugHooks) ? 2 : 1, tools.Count);
+            Assert.All(
+                tools,
+                tool => Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(tool)));
         }
 
         /// <summary>
@@ -211,7 +261,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         /// <summary>
-        /// 名前の似た別の環境変数まで接続先として読む実装だと、利用者が起動設定で接続先を
+        /// 名前の似た別の環境変数まで接続先として読む実装だと、エンドユーザーが起動設定で接続先を
         /// 選べる余地が残る。読まないはずの名前へ待ち受けていない名前を与えても、待受の
         /// 列挙で決めることを見る。読んでいれば、その名前へ繋ごうとして失敗する。
         /// </summary>
@@ -339,7 +389,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
         /// <summary>
         /// ブリッジの実行ファイルをMCPサーバーとして起動する。接続先と応答サイズ予算は、
-        /// 呼び出し側の環境に左右されないよう明示して渡す。
+        /// このテストを走らせるプロセスの環境に左右されないよう明示して渡す。
         /// </summary>
         private static Task<McpClient> StartBridgeAsync(
             string pipeName,
@@ -367,13 +417,13 @@ namespace PmxEditorMcp.Bridge.Tests
             string declareMeta = null)
         {
             // 接続先として読まれうる名前を親の環境から消してから、選んだものだけを与える。
-            // 受け継いだ値が残ると、この起動が何を指すかが呼び出し側の環境で変わる。
+            // 受け継いだ値が残ると、この起動が何を指すかが親プロセスの環境で変わる。
             Dictionary<string, string> environment = new Dictionary<string, string>
             {
                 [IgnoredPipeEnvironmentVariableName] = null,
                 [PipeTargetResolver.TestPipeEnvironmentVariableName] = null,
                 [BridgeBudget.EnvironmentVariableName] = budgetChars,
-                [BridgeDeclaration.DebugHooksVariableName] = debugHooks,
+                [BridgeDebugHooks.EnvironmentVariableName] = debugHooks,
                 [BridgeDeclaration.EnvironmentVariableName] = declareMeta,
             };
 
@@ -391,6 +441,12 @@ namespace PmxEditorMcp.Bridge.Tests
                 });
 
             return McpClient.CreateAsync(transport, cancellationToken: cancellationToken);
+        }
+
+        private static int CharsOf(string request)
+        {
+            return (int)System.Text.Json.Nodes.JsonNode.Parse(request)
+                .AsObject()["params"][BridgeTools.LargeTextCharsParameter];
         }
 
         /// <summary>接続先の行を先頭に置いた、要求元へ返る本文を組み立てる。</summary>
