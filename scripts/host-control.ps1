@@ -45,8 +45,32 @@ Add-Type -AssemblyName UIAutomationTypes
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 public static class HostControlWindow {
   [DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
+}
+public static class HostControlPath {
+  // .NET のパスの絶対化は、相対の要素を畳むだけで、ジャンクション・シンボリックリンク・
+  // 8.3形式の短い名前は解決しない。同じ実体を指す2つのパスを比べるには、開いたハンドルから
+  // 最終的なパスを取り直す必要がある。
+  [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  private static extern IntPtr CreateFileW(string name, uint access, uint share, IntPtr security,
+      uint disposition, uint flags, IntPtr template);
+  [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  private static extern uint GetFinalPathNameByHandleW(IntPtr file, StringBuilder path, uint length,
+      uint flags);
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern bool CloseHandle(IntPtr handle);
+  public static string Final(string path) {
+    IntPtr handle = CreateFileW(path, 0, 7, IntPtr.Zero, 3, 0x02000000, IntPtr.Zero);
+    if (handle == new IntPtr(-1)) { return null; }
+    try {
+      StringBuilder buffer = new StringBuilder(32768);
+      uint written = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Capacity, 0);
+      if (written == 0 || written >= buffer.Capacity) { return null; }
+      return buffer.ToString();
+    } finally { CloseHandle(handle); }
+  }
 }
 "@
 
@@ -120,14 +144,31 @@ function Wait-HostPipe {
 function Get-EditorProcess {
     <#
         .SYNOPSIS
-        対象がPMXエディタであることを確かめてプロセスを返す。プロセスIDは使い回されるので、
-        名前を確かめずに終了させると無関係なプロセスを巻き込む。
+        対象がこのリポジトリの導入ディレクトリのPMXエディタであることを確かめてプロセスを返す。
+        プロセスIDは使い回されるうえ、同じ名前のエディタが別の導入ディレクトリからも動く。実行
+        ファイルのパスまで確かめずに終了させると、無関係なプロセスを巻き込む。
     #>
     param([int]$OwnerProcessId)
 
     $process = Get-Process -Id $OwnerProcessId
-    if ($process.ProcessName -ne "PmxEditor_x64") {
-        throw "プロセスIDがPMXエディタのものではない: $OwnerProcessId ($($process.ProcessName))"
+
+    # 別のセッションが持つプロセスでは実行ファイルのパスを読めない。読めないものは対象外とする。
+    $actual = $null
+    try { $actual = $process.Path } catch [System.ComponentModel.Win32Exception] { }
+
+    if ($null -eq $actual) {
+        throw "プロセスの実行ファイルを読めない: $OwnerProcessId ($($process.ProcessName))"
+    }
+
+    $expected = [HostControlPath]::Final((Join-Path (Get-EditorDirectory) "PmxEditor_x64.exe"))
+    if ($null -eq $expected) {
+        throw "導入ディレクトリのエディタの実行ファイルを開けない: $(Get-EditorDirectory)"
+    }
+
+    $resolved = [HostControlPath]::Final($actual)
+    if ($null -eq $resolved -or -not [string]::Equals(
+            $resolved, $expected, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "プロセスIDが導入ディレクトリのPMXエディタのものではない: $OwnerProcessId ($actual)"
     }
 
     $process
@@ -648,6 +689,7 @@ switch ($Action) {
     }
     "acl" {
         Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         $pipe = New-Object System.IO.Pipes.NamedPipeClientStream(
             ".",
             "pmx-editor-mcp-$ProcessId",
