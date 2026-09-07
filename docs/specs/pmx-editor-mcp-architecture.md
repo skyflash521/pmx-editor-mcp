@@ -21,7 +21,15 @@ stdioを使うMCPサーバーの外部プロセス(以下ブリッジ)の両方�
 - [tests/Bridge.Tests](../../tests/Bridge.Tests) の `PmxEditorMcp.Bridge.Tests.csproj`:
   net10.0・xUnit。接続先解決・エラー変換など、プロセス外部に依存しないロジックと、試験用の
   ホストを相手にした通信を対象とする。ブリッジの `InternalsVisibleTo` の対象でもある。
-- 4つのプロジェクトはすべて [PmxEditorMcp.sln](../../PmxEditorMcp.sln) に含める。
+- [PmxEditorMcp.SignatureDump.csproj](../../src/SignatureDump/PmxEditorMcp.SignatureDump.csproj):
+  net48のコンソール実行プロジェクト。成果物名は `PmxEditorMcp.SignatureDump.exe`。SDKの公開APIを
+  リフレクションで列挙し、[能力台帳](pmx-editor-mcp-capability-ledger.md)と機械可読の正本群を
+  それへ突き合わせる下位コマンドを持つ。ホストにもブリッジにも読み込まれず、検査からだけ走らせる。
+  プラットフォームは x64 とする——`SlimDX` の混在モードのアセンブリを解決するために64ビットで
+  実行する必要がある。
+- [tests/SignatureDump.Tests](../../tests/SignatureDump.Tests) の
+  `PmxEditorMcp.SignatureDump.Tests.csproj`: net48・xUnit。列挙と照合のロジックを対象とする。
+- 6つのプロジェクトはすべて [PmxEditorMcp.sln](../../PmxEditorMcp.sln) に含める。
 
 ## ビルドとデプロイ
 
@@ -174,8 +182,7 @@ dotnet build src/HostPlugin/PmxEditorMcp.HostPlugin.csproj -t:Deploy
 ```
 
 **ホストDLLの置き場はこの1つとする。** デプロイはすべてのエディタを終了してから行い、反映は
-次回のエディタ起動からになる。手順と確認の正本は[検証手順書](../conventions/verification.md)、
-どちらの制約も理由は[設計判断の理由](#設計判断の理由)。
+次回のエディタ起動からになる。どちらの制約も理由は[設計判断の理由](#設計判断の理由)。
 
 ## プラグインのライフサイクル
 
@@ -307,8 +314,7 @@ stdioで、ホストとは名前付きパイプでやり取りする。
   バージョン。
 - **ログ・診断は標準エラー出力へ出す。** 標準出力はプロトコルの通り道なので、既定のログ出力先を
   すべて取り除いたうえで、すべての水準を標準エラー出力へ送る。
-- 登録するツールは「1ツール=ホストの1メソッドへの中継」を基本形とする。ツール群の登録は
-  ツール契約仕様書と[能力台帳](pmx-editor-mcp-capability-ledger.md)が定める。
+- 登録するツールは「1ツール=ホストの1メソッドへの中継」を基本形とする。
 - ツールは `McpServerToolCreateOptions` の `Meta` へ `JsonObject` を設定し、
   `McpServerTool.Create` で作る。属性(`McpMetaAttribute`)は採らない——属性の値はコンパイル時
   定数であるのに対し、付与する値は環境変数から実行時に決まり、宣言の有無も実行時に切り替える

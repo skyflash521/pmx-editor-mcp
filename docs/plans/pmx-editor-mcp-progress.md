@@ -170,9 +170,12 @@
   (対象外一覧の理由と、日本語名の正本と型役割表が持っていた導ける項目のうち、接続の経路・発行の
   種別・許容する具象型・ツール名・担当群と、能力対応表の提供能力のID・操作の向き・危険の種別・
   注記・行の種別・ツールの名前・割当と対象名と束縛の写し・共通契約割当の正本の束縛までは
-  落とし済み。スキーマ正本のSDKに由来する項目の出所と表現も落とし、これで一覧のぶんは片付いた)。除外一覧は能力台帳とSDKから
-  毎回導く。日本語名の正本と型役割表の規則は、役割対象仕様書・
-  型役割仕様書・日本語名仕様書が持つ。照合は `ledger-coverage`・`property-names`・`type-roles`・
+  落とし済み。スキーマ正本のSDKに由来する項目の出所と表現も落とし、これで一覧のぶんは片付いた)。
+  除外一覧は[能力台帳](../specs/pmx-editor-mcp-capability-ledger.md)とSDKから
+  毎回導く。日本語名の正本と型役割表の規則は、
+  [役割対象仕様書](../specs/pmx-editor-mcp-role-types.md)・
+  [型役割仕様書](../specs/pmx-editor-mcp-type-roles.md)・
+  [日本語名仕様書](../specs/pmx-editor-mcp-property-names.md)が持つ。照合は `ledger-coverage`・`property-names`・`type-roles`・
   `common-assignments`・`value-shapes`・`dangerous-operations`・`tool-map`・`tool-schemas`・
   `tool-descriptions`・`sample-values`・`schema-correspondence`・`tool-mapping` として
   配線し、検証手順書へ登録済み。台帳の備考更新も済んでいる。型役割表は、計画書がステップ1で求める

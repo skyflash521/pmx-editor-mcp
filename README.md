@@ -67,7 +67,8 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 |---|---|
 | `src/HostPlugin/` | ホスト |
 | `src/Bridge/` | ブリッジ |
-| `tests/HostPlugin.Tests/`・`tests/Bridge.Tests/` | xUnit。UIスレッドとエディタ実機に依存する部分は対象外で、実機動作確認が担保する |
+| `src/SignatureDump/` | SDKの公開APIを列挙し、台帳と機械可読の正本群をそれへ突き合わせる実行器。検査からだけ走らせる |
+| `tests/HostPlugin.Tests/`・`tests/Bridge.Tests/`・`tests/SignatureDump.Tests/` | xUnit。UIスレッドとエディタ実機に依存する部分は対象外で、実機動作確認が担保する |
 | `docs/` | 正本 |
 | `scripts/` | 検証の実行器と、実機動作確認で使う補助。用途と使い方は各スクリプト冒頭のコメントと検証手順 |
 | `PmxEditorMcp.sln` | ソリューション。リポジトリ直下のこの1本にすべてのプロジェクトを集約する |

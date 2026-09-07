@@ -8,12 +8,9 @@ using System.Text.RegularExpressions;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力台帳の表を機械可読な行の並びへ写す。台帳と公開APIの一覧を突き合わせる側が名前を
-    /// 解決できるよう、対象の列を書き方で分けて、挙げられている名前を取り出しておく。名前が
-    /// 型かメンバーかまでは決めない(<see cref="CapabilityRecord.TargetNames"/> を見よ)。
-    ///
-    /// 読み落としは後段の検査そのものを黙って素通りさせるので、能力の表と分かった範囲の中では
-    /// 読めない行を読み飛ばさず例外にする。
+    /// 能力台帳の表を機械可読な行の並びへ写す。名前が型かメンバーかまでは決めない
+    /// (<see cref="CapabilityRecord.TargetNames"/> を見よ)。能力の表の中で読めない行に
+    /// 出会ったら、読み飛ばさず例外にする。
     /// </summary>
     public static class LedgerParser
     {
@@ -33,10 +30,7 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly ReadOnlyCollection<string> HeaderCells =
             Array.AsReadOnly(new[] { "ID", "大分類", "対象", "分類", "担当", "備考" });
 
-        /// <summary>
-        /// 型引数の数は1以上で、先頭に0を置いた書き方もしない。この形に合わない接尾辞を落とすと、
-        /// 台帳の誤記が実在する非総称型の名前へ化けて、後段の照合を黙って通る。
-        /// </summary>
+        /// <summary>型引数の数は1以上で、先頭に0を置いた書き方もしない。</summary>
         private static readonly Regex GenericAritySuffix =
             new Regex("`[1-9][0-9]*$", RegexOptions.CultureInvariant);
 
@@ -61,11 +55,7 @@ namespace PmxEditorMcp.SignatureDump
                 { "変形・モーション", CapabilityOwner.MotionTransform },
             };
 
-        /// <summary>
-        /// 台帳の本文から能力の行を取り出す。能力の表の外は読み飛ばす。表が終わるのは、空行か、
-        /// 別の構造が始まる行に出会ったときだけとする。縦棒を失っただけの行で表が終わったことに
-        /// すると、以降の能力を黙って読み落とす。
-        /// </summary>
+        /// <summary>台帳の本文から能力の行を取り出す。能力の表の外は読み飛ばす。</summary>
         public static IList<CapabilityRecord> Parse(string markdown)
         {
             if (markdown == null)
@@ -108,10 +98,6 @@ namespace PmxEditorMcp.SignatureDump
             return records.AsReadOnly();
         }
 
-        /// <summary>
-        /// 見出しを起点にすることで、同じ列の数を持つ別の表や、表を作らない単独の行を能力として
-        /// 拾わずに済む。
-        /// </summary>
         private static int FindHeader(string[] lines)
         {
             for (int i = 0; i < lines.Length; i++)
@@ -213,9 +199,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 行を列へ分ける。縦棒を1つも持たない行には null を返す。列を隔てる縦棒さえあれば行として
-        /// 扱い、行の両端の縦棒は省かれていてもよい。両端を必須にすると、端の縦棒が落ちた行を表の
-        /// 行として読めなくなる。
+        /// 行を列へ分ける。縦棒を1つも持たない行には null を返す。行の両端の縦棒は省かれていてもよい。
         /// </summary>
         private static string[] SplitCells(string line)
         {
@@ -288,7 +272,6 @@ namespace PmxEditorMcp.SignatureDump
 
         private static CapabilityTargetKind ClassifyTarget(string target)
         {
-            // まとめて指す書き方は散文を伴うことがあり、その散文に区切りと同じ字が現れ得るので先に見る。
             if (target.IndexOf(PatternMark) >= 0)
             {
                 return CapabilityTargetKind.Pattern;
@@ -318,10 +301,7 @@ namespace PmxEditorMcp.SignatureDump
             return Array.AsReadOnly(names);
         }
 
-        /// <summary>
-        /// 知らない語で黙って既定値へ倒すと、台帳の行が誤った分類・担当のまま突き合わせへ
-        /// 流れるため、その場で止める。
-        /// </summary>
+        /// <summary>表に無い語は既定値へ倒さず例外にする。</summary>
         private static TValue Lookup<TValue>(
             Dictionary<string, TValue> table, string cell, string columnName, string id)
         {
@@ -335,10 +315,6 @@ namespace PmxEditorMcp.SignatureDump
             return value;
         }
 
-        /// <summary>
-        /// 台帳は担当を、分類が提供の能力を担当するツール契約仕様書として定めている。片方だけを
-        /// 満たす行は、担当を持たない能力へ契約が割り当てられるか、その逆になる。
-        /// </summary>
         private static void RequireOwnerMatchesStatus(
             string id, CapabilityStatus status, CapabilityOwner owner)
         {

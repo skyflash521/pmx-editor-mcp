@@ -11,9 +11,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string SeparatorRow = "|---|---|---|---|---|---|";
 
-        // 台帳の表と、その前後に置かれる散文・見出し・凡例を1つにした題材。実物に現れる対象の
-        // 書き方——区切りの点がメンバーを指すもの・入れ子の型を指すもの・名前空間つきの名前を
-        // 並べたもの・まとめて指す2通り・総称型の接尾辞つき——をすべて含める。
         private static readonly string[] LedgerLines =
         {
             "# PEPlugin SDK 能力台帳",
@@ -97,14 +94,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ListedTargetsAreSplitPerName()
         {
-            // 実物に現れる要素の数は2・3・5と幅があるので、どれも固定する。
             CapabilityRecord two = Find("CAP-011");
             Assert.Equal(CapabilityTargetKind.Group, two.TargetKind);
             Assert.Equal(
                 new[] { "IPERegisteredPluginInfo", "IPEPluginOption" }, two.TargetNames.ToArray());
             Assert.Equal("IPERegisteredPluginInfo / IPEPluginOption", two.Target);
 
-            // 名前空間つきで書かれた要素も、そのままの形で残す。
             CapabilityRecord three = Find("CAP-007");
             Assert.Equal(CapabilityTargetKind.Group, three.TargetKind);
             Assert.Equal(
@@ -147,8 +142,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             CapabilityRecord record = Find("CAP-005");
 
-            // 台帳は総称型を型引数の数の接尾辞つきで書き、公開APIの一覧は山括弧で書く。
-            // 突き合わせ側が名前で解決できるよう、接尾辞は落とす。
             Assert.Equal(CapabilityTargetKind.Single, record.TargetKind);
             Assert.Equal(new[] { "IPEVmePrimaryValue" }, record.TargetNames.ToArray());
             Assert.Equal("IPEVmePrimaryValue`1", record.Target);
@@ -316,7 +309,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         /// <summary>
         /// 知らない語を既知の値へ黙って倒す誤りと区別するため、止まった理由がその語であることまで
-        /// 見る。行そのものは、語を取り違えても分類と担当が食い違わない組み合わせにしてある。
+        /// 見る。
         /// </summary>
         [Fact]
         public void UnknownStatusOrOwnerThrows()
@@ -379,7 +372,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal("CAP-001", underlined.Single().Id);
 
-            // 下線の手前が能力の行なら、それは見出しの本文ではないので読む。
             IList<CapabilityRecord> beforeUnderline = LedgerParser.Parse(Compose(
                 HeaderRow, SeparatorRow, capability, "------"));
 
@@ -410,9 +402,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("CAP-001", records.Single().Id);
         }
 
-        /// <summary>
-        /// 台帳は担当を、分類が提供の能力を担当するツール契約仕様書として定めている。
-        /// </summary>
         [Fact]
         public void RowWhoseStatusAndOwnerDisagreeThrows()
         {
