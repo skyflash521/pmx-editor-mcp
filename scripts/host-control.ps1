@@ -53,6 +53,38 @@ using System.Runtime.InteropServices;
 using System.Text;
 public static class HostControlWindow {
   [DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
+
+  private delegate bool EnumProc(IntPtr window, IntPtr state);
+  [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc callback, IntPtr state);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+  private static extern int GetClassName(IntPtr window, StringBuilder text, int length);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+  private static extern int GetWindowText(IntPtr window, StringBuilder text, int length);
+  [DllImport("user32.dll")]
+  private static extern uint GetWindowThreadProcessId(IntPtr window, out uint owner);
+  [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr window);
+
+  /// <summary>指定したプロセスが持つ、見えているトップレベルのウィンドウを名前と種類で絞って返す。</summary>
+  public static IntPtr[] Find(int owner, string className, string title) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      var name = new StringBuilder(256);
+      GetClassName(window, name, name.Capacity);
+      if (name.ToString() != className) { return true; }
+
+      var caption = new StringBuilder(512);
+      GetWindowText(window, caption, caption.Capacity);
+      if (caption.ToString() != title) { return true; }
+
+      found.Add(window);
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
 }
 public static class HostControlPath {
   // .NET のパスの絶対化は、相対の要素を畳むだけで、ジャンクション・シンボリックリンク・
@@ -108,6 +140,8 @@ $PollIntervalMs = 500
 
 # 閉じるためのウィンドウメッセージ(WM_CLOSE)。
 $WindowMessageClose = 0x0010
+
+$EditMenuBars = @()
 
 function Get-HostPipeNames {
     <#
@@ -182,20 +216,20 @@ function Get-EditorProcess {
 function Get-ProcessElements {
     <#
         .SYNOPSIS
-        指定したプロセスの要素を返す。子孫まで辿る——プラグインが出す状態表示はデスクトップ
-        直下ではなくエディタのウィンドウの配下に現れるので、直下だけを見ると取りこぼす。
-        Match を与えると、その条件も満たすものだけを返す。
+        指定したプロセスのウィンドウの中にある要素を、条件で絞って返す。
     #>
-    param([int]$OwnerProcessId, $Match = $null)
+    param([int]$OwnerProcessId, $Match)
 
+    # UI Automation の探索は、辿った要素の一つずつにプロセスをまたぐ往復が要る。デスクトップを
+    # 起点にすると他のプロセスの木まで辿るので、対象のウィンドウを起点にする。
     $root = [System.Windows.Automation.AutomationElement]::RootElement
     $condition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $OwnerProcessId)
-    if ($Match) {
-        $condition = New-Object System.Windows.Automation.AndCondition($condition, $Match)
-    }
 
-    $root.FindAll([System.Windows.Automation.TreeScope]::Descendants, $condition)
+    foreach ($window in $root.FindAll(
+            [System.Windows.Automation.TreeScope]::Children, $condition)) {
+        $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $Match)
+    }
 }
 
 function Get-StatusDialogs {
@@ -206,10 +240,8 @@ function Get-StatusDialogs {
     #>
     param([int]$OwnerProcessId)
 
-    @(Get-ProcessElements -OwnerProcessId $OwnerProcessId |
-        Where-Object {
-            $_.Current.ClassName -eq $DialogClassName -and $_.Current.Name -eq $PluginName
-        })
+    @([HostControlWindow]::Find($OwnerProcessId, $DialogClassName, $PluginName) |
+        ForEach-Object { [System.Windows.Automation.AutomationElement]::FromHandle($_) })
 }
 
 function Wait-Interval {
@@ -315,21 +347,18 @@ function Invoke-Element {
 function Find-EditMenu {
     <#
         .SYNOPSIS
-        プラグインの項目が属する編集メニューを探す。エディタは複数のウィンドウを持ち、編集の
-        メニューを持つメニューバーも1つとは限らないので、メニューの文言だけでは決められない。
-        目当ての項目そのものを配下に持つことを条件にして選ぶ。まだ組み上がっていなければ空を
-        返す。該当が複数あるときは選ばずに失敗させる——取り違えると別のメニューを操作してしまう。
+        与えたメニューバーから、プラグインの項目が属する編集メニューを選ぶ。編集のメニューを持つ
+        メニューバーは1つとは限らないので、メニューの文言だけでは決められない。目当ての項目その
+        ものを配下に持つことを条件にして選ぶ。まだ組み上がっていなければ空を返す。該当が複数ある
+        ときは選ばずに失敗させる——取り違えると別のメニューを操作してしまう。
     #>
-    param([int]$OwnerProcessId)
+    param([int]$OwnerProcessId, $Bars)
 
-    $barCondition = New-Object System.Windows.Automation.PropertyCondition(
-        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-        [System.Windows.Automation.ControlType]::MenuBar)
     $pluginCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::NameProperty, $PluginName)
 
     $found = @()
-    foreach ($bar in Get-ProcessElements -OwnerProcessId $OwnerProcessId -Match $barCondition) {
+    foreach ($bar in $Bars) {
         foreach ($item in $bar.FindAll(
                 [System.Windows.Automation.TreeScope]::Children,
                 [System.Windows.Automation.Condition]::TrueCondition)) {
@@ -357,8 +386,19 @@ function Get-EditMenu {
     #>
     param([int]$OwnerProcessId, $Deadline)
 
+    $barCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::MenuBar)
+
     while ($true) {
-        $menu = Find-EditMenu -OwnerProcessId $OwnerProcessId
+        # 木を辿る探索は重い。メニューバーはエディタが動いている間そのままなので、この実行の
+        # あいだは一度見つけたものを使い回す。待っているのはその下に現れるプラグインの項目である。
+        if ($script:EditMenuBars.Count -eq 0) {
+            $script:EditMenuBars = @(
+                Get-ProcessElements -OwnerProcessId $OwnerProcessId -Match $barCondition)
+        }
+
+        $menu = Find-EditMenu -OwnerProcessId $OwnerProcessId -Bars $script:EditMenuBars
         if ($menu) { return $menu }
         if ((Get-Date) -ge $Deadline) {
             throw "「$PluginName」を含む編集メニューが現れない: プロセスID $OwnerProcessId"
