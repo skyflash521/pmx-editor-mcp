@@ -11,6 +11,11 @@
 # 停止・開始は、いま押そうとしている問いが要求した操作のものであることを確かめてから押す。
 # ホストは稼働中なら停止を、停止済みなら開始を問う同じ形の表示を出すので、確かめずに肯定を
 # 押すと逆の操作をしたまま正常終了しうる。
+#
+# 待ちはどれも、時間の見積りではなく観測で抜ける。待受のパイプの出現と消失、プロセスの終了、
+# 状態表示の文言がその観測にあたる。時間で当て推量すると、通ったのがその見積りのおかげなのか
+# 別の理由なのかが後から分からない。どの待ちにも上限を持たせ、締切は繰り返しの先頭で判じ、
+# 待ち時間は残り時間で頭打ちにする。
 [CmdletBinding()]
 param(
     # 行う操作。
@@ -134,7 +139,7 @@ function Wait-HostPipe {
     while ($true) {
         if (((Test-HostPipe -OwnerProcessId $OwnerProcessId)) -eq ($Until -eq "Present")) { return }
         if ((Get-Date) -ge $deadline) { break }
-        Start-Sleep -Milliseconds $PollIntervalMs
+        Wait-Interval -Deadline $deadline
     }
 
     $state = if ($Until -eq "Present") { "現れなかった" } else { "消えなかった" }
@@ -205,6 +210,34 @@ function Get-StatusDialogs {
         Where-Object {
             $_.Current.ClassName -eq $DialogClassName -and $_.Current.Name -eq $PluginName
         })
+}
+
+function Wait-Interval {
+    <#
+        .SYNOPSIS
+        次に観測し直すまで、締切を越えない範囲で待つ。
+    #>
+    param($Deadline)
+
+    $remaining = [int]($Deadline - (Get-Date)).TotalMilliseconds
+    if ($remaining -le 0) { return }
+
+    Start-Sleep -Milliseconds ([Math]::Min($PollIntervalMs, $remaining))
+}
+
+function Get-EditorWindows {
+    <#
+        .SYNOPSIS
+        対象のエディタがデスクトップ直下に持つ、終了要求の相手になるウィンドウのハンドルを返す。
+    #>
+    param([int]$OwnerProcessId)
+
+    $root = [System.Windows.Automation.AutomationElement]::RootElement
+    $condition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $OwnerProcessId)
+    @($root.FindAll([System.Windows.Automation.TreeScope]::Children, $condition) |
+        Where-Object { $_.Current.ClassName -ne $ShadowClassName } |
+        ForEach-Object { $_.Current.NativeWindowHandle })
 }
 
 function Get-MenuShadows {
@@ -330,7 +363,7 @@ function Get-EditMenu {
         if ((Get-Date) -ge $Deadline) {
             throw "「$PluginName」を含む編集メニューが現れない: プロセスID $OwnerProcessId"
         }
-        Start-Sleep -Milliseconds $PollIntervalMs
+        Wait-Interval -Deadline $Deadline
     }
 }
 
@@ -375,7 +408,7 @@ function Show-StatusDialog {
                 [System.Windows.Automation.TreeScope]::Descendants, $nameCondition)
             if ($target) { break }
             if ((Get-Date) -ge $deadline) { throw "メニュー項目が見つからない: $PluginName" }
-            Start-Sleep -Milliseconds $PollIntervalMs
+            Wait-Interval -Deadline $deadline
         }
 
         # ここから先の失敗は、押す操作が届いた後かもしれない。表示が出ている可能性を残したまま
@@ -438,7 +471,7 @@ function Wait-StatusDialog {
         $dialogs = @(Get-StatusDialogs -OwnerProcessId $OwnerProcessId)
         if ($dialogs.Count -ge 1) { return $dialogs[0] }
         if ((Get-Date) -ge $Deadline) { return $null }
-        Start-Sleep -Milliseconds $PollIntervalMs
+        Wait-Interval -Deadline $Deadline
     }
 }
 
@@ -560,7 +593,7 @@ function Wait-StatusKind {
         }
         if ($seen -eq $Expected) { return }
         if ((Get-Date) -ge $deadline) { break }
-        Start-Sleep -Milliseconds $PollIntervalMs
+        Wait-Interval -Deadline $deadline
     }
 
     throw "状態区分が $TimeoutSeconds 秒以内に「$Expected」にならなかった。最後に見たのは「$seen」。"
@@ -628,37 +661,45 @@ switch ($Action) {
     "close" {
         Assert-ProcessId
         # 強制終了はプラグインの後始末を通らないので、通常の終了と同じ経路で閉じる。
-        # 直前の操作の名残でウィンドウが終了要求を受け付けないことがあるので、受け付けるまで
-        # 求め直す。ウィンドウの取り直しが要るため、そのつど最新の状態を読み込む。
+        # エディタは編集とビューのウィンドウを別々に持ち、閉じ残すとプロセスが終わらない。
         $process = Get-EditorProcess -OwnerProcessId $ProcessId
         $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-        $lastError = $null
         while ($true) {
             $process.Refresh()
-            # 求め直している間に終わっていることがある。終わっていれば要求はもう要らない。
+            # 数え直している間に終わっていることがある。終わっていれば要求はもう要らない。
             if ($process.HasExited) { break }
 
-            $requested = $false
+            $windows = $null
             try {
-                $requested = $process.CloseMainWindow()
+                $windows = Get-EditorWindows -OwnerProcessId $ProcessId
             }
             catch {
-                # 要求を出すまでの間に終わっていると、これも失敗になる。次の観測で判ずる。
-                $lastError = $_
+                $process.Refresh()
+                # 閉じている最中のウィンドウは読めなくなる。終わっていれば失敗ではない。
+                if ($process.HasExited) { break }
+                throw
             }
-            if ($requested) { break }
 
-            $process.Refresh()
-            if ($process.HasExited) { break }
-            if ((Get-Date) -ge $deadline) {
-                $detail = if ($lastError) { " 最後の失敗: $($lastError.Exception.Message)" } else { "" }
-                throw "エディタが $TimeoutSeconds 秒のあいだ終了要求を受け付けなかった: $ProcessId$detail"
+            foreach ($handle in $windows) {
+                if ((Get-Date) -ge $deadline) { break }
+
+                [void][HostControlWindow]::PostMessage(
+                    [IntPtr]$handle, $WindowMessageClose, [IntPtr]::Zero, [IntPtr]::Zero)
             }
-            Start-Sleep -Milliseconds $PollIntervalMs
-        }
 
-        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
-            throw "エディタが $TimeoutSeconds 秒以内に終了しなかった: $ProcessId"
+            $remaining = [int]($deadline - (Get-Date)).TotalMilliseconds
+            if ($remaining -le 0) {
+                $left = "不明"
+                try { $left = @(Get-EditorWindows -OwnerProcessId $ProcessId).Count } catch { }
+
+                $process.Refresh()
+                if ($process.HasExited) { break }
+
+                throw ("エディタが $TimeoutSeconds 秒以内に終了しなかった: $ProcessId " +
+                    "残っているウィンドウ: $left")
+            }
+
+            if ($process.WaitForExit([Math]::Min($PollIntervalMs, $remaining))) { break }
         }
 
         Wait-HostPipe -OwnerProcessId $ProcessId -Until Absent
