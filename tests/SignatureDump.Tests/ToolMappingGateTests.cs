@@ -167,7 +167,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Require(
                 ToolMapJsonReader.Read(EmbeddedMapJson("model_list_vertexes")),
                 Roles(),
-                Signatures(Property(Vertex + ".Index")));
+                Signatures(Property(Vertex + ".Index")),
+                schemas: Schemas("model_list_vertexes"));
         }
 
         [Fact]

@@ -8,10 +8,10 @@ using System.Text;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力対応表の行キーからSDKへの中継を組み立てて書き出す配線。ホストのビルドがこれを呼び、
+    /// ツールの名前から呼ぶ行へ結び付ける表を組み立てて書き出す配線。ホストのビルドがこれを呼び、
     /// 出来た本文だけを配布物へ入れる。
     /// </summary>
-    public static class RelaySourceRunner
+    public static class ToolBindingRunner
     {
         private static readonly UTF8Encoding Utf8WithoutBom = new UTF8Encoding(false);
 
@@ -32,10 +32,12 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 3)
+            if (args.Length != 6)
             {
                 error.WriteLine(
-                    "引数は3つ: <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <書き出し先パス>");
+                    "引数は6つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <型役割表の正本のパス> <共通契約割当の正本のパス>"
+                        + " <能力対応表の正本のパス> <書き出し先パス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -47,18 +49,16 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
-            ToolMap toolMap;
-            string toolMapDigest;
+            IList<CapabilityRecord> ledger;
+            TypeRoleTable roles;
+            CommonAssignmentTable assignments;
+            ToolMap map;
             try
             {
-                if (!File.Exists(args[1]))
-                {
-                    throw new FileNotFoundException("能力対応表が無い: " + args[1], args[1]);
-                }
-
-                string toolMapText = File.ReadAllText(args[1]);
-                toolMap = ToolMapJsonReader.Read(toolMapText);
-                toolMapDigest = ToolMapDigest.Of(toolMapText);
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
+                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[2], "型役割表の正本"));
+                assignments = CommonAssignmentJsonReader.Read(Read(args[3], "共通契約割当の正本"));
+                map = ToolMapJsonReader.Read(Read(args[4], "能力対応表の正本"));
             }
             catch (Exception exception)
             {
@@ -66,10 +66,10 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
-            SdkFacts facts;
+            InventoryRecord inventory;
             try
             {
-                facts = SdkInventory.Read(editorDirectory, assemblyPath, SdkFacts.Of);
+                inventory = SdkInventory.Load(editorDirectory, assemblyPath);
             }
             catch (Exception exception)
             {
@@ -78,61 +78,54 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
-            InventoryRecord inventory = facts.Inventory;
-            IDictionary<string, ReceiverPath> receivers;
+            ToolBindingSource source;
             try
             {
-                receivers = ReceiverEvidence.Resolve(inventory, Receiving(toolMap, inventory));
+                IDictionary<string, SignatureRecord> signatures = inventory.Signatures
+                    .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+                TypeRoleTable owned = TypeGroupRule.Resolve(
+                    roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
+                source = ToolBindingSourceBuilder.Build(
+                    map,
+                    owned,
+                    signatures,
+                    ToolNameEvidence.Resolve(map, owned, assignments, signatures));
             }
             catch (InvalidOperationException exception)
             {
-                error.WriteLine("受け手の道を辿れない。");
+                error.WriteLine("ツールの結び付きを組み立てられない。");
                 error.WriteLine(exception.Message);
                 return ExitCodes.Unresolved;
             }
 
-            RelaySource source = RelaySourceBuilder.Build(
-                toolMap.Rows.Select(r => r.SignatureKey),
-                inventory,
-                inventory.AssemblyVersion,
-                facts.CombinableEnums,
-                toolMapDigest,
-                receivers);
-
             try
             {
-                WriteIfChanged(args[2], source.Text);
+                WriteIfChanged(args[5], source.Text);
             }
             catch (Exception exception)
             {
-                error.WriteLine("書き出せない: " + args[2]);
+                error.WriteLine("書き出せない: " + args[5]);
                 error.WriteLine(exception.Message);
                 return ExitCodes.WriteFailed;
             }
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "中継を組み立てた: 行 {0} 件・解決 {1} 件・未解決 {2} 件・受け手 {3} 型・SDK {4}",
-                source.Resolved.Count + source.Unresolved.Count,
-                source.Resolved.Count,
-                source.Unresolved.Count,
-                receivers.Count,
-                inventory.AssemblyVersion));
+                "ツールの結び付きを組み立てた: 中継 {0} 件・項目を集める {1} 件",
+                source.Calls.Count,
+                source.Aggregations.Count));
 
             return ExitCodes.Success;
         }
 
-        /// <summary>
-        /// 受け手の要る宣言型。静的なメンバーだけを持たせた行は呼ぶ相手が無いので、道も要らない。
-        /// </summary>
-        private static IEnumerable<string> Receiving(ToolMap toolMap, InventoryRecord inventory)
+        private static string Read(string path, string name)
         {
-            HashSet<string> rows = new HashSet<string>(
-                toolMap.Rows.Select(r => r.SignatureKey), StringComparer.Ordinal);
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(name + "が無い: " + path, path);
+            }
 
-            return inventory.Signatures
-                .Where(s => !s.IsStatic && rows.Contains(s.Key))
-                .Select(s => TypeDefinitionName.Of(s.DeclaringType));
+            return File.ReadAllText(path);
         }
 
         /// <summary>

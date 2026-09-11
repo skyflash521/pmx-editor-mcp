@@ -46,7 +46,8 @@ namespace PmxEditorMcp.SignatureDump
             InventoryRecord inventory,
             string sdkVersion,
             IEnumerable<string> combinableEnums,
-            string toolMapDigest)
+            string toolMapDigest,
+            IDictionary<string, ReceiverPath> receivers)
         {
             if (rowKeys == null)
             {
@@ -71,6 +72,11 @@ namespace PmxEditorMcp.SignatureDump
             if (toolMapDigest == null)
             {
                 throw new ArgumentNullException(nameof(toolMapDigest));
+            }
+
+            if (receivers == null)
+            {
+                throw new ArgumentNullException(nameof(receivers));
             }
 
             Dictionary<string, SignatureRecord> byKey = inventory.Signatures
@@ -102,7 +108,8 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new RelaySource(
-                Compose(calls.ToString(), unresolved, sdkVersion, combinableEnums, toolMapDigest),
+                Compose(
+                    calls.ToString(), unresolved, sdkVersion, combinableEnums, toolMapDigest, receivers),
                 resolved,
                 unresolved);
         }
@@ -190,6 +197,46 @@ namespace PmxEditorMcp.SignatureDump
             return value.ToString(CultureInfo.InvariantCulture);
         }
 
+        /// <summary>
+        /// 受け手を得る式。根から一歩ずつ進む。自動注入コネクタを取る一歩には、常駐から渡す。
+        /// </summary>
+        private static string Receiver(ReceiverPath path)
+        {
+            string expression = Root(path.Root);
+            if (path.Steps.Length == 0)
+            {
+                return expression;
+            }
+
+            foreach (string step in path.Steps.Split('.'))
+            {
+                expression += "." + (step.EndsWith("()", StringComparison.Ordinal)
+                    ? step.Substring(0, step.Length - 2) + "(connection.Use())"
+                    : step);
+            }
+
+            return expression;
+        }
+
+        /// <summary>
+        /// 接続の根を指す式。常駐が保つものと、実体を持たない静的な橋渡しから採る。これ以外の根は
+        /// 常駐が渡せないので、その道は中継に使えない。
+        /// </summary>
+        private static string Root(string root)
+        {
+            switch (root)
+            {
+                case "PEPlugin.IPERunArgs":
+                    return "connection.RunArgs";
+                case "PXCPlugin.IPXCPluginRunArgs":
+                    return "connection.UseRunArgs()";
+                case "PXCPlugin.PXCBridge":
+                    return "global::PXCPlugin.PXCBridge";
+                default:
+                    throw new InvalidOperationException("受け手を得られない接続の根: " + root);
+            }
+        }
+
         private static string Literal(string text)
         {
             return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
@@ -200,7 +247,8 @@ namespace PmxEditorMcp.SignatureDump
             IList<string> unresolved,
             string sdkVersion,
             IEnumerable<string> combinableEnums,
-            string toolMapDigest)
+            string toolMapDigest,
+            IDictionary<string, ReceiverPath> receivers)
         {
             StringBuilder text = new StringBuilder();
             text.Append("// この本文はビルドのたびに作り直す。手で直さない。\n");
@@ -257,6 +305,26 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             text.Append("            };\n");
+            text.Append("    }\n");
+            text.Append("\n");
+            text.Append("    internal static class GeneratedSdkReceivers\n");
+            text.Append("    {\n");
+            text.Append("        /// <summary>宣言型から受け手を得る。道はビルド時に辿ってある。</summary>\n");
+            text.Append("        internal static Dictionary<string, SdkReceiver> Create()\n");
+            text.Append("        {\n");
+            text.Append("            Dictionary<string, SdkReceiver> receivers =\n");
+            text.Append("                new Dictionary<string, SdkReceiver>(StringComparer.Ordinal);\n");
+            foreach (KeyValuePair<string, ReceiverPath> receiver in receivers
+                .OrderBy(r => r.Key, StringComparer.Ordinal))
+            {
+                text.Append(Indent).Append("receivers.Add(").Append(Literal(receiver.Key))
+                    .Append(", connection => ")
+                    .Append(Receiver(receiver.Value)).Append(");\n");
+            }
+
+            text.Append("\n");
+            text.Append("            return receivers;\n");
+            text.Append("        }\n");
             text.Append("    }\n");
             text.Append("}\n");
 

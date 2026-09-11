@@ -65,10 +65,15 @@ namespace PmxEditorMcp.SignatureDump
                 { "brush", new[] { 3, 4 } },
             };
 
+        /// <summary>危険操作の確認を受け取る共通引数の名前。</summary>
+        public const string ConfirmName = "confirm";
+
         /// <summary>
         /// ツール定義を綴りの順に組み立てる。<paramref name="descriptions"/> はツール名から説明文へ、
         /// <paramref name="valueChars"/> は応答の値の枠、<paramref name="requestBudgetBytes"/> は
-        /// 要求サイズ予算、<paramref name="tokenLimit"/> はIPCの構造トークンの上限。
+        /// 要求サイズ予算、<paramref name="tokenLimit"/> はIPCの構造トークンの上限、
+        /// <paramref name="sdkShapes"/> はSDKに由来する項目の綴り、<paramref name="dangerous"/> は
+        /// 確認を要するツールの名前。
         /// </summary>
         public static IList<ToolDefinition> Build(
             ToolSchemaTable schemas,
@@ -76,7 +81,9 @@ namespace PmxEditorMcp.SignatureDump
             AssumedLength lengths,
             int valueChars,
             int requestBudgetBytes,
-            int tokenLimit)
+            int tokenLimit,
+            IDictionary<SchemaItem, string> sdkShapes,
+            ISet<string> dangerous)
         {
             if (schemas == null)
             {
@@ -93,6 +100,16 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(lengths));
             }
 
+            if (sdkShapes == null)
+            {
+                throw new ArgumentNullException(nameof(sdkShapes));
+            }
+
+            if (dangerous == null)
+            {
+                throw new ArgumentNullException(nameof(dangerous));
+            }
+
             List<ToolDefinition> definitions = new List<ToolDefinition>();
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
@@ -105,7 +122,14 @@ namespace PmxEditorMcp.SignatureDump
                 definitions.Add(new ToolDefinition(
                     schema.Tool,
                     description,
-                    InputSchema(schema, lengths, valueChars, requestBudgetBytes, tokenLimit)));
+                    InputSchema(
+                        schema,
+                        lengths,
+                        valueChars,
+                        requestBudgetBytes,
+                        tokenLimit,
+                        sdkShapes,
+                        dangerous.Contains(schema.Tool))));
             }
 
             return definitions;
@@ -116,7 +140,9 @@ namespace PmxEditorMcp.SignatureDump
             AssumedLength lengths,
             int valueChars,
             int requestBudgetBytes,
-            int tokenLimit)
+            int tokenLimit,
+            IDictionary<SchemaItem, string> sdkShapes,
+            bool confirms)
         {
             ListingLimits listing = IsListing(schema)
                 ? ListingLimitRule.Derive(schema, lengths, valueChars)
@@ -124,7 +150,15 @@ namespace PmxEditorMcp.SignatureDump
 
             List<string> branches = schema.Branches
                 .Select(b => Branch(
-                    schema, b, listing, lengths, valueChars, requestBudgetBytes, tokenLimit))
+                    schema,
+                    b,
+                    listing,
+                    lengths,
+                    valueChars,
+                    requestBudgetBytes,
+                    tokenLimit,
+                    sdkShapes,
+                    confirms))
                 .ToList();
 
             if (branches.Count == 1)
@@ -132,7 +166,8 @@ namespace PmxEditorMcp.SignatureDump
                 return branches[0];
             }
 
-            return new JsonObjectText().Add("oneOf", JsonWriter.Array(branches)).Text;
+            return new JsonObjectText().AddText("type", ObjectType)
+                .Add("oneOf", JsonWriter.Array(branches)).Text;
         }
 
         private static string Branch(
@@ -142,7 +177,9 @@ namespace PmxEditorMcp.SignatureDump
             AssumedLength lengths,
             int valueChars,
             int requestBudgetBytes,
-            int tokenLimit)
+            int tokenLimit,
+            IDictionary<SchemaItem, string> sdkShapes,
+            bool confirms)
         {
             IDictionary<SchemaItem, int> limits =
                 ElementLimitRule.Request(branch, lengths, requestBudgetBytes, tokenLimit);
@@ -167,11 +204,19 @@ namespace PmxEditorMcp.SignatureDump
             foreach (SchemaItem input in branch.Inputs.Where(i => !i.Injected))
             {
                 properties.Add(
-                    input.Name, Item(schema, branch, input, listing, limits, issued));
+                    input.Name, Item(schema, branch, input, listing, limits, issued, sdkShapes));
                 if (input.Required.HasValue && input.Required.Value)
                 {
                     required.Add(input.Name);
                 }
+            }
+
+            // 確認の共通引数は、どのシグネチャが危険操作に当たるかの決め方が導くので正本に書かない。
+            // 要らないツールには現れない。
+            if (confirms)
+            {
+                properties.Add(ConfirmName, new JsonObjectText().AddText("type", "boolean").Text);
+                required.Add(ConfirmName);
             }
 
             JsonObjectText body = new JsonObjectText().AddText("type", ObjectType);
@@ -192,7 +237,8 @@ namespace PmxEditorMcp.SignatureDump
             List<string> all = new List<string> { body.Text };
             all.AddRange(branch.Choices.Select(Choice));
 
-            return new JsonObjectText().Add("allOf", JsonWriter.Array(all)).Text;
+            return new JsonObjectText().AddText("type", ObjectType)
+                .Add("allOf", JsonWriter.Array(all)).Text;
         }
 
         /// <summary>
@@ -221,9 +267,11 @@ namespace PmxEditorMcp.SignatureDump
             SchemaItem item,
             ListingLimits listing,
             IDictionary<SchemaItem, int> limits,
-            int? issued)
+            int? issued,
+            IDictionary<SchemaItem, string> sdkShapes)
         {
-            JsonObjectText written = Shape(schema, branch, item, listing, limits, issued);
+            JsonObjectText written = Shape(
+                schema, branch, item, listing, limits, issued, sdkShapes);
 
             if (item.Bounds != null)
             {
@@ -261,7 +309,8 @@ namespace PmxEditorMcp.SignatureDump
             SchemaItem item,
             ListingLimits listing,
             IDictionary<SchemaItem, int> limits,
-            int? issued)
+            int? issued,
+            IDictionary<SchemaItem, string> sdkShapes)
         {
             if (item.Members != null)
             {
@@ -270,7 +319,8 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (SchemaItem member in item.Members)
                 {
                     members.Add(
-                        member.Name, Item(schema, branch, member, listing, limits, issued));
+                        member.Name,
+                        Item(schema, branch, member, listing, limits, issued, sdkShapes));
                     if (member.Required.HasValue && member.Required.Value)
                     {
                         required.Add(member.Name);
@@ -292,7 +342,9 @@ namespace PmxEditorMcp.SignatureDump
             {
                 JsonObjectText body = new JsonObjectText()
                     .Add("type", TypeOf(ArrayType, item.Nullable));
-                body.Add("items", Item(schema, branch, item.Element, listing, limits, issued));
+                body.Add(
+                    "items",
+                    Item(schema, branch, item.Element, listing, limits, issued, sdkShapes));
                 if (NonEmptyArrayRule.NonEmpty(item))
                 {
                     body.AddNumber("minItems", 1);
@@ -312,13 +364,14 @@ namespace PmxEditorMcp.SignatureDump
                 return body.AddNumber("maxItems", maxItems);
             }
 
-            if (item.Shape == null)
+            string spelling = item.Shape;
+            if (spelling == null && !sdkShapes.TryGetValue(item, out spelling))
             {
                 throw new InvalidOperationException(
                     "形を持たない項目: " + schema.Tool + "." + item.Name);
             }
 
-            return Scalar(schema, branch, item, listing, issued);
+            return Scalar(schema, branch, item, listing, issued, spelling);
         }
 
         private static JsonObjectText Scalar(
@@ -326,10 +379,11 @@ namespace PmxEditorMcp.SignatureDump
             SchemaBranch branch,
             SchemaItem item,
             ListingLimits listing,
-            int? issued)
+            int? issued,
+            string spelling)
         {
             int[] fixedArray;
-            if (FixedArrays.TryGetValue(item.Shape, out fixedArray))
+            if (FixedArrays.TryGetValue(spelling, out fixedArray))
             {
                 return new JsonObjectText()
                     .Add("type", TypeOf(ArrayType, item.Nullable))
@@ -338,14 +392,14 @@ namespace PmxEditorMcp.SignatureDump
                     .AddNumber("maxItems", fixedArray[1]);
             }
 
-            if (string.Equals(item.Shape, "number_array", StringComparison.Ordinal))
+            if (string.Equals(spelling, "number_array", StringComparison.Ordinal))
             {
                 return new JsonObjectText()
                     .Add("type", TypeOf(ArrayType, item.Nullable))
                     .Add("items", new JsonObjectText().AddText("type", "number").Text);
             }
 
-            if (string.Equals(item.Shape, "font", StringComparison.Ordinal))
+            if (string.Equals(spelling, "font", StringComparison.Ordinal))
             {
                 JsonObjectText members = new JsonObjectText()
                     .Add("family", new JsonObjectText().AddText("type", "string").Text)
@@ -359,16 +413,16 @@ namespace PmxEditorMcp.SignatureDump
                     .AddBoolean("additionalProperties", false);
             }
 
-            if (string.Equals(item.Shape, "json", StringComparison.Ordinal))
+            if (string.Equals(spelling, "json", StringComparison.Ordinal))
             {
                 return new JsonObjectText();
             }
 
             string type;
-            if (!ScalarTypes.TryGetValue(item.Shape, out type))
+            if (!ScalarTypes.TryGetValue(spelling, out type))
             {
                 throw new InvalidOperationException(
-                    "組み立て方を持たない綴り: " + item.Shape + "(" + schema.Tool + ")");
+                    "組み立て方を持たない綴り: " + spelling + "(" + schema.Tool + ")");
             }
 
             JsonObjectText written = new JsonObjectText().Add("type", TypeOf(type, item.Nullable));

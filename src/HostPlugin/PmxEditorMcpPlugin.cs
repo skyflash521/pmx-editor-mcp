@@ -153,14 +153,22 @@ namespace PmxEditorMcp
                 ResponseBudget budget = ResponseBudget.ReadFromEnvironment();
                 HoldResidentConnection(args);
 
-                // ツールに対応する処理は無く、基盤メソッドは接続が受け持つ。
+                // 基盤メソッドは接続が受け持つので、ここへはツールだけを載せる。
                 McpMethodTable methods = new McpMethodTable();
+                SdkRelayTable relay = GeneratedSdkRelay.Create();
+                ToolDispatch.AddTo(
+                    methods,
+                    relay,
+                    GeneratedSdkReceivers.Create(),
+                    _resident,
+                    GeneratedTools.Calls(),
+                    GeneratedTools.Aggregations());
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);
                 DebugLargeText.AddTo(methods, debugHooks);
                 DebugConnectorExpiry.AddTo(methods, debugHooks, _resident);
                 _connection = new JsonRpcConnection(
-                    _log, methods, HostVersion, budget.Chars, GeneratedSdkRelay.Create(), SdkVersion);
+                    _log, methods, HostVersion, budget.Chars, relay, SdkVersion);
 
                 _host = new McpHost(
                     McpHost.BuildPipeName(editorProcessId),

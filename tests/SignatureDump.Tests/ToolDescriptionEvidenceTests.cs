@@ -99,11 +99,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnEmbeddedRowOfAnotherToolIsNotAnIndexTerm()
         {
-            ToolDescriptionMaterial material = Only(Map(
+            IList<ToolDescriptionMaterial> materials = Collect(Map(
                 Row("Draw", ListTool, null),
                 Row("Index", null, new[] { "model_update_vertices" })));
 
-            Assert.Empty(material.IndexTerms);
+            Assert.Empty(
+                Assert.Single(materials, m => m.Tool == ListTool).IndexTerms);
         }
 
         /// <summary>正本に載らない項目の日本語名は、記載から採る。</summary>

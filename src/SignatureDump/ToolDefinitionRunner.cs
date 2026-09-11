@@ -82,7 +82,9 @@ namespace PmxEditorMcp.SignatureDump
                     new AssumedLength(inputs.Lengths),
                     inputs.BudgetChars - inputs.WarningChars,
                     inputs.RequestBytes,
-                    inputs.TokenLimit);
+                    inputs.TokenLimit,
+                    inputs.SdkShapes(inventory),
+                    inputs.DangerousTools(inventory));
             }
             catch (InvalidOperationException exception)
             {

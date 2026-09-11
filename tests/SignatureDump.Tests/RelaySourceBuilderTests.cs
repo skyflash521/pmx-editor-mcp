@@ -15,6 +15,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Digest = "8f14e45fceea167a5a36dedd4bea2543";
 
+        private static readonly IDictionary<string, ReceiverPath> NoReceivers =
+            new Dictionary<string, ReceiverPath>(StringComparer.Ordinal);
+
         [Fact]
         public void AMethodIsCalledOnTheReceiverCastToItsDeclaringType()
         {
@@ -72,7 +75,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Inventory(Method("PEPlugin.Pmx.IPXPmxConnector.LockUndo()", "System.Void")),
                 SdkVersion,
                 new string[0],
-                Digest);
+                Digest,
+                NoReceivers);
 
             Assert.Equal(new[] { "PEPlugin.Pmx.IPXPmxConnector.LockUndo()" }, source.Resolved);
             Assert.Equal(new[] { "Sdk.Type.Absent()" }, source.Unresolved);
@@ -121,7 +125,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Inventory(),
                 SdkVersion,
                 new[] { "Sdk.Second", "Sdk.First", "Sdk.First" },
-                Digest);
+                Digest,
+                NoReceivers);
 
             int first = source.Text.IndexOf("\"Sdk.First\",", StringComparison.Ordinal);
             int second = source.Text.IndexOf("\"Sdk.Second\",", StringComparison.Ordinal);
@@ -137,7 +142,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Inventory(Property("Sdk.Type.Name", "System.String", true, true)),
                 SdkVersion,
                 new string[0],
-                Digest);
+                Digest,
+                NoReceivers);
 
             Assert.Equal(new[] { "Sdk.Type.Name" }, source.Resolved);
             Assert.Equal(1, Occurrences(source.Text, "calls.Add(\"Sdk.Type.Name\""));
@@ -148,10 +154,63 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return Build(Known().Single(s => string.Equals(s.Key, rowKey, StringComparison.Ordinal)));
         }
 
+        [Fact]
+        public void AReceiverRootedAtTheStartupArgumentsComesFromTheResidentConnection()
+        {
+            Assert.Contains(
+                "receivers.Add(\"Sdk.View\", connection => connection.RunArgs.Host.View);",
+                Receivers("Sdk.View", "PEPlugin.IPERunArgs", "Host.View"));
+        }
+
+        [Fact]
+        public void AReceiverRootedAtTheCPluginArgumentsAsksTheResidentConnectionForThem()
+        {
+            Assert.Contains(
+                "receivers.Add(\"Sdk.View\", connection => connection.UseRunArgs().Connector);",
+                Receivers("Sdk.View", "PXCPlugin.IPXCPluginRunArgs", "Connector"));
+        }
+
+        [Fact]
+        public void AStepThatTakesTheInjectedConnectorIsGivenTheHeldOne()
+        {
+            Assert.Contains(
+                "receivers.Add(\"Sdk.Events\", connection =>"
+                    + " global::PXCPlugin.PXCBridge.CreateEventConnector(connection.Use()));",
+                Receivers("Sdk.Events", "PXCPlugin.PXCBridge", "CreateEventConnector()"));
+        }
+
+        [Fact]
+        public void ARootTheResidentConnectionCannotGiveStops()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Receivers("Sdk.View", "Sdk.Root", string.Empty));
+
+            Assert.StartsWith("受け手を得られない接続の根:", error.Message, StringComparison.Ordinal);
+        }
+
+        private static string Receivers(string type, string root, string steps)
+        {
+            return RelaySourceBuilder.Build(
+                new string[0],
+                Inventory(),
+                SdkVersion,
+                new string[0],
+                Digest,
+                new Dictionary<string, ReceiverPath>(StringComparer.Ordinal)
+                {
+                    { type, new ReceiverPath(root, steps) },
+                }).Text;
+        }
+
         private static RelaySource Build(SignatureRecord signature)
         {
             return RelaySourceBuilder.Build(
-                new[] { signature.Key }, Inventory(signature), SdkVersion, new string[0], Digest);
+                new[] { signature.Key },
+                Inventory(signature),
+                SdkVersion,
+                new string[0],
+                Digest,
+                NoReceivers);
         }
 
         /// <summary>題材のシグネチャ。呼び出しの形が分かれる並びを1つずつ持つ。</summary>

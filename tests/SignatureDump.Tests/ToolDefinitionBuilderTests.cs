@@ -13,6 +13,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const int ValueChars = 98000;
 
+        private static readonly IDictionary<SchemaItem, string> NoSdkShapes =
+            new Dictionary<SchemaItem, string>();
+
+        private static readonly ISet<string> NoDangerousTools =
+            new HashSet<string>(StringComparer.Ordinal);
+
         private const int RequestBytes = 8000000;
 
         private const int TokenLimit = 200000;
@@ -207,7 +213,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Output("number"),
                 null));
 
-            Assert.StartsWith("{\"oneOf\":[{\"type\":\"object\"", schema);
+            Assert.StartsWith("{\"type\":\"object\",\"oneOf\":[{\"type\":\"object\"", schema);
             Assert.Contains("\"index\":{\"type\":\"number\"}", schema);
         }
 
@@ -287,7 +293,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new AssumedLength(Lengths),
                 ValueChars,
                 RequestBytes,
-                TokenLimit));
+                TokenLimit,
+                NoSdkShapes,
+                NoDangerousTools));
         }
 
         [Fact]
@@ -307,10 +315,72 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new AssumedLength(Lengths),
                 ValueChars,
                 RequestBytes,
-                TokenLimit);
+                TokenLimit,
+                NoSdkShapes,
+                NoDangerousTools);
 
             Assert.Equal(new[] { "first", "second" }, definitions.Select(d => d.Name).ToArray());
             Assert.Equal("ひとつめ", definitions[0].Description);
+        }
+
+        [Fact]
+        public void ADangerousToolTakesTheConfirmationAsARequiredArgument()
+        {
+            ToolSchema schema = Tool("one", Branch(Input("name", "text", true)));
+
+            string written = ToolDefinitionBuilder.Build(
+                new ToolSchemaTable(new[] { schema }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { "one", "受け持つこと" } },
+                new AssumedLength(Lengths),
+                ValueChars,
+                RequestBytes,
+                TokenLimit,
+                NoSdkShapes,
+                new HashSet<string>(new[] { "one" }, StringComparer.Ordinal))[0].InputSchema;
+
+            Assert.Contains("\"confirm\":{\"type\":\"boolean\"}", written);
+            Assert.Contains("\"required\":[\"name\",\"confirm\"]", written);
+        }
+
+        [Fact]
+        public void AToolThatIsNotDangerousDoesNotTakeTheConfirmation()
+        {
+            Assert.DoesNotContain(
+                "confirm", Schema(Tool("one", Branch(Input("name", "text", true)))));
+        }
+
+        [Fact]
+        public void AnItemThatWritesNoSpellingTakesTheOneDerivedFromItsRow()
+        {
+            SchemaItem input = new SchemaItem(
+                null, null, null, "path", null, true, null, false,
+                null, null, null, false, null);
+            ToolSchema schema = new ToolSchema(
+                "one", new[] { Branch(input) }, Output("number"), null);
+
+            string written = ToolDefinitionBuilder.Build(
+                new ToolSchemaTable(new[] { schema }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { "one", "受け持つこと" } },
+                new AssumedLength(Lengths),
+                ValueChars,
+                RequestBytes,
+                TokenLimit,
+                new Dictionary<SchemaItem, string> { { input, "text" } },
+                NoDangerousTools)[0].InputSchema;
+
+            Assert.Contains("\"path\":{\"type\":\"string\"}", written);
+        }
+
+        [Fact]
+        public void AnItemWithNeitherASpellingNorADerivedOneIsRefused()
+        {
+            SchemaItem input = new SchemaItem(
+                null, null, null, "path", null, true, null, false,
+                null, null, null, false, null);
+
+            Assert.Throws<InvalidOperationException>(
+                () => Schema(new ToolSchema(
+                    "one", new[] { Branch(input) }, Output("number"), null)));
         }
 
         private static int Occurrences(string text, string part)
@@ -334,7 +404,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new AssumedLength(Lengths),
                 ValueChars,
                 RequestBytes,
-                TokenLimit)[0].InputSchema;
+                TokenLimit,
+                NoSdkShapes,
+                NoDangerousTools)[0].InputSchema;
         }
 
         private static ToolSchema Tool(string name, SchemaBranch branch)

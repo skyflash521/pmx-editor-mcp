@@ -22,6 +22,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly IDictionary<string, string> _propertyNotes;
 
+        private readonly IDictionary<string, string> _shapesByType;
+
         private ToolDefinitionInputs(
             IList<CapabilityRecord> ledger,
             TypeRoleTable roles,
@@ -30,6 +32,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ComposedTool> composedTools,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes,
+            IDictionary<string, string> shapesByType,
             ToolMap map,
             string mapDigest,
             ToolSchemaTable schemas,
@@ -46,6 +49,7 @@ namespace PmxEditorMcp.SignatureDump
             _composedTools = composedTools;
             _methodNotes = methodNotes;
             _propertyNotes = propertyNotes;
+            _shapesByType = shapesByType;
             Map = map;
             MapDigest = mapDigest;
             Schemas = schemas;
@@ -101,6 +105,7 @@ namespace PmxEditorMcp.SignatureDump
                 ComposedToolDocument.Read(contract),
                 DocumentNoteReader.ReadMethods(document),
                 DocumentNoteReader.Read(document),
+                ShapesByType(contract),
                 ToolMapJsonReader.Read(map),
                 ToolMapDigest.Of(map),
                 ToolSchemaJsonReader.Read(ReadFile(args[9], "スキーマ正本")),
@@ -109,6 +114,51 @@ namespace PmxEditorMcp.SignatureDump
                 BudgetDocument.ReadWarningRoom(contract),
                 BudgetDocument.ReadRequestBytes(contract),
                 BudgetDocument.ReadTokenLimit(ipc));
+        }
+
+        /// <summary>型から値の表現の綴りへ。綴りが1つに決まらない包む型は持たない。</summary>
+        private static IDictionary<string, string> ShapesByType(string contract)
+        {
+            Dictionary<string, string> shapes =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (ValueShapeRow row in ValueShapeDocument.Read(contract)
+                .Where(r => r.Shape != null))
+            {
+                shapes[row.TypeName] = row.Shape;
+            }
+
+            return shapes;
+        }
+
+        /// <summary>SDKに由来する項目から表現の綴りへ。正本が綴りを書かない項目をここで補う。</summary>
+        public IDictionary<SchemaItem, string> SdkShapes(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            return SdkShapeEvidence.Resolve(
+                Schemas,
+                Map,
+                inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
+                ToolsByRow(inventory),
+                _shapesByType);
+        }
+
+        /// <summary>確認を要するツールの名前。行の側の判定をツールの名前へ写す。</summary>
+        public ISet<string> DangerousTools(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            IDictionary<string, string> tools = ToolsByRow(inventory);
+
+            return new HashSet<string>(
+                Dangerous(inventory).Where(tools.ContainsKey).Select(k => tools[k]),
+                StringComparer.Ordinal);
         }
 
         /// <summary>ツール名から説明文へ。合成ツールは仕様書の受け持つことをそのまま使う。</summary>

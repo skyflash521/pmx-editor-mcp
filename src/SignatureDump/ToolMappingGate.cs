@@ -50,12 +50,13 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(composedTools));
             }
 
-            RequireNoComposedName(toolNames, composedTools);
-            RequireSameTools(schemas, map, toolNames, composedTools);
-            RequireTellableBranches(schemas);
-
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
+
+            RequireNoComposedName(toolNames, composedTools);
+            RequireSameTools(
+                schemas, map, toolNames, composedTools, Aggregations(map, signatures, byType));
+            RequireTellableBranches(schemas);
 
             foreach (ToolMapRow row in map.Rows
                 .Where(r => r.EmbeddedIn != null)
@@ -96,11 +97,40 @@ namespace PmxEditorMcp.SignatureDump
         /// そのどちらかに在ることを求める。分岐を持つ合成ツールの形は、その分岐の出どころで
         /// あるイベント行が無ければ書けないので、イベント行が在るときだけ求める。
         /// </summary>
+        /// <summary>
+        /// 項目を集める取得と更新のツールの名前。これらのツールは行を持たないので、埋め込み先として
+        /// 名指しされたものを母集合へ入れる。
+        /// </summary>
+        private static ISet<string> Aggregations(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, TypeRoleRecord> byType)
+        {
+            HashSet<string> names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows.Where(r => r.EmbeddedIn != null))
+            {
+                SignatureRecord signature;
+                TypeRoleRecord owner;
+                if (!signatures.TryGetValue(row.SignatureKey, out signature)
+                    || !byType.TryGetValue(
+                        TypeDefinitionName.OfElement(signature.DeclaringType), out owner))
+                {
+                    continue;
+                }
+
+                ISet<string> aggregations = AggregationToolRule.Names(new[] { owner });
+                names.UnionWith(row.EmbeddedIn.Where(aggregations.Contains));
+            }
+
+            return names;
+        }
+
         private static void RequireSameTools(
             ToolSchemaTable schemas,
             ToolMap map,
             IDictionary<string, string> toolNames,
-            IDictionary<string, ComposedTool> composedTools)
+            IDictionary<string, ComposedTool> composedTools,
+            ISet<string> aggregations)
         {
             HashSet<string> assigned = new HashSet<string>(
                 toolNames.Values, StringComparer.Ordinal);
@@ -109,6 +139,7 @@ namespace PmxEditorMcp.SignatureDump
             bool hasEvents = map.Rows.Any(r => r.EventType != null);
 
             HashSet<string> wanted = new HashSet<string>(assigned, StringComparer.Ordinal);
+            wanted.UnionWith(aggregations);
             wanted.UnionWith(
                 composedTools.Where(t => hasEvents || !t.Value.Branching).Select(t => t.Key));
             string missing = wanted.Except(described, StringComparer.Ordinal)
@@ -119,6 +150,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             HashSet<string> allowed = new HashSet<string>(assigned, StringComparer.Ordinal);
+            allowed.UnionWith(aggregations);
             allowed.UnionWith(composedTools.Keys);
             string extra = described.Except(allowed, StringComparer.Ordinal)
                 .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
@@ -300,21 +332,11 @@ namespace PmxEditorMcp.SignatureDump
                 return;
             }
 
-            if (!Aggregated(owner).Contains(embedded, StringComparer.Ordinal))
+            if (!AggregationToolRule.Of(owner).Contains(embedded, StringComparer.Ordinal))
             {
                 throw new InvalidOperationException(
                     "埋め込み先が宣言型の取得と更新のツールに無い: " + embedded);
             }
-        }
-
-        /// <summary>プロパティを集める先。取得と更新の2つで、追加と削除は集める先にならない。</summary>
-        private static IEnumerable<string> Aggregated(TypeRoleRecord owner)
-        {
-            ToolVerb[] verbs = owner.Role == TypeRole.Connector
-                ? new[] { ToolVerb.Get, ToolVerb.Update }
-                : new[] { ToolVerb.List, ToolVerb.Update };
-
-            return verbs.Select(v => ToolNameRule.OfRole(owner, v));
         }
     }
 }

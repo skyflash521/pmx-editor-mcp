@@ -35,10 +35,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string EmptyAssignments = "{\"assignments\":[]}\n";
 
         /// <summary>合成ツールの形だけを持つスキーマ正本。</summary>
-        private const string ComposedSchemas =
-            "{\"tools\":[{\"tool\":\"session_release_handle\""
+        private const string ComposedSchemas = "{\"tools\":[" + ReleaseSchema + "]}\n";
+
+        /// <summary>合成ツールと、項目を集める一覧のツールの形を持つスキーマ正本。</summary>
+        private const string EmbeddedSchemas =
+            "{\"tools\":[{\"tool\":\"model_list_samples\""
             + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
-            + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}}]}\n";
+            + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}},"
+            + ReleaseSchema + "]}\n";
+
+        /// <summary>合成ツール1件ぶんの入出力の形。</summary>
+        private const string ReleaseSchema =
+            "{\"tool\":\"session_release_handle\""
+            + ",\"branches\":[{\"branch\":\"only\",\"inputs\":[]}]"
+            + ",\"output\":{\"origin\":\"hostOutput\",\"shape\":\"number\"}}";
 
         private readonly string _root;
 
@@ -175,7 +185,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             StringWriter error = new StringWriter();
 
-            int code = ToolMappingRunner.Run(Arguments(Embedded()), output, error);
+            int code = ToolMappingRunner.Run(
+                Arguments(Embedded(), EmbeddedSchemas), output, error);
 
             Assert.Equal(error.ToString(), string.Empty);
             Assert.Equal(ExitCodes.Success, code);
@@ -262,7 +273,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + ",\"editKind\":\"read\",\"basis\":\"題材の根拠。\"}]}\n";
         }
 
-        private string[] Arguments(string map)
+        private string[] Arguments(string map, string schemas = ComposedSchemas)
         {
             return new[]
             {
@@ -272,7 +283,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Write("roles.json", Roles),
                 Write("assignments.json", EmptyAssignments),
                 Write("map.json", map),
-                Write("schemas.json", ComposedSchemas),
+                Write("schemas.json", schemas),
             };
         }
 

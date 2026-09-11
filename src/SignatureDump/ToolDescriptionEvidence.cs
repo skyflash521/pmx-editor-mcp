@@ -72,6 +72,7 @@ namespace PmxEditorMcp.SignatureDump
             foreach (IGrouping<string, ToolMapRow> tool in map.Rows
                 .Where(r => toolNames.ContainsKey(r.SignatureKey))
                 .GroupBy(r => toolNames[r.SignatureKey], StringComparer.Ordinal)
+                .Concat(Aggregations(map, byType, toolNames))
                 .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 materials.Add(Material(
@@ -87,6 +88,49 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new ReadOnlyCollection<ToolDescriptionMaterial>(materials);
+        }
+
+        /// <summary>
+        /// 項目を集める取得と更新のツールごとの行。これらのツールは行を持たず、埋め込み先として
+        /// 名指しされることで現れるので、名指しの側から集める。埋め込み先がイベントの分岐や
+        /// ほかのツールであるものは、そのツールの材料が別に在るのでここには入らない。
+        /// </summary>
+        private static IEnumerable<IGrouping<string, ToolMapRow>> Aggregations(
+            ToolMap map,
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, string> toolNames)
+        {
+            HashSet<string> dispatched = new HashSet<string>(
+                toolNames.Values, StringComparer.Ordinal);
+            List<KeyValuePair<string, ToolMapRow>> named =
+                new List<KeyValuePair<string, ToolMapRow>>();
+            foreach (ToolMapRow row in map.Rows.Where(r => r.EmbeddedIn != null))
+            {
+                TypeRoleRecord owner;
+                if (!byType.TryGetValue(DeclaringTypeOf(row.SignatureKey), out owner))
+                {
+                    continue;
+                }
+
+                ISet<string> aggregations = AggregationToolRule.Names(new[] { owner });
+                foreach (string embedded in row.EmbeddedIn
+                    .Where(e => aggregations.Contains(e) && !dispatched.Contains(e)))
+                {
+                    named.Add(new KeyValuePair<string, ToolMapRow>(embedded, row));
+                }
+            }
+
+            return named.GroupBy(e => e.Key, e => e.Value, StringComparer.Ordinal);
+        }
+
+        /// <summary>行キーが指すメンバーの宣言型。型役割表を引く鍵の形にそろえる。</summary>
+        private static string DeclaringTypeOf(string signatureKey)
+        {
+            int open = signatureKey.IndexOf('(');
+            string head = open < 0 ? signatureKey : signatureKey.Substring(0, open);
+            int dot = head.LastIndexOf('.');
+
+            return TypeDefinitionName.OfElement(dot < 0 ? head : head.Substring(0, dot));
         }
 
         private static ToolDescriptionMaterial Material(

@@ -13,6 +13,13 @@ namespace PmxEditorMcp
     /// <param name="arguments">引数。並びは行キーの引数の列と同じ。</param>
     public delegate object SdkCall(object target, object[] arguments);
 
+    /// <summary>
+    /// 宣言型の受け手を、接続の根から辿って得る。辿る道はビルド時に決めて生成するので、配布物が
+    /// 名前で辿る経路は無い。
+    /// </summary>
+    /// <param name="connection">接続の根を保つ常駐。道の起点と、自動注入のコネクタをここから採る。</param>
+    public delegate object SdkReceiver(ResidentConnection connection);
+
     /// <summary>中継を断った理由。</summary>
     public enum SdkRelayRefusal
     {

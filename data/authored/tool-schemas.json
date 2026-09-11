@@ -1,6 +1,172 @@
 {
   "tools": [
     {
+      "tool": "session_append_pmd_file",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_append_x_file",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_close",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_get_form_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "enableFacePage"
+          },
+          {
+            "name": "enableTexUpdateWatch"
+          },
+          {
+            "name": "pmxFormActivate"
+          },
+          {
+            "name": "redoCount"
+          },
+          {
+            "name": "undoCount"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "session_import_x_file",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_initialize_pmd",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_initialize_pmx",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_open_pmd_file",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_open_pmx_file",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_redo",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "session_release_handle",
       "branches": [
         {
@@ -24,6 +190,112 @@
           "origin": "hostOutput",
           "shape": "number"
         }
+      }
+    },
+    {
+      "tool": "session_save_material_name",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_save_pmd_file",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_save_pmx_file",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_undo",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_update_form_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "enableFacePage"
+            },
+            {
+              "name": "enableTexUpdateWatch"
+            },
+            {
+              "name": "pmxFormActivate"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "enableFacePage",
+                "enableTexUpdateWatch",
+                "pmxFormActivate"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     }
   ]

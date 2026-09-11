@@ -77,6 +77,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>値を読み出す。</summary>
         ValueRead,
 
+        /// <summary>エディタそのものが終わる。</summary>
+        EditorEnded,
+
         /// <summary>外から観測できる効果を持たない。</summary>
         None,
     }

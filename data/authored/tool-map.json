@@ -1,6 +1,284 @@
 {
   "rows": [
     {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendPMDFile(System.String)",
+      "editKind": "directChange",
+      "basis": "読み込んだPMDをいま開いているモデルへ足すので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendXFile(System.String)",
+      "editKind": "directChange",
+      "basis": "読み込んだXファイルをいま開いているモデルへ足すので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.Close()",
+      "editKind": "viewSession",
+      "basis": "エディタそのものを終わらせるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "editorEnded",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.EnableFacePage()",
+      "editKind": "viewSession",
+      "basis": "表情ページを使うかどうかの設定を切り替えるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.EnableTexUpdateWatch()",
+      "editKind": "viewSession",
+      "basis": "テクスチャの更新を見張るかどうかの設定を切り替えるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.ImportXFile(System.String)",
+      "editKind": "directChange",
+      "basis": "読み込んだXファイルをいま開いているモデルへ取り込むので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.InitializePMD()",
+      "editKind": "directChange",
+      "basis": "いま開いているモデルの中身を空にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.InitializePMX()",
+      "editKind": "directChange",
+      "basis": "いま開いているモデルの中身を空にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMDFile(System.String)",
+      "editKind": "directChange",
+      "basis": "読み込んだPMDでいま開いているモデルを置き換えるので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMXFile(System.String)",
+      "editKind": "directChange",
+      "basis": "読み込んだPMXでいま開いているモデルを置き換えるので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.PmxFormActivate()",
+      "editKind": "viewSession",
+      "basis": "本体フォームを前面にするかどうかを切り替えるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.Redo()",
+      "editKind": "directChange",
+      "basis": "取り消した編集をモデルへ戻すので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "tool": "session_undo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.RedoCount()",
+      "editKind": "read",
+      "basis": "やり直せる件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SaveMaterialName(System.String)",
+      "editKind": "directChange",
+      "basis": "材質名をファイルへ書き出すので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "fileWritten",
+          "effectKey": "path",
+          "kind": "file",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SavePMDFile(System.String)",
+      "editKind": "directChange",
+      "basis": "いま開いているモデルをPMDのファイルへ書き出すので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "fileWritten",
+          "effectKey": "path",
+          "kind": "file",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SavePMXFile(System.String)",
+      "editKind": "directChange",
+      "basis": "いま開いているモデルをPMXのファイルへ書き出すので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "fileWritten",
+          "effectKey": "path",
+          "kind": "file",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.Undo()",
+      "editKind": "directChange",
+      "basis": "直前の編集をモデルから取り消すので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.UndoCount()",
+      "editKind": "read",
+      "basis": "取り消せる件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.IPESystemConnector.GetCPluginRunArgsClone(System.String)",
       "editKind": "read",
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。"

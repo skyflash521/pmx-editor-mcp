@@ -58,6 +58,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>行キーからSDKのメンバーを直接呼ぶ中継をC#の本文として書き出す。</summary>
         public const string RelaySourceCommand = "relay-source";
 
+        /// <summary>ツールの名前から呼ぶ行へ結び付ける表をC#として書き出す。</summary>
+        public const string ToolBindingsCommand = "tool-bindings";
+
         /// <summary>ツール定義を組み立ててブリッジへ組み込むC#として書き出す。</summary>
         public const string ToolDefinitionsCommand = "tool-definitions";
 
@@ -172,6 +175,11 @@ namespace PmxEditorMcp.SignatureDump
                 return RelaySourceRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], ToolBindingsCommand, StringComparison.Ordinal))
+            {
+                return ToolBindingRunner.Run(rest, output, error);
+            }
+
             if (string.Equals(args[0], ToolDefinitionsCommand, StringComparison.Ordinal))
             {
                 return ToolDefinitionRunner.Run(rest, output, error);
@@ -252,6 +260,10 @@ namespace PmxEditorMcp.SignatureDump
             error.WriteLine(
                 RelaySourceCommand
                     + " <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                ToolBindingsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス> <書き出し先パス>");
             error.WriteLine(
                 ToolDefinitionsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
