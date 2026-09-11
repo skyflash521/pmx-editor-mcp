@@ -60,6 +60,9 @@ function expectHandshakeResult(taken) {
             "(予算の環境変数を設定したままエディタを起動していないか確かめてください)。"
         );
     }
+    if (typeof result.session !== "string" || !/^[0-9a-f]{32}$/.test(result.session)) {
+        return "result の session が16進32文字の文字列ではありません。";
+    }
     return null;
 }
 

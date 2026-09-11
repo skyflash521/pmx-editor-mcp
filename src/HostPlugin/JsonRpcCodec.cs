@@ -36,6 +36,9 @@ namespace PmxEditorMcp
 
         /// <summary>応答のメッセージが上限のバイト数を超えた。</summary>
         public const int ResponseTooLarge = -32005;
+
+        /// <summary>接続元のプロセスを所有者にできないか、提示された session が別のプロセスのもの。</summary>
+        public const int SessionRefused = -32006;
     }
 
     /// <summary>解析できた要求。</summary>

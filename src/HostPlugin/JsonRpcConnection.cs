@@ -21,7 +21,7 @@ namespace PmxEditorMcp
     public sealed class McpMethodContext
     {
         /// <summary>
-        /// 引数・UIスレッドへの委譲・応答サイズ予算・接続が保つ台帳とキューを与えて生成する。
+        /// 引数・UIスレッドへの委譲・応答サイズ予算・セッションが保つ台帳とキューを与えて生成する。
         /// </summary>
         public McpMethodContext(
             IDictionary<string, object> parameters,
@@ -66,10 +66,10 @@ namespace PmxEditorMcp
         /// <summary>ホストが読んだ応答サイズ予算の文字数。結果の量を抑える判定に用いる。</summary>
         public int BudgetChars { get; }
 
-        /// <summary>この接続が保つ長寿命オブジェクトの台帳。</summary>
+        /// <summary>このセッションが保つ長寿命オブジェクトの台帳。</summary>
         public HandleLedger Handles { get; }
 
-        /// <summary>この接続が溜めている購読中のイベント。</summary>
+        /// <summary>このセッションが溜めている購読中のイベント。</summary>
         public EventQueue Events { get; }
     }
 
@@ -151,6 +151,8 @@ namespace PmxEditorMcp
         private readonly int _maxMessageBytes;
         private readonly HandleIdIssuer _handleIds = new HandleIdIssuer();
         private readonly EventSequenceIssuer _eventSequence = new EventSequenceIssuer();
+        private readonly SessionStore _sessions;
+        private readonly ClientProcessOpener _openClient;
 
         /// <summary>ログ・メソッド表・ハンドシェイク応答に載せる値を与えて生成する。</summary>
         public JsonRpcConnection(HostLog log, McpMethodTable methods, string hostVersion, int budgetChars)
@@ -169,6 +171,29 @@ namespace PmxEditorMcp
             int budgetChars,
             TimeSpan requestTimeout,
             int maxMessageBytes)
+            : this(
+                log,
+                methods,
+                hostVersion,
+                budgetChars,
+                requestTimeout,
+                maxMessageBytes,
+                PipeClientProcess.TryOpen)
+        {
+        }
+
+        /// <summary>
+        /// 接続元のプロセスの開き方も指定して生成する。テストから差し替えるための引数で、
+        /// 通常は名前付きパイプから開くものを用いる。
+        /// </summary>
+        public JsonRpcConnection(
+            HostLog log,
+            McpMethodTable methods,
+            string hostVersion,
+            int budgetChars,
+            TimeSpan requestTimeout,
+            int maxMessageBytes,
+            ClientProcessOpener openClient)
         {
             if (log == null)
             {
@@ -185,12 +210,25 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(hostVersion));
             }
 
+            if (openClient == null)
+            {
+                throw new ArgumentNullException(nameof(openClient));
+            }
+
             _log = log;
             _methods = methods;
             _hostVersion = hostVersion;
             _budgetChars = budgetChars;
             _requestTimeout = requestTimeout;
             _maxMessageBytes = maxMessageBytes;
+            _openClient = openClient;
+            _sessions = new SessionStore(log, _handleIds, _eventSequence);
+        }
+
+        /// <summary>ホストが持つセッションの集まり。</summary>
+        public SessionStore Sessions
+        {
+            get { return _sessions; }
         }
 
         /// <summary>
@@ -210,24 +248,32 @@ namespace PmxEditorMcp
 
             MessageChannel channel = new MessageChannel(stream, _maxMessageBytes);
 
-            // 接続ごとに独立させるため、この呼び出しのローカルに持つ。
-            bool handshaked = false;
-            ConnectionScope scope = new ConnectionScope(ui, _log, _handleIds, _eventSequence);
-
             // エラー応答の数はコードごとに数え、記録は最初の1回と、接続が切れたときの合計に限る。
             // 同じ記録の反復でローテーションが有用な履歴を押し流すのを避けるため。数え上げは接続ごとに
             // 独立させたいので、稼働世代やインスタンスでなくこの呼び出しのローカルに持つ。
             ErrorResponseCounter errors = new ErrorResponseCounter();
 
+            ClientProcess client;
+            bool opened = _openClient(stream, out client);
+
+            // 所有権が移ったかどうかは、この呼び出しがどう終わるかと切り離して覚える。戻り値で
+            // 表すと、例外で抜けた回に、セッションが所有しているハンドルを閉じてしまう。
+            ClientHandover handover = new ClientHandover();
+
             try
             {
-                HandleRequests(channel, errors, scope, handshaked);
+                HandleRequests(channel, errors, ui, opened ? client : null, handover);
             }
             finally
             {
                 try
                 {
-                    scope.Handles.ReleaseAll();
+                    // セッションが所有者として保つのは自分が受け取ったハンドルだけなので、
+                    // 繋ぎ直しで戻った接続が開いたぶんはここで閉じる。
+                    if (opened && !handover.Taken)
+                    {
+                        client.Dispose();
+                    }
                 }
                 finally
                 {
@@ -236,9 +282,22 @@ namespace PmxEditorMcp
             }
         }
 
-        private void HandleRequests(
-            MessageChannel channel, ErrorResponseCounter errors, ConnectionScope scope, bool handshaked)
+        /// <summary>接続元のプロセスの所有権がセッションへ移ったかどうか。</summary>
+        private sealed class ClientHandover
         {
+            public bool Taken { get; set; }
+        }
+
+        /// <summary>要求を処理する。</summary>
+        private void HandleRequests(
+            MessageChannel channel,
+            ErrorResponseCounter errors,
+            IUiInvoker ui,
+            ClientProcess client,
+            ClientHandover handover)
+        {
+            ConnectionScope scope = null;
+
             while (true)
             {
                 string line;
@@ -274,7 +333,7 @@ namespace PmxEditorMcp
                 JsonRpcRequest request = parsed.Request;
                 bool isHandshake = HandshakeMethodName.Equals(request.Method, StringComparison.Ordinal);
 
-                if (!handshaked && !isHandshake)
+                if (scope == null && !isHandshake)
                 {
                     Respond(channel, errors, request.Id, JsonRpcErrorCodes.HandshakeRequired,
                         "接続後の最初の要求は handshake でなければならない。");
@@ -283,16 +342,22 @@ namespace PmxEditorMcp
 
                 if (isHandshake)
                 {
-                    HandshakeOutcome outcome = CheckHandshake(channel, errors, request);
-                    if (outcome == HandshakeOutcome.Mismatched)
+                    Session session;
+                    HandshakeOutcome outcome = CheckHandshake(
+                        channel, errors, request, client, scope, handover, out session);
+                    if (outcome == HandshakeOutcome.Refused)
                     {
                         return;
                     }
 
                     if (outcome == HandshakeOutcome.Accepted)
                     {
-                        handshaked = true;
-                        WriteResult(channel, errors, request.Id, BuildHandshakeResult());
+                        if (scope == null)
+                        {
+                            scope = new ConnectionScope(ui, session);
+                        }
+
+                        WriteResult(channel, errors, request.Id, BuildHandshakeResult(scope.Session));
                     }
 
                     continue;
@@ -316,25 +381,35 @@ namespace PmxEditorMcp
                 }
 
                 int issuedBefore = scope.Handles.LastIssuedId;
-                object result;
-                if (isPing)
+                try
                 {
-                    result = "pong";
-                }
-                else if (!TryInvoke(channel, errors, request, method, parameters, scope, out result))
-                {
-                    DiscardHandles(scope, issuedBefore);
-                    continue;
-                }
+                    object result;
+                    if (isPing)
+                    {
+                        result = "pong";
+                    }
+                    else if (!TryInvoke(channel, errors, request, method, parameters, scope, out result))
+                    {
+                        DiscardHandles(scope, issuedBefore);
+                        continue;
+                    }
 
-                if (!WriteResult(channel, errors, request.Id, result))
+                    if (!WriteResult(channel, errors, request.Id, result))
+                    {
+                        DiscardHandles(scope, issuedBefore);
+                    }
+                }
+                catch
                 {
+                    // 書き出せずに抜ける経路でも、呼び出し側へ届かないIDを台帳に残さない。
+                    // 台帳は切断を越えて生きるので、残すと誰も解放できないまま居座る。
                     DiscardHandles(scope, issuedBefore);
+                    throw;
                 }
             }
         }
 
-        /// <summary>ハンドシェイクの検査の結末。引数の不備と番号の不一致で切断の要否が分かれる。</summary>
+        /// <summary>ハンドシェイクの検査の結末。引数の不備と、断る結末とで切断の要否が分かれる。</summary>
         private enum HandshakeOutcome
         {
             /// <summary>受理した。</summary>
@@ -343,14 +418,25 @@ namespace PmxEditorMcp
             /// <summary>引数が契約に合わない。応答は返したが接続は保つ。</summary>
             InvalidParams,
 
-            /// <summary>プロトコル番号が合わない。応答を返して切断する。</summary>
-            Mismatched,
+            /// <summary>断った。応答を返して切断する。</summary>
+            Refused,
         }
 
-        /// <summary>ハンドシェイクの引数を検査し、受理できないときは応答まで済ませる。</summary>
+        /// <summary>
+        /// ハンドシェイクの引数を検査し、接続に結び付けるセッションを決める。受理できないときは
+        /// 応答まで済ませる。済んだ接続で受け直したときは、同じセッションのまま同じ応答を返す。
+        /// </summary>
         private HandshakeOutcome CheckHandshake(
-            MessageChannel channel, ErrorResponseCounter errors, JsonRpcRequest request)
+            MessageChannel channel,
+            ErrorResponseCounter errors,
+            JsonRpcRequest request,
+            ClientProcess client,
+            ConnectionScope scope,
+            ClientHandover handover,
+            out Session session)
         {
+            session = null;
+
             IDictionary<string, object> parameters;
             if (!request.TryGetParams(out parameters))
             {
@@ -372,10 +458,60 @@ namespace PmxEditorMcp
                 Respond(channel, errors, request.Id, JsonRpcErrorCodes.ProtocolMismatch,
                     "プロトコル番号が合わない。このホストは "
                     + Protocol.ToString(CultureInfo.InvariantCulture) + " を用いる。");
-                return HandshakeOutcome.Mismatched;
+                return HandshakeOutcome.Refused;
             }
 
+            string presented;
+            if (!TryReadSessionId(parameters, out presented))
+            {
+                Respond(channel, errors, request.Id, JsonRpcErrorCodes.InvalidParams,
+                    "handshake の session は文字列でなければならない。");
+                return HandshakeOutcome.InvalidParams;
+            }
+
+            if (scope != null)
+            {
+                session = scope.Session;
+                return HandshakeOutcome.Accepted;
+            }
+
+            // 開けたかどうかだけでは終わったかを判じられない。終わったプロセスでも、そのプロセス
+            // オブジェクトへのハンドルが残っている間は開けて、開いた直後から合図済みになる。
+            if (client == null || client.HasExited)
+            {
+                Respond(channel, errors, request.Id, JsonRpcErrorCodes.SessionRefused,
+                    "接続元のプロセスを所有者にできない。");
+                return HandshakeOutcome.Refused;
+            }
+
+            if (!_sessions.TryResolve(presented, client, out session))
+            {
+                Respond(channel, errors, request.Id, JsonRpcErrorCodes.SessionRefused,
+                    "提示された session は別のプロセスのものである。");
+                return HandshakeOutcome.Refused;
+            }
+
+            handover.Taken = ReferenceEquals(session.Client, client);
+
             return HandshakeOutcome.Accepted;
+        }
+
+        /// <summary>
+        /// 提示された識別子を読む。書かれていなければ null を入れて真。文字列でなければ偽。
+        /// </summary>
+        private static bool TryReadSessionId(IDictionary<string, object> parameters, out string id)
+        {
+            id = null;
+
+            object value;
+            if (!parameters.TryGetValue("session", out value) || value == null)
+            {
+                return true;
+            }
+
+            id = value as string;
+
+            return id != null;
         }
 
         private static bool IsNumber(object value)
@@ -419,13 +555,14 @@ namespace PmxEditorMcp
                 || exception is NotSupportedException;
         }
 
-        private IDictionary<string, object> BuildHandshakeResult()
+        private IDictionary<string, object> BuildHandshakeResult(Session session)
         {
             return new Dictionary<string, object>
             {
                 { "protocol", Protocol },
                 { "hostVersion", _hostVersion },
                 { "budgetChars", _budgetChars },
+                { "session", session.Id },
             };
         }
 
@@ -566,22 +703,25 @@ namespace PmxEditorMcp
         /// </summary>
         private sealed class ConnectionScope
         {
-            public ConnectionScope(
-                IUiInvoker ui,
-                HostLog log,
-                HandleIdIssuer handleIds,
-                EventSequenceIssuer eventSequence)
+            public ConnectionScope(IUiInvoker ui, Session session)
             {
                 Ui = ui;
-                Handles = new HandleLedger(log, handleIds);
-                Events = new EventQueue(eventSequence);
+                Session = session;
             }
 
             public IUiInvoker Ui { get; }
 
-            public HandleLedger Handles { get; }
+            public Session Session { get; }
 
-            public EventQueue Events { get; }
+            public HandleLedger Handles
+            {
+                get { return Session.Handles; }
+            }
+
+            public EventQueue Events
+            {
+                get { return Session.Events; }
+            }
         }
 
         /// <summary>
