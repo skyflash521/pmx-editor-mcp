@@ -24,6 +24,32 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string MorphList = Pmx + ".Morph()";
 
+        private const string Bone = "PEPlugin.Pmx.IPXBone";
+
+        private const string Ik = "PEPlugin.Pmx.IPXIK";
+
+        private const string BoneList = Pmx + ".Bone()";
+
+        private const string IkKey = Bone + ".IK()";
+
+        private const string Label = "PEPlugin.Pmx.IPXLabel";
+
+        private const string LabelOfPmx = Pmx + ".Label()";
+
+        private const string LabelOfBone = Bone + ".Label()";
+
+        private const string Part = "PEPlugin.Pmx.IPXPart";
+
+        private const string Mid = "PEPlugin.Pmx.IPXMid";
+
+        private const string Far = "PEPlugin.Pmx.IPXFar";
+
+        private const string PartList = MaterialOffset + ".Parts()";
+
+        private const string MidOfBone = Bone + ".Mid()";
+
+        private const string FarOfMid = Mid + ".Far()";
+
         private const string OffsetList = Morph + ".Offsets()";
 
         private const string HeaderKey = Pmx + ".Header()";
@@ -77,7 +103,37 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(AccessPathKind.Child, path.Kind);
             Assert.Equal(HeaderKey, path.RowKey);
             Assert.Empty(path.Parents);
-            Assert.Null(path.ElementType);
+            Assert.False(path.Listed);
+        }
+
+        [Fact]
+        public void AChildOfAnElementIsReachedThroughTheListThatHoldsIt()
+        {
+            AccessPath path = Resolve()[Ik];
+
+            Assert.Equal(AccessPathKind.Element, path.Kind);
+            Assert.Equal(IkKey, path.RowKey);
+            Assert.False(path.Listed);
+            Assert.Equal(new[] { BoneList }, path.Parents.ToArray());
+        }
+
+        [Fact]
+        public void TheWayWithFewerStepsIsTheOneThatRemains()
+        {
+            AccessPath path = Resolve()[Label];
+
+            Assert.Equal(AccessPathKind.Child, path.Kind);
+            Assert.Equal(LabelOfPmx, path.RowKey);
+            Assert.Empty(path.Parents);
+        }
+
+        [Fact]
+        public void AWayFoundLaterStillWinsWhenItHasFewerSteps()
+        {
+            AccessPath path = Resolve()[Far];
+
+            Assert.Equal(FarOfMid, path.RowKey);
+            Assert.Equal(new[] { BoneList, MidOfBone }, path.Parents.ToArray());
         }
 
         [Fact]
@@ -121,6 +177,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Type(Offset),
                     Type(MaterialOffset, Offset),
                     Type(Vertex),
+                    Type(Bone),
+                    Type(Ik),
+                    Type(Label),
+                    Type(Part),
+                    Type(Mid),
+                    Type(Far),
                     Type(Header),
                     Type(Morph),
                     Type(Pmx),
@@ -129,6 +191,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[]
                 {
                     List(Pmx, "Vertex", Vertex),
+                    List(Pmx, "Bone", Bone),
+                    Single(Bone, "IK", Ik),
+                    Single(Bone, "Label", Label),
+                    Single(Bone, "Mid", Mid),
+                    Single(Mid, "Far", Far),
+                    Single(Part, "Far", Far),
+                    List(MaterialOffset, "Parts", Part),
+                    Single(Pmx, "Label", Label),
                     List(Pmx, "Morph", Morph),
                     List(Morph, "Offsets", Offset),
                     Single(Pmx, "Header", Header),
@@ -141,6 +211,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 Role(Pmx, "pmx", "pmxes"),
                 Role(Vertex, "vertex", "vertices"),
+                Role(Bone, "bone", "bones"),
+                Role(Ik, "ik", "iks"),
+                Role(Label, "label", "labels"),
+                Role(Part, "part", "parts"),
+                Role(Mid, "mid", "mids"),
+                Role(Far, "far", "fars"),
                 Role(Header, "header", "headers"),
                 Role(Morph, "morph", "morphs"),
                 Role(Offset, "morph_offset", "morph_offsets"),
@@ -149,9 +225,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ElementCollectionRecord[] collections =
             {
                 new ElementCollectionRecord(VertexList, true, "題材。", new[] { VertexList }),
+                new ElementCollectionRecord(BoneList, true, "題材。", new[] { BoneList }),
                 new ElementCollectionRecord(MorphList, true, "題材。", new[] { MorphList }),
                 new ElementCollectionRecord(
                     OffsetList, true, "題材。", new[] { MorphList, OffsetList }),
+                new ElementCollectionRecord(
+                    PartList, true, "題材。", new[] { MorphList, OffsetList, PartList }),
             };
 
             return new TypeRoleTable(types, new HandleIssuanceRecord[0], collections);

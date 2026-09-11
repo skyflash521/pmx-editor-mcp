@@ -284,6 +284,338 @@
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。"
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.AppendParent()",
+      "editKind": "read",
+      "basis": "付与の親ボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.AppendRatio()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して付与率を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.Controllable()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して操作できるかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.ExternalKey()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して外部親のキーを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.FixAxis()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して固定する軸の向きを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.GetLocalAxis(out PEPlugin.SDX.V3,out PEPlugin.SDX.V3,out PEPlugin.SDX.V3)",
+      "editKind": "read",
+      "basis": "ローカル軸のX・Y・Zを取り出すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IK()",
+      "editKind": "read",
+      "basis": "IKの設定を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsAfterPhysics()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して物理の後で変形するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsAppendLocal()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して付与をローカルで行うかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsAppendRotation()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して回転を付与するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsAppendTranslation()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して移動を付与するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsExternal()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して外部親で変形するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsFixAxis()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して軸を固定するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsIK()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してIKボーンかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsLocalFrame()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してローカル軸を持つかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsRotation()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して回転できるかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.IsTranslation()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して移動できるかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.Level()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して変形の階層を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.Name()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してボーン名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.NameE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語のボーン名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.Parent()",
+      "editKind": "read",
+      "basis": "親ボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.Position()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して位置を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.SetLocalAxis(PEPlugin.SDX.V3,PEPlugin.SDX.V3)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してボーンのローカル軸を定め、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.SetPMDBoneKind(PEPlugin.Pmd.BoneKind)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してPMDのボーン種別に合う設定へまとめて変え、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.ToBone()",
+      "editKind": "read",
+      "basis": "接続先のボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.ToOffset()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して接続先への相対位置を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.Visible()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して表示するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex1()",
       "editKind": "read",
       "basis": "面の1つめの頂点を返すだけで、エディタの状態を動かさない。"
@@ -332,6 +664,81 @@
       "embeddedIn": [
         "model_list_headers",
         "model_update_headers"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIK.Angle()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して1回あたりの角度の制限を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_iks",
+        "model_update_iks"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIK.Links()",
+      "editKind": "read",
+      "basis": "IKリンクのリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIK.LoopCount()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して演算を繰り返す回数を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_iks",
+        "model_update_iks"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIK.Target()",
+      "editKind": "read",
+      "basis": "IKが合わせる先のボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIKLink.Bone()",
+      "editKind": "read",
+      "basis": "リンクのボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIKLink.High()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して角度の制限の上限を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_ik_links",
+        "model_update_ik_links"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIKLink.IsLimit()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して角度を制限するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_ik_links",
+        "model_update_ik_links"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIKLink.Low()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して角度の制限の下限を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_ik_links",
+        "model_update_ik_links"
       ]
     },
     {
@@ -778,6 +1185,115 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.IsBone()",
+      "editKind": "read",
+      "basis": "ボーンモーフかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.IsFlip()",
+      "editKind": "read",
+      "basis": "フリップモーフかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.IsGroup()",
+      "editKind": "read",
+      "basis": "グループモーフかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.IsImpulse()",
+      "editKind": "read",
+      "basis": "インパルスモーフかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.IsMaterial()",
+      "editKind": "read",
+      "basis": "材質モーフかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.IsUV()",
+      "editKind": "read",
+      "basis": "UVモーフかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.IsVertex()",
+      "editKind": "read",
+      "basis": "頂点モーフかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.Kind()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してモーフの種別を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morphs",
+        "model_update_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.Name()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してモーフ名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morphs",
+        "model_update_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.NameE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語のモーフ名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morphs",
+        "model_update_morphs"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.Offsets()",
+      "editKind": "read",
+      "basis": "モーフオフセットのリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.Panel()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して表示するパネルを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morphs",
+        "model_update_morphs"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Body()",
       "editKind": "read",
       "basis": "剛体リストを返すだけで、エディタの状態を動かさない。"
@@ -1209,6 +1725,23 @@
         "model_list_vertices",
         "model_update_vertices"
       ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertexMorphOffset.Offset()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して頂点を動かす量を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertexMorphOffset.Vertex()",
+      "editKind": "read",
+      "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。"
     },
     {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.ReleaseViewEventListener(PXCPlugin.Event.IPXViewEventListener)",

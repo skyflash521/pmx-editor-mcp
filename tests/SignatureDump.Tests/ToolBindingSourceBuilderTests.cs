@@ -37,7 +37,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + ".OpenPMXFile(System.String)\", new ToolReceiver(ToolReceiverKind.Connection,"
                     + " \"" + Form + "\", EditKind.DirectChange), ToolAccess.Whole(),"
                     + " DangerKind.None, new ToolArgument[] { new ToolArgument(\"path\","
-                    + " typeof(global::System.String)) }, typeof(global::System.Boolean)));",
+                    + " typeof(global::System.String)) }, new ToolArgument[] {  },"
+                    + " typeof(global::System.Boolean)));",
                 source.Text);
         }
 
@@ -47,7 +48,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolBindingSource source = Build(
                 Dispatched("session_undo", Method("Undo", "System.Void")));
 
-            Assert.Contains("new ToolArgument[] {  }, null));", source.Text);
+            Assert.Contains(
+                "new ToolArgument[] {  }, new ToolArgument[] {  }, null));", source.Text);
         }
 
         [Fact]
@@ -175,7 +177,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "elements.Add(\"model_add_vertices\", new ToolElements(false,"
                     + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.DuplicateEdit),"
                     + " new ToolAccess(ToolAccessKind.Element, \"" + ListKey
-                    + "\", new ToolHop[] {  }, typeof(global::" + Vertex
+                    + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
                     + "), item => item is global::" + Vertex + ", \"vertex\", null)));",
                 source.Text);
             Assert.Contains(

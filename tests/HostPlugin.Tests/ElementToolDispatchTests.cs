@@ -39,6 +39,12 @@ namespace PmxEditorMcp.Tests
 
         private const string NoteOfSpareKey = "Sdk.Spare.Note()";
 
+        private const string MarkKey = "Sdk.Group.Mark()";
+
+        private const string WidthKey = "Sdk.Mark.Width()";
+
+        private const string SplitKey = "Sdk.Item.Split(out System.String,out System.String)";
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -339,6 +345,61 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
             Assert.Contains("位置 0 は item", Message(envelope));
             Assert.Equal("控え", ((Spare)group.Leaves[1]).Note);
+        }
+
+        [Fact]
+        public void TheChildEachElementHoldsBecomesOneColumn()
+        {
+            _model.Groups.Add(new Group { Mark = new Mark { Width = 1 } });
+            _model.Groups.Add(new Group());
+            _model.Groups.Add(new Group { Mark = new Mark { Width = 3 } });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_marks",
+                Arguments(TargetNames.Parent.All, true, TargetNames.Element.All, true));
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.Equal(2, Value(envelope)[ToolDispatch.TotalName]);
+            Assert.Equal(new[] { 1, 3 }, items.Select(i => (int)i["width"]).ToArray());
+            Assert.Equal(
+                new[] { 0, 2 },
+                items.Select(i => (int)i[ToolDispatch.ParentIndexName]).ToArray());
+        }
+
+        [Fact]
+        public void OnlyThePointedChildIsUpdated()
+        {
+            Group first = new Group { Mark = new Mark { Width = 1 } };
+            Group second = new Group { Mark = new Mark { Width = 3 } };
+            _model.Groups.Add(first);
+            _model.Groups.Add(second);
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_marks",
+                Arguments(
+                    TargetNames.Parent.All, true,
+                    TargetNames.Element.Indices, new object[] { 1 },
+                    ToolDispatch.ValueName, Value("width", 7)));
+
+            Assert.Equal(1, Value(envelope)[SetResponse.UpdatedName]);
+            Assert.Equal(1, first.Mark.Width);
+            Assert.Equal(7, second.Mark.Width);
+        }
+
+        [Fact]
+        public void TheOutputArgumentsComeBackAsOneSetPerTarget()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_split_item", Arguments(TargetNames.Element.All, true));
+
+            object[] values = (object[])envelope["value"];
+            Assert.Equal(2, values.Length);
+            Assert.Equal("一の左", ((IDictionary<string, object>)values[0])["left"]);
+            Assert.Equal("一の右", ((IDictionary<string, object>)values[0])["right"]);
+            Assert.Equal("二の左", ((IDictionary<string, object>)values[1])["left"]);
         }
 
         [Fact]
@@ -804,6 +865,24 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     {
+                        MarkKey,
+                        (target, arguments) => ((Group)target).Mark
+                    },
+                    {
+                        WidthKey,
+                        (target, arguments) => arguments.Length == 0
+                            ? (object)((Mark)target).Width
+                            : Written(((Mark)target), (int)arguments[0])
+                    },
+                    {
+                        SplitKey,
+                        (target, arguments) => new object[]
+                        {
+                            ((Item)target).Label + "の左",
+                            ((Item)target).Label + "の右",
+                        }
+                    },
+                    {
                         NoteOfSpareKey,
                         (target, arguments) => arguments.Length == 0
                             ? (object)((Spare)target).Note
@@ -831,6 +910,13 @@ namespace PmxEditorMcp.Tests
         private static object Written(Spare spare, string note)
         {
             spare.Note = note;
+
+            return null;
+        }
+
+        private static object Written(Mark mark, int width)
+        {
+            mark.Width = width;
 
             return null;
         }
@@ -895,6 +981,7 @@ namespace PmxEditorMcp.Tests
                 ToolAccessKind.Element,
                 ItemsKey,
                 null,
+                true,
                 typeof(Item),
                 item => item is Item,
                 "item");
@@ -907,10 +994,24 @@ namespace PmxEditorMcp.Tests
                 ToolAccessKind.Element,
                 LeavesKey,
                 new[] { new ToolHop(GroupsKey, true) },
+                true,
                 typeof(Item),
                 item => item is Item,
                 "item",
                 Kinds());
+        }
+
+        /// <summary>親のリストを1つ挟んだ先の、親ごとに1つだけ持つ子へ至る道。</summary>
+        private static ToolAccess Marked()
+        {
+            return new ToolAccess(
+                ToolAccessKind.Element,
+                MarkKey,
+                new[] { new ToolHop(GroupsKey, true) },
+                false,
+                typeof(Mark),
+                item => item is Mark,
+                "mark");
         }
 
         /// <summary>そのリストが並べうる具象の型。</summary>
@@ -930,6 +1031,7 @@ namespace PmxEditorMcp.Tests
                 ToolAccessKind.Element,
                 LeavesKey,
                 new[] { new ToolHop(GroupsKey, true) },
+                true,
                 typeof(Item),
                 item => item is Item,
                 "item",
@@ -943,6 +1045,7 @@ namespace PmxEditorMcp.Tests
                 ToolAccessKind.Element,
                 LeavesKey,
                 new[] { new ToolHop(GroupsKey, true) },
+                true,
                 typeof(Leaf),
                 item => item is Leaf,
                 "leaf",
@@ -961,6 +1064,22 @@ namespace PmxEditorMcp.Tests
                         Direct(),
                         DangerKind.None,
                         new[] { new ToolArgument("v", typeof(float)) },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "model_split_item",
+                    new ToolCall(
+                        SplitKey,
+                        Rooted(EditKind.Read),
+                        Direct(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new[]
+                        {
+                            new ToolArgument("left", typeof(string)),
+                            new ToolArgument("right", typeof(string)),
+                        },
                         null)
                 },
                 {
@@ -971,6 +1090,7 @@ namespace PmxEditorMcp.Tests
                         Sprout(),
                         DangerKind.None,
                         new[] { new ToolArgument("v", typeof(float)) },
+                        new ToolArgument[0],
                         null)
                 },
             };
@@ -980,7 +1100,8 @@ namespace PmxEditorMcp.Tests
         {
             ToolField[] labels = { new ToolField("label", LabelKey, typeof(string)) };
             ToolField[] texts = { new ToolField("text", TextKey, typeof(string)) };
-            ToolAccess note = new ToolAccess(ToolAccessKind.Child, NoteKey, null, null, null);
+            ToolAccess note = new ToolAccess(
+                ToolAccessKind.Child, NoteKey, null, false, null, null);
 
             return new Dictionary<string, ToolFields>(StringComparer.Ordinal)
             {
@@ -1010,6 +1131,24 @@ namespace PmxEditorMcp.Tests
                     "model_update_sprouts",
                     new ToolFields(
                         true, true, Rooted(EditKind.DuplicateEdit), Divided(), Sprouts(labels))
+                },
+                {
+                    "model_list_marks",
+                    new ToolFields(
+                        false,
+                        true,
+                        Rooted(EditKind.Read),
+                        Marked(),
+                        Set(new[] { new ToolField("width", WidthKey, typeof(int)) }))
+                },
+                {
+                    "model_update_marks",
+                    new ToolFields(
+                        true,
+                        true,
+                        Rooted(EditKind.DuplicateEdit),
+                        Marked(),
+                        Set(new[] { new ToolField("width", WidthKey, typeof(int)) }))
                 },
                 {
                     "model_list_notes",
@@ -1045,6 +1184,15 @@ namespace PmxEditorMcp.Tests
         private sealed class Group
         {
             public List<Leaf> Leaves { get; } = new List<Leaf>();
+
+            /// <summary>その親が1つだけ持つ子。持たない親では null。</summary>
+            public Mark Mark { get; set; }
+        }
+
+        /// <summary>リストの要素が1つだけ持つ子の題材。</summary>
+        private sealed class Mark
+        {
+            public int Width { get; set; }
         }
 
         /// <summary>PMXが1つだけ持つ子の題材。</summary>

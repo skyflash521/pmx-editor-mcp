@@ -104,6 +104,58 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AMethodWithOutputArgumentsTakesThemIntoLocalsAndReturnsThem()
+        {
+            RelaySource source = Build(new SignatureRecord(
+                "Sdk.Type.Split(System.Int32,out System.String,out System.String)",
+                "Sdk.Type",
+                MemberKind.Method,
+                "Split",
+                false,
+                0,
+                new[]
+                {
+                    new ParameterRecord("at", "System.Int32", ParameterDirection.In, false),
+                    new ParameterRecord("left", "System.String", ParameterDirection.Out, false),
+                    new ParameterRecord("right", "System.String", ParameterDirection.Out, false),
+                },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Write));
+
+            Assert.Empty(source.Unresolved);
+            Assert.Contains("global::System.String left;", source.Text);
+            Assert.Contains(
+                "((global::Sdk.Type)target).Split((global::System.Int32)arguments[0], out left,"
+                    + " out right);",
+                source.Text);
+            Assert.Contains("return new object[] { left, right };", source.Text);
+        }
+
+        [Fact]
+        public void AMethodThatReturnsAValueAndAlsoWritesOutputArgumentsIsLeftUnresolved()
+        {
+            Assert.Equal(
+                new[] { "Sdk.Type.Take(out System.Int32)" },
+                Build(new SignatureRecord(
+                    "Sdk.Type.Take(out System.Int32)",
+                    "Sdk.Type",
+                    MemberKind.Method,
+                    "Take",
+                    false,
+                    0,
+                    new[]
+                    {
+                        new ParameterRecord("value", "System.Int32", ParameterDirection.Out, false),
+                    },
+                    "System.Boolean",
+                    false,
+                    false,
+                    OperationDirection.Write)).Unresolved);
+        }
+
+        [Fact]
         public void TheVersionUsedForGenerationIsCarriedInTheText()
         {
             Assert.Contains("internal const string SdkVersion = \"0.0.8.9\";", Build("Sdk.Type.Name").Text);

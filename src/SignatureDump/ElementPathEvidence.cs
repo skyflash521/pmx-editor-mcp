@@ -11,10 +11,10 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>受け手そのもの。</summary>
         Whole,
 
-        /// <summary>PMXが1つだけ持つ子。</summary>
+        /// <summary>PMXから単数の段だけを辿った先。相手は1つに決まる。</summary>
         Child,
 
-        /// <summary>リストが並べる要素。</summary>
+        /// <summary>途中にリストの段を挟んだ先。相手は集合になる。</summary>
         Element,
     }
 
@@ -22,23 +22,31 @@ namespace PmxEditorMcp.SignatureDump
     public sealed class AccessPath
     {
         public AccessPath(
-            AccessPathKind kind, string rowKey, IList<string> parents, string elementType)
+            AccessPathKind kind,
+            string rowKey,
+            IList<string> parents,
+            bool listed,
+            string elementType)
         {
             Kind = kind;
             RowKey = rowKey;
             Parents = new ReadOnlyCollection<string>(parents ?? new string[0]);
+            Listed = listed;
             ElementType = elementType;
         }
 
         public AccessPathKind Kind { get; }
 
-        /// <summary>子を得る行、または要素を並べるリストの行。受け手そのものでは null。</summary>
+        /// <summary>最後の一歩の行。受け手そのものでは null。</summary>
         public string RowKey { get; }
 
-        /// <summary>要素までに辿る親の行。PMXが直に持つリストでは空。</summary>
+        /// <summary>最後の一歩までに辿る行。</summary>
         public IList<string> Parents { get; }
 
-        /// <summary>要素として扱う型の名前。要素を相手にしない道では null。</summary>
+        /// <summary>最後の一歩がリストの段か。偽ならそのプロパティを1つ辿る段。</summary>
+        public bool Listed { get; }
+
+        /// <summary>相手にする型の名前。受け手そのものでは null。</summary>
         public string ElementType { get; }
     }
 
@@ -75,7 +83,7 @@ namespace PmxEditorMcp.SignatureDump
             Dictionary<string, AccessPath> paths =
                 new Dictionary<string, AccessPath>(StringComparer.Ordinal)
                 {
-                    { PmxTypeName, new AccessPath(AccessPathKind.Whole, null, null, null) },
+                    { PmxTypeName, new AccessPath(AccessPathKind.Whole, null, null, false, null) },
                 };
 
             foreach (ElementCollectionRecord collection in roles.Collections
@@ -94,41 +102,23 @@ namespace PmxEditorMcp.SignatureDump
                 IList<string> parents = collection.OwnerPath
                     .Take(collection.OwnerPath.Count - 1)
                     .ToList();
-                Reach(paths, element, collection.SignatureKey, parents);
+                Reach(paths, element, collection.SignatureKey, parents, true);
                 IList<string> leaves;
                 if (concrete.TryGetValue(element, out leaves))
                 {
                     foreach (string leaf in leaves)
                     {
-                        Reach(paths, leaf, collection.SignatureKey, parents);
+                        Reach(paths, leaf, collection.SignatureKey, parents, true);
                     }
                 }
             }
 
-            foreach (SignatureRecord signature in inventory.Signatures
-                .Where(s => string.Equals(
-                    TypeDefinitionName.OfElement(s.DeclaringType),
-                    PmxTypeName,
-                    StringComparison.Ordinal))
-                .Where(s => s.MemberKind == MemberKind.Property && s.CanRead && s.Parameters.Count == 0)
-                .OrderBy(s => s.Key, StringComparer.Ordinal))
-            {
-                string value = TypeDefinitionName.OfElement(signature.ValueType);
-                string contained;
-                if (ValueTypeName.TryElement(signature.ValueType, out contained)
-                    || !roleOf.ContainsKey(value)
-                    || paths.ContainsKey(value))
-                {
-                    continue;
-                }
-
-                paths.Add(value, new AccessPath(AccessPathKind.Child, signature.Key, null, null));
-            }
+            Walk(inventory, roleOf, signatures, paths);
 
             return new ReadOnlyDictionary<string, AccessPath>(paths);
         }
 
-        /// <summary>その道で辿り着く一歩がリストの段かどうか。</summary>
+        /// <summary>その道で辿る一歩がリストの段かどうか。</summary>
         public static bool Listed(IDictionary<string, SignatureRecord> signatures, string rowKey)
         {
             if (signatures == null)
@@ -148,19 +138,93 @@ namespace PmxEditorMcp.SignatureDump
                 && ValueTypeName.TryElement(signature.ValueType, out element);
         }
 
+        /// <summary>
+        /// まだ道の無い型へ届く道を覚える。同じ型へ届く道が2つあれば、一歩の少ない方を採る。
+        /// </summary>
+        private static void Walk(
+            InventoryRecord inventory,
+            IDictionary<string, TypeRole> roleOf,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, AccessPath> paths)
+        {
+            IDictionary<string, IList<SignatureRecord>> members = inventory.Signatures
+                .Where(s => s.MemberKind == MemberKind.Property
+                    && s.CanRead
+                    && s.Parameters.Count == 0)
+                .GroupBy(s => TypeDefinitionName.OfElement(s.DeclaringType), StringComparer.Ordinal)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (IList<SignatureRecord>)g.OrderBy(s => s.Key, StringComparer.Ordinal).ToList(),
+                    StringComparer.Ordinal);
+
+            for (int steps = 0; steps <= paths.Values.Max(Steps); steps++)
+            {
+                foreach (string from in paths
+                    .Where(p => Steps(p.Value) == steps)
+                    .Select(p => p.Key)
+                    .OrderBy(t => t, StringComparer.Ordinal)
+                    .ToList())
+                {
+                    IList<SignatureRecord> listed;
+                    if (!members.TryGetValue(from, out listed))
+                    {
+                        continue;
+                    }
+
+                    foreach (SignatureRecord signature in listed)
+                    {
+                        string value = TypeDefinitionName.OfElement(signature.ValueType);
+                        string element;
+                        if (ValueTypeName.TryElement(signature.ValueType, out element)
+                            || !roleOf.ContainsKey(value)
+                            || paths.ContainsKey(value))
+                        {
+                            continue;
+                        }
+
+                        paths.Add(value, Extend(paths[from], signature.Key, value));
+                    }
+                }
+            }
+        }
+
+        /// <summary>その道が辿る一歩の数。</summary>
+        private static int Steps(AccessPath path)
+        {
+            return path.Parents.Count + (path.RowKey == null ? 0 : 1);
+        }
+
+        /// <summary>その道の先へ、単数の段を1つ延ばした道。</summary>
+        private static AccessPath Extend(AccessPath path, string rowKey, string type)
+        {
+            List<string> parents = new List<string>(path.Parents);
+            if (path.RowKey != null)
+            {
+                parents.Add(path.RowKey);
+            }
+
+            return new AccessPath(
+                path.Kind == AccessPathKind.Element ? AccessPathKind.Element : AccessPathKind.Child,
+                rowKey,
+                parents,
+                false,
+                type);
+        }
+
         /// <summary>その型へ至る道をまだ持っていなければ覚える。</summary>
         private static void Reach(
             IDictionary<string, AccessPath> paths,
             string type,
             string rowKey,
-            IList<string> parents)
+            IList<string> parents,
+            bool listed)
         {
             if (paths.ContainsKey(type))
             {
                 return;
             }
 
-            paths.Add(type, new AccessPath(AccessPathKind.Element, rowKey, parents, type));
+            paths.Add(type, new AccessPath(AccessPathKind.Element, rowKey, parents, listed, type));
         }
     }
 }

@@ -102,8 +102,11 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 resolved.Add(rowKey);
-                calls.Append(Indent).Append("calls.Add(").Append(Literal(rowKey))
-                    .Append(", (target, arguments) => ").Append(expression).Append(");")
+                calls.Append(Indent).Append("calls.Add(").Append(Literal(rowKey)).Append(", ")
+                    .Append(expression.StartsWith("(target", StringComparison.Ordinal)
+                        ? expression
+                        : "(target, arguments) => " + expression)
+                    .Append(");")
                     .Append('\n');
             }
 
@@ -115,14 +118,17 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// そのシグネチャを直接呼ぶ式。中継を作れない形では null。作れないのは、参照渡しの引数を
-        /// 持つもの・総称型の引数を取るもの・引数を取るプロパティ・イベント・コンストラクタで、
-        /// いずれもこの生成では呼び出しの形が1つに定まらない。
+        /// そのシグネチャを直接呼ぶ式。中継を作れない形では null。作れないのは、値を返しながら
+        /// 出力の引数も持つもの・参照渡し(入出力の両方)の引数を持つもの・総称型の引数を取るもの・
+        /// 引数を取るプロパティ・イベント・コンストラクタで、いずれもこの生成では呼び出しの形か
+        /// 返すものが1つに定まらない。
         /// </summary>
         private static string TryExpression(SignatureRecord signature)
         {
+            bool outputs = signature.Parameters.Any(p => p.Direction == ParameterDirection.Out);
             if (signature.GenericArity != 0
-                || signature.Parameters.Any(p => p.Direction != ParameterDirection.In))
+                || signature.Parameters.Any(p => p.Direction == ParameterDirection.Ref)
+                || (outputs && !IsVoid(signature.ValueType)))
             {
                 return null;
             }
@@ -137,6 +143,10 @@ namespace PmxEditorMcp.SignatureDump
             {
                 string arguments = string.Join(", ", Casts(signature).ToArray());
                 string call = receiver + "." + signature.MemberName + "(" + arguments + ")";
+                if (outputs)
+                {
+                    return Outputting(signature, call);
+                }
 
                 return IsVoid(signature.ValueType) ? "Call(() => " + call + ")" : call;
             }
@@ -170,10 +180,45 @@ namespace PmxEditorMcp.SignatureDump
             return "arguments.Length == 0 ? (object)" + read + " : " + write;
         }
 
+        /// <summary>呼び出しへ渡す引数の式。</summary>
         private static IEnumerable<string> Casts(SignatureRecord signature)
         {
-            return signature.Parameters
-                .Select((p, i) => Cast(p.TypeName, "arguments[" + Index(i) + "]"));
+            int taken = 0;
+            foreach (ParameterRecord parameter in signature.Parameters)
+            {
+                if (parameter.Direction == ParameterDirection.Out)
+                {
+                    yield return "out " + parameter.Name;
+                    continue;
+                }
+
+                yield return Cast(parameter.TypeName, "arguments[" + Index(taken) + "]");
+                taken++;
+            }
+        }
+
+        /// <summary>出力に現れる引数を持つ呼び出しの中継の式。</summary>
+        private static string Outputting(SignatureRecord signature, string call)
+        {
+            StringBuilder built = new StringBuilder("(target, arguments) =>\n");
+            built.Append(Indent).Append("{\n");
+            foreach (ParameterRecord parameter in signature.Parameters
+                .Where(p => p.Direction == ParameterDirection.Out))
+            {
+                built.Append(Indent).Append("    ").Append(Code(parameter.TypeName)).Append(' ')
+                    .Append(parameter.Name).Append(";\n");
+            }
+
+            built.Append(Indent).Append("    ").Append(call).Append(";\n");
+            built.Append(Indent).Append("    return new object[] { ")
+                .Append(string.Join(", ", signature.Parameters
+                    .Where(p => p.Direction == ParameterDirection.Out)
+                    .Select(p => p.Name)
+                    .ToArray()))
+                .Append(" };\n");
+            built.Append(Indent).Append("}");
+
+            return built.ToString();
         }
 
         private static bool IsVoid(string valueType)

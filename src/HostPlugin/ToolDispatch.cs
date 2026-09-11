@@ -267,6 +267,11 @@ namespace PmxEditorMcp
                 return refused.Envelope;
             }
 
+            if (call.Outputs.Count != 0)
+            {
+                return Written(call, result);
+            }
+
             return call.Result == null
                 ? ToolEnvelope.Success(null)
                 : Written(call.Result, result);
@@ -383,7 +388,7 @@ namespace PmxEditorMcp
                 return refused.Envelope;
             }
 
-            if (call.Result == null)
+            if (call.Result == null && call.Outputs.Count == 0)
             {
                 return ToolEnvelope.Success(SetResponse.Invoked(invoked));
             }
@@ -392,22 +397,21 @@ namespace PmxEditorMcp
             List<string> warnings = new List<string>();
             foreach (object one in results)
             {
-                object json;
-                IList<string> noted;
-                if (!ValueShape.TryToJson(
-                    call.Result,
-                    one,
-                    ImageTransfer.DefaultMaxLongSide,
-                    out json,
-                    out noted,
-                    out code,
-                    out message))
+                IDictionary<string, object> envelope = call.Outputs.Count != 0
+                    ? Written(call, one)
+                    : Written(call.Result, one);
+                object value;
+                if (!envelope.TryGetValue("value", out value))
                 {
-                    return Unwritable(call.Result, code, message);
+                    return envelope;
                 }
 
-                written.Add(json);
-                warnings.AddRange(noted);
+                written.Add(value);
+                object noted;
+                if (envelope.TryGetValue("warnings", out noted))
+                {
+                    warnings.AddRange(((object[])noted).Cast<string>());
+                }
             }
 
             return ToolEnvelope.Success(SetResponse.PerTarget(written, invoked), warnings);
@@ -985,7 +989,7 @@ namespace PmxEditorMcp
                     new TargetRequest(null, null, null, null, given),
                     TargetForm.Handles,
                     0,
-                    id => Held(context, tool.Access.Element, id) != null,
+                    id => Held(context, Accepted(tool.Access, null, true), id) != null,
                     out resolved,
                     out code,
                     out message,
@@ -995,7 +999,7 @@ namespace PmxEditorMcp
             }
 
             object[] items = resolved.Handles
-                .Select(id => Held(context, tool.Access.Element, id))
+                .Select(id => Held(context, Accepted(tool.Access, null, true), id))
                 .ToArray();
             int[] indices = new int[items.Length];
             Refusal refused = null;
@@ -1365,19 +1369,21 @@ namespace PmxEditorMcp
                 return true;
             }
 
+            IList<object> owners;
+            if (!TryOwners(access, target, out owners, out refused))
+            {
+                return false;
+            }
+
             if (access.Kind == ToolAccessKind.Child)
             {
-                object child;
-                SdkRelayRefusal refusal;
-                if (!_relay.TryInvoke(
-                    access.RowKey, Receiver(receiver, target), new object[0], out child, out refusal))
+                List<object> child = new List<object>();
+                if (owners.Count != 0 && !TryStep(Step(access), owners[0], child, out refused))
                 {
-                    refused = Refusal.Of(access.RowKey, refusal);
-
                     return false;
                 }
 
-                column = new[] { new Spot(null, 0, -1, -1, child) };
+                column = child.Select(one => new Spot(null, 0, -1, -1, one)).ToList();
 
                 return true;
             }
@@ -1387,12 +1393,8 @@ namespace PmxEditorMcp
                 return TryHeld(context, access, accepted, pointed, out column, out refused);
             }
 
-            SdkList list;
-            IList<object> owners;
             IList<int> chosen;
-            if (!TryList(access.RowKey, out list, out refused)
-                || !TryOwners(access, target, out owners, out refused)
-                || !TryChosen(pointed.Parents, owners.Count, out chosen, out refused))
+            if (!TryChosen(pointed.Parents, owners.Count, out chosen, out refused))
             {
                 return false;
             }
@@ -1400,11 +1402,16 @@ namespace PmxEditorMcp
             List<Spot> spots = new List<Spot>();
             foreach (int parent in chosen)
             {
-                int count = list.Count(owners[parent]);
-                for (int at = 0; at < count; at++)
+                List<object> reached = new List<object>();
+                if (!TryStep(Step(access), owners[parent], reached, out refused))
+                {
+                    return false;
+                }
+
+                for (int at = 0; at < reached.Count; at++)
                 {
                     spots.Add(new Spot(
-                        owners[parent], spots.Count, parent, at, list.At(owners[parent], at)));
+                        owners[parent], spots.Count, parent, access.Listed ? at : 0, reached[at]));
                 }
             }
 
@@ -1532,6 +1539,11 @@ namespace PmxEditorMcp
             }
 
             return true;
+        }
+
+        private static ToolHop Step(ToolAccess access)
+        {
+            return new ToolHop(access.RowKey, access.Listed);
         }
 
         /// <summary>
@@ -1971,7 +1983,7 @@ namespace PmxEditorMcp
                     return false;
                 }
 
-                object item = Held(context, tool.Access.Element, id);
+                object item = Held(context, Accepted(tool.Access, null, true), id);
                 if (item == null)
                 {
                     code = ToolEnvelope.InvalidHandle;
@@ -2566,6 +2578,46 @@ namespace PmxEditorMcp
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 出力に現れる引数を持つ呼び出しの応答。呼び出しが返した並びを、引数の名前の組へ直す。
+        /// </summary>
+        private static IDictionary<string, object> Written(ToolCall call, object result)
+        {
+            object[] values = result as object[];
+            if (values == null || values.Length != call.Outputs.Count)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "出力の引数の数が呼び出しの結果と合わない。");
+            }
+
+            Dictionary<string, object> members =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            List<string> warnings = new List<string>();
+            for (int at = 0; at < call.Outputs.Count; at++)
+            {
+                object json;
+                IList<string> written;
+                string code;
+                string message;
+                if (!ValueShape.TryToJson(
+                    call.Outputs[at].Type,
+                    values[at],
+                    ImageTransfer.DefaultMaxLongSide,
+                    out json,
+                    out written,
+                    out code,
+                    out message))
+                {
+                    return Unwritable(call.Outputs[at].Type, code, message);
+                }
+
+                members.Add(call.Outputs[at].Name, json);
+                warnings.AddRange(written);
+            }
+
+            return ToolEnvelope.Success(members, warnings);
         }
 
         private static IDictionary<string, object> Written(Type declared, object value)

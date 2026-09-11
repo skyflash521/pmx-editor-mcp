@@ -98,6 +98,7 @@ namespace PmxEditorMcp
             ToolAccessKind kind,
             string rowKey,
             IList<ToolHop> parents,
+            bool listed,
             Type element,
             Func<object, bool> isElement,
             string itemType = null,
@@ -116,6 +117,7 @@ namespace PmxEditorMcp
             Kind = kind;
             RowKey = rowKey;
             Parents = new ReadOnlyCollection<ToolHop>(parents ?? NoHops);
+            Listed = listed;
             Element = element;
             IsElement = isElement;
             ItemType = itemType;
@@ -129,6 +131,9 @@ namespace PmxEditorMcp
 
         /// <summary>要素までに辿る親の一歩。PMXが直に持つリストでは空。</summary>
         public IList<ToolHop> Parents { get; }
+
+        /// <summary>最後の一歩がリストの段か。偽なら、親ごとに1つだけ辿る段である。</summary>
+        public bool Listed { get; }
 
         /// <summary>要素として扱う宣言型。要素を相手にしない道では null。</summary>
         public Type Element { get; }
@@ -148,7 +153,7 @@ namespace PmxEditorMcp
         /// <summary>受け手そのものを相手にする道。</summary>
         public static ToolAccess Whole()
         {
-            return new ToolAccess(ToolAccessKind.Whole, null, null, null, null);
+            return new ToolAccess(ToolAccessKind.Whole, null, null, false, null, null);
         }
     }
 
@@ -241,6 +246,7 @@ namespace PmxEditorMcp
             ToolAccess access,
             DangerKind danger,
             IList<ToolArgument> arguments,
+            IList<ToolArgument> outputs,
             Type result)
         {
             if (rowKey == null)
@@ -263,11 +269,17 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(arguments));
             }
 
+            if (outputs == null)
+            {
+                throw new ArgumentNullException(nameof(outputs));
+            }
+
             RowKey = rowKey;
             Receiver = receiver;
             Access = access;
             Danger = danger;
             Arguments = new ReadOnlyCollection<ToolArgument>(arguments);
+            Outputs = new ReadOnlyCollection<ToolArgument>(outputs);
             Result = result;
         }
 
@@ -285,6 +297,9 @@ namespace PmxEditorMcp
 
         /// <summary>受け取る引数。</summary>
         public IList<ToolArgument> Arguments { get; }
+
+        /// <summary>出力に現れる引数。呼び出した後の値を応答へ載せる。</summary>
+        public IList<ToolArgument> Outputs { get; }
 
         /// <summary>返す値の宣言型。値を返さないメンバーでは null。</summary>
         public Type Result { get; }

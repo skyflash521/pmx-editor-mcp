@@ -137,6 +137,7 @@ namespace PmxEditorMcp.SignatureDump
                         AccessPathKind.Element,
                         row.SignatureKey,
                         Owner(ownerPaths, row.SignatureKey),
+                        true,
                         element.TypeName);
                     foreach (string named in ElementToolRule.Of(element))
                     {
@@ -347,6 +348,11 @@ namespace PmxEditorMcp.SignatureDump
                 ? "DangerKind." + kind
                 : "DangerKind.None";
             string[] arguments = signature.Parameters
+                .Where(p => p.Direction != ParameterDirection.Out)
+                .Select(p => "new ToolArgument(" + Literal(p.Name) + ", " + TypeOf(p.TypeName) + ")")
+                .ToArray();
+            string[] outputs = signature.Parameters
+                .Where(p => p.Direction != ParameterDirection.In)
                 .Select(p => "new ToolArgument(" + Literal(p.Name) + ", " + TypeOf(p.TypeName) + ")")
                 .ToArray();
 
@@ -354,6 +360,7 @@ namespace PmxEditorMcp.SignatureDump
                 + Receiver(row, signature, path) + ", "
                 + Access(path, signatures, concrete, byType) + ", "
                 + danger + ", new ToolArgument[] { " + string.Join(", ", arguments) + " }, "
+                + "new ToolArgument[] { " + string.Join(", ", outputs) + " }, "
                 + (string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
                     ? "null"
                     : TypeOf(signature.ValueType))
@@ -405,16 +412,17 @@ namespace PmxEditorMcp.SignatureDump
                 return "ToolAccess.Whole()";
             }
 
-            if (path.Kind == AccessPathKind.Child)
-            {
-                return "new ToolAccess(ToolAccessKind.Child, " + Literal(path.RowKey)
-                    + ", null, null, null)";
-            }
-
             string[] hops = path.Parents
                 .Select(p => "new ToolHop(" + Literal(p) + ", "
                     + (ElementPathEvidence.Listed(signatures, p) ? "true" : "false") + ")")
                 .ToArray();
+            string walked = "new ToolHop[] { " + string.Join(", ", hops) + " }, "
+                + (path.Listed ? "true" : "false");
+            if (path.Kind == AccessPathKind.Child)
+            {
+                return "new ToolAccess(ToolAccessKind.Child, " + Literal(path.RowKey)
+                    + ", " + walked + ", null, null)";
+            }
 
             TypeRoleRecord element;
             string noun = byType.TryGetValue(
@@ -423,7 +431,7 @@ namespace PmxEditorMcp.SignatureDump
                     : "null";
 
             return "new ToolAccess(ToolAccessKind.Element, " + Literal(path.RowKey)
-                + ", new ToolHop[] { " + string.Join(", ", hops) + " }, "
+                + ", " + walked + ", "
                 + TypeOf(path.ElementType) + ", item => item is " + Code(path.ElementType) + ", "
                 + noun + ", " + Items(path, signatures, concrete, byType) + ")";
         }

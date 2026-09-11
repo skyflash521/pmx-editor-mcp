@@ -532,7 +532,7 @@ namespace PmxEditorMcp.Tests
         private static ToolAccess Listed()
         {
             return new ToolAccess(
-                ToolAccessKind.Element, ListKey, null, typeof(Item), item => item is Item);
+                ToolAccessKind.Element, ListKey, null, true, typeof(Item), item => item is Item);
         }
 
         private static ToolReceiver Rooted(EditKind edit)
@@ -552,6 +552,7 @@ namespace PmxEditorMcp.Tests
                         ToolAccess.Whole(),
                         DangerKind.Reset,
                         new ToolArgument[0],
+                        new ToolArgument[0],
                         null)
                 },
                 {
@@ -561,6 +562,7 @@ namespace PmxEditorMcp.Tests
                         Rooted(EditKind.DuplicateEdit),
                         ToolAccess.Whole(),
                         DangerKind.None,
+                        new ToolArgument[0],
                         new ToolArgument[0],
                         null)
                 },

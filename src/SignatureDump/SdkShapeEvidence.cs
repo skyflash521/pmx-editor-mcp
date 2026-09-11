@@ -109,11 +109,12 @@ namespace PmxEditorMcp.SignatureDump
         {
             foreach (ParameterRecord parameter in signature.Parameters)
             {
-                foreach (SchemaItem input in schema.Branches
+                foreach (SchemaItem item in schema.Branches
                     .SelectMany(b => b.Inputs.SelectMany(i => i.WithNested))
+                    .Concat(schema.Output == null ? new SchemaItem[0] : schema.Output.WithNested)
                     .Where(i => string.Equals(i.Name, parameter.Name, StringComparison.Ordinal)))
                 {
-                    Assign(shapes, schema.Tool, input, parameter.TypeName, shapesByType);
+                    Assign(shapes, schema.Tool, item, parameter.TypeName, shapesByType);
                 }
             }
 

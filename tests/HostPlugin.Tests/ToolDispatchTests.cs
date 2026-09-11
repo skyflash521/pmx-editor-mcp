@@ -383,6 +383,7 @@ namespace PmxEditorMcp.Tests
                         ToolAccess.Whole(),
                         DangerKind.Overwrite,
                         new[] { new ToolArgument("path", typeof(string)) },
+                        new ToolArgument[0],
                         null)
                 },
                 {
@@ -392,6 +393,7 @@ namespace PmxEditorMcp.Tests
                         Direct(),
                         ToolAccess.Whole(),
                         DangerKind.None,
+                        new ToolArgument[0],
                         new ToolArgument[0],
                         typeof(int))
                 },
@@ -403,6 +405,7 @@ namespace PmxEditorMcp.Tests
                         ToolAccess.Whole(),
                         DangerKind.None,
                         new ToolArgument[0],
+                        new ToolArgument[0],
                         null)
                 },
                 {
@@ -412,6 +415,7 @@ namespace PmxEditorMcp.Tests
                         Direct(),
                         ToolAccess.Whole(),
                         DangerKind.None,
+                        new ToolArgument[0],
                         new ToolArgument[0],
                         null)
                 },
