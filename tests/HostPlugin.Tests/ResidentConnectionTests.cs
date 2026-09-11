@@ -47,7 +47,7 @@ namespace PmxEditorMcp.Tests
             using (ResidentConnection connection = ResidentConnection.Hold(runArgs, _log))
             {
                 Assert.Same(runArgs, connection.RunArgs);
-                Assert.Null(connection.CPluginConnector);
+                Assert.False(connection.IsHolding);
             }
 
             Assert.Equal(0, _system.CloneCount);
@@ -59,7 +59,7 @@ namespace PmxEditorMcp.Tests
         {
             using (ResidentConnection connection = Taken(ModulePath))
             {
-                Assert.Same(_cPluginConnector, connection.CPluginConnector);
+                Assert.Same(_cPluginConnector, connection.Use());
             }
 
             Assert.Equal(1, _system.CloneCount);
@@ -67,16 +67,82 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TakingTheCPluginConnectorTwiceStops()
+        public void UsingTheCPluginConnectorAgainGivesBackTheSameOne()
         {
             using (ResidentConnection connection = Taken(ModulePath))
             {
-                InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                    () => connection.TakeCPluginConnector());
-
-                Assert.Contains("二度", error.Message, StringComparison.Ordinal);
+                Assert.Same(_cPluginConnector, connection.Use());
                 Assert.Equal(1, _system.CloneCount);
+                Assert.Single(Lines(), l => l.Contains("Cプラグインコネクタの取得"));
             }
+        }
+
+        [Fact]
+        public void AnExpiredConnectorIsTakenAgainWhenItIsNextNeeded()
+        {
+            using (ResidentConnection connection = Taken(ModulePath))
+            {
+                connection.Expire();
+
+                Assert.False(connection.IsHolding);
+                Assert.Same(_cPluginConnector, connection.Use());
+                Assert.Equal(2, _system.CloneCount);
+            }
+        }
+
+        [Fact]
+        public void TheExpiryAndTheRetakeAreRecorded()
+        {
+            using (ResidentConnection connection = Taken(ModulePath))
+            {
+                connection.Expire();
+                connection.Use();
+            }
+
+            Assert.Equal(
+                new[]
+                {
+                    "Cプラグインコネクタの取得",
+                    "Cプラグインコネクタの失効",
+                    "Cプラグインコネクタの取得",
+                    "Cプラグインコネクタの破棄",
+                },
+                Lines().Select(Kind).Where(k => k != null).ToArray());
+        }
+
+        [Fact]
+        public void AConnectorIsNotGivenBackAfterItWasReleased()
+        {
+            ResidentConnection connection = Taken(ModulePath);
+
+            connection.Dispose();
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => connection.Use());
+
+            Assert.Contains("手放した", error.Message, StringComparison.Ordinal);
+            Assert.Equal(1, _system.CloneCount);
+        }
+
+        [Fact]
+        public void ExpiringAfterTheReleaseIsNotRecorded()
+        {
+            ResidentConnection connection = Taken(ModulePath);
+
+            connection.Dispose();
+            connection.Expire();
+
+            Assert.DoesNotContain(Lines(), l => l.Contains("Cプラグインコネクタの失効"));
+        }
+
+        [Fact]
+        public void ExpiringWithoutHoldingIsNotRecorded()
+        {
+            ResidentConnection connection = ResidentConnection.Hold(RunArgs(ModulePath), _log);
+
+            connection.Expire();
+
+            Assert.Empty(Lines());
         }
 
         [Fact]
@@ -97,7 +163,7 @@ namespace PmxEditorMcp.Tests
             connection.Dispose();
 
             Assert.Single(Lines(), l => l.Contains("Cプラグインコネクタの破棄"));
-            Assert.Null(connection.CPluginConnector);
+            Assert.False(connection.IsHolding);
         }
 
         [Fact]
@@ -127,7 +193,7 @@ namespace PmxEditorMcp.Tests
                 ResidentConnection connection = ResidentConnection.Hold(RunArgs(modulePath), _log);
 
                 InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                    () => connection.TakeCPluginConnector());
+                    () => connection.Use());
 
                 Assert.Contains("モジュールパス", error.Message, StringComparison.Ordinal);
                 Assert.NotNull(connection.RunArgs);
@@ -147,7 +213,7 @@ namespace PmxEditorMcp.Tests
                 _log);
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => connection.TakeCPluginConnector());
+                () => connection.Use());
 
             Assert.Contains("実行引数", error.Message, StringComparison.Ordinal);
             Assert.Empty(Lines());
@@ -165,10 +231,29 @@ namespace PmxEditorMcp.Tests
                 _log);
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => connection.TakeCPluginConnector());
+                () => connection.Use());
 
             Assert.Contains("コネクタ", error.Message, StringComparison.Ordinal);
             Assert.Empty(Lines());
+        }
+
+        /// <summary>記録の行から、コネクタについて何が起きたかだけを取り出す。</summary>
+        private static string Kind(string line)
+        {
+            foreach (string kind in new[]
+            {
+                "Cプラグインコネクタの取得",
+                "Cプラグインコネクタの失効",
+                "Cプラグインコネクタの破棄",
+            })
+            {
+                if (line.Contains(kind))
+                {
+                    return kind;
+                }
+            }
+
+            return null;
         }
 
         [Fact]
@@ -183,7 +268,7 @@ namespace PmxEditorMcp.Tests
         private ResidentConnection Taken(string modulePath)
         {
             ResidentConnection connection = ResidentConnection.Hold(RunArgs(modulePath), _log);
-            connection.TakeCPluginConnector();
+            connection.Use();
 
             return connection;
         }

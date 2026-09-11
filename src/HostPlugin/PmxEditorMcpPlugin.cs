@@ -151,12 +151,14 @@ namespace PmxEditorMcp
                 _ = _uiAnchor.Handle;
 
                 ResponseBudget budget = ResponseBudget.ReadFromEnvironment();
+                HoldResidentConnection(args);
 
                 // ツールに対応する処理は無く、基盤メソッドは接続が受け持つ。
                 McpMethodTable methods = new McpMethodTable();
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);
                 DebugLargeText.AddTo(methods, debugHooks);
+                DebugConnectorExpiry.AddTo(methods, debugHooks, _resident);
                 _connection = new JsonRpcConnection(
                     _log, methods, HostVersion, budget.Chars, GeneratedSdkRelay.Create(), SdkVersion);
 
@@ -167,8 +169,6 @@ namespace PmxEditorMcp
                     new FormUiDispatcher(_uiAnchor),
                     (stream, generation) => _connection.Handle(stream, generation));
 
-                HoldResidentConnection(args);
-
                 string reason;
                 if (!_host.TryStart(out reason))
                 {
@@ -178,7 +178,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 接続の根を常駐保持し、Cプラグイン連携のコネクタを一度だけ得る。要求を受ける前に済ませる。
+        /// 接続の根を常駐保持し、Cプラグイン連携のコネクタを先に得ておく。要求を受ける前に済ませる。
         /// コネクタを得られなくても根は保ち、待受も続けるので、失敗は記録にとどめる。
         /// </summary>
         private void HoldResidentConnection(IPERunArgs args)
@@ -186,7 +186,7 @@ namespace PmxEditorMcp
             _resident = ResidentConnection.Hold(args, _log);
             try
             {
-                _resident.TakeCPluginConnector();
+                _resident.Use();
             }
             catch (Exception exception)
             {

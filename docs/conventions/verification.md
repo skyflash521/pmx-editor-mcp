@@ -99,6 +99,14 @@ pwsh -File scripts/verify.ps1
    - エディタを終了するとパイプが消えること(`close` が待受の消失を待って戻る)。`--hold` で
      接続を保ったまま終了しても、エディタがハング・クラッシュせず、確認クライアントが
      「ホストが接続を切りました。」で終了コード0になること。パイプの有無は `pipes` で見る。
+   - 常駐コネクタを失効させると取り直され、取得の記録が失効の前後で1件ずつになること。
+     `PMX_EDITOR_MCP_DEBUG_HOOKS` に `1` を与えて起動したエディタに対して
+     `node scripts/e2e-check.mjs <エディタのプロセスID> handshake '{"protocol":1}' debug_expire_connector`
+     と打ち、`{"renewed":true}` が返ること。そのうえで
+     `Select-String -Path "$env:TEMP\pmx-editor-mcp-host-<エディタのプロセスID>.log" -Pattern 'Cプラグインコネクタの'`
+     が出す行のうち、`(Get-Process -Id <エディタのプロセスID>).StartTime` 以降の時刻のものが、
+     取得・失効・取得の順に3行だけ並んでいれば期待どおり(ログはプロセスIDごとのファイルへ
+     追記するので、同じプロセスIDが再び割り当てられると前回の記録も残る)。
    - `stop` でパイプが消え、確認クライアントを実行し直すと
      「接続または送受信に失敗しました: 」で終了コード1になり、`status` の状態区分が
      「停止済み」であること。

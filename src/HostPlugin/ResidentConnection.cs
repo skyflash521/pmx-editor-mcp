@@ -6,13 +6,18 @@ namespace PmxEditorMcp
 {
     /// <summary>
     /// 接続初期化。起動時に受け取った接続の根を常駐期間中保持し、Cプラグイン連携のコネクタを
-    /// 一度だけ得て、終了時に手放す。取得経路は一次資料が利用非推奨としているので、再取得はしない。
+    /// 求められたときに得て、終了時に手放す。保持しているコネクタが失効したら、次に求められた
+    /// ところで取り直す——常駐が長くなるほど、得たときのままで在り続ける保証は薄くなる。
     /// </summary>
     public sealed class ResidentConnection : IDisposable
     {
         private readonly HostLog _log;
 
+        private readonly object _gate = new object();
+
         private IPXCPluginConnector _cPluginConnector;
+
+        private bool _released;
 
         private ResidentConnection(IPERunArgs runArgs, HostLog log)
         {
@@ -23,12 +28,16 @@ namespace PmxEditorMcp
         /// <summary>常駐保持する接続の根。各コネクタ・ビルダはここから辿って得る。</summary>
         public IPERunArgs RunArgs { get; }
 
-        /// <summary>
-        /// 常駐保持するCプラグイン連携のコネクタ。まだ得ていないときと、手放した後は null。
-        /// </summary>
-        public IPXCPluginConnector CPluginConnector
+        /// <summary>コネクタを保持しているかどうか。</summary>
+        public bool IsHolding
         {
-            get { return _cPluginConnector; }
+            get
+            {
+                lock (_gate)
+                {
+                    return _cPluginConnector != null;
+                }
+            }
         }
 
         /// <summary>
@@ -51,18 +60,31 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 接続の根から辿ってCプラグイン連携のコネクタを得る。求めるときに渡すホストプラグイン
-        /// 自身の位置は、接続の根が持つものを使う。得られなければ
+        /// Cプラグイン連携のコネクタを渡す。保持していなければ接続の根から辿って得る。求めるときに
+        /// 渡すホストプラグイン自身の位置は、接続の根が持つものを使う。得られなければ
         /// <see cref="InvalidOperationException"/> で、記録は残さない——取得の記録は、得たものを
-        /// 手放すまでの対で読むためである。二度目の呼び出しも同じ例外で止める。
+        /// 手放すまでの対で読むためである。
         /// </summary>
-        public void TakeCPluginConnector()
+        public IPXCPluginConnector Use()
         {
-            if (_cPluginConnector != null)
+            lock (_gate)
             {
-                throw new InvalidOperationException("Cプラグインコネクタを二度得ようとした。");
-            }
+                if (_released)
+                {
+                    throw new InvalidOperationException("手放したあとにコネクタを求めた。");
+                }
 
+                if (_cPluginConnector != null)
+                {
+                    return _cPluginConnector;
+                }
+
+                return Take();
+            }
+        }
+
+        private IPXCPluginConnector Take()
+        {
             string modulePath = RunArgs.ModulePath;
             if (string.IsNullOrEmpty(modulePath) || modulePath.Trim().Length == 0)
             {
@@ -83,20 +105,45 @@ namespace PmxEditorMcp
 
             _cPluginConnector = connector;
             _log.Write("Cプラグインコネクタの取得: modulePath=" + modulePath);
+
+            return connector;
         }
 
         /// <summary>
-        /// 保持しているコネクタを手放す。得ていないときは何もせず、二度呼んでも記録は一度だけ書く。
+        /// 保持しているコネクタを失効として手放す。次に求められたところで取り直す。保持して
+        /// いなければ何もせず、記録も残さない——失効の記録は、取り直しと対で読むためである。
+        /// </summary>
+        public void Expire()
+        {
+            lock (_gate)
+            {
+                if (_cPluginConnector == null)
+                {
+                    return;
+                }
+
+                _cPluginConnector = null;
+                _log.Write("Cプラグインコネクタの失効");
+            }
+        }
+
+        /// <summary>
+        /// 保持しているコネクタを手放し、以後は求められても渡さない。得ていないときは記録を残さず、
+        /// 二度呼んでも記録は一度だけ書く。
         /// </summary>
         public void Dispose()
         {
-            if (_cPluginConnector == null)
+            lock (_gate)
             {
-                return;
-            }
+                _released = true;
+                if (_cPluginConnector == null)
+                {
+                    return;
+                }
 
-            _cPluginConnector = null;
-            _log.Write("Cプラグインコネクタの破棄");
+                _cPluginConnector = null;
+                _log.Write("Cプラグインコネクタの破棄");
+            }
         }
     }
 }
