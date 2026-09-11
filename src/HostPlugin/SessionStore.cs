@@ -76,7 +76,17 @@ namespace PmxEditorMcp
 
         private readonly EventSequenceIssuer _eventSequence;
 
-        public SessionStore(HostLog log, HandleIdIssuer handleIds, EventSequenceIssuer eventSequence)
+        /// <summary>
+        /// 要求の処理を直列化する錠。終わらせる前にこれを取るのは、要求が使っている最中の台帳と
+        /// 溜め場を閉じないため。所有者の終了による回収も明示の終了と同じここを通す。
+        /// </summary>
+        private readonly object _serialGate;
+
+        public SessionStore(
+            HostLog log,
+            HandleIdIssuer handleIds,
+            EventSequenceIssuer eventSequence,
+            object serialGate)
         {
             if (log == null)
             {
@@ -93,9 +103,15 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(eventSequence));
             }
 
+            if (serialGate == null)
+            {
+                throw new ArgumentNullException(nameof(serialGate));
+            }
+
             _log = log;
             _handleIds = handleIds;
             _eventSequence = eventSequence;
+            _serialGate = serialGate;
         }
 
         /// <summary>いま持っているセッションの数。</summary>
@@ -180,6 +196,16 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(id));
             }
 
+            // 走っている要求が戻るまで待つ。取る順は直列化の錠が先で、持ち物の錠を持ったまま
+            // こちらを取る経路は作らない。
+            lock (_serialGate)
+            {
+                return EndUnderSerialGate(id);
+            }
+        }
+
+        private bool EndUnderSerialGate(string id)
+        {
             Session session;
             lock (_gate)
             {

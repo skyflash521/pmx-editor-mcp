@@ -104,13 +104,12 @@ namespace PmxEditorMcp.Bridge
             }
             catch (TimeoutException)
             {
-                // 待ち受けていないときのほか、ホストは同時接続を1本に限るので別の接続が使用中でも
-                // ここへ来る。区別できないので、事実だけを述べて考えられる原因を並べる。
+                // どの原因でここへ来たかは区別できないので、事実だけを述べて考えられる原因を並べる。
                 throw new BridgeException(
                     BridgeErrorCodes.ConnectFailed,
                     "ホストのパイプ " + pipeName + " へ " + Describe(ConnectWaitLimit)
-                        + "以内に接続できなかった。接続先のエディタが終了している、エディタでホストが"
-                        + "停止している、または別の接続がパイプを使用中である可能性がある。");
+                        + "以内に接続できなかった。接続先のエディタが終了している、またはエディタで"
+                        + "ホストが停止している可能性がある。");
             }
             catch (IOException error)
             {

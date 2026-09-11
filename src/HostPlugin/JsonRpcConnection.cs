@@ -155,6 +155,13 @@ namespace PmxEditorMcp
         private readonly SessionStore _sessions;
         private readonly ClientProcessOpener _openClient;
 
+        /// <summary>
+        /// 要求の処理を直列化する錠。複数の接続を同時に受けるので、SDKを呼んでいる区間が重ならない
+        /// ことと、要求1件が発行したハンドルがその要求のものに定まることを、ここで保証する
+        /// ——SDKのスレッドセーフティは仮定しない。
+        /// </summary>
+        private readonly object _requestGate = new object();
+
         /// <summary>ログ・メソッド表・ハンドシェイク応答に載せる値を与えて生成する。</summary>
         public JsonRpcConnection(HostLog log, McpMethodTable methods, string hostVersion, int budgetChars)
             : this(log, methods, hostVersion, budgetChars, DefaultRequestTimeout, MessageChannel.DefaultMaxMessageBytes)
@@ -223,7 +230,7 @@ namespace PmxEditorMcp
             _requestTimeout = requestTimeout;
             _maxMessageBytes = maxMessageBytes;
             _openClient = openClient;
-            _sessions = new SessionStore(log, _handleIds, _eventSequence);
+            _sessions = new SessionStore(log, _handleIds, _eventSequence, _requestGate);
         }
 
         /// <summary>ホストが持つセッションの集まり。</summary>
@@ -341,8 +348,8 @@ namespace PmxEditorMcp
                     return;
                 }
 
-                // 別の接続が終わらせたセッションかもしれないので、要求のたびに、どの分岐よりも先に
-                // 見る。台帳もキューも失効しているので、この接続で続けられることはもう無い。
+                // handshake の受け直しも断るので、どの分岐よりも先に見る。ここで通ったあと錠を
+                // 待つ間に終わることもあるので、直列区間の中でもう一度見る。
                 if (scope != null && scope.Session.IsEnded)
                 {
                     Respond(channel, errors, request.Id, JsonRpcErrorCodes.SessionRefused,
@@ -373,17 +380,12 @@ namespace PmxEditorMcp
                     continue;
                 }
 
-                if (EndSessionMethodName.Equals(request.Method, StringComparison.Ordinal))
-                {
-                    _sessions.End(scope.Session.Id);
-                    WriteResult(channel, errors, request.Id, scope.Session.Id);
-
-                    return;
-                }
+                bool isEndSession =
+                    EndSessionMethodName.Equals(request.Method, StringComparison.Ordinal);
 
                 McpMethod method = null;
                 bool isPing = PingMethodName.Equals(request.Method, StringComparison.Ordinal);
-                if (!isPing && !_methods.TryGet(request.Method, out method))
+                if (!isPing && !isEndSession && !_methods.TryGet(request.Method, out method))
                 {
                     Respond(channel, errors, request.Id, JsonRpcErrorCodes.MethodNotFound,
                         "method に対応する処理が無い。");
@@ -398,31 +400,56 @@ namespace PmxEditorMcp
                     continue;
                 }
 
-                int issuedBefore = scope.Handles.LastIssuedId;
-                try
+                // 要求1件の処理をまるごと直列化する。境界の記録・実行・結果の確定か後始末までを
+                // 分けずに囲むのは、別の接続が同じ台帳へ発行したハンドルを、こちらの後始末が
+                // 巻き込まないようにするため。処理に許す時間を測り始めるのも錠を取ったあとで、
+                // 待っている間は数えない。
+                lock (_requestGate)
                 {
-                    object result;
-                    if (isPing)
+                    // 錠を待つ間に別の接続が終わらせたかもしれない。終わったセッションの台帳と
+                    // キューへ触らせないために、ここでもう一度見る。
+                    if (scope.Session.IsEnded)
                     {
-                        result = "pong";
-                    }
-                    else if (!TryInvoke(channel, errors, request, method, parameters, scope, out result))
-                    {
-                        DiscardHandles(scope, issuedBefore);
-                        continue;
+                        Respond(channel, errors, request.Id, JsonRpcErrorCodes.SessionRefused,
+                            "このセッションは終わっている。");
+                        return;
                     }
 
-                    if (!WriteResult(channel, errors, request.Id, result))
+                    if (isEndSession)
                     {
-                        DiscardHandles(scope, issuedBefore);
+                        _sessions.End(scope.Session.Id);
+                        WriteResult(channel, errors, request.Id, scope.Session.Id);
+
+                        return;
                     }
-                }
-                catch
-                {
-                    // 書き出せずに抜ける経路でも、呼び出し側へ届かないIDを台帳に残さない。
-                    // 台帳は切断を越えて生きるので、残すと誰も解放できないまま居座る。
-                    DiscardHandles(scope, issuedBefore);
-                    throw;
+
+                    int issuedBefore = scope.Handles.LastIssuedId;
+                    try
+                    {
+                        object result;
+                        if (isPing)
+                        {
+                            result = "pong";
+                        }
+                        else if (!TryInvoke(
+                            channel, errors, request, method, parameters, scope, out result))
+                        {
+                            DiscardHandles(scope, issuedBefore);
+                            continue;
+                        }
+
+                        if (!WriteResult(channel, errors, request.Id, result))
+                        {
+                            DiscardHandles(scope, issuedBefore);
+                        }
+                    }
+                    catch
+                    {
+                        // 書き出せずに抜ける経路でも、呼び出し側へ届かないIDを台帳に残さない。
+                        // 台帳は切断を越えて生きるので、残すと誰も解放できないまま居座る。
+                        DiscardHandles(scope, issuedBefore);
+                        throw;
+                    }
                 }
             }
         }
@@ -597,7 +624,8 @@ namespace PmxEditorMcp
 
             McpMethodContext context = new McpMethodContext(
                 parameters, scope.Ui, _budgetChars, scope.Handles, scope.Events);
-            Task<object> running = Task.Factory.StartNew(() => method(context), TaskCreationOptions.LongRunning);
+            Task<object> running = Task.Factory.StartNew(
+                () => method(context), TaskCreationOptions.LongRunning);
 
             try
             {

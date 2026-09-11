@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -188,6 +189,55 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(id, SessionOf(Exchange(connection, Handshake(id))[0]));
         }
 
+        /// <summary>
+        /// 2本の接続から時間の重なる要求を送っても、処理の区間は重ならない。SDKのスレッド
+        /// セーフティを仮定しないので、ここで直列化する。
+        /// </summary>
+        [Fact]
+        public void RequestsFromTwoConnectionsDoNotOverlap()
+        {
+            int inside = 0;
+            int overlapped = 0;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("work", context =>
+            {
+                if (Interlocked.Increment(ref inside) != 1)
+                {
+                    Interlocked.Increment(ref overlapped);
+                }
+
+                Thread.Sleep(20);
+                Interlocked.Decrement(ref inside);
+
+                return "ok";
+            });
+
+            JsonRpcConnection connection = Connection(
+                StubClientProcess.Opener(ClientId, ClientId), methods);
+
+            Thread[] workers = new Thread[2];
+            for (int i = 0; i < workers.Length; i++)
+            {
+                workers[i] = new Thread(() =>
+                {
+                    for (int call = 0; call < 5; call++)
+                    {
+                        IList<IDictionary<string, object>> responses =
+                            Exchange(connection, Handshake(), Request(2, "work"));
+                        Assert.Equal(2, responses.Count);
+                    }
+                });
+                workers[i].Start();
+            }
+
+            foreach (Thread worker in workers)
+            {
+                Assert.True(worker.Join(TimeSpan.FromSeconds(60)), "要求が終わらない。");
+            }
+
+            Assert.Equal(0, overlapped);
+        }
+
         [Fact]
         public void AnIdentifierThatIsNotTextIsInvalidArguments()
         {
@@ -203,7 +253,7 @@ namespace PmxEditorMcp.Tests
         public void TheStoreRefusesAnIdentifierWhoseOwnerHasExited()
         {
             SessionStore store = new SessionStore(
-                _log, new HandleIdIssuer(), new EventSequenceIssuer());
+                _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object());
             ClientProcess owner = StubClientProcess.Exited(ClientId);
 
             Session created;
@@ -219,16 +269,16 @@ namespace PmxEditorMcp.Tests
         public void TheStoreInputsAreRequired()
         {
             SessionStore store = new SessionStore(
-                _log, new HandleIdIssuer(), new EventSequenceIssuer());
+                _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object());
             Session session;
 
             Assert.Throws<ArgumentNullException>(() => store.TryResolve(null, null, out session));
             Assert.Throws<ArgumentNullException>(
-                () => new SessionStore(null, new HandleIdIssuer(), new EventSequenceIssuer()));
+                () => new SessionStore(null, new HandleIdIssuer(), new EventSequenceIssuer(), new object()));
             Assert.Throws<ArgumentNullException>(
-                () => new SessionStore(_log, null, new EventSequenceIssuer()));
+                () => new SessionStore(_log, null, new EventSequenceIssuer(), new object()));
             Assert.Throws<ArgumentNullException>(
-                () => new SessionStore(_log, new HandleIdIssuer(), null));
+                () => new SessionStore(_log, new HandleIdIssuer(), null, new object()));
         }
 
         private JsonRpcConnection Connection(ClientProcessOpener opener)

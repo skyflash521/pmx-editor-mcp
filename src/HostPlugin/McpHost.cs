@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -156,9 +157,9 @@ namespace PmxEditorMcp
 
                 generation.RequestStop();
 
-                NamedPipeServerStream pipe = generation.PublishedPipe;
-                generation.PublishedPipe = null;
-                if (pipe != null)
+                NamedPipeServerStream[] pipes = generation.Pipes.ToArray();
+                generation.Pipes.Clear();
+                foreach (NamedPipeServerStream pipe in pipes)
                 {
                     // PipeOptions.Asynchronous で生成しているため、待受と読み取りのブロックがここで解ける。
                     try
@@ -189,7 +190,7 @@ namespace PmxEditorMcp
                 return HostStatus.Running;
             }
 
-            if (_stopped != null && _stopped.ServerThread != null && _stopped.ServerThread.IsAlive)
+            if (_stopped != null && _stopped.HasLiveThreads)
             {
                 return HostStatus.Stopping;
             }
@@ -228,7 +229,10 @@ namespace PmxEditorMcp
 
                     // 停止手順とこのロックを共有するため、生成したインスタンスが閉じられずに待受へ残ることはない。
                     pipe = TryCreatePipe(_pipeName, out prepareFailure);
-                    generation.PublishedPipe = pipe;
+                    if (pipe != null)
+                    {
+                        generation.Pipes.Add(pipe);
+                    }
                 }
 
                 if (pipe == null)
@@ -253,56 +257,85 @@ namespace PmxEditorMcp
                     consecutivePrepareFailures = 0;
                 }
 
-                bool connected = false;
                 try
                 {
                     pipe.WaitForConnection();
-                    connected = true;
-                    generation.IsClientConnected = true;
-                    _log.Write("接続を受けた: " + _pipeName);
-                    _connectionHandler(pipe, generation);
                 }
                 catch (Exception exception)
                 {
-                    if (generation.IsStopRequested)
-                    {
-                        // 停止手順がパイプを閉じたことによる解除で、異常ではない。
-                        // 待受中の解除と接続中の解除のどちらもここへ来る。
-                        _log.Write("停止により中断した: " + _pipeName);
-                    }
-                    else
-                    {
-                        _log.WriteException("待受で例外が起きた。", exception);
-                    }
+                    NoteLoopFailure(generation, exception);
+                    Discard(generation, pipe);
+                    continue;
                 }
-                finally
-                {
-                    generation.IsClientConnected = false;
-                    lock (_gate)
-                    {
-                        if (ReferenceEquals(generation.PublishedPipe, pipe))
-                        {
-                            generation.PublishedPipe = null;
-                        }
-                    }
 
-                    try
-                    {
-                        pipe.Dispose();
-                    }
-                    catch (Exception)
-                    {
-                        // 閉じ済みのインスタンスを閉じても害はない。
-                    }
+                generation.NoteConnected();
+                _log.Write("接続を受けた: " + _pipeName);
 
-                    if (connected)
-                    {
-                        _log.Write("切断した: " + _pipeName);
-                    }
-                }
+                // この接続の処理は別のスレッドへ渡し、待受はすぐ次のインスタンスへ戻る。待たせると、
+                // 2本目の接続が1本目の終わりまで開けない。
+                NamedPipeServerStream accepted = pipe;
+                Thread worker = null;
+                worker = new Thread(() => Serve(generation, accepted, worker));
+                worker.IsBackground = true;
+                worker.Name = "pmx-editor-mcp-connection";
+
+                // 覚えてから走らせる。走らせてから覚えると、覚える前に終わったスレッドを
+                // 消し忘れて、止まり切ったあとも停止処理中に見える。
+                generation.AddWorker(worker);
+                worker.Start();
             }
 
             _log.Write("待受を終えた: " + _pipeName);
+        }
+
+        /// <summary>接続1本を処理して後始末する。待受のスレッドとは別のスレッドで走る。</summary>
+        private void Serve(HostGeneration generation, NamedPipeServerStream pipe, Thread worker)
+        {
+            try
+            {
+                _connectionHandler(pipe, generation);
+            }
+            catch (Exception exception)
+            {
+                NoteLoopFailure(generation, exception);
+            }
+            finally
+            {
+                generation.NoteDisconnected();
+                Discard(generation, pipe);
+                generation.RemoveWorker(worker);
+                _log.Write("切断した: " + _pipeName);
+            }
+        }
+
+        private void NoteLoopFailure(HostGeneration generation, Exception exception)
+        {
+            if (generation.IsStopRequested)
+            {
+                // 停止手順がパイプを閉じたことによる解除で、異常ではない。
+                // 待受中の解除と接続中の解除のどちらもここへ来る。
+                _log.Write("停止により中断した: " + _pipeName);
+                return;
+            }
+
+            _log.WriteException("待受で例外が起きた。", exception);
+        }
+
+        private void Discard(HostGeneration generation, NamedPipeServerStream pipe)
+        {
+            lock (_gate)
+            {
+                generation.Pipes.Remove(pipe);
+            }
+
+            try
+            {
+                pipe.Dispose();
+            }
+            catch (Exception)
+            {
+                // 閉じ済みのインスタンスを閉じても害はない。
+            }
         }
 
         private static NamedPipeServerStream TryCreatePipe(string pipeName, out Exception failure)
@@ -320,7 +353,7 @@ namespace PmxEditorMcp
                 return new NamedPipeServerStream(
                     pipeName,
                     PipeDirection.InOut,
-                    1,
+                    NamedPipeServerStream.MaxAllowedServerInstances,
                     PipeTransmissionMode.Byte,
                     // これでなければ、停止手順がパイプを閉じても待受・読み取りのブロックが解けない。
                     PipeOptions.Asynchronous,

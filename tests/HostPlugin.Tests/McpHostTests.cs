@@ -71,8 +71,13 @@ namespace PmxEditorMcp.Tests
 
         private static bool WaitUntil(Func<bool> condition)
         {
+            return WaitUntil(condition, WaitLimit);
+        }
+
+        private static bool WaitUntil(Func<bool> condition, TimeSpan limit)
+        {
             Stopwatch elapsed = Stopwatch.StartNew();
-            while (elapsed.Elapsed < WaitLimit)
+            while (elapsed.Elapsed < limit)
             {
                 if (condition())
                 {
@@ -184,24 +189,28 @@ namespace PmxEditorMcp.Tests
             Assert.True(CanConnect(_pipeName, ConnectTimeoutMs));
         }
 
+        /// <summary>
+        /// 1本目を処理している最中でも2本目を受ける。待たせると、繋ぎ直しや2つ目のクライアントが
+        /// 前の接続の終わりまで開けない。
+        /// </summary>
         [Fact]
-        public void OnlyOneConnectionIsAcceptedAtATime()
+        public void AnotherConnectionIsAcceptedWhileOneIsBeingServed()
         {
-            using (ManualResetEventSlim connected = new ManualResetEventSlim())
+            using (CountdownEvent connected = new CountdownEvent(2))
             using (ManualResetEventSlim release = new ManualResetEventSlim())
             {
                 McpHost host = CreateHost((stream, generation) =>
                 {
-                    connected.Set();
+                    connected.Signal();
                     release.Wait(WaitLimit);
                 });
                 string reason;
                 host.TryStart(out reason);
 
                 using (Connect(_pipeName, ConnectTimeoutMs))
+                using (Connect(_pipeName, ConnectTimeoutMs))
                 {
-                    Assert.True(connected.Wait(WaitLimit));
-                    Assert.False(CanConnect(_pipeName, AbsentTimeoutMs));
+                    Assert.True(connected.Wait(WaitLimit), "2本目の接続が受けられていない。");
                     release.Set();
                 }
 
@@ -275,6 +284,42 @@ namespace PmxEditorMcp.Tests
                     host.Stop();
 
                     Assert.True(finished.Wait(WaitLimit));
+                }
+
+                Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
+            }
+        }
+
+        /// <summary>
+        /// 接続の処理は待受とは別のスレッドで走るので、待受が終わっただけでは止まり切っていない。
+        /// 残っている処理を数えないと、前の稼働世代の処理と次の稼働世代の要求が並んでしまう。
+        /// </summary>
+        [Fact]
+        public void StoppingLastsWhileAConnectionIsStillBeingServed()
+        {
+            using (ManualResetEventSlim connected = new ManualResetEventSlim())
+            using (ManualResetEventSlim release = new ManualResetEventSlim())
+            {
+                McpHost host = CreateHost((stream, generation) =>
+                {
+                    connected.Set();
+                    release.Wait(WaitLimit);
+                });
+                string reason;
+                host.TryStart(out reason);
+
+                using (Connect(_pipeName, ConnectTimeoutMs))
+                {
+                    Assert.True(connected.Wait(WaitLimit));
+
+                    host.Stop();
+
+                    // 待受はもう終わっているが、接続の処理はまだ戻っていない。
+                    Assert.False(WaitUntil(
+                        () => host.Status == HostStatus.Stopped, TimeSpan.FromMilliseconds(500)));
+                    Assert.Equal(HostStatus.Stopping, host.Status);
+
+                    release.Set();
                 }
 
                 Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));

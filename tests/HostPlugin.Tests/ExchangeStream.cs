@@ -114,6 +114,12 @@ namespace PmxEditorMcp.Tests
             return responses;
         }
 
+        /// <summary>
+        /// 書き終えたメッセージの件数を渡して呼ぶ処理。どの応答まで返ったかを見て、要求と要求の
+        /// 合間に外から状態を変えるのに使う。
+        /// </summary>
+        public Action<int> AfterWrite { get; set; }
+
         public override int Read(byte[] buffer, int offset, int count)
         {
             return _input.Read(buffer, offset, count);
@@ -121,6 +127,7 @@ namespace PmxEditorMcp.Tests
 
         public override void Write(byte[] buffer, int offset, int count)
         {
+            int written;
             lock (_gate)
             {
                 if (_writesBeforeFailure <= 0)
@@ -139,6 +146,13 @@ namespace PmxEditorMcp.Tests
                 }
 
                 Monitor.PulseAll(_gate);
+                written = _messageCount;
+            }
+
+            Action<int> after = AfterWrite;
+            if (after != null)
+            {
+                after(written);
             }
         }
 

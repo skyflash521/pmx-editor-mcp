@@ -20,7 +20,11 @@ namespace PmxEditorMcp.Tests
 
         private const int ClientId = 4321;
 
-        private static readonly TimeSpan WaitLimit = TimeSpan.FromSeconds(10);
+        /// <summary>
+        /// 回収はスレッドプールの合図で走るので、同時に走る別の検査が機を占有すると遅れる。合否が
+        /// 機の混み具合で動かないよう、上限は待ちたい時間ではなく明らかに超えない値にする。
+        /// </summary>
+        private static readonly TimeSpan WaitLimit = TimeSpan.FromSeconds(60);
 
         private static readonly UTF8Encoding Utf8WithoutBom = new UTF8Encoding(false);
 
@@ -184,30 +188,28 @@ namespace PmxEditorMcp.Tests
         [InlineData("ping")]
         public void AConnectionIsRefusedAtTheNextRequestAfterItsSessionEnds(string next)
         {
-            JsonRpcConnection[] holder = new JsonRpcConnection[1];
-            ExchangeStream[] streams = new ExchangeStream[1];
-            McpMethodTable methods = new McpMethodTable();
-            methods.Add("end_elsewhere", context =>
-            {
-                // この接続の外からセッションを終わらせる。所有者の終了で回収される経路と同じ形。
-                holder[0].Sessions.End(SessionOf(streams[0].ReadResponses()[0]));
-                return "ok";
-            });
+            JsonRpcConnection connection = Connection(new McpMethodTable());
+            string request = next == "handshake" ? Handshake() : Request(2, "ping");
 
-            JsonRpcConnection connection = Connection(methods);
-            holder[0] = connection;
-
-            string request = next == "handshake" ? Handshake() : Request(3, "ping");
             using (ExchangeStream stream = new ExchangeStream(
-                Lines(Handshake(), Request(2, "end_elsewhere"), request, Request(4, "ping"))))
+                Lines(Handshake(), request, Request(3, "ping"))))
             {
-                streams[0] = stream;
+                stream.AfterWrite = written =>
+                {
+                    // ハンドシェイクの応答を返したところで、要求の合間に外からセッションを
+                    // 終わらせる。直列化の錠を持っていない時点なので、所有者の終了による回収と
+                    // 同じ形になる。
+                    if (written == 1)
+                    {
+                        connection.Sessions.End(SessionOf(stream.ReadResponses()[0]));
+                    }
+                };
+
                 connection.Handle(stream, new InlineInvoker());
 
                 IList<IDictionary<string, object>> responses = stream.ReadResponses();
-                Assert.Equal(3, responses.Count);
-                Assert.Equal("ok", ResultOf(responses[1]));
-                Assert.Equal(JsonRpcErrorCodes.SessionRefused, ErrorCodeOf(responses[2]));
+                Assert.Equal(2, responses.Count);
+                Assert.Equal(JsonRpcErrorCodes.SessionRefused, ErrorCodeOf(responses[1]));
             }
 
             Assert.Equal(0, connection.Sessions.Count);
@@ -224,6 +226,83 @@ namespace PmxEditorMcp.Tests
             Assert.True(session.IsEnded);
             Assert.True(session.Events.IsClosed);
             Assert.True(session.Handles.IsClosed);
+        }
+
+        /// <summary>
+        /// セッションを終わらせる要求も、ほかの要求と同じ直列区間の中で処理する。外で走らせると、
+        /// 別の接続が使っている最中の台帳と溜め場を閉じてしまう。
+        /// </summary>
+        [Fact]
+        public void EndingASessionWaitsForTheRequestThatIsRunning()
+        {
+            JsonRpcConnection[] holder = new JsonRpcConnection[1];
+            ExchangeStream[] streams = new ExchangeStream[1];
+            Thread other = null;
+            bool closedWhileWorking = false;
+
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("work", context =>
+            {
+                string id = SessionOf(streams[0].ReadResponses()[0]);
+
+                // 走っている最中に、別の接続として終了の要求を出す。直列化していれば、こちらが
+                // 戻るまで終わらないので、ここでは終わるのを待たない——待てば自分が解かない錠を
+                // 待つことになる。
+                other = new Thread(
+                    () => Exchange(holder[0], Handshake(id), Request(2, "end_session")));
+                other.Start();
+
+                Thread.Sleep(100);
+                closedWhileWorking = context.Handles.IsClosed || context.Events.IsClosed;
+
+                return "ok";
+            });
+
+            JsonRpcConnection connection = Connection(methods);
+            holder[0] = connection;
+
+            using (ExchangeStream stream = new ExchangeStream(Lines(Handshake(), Request(2, "work"))))
+            {
+                streams[0] = stream;
+                connection.Handle(stream, new InlineInvoker());
+            }
+
+            Assert.NotNull(other);
+            Assert.True(other.Join(WaitLimit), "終了の要求が終わらない。");
+            Assert.False(closedWhileWorking, "処理の最中に台帳か溜め場が閉じられた。");
+            Assert.Equal(0, connection.Sessions.Count);
+        }
+
+        /// <summary>
+        /// 所有者の終了による回収も、明示の終了と同じ直列区間を通る。通さないと、走っている要求が
+        /// 使っている最中の台帳と溜め場を閉じてしまう。
+        /// </summary>
+        [Fact]
+        public void TheOwnerLeavingWaitsForTheRequestThatIsRunning()
+        {
+            object serialGate = new object();
+            SessionStore store = new SessionStore(
+                _log, new HandleIdIssuer(), new EventSequenceIssuer(), serialGate);
+            ManualResetEvent exit = new ManualResetEvent(false);
+
+            Session session;
+            Assert.True(store.TryResolve(null, new ClientProcess(ClientId, exit), out session));
+
+            bool closedWhileWorking;
+            lock (serialGate)
+            {
+                exit.Set();
+                Thread.Sleep(200);
+                closedWhileWorking = session.Handles.IsClosed || session.Events.IsClosed;
+            }
+
+            Assert.False(closedWhileWorking, "処理の最中に台帳か溜め場が閉じられた。");
+
+            // 持ち物から除くのと台帳を閉じるのは別の段なので、閉じたことのほうを待つ。
+            Assert.True(
+                WaitUntil(() => session.Handles.IsClosed && session.Events.IsClosed),
+                "所有者が終わっても台帳と溜め場が閉じられない。");
+            Assert.Equal(0, store.Count);
         }
 
         [Fact]
@@ -260,7 +339,8 @@ namespace PmxEditorMcp.Tests
 
         private SessionStore Store()
         {
-            return new SessionStore(_log, new HandleIdIssuer(), new EventSequenceIssuer());
+            return new SessionStore(
+                _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object());
         }
 
         private JsonRpcConnection Connection(McpMethodTable methods)
@@ -278,8 +358,13 @@ namespace PmxEditorMcp.Tests
         /// <summary>回収はスレッドプールの合図で走るので、数が落ち着くまで待つ。</summary>
         private static bool WaitForCount(SessionStore store, int count)
         {
+            return WaitUntil(() => store.Count == count);
+        }
+
+        private static bool WaitUntil(Func<bool> condition)
+        {
             Stopwatch elapsed = Stopwatch.StartNew();
-            while (store.Count != count)
+            while (!condition())
             {
                 if (elapsed.Elapsed > WaitLimit)
                 {
