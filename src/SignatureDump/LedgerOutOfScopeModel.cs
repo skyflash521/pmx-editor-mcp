@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力台帳が行を作らない理由。台帳の凡例が数えないと定める種類だけを並べる。ここに無い
+    /// 能力台帳が行を作らない理由。能力として数えない種類だけを並べる。ここに無い
     /// 理由では対象外にできない。
     /// </summary>
     public enum OutOfScopeReason

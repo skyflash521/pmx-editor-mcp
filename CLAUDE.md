@@ -13,6 +13,7 @@
 |---|---|
 | 仕様書 | [docs/specs/](docs/specs/) |
 | 規約 | [docs/conventions/](docs/conventions/) |
+| 検査と生成が読むデータ | [data/](data/) |
 | 人も読む情報 | [README.md](README.md) |
 
 **設計値・手順をこの文書へ書き写さない。** 置き場を開き、題が合う文書だけを読む。

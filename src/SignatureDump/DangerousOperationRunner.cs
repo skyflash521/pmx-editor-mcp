@@ -47,7 +47,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<ExcludedSignatureRecord> excluded;
             try
             {
-                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 excluded = ExcludedSignatureJsonReader.Read(Read(args[2], "除外一覧"));
             }
             catch (Exception exception)

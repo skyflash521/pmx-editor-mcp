@@ -49,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<ValueShapeRow> rows;
             try
             {
-                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 excluded = ExcludedSignatureJsonReader.Read(Read(args[2], "除外一覧"));
                 rows = ValueShapeDocument.Read(Read(args[3], "共通契約仕様書"));
             }

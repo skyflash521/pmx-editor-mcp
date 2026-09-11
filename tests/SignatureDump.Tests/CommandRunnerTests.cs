@@ -89,12 +89,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private string CreateLedger()
         {
-            string path = Path.Combine(_root, "ledger.md");
-            File.WriteAllText(
-                path,
-                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n|---|---|---|---|---|---|\n"
-                + string.Concat(LedgerRows.Select(
-                    r => "| " + string.Join(" | ", r) + " | " + LedgerRemarks[r[0]] + " |\n")));
+            string path = Path.Combine(_root, "ledger.json");
+            LedgerJsonBuilder builder = new LedgerJsonBuilder();
+            foreach (string[] row in LedgerRows)
+            {
+                builder.Add(row[0], row[1], row[2], row[3], row[4], LedgerRemarks[row[0]]);
+            }
+
+            File.WriteAllText(path, builder.ToString());
             return path;
         }
 
@@ -133,11 +135,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void CoverageSubcommandRunsLedgerAndCanonicalCollation()
         {
-            string ledgerPath = Path.Combine(_root, "ledger.md");
+            string ledgerPath = Path.Combine(_root, "ledger.json");
             File.WriteAllText(
                 ledgerPath,
-                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
-                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+                new LedgerJsonBuilder().ToString());
             string excludedPath = Path.Combine(_root, "excluded-signatures.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string outOfScopePath = Path.Combine(_root, "out-of-scope.json");
@@ -178,8 +179,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string ledgerPath = Path.Combine(_root, "names-ledger.md");
             File.WriteAllText(
                 ledgerPath,
-                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
-                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+                new LedgerJsonBuilder().ToString());
             string excludedPath = Path.Combine(_root, "names-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string namesPath = Path.Combine(_root, "property-names.json");
@@ -223,8 +223,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string ledgerPath = Path.Combine(_root, "roles-ledger.md");
             File.WriteAllText(
                 ledgerPath,
-                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
-                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+                new LedgerJsonBuilder().ToString());
             string excludedPath = Path.Combine(_root, "roles-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string rolesPath = Path.Combine(_root, "type-roles.json");
@@ -266,8 +265,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string ledgerPath = Path.Combine(_root, "assign-ledger.md");
             File.WriteAllText(
                 ledgerPath,
-                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
-                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+                new LedgerJsonBuilder().ToString());
             string excludedPath = Path.Combine(_root, "assign-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string rolesPath = Path.Combine(_root, "assign-roles.json");
@@ -317,8 +315,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string ledgerPath = Path.Combine(_root, "shapes-ledger.md");
             File.WriteAllText(
                 ledgerPath,
-                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
-                    + "|---|---|---|---|---|---|" + Environment.NewLine);
+                new LedgerJsonBuilder().ToString());
             string excludedPath = Path.Combine(_root, "shapes-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string documentPath = Path.Combine(_root, "shapes-contract.md");
@@ -365,10 +362,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string ledgerPath = Path.Combine(_root, "danger-ledger.md");
             File.WriteAllText(
                 ledgerPath,
-                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
-                    + "|---|---|---|---|---|---|" + Environment.NewLine
-                    + "| CAP-001 | 標本 | N.Absent | 提供 | モデル |"
-                    + " 危険操作(エディタ終了)。該当は Close()。 |" + Environment.NewLine);
+                new LedgerJsonBuilder()
+                    .Add(
+                        "CAP-001",
+                        "標本",
+                        "N.Absent",
+                        "提供",
+                        "モデル",
+                        "危険操作(エディタ終了)。該当は Close()。")
+                    .ToString());
             string excludedPath = Path.Combine(_root, "danger-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string editorDirectory = CreateEditorDirectory();
@@ -406,9 +408,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string ledgerPath = Path.Combine(_root, "map-ledger.md");
             File.WriteAllText(
                 ledgerPath,
-                "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |" + Environment.NewLine
-                    + "|---|---|---|---|---|---|" + Environment.NewLine
-                    + "| CAP-001 | 標本 | N.Absent | 提供 | モデル |  |" + Environment.NewLine);
+                new LedgerJsonBuilder().Add("CAP-001", "N.Absent").ToString());
             string excludedPath = Path.Combine(_root, "map-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string rolesPath = Path.Combine(_root, "map-roles.json");
@@ -550,7 +550,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     CommandRunner.ToolDescriptionsCommand,
                     Path.Combine(_root, "no-editor"),
-                    Path.Combine(_root, "ledger.md"),
+                    Path.Combine(_root, "ledger.json"),
                     Path.Combine(_root, "contract.md"),
                     Path.Combine(_root, "roles.json"),
                     Path.Combine(_root, "names.json"),
@@ -578,7 +578,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     CommandRunner.ToolMappingCommand,
                     Path.Combine(_root, "no-editor"),
-                    Path.Combine(_root, "ledger.md"),
+                    Path.Combine(_root, "ledger.json"),
                     Path.Combine(_root, "contract.md"),
                     Path.Combine(_root, "roles.json"),
                     Path.Combine(_root, "assignments.json"),
@@ -606,7 +606,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     CommandRunner.SchemaCorrespondenceCommand,
                     Path.Combine(_root, "no-editor"),
-                    Path.Combine(_root, "ledger.md"),
+                    Path.Combine(_root, "ledger.json"),
                     Path.Combine(_root, "roles.json"),
                     Path.Combine(_root, "assignments.json"),
                     Path.Combine(_root, "map.json"),

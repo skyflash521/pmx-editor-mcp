@@ -245,9 +245,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             List<CapabilityRecord> rows = Rows(skip);
             IDictionary<string, int> counts = ExcludedCounts(rows);
-            StringBuilder builder = new StringBuilder();
-            builder.Append("| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n");
-            builder.Append("|---|---|---|---|---|---|\n");
+            LedgerJsonBuilder builder = new LedgerJsonBuilder();
 
             foreach (CapabilityRecord row in rows)
             {
@@ -255,13 +253,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 string remarks = counts.TryGetValue(row.Id, out count) && count > 0
                     ? "非対応件数: " + count.ToString(CultureInfo.InvariantCulture)
                     : string.Empty;
-                builder.Append(string.Format(
-                    "| {0} | 標本 | {1} | {2} | {3} | {4} |\n",
+                builder.Add(
                     row.Id,
+                    "標本",
                     row.Target,
                     row.Status == CapabilityStatus.Provided ? "提供" : "非対応",
                     row.Status == CapabilityStatus.Provided ? "モデル" : string.Empty,
-                    remarks));
+                    remarks);
             }
 
             return builder.ToString();

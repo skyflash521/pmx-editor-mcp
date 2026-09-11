@@ -55,7 +55,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchemaTable schemas;
             try
             {
-                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 composedTools = ComposedToolDocument.Read(Read(args[2], "共通契約仕様書"));
                 roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
                 assignments = CommonAssignmentJsonReader.Read(Read(args[4], "共通契約割当の正本"));

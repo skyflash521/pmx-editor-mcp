@@ -68,7 +68,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TheInputsAreRequired()
         {
             SignatureRecord save = Signature("Save", "System.String");
-            IList<CapabilityRecord> ledger = LedgerParser.Parse(Ledger(string.Empty));
+            IList<CapabilityRecord> ledger = LedgerJsonReader.Read(Ledger(string.Empty));
             InventoryRecord inventory = Inventory(save);
             LedgerPopulation population = LedgerPopulation.Resolve(ledger, inventory);
 
@@ -83,7 +83,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static IDictionary<string, DangerKind> Read(
             string remarks, params SignatureRecord[] signatures)
         {
-            IList<CapabilityRecord> ledger = LedgerParser.Parse(Ledger(remarks));
+            IList<CapabilityRecord> ledger = LedgerJsonReader.Read(Ledger(remarks));
             InventoryRecord inventory = Inventory(signatures);
 
             return DangerousOperationLedger.Read(
@@ -92,11 +92,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static string Ledger(string remarks)
         {
-            return "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n"
-                + "|---|---|---|---|---|---|\n"
-                + "| CAP-001 | 標本 | " + TypeName + " | 提供 | モデル | " + remarks + " |\n"
-                + "| CAP-463 | 標本 | PEPlugin.Pmd.* のまとめ | 非対応 |  |  |\n"
-                + "| CAP-466 | 標本 | PEPlugin.SDX.* のまとめ | 非対応 |  |  |\n";
+            return new LedgerJsonBuilder()
+                .Add("CAP-001", "標本", TypeName, "提供", "モデル", remarks)
+                .AddNamespaceRows()
+                .ToString();
         }
 
         private static InventoryRecord Inventory(params SignatureRecord[] signatures)

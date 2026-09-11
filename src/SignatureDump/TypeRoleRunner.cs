@@ -49,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump
             TypeRoleTable table;
             try
             {
-                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 excluded = ExcludedSignatureJsonReader.Read(Read(args[2], "除外一覧"));
                 table = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
             }

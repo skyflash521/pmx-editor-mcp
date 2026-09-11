@@ -55,7 +55,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<CapabilityRecord> ledger;
             try
             {
-                ledger = LedgerParser.Parse(File.ReadAllText(ledgerPath));
+                ledger = LedgerJsonReader.Read(File.ReadAllText(ledgerPath));
             }
             catch (Exception exception)
             {

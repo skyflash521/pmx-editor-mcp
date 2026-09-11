@@ -49,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump
             LedgerOutOfScopeRecord outOfScope;
             try
             {
-                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 excluded = ExcludedSignatureJsonReader.Read(Read(args[2], "除外一覧"));
                 outOfScope = LedgerOutOfScopeJsonReader.Read(Read(args[3], "対象外一覧"));
             }

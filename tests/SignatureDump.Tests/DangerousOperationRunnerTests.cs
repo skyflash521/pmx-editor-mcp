@@ -126,25 +126,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>題材のアセンブリの公開型を提供として並べ、備考を与えた台帳。</summary>
         private static string Ledger(string remarks)
         {
-            StringBuilder builder = new StringBuilder();
-            builder.Append("| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n");
-            builder.Append("|---|---|---|---|---|---|\n");
+            LedgerJsonBuilder builder = new LedgerJsonBuilder();
 
             int id = 1;
             foreach (TypeRecord type in AssemblyEnumerator.Enumerate(Sample).Types)
             {
-                builder.Append(string.Format(
-                    CultureInfo.InvariantCulture,
-                    "| CAP-{0:D3} | 標本 | {1} | 提供 | モデル | {2} |\n",
-                    id++,
+                string capability = string.Format(
+                    CultureInfo.InvariantCulture, "CAP-{0:D3}", id++);
+                builder.Add(
+                    capability,
+                    "標本",
                     WithoutTypeArguments(type.Name),
-                    id == 2 ? remarks : string.Empty));
+                    "提供",
+                    "モデル",
+                    id == 2 ? remarks : string.Empty);
             }
 
-            builder.Append("| CAP-463 | 標本 | PEPlugin.Pmd.* のまとめ | 非対応 |  |  |\n");
-            builder.Append("| CAP-466 | 標本 | PEPlugin.SDX.* のまとめ | 非対応 |  |  |\n");
-
-            return builder.ToString();
+            return builder.AddNamespaceRows().ToString();
         }
 
         private static string WithoutTypeArguments(string typeName)

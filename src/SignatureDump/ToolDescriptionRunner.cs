@@ -57,7 +57,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> propertyNotes;
             try
             {
-                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 composedTools = ComposedToolDocument.Read(Read(args[2], "共通契約仕様書"));
                 roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
                 names = PropertyNameJsonReader.ReadPropertyNames(Read(args[4], "日本語名の正本"));

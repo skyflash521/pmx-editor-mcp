@@ -52,7 +52,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<PropertyNameRecord> names;
             try
             {
-                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 excluded = ExcludedSignatureJsonReader.Read(Read(args[2], "除外一覧"));
                 names = PropertyNameJsonReader.ReadPropertyNames(Read(args[3], "日本語名の正本"));
                 notes = DocumentNoteReader.Read(Read(documentPath, "ドキュメントXML"));

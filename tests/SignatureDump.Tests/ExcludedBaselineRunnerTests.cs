@@ -92,14 +92,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static string LedgerText(string[][] rows)
         {
-            return "| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n|---|---|---|---|---|---|\n"
-                + string.Concat(rows.Select(
-                    r => "| " + string.Join(" | ", r) + " | " + LedgerRemarks[r[0]] + " |\n"));
+            LedgerJsonBuilder builder = new LedgerJsonBuilder();
+            foreach (string[] row in rows)
+            {
+                builder.Add(row[0], row[1], row[2], row[3], row[4], LedgerRemarks[row[0]]);
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>分類に知らない値を書いた、読み取りが拒む台帳。</summary>
+        private static string UnreadableLedgerText()
+        {
+            return new LedgerJsonBuilder()
+                .Add("CAP-114", "標本", "IPXPmxViewConnector.BootupVmdView", "保留", "モデル", string.Empty)
+                .ToString();
         }
 
         private string CreateLedger()
         {
-            string path = Path.Combine(_root, "ledger.md");
+            string path = Path.Combine(_root, "ledger.json");
             File.WriteAllText(path, LedgerText(LedgerRows));
             return path;
         }
@@ -275,17 +287,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.False(RunAndFindOutput("mismatch", CreateEditorDirectory(), CreateLedger()));
             Assert.False(RunAndFindOutput("no-editor", Path.Combine(_root, "empty"), CreateLedger()));
-            Assert.False(RunAndFindOutput("no-ledger", CreateEditorDirectory(), Path.Combine(_root, "none.md")));
+            Assert.False(RunAndFindOutput(
+                "no-ledger", CreateEditorDirectory(), Path.Combine(_root, "none.json")));
 
             string broken = CreateEditorDirectory("broken-editor");
             File.WriteAllText(SdkAssemblyLocator.GetAssemblyPath(broken), "アセンブリではない");
             Assert.False(RunAndFindOutput("broken-assembly", broken, CreateLedger()));
 
-            string unreadable = Path.Combine(_root, "unreadable-ledger.md");
-            File.WriteAllText(unreadable, LedgerText(new[] { new[] { "CAP-114", "保留", "モデル" } }));
+            string unreadable = Path.Combine(_root, "unreadable-ledger.json");
+            File.WriteAllText(unreadable, UnreadableLedgerText());
             Assert.False(RunAndFindOutput("broken-ledger", CreateEditorDirectory(), unreadable));
 
-            string lockedLedger = Path.Combine(_root, "locked-ledger.md");
+            string lockedLedger = Path.Combine(_root, "locked-source.json");
             File.WriteAllText(lockedLedger, LedgerText(LedgerRows));
             using (new FileStream(lockedLedger, FileMode.Open, FileAccess.Read, FileShare.None))
             {
@@ -320,8 +333,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void UnparsableLedgerIsInputUnavailable()
         {
-            string path = Path.Combine(_root, "broken-ledger.md");
-            File.WriteAllText(path, LedgerText(new[] { new[] { "CAP-114", "保留", "モデル" } }));
+            string path = Path.Combine(_root, "broken-ledger.json");
+            File.WriteAllText(path, UnreadableLedgerText());
             string outputPath = CreateExistingOutput();
             StringWriter error = new StringWriter();
 

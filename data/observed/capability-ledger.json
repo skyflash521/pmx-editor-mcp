@@ -1,0 +1,3818 @@
+{
+  "source": {
+    "distribution": "PmxEditor_0273",
+    "assembly": "PEPlugin.dll",
+    "assemblyVersion": "0.0.8.9",
+    "framework": ".NET Framework 4.0"
+  },
+  "capabilities": [
+    {
+      "id": "CAP-001",
+      "category": "PMXデータ",
+      "target": "IPXPmxConnector.GetCurrentState",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-002",
+      "category": "PMXデータ",
+      "target": "IPXPmxConnector.CurrentPath",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "開いているファイルパスの取得・設定"
+    },
+    {
+      "id": "CAP-003",
+      "category": "PMXデータ",
+      "target": "IPXPmxConnector.Update",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全体更新と部分更新(単一/複数Index)のオーバーロードを含む"
+    },
+    {
+      "id": "CAP-004",
+      "category": "PMXデータ",
+      "target": "IPXPmxConnector.LockUndo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "Undo記録の制御"
+    },
+    {
+      "id": "CAP-005",
+      "category": "PMXデータ",
+      "target": "IPXPmxConnector.UnlockUndo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "Undo記録の制御"
+    },
+    {
+      "id": "CAP-006",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.Close",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 危険操作(エディタ終了)。該当は Close()。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-007",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.InitializePMD",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 危険操作(モデル初期化)。該当は InitializePMD()。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-008",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.OpenPMDFile",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-009",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.ImportXFile",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-010",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.AppendPMDFile",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-011",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.AppendXFile",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-012",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SavePMDFile",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 危険操作(上書き保存)。該当は SavePMDFile(System.String)。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-013",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SaveMaterialName",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "保存材質名ファイルパスを取る。契約注記: 危険操作(上書き保存)。該当は SaveMaterialName(System.String)。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-014",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.InitializePMX",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 危険操作(モデル初期化)。該当は InitializePMX()。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-015",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.OpenPMXFile",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "PMXファイルパスを取り真偽値を返す"
+    },
+    {
+      "id": "CAP-016",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SavePMXFile",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 危険操作(上書き保存)。該当は SavePMXFile(System.String)。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-017",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.UpdateList",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "リスト表示更新"
+    },
+    {
+      "id": "CAP-018",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.VertexItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-019",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.FaceItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-020",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.MaterialItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-021",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.BoneItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-022",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.IKItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-023",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.IKLinkItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-024",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.ExpressionItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-025",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.ExpressionOffsetItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-026",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.FrameExpressionItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-027",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.FrameBoneItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-028",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.FrameBone_BoneItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-029",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.BodyItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-030",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.JointItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-031",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.MorphItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-032",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.NodeItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-033",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.NodeElementItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-034",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedTabPage",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-035",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedVertexIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-036",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedFaceIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-037",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedMaterialIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-038",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.GetSelectedMaterialIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-039",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SetSelectedMaterialIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-040",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedBoneIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-041",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedIKIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-042",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedIKLinkIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-043",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedExpressionIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-044",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedExpressionOffsetIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-045",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedFrameExpressionIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-046",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedFrameBoneIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-047",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedFrameBone_BoneIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-048",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedBodyIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-049",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.SelectedJointIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-050",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.Undo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-051",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.UndoCount",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-052",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.Redo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-053",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.RedoCount",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-054",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.Location",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-055",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.TopMost",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-056",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.EnableFacePage",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-057",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.GetBoneKindColors",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-058",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.GetExpressionCategoryColors",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-059",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.GetBodyModeColors",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-060",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.GetBodyGroupColors",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-061",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.EnableTexUpdateWatch",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-062",
+      "category": "本体フォーム",
+      "target": "IPEFormConnector.PmxFormActivate",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-063",
+      "category": "システム",
+      "target": "IPESystemConnector.PEPluginAssemblyVersion",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-064",
+      "category": "システム",
+      "target": "IPESystemConnector.PEPluginAssemblyPath",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-065",
+      "category": "システム",
+      "target": "IPESystemConnector.DefaultPluginFolderPath",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-066",
+      "category": "システム",
+      "target": "IPESystemConnector.HostApplicationPath",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-067",
+      "category": "システム",
+      "target": "IPESystemConnector.SlimDXAssemblyPath",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-068",
+      "category": "システム",
+      "target": "IPESystemConnector.RegisteredPluginCount",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-069",
+      "category": "システム",
+      "target": "IPESystemConnector.FindRegisteredPluginsFromMenuText",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-070",
+      "category": "システム",
+      "target": "IPESystemConnector.GetPluginInfo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-071",
+      "category": "システム",
+      "target": "IPESystemConnector.RunPlugin",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-072",
+      "category": "システム",
+      "target": "IPESystemConnector.SetShareObject",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: JSONで表現できる値に限定。任意の.NETオブジェクトは対象外"
+    },
+    {
+      "id": "CAP-073",
+      "category": "システム",
+      "target": "IPESystemConnector.GetShareObject",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: JSONで表現できる値に限定。任意の.NETオブジェクトは対象外"
+    },
+    {
+      "id": "CAP-074",
+      "category": "システム",
+      "target": "IPESystemConnector.RemoveShareObject",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-075",
+      "category": "システム",
+      "target": "IPESystemConnector.RegisteredCPluginCount",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-076",
+      "category": "システム",
+      "target": "IPESystemConnector.GetCPluginInfo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-077",
+      "category": "システム",
+      "target": "IPESystemConnector.RunCPlugin",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-078",
+      "category": "システム",
+      "target": "IPESystemConnector.GetCPluginRunArgsClone",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "Cプラグイン連携の各操作(モデル/セッション/ビュー)への取得経路。契約注記: 一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-079",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetViewMatrix",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-080",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetProjectionMatrix",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-081",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateView",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-082",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateModel",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-083",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateModel_Vertex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-084",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateModel_Bone",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-085",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateModel_Weight",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-086",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateModel_Body",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-087",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateModel_Joint",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-088",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateModel_Material",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-089",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.UpdateModelSize",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-090",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetVertexIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-091",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetVertexIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-092",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetSelectedVertexIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-093",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetSelectedVertexIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-094",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetSelectedFaceIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-095",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetSelectedFaceIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-096",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetSelectedBoneIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-097",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetSelectedBoneIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-098",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetSelectedBodyIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-099",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetSelectedBodyIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-100",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetSelectedJointIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-101",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetSelectedJointIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-102",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.BodyVisible",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-103",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SelectedBodyIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-104",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SelectedJointIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-105",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.CameraRotateCenter",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-106",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.CameraTarget",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-107",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.CameraPosition",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-108",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.CameraUpVector",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-109",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetCameraView",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-110",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.IsShaderMode",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-111",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetViewAxis",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-112",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.EnableHandleEdit",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-113",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.IsVmdViewBootup",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-114",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.BootupVmdView",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 1。PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外"
+    },
+    {
+      "id": "CAP-115",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.PlayVmdView",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-116",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.StopVmdView",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-117",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.ShowBoneVmdView",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-118",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.EnableCameraVmdView",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-119",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetVmeEvent",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "IPEVme版とIPEVmeResult版の2種。契約注記: VME記述は数値引数のテンプレートに対応する範囲で扱う"
+    },
+    {
+      "id": "CAP-120",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetClientImage",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-121",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.Visible",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-122",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.Location",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-123",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.Focus",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-124",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.Size",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-125",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.WindowState",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-126",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetBodyVisibles",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-127",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetBodyVisibles",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-128",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.GetJointVisibles",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-129",
+      "category": "PmxView",
+      "target": "IPXPmxViewConnector.SetJointVisibles",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-130",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.SelectedTabPage",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-131",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.BackColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-132",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.AmbientColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-133",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.LightColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-134",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.LightDirection",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-135",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.InitializeLight",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-136",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_Bone",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-137",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_Vertex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-138",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_SelectedVertex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-139",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_UnvisibleVertex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-140",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_SelectedFace",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-141",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_Normal",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-142",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_SelectedNormal",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-143",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_Body",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-144",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_SolidBody",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-145",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_Joint",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-146",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Visible_WeightMap",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-147",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.OnlyWeighting",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-148",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.NonWeightingVertexColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-149",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.ModelSize",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-150",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Perspective",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-151",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.AAType",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-152",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.ColorBlending",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-153",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.FillMode",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-154",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.VertexPointSize",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-155",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.VertexPointColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-156",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.SelectedVertexPointColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-157",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.NormalLength",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-158",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.NormalColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-159",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.SelectedNormalColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-160",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.JointPointSize",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-161",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.ToonType",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-162",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.Edge",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-163",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.EdgeSize",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-164",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.InitializeViewSetting",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-165",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.LoadViewSetting",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-166",
+      "category": "ビュー設定",
+      "target": "IPEViewSettingConnector.SaveViewSetting",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "設定ファイルパスを取る。契約注記: 危険操作(上書き保存)。該当は SaveViewSetting(System.String)。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-167",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.UpdateView",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-168",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.GetClientImage",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-169",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.ResetTransform",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-170",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.SelectedBoneIndex",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-171",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.BoneRotate_XYZ",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-172",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.BoneTranslate_XYZ",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-173",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.BoneScale_XYZ",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-174",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.BoneRotate",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-175",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.BoneTranslate",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-176",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.BoneScaling",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-177",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.SelectedMorphIndex",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-178",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.MorphValue",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-179",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.MorphChecker",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-180",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.SetVpd",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-181",
+      "category": "TransformView",
+      "target": "IPETransformViewConnector.SetVpdFromText",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-182",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.EditObject",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-183",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.MoveOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-184",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.RotateOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-185",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.ScaleOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-186",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.RotateNormalOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-187",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.NormalAxisMoveOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-188",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.ControlYDirection",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-189",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.NormalControlXDirection",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-190",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.CenterOrigin",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-191",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.MirrorMode",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-192",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.MoveValue",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-193",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.RotateValue",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-194",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.ScaleValue",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-195",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.CenterValue",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-196",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.Move",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-197",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.Rotate",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-198",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.Scaling",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-199",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.RotateNormalValue",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-200",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.RotateNormal",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-201",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.MoveNormalAxisValue",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-202",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.MoveNormalAxis",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-203",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.GetVertexMemory",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-204",
+      "category": "頂点編集補助",
+      "target": "IPEVertexEditConnector.SetVertexMemory",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-205",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.Drawing",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-206",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.BeginDraw",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-207",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.EndDraw",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-208",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.DrawSize",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-209",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.IsGradation",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-210",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.WeightValue",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-211",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.Spray",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-212",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.SprayOn",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-213",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.SprayOff",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-214",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.SprayPower",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-215",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.SprayInterval",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-216",
+      "category": "ウェイト編集補助",
+      "target": "IPEWeightEditConnector.SprayOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-217",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.SelectObject",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-218",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.RangeBegin",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-219",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.RangeEnd",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-220",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.MaterialItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-221",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.BoneItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-222",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.ExpressionItemsCount",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-223",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.SelectedMaterialIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-224",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.SelectedBoneIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-225",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.SelectedExpressionIndex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-226",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.GetCheckedMaterialIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-227",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.SetCheckedMaterialIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-228",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.GetCheckedBoneIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-229",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.SetCheckedBoneIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-230",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.GetCheckedExpressionIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-231",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.SetCheckedExpressionIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-232",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.SelectedPartsVisible",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-233",
+      "category": "絞り込み表示",
+      "target": "IPEPartsSelectConnector.BoneSelected",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-234",
+      "category": "頂点ガイド",
+      "target": "IPEVertexGuideConnector.GetSelectedCurrentVertex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-235",
+      "category": "頂点ガイド",
+      "target": "IPEVertexGuideConnector.SelectVertex",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-236",
+      "category": "頂点ガイド",
+      "target": "IPEVertexGuideConnector.GetVertexIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-237",
+      "category": "頂点ガイド",
+      "target": "IPEVertexGuideConnector.SetVertexIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-238",
+      "category": "サブビュー",
+      "target": "IPESubViewConnector.UpdateView",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-239",
+      "category": "サブビュー",
+      "target": "IPESubViewConnector.GetClientImage",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-240",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.Builder",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-241",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.BuilderInitialize",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "Builder利用前の初期化。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-242",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.PrimitiveBuilder",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-243",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.PrimitiveBuilderInitialize",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "PrimitiveBuilder利用前の初期化。契約注記: PrimitiveBuilderの利用前に呼ぶことが一次資料で必須。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-244",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.GetCurrentPmx",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-245",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.UpdatePmx",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-246",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.GetViewAxis",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-247",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.ViewCtrl",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-248",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.SystemCtrl",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-249",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.RegisterUIModel",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-250",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.CreateEventConnector",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: イベントはホスト側がハンドラを登録してキューへ積む形で扱う。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-251",
+      "category": "Cプラグイン連携",
+      "target": "PXCBridge.ReleaseEventConnector",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-252",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.GetSelectedVertexIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-253",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.SetSelectedVertexIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-254",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.GetSelectedFaceIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-255",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.SetSelectedFaceIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-256",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.GetSelectedBoneIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-257",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.SetSelectedBoneIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-258",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.GetSelectedBodyIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-259",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.SetSelectedBodyIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-260",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.GetSelectedJointIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-261",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.SetSelectedJointIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-262",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginConnector.GetVisibleMaterialIndices",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-263",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.PEPluginCount",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-264",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.FindPEPlugins",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-265",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.GetPEPluginInfo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-266",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.RunPEPlugin",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-267",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.CPluginCount",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-268",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.FindCPlugins",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-269",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.GetCPluginInfo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "非対応件数: 1。Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-270",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.RunCPlugin",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-271",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.SetShareData",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-272",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.GetShareValue",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-273",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.GetShareText",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-274",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.GetShareBuffer",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-275",
+      "category": "Cプラグイン連携",
+      "target": "IPXSystemControl.RemoveShareData",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-276",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.UpdateView",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-277",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.ClientSize",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-278",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.ScreenPosition",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-279",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.ViewMatrix",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-280",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.ProjectionMatrix",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-281",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.Viewport",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-282",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.CameraRotateCenter",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-283",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.CameraTarget",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-284",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.CameraPosition",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-285",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.CameraUpVector",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-286",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.SetCameraParameter",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-287",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.VCursorPosition",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-288",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.ViewAxis",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-289",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.EnableVAxis",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-290",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.GetVAxis",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-291",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.SetVAxis",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-292",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.VAxisOrigin",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-293",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.GetBodyVisibles",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-294",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.SetBodyVisibles",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-295",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.GetJointVisibles",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-296",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewControl.SetJointVisibles",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-297",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPrimitiveBuilder.AddPlane",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-298",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPrimitiveBuilder.AddBox",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-299",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPrimitiveBuilder.AddSphere",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-300",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPrimitiveBuilder.AddCylinder",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-301",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPrimitiveBuilder.AddTorus",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-302",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPrimitiveBuilder.AddText",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-303",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.Release",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-304",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetAutoRelease",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "引数のIPXCPlugin(実装拡張点・非対応)を取得経路から得られないため"
+    },
+    {
+      "id": "CAP-305",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.Name",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-306",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.Visible",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-307",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.DrawMode",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-308",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.Light",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-309",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.Depth",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-310",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.TopMost",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-311",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.FixedDrawScale",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-312",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetBillboard",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-313",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetWorld",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-314",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.GetWorld",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-315",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetBone",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-316",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetBoneScale",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-317",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetBoneRotate",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-318",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetBoneTranslate",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-319",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.ResetBone",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-320",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetMorph",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-321",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.ResetMorph",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-322",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.UpdateTransform",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-323",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.GetTransformedVertexPosition",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-324",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.GetTransformedVertexNormal",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-325",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.GetTransformedBonePosition",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-326",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.GetTransformedBoneMatrix",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-327",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.UpdateMaterialColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-328",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.UpdateMaterialEdge",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-329",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.UpdateMaterialFlags",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-330",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.SetBitmapTexture",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-331",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.UpdateBitmapTexture",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-332",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.CreateEventListener",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-333",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModel.ReleaseEventListener",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-334",
+      "category": "Cプラグイン連携",
+      "target": "PXUIModelHelper.SetMouseOverColor",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-335",
+      "category": "Cプラグイン連携",
+      "target": "PXUIModelHelper.SetMouseDragMove",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-336",
+      "category": "Cプラグイン連携",
+      "target": "PXUIModelHelper.CreateTextControl",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-337",
+      "category": "Cプラグイン連携",
+      "target": "IPXEventConnector.CreateViewEventListener",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-338",
+      "category": "Cプラグイン連携",
+      "target": "IPXEventConnector.ReleaseViewEventListener",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-339",
+      "category": "モデルデータ型",
+      "target": "IPXPmx",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は Clear()。現在のモデルを対象に呼ぶ場合に限って当たり、対象を指定して呼ぶ場合は当たらない。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-340",
+      "category": "モデルデータ型",
+      "target": "IPXHeader",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-341",
+      "category": "モデルデータ型",
+      "target": "IPXModelInfo",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-342",
+      "category": "モデルデータ型",
+      "target": "IPXVertex",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-343",
+      "category": "モデルデータ型",
+      "target": "IPXFace",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-344",
+      "category": "モデルデータ型",
+      "target": "IPXMaterial",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-345",
+      "category": "モデルデータ型",
+      "target": "IPXBone",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-346",
+      "category": "モデルデータ型",
+      "target": "IPXIK",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-347",
+      "category": "モデルデータ型",
+      "target": "IPXIKLink",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-348",
+      "category": "モデルデータ型",
+      "target": "IPXMorph",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-349",
+      "category": "モデルデータ型",
+      "target": "IPXMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-350",
+      "category": "モデルデータ型",
+      "target": "IPXVertexMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-351",
+      "category": "モデルデータ型",
+      "target": "IPXUVMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-352",
+      "category": "モデルデータ型",
+      "target": "IPXBoneMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-353",
+      "category": "モデルデータ型",
+      "target": "IPXImpulseMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-354",
+      "category": "モデルデータ型",
+      "target": "IPXMaterialMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-355",
+      "category": "モデルデータ型",
+      "target": "IPXGroupMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-356",
+      "category": "モデルデータ型",
+      "target": "IPXNode",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-357",
+      "category": "モデルデータ型",
+      "target": "IPXNodeItem",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-358",
+      "category": "モデルデータ型",
+      "target": "IPXBoneNodeItem",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-359",
+      "category": "モデルデータ型",
+      "target": "IPXMorphNodeItem",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-360",
+      "category": "モデルデータ型",
+      "target": "IPXBody",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-361",
+      "category": "モデルデータ型",
+      "target": "IPXJoint",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-362",
+      "category": "モデルデータ型",
+      "target": "IPXSoftBody",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-363",
+      "category": "モデルデータ型",
+      "target": "IPXSoftBodyAnchor",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-364",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Pmx",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-365",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Vertex",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-366",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Face",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-367",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Material",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-368",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Bone",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-369",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.IKLink",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-370",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Morph",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-371",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.VertexMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-372",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.UVMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-373",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.BoneMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-374",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.MaterialMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-375",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.GroupMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-376",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.ImpulseMorphOffset",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-377",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Node",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-378",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.BoneNodeItem",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-379",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.MorphNodeItem",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-380",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Body",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-381",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.Joint",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-382",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.SoftBody",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-383",
+      "category": "PMXビルダ",
+      "target": "IPXPmxBuilder.SoftBodyAnchor",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-384",
+      "category": "プリミティブ",
+      "target": "IPXPrimitiveBuilder.AddPlane",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-385",
+      "category": "プリミティブ",
+      "target": "IPXPrimitiveBuilder.AddBox",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-386",
+      "category": "プリミティブ",
+      "target": "IPXPrimitiveBuilder.AddSphere",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-387",
+      "category": "プリミティブ",
+      "target": "IPXPrimitiveBuilder.AddCylinder",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-388",
+      "category": "プリミティブ",
+      "target": "IPXPrimitiveBuilder.AddTorus",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-389",
+      "category": "プリミティブ",
+      "target": "IPXPrimitiveBuilder.AddText",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-390",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmd",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 2。他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外"
+    },
+    {
+      "id": "CAP-391",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmdIPL",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-392",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmdBoneKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-393",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmdMorphKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-394",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmdBasCameraKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-395",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmdLightKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-396",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmdSelfShadowKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-397",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmdBonePoseState",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-398",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVme",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 1。契約注記: PMDを引数に取る版はレガシーのため対象外"
+    },
+    {
+      "id": "CAP-399",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmeGroup",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-400",
+      "category": "VMD/VMEビルダ",
+      "target": "IPEBuilder.CreateVmePath",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-401",
+      "category": "VMEデータ型",
+      "target": "IPEVmeElement",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-402",
+      "category": "VMEデータ型",
+      "target": "IPEVmeEventElement",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-403",
+      "category": "VMEデータ型",
+      "target": "IPEVmeObject",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-404",
+      "category": "VMEデータ型",
+      "target": "IPEVme",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 3。契約注記: PMDモデルを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-405",
+      "category": "VMEデータ型",
+      "target": "IPEVmeFrameEvent",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-406",
+      "category": "VMEデータ型",
+      "target": "IPEVmeEventState",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-407",
+      "category": "VMEデータ型",
+      "target": "IPEVmeSingleValueState",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-408",
+      "category": "VMEデータ型",
+      "target": "IPEVmeSingleValueElement",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-409",
+      "category": "VMEデータ型",
+      "target": "IPEVmeGroup",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 8。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-410",
+      "category": "VMEデータ型",
+      "target": "IPEVmeGroupBone",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 8。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-411",
+      "category": "VMEデータ型",
+      "target": "IPEVmeGroupMorph",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 8。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-412",
+      "category": "VMEデータ型",
+      "target": "IPEVmePrimaryValue`1",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-413",
+      "category": "VMEデータ型",
+      "target": "IPEVmeSingleValue",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-414",
+      "category": "VMEデータ型",
+      "target": "IPEVmeVectorValue",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-415",
+      "category": "VMEデータ型",
+      "target": "IPEVmeQuaternionValue",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-416",
+      "category": "VMEデータ型",
+      "target": "IPEVmePosition",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-417",
+      "category": "VMEデータ型",
+      "target": "IPEVmeDirection",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-418",
+      "category": "VMEデータ型",
+      "target": "IPEVmeScale",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-419",
+      "category": "VMEデータ型",
+      "target": "IPEVmeSingleValueOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-420",
+      "category": "VMEデータ型",
+      "target": "IPEVmeVectorValueOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-421",
+      "category": "VMEデータ型",
+      "target": "IPEVmeQuaternionValueOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-422",
+      "category": "VMEデータ型",
+      "target": "IPEVmePositionOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-423",
+      "category": "VMEデータ型",
+      "target": "IPEVmeDirectionOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-424",
+      "category": "VMEデータ型",
+      "target": "IPEVmeScalingOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-425",
+      "category": "VMEデータ型",
+      "target": "IPEVmeSingleValueEventOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-426",
+      "category": "VMEデータ型",
+      "target": "IPEVmeVectorValueEventOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 10。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-427",
+      "category": "VMEデータ型",
+      "target": "IPEVmeQuaternionValueEventOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-428",
+      "category": "VMEデータ型",
+      "target": "IPEVmePositionEventOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 5。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-429",
+      "category": "VMEデータ型",
+      "target": "IPEVmeDirectionEventOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 2。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-430",
+      "category": "VMEデータ型",
+      "target": "IPEVmeScalingEventOperator",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 12。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-431",
+      "category": "VMEデータ型",
+      "target": "IPEVmePath",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 5。契約注記: デリゲートまたはPMDモデルを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-432",
+      "category": "VMEデータ型",
+      "target": "IPEVmeBoneState",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-433",
+      "category": "VMEデータ型",
+      "target": "IPEVmeBone",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-434",
+      "category": "VMEデータ型",
+      "target": "IPEVmeCameraState",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-435",
+      "category": "VMEデータ型",
+      "target": "IPEVmeCameraPosition",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-436",
+      "category": "VMEデータ型",
+      "target": "IPEVmeCamera",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-437",
+      "category": "VMEデータ型",
+      "target": "IPEVmeResult",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 1。契約注記: PMDモデルを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-438",
+      "category": "VMEデータ型",
+      "target": "IPEVmeBoneResult",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-439",
+      "category": "VMEデータ型",
+      "target": "IPEVmeMorphResult",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-440",
+      "category": "VMEデータ型",
+      "target": "IPEVmeCameraResult",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-441",
+      "category": "VMEデータ型",
+      "target": "IPEVmeLightResult",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-442",
+      "category": "VMEデータ型",
+      "target": "IPEVmeLightState",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": ""
+    },
+    {
+      "id": "CAP-443",
+      "category": "VMEデータ型",
+      "target": "IPEVmeLight",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 6。契約注記: デリゲートを要するシグネチャは非対応"
+    },
+    {
+      "id": "CAP-444",
+      "category": "VMDデータ型",
+      "target": "IPEVmdBonePoseState",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-445",
+      "category": "VMDデータ型",
+      "target": "IPEVmd",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 2。全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ。PMDモデルを要するシグネチャは非対応。危険操作(上書き保存)。該当は ToFile(System.String,System.Boolean)。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-446",
+      "category": "VMDデータ型",
+      "target": "IPEVmdFrameKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-447",
+      "category": "VMDデータ型",
+      "target": "IPEVmdIPL",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-448",
+      "category": "VMDデータ型",
+      "target": "IPEVmdBoneKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-449",
+      "category": "VMDデータ型",
+      "target": "IPEVmdMorphKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-450",
+      "category": "VMDデータ型",
+      "target": "IPEVmdCameraKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-451",
+      "category": "VMDデータ型",
+      "target": "IPEVmdLightKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-452",
+      "category": "VMDデータ型",
+      "target": "IPEVmdSelfShadowKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-453",
+      "category": "VMDデータ型",
+      "target": "IPEVmdVisibleIKKey",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-454",
+      "category": "VMDデータ型",
+      "target": "IPEVmdIKEnable",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "全公開メンバーへのアクセス(型単位)"
+    },
+    {
+      "id": "CAP-455",
+      "category": "Cプラグイン連携",
+      "target": "PXPluginInfo",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "非対応件数: 1。プラグイン情報の読み取り用データ(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-456",
+      "category": "Cプラグイン連携",
+      "target": "IPXViewEventListener",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "イベント通知の型(型単位)。契約注記: ホスト側がハンドラを登録してキューへ積む形で扱う。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-457",
+      "category": "Cプラグイン連携",
+      "target": "IPXUIModelEventListener",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "イベント通知の型(型単位)。契約注記: ホスト側がハンドラを登録してキューへ積む形で扱う。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-458",
+      "category": "Cプラグイン連携",
+      "target": "PXEventArgs",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "イベント引数の型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-459",
+      "category": "プラグイン機構",
+      "target": "IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "プラグイン自身がホストに登録されるための実装専用API"
+    },
+    {
+      "id": "CAP-460",
+      "category": "プラグイン情報",
+      "target": "IPERegisteredPluginInfo / IPEPluginOption",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "GetPluginInfoの結果として返す読み取り用データ"
+    },
+    {
+      "id": "CAP-461",
+      "category": "ビルダ別経路",
+      "target": "PEStaticBuilder / IPEShortBuilder",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "IPXPmxBuilder等の提供経路と重複する短絡経路のため"
+    },
+    {
+      "id": "CAP-462",
+      "category": "プラグイン拡張点",
+      "target": "IPECheckerPlugin / IPEImportPlugin / IPEExportPlugin",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "プラグインDLL側の拡張点(MCPからの呼び出し対象ではない)"
+    },
+    {
+      "id": "CAP-463",
+      "category": "PMDレガシー",
+      "target": "PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "PMX系に同等機能。PMDファイル入出力はFormコネクタの能力として提供"
+    },
+    {
+      "id": "CAP-464",
+      "category": "ビューヘルパ",
+      "target": "IPEObjectSelectConnector / IPEExtensionEditConnector",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "固有メンバーなし。契約注記: 基底のウィンドウ表示制御(Visible・Location・Focus)のみ"
+    },
+    {
+      "id": "CAP-465",
+      "category": "Cプラグイン実装拡張点",
+      "target": "PXCPlugin.RegisterBase / IPXCPlugin / PXCPluginClass",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "Cプラグインを実装する側の基底クラス・エントリポイント(実装専用)"
+    },
+    {
+      "id": "CAP-466",
+      "category": "SDX数値型",
+      "target": "PEPlugin.SDX.*(M・Q・V2・V3・V4)",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "SlimDX数値型の橋渡し型。演算メンバーはモデル状態に作用せずクライアント側で完結する数値計算のため対象外。値の受け渡し方はこの台帳では定めない"
+    },
+    {
+      "id": "CAP-467",
+      "category": "Cプラグイン連携",
+      "target": "PXEventArgs.UIModelMouse",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-468",
+      "category": "Cプラグイン連携",
+      "target": "PXEventArgs.UIModelMouseDrag",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-469",
+      "category": "Cプラグイン連携",
+      "target": "PXEventArgs.ViewMouse",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-470",
+      "category": "Cプラグイン連携",
+      "target": "PXEventArgs.ViewObjectSelected",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-471",
+      "category": "Cプラグイン連携",
+      "target": "PXUIModelHelper.MaterialColorEvPara",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-472",
+      "category": "Cプラグイン連携",
+      "target": "PXUIModelHelper.TextControl",
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": "非対応件数: 1。入れ子の公開データ型(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-473",
+      "category": "VMDデータ型",
+      "target": "PEVmdBonePose",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "非対応件数: 2。全公開メンバー(型単位)。契約注記: 取得は IPEVmdBonePoseState.GetPose で行い、コンストラクタは対象外"
+    },
+    {
+      "id": "CAP-474",
+      "category": "Cプラグイン連携",
+      "target": "IPXCPluginRunArgs",
+      "status": "提供",
+      "owner": "セッション",
+      "remarks": "全公開メンバー(型単位)。契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+    },
+    {
+      "id": "CAP-475",
+      "category": "プラグイン機構",
+      "target": "IPEPluginHost",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "プラグインがホストから受け取る接続初期化の入口(実装専用)"
+    },
+    {
+      "id": "CAP-476",
+      "category": "Cプラグイン実装拡張点",
+      "target": "IPXConnector",
+      "status": "非対応",
+      "owner": "",
+      "remarks": "Cプラグインを実装する側が実装する接続の入口(実装専用)"
+    }
+  ]
+}

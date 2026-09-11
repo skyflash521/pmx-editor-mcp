@@ -203,7 +203,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InventoryRecord inventory = AssemblyEnumerator.Enumerate(Sample);
             ISet<string> provided = TypeRolePopulation.Resolve(
-                LedgerParser.Parse(Ledger()),
+                LedgerJsonReader.Read(Ledger()),
                 inventory,
                 new List<ExcludedSignatureRecord>()).Signatures;
 
@@ -215,24 +215,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>題材のアセンブリの公開型を提供として並べ、まとめて指す行を足した台帳。</summary>
         private static string Ledger()
         {
-            StringBuilder builder = new StringBuilder();
-            builder.Append("| ID | 大分類 | 対象 | 分類 | 担当 | 備考 |\n");
-            builder.Append("|---|---|---|---|---|---|\n");
+            LedgerJsonBuilder builder = new LedgerJsonBuilder();
 
             int id = 1;
             foreach (TypeRecord type in AssemblyEnumerator.Enumerate(Sample).Types)
             {
-                builder.Append(string.Format(
-                    CultureInfo.InvariantCulture,
-                    "| CAP-{0:D3} | 標本 | {1} | 提供 | モデル |  |\n",
-                    id++,
-                    WithoutTypeArguments(type.Name)));
+                builder.Add(
+                    string.Format(CultureInfo.InvariantCulture, "CAP-{0:D3}", id++),
+                    WithoutTypeArguments(type.Name));
             }
 
-            builder.Append("| CAP-463 | 標本 | PEPlugin.Pmd.* のまとめ | 非対応 |  |  |\n");
-            builder.Append("| CAP-466 | 標本 | PEPlugin.SDX.* のまとめ | 非対応 |  |  |\n");
-
-            return builder.ToString();
+            return builder.AddNamespaceRows().ToString();
         }
 
         private static string WithoutTypeArguments(string typeName)
@@ -252,7 +245,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new[]
             {
                 editorDirectory,
-                Write("l.md", Ledger()),
+                Write("l.json", Ledger()),
                 Write("e.json", EmptyExcluded),
                 Write("r.json", EmptyRoles),
                 Write("a.json", table),

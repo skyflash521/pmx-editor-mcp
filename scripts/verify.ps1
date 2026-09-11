@@ -15,14 +15,16 @@ Set-Location (Split-Path -Parent $PSScriptRoot)
 $editorDir = Get-EditorDirectory
 $dump = 'src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe'
 $specs = 'docs/specs'
-$ledger = "$specs/pmx-editor-mcp-capability-ledger.md"
-$outOfScope = "$specs/pmx-editor-mcp-ledger-out-of-scope.json"
-$roles = "$specs/pmx-editor-mcp-type-roles.json"
-$names = "$specs/pmx-editor-mcp-property-names.json"
-$assignments = "$specs/pmx-editor-mcp-common-assignments.json"
-$toolMap = "$specs/pmx-editor-mcp-tool-map.json"
-$toolSchemas = "$specs/pmx-editor-mcp-tool-schemas.json"
-$sampleValues = "$specs/pmx-editor-mcp-sample-values.json"
+$observed = 'data/observed'
+$authored = 'data/authored'
+$ledger = "$observed/capability-ledger.json"
+$outOfScope = "$observed/ledger-out-of-scope.json"
+$roles = "$authored/type-roles.json"
+$names = "$authored/property-names.json"
+$assignments = "$authored/common-assignments.json"
+$toolMap = "$authored/tool-map.json"
+$toolSchemas = "$authored/tool-schemas.json"
+$sampleValues = "$authored/sample-values.json"
 $contract = "$specs/pmx-editor-mcp-common-contract.md"
 $procedure = 'docs/conventions/verification.md'
 
@@ -99,6 +101,13 @@ try {
                 if ($errors) { $bad += ($file.Name + ': ' + ($errors.Message -join '; ')) }
             }
             if ($bad) { throw ($bad -join "`n") }
+        }
+    }
+    $checks['文書のリンク'] = @{
+        Needs = $noArtifact
+        Body = {
+            lychee --offline --no-progress --include-fragments `
+                --exclude-path .scratch --exclude-path docs/.scratch '**/*.md'
         }
     }
     $checks[$derivation] = @{

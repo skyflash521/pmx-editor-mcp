@@ -53,7 +53,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchemaTable schemas;
             try
             {
-                ledger = LedgerParser.Parse(Read(args[1], "能力台帳"));
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[2], "型役割表の正本"));
                 assignments = CommonAssignmentJsonReader.Read(Read(args[3], "共通契約割当の正本"));
                 map = ToolMapJsonReader.Read(Read(args[4], "能力対応表の正本"));

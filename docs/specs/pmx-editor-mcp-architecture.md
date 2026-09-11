@@ -3,7 +3,7 @@
 pmx-editor-mcp の構成・ライフサイクル・運用の正本。エディタ側プラグイン(以下ホスト)と、
 stdioを使うMCPサーバーの外部プロセス(以下ブリッジ)の両方を定める。両者の間で交わすプロトコルは
 [IPC仕様書](pmx-editor-mcp-ipc.md)が定める。ツール化する能力の一覧は
-[PEPlugin SDK 能力台帳](pmx-editor-mcp-capability-ledger.md)が持つ。
+[PEPlugin SDK 能力台帳](../../data/observed/capability-ledger.json)が持つ。
 
 ## プロジェクト構成
 
@@ -23,7 +23,7 @@ stdioを使うMCPサーバーの外部プロセス(以下ブリッジ)の両方�
   ホストを相手にした通信を対象とする。ブリッジの `InternalsVisibleTo` の対象でもある。
 - [PmxEditorMcp.SignatureDump.csproj](../../src/SignatureDump/PmxEditorMcp.SignatureDump.csproj):
   net48のコンソール実行プロジェクト。成果物名は `PmxEditorMcp.SignatureDump.exe`。SDKの公開APIを
-  リフレクションで列挙し、[能力台帳](pmx-editor-mcp-capability-ledger.md)と機械可読の正本群を
+  リフレクションで列挙し、[能力台帳](../../data/observed/capability-ledger.json)と機械可読の正本群を
   それへ突き合わせる下位コマンドを持つ。ホストにもブリッジにも読み込まれず、検査からだけ走らせる。
   プラットフォームは x64 とする——`SlimDX` の混在モードのアセンブリを解決するために64ビットで
   実行する必要がある。
@@ -552,8 +552,8 @@ handshake で `budgetChars` と照合する。一致しなければ接続を閉�
   待ち受けているホストの解決・ブリッジの側で起きた失敗の伝え方・両プロセスが持つ応答サイズ予算の
   照合を、この製品自身が持つことになる。
 - **PEPlugin API呼び出しをUIスレッドへ委譲する**: PEPlugin APIのスレッドセーフティを仮定しない
-  ため。不可視Formの `Invoke` でワーカースレッドからUIスレッドへ到達できることは実機で確かめて
-  ある([能力台帳の実機確認](pmx-editor-mcp-capability-ledger.md#実機確認で確かめたこと))。
+  ため。不可視Formの `Invoke` でワーカースレッドからUIスレッドへ到達できることは、検証専用の
+  プラグインとブリッジで実機で確かめてある。
   委譲先を起動時実行で作った不可視Formにしているのは、起動時実行がUIスレッドで呼ばれるため、
   そこで作ったFormのハンドルがUIスレッドに属すると分かっているからである。
 - **ホストDLLの置き場を `_plugin\User\` の1つにする**: `_plugin` 直下と `User` の両方にDLLが

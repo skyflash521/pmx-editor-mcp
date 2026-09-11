@@ -2,7 +2,7 @@
 
 SDKの公開プロパティ1件ごとに付ける日本語名の付け方の規則を定める。名前は
 ツールの説明文の索引語と、発見可能性を測る想定質問文が引く語である。名前の多くは配布物の記載から
-導けるので、[`pmx-editor-mcp-property-names.json`](pmx-editor-mcp-property-names.json) が値として
+導けるので、[`data/authored/property-names.json`](../../data/authored/property-names.json) が値として
 持つのは**導けない項目、すなわち名前を起こした項目だけ**である。
 
 型ごとの役割・要素名詞・ツール名は別の表が持つ。この表を型ごとの項目へ入れ子にしないのは、
@@ -13,7 +13,7 @@ SDKの公開プロパティ1件ごとに付ける日本語名の付け方の規�
 ## 対象
 
 **役割対象の型**が持つ**読み取り可能な公開プロパティ**を対象とする。役割対象の型の母集合は
-[役割対象仕様書](pmx-editor-mcp-role-types.md)が定め、[能力台帳](pmx-editor-mcp-capability-ledger.md)と
+[役割対象仕様書](pmx-editor-mcp-role-types.md)が定め、[能力台帳](../../data/observed/capability-ledger.json)と
 除外一覧とSDKの列挙から機械で導く
 ——本書は値としてそれを持たず、日本語名の照合が同じ3つを引数に取るのはこのためである。
 
