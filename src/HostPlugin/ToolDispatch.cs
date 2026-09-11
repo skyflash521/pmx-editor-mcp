@@ -586,7 +586,7 @@ namespace PmxEditorMcp
                 || !FieldSelection.TryResolve(
                     requested,
                     tool.Fields.Select(f => f.Name).ToList(),
-                    Composed(tool.Access, pointed, divided),
+                    Composed(tool.Access, pointed),
                     out selected,
                     out code,
                     out message))
@@ -624,8 +624,10 @@ namespace PmxEditorMcp
                 taken.AddRange(tool.Listing ? column.Skip(offset).Take(limit) : column);
                 foreach (Spot spot in taken)
                 {
-                    string itemType = divided ? Named(tool.Access, spot.Item) : null;
-                    IList<ToolField> fields = Reading(tool, itemType, selected);
+                    string itemType = tool.Access.Items.Count == 0
+                        ? null
+                        : Named(tool.Access, spot.Item);
+                    IList<ToolField> fields = Reading(tool, divided ? itemType : null, selected);
                     object[] read = new object[fields.Count];
                     for (int at = 0; at < fields.Count; at++)
                     {
@@ -668,7 +670,7 @@ namespace PmxEditorMcp
             {
                 Dictionary<string, object> item =
                     new Dictionary<string, object>(StringComparer.Ordinal);
-                foreach (string name in Composed(tool.Access, pointed, divided))
+                foreach (string name in Composed(tool.Access, pointed))
                 {
                     item.Add(name, Composed(name, taken[spot], types[spot]));
                 }
@@ -1262,10 +1264,10 @@ namespace PmxEditorMcp
         /// 一覧の各項目が常に持つ合成の項目。親を辿る道の、位置で指した呼び出しだけが持つ
         /// ——ハンドルで指した対象はまだどの親にも属していない。
         /// </summary>
-        private static IList<string> Composed(ToolAccess access, Pointed pointed, bool divided)
+        private static IList<string> Composed(ToolAccess access, Pointed pointed)
         {
             List<string> composed = new List<string>();
-            if (divided)
+            if (access.Items.Count != 0)
             {
                 composed.Add(ItemTypeName);
             }

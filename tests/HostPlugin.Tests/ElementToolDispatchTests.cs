@@ -45,6 +45,8 @@ namespace PmxEditorMcp.Tests
 
         private const string SplitKey = "Sdk.Item.Split(out System.String,out System.String)";
 
+        private const string TagKey = "Sdk.Leaf.Tag()";
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -400,6 +402,25 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("一の左", ((IDictionary<string, object>)values[0])["left"]);
             Assert.Equal("一の右", ((IDictionary<string, object>)values[0])["right"]);
             Assert.Equal("二の左", ((IDictionary<string, object>)values[1])["left"]);
+        }
+
+        [Fact]
+        public void ItemsOfADividedListCarryTheirTypeEvenWhenTheItemsAreNotDividedByIt()
+        {
+            Group group = new Group();
+            group.Leaves.Add(new Item { Tag = "一" });
+            group.Leaves.Add(new Spare { Tag = "二" });
+            _model.Groups.Add(group);
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_tags",
+                Arguments(TargetNames.Parent.All, true, TargetNames.Element.All, true));
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.Equal(
+                new[] { "item", "spare" },
+                items.Select(i => (string)i[ToolDispatch.ItemTypeName]).ToArray());
+            Assert.Equal(new[] { "一", "二" }, items.Select(i => (string)i["tag"]).ToArray());
         }
 
         [Fact]
@@ -865,6 +886,10 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     {
+                        TagKey,
+                        (target, arguments) => ((Leaf)target).Tag
+                    },
+                    {
                         MarkKey,
                         (target, arguments) => ((Group)target).Mark
                     },
@@ -1124,6 +1149,15 @@ namespace PmxEditorMcp.Tests
                         true, true, Rooted(EditKind.DuplicateEdit), Nested(), Set(labels))
                 },
                 {
+                    "model_list_tags",
+                    new ToolFields(
+                        false,
+                        true,
+                        Rooted(EditKind.Read),
+                        Divided(),
+                        Set(new[] { new ToolField("tag", TagKey, typeof(string)) }))
+                },
+                {
                     "model_list_sprouts",
                     new ToolFields(false, true, Rooted(EditKind.Read), Divided(), Sprouts(labels))
                 },
@@ -1204,6 +1238,7 @@ namespace PmxEditorMcp.Tests
         /// <summary>並びが受け入れる基の型。</summary>
         private abstract class Leaf
         {
+            public string Tag { get; set; }
         }
 
         /// <summary>ツールが相手にする具象の型。</summary>

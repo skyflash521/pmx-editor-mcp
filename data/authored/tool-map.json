@@ -616,6 +616,40 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXBoneMorphOffset.Bone()",
+      "editKind": "read",
+      "basis": "動かすボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBoneMorphOffset.Rotation()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してボーンを回す量を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBoneMorphOffset.Translation()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してボーンを動かす量を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBoneNodeItem.Bone()",
+      "editKind": "read",
+      "basis": "表示枠が並べるボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex1()",
       "editKind": "read",
       "basis": "面の1つめの頂点を返すだけで、エディタの状態を動かさない。"
@@ -629,6 +663,23 @@
       "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex3()",
       "editKind": "read",
       "basis": "面の3つめの頂点を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXGroupMorphOffset.Morph()",
+      "editKind": "read",
+      "basis": "まとめて動かすモーフを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXGroupMorphOffset.Ratio()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してモーフを動かす割合を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXHeader.StringEncode()",
@@ -739,6 +790,47 @@
       "embeddedIn": [
         "model_list_ik_links",
         "model_update_ik_links"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXImpulseMorphOffset.Body()",
+      "editKind": "read",
+      "basis": "力を加える剛体を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXImpulseMorphOffset.Local()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して力をローカルで加えるかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXImpulseMorphOffset.Torque()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して加える回転の力を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXImpulseMorphOffset.Velocity()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して加える速度を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
       ]
     },
     {
@@ -1294,6 +1386,66 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXMorphNodeItem.Morph()",
+      "editKind": "read",
+      "basis": "表示枠が並べるモーフを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNode.Items()",
+      "editKind": "read",
+      "basis": "表示枠に並ぶ要素のリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNode.Name()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して表示枠の名前を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_nodes",
+        "model_update_nodes"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNode.NameE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語の表示枠の名前を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_nodes",
+        "model_update_nodes"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNodeItem.BoneItem()",
+      "editKind": "read",
+      "basis": "ボーンを指す表示枠の要素を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNodeItem.IsBone()",
+      "editKind": "read",
+      "basis": "ボーンを指す要素かどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_node_items"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNodeItem.IsMorph()",
+      "editKind": "read",
+      "basis": "モーフを指す要素かどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_node_items"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNodeItem.MorphItem()",
+      "editKind": "read",
+      "basis": "モーフを指す表示枠の要素を返すだけで、エディタの状態を動かさない。"
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Body()",
       "editKind": "read",
       "basis": "剛体リストを返すだけで、エディタの状態を動かさない。"
@@ -1501,6 +1653,23 @@
         "refresh": []
       },
       "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲は引数で受け取り、反映の後の表示更新はこの流れを起こしたツールの行が決めるので、この行は持たない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXUVMorphOffset.Offset()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してUVを動かす量を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXUVMorphOffset.Vertex()",
+      "editKind": "read",
+      "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone1()",
