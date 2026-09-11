@@ -15,7 +15,11 @@ namespace PmxEditorMcp
             Payload = payload;
         }
 
-        /// <summary>接続の中で1から増える連番。欠番は取りこぼしを表す。</summary>
+        /// <summary>
+        /// ホストが1から増やす連番。発行元はホストにひとつなので、このキューの中では飛びうる
+        /// ——ほかのキューへ発行したぶんがそこに入る。取りこぼしは
+        /// <see cref="EventDrainResult.Dropped"/> で知る。
+        /// </summary>
         public long Seq { get; }
 
         /// <summary>イベント種別の識別子。</summary>
@@ -68,9 +72,21 @@ namespace PmxEditorMcp
 
         private readonly object _gate = new object();
 
+        private readonly EventSequenceIssuer _issuer;
+
         private long _lastSeq;
 
         private int _dropped;
+
+        public EventQueue(EventSequenceIssuer issuer)
+        {
+            if (issuer == null)
+            {
+                throw new ArgumentNullException(nameof(issuer));
+            }
+
+            _issuer = issuer;
+        }
 
         /// <summary>いま溜まっている件数。</summary>
         public int Count
@@ -109,7 +125,7 @@ namespace PmxEditorMcp
 
             lock (_gate)
             {
-                _lastSeq++;
+                _lastSeq = _issuer.Next();
                 QueuedEvent queued = new QueuedEvent(_lastSeq, type, sourceHandle, payload);
                 _events.Enqueue(queued);
                 while (_events.Count > Capacity)

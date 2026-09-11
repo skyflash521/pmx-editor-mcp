@@ -8,7 +8,7 @@ namespace PmxEditorMcp.Tests
     {
         private const string Type = "pmx_view.mouse_down";
 
-        private readonly EventQueue _queue = new EventQueue();
+        private readonly EventQueue _queue = new EventQueue(new EventSequenceIssuer());
 
         [Fact]
         public void TheSeqStartsAtOneAndGrowsByOne()

@@ -149,6 +149,8 @@ namespace PmxEditorMcp
         private readonly int _budgetChars;
         private readonly TimeSpan _requestTimeout;
         private readonly int _maxMessageBytes;
+        private readonly HandleIdIssuer _handleIds = new HandleIdIssuer();
+        private readonly EventSequenceIssuer _eventSequence = new EventSequenceIssuer();
 
         /// <summary>ログ・メソッド表・ハンドシェイク応答に載せる値を与えて生成する。</summary>
         public JsonRpcConnection(HostLog log, McpMethodTable methods, string hostVersion, int budgetChars)
@@ -210,7 +212,7 @@ namespace PmxEditorMcp
 
             // 接続ごとに独立させるため、この呼び出しのローカルに持つ。
             bool handshaked = false;
-            ConnectionScope scope = new ConnectionScope(ui, _log);
+            ConnectionScope scope = new ConnectionScope(ui, _log, _handleIds, _eventSequence);
 
             // エラー応答の数はコードごとに数え、記録は最初の1回と、接続が切れたときの合計に限る。
             // 同じ記録の反復でローテーションが有用な履歴を押し流すのを避けるため。数え上げは接続ごとに
@@ -564,11 +566,15 @@ namespace PmxEditorMcp
         /// </summary>
         private sealed class ConnectionScope
         {
-            public ConnectionScope(IUiInvoker ui, HostLog log)
+            public ConnectionScope(
+                IUiInvoker ui,
+                HostLog log,
+                HandleIdIssuer handleIds,
+                EventSequenceIssuer eventSequence)
             {
                 Ui = ui;
-                Handles = new HandleLedger(log);
-                Events = new EventQueue();
+                Handles = new HandleLedger(log, handleIds);
+                Events = new EventQueue(eventSequence);
             }
 
             public IUiInvoker Ui { get; }

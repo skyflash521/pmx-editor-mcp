@@ -55,7 +55,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheEventGoesThroughTheSameQueueAsRealOnes()
         {
-            EventQueue events = new EventQueue();
+            EventQueue events = new EventQueue(new EventSequenceIssuer());
             object payload = new Dictionary<string, object>(StringComparer.Ordinal) { { "x", 1 } };
 
             object result = DebugEventInjection.Enqueue(
@@ -72,7 +72,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ThePayloadMayBeLeftOut()
         {
-            EventQueue events = new EventQueue();
+            EventQueue events = new EventQueue(new EventSequenceIssuer());
             Dictionary<string, object> parameters =
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
@@ -81,7 +81,7 @@ namespace PmxEditorMcp.Tests
                 };
 
             DebugEventInjection.Enqueue(new McpMethodContext(
-                parameters, new StubUiInvoker(), 100000, new HandleLedger(_log), events));
+                parameters, new StubUiInvoker(), 100000, new HandleLedger(_log, new HandleIdIssuer()), events));
 
             Assert.Null(Assert.Single(events.Drain(EventQueue.DefaultLimit).Events).Payload);
         }
@@ -89,7 +89,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void EachInjectionTakesTheNextNumber()
         {
-            EventQueue events = new EventQueue();
+            EventQueue events = new EventQueue(new EventSequenceIssuer());
 
             DebugEventInjection.Enqueue(Context(events, "a", 1, null));
             object second = DebugEventInjection.Enqueue(Context(events, "b", 1, null));
@@ -109,7 +109,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ATypeThatIsNotAStringStops()
         {
-            EventQueue events = new EventQueue();
+            EventQueue events = new EventQueue(new EventSequenceIssuer());
             Dictionary<string, object> parameters =
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
@@ -119,7 +119,7 @@ namespace PmxEditorMcp.Tests
 
             InvalidParamsException error = Assert.Throws<InvalidParamsException>(
                 () => DebugEventInjection.Enqueue(new McpMethodContext(
-                    parameters, new StubUiInvoker(), 100000, new HandleLedger(_log), events)));
+                    parameters, new StubUiInvoker(), 100000, new HandleLedger(_log, new HandleIdIssuer()), events)));
 
             Assert.Contains("type", error.Message, StringComparison.Ordinal);
         }
@@ -142,7 +142,7 @@ namespace PmxEditorMcp.Tests
         [InlineData(null)]
         public void ASourceHandleThatIsNotAWholeNumberStops(object sourceHandle)
         {
-            EventQueue events = new EventQueue();
+            EventQueue events = new EventQueue(new EventSequenceIssuer());
             Dictionary<string, object> parameters =
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
@@ -152,7 +152,7 @@ namespace PmxEditorMcp.Tests
 
             InvalidParamsException error = Assert.Throws<InvalidParamsException>(
                 () => DebugEventInjection.Enqueue(new McpMethodContext(
-                    parameters, new StubUiInvoker(), 100000, new HandleLedger(_log), events)));
+                    parameters, new StubUiInvoker(), 100000, new HandleLedger(_log, new HandleIdIssuer()), events)));
 
             Assert.Contains("sourceHandle", error.Message, StringComparison.Ordinal);
         }
@@ -160,7 +160,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ASourceHandleBeyondTheRangeOfAnIntegerStops()
         {
-            EventQueue events = new EventQueue();
+            EventQueue events = new EventQueue(new EventSequenceIssuer());
             Dictionary<string, object> parameters =
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
@@ -170,13 +170,13 @@ namespace PmxEditorMcp.Tests
 
             Assert.Throws<InvalidParamsException>(() => DebugEventInjection.Enqueue(
                 new McpMethodContext(
-                    parameters, new StubUiInvoker(), 100000, new HandleLedger(_log), events)));
+                    parameters, new StubUiInvoker(), 100000, new HandleLedger(_log, new HandleIdIssuer()), events)));
         }
 
         [Fact]
         public void ASourceHandleWrittenAsAWholeDecimalIsTaken()
         {
-            EventQueue events = new EventQueue();
+            EventQueue events = new EventQueue(new EventSequenceIssuer());
             Dictionary<string, object> parameters =
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
@@ -185,7 +185,7 @@ namespace PmxEditorMcp.Tests
                 };
 
             DebugEventInjection.Enqueue(new McpMethodContext(
-                parameters, new StubUiInvoker(), 100000, new HandleLedger(_log), events));
+                parameters, new StubUiInvoker(), 100000, new HandleLedger(_log, new HandleIdIssuer()), events));
 
             Assert.Equal(7, Assert.Single(events.Drain(EventQueue.DefaultLimit).Events).SourceHandle);
         }
@@ -193,14 +193,14 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AMissingArgumentStops()
         {
-            EventQueue events = new EventQueue();
+            EventQueue events = new EventQueue(new EventSequenceIssuer());
 
             Assert.Throws<InvalidParamsException>(() => DebugEventInjection.Enqueue(
                 new McpMethodContext(
                     new Dictionary<string, object>(StringComparer.Ordinal),
                     new StubUiInvoker(),
                     100000,
-                    new HandleLedger(_log),
+                    new HandleLedger(_log, new HandleIdIssuer()),
                     events)));
         }
 
@@ -229,7 +229,7 @@ namespace PmxEditorMcp.Tests
 
             InvalidParamsException error = Assert.Throws<InvalidParamsException>(
                 () => DebugEventInjection.Enqueue(new McpMethodContext(
-                    parameters, new StubUiInvoker(), 100000, new HandleLedger(_log), new EventQueue())));
+                    parameters, new StubUiInvoker(), 100000, new HandleLedger(_log, new HandleIdIssuer()), new EventQueue(new EventSequenceIssuer()))));
 
             Assert.Contains(name, error.Message, StringComparison.Ordinal);
         }
@@ -246,7 +246,7 @@ namespace PmxEditorMcp.Tests
                 };
 
             return new McpMethodContext(
-                parameters, new StubUiInvoker(), 100000, new HandleLedger(_log), events);
+                parameters, new StubUiInvoker(), 100000, new HandleLedger(_log, new HandleIdIssuer()), events);
         }
 
         private sealed class StubUiInvoker : IUiInvoker

@@ -36,18 +36,26 @@ namespace PmxEditorMcp
 
         private readonly HostLog _log;
 
+        private readonly HandleIdIssuer _issuer;
+
         private int _lastId;
 
         private bool _closed;
 
-        public HandleLedger(HostLog log)
+        public HandleLedger(HostLog log, HandleIdIssuer issuer)
         {
             if (log == null)
             {
                 throw new ArgumentNullException(nameof(log));
             }
 
+            if (issuer == null)
+            {
+                throw new ArgumentNullException(nameof(issuer));
+            }
+
             _log = log;
+            _issuer = issuer;
         }
 
         /// <summary>いま有効なハンドルの数。</summary>
@@ -74,7 +82,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>最後に発行したハンドルのID。まだ1件も発行していなければ0。</summary>
+        /// <summary>この台帳が最後に発行したハンドルのID。まだ1件も発行していなければ0。</summary>
         public int LastIssuedId
         {
             get
@@ -131,7 +139,7 @@ namespace PmxEditorMcp
                     }
                 }
 
-                _lastId++;
+                _lastId = _issuer.Next();
                 _entries.Add(_lastId, new Entry(type, target, release, listed));
 
                 return _lastId;

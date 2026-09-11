@@ -26,7 +26,7 @@ namespace PmxEditorMcp.Tests
                 Path.GetTempPath(), "pmx-editor-mcp-handles-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_root);
             _log = new HostLog(Path.Combine(_root, "host.log"));
-            _ledger = new HandleLedger(_log);
+            _ledger = new HandleLedger(_log, new HandleIdIssuer());
         }
 
         public void Dispose()
@@ -308,7 +308,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void EveryArgumentIsRequired()
         {
-            Assert.Throws<ArgumentNullException>(() => new HandleLedger(null));
+            Assert.Throws<ArgumentNullException>(() => new HandleLedger(null, new HandleIdIssuer()));
             Assert.Throws<ArgumentNullException>(() => _ledger.Issue(null, new object(), () => { }));
             Assert.Throws<ArgumentNullException>(() => _ledger.Issue(UiModel, null, () => { }));
             Assert.Throws<ArgumentNullException>(() => _ledger.Issue(UiModel, new object(), null));

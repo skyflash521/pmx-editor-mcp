@@ -105,8 +105,8 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, object>(StringComparer.Ordinal),
                 new StubUiInvoker(),
                 Budget,
-                new HandleLedger(_log),
-                new EventQueue())));
+                new HandleLedger(_log, new HandleIdIssuer()),
+                new EventQueue(new EventSequenceIssuer()))));
         }
 
         [Fact]
@@ -121,7 +121,7 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, object>(StringComparer.Ordinal) { { "chars", chars } };
 
             return new McpMethodContext(
-                parameters, new StubUiInvoker(), Budget, new HandleLedger(_log), new EventQueue());
+                parameters, new StubUiInvoker(), Budget, new HandleLedger(_log, new HandleIdIssuer()), new EventQueue(new EventSequenceIssuer()));
         }
 
         private sealed class StubUiInvoker : IUiInvoker
