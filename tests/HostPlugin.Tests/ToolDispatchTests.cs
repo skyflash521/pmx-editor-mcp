@@ -380,6 +380,7 @@ namespace PmxEditorMcp.Tests
                     new ToolCall(
                         SaveKey,
                         Direct(),
+                        ToolAccess.Whole(),
                         DangerKind.Overwrite,
                         new[] { new ToolArgument("path", typeof(string)) },
                         null)
@@ -387,19 +388,40 @@ namespace PmxEditorMcp.Tests
                 {
                     "session_count",
                     new ToolCall(
-                        CountKey, Direct(), DangerKind.None, new ToolArgument[0], typeof(int))
+                        CountKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        typeof(int))
                 },
                 {
                     "session_lost",
                     new ToolCall(
-                        LostKey, Direct(), DangerKind.None, new ToolArgument[0], null)
+                        LostKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        null)
                 },
                 {
                     "session_throw",
                     new ToolCall(
-                        ThrowKey, Direct(), DangerKind.None, new ToolArgument[0], null)
+                        ThrowKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        null)
                 },
             };
+        }
+
+        /// <summary>型で分かれないツールの、1つだけの項目の組。</summary>
+        private static IList<ToolFieldSet> Set(params ToolField[] fields)
+        {
+            return new[] { new ToolFieldSet(null, fields) };
         }
 
         private static IDictionary<string, ToolFields> Aggregations()
@@ -412,16 +434,19 @@ namespace PmxEditorMcp.Tests
                         false,
                         false,
                         Direct(),
-                        new[]
-                        {
+                        ToolAccess.Whole(),
+                        Set(
                             new ToolField("count", CountKey, typeof(int)),
-                            new ToolField("flag", FlagKey, typeof(bool)),
-                        })
+                            new ToolField("flag", FlagKey, typeof(bool))))
                 },
                 {
                     "session_update_form",
                     new ToolFields(
-                        true, false, Direct(), new[] { new ToolField("flag", FlagKey, typeof(bool)) })
+                        true,
+                        false,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        Set(new ToolField("flag", FlagKey, typeof(bool))))
                 },
                 {
                     "session_update_pair",
@@ -429,12 +454,11 @@ namespace PmxEditorMcp.Tests
                         true,
                         false,
                         Direct(),
-                        new[]
-                        {
+                        ToolAccess.Whole(),
+                        Set(
                             new ToolField("flag", FlagKey, typeof(bool)),
                             new ToolField("lost", LostKey, typeof(bool)),
-                            new ToolField("broken", ThrowKey, typeof(bool)),
-                        })
+                            new ToolField("broken", ThrowKey, typeof(bool))))
                 },
             };
         }

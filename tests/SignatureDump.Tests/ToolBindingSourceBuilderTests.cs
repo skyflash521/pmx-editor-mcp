@@ -35,8 +35,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 "calls.Add(\"session_open_pmx_file\", new ToolCall(\"" + Form
                     + ".OpenPMXFile(System.String)\", new ToolReceiver(ToolReceiverKind.Connection,"
-                    + " \"" + Form + "\", EditKind.DirectChange), DangerKind.None,"
-                    + " new ToolArgument[] { new ToolArgument(\"path\","
+                    + " \"" + Form + "\", EditKind.DirectChange), ToolAccess.Whole(),"
+                    + " DangerKind.None, new ToolArgument[] { new ToolArgument(\"path\","
                     + " typeof(global::System.String)) }, typeof(global::System.Boolean)));",
                 source.Text);
         }
@@ -71,7 +71,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 "new ToolCall(\"Sdk.Bridge.Ping()\","
                     + " new ToolReceiver(ToolReceiverKind.Connection, null, EditKind.DirectChange),"
-                    + " DangerKind.None,",
+                    + " ToolAccess.Whole(), DangerKind.None,",
                 source.Text);
         }
 
@@ -122,12 +122,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 "aggregations.Add(\"" + GetTool + "\", new ToolFields(false, false,"
                     + " new ToolReceiver(ToolReceiverKind.Connection, \"" + Form
-                    + "\", EditKind.Read), new ToolField[]",
+                    + "\", EditKind.Read), ToolAccess.Whole(), new ToolFieldSet[]",
                 source.Text);
             Assert.Contains(
                 "aggregations.Add(\"" + UpdateTool + "\", new ToolFields(true, false,"
                     + " new ToolReceiver(ToolReceiverKind.Connection, \"" + Form
-                    + "\", EditKind.ViewSession), new ToolField[]",
+                    + "\", EditKind.ViewSession), ToolAccess.Whole(), new ToolFieldSet[]",
                 source.Text);
             Assert.Contains(
                 "new ToolField(\"undoCount\", \"" + Form
@@ -172,13 +172,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(
                 new[] { "model_add_vertices", "model_remove_vertices" }, source.Elements.ToArray());
             Assert.Contains(
-                "elements.Add(\"model_add_vertices\", new ToolElements(false, \"" + ListKey
-                    + "\", new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.DuplicateEdit),"
-                    + " typeof(global::" + Vertex + ")));",
+                "elements.Add(\"model_add_vertices\", new ToolElements(false,"
+                    + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.DuplicateEdit),"
+                    + " new ToolAccess(ToolAccessKind.Element, \"" + ListKey
+                    + "\", new ToolHop[] {  }, typeof(global::" + Vertex
+                    + "), item => item is global::" + Vertex + ", \"vertex\", null)));",
                 source.Text);
             Assert.Contains(
-                "elements.Add(\"model_remove_vertices\", new ToolElements(true, \"" + ListKey,
-                source.Text);
+                "elements.Add(\"model_remove_vertices\", new ToolElements(true,", source.Text);
         }
 
         [Fact]
@@ -256,7 +257,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return ToolBindingSourceBuilder.Build(
                 new ToolMap(bindings.Select(b => b.Row).ToList()),
                 Roles(),
-                signatures,
+                new InventoryRecord(
+                    "題材",
+                    "0.0.0.0",
+                    new TypeRecord[0],
+                    new TypeRecord[0],
+                    signatures.Values.ToList()),
                 bindings.Where(b => b.Tool != null)
                     .ToDictionary(b => b.Signature.Key, b => b.Tool, StringComparer.Ordinal),
                 Assignments());

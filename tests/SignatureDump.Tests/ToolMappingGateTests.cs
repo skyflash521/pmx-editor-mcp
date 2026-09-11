@@ -130,7 +130,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Signatures(Property(Vertex + ".Index"))));
 
             Assert.Contains(
-                "埋め込み先が宣言型の取得と更新のツールに無い",
+                "埋め込み先が宣言型の取得と更新のツールにも",
                 error.Message,
                 StringComparison.Ordinal);
         }
@@ -156,9 +156,41 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Signatures(Property(Vertex + ".Index"))));
 
             Assert.Contains(
-                "埋め込み先が宣言型の取得と更新のツールに無い",
+                "埋め込み先が宣言型の取得と更新のツールにも",
                 error.Message,
                 StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnEmbeddedNameOfTheListThatHoldsTheDeclaringTypePasses()
+        {
+            TypeRoleRecord offset = new TypeRoleRecord(
+                Vertex,
+                TypeRole.OperationTarget,
+                "根拠。",
+                "vertex_morph_offset",
+                "vertex_morph_offsets",
+                CapabilityOwner.Model);
+            TypeRoleRecord listed = new TypeRoleRecord(
+                "PEPlugin.Pmx.IPXMorphOffset",
+                TypeRole.OperationTarget,
+                "根拠。",
+                "morph_offset",
+                "morph_offsets",
+                CapabilityOwner.Model);
+
+            Require(
+                ToolMapJsonReader.Read(EmbeddedMapJson("model_list_morph_offsets")),
+                new TypeRoleTable(
+                    new[] { offset, listed },
+                    new HandleIssuanceRecord[0],
+                    new ElementCollectionRecord[0]),
+                Signatures(Property(Vertex + ".Index")),
+                schemas: Schemas("model_list_morph_offsets"),
+                concrete: new Dictionary<string, IList<string>>(StringComparer.Ordinal)
+                {
+                    { "PEPlugin.Pmx.IPXMorphOffset", new[] { Vertex } },
+                });
         }
 
         [Fact]
@@ -637,17 +669,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new Dictionary<string, ComposedTool>(StringComparer.Ordinal);
 
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(null, roles, signatures, schemas, names, composed));
+                () => ToolMappingGate.Require(
+                    null, roles, signatures, schemas, names, composed, Concrete()));
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(map, null, signatures, schemas, names, composed));
+                () => ToolMappingGate.Require(
+                    map, null, signatures, schemas, names, composed, Concrete()));
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(map, roles, null, schemas, names, composed));
+                () => ToolMappingGate.Require(
+                    map, roles, null, schemas, names, composed, Concrete()));
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(map, roles, signatures, null, names, composed));
+                () => ToolMappingGate.Require(
+                    map, roles, signatures, null, names, composed, Concrete()));
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(map, roles, signatures, schemas, null, composed));
+                () => ToolMappingGate.Require(
+                    map, roles, signatures, schemas, null, composed, Concrete()));
             Assert.Throws<ArgumentNullException>(
-                () => ToolMappingGate.Require(map, roles, signatures, schemas, names, null));
+                () => ToolMappingGate.Require(
+                    map, roles, signatures, schemas, names, null, Concrete()));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolMappingGate.Require(
+                    map, roles, signatures, schemas, names, composed, null));
         }
 
         /// <summary>入出力の形を持たないスキーマ正本。埋め込み先だけを見る試験が使う。</summary>
@@ -660,7 +701,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, SignatureRecord> signatures,
             string schemas = null,
             IDictionary<string, string> toolNames = null,
-            IDictionary<string, ComposedTool> composedTools = null)
+            IDictionary<string, ComposedTool> composedTools = null,
+            IDictionary<string, IList<string>> concrete = null)
         {
             IDictionary<string, string> names =
                 toolNames ?? new Dictionary<string, string>(StringComparer.Ordinal);
@@ -670,7 +712,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 signatures,
                 ToolSchemaJsonReader.Read(schemas ?? Schemas(names.Values.ToArray())),
                 names,
-                composedTools ?? new Dictionary<string, ComposedTool>(StringComparer.Ordinal));
+                composedTools ?? new Dictionary<string, ComposedTool>(StringComparer.Ordinal),
+                concrete ?? Concrete());
+        }
+
+        /// <summary>具象の型の表。題材のリストは抽象の型を並べない。</summary>
+        private static IDictionary<string, IList<string>> Concrete()
+        {
+            return new Dictionary<string, IList<string>>(StringComparer.Ordinal);
         }
 
         /// <summary>行キーからツールの名前を引く表。行キーと名前を交互に並べる。</summary>

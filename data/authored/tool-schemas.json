@@ -75,6 +75,59 @@
       }
     },
     {
+      "tool": "model_add_faces",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentIndex",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "indices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_add_joints",
       "branches": [
         {
@@ -297,6 +350,151 @@
       }
     },
     {
+      "tool": "model_clear_material_morph_offset",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "v",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "v",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentIndices",
+                "parentRange",
+                "parentAll"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "indices",
+                "range",
+                "all",
+                "handles"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_clear_pmx",
       "branches": [
         {
@@ -338,6 +536,558 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_get_pmx_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "currentPath"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_headers",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "stringEncode"
+                },
+                {
+                  "name": "uvaCount"
+                },
+                {
+                  "name": "version"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_materials",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all",
+                "handles"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "ambient"
+                },
+                {
+                  "name": "bothDraw"
+                },
+                {
+                  "name": "diffuse"
+                },
+                {
+                  "name": "edge"
+                },
+                {
+                  "name": "edgeColor"
+                },
+                {
+                  "name": "edgeSize"
+                },
+                {
+                  "name": "memo"
+                },
+                {
+                  "name": "name"
+                },
+                {
+                  "name": "nameE"
+                },
+                {
+                  "name": "power"
+                },
+                {
+                  "name": "primitiveType"
+                },
+                {
+                  "name": "selfShadow"
+                },
+                {
+                  "name": "selfShadowMap"
+                },
+                {
+                  "name": "shadow"
+                },
+                {
+                  "name": "specular"
+                },
+                {
+                  "name": "sphere"
+                },
+                {
+                  "name": "sphereMode"
+                },
+                {
+                  "name": "tex"
+                },
+                {
+                  "name": "toon"
+                },
+                {
+                  "name": "vertexColor"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_model_infos",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "comment"
+                },
+                {
+                  "name": "commentE"
+                },
+                {
+                  "name": "modelName"
+                },
+                {
+                  "name": "modelNameE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_morph_offsets",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentIndices",
+                "parentRange",
+                "parentAll"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "indices",
+                "range",
+                "all",
+                "handles"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "itemType",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "parentIndex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "indexInParent",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "ambient"
+                },
+                {
+                  "name": "diffuse"
+                },
+                {
+                  "name": "edgeColor"
+                },
+                {
+                  "name": "edgeSize"
+                },
+                {
+                  "name": "op"
+                },
+                {
+                  "name": "power"
+                },
+                {
+                  "name": "specular"
+                },
+                {
+                  "name": "sphere"
+                },
+                {
+                  "name": "tex"
+                },
+                {
+                  "name": "toon"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -396,6 +1146,172 @@
               "members": [
                 {
                   "name": "filePath"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_vertices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all",
+                "handles"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "edgeScale"
+                },
+                {
+                  "name": "normal"
+                },
+                {
+                  "name": "position"
+                },
+                {
+                  "name": "qdef"
+                },
+                {
+                  "name": "sdef"
+                },
+                {
+                  "name": "sdefC"
+                },
+                {
+                  "name": "sdefR0"
+                },
+                {
+                  "name": "sdefR1"
+                },
+                {
+                  "name": "uv"
+                },
+                {
+                  "name": "uva1"
+                },
+                {
+                  "name": "uva2"
+                },
+                {
+                  "name": "uva3"
+                },
+                {
+                  "name": "uva4"
+                },
+                {
+                  "name": "weight1"
+                },
+                {
+                  "name": "weight2"
+                },
+                {
+                  "name": "weight3"
+                },
+                {
+                  "name": "weight4"
                 }
               ]
             }
@@ -540,6 +1456,112 @@
             }
           ],
           "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "removed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_remove_faces",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentIndices",
+                "parentRange",
+                "parentAll"
+              ],
+              "required": true
+            },
             {
               "names": [
                 "indices",
@@ -989,6 +2011,609 @@
       }
     },
     {
+      "tool": "model_update_headers",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "stringEncode",
+                  "required": false
+                },
+                {
+                  "name": "uvaCount",
+                  "required": false
+                },
+                {
+                  "name": "version",
+                  "required": false
+                }
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_materials",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "ambient",
+                  "required": false
+                },
+                {
+                  "name": "bothDraw",
+                  "required": false
+                },
+                {
+                  "name": "diffuse",
+                  "required": false
+                },
+                {
+                  "name": "edge",
+                  "required": false
+                },
+                {
+                  "name": "edgeColor",
+                  "required": false
+                },
+                {
+                  "name": "edgeSize",
+                  "required": false
+                },
+                {
+                  "name": "memo",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "power",
+                  "required": false
+                },
+                {
+                  "name": "primitiveType",
+                  "required": false
+                },
+                {
+                  "name": "selfShadow",
+                  "required": false
+                },
+                {
+                  "name": "selfShadowMap",
+                  "required": false
+                },
+                {
+                  "name": "shadow",
+                  "required": false
+                },
+                {
+                  "name": "specular",
+                  "required": false
+                },
+                {
+                  "name": "sphere",
+                  "required": false
+                },
+                {
+                  "name": "sphereMode",
+                  "required": false
+                },
+                {
+                  "name": "tex",
+                  "required": false
+                },
+                {
+                  "name": "toon",
+                  "required": false
+                },
+                {
+                  "name": "vertexColor",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "ambient",
+                    "required": false
+                  },
+                  {
+                    "name": "bothDraw",
+                    "required": false
+                  },
+                  {
+                    "name": "diffuse",
+                    "required": false
+                  },
+                  {
+                    "name": "edge",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeColor",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeSize",
+                    "required": false
+                  },
+                  {
+                    "name": "memo",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "power",
+                    "required": false
+                  },
+                  {
+                    "name": "primitiveType",
+                    "required": false
+                  },
+                  {
+                    "name": "selfShadow",
+                    "required": false
+                  },
+                  {
+                    "name": "selfShadowMap",
+                    "required": false
+                  },
+                  {
+                    "name": "shadow",
+                    "required": false
+                  },
+                  {
+                    "name": "specular",
+                    "required": false
+                  },
+                  {
+                    "name": "sphere",
+                    "required": false
+                  },
+                  {
+                    "name": "sphereMode",
+                    "required": false
+                  },
+                  {
+                    "name": "tex",
+                    "required": false
+                  },
+                  {
+                    "name": "toon",
+                    "required": false
+                  },
+                  {
+                    "name": "vertexColor",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all",
+                "handles"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_model_infos",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "comment",
+                  "required": false
+                },
+                {
+                  "name": "commentE",
+                  "required": false
+                },
+                {
+                  "name": "modelName",
+                  "required": false
+                },
+                {
+                  "name": "modelNameE",
+                  "required": false
+                }
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_morph_offsets",
+      "branches": [
+        {
+          "branch": "material",
+          "selector": {
+            "name": "itemType",
+            "value": "material_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "ambient",
+                  "required": false
+                },
+                {
+                  "name": "diffuse",
+                  "required": false
+                },
+                {
+                  "name": "edgeColor",
+                  "required": false
+                },
+                {
+                  "name": "edgeSize",
+                  "required": false
+                },
+                {
+                  "name": "op",
+                  "required": false
+                },
+                {
+                  "name": "power",
+                  "required": false
+                },
+                {
+                  "name": "specular",
+                  "required": false
+                },
+                {
+                  "name": "sphere",
+                  "required": false
+                },
+                {
+                  "name": "tex",
+                  "required": false
+                },
+                {
+                  "name": "toon",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "ambient",
+                    "required": false
+                  },
+                  {
+                    "name": "diffuse",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeColor",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeSize",
+                    "required": false
+                  },
+                  {
+                    "name": "op",
+                    "required": false
+                  },
+                  {
+                    "name": "power",
+                    "required": false
+                  },
+                  {
+                    "name": "specular",
+                    "required": false
+                  },
+                  {
+                    "name": "sphere",
+                    "required": false
+                  },
+                  {
+                    "name": "tex",
+                    "required": false
+                  },
+                  {
+                    "name": "toon",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentIndices",
+                "parentRange",
+                "parentAll"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "indices",
+                "range",
+                "all",
+                "handles"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_pmx_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "currentPath",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_update_pmxes",
       "branches": [
         {
@@ -1008,6 +2633,240 @@
                   "name": "filePath",
                   "required": false
                 }
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_vertices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "edgeScale",
+                  "required": false
+                },
+                {
+                  "name": "normal",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                },
+                {
+                  "name": "qdef",
+                  "required": false
+                },
+                {
+                  "name": "sdef",
+                  "required": false
+                },
+                {
+                  "name": "sdefC",
+                  "required": false
+                },
+                {
+                  "name": "sdefR0",
+                  "required": false
+                },
+                {
+                  "name": "sdefR1",
+                  "required": false
+                },
+                {
+                  "name": "uv",
+                  "required": false
+                },
+                {
+                  "name": "uva1",
+                  "required": false
+                },
+                {
+                  "name": "uva2",
+                  "required": false
+                },
+                {
+                  "name": "uva3",
+                  "required": false
+                },
+                {
+                  "name": "uva4",
+                  "required": false
+                },
+                {
+                  "name": "weight1",
+                  "required": false
+                },
+                {
+                  "name": "weight2",
+                  "required": false
+                },
+                {
+                  "name": "weight3",
+                  "required": false
+                },
+                {
+                  "name": "weight4",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "edgeScale",
+                    "required": false
+                  },
+                  {
+                    "name": "normal",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  },
+                  {
+                    "name": "qdef",
+                    "required": false
+                  },
+                  {
+                    "name": "sdef",
+                    "required": false
+                  },
+                  {
+                    "name": "sdefC",
+                    "required": false
+                  },
+                  {
+                    "name": "sdefR0",
+                    "required": false
+                  },
+                  {
+                    "name": "sdefR1",
+                    "required": false
+                  },
+                  {
+                    "name": "uv",
+                    "required": false
+                  },
+                  {
+                    "name": "uva1",
+                    "required": false
+                  },
+                  {
+                    "name": "uva2",
+                    "required": false
+                  },
+                  {
+                    "name": "uva3",
+                    "required": false
+                  },
+                  {
+                    "name": "uva4",
+                    "required": false
+                  },
+                  {
+                    "name": "weight1",
+                    "required": false
+                  },
+                  {
+                    "name": "weight2",
+                    "required": false
+                  },
+                  {
+                    "name": "weight3",
+                    "required": false
+                  },
+                  {
+                    "name": "weight4",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all",
+                "handles"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
               ],
               "required": true
             }

@@ -284,6 +284,500 @@
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。"
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex1()",
+      "editKind": "read",
+      "basis": "面の1つめの頂点を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex2()",
+      "editKind": "read",
+      "basis": "面の2つめの頂点を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex3()",
+      "editKind": "read",
+      "basis": "面の3つめの頂点を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXHeader.StringEncode()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して文字列の符号化の指定を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_headers",
+        "model_update_headers"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXHeader.UVACount()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して追加UVの数を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_headers",
+        "model_update_headers"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXHeader.Version()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してPMXの版を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_headers",
+        "model_update_headers"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Ambient()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して環境色を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.BothDraw()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して両面を描くかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Diffuse()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して拡散色を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Edge()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してエッジを描くかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.EdgeColor()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してエッジの色を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.EdgeSize()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してエッジの太さを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Faces()",
+      "editKind": "read",
+      "basis": "材質の中の面リストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Memo()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してメモを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Name()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して材質名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.NameE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語の材質名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Power()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して反射の強さを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.PrimitiveType()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して描く基本図形を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.SelfShadow()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してセルフ影を描くかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.SelfShadowMap()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してセルフ影のマップへ描くかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Shadow()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して地面へ影を落とすかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Specular()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して反射色を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Sphere()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してスフィアの位置を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.SphereMode()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してスフィアの合わせ方を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Tex()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してテクスチャの位置を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Toon()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してトゥーンの位置を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.VertexColor()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して頂点色を使うかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_materials",
+        "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Ambient()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して環境色のオフセットを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Clear(System.Single)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して材質モーフオフセットの全成分を同じ値で埋め、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "morph"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Diffuse()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して拡散色のオフセットを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.EdgeColor()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してエッジの色のオフセットを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.EdgeSize()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してエッジの太さのオフセットを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Material()",
+      "editKind": "read",
+      "basis": "オフセットを掛ける材質を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Op()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して掛け方の種別を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Power()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して反射の強さのオフセットを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Specular()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して反射色のオフセットを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Sphere()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してスフィアの係数を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Tex()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してテクスチャの係数を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Toon()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してトゥーンの係数を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXModelInfo.Comment()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してコメントを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_model_infos",
+        "model_update_model_infos"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXModelInfo.CommentE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語のコメントを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_model_infos",
+        "model_update_model_infos"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXModelInfo.ModelName()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してモデル名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_model_infos",
+        "model_update_model_infos"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXModelInfo.ModelNameE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語のモデル名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_model_infos",
+        "model_update_model_infos"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Body()",
       "editKind": "read",
       "basis": "剛体リストを返すだけで、エディタの状態を動かさない。"
@@ -445,6 +939,15 @@
       "basis": "頂点リストを返すだけで、エディタの状態を動かさない。"
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.CurrentPath()",
+      "editKind": "viewSession",
+      "basis": "いま開いているモデルのファイルパスを切り替えるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_pmx_connector",
+        "model_update_pmx_connector"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()",
       "editKind": "read",
       "basis": "現在のPMXの複製を返すだけで、エディタの状態を動かさない。"
@@ -482,6 +985,230 @@
         "refresh": []
       },
       "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲は引数で受け取り、反映の後の表示更新はこの流れを起こしたツールの行が決めるので、この行は持たない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone1()",
+      "editKind": "read",
+      "basis": "ウェイト1が指すボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone2()",
+      "editKind": "read",
+      "basis": "ウェイト2が指すボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone3()",
+      "editKind": "read",
+      "basis": "ウェイト3が指すボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone4()",
+      "editKind": "read",
+      "basis": "ウェイト4が指すボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.EdgeScale()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してエッジの倍率を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Normal()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して法線を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Position()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して位置を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.QDEF()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してQDEFで変形するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.SDEF()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してSDEFで変形するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.SDEF_C()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してSDEFのC値を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.SDEF_R0()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してSDEFのR0値を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.SDEF_R1()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してSDEFのR1値を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.UV()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してUVを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.UVA1()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して追加UV1を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.UVA2()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して追加UV2を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.UVA3()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して追加UV3を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.UVA4()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して追加UV4を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Weight1()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してウェイト1を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Weight2()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してウェイト2を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Weight3()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してウェイト3を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Weight4()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してウェイト4を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
     },
     {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.ReleaseViewEventListener(PXCPlugin.Event.IPXViewEventListener)",

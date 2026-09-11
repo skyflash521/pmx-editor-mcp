@@ -522,6 +522,19 @@ namespace PmxEditorMcp.Tests
             };
         }
 
+        /// <summary>型で分かれないツールの、1つだけの項目の組。</summary>
+        private static IList<ToolFieldSet> Set(IList<ToolField> fields)
+        {
+            return new[] { new ToolFieldSet(null, fields) };
+        }
+
+        /// <summary>PMXが直に持つ要素のリストへ至る道。</summary>
+        private static ToolAccess Listed()
+        {
+            return new ToolAccess(
+                ToolAccessKind.Element, ListKey, null, typeof(Item), item => item is Item);
+        }
+
         private static ToolReceiver Rooted(EditKind edit)
         {
             return new ToolReceiver(ToolReceiverKind.Pmx, null, edit);
@@ -536,6 +549,7 @@ namespace PmxEditorMcp.Tests
                     new ToolCall(
                         ClearKey,
                         Rooted(EditKind.DuplicateEdit),
+                        ToolAccess.Whole(),
                         DangerKind.Reset,
                         new ToolArgument[0],
                         null)
@@ -545,6 +559,7 @@ namespace PmxEditorMcp.Tests
                     new ToolCall(
                         CompactKey,
                         Rooted(EditKind.DuplicateEdit),
+                        ToolAccess.Whole(),
                         DangerKind.None,
                         new ToolArgument[0],
                         null)
@@ -560,11 +575,13 @@ namespace PmxEditorMcp.Tests
             {
                 {
                     "model_list_pmxes",
-                    new ToolFields(false, true, Rooted(EditKind.Read), fields)
+                    new ToolFields(
+                        false, true, Rooted(EditKind.Read), ToolAccess.Whole(), Set(fields))
                 },
                 {
                     "model_update_pmxes",
-                    new ToolFields(true, true, Rooted(EditKind.DuplicateEdit), fields)
+                    new ToolFields(
+                        true, true, Rooted(EditKind.DuplicateEdit), ToolAccess.Whole(), Set(fields))
                 },
             };
         }
@@ -575,12 +592,11 @@ namespace PmxEditorMcp.Tests
             {
                 {
                     "model_add_vertices",
-                    new ToolElements(
-                        false, ListKey, Rooted(EditKind.DuplicateEdit), typeof(Item))
+                    new ToolElements(false, Rooted(EditKind.DuplicateEdit), Listed())
                 },
                 {
                     "model_remove_vertices",
-                    new ToolElements(true, ListKey, Rooted(EditKind.DuplicateEdit), typeof(Item))
+                    new ToolElements(true, Rooted(EditKind.DuplicateEdit), Listed())
                 },
             };
         }

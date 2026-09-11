@@ -18,7 +18,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, SignatureRecord> signatures,
             ToolSchemaTable schemas,
             IDictionary<string, string> toolNames,
-            IDictionary<string, ComposedTool> composedTools)
+            IDictionary<string, ComposedTool> composedTools,
+            IDictionary<string, IList<string>> concrete)
         {
             if (map == null)
             {
@@ -50,11 +51,16 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(composedTools));
             }
 
+            if (concrete == null)
+            {
+                throw new ArgumentNullException(nameof(concrete));
+            }
+
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
 
             HashSet<string> derived = new HashSet<string>(
-                Aggregations(map, signatures, byType), StringComparer.Ordinal);
+                Aggregations(map, signatures, byType, concrete), StringComparer.Ordinal);
             derived.UnionWith(ElementToolRule.Names(map, signatures, roles));
 
             RequireNoComposedName(toolNames, composedTools);
@@ -74,7 +80,7 @@ namespace PmxEditorMcp.SignatureDump
 
                 foreach (string embedded in row.EmbeddedIn)
                 {
-                    RequireEmbedded(embedded, signature, byType, map, toolNames);
+                    RequireEmbedded(embedded, signature, byType, map, toolNames, concrete);
                 }
             }
         }
@@ -107,25 +113,44 @@ namespace PmxEditorMcp.SignatureDump
         private static ISet<string> Aggregations(
             ToolMap map,
             IDictionary<string, SignatureRecord> signatures,
-            IDictionary<string, TypeRoleRecord> byType)
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> concrete)
         {
             HashSet<string> names = new HashSet<string>(StringComparer.Ordinal);
             foreach (ToolMapRow row in map.Rows.Where(r => r.EmbeddedIn != null))
             {
                 SignatureRecord signature;
                 TypeRoleRecord owner;
-                if (!signatures.TryGetValue(row.SignatureKey, out signature)
-                    || !byType.TryGetValue(
-                        TypeDefinitionName.OfElement(signature.DeclaringType), out owner))
+                string declaring = signatures.TryGetValue(row.SignatureKey, out signature)
+                    ? TypeDefinitionName.OfElement(signature.DeclaringType)
+                    : null;
+                if (declaring == null || !byType.TryGetValue(declaring, out owner))
                 {
                     continue;
                 }
 
-                ISet<string> aggregations = AggregationToolRule.Names(new[] { owner });
+                ISet<string> aggregations = AggregationToolRule.Names(
+                    Holders(owner, declaring, byType, concrete));
                 names.UnionWith(row.EmbeddedIn.Where(aggregations.Contains));
             }
 
             return names;
+        }
+
+        /// <summary>
+        /// その行の項目を集めうる型。宣言型そのものと、宣言型を具象として並べる抽象の型である。
+        /// </summary>
+        private static IEnumerable<TypeRoleRecord> Holders(
+            TypeRoleRecord owner,
+            string declaring,
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> concrete)
+        {
+            return new[] { owner }.Concat(concrete
+                .Where(c => c.Value.Contains(declaring, StringComparer.Ordinal))
+                .Select(c => c.Key)
+                .Where(byType.ContainsKey)
+                .Select(t => byType[t]));
         }
 
         private static void RequireSameTools(
@@ -300,11 +325,12 @@ namespace PmxEditorMcp.SignatureDump
             SignatureRecord signature,
             IDictionary<string, TypeRoleRecord> byType,
             ToolMap map,
-            IDictionary<string, string> toolNames)
+            IDictionary<string, string> toolNames,
+            IDictionary<string, IList<string>> concrete)
         {
+            string declaring = TypeDefinitionName.OfElement(signature.DeclaringType);
             TypeRoleRecord owner;
-            if (!byType.TryGetValue(
-                    TypeDefinitionName.OfElement(signature.DeclaringType), out owner))
+            if (!byType.TryGetValue(declaring, out owner))
             {
                 throw new InvalidOperationException(
                     "ツールの名前を導く型が型役割表に無い: " + signature.DeclaringType);
@@ -335,10 +361,12 @@ namespace PmxEditorMcp.SignatureDump
                 return;
             }
 
-            if (!AggregationToolRule.Of(owner).Contains(embedded, StringComparer.Ordinal))
+            // 抽象の型を並べるリストでは、具象の型の項目はそのリストのツールへ集まる。
+            if (!Holders(owner, declaring, byType, concrete).Any(h => AggregationToolRule.Of(h).Contains(embedded, StringComparer.Ordinal)))
             {
                 throw new InvalidOperationException(
-                    "埋め込み先が宣言型の取得と更新のツールに無い: " + embedded);
+                    "埋め込み先が宣言型の取得と更新のツールにも、"
+                        + "その型を具象として並べるリストのツールにも無い: " + embedded);
             }
         }
     }

@@ -25,6 +25,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheHandleCheckAlsoCarriesTheOtherGroupsTheToolMustHave()
+        {
+            E2eCase one = Assert.Single(Build(Valued("model_update_items")));
+
+            Assert.Equal("TOOL_INVALID_HANDLE", one.Code);
+            Assert.Equal(new[] { "handles", "value" }, one.Arguments.Keys.OrderBy(k => k).ToArray());
+            Assert.Empty((IDictionary<string, object>)one.Arguments["value"]);
+        }
+
+        [Fact]
+        public void AGroupThatCannotBeFilledLeavesNoHandleCheck()
+        {
+            Assert.Empty(Build(Shaped("model_paint_items")));
+        }
+
+        [Fact]
         public void AToolThatTakesACountIsCheckedAtTheEdgeOfThePage()
         {
             E2eCase one = Assert.Single(Build(Tool("model_list_bone", Limit())));
@@ -93,15 +109,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
             HashSet<string> dangerous = new HashSet<string>(StringComparer.Ordinal);
 
             Assert.Throws<ArgumentNullException>(
-                () => E2eCaseBuilder.Build(null, schemas, named, Paths(), dangerous));
+                () => E2eCaseBuilder.Build(null, schemas, named, Paths(), dangerous, Shapes()));
             Assert.Throws<ArgumentNullException>(
-                () => E2eCaseBuilder.Build(Map(RowKey), null, named, Paths(), dangerous));
+                () => E2eCaseBuilder.Build(Map(RowKey), null, named, Paths(), dangerous, Shapes()));
             Assert.Throws<ArgumentNullException>(
-                () => E2eCaseBuilder.Build(Map(RowKey), schemas, null, Paths(), dangerous));
+                () => E2eCaseBuilder.Build(Map(RowKey), schemas, null, Paths(), dangerous, Shapes()));
             Assert.Throws<ArgumentNullException>(
-                () => E2eCaseBuilder.Build(Map(RowKey), schemas, named, null, dangerous));
+                () => E2eCaseBuilder.Build(Map(RowKey), schemas, named, null, dangerous, Shapes()));
             Assert.Throws<ArgumentNullException>(
-                () => E2eCaseBuilder.Build(Map(RowKey), schemas, named, Paths(), null));
+                () => E2eCaseBuilder.Build(Map(RowKey), schemas, named, Paths(), null, Shapes()));
+            Assert.Throws<ArgumentNullException>(
+                () => E2eCaseBuilder.Build(Map(RowKey), schemas, named, Paths(), dangerous, null));
         }
 
         private static IList<E2eCase> Build(ToolSchema schema, string rowKey = null, bool dangerous = false)
@@ -119,7 +137,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Paths(),
                 dangerous
                     ? new HashSet<string>(new[] { rowKey }, StringComparer.Ordinal)
-                    : new HashSet<string>(StringComparer.Ordinal));
+                    : new HashSet<string>(StringComparer.Ordinal),
+                Shapes());
+        }
+
+        /// <summary>SDKに由来する項目の綴り。題材では引く先を持たない。</summary>
+        private static IDictionary<SchemaItem, string> Shapes()
+        {
+            return new Dictionary<SchemaItem, string>();
         }
 
         private static ToolMap Map(string rowKey)
@@ -143,6 +168,50 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new ToolSchema(
                 name,
                 new[] { new SchemaBranch("only", null, null, inputs, new SchemaChoice[0]) },
+                Output(),
+                null);
+        }
+
+        /// <summary>対象をハンドルで指し、値の組も要るツール。</summary>
+        private static ToolSchema Valued(string name)
+        {
+            SchemaItem value = new SchemaItem(
+                null, new SchemaItem[0], null, "value", ItemOrigin.HostInput, null, null, false,
+                null, null, null, false, null);
+
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        Handles().Concat(new[] { value }).ToList(),
+                        new[] { new SchemaChoice(new[] { "value", "values" }, true) }),
+                },
+                Output(),
+                null);
+        }
+
+        /// <summary>対象をハンドルで指し、綴りから値を決められない項目が要るツール。</summary>
+        private static ToolSchema Shaped(string name)
+        {
+            SchemaItem color = new SchemaItem(
+                "color", null, null, "color", ItemOrigin.HostInput, null, null, false,
+                null, null, null, false, null);
+
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        Handles().Concat(new[] { color }).ToList(),
+                        new[] { new SchemaChoice(new[] { "color", "brush" }, true) }),
+                },
                 Output(),
                 null);
         }

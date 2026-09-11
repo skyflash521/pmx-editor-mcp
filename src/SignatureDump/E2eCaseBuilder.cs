@@ -29,6 +29,16 @@ namespace PmxEditorMcp.SignatureDump
         public const string HandlesName = "handles";
 
         /// <summary>
+        /// 対象を指す項目の名前。対象が決まっている呼び出しでは、この組を埋めない——ハンドルで
+        /// 指した対象は、位置でも親でも指し直せない。
+        /// </summary>
+        private static readonly string[] PointingNames =
+        {
+            "indices", "range", "all", "handles",
+            "parentIndices", "parentRange", "parentAll", "parentHandles",
+        };
+
+        /// <summary>
         /// 台帳に無いハンドルとして渡す値。ホストの発行器がこの値を決して発行しないので、どの
         /// 台帳にも在り得ない。
         /// </summary>
@@ -45,7 +55,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchemaTable schemas,
             IDictionary<string, string> toolsByRow,
             IDictionary<string, string> connectionPaths,
-            ISet<string> dangerous)
+            ISet<string> dangerous,
+            IDictionary<SchemaItem, string> sdkShapes)
         {
             if (map == null)
             {
@@ -72,6 +83,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(dangerous));
             }
 
+            if (sdkShapes == null)
+            {
+                throw new ArgumentNullException(nameof(sdkShapes));
+            }
+
             // 母集団はスキーマ正本が持つツールである。行から導く名前を持たない共通契約のツールも
             // 検査の相手なので、行の側を母集団にすると落ちる。
             Dictionary<string, ToolMapRow> byTool = new Dictionary<string, ToolMapRow>(
@@ -92,7 +108,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 ToolMapRow row;
                 byTool.TryGetValue(schema.Tool, out row);
-                cases.AddRange(Cases(row, schema, connectionPaths, dangerous));
+                cases.AddRange(Cases(row, schema, connectionPaths, dangerous, sdkShapes));
             }
 
             return cases;
@@ -102,7 +118,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolMapRow row,
             ToolSchema schema,
             IDictionary<string, string> connectionPaths,
-            ISet<string> dangerous)
+            ISet<string> dangerous,
+            IDictionary<SchemaItem, string> sdkShapes)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -126,13 +143,20 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (SchemaItem handles in HandleInputs(schema))
             {
+                IDictionary<string, object> arguments =
+                    Single(handles.Name, new object[] { UnknownHandle }, confirmed);
+                if (!TryFill(schema, sdkShapes, arguments))
+                {
+                    continue;
+                }
+
                 yield return new E2eCase(
                     rowKey,
                     editKind,
                     path,
                     tool,
                     "台帳に無いハンドルを渡す呼び出しを断ること",
-                    Single(handles.Name, new object[] { UnknownHandle }, confirmed),
+                    arguments,
                     E2eExpectation.Refusal,
                     InvalidHandle);
             }
@@ -148,6 +172,126 @@ namespace PmxEditorMcp.SignatureDump
                     Single(limit.Name, 0, confirmed),
                     E2eExpectation.Refusal,
                     InvalidArgument);
+            }
+        }
+
+        /// <summary>
+        /// その呼び分けで、対象を指す組のほかに必ず要る組を、最小の値で埋める。埋められない形が
+        /// 在れば偽——確かめたい断り方ではなく、埋め忘れを断ることになるからである。
+        /// </summary>
+        private static bool TryFill(
+            ToolSchema schema,
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<string, object> arguments)
+        {
+            foreach (SchemaBranch branch in schema.Branches)
+            {
+                foreach (SchemaChoice choice in branch.Choices)
+                {
+                    if (!choice.Required
+                        || choice.Names.Any(n => PointingNames.Contains(n, StringComparer.Ordinal)))
+                    {
+                        continue;
+                    }
+
+                    SchemaItem item = branch.Inputs.FirstOrDefault(
+                        i => string.Equals(i.Name, choice.Names[0], StringComparison.Ordinal));
+                    object value;
+                    if (item == null || !TryMinimal(item, sdkShapes, out value))
+                    {
+                        return false;
+                    }
+
+                    arguments[item.Name] = value;
+                }
+
+                foreach (SchemaItem item in branch.Inputs
+                    .Where(i => i.Required == true
+                        && !i.Injected
+                        && !arguments.ContainsKey(i.Name)
+                        && !PointingNames.Contains(i.Name, StringComparer.Ordinal)))
+                {
+                    // 分岐を選ぶ項目は、その分岐が選ばれる値でなければ届かない。
+                    object value = string.Equals(
+                        branch.SelectorName, item.Name, StringComparison.Ordinal)
+                            ? branch.SelectorValue
+                            : null;
+                    if (value == null && !TryMinimal(item, sdkShapes, out value))
+                    {
+                        return false;
+                    }
+
+                    arguments[item.Name] = value;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// その項目の最小の値。組は必ず要る項目だけを埋めた組、配列は要素1つの並び、綴りは
+        /// その綴りが受け取る最も短い値とする。綴りから値を決められなければ偽。
+        /// </summary>
+        private static bool TryMinimal(
+            SchemaItem item, IDictionary<SchemaItem, string> sdkShapes, out object value)
+        {
+            value = null;
+            if (item.Members != null)
+            {
+                Dictionary<string, object> members =
+                    new Dictionary<string, object>(StringComparer.Ordinal);
+                foreach (SchemaItem member in item.Members.Where(m => m.Required == true))
+                {
+                    object one;
+                    if (!TryMinimal(member, sdkShapes, out one))
+                    {
+                        return false;
+                    }
+
+                    members[member.Name] = one;
+                }
+
+                value = members;
+
+                return true;
+            }
+
+            if (item.Element != null)
+            {
+                object one;
+                if (!TryMinimal(item.Element, sdkShapes, out one))
+                {
+                    return false;
+                }
+
+                value = new[] { one };
+
+                return true;
+            }
+
+            string shape;
+            if (!sdkShapes.TryGetValue(item, out shape))
+            {
+                shape = item.Shape;
+            }
+
+            switch (shape)
+            {
+                case "number":
+                    value = 0;
+                    return true;
+
+                case "text":
+                case "base64":
+                    value = string.Empty;
+                    return true;
+
+                case "boolean":
+                    value = false;
+                    return true;
+
+                default:
+                    return false;
             }
         }
 

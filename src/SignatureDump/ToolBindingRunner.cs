@@ -88,7 +88,7 @@ namespace PmxEditorMcp.SignatureDump
                 source = ToolBindingSourceBuilder.Build(
                     map,
                     owned,
-                    signatures,
+                    inventory,
                     ToolNameEvidence.Resolve(map, owned, assignments, signatures),
                     assignments);
             }

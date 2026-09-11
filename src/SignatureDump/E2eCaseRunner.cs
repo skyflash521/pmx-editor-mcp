@@ -81,7 +81,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.Schemas,
                     inputs.ToolsByRow(inventory),
                     inputs.ConnectionPaths(inventory),
-                    inputs.Dangerous(inventory));
+                    inputs.Dangerous(inventory),
+                    inputs.SdkShapes(inventory));
             }
             catch (InvalidOperationException exception)
             {

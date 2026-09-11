@@ -86,6 +86,12 @@ namespace PmxEditorMcp.SignatureDump
                 return JsonWriter.Array(items.Select(Value));
             }
 
+            IDictionary<string, object> members = value as IDictionary<string, object>;
+            if (members != null)
+            {
+                return Arguments(members);
+            }
+
             return Convert.ToDouble(value, CultureInfo.InvariantCulture)
                 .ToString("R", CultureInfo.InvariantCulture);
         }

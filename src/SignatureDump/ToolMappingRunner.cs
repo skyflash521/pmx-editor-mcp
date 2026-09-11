@@ -90,7 +90,18 @@ namespace PmxEditorMcp.SignatureDump
                     s => s.Key, s => s, StringComparer.Ordinal);
                 toolNames = ToolNameEvidence.Resolve(map, roles, assignments, signatures);
                 ToolMappingGate.Require(
-                    map, roles, signatures, schemas, toolNames, composedTools);
+                    map,
+                    roles,
+                    signatures,
+                    schemas,
+                    toolNames,
+                    composedTools,
+                    ElementCollectionEvidence.ConcreteTypes(
+                        inventory,
+                        roles.Types.ToDictionary(
+                            t => TypeDefinitionName.OfElement(t.TypeName),
+                            t => t.Role,
+                            StringComparer.Ordinal)));
             }
             catch (InvalidOperationException exception)
             {

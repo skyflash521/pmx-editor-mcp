@@ -51,7 +51,7 @@ namespace PmxEditorMcp.SignatureDump
         public static ToolBindingSource Build(
             ToolMap map,
             TypeRoleTable roles,
-            IDictionary<string, SignatureRecord> signatures,
+            InventoryRecord inventory,
             IDictionary<string, string> toolNames,
             CommonAssignmentTable assignments)
         {
@@ -65,9 +65,9 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(roles));
             }
 
-            if (signatures == null)
+            if (inventory == null)
             {
-                throw new ArgumentNullException(nameof(signatures));
+                throw new ArgumentNullException(nameof(inventory));
             }
 
             if (toolNames == null)
@@ -80,17 +80,31 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(assignments));
             }
 
+            IDictionary<string, SignatureRecord> signatures = inventory.Signatures.ToDictionary(
+                s => s.Key, s => s, StringComparer.Ordinal);
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
             IDictionary<string, DangerKind> dangerous = DangerousOperationRule.Classify(
                 signatures.Values);
             IDictionary<string, TypeRoleRecord> owned = ElementToolRule.Elements(
                 map, signatures, roles);
+            IDictionary<string, AccessPath> paths = ElementPathEvidence.Resolve(inventory, roles);
+            IDictionary<string, TypeRole> roleOf = roles.Types.ToDictionary(
+                t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
+            IDictionary<string, IList<string>> concrete =
+                ElementCollectionEvidence.ConcreteTypes(inventory, roleOf);
+            IDictionary<string, IList<string>> ownerPaths = roles.Collections
+                .Where(c => c.Owns && c.OwnerPath.Count != 0)
+                .ToDictionary(
+                    c => c.SignatureKey,
+                    c => (IList<string>)c.OwnerPath.Take(c.OwnerPath.Count - 1).ToList(),
+                    StringComparer.Ordinal);
 
             SortedDictionary<string, string> calls =
                 new SortedDictionary<string, string>(StringComparer.Ordinal);
-            SortedDictionary<string, List<string>> fields =
-                new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
+            SortedDictionary<string, SortedDictionary<string, List<string>>> fields =
+                new SortedDictionary<string, SortedDictionary<string, List<string>>>(
+                    StringComparer.Ordinal);
             SortedDictionary<string, string> aggregated =
                 new SortedDictionary<string, string>(StringComparer.Ordinal);
             SortedDictionary<string, string> elements =
@@ -106,38 +120,62 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
+                AccessPath path = Path(paths, signature);
                 string tool;
                 if (toolNames.TryGetValue(row.SignatureKey, out tool))
                 {
-                    calls.Add(tool, Call(row, signature, dangerous));
+                    calls.Add(
+                        tool, Call(row, signature, path, dangerous, signatures, concrete, byType));
+                    Listing(lists, path, signatures, byType);
                     continue;
                 }
 
                 TypeRoleRecord element;
                 if (owned.TryGetValue(row.SignatureKey, out element))
                 {
-                    lists.Add(row.SignatureKey, List(signature, element));
+                    AccessPath listed = new AccessPath(
+                        AccessPathKind.Element,
+                        row.SignatureKey,
+                        Owner(ownerPaths, row.SignatureKey),
+                        element.TypeName);
                     foreach (string named in ElementToolRule.Of(element))
                     {
-                        elements.Add(named, Elements(row, signature, element, named));
+                        elements.Add(
+                            named,
+                            Elements(
+                                row, signature, element, named, listed, signatures, concrete,
+                                byType));
                     }
 
+                    Listing(lists, listed, signatures, byType);
                     continue;
                 }
 
-                foreach (KeyValuePair<string, bool> target in Aggregations(row, signature, byType))
+                foreach (Embedding target in Aggregations(row, signature, byType, concrete))
                 {
-                    List<string> listed;
-                    if (!fields.TryGetValue(target.Key, out listed))
+                    AccessPath owning = Path(paths, target.OwnerType);
+                    SortedDictionary<string, List<string>> sets;
+                    if (!fields.TryGetValue(target.Tool, out sets))
                     {
-                        listed = new List<string>();
-                        fields.Add(target.Key, listed);
+                        sets = new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
+                        fields.Add(target.Tool, sets);
                         aggregated.Add(
-                            target.Key,
-                            Aggregation(row, signature, byType, target.Value));
+                            target.Tool,
+                            Aggregation(
+                                row, byType[target.OwnerType], target.Updates, owning,
+                                signatures, concrete, byType));
+                        Listing(lists, owning, signatures, byType);
                     }
 
-                    listed.Add(Field(signature));
+                    List<string> members;
+                    string kind = target.ItemType ?? string.Empty;
+                    if (!sets.TryGetValue(kind, out members))
+                    {
+                        members = new List<string>();
+                        sets.Add(kind, members);
+                    }
+
+                    members.Add(Field(signature));
                 }
             }
 
@@ -152,40 +190,157 @@ namespace PmxEditorMcp.SignatureDump
         /// その行が項目を持ち込む取得と更新のツール。名前と、そのツールが書き込む側かどうかを返す。
         /// 埋め込み先が取得と更新のどちらでもないものは、そのツールの側が項目を持つので返さない。
         /// </summary>
-        private static IEnumerable<KeyValuePair<string, bool>> Aggregations(
+        private static IEnumerable<Embedding> Aggregations(
             ToolMapRow row,
             SignatureRecord signature,
-            IDictionary<string, TypeRoleRecord> byType)
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> concrete)
         {
+            string declaring = TypeDefinitionName.OfElement(signature.DeclaringType);
             TypeRoleRecord owner;
-            if (row.EmbeddedIn == null
-                || !byType.TryGetValue(
-                    TypeDefinitionName.OfElement(signature.DeclaringType), out owner))
+            if (row.EmbeddedIn == null || !byType.TryGetValue(declaring, out owner))
             {
                 yield break;
             }
 
-            string[] aggregations = AggregationToolRule.Of(owner).ToArray();
-            string updating = ToolNameRule.OfRole(owner, ToolVerb.Update);
-            foreach (string embedded in row.EmbeddedIn
-                .Where(e => aggregations.Contains(e, StringComparer.Ordinal)))
+            foreach (string embedded in row.EmbeddedIn)
             {
-                bool updates = string.Equals(embedded, updating, StringComparison.Ordinal);
-                if (updates ? !signature.CanWrite : !signature.CanRead)
+                foreach (TypeRoleRecord holder in Holders(owner, declaring, byType, concrete))
                 {
-                    throw new InvalidOperationException(
-                        (updates ? "書き込めない項目が更新へ持ち込まれている: "
-                            : "読み取れない項目が取得へ持ち込まれている: ") + signature.Key);
+                    if (!AggregationToolRule.Of(holder).Contains(embedded, StringComparer.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    bool updates = string.Equals(
+                        embedded,
+                        ToolNameRule.OfRole(holder, ToolVerb.Update),
+                        StringComparison.Ordinal);
+                    if (updates ? !signature.CanWrite : !signature.CanRead)
+                    {
+                        throw new InvalidOperationException(
+                            (updates ? "書き込めない項目が更新へ持ち込まれている: "
+                                : "読み取れない項目が取得へ持ち込まれている: ") + signature.Key);
+                    }
+
+                    yield return new Embedding(
+                        embedded,
+                        updates,
+                        TypeDefinitionName.OfElement(holder.TypeName),
+                        ReferenceEquals(holder, owner) ? null : owner.ElementNoun);
+                }
+            }
+        }
+
+        /// <summary>
+        /// その行の項目を集めうる型。宣言型そのものと、宣言型を具象として並べる抽象の型である
+        /// ——抽象の型を並べるリストでは、具象の型の項目はそのリストのツールへ集まる。
+        /// </summary>
+        private static IEnumerable<TypeRoleRecord> Holders(
+            TypeRoleRecord owner,
+            string declaring,
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> concrete)
+        {
+            yield return owner;
+            foreach (KeyValuePair<string, IList<string>> listed in concrete
+                .Where(c => c.Value.Contains(declaring, StringComparer.Ordinal))
+                .OrderBy(c => c.Key, StringComparer.Ordinal))
+            {
+                TypeRoleRecord holder;
+                if (byType.TryGetValue(listed.Key, out holder))
+                {
+                    yield return holder;
+                }
+            }
+        }
+
+        /// <summary>その行の宣言型の受け手が、PMXのどこに居るか。辿り着けない型では null。</summary>
+        private static AccessPath Path(
+            IDictionary<string, AccessPath> paths, SignatureRecord signature)
+        {
+            return Path(paths, TypeDefinitionName.OfElement(signature.DeclaringType));
+        }
+
+        /// <summary>その型の受け手が、PMXのどこに居るか。辿り着けない型では null。</summary>
+        private static AccessPath Path(IDictionary<string, AccessPath> paths, string typeName)
+        {
+            AccessPath path;
+
+            return paths.TryGetValue(typeName, out path) ? path : null;
+        }
+
+        /// <summary>行が項目を持ち込む先1件。</summary>
+        private sealed class Embedding
+        {
+            public Embedding(string tool, bool updates, string ownerType, string itemType)
+            {
+                Tool = tool;
+                Updates = updates;
+                OwnerType = ownerType;
+                ItemType = itemType;
+            }
+
+            /// <summary>持ち込む先のツールの名前。</summary>
+            public string Tool { get; }
+
+            /// <summary>そのツールが書き込む側か。</summary>
+            public bool Updates { get; }
+
+            /// <summary>そのツールの名前を導く型。</summary>
+            public string OwnerType { get; }
+
+            /// <summary>持ち込む項目を持つ要素の実行時の型。宣言型そのもののツールでは null。</summary>
+            public string ItemType { get; }
+        }
+
+        /// <summary>その行が並べる要素の、所有の経路の親の側。</summary>
+        private static IList<string> Owner(
+            IDictionary<string, IList<string>> ownerPaths, string rowKey)
+        {
+            IList<string> parents;
+
+            return ownerPaths.TryGetValue(rowKey, out parents) ? parents : new string[0];
+        }
+
+        /// <summary>
+        /// その道が辿るリストの中継を、まだ持っていなければ足す。要素を並べるリストも、親の列を
+        /// 作る途中のリストも、同じ引き当てで辿る。
+        /// </summary>
+        private static void Listing(
+            IDictionary<string, string> lists,
+            AccessPath path,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, TypeRoleRecord> byType)
+        {
+            if (path == null || path.Kind != AccessPathKind.Element)
+            {
+                return;
+            }
+
+            foreach (string rowKey in path.Parents.Concat(new[] { path.RowKey }))
+            {
+                SignatureRecord signature;
+                string element;
+                if (lists.ContainsKey(rowKey)
+                    || !signatures.TryGetValue(rowKey, out signature)
+                    || !ValueTypeName.TryElement(signature.ValueType, out element))
+                {
+                    continue;
                 }
 
-                yield return new KeyValuePair<string, bool>(embedded, updates);
+                lists.Add(rowKey, List(signature, element));
             }
         }
 
         private static string Call(
             ToolMapRow row,
             SignatureRecord signature,
-            IDictionary<string, DangerKind> dangerous)
+            AccessPath path,
+            IDictionary<string, DangerKind> dangerous,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete,
+            IDictionary<string, TypeRoleRecord> byType)
         {
             DangerKind kind;
             string danger = dangerous.TryGetValue(signature.Key, out kind)
@@ -195,7 +350,9 @@ namespace PmxEditorMcp.SignatureDump
                 .Select(p => "new ToolArgument(" + Literal(p.Name) + ", " + TypeOf(p.TypeName) + ")")
                 .ToArray();
 
-            return "new ToolCall(" + Literal(signature.Key) + ", " + Receiver(row, signature) + ", "
+            return "new ToolCall(" + Literal(signature.Key) + ", "
+                + Receiver(row, signature, path) + ", "
+                + Access(path, signatures, concrete, byType) + ", "
                 + danger + ", new ToolArgument[] { " + string.Join(", ", arguments) + " }, "
                 + (string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
                     ? "null"
@@ -205,37 +362,110 @@ namespace PmxEditorMcp.SignatureDump
 
         private static string Aggregation(
             ToolMapRow row,
-            SignatureRecord signature,
-            IDictionary<string, TypeRoleRecord> byType,
-            bool writes)
+            TypeRoleRecord owner,
+            bool writes,
+            AccessPath path,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete,
+            IDictionary<string, TypeRoleRecord> byType)
         {
-            TypeRoleRecord owner = byType[TypeDefinitionName.OfElement(signature.DeclaringType)];
-
             return "new ToolFields(" + (writes ? "true" : "false") + ", "
                 + (owner.Role == TypeRole.Connector ? "false" : "true") + ", "
-                + Receiver(row, signature, writes ? row.EditKind : ToolMapEditKind.Read)
-                + ", new ToolField[]";
+                + Receiver(owner.TypeName, false, path, writes ? row.EditKind : ToolMapEditKind.Read)
+                + ", " + Access(path, signatures, concrete, byType) + ", new ToolFieldSet[]";
         }
 
         private static string Elements(
-            ToolMapRow row, SignatureRecord signature, TypeRoleRecord element, string tool)
+            ToolMapRow row,
+            SignatureRecord signature,
+            TypeRoleRecord element,
+            string tool,
+            AccessPath path,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete,
+            IDictionary<string, TypeRoleRecord> byType)
         {
             bool removes = string.Equals(
                 tool, ToolNameRule.OfRole(element, ToolVerb.Remove), StringComparison.Ordinal);
 
             return "new ToolElements(" + (removes ? "true" : "false") + ", "
-                + Literal(signature.Key) + ", " + Receiver(row, signature, ToolMapEditKind.DuplicateEdit)
-                + ", " + TypeOf(element.TypeName) + ")";
+                + Receiver(row, signature, path, ToolMapEditKind.DuplicateEdit)
+                + ", " + Access(path, signatures, concrete, byType) + ")";
         }
 
-        private static string List(SignatureRecord signature, TypeRoleRecord element)
+        /// <summary>相手にするPMXから受け手へ至る道をC#の式にする。</summary>
+        private static string Access(
+            AccessPath path,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete,
+            IDictionary<string, TypeRoleRecord> byType)
+        {
+            if (path == null || path.Kind == AccessPathKind.Whole)
+            {
+                return "ToolAccess.Whole()";
+            }
+
+            if (path.Kind == AccessPathKind.Child)
+            {
+                return "new ToolAccess(ToolAccessKind.Child, " + Literal(path.RowKey)
+                    + ", null, null, null)";
+            }
+
+            string[] hops = path.Parents
+                .Select(p => "new ToolHop(" + Literal(p) + ", "
+                    + (ElementPathEvidence.Listed(signatures, p) ? "true" : "false") + ")")
+                .ToArray();
+
+            TypeRoleRecord element;
+            string noun = byType.TryGetValue(
+                TypeDefinitionName.OfElement(path.ElementType), out element)
+                    ? Literal(element.ElementNoun)
+                    : "null";
+
+            return "new ToolAccess(ToolAccessKind.Element, " + Literal(path.RowKey)
+                + ", new ToolHop[] { " + string.Join(", ", hops) + " }, "
+                + TypeOf(path.ElementType) + ", item => item is " + Code(path.ElementType) + ", "
+                + noun + ", " + Items(path, signatures, concrete, byType) + ")";
+        }
+
+        /// <summary>
+        /// そのリストが並べうる具象の型。要素の型が抽象で実体が複数の型に分かれるリストだけが持つ。
+        /// </summary>
+        private static string Items(
+            AccessPath path,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete,
+            IDictionary<string, TypeRoleRecord> byType)
+        {
+            SignatureRecord signature;
+            IList<string> listed;
+            if (!signatures.TryGetValue(path.RowKey, out signature)
+                || !concrete.TryGetValue(
+                    TypeDefinitionName.OfElement(ValueTypeName.Contained(signature.ValueType)),
+                    out listed))
+            {
+                return "null";
+            }
+
+            string[] items = listed
+                .Where(byType.ContainsKey)
+                .Select(t => "new ToolItem(" + Literal(byType[t].ElementNoun) + ", "
+                    + TypeOf(t) + ", item => item is " + Code(t) + ")")
+                .ToArray();
+
+            return items.Length == 0
+                ? "null"
+                : "new ToolItem[] { " + string.Join(", ", items) + " }";
+        }
+
+        private static string List(SignatureRecord signature, string element)
         {
             string owner = "((" + Code(signature.DeclaringType) + ")owner)." + signature.MemberName;
 
             return "new SdkList("
                 + "owner => " + owner + ".Count, "
                 + "(owner, index) => " + owner + "[index], "
-                + "(owner, item) => " + owner + ".Add((" + Code(element.TypeName) + ")item), "
+                + "(owner, item) => " + owner + ".Add((" + Code(element) + ")item), "
                 + "(owner, index) => " + owner + ".RemoveAt(index))";
         }
 
@@ -250,15 +480,26 @@ namespace PmxEditorMcp.SignatureDump
         /// 静的なメンバーは相手を取らない。
         /// </summary>
         private static string Receiver(
-            ToolMapRow row, SignatureRecord signature, ToolMapEditKind? edit = null)
+            ToolMapRow row,
+            SignatureRecord signature,
+            AccessPath path,
+            ToolMapEditKind? edit = null)
         {
-            string declaring = TypeDefinitionName.OfElement(signature.DeclaringType);
-            bool rooted = string.Equals(declaring, PmxTypeName, StringComparison.Ordinal);
-            string type = signature.IsStatic || rooted ? "null" : Literal(declaring);
+            return Receiver(signature.DeclaringType, signature.IsStatic, path, edit ?? row.EditKind);
+        }
+
+        /// <summary>受け手の得方を、宣言型と道から決める。</summary>
+        private static string Receiver(
+            string declaringType, bool isStatic, AccessPath path, ToolMapEditKind edit)
+        {
+            string declaring = TypeDefinitionName.OfElement(declaringType);
+            bool rooted = string.Equals(declaring, PmxTypeName, StringComparison.Ordinal)
+                || (path != null && path.Kind != AccessPathKind.Whole);
+            string type = isStatic || rooted ? "null" : Literal(declaring);
 
             return "new ToolReceiver(ToolReceiverKind."
                 + (rooted ? "Pmx" : "Connection") + ", " + type + ", EditKind."
-                + Edit(edit ?? row.EditKind) + ")";
+                + Edit(edit) + ")";
         }
 
         private static string Edit(ToolMapEditKind kind)
@@ -348,7 +589,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private static string Compose(
             IDictionary<string, string> calls,
-            IDictionary<string, List<string>> fields,
+            IDictionary<string, SortedDictionary<string, List<string>>> fields,
             IDictionary<string, string> aggregated,
             IDictionary<string, string> elements,
             IDictionary<string, string> lists,
@@ -383,14 +624,23 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("        {\n");
             text.Append("            Dictionary<string, ToolFields> aggregations =\n");
             text.Append("                new Dictionary<string, ToolFields>(StringComparer.Ordinal);\n");
-            foreach (KeyValuePair<string, List<string>> tool in fields)
+            foreach (KeyValuePair<string, SortedDictionary<string, List<string>>> tool in fields)
             {
                 text.Append(Indent).Append("aggregations.Add(").Append(Literal(tool.Key))
                     .Append(", ").Append(aggregated[tool.Key]).Append("\n");
                 text.Append(Indent).Append("{\n");
-                foreach (string field in tool.Value)
+                foreach (KeyValuePair<string, List<string>> set in tool.Value)
                 {
-                    text.Append(Indent).Append("    ").Append(field).Append(",\n");
+                    text.Append(Indent).Append("    new ToolFieldSet(")
+                        .Append(set.Key.Length == 0 ? "null" : Literal(set.Key))
+                        .Append(", new ToolField[]\n");
+                    text.Append(Indent).Append("    {\n");
+                    foreach (string field in set.Value)
+                    {
+                        text.Append(Indent).Append("        ").Append(field).Append(",\n");
+                    }
+
+                    text.Append(Indent).Append("    }),\n");
                 }
 
                 text.Append(Indent).Append("}));\n");

@@ -72,7 +72,6 @@ namespace PmxEditorMcp.SignatureDump
             foreach (IGrouping<string, ToolMapRow> tool in map.Rows
                 .Where(r => toolNames.ContainsKey(r.SignatureKey))
                 .GroupBy(r => toolNames[r.SignatureKey], StringComparer.Ordinal)
-                .Concat(Aggregations(map, byType, toolNames))
                 .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 materials.Add(Material(
@@ -86,6 +85,21 @@ namespace PmxEditorMcp.SignatureDump
                     methodNotes,
                     propertyNotes,
                     null));
+            }
+
+            foreach (Aggregated tool in Aggregations(map, byType, toolNames, inventory, roles))
+            {
+                materials.Add(Material(
+                    tool.Tool,
+                    tool.Rows,
+                    map,
+                    byType,
+                    japanese,
+                    signatures,
+                    contractNotes,
+                    methodNotes,
+                    propertyNotes,
+                    tool.Holder));
             }
 
             foreach (KeyValuePair<string, TypeRoleRecord> element in ElementTools(
@@ -115,32 +129,86 @@ namespace PmxEditorMcp.SignatureDump
         /// 名指しされることで現れるので、名指しの側から集める。埋め込み先がイベントの分岐や
         /// ほかのツールであるものは、そのツールの材料が別に在るのでここには入らない。
         /// </summary>
-        private static IEnumerable<IGrouping<string, ToolMapRow>> Aggregations(
+        private static IEnumerable<Aggregated> Aggregations(
             ToolMap map,
             IDictionary<string, TypeRoleRecord> byType,
-            IDictionary<string, string> toolNames)
+            IDictionary<string, string> toolNames,
+            InventoryRecord inventory,
+            TypeRoleTable roles)
         {
+            IDictionary<string, IList<string>> concrete = ElementCollectionEvidence.ConcreteTypes(
+                inventory,
+                roles.Types.ToDictionary(
+                    t => TypeDefinitionName.OfElement(t.TypeName),
+                    t => t.Role,
+                    StringComparer.Ordinal));
             HashSet<string> dispatched = new HashSet<string>(
                 toolNames.Values, StringComparer.Ordinal);
+            Dictionary<string, TypeRoleRecord> holders =
+                new Dictionary<string, TypeRoleRecord>(StringComparer.Ordinal);
             List<KeyValuePair<string, ToolMapRow>> named =
                 new List<KeyValuePair<string, ToolMapRow>>();
             foreach (ToolMapRow row in map.Rows.Where(r => r.EmbeddedIn != null))
             {
+                string declaring = DeclaringTypeOf(row.SignatureKey);
                 TypeRoleRecord owner;
-                if (!byType.TryGetValue(DeclaringTypeOf(row.SignatureKey), out owner))
+                if (!byType.TryGetValue(declaring, out owner))
                 {
                     continue;
                 }
 
-                ISet<string> aggregations = AggregationToolRule.Names(new[] { owner });
-                foreach (string embedded in row.EmbeddedIn
-                    .Where(e => aggregations.Contains(e) && !dispatched.Contains(e)))
+                // 抽象の型を並べるリストでは、具象の型の項目はそのリストのツールへ集まる。
+                foreach (TypeRoleRecord holder in Holders(owner, declaring, byType, concrete))
                 {
-                    named.Add(new KeyValuePair<string, ToolMapRow>(embedded, row));
+                    ISet<string> aggregations = AggregationToolRule.Names(new[] { holder });
+                    foreach (string embedded in row.EmbeddedIn
+                        .Where(e => aggregations.Contains(e) && !dispatched.Contains(e)))
+                    {
+                        holders[embedded] = holder;
+                        named.Add(new KeyValuePair<string, ToolMapRow>(embedded, row));
+                    }
                 }
             }
 
-            return named.GroupBy(e => e.Key, e => e.Value, StringComparer.Ordinal);
+            return named.GroupBy(e => e.Key, e => e.Value, StringComparer.Ordinal)
+                .OrderBy(g => g.Key, StringComparer.Ordinal)
+                .Select(g => new Aggregated(g.Key, holders[g.Key], g.ToList()));
+        }
+
+        /// <summary>
+        /// その行の項目を集めうる型。宣言型そのものと、宣言型を具象として並べる抽象の型である。
+        /// </summary>
+        private static IEnumerable<TypeRoleRecord> Holders(
+            TypeRoleRecord owner,
+            string declaring,
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> concrete)
+        {
+            return new[] { owner }.Concat(concrete
+                .Where(c => c.Value.Contains(declaring, StringComparer.Ordinal))
+                .Select(c => c.Key)
+                .Where(byType.ContainsKey)
+                .Select(t => byType[t]));
+        }
+
+        /// <summary>項目を集めるツール1件の材料。</summary>
+        private sealed class Aggregated
+        {
+            public Aggregated(string tool, TypeRoleRecord holder, IList<ToolMapRow> rows)
+            {
+                Tool = tool;
+                Holder = holder;
+                Rows = rows;
+            }
+
+            /// <summary>そのツールの名前。</summary>
+            public string Tool { get; }
+
+            /// <summary>そのツールの名前を導く型。</summary>
+            public TypeRoleRecord Holder { get; }
+
+            /// <summary>項目を持ち込む行。</summary>
+            public IList<ToolMapRow> Rows { get; }
         }
 
         /// <summary>
@@ -207,7 +275,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> propertyNotes,
             TypeRoleRecord named)
         {
-            SignatureRecord signature = OneType(tool, rows, signatures);
+            SignatureRecord signature = named == null
+                ? OneType(tool, rows, signatures)
+                : Signature(rows[0].SignatureKey, signatures);
             TypeRoleRecord role = named ?? Role(signature.DeclaringType, byType, tool);
             string group = ToolGroups.TokenOf(role.Group);
             string qualifier = Qualifier(tool, group, role);
