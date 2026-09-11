@@ -20,6 +20,12 @@
       <HintPath>$(PmxEditorDir)\Lib\PEPlugin\PEPlugin.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- 成分を並べる型の一部はこのライブラリが持つ。名前で引かずに読み書きするため、綴りではなく
+         型そのものを指す。実体はエディタのプロセスに読み込まれているので出力へコピーしない。 -->
+    <Reference Include="SlimDX">
+      <HintPath>$(PmxEditorDir)\Lib\SlimDX\x64\SlimDX.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
     <!-- 同梱依存ゼロでJSONを扱うため、.NET Framework 付属の JavaScriptSerializer を使う。 -->
@@ -29,6 +35,30 @@
   <Target Name="EnsurePmxEditorDir" BeforeTargets="BeforeBuild;Deploy">
     <Error Condition="'$(PmxEditorDir)' == ''"
            Text="local.props に PmxEditorDir を定義せよ(PMXエディタ導入ディレクトリのパス)。" />
+  </Target>
+
+  <!-- 行キーからSDKへの中継は、ビルドのたびに作り直して組み込む。配布物へ入るのは出来た本文
+       だけで、呼び出し先を名前で引く経路は持たない。 -->
+  <PropertyGroup>
+    <!-- 中間の置き場は本文の評価の時点では決まっていないので、その元から組み立てる。 -->
+    <RelaySourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedSdkRelay.g.cs</RelaySourcePath>
+    <RelayGeneratorPath>$(MSBuildThisFileDirectory)..\SignatureDump\bin\$(Configuration)\net48\PmxEditorMcp.SignatureDump.exe</RelayGeneratorPath>
+    <ToolMapPath>$(MSBuildThisFileDirectory)..\..\data\authored\tool-map.json</ToolMapPath>
+  </PropertyGroup>
+
+  <Target Name="BuildRelayGenerator">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\SignatureDump\PmxEditorMcp.SignatureDump.csproj"
+             Properties="Configuration=$(Configuration)" />
+  </Target>
+
+  <!-- 作り直しの要否は生成器の側が中身で判じるので、ここでは入力と出力の比べをしない。 -->
+  <Target Name="GenerateRelaySource"
+          BeforeTargets="BeforeCompile"
+          DependsOnTargets="EnsurePmxEditorDir;BuildRelayGenerator">
+    <Exec Command="&quot;$(RelayGeneratorPath)&quot; relay-source &quot;$(PmxEditorDir)&quot; &quot;$(ToolMapPath)&quot; &quot;$(RelaySourcePath)&quot;" />
+    <ItemGroup>
+      <Compile Include="$(RelaySourcePath)" Exclude="@(Compile)" />
+    </ItemGroup>
   </Target>
 
   <Target Name="Deploy" DependsOnTargets="Build">

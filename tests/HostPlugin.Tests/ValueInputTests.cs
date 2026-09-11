@@ -9,16 +9,6 @@ namespace PmxEditorMcp.Tests
 {
     public class ValueInputTests
     {
-        [Flags]
-        private enum Marks
-        {
-            None = 0,
-
-            First = 1,
-
-            Second = 2,
-        }
-
         private enum Sides
         {
             Front = 0,
@@ -128,9 +118,9 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void CombinedMarksAreReadFromTheNamesSpelledOut()
+        public void CombinedStylesAreReadFromTheNamesSpelledOut()
         {
-            Assert.Equal(Marks.First | Marks.Second, Read(typeof(Marks), "First, Second"));
+            Assert.Equal(FontStyle.Bold | FontStyle.Italic, Read(typeof(FontStyle), "Bold, Italic"));
         }
 
         [Fact]

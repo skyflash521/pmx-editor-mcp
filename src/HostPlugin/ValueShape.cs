@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
-using System.Reflection;
 
 namespace PmxEditorMcp
 {
@@ -25,20 +24,6 @@ namespace PmxEditorMcp
 
         private const int ColorScale = 255;
 
-        private static readonly string[] XY = { "X", "Y" };
-
-        private static readonly string[] XYZ = { "X", "Y", "Z" };
-
-        private static readonly string[] XYZW = { "X", "Y", "Z", "W" };
-
-        private static readonly string[] RowMajor =
-        {
-            "M11", "M12", "M13", "M14",
-            "M21", "M22", "M23", "M24",
-            "M31", "M32", "M33", "M34",
-            "M41", "M42", "M43", "M44",
-        };
-
         /// <summary>綴りが1つに決まる型。写し方は <see cref="TryFixed"/> が持つ。</summary>
         private static readonly HashSet<Type> Fixed = new HashSet<Type>
         {
@@ -46,22 +31,6 @@ namespace PmxEditorMcp
             typeof(string), typeof(Version), typeof(Color), typeof(Size), typeof(Point),
             typeof(Rectangle), typeof(Font), typeof(Brush), typeof(Bitmap),
         };
-
-        /// <summary>成分を並べる型と、並べる順の成分名。</summary>
-        private static readonly Dictionary<string, string[]> Components =
-            new Dictionary<string, string[]>(StringComparer.Ordinal)
-            {
-                { "PEPlugin.SDX.V2", XY },
-                { "PEPlugin.SDX.V3", XYZ },
-                { "PEPlugin.SDX.V4", XYZW },
-                { "PEPlugin.SDX.Q", XYZW },
-                { "PEPlugin.SDX.M", RowMajor },
-                { "PEPlugin.Pmd.IPEVector3", XYZ },
-                { "PEPlugin.Pmd.IPEQuaternion", XYZW },
-                { "SlimDX.Vector3", XYZ },
-                { "SlimDX.Quaternion", XYZW },
-                { "SlimDX.Matrix", RowMajor },
-            };
 
         /// <summary>
         /// 値をJSONへ写す。写せない型なら偽を返して <paramref name="code"/> を持たせず、写せる型の
@@ -139,9 +108,9 @@ namespace PmxEditorMcp
             }
 
             string[] components;
-            if (Components.TryGetValue(FullName(target), out components))
+            if (ValueComponents.TryNames(FullName(target), out components))
             {
-                return TryComponents(target, components, value, out json, out code, out message);
+                return TryComponents(FullName(target), value, out json, out code, out message);
             }
 
             return TryFixed(target, value, maxLongSide, warnings, out json, out code, out message);
@@ -171,9 +140,11 @@ namespace PmxEditorMcp
                 return element == typeof(byte) || IsValue(element);
             }
 
+            string[] components;
+
             return target.IsEnum
                 || target == typeof(object)
-                || Components.ContainsKey(FullName(target))
+                || ValueComponents.TryNames(FullName(target), out components)
                 || Fixed.Contains(target);
         }
 
@@ -186,7 +157,7 @@ namespace PmxEditorMcp
             }
 
             string[] names;
-            components = Components.TryGetValue(FullName(declared), out names) ? names : null;
+            components = ValueComponents.TryNames(FullName(declared), out names) ? names : null;
 
             return components != null;
         }
@@ -349,7 +320,7 @@ namespace PmxEditorMcp
             }
 
             string spelled;
-            if (target.IsDefined(typeof(FlagsAttribute), false) && TryCombined(target, value, out spelled))
+            if (ValueEnums.IsCombinable(target) && TryCombined(target, value, out spelled))
             {
                 json = spelled;
 
@@ -393,8 +364,7 @@ namespace PmxEditorMcp
 
         /// <summary>成分は宣言型から引く。インターフェースで受け取った値も同じ並びで写すため。</summary>
         private static bool TryComponents(
-            Type target,
-            string[] components,
+            string typeName,
             object value,
             out object json,
             out string code,
@@ -403,10 +373,11 @@ namespace PmxEditorMcp
             json = null;
             code = null;
             message = null;
-            object[] written = new object[components.Length];
-            for (int i = 0; i < components.Length; i++)
+            object[] read = ValueComponents.Read(typeName, value);
+            object[] written = new object[read.Length];
+            for (int i = 0; i < read.Length; i++)
             {
-                object component = ComponentOf(target, components[i], value);
+                object component = read[i];
                 object each;
                 if (!TryFinite(
                     component, Convert.ToDouble(component, CultureInfo.InvariantCulture),
@@ -604,23 +575,6 @@ namespace PmxEditorMcp
             };
         }
 
-        private static object ComponentOf(Type target, string name, object value)
-        {
-            PropertyInfo property = target.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
-            if (property != null)
-            {
-                return property.GetValue(value, null);
-            }
-
-            FieldInfo field = target.GetField(name, BindingFlags.Public | BindingFlags.Instance);
-            if (field != null)
-            {
-                return field.GetValue(value);
-            }
-
-            throw new InvalidOperationException("成分 " + name + " を " + FullName(target) + " が持たない。");
-        }
-
         private static byte[] BytesOf(IEnumerable items)
         {
             byte[] array = items as byte[];
@@ -665,9 +619,10 @@ namespace PmxEditorMcp
             return true;
         }
 
+        /// <summary>綴りの無い型は総称型の引数だけで、成分を並べる型にも綴りの決まる型にもならない。</summary>
         private static string FullName(Type target)
         {
-            return target.FullName ?? target.Name;
+            return target.FullName;
         }
     }
 }

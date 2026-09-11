@@ -14,6 +14,7 @@ Set-Location (Split-Path -Parent $PSScriptRoot)
 
 $editorDir = Get-EditorDirectory
 $dump = 'src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe'
+$hostDll = 'src/HostPlugin/bin/Debug/net48/PmxEditorMcp.dll'
 $specs = 'docs/specs'
 $observed = 'data/observed'
 $authored = 'data/authored'
@@ -117,6 +118,10 @@ try {
             & $dump excluded-baseline $editorDir $ledger $baseline
             if ($LASTEXITCODE -eq 0) { & $dump excluded-signatures $editorDir $baseline $excluded }
         }
+    }
+    $checks['実行時リフレクション'] = @{
+        Needs = $buildOutput
+        Body = { & $dump reflection-free $editorDir $hostDll }
     }
     $checks['整形'] = @{
         Needs = $buildOutput

@@ -55,6 +55,12 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>能力対応表とスキーマ正本が、写像の規則に合うことを照合する。</summary>
         public const string ToolMappingCommand = "tool-mapping";
 
+        /// <summary>行キーからSDKのメンバーを直接呼ぶ中継をC#の本文として書き出す。</summary>
+        public const string RelaySourceCommand = "relay-source";
+
+        /// <summary>配布物が実行時リフレクションを持たないことを照合する。</summary>
+        public const string ReflectionFreeCommand = "reflection-free";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -155,6 +161,16 @@ namespace PmxEditorMcp.SignatureDump
                 return ToolMappingRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], RelaySourceCommand, StringComparison.Ordinal))
+            {
+                return RelaySourceRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ReflectionFreeCommand, StringComparison.Ordinal))
+            {
+                return ReflectionFreeRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -217,6 +233,11 @@ namespace PmxEditorMcp.SignatureDump
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
                         + " <型役割表の正本のパス> <共通契約割当の正本のパス>"
                         + " <能力対応表の正本のパス> <スキーマ正本のパス>");
+            error.WriteLine(
+                RelaySourceCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                ReflectionFreeCommand + " <PMXエディタ導入ディレクトリ> <検査するアセンブリのパス>");
         }
     }
 }

@@ -47,6 +47,15 @@ namespace PmxEditorMcp
             get { return "MCPクライアントからPMXエディタを操作するための常駐ホスト。"; }
         }
 
+        /// <summary>
+        /// 読み込まれているSDKのアセンブリバージョン文字列。型そのものの所属を見るだけで、
+        /// メンバーを名前で引かない。
+        /// </summary>
+        internal static string SdkVersion
+        {
+            get { return typeof(IPEPlugin).Assembly.GetName().Version.ToString(); }
+        }
+
         /// <summary>ホストDLLのアセンブリバージョン文字列。</summary>
         internal static string HostVersion
         {
@@ -148,7 +157,8 @@ namespace PmxEditorMcp
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);
                 DebugLargeText.AddTo(methods, debugHooks);
-                _connection = new JsonRpcConnection(_log, methods, HostVersion, budget.Chars);
+                _connection = new JsonRpcConnection(
+                    _log, methods, HostVersion, budget.Chars, GeneratedSdkRelay.Create(), SdkVersion);
 
                 _host = new McpHost(
                     McpHost.BuildPipeName(editorProcessId),

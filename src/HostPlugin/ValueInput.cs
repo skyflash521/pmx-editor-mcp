@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
-using System.Reflection;
 
 namespace PmxEditorMcp
 {
@@ -29,14 +28,6 @@ namespace PmxEditorMcp
 
         /// <summary>書体の組が持てる項目の名前。</summary>
         private static readonly string[] FontNames = { FamilyName, SizeName, StyleName };
-
-        /// <summary>成分を並べるインターフェースと、その値として組み立てる型。</summary>
-        private static readonly Dictionary<string, Type> Concretes =
-            new Dictionary<string, Type>(StringComparer.Ordinal)
-            {
-                { "PEPlugin.Pmd.IPEVector3", typeof(PEPlugin.SDX.V3) },
-                { "PEPlugin.Pmd.IPEQuaternion", typeof(PEPlugin.SDX.Q) },
-            };
 
         /// <summary>
         /// JSONから値を組み立てる。値として写せない型なら偽を返して <paramref name="code"/> を
@@ -233,7 +224,9 @@ namespace PmxEditorMcp
                 read.SetValue(each, i);
             }
 
-            value = target.IsArray ? (object)read : ListOf(element, read);
+            // 並びは配列のまま渡す。要素の型ごとの組み立てを名前で引かずに済ませるためで、
+            // 一列に並ぶ配列は同じ要素の IList を満たす。長さは変えられない。
+            value = read;
 
             return true;
         }
@@ -250,7 +243,7 @@ namespace PmxEditorMcp
             }
 
             string[] parts = spelled.Split(new[] { CombinedSeparator }, StringSplitOptions.None);
-            if (parts.Length > 1 && !target.IsDefined(typeof(FlagsAttribute), false))
+            if (parts.Length > 1 && !ValueEnums.IsCombinable(target))
             {
                 return Invalid("組み合わせを許さない列挙に、名前を並べた綴りを渡した。", out code, out message);
             }
@@ -283,19 +276,13 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            Type concrete;
-            if (!Concretes.TryGetValue(FullName(target), out concrete))
+            float[] read = new float[numbers.Length];
+            for (int i = 0; i < numbers.Length; i++)
             {
-                concrete = target;
+                read[i] = (float)numbers[i];
             }
 
-            object built = Activator.CreateInstance(concrete);
-            for (int i = 0; i < components.Count; i++)
-            {
-                SetComponent(concrete, components[i], built, (float)numbers[i]);
-            }
-
-            value = built;
+            value = ValueComponents.Build(FullName(target), read);
 
             return true;
         }
@@ -584,37 +571,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        private static object ListOf(Type element, Array read)
-        {
-            object list = Activator.CreateInstance(typeof(List<>).MakeGenericType(element), read.Length);
-            MethodInfo add = list.GetType().GetMethod("Add");
-            foreach (object item in read)
-            {
-                add.Invoke(list, new[] { item });
-            }
-
-            return list;
-        }
-
-        private static void SetComponent(Type target, string name, object built, float number)
-        {
-            PropertyInfo property = target.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
-            if (property != null)
-            {
-                property.SetValue(built, number, null);
-
-                return;
-            }
-
-            FieldInfo field = target.GetField(name, BindingFlags.Public | BindingFlags.Instance);
-            if (field == null)
-            {
-                throw new InvalidOperationException("成分 " + name + " を " + FullName(target) + " が持たない。");
-            }
-
-            field.SetValue(built, number);
-        }
-
         /// <summary>JSONの値が数値かどうか。文字列や真偽値を変換で数値へ化けさせないために先に見る。</summary>
         internal static bool IsNumber(object json)
         {
@@ -677,9 +633,10 @@ namespace PmxEditorMcp
             return false;
         }
 
+        /// <summary>綴りの無い型は総称型の引数だけで、値として組み立てる型にならない。</summary>
         private static string FullName(Type target)
         {
-            return target.FullName ?? target.Name;
+            return target.FullName;
         }
     }
 }

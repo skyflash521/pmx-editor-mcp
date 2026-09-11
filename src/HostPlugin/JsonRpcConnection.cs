@@ -136,10 +136,14 @@ namespace PmxEditorMcp
         private const string HandshakeMethodName = "handshake";
         private const string PingMethodName = "ping";
         private const string EndSessionMethodName = "end_session";
+        private const string SdkStatusMethodName = "sdk_status";
 
         /// <summary>接続自身が受け持つ基盤メソッドの名前。</summary>
         public static readonly ReadOnlyCollection<string> BaseMethodNames =
-            Array.AsReadOnly(new[] { HandshakeMethodName, PingMethodName, EndSessionMethodName });
+            Array.AsReadOnly(new[]
+            {
+                HandshakeMethodName, PingMethodName, EndSessionMethodName, SdkStatusMethodName,
+            });
 
         /// <summary>要求1件の処理に許す時間の既定。</summary>
         public static readonly TimeSpan DefaultRequestTimeout = TimeSpan.FromSeconds(120);
@@ -154,6 +158,8 @@ namespace PmxEditorMcp
         private readonly EventSequenceIssuer _eventSequence = new EventSequenceIssuer();
         private readonly SessionStore _sessions;
         private readonly ClientProcessOpener _openClient;
+        private readonly SdkRelayTable _relays;
+        private readonly string _sdkVersion;
 
         /// <summary>
         /// 要求の処理を直列化する錠。複数の接続を同時に受けるので、SDKを呼んでいる区間が重ならない
@@ -165,6 +171,27 @@ namespace PmxEditorMcp
         /// <summary>ログ・メソッド表・ハンドシェイク応答に載せる値を与えて生成する。</summary>
         public JsonRpcConnection(HostLog log, McpMethodTable methods, string hostVersion, int budgetChars)
             : this(log, methods, hostVersion, budgetChars, DefaultRequestTimeout, MessageChannel.DefaultMaxMessageBytes)
+        {
+        }
+
+        /// <summary>行キーからSDKへの中継と、読み込まれているSDKの版も与えて生成する。</summary>
+        public JsonRpcConnection(
+            HostLog log,
+            McpMethodTable methods,
+            string hostVersion,
+            int budgetChars,
+            SdkRelayTable relays,
+            string sdkVersion)
+            : this(
+                log,
+                methods,
+                hostVersion,
+                budgetChars,
+                DefaultRequestTimeout,
+                MessageChannel.DefaultMaxMessageBytes,
+                PipeClientProcess.TryOpen,
+                relays,
+                sdkVersion)
         {
         }
 
@@ -202,6 +229,30 @@ namespace PmxEditorMcp
             TimeSpan requestTimeout,
             int maxMessageBytes,
             ClientProcessOpener openClient)
+            : this(
+                log,
+                methods,
+                hostVersion,
+                budgetChars,
+                requestTimeout,
+                maxMessageBytes,
+                openClient,
+                new SdkRelayTable(string.Empty, new Dictionary<string, SdkCall>(), new string[0]),
+                string.Empty)
+        {
+        }
+
+        /// <summary>すべてを指定して生成する。</summary>
+        public JsonRpcConnection(
+            HostLog log,
+            McpMethodTable methods,
+            string hostVersion,
+            int budgetChars,
+            TimeSpan requestTimeout,
+            int maxMessageBytes,
+            ClientProcessOpener openClient,
+            SdkRelayTable relays,
+            string sdkVersion)
         {
             if (log == null)
             {
@@ -223,6 +274,16 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(openClient));
             }
 
+            if (relays == null)
+            {
+                throw new ArgumentNullException(nameof(relays));
+            }
+
+            if (sdkVersion == null)
+            {
+                throw new ArgumentNullException(nameof(sdkVersion));
+            }
+
             _log = log;
             _methods = methods;
             _hostVersion = hostVersion;
@@ -230,6 +291,8 @@ namespace PmxEditorMcp
             _requestTimeout = requestTimeout;
             _maxMessageBytes = maxMessageBytes;
             _openClient = openClient;
+            _relays = relays;
+            _sdkVersion = sdkVersion;
             _sessions = new SessionStore(log, _handleIds, _eventSequence, _requestGate);
         }
 
@@ -237,6 +300,12 @@ namespace PmxEditorMcp
         public SessionStore Sessions
         {
             get { return _sessions; }
+        }
+
+        /// <summary>行キーからSDKへの中継。</summary>
+        public SdkRelayTable Relays
+        {
+            get { return _relays; }
         }
 
         /// <summary>
@@ -382,10 +451,13 @@ namespace PmxEditorMcp
 
                 bool isEndSession =
                     EndSessionMethodName.Equals(request.Method, StringComparison.Ordinal);
+                bool isSdkStatus =
+                    SdkStatusMethodName.Equals(request.Method, StringComparison.Ordinal);
 
                 McpMethod method = null;
                 bool isPing = PingMethodName.Equals(request.Method, StringComparison.Ordinal);
-                if (!isPing && !isEndSession && !_methods.TryGet(request.Method, out method))
+                if (!isPing && !isEndSession && !isSdkStatus
+                    && !_methods.TryGet(request.Method, out method))
                 {
                     Respond(channel, errors, request.Id, JsonRpcErrorCodes.MethodNotFound,
                         "method に対応する処理が無い。");
@@ -430,6 +502,10 @@ namespace PmxEditorMcp
                         if (isPing)
                         {
                             result = "pong";
+                        }
+                        else if (isSdkStatus)
+                        {
+                            result = BuildSdkStatusResult();
                         }
                         else if (!TryInvoke(
                             channel, errors, request, method, parameters, scope, out result))
@@ -598,6 +674,21 @@ namespace PmxEditorMcp
             return exception is ArgumentException
                 || exception is InvalidOperationException
                 || exception is NotSupportedException;
+        }
+
+        /// <summary>
+        /// 稼働しているSDKの版・生成に使ったSDKの版・中継を作れなかった行・呼び出しの失敗で
+        /// 無効にした行を返す。
+        /// </summary>
+        private IDictionary<string, object> BuildSdkStatusResult()
+        {
+            return new Dictionary<string, object>
+            {
+                { "runningSdkVersion", _sdkVersion },
+                { "generatedSdkVersion", _relays.GeneratedSdkVersion },
+                { "unresolvedRows", _relays.Unresolved },
+                { "disabledRows", _relays.Disabled },
+            };
         }
 
         private IDictionary<string, object> BuildHandshakeResult(Session session)

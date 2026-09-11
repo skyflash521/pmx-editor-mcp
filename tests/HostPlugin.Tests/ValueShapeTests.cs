@@ -11,18 +11,6 @@ namespace PmxEditorMcp.Tests
     {
         private const int MaxLongSide = ImageTransfer.DefaultMaxLongSide;
 
-        [Flags]
-        private enum Marks
-        {
-            None = 0,
-
-            First = 1,
-
-            Second = 2,
-
-            Fourth = 4,
-        }
-
         private enum Sides
         {
             Front = 0,
@@ -112,16 +100,16 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void CombinedMarksAreWrittenAsTheNamesInTheOrderOfTheirValues()
+        public void CombinedStylesAreWrittenAsTheNamesInTheOrderOfTheirValues()
         {
-            Assert.Equal("First, Second", Write(typeof(Marks), Marks.Second | Marks.First));
-            Assert.Equal("First, Fourth", Write(typeof(Marks), Marks.First | Marks.Fourth));
+            Assert.Equal("Bold, Italic", Write(typeof(FontStyle), FontStyle.Italic | FontStyle.Bold));
+            Assert.Equal("Bold, Underline", Write(typeof(FontStyle), FontStyle.Bold | FontStyle.Underline));
         }
 
         [Fact]
-        public void MarksWithAPartThatNoMemberCoversAreRefused()
+        public void AStyleWithAPartThatNoMemberCoversIsRefused()
         {
-            Refused(typeof(Marks), (Marks)(1 | 8), "当てはまる列挙子の名前が無い");
+            Refused(typeof(FontStyle), (FontStyle)(1 | 16), "当てはまる列挙子の名前が無い");
         }
 
         [Fact]
