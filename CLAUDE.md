@@ -11,9 +11,9 @@
 
 | 対象 | 置き場 |
 |---|---|
-| 何がどう動くか(仕様) | [docs/specs/](docs/specs/) |
-| どう作業するか(規約) | [docs/conventions/](docs/conventions/) |
-| 開発環境と動かし方 | [README.md](README.md) |
+| 仕様書 | [docs/specs/](docs/specs/) |
+| 規約 | [docs/conventions/](docs/conventions/) |
+| 人も読む情報 | [README.md](README.md) |
 
 **設計値・手順をこの文書へ書き写さない。** 置き場を開き、題が合う文書だけを読む。
 

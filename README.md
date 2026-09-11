@@ -11,8 +11,8 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 
 | 対象 | 置き場 |
 |---|---|
-| 何がどう動くか(仕様) | [docs/specs/](docs/specs/) |
-| どう作業するか(規約) | [docs/conventions/](docs/conventions/) |
+| 仕様書 | [docs/specs/](docs/specs/) |
+| 規約 | [docs/conventions/](docs/conventions/) |
 
 ## 開発環境
 
