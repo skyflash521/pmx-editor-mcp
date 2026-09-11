@@ -38,13 +38,15 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// 中継を組み立てる。<paramref name="rowKeys"/> は能力対応表の行キーで、
         /// <paramref name="inventory"/> はSDKの公開シグネチャの列挙、
-        /// <paramref name="combinableEnums"/> は名前を並べて組み合わせられる列挙の綴り。
+        /// <paramref name="combinableEnums"/> は名前を並べて組み合わせられる列挙の綴り、
+        /// <paramref name="toolMapDigest"/> はその能力対応表の指紋。
         /// </summary>
         public static RelaySource Build(
             IEnumerable<string> rowKeys,
             InventoryRecord inventory,
             string sdkVersion,
-            IEnumerable<string> combinableEnums)
+            IEnumerable<string> combinableEnums,
+            string toolMapDigest)
         {
             if (rowKeys == null)
             {
@@ -64,6 +66,11 @@ namespace PmxEditorMcp.SignatureDump
             if (combinableEnums == null)
             {
                 throw new ArgumentNullException(nameof(combinableEnums));
+            }
+
+            if (toolMapDigest == null)
+            {
+                throw new ArgumentNullException(nameof(toolMapDigest));
             }
 
             Dictionary<string, SignatureRecord> byKey = inventory.Signatures
@@ -95,7 +102,9 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new RelaySource(
-                Compose(calls.ToString(), unresolved, sdkVersion, combinableEnums), resolved, unresolved);
+                Compose(calls.ToString(), unresolved, sdkVersion, combinableEnums, toolMapDigest),
+                resolved,
+                unresolved);
         }
 
         /// <summary>
@@ -187,7 +196,11 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         private static string Compose(
-            string calls, IList<string> unresolved, string sdkVersion, IEnumerable<string> combinableEnums)
+            string calls,
+            IList<string> unresolved,
+            string sdkVersion,
+            IEnumerable<string> combinableEnums,
+            string toolMapDigest)
         {
             StringBuilder text = new StringBuilder();
             text.Append("// この本文はビルドのたびに作り直す。手で直さない。\n");
@@ -201,13 +214,18 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("        internal const string SdkVersion = ").Append(Literal(sdkVersion))
                 .Append(";\n");
             text.Append("\n");
+            text.Append("        /// <summary>中継を作った能力対応表の指紋。</summary>\n");
+            text.Append("        internal const string ToolMapDigest = ").Append(Literal(toolMapDigest))
+                .Append(";\n");
+            text.Append("\n");
             text.Append("        internal static SdkRelayTable Create()\n");
             text.Append("        {\n");
             text.Append("            Dictionary<string, SdkCall> calls =\n");
             text.Append("                new Dictionary<string, SdkCall>(StringComparer.Ordinal);\n");
             text.Append(calls);
             text.Append("\n");
-            text.Append("            return new SdkRelayTable(SdkVersion, calls, new string[]\n");
+            text.Append(
+                "            return new SdkRelayTable(SdkVersion, ToolMapDigest, calls, new string[]\n");
             text.Append("            {\n");
             foreach (string key in unresolved)
             {

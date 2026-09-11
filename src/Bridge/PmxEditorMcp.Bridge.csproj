@@ -9,6 +9,8 @@
     <!-- ホスト側と記述の様式を揃えるため、暗黙のusingとnull許容注釈は使わない。 -->
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
+    <!-- ツール定義の生成がSDKを読むので、導入ディレクトリの指定が要る。 -->
+    <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,5 +25,31 @@
          Generic Host の実装は含まれないため直接参照する。 -->
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
   </ItemGroup>
+
+  <!-- ツール定義は、ビルドのたびに作り直して組み込む。配布物へ入るのは出来た本文だけで、
+       委譲先の形から名前や引数を読み取る経路は持たない。 -->
+  <PropertyGroup>
+    <!-- 中間の置き場は本文の評価の時点では決まっていないので、その元から組み立てる。 -->
+    <ToolDefinitionPath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedToolDefinitions.g.cs</ToolDefinitionPath>
+    <DefinitionGeneratorPath>$(MSBuildThisFileDirectory)..\SignatureDump\bin\$(Configuration)\net48\PmxEditorMcp.SignatureDump.exe</DefinitionGeneratorPath>
+    <SpecsDirectory>$(MSBuildThisFileDirectory)..\..\docs\specs</SpecsDirectory>
+    <ObservedDirectory>$(MSBuildThisFileDirectory)..\..\data\observed</ObservedDirectory>
+    <AuthoredDirectory>$(MSBuildThisFileDirectory)..\..\data\authored</AuthoredDirectory>
+  </PropertyGroup>
+
+  <Target Name="BuildDefinitionGenerator">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\SignatureDump\PmxEditorMcp.SignatureDump.csproj"
+             Properties="Configuration=$(Configuration)" />
+  </Target>
+
+  <!-- 作り直しの要否は生成器の側が中身で判じるので、ここでは入力と出力の比べをしない。 -->
+  <Target Name="GenerateToolDefinitions"
+          BeforeTargets="BeforeCompile"
+          DependsOnTargets="EnsurePmxEditorDir;BuildDefinitionGenerator">
+    <Exec Command="&quot;$(DefinitionGeneratorPath)&quot; tool-definitions &quot;$(PmxEditorDir)&quot; &quot;$(ObservedDirectory)\capability-ledger.json&quot; &quot;$(SpecsDirectory)\pmx-editor-mcp-common-contract.md&quot; &quot;$(SpecsDirectory)\pmx-editor-mcp-ipc.md&quot; &quot;$(SpecsDirectory)\pmx-editor-mcp-architecture.md&quot; &quot;$(AuthoredDirectory)\type-roles.json&quot; &quot;$(AuthoredDirectory)\property-names.json&quot; &quot;$(AuthoredDirectory)\common-assignments.json&quot; &quot;$(AuthoredDirectory)\tool-map.json&quot; &quot;$(AuthoredDirectory)\tool-schemas.json&quot; &quot;$(ToolDefinitionPath)&quot;" />
+    <ItemGroup>
+      <Compile Include="$(ToolDefinitionPath)" Exclude="@(Compile)" />
+    </ItemGroup>
+  </Target>
 
 </Project>

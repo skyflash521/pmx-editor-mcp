@@ -26,6 +26,9 @@ namespace PmxEditorMcp.Bridge
         /// <summary>handshake は成立したが、ホストの応答サイズ予算がブリッジ自身の値と一致しない。</summary>
         public const string BudgetMismatch = "BRIDGE_BUDGET_MISMATCH";
 
+        /// <summary>ホストの中継とブリッジのツール定義が別の能力対応表から作られている。</summary>
+        public const string ToolDefinitionMismatch = "BRIDGE_TOOL_DEFINITION_MISMATCH";
+
         /// <summary>応答待ちの間に切断された。</summary>
         public const string ConnectionLost = "BRIDGE_CONNECTION_LOST";
 

@@ -237,7 +237,8 @@ namespace PmxEditorMcp
                 requestTimeout,
                 maxMessageBytes,
                 openClient,
-                new SdkRelayTable(string.Empty, new Dictionary<string, SdkCall>(), new string[0]),
+                new SdkRelayTable(
+                    string.Empty, string.Empty, new Dictionary<string, SdkCall>(), new string[0]),
                 string.Empty)
         {
         }
@@ -698,6 +699,7 @@ namespace PmxEditorMcp
                 { "protocol", Protocol },
                 { "hostVersion", _hostVersion },
                 { "budgetChars", _budgetChars },
+                { "toolMapDigest", _relays.ToolMapDigest },
                 { "session", session.Id },
             };
         }

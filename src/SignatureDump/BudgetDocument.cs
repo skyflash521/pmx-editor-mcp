@@ -5,8 +5,7 @@ using System.Text.RegularExpressions;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// アーキテクチャ仕様書から応答サイズ予算の既定を読む。逆算した件数はこの設定から決まるので、
-    /// 値を写さずその都度読む。
+    /// 仕様書から予算と上限を読む。逆算した件数はこれらから決まるので、値を写さずその都度読む。
     /// </summary>
     public static class BudgetDocument
     {
@@ -14,6 +13,15 @@ namespace PmxEditorMcp.SignatureDump
 
         private static readonly Regex Default = new Regex(
             "^- 未設定時の既定は \\*\\*([0-9,]+)\\*\\*", RegexOptions.CultureInvariant);
+
+        private static readonly Regex WarningRoom = new Regex(
+            "\\*\\*警告の枠は([0-9,]+)文字\\*\\*", RegexOptions.CultureInvariant);
+
+        private static readonly Regex RequestBytes = new Regex(
+            "要求の大きさの上限は\\*\\*([0-9,]+)バイト\\*\\*", RegexOptions.CultureInvariant);
+
+        private static readonly Regex TokenLimit = new Regex(
+            "\\*\\*構造トークンの上限 ([0-9,]+)\\*\\*", RegexOptions.CultureInvariant);
 
         /// <summary>節が無いか既定を読めなければ <see cref="InvalidOperationException"/>。</summary>
         public static int ReadDefault(string text)
@@ -49,6 +57,41 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             throw new InvalidOperationException("既定の予算が読めない: " + SectionHeading);
+        }
+
+        /// <summary>共通契約仕様書から警告の枠を読む。読めなければ <see cref="InvalidOperationException"/>。</summary>
+        public static int ReadWarningRoom(string text)
+        {
+            return Find(text, WarningRoom, "警告の枠");
+        }
+
+        /// <summary>共通契約仕様書から要求サイズ予算を読む。読めなければ <see cref="InvalidOperationException"/>。</summary>
+        public static int ReadRequestBytes(string text)
+        {
+            return Find(text, RequestBytes, "要求サイズ予算");
+        }
+
+        /// <summary>IPC仕様書から構造トークンの上限を読む。読めなければ <see cref="InvalidOperationException"/>。</summary>
+        public static int ReadTokenLimit(string text)
+        {
+            return Find(text, TokenLimit, "構造トークンの上限");
+        }
+
+        private static int Find(string text, Regex pattern, string name)
+        {
+            if (text == null)
+            {
+                throw new ArgumentNullException(nameof(text));
+            }
+
+            Match match = pattern.Match(text);
+            if (!match.Success)
+            {
+                throw new InvalidOperationException(name + "が読めない。");
+            }
+
+            return int.Parse(
+                match.Groups[1].Value.Replace(",", string.Empty), CultureInfo.InvariantCulture);
         }
     }
 }

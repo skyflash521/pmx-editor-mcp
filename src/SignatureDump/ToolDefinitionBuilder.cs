@@ -1,0 +1,440 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PmxEditorMcp.SignatureDump
+{
+    /// <summary>MCPクライアントへ載せるツール定義の1件。</summary>
+    public sealed class ToolDefinition
+    {
+        public ToolDefinition(string name, string description, string inputSchema)
+        {
+            Name = name;
+            Description = description;
+            InputSchema = inputSchema;
+        }
+
+        public string Name { get; }
+
+        public string Description { get; }
+
+        /// <summary>入力の形をJSON Schemaで綴ったもの。</summary>
+        public string InputSchema { get; }
+    }
+
+    /// <summary>
+    /// スキーマ正本と説明文から、MCPクライアントへ載せるツール定義を組み立てる。件数と要素数の
+    /// 上限は正本に書かず、[逆算の規則](ListingLimitRule)と[要素数の規則](ElementLimitRule)が
+    /// 導いた値をここで入れる——予算を変えれば動く値なので、書き写せば必ず食い違う。
+    /// </summary>
+    public static class ToolDefinitionBuilder
+    {
+        /// <summary>一覧が何件返すかを受け取る入力の名前。</summary>
+        public const string LimitName = "limit";
+
+        /// <summary>一覧が切り出す前の総数を返す項目の名前。</summary>
+        public const string TotalName = "total";
+
+        /// <summary>ハンドルをいくつ発行するかを受け取る入力の名前。</summary>
+        public const string CountName = "count";
+
+        private const string ObjectType = "object";
+
+        private const string ArrayType = "array";
+
+        private static readonly IDictionary<string, string> ScalarTypes =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { "boolean", "boolean" },
+                { "number", "number" },
+                { "text", "string" },
+                { "base64", "string" },
+                { "enum_name", "string" },
+                { "image", "string" },
+                { "null_value", "null" },
+            };
+
+        /// <summary>成分の数が綴りで決まる並び。最小と最大をそのまま入れる。</summary>
+        private static readonly IDictionary<string, int[]> FixedArrays =
+            new Dictionary<string, int[]>(StringComparer.Ordinal)
+            {
+                { "color", new[] { 3, 4 } },
+                { "size", new[] { 2, 2 } },
+                { "point", new[] { 2, 2 } },
+                { "rectangle", new[] { 4, 4 } },
+                { "brush", new[] { 3, 4 } },
+            };
+
+        /// <summary>
+        /// ツール定義を綴りの順に組み立てる。<paramref name="descriptions"/> はツール名から説明文へ、
+        /// <paramref name="valueChars"/> は応答の値の枠、<paramref name="requestBudgetBytes"/> は
+        /// 要求サイズ予算、<paramref name="tokenLimit"/> はIPCの構造トークンの上限。
+        /// </summary>
+        public static IList<ToolDefinition> Build(
+            ToolSchemaTable schemas,
+            IDictionary<string, string> descriptions,
+            AssumedLength lengths,
+            int valueChars,
+            int requestBudgetBytes,
+            int tokenLimit)
+        {
+            if (schemas == null)
+            {
+                throw new ArgumentNullException(nameof(schemas));
+            }
+
+            if (descriptions == null)
+            {
+                throw new ArgumentNullException(nameof(descriptions));
+            }
+
+            if (lengths == null)
+            {
+                throw new ArgumentNullException(nameof(lengths));
+            }
+
+            List<ToolDefinition> definitions = new List<ToolDefinition>();
+            foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
+            {
+                string description;
+                if (!descriptions.TryGetValue(schema.Tool, out description))
+                {
+                    throw new InvalidOperationException("説明文が無いツール: " + schema.Tool);
+                }
+
+                definitions.Add(new ToolDefinition(
+                    schema.Tool,
+                    description,
+                    InputSchema(schema, lengths, valueChars, requestBudgetBytes, tokenLimit)));
+            }
+
+            return definitions;
+        }
+
+        private static string InputSchema(
+            ToolSchema schema,
+            AssumedLength lengths,
+            int valueChars,
+            int requestBudgetBytes,
+            int tokenLimit)
+        {
+            ListingLimits listing = IsListing(schema)
+                ? ListingLimitRule.Derive(schema, lengths, valueChars)
+                : null;
+
+            List<string> branches = schema.Branches
+                .Select(b => Branch(
+                    schema, b, listing, lengths, valueChars, requestBudgetBytes, tokenLimit))
+                .ToList();
+
+            if (branches.Count == 1)
+            {
+                return branches[0];
+            }
+
+            return new JsonObjectText().Add("oneOf", JsonWriter.Array(branches)).Text;
+        }
+
+        private static string Branch(
+            ToolSchema schema,
+            SchemaBranch branch,
+            ListingLimits listing,
+            AssumedLength lengths,
+            int valueChars,
+            int requestBudgetBytes,
+            int tokenLimit)
+        {
+            IDictionary<SchemaItem, int> limits =
+                ElementLimitRule.Request(branch, lengths, requestBudgetBytes, tokenLimit);
+
+            // 応答が並びを返すなら、要求で受ける件数も応答で返せる件数より多くできない。
+            SchemaItem returned = schema.Output == null ? null : schema.Output.Element;
+            int? issued = returned == null
+                ? (int?)null
+                : ElementLimitRule.Response(returned, lengths, valueChars);
+            if (issued.HasValue)
+            {
+                foreach (SchemaItem array in limits.Keys.ToList())
+                {
+                    limits[array] = ElementLimitRule.Bounded(limits[array], issued.Value);
+                }
+            }
+
+            JsonObjectText properties = new JsonObjectText();
+            List<string> required = new List<string>();
+
+            // ホストが自分で入れる引数は、呼び出す側へ現れない。
+            foreach (SchemaItem input in branch.Inputs.Where(i => !i.Injected))
+            {
+                properties.Add(
+                    input.Name, Item(schema, branch, input, listing, limits, issued));
+                if (input.Required.HasValue && input.Required.Value)
+                {
+                    required.Add(input.Name);
+                }
+            }
+
+            JsonObjectText body = new JsonObjectText().AddText("type", ObjectType);
+            body.Add("properties", properties.Text);
+            if (required.Count > 0)
+            {
+                body.Add("required", JsonWriter.TextArray(required));
+            }
+
+            body.AddBoolean("additionalProperties", false);
+
+
+            if (branch.Choices == null || branch.Choices.Count == 0)
+            {
+                return body.Text;
+            }
+
+            List<string> all = new List<string> { body.Text };
+            all.AddRange(branch.Choices.Select(Choice));
+
+            return new JsonObjectText().Add("allOf", JsonWriter.Array(all)).Text;
+        }
+
+        /// <summary>
+        /// まとまりのうち1つだけを受け取る決まりを綴る。必ず要るまとまりはどれか1つを要り、
+        /// 要らないまとまりはどれも無い形も許す。
+        /// </summary>
+        private static string Choice(SchemaChoice choice)
+        {
+            List<string> cases = choice.Names
+                .Select(n => new JsonObjectText().Add("required", JsonWriter.TextArray(new[] { n })).Text)
+                .ToList();
+
+            if (!choice.Required)
+            {
+                cases.Add(new JsonObjectText()
+                    .Add("not", new JsonObjectText().Add("anyOf", JsonWriter.Array(cases)).Text)
+                    .Text);
+            }
+
+            return new JsonObjectText().Add("oneOf", JsonWriter.Array(cases)).Text;
+        }
+
+        private static string Item(
+            ToolSchema schema,
+            SchemaBranch branch,
+            SchemaItem item,
+            ListingLimits listing,
+            IDictionary<SchemaItem, int> limits,
+            int? issued)
+        {
+            JsonObjectText written = Shape(schema, branch, item, listing, limits, issued);
+
+            if (item.Bounds != null)
+            {
+                if (item.Bounds.Minimum.HasValue)
+                {
+                    written.AddNumber("minimum", item.Bounds.Minimum.Value);
+                }
+
+                if (item.Bounds.Maximum.HasValue)
+                {
+                    written.AddNumber("maximum", item.Bounds.Maximum.Value);
+                }
+            }
+
+            if (item.HasDefault)
+            {
+                written.Add("default", Value(item.Default));
+            }
+
+            // 値で分かれる呼び分けは、その項目の値そのものが分岐を選ぶ。名前が同じだけの入れ子の
+            // 項目まで縛らないよう、分岐が直に受け取る入力に限る。
+            if (branch.SelectorName != null
+                && branch.Inputs.Contains(item)
+                && string.Equals(branch.SelectorName, item.Name, StringComparison.Ordinal))
+            {
+                written.Add("const", Value(branch.SelectorValue));
+            }
+
+            return written.Text;
+        }
+
+        private static JsonObjectText Shape(
+            ToolSchema schema,
+            SchemaBranch branch,
+            SchemaItem item,
+            ListingLimits listing,
+            IDictionary<SchemaItem, int> limits,
+            int? issued)
+        {
+            if (item.Members != null)
+            {
+                JsonObjectText members = new JsonObjectText();
+                List<string> required = new List<string>();
+                foreach (SchemaItem member in item.Members)
+                {
+                    members.Add(
+                        member.Name, Item(schema, branch, member, listing, limits, issued));
+                    if (member.Required.HasValue && member.Required.Value)
+                    {
+                        required.Add(member.Name);
+                    }
+                }
+
+                JsonObjectText body = new JsonObjectText()
+                    .Add("type", TypeOf(ObjectType, item.Nullable));
+                body.Add("properties", members.Text);
+                if (required.Count > 0)
+                {
+                    body.Add("required", JsonWriter.TextArray(required));
+                }
+
+                return body.AddBoolean("additionalProperties", false);
+            }
+
+            if (item.Element != null)
+            {
+                JsonObjectText body = new JsonObjectText()
+                    .Add("type", TypeOf(ArrayType, item.Nullable));
+                body.Add("items", Item(schema, branch, item.Element, listing, limits, issued));
+                if (NonEmptyArrayRule.NonEmpty(item))
+                {
+                    body.AddNumber("minItems", 1);
+                }
+
+                int maxItems;
+                if (item.MaxItems.HasValue)
+                {
+                    maxItems = item.MaxItems.Value;
+                }
+                else if (!limits.TryGetValue(item, out maxItems))
+                {
+                    throw new InvalidOperationException(
+                        "要素数の上限を導けない並び: " + schema.Tool + "." + item.Name);
+                }
+
+                return body.AddNumber("maxItems", maxItems);
+            }
+
+            if (item.Shape == null)
+            {
+                throw new InvalidOperationException(
+                    "形を持たない項目: " + schema.Tool + "." + item.Name);
+            }
+
+            return Scalar(schema, branch, item, listing, issued);
+        }
+
+        private static JsonObjectText Scalar(
+            ToolSchema schema,
+            SchemaBranch branch,
+            SchemaItem item,
+            ListingLimits listing,
+            int? issued)
+        {
+            int[] fixedArray;
+            if (FixedArrays.TryGetValue(item.Shape, out fixedArray))
+            {
+                return new JsonObjectText()
+                    .Add("type", TypeOf(ArrayType, item.Nullable))
+                    .Add("items", new JsonObjectText().AddText("type", "number").Text)
+                    .AddNumber("minItems", fixedArray[0])
+                    .AddNumber("maxItems", fixedArray[1]);
+            }
+
+            if (string.Equals(item.Shape, "number_array", StringComparison.Ordinal))
+            {
+                return new JsonObjectText()
+                    .Add("type", TypeOf(ArrayType, item.Nullable))
+                    .Add("items", new JsonObjectText().AddText("type", "number").Text);
+            }
+
+            if (string.Equals(item.Shape, "font", StringComparison.Ordinal))
+            {
+                JsonObjectText members = new JsonObjectText()
+                    .Add("family", new JsonObjectText().AddText("type", "string").Text)
+                    .Add("size", new JsonObjectText().AddText("type", "number").Text)
+                    .Add("style", new JsonObjectText().AddText("type", "string").Text);
+
+                return new JsonObjectText()
+                    .Add("type", TypeOf(ObjectType, item.Nullable))
+                    .Add("properties", members.Text)
+                    .Add("required", JsonWriter.TextArray(new[] { "family", "size", "style" }))
+                    .AddBoolean("additionalProperties", false);
+            }
+
+            if (string.Equals(item.Shape, "json", StringComparison.Ordinal))
+            {
+                return new JsonObjectText();
+            }
+
+            string type;
+            if (!ScalarTypes.TryGetValue(item.Shape, out type))
+            {
+                throw new InvalidOperationException(
+                    "組み立て方を持たない綴り: " + item.Shape + "(" + schema.Tool + ")");
+            }
+
+            JsonObjectText written = new JsonObjectText().Add("type", TypeOf(type, item.Nullable));
+
+            // 一覧の件数は予算から導く値なので、正本ではなくここで入れる。
+            if (listing != null
+                && string.Equals(item.Name, LimitName, StringComparison.Ordinal)
+                && branch.Inputs.Contains(item))
+            {
+                written.AddNumber("minimum", 1);
+                written.AddNumber("maximum", listing.LimitMaximum);
+                written.AddNumber("default", listing.LimitDefault);
+            }
+
+            // 発行する数も、応答で返せる件数から導く値なので正本に書かない。
+            if (issued.HasValue
+                && string.Equals(item.Name, CountName, StringComparison.Ordinal)
+                && branch.Inputs.Contains(item))
+            {
+                written.AddNumber("minimum", 1);
+                written.AddNumber("maximum", issued.Value);
+            }
+
+            return written;
+        }
+
+        /// <summary>
+        /// 形の綴り。値を持たないことを許す項目は、その形と null の両方を受け取る。
+        /// </summary>
+        private static string TypeOf(string type, bool? nullable)
+        {
+            return nullable.HasValue && nullable.Value
+                ? JsonWriter.TextArray(new[] { type, "null" })
+                : JsonText.Quote(type);
+        }
+
+        private static string Value(object value)
+        {
+            if (value == null)
+            {
+                return "null";
+            }
+
+            if (value is bool)
+            {
+                return (bool)value ? "true" : "false";
+            }
+
+            if (value is string)
+            {
+                return JsonText.Quote((string)value);
+            }
+
+            return JsonWriter.Number(Convert.ToDouble(value));
+        }
+
+        /// <summary>応答が総数と切り出した並びを返す形か。一覧を返すツールはこの形を取る。</summary>
+        private static bool IsListing(ToolSchema schema)
+        {
+            IList<SchemaItem> members = schema.Output == null ? null : schema.Output.Members;
+
+            return members != null
+                && members.Any(m => string.Equals(m.Name, TotalName, StringComparison.Ordinal))
+                && members.Any(
+                    m => string.Equals(m.Name, ListingLimitRule.ItemsName, StringComparison.Ordinal)
+                        && m.Element != null);
+        }
+    }
+}

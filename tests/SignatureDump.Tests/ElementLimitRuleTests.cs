@@ -45,6 +45,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return Value(null, "number");
         }
 
+        /// <summary>ホストが自分で入れる引数。呼び出す側は送らない。</summary>
+        private static SchemaItem Injected(string name)
+        {
+            return new SchemaItem(
+                null, null, null, name, ItemOrigin.HostInput, true, null, false,
+                null, null, null, true, null);
+        }
+
         [Fact]
         public void TheRequestTakesTheSmallerOfTheBudgetAndTheStructureTokens()
         {
@@ -166,6 +174,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 envelope + 1000);
 
             Assert.Equal(1000, limits[targets]);
+        }
+
+        /// <summary>
+        /// ホストが自分で入れる引数は要求に現れないので、要求の外枠にも数えない。数えると、
+        /// 実際より小さい上限を並びへ与えることになる。
+        /// </summary>
+        [Fact]
+        public void TheInputsTheHostFillsInAreNotCountedInTheEnvelope()
+        {
+            SchemaItem targets = Sequence("targets", Number(), null);
+            SchemaItem connector = Injected("connector");
+            const int envelope = 10;
+
+            IDictionary<SchemaItem, int> withInjected = ElementLimitRule.Request(
+                Branch(new[] { connector, targets }), Lengths, Budget, envelope + 1000);
+            IDictionary<SchemaItem, int> withoutInjected = ElementLimitRule.Request(
+                Branch(new[] { targets }), Lengths, Budget, envelope + 1000);
+
+            Assert.Equal(withoutInjected[targets], withInjected[targets]);
         }
 
         [Fact]

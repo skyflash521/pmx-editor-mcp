@@ -38,14 +38,15 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             Dictionary<SchemaItem, int> limits = new Dictionary<SchemaItem, int>();
-            IList<IList<SchemaItem>> paths = branch.Inputs
+            IList<SchemaItem> sent = Sent(branch);
+            IList<IList<SchemaItem>> paths = sent
                 .SelectMany(i => Arrays(i, new SchemaItem[0])).ToList();
             if (paths.Count == 0)
             {
                 return limits;
             }
 
-            int share = (tokenLimit - Envelope(branch)) / Simultaneous(branch);
+            int share = (tokenLimit - Envelope(sent)) / Simultaneous(branch, sent);
             if (share < 1)
             {
                 throw new InvalidOperationException(
@@ -154,17 +155,17 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// 同時に指定できる可変長の並びの数。同時には持てない項目のまとまりからは1つぶんだけを数える。
         /// </summary>
-        private static int Simultaneous(SchemaBranch branch)
+        private static int Simultaneous(SchemaBranch branch, IList<SchemaItem> sent)
         {
             HashSet<string> chosen = new HashSet<string>(
                 branch.Choices.SelectMany(c => c.Names), StringComparer.Ordinal);
-            int count = branch.Inputs
+            int count = sent
                 .Where(i => i.Name == null || !chosen.Contains(i.Name))
                 .Sum(i => Arrays(i, new SchemaItem[0]).Count());
             foreach (SchemaChoice choice in branch.Choices)
             {
                 count += choice.Names
-                    .Select(n => branch.Inputs
+                    .Select(n => sent
                         .Where(i => string.Equals(i.Name, n, StringComparison.Ordinal))
                         .Sum(i => Arrays(i, new SchemaItem[0]).Count()))
                     .Max();
@@ -173,11 +174,19 @@ namespace PmxEditorMcp.SignatureDump
             return count;
         }
 
-        /// <summary>要求の外枠と、ツールが受け取る固定のメンバーが使う構造トークン数。</summary>
-        private static int Envelope(SchemaBranch branch)
+        /// <summary>
+        /// 呼び出す側が実際に送る入力。ホストが自分で入れる引数は要求に現れないので、要求の
+        /// 大きさにも数えない。
+        /// </summary>
+        private static IList<SchemaItem> Sent(SchemaBranch branch)
         {
-            return EnvelopeTokens + 1 + (branch.Inputs.Count - 1)
-                + branch.Inputs.Sum(i => Tokens(i));
+            return branch.Inputs.Where(i => !i.Injected).ToList();
+        }
+
+        /// <summary>要求の外枠と、ツールが受け取る固定のメンバーが使う構造トークン数。</summary>
+        private static int Envelope(IList<SchemaItem> sent)
+        {
+            return EnvelopeTokens + 1 + (sent.Count - 1) + sent.Sum(i => Tokens(i));
         }
 
         /// <summary>

@@ -107,27 +107,6 @@ namespace PmxEditorMcp.SignatureDump
             });
 
         /// <summary>
-        /// 参照を見て、名前で引く経路と綴りを取れなかった行を返す。<paramref name="assemblyPath"/>
-        /// は検査する配布物のパスで、<paramref name="editorDirectory"/> はその配布物が参照するSDKの
-        /// 置き場。見るのはアセンブリのメタデータが持つ外部メンバーの参照で、本体の命令を
-        /// 読み解かない——命令の長さを解さずに読むと、引数の並びを命令と取り違える。
-        /// </summary>
-        public static ReflectionScan Scan(string editorDirectory, string assemblyPath)
-        {
-            if (editorDirectory == null)
-            {
-                throw new ArgumentNullException(nameof(editorDirectory));
-            }
-
-            if (assemblyPath == null)
-            {
-                throw new ArgumentNullException(nameof(assemblyPath));
-            }
-
-            return SdkInventory.Read(editorDirectory, assemblyPath, assembly => Scan(assembly.ManifestModule));
-        }
-
-        /// <summary>
         /// 参照の綴りのうち、名前で引く経路を持つものを識別子の序数昇順で返す。綴りは宣言型と
         /// メンバー名を点でつないだもの。
         /// </summary>
@@ -154,9 +133,16 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// メタデータのメンバー参照の表を1行ずつ引く。行が尽きたところで終わる。綴りを取れない行は
         /// 判じずに数える——判じられなかったものを通せば、この検査が保証するのは参照の一部だけになる。
+        /// 見るのはメタデータが持つ外部メンバーの参照で、本体の命令を読み解かない——命令の長さを
+        /// 解さずに読むと、引数の並びを命令と取り違える。
         /// </summary>
-        private static ReflectionScan Scan(Module module)
+        public static ReflectionScan Scan(Module module)
         {
+            if (module == null)
+            {
+                throw new ArgumentNullException(nameof(module));
+            }
+
             const int MemberRefTable = 0x0A000000;
 
             SortedSet<string> found = new SortedSet<string>(StringComparer.Ordinal);

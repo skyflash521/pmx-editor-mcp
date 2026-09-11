@@ -10,6 +10,8 @@
     <RootNamespace>PmxEditorMcp.Tests</RootNamespace>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
+    <!-- SDKを読むので、導入ディレクトリの指定が要る。 -->
+    <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
   </PropertyGroup>
 
   <ItemGroup>

@@ -365,10 +365,23 @@ namespace PmxEditorMcp.Bridge
             }
 
             int hostBudgetChars;
+            string hostToolMapDigest;
             string invalidReason;
-            if (!TryReadHandshakeBudget(response.Result, out hostBudgetChars, out invalidReason))
+            if (!TryReadHandshake(
+                response.Result, out hostBudgetChars, out hostToolMapDigest, out invalidReason))
             {
                 throw FailAndClose(BridgeErrorCodes.HandshakeMismatch, invalidReason);
+            }
+
+            if (!string.Equals(
+                hostToolMapDigest, GeneratedToolDefinitions.ToolMapDigest, StringComparison.Ordinal))
+            {
+                throw FailAndClose(
+                    BridgeErrorCodes.ToolDefinitionMismatch,
+                    "ホストの中継とブリッジのツール定義が別の能力対応表から作られている。"
+                        + "ホストの指紋は " + hostToolMapDigest + " で、ブリッジの指紋は "
+                        + GeneratedToolDefinitions.ToolMapDigest + " である。"
+                        + "同じ版のホストDLLとブリッジを使う。");
             }
 
             if (hostBudgetChars != BudgetChars)
@@ -458,9 +471,11 @@ namespace PmxEditorMcp.Bridge
             return duringHandshake ? BridgeErrorCodes.HandshakeMismatch : BridgeErrorCodes.ProtocolError;
         }
 
-        private static bool TryReadHandshakeBudget(JsonNode result, out int budgetChars, out string invalidReason)
+        private static bool TryReadHandshake(
+            JsonNode result, out int budgetChars, out string toolMapDigest, out string invalidReason)
         {
             budgetChars = 0;
+            toolMapDigest = null;
             invalidReason = null;
 
             JsonObject handshake = result as JsonObject;
@@ -500,6 +515,14 @@ namespace PmxEditorMcp.Bridge
                 || !BridgeJsonRpc.TryGetInt32(budgetNode, out budgetChars))
             {
                 invalidReason = "handshake の結果の budgetChars が整数でない。";
+                return false;
+            }
+
+            JsonNode digestNode;
+            if (!handshake.TryGetPropertyValue("toolMapDigest", out digestNode)
+                || !BridgeJsonRpc.TryGetString(digestNode, out toolMapDigest))
+            {
+                invalidReason = "handshake の結果の toolMapDigest が文字列でない。";
                 return false;
             }
 

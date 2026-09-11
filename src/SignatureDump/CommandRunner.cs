@@ -58,6 +58,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>行キーからSDKのメンバーを直接呼ぶ中継をC#の本文として書き出す。</summary>
         public const string RelaySourceCommand = "relay-source";
 
+        /// <summary>ツール定義を組み立ててブリッジへ組み込むC#として書き出す。</summary>
+        public const string ToolDefinitionsCommand = "tool-definitions";
+
         /// <summary>配布物が実行時リフレクションを持たないことを照合する。</summary>
         public const string ReflectionFreeCommand = "reflection-free";
 
@@ -166,6 +169,11 @@ namespace PmxEditorMcp.SignatureDump
                 return RelaySourceRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], ToolDefinitionsCommand, StringComparison.Ordinal))
+            {
+                return ToolDefinitionRunner.Run(rest, output, error);
+            }
+
             if (string.Equals(args[0], ReflectionFreeCommand, StringComparison.Ordinal))
             {
                 return ReflectionFreeRunner.Run(rest, output, error);
@@ -236,6 +244,12 @@ namespace PmxEditorMcp.SignatureDump
             error.WriteLine(
                 RelaySourceCommand
                     + " <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                ToolDefinitionsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
+                    + " <IPC仕様書のパス> <アーキテクチャ仕様書のパス> <型役割表の正本のパス>"
+                    + " <日本語名の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <書き出し先パス>");
             error.WriteLine(
                 ReflectionFreeCommand + " <PMXエディタ導入ディレクトリ> <検査するアセンブリのパス>");
         }

@@ -43,16 +43,40 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.ServerInfo.Version);
         }
 
+        /// <summary>
+        /// 登録するのは基盤の中継と、ビルド時に組み立てた定義のすべてである。定義は本文が持つので、
+        /// 期待する名前もその本文から取る。
+        /// </summary>
         [Fact]
-        public async Task OnlyOneToolIsRegisteredForHostRelay()
+        public async Task TheBaseRelayAndEveryGeneratedDefinitionAreRegistered()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
             await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            McpClientTool only = Assert.Single(tools);
-            Assert.Equal("ping", only.Name);
+            Assert.Equal(Expected(false), Sorted(tools.Select(tool => tool.Name)));
+        }
+
+        /// <summary>
+        /// 組み立てた定義の入力の形と説明文が、そのまま一覧へ出る。ブリッジは形を作り直さない。
+        /// </summary>
+        [Fact]
+        public async Task AGeneratedDefinitionKeepsItsDescriptionAndInputSchema()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
+
+            IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
+
+            foreach (GeneratedToolDefinition definition in GeneratedToolDefinitions.Create())
+            {
+                McpClientTool tool = Named(tools, definition.Name);
+                Assert.Equal(definition.Description, tool.Description);
+                Assert.Equal(
+                    definition.InputSchema,
+                    tool.ProtocolTool.InputSchema.GetRawText());
+            }
         }
 
         /// <summary>
@@ -68,9 +92,7 @@ namespace PmxEditorMcp.Bridge.Tests
             IList<McpClientTool> tools = await opened.ListToolsAsync(cancellationToken: limit.Token);
 
             // ツールの一覧の並びは ModelContextProtocol のサーバーが決める。
-            Assert.Equal(
-                new string[] { BridgeTools.LargeTextMethod, "ping" },
-                tools.Select(tool => tool.Name).OrderBy(name => name, StringComparer.Ordinal).ToArray());
+            Assert.Equal(Expected(true), Sorted(tools.Select(tool => tool.Name)));
         }
 
         [Fact]
@@ -109,7 +131,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Assert.Single(tools)));
+            Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Named(tools, "ping")));
         }
 
         [Fact]
@@ -120,7 +142,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Equal(250000, DeclaredResultSize(Assert.Single(tools)));
+            Assert.Equal(250000, DeclaredResultSize(Named(tools, "ping")));
         }
 
         [Fact]
@@ -132,7 +154,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Equal(2, tools.Count);
+            Assert.Equal(Expected(true).Length, tools.Count);
             Assert.All(tools, tool => Assert.Null(tool.ProtocolTool.Meta));
         }
 
@@ -150,7 +172,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Equal(BridgeDebugHooks.IsEnabled(debugHooks) ? 2 : 1, tools.Count);
+            Assert.Equal(Expected(BridgeDebugHooks.IsEnabled(debugHooks)).Length, tools.Count);
             Assert.All(
                 tools,
                 tool => Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(tool)));
@@ -169,7 +191,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Assert.Single(tools)));
+            Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Named(tools, "ping")));
         }
 
         [Fact]
@@ -212,7 +234,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.StartsWith(BridgeErrorCodes.BudgetMismatch + ": ", TextOf(result));
 
             // 失敗してもプロセスは生きているので、続けて応答できる。
-            Assert.Single(await client.ListToolsAsync(cancellationToken: limit.Token));
+            Assert.NotEmpty(await client.ListToolsAsync(cancellationToken: limit.Token));
         }
 
         /// <summary>
@@ -471,11 +493,36 @@ namespace PmxEditorMcp.Bridge.Tests
             return Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
         }
 
+        /// <summary>一覧に出るはずの名前。基盤の中継と、組み立てた定義のすべてからなる。</summary>
+        private static string[] Expected(bool debugHooks)
+        {
+            List<string> names = new List<string> { "ping" };
+            names.AddRange(GeneratedToolDefinitions.Create().Select(d => d.Name));
+            if (debugHooks)
+            {
+                names.Add(BridgeTools.LargeTextMethod);
+            }
+
+            return Sorted(names);
+        }
+
+        private static string[] Sorted(IEnumerable<string> names)
+        {
+            return names.OrderBy(name => name, StringComparer.Ordinal).ToArray();
+        }
+
+        private static McpClientTool Named(IEnumerable<McpClientTool> tools, string name)
+        {
+            return Assert.Single(
+                tools, tool => string.Equals(tool.Name, name, StringComparison.Ordinal));
+        }
+
         private static Func<string, string> HandshakeResultOf(int budgetChars)
         {
             return request => Result(
                 request,
-                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":" + budgetChars + "}");
+                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                    + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + budgetChars + "}");
         }
 
         private static string Result(string request, string result)

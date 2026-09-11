@@ -41,6 +41,11 @@ namespace PmxEditorMcp.Bridge
                 Relay(client, declared, "ping", "ホストが応答することを確かめる。"),
             };
 
+            foreach (GeneratedToolDefinition definition in GeneratedToolDefinitions.Create())
+            {
+                tools.Add(Generated(definition, client, declared));
+            }
+
             if (debugHooks)
             {
                 tools.Add(LargeText(client, declared));
@@ -71,6 +76,25 @@ namespace PmxEditorMcp.Bridge
                 });
         }
 
+        /// <summary>
+        /// ビルド時に組み立てた定義からツールを作る。名前も説明も入力の形も本文が持つので、
+        /// 委譲先の形から読み取らせない。
+        /// </summary>
+        private static McpServerTool Generated(
+            GeneratedToolDefinition definition, HostIpcClient client, bool declared)
+        {
+            return McpServerTool.Create(
+                new RelayFunction(definition, client),
+                new McpServerToolCreateOptions
+                {
+                    Name = definition.Name,
+                    Description = definition.Description,
+                    Meta = declared
+                        ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
+                        : null,
+                });
+        }
+
         /// <summary>ホストの同名のメソッドへ中継するツールを作る。</summary>
         private static McpServerTool Relay(
             HostIpcClient client, bool declared, string method, string description)
@@ -94,7 +118,7 @@ namespace PmxEditorMcp.Bridge
                 });
         }
 
-        private static async Task<CallToolResult> RelayAsync(
+        internal static async Task<CallToolResult> RelayAsync(
             HostIpcClient client,
             string method,
             JsonObject parameters,

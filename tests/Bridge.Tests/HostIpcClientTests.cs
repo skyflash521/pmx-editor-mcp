@@ -207,6 +207,47 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         /// <summary>
+        /// ホストの中継とブリッジのツール定義は同じ能力対応表から作る。別の表から作られた組み合わせ
+        /// では、どのツールが中継できるかが食い違うので、繋がずに断る。
+        /// </summary>
+        [Fact]
+        public async Task ADifferentToolMapClosesConnectionShowingBothDigests()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Result(
+                    request,
+                    "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\","
+                        + "\"toolMapDigest\":\"0123456789abcdef\",\"budgetChars\":100000}"))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ToolDefinitionMismatch, error.Code);
+            Assert.Contains("0123456789abcdef", error.Message);
+            Assert.Contains(GeneratedToolDefinitions.ToolMapDigest, error.Message);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task AHandshakeWithoutADigestIsOutsideTheContract()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Result(
+                    request,
+                    "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}"))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.Contains("toolMapDigest", error.Message);
+        }
+
+        /// <summary>
         /// 予算の不一致でプロセスを終えないので、設定を直したホストへ繋ぎ直せば回復する。
         /// </summary>
         [Fact]
@@ -758,7 +799,8 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             return request => Result(
                 request,
-                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":" + budgetChars + "}");
+                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                    + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + budgetChars + "}");
         }
 
         /// <summary>

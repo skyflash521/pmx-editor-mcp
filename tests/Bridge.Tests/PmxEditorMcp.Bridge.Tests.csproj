@@ -20,4 +20,11 @@
     <ProjectReference Include="..\..\src\Bridge\PmxEditorMcp.Bridge.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 名前で引く経路の判じ方は、ホストへ掛けるものと同じでなければ意味がない。ブリッジは
+         別のフレームワークなので実行ファイルからは検査できず、判じ方の本文をここへ持ち込む。 -->
+    <Compile Include="..\..\src\SignatureDump\ReflectionFreeGate.cs"
+             Link="ReflectionFreeGate.cs" />
+  </ItemGroup>
+
 </Project>

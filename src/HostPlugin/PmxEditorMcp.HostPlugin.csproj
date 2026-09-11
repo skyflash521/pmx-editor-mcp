@@ -8,6 +8,8 @@
     <AssemblyName>PmxEditorMcp</AssemblyName>
     <RootNamespace>PmxEditorMcp</RootNamespace>
     <LangVersion>latest</LangVersion>
+    <!-- SDKを読むので、導入ディレクトリの指定が要る。 -->
+    <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,11 +33,6 @@
     <!-- 同梱依存ゼロでJSONを扱うため、.NET Framework 付属の JavaScriptSerializer を使う。 -->
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>
-
-  <Target Name="EnsurePmxEditorDir" BeforeTargets="BeforeBuild;Deploy">
-    <Error Condition="'$(PmxEditorDir)' == ''"
-           Text="local.props に PmxEditorDir を定義せよ(PMXエディタ導入ディレクトリのパス)。" />
-  </Target>
 
   <!-- 行キーからSDKへの中継は、ビルドのたびに作り直して組み込む。配布物へ入るのは出来た本文
        だけで、呼び出し先を名前で引く経路は持たない。 -->

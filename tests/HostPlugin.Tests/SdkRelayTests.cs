@@ -19,6 +19,8 @@ namespace PmxEditorMcp.Tests
 
         private const string GeneratedVersion = "0.0.8.9";
 
+        private const string Digest = "8f14e45fceea167a5a36dedd4bea2543";
+
         private const string LiveKey = "Sdk.Type.Live()";
 
         private const string LostKey = "Sdk.Type.Lost()";
@@ -101,7 +103,7 @@ namespace PmxEditorMcp.Tests
             {
                 { LostKey, (target, arguments) => { throw new MethodAccessException("Sdk.Type.Lost"); } },
             };
-            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, calls, new string[0]);
+            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, Digest, calls, new string[0]);
 
             object result;
             SdkRelayRefusal refusal;
@@ -117,7 +119,7 @@ namespace PmxEditorMcp.Tests
             {
                 { LostKey, (target, arguments) => { throw new TypeLoadException("Sdk.Type"); } },
             };
-            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, calls, new string[0]);
+            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, Digest, calls, new string[0]);
 
             object result;
             SdkRelayRefusal refusal;
@@ -132,7 +134,7 @@ namespace PmxEditorMcp.Tests
             {
                 { LiveKey, (target, arguments) => { throw new InvalidOperationException("SDKが断った。"); } },
             };
-            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, calls, new string[0]);
+            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, Digest, calls, new string[0]);
 
             object result;
             SdkRelayRefusal refusal;
@@ -159,7 +161,7 @@ namespace PmxEditorMcp.Tests
                     }
                 },
             };
-            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, calls, new string[0]);
+            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, Digest, calls, new string[0]);
             object receiver = new object();
 
             object result;
@@ -185,7 +187,7 @@ namespace PmxEditorMcp.Tests
                     }
                 },
             };
-            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, calls, new string[0]);
+            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, Digest, calls, new string[0]);
 
             object result;
             SdkRelayRefusal refusal;
@@ -212,6 +214,20 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { LostKey }, Assert.IsType<object[]>(body["disabledRows"]));
         }
 
+        /// <summary>
+        /// 中継を作った表の指紋は接続の確立で名乗る。ブリッジはこれと自分の指紋を照らし合わせて、
+        /// 別の表から作られた組み合わせを断る。
+        /// </summary>
+        [Fact]
+        public void TheHandshakeNamesTheDigestOfTheTableTheRelayWasBuiltFrom()
+        {
+            JsonRpcConnection connection = Connection(Table(), "0.0.8.9");
+
+            IDictionary<string, object> body = ResultOf(Exchange(connection, Handshake())[0]);
+
+            Assert.Equal(Digest, body["toolMapDigest"]);
+        }
+
         [Fact]
         public void TheStatusNameCannotBeRegisteredAsATool()
         {
@@ -230,7 +246,7 @@ namespace PmxEditorMcp.Tests
                 { LostKey, (target, arguments) => { throw new MissingMethodException("Sdk.Type", "Lost"); } },
             };
 
-            return new SdkRelayTable(GeneratedVersion, calls, new[] { UnresolvedKey });
+            return new SdkRelayTable(GeneratedVersion, Digest, calls, new[] { UnresolvedKey });
         }
 
         private JsonRpcConnection Connection(SdkRelayTable relays, string sdkVersion)

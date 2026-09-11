@@ -13,6 +13,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string SdkVersion = "0.0.8.9";
 
+        private const string Digest = "8f14e45fceea167a5a36dedd4bea2543";
+
         [Fact]
         public void AMethodIsCalledOnTheReceiverCastToItsDeclaringType()
         {
@@ -69,7 +71,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[] { "Sdk.Type.Absent()", "PEPlugin.Pmx.IPXPmxConnector.LockUndo()" },
                 Inventory(Method("PEPlugin.Pmx.IPXPmxConnector.LockUndo()", "System.Void")),
                 SdkVersion,
-                new string[0]);
+                new string[0],
+                Digest);
 
             Assert.Equal(new[] { "PEPlugin.Pmx.IPXPmxConnector.LockUndo()" }, source.Resolved);
             Assert.Equal(new[] { "Sdk.Type.Absent()" }, source.Unresolved);
@@ -103,13 +106,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheDigestOfTheTableIsCarriedInTheText()
+        {
+            Assert.Contains(
+                "internal const string ToolMapDigest = \"" + Digest + "\";",
+                Build("Sdk.Type.Name").Text);
+        }
+
+        [Fact]
         public void TheEnumsThatTakeNamesSpelledOutAreCarriedInTheText()
         {
             RelaySource source = RelaySourceBuilder.Build(
                 new string[0],
                 Inventory(),
                 SdkVersion,
-                new[] { "Sdk.Second", "Sdk.First", "Sdk.First" });
+                new[] { "Sdk.Second", "Sdk.First", "Sdk.First" },
+                Digest);
 
             int first = source.Text.IndexOf("\"Sdk.First\",", StringComparison.Ordinal);
             int second = source.Text.IndexOf("\"Sdk.Second\",", StringComparison.Ordinal);
@@ -124,7 +136,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[] { "Sdk.Type.Name", "Sdk.Type.Name" },
                 Inventory(Property("Sdk.Type.Name", "System.String", true, true)),
                 SdkVersion,
-                new string[0]);
+                new string[0],
+                Digest);
 
             Assert.Equal(new[] { "Sdk.Type.Name" }, source.Resolved);
             Assert.Equal(1, Occurrences(source.Text, "calls.Add(\"Sdk.Type.Name\""));
@@ -138,7 +151,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static RelaySource Build(SignatureRecord signature)
         {
             return RelaySourceBuilder.Build(
-                new[] { signature.Key }, Inventory(signature), SdkVersion, new string[0]);
+                new[] { signature.Key }, Inventory(signature), SdkVersion, new string[0], Digest);
         }
 
         /// <summary>題材のシグネチャ。呼び出しの形が分かれる並びを1つずつ持つ。</summary>

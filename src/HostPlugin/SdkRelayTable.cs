@@ -45,16 +45,23 @@ namespace PmxEditorMcp
         private readonly object _gate = new object();
 
         /// <summary>
-        /// 生成に使ったSDKの版・解決できた行の中継・生成の時点で解決できなかった行を与えて生成する。
+        /// 生成に使ったSDKの版・中継を作った能力対応表の指紋・解決できた行の中継・生成の時点で
+        /// 解決できなかった行を与えて生成する。
         /// </summary>
         public SdkRelayTable(
             string generatedSdkVersion,
+            string toolMapDigest,
             IDictionary<string, SdkCall> calls,
             IEnumerable<string> unresolved)
         {
             if (generatedSdkVersion == null)
             {
                 throw new ArgumentNullException(nameof(generatedSdkVersion));
+            }
+
+            if (toolMapDigest == null)
+            {
+                throw new ArgumentNullException(nameof(toolMapDigest));
             }
 
             if (calls == null)
@@ -68,12 +75,16 @@ namespace PmxEditorMcp
             }
 
             GeneratedSdkVersion = generatedSdkVersion;
+            ToolMapDigest = toolMapDigest;
             _calls = new Dictionary<string, SdkCall>(calls, StringComparer.Ordinal);
             _unresolved = new HashSet<string>(unresolved, StringComparer.Ordinal);
         }
 
         /// <summary>生成に使ったSDKの版。</summary>
         public string GeneratedSdkVersion { get; }
+
+        /// <summary>中継を作った能力対応表の指紋。ブリッジの定義と同じ表から作られたことを示す。</summary>
+        public string ToolMapDigest { get; }
 
         /// <summary>生成の時点で解決できなかった行。識別子の序数昇順。</summary>
         public IList<string> Unresolved

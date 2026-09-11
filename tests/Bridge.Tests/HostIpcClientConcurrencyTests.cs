@@ -126,7 +126,8 @@ namespace PmxEditorMcp.Bridge.Tests
                     await holding.WaitAsync(stopping).ConfigureAwait(false);
                     return Result(
                         request,
-                        "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":" + BudgetChars + "}");
+                        "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                    + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + BudgetChars + "}");
                 })
                 .Reply(request => Result(request, "\"pong\""))
                 .Reply(request => Result(request, "\"pong\""))
@@ -292,7 +293,8 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             return request => Result(
                 request,
-                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":" + budgetChars + "}");
+                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                    + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + budgetChars + "}");
         }
 
         private static string Result(string request, string result)

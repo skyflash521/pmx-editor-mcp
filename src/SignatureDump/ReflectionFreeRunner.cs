@@ -46,7 +46,8 @@ namespace PmxEditorMcp.SignatureDump
             ReflectionScan scan;
             try
             {
-                scan = ReflectionFreeGate.Scan(args[0], args[1]);
+                scan = SdkInventory.Read(
+                    args[0], args[1], assembly => ReflectionFreeGate.Scan(assembly.ManifestModule));
             }
             catch (Exception exception)
             {
