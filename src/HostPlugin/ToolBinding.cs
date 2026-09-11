@@ -102,7 +102,8 @@ namespace PmxEditorMcp
             Type element,
             Func<object, bool> isElement,
             string itemType = null,
-            IList<ToolItem> items = null)
+            IList<ToolItem> items = null,
+            Type owner = null)
         {
             if (kind != ToolAccessKind.Whole && rowKey == null)
             {
@@ -122,6 +123,7 @@ namespace PmxEditorMcp
             IsElement = isElement;
             ItemType = itemType;
             Items = new ReadOnlyCollection<ToolItem>(items ?? NoItems);
+            Owner = owner;
         }
 
         public ToolAccessKind Kind { get; }
@@ -149,6 +151,12 @@ namespace PmxEditorMcp
         /// ほかは空——分かれないリストでは、実行時の型を載せても要素の型の言い直しにしかならない。
         /// </summary>
         public IList<ToolItem> Items { get; }
+
+        /// <summary>
+        /// そのリストを直に持つ型。親をハンドルで指せる道だけが持ち、ほかは null——親が所有する
+        /// リストの要素でなければ、その親を指すハンドルは発行されない。
+        /// </summary>
+        public Type Owner { get; }
 
         /// <summary>受け手そのものを相手にする道。</summary>
         public static ToolAccess Whole()

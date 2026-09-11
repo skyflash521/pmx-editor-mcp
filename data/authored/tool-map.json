@@ -284,6 +284,175 @@
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。"
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Bone()",
+      "editKind": "read",
+      "basis": "関連するボーンを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.BoxKind()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して形状の種類を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.BoxSize()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して形状の大きさを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Friction()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して摩擦力を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Group()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してグループの番号を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Mass()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して質量を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Mode()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して剛体のモードを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Name()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して剛体名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.NameE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語の剛体名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.PassGroup()",
+      "editKind": "read",
+      "basis": "衝突しないグループを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Position()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して位置を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.PositionDamping()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して移動の減衰を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Restitution()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して反発力を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Rotation()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して回転を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.RotationDamping()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して回転の減衰を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXBone.AppendParent()",
       "editKind": "read",
       "basis": "付与の親ボーンを返すだけで、エディタの状態を動かさない。"
@@ -831,6 +1000,148 @@
       "embeddedIn": [
         "model_list_morph_offsets",
         "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.BodyA()",
+      "editKind": "read",
+      "basis": "接続する1つめの剛体を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.BodyB()",
+      "editKind": "read",
+      "basis": "接続する2つめの剛体を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Kind()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してJointの種類を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Limit_AngleHigh()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して回転の上限を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Limit_AngleLow()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して回転の下限を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Limit_MoveHigh()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して移動の上限を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Limit_MoveLow()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して移動の下限を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Name()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してJoint名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.NameE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語のJoint名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Position()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して位置を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Rotation()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して回転を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.SpringConst_Move()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して移動のバネ定数を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.SpringConst_Rotate()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して回転のバネ定数を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
       ]
     },
     {
@@ -1653,6 +1964,495 @@
         "refresh": []
       },
       "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲は引数で受け取り、反映の後の表示更新はこの流れを起こしたツールの行が決めるので、この行は持たない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.AHR()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(AHR)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.AST()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してMaterialConfig系の設定値(AST)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.AeroModel()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して風圧の計算モデルを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Anchors()",
+      "editKind": "read",
+      "basis": "剛体アンカーのリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.BendingLinkDistance()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してBendingLinkを生成する距離を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.CHR()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(CHR)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.C_IT()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(C_IT)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.ClusterCount()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して生成するクラスタの数を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.DF()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(DF)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.DG()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(DG)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.DP()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(DP)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.D_IT()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(D_IT)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.GenerateBendingLinks()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してBendingLinkを生成するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.GenerateClusters()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してクラスタを生成するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Group()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してグループの番号を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.KHR()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(KHR)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.LF()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(LF)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.LST()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してMaterialConfig系の設定値(LST)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.MT()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(MT)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Margin()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して衝突のマージンを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Material()",
+      "editKind": "read",
+      "basis": "対応する材質を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Name()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してSoftBody名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.NameE()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して英語のSoftBody名を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.PR()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(PR)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.P_IT()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(P_IT)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.PassGroup()",
+      "editKind": "read",
+      "basis": "衝突しないグループを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Pins()",
+      "editKind": "read",
+      "basis": "Pinにする頂点のリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.RandomizeConstraints()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してリンクを交雑するかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.SHR()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(SHR)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.SKHR_CL()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(SKHR_CL)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.SK_SPLT_CL()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(SK_SPLT_CL)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.SRHR_CL()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(SRHR_CL)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.SR_SPLT_CL()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(SR_SPLT_CL)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.SSHR_CL()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(SSHR_CL)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.SS_SPLT_CL()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(SS_SPLT_CL)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Shape()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して形状を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.TotalMass()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して総質量を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.VC()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(VC)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.VCF()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(VCF)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.VST()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してMaterialConfig系の設定値(VST)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.V_IT()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してConfig系の設定値(V_IT)を変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBodyAnchor.Body()",
+      "editKind": "read",
+      "basis": "繋ぐ剛体を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBodyAnchor.Near()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してNearのモードにするかどうかを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_soft_body_anchors",
+        "model_update_soft_body_anchors"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBodyAnchor.Vertex()",
+      "editKind": "read",
+      "basis": "対応する頂点を返すだけで、エディタの状態を動かさない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXUVMorphOffset.Offset()",

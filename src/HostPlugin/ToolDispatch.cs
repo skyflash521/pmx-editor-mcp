@@ -58,6 +58,9 @@ namespace PmxEditorMcp
         /// <summary>親を指す位置の名前。一覧の各項目と、親ごとの組がこれを持つ。</summary>
         public const string ParentIndexName = "parentIndex";
 
+        /// <summary>親を指すハンドルの名前。親をハンドルで指した呼び出しがこれを持つ。</summary>
+        public const string ParentHandleName = "parentHandle";
+
         /// <summary>一覧の各項目が持つ、親の中の位置の名前。</summary>
         public const string IndexInParentName = "indexInParent";
 
@@ -224,7 +227,7 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
-                if (!TryTake(context, call.Receiver, handle, out target, out refused)
+                if (!TryTake(context, call.Receiver, handle, false, out target, out refused)
                     || !TryColumn(
                         context,
                         call.Access,
@@ -250,7 +253,7 @@ namespace PmxEditorMcp
                 }
 
                 result = value;
-                stage = Reflecting(call.Receiver, stage);
+                stage = Reflecting(call.Receiver, target, stage);
                 refused = Commit(call.Receiver, target);
             }, out failure))
             {
@@ -326,7 +329,7 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
-                if (!TryTake(context, call.Receiver, handle, out target, out refused)
+                if (!TryTake(context, call.Receiver, handle, pointed.Held, out target, out refused)
                     || !TryColumn(
                         context,
                         call.Access,
@@ -371,7 +374,7 @@ namespace PmxEditorMcp
                 }
 
                 invoked = column.Count;
-                stage = Reflecting(call.Receiver, stage);
+                stage = Reflecting(call.Receiver, target, stage);
                 refused = Commit(call.Receiver, target);
             }, out failure))
             {
@@ -605,7 +608,7 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
-                if (!TryTake(context, tool.Receiver, handle, out target, out refused)
+                if (!TryTake(context, tool.Receiver, handle, pointed.Held, out target, out refused)
                     || !TryColumn(
                         context,
                         tool.Access,
@@ -728,8 +731,13 @@ namespace PmxEditorMcp
                 return itemType;
             }
 
+            if (string.Equals(name, ParentHandleName, StringComparison.Ordinal))
+            {
+                return spot.ParentHandle;
+            }
+
             return string.Equals(name, ParentIndexName, StringComparison.Ordinal)
-                ? spot.ParentIndex
+                ? (object)spot.ParentIndex
                 : spot.IndexInParent;
         }
 
@@ -857,7 +865,7 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
-                if (!TryTake(context, tool.Receiver, handle, out target, out refused)
+                if (!TryTake(context, tool.Receiver, handle, pointed.Held, out target, out refused)
                     || !TryColumn(
                         context,
                         tool.Access,
@@ -904,7 +912,7 @@ namespace PmxEditorMcp
                 }
 
                 updated = column.Count;
-                stage = Reflecting(tool.Receiver, stage);
+                stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(tool.Receiver, target);
             }, out failure))
             {
@@ -1011,7 +1019,7 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 SdkList list;
-                if (!TryTake(context, tool.Receiver, null, out target, out refused)
+                if (!TryTake(context, tool.Receiver, null, false, out target, out refused)
                     || !TryList(tool.Access.RowKey, out list, out refused))
                 {
                     return;
@@ -1024,7 +1032,7 @@ namespace PmxEditorMcp
                     indices[at] = list.Count(target.Pmx) - 1;
                 }
 
-                stage = Reflecting(tool.Receiver, stage);
+                stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(tool.Receiver, target);
             }, out failure))
             {
@@ -1052,8 +1060,9 @@ namespace PmxEditorMcp
             string code;
             string message;
             IList<Assignment> assignments;
+            bool byHandle;
             if (!TryOnlyKnown(context, new List<string> { AssignmentsName }, out code, out message)
-                || !TryAssignments(context, tool, out assignments, out code, out message))
+                || !TryAssignments(context, tool, out assignments, out byHandle, out code, out message))
             {
                 return ToolEnvelope.Failure(code, message);
             }
@@ -1066,17 +1075,18 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 SdkList list;
-                IList<object> owners;
-                if (!TryTake(context, tool.Receiver, null, out target, out refused)
+                IList<object> owners = null;
+                if (!TryTake(context, tool.Receiver, null, byHandle, out target, out refused)
                     || !TryList(tool.Access.RowKey, out list, out refused)
-                    || !TryOwners(tool.Access, target, out owners, out refused))
+                    || (!byHandle && !TryOwners(tool.Access, target, out owners, out refused)))
                 {
                     return;
                 }
 
                 foreach (Assignment assignment in assignments)
                 {
-                    if (assignment.Parent < 0 || assignment.Parent >= owners.Count)
+                    if (!byHandle
+                        && (assignment.Parent < 0 || assignment.Parent >= owners.Count))
                     {
                         refused = new Refusal(ToolEnvelope.Failure(
                             ToolEnvelope.IndexOutOfRange,
@@ -1089,7 +1099,7 @@ namespace PmxEditorMcp
                 stage = Changing(tool.Receiver, target);
                 foreach (Assignment assignment in assignments)
                 {
-                    object owner = owners[assignment.Parent];
+                    object owner = byHandle ? assignment.Owner : owners[assignment.Parent];
                     foreach (object item in assignment.Items)
                     {
                         list.Add(owner, item);
@@ -1097,7 +1107,7 @@ namespace PmxEditorMcp
                     }
                 }
 
-                stage = Reflecting(tool.Receiver, stage);
+                stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(tool.Receiver, target);
             }, out failure))
             {
@@ -1143,7 +1153,7 @@ namespace PmxEditorMcp
                 PmxTarget target;
                 SdkList list;
                 IList<Spot> column;
-                if (!TryTake(context, tool.Receiver, handle, out target, out refused)
+                if (!TryTake(context, tool.Receiver, handle, pointed.Held, out target, out refused)
                     || !TryList(tool.Access.RowKey, out list, out refused)
                     || !TryColumn(
                         context,
@@ -1168,7 +1178,7 @@ namespace PmxEditorMcp
                 }
 
                 removed = column.Count;
-                stage = Reflecting(tool.Receiver, stage);
+                stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(tool.Receiver, target);
             }, out failure))
             {
@@ -1258,6 +1268,10 @@ namespace PmxEditorMcp
             yield return TargetNames.Parent.Indices;
             yield return TargetNames.Parent.Range;
             yield return TargetNames.Parent.All;
+            if (access.Owner != null)
+            {
+                yield return TargetNames.Parent.Handles;
+            }
         }
 
         /// <summary>
@@ -1276,7 +1290,7 @@ namespace PmxEditorMcp
                 && access.Parents.Count != 0
                 && !pointed.ByHandle)
             {
-                composed.Add(ParentIndexName);
+                composed.Add(pointed.ParentByHandle ? ParentHandleName : ParentIndexName);
                 composed.Add(IndexInParentName);
             }
 
@@ -1311,20 +1325,18 @@ namespace PmxEditorMcp
             }
 
             if (access.Parents.Count != 0
-                && !TryTargets(context, TargetNames.Parent, false, out parents, out code, out message))
+                && !TryTargets(
+                    context,
+                    TargetNames.Parent,
+                    access.Owner != null,
+                    out parents,
+                    out code,
+                    out message))
             {
                 return false;
             }
 
             bool byHandle = elements.Handles != null;
-            if (byHandle && pmxHandle.HasValue)
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = "対象をハンドルで指した呼び出しは " + PmxSession.HandleName + " を取らない。";
-
-                return false;
-            }
-
             if (byHandle && parents != null && Points(parents))
             {
                 code = ToolEnvelope.InvalidArgument;
@@ -1333,7 +1345,16 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            pointed = new Pointed(elements, parents, byHandle);
+            bool parentByHandle = parents != null && parents.Handles != null;
+            if ((byHandle || parentByHandle) && pmxHandle.HasValue)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = "対象をハンドルで指した呼び出しは " + PmxSession.HandleName + " を取らない。";
+
+                return false;
+            }
+
+            pointed = new Pointed(elements, parents, byHandle, parentByHandle);
 
             return true;
         }
@@ -1371,8 +1392,21 @@ namespace PmxEditorMcp
                 return true;
             }
 
+            if (access.Kind == ToolAccessKind.Element && pointed.ByHandle)
+            {
+                return TryHeld(context, access, accepted, pointed, out column, out refused);
+            }
+
             IList<object> owners;
-            if (!TryOwners(access, target, out owners, out refused))
+            IList<long> ids = null;
+            if (pointed.ParentByHandle)
+            {
+                if (!TryHeldOwners(context, access, pointed, out owners, out ids, out refused))
+                {
+                    return false;
+                }
+            }
+            else if (!TryOwners(access, target, out owners, out refused))
             {
                 return false;
             }
@@ -1390,13 +1424,12 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            if (pointed.ByHandle)
-            {
-                return TryHeld(context, access, accepted, pointed, out column, out refused);
-            }
-
             IList<int> chosen;
-            if (!TryChosen(pointed.Parents, owners.Count, out chosen, out refused))
+            if (pointed.ParentByHandle)
+            {
+                chosen = Enumerable.Range(0, owners.Count).ToArray();
+            }
+            else if (!TryChosen(pointed.Parents, owners.Count, out chosen, out refused))
             {
                 return false;
             }
@@ -1413,7 +1446,12 @@ namespace PmxEditorMcp
                 for (int at = 0; at < reached.Count; at++)
                 {
                     spots.Add(new Spot(
-                        owners[parent], spots.Count, parent, access.Listed ? at : 0, reached[at]));
+                        owners[parent],
+                        spots.Count,
+                        ids == null ? parent : -1,
+                        access.Listed ? at : 0,
+                        reached[at],
+                        ids == null ? (long?)null : ids[parent]));
                 }
             }
 
@@ -1583,6 +1621,45 @@ namespace PmxEditorMcp
             column = resolved.Handles
                 .Select((id, at) => new Spot(null, at, -1, -1, Held(context, accepted, id)))
                 .ToList();
+
+            return true;
+        }
+
+        /// <summary>
+        /// ハンドルで指した親の列。要求に現れた順に並べ、同じ並びのハンドルも返す。親がまだ
+        /// どのPMXにも属していないので、所有の経路は辿らない。
+        /// </summary>
+        private static bool TryHeldOwners(
+            McpMethodContext context,
+            ToolAccess access,
+            Pointed pointed,
+            out IList<object> owners,
+            out IList<long> ids,
+            out Refusal refused)
+        {
+            owners = null;
+            ids = null;
+            refused = null;
+            ResolvedTargets resolved;
+            string code;
+            string message;
+            if (!TargetSelection.TryResolve(
+                pointed.Parents,
+                TargetForm.Handles,
+                0,
+                id => Held(context, access.Owner, id) != null,
+                out resolved,
+                out code,
+                out message,
+                TargetNames.Parent))
+            {
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                return false;
+            }
+
+            ids = resolved.Handles;
+            owners = resolved.Handles.Select(id => Held(context, access.Owner, id)).ToList();
 
             return true;
         }
@@ -1866,10 +1943,12 @@ namespace PmxEditorMcp
             McpMethodContext context,
             ToolElements tool,
             out IList<Assignment> assignments,
+            out bool byHandle,
             out string code,
             out string message)
         {
             assignments = null;
+            byHandle = false;
             code = null;
             message = null;
             object given;
@@ -1884,7 +1963,7 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            HashSet<int> parents = new HashSet<int>();
+            HashSet<long> parents = new HashSet<long>();
             HashSet<long> used = new HashSet<long>();
             List<Assignment> built = new List<Assignment>();
             foreach (object item in items)
@@ -1898,7 +1977,18 @@ namespace PmxEditorMcp
                 built.Add(one);
             }
 
+            if (built.Any(a => a.Owner != null) && built.Any(a => a.Owner == null))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = AssignmentsName + " が親の指し方を混ぜている。全部の組が "
+                    + ParentIndexName + " を持つか、全部の組が " + ParentHandleName
+                    + " を持つかのどちらかにする。";
+
+                return false;
+            }
+
             assignments = built;
+            byHandle = built[0].Owner != null;
 
             return true;
         }
@@ -1908,7 +1998,7 @@ namespace PmxEditorMcp
             McpMethodContext context,
             ToolElements tool,
             object given,
-            ISet<int> parents,
+            ISet<long> parents,
             ISet<long> used,
             out Assignment assignment,
             out string code,
@@ -1918,20 +2008,17 @@ namespace PmxEditorMcp
             code = null;
             message = null;
             IDictionary<string, object> members = given as IDictionary<string, object>;
-            object parent;
-            int position;
-            if (members == null
-                || !members.TryGetValue(ParentIndexName, out parent)
-                || !TryIndex(parent, out position))
+            if (members == null)
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = AssignmentsName + " の組は " + ParentIndexName + " を持つ。";
+                message = AssignmentsName + " の組は項目の組でなければならない。";
 
                 return false;
             }
 
             string unknown = members.Keys
                 .Where(n => !string.Equals(n, ParentIndexName, StringComparison.Ordinal)
+                    && !string.Equals(n, ParentHandleName, StringComparison.Ordinal)
                     && !string.Equals(n, TargetNames.Element.Handles, StringComparison.Ordinal))
                 .OrderBy(n => n, StringComparer.Ordinal)
                 .FirstOrDefault();
@@ -1943,10 +2030,19 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            if (!parents.Add(position))
+            int position;
+            object owner;
+            long pointing;
+            if (!TryParent(
+                context, tool, members, out position, out owner, out pointing, out code, out message))
+            {
+                return false;
+            }
+
+            if (!parents.Add(pointing))
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = "同じ親を2つ以上の組へ書いている: " + position;
+                message = "同じ親を2つ以上の組へ書いている: " + pointing;
 
                 return false;
             }
@@ -1998,7 +2094,71 @@ namespace PmxEditorMcp
                 held.Add(item);
             }
 
-            assignment = new Assignment(position, ids, held);
+            assignment = new Assignment(position, owner, ids, held);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 組が指す親。位置で指す組は親の列の中の位置を、ハンドルで指す組は台帳の実体を持つ。
+        /// </summary>
+        private static bool TryParent(
+            McpMethodContext context,
+            ToolElements tool,
+            IDictionary<string, object> members,
+            out int position,
+            out object owner,
+            out long pointing,
+            out string code,
+            out string message)
+        {
+            position = -1;
+            owner = null;
+            pointing = 0;
+            code = null;
+            message = null;
+            object given;
+            bool byIndex = members.TryGetValue(ParentIndexName, out given)
+                && TryIndex(given, out position);
+            object held;
+            long id = 0;
+            bool byHandle = members.TryGetValue(ParentHandleName, out held)
+                && TryInteger(held, out id);
+            if (byIndex == byHandle)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = AssignmentsName + " の組は " + ParentIndexName + " と "
+                    + ParentHandleName + " のどちらか1つを持つ。";
+
+                return false;
+            }
+
+            if (byIndex)
+            {
+                pointing = position;
+
+                return true;
+            }
+
+            if (tool.Access.Owner == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ParentHandleName
+                    + " はこのツールでは指定できない。親の型がハンドルを発行しないためである。";
+
+                return false;
+            }
+
+            owner = Held(context, tool.Access.Owner, id);
+            if (owner == null)
+            {
+                code = ToolEnvelope.InvalidHandle;
+                message = ParentHandleName + " が台帳に無いハンドルを指している: " + id;
+
+                return false;
+            }
+
+            pointing = id;
 
             return true;
         }
@@ -2014,11 +2174,15 @@ namespace PmxEditorMcp
                     : null;
         }
 
-        /// <summary>相手にするPMX。PMXから得ない受け手では何も決めない。</summary>
+        /// <summary>
+        /// 相手にするPMX。PMXから得ない受け手では何も決めない。対象をハンドルで指した呼び出しは
+        /// PMXを相手にしないので、複製も作らない。
+        /// </summary>
         private bool TryTake(
             McpMethodContext context,
             ToolReceiver receiver,
             long? handle,
+            bool held,
             out PmxTarget target,
             out Refusal refused)
         {
@@ -2026,6 +2190,13 @@ namespace PmxEditorMcp
             refused = null;
             if (receiver.Kind != ToolReceiverKind.Pmx)
             {
+                return true;
+            }
+
+            if (held)
+            {
+                target = new PmxTarget(null, false);
+
                 return true;
             }
 
@@ -2041,11 +2212,16 @@ namespace PmxEditorMcp
             return false;
         }
 
-        /// <summary>まとめて反映する呼び出しを持つのは、複製して編集する分類だけである。</summary>
-        private static bool Reflects(ToolReceiver receiver)
+        /// <summary>
+        /// まとめて反映する呼び出しを持つのは、複製して編集する分類だけである。現在のPMXの複製を
+        /// 相手にしていない呼び出しは、直に変える側なので反映を持たない。
+        /// </summary>
+        private static bool Reflects(ToolReceiver receiver, PmxTarget target)
         {
             return receiver.Kind == ToolReceiverKind.Pmx
-                && receiver.Edit == EditKind.DuplicateEdit;
+                && receiver.Edit == EditKind.DuplicateEdit
+                && target != null
+                && target.Current;
         }
 
         /// <summary>
@@ -2068,15 +2244,15 @@ namespace PmxEditorMcp
         /// <summary>
         /// まとめて反映する段の位置。反映を持たない呼び出しでは、メンバーを呼ぶ段の位置のままである。
         /// </summary>
-        private static EditStage Reflecting(ToolReceiver receiver, EditStage stage)
+        private static EditStage Reflecting(ToolReceiver receiver, PmxTarget target, EditStage stage)
         {
-            return Reflects(receiver) ? EditStage.AtCommit : stage;
+            return Reflects(receiver, target) ? EditStage.AtCommit : stage;
         }
 
         /// <summary>複製編集型の呼び出しを、現在のPMXへ反映する。</summary>
         private Refusal Commit(ToolReceiver receiver, PmxTarget target)
         {
-            if (!Reflects(receiver))
+            if (!Reflects(receiver, target))
             {
                 return null;
             }
@@ -2672,13 +2848,20 @@ namespace PmxEditorMcp
         /// <summary>対象1件の居場所。</summary>
         private sealed class Spot
         {
-            public Spot(object owner, int position, int parentIndex, int indexInParent, object item)
+            public Spot(
+                object owner,
+                int position,
+                int parentIndex,
+                int indexInParent,
+                object item,
+                long? parentHandle = null)
             {
                 Owner = owner;
                 Position = position;
                 ParentIndex = parentIndex;
                 IndexInParent = indexInParent;
                 Item = item;
+                ParentHandle = parentHandle;
             }
 
             /// <summary>親をまたいで平らにした列の中の位置。要求が対象を指す位置である。</summary>
@@ -2693,6 +2876,9 @@ namespace PmxEditorMcp
             /// <summary>親の中の位置。ハンドルで指した対象では -1。</summary>
             public int IndexInParent { get; }
 
+            /// <summary>親を指すハンドル。親を位置で指した呼び出しでは null。</summary>
+            public long? ParentHandle { get; }
+
             /// <summary>対象そのもの。</summary>
             public object Item { get; }
         }
@@ -2700,11 +2886,16 @@ namespace PmxEditorMcp
         /// <summary>要素と親の指し方の指定。要素を相手にしない道では、どちらも持たない。</summary>
         private sealed class Pointed
         {
-            public Pointed(TargetRequest elements, TargetRequest parents, bool byHandle)
+            public Pointed(
+                TargetRequest elements,
+                TargetRequest parents,
+                bool byHandle,
+                bool parentByHandle = false)
             {
                 Elements = elements;
                 Parents = parents;
                 ByHandle = byHandle;
+                ParentByHandle = parentByHandle;
             }
 
             /// <summary>要素の指し方。要素を相手にしない道では null。</summary>
@@ -2715,6 +2906,15 @@ namespace PmxEditorMcp
 
             /// <summary>要素をハンドルで指しているか。</summary>
             public bool ByHandle { get; }
+
+            /// <summary>親をハンドルで指しているか。</summary>
+            public bool ParentByHandle { get; }
+
+            /// <summary>対象そのものをハンドルで指しているか。どのPMXを見るかを切り替えられない。</summary>
+            public bool Held
+            {
+                get { return ByHandle || ParentByHandle; }
+            }
 
             /// <summary>何も指していない指定。要素を相手にしない道で使う。</summary>
             public static Pointed None { get; } = new Pointed(null, null, false);
@@ -2739,15 +2939,19 @@ namespace PmxEditorMcp
         /// <summary>親1件へ加える組。</summary>
         private sealed class Assignment
         {
-            public Assignment(int parent, IList<long> handles, IList<object> items)
+            public Assignment(int parent, object owner, IList<long> handles, IList<object> items)
             {
                 Parent = parent;
+                Owner = owner;
                 Handles = handles;
                 Items = items;
             }
 
-            /// <summary>親の列の中の位置。</summary>
+            /// <summary>親の列の中の位置。親をハンドルで指した組では -1。</summary>
             public int Parent { get; }
+
+            /// <summary>ハンドルが指す親。親を位置で指した組では null。</summary>
+            public object Owner { get; }
 
             /// <summary>加えるものを指すハンドル。</summary>
             public IList<long> Handles { get; }

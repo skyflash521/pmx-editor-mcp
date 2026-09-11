@@ -89,6 +89,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> owned = ElementToolRule.Elements(
                 map, signatures, roles);
             IDictionary<string, AccessPath> paths = ElementPathEvidence.Resolve(inventory, roles);
+            ISet<string> issued = ElementPathEvidence.Issued(inventory, roles);
             IDictionary<string, TypeRole> roleOf = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
             IDictionary<string, IList<string>> concrete =
@@ -133,12 +134,15 @@ namespace PmxEditorMcp.SignatureDump
                 TypeRoleRecord element;
                 if (owned.TryGetValue(row.SignatureKey, out element))
                 {
+                    IList<string> owning = Owner(ownerPaths, row.SignatureKey);
                     AccessPath listed = new AccessPath(
                         AccessPathKind.Element,
                         row.SignatureKey,
-                        Owner(ownerPaths, row.SignatureKey),
+                        owning,
                         true,
-                        element.TypeName);
+                        element.TypeName,
+                        ElementPathEvidence.Owner(
+                            signatures, issued, row.SignatureKey, owning.Count));
                     foreach (string named in ElementToolRule.Of(element))
                     {
                         elements.Add(
@@ -433,7 +437,8 @@ namespace PmxEditorMcp.SignatureDump
             return "new ToolAccess(ToolAccessKind.Element, " + Literal(path.RowKey)
                 + ", " + walked + ", "
                 + TypeOf(path.ElementType) + ", item => item is " + Code(path.ElementType) + ", "
-                + noun + ", " + Items(path, signatures, concrete, byType) + ")";
+                + noun + ", " + Items(path, signatures, concrete, byType) + ", "
+                + (path.OwnerType == null ? "null" : TypeOf(path.OwnerType)) + ")";
         }
 
         /// <summary>

@@ -154,12 +154,54 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AListWhoseHolderIsTheElementOfAnOwningListCanBeReachedThroughAHeldParent()
+        {
+            AccessPath path = Resolve()[Offset];
+
+            Assert.Equal(Morph, path.OwnerType);
+        }
+
+        [Fact]
+        public void AStepWhoseHolderIsNeverHeldHasNoOwnerToPointByHandle()
+        {
+            Assert.Null(Resolve()[Far].OwnerType);
+        }
+
+        [Fact]
+        public void AListTheModelHoldsItselfHasNoOwnerToPointByHandle()
+        {
+            Assert.Null(Resolve()[Vertex].OwnerType);
+        }
+
+        [Fact]
+        public void TheTypesAnOwningListLinesUpAreTheOnesAHandleCanPointAt()
+        {
+            ISet<string> issued = ElementPathEvidence.Issued(Inventory(), Roles());
+
+            Assert.Contains(Morph, issued);
+            Assert.Contains(MaterialOffset, issued);
+            Assert.DoesNotContain(Ik, issued);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             Assert.Throws<ArgumentNullException>(
                 () => ElementPathEvidence.Resolve(null, Roles()));
             Assert.Throws<ArgumentNullException>(
                 () => ElementPathEvidence.Resolve(Inventory(), null));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementPathEvidence.Issued(null, Roles()));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementPathEvidence.Issued(Inventory(), null));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementPathEvidence.Owner(null, new HashSet<string>(), MorphList, 1));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementPathEvidence.Owner(
+                    new Dictionary<string, SignatureRecord>(StringComparer.Ordinal),
+                    null,
+                    MorphList,
+                    1));
         }
 
         private static IDictionary<string, AccessPath> Resolve()

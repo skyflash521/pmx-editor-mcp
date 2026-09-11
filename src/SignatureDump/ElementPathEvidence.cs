@@ -26,13 +26,15 @@ namespace PmxEditorMcp.SignatureDump
             string rowKey,
             IList<string> parents,
             bool listed,
-            string elementType)
+            string elementType,
+            string ownerType = null)
         {
             Kind = kind;
             RowKey = rowKey;
             Parents = new ReadOnlyCollection<string>(parents ?? new string[0]);
             Listed = listed;
             ElementType = elementType;
+            OwnerType = ownerType;
         }
 
         public AccessPathKind Kind { get; }
@@ -48,6 +50,11 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>相手にする型の名前。受け手そのものでは null。</summary>
         public string ElementType { get; }
+
+        /// <summary>
+        /// 最後の一歩を直に持つ型の名前。その型へハンドルが発行されうる道だけが持ち、ほかは null。
+        /// </summary>
+        public string OwnerType { get; }
     }
 
     /// <summary>
@@ -79,6 +86,7 @@ namespace PmxEditorMcp.SignatureDump
                 ElementCollectionEvidence.ConcreteTypes(inventory, roleOf);
             IDictionary<string, SignatureRecord> signatures = inventory.Signatures.ToDictionary(
                 s => s.Key, s => s, StringComparer.Ordinal);
+            ISet<string> issued = Issued(inventory, roles);
 
             Dictionary<string, AccessPath> paths =
                 new Dictionary<string, AccessPath>(StringComparer.Ordinal)
@@ -102,18 +110,19 @@ namespace PmxEditorMcp.SignatureDump
                 IList<string> parents = collection.OwnerPath
                     .Take(collection.OwnerPath.Count - 1)
                     .ToList();
-                Reach(paths, element, collection.SignatureKey, parents, true);
+                string owner = Owner(signatures, issued, collection.SignatureKey, parents.Count);
+                Reach(paths, element, collection.SignatureKey, parents, owner);
                 IList<string> leaves;
                 if (concrete.TryGetValue(element, out leaves))
                 {
                     foreach (string leaf in leaves)
                     {
-                        Reach(paths, leaf, collection.SignatureKey, parents, true);
+                        Reach(paths, leaf, collection.SignatureKey, parents, owner);
                     }
                 }
             }
 
-            Walk(inventory, roleOf, signatures, paths);
+            Walk(inventory, roleOf, signatures, issued, paths);
 
             return new ReadOnlyDictionary<string, AccessPath>(paths);
         }
@@ -139,12 +148,91 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// ハンドルを発行されうる型。所有するリストの要素になる型がこれに当たる——そこへ加える
+        /// ために作られた生成物は、加わるまで台帳が保つ。
+        /// </summary>
+        public static ISet<string> Issued(InventoryRecord inventory, TypeRoleTable roles)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            if (roles == null)
+            {
+                throw new ArgumentNullException(nameof(roles));
+            }
+
+            IDictionary<string, TypeRole> roleOf = roles.Types.ToDictionary(
+                t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
+            IDictionary<string, IList<string>> concrete =
+                ElementCollectionEvidence.ConcreteTypes(inventory, roleOf);
+            IDictionary<string, SignatureRecord> signatures = inventory.Signatures.ToDictionary(
+                s => s.Key, s => s, StringComparer.Ordinal);
+            HashSet<string> issued = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ElementCollectionRecord collection in roles.Collections.Where(c => c.Owns))
+            {
+                SignatureRecord signature;
+                if (!signatures.TryGetValue(collection.SignatureKey, out signature))
+                {
+                    continue;
+                }
+
+                string element = TypeDefinitionName.OfElement(
+                    ValueTypeName.Contained(signature.ValueType));
+                issued.Add(element);
+                IList<string> leaves;
+                if (concrete.TryGetValue(element, out leaves))
+                {
+                    foreach (string leaf in leaves)
+                    {
+                        issued.Add(leaf);
+                    }
+                }
+            }
+
+            return issued;
+        }
+
+        /// <summary>
+        /// その一歩を直に持つ型。親をハンドルで指せない道では null——親を辿らない道と、親へ
+        /// ハンドルが発行されない道である。
+        /// </summary>
+        public static string Owner(
+            IDictionary<string, SignatureRecord> signatures,
+            ISet<string> issued,
+            string rowKey,
+            int parents)
+        {
+            if (signatures == null)
+            {
+                throw new ArgumentNullException(nameof(signatures));
+            }
+
+            if (issued == null)
+            {
+                throw new ArgumentNullException(nameof(issued));
+            }
+
+            SignatureRecord signature;
+            if (parents == 0 || rowKey == null || !signatures.TryGetValue(rowKey, out signature))
+            {
+                return null;
+            }
+
+            string owner = TypeDefinitionName.OfElement(signature.DeclaringType);
+
+            return issued.Contains(owner) ? owner : null;
+        }
+
+        /// <summary>
         /// まだ道の無い型へ届く道を覚える。同じ型へ届く道が2つあれば、一歩の少ない方を採る。
         /// </summary>
         private static void Walk(
             InventoryRecord inventory,
             IDictionary<string, TypeRole> roleOf,
             IDictionary<string, SignatureRecord> signatures,
+            ISet<string> issued,
             IDictionary<string, AccessPath> paths)
         {
             IDictionary<string, IList<SignatureRecord>> members = inventory.Signatures
@@ -182,7 +270,8 @@ namespace PmxEditorMcp.SignatureDump
                             continue;
                         }
 
-                        paths.Add(value, Extend(paths[from], signature.Key, value));
+                        paths.Add(
+                            value, Extend(paths[from], signatures, issued, signature.Key, value));
                     }
                 }
             }
@@ -195,7 +284,12 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>その道の先へ、単数の段を1つ延ばした道。</summary>
-        private static AccessPath Extend(AccessPath path, string rowKey, string type)
+        private static AccessPath Extend(
+            AccessPath path,
+            IDictionary<string, SignatureRecord> signatures,
+            ISet<string> issued,
+            string rowKey,
+            string type)
         {
             List<string> parents = new List<string>(path.Parents);
             if (path.RowKey != null)
@@ -208,7 +302,8 @@ namespace PmxEditorMcp.SignatureDump
                 rowKey,
                 parents,
                 false,
-                type);
+                type,
+                Owner(signatures, issued, rowKey, parents.Count));
         }
 
         /// <summary>その型へ至る道をまだ持っていなければ覚える。</summary>
@@ -217,14 +312,15 @@ namespace PmxEditorMcp.SignatureDump
             string type,
             string rowKey,
             IList<string> parents,
-            bool listed)
+            string owner)
         {
             if (paths.ContainsKey(type))
             {
                 return;
             }
 
-            paths.Add(type, new AccessPath(AccessPathKind.Element, rowKey, parents, listed, type));
+            paths.Add(
+                type, new AccessPath(AccessPathKind.Element, rowKey, parents, true, type, owner));
         }
     }
 }

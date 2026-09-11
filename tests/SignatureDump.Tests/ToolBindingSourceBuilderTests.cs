@@ -26,6 +26,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Vertex = "PEPlugin.Pmx.IPXVertex";
 
+        private const string Weight = "PEPlugin.Pmx.IPXWeight";
+
+        private const string WeightKey = Vertex + ".Weight()";
+
         [Fact]
         public void ACallCarriesTheRowTheReceiverAndTheArgumentTypes()
         {
@@ -178,7 +182,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.DuplicateEdit),"
                     + " new ToolAccess(ToolAccessKind.Element, \"" + ListKey
                     + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
-                    + "), item => item is global::" + Vertex + ", \"vertex\", null)));",
+                    + "), item => item is global::" + Vertex + ", \"vertex\", null, null)));",
                 source.Text);
             Assert.Contains(
                 "elements.Add(\"model_remove_vertices\", new ToolElements(true,", source.Text);
@@ -212,6 +216,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "internal const string Receiver = \"" + Connector + "\";", source.Text);
         }
 
+        [Fact]
+        public void AListUnderAnElementCarriesTheTypeThatHoldsItSoTheParentCanBePointedByHandle()
+        {
+            ToolBindingSource source = Build(Collection(), Weights());
+
+            Assert.Contains(
+                "new ToolAccess(ToolAccessKind.Element, \"" + WeightKey
+                    + "\", new ToolHop[] { new ToolHop(\"" + ListKey + "\", true) },"
+                    + " true, typeof(global::" + Weight + "), item => item is global::" + Weight
+                    + ", \"weight\", null, typeof(global::" + Vertex + "))",
+                source.Text);
+        }
+
         private static Binding Collection()
         {
             SignatureRecord signature = new SignatureRecord(
@@ -232,6 +249,29 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 new ToolMapRow(
                     ListKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
+        }
+
+        /// <summary>要素の下にある、もう一段深いリストの題材。</summary>
+        private static Binding Weights()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                WeightKey,
+                Vertex,
+                MemberKind.Property,
+                "Weight",
+                false,
+                0,
+                new ParameterRecord[0],
+                "System.Collections.Generic.IList<" + Weight + ">",
+                true,
+                false,
+                OperationDirection.Read);
+
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    WeightKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
         }
 
         private static int Occurrences(string text, string part)
@@ -354,11 +394,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "vertex",
                         "vertices",
                         CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Weight,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "weight",
+                        "weights",
+                        CapabilityOwner.Model),
                 },
                 new HandleIssuanceRecord[0],
                 new[]
                 {
                     new ElementCollectionRecord(ListKey, true, "題材の根拠。", new[] { ListKey }),
+                    new ElementCollectionRecord(
+                        WeightKey, true, "題材の根拠。", new[] { ListKey, WeightKey }),
                 });
         }
 

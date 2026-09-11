@@ -41,6 +41,8 @@ namespace PmxEditorMcp.Tests
 
         private const string MarkKey = "Sdk.Group.Mark()";
 
+        private const string VeinsKey = "Sdk.Mark.Veins()";
+
         private const string WidthKey = "Sdk.Mark.Width()";
 
         private const string SplitKey = "Sdk.Item.Split(out System.String,out System.String)";
@@ -742,6 +744,232 @@ namespace PmxEditorMcp.Tests
             Assert.False(items[0].ContainsKey(ToolDispatch.ParentIndexName));
         }
 
+        [Fact]
+        public void AListingUnderAHeldParentCarriesThatHandleAndTheIndexInIt()
+        {
+            HandleLedger handles = Ledger();
+            Group group = new Group();
+            group.Leaves.Add(new Item { Label = "一" });
+            group.Leaves.Add(new Item { Label = "二" });
+            int handle = handles.Issue(typeof(Group).FullName, group, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_leaves",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.All, true),
+                handles);
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.Equal(new[] { "一", "二" }, items.Select(i => i["label"]).ToArray());
+            Assert.Equal(
+                new object[] { (long)handle, (long)handle },
+                items.Select(i => i[ToolDispatch.ParentHandleName]).ToArray());
+            Assert.Equal(
+                new object[] { 0, 1 },
+                items.Select(i => i[ToolDispatch.IndexInParentName]).ToArray());
+            Assert.False(items[0].ContainsKey(ToolDispatch.ParentIndexName));
+        }
+
+        [Fact]
+        public void AnUpdateUnderAHeldParentChangesItWithoutReflectingThePmx()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            held.Leaves.Add(new Item { Label = "一" });
+            Group inside = new Group();
+            inside.Leaves.Add(new Item { Label = "二" });
+            _model.Groups.Add(inside);
+            int handle = handles.Issue(typeof(Group).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_leaves",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "書き換え")),
+                handles);
+
+            Assert.Equal(1, Value(envelope)[SetResponse.UpdatedName]);
+            Assert.Equal("書き換え", ((Item)held.Leaves[0]).Label);
+            Assert.Equal("二", ((Item)inside.Leaves[0]).Label);
+            Assert.Equal(0, _commits);
+        }
+
+        [Fact]
+        public void RemovingUnderAHeldParentTakesTheElementOutOfIt()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            held.Leaves.Add(new Item { Label = "一" });
+            held.Leaves.Add(new Item { Label = "二" });
+            int handle = handles.Issue(typeof(Group).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_remove_leaves",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.Indices, new object[] { 0 }),
+                handles);
+
+            Assert.Equal(1, Value(envelope)[SetResponse.RemovedName]);
+            Assert.Equal(new[] { "二" }, held.Leaves.Cast<Item>().Select(i => i.Label).ToArray());
+            Assert.Equal(0, _commits);
+        }
+
+        [Fact]
+        public void PointingTheParentByHandleAndSwitchingThePmxIsRefused()
+        {
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(typeof(Group).FullName, new Group(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_leaves",
+                Arguments(
+                    PmxSession.HandleName, 1,
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.All, true),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains(PmxSession.HandleName, Message(envelope), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AHandleOfAnotherTypeThanTheParentIsRefused()
+        {
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_leaves",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.All, true),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidHandle, Code(envelope));
+        }
+
+        [Fact]
+        public void AParentThatIssuesNoHandleTakesNoHandleOfTheParent()
+        {
+            IDictionary<string, object> envelope = Call(
+                "model_list_veins",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { 1 },
+                    TargetNames.Element.All, true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains(TargetNames.Parent.Handles, Message(envelope), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AddingUnderAHeldParentPutsTheElementIntoItWithoutReflectingThePmx()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            int parent = handles.Issue(typeof(Group).FullName, held, () => { });
+            int child = handles.Issue(typeof(Item).FullName, new Item { Label = "一" }, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_leaves",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { HeldAssignment(parent, child) }),
+                handles);
+
+            IDictionary<string, object> value = Value(envelope);
+            Assert.Equal(1, value[SetResponse.AddedName]);
+            Assert.Equal(new[] { 0 }, (int[])value[SetResponse.IndicesName]);
+            Assert.Equal("一", ((Item)held.Leaves[0]).Label);
+            Assert.Equal(0, _commits);
+            object released;
+            Assert.False(handles.TryGet(child, typeof(Item).FullName, out released));
+        }
+
+        [Fact]
+        public void MixingHowTheParentIsPointedAcrossTheGroupsIsRefused()
+        {
+            _model.Groups.Add(new Group());
+            HandleLedger handles = Ledger();
+            int parent = handles.Issue(typeof(Group).FullName, new Group(), () => { });
+            int first = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+            int second = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_leaves",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { Assignment(0, first), HeldAssignment(parent, second) }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Empty(_model.Groups[0].Leaves);
+        }
+
+        [Fact]
+        public void AGroupThatPointsTheParentBothWaysIsRefused()
+        {
+            HandleLedger handles = Ledger();
+            int parent = handles.Issue(typeof(Group).FullName, new Group(), () => { });
+            int child = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+            IDictionary<string, object> group = HeldAssignment(parent, child);
+            group.Add(ToolDispatch.ParentIndexName, 0);
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_leaves",
+                Arguments(ToolDispatch.AssignmentsName, new object[] { group }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void AddingUnderAParentThatIssuesNoHandleTakesNoHandleOfTheParent()
+        {
+            HandleLedger handles = Ledger();
+            int child = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_veins",
+                Arguments(
+                    ToolDispatch.AssignmentsName, new object[] { HeldAssignment(1, child) }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains(
+                ToolDispatch.ParentHandleName, Message(envelope), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnUpdateOfHeldElementsDoesNotReflectThePmx()
+        {
+            HandleLedger handles = Ledger();
+            Item item = new Item { Label = "一" };
+            int handle = handles.Issue(typeof(Item).FullName, item, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { handle },
+                    ToolDispatch.ValueName, Value("label", "書き換え")),
+                handles);
+
+            Assert.Equal(1, Value(envelope)[SetResponse.UpdatedName]);
+            Assert.Equal("書き換え", item.Label);
+            Assert.Equal(0, _commits);
+        }
+
+        private static IDictionary<string, object> HeldAssignment(int parent, int handle)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { ToolDispatch.ParentHandleName, parent },
+                { TargetNames.Element.Handles, new object[] { handle } },
+            };
+        }
+
         private static IDictionary<string, object> Assignment(int parent, int handle)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal)
@@ -974,6 +1202,14 @@ namespace PmxEditorMcp.Tests
                         (owner, item) => ((Group)owner).Leaves.Add((Leaf)item),
                         (owner, index) => ((Group)owner).Leaves.RemoveAt(index))
                 },
+                {
+                    VeinsKey,
+                    new SdkList(
+                        owner => ((Mark)owner).Veins.Count,
+                        (owner, index) => ((Mark)owner).Veins[index],
+                        (owner, item) => ((Mark)owner).Veins.Add((Item)item),
+                        (owner, index) => ((Mark)owner).Veins.RemoveAt(index))
+                },
             };
         }
 
@@ -1023,7 +1259,21 @@ namespace PmxEditorMcp.Tests
                 typeof(Item),
                 item => item is Item,
                 "item",
-                Kinds());
+                Kinds(),
+                typeof(Group));
+        }
+
+        /// <summary>親が1つだけ持つ子の、さらに下にある要素のリストへ至る道。</summary>
+        private static ToolAccess Veined()
+        {
+            return new ToolAccess(
+                ToolAccessKind.Element,
+                VeinsKey,
+                new[] { new ToolHop(GroupsKey, true), new ToolHop(MarkKey, false) },
+                true,
+                typeof(Item),
+                item => item is Item,
+                "item");
         }
 
         /// <summary>親のリストを1つ挟んだ先の、親ごとに1つだけ持つ子へ至る道。</summary>
@@ -1036,7 +1286,9 @@ namespace PmxEditorMcp.Tests
                 false,
                 typeof(Mark),
                 item => item is Mark,
-                "mark");
+                "mark",
+                null,
+                typeof(Group));
         }
 
         /// <summary>そのリストが並べうる具象の型。</summary>
@@ -1060,7 +1312,8 @@ namespace PmxEditorMcp.Tests
                 typeof(Item),
                 item => item is Item,
                 "item",
-                Kinds());
+                Kinds(),
+                typeof(Group));
         }
 
         /// <summary>同じリストを、並べうる具象の型で分けて相手にする道。</summary>
@@ -1074,7 +1327,8 @@ namespace PmxEditorMcp.Tests
                 typeof(Leaf),
                 item => item is Leaf,
                 "leaf",
-                Kinds());
+                Kinds(),
+                typeof(Group));
         }
 
         private static IDictionary<string, ToolCall> Calls()
@@ -1185,6 +1439,10 @@ namespace PmxEditorMcp.Tests
                         Set(new[] { new ToolField("width", WidthKey, typeof(int)) }))
                 },
                 {
+                    "model_list_veins",
+                    new ToolFields(false, true, Rooted(EditKind.Read), Veined(), Set(labels))
+                },
+                {
                     "model_list_notes",
                     new ToolFields(false, true, Rooted(EditKind.Read), note, Set(texts))
                 },
@@ -1201,6 +1459,7 @@ namespace PmxEditorMcp.Tests
             {
                 { "model_add_leaves", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Nested()) },
                 { "model_remove_leaves", new ToolElements(true, Rooted(EditKind.DuplicateEdit), Nested()) },
+                { "model_add_veins", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Veined()) },
             };
         }
 
@@ -1227,6 +1486,8 @@ namespace PmxEditorMcp.Tests
         private sealed class Mark
         {
             public int Width { get; set; }
+
+            public List<Item> Veins { get; } = new List<Item>();
         }
 
         /// <summary>PMXが1つだけ持つ子の題材。</summary>

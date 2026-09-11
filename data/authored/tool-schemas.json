@@ -78,7 +78,7 @@
       "tool": "model_add_faces",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "assignments",
@@ -88,6 +88,36 @@
                 "members": [
                   {
                     "name": "parentIndex",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
                     "origin": "hostInput",
                     "shape": "number",
                     "required": true
@@ -258,7 +288,7 @@
       "tool": "model_add_morph_offsets",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "assignments",
@@ -268,6 +298,36 @@
                 "members": [
                   {
                     "name": "parentIndex",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
                     "origin": "hostInput",
                     "shape": "number",
                     "required": true
@@ -348,7 +408,7 @@
       "tool": "model_add_node_items",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "assignments",
@@ -358,6 +418,36 @@
                 "members": [
                   {
                     "name": "parentIndex",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
                     "origin": "hostInput",
                     "shape": "number",
                     "required": true
@@ -472,6 +562,89 @@
       }
     },
     {
+      "tool": "model_add_soft_body_anchors",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentIndex",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "indices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_add_vertices",
       "branches": [
         {
@@ -512,7 +685,7 @@
       "tool": "model_clear_material_morph_offset",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -583,14 +756,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "args",
               "origin": "hostInput",
               "members": [
@@ -627,11 +792,141 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "v",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "v",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "v",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "v",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "args",
@@ -701,7 +996,7 @@
       "tool": "model_get_local_axis_bone",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -739,14 +1034,6 @@
               "name": "all",
               "origin": "hostInput",
               "shape": "boolean"
-            },
-            {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
             }
           ],
           "choices": [
@@ -754,9 +1041,22 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
               "required": true
             }
           ]
@@ -808,10 +1108,10 @@
       }
     },
     {
-      "tool": "model_list_bones",
+      "tool": "model_list_bodies",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -851,12 +1151,192 @@
               "shape": "boolean"
             },
             {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
               "name": "handles",
               "origin": "hostInput",
               "element": {
                 "origin": "hostInput",
                 "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
               }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "boxKind"
+                },
+                {
+                  "name": "boxSize"
+                },
+                {
+                  "name": "friction"
+                },
+                {
+                  "name": "group"
+                },
+                {
+                  "name": "mass"
+                },
+                {
+                  "name": "mode"
+                },
+                {
+                  "name": "name"
+                },
+                {
+                  "name": "nameE"
+                },
+                {
+                  "name": "passGroup",
+                  "element": {}
+                },
+                {
+                  "name": "position"
+                },
+                {
+                  "name": "positionDamping"
+                },
+                {
+                  "name": "restitution"
+                },
+                {
+                  "name": "rotation"
+                },
+                {
+                  "name": "rotationDamping"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_bones",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
             },
             {
               "name": "fields",
@@ -889,10 +1369,48 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -1060,7 +1578,7 @@
       "tool": "model_list_ik_links",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -1131,14 +1649,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "fields",
               "origin": "hostInput",
               "element": {
@@ -1177,10 +1687,48 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -1233,7 +1781,7 @@
       "tool": "model_list_iks",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -1304,14 +1852,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "fields",
               "origin": "hostInput",
               "element": {
@@ -1350,10 +1890,128 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -1374,6 +2032,11 @@
               "members": [
                 {
                   "name": "parentIndex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "parentHandle",
                   "origin": "hostOutput",
                   "shape": "number"
                 },
@@ -1400,10 +2063,10 @@
       }
     },
     {
-      "tool": "model_list_materials",
+      "tool": "model_list_joints",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -1443,12 +2106,182 @@
               "shape": "boolean"
             },
             {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
               "name": "handles",
               "origin": "hostInput",
               "element": {
                 "origin": "hostInput",
                 "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
               }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "kind"
+                },
+                {
+                  "name": "limitAngleHigh"
+                },
+                {
+                  "name": "limitAngleLow"
+                },
+                {
+                  "name": "limitMoveHigh"
+                },
+                {
+                  "name": "limitMoveLow"
+                },
+                {
+                  "name": "name"
+                },
+                {
+                  "name": "nameE"
+                },
+                {
+                  "name": "position"
+                },
+                {
+                  "name": "rotation"
+                },
+                {
+                  "name": "springConstMove"
+                },
+                {
+                  "name": "springConstRotate"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_materials",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
             },
             {
               "name": "fields",
@@ -1481,10 +2314,48 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -1655,7 +2526,7 @@
       "tool": "model_list_morph_offsets",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -1726,14 +2597,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "fields",
               "origin": "hostInput",
               "element": {
@@ -1772,10 +2635,128 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -1801,6 +2782,11 @@
                 },
                 {
                   "name": "parentIndex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "parentHandle",
                   "origin": "hostOutput",
                   "shape": "number"
                 },
@@ -1875,7 +2861,7 @@
       "tool": "model_list_morphs",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -1915,14 +2901,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "fields",
               "origin": "hostInput",
               "element": {
@@ -1953,10 +2931,48 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -2023,7 +3039,7 @@
       "tool": "model_list_node_items",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -2094,14 +3110,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "fields",
               "origin": "hostInput",
               "element": {
@@ -2140,10 +3148,128 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -2173,6 +3299,11 @@
                   "shape": "number"
                 },
                 {
+                  "name": "parentHandle",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
                   "name": "indexInParent",
                   "origin": "hostOutput",
                   "shape": "number"
@@ -2198,7 +3329,7 @@
       "tool": "model_list_nodes",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -2238,14 +3369,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "fields",
               "origin": "hostInput",
               "element": {
@@ -2276,10 +3399,48 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -2384,10 +3545,10 @@
       }
     },
     {
-      "tool": "model_list_vertices",
+      "tool": "model_list_soft_bodies",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -2427,12 +3588,383 @@
               "shape": "boolean"
             },
             {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
               "name": "handles",
               "origin": "hostInput",
               "element": {
                 "origin": "hostInput",
                 "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
               }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "aeroModel"
+                },
+                {
+                  "name": "ahr"
+                },
+                {
+                  "name": "ast"
+                },
+                {
+                  "name": "bendingLinkDistance"
+                },
+                {
+                  "name": "cIt"
+                },
+                {
+                  "name": "chr"
+                },
+                {
+                  "name": "clusterCount"
+                },
+                {
+                  "name": "dIt"
+                },
+                {
+                  "name": "df"
+                },
+                {
+                  "name": "dg"
+                },
+                {
+                  "name": "dp"
+                },
+                {
+                  "name": "generateBendingLinks"
+                },
+                {
+                  "name": "generateClusters"
+                },
+                {
+                  "name": "group"
+                },
+                {
+                  "name": "khr"
+                },
+                {
+                  "name": "lf"
+                },
+                {
+                  "name": "lst"
+                },
+                {
+                  "name": "margin"
+                },
+                {
+                  "name": "mt"
+                },
+                {
+                  "name": "name"
+                },
+                {
+                  "name": "nameE"
+                },
+                {
+                  "name": "pIt"
+                },
+                {
+                  "name": "passGroup",
+                  "element": {}
+                },
+                {
+                  "name": "pr"
+                },
+                {
+                  "name": "randomizeConstraints"
+                },
+                {
+                  "name": "shape"
+                },
+                {
+                  "name": "shr"
+                },
+                {
+                  "name": "skSpltCl"
+                },
+                {
+                  "name": "skhrCl"
+                },
+                {
+                  "name": "srSpltCl"
+                },
+                {
+                  "name": "srhrCl"
+                },
+                {
+                  "name": "ssSpltCl"
+                },
+                {
+                  "name": "sshrCl"
+                },
+                {
+                  "name": "totalMass"
+                },
+                {
+                  "name": "vIt"
+                },
+                {
+                  "name": "vc"
+                },
+                {
+                  "name": "vcf"
+                },
+                {
+                  "name": "vst"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_soft_body_anchors",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentIndices",
+                "parentRange",
+                "parentAll"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
             },
             {
               "name": "fields",
@@ -2465,10 +3997,211 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "parentIndex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "parentHandle",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "indexInParent",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "near"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_vertices",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }
@@ -2573,7 +4306,7 @@
       "tool": "model_remove_bodies",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -2640,7 +4373,7 @@
       "tool": "model_remove_bones",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -2707,7 +4440,7 @@
       "tool": "model_remove_faces",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -2796,6 +4529,61 @@
               "required": true
             }
           ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
         }
       ],
       "output": {
@@ -2813,7 +4601,7 @@
       "tool": "model_remove_ik_links",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -2919,7 +4707,7 @@
       "tool": "model_remove_joints",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -2986,7 +4774,7 @@
       "tool": "model_remove_materials",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3053,7 +4841,7 @@
       "tool": "model_remove_morph_offsets",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3142,6 +4930,61 @@
               "required": true
             }
           ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
         }
       ],
       "output": {
@@ -3159,7 +5002,7 @@
       "tool": "model_remove_morphs",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3226,7 +5069,7 @@
       "tool": "model_remove_node_items",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3315,6 +5158,61 @@
               "required": true
             }
           ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
         }
       ],
       "output": {
@@ -3332,7 +5230,7 @@
       "tool": "model_remove_nodes",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3399,7 +5297,7 @@
       "tool": "model_remove_soft_bodies",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3463,10 +5361,171 @@
       }
     },
     {
+      "tool": "model_remove_soft_body_anchors",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentIndices",
+                "parentRange",
+                "parentAll"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "removed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_remove_vertices",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3533,7 +5592,7 @@
       "tool": "model_set_local_axis_bone",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3571,14 +5630,6 @@
               "name": "all",
               "origin": "hostInput",
               "shape": "boolean"
-            },
-            {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
             },
             {
               "name": "args",
@@ -3617,11 +5668,64 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "x",
+                  "required": true
+                },
+                {
+                  "name": "z",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "x",
+                    "required": true
+                  },
+                  {
+                    "name": "z",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "args",
@@ -3647,7 +5751,7 @@
       "tool": "model_set_pmd_bone_kind_bone",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3687,14 +5791,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "args",
               "origin": "hostInput",
               "members": [
@@ -3723,11 +5819,56 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "kind",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "kind",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "args",
@@ -3774,10 +5915,10 @@
       }
     },
     {
-      "tool": "model_update_bones",
+      "tool": "model_update_bodies",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -3817,12 +5958,339 @@
               "shape": "boolean"
             },
             {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "boxKind",
+                  "required": false
+                },
+                {
+                  "name": "boxSize",
+                  "required": false
+                },
+                {
+                  "name": "friction",
+                  "required": false
+                },
+                {
+                  "name": "group",
+                  "required": false
+                },
+                {
+                  "name": "mass",
+                  "required": false
+                },
+                {
+                  "name": "mode",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                },
+                {
+                  "name": "positionDamping",
+                  "required": false
+                },
+                {
+                  "name": "restitution",
+                  "required": false
+                },
+                {
+                  "name": "rotation",
+                  "required": false
+                },
+                {
+                  "name": "rotationDamping",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "boxKind",
+                    "required": false
+                  },
+                  {
+                    "name": "boxSize",
+                    "required": false
+                  },
+                  {
+                    "name": "friction",
+                    "required": false
+                  },
+                  {
+                    "name": "group",
+                    "required": false
+                  },
+                  {
+                    "name": "mass",
+                    "required": false
+                  },
+                  {
+                    "name": "mode",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  },
+                  {
+                    "name": "positionDamping",
+                    "required": false
+                  },
+                  {
+                    "name": "restitution",
+                    "required": false
+                  },
+                  {
+                    "name": "rotation",
+                    "required": false
+                  },
+                  {
+                    "name": "rotationDamping",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
               "name": "handles",
               "origin": "hostInput",
               "element": {
                 "origin": "hostInput",
                 "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "boxKind",
+                  "required": false
+                },
+                {
+                  "name": "boxSize",
+                  "required": false
+                },
+                {
+                  "name": "friction",
+                  "required": false
+                },
+                {
+                  "name": "group",
+                  "required": false
+                },
+                {
+                  "name": "mass",
+                  "required": false
+                },
+                {
+                  "name": "mode",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                },
+                {
+                  "name": "positionDamping",
+                  "required": false
+                },
+                {
+                  "name": "restitution",
+                  "required": false
+                },
+                {
+                  "name": "rotation",
+                  "required": false
+                },
+                {
+                  "name": "rotationDamping",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "boxKind",
+                    "required": false
+                  },
+                  {
+                    "name": "boxSize",
+                    "required": false
+                  },
+                  {
+                    "name": "friction",
+                    "required": false
+                  },
+                  {
+                    "name": "group",
+                    "required": false
+                  },
+                  {
+                    "name": "mass",
+                    "required": false
+                  },
+                  {
+                    "name": "mode",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  },
+                  {
+                    "name": "positionDamping",
+                    "required": false
+                  },
+                  {
+                    "name": "restitution",
+                    "required": false
+                  },
+                  {
+                    "name": "rotation",
+                    "required": false
+                  },
+                  {
+                    "name": "rotationDamping",
+                    "required": false
+                  }
+                ]
               }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_bones",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
             },
             {
               "name": "value",
@@ -4005,11 +6473,208 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "appendRatio",
+                  "required": false
+                },
+                {
+                  "name": "controllable",
+                  "required": false
+                },
+                {
+                  "name": "externalKey",
+                  "required": false
+                },
+                {
+                  "name": "fixAxis",
+                  "required": false
+                },
+                {
+                  "name": "isAfterPhysics",
+                  "required": false
+                },
+                {
+                  "name": "isAppendLocal",
+                  "required": false
+                },
+                {
+                  "name": "isAppendRotation",
+                  "required": false
+                },
+                {
+                  "name": "isAppendTranslation",
+                  "required": false
+                },
+                {
+                  "name": "isExternal",
+                  "required": false
+                },
+                {
+                  "name": "isFixAxis",
+                  "required": false
+                },
+                {
+                  "name": "isIk",
+                  "required": false
+                },
+                {
+                  "name": "isLocalFrame",
+                  "required": false
+                },
+                {
+                  "name": "isRotation",
+                  "required": false
+                },
+                {
+                  "name": "isTranslation",
+                  "required": false
+                },
+                {
+                  "name": "level",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                },
+                {
+                  "name": "toOffset",
+                  "required": false
+                },
+                {
+                  "name": "visible",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "appendRatio",
+                    "required": false
+                  },
+                  {
+                    "name": "controllable",
+                    "required": false
+                  },
+                  {
+                    "name": "externalKey",
+                    "required": false
+                  },
+                  {
+                    "name": "fixAxis",
+                    "required": false
+                  },
+                  {
+                    "name": "isAfterPhysics",
+                    "required": false
+                  },
+                  {
+                    "name": "isAppendLocal",
+                    "required": false
+                  },
+                  {
+                    "name": "isAppendRotation",
+                    "required": false
+                  },
+                  {
+                    "name": "isAppendTranslation",
+                    "required": false
+                  },
+                  {
+                    "name": "isExternal",
+                    "required": false
+                  },
+                  {
+                    "name": "isFixAxis",
+                    "required": false
+                  },
+                  {
+                    "name": "isIk",
+                    "required": false
+                  },
+                  {
+                    "name": "isLocalFrame",
+                    "required": false
+                  },
+                  {
+                    "name": "isRotation",
+                    "required": false
+                  },
+                  {
+                    "name": "isTranslation",
+                    "required": false
+                  },
+                  {
+                    "name": "level",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  },
+                  {
+                    "name": "toOffset",
+                    "required": false
+                  },
+                  {
+                    "name": "visible",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -4080,7 +6745,7 @@
       "tool": "model_update_ik_links",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -4149,14 +6814,6 @@
               "name": "all",
               "origin": "hostInput",
               "shape": "boolean"
-            },
-            {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
             },
             {
               "name": "value",
@@ -4211,11 +6868,72 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "high",
+                  "required": false
+                },
+                {
+                  "name": "isLimit",
+                  "required": false
+                },
+                {
+                  "name": "low",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "high",
+                    "required": false
+                  },
+                  {
+                    "name": "isLimit",
+                    "required": false
+                  },
+                  {
+                    "name": "low",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -4241,7 +6959,7 @@
       "tool": "model_update_iks",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -4312,14 +7030,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -4364,11 +7074,157 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "angle",
+                  "required": false
+                },
+                {
+                  "name": "loopCount",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "angle",
+                    "required": false
+                  },
+                  {
+                    "name": "loopCount",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "angle",
+                  "required": false
+                },
+                {
+                  "name": "loopCount",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "angle",
+                    "required": false
+                  },
+                  {
+                    "name": "loopCount",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -4391,10 +7247,10 @@
       }
     },
     {
-      "tool": "model_update_materials",
+      "tool": "model_update_joints",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -4434,12 +7290,307 @@
               "shape": "boolean"
             },
             {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "kind",
+                  "required": false
+                },
+                {
+                  "name": "limitAngleHigh",
+                  "required": false
+                },
+                {
+                  "name": "limitAngleLow",
+                  "required": false
+                },
+                {
+                  "name": "limitMoveHigh",
+                  "required": false
+                },
+                {
+                  "name": "limitMoveLow",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                },
+                {
+                  "name": "rotation",
+                  "required": false
+                },
+                {
+                  "name": "springConstMove",
+                  "required": false
+                },
+                {
+                  "name": "springConstRotate",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "kind",
+                    "required": false
+                  },
+                  {
+                    "name": "limitAngleHigh",
+                    "required": false
+                  },
+                  {
+                    "name": "limitAngleLow",
+                    "required": false
+                  },
+                  {
+                    "name": "limitMoveHigh",
+                    "required": false
+                  },
+                  {
+                    "name": "limitMoveLow",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  },
+                  {
+                    "name": "rotation",
+                    "required": false
+                  },
+                  {
+                    "name": "springConstMove",
+                    "required": false
+                  },
+                  {
+                    "name": "springConstRotate",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
               "name": "handles",
               "origin": "hostInput",
               "element": {
                 "origin": "hostInput",
                 "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "kind",
+                  "required": false
+                },
+                {
+                  "name": "limitAngleHigh",
+                  "required": false
+                },
+                {
+                  "name": "limitAngleLow",
+                  "required": false
+                },
+                {
+                  "name": "limitMoveHigh",
+                  "required": false
+                },
+                {
+                  "name": "limitMoveLow",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                },
+                {
+                  "name": "rotation",
+                  "required": false
+                },
+                {
+                  "name": "springConstMove",
+                  "required": false
+                },
+                {
+                  "name": "springConstRotate",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "kind",
+                    "required": false
+                  },
+                  {
+                    "name": "limitAngleHigh",
+                    "required": false
+                  },
+                  {
+                    "name": "limitAngleLow",
+                    "required": false
+                  },
+                  {
+                    "name": "limitMoveHigh",
+                    "required": false
+                  },
+                  {
+                    "name": "limitMoveLow",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  },
+                  {
+                    "name": "rotation",
+                    "required": false
+                  },
+                  {
+                    "name": "springConstMove",
+                    "required": false
+                  },
+                  {
+                    "name": "springConstRotate",
+                    "required": false
+                  }
+                ]
               }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_materials",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
             },
             {
               "name": "value",
@@ -4622,11 +7773,208 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "ambient",
+                  "required": false
+                },
+                {
+                  "name": "bothDraw",
+                  "required": false
+                },
+                {
+                  "name": "diffuse",
+                  "required": false
+                },
+                {
+                  "name": "edge",
+                  "required": false
+                },
+                {
+                  "name": "edgeColor",
+                  "required": false
+                },
+                {
+                  "name": "edgeSize",
+                  "required": false
+                },
+                {
+                  "name": "memo",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "power",
+                  "required": false
+                },
+                {
+                  "name": "primitiveType",
+                  "required": false
+                },
+                {
+                  "name": "selfShadow",
+                  "required": false
+                },
+                {
+                  "name": "selfShadowMap",
+                  "required": false
+                },
+                {
+                  "name": "shadow",
+                  "required": false
+                },
+                {
+                  "name": "specular",
+                  "required": false
+                },
+                {
+                  "name": "sphere",
+                  "required": false
+                },
+                {
+                  "name": "sphereMode",
+                  "required": false
+                },
+                {
+                  "name": "tex",
+                  "required": false
+                },
+                {
+                  "name": "toon",
+                  "required": false
+                },
+                {
+                  "name": "vertexColor",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "ambient",
+                    "required": false
+                  },
+                  {
+                    "name": "bothDraw",
+                    "required": false
+                  },
+                  {
+                    "name": "diffuse",
+                    "required": false
+                  },
+                  {
+                    "name": "edge",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeColor",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeSize",
+                    "required": false
+                  },
+                  {
+                    "name": "memo",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "power",
+                    "required": false
+                  },
+                  {
+                    "name": "primitiveType",
+                    "required": false
+                  },
+                  {
+                    "name": "selfShadow",
+                    "required": false
+                  },
+                  {
+                    "name": "selfShadowMap",
+                    "required": false
+                  },
+                  {
+                    "name": "shadow",
+                    "required": false
+                  },
+                  {
+                    "name": "specular",
+                    "required": false
+                  },
+                  {
+                    "name": "sphere",
+                    "required": false
+                  },
+                  {
+                    "name": "sphereMode",
+                    "required": false
+                  },
+                  {
+                    "name": "tex",
+                    "required": false
+                  },
+                  {
+                    "name": "toon",
+                    "required": false
+                  },
+                  {
+                    "name": "vertexColor",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -4782,14 +8130,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -4898,11 +8238,305 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "materialHeldParent",
+          "selector": {
+            "name": "itemType",
+            "value": "material_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "ambient",
+                  "required": false
+                },
+                {
+                  "name": "diffuse",
+                  "required": false
+                },
+                {
+                  "name": "edgeColor",
+                  "required": false
+                },
+                {
+                  "name": "edgeSize",
+                  "required": false
+                },
+                {
+                  "name": "op",
+                  "required": false
+                },
+                {
+                  "name": "power",
+                  "required": false
+                },
+                {
+                  "name": "specular",
+                  "required": false
+                },
+                {
+                  "name": "sphere",
+                  "required": false
+                },
+                {
+                  "name": "tex",
+                  "required": false
+                },
+                {
+                  "name": "toon",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "ambient",
+                    "required": false
+                  },
+                  {
+                    "name": "diffuse",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeColor",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeSize",
+                    "required": false
+                  },
+                  {
+                    "name": "op",
+                    "required": false
+                  },
+                  {
+                    "name": "power",
+                    "required": false
+                  },
+                  {
+                    "name": "specular",
+                    "required": false
+                  },
+                  {
+                    "name": "sphere",
+                    "required": false
+                  },
+                  {
+                    "name": "tex",
+                    "required": false
+                  },
+                  {
+                    "name": "toon",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "materialHeld",
+          "selector": {
+            "name": "itemType",
+            "value": "material_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "ambient",
+                  "required": false
+                },
+                {
+                  "name": "diffuse",
+                  "required": false
+                },
+                {
+                  "name": "edgeColor",
+                  "required": false
+                },
+                {
+                  "name": "edgeSize",
+                  "required": false
+                },
+                {
+                  "name": "op",
+                  "required": false
+                },
+                {
+                  "name": "power",
+                  "required": false
+                },
+                {
+                  "name": "specular",
+                  "required": false
+                },
+                {
+                  "name": "sphere",
+                  "required": false
+                },
+                {
+                  "name": "tex",
+                  "required": false
+                },
+                {
+                  "name": "toon",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "ambient",
+                    "required": false
+                  },
+                  {
+                    "name": "diffuse",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeColor",
+                    "required": false
+                  },
+                  {
+                    "name": "edgeSize",
+                    "required": false
+                  },
+                  {
+                    "name": "op",
+                    "required": false
+                  },
+                  {
+                    "name": "power",
+                    "required": false
+                  },
+                  {
+                    "name": "specular",
+                    "required": false
+                  },
+                  {
+                    "name": "sphere",
+                    "required": false
+                  },
+                  {
+                    "name": "tex",
+                    "required": false
+                  },
+                  {
+                    "name": "toon",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -4994,14 +8628,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -5038,11 +8664,161 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "vertexHeldParent",
+          "selector": {
+            "name": "itemType",
+            "value": "vertex_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "offset",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "offset",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "vertexHeld",
+          "selector": {
+            "name": "itemType",
+            "value": "vertex_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "offset",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "offset",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -5134,14 +8910,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -5186,11 +8954,177 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "boneHeldParent",
+          "selector": {
+            "name": "itemType",
+            "value": "bone_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "rotation",
+                  "required": false
+                },
+                {
+                  "name": "translation",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "rotation",
+                    "required": false
+                  },
+                  {
+                    "name": "translation",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "boneHeld",
+          "selector": {
+            "name": "itemType",
+            "value": "bone_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "rotation",
+                  "required": false
+                },
+                {
+                  "name": "translation",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "rotation",
+                    "required": false
+                  },
+                  {
+                    "name": "translation",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -5282,14 +9216,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -5326,11 +9252,161 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "groupHeldParent",
+          "selector": {
+            "name": "itemType",
+            "value": "group_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "ratio",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "ratio",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "groupHeld",
+          "selector": {
+            "name": "itemType",
+            "value": "group_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "ratio",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "ratio",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -5422,14 +9498,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -5482,11 +9550,193 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "impulseHeldParent",
+          "selector": {
+            "name": "itemType",
+            "value": "impulse_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "local",
+                  "required": false
+                },
+                {
+                  "name": "torque",
+                  "required": false
+                },
+                {
+                  "name": "velocity",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "local",
+                    "required": false
+                  },
+                  {
+                    "name": "torque",
+                    "required": false
+                  },
+                  {
+                    "name": "velocity",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "impulseHeld",
+          "selector": {
+            "name": "itemType",
+            "value": "impulse_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "local",
+                  "required": false
+                },
+                {
+                  "name": "torque",
+                  "required": false
+                },
+                {
+                  "name": "velocity",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "local",
+                    "required": false
+                  },
+                  {
+                    "name": "torque",
+                    "required": false
+                  },
+                  {
+                    "name": "velocity",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -5578,14 +9828,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -5622,11 +9864,161 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "uvHeldParent",
+          "selector": {
+            "name": "itemType",
+            "value": "uv_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "offset",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "offset",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "uvHeld",
+          "selector": {
+            "name": "itemType",
+            "value": "uv_morph_offset"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "offset",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "offset",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -5652,7 +10044,7 @@
       "tool": "model_update_morphs",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -5690,14 +10082,6 @@
               "name": "all",
               "origin": "hostInput",
               "shape": "boolean"
-            },
-            {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
             },
             {
               "name": "value",
@@ -5752,11 +10136,80 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "kind",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "panel",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "kind",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "panel",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -5782,7 +10235,7 @@
       "tool": "model_update_nodes",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -5822,14 +10275,6 @@
               "shape": "boolean"
             },
             {
-              "name": "handles",
-              "origin": "hostInput",
-              "element": {
-                "origin": "hostInput",
-                "shape": "number"
-              }
-            },
-            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -5866,11 +10311,64 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
@@ -5954,10 +10452,10 @@
       }
     },
     {
-      "tool": "model_update_vertices",
+      "tool": "model_update_soft_bodies",
       "branches": [
         {
-          "branch": "only",
+          "branch": "position",
           "inputs": [
             {
               "name": "pmxHandle",
@@ -5997,12 +10495,990 @@
               "shape": "boolean"
             },
             {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "aeroModel",
+                  "required": false
+                },
+                {
+                  "name": "ahr",
+                  "required": false
+                },
+                {
+                  "name": "ast",
+                  "required": false
+                },
+                {
+                  "name": "bendingLinkDistance",
+                  "required": false
+                },
+                {
+                  "name": "cIt",
+                  "required": false
+                },
+                {
+                  "name": "chr",
+                  "required": false
+                },
+                {
+                  "name": "clusterCount",
+                  "required": false
+                },
+                {
+                  "name": "dIt",
+                  "required": false
+                },
+                {
+                  "name": "df",
+                  "required": false
+                },
+                {
+                  "name": "dg",
+                  "required": false
+                },
+                {
+                  "name": "dp",
+                  "required": false
+                },
+                {
+                  "name": "generateBendingLinks",
+                  "required": false
+                },
+                {
+                  "name": "generateClusters",
+                  "required": false
+                },
+                {
+                  "name": "group",
+                  "required": false
+                },
+                {
+                  "name": "khr",
+                  "required": false
+                },
+                {
+                  "name": "lf",
+                  "required": false
+                },
+                {
+                  "name": "lst",
+                  "required": false
+                },
+                {
+                  "name": "margin",
+                  "required": false
+                },
+                {
+                  "name": "mt",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "pIt",
+                  "required": false
+                },
+                {
+                  "name": "pr",
+                  "required": false
+                },
+                {
+                  "name": "randomizeConstraints",
+                  "required": false
+                },
+                {
+                  "name": "shape",
+                  "required": false
+                },
+                {
+                  "name": "shr",
+                  "required": false
+                },
+                {
+                  "name": "skSpltCl",
+                  "required": false
+                },
+                {
+                  "name": "skhrCl",
+                  "required": false
+                },
+                {
+                  "name": "srSpltCl",
+                  "required": false
+                },
+                {
+                  "name": "srhrCl",
+                  "required": false
+                },
+                {
+                  "name": "ssSpltCl",
+                  "required": false
+                },
+                {
+                  "name": "sshrCl",
+                  "required": false
+                },
+                {
+                  "name": "totalMass",
+                  "required": false
+                },
+                {
+                  "name": "vIt",
+                  "required": false
+                },
+                {
+                  "name": "vc",
+                  "required": false
+                },
+                {
+                  "name": "vcf",
+                  "required": false
+                },
+                {
+                  "name": "vst",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "aeroModel",
+                    "required": false
+                  },
+                  {
+                    "name": "ahr",
+                    "required": false
+                  },
+                  {
+                    "name": "ast",
+                    "required": false
+                  },
+                  {
+                    "name": "bendingLinkDistance",
+                    "required": false
+                  },
+                  {
+                    "name": "cIt",
+                    "required": false
+                  },
+                  {
+                    "name": "chr",
+                    "required": false
+                  },
+                  {
+                    "name": "clusterCount",
+                    "required": false
+                  },
+                  {
+                    "name": "dIt",
+                    "required": false
+                  },
+                  {
+                    "name": "df",
+                    "required": false
+                  },
+                  {
+                    "name": "dg",
+                    "required": false
+                  },
+                  {
+                    "name": "dp",
+                    "required": false
+                  },
+                  {
+                    "name": "generateBendingLinks",
+                    "required": false
+                  },
+                  {
+                    "name": "generateClusters",
+                    "required": false
+                  },
+                  {
+                    "name": "group",
+                    "required": false
+                  },
+                  {
+                    "name": "khr",
+                    "required": false
+                  },
+                  {
+                    "name": "lf",
+                    "required": false
+                  },
+                  {
+                    "name": "lst",
+                    "required": false
+                  },
+                  {
+                    "name": "margin",
+                    "required": false
+                  },
+                  {
+                    "name": "mt",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "pIt",
+                    "required": false
+                  },
+                  {
+                    "name": "pr",
+                    "required": false
+                  },
+                  {
+                    "name": "randomizeConstraints",
+                    "required": false
+                  },
+                  {
+                    "name": "shape",
+                    "required": false
+                  },
+                  {
+                    "name": "shr",
+                    "required": false
+                  },
+                  {
+                    "name": "skSpltCl",
+                    "required": false
+                  },
+                  {
+                    "name": "skhrCl",
+                    "required": false
+                  },
+                  {
+                    "name": "srSpltCl",
+                    "required": false
+                  },
+                  {
+                    "name": "srhrCl",
+                    "required": false
+                  },
+                  {
+                    "name": "ssSpltCl",
+                    "required": false
+                  },
+                  {
+                    "name": "sshrCl",
+                    "required": false
+                  },
+                  {
+                    "name": "totalMass",
+                    "required": false
+                  },
+                  {
+                    "name": "vIt",
+                    "required": false
+                  },
+                  {
+                    "name": "vc",
+                    "required": false
+                  },
+                  {
+                    "name": "vcf",
+                    "required": false
+                  },
+                  {
+                    "name": "vst",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
               "name": "handles",
               "origin": "hostInput",
               "element": {
                 "origin": "hostInput",
                 "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "aeroModel",
+                  "required": false
+                },
+                {
+                  "name": "ahr",
+                  "required": false
+                },
+                {
+                  "name": "ast",
+                  "required": false
+                },
+                {
+                  "name": "bendingLinkDistance",
+                  "required": false
+                },
+                {
+                  "name": "cIt",
+                  "required": false
+                },
+                {
+                  "name": "chr",
+                  "required": false
+                },
+                {
+                  "name": "clusterCount",
+                  "required": false
+                },
+                {
+                  "name": "dIt",
+                  "required": false
+                },
+                {
+                  "name": "df",
+                  "required": false
+                },
+                {
+                  "name": "dg",
+                  "required": false
+                },
+                {
+                  "name": "dp",
+                  "required": false
+                },
+                {
+                  "name": "generateBendingLinks",
+                  "required": false
+                },
+                {
+                  "name": "generateClusters",
+                  "required": false
+                },
+                {
+                  "name": "group",
+                  "required": false
+                },
+                {
+                  "name": "khr",
+                  "required": false
+                },
+                {
+                  "name": "lf",
+                  "required": false
+                },
+                {
+                  "name": "lst",
+                  "required": false
+                },
+                {
+                  "name": "margin",
+                  "required": false
+                },
+                {
+                  "name": "mt",
+                  "required": false
+                },
+                {
+                  "name": "name",
+                  "required": false
+                },
+                {
+                  "name": "nameE",
+                  "required": false
+                },
+                {
+                  "name": "pIt",
+                  "required": false
+                },
+                {
+                  "name": "pr",
+                  "required": false
+                },
+                {
+                  "name": "randomizeConstraints",
+                  "required": false
+                },
+                {
+                  "name": "shape",
+                  "required": false
+                },
+                {
+                  "name": "shr",
+                  "required": false
+                },
+                {
+                  "name": "skSpltCl",
+                  "required": false
+                },
+                {
+                  "name": "skhrCl",
+                  "required": false
+                },
+                {
+                  "name": "srSpltCl",
+                  "required": false
+                },
+                {
+                  "name": "srhrCl",
+                  "required": false
+                },
+                {
+                  "name": "ssSpltCl",
+                  "required": false
+                },
+                {
+                  "name": "sshrCl",
+                  "required": false
+                },
+                {
+                  "name": "totalMass",
+                  "required": false
+                },
+                {
+                  "name": "vIt",
+                  "required": false
+                },
+                {
+                  "name": "vc",
+                  "required": false
+                },
+                {
+                  "name": "vcf",
+                  "required": false
+                },
+                {
+                  "name": "vst",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "aeroModel",
+                    "required": false
+                  },
+                  {
+                    "name": "ahr",
+                    "required": false
+                  },
+                  {
+                    "name": "ast",
+                    "required": false
+                  },
+                  {
+                    "name": "bendingLinkDistance",
+                    "required": false
+                  },
+                  {
+                    "name": "cIt",
+                    "required": false
+                  },
+                  {
+                    "name": "chr",
+                    "required": false
+                  },
+                  {
+                    "name": "clusterCount",
+                    "required": false
+                  },
+                  {
+                    "name": "dIt",
+                    "required": false
+                  },
+                  {
+                    "name": "df",
+                    "required": false
+                  },
+                  {
+                    "name": "dg",
+                    "required": false
+                  },
+                  {
+                    "name": "dp",
+                    "required": false
+                  },
+                  {
+                    "name": "generateBendingLinks",
+                    "required": false
+                  },
+                  {
+                    "name": "generateClusters",
+                    "required": false
+                  },
+                  {
+                    "name": "group",
+                    "required": false
+                  },
+                  {
+                    "name": "khr",
+                    "required": false
+                  },
+                  {
+                    "name": "lf",
+                    "required": false
+                  },
+                  {
+                    "name": "lst",
+                    "required": false
+                  },
+                  {
+                    "name": "margin",
+                    "required": false
+                  },
+                  {
+                    "name": "mt",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "required": false
+                  },
+                  {
+                    "name": "nameE",
+                    "required": false
+                  },
+                  {
+                    "name": "pIt",
+                    "required": false
+                  },
+                  {
+                    "name": "pr",
+                    "required": false
+                  },
+                  {
+                    "name": "randomizeConstraints",
+                    "required": false
+                  },
+                  {
+                    "name": "shape",
+                    "required": false
+                  },
+                  {
+                    "name": "shr",
+                    "required": false
+                  },
+                  {
+                    "name": "skSpltCl",
+                    "required": false
+                  },
+                  {
+                    "name": "skhrCl",
+                    "required": false
+                  },
+                  {
+                    "name": "srSpltCl",
+                    "required": false
+                  },
+                  {
+                    "name": "srhrCl",
+                    "required": false
+                  },
+                  {
+                    "name": "ssSpltCl",
+                    "required": false
+                  },
+                  {
+                    "name": "sshrCl",
+                    "required": false
+                  },
+                  {
+                    "name": "totalMass",
+                    "required": false
+                  },
+                  {
+                    "name": "vIt",
+                    "required": false
+                  },
+                  {
+                    "name": "vc",
+                    "required": false
+                  },
+                  {
+                    "name": "vcf",
+                    "required": false
+                  },
+                  {
+                    "name": "vst",
+                    "required": false
+                  }
+                ]
               }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_soft_body_anchors",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "near",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "near",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentIndices",
+                "parentRange",
+                "parentAll"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "near",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "near",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "near",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "near",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_vertices",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
             },
             {
               "name": "value",
@@ -6161,11 +11637,184 @@
               "names": [
                 "indices",
                 "range",
-                "all",
-                "handles"
+                "all"
               ],
               "required": true
             },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "edgeScale",
+                  "required": false
+                },
+                {
+                  "name": "normal",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                },
+                {
+                  "name": "qdef",
+                  "required": false
+                },
+                {
+                  "name": "sdef",
+                  "required": false
+                },
+                {
+                  "name": "sdefC",
+                  "required": false
+                },
+                {
+                  "name": "sdefR0",
+                  "required": false
+                },
+                {
+                  "name": "sdefR1",
+                  "required": false
+                },
+                {
+                  "name": "uv",
+                  "required": false
+                },
+                {
+                  "name": "uva1",
+                  "required": false
+                },
+                {
+                  "name": "uva2",
+                  "required": false
+                },
+                {
+                  "name": "uva3",
+                  "required": false
+                },
+                {
+                  "name": "uva4",
+                  "required": false
+                },
+                {
+                  "name": "weight1",
+                  "required": false
+                },
+                {
+                  "name": "weight2",
+                  "required": false
+                },
+                {
+                  "name": "weight3",
+                  "required": false
+                },
+                {
+                  "name": "weight4",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "edgeScale",
+                    "required": false
+                  },
+                  {
+                    "name": "normal",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  },
+                  {
+                    "name": "qdef",
+                    "required": false
+                  },
+                  {
+                    "name": "sdef",
+                    "required": false
+                  },
+                  {
+                    "name": "sdefC",
+                    "required": false
+                  },
+                  {
+                    "name": "sdefR0",
+                    "required": false
+                  },
+                  {
+                    "name": "sdefR1",
+                    "required": false
+                  },
+                  {
+                    "name": "uv",
+                    "required": false
+                  },
+                  {
+                    "name": "uva1",
+                    "required": false
+                  },
+                  {
+                    "name": "uva2",
+                    "required": false
+                  },
+                  {
+                    "name": "uva3",
+                    "required": false
+                  },
+                  {
+                    "name": "uva4",
+                    "required": false
+                  },
+                  {
+                    "name": "weight1",
+                    "required": false
+                  },
+                  {
+                    "name": "weight2",
+                    "required": false
+                  },
+                  {
+                    "name": "weight3",
+                    "required": false
+                  },
+                  {
+                    "name": "weight4",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
             {
               "names": [
                 "value",
