@@ -61,6 +61,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ツール定義を組み立ててブリッジへ組み込むC#として書き出す。</summary>
         public const string ToolDefinitionsCommand = "tool-definitions";
 
+        /// <summary>実機のエディタへ投げる検査を組み立てて書き出す。</summary>
+        public const string E2eCasesCommand = "e2e-cases";
+
         /// <summary>配布物が実行時リフレクションを持たないことを照合する。</summary>
         public const string ReflectionFreeCommand = "reflection-free";
 
@@ -174,6 +177,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ToolDefinitionRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], E2eCasesCommand, StringComparison.Ordinal))
+            {
+                return E2eCaseRunner.Run(rest, output, error);
+            }
+
             if (string.Equals(args[0], ReflectionFreeCommand, StringComparison.Ordinal))
             {
                 return ReflectionFreeRunner.Run(rest, output, error);
@@ -246,6 +254,12 @@ namespace PmxEditorMcp.SignatureDump
                     + " <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <書き出し先パス>");
             error.WriteLine(
                 ToolDefinitionsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
+                    + " <IPC仕様書のパス> <アーキテクチャ仕様書のパス> <型役割表の正本のパス>"
+                    + " <日本語名の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                E2eCasesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
                     + " <IPC仕様書のパス> <アーキテクチャ仕様書のパス> <型役割表の正本のパス>"
                     + " <日本語名の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>"

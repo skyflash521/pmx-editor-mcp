@@ -87,9 +87,10 @@ namespace PmxEditorMcp.SignatureDump
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: 型 {0} 件・成分の数 {1} 件",
+                "照合した: 型 {0} 件・成分の数 {1} 件・ファイルの種別 {2} 件",
                 table.Types.Count,
-                components.Count));
+                components.Count,
+                table.Types.Count(t => t.File != null)));
 
             return ExitCodes.Success;
         }

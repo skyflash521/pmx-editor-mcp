@@ -116,6 +116,31 @@ pwsh -File scripts/verify.ps1
      確認クライアントが「ホストが接続を切りました。」で終了コード0になり、`status` の
      状態区分が「停止済み」であること。
 
+### 自動E2E検査
+
+**ツール個別の確認はこれが担う。** 実機のエディタへ、能力対応表とスキーマ正本から機械生成した
+検査を投げ、行キー・編集の流れ・接続の経路ごとに合否を出す。合否は終了コードで判じる
+(不合格が1件でもあれば1)。
+
+1. 検査を組み立てる。書き出し先は追跡下に置かない。
+
+   ```
+   src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe e2e-cases <PMXエディタ導入ディレクトリ> data/observed/capability-ledger.json docs/specs/pmx-editor-mcp-common-contract.md docs/specs/pmx-editor-mcp-ipc.md docs/specs/pmx-editor-mcp-architecture.md data/authored/type-roles.json data/authored/property-names.json data/authored/common-assignments.json data/authored/tool-map.json data/authored/tool-schemas.json .scratch/e2e-cases.json
+   ```
+
+2. エディタを起動し([エディタとホストの操作](#エディタとホストの操作)の `launch`)、実行する。
+
+   ```
+   node scripts/e2e-tools.mjs <エディタのプロセスID> .scratch/e2e-cases.json
+   ```
+
+   期待: 不合格0件で終了コード0。**まだツールを実装していない行は、ホストが未知のメソッドとして
+   断るので不合格になる**——実装が進むにつれて不合格が減る。
+
+3. 編集を伴う検査のあとは、[エディタとホストの操作](#エディタとホストの操作)の `undo` で
+   1回分を戻す。`undo` は取り消せる編集が無ければ失敗し、押したあとにやり直しが使えるように
+   なるまで待つので、成功は1回の取り消しが起きたことを意味する。
+
 ### ブリッジの実機動作確認
 
 ブリッジはMCPサーバーとしてClaude Codeから起動されるので、確認もClaude Code越しに行う。登録は
@@ -188,6 +213,8 @@ pwsh -File scripts/host-control.ps1 -Action show   -ProcessId <エディタの�
 `pipes` は待ち受けているホストのパイプ名を一覧する。`launch` は起動したエディタのプロセスIDを
 返す。`status`・`stop`・`start` は稼働状態の本文(状態区分・パイプ名・接続・応答サイズ予算・
 ログの所在)を表示してから操作する。`acl` はそのエディタのパイプの権限の規則を表示する。
+`undo` は編集メニューから1回分の取り消しを起こす。取り消せる編集が無ければ失敗し、押したあとは
+やり直しが使えるようになるまで待つので、成功は取り消しが1回起きたことを意味する。
 
 **エディタの画面への操作はUI Automationで行う。** `undo` は取り消しを1回行う。`click` は指定した
 ビューの中央を左クリックする。`show` は指定したビューを表示する。`-View` はビューの名前で、PMX

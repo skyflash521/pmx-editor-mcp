@@ -6,10 +6,30 @@ using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
+    /// <summary>ファイルの位置で渡すときの決めごと。中身はその型のサンプル値から採る。</summary>
+    public sealed class SampleFile
+    {
+        public SampleFile(string kind, string extension, string purpose)
+        {
+            Kind = kind;
+            Extension = extension;
+            Purpose = purpose;
+        }
+
+        /// <summary>ファイルの種別。検査はこの名前で引くので、表の中で二度現れない。</summary>
+        public string Kind { get; }
+
+        /// <summary>書き出すときに付ける拡張子。点から始まる。</summary>
+        public string Extension { get; }
+
+        /// <summary>何に渡すためのものか。</summary>
+        public string Purpose { get; }
+    }
+
     /// <summary>型ごとのサンプル値の表の1行。</summary>
     public sealed class SampleValueRow
     {
-        public SampleValueRow(string typeName, object first, object second)
+        public SampleValueRow(string typeName, object first, object second, SampleFile file = null)
         {
             if (typeName == null)
             {
@@ -19,6 +39,7 @@ namespace PmxEditorMcp.SignatureDump
             TypeName = typeName;
             First = first;
             Second = second;
+            File = file;
         }
 
         /// <summary>値を写す型の名前。</summary>
@@ -29,6 +50,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>書き込む前の値が既定と一致するときに使う値。</summary>
         public object Second { get; }
+
+        /// <summary>ファイルの位置で渡せる型だけが持つ決めごと。ほかの型では null。</summary>
+        public SampleFile File { get; }
     }
 
     /// <summary>型ごとのサンプル値の表。</summary>
@@ -58,6 +82,14 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string SecondName = "second";
 
+        private const string FileName = "file";
+
+        private const string KindName = "kind";
+
+        private const string ExtensionName = "extension";
+
+        private const string PurposeName = "purpose";
+
         /// <summary>形が違えば <see cref="FormatException"/>。</summary>
         public static SampleValueTable Read(string json)
         {
@@ -68,11 +100,12 @@ namespace PmxEditorMcp.SignatureDump
 
             Dictionary<string, object> root = Members(Parse(json), TypesName);
             List<SampleValueRow> rows = new List<SampleValueRow>();
+            HashSet<string> kinds = new HashSet<string>(StringComparer.Ordinal);
             string previous = null;
             foreach (object item in Array(root[TypesName], TypesName))
             {
                 Dictionary<string, object> members =
-                    Members(item, TypeNameName, DefaultName, SecondName);
+                    Members(item, new[] { TypeNameName, DefaultName, SecondName }, FileName);
                 string typeName = Text(members[TypeNameName], TypeNameName);
                 if (previous != null
                     && string.CompareOrdinal(previous, typeName) > 0)
@@ -81,11 +114,37 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 previous = typeName;
+                SampleFile file = File(members);
+                if (file != null && !kinds.Add(file.Kind))
+                {
+                    throw new FormatException("ファイルの種別が二度現れる: " + file.Kind);
+                }
+
                 rows.Add(new SampleValueRow(
-                    typeName, members[DefaultName], members[SecondName]));
+                    typeName, members[DefaultName], members[SecondName], file));
             }
 
             return new SampleValueTable(rows);
+        }
+
+        /// <summary>ファイルの決めごと。持たない行では null。拡張子は点から始まる。</summary>
+        private static SampleFile File(Dictionary<string, object> members)
+        {
+            object value;
+            if (!members.TryGetValue(FileName, out value))
+            {
+                return null;
+            }
+
+            Dictionary<string, object> file = Members(value, KindName, ExtensionName, PurposeName);
+            string extension = Text(file[ExtensionName], ExtensionName);
+            if (!extension.StartsWith(".", StringComparison.Ordinal) || extension.Length < 2)
+            {
+                throw new FormatException(ExtensionName + " は点から始まらなければならない。");
+            }
+
+            return new SampleFile(
+                Text(file[KindName], KindName), extension, Text(file[PurposeName], PurposeName));
         }
 
         private static object Parse(string json)
@@ -117,6 +176,16 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private static Dictionary<string, object> Members(object value, params string[] names)
         {
+            return Members(value, names, new string[0]);
+        }
+
+        /// <summary>
+        /// 求める項目と、在ってもよい項目だけを持つ対象として読む。余分な項目を黙って捨てると、
+        /// 正本の形が崩れても気づけない。
+        /// </summary>
+        private static Dictionary<string, object> Members(
+            object value, string[] names, params string[] optional)
+        {
             Dictionary<string, object> members = value as Dictionary<string, object>;
             if (members == null)
             {
@@ -133,7 +202,8 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (string name in members.Keys)
             {
-                if (!names.Contains(name, StringComparer.Ordinal))
+                if (!names.Contains(name, StringComparer.Ordinal)
+                    && !optional.Contains(name, StringComparer.Ordinal))
                 {
                     throw new FormatException("知らない項目がある: " + name);
                 }

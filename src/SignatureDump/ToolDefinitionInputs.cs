@@ -151,6 +151,47 @@ namespace PmxEditorMcp.SignatureDump
             return descriptions;
         }
 
+        /// <summary>行キーからツールの名前へ。</summary>
+        public IDictionary<string, string> ToolsByRow(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            TypeRoleTable owned = TypeGroupRule.Resolve(
+                _roles, TypeGroupEvidence.OwnersByType(_ledger, inventory));
+
+            return ToolNameEvidence.Resolve(
+                Map,
+                owned,
+                _assignments,
+                inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal));
+        }
+
+        /// <summary>確認を要する行キー。名前で決まるので列挙から判じる。</summary>
+        public ISet<string> Dangerous(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            return new HashSet<string>(
+                DangerousOperationRule.Classify(inventory.Signatures).Keys, StringComparer.Ordinal);
+        }
+
+        /// <summary>型から接続の根へ至る経路。辿り着けない型は持たない。</summary>
+        public IDictionary<string, string> ConnectionPaths(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            return TypeRoleEvidence.ReachableFromRoots(inventory, TypeRoleEvidence.ConnectionRoots);
+        }
+
         private static string ReadFile(string path, string name)
         {
             if (!File.Exists(path))

@@ -26,8 +26,9 @@ param(
     #   stop   稼働中のホストを停止し、待受の消失と状態区分が停止済みになるまで待つ
     #   start  停止済みのホストを開始し、待受が現れるまで待つ
     #   acl    指定したエディタの待受のパイプに掛かっている権限の規則を表示する
+    #   undo   指定したエディタの編集を1回分だけ元に戻す
     [Parameter(Mandatory = $true)]
-    [ValidateSet("pipes", "launch", "close", "status", "stop", "start", "acl")]
+    [ValidateSet("pipes", "launch", "close", "status", "stop", "start", "acl", "undo")]
     [string]$Action,
 
     # 操作の対象にするエディタのプロセスID。pipes と launch では使わない。
@@ -122,6 +123,13 @@ $PipeDirectory = "\\.\pipe\"
 
 # プラグインのメニュー文言。状態表示の表題にも同じ文言が出る。
 $PluginName = "PMX Editor MCP"
+
+# 編集メニューの中で1回分の取り消しを起こす項目の名前。実機の編集メニューが持つ綴りである。
+$UndoItemName = "元に戻す(U)"
+
+# 取り消した分をやり直す項目の名前。取り消しが1回起きたことは、この項目が使えるようになることで
+# 分かる——押した結果は編集の中身に出るので、それ自体はここからは読めない。
+$RedoItemName = "やり直し(R)"
 
 # 状態表示のウィンドウクラス。標準のメッセージボックスのもの。
 $DialogClassName = "#32770"
@@ -308,18 +316,20 @@ function Close-OpenMenu {
     <#
         .SYNOPSIS
         開いたメニューを畳む。開いたままだとメニューが入力待ちを続け、エディタは終了要求も
-        受け付けなくなる。畳む手段が無ければ、黙って見逃さずに失敗させる——残ったメニューは
-        後の操作を塞ぐので、残ったこと自体が伝わらないと原因に辿り着けない。
+        受け付けなくなる。畳む形を持たないメニューは、開いた操作をもう一度行って閉じる
+        ——メニューバーの項目は押すたびに開閉が入れ替わる。
     #>
     param($Menu)
 
     $pattern = $null
-    if (-not $Menu.TryGetCurrentPattern(
+    if ($Menu.TryGetCurrentPattern(
             [System.Windows.Automation.ExpandCollapsePattern]::Pattern, [ref]$pattern)) {
-        throw "メニューを畳む手段が無い: $($Menu.Current.Name)"
+        $pattern.Collapse()
+
+        return
     }
 
-    $pattern.Collapse()
+    Invoke-Element -Element $Menu
 }
 
 function Close-OpenMenuSafely {
@@ -497,6 +507,80 @@ function Show-StatusDialog {
     if (-not $dialog) { throw "稼働状態の表示が $TimeoutSeconds 秒以内に出なかった。" }
 
     $dialog
+}
+
+function Get-MenuItem {
+    <#
+        .SYNOPSIS
+        開いているメニューから名前で項目を選ぶ。項目が辿れるようになるまで待つ。
+    #>
+    param($Menu, [string]$Name, $Deadline)
+
+    $nameCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::NameProperty, $Name)
+
+    while ($true) {
+        $found = $Menu.FindFirst(
+            [System.Windows.Automation.TreeScope]::Descendants, $nameCondition)
+        if ($found) { return $found }
+        if ((Get-Date) -ge $Deadline) { throw "メニュー項目が見つからない: $Name" }
+        Wait-Interval -Deadline $Deadline
+    }
+}
+
+function Invoke-UndoOnce {
+    <#
+        .SYNOPSIS
+        編集メニューから1回分の取り消しを起こす。プラグインの項目を押すのと同じ経路を通るが、
+        押した先に表示は出ないので、待つのは項目が辿れるようになるところまでである。
+    #>
+    param([int]$OwnerProcessId, $Deadline)
+
+    $deadline = Get-Deadline -Deadline $Deadline
+    $edit = Get-EditMenu -OwnerProcessId $OwnerProcessId -Deadline $deadline
+    $shadows = @(Get-MenuShadows -OwnerProcessId $OwnerProcessId)
+
+    try {
+        Invoke-Element -Element $edit
+
+        $target = Get-MenuItem -Menu $edit -Name $UndoItemName -Deadline $deadline
+        if (-not $target.Current.IsEnabled) {
+            throw "取り消せる編集が無い: プロセスID $OwnerProcessId"
+        }
+
+        # やり直しが既に使えると、押した結果として使えるようになったのか、元からそうだったのかを
+        # 見分けられない。見分けられない状態では、起きたかどうかを確かめずに成功を返さない。
+        $redo = Get-MenuItem -Menu $edit -Name $RedoItemName -Deadline $deadline
+        if ($redo.Current.IsEnabled) {
+            throw "やり直せる状態なので取り消しが起きたことを確かめられない: プロセスID $OwnerProcessId"
+        }
+
+        Invoke-Element -Element $target
+
+        # 取り消しが1回起きたことを、やり直せるようになったことで確かめる。押しただけでは、
+        # 届いたかどうかも、何も起きなかったのかも分からない。
+        while (-not $redo.Current.IsEnabled) {
+            if ((Get-Date) -ge $deadline) {
+                throw "取り消しが起きなかった: プロセスID $OwnerProcessId"
+            }
+
+            Wait-Interval -Deadline $deadline
+        }
+    }
+    catch {
+        # 開いたままのメニューを残さない。押せたときは押した側が畳む。
+        Close-OpenMenuSafely -Menu $edit
+        throw
+    }
+    finally {
+        # 後始末の失敗で元の失敗を上書きしない。
+        try {
+            Close-MenuShadow -OwnerProcessId $OwnerProcessId -Existing $shadows
+        }
+        catch {
+            Write-Warning "メニューの影を片付けられなかった: $($_.Exception.Message)" -WarningAction Continue
+        }
+    }
 }
 
 function Wait-StatusDialog {
@@ -743,6 +827,11 @@ switch ($Action) {
         }
 
         Wait-HostPipe -OwnerProcessId $ProcessId -Until Absent
+    }
+    "undo" {
+        Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        Invoke-UndoOnce -OwnerProcessId $ProcessId -Deadline $null
     }
     "status" {
         Assert-ProcessId

@@ -29,6 +29,38 @@ namespace PmxEditorMcp.Tests
             _log = new HostLog(Path.Combine(_root, "host.log"));
         }
 
+        [Fact]
+        public void TheReservedIdIsNeverIssued()
+        {
+            HandleIdIssuer issuer = new HandleIdIssuer();
+
+            Assert.NotEqual(HandleIdIssuer.Reserved, issuer.Next());
+        }
+
+        [Fact]
+        public void TheIssuerStopsForGoodOnceItRunsOut()
+        {
+            HandleIdIssuer issuer = Exhausted();
+
+            Assert.Throws<InvalidOperationException>(() => issuer.Next());
+            Assert.Throws<InvalidOperationException>(() => issuer.Next());
+        }
+
+        [Fact]
+        public void TheLastIdBeforeTheReservedOneIsStillIssued()
+        {
+            Assert.Equal(HandleIdIssuer.Reserved - 1, Exhausted().Last);
+        }
+
+        /// <summary>予約の1つ手前まで配った発行器。</summary>
+        private static HandleIdIssuer Exhausted()
+        {
+            HandleIdIssuer issuer = new HandleIdIssuer();
+            issuer.SkipTo(HandleIdIssuer.Reserved - 1);
+
+            return issuer;
+        }
+
         public void Dispose()
         {
             try

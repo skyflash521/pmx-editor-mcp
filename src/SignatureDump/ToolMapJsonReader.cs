@@ -86,6 +86,20 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly Regex SampleReference = new Regex(
             "^sample2?:[A-Za-z][A-Za-z0-9_.+<>,\\[\\]]*$", RegexOptions.CultureInvariant);
 
+        /// <summary>編集の流れの綴り。正本が持つ綴りをそのまま返す。</summary>
+        public static string SpellingOf(ToolMapEditKind editKind)
+        {
+            foreach (KeyValuePair<string, ToolMapEditKind> pair in EditKinds)
+            {
+                if (pair.Value == editKind)
+                {
+                    return pair.Key;
+                }
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(editKind), editKind, "綴りを持たない編集の流れ。");
+        }
+
         private static readonly Dictionary<string, ToolMapEditKind> EditKinds =
             new Dictionary<string, ToolMapEditKind>(StringComparer.Ordinal)
             {

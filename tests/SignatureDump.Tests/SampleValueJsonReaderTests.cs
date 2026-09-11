@@ -74,6 +74,53 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ARowCanCarryHowItIsPassedAsAFile()
+        {
+            SampleValueRow row = Assert.Single(SampleValueJsonReader.Read(
+                "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2,\"file\":" +
+                "{\"kind\":\"image\",\"extension\":\".png\",\"purpose\":\"渡す。\"}}]}").Types);
+
+            Assert.Equal("image", row.File.Kind);
+            Assert.Equal(".png", row.File.Extension);
+            Assert.Equal("渡す。", row.File.Purpose);
+        }
+
+        [Fact]
+        public void ARowWithoutTheFileMemberCarriesNone()
+        {
+            SampleValueRow row = Assert.Single(SampleValueJsonReader.Read(
+                "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2}]}").Types);
+
+            Assert.Null(row.File);
+        }
+
+        [Fact]
+        public void AnExtensionWithoutItsDotStops()
+        {
+            Assert.Throws<FormatException>(() => SampleValueJsonReader.Read(
+                "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2,\"file\":" +
+                "{\"kind\":\"image\",\"extension\":\"png\",\"purpose\":\"渡す。\"}}]}"));
+        }
+
+        [Fact]
+        public void AFileWithoutAMemberStops()
+        {
+            Assert.Throws<FormatException>(() => SampleValueJsonReader.Read(
+                "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2,\"file\":" +
+                "{\"kind\":\"image\"}}]}"));
+        }
+
+        [Fact]
+        public void TheSameFileKindOnTwoTypesStops()
+        {
+            Assert.Throws<FormatException>(() => SampleValueJsonReader.Read(
+                "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2,\"file\":" +
+                "{\"kind\":\"image\",\"extension\":\".png\",\"purpose\":\"渡す。\"}}," +
+                "{\"typeName\":\"B\",\"default\":1,\"second\":2,\"file\":" +
+                "{\"kind\":\"image\",\"extension\":\".bmp\",\"purpose\":\"渡す。\"}}]}"));
+        }
+
+        [Fact]
         public void TheArgumentsAreChecked()
         {
             Assert.Throws<ArgumentNullException>(() => SampleValueJsonReader.Read(null));

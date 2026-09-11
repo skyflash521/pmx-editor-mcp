@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- 配布物のDLLは再配布できないため、各自の導入物を参照するだけで出力へコピーしない。 -->
     <Reference Include="PEPlugin">
       <HintPath>$(PmxEditorDir)\Lib\PEPlugin\PEPlugin.dll</HintPath>

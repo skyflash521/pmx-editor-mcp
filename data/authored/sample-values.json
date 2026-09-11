@@ -291,7 +291,12 @@
     {
       "typeName": "System.Drawing.Bitmap",
       "default": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4z8AAAAMBAQD3A0FDAAAAAElFTkSuQmCC",
-      "second": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mNgYPgPAAEDAQA2dBFAAAAAAElFTkSuQmCC"
+      "second": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mNgYPgPAAEDAQA2dBFAAAAAAElFTkSuQmCC",
+      "file": {
+        "kind": "image",
+        "extension": ".png",
+        "purpose": "ファイルの位置で画像を受け取る呼び出しへ渡す。"
+      }
     },
     {
       "typeName": "System.Drawing.Brush",
