@@ -89,7 +89,8 @@ namespace PmxEditorMcp.SignatureDump
                     map,
                     owned,
                     signatures,
-                    ToolNameEvidence.Resolve(map, owned, assignments, signatures));
+                    ToolNameEvidence.Resolve(map, owned, assignments, signatures),
+                    assignments);
             }
             catch (InvalidOperationException exception)
             {
@@ -111,9 +112,10 @@ namespace PmxEditorMcp.SignatureDump
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "ツールの結び付きを組み立てた: 中継 {0} 件・項目を集める {1} 件",
+                "ツールの結び付きを組み立てた: 中継 {0} 件・項目を集める {1} 件・要素 {2} 件",
                 source.Calls.Count,
-                source.Aggregations.Count));
+                source.Aggregations.Count,
+                source.Elements.Count));
 
             return ExitCodes.Success;
         }

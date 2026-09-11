@@ -24,6 +24,20 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AStateThatIsNotKnownHasNoWording()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => EditOutcome.Describe((EditState)99));
+        }
+
+        [Fact]
+        public void OnlyTheUnknownResultAsksForAReadBack()
+        {
+            Assert.DoesNotContain("読み戻", EditOutcome.Describe(EditState.Unchanged));
+            Assert.Contains("読み戻", EditOutcome.Describe(EditState.Unknown));
+            Assert.DoesNotContain("読み戻", EditOutcome.Describe(EditState.Changed));
+        }
+
+        [Fact]
         public void AStageThatIsNotKnownStops()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => EditOutcome.Resolve((EditStage)99));

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Forms;
@@ -156,13 +157,24 @@ namespace PmxEditorMcp
                 // 基盤メソッドは接続が受け持つので、ここへはツールだけを載せる。
                 McpMethodTable methods = new McpMethodTable();
                 SdkRelayTable relay = GeneratedSdkRelay.Create();
+                Dictionary<string, SdkReceiver> receivers = GeneratedSdkReceivers.Create();
                 ToolDispatch.AddTo(
                     methods,
                     relay,
-                    GeneratedSdkReceivers.Create(),
+                    receivers,
+                    GeneratedSdkLists.Create(),
                     _resident,
+                    new PmxSession(
+                        relay,
+                        receivers,
+                        _resident,
+                        GeneratedSdkFlows.StateRead,
+                        GeneratedSdkFlows.Commit,
+                        GeneratedSdkFlows.Receiver,
+                        GeneratedSdkFlows.Pmx),
                     GeneratedTools.Calls(),
-                    GeneratedTools.Aggregations());
+                    GeneratedTools.Aggregations(),
+                    GeneratedTools.Elements());
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);
                 DebugLargeText.AddTo(methods, debugHooks);

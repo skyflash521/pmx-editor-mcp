@@ -73,6 +73,28 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
+        /// 状態を、誤りの説明へそのまま置ける言葉にする。結果不明のときだけ読み戻しが要る
+        /// ——どこまで変わったかは、返ってきた誤りからは分からない。
+        /// </summary>
+        public static string Describe(EditState state)
+        {
+            switch (state)
+            {
+                case EditState.Unchanged:
+                    return "状態は未変更である。";
+
+                case EditState.Unknown:
+                    return "状態は結果不明で、読み戻さなければ変わったかどうか分からない。";
+
+                case EditState.Changed:
+                    return "状態は変更済みである。";
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, "知らない状態。");
+            }
+        }
+
+        /// <summary>
         /// 失敗を誤りとして返すか、警告を添えた成功として返すか。確定した後の失敗だけが後者になる
         /// ——反映は済んでいるので、失敗を理由に取り消すことはできない。
         /// </summary>

@@ -132,8 +132,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> shapesByType)
         {
             string member = MemberNameOf(signature.MemberName);
-            IEnumerable<SchemaItem> items = (schema.Output.Members ?? new SchemaItem[0])
-                .Concat(schema.Branches.SelectMany(b => b.Inputs))
+            IEnumerable<SchemaItem> items = schema.Output.WithNested
+                .Concat(schema.Branches.SelectMany(b => b.Inputs.SelectMany(i => i.WithNested)))
                 .Where(i => string.Equals(i.Name, member, StringComparison.Ordinal))
                 .ToList();
             if (!items.Any())

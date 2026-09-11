@@ -39,10 +39,10 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.Close()",
       "editKind": "viewSession",
-      "basis": "エディタそのものを終わらせるだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "エディタの終了を求めるだけで、モデルのデータにもファイルにも作用しない。未保存の編集があるときは、エディタが確認を出して終わらないことがある。",
       "postcondition": [
         {
-          "effectType": "editorEnded",
+          "effectType": "shutdownRequested",
           "effectKey": "",
           "kind": "callLogOnly",
           "comparison": "exists"
@@ -282,6 +282,167 @@
       "signatureKey": "PEPlugin.IPESystemConnector.GetCPluginRunArgsClone(System.String)",
       "editKind": "read",
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Body()",
+      "editKind": "read",
+      "basis": "剛体リストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Bone()",
+      "editKind": "read",
+      "basis": "ボーンリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Clear()",
+      "editKind": "duplicateEdit",
+      "basis": "いまのPMXを複製して中身を空にし、まとめて反映するので、複製編集型に当たる。",
+      "updateSpec": {
+        "refresh": []
+      },
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.ExpressionNode()",
+      "editKind": "read",
+      "basis": "表情の表示枠を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.FilePath()",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製してファイルパスを変え、まとめて反映するので、複製編集型に当たる。",
+      "embeddedIn": [
+        "model_list_pmxes",
+        "model_update_pmxes"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.FromFile(System.String)",
+      "editKind": "duplicateEdit",
+      "basis": "いまのPMXを複製して読み込んだ内容で置き換え、まとめて反映するので、複製編集型に当たる。",
+      "updateSpec": {
+        "refresh": []
+      },
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Header()",
+      "editKind": "read",
+      "basis": "ヘッダを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Joint()",
+      "editKind": "read",
+      "basis": "Jointリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Material()",
+      "editKind": "read",
+      "basis": "材質リストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.ModelInfo()",
+      "editKind": "read",
+      "basis": "モデル情報を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Morph()",
+      "editKind": "read",
+      "basis": "モーフリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Node()",
+      "editKind": "read",
+      "basis": "表示枠リストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Normalize()",
+      "editKind": "duplicateEdit",
+      "basis": "いまのPMXを複製して整え、まとめて反映するので、複製編集型に当たる。",
+      "updateSpec": {
+        "refresh": []
+      },
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Primitive()",
+      "editKind": "read",
+      "basis": "プリミティブのビルダを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.RootNode()",
+      "editKind": "read",
+      "basis": "ルートの表示枠を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.SoftBody()",
+      "editKind": "read",
+      "basis": "SoftBodyリストを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.ToFile(System.String)",
+      "editKind": "directChange",
+      "basis": "PMXをファイルへ書き出すので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "fileWritten",
+          "effectKey": "path",
+          "kind": "file",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Vertex()",
+      "editKind": "read",
+      "basis": "頂点リストを返すだけで、エディタの状態を動かさない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()",

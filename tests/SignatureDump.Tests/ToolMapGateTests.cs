@@ -47,7 +47,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ISet<string> typeNames = null,
             IList<ParameterRecord> parameters = null,
             MemberKind memberKind = MemberKind.Method,
-            ISet<string> embeddedTypes = null)
+            ISet<string> embeddedTypes = null,
+            ISet<string> independentTypes = null)
         {
             ToolMapGate.Require(
                 ToolMapJsonReader.Read(mapJson),
@@ -63,7 +64,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         new[] { "vertex" }, StringComparer.Ordinal),
                     typeNames ?? new HashSet<string>(
                         new[] { "PEPlugin.SDX.V3" }, StringComparer.Ordinal),
-                    embeddedTypes ?? new HashSet<string>(StringComparer.Ordinal)),
+                    embeddedTypes ?? new HashSet<string>(StringComparer.Ordinal),
+                    independentTypes ?? new HashSet<string>(StringComparer.Ordinal)),
                 CommonAssignmentJsonReader.Read(assignmentsJson));
         }
 

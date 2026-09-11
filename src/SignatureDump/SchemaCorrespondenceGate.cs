@@ -127,7 +127,11 @@ namespace PmxEditorMcp.SignatureDump
                 return;
             }
 
+            // 所有の根そのものは、どのPMXを見るかの切り替えで選ぶので対象の集合を持たない。
+            bool rooted = ElementCollectionEvidence.OwnershipRoots.Contains(
+                TypeDefinitionName.OfElement(signature.DeclaringType), StringComparer.Ordinal);
             if (role == TypeRole.OperationTarget
+                && !rooted
                 && !schema.Branches.All(b => TargetSelectors.Any(n => HasDirectInput(b, n))))
             {
                 throw new InvalidOperationException(

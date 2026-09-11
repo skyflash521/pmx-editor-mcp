@@ -128,7 +128,7 @@ namespace PmxEditorMcp.SignatureDump
                 { "stateWritten", EffectType.StateWritten },
                 { "observableChange", EffectType.ObservableChange },
                 { "valueRead", EffectType.ValueRead },
-                { "editorEnded", EffectType.EditorEnded },
+                { "shutdownRequested", EffectType.ShutdownRequested },
                 { "none", EffectType.None },
             };
 

@@ -295,6 +295,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 RequestBytes,
                 TokenLimit,
                 NoSdkShapes,
+                NoDangerousTools,
                 NoDangerousTools));
         }
 
@@ -317,6 +318,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 RequestBytes,
                 TokenLimit,
                 NoSdkShapes,
+                NoDangerousTools,
                 NoDangerousTools);
 
             Assert.Equal(new[] { "first", "second" }, definitions.Select(d => d.Name).ToArray());
@@ -336,10 +338,36 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 RequestBytes,
                 TokenLimit,
                 NoSdkShapes,
-                new HashSet<string>(new[] { "one" }, StringComparer.Ordinal))[0].InputSchema;
+                new HashSet<string>(new[] { "one" }, StringComparer.Ordinal),
+                NoDangerousTools)[0].InputSchema;
 
             Assert.Contains("\"confirm\":{\"type\":\"boolean\"}", written);
             Assert.Contains("\"required\":[\"name\",\"confirm\"]", written);
+        }
+
+        [Fact]
+        public void AToolWhoseConfirmationDependsOnTheTargetDoesNotAlwaysRequireIt()
+        {
+            ToolSchema schema = Tool(
+                "one",
+                Branch(Input("name", "text", true), Input("pmxHandle", "number", false)));
+
+            string written = ToolDefinitionBuilder.Build(
+                new ToolSchemaTable(new[] { schema }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { "one", "受け持つこと" } },
+                new AssumedLength(Lengths),
+                ValueChars,
+                RequestBytes,
+                TokenLimit,
+                NoSdkShapes,
+                new HashSet<string>(new[] { "one" }, StringComparer.Ordinal),
+                new HashSet<string>(new[] { "one" }, StringComparer.Ordinal))[0].InputSchema;
+
+            Assert.Contains("\"confirm\":{\"type\":\"boolean\"}", written);
+            Assert.Contains("\"required\":[\"name\"],\"additionalProperties\":false", written);
+            Assert.Contains(
+                "\"anyOf\":[{\"required\":[\"pmxHandle\"]},{\"required\":[\"confirm\"]}]",
+                written);
         }
 
         [Fact]
@@ -366,6 +394,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 RequestBytes,
                 TokenLimit,
                 new Dictionary<SchemaItem, string> { { input, "text" } },
+                NoDangerousTools,
                 NoDangerousTools)[0].InputSchema;
 
             Assert.Contains("\"path\":{\"type\":\"string\"}", written);
@@ -406,6 +435,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 RequestBytes,
                 TokenLimit,
                 NoSdkShapes,
+                NoDangerousTools,
                 NoDangerousTools)[0].InputSchema;
         }
 

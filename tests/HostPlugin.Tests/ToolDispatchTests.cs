@@ -281,8 +281,20 @@ namespace PmxEditorMcp.Tests
         private McpMethod Method(string tool)
         {
             McpMethodTable methods = new McpMethodTable();
+            SdkRelayTable relay = Relay();
+            IDictionary<string, SdkReceiver> receivers = Receivers();
+            ResidentConnection connection = Connection();
             ToolDispatch.AddTo(
-                methods, Relay(), Receivers(), Connection(), Calls(), Aggregations());
+                methods,
+                relay,
+                receivers,
+                new Dictionary<string, SdkList>(StringComparer.Ordinal),
+                connection,
+                new PmxSession(
+                    relay, receivers, connection, CountKey, CountKey, TargetType, typeof(object)),
+                Calls(),
+                Aggregations(),
+                new Dictionary<string, ToolElements>(StringComparer.Ordinal));
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
@@ -353,6 +365,12 @@ namespace PmxEditorMcp.Tests
             return null;
         }
 
+        /// <summary>接続の道から受け手を得る、直に触る呼び出し。</summary>
+        private static ToolReceiver Direct()
+        {
+            return new ToolReceiver(ToolReceiverKind.Connection, TargetType, EditKind.DirectChange);
+        }
+
         private static IDictionary<string, ToolCall> Calls()
         {
             return new Dictionary<string, ToolCall>(StringComparer.Ordinal)
@@ -361,7 +379,7 @@ namespace PmxEditorMcp.Tests
                     "session_save",
                     new ToolCall(
                         SaveKey,
-                        TargetType,
+                        Direct(),
                         DangerKind.Overwrite,
                         new[] { new ToolArgument("path", typeof(string)) },
                         null)
@@ -369,17 +387,17 @@ namespace PmxEditorMcp.Tests
                 {
                     "session_count",
                     new ToolCall(
-                        CountKey, TargetType, DangerKind.None, new ToolArgument[0], typeof(int))
+                        CountKey, Direct(), DangerKind.None, new ToolArgument[0], typeof(int))
                 },
                 {
                     "session_lost",
                     new ToolCall(
-                        LostKey, TargetType, DangerKind.None, new ToolArgument[0], null)
+                        LostKey, Direct(), DangerKind.None, new ToolArgument[0], null)
                 },
                 {
                     "session_throw",
                     new ToolCall(
-                        ThrowKey, TargetType, DangerKind.None, new ToolArgument[0], null)
+                        ThrowKey, Direct(), DangerKind.None, new ToolArgument[0], null)
                 },
             };
         }
@@ -392,26 +410,30 @@ namespace PmxEditorMcp.Tests
                     "session_get_form",
                     new ToolFields(
                         false,
+                        false,
+                        Direct(),
                         new[]
                         {
-                            new ToolField("count", CountKey, TargetType, typeof(int)),
-                            new ToolField("flag", FlagKey, TargetType, typeof(bool)),
+                            new ToolField("count", CountKey, typeof(int)),
+                            new ToolField("flag", FlagKey, typeof(bool)),
                         })
                 },
                 {
                     "session_update_form",
                     new ToolFields(
-                        true, new[] { new ToolField("flag", FlagKey, TargetType, typeof(bool)) })
+                        true, false, Direct(), new[] { new ToolField("flag", FlagKey, typeof(bool)) })
                 },
                 {
                     "session_update_pair",
                     new ToolFields(
                         true,
+                        false,
+                        Direct(),
                         new[]
                         {
-                            new ToolField("flag", FlagKey, TargetType, typeof(bool)),
-                            new ToolField("lost", LostKey, TargetType, typeof(bool)),
-                            new ToolField("broken", ThrowKey, TargetType, typeof(bool)),
+                            new ToolField("flag", FlagKey, typeof(bool)),
+                            new ToolField("lost", LostKey, typeof(bool)),
+                            new ToolField("broken", ThrowKey, typeof(bool)),
                         })
                 },
             };

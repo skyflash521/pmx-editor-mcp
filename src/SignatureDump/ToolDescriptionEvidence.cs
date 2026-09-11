@@ -84,8 +84,28 @@ namespace PmxEditorMcp.SignatureDump
                     signatures,
                     contractNotes,
                     methodNotes,
-                    propertyNotes));
+                    propertyNotes,
+                    null));
             }
+
+            foreach (KeyValuePair<string, TypeRoleRecord> element in ElementTools(
+                map, signatures, roles).OrderBy(e => e.Key, StringComparer.Ordinal))
+            {
+                materials.Add(Material(
+                    element.Key,
+                    Owning(map, signatures, roles, element.Value),
+                    map,
+                    byType,
+                    japanese,
+                    signatures,
+                    contractNotes,
+                    methodNotes,
+                    propertyNotes,
+                    element.Value));
+            }
+
+            materials.Sort(
+                (first, second) => StringComparer.Ordinal.Compare(first.Tool, second.Tool));
 
             return new ReadOnlyCollection<ToolDescriptionMaterial>(materials);
         }
@@ -123,6 +143,48 @@ namespace PmxEditorMcp.SignatureDump
             return named.GroupBy(e => e.Key, e => e.Value, StringComparer.Ordinal);
         }
 
+        /// <summary>
+        /// 所有するリストの要素が持つ、追加と削除のツールごとの要素の型の役割。これらのツールも
+        /// 行を持たず、そのリストの行が表へ載ることで現れる。
+        /// </summary>
+        private static IDictionary<string, TypeRoleRecord> ElementTools(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            TypeRoleTable roles)
+        {
+            Dictionary<string, TypeRoleRecord> tools =
+                new Dictionary<string, TypeRoleRecord>(StringComparer.Ordinal);
+            foreach (TypeRoleRecord element in
+                ElementToolRule.Elements(map, signatures, roles).Values)
+            {
+                foreach (string tool in ElementToolRule.Of(element))
+                {
+                    tools[tool] = element;
+                }
+            }
+
+            return tools;
+        }
+
+        /// <summary>その要素の型を並べる、所有するリストの行。</summary>
+        private static IList<ToolMapRow> Owning(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            TypeRoleTable roles,
+            TypeRoleRecord element)
+        {
+            ISet<string> keys = new HashSet<string>(
+                ElementToolRule.Elements(map, signatures, roles)
+                    .Where(e => string.Equals(
+                        e.Value.TypeName, element.TypeName, StringComparison.Ordinal))
+                    .Select(e => e.Key),
+                StringComparer.Ordinal);
+
+            return map.Rows.Where(r => keys.Contains(r.SignatureKey))
+                .OrderBy(r => r.SignatureKey, StringComparer.Ordinal)
+                .ToList();
+        }
+
         /// <summary>行キーが指すメンバーの宣言型。型役割表を引く鍵の形にそろえる。</summary>
         private static string DeclaringTypeOf(string signatureKey)
         {
@@ -142,10 +204,11 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, string> contractNotes,
             IDictionary<string, string> methodNotes,
-            IDictionary<string, string> propertyNotes)
+            IDictionary<string, string> propertyNotes,
+            TypeRoleRecord named)
         {
             SignatureRecord signature = OneType(tool, rows, signatures);
-            TypeRoleRecord role = Role(signature.DeclaringType, byType, tool);
+            TypeRoleRecord role = named ?? Role(signature.DeclaringType, byType, tool);
             string group = ToolGroups.TokenOf(role.Group);
             string qualifier = Qualifier(tool, group, role);
 

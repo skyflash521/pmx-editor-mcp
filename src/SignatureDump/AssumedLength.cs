@@ -19,7 +19,13 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly IDictionary<string, int> _bySpelling;
 
-        public AssumedLength(IDictionary<string, int> bySpelling)
+        private readonly IDictionary<SchemaItem, string> _sdkShapes;
+
+        /// <summary>
+        /// 綴りごとの想定文字数と、正本が綴りを書かないSDK由来の項目の綴りを与えて生成する。
+        /// </summary>
+        public AssumedLength(
+            IDictionary<string, int> bySpelling, IDictionary<SchemaItem, string> sdkShapes = null)
         {
             if (bySpelling == null)
             {
@@ -27,6 +33,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             _bySpelling = bySpelling;
+            _sdkShapes = sdkShapes ?? new Dictionary<SchemaItem, string>();
         }
 
         /// <summary>綴りを知らないか、形を持たない項目であれば <see cref="InvalidOperationException"/>。</summary>
@@ -52,11 +59,17 @@ namespace PmxEditorMcp.SignatureDump
                 return item.Bounds.Maximum.Value.ToString("R", CultureInfo.InvariantCulture).Length;
             }
 
+            string spelling = item.Shape;
+            if (spelling == null)
+            {
+                _sdkShapes.TryGetValue(item, out spelling);
+            }
+
             int length;
-            if (item.Shape == null || !_bySpelling.TryGetValue(item.Shape, out length))
+            if (spelling == null || !_bySpelling.TryGetValue(spelling, out length))
             {
                 throw new InvalidOperationException(
-                    "想定文字数を持たない項目がある: " + (item.Shape ?? item.Name ?? "名前無し"));
+                    "想定文字数を持たない項目がある: " + (spelling ?? item.Name ?? "名前無し"));
             }
 
             return length;

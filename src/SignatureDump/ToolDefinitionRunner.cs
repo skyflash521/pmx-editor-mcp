@@ -76,15 +76,17 @@ namespace PmxEditorMcp.SignatureDump
             IList<ToolDefinition> definitions;
             try
             {
+                IDictionary<SchemaItem, string> sdkShapes = inputs.SdkShapes(inventory);
                 definitions = ToolDefinitionBuilder.Build(
                     inputs.Schemas,
                     inputs.Descriptions(inventory),
-                    new AssumedLength(inputs.Lengths),
+                    new AssumedLength(inputs.Lengths, sdkShapes),
                     inputs.BudgetChars - inputs.WarningChars,
                     inputs.RequestBytes,
                     inputs.TokenLimit,
-                    inputs.SdkShapes(inventory),
-                    inputs.DangerousTools(inventory));
+                    sdkShapes,
+                    inputs.DangerousTools(inventory),
+                    inputs.ConditionalDangerousTools(inventory));
             }
             catch (InvalidOperationException exception)
             {

@@ -53,9 +53,12 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
 
+            HashSet<string> derived = new HashSet<string>(
+                Aggregations(map, signatures, byType), StringComparer.Ordinal);
+            derived.UnionWith(ElementToolRule.Names(map, signatures, roles));
+
             RequireNoComposedName(toolNames, composedTools);
-            RequireSameTools(
-                schemas, map, toolNames, composedTools, Aggregations(map, signatures, byType));
+            RequireSameTools(schemas, map, toolNames, composedTools, derived);
             RequireTellableBranches(schemas);
 
             foreach (ToolMapRow row in map.Rows
@@ -130,7 +133,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             IDictionary<string, string> toolNames,
             IDictionary<string, ComposedTool> composedTools,
-            ISet<string> aggregations)
+            ISet<string> derived)
         {
             HashSet<string> assigned = new HashSet<string>(
                 toolNames.Values, StringComparer.Ordinal);
@@ -139,7 +142,7 @@ namespace PmxEditorMcp.SignatureDump
             bool hasEvents = map.Rows.Any(r => r.EventType != null);
 
             HashSet<string> wanted = new HashSet<string>(assigned, StringComparer.Ordinal);
-            wanted.UnionWith(aggregations);
+            wanted.UnionWith(derived);
             wanted.UnionWith(
                 composedTools.Where(t => hasEvents || !t.Value.Branching).Select(t => t.Key));
             string missing = wanted.Except(described, StringComparer.Ordinal)
@@ -150,7 +153,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             HashSet<string> allowed = new HashSet<string>(assigned, StringComparer.Ordinal);
-            allowed.UnionWith(aggregations);
+            allowed.UnionWith(derived);
             allowed.UnionWith(composedTools.Keys);
             string extra = described.Except(allowed, StringComparer.Ordinal)
                 .OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();

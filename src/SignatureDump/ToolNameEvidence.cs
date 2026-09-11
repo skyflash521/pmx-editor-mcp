@@ -44,7 +44,8 @@ namespace PmxEditorMcp.SignatureDump
                 signatures,
                 ToolMapEvidence.EmbeddedTypeNames(roles),
                 new HashSet<string>(
-                    assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal));
+                    assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal),
+                ToolMapEvidence.IndependentToolTypeNames(roles));
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
             IList<string> dispatched = kinds

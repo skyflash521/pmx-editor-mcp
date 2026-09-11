@@ -14,6 +14,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string UpdateTool = "session_update_form_connector";
 
+        private const string Connector = "PEPlugin.Pmx.IPXPmxConnector";
+
+        private const string StateReadKey = Connector + ".GetCurrentState()";
+
+        private const string CommitKey = Connector + ".Update(PEPlugin.Pmx.IPXPmx)";
+
+        private const string Pmx = "PEPlugin.Pmx.IPXPmx";
+
+        private const string ListKey = Pmx + ".Vertex()";
+
+        private const string Vertex = "PEPlugin.Pmx.IPXVertex";
+
         [Fact]
         public void ACallCarriesTheRowTheReceiverAndTheArgumentTypes()
         {
@@ -22,7 +34,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "calls.Add(\"session_open_pmx_file\", new ToolCall(\"" + Form
-                    + ".OpenPMXFile(System.String)\", \"" + Form + "\", DangerKind.None,"
+                    + ".OpenPMXFile(System.String)\", new ToolReceiver(ToolReceiverKind.Connection,"
+                    + " \"" + Form + "\", EditKind.DirectChange), DangerKind.None,"
                     + " new ToolArgument[] { new ToolArgument(\"path\","
                     + " typeof(global::System.String)) }, typeof(global::System.Boolean)));",
                 source.Text);
@@ -55,7 +68,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             ToolBindingSource source = Build(Dispatched("model_ping", signature));
 
-            Assert.Contains("new ToolCall(\"Sdk.Bridge.Ping()\", null, DangerKind.None,", source.Text);
+            Assert.Contains(
+                "new ToolCall(\"Sdk.Bridge.Ping()\","
+                    + " new ToolReceiver(ToolReceiverKind.Connection, null, EditKind.DirectChange),"
+                    + " DangerKind.None,",
+                source.Text);
         }
 
         [Theory]
@@ -103,14 +120,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(new[] { GetTool, UpdateTool }, source.Aggregations.ToArray());
             Assert.Contains(
-                "aggregations.Add(\"" + GetTool + "\", new ToolFields(false, new ToolField[]",
+                "aggregations.Add(\"" + GetTool + "\", new ToolFields(false, false,"
+                    + " new ToolReceiver(ToolReceiverKind.Connection, \"" + Form
+                    + "\", EditKind.Read), new ToolField[]",
                 source.Text);
             Assert.Contains(
-                "aggregations.Add(\"" + UpdateTool + "\", new ToolFields(true, new ToolField[]",
+                "aggregations.Add(\"" + UpdateTool + "\", new ToolFields(true, false,"
+                    + " new ToolReceiver(ToolReceiverKind.Connection, \"" + Form
+                    + "\", EditKind.ViewSession), new ToolField[]",
                 source.Text);
             Assert.Contains(
-                "new ToolField(\"undoCount\", \"" + Form + ".UndoCount()\", \"" + Form
-                    + "\", typeof(global::System.Int32)),",
+                "new ToolField(\"undoCount\", \"" + Form
+                    + ".UndoCount()\", typeof(global::System.Int32)),",
                 source.Text);
             Assert.Equal(1, Occurrences(source.Text, "\"undoCount\""));
             Assert.Equal(2, Occurrences(source.Text, "\"pmxFormActivate\""));
@@ -143,6 +164,73 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(source.Aggregations);
         }
 
+        [Fact]
+        public void AnOwningListBringsTheAddingAndRemovingToolsOfItsElement()
+        {
+            ToolBindingSource source = Build(Collection());
+
+            Assert.Equal(
+                new[] { "model_add_vertices", "model_remove_vertices" }, source.Elements.ToArray());
+            Assert.Contains(
+                "elements.Add(\"model_add_vertices\", new ToolElements(false, \"" + ListKey
+                    + "\", new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.DuplicateEdit),"
+                    + " typeof(global::" + Vertex + ")));",
+                source.Text);
+            Assert.Contains(
+                "elements.Add(\"model_remove_vertices\", new ToolElements(true, \"" + ListKey,
+                source.Text);
+        }
+
+        [Fact]
+        public void AnOwningListAlsoBringsTheRelayThatReadsAndWritesIt()
+        {
+            ToolBindingSource source = Build(Collection());
+
+            Assert.Contains(
+                "lists.Add(\"" + ListKey + "\",", source.Text);
+            Assert.Contains(
+                "new SdkList(owner => ((global::" + Pmx + ")owner).Vertex.Count,"
+                    + " (owner, index) => ((global::" + Pmx + ")owner).Vertex[index],"
+                    + " (owner, item) => ((global::" + Pmx + ")owner).Vertex.Add((global::"
+                    + Vertex + ")item),"
+                    + " (owner, index) => ((global::" + Pmx + ")owner).Vertex.RemoveAt(index)));",
+                source.Text);
+        }
+
+        [Fact]
+        public void TheFlowsNameTheRowsThatDuplicateAndReflectTheCurrentModel()
+        {
+            ToolBindingSource source = Build(Collection());
+
+            Assert.Contains(
+                "internal const string StateRead = \"" + StateReadKey + "\";", source.Text);
+            Assert.Contains("internal const string Commit = \"" + CommitKey + "\";", source.Text);
+            Assert.Contains(
+                "internal const string Receiver = \"" + Connector + "\";", source.Text);
+        }
+
+        private static Binding Collection()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                ListKey,
+                Pmx,
+                MemberKind.Property,
+                "Vertex",
+                false,
+                0,
+                new ParameterRecord[0],
+                "System.Collections.Generic.IList<" + Vertex + ">",
+                true,
+                false,
+                OperationDirection.Read);
+
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    ListKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
+        }
+
         private static int Occurrences(string text, string part)
         {
             int count = 0;
@@ -158,13 +246,71 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static ToolBindingSource Build(params Binding[] bindings)
         {
+            Dictionary<string, SignatureRecord> signatures = bindings.ToDictionary(
+                b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal);
+            foreach (SignatureRecord flow in Flows())
+            {
+                signatures.Add(flow.Key, flow);
+            }
+
             return ToolBindingSourceBuilder.Build(
                 new ToolMap(bindings.Select(b => b.Row).ToList()),
                 Roles(),
-                bindings.ToDictionary(
-                    b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal),
+                signatures,
                 bindings.Where(b => b.Tool != null)
-                    .ToDictionary(b => b.Signature.Key, b => b.Tool, StringComparer.Ordinal));
+                    .ToDictionary(b => b.Signature.Key, b => b.Tool, StringComparer.Ordinal),
+                Assignments());
+        }
+
+        /// <summary>複製編集の流れが通る2つのシグネチャ。組み立てはこの2つを名指しする。</summary>
+        private static IList<SignatureRecord> Flows()
+        {
+            return new[]
+            {
+                new SignatureRecord(
+                    StateReadKey,
+                    Connector,
+                    MemberKind.Method,
+                    "GetCurrentState",
+                    false,
+                    0,
+                    new ParameterRecord[0],
+                    "PEPlugin.Pmx.IPXPmx",
+                    false,
+                    false,
+                    OperationDirection.Read),
+                new SignatureRecord(
+                    CommitKey,
+                    Connector,
+                    MemberKind.Method,
+                    "Update",
+                    false,
+                    0,
+                    new[]
+                    {
+                        new ParameterRecord(
+                            "pmx", "PEPlugin.Pmx.IPXPmx", ParameterDirection.In, false),
+                    },
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
+            };
+        }
+
+        private static CommonAssignmentTable Assignments()
+        {
+            return new CommonAssignmentTable(
+                new[]
+                {
+                    new CommonAssignmentRecord(
+                        StateReadKey, CommonAssignmentKind.InternalFlow, "stateRead", "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        CommitKey,
+                        CommonAssignmentKind.InternalFlow,
+                        "duplicateEdit",
+                        "題材の根拠。"),
+                });
         }
 
         private static TypeRoleTable Roles()
@@ -186,9 +332,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "bridge",
                         string.Empty,
                         CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Pmx,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "pmx",
+                        "pmxes",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Vertex,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "vertex",
+                        "vertices",
+                        CapabilityOwner.Model),
                 },
                 new HandleIssuanceRecord[0],
-                new ElementCollectionRecord[0]);
+                new[]
+                {
+                    new ElementCollectionRecord(ListKey, true, "題材の根拠。", new[] { ListKey }),
+                });
         }
 
         private static Binding Dispatched(string tool, SignatureRecord signature)

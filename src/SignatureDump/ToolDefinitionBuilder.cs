@@ -68,6 +68,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>危険操作の確認を受け取る共通引数の名前。</summary>
         public const string ConfirmName = "confirm";
 
+        /// <summary>どのPMXを見るかを切り替える共通引数の名前。</summary>
+        public const string PmxHandleName = "pmxHandle";
+
         /// <summary>
         /// ツール定義を綴りの順に組み立てる。<paramref name="descriptions"/> はツール名から説明文へ、
         /// <paramref name="valueChars"/> は応答の値の枠、<paramref name="requestBudgetBytes"/> は
@@ -83,7 +86,8 @@ namespace PmxEditorMcp.SignatureDump
             int requestBudgetBytes,
             int tokenLimit,
             IDictionary<SchemaItem, string> sdkShapes,
-            ISet<string> dangerous)
+            ISet<string> dangerous,
+            ISet<string> conditional)
         {
             if (schemas == null)
             {
@@ -110,6 +114,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(dangerous));
             }
 
+            if (conditional == null)
+            {
+                throw new ArgumentNullException(nameof(conditional));
+            }
+
             List<ToolDefinition> definitions = new List<ToolDefinition>();
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
@@ -129,7 +138,8 @@ namespace PmxEditorMcp.SignatureDump
                         requestBudgetBytes,
                         tokenLimit,
                         sdkShapes,
-                        dangerous.Contains(schema.Tool))));
+                        dangerous.Contains(schema.Tool),
+                        conditional.Contains(schema.Tool))));
             }
 
             return definitions;
@@ -142,7 +152,8 @@ namespace PmxEditorMcp.SignatureDump
             int requestBudgetBytes,
             int tokenLimit,
             IDictionary<SchemaItem, string> sdkShapes,
-            bool confirms)
+            bool confirms,
+            bool conditional)
         {
             ListingLimits listing = IsListing(schema)
                 ? ListingLimitRule.Derive(schema, lengths, valueChars)
@@ -158,7 +169,8 @@ namespace PmxEditorMcp.SignatureDump
                     requestBudgetBytes,
                     tokenLimit,
                     sdkShapes,
-                    confirms))
+                    confirms,
+                    conditional))
                 .ToList();
 
             if (branches.Count == 1)
@@ -179,7 +191,8 @@ namespace PmxEditorMcp.SignatureDump
             int requestBudgetBytes,
             int tokenLimit,
             IDictionary<SchemaItem, string> sdkShapes,
-            bool confirms)
+            bool confirms,
+            bool conditional)
         {
             IDictionary<SchemaItem, int> limits =
                 ElementLimitRule.Request(branch, lengths, requestBudgetBytes, tokenLimit);
@@ -212,11 +225,15 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             // 確認の共通引数は、どのシグネチャが危険操作に当たるかの決め方が導くので正本に書かない。
-            // 要らないツールには現れない。
+            // 要らないツールには現れない。対象で要否が分かれる呼び出しでは、必ず渡す側へ入れずに
+            // 下の決まりで表す。
             if (confirms)
             {
                 properties.Add(ConfirmName, new JsonObjectText().AddText("type", "boolean").Text);
-                required.Add(ConfirmName);
+                if (!conditional)
+                {
+                    required.Add(ConfirmName);
+                }
             }
 
             JsonObjectText body = new JsonObjectText().AddText("type", ObjectType);
@@ -228,17 +245,37 @@ namespace PmxEditorMcp.SignatureDump
 
             body.AddBoolean("additionalProperties", false);
 
+            List<string> all = new List<string> { body.Text };
+            all.AddRange((branch.Choices ?? new SchemaChoice[0]).Select(Choice));
+            if (confirms && conditional)
+            {
+                all.Add(Conditional());
+            }
 
-            if (branch.Choices == null || branch.Choices.Count == 0)
+            if (all.Count == 1)
             {
                 return body.Text;
             }
 
-            List<string> all = new List<string> { body.Text };
-            all.AddRange(branch.Choices.Select(Choice));
-
             return new JsonObjectText().AddText("type", ObjectType)
                 .Add("allOf", JsonWriter.Array(all)).Text;
+        }
+
+        /// <summary>
+        /// 対象で要否が分かれる確認の決まりを綴る。どのPMXを見るかを切り替えていれば確認は要らず、
+        /// 切り替えていなければ開いているPMXが相手になるので確認を要る。
+        /// </summary>
+        private static string Conditional()
+        {
+            string[] cases =
+            {
+                new JsonObjectText()
+                    .Add("required", JsonWriter.TextArray(new[] { PmxHandleName })).Text,
+                new JsonObjectText()
+                    .Add("required", JsonWriter.TextArray(new[] { ConfirmName })).Text,
+            };
+
+            return new JsonObjectText().Add("anyOf", JsonWriter.Array(cases)).Text;
         }
 
         /// <summary>

@@ -75,7 +75,8 @@ namespace PmxEditorMcp.SignatureDump
                 evidence.Signatures,
                 evidence.EmbeddedTypes,
                 new HashSet<string>(
-                    assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal));
+                    assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal),
+                evidence.IndependentTypes);
         }
 
         private static void RequireProvided(ToolMapRow row, ToolMapEvidence evidence)

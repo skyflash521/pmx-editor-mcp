@@ -161,6 +161,32 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
         }
 
+        /// <summary>
+        /// 確認の要否が呼ぶ対象で分かれるツールの名前。所有の根そのものを空にする初期化だけが
+        /// これに当たり、対象を指定した呼び出しはメモリの上の生成物を空にするので確認を要さない。
+        /// </summary>
+        public ISet<string> ConditionalDangerousTools(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            IDictionary<string, string> tools = ToolsByRow(inventory);
+            IDictionary<string, SignatureRecord> signatures = inventory.Signatures
+                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+
+            return new HashSet<string>(
+                DangerousOperationRule.Classify(inventory.Signatures)
+                    .Where(d => d.Value == DangerKind.Reset
+                        && tools.ContainsKey(d.Key)
+                        && ElementCollectionEvidence.OwnershipRoots.Contains(
+                            TypeDefinitionName.OfElement(signatures[d.Key].DeclaringType),
+                            StringComparer.Ordinal))
+                    .Select(d => tools[d.Key]),
+                StringComparer.Ordinal);
+        }
+
         /// <summary>ツール名から説明文へ。合成ツールは仕様書の受け持つことをそのまま使う。</summary>
         public IDictionary<string, string> Descriptions(InventoryRecord inventory)
         {

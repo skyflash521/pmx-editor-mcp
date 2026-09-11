@@ -17,6 +17,12 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>独立したツールを持たず、ほかのツールかイベントの分岐へ埋め込まれる行。</summary>
         SchemaEmbedded,
 
+        /// <summary>
+        /// 独立したツールを持たず、別の役割を持つ型の実体へ至る経路になる行。その先の型のツールが
+        /// 相手を得るのにこの経路を通る。
+        /// </summary>
+        RoleAccess,
+
         /// <summary>独立したツールを持ってSDKのメンバーへ中継する行。</summary>
         DirectDispatch,
     }
@@ -77,8 +83,11 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>値を読み出す。</summary>
         ValueRead,
 
-        /// <summary>エディタそのものが終わる。</summary>
-        EditorEnded,
+        /// <summary>
+        /// エディタの終了を求める。未保存の編集があるときは、エディタが確認を出して終わらない
+        /// ことがある。
+        /// </summary>
+        ShutdownRequested,
 
         /// <summary>外から観測できる効果を持たない。</summary>
         None,

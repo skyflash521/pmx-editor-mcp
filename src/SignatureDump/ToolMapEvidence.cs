@@ -23,7 +23,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> updateKinds,
             ISet<string> elementNouns,
             ISet<string> typeNames,
-            ISet<string> embeddedTypes)
+            ISet<string> embeddedTypes,
+            ISet<string> independentTypes)
         {
             if (provided == null)
             {
@@ -55,6 +56,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(embeddedTypes));
             }
 
+            if (independentTypes == null)
+            {
+                throw new ArgumentNullException(nameof(independentTypes));
+            }
+
             Provided = provided;
             Signatures = new ReadOnlyDictionary<string, SignatureRecord>(
                 new Dictionary<string, SignatureRecord>(signatures, StringComparer.Ordinal));
@@ -62,6 +68,7 @@ namespace PmxEditorMcp.SignatureDump
             ElementNouns = elementNouns;
             TypeNames = typeNames;
             EmbeddedTypes = embeddedTypes;
+            IndependentTypes = independentTypes;
         }
 
         /// <summary>提供対象のシグネチャの行キー。</summary>
@@ -81,6 +88,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>独立したツールを持たない役割の型の名前。総称と配列の印を外した鍵で持つ。</summary>
         public ISet<string> EmbeddedTypes { get; }
+
+        /// <summary>独立したツールを持つ役割の型の名前。総称と配列の印を外した鍵で持つ。</summary>
+        public ISet<string> IndependentTypes { get; }
 
         /// <summary>導けないものがあれば <see cref="InvalidOperationException"/>。</summary>
         public static ToolMapEvidence Collect(
@@ -126,7 +136,8 @@ namespace PmxEditorMcp.SignatureDump
                     roles.Types.Where(r => r.ElementNoun != null).Select(r => r.ElementNoun),
                     StringComparer.Ordinal),
                 new HashSet<string>(types.Select(t => t.Name), StringComparer.Ordinal),
-                EmbeddedTypeNames(roles));
+                EmbeddedTypeNames(roles),
+                IndependentToolTypeNames(roles));
         }
 
         /// <summary>
@@ -177,6 +188,23 @@ namespace PmxEditorMcp.SignatureDump
 
             return new HashSet<string>(
                 roles.Types.Where(r => !TypeRoleRecord.HasIndependentTool(r.Role))
+                    .Select(r => TypeDefinitionName.OfElement(r.TypeName)),
+                StringComparer.Ordinal);
+        }
+
+        /// <summary>
+        /// 独立したツールを持つ役割の型の名前。引き当てと同じ鍵にするため、総称と配列の印を
+        /// 外して持つ。
+        /// </summary>
+        public static ISet<string> IndependentToolTypeNames(TypeRoleTable roles)
+        {
+            if (roles == null)
+            {
+                throw new ArgumentNullException(nameof(roles));
+            }
+
+            return new HashSet<string>(
+                roles.Types.Where(r => TypeRoleRecord.HasIndependentTool(r.Role))
                     .Select(r => TypeDefinitionName.OfElement(r.TypeName)),
                 StringComparer.Ordinal);
         }
