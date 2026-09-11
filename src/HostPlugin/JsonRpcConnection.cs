@@ -82,8 +82,8 @@ namespace PmxEditorMcp
         private readonly Dictionary<string, McpMethod> _methods = new Dictionary<string, McpMethod>(StringComparer.Ordinal);
 
         /// <summary>
-        /// 処理を登録する。同じ名前を二度登録することと、接続自身が受け持つ基盤メソッドの名前
-        /// (handshake・ping)を登録することは、いずれも黙って無視されるのを避けるため拒む。
+        /// 処理を登録する。同じ名前を二度登録することと、接続自身が受け持つ基盤メソッドの名前を
+        /// 登録することは、いずれも黙って無視されるのを避けるため拒む。
         /// </summary>
         public void Add(string name, McpMethod method)
         {
@@ -135,10 +135,11 @@ namespace PmxEditorMcp
 
         private const string HandshakeMethodName = "handshake";
         private const string PingMethodName = "ping";
+        private const string EndSessionMethodName = "end_session";
 
         /// <summary>接続自身が受け持つ基盤メソッドの名前。</summary>
         public static readonly ReadOnlyCollection<string> BaseMethodNames =
-            Array.AsReadOnly(new[] { HandshakeMethodName, PingMethodName });
+            Array.AsReadOnly(new[] { HandshakeMethodName, PingMethodName, EndSessionMethodName });
 
         /// <summary>要求1件の処理に許す時間の既定。</summary>
         public static readonly TimeSpan DefaultRequestTimeout = TimeSpan.FromSeconds(120);
@@ -340,6 +341,15 @@ namespace PmxEditorMcp
                     return;
                 }
 
+                // 別の接続が終わらせたセッションかもしれないので、要求のたびに、どの分岐よりも先に
+                // 見る。台帳もキューも失効しているので、この接続で続けられることはもう無い。
+                if (scope != null && scope.Session.IsEnded)
+                {
+                    Respond(channel, errors, request.Id, JsonRpcErrorCodes.SessionRefused,
+                        "このセッションは終わっている。");
+                    return;
+                }
+
                 if (isHandshake)
                 {
                     Session session;
@@ -361,6 +371,14 @@ namespace PmxEditorMcp
                     }
 
                     continue;
+                }
+
+                if (EndSessionMethodName.Equals(request.Method, StringComparison.Ordinal))
+                {
+                    _sessions.End(scope.Session.Id);
+                    WriteResult(channel, errors, request.Id, scope.Session.Id);
+
+                    return;
                 }
 
                 McpMethod method = null;
@@ -698,8 +716,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 接続1本の間だけ生きるもの。要求ごとの文脈はここから作るので、ハンドルもイベントも
-        /// 接続をまたがない。
+        /// 接続1本が結び付いた相手。要求ごとの文脈はここから作る。ハンドルもイベントもセッションの
+        /// 持ち物なので、切断を越えて生き、繋ぎ直した接続が同じものを見る。
         /// </summary>
         private sealed class ConnectionScope
         {

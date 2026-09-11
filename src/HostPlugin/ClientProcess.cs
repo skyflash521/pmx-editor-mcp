@@ -30,6 +30,12 @@ namespace PmxEditorMcp
         /// <summary>接続元のプロセスID。</summary>
         public int Id { get; }
 
+        /// <summary>そのプロセスが終わったときに合図されるハンドル。</summary>
+        public WaitHandle Exited
+        {
+            get { return _exited; }
+        }
+
         /// <summary>そのプロセスが終わっていれば真。</summary>
         public bool HasExited
         {

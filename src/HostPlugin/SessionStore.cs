@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace PmxEditorMcp
 {
@@ -17,6 +19,25 @@ namespace PmxEditorMcp
             Handles = handles;
             Events = events;
             Client = client;
+        }
+
+        /// <summary>見張りの登録と、終わったかどうかを守る錠。</summary>
+        internal object WatchGate { get; } = new object();
+
+        /// <summary>所有者の終了を見張っている登録。回収のときに解く。</summary>
+        internal RegisteredWaitHandle Watch { get; set; }
+
+        private volatile bool _ended;
+
+        /// <summary>
+        /// 終わらせたあとなら真。一度真になったら戻らない。別のスレッドが終わらせた結果を
+        /// 要求の処理が読むので、書いたことが読む側へ必ず見える形で持つ。
+        /// </summary>
+        public bool IsEnded
+        {
+            get { return _ended; }
+
+            internal set { _ended = value; }
         }
 
         /// <summary>ホストが発行した識別子。128ビットの乱数を16進で表した文字列。</summary>
@@ -104,6 +125,7 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(client));
             }
 
+            Session created;
             lock (_gate)
             {
                 Session existing;
@@ -122,9 +144,75 @@ namespace PmxEditorMcp
                 session = new Session(
                     NewId(), new HandleLedger(_log, _handleIds), new EventQueue(_eventSequence), client);
                 _sessions.Add(session.Id, session);
-
-                return true;
+                created = session;
             }
+
+            // 所有者の終了を見張る。すでに終わっていれば登録した時点で合図されるので、handshake の
+            // 途中で終わった接続元のセッションも、作った直後に回収される。合図が先に走ると登録を
+            // 覚える前に終わりうるので、覚えたところで終わり済みかを見て、そのときは自分で解く。
+            RegisteredWaitHandle watch = ThreadPool.RegisterWaitForSingleObject(
+                created.Client.Exited,
+                (state, timedOut) => End(((Session)state).Id),
+                created,
+                Timeout.Infinite,
+                true);
+
+            lock (created.WatchGate)
+            {
+                created.Watch = watch;
+                if (created.IsEnded)
+                {
+                    watch.Unregister(null);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// セッションを終わらせる。ハンドルを解放して台帳を閉じ、所有者の待機ハンドルと見張りを
+        /// 解く。知らない識別子と、終わり済みの識別子では何もせず偽を返す。
+        /// </summary>
+        public bool End(string id)
+        {
+            if (id == null)
+            {
+                throw new ArgumentNullException(nameof(id));
+            }
+
+            Session session;
+            lock (_gate)
+            {
+                if (!_sessions.TryGetValue(id, out session))
+                {
+                    return false;
+                }
+
+                _sessions.Remove(id);
+            }
+
+            // 見張りの解除と後始末は、台帳の錠の外で行う。所有者の終了から呼ばれる経路と、明示の
+            // 終了から呼ばれる経路が同じここへ来るので、取り出せた側だけが進む。
+            lock (session.WatchGate)
+            {
+                session.IsEnded = true;
+                if (session.Watch != null)
+                {
+                    session.Watch.Unregister(null);
+                }
+            }
+
+            try
+            {
+                session.Handles.ReleaseAll();
+                session.Events.Close();
+            }
+            finally
+            {
+                session.Client.Dispose();
+            }
+
+            return true;
         }
 
         /// <summary>その識別子のセッション。知らなければ null。</summary>
@@ -151,7 +239,7 @@ namespace PmxEditorMcp
             StringBuilder text = new StringBuilder(IdBytes * 2);
             foreach (byte value in bytes)
             {
-                text.Append(value.ToString("x2", System.Globalization.CultureInfo.InvariantCulture));
+                text.Append(value.ToString("x2", CultureInfo.InvariantCulture));
             }
 
             return text.ToString();

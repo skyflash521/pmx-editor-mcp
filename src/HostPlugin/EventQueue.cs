@@ -53,7 +53,7 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// 接続が溜める購読中のイベント。押し出す通知は持たず、取りに来たぶんだけ渡す。あふれたら
+    /// セッションが溜める購読中のイベント。押し出す通知は持たず、取りに来たぶんだけ渡す。あふれたら
     /// 古いものから捨て、捨てた件数を次の取り出しで知らせる。
     /// 複数のスレッドから同時に呼んでよい。
     /// </summary>
@@ -78,6 +78,8 @@ namespace PmxEditorMcp
 
         private int _dropped;
 
+        private bool _closed;
+
         public EventQueue(EventSequenceIssuer issuer)
         {
             if (issuer == null)
@@ -86,6 +88,32 @@ namespace PmxEditorMcp
             }
 
             _issuer = issuer;
+        }
+
+        /// <summary>閉じていれば真。</summary>
+        public bool IsClosed
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return _closed;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 溜めるのをやめ、残っているイベントを捨てる。セッションが終わるときに呼ぶ。以後は
+        /// 溜めることも取り出すこともできない——取り出せると、誰のものでもない列を読めてしまう。
+        /// </summary>
+        public void Close()
+        {
+            lock (_gate)
+            {
+                _closed = true;
+                _events.Clear();
+                _dropped = 0;
+            }
         }
 
         /// <summary>いま溜まっている件数。</summary>
@@ -125,6 +153,7 @@ namespace PmxEditorMcp
 
             lock (_gate)
             {
+                RequireOpen();
                 _lastSeq = _issuer.Next();
                 QueuedEvent queued = new QueuedEvent(_lastSeq, type, sourceHandle, payload);
                 _events.Enqueue(queued);
@@ -152,6 +181,7 @@ namespace PmxEditorMcp
 
             lock (_gate)
             {
+                RequireOpen();
                 List<QueuedEvent> taken = new List<QueuedEvent>();
                 while (taken.Count < limit && _events.Count != 0)
                 {
@@ -162,6 +192,14 @@ namespace PmxEditorMcp
                 _dropped = 0;
 
                 return new EventDrainResult(taken, dropped, _events.Count);
+            }
+        }
+
+        private void RequireOpen()
+        {
+            if (_closed)
+            {
+                throw new InvalidOperationException("キューは閉じている。");
             }
         }
     }

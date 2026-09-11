@@ -1014,9 +1014,10 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void BuiltInMethodNamesCanBeEnumerated()
         {
-            Assert.Equal(2, JsonRpcConnection.BaseMethodNames.Count);
+            Assert.Equal(3, JsonRpcConnection.BaseMethodNames.Count);
             Assert.Contains("handshake", JsonRpcConnection.BaseMethodNames);
             Assert.Contains("ping", JsonRpcConnection.BaseMethodNames);
+            Assert.Contains("end_session", JsonRpcConnection.BaseMethodNames);
         }
 
         [Fact]

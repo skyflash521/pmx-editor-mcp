@@ -67,12 +67,15 @@ handshake 済みの接続で引数が有効な handshake を再度受けたと�
 
 ## 基盤メソッド
 
-`handshake` と `ping`(result: 文字列 `"pong"`)。
+`handshake`・`ping`(result: 文字列 `"pong"`)・`end_session`(result: 終わらせたセッションの識別子)。
 
 ```
 要求 {"jsonrpc":"2.0","id":1,"method":"ping"}
 応答 {"jsonrpc":"2.0","id":1,"result":"pong"}
 ```
+
+`end_session` はそのセッションを終わらせ、応答を返してから接続を切る。終わったセッションの
+識別子は以後どの接続からも使えない。
 
 ## 検査からだけ使う入口
 
