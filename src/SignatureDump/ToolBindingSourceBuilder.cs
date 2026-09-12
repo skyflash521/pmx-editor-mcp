@@ -189,8 +189,7 @@ namespace PmxEditorMcp.SignatureDump
                         owning,
                         true,
                         element.TypeName,
-                        ElementPathEvidence.Owner(
-                            signatures, issued, row.SignatureKey, owning.Count));
+                        ElementPathEvidence.Owner(signatures, issued, row.SignatureKey));
                     foreach (string named in ElementToolRule.Of(element))
                     {
                         elements.Add(
@@ -963,7 +962,8 @@ namespace PmxEditorMcp.SignatureDump
             if (held)
             {
                 return "new ToolReceiver(ToolReceiverKind.Handle, " + Literal(declaring)
-                    + ", EditKind." + Edit(edit) + ", false, " + TypeOf(declaringType) + ")";
+                    + ", EditKind." + Edit(edit) + ", false, item => item is "
+                    + Code(declaringType) + ")";
             }
 
             return "new ToolReceiver(ToolReceiverKind."

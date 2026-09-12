@@ -147,6 +147,27 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
+        /// そのハンドルが指す実体。型を問わずに取り出すので、受け取る側がその実体を扱えるかを
+        /// 判ずる。解放済み・知らないハンドルでは偽。
+        /// </summary>
+        public bool TryGet(int id, out object target)
+        {
+            lock (_gate)
+            {
+                target = null;
+                Entry entry;
+                if (!_entries.TryGetValue(id, out entry))
+                {
+                    return false;
+                }
+
+                target = entry.Target;
+
+                return true;
+            }
+        }
+
+        /// <summary>
         /// ハンドルの実体を取り出す。知らない・解放済み・型が違うときは偽。
         /// </summary>
         public bool TryGet(int id, string type, out object target)

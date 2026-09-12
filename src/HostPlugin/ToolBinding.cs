@@ -288,18 +288,18 @@ namespace PmxEditorMcp
             string typeName,
             EditKind edit,
             bool bridged = false,
-            Type held = null)
+            Func<object, bool> accepts = null)
         {
-            if (kind == ToolReceiverKind.Handle && held == null)
+            if (kind == ToolReceiverKind.Handle && accepts == null)
             {
-                throw new ArgumentNullException(nameof(held));
+                throw new ArgumentNullException(nameof(accepts));
             }
 
             Kind = kind;
             TypeName = typeName;
             Edit = edit;
             Bridged = bridged;
-            Held = held;
+            Accepts = accepts;
         }
 
         public ToolReceiverKind Kind { get; }
@@ -316,8 +316,10 @@ namespace PmxEditorMcp
         /// </summary>
         public bool Bridged { get; }
 
-        /// <summary>ハンドルから得る受け手の型。ほかの得方では null。</summary>
-        public Type Held { get; }
+        /// <summary>
+        /// その実体を受け手にできるか。ハンドルから得る受け手だけが持ち、派生した型も通す。
+        /// </summary>
+        public Func<object, bool> Accepts { get; }
     }
 
     /// <summary>SDKのメンバーへ中継するツール1件。</summary>

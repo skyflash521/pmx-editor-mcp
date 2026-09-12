@@ -110,7 +110,7 @@ namespace PmxEditorMcp.SignatureDump
                 IList<string> parents = collection.OwnerPath
                     .Take(collection.OwnerPath.Count - 1)
                     .ToList();
-                string owner = Owner(signatures, issued, collection.SignatureKey, parents.Count);
+                string owner = Owner(signatures, issued, collection.SignatureKey);
                 Reach(paths, element, collection.SignatureKey, parents, owner);
                 IList<string> leaves;
                 if (concrete.TryGetValue(element, out leaves))
@@ -191,18 +191,27 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
+            foreach (HandleIssuanceRecord issuance in roles.Issuances.Where(i => i.Issues))
+            {
+                SignatureRecord signature;
+                if (signatures.TryGetValue(issuance.SignatureKey, out signature))
+                {
+                    issued.Add(TypeDefinitionName.OfElement(
+                        ValueTypeName.Contained(signature.ValueType)));
+                }
+            }
+
             return issued;
         }
 
         /// <summary>
-        /// その一歩を直に持つ型。親をハンドルで指せない道では null——親を辿らない道と、親へ
-        /// ハンドルが発行されない道である。
+        /// その一歩を直に持つ型。親をハンドルで指せない道では null——親へハンドルが発行されない
+        /// 道である。
         /// </summary>
         public static string Owner(
             IDictionary<string, SignatureRecord> signatures,
             ISet<string> issued,
-            string rowKey,
-            int parents)
+            string rowKey)
         {
             if (signatures == null)
             {
@@ -215,7 +224,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             SignatureRecord signature;
-            if (parents == 0 || rowKey == null || !signatures.TryGetValue(rowKey, out signature))
+            if (rowKey == null || !signatures.TryGetValue(rowKey, out signature))
             {
                 return null;
             }
@@ -303,7 +312,7 @@ namespace PmxEditorMcp.SignatureDump
                 parents,
                 false,
                 type,
-                Owner(signatures, issued, rowKey, parents.Count));
+                Owner(signatures, issued, rowKey));
         }
 
         /// <summary>その型へ至る道をまだ持っていなければ覚える。</summary>

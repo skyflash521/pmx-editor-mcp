@@ -991,6 +991,77 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheElementsOfAParentWithNoPathFromTheModelComeBackUnderItsHandle()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            held.Leaves.Add(new Item { Label = "一" });
+            held.Leaves.Add(new Item { Label = "二" });
+            int handle = handles.Issue(typeof(Group).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_sprigs",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.All, true),
+                handles);
+
+            Assert.Equal(
+                new[] { "一", "二" },
+                Items(Value(envelope)).Select(i => i["label"]).ToArray());
+        }
+
+        [Fact]
+        public void PointingTheElementsOfSuchAParentWithoutItsHandleIsRefused()
+        {
+            IDictionary<string, object> envelope = Call(
+                "model_list_sprigs", Arguments(TargetNames.Element.All, true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains(TargetNames.Parent.Handles, Message(envelope), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AddingUnderSuchAParentPutsTheElementIntoItWithoutReflectingThePmx()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            int parent = handles.Issue(typeof(Group).FullName, held, () => { });
+            int child = handles.Issue(typeof(Item).FullName, new Item { Label = "一" }, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_sprigs",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { HeldAssignment(parent, child) }),
+                handles);
+
+            IDictionary<string, object> value = Value(envelope);
+            Assert.Equal(1, value[SetResponse.AddedName]);
+            Assert.Equal(new[] { 0 }, (int[])value[SetResponse.IndicesName]);
+            Assert.Equal("一", ((Item)held.Leaves[0]).Label);
+            Assert.Equal(0, _commits);
+        }
+
+        [Fact]
+        public void AddingUnderSuchAParentByItsPositionIsRefused()
+        {
+            _model.Groups.Add(new Group());
+            HandleLedger handles = Ledger();
+            int child = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_sprigs",
+                Arguments(ToolDispatch.AssignmentsName, new object[] { Assignment(0, child) }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains(
+                ToolDispatch.ParentIndexName, Message(envelope), StringComparison.Ordinal);
+            Assert.Empty(_model.Groups[0].Leaves);
+        }
+
+        [Fact]
         public void AnUpdateOfHeldElementsDoesNotReflectThePmx()
         {
             HandleLedger handles = Ledger();
@@ -1828,6 +1899,21 @@ namespace PmxEditorMcp.Tests
                 typeof(Group));
         }
 
+        /// <summary>PMXから辿る道が無く、ハンドルで指した親の下にだけある要素のリストへ至る道。</summary>
+        private static ToolAccess Sprigged()
+        {
+            return new ToolAccess(
+                ToolAccessKind.Element,
+                LeavesKey,
+                null,
+                true,
+                typeof(Item),
+                item => item is Item,
+                "item",
+                null,
+                typeof(Group));
+        }
+
         /// <summary>親が1つだけ持つ子の、さらに下にある要素のリストへ至る道。</summary>
         private static ToolAccess Veined()
         {
@@ -2099,6 +2185,10 @@ namespace PmxEditorMcp.Tests
                     new ToolFields(false, true, Rooted(EditKind.Read), Veined(), Set(labels))
                 },
                 {
+                    "model_list_sprigs",
+                    new ToolFields(false, true, Rooted(EditKind.Read), Sprigged(), Set(labels))
+                },
+                {
                     "model_list_notes",
                     new ToolFields(false, true, Rooted(EditKind.Read), note, Set(texts))
                 },
@@ -2116,6 +2206,7 @@ namespace PmxEditorMcp.Tests
                 { "model_add_leaves", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Nested()) },
                 { "model_remove_leaves", new ToolElements(true, Rooted(EditKind.DuplicateEdit), Nested()) },
                 { "model_add_veins", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Veined()) },
+                { "model_add_sprigs", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Sprigged()) },
             };
         }
 

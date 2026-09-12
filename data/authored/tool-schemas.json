@@ -13348,6 +13348,324 @@
       "output": {}
     },
     {
+      "tool": "motion_add_vmd_bone_keys",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "indices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostInput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_add_vmd_camera_keys",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "indices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostInput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_add_vmd_light_keys",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "indices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostInput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_add_vmd_morph_keys",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "indices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostInput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_add_vmd_self_shadow_keys",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "indices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostInput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_add_vmd_visible_ik_keys",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "assignments",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "parentHandle",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "handles",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    },
+                    "required": true
+                  }
+                ]
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "indices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostInput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_clear_keys_vmd",
       "branches": [
         {
@@ -13397,6 +13715,56 @@
               "element": {}
             }
           ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_create_vmd_bas_camera_key",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_create_vmd_bone_key",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_create_vmd_light_key",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_create_vmd_morph_key",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_create_vmd_self_shadow_key",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
         }
       ],
       "output": {}
@@ -13766,6 +14134,501 @@
       }
     },
     {
+      "tool": "motion_list_vmd_bone_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "boneIndex"
+                },
+                {
+                  "name": "physicsOff"
+                },
+                {
+                  "name": "rotation"
+                },
+                {
+                  "name": "translation"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vmd_camera_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "angle"
+                },
+                {
+                  "name": "distance"
+                },
+                {
+                  "name": "fov"
+                },
+                {
+                  "name": "isPers"
+                },
+                {
+                  "name": "position"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vmd_frame_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "frameIndex"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vmd_ik_enables",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "enable"
+                },
+                {
+                  "name": "ikBoneIndex"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vmd_light_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "color"
+                },
+                {
+                  "name": "direction"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vmd_morph_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "morphIndex"
+                },
+                {
+                  "name": "value"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vmd_self_shadow_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "distance"
+                },
+                {
+                  "name": "mode"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_list_vmds",
       "branches": [
         {
@@ -13857,6 +14720,426 @@
         "members": [
           {
             "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_remove_vmd_bone_keys",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "removed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_remove_vmd_camera_keys",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "removed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_remove_vmd_light_keys",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "removed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_remove_vmd_morph_keys",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "removed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_remove_vmd_self_shadow_keys",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "removed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_remove_vmd_visible_ik_keys",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "removed",
             "origin": "hostOutput",
             "shape": "number"
           }
@@ -14255,6 +15538,521 @@
         "members": [
           {
             "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vmd_bone_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "boneIndex",
+                  "required": false
+                },
+                {
+                  "name": "physicsOff",
+                  "required": false
+                },
+                {
+                  "name": "rotation",
+                  "required": false
+                },
+                {
+                  "name": "translation",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "boneIndex",
+                    "required": false
+                  },
+                  {
+                    "name": "physicsOff",
+                    "required": false
+                  },
+                  {
+                    "name": "rotation",
+                    "required": false
+                  },
+                  {
+                    "name": "translation",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vmd_camera_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "angle",
+                  "required": false
+                },
+                {
+                  "name": "distance",
+                  "required": false
+                },
+                {
+                  "name": "fov",
+                  "required": false
+                },
+                {
+                  "name": "isPers",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "angle",
+                    "required": false
+                  },
+                  {
+                    "name": "distance",
+                    "required": false
+                  },
+                  {
+                    "name": "fov",
+                    "required": false
+                  },
+                  {
+                    "name": "isPers",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vmd_frame_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "frameIndex",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "frameIndex",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vmd_ik_enables",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "enable",
+                  "required": false
+                },
+                {
+                  "name": "ikBoneIndex",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "enable",
+                    "required": false
+                  },
+                  {
+                    "name": "ikBoneIndex",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vmd_light_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "color",
+                  "required": false
+                },
+                {
+                  "name": "direction",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "color",
+                    "required": false
+                  },
+                  {
+                    "name": "direction",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vmd_morph_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "morphIndex",
+                  "required": false
+                },
+                {
+                  "name": "value",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "morphIndex",
+                    "required": false
+                  },
+                  {
+                    "name": "value",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vmd_self_shadow_keys",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "distance",
+                  "required": false
+                },
+                {
+                  "name": "mode",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "distance",
+                    "required": false
+                  },
+                  {
+                    "name": "mode",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
             "origin": "hostOutput",
             "shape": "number"
           }

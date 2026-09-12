@@ -54,6 +54,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string HeaderKey = Pmx + ".Header()";
 
+        private const string Keep = "PEPlugin.Pmx.IPXKeep";
+
+        private const string NewKeep = Pmx + ".NewKeep()";
+
+        private const string FindFar = Pmx + ".FindFar()";
+
         [Fact]
         public void TheModelItselfIsTheReceiverOfItsOwnPath()
         {
@@ -184,6 +190,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ATypeAMemberHandsOutAFreshHandleForIsAlsoOneAHandleCanPointAt()
+        {
+            ISet<string> issued = ElementPathEvidence.Issued(Inventory(), Roles());
+
+            Assert.Contains(Keep, issued);
+            Assert.DoesNotContain(Far, issued);
+        }
+
+        [Fact]
+        public void WhatHoldsTheListDecidesTheOwnerEvenWhenNoParentIsWalked()
+        {
+            IDictionary<string, SignatureRecord> signatures = Inventory().Signatures
+                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+
+            Assert.Equal(
+                Pmx,
+                ElementPathEvidence.Owner(
+                    signatures, new HashSet<string>(StringComparer.Ordinal) { Pmx }, VertexList));
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             Assert.Throws<ArgumentNullException>(
@@ -195,13 +222,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentNullException>(
                 () => ElementPathEvidence.Issued(Inventory(), null));
             Assert.Throws<ArgumentNullException>(
-                () => ElementPathEvidence.Owner(null, new HashSet<string>(), MorphList, 1));
+                () => ElementPathEvidence.Owner(null, new HashSet<string>(), MorphList));
             Assert.Throws<ArgumentNullException>(
                 () => ElementPathEvidence.Owner(
                     new Dictionary<string, SignatureRecord>(StringComparer.Ordinal),
                     null,
-                    MorphList,
-                    1));
+                    MorphList));
         }
 
         private static IDictionary<string, AccessPath> Resolve()
@@ -226,6 +252,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Type(Mid),
                     Type(Far),
                     Type(Header),
+                    Type(Keep),
                     Type(Morph),
                     Type(Pmx),
                 }.ToList(),
@@ -244,6 +271,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     List(Pmx, "Morph", Morph),
                     List(Morph, "Offsets", Offset),
                     Single(Pmx, "Header", Header),
+                    Made(Pmx, "NewKeep", Keep),
+                    Made(Pmx, "FindFar", Far),
                 }.ToList());
         }
 
@@ -263,6 +292,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Role(Morph, "morph", "morphs"),
                 Role(Offset, "morph_offset", "morph_offsets"),
                 Role(MaterialOffset, "material_morph_offset", "material_morph_offsets"),
+                Role(Keep, "keep", "keeps"),
             };
             ElementCollectionRecord[] collections =
             {
@@ -275,7 +305,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     PartList, true, "題材。", new[] { MorphList, OffsetList, PartList }),
             };
 
-            return new TypeRoleTable(types, new HandleIssuanceRecord[0], collections);
+            HandleIssuanceRecord[] issuances =
+            {
+                new HandleIssuanceRecord(NewKeep, true, "題材。"),
+                new HandleIssuanceRecord(FindFar, false, "題材。"),
+            };
+
+            return new TypeRoleTable(types, issuances, collections);
         }
 
         private static TypeRoleRecord Role(string typeName, string noun, string plural)
@@ -309,6 +345,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string declaringType, string memberName, string valueType)
         {
             return Property(declaringType, memberName, valueType);
+        }
+
+        /// <summary>値を返すメソッド1件。</summary>
+        private static SignatureRecord Made(
+            string declaringType, string memberName, string valueType)
+        {
+            return new SignatureRecord(
+                declaringType + "." + memberName + "()",
+                declaringType,
+                MemberKind.Method,
+                memberName,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                false,
+                false,
+                OperationDirection.Read);
         }
 
         private static SignatureRecord Property(

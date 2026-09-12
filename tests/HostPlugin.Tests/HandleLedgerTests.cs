@@ -74,6 +74,31 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheTargetIsAlsoTakenBackWithoutNamingItsType()
+        {
+            object target = new object();
+            int id = _ledger.Issue(UiModel, target, () => { });
+
+            object found;
+
+            Assert.True(_ledger.TryGet(id, out found));
+            Assert.Same(target, found);
+        }
+
+        [Fact]
+        public void AReleasedHandleIsNotTakenBackWithoutNamingItsTypeEither()
+        {
+            int id = Issue(UiModel);
+            HandleReleaseResult result;
+            _ledger.TryRelease(id, out result);
+
+            object found;
+
+            Assert.False(_ledger.TryGet(id, out found));
+            Assert.Null(found);
+        }
+
+        [Fact]
         public void AnUnknownHandleIsNotTakenBack()
         {
             object found;

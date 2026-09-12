@@ -2082,7 +2082,7 @@ namespace PmxEditorMcp
         /// <summary>所有するリストの末尾へ、ハンドルが指す要素を加える。</summary>
         private object Add(McpMethodContext context, ToolElements tool)
         {
-            return tool.Access.Parents.Count == 0
+            return tool.Access.Parents.Count == 0 && tool.Access.Owner == null
                 ? AddToRoot(context, tool)
                 : AddToParents(context, tool);
         }
@@ -2390,14 +2390,13 @@ namespace PmxEditorMcp
                 yield return TargetNames.Element.Handles;
             }
 
-            if (access.Parents.Count == 0)
+            if (access.Parents.Count != 0)
             {
-                yield break;
+                yield return TargetNames.Parent.Indices;
+                yield return TargetNames.Parent.Range;
+                yield return TargetNames.Parent.All;
             }
 
-            yield return TargetNames.Parent.Indices;
-            yield return TargetNames.Parent.Range;
-            yield return TargetNames.Parent.All;
             if (access.Owner != null)
             {
                 yield return TargetNames.Parent.Handles;
@@ -2460,7 +2459,7 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            if (access.Parents.Count != 0
+            if ((access.Parents.Count != 0 || access.Owner != null)
                 && !TryTargets(
                     context,
                     TargetNames.Parent,
@@ -2469,6 +2468,14 @@ namespace PmxEditorMcp
                     out code,
                     out message))
             {
+                return false;
+            }
+
+            if (access.Parents.Count == 0 && access.Owner != null && parents.Handles == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = TargetNames.Parent.Handles + " で親を指す。";
+
                 return false;
             }
 
@@ -2551,7 +2558,7 @@ namespace PmxEditorMcp
             if (Handled(receiver))
             {
                 return TryHeld(
-                    context, access, new[] { receiver.Held }, pointed, out column, out refused);
+                    id => Held(context, receiver.Accepts, id), pointed, out column, out refused);
             }
 
             if (access.Kind == ToolAccessKind.Whole)
@@ -2563,7 +2570,8 @@ namespace PmxEditorMcp
 
             if (access.Kind == ToolAccessKind.Element && pointed.ByHandle)
             {
-                return TryHeld(context, access, accepted, pointed, out column, out refused);
+                return TryHeld(
+                    id => Held(context, accepted, id), pointed, out column, out refused);
             }
 
             IList<object> owners;
@@ -2760,9 +2768,7 @@ namespace PmxEditorMcp
         /// 覚えているので、そのツールが受け付ける型のどれかで引く。
         /// </summary>
         private static bool TryHeld(
-            McpMethodContext context,
-            ToolAccess access,
-            IList<Type> accepted,
+            Func<long, object> resolve,
             Pointed pointed,
             out IList<Spot> column,
             out Refusal refused)
@@ -2776,7 +2782,7 @@ namespace PmxEditorMcp
                 pointed.Elements,
                 TargetForm.Handles,
                 0,
-                id => Held(context, accepted, id) != null,
+                id => resolve(id) != null,
                 out resolved,
                 out code,
                 out message,
@@ -2788,7 +2794,7 @@ namespace PmxEditorMcp
             }
 
             column = resolved.Handles
-                .Select((id, at) => new Spot(null, at, -1, -1, Held(context, accepted, id)))
+                .Select((id, at) => new Spot(null, at, -1, -1, resolve(id)))
                 .ToList();
 
             return true;
@@ -3304,6 +3310,15 @@ namespace PmxEditorMcp
 
             if (byIndex)
             {
+                if (tool.Access.Parents.Count == 0)
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = ParentIndexName
+                        + " はこのツールでは指定できない。親を位置で指す道が無いためである。";
+
+                    return false;
+                }
+
                 pointing = position;
 
                 return true;
@@ -3339,6 +3354,21 @@ namespace PmxEditorMcp
 
             return id >= int.MinValue && id <= int.MaxValue
                 && context.Handles.TryGet((int)id, type.FullName, out held)
+                    ? held
+                    : null;
+        }
+
+        /// <summary>
+        /// そのハンドルが指す、受け手にできる実体。指していなければ null。実体の側で判ずるので、
+        /// 派生した型のハンドルは、その基底の型を相手にする呼び出しでも通る。
+        /// </summary>
+        private static object Held(McpMethodContext context, Func<object, bool> accepts, long id)
+        {
+            object held;
+
+            return id >= int.MinValue && id <= int.MaxValue
+                && context.Handles.TryGet((int)id, out held)
+                && accepts(held)
                     ? held
                     : null;
         }

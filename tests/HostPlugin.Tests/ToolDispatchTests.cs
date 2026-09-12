@@ -465,6 +465,22 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ACallOnAHeldReceiverTakesAHandleOfATypeThatDerivesFromIts()
+        {
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", new object[] { 1L });
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Twin).FullName, new Twin { Count = 7 }, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_count_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.Equal(new object[] { 7 }, (IEnumerable<object>)envelope[ToolEnvelope.ValueName]);
+        }
+
+        [Fact]
         public void ACallOnAHeldReceiverIsRefusedWithoutHandles()
         {
             IDictionary<string, object> envelope = (IDictionary<string, object>)
@@ -1077,7 +1093,7 @@ namespace PmxEditorMcp.Tests
                             TargetType,
                             EditKind.Read,
                             false,
-                            typeof(Target)),
+                            item => item is Target),
                         ToolAccess.Whole(),
                         DangerKind.None,
                         new ToolArgument[0],
@@ -1111,7 +1127,7 @@ namespace PmxEditorMcp.Tests
                             TargetType,
                             EditKind.ViewSession,
                             false,
-                            typeof(Target)),
+                            item => item is Target),
                         ToolAccess.Whole(),
                         DangerKind.None,
                         new[]
@@ -1132,7 +1148,7 @@ namespace PmxEditorMcp.Tests
                             TargetType,
                             EditKind.DirectChange,
                             false,
-                            typeof(Target)),
+                            item => item is Target),
                         ToolAccess.Whole(),
                         DangerKind.None,
                         new[] { new ToolArgument("pmx", typeof(object), true) },
@@ -1307,7 +1323,7 @@ namespace PmxEditorMcp.Tests
                             TargetType,
                             EditKind.ViewSession,
                             false,
-                            typeof(Target)),
+                            item => item is Target),
                         ToolAccess.Whole(),
                         Set(new ToolField("flag", FlagKey, typeof(bool))))
                 },
@@ -1327,7 +1343,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>中継が読み書きする題材。</summary>
-        private sealed class Target
+        private class Target
         {
             public int[] Picked { get; set; } = new int[0];
 
@@ -1344,6 +1360,11 @@ namespace PmxEditorMcp.Tests
             public Note[] Notes { get; set; }
 
             public object Taken { get; set; }
+        }
+
+        /// <summary>題材を継いだ型。台帳はこちらの名前で覚える。</summary>
+        private sealed class Twin : Target
+        {
         }
 
         /// <summary>組で受け取ってSDKへ渡す題材。</summary>

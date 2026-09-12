@@ -701,6 +701,91 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBasCameraKey()",
+      "editKind": "directChange",
+      "basis": "カメラのキーを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmd_camera_keys",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBoneKey()",
+      "editKind": "directChange",
+      "basis": "ボーンのキーを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmd_bone_keys",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdLightKey()",
+      "editKind": "directChange",
+      "basis": "照明のキーを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmd_light_keys",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdMorphKey()",
+      "editKind": "directChange",
+      "basis": "モーフのキーを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmd_morph_keys",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdSelfShadowKey()",
+      "editKind": "directChange",
+      "basis": "セルフ影のキーを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmd_self_shadow_keys",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.IPEPluginOption.Bootup()",
       "editKind": "read",
       "basis": "起動のときに走らせるかどうかを返すだけで、エディタの状態を動かさない。",
@@ -5820,6 +5905,16 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.Bone()",
+      "editKind": "directChange",
+      "basis": "ボーンのキーを並べて持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.Camera()",
+      "editKind": "directChange",
+      "basis": "カメラのキーを並べて持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.ClearKeys()",
       "editKind": "directChange",
       "basis": "すべてのキーを取り除く。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
@@ -6012,6 +6107,11 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.Light()",
+      "editKind": "directChange",
+      "basis": "照明のキーを並べて持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.ModelName()",
       "editKind": "directChange",
       "basis": "相手にするモデルの名前を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
@@ -6019,6 +6119,11 @@
         "motion_list_vmds",
         "motion_update_vmds"
       ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.Morph()",
+      "editKind": "directChange",
+      "basis": "モーフのキーを並べて持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.NormalizeKeys()",
@@ -6032,6 +6137,11 @@
           "comparison": "exists"
         }
       ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.SelfShadow()",
+      "editKind": "directChange",
+      "basis": "セルフ影のキーを並べて持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.SetBoneNames(System.String[])",
@@ -6161,6 +6271,223 @@
           "kind": "callLogOnly",
           "comparison": "exists"
         }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.VisibleIK()",
+      "editKind": "directChange",
+      "basis": "表示とIKのキーを並べて持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.BoneIndex()",
+      "editKind": "directChange",
+      "basis": "どのボーンのキーかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_bone_keys",
+        "motion_update_vmd_bone_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplR()",
+      "editKind": "directChange",
+      "basis": "向きの補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplX()",
+      "editKind": "directChange",
+      "basis": "横の移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplY()",
+      "editKind": "directChange",
+      "basis": "縦の移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplZ()",
+      "editKind": "directChange",
+      "basis": "奥行きの移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.PhysicsOff()",
+      "editKind": "directChange",
+      "basis": "物理を切るかどうかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_bone_keys",
+        "motion_update_vmd_bone_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.Rotation()",
+      "editKind": "directChange",
+      "basis": "ボーンの向きを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_bone_keys",
+        "motion_update_vmd_bone_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.Translation()",
+      "editKind": "directChange",
+      "basis": "ボーンの移動を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_bone_keys",
+        "motion_update_vmd_bone_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.Angle()",
+      "editKind": "directChange",
+      "basis": "カメラの向きを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_camera_keys",
+        "motion_update_vmd_camera_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.Distance()",
+      "editKind": "directChange",
+      "basis": "注視点までの距離を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_camera_keys",
+        "motion_update_vmd_camera_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.FOV()",
+      "editKind": "directChange",
+      "basis": "視野の広さを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_camera_keys",
+        "motion_update_vmd_camera_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplD()",
+      "editKind": "directChange",
+      "basis": "距離の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplFOV()",
+      "editKind": "directChange",
+      "basis": "視野の広さの補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplR()",
+      "editKind": "directChange",
+      "basis": "向きの補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplX()",
+      "editKind": "directChange",
+      "basis": "横の移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplY()",
+      "editKind": "directChange",
+      "basis": "縦の移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplZ()",
+      "editKind": "directChange",
+      "basis": "奥行きの移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IsPers()",
+      "editKind": "directChange",
+      "basis": "遠近を付けるかどうかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_camera_keys",
+        "motion_update_vmd_camera_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.Position()",
+      "editKind": "directChange",
+      "basis": "カメラの注視点を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_camera_keys",
+        "motion_update_vmd_camera_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdFrameKey.FrameIndex()",
+      "editKind": "directChange",
+      "basis": "何コマめのキーかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_frame_keys",
+        "motion_update_vmd_frame_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIKEnable.Enable()",
+      "editKind": "directChange",
+      "basis": "そのIKを効かせるかどうかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_ik_enables",
+        "motion_update_vmd_ik_enables"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIKEnable.IKBoneIndex()",
+      "editKind": "directChange",
+      "basis": "どのIKボーンのことかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_ik_enables",
+        "motion_update_vmd_ik_enables"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdLightKey.Color()",
+      "editKind": "directChange",
+      "basis": "照明の色を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_light_keys",
+        "motion_update_vmd_light_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdLightKey.Direction()",
+      "editKind": "directChange",
+      "basis": "照明の向きを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_light_keys",
+        "motion_update_vmd_light_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdMorphKey.MorphIndex()",
+      "editKind": "directChange",
+      "basis": "どのモーフのキーかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_morph_keys",
+        "motion_update_vmd_morph_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdMorphKey.Value()",
+      "editKind": "directChange",
+      "basis": "モーフの効き具合を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_morph_keys",
+        "motion_update_vmd_morph_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdSelfShadowKey.Distance()",
+      "editKind": "directChange",
+      "basis": "影を落とす距離を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_self_shadow_keys",
+        "motion_update_vmd_self_shadow_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdSelfShadowKey.Mode()",
+      "editKind": "directChange",
+      "basis": "影の付け方を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_self_shadow_keys",
+        "motion_update_vmd_self_shadow_keys"
       ]
     },
     {

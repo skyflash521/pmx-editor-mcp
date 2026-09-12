@@ -110,7 +110,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "new ToolReceiver(ToolReceiverKind.Handle, \"" + Held + "\","
-                    + " EditKind.DirectChange, false, typeof(global::" + Held + "))",
+                    + " EditKind.DirectChange, false, item => item is global::" + Held + ")",
                 source.Text);
         }
 
