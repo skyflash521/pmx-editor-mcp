@@ -9001,6 +9001,249 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.Clear()",
+      "editKind": "directChange",
+      "basis": "持っている量をすべて初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.ClearA()",
+      "editKind": "directChange",
+      "basis": "加速度を単位行列で初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.ClearV()",
+      "editKind": "directChange",
+      "basis": "速度を単位行列で初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.Get()",
+      "editKind": "read",
+      "basis": "いまの量を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_t_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.GetA()",
+      "editKind": "read",
+      "basis": "加速度の行列を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_t_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.GetV()",
+      "editKind": "read",
+      "basis": "速度の行列を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_t_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.Set(SlimDX.Vector3,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "いまの量を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.SetA(SlimDX.Matrix,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "加速度を、渡した行列で置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.SetA(SlimDX.Vector3,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "加速度を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.SetV(SlimDX.Matrix,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "速度を、渡した行列で置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.SetV(SlimDX.Vector3,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "速度を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.Update()",
+      "editKind": "directChange",
+      "basis": "速度と加速度から、いまの量を進める。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.PEVmePreviewOption.BeginFrame()",
       "editKind": "viewSession",
       "basis": "再生を始めるコマを持つ。表示だけを動かす指定なので、画面の状態に当たる。",
