@@ -9,7 +9,7 @@ namespace PmxEditorMcp
     /// </summary>
     public interface IUiInvoker
     {
-        /// <summary>UIスレッドで実行する。実行しなかったときは偽を返す。</summary>
-        bool TryInvokeOnUi(Action action);
+        /// <summary>UIスレッドで実行する。実行できなかったときは、その理由を結果が持つ。</summary>
+        UiInvocation TryInvokeOnUi(Action action);
     }
 }

@@ -22,21 +22,37 @@ namespace PmxEditorMcp
             _uiAnchor = uiAnchor;
         }
 
-        /// <summary>UIスレッドで実行し、完了するまで待つ。</summary>
-        public void Invoke(Action action)
+        /// <summary>UIスレッドでの実行を始める。</summary>
+        public IAsyncResult Begin(Action action)
         {
             if (action == null)
             {
                 throw new ArgumentNullException(nameof(action));
             }
 
-            if (_uiAnchor.InvokeRequired)
+            return _uiAnchor.BeginInvoke(action);
+        }
+
+        /// <summary>始めた実行が終わるのを、与えた長さまで待つ。</summary>
+        public bool Wait(IAsyncResult pending, TimeSpan limit)
+        {
+            if (pending == null)
             {
-                _uiAnchor.Invoke(action);
-                return;
+                throw new ArgumentNullException(nameof(pending));
             }
 
-            action();
+            return pending.AsyncWaitHandle.WaitOne(limit);
+        }
+
+        /// <summary>始めた実行の後始末をする。</summary>
+        public void End(IAsyncResult pending)
+        {
+            if (pending == null)
+            {
+                throw new ArgumentNullException(nameof(pending));
+            }
+
+            _uiAnchor.EndInvoke(pending);
         }
     }
 }

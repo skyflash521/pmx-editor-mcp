@@ -170,6 +170,26 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ACallHeldByAModalIsRefusedWithWhatIsShownAndWithTheResultUnknown()
+        {
+            IDictionary<string, object> envelope = (IDictionary<string, object>)Method("session_count")(
+                new McpMethodContext(
+                    Arguments(),
+                    new BlockedInvoker(
+                        "エディタが人の応答を待つ表示を出していて進められない。"
+                            + "表示: 確認: 未保存の編集項目があります"),
+                    100000,
+                    Ledger(),
+                    Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Equal(
+                "エディタが人の応答を待つ表示を出していて進められない。"
+                    + "表示: 確認: 未保存の編集項目があります",
+                Message(envelope));
+        }
+
+        [Fact]
         public void TheGettingToolReturnsEveryReadableItem()
         {
             _target.Count = 3;
@@ -634,12 +654,28 @@ namespace PmxEditorMcp.Tests
             public bool Bootup { get; set; }
         }
 
+        /// <summary>人の応答を待つ表示でUIスレッドが塞がっている稼働世代のように答える。</summary>
+        private sealed class BlockedInvoker : IUiInvoker
+        {
+            private readonly string _shown;
+
+            public BlockedInvoker(string shown)
+            {
+                _shown = shown;
+            }
+
+            public UiInvocation TryInvokeOnUi(Action action)
+            {
+                return UiInvocation.Blocked(_shown);
+            }
+        }
+
         /// <summary>受付を止めた稼働世代のように、委譲された処理を実行しない。</summary>
         private sealed class RefusingInvoker : IUiInvoker
         {
-            public bool TryInvokeOnUi(Action action)
+            public UiInvocation TryInvokeOnUi(Action action)
             {
-                return false;
+                return UiInvocation.Declined;
             }
         }
     }

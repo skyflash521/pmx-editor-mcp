@@ -52,9 +52,20 @@ namespace PmxEditorMcp.Tests
         /// <summary>UIスレッドを持たないため、委譲された処理はその場で実行する。</summary>
         private sealed class InlineDispatcher : IUiDispatcher
         {
-            public void Invoke(Action action)
+            public IAsyncResult Begin(Action action)
             {
                 action();
+
+                return new FinishedPending();
+            }
+
+            public bool Wait(IAsyncResult pending, TimeSpan limit)
+            {
+                return true;
+            }
+
+            public void End(IAsyncResult pending)
+            {
             }
         }
 
@@ -436,10 +447,10 @@ namespace PmxEditorMcp.Tests
                 bool dispatchedAfterStop = true;
                 McpHost host = CreateHost((stream, generation) =>
                 {
-                    dispatchedBeforeStop = generation.TryInvokeOnUi(() => { });
+                    dispatchedBeforeStop = generation.TryInvokeOnUi(() => { }).DidRun;
                     connected.Set();
                     release.Wait(WaitLimit);
-                    dispatchedAfterStop = generation.TryInvokeOnUi(() => { });
+                    dispatchedAfterStop = generation.TryInvokeOnUi(() => { }).DidRun;
                     finished.Set();
                 });
                 string reason;
@@ -515,7 +526,7 @@ namespace PmxEditorMcp.Tests
                 McpHost host = CreateHost((stream, generation) =>
                 {
                     observed = generation;
-                    dispatched = generation.TryInvokeOnUi(() => { });
+                    dispatched = generation.TryInvokeOnUi(() => { }).DidRun;
                     connected.Set();
                 });
                 string reason;
@@ -528,7 +539,7 @@ namespace PmxEditorMcp.Tests
                 HostGeneration first = observed;
                 host.Stop();
                 Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
-                Assert.False(first.TryInvokeOnUi(() => { }));
+                Assert.False(first.TryInvokeOnUi(() => { }).DidRun);
 
                 connected.Reset();
                 Assert.True(host.TryStart(out reason));
@@ -549,10 +560,21 @@ namespace PmxEditorMcp.Tests
         {
             public McpHost Host { get; set; }
 
-            public void Invoke(Action action)
+            public IAsyncResult Begin(Action action)
             {
                 Host.Stop();
                 action();
+
+                return new FinishedPending();
+            }
+
+            public bool Wait(IAsyncResult pending, TimeSpan limit)
+            {
+                return true;
+            }
+
+            public void End(IAsyncResult pending)
+            {
             }
         }
 
@@ -573,7 +595,7 @@ namespace PmxEditorMcp.Tests
                     (stream, generation) =>
                     {
                         connected.Set();
-                        dispatched = generation.TryInvokeOnUi(() => actionRan = true);
+                        dispatched = generation.TryInvokeOnUi(() => actionRan = true).DidRun;
                         finished.Set();
                     });
                 dispatcher.Host = _host;

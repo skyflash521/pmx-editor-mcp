@@ -11,10 +11,10 @@ namespace PmxEditorMcp.Tests
     /// <summary>UIスレッドを持たないため、委譲された処理はその場で実行する。</summary>
     internal sealed class InlineInvoker : IUiInvoker
     {
-        public bool TryInvokeOnUi(Action action)
+        public UiInvocation TryInvokeOnUi(Action action)
         {
             action();
-            return true;
+            return UiInvocation.Done;
         }
     }
 

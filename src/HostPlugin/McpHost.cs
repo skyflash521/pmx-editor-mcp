@@ -15,13 +15,19 @@ namespace PmxEditorMcp
     public sealed class McpHost
     {
         private const int PipeBufferSizeBytes = 65536;
-        private const int PrepareRetryDelayMs = 500;
+
+        /// <summary>
+        /// 進まないものを待ち直す間隔。待受の準備に失敗したときと、UIスレッドが進まないときの
+        /// 両方で使う——どちらも、こちらから進められないものが解けるのを待つ間隔である。
+        /// </summary>
+        private const int RetryDelayMs = 500;
 
         private readonly object _gate = new object();
         private readonly string _pipeName;
         private readonly HostLog _log;
         private readonly ResponseBudget _budget;
         private readonly IUiDispatcher _uiDispatcher;
+        private readonly IModalWindowProbe _modals;
         private readonly ConnectionHandler _connectionHandler;
 
         private HostGeneration _current;
@@ -29,13 +35,15 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 待受に使うパイプ名・ログ・応答サイズ予算・UIディスパッチ・接続処理を与えて生成する。
+        /// 人の応答を待つ表示を見るものは、与えなければこのプロセスの窓を数え上げるものを使う。
         /// </summary>
         public McpHost(
             string pipeName,
             HostLog log,
             ResponseBudget budget,
             IUiDispatcher uiDispatcher,
-            ConnectionHandler connectionHandler)
+            ConnectionHandler connectionHandler,
+            IModalWindowProbe modals = null)
         {
             if (pipeName == null)
             {
@@ -67,6 +75,8 @@ namespace PmxEditorMcp
             _budget = budget;
             _uiDispatcher = uiDispatcher;
             _connectionHandler = connectionHandler;
+            _modals = modals
+                ?? new DesktopModalWindowProbe(TimeSpan.FromMilliseconds(RetryDelayMs));
         }
 
         /// <summary>待受に使うパイプ名。</summary>
@@ -200,7 +210,8 @@ namespace PmxEditorMcp
 
         private void StartUnderLock()
         {
-            HostGeneration generation = new HostGeneration(_uiDispatcher);
+            HostGeneration generation = new HostGeneration(
+                _uiDispatcher, _modals, TimeSpan.FromMilliseconds(RetryDelayMs));
             Thread thread = new Thread(() => ServerLoop(generation));
             thread.IsBackground = true;
             thread.Name = "pmx-editor-mcp-ipc";
@@ -246,7 +257,7 @@ namespace PmxEditorMcp
                     consecutivePrepareFailures++;
 
                     // 直ちに再試行すると失敗が続く間ずっと回り続けるため、間を置いてから次の反復へ戻る。
-                    Thread.Sleep(PrepareRetryDelayMs);
+                    Thread.Sleep(RetryDelayMs);
                     continue;
                 }
 

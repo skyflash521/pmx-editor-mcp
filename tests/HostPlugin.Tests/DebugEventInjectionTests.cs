@@ -251,10 +251,10 @@ namespace PmxEditorMcp.Tests
 
         private sealed class StubUiInvoker : IUiInvoker
         {
-            public bool TryInvokeOnUi(Action action)
+            public UiInvocation TryInvokeOnUi(Action action)
             {
                 action();
-                return true;
+                return UiInvocation.Done;
             }
         }
     }

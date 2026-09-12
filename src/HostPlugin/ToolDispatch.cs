@@ -505,6 +505,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
+            string unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -542,9 +543,9 @@ namespace PmxEditorMcp
 
                 stage = Reflecting(call.Receiver, target, stage);
                 refused = Commit(context, call.Receiver, target);
-            }, out failure))
+            }, out failure, out unavailable))
             {
-                return Unavailable();
+                return Unavailable(unavailable);
             }
 
             if (failure != null)
@@ -639,6 +640,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
+            string unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -697,9 +699,9 @@ namespace PmxEditorMcp
                 invoked = column.Count;
                 stage = Reflecting(call.Receiver, target, stage);
                 refused = Commit(context, call.Receiver, target);
-            }, out failure))
+            }, out failure, out unavailable))
             {
-                return Unavailable();
+                return Unavailable(unavailable);
             }
 
             if (failure != null)
@@ -1068,6 +1070,7 @@ namespace PmxEditorMcp
             List<object[]> values = new List<object[]>();
             Refusal refused = null;
             Exception failure;
+            string unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -1115,9 +1118,9 @@ namespace PmxEditorMcp
                     reading.Add(fields);
                     values.Add(read);
                 }
-            }, out failure))
+            }, out failure, out unavailable))
             {
-                return Unavailable();
+                return Unavailable(unavailable);
             }
 
             if (failure != null)
@@ -1248,6 +1251,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = Changing(tool.Receiver, null);
             Exception failure;
+            string unavailable;
             if (!Run(context, () =>
             {
                 object ignored;
@@ -1261,9 +1265,9 @@ namespace PmxEditorMcp
                 {
                     refused = Refusal.Of(field.RowKey, refusal);
                 }
-            }, out failure))
+            }, out failure, out unavailable))
             {
-                return Unavailable();
+                return Unavailable(unavailable);
             }
 
             if (failure != null)
@@ -1325,6 +1329,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
+            string unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -1378,9 +1383,9 @@ namespace PmxEditorMcp
                 updated = column.Count;
                 stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(context, tool.Receiver, target);
-            }, out failure))
+            }, out failure, out unavailable))
             {
-                return Unavailable();
+                return Unavailable(unavailable);
             }
 
             if (failure != null)
@@ -1479,6 +1484,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
+            string unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -1498,9 +1504,9 @@ namespace PmxEditorMcp
 
                 stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(context, tool.Receiver, target);
-            }, out failure))
+            }, out failure, out unavailable))
             {
-                return Unavailable();
+                return Unavailable(unavailable);
             }
 
             if (failure != null)
@@ -1535,6 +1541,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
+            string unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -1573,9 +1580,9 @@ namespace PmxEditorMcp
 
                 stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(context, tool.Receiver, target);
-            }, out failure))
+            }, out failure, out unavailable))
             {
-                return Unavailable();
+                return Unavailable(unavailable);
             }
 
             if (failure != null)
@@ -1612,6 +1619,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
+            string unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -1644,9 +1652,9 @@ namespace PmxEditorMcp
                 removed = column.Count;
                 stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(context, tool.Receiver, target);
-            }, out failure))
+            }, out failure, out unavailable))
             {
-                return Unavailable();
+                return Unavailable(unavailable);
             }
 
             if (failure != null)
@@ -2776,12 +2784,14 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// SDKへの呼び出しをUIスレッドで行う。行えなければ偽を返し、落ちたときは
-        /// <paramref name="failure"/> にその例外を持たせる。
+        /// <paramref name="failure"/> にその例外を、行えなかったときは
+        /// <paramref name="unavailable"/> にその理由を持たせる。
         /// </summary>
-        private static bool Run(McpMethodContext context, Action action, out Exception failure)
+        private static bool Run(
+            McpMethodContext context, Action action, out Exception failure, out string unavailable)
         {
             Exception caught = null;
-            bool ran = context.Ui.TryInvokeOnUi(() =>
+            UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
             {
                 try
                 {
@@ -2793,8 +2803,9 @@ namespace PmxEditorMcp
                 }
             });
             failure = caught;
+            unavailable = invocation.Unavailable;
 
-            return ran;
+            return invocation.DidRun;
         }
 
         /// <summary>そのツールが受け取る名前。PMXから受け手を得るものは切り替えも受け取る。</summary>
@@ -3411,10 +3422,14 @@ namespace PmxEditorMcp
                 message ?? ("返す値を写せない型を取る: " + declared.FullName));
         }
 
-        private static IDictionary<string, object> Unavailable()
+        /// <summary>
+        /// 呼び出しをUIスレッドで行えなかったことを返す。<paramref name="unavailable"/> に事情が
+        /// 在るときはそれを説明とする——何が起きているかを知っているのは委譲した側である。
+        /// </summary>
+        private static IDictionary<string, object> Unavailable(string unavailable = null)
         {
             return ToolEnvelope.Failure(
-                ToolEnvelope.NotApplicable, "いまは要求を受け付けていない。");
+                ToolEnvelope.NotApplicable, unavailable ?? "いまは要求を受け付けていない。");
         }
 
         /// <summary>

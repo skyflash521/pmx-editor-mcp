@@ -59,7 +59,7 @@ namespace PmxEditorMcp
             }
 
             bool cleared = false;
-            if (!ui.TryInvokeOnUi(() => cleared = _undo.TryRecover(_target)) || !cleared)
+            if (!ui.TryInvokeOnUi(() => cleared = _undo.TryRecover(_target)).DidRun || !cleared)
             {
                 return false;
             }

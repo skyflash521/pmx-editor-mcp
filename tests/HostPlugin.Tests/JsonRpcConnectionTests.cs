@@ -429,7 +429,7 @@ namespace PmxEditorMcp.Tests
             {
                 observedBudget = context.BudgetChars;
                 observedUi = context.Ui;
-                dispatched = context.Ui.TryInvokeOnUi(() => { });
+                dispatched = context.Ui.TryInvokeOnUi(() => { }).DidRun;
                 return context.Params["value"];
             });
 
