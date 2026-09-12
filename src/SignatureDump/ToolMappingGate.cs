@@ -102,11 +102,6 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 行から導いた名前と合成ツールに入出力の形が在ること、およびスキーマ正本が持つツールが
-        /// そのどちらかに在ることを求める。分岐を持つ合成ツールの形は、その分岐の出どころで
-        /// あるイベント行が無ければ書けないので、イベント行が在るときだけ求める。
-        /// </summary>
-        /// <summary>
         /// 項目を集める取得と更新のツールの名前。これらのツールは行を持たないので、埋め込み先として
         /// 名指しされたものを母集合へ入れる。
         /// </summary>
@@ -153,6 +148,11 @@ namespace PmxEditorMcp.SignatureDump
                 .Select(t => byType[t]));
         }
 
+        /// <summary>
+        /// 行から導いた名前と合成ツールに入出力の形が在ること、およびスキーマ正本が持つツールが
+        /// そのどちらかに在ることを求める。分岐を持つ合成ツールの形は、その分岐の出どころで
+        /// あるイベント行が無ければ書けないので、イベント行が在るときだけ求める。
+        /// </summary>
         private static void RequireSameTools(
             ToolSchemaTable schemas,
             ToolMap map,

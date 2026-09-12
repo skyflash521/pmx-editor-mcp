@@ -694,6 +694,13 @@ namespace PmxEditorMcp
                 return TryReference(argument, given, out taken, out code, out message);
             }
 
+            if (argument.Held != null)
+            {
+                long id;
+
+                return TryInteger(given, out id);
+            }
+
             return ValueInput.TryFromJson(argument.Type, given, out taken, out code, out message);
         }
 
@@ -854,7 +861,7 @@ namespace PmxEditorMcp
                 issued.Add(One(context, call, one, receiver, at, held));
             }
 
-            return call.ReturnsMany
+            return call.RespondsMany
                 ? ToolEnvelope.Success(issued.ToArray())
                 : ToolEnvelope.Success(issued[0]);
         }
@@ -3566,10 +3573,6 @@ namespace PmxEditorMcp
             return false;
         }
 
-        /// <summary>
-        /// 受け手。接続の道から得るものはビルド時に決めた道を辿り、PMXから得るものはその実体を
-        /// そのまま渡す。静的なメンバーは相手を取らない。
-        /// </summary>
         /// <summary>ホストが入れる引数の値。取る型で、どこから得るかが決まる。</summary>
         private object Injected(ToolArgument argument, PmxTarget target)
         {
@@ -3593,6 +3596,10 @@ namespace PmxEditorMcp
             return target == null ? null : target.Pmx;
         }
 
+        /// <summary>
+        /// 受け手。接続の道から得るものはビルド時に決めた道を辿り、PMXから得るものはその実体を
+        /// そのまま渡す。静的なメンバーは相手を取らない。
+        /// </summary>
         private object Receiver(ToolReceiver receiver, PmxTarget target)
         {
             if (receiver.Kind == ToolReceiverKind.Pmx)
@@ -4338,7 +4345,6 @@ namespace PmxEditorMcp
                 failure.Message + " " + EditOutcome.Describe(EditOutcome.Resolve(stage)));
         }
 
-        /// <summary>UIスレッドの中で決まった断り。包みは同じスレッドの外で返す。</summary>
         /// <summary>対象1件の居場所。</summary>
         private sealed class Spot
         {
@@ -4454,6 +4460,7 @@ namespace PmxEditorMcp
             public IList<object> Items { get; }
         }
 
+        /// <summary>UIスレッドの中で決まった断り。包みは同じスレッドの外で返す。</summary>
         private sealed class Refusal
         {
             public Refusal(IDictionary<string, object> envelope)

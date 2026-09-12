@@ -11,6 +11,24 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class HandleIssuanceEvidence
     {
+        /// <summary>その行が生成物を台帳へ預けるか。効果にハンドルの発行が並ぶ行が当たる。</summary>
+        public static bool Issues(ToolMapRow row, SignatureRecord signature)
+        {
+            if (row == null)
+            {
+                throw new ArgumentNullException(nameof(row));
+            }
+
+            if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
+            return !string.Equals(signature.ValueType, "System.Void", StringComparison.Ordinal)
+                && row.Postcondition != null
+                && row.Postcondition.Any(p => p.EffectType == EffectType.HandleCreated);
+        }
+
         /// <summary>
         /// 提供対象のうち、ハンドル操作型の実体を返しうるシグネチャと、その発行の種別。公開
         /// コンストラクタは <see cref="HandleIssuanceKind.Constructor"/>、コネクタ型のメソッドは

@@ -748,6 +748,32 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd,System.Int32)",
+      "editKind": "directChange",
+      "basis": "モーションのデータのボーン1本ぶんから変形状態を作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd,System.Int32[])",
+      "editKind": "directChange",
+      "basis": "モーションのデータのボーンごとに変形状態をまとめて作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdIPL()",
       "editKind": "directChange",
       "basis": "補間の値を作って持ち物にするので、直接変更型に当たる。",
@@ -811,6 +837,45 @@
           "observerArgs": {
             "handles": "result:"
           },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVme()",
+      "editKind": "directChange",
+      "basis": "VMEのデータを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmeGroup()",
+      "editKind": "directChange",
+      "basis": "VMEのグループを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmePath()",
+      "editKind": "directChange",
+      "basis": "VMEの空間パスを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
           "comparison": "exists"
         }
       ]

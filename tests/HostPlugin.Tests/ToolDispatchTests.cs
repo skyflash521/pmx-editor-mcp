@@ -53,6 +53,8 @@ namespace PmxEditorMcp.Tests
 
         private const string MakeManyKey = "Sdk.Form.MakeMany()";
 
+        private const string MakeOneKey = "Sdk.Form.MakeOne()";
+
         private const string DropKey = "Sdk.Form.Drop()";
 
         private readonly string _root;
@@ -531,6 +533,25 @@ namespace PmxEditorMcp.Tests
             Assert.Same(first, held);
             Assert.True(ledger.TryGet((int)handed[1], typeof(Target).FullName, out held));
             Assert.Same(second, held);
+        }
+
+        [Fact]
+        public void ACallThatMakesOneThingStillRespondsInARowWhenItsToolCanMakeMany()
+        {
+            Target made = new Target();
+            _target.Made = made;
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_one")(
+                    new McpMethodContext(
+                        Arguments(), new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            object[] handed = (object[])envelope[ToolEnvelope.ValueName];
+            object held;
+            Assert.True(ledger.TryGet((int)handed[0], typeof(Target).FullName, out held));
+            Assert.Same(made, held);
         }
 
         [Fact]
@@ -1044,6 +1065,7 @@ namespace PmxEditorMcp.Tests
                             ?? ((Target)arguments[0]).Made
                     },
                     { MakeManyKey, (target, arguments) => ((Target)target).Twins },
+                    { MakeOneKey, (target, arguments) => ((Target)target).Made },
                     {
                         TakesKey,
                         (target, arguments) =>
@@ -1196,6 +1218,24 @@ namespace PmxEditorMcp.Tests
                         typeof(Target),
                         null,
                         null,
+                        false,
+                        true,
+                        true)
+                },
+                {
+                    "session_make_one",
+                    new ToolCall(
+                        MakeOneKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Target),
+                        typeof(Target),
+                        null,
+                        null,
+                        false,
                         false,
                         true)
                 },

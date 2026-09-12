@@ -157,7 +157,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "typeof(global::" + Held + "[]), typeof(global::" + Held + "), null, \""
-                    + Held + ".Drop()\", false, true)",
+                    + Held + ".Drop()\", false, true, true)",
+                source.Text);
+        }
+
+        [Fact]
+        public void EveryCallOfAToolThatIssuesThingsInARowAlsoRespondsInARow()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_them", Method("MakeThem", Held + "[]", "one")),
+                Issuing("session_make_them", Method("MakeThem", Held)),
+                Released(HeldMethod("Drop", "System.Void")));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
+                    + Held + ".Drop()\", false, false, true)",
                 source.Text);
         }
 

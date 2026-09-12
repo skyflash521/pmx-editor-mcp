@@ -139,6 +139,7 @@ namespace PmxEditorMcp.SignatureDump
 
             IDictionary<string, string> projections =
                 Projections(map, signatures, byType, toolNames);
+            ISet<string> responding = Responding(map, signatures, toolNames);
 
             foreach (ToolMapRow row in map.Rows.OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
             {
@@ -174,7 +175,8 @@ namespace PmxEditorMcp.SignatureDump
                             projections.TryGetValue(tool, out carried) ? carried : null,
                             assignments,
                             map,
-                            tool));
+                            tool,
+                            responding.Contains(tool)));
                     Listing(lists, path, signatures, byType);
                     continue;
                 }
@@ -252,6 +254,33 @@ namespace PmxEditorMcp.SignatureDump
                 calls.Keys.ToList(),
                 fields.Keys.ToList(),
                 elements.Keys.ToList());
+        }
+
+        /// <summary>
+        /// 応答をハンドルの並びで返すツールの名前。呼び分けのどれかが並びを預けるなら、どの
+        /// 呼び分けでも並びで返す——選んだ呼び分けで応答の形が変わらないようにする。
+        /// </summary>
+        private static ISet<string> Responding(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> toolNames)
+        {
+            HashSet<string> responding = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows)
+            {
+                SignatureRecord signature;
+                string tool;
+                string element;
+                if (signatures.TryGetValue(row.SignatureKey, out signature)
+                    && toolNames.TryGetValue(row.SignatureKey, out tool)
+                    && HandleIssuanceEvidence.Issues(row, signature)
+                    && ValueTypeName.TryElement(signature.ValueType, out element))
+                {
+                    responding.Add(tool);
+                }
+            }
+
+            return responding;
         }
 
         /// <summary>
@@ -416,7 +445,8 @@ namespace PmxEditorMcp.SignatureDump
             string projected,
             CommonAssignmentTable assignments,
             ToolMap map,
-            string tool)
+            string tool,
+            bool responds)
         {
             DangerKind kind;
             string danger = dangerous.TryGetValue(signature.Key, out kind)
@@ -431,19 +461,28 @@ namespace PmxEditorMcp.SignatureDump
                 .Select(p => "new ToolArgument(" + Literal(p.Name) + ", " + TypeOf(p.TypeName) + ")")
                 .ToArray();
 
-            bool issuing = Issues(row, signature);
+            bool issuing = HandleIssuanceEvidence.Issues(row, signature);
             string[] release = issuing
                 ? Releases(signature, signatures, assignments)
                 : new string[0];
             string made = ValueTypeName.Contained(signature.ValueType);
             bool many = (issuing || projected != null)
                 && !string.Equals(made, signature.ValueType, StringComparison.Ordinal);
+            string releases = release.Length == 0 ? null : release[0];
+            string releasesIssued = release.Length == 0 ? null : release[1];
+            string returnsMany = many ? "true" : responds ? "false" : null;
+            if (returnsMany != null && releasesIssued == null)
+            {
+                releasesIssued = "false";
+            }
+
             string tail = Tail(
                 issuing ? TypeOf(made) : null,
                 projected,
-                release.Length == 0 ? null : release[0],
-                release.Length != 0 ? release[1] : many ? "false" : null,
-                many ? "true" : null);
+                releases,
+                releasesIssued,
+                returnsMany,
+                responds ? "true" : null);
 
             return "new ToolCall(" + Literal(signature.Key) + ", "
                 + Receiver(
@@ -546,17 +585,6 @@ namespace PmxEditorMcp.SignatureDump
             return signature.Parameters.Any(
                 p => string.Equals(
                     TypeDefinitionName.OfElement(p.TypeName), typeName, StringComparison.Ordinal));
-        }
-
-        /// <summary>
-        /// その行が返す値を台帳へ預けるか。返り値がどのリストにも居ない新しい実体なのかは列挙からは
-        /// 決まらないので、能力対応表がその行へ判じた効果から採る。
-        /// </summary>
-        private static bool Issues(ToolMapRow row, SignatureRecord signature)
-        {
-            return !string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
-                && row.Postcondition != null
-                && row.Postcondition.Any(p => p.EffectType == EffectType.HandleCreated);
         }
 
         /// <summary>

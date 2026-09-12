@@ -13772,11 +13772,41 @@
       "tool": "motion_create_vmd_bone_pose_state",
       "branches": [
         {
-          "branch": "only",
+          "branch": "plain",
           "inputs": []
+        },
+        {
+          "branch": "bone",
+          "inputs": [
+            {
+              "name": "vmd",
+              "required": true
+            },
+            {
+              "name": "boneIndex",
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "bones",
+          "inputs": [
+            {
+              "name": "vmd",
+              "required": true
+            },
+            {
+              "name": "boneIndices",
+              "required": true,
+              "element": {}
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vmd_ipl",
@@ -13810,6 +13840,36 @@
     },
     {
       "tool": "motion_create_vmd_self_shadow_key",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_create_vme",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_create_vme_group",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_create_vme_path",
       "branches": [
         {
           "branch": "only",
@@ -15847,6 +15907,7 @@
       "output": {
         "origin": "hostOutput",
         "element": {
+          "origin": "hostOutput",
           "element": {}
         }
       }

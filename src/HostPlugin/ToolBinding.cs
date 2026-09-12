@@ -337,7 +337,8 @@ namespace PmxEditorMcp
             IList<ToolField> projected = null,
             string releases = null,
             bool releasesIssued = false,
-            bool returnsMany = false)
+            bool returnsMany = false,
+            bool respondsMany = false)
         {
             if (rowKey == null)
             {
@@ -376,6 +377,7 @@ namespace PmxEditorMcp
             Releases = releases;
             ReleasesIssued = releasesIssued;
             ReturnsMany = returnsMany;
+            RespondsMany = respondsMany;
         }
 
         /// <summary>呼ぶ行のキー。</summary>
@@ -410,6 +412,12 @@ namespace PmxEditorMcp
         /// 並びでは偽——写し方の側が並びを扱う。
         /// </summary>
         public bool ReturnsMany { get; }
+
+        /// <summary>
+        /// 応答がハンドルの並びか。同じ名前の呼び分けのどれかが並びを預けるなら、どの呼び分けでも
+        /// 並びで返す——選んだ呼び分けで応答の形が変わらないようにする。
+        /// </summary>
+        public bool RespondsMany { get; }
 
         /// <summary>
         /// 預けた生成物を手放すときに呼ぶ行のキー。手放す手順を持つ型を預ける行だけが持ち、ほかは

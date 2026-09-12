@@ -81,7 +81,12 @@ namespace PmxEditorMcp.SignatureDump
                             "スキーマ正本に無いツールを行が持っている: " + dispatched);
                     }
 
-                    Dispatched(shapes, called, signature, shapesByType);
+                    Dispatched(
+                        shapes,
+                        called,
+                        signature,
+                        shapesByType,
+                        HandleIssuanceEvidence.Issues(row, signature));
                     continue;
                 }
 
@@ -124,7 +129,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<SchemaItem, string> shapes,
             ToolSchema schema,
             SignatureRecord signature,
-            IDictionary<string, string> shapesByType)
+            IDictionary<string, string> shapesByType,
+            bool issues)
         {
             foreach (ParameterRecord parameter in signature.Parameters)
             {
@@ -137,17 +143,25 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
-            if (schema.Output.Origin == null)
+            string valueType = issues
+                ? ValueTypeName.Contained(signature.ValueType)
+                : signature.ValueType;
+            SchemaItem output = schema.Output;
+            while (output.Origin != null && output.Element != null && output.Element.Origin != null)
             {
-                Assign(shapes, schema.Tool, schema.Output, signature.ValueType, shapesByType);
+                output = output.Element;
+            }
+
+            if (output.Origin == null)
+            {
+                Assign(shapes, schema.Tool, output, valueType, shapesByType);
 
                 return;
             }
 
-            if (schema.Output.Element != null && schema.Output.Element.Origin == null)
+            if (output.Element != null && output.Element.Origin == null)
             {
-                Assign(
-                    shapes, schema.Tool, schema.Output.Element, signature.ValueType, shapesByType);
+                Assign(shapes, schema.Tool, output.Element, valueType, shapesByType);
             }
         }
 

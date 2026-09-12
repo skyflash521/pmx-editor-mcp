@@ -61,6 +61,8 @@ namespace PmxEditorMcp.Tests
 
         private const string MakeCountedKey = "Sdk.Maker.Make(System.Int32)";
 
+        private const string MakeHeldKey = "Sdk.Maker.Make(Sdk.Item)";
+
         private const string AttachKey = "Sdk.Maker.Attach(Sdk.Model,Sdk.Item,System.String)";
 
         private const string BridgeReadKey = "Sdk.Bridge.GetModel(Sdk.Connector)";
@@ -1270,6 +1272,19 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheOverloadThatTakesAHeldThingIsToldApartByTheHandleGivenForIt()
+        {
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_make_item", Arguments("source", (long)handle), handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(MakeHeldKey, _madeBy);
+        }
+
+        [Fact]
         public void AValueThatNoOverloadCanTakeIsRefused()
         {
             IDictionary<string, object> envelope = Call(
@@ -1701,6 +1716,7 @@ namespace PmxEditorMcp.Tests
                     { MakeLabelledKey, (target, arguments) => Made(MakeLabelledKey) },
                     { MakeMarkedKey, (target, arguments) => Made(MakeMarkedKey) },
                     { MakeCountedKey, (target, arguments) => Made(MakeCountedKey) },
+                    { MakeHeldKey, (target, arguments) => Made(MakeHeldKey) },
                     { BridgeReadKey, (target, arguments) => _bridged },
                     {
                         BridgeCommitKey,
@@ -2112,6 +2128,10 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument("label", typeof(string)),
                         new ToolArgument("mark", typeof(int))),
                     Making(MakeCountedKey, new ToolArgument("label", typeof(int))),
+                    Making(
+                        MakeHeldKey,
+                        new ToolArgument(
+                            "source", typeof(Item), false, null, false, typeof(Item))),
                 });
 
             return calls;
