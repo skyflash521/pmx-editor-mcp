@@ -7027,6 +7027,201 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.AddPoint(SlimDX.Vector3)",
+      "editKind": "directChange",
+      "basis": "通る点を末尾へ足す。空間パスは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.Clear()",
+      "editKind": "directChange",
+      "basis": "通る点をすべて取り除く。空間パスは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.CreateFrontDirections(SlimDX.Vector3[],System.Int32,System.Boolean)",
+      "editKind": "read",
+      "basis": "渡された点の並びから進む向きを計算して返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "path",
+              "tool": "motion_create_vme_path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.GetDistanceAtPoint(System.Int32)",
+      "editKind": "read",
+      "basis": "その点までの道のりを返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "path",
+              "tool": "motion_create_vme_path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.GetPathPoint(System.Double)",
+      "editKind": "read",
+      "basis": "その道のりの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "path",
+              "tool": "motion_create_vme_path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Double)",
+      "editKind": "read",
+      "basis": "一定の間隔で道の上の位置を並べて返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "path",
+              "tool": "motion_create_vme_path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Double,System.Double,System.Double)",
+      "editKind": "read",
+      "basis": "道のりの範囲を一定の間隔で区切って位置を並べて返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "path",
+              "tool": "motion_create_vme_path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.PathType()",
+      "editKind": "directChange",
+      "basis": "点のつなぎ方を持つ。空間パスは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vme_paths",
+        "motion_update_vme_paths"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.RangeMax()",
+      "editKind": "read",
+      "basis": "道のりの終わりを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_paths"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.RangeMin()",
+      "editKind": "read",
+      "basis": "道のりの始まりを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_paths"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.RegisterDirectionEvent(PEPlugin.Vme.IPEVmeDirectionEventOperator,System.Int32,SlimDX.Vector3[],System.Int32)",
+      "editKind": "directChange",
+      "basis": "渡された方向演算へ、コマごとの向きをイベントとして登録する。方向演算は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.RegisterPositionEvent(PEPlugin.Vme.IPEVmePositionEventOperator,System.Int32,SlimDX.Vector3[],System.Int32)",
+      "editKind": "directChange",
+      "basis": "渡された位置演算へ、コマごとの位置をイベントとして登録する。位置演算は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.SetPoint(SlimDX.Vector3[])",
+      "editKind": "directChange",
+      "basis": "通る点を並びごと置き換える。空間パスは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.Bone(System.Int32,System.Int32)",
       "editKind": "read",
       "basis": "そのコマのボーンの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
