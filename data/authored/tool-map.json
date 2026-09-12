@@ -7027,6 +7027,92 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeElement.Enable()",
+      "editKind": "directChange",
+      "basis": "動かす相手にするかどうかを持つ。要素は長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vme_elements",
+        "motion_update_vme_elements"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeElement.Extern()",
+      "editKind": "read",
+      "basis": "要素が属する登録先を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeElement.Name()",
+      "editKind": "directChange",
+      "basis": "要素の名前を持つ。要素は長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vme_elements",
+        "motion_update_vme_elements"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.ClearEvents()",
+      "editKind": "directChange",
+      "basis": "登録したイベントをすべて取り除く。イベントの並びは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.EventCount()",
+      "editKind": "read",
+      "basis": "登録したイベントの数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_frame_events"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.IsRunning()",
+      "editKind": "read",
+      "basis": "いま走っている最中かどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_frame_events"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.LastFrame()",
+      "editKind": "read",
+      "basis": "登録したイベントが終わるコマを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_frame_events"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.RemoveEvent(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの番号のイベントを取り除く。イベントの並びは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.RunEvent(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの番号のイベントを走らせて、登録先の状態を進める。イベントの並びは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroup.AddElement(PEPlugin.Vme.IPEVmeEventElement)",
       "editKind": "directChange",
       "basis": "まとまりへ要素を1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
@@ -7241,6 +7327,26 @@
           "comparison": "exists"
         }
       ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeObject.Bone()",
+      "editKind": "directChange",
+      "basis": "動かすボーンを並べて持つ。VMEの登録先は長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeObject.Camera()",
+      "editKind": "read",
+      "basis": "動かすカメラを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeObject.Light()",
+      "editKind": "read",
+      "basis": "動かす照明を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeObject.Morph()",
+      "editKind": "directChange",
+      "basis": "動かすモーフを並べて持つ。VMEの登録先は長寿命の持ち物なので、それへ直に作用する。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.AddPoint(SlimDX.Vector3)",
@@ -7715,6 +7821,47 @@
           "comparison": "exists"
         }
       ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToVS(PEPlugin.Vme.IPEVmeEventState)",
+      "editKind": "read",
+      "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToValueState(PEPlugin.Vme.IPEVmeEventState)",
+      "editKind": "read",
+      "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.V()",
+      "editKind": "read",
+      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.VS()",
+      "editKind": "read",
+      "basis": "いまの単値の状態を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.Value()",
+      "editKind": "read",
+      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。"
     },
     {
       "signatureKey": "PEPlugin.Vme.PEVmePreviewOption.BeginFrame()",
