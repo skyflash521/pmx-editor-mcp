@@ -36,25 +36,18 @@ namespace PmxEditorMcp
 
         private readonly ResidentConnection _connection;
 
-        private readonly string _stateRead;
-
-        private readonly string _commit;
-
-        private readonly string _receiverType;
+        private readonly PmxFlow _flow;
 
         private readonly Type _pmxType;
 
         /// <summary>
-        /// 中継・受け手の道・常駐と、現在のPMXを複製する行・まとめて反映する行・その受け手を引く
-        /// 鍵・PMXの実体の型を与えて生成する。
+        /// 中継・受け手の道・常駐と、複製編集の流れ・PMXの実体の型を与えて生成する。
         /// </summary>
         public PmxSession(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
             ResidentConnection connection,
-            string stateRead,
-            string commit,
-            string receiverType,
+            PmxFlow flow,
             Type pmxType)
         {
             if (relay == null)
@@ -72,19 +65,9 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(connection));
             }
 
-            if (stateRead == null)
+            if (flow == null)
             {
-                throw new ArgumentNullException(nameof(stateRead));
-            }
-
-            if (commit == null)
-            {
-                throw new ArgumentNullException(nameof(commit));
-            }
-
-            if (receiverType == null)
-            {
-                throw new ArgumentNullException(nameof(receiverType));
+                throw new ArgumentNullException(nameof(flow));
             }
 
             if (pmxType == null)
@@ -95,9 +78,7 @@ namespace PmxEditorMcp
             _relay = relay;
             _receivers = receivers;
             _connection = connection;
-            _stateRead = stateRead;
-            _commit = commit;
-            _receiverType = receiverType;
+            _flow = flow;
             _pmxType = pmxType;
         }
 
@@ -139,10 +120,11 @@ namespace PmxEditorMcp
 
             object clone;
             SdkRelayRefusal refusal;
-            if (!_relay.TryInvoke(_stateRead, Receiver(), new object[0], out clone, out refusal))
+            if (!_relay.TryInvoke(
+                _flow.StateRead, Receiver(), Passed(_flow.Reading, null), out clone, out refusal))
             {
                 code = ToolEnvelope.NotApplicable;
-                message = "現在のPMXを複製できない: " + _stateRead;
+                message = "現在のPMXを複製できない: " + _flow.StateRead;
 
                 return false;
             }
@@ -173,23 +155,58 @@ namespace PmxEditorMcp
             object ignored;
             SdkRelayRefusal refusal;
             if (_relay.TryInvoke(
-                _commit, Receiver(), new[] { target.Pmx }, out ignored, out refusal))
+                _flow.Commit,
+                Receiver(),
+                Passed(_flow.Reflecting, target.Pmx),
+                out ignored,
+                out refusal))
             {
                 return true;
             }
 
             code = ToolEnvelope.NotApplicable;
-            message = "複製したPMXを反映できない: " + _commit;
+            message = "複製したPMXを反映できない: " + _flow.Commit;
 
             return false;
         }
 
+        /// <summary>流れが取る引数。置き場の並びのまま値を入れる。</summary>
+        private object[] Passed(IList<FlowSlot> slots, object pmx)
+        {
+            object[] passed = new object[slots.Count];
+            for (int at = 0; at < slots.Count; at++)
+            {
+                switch (slots[at])
+                {
+                    case FlowSlot.Connector:
+                        passed[at] = _connection.Use();
+                        break;
+
+                    case FlowSlot.Pmx:
+                        passed[at] = pmx;
+                        break;
+
+                    default:
+                        // 反映は取り消しへ積む。抑止は共通引数が別に受け持つ。
+                        passed[at] = true;
+                        break;
+                }
+            }
+
+            return passed;
+        }
+
         private object Receiver()
         {
-            SdkReceiver receiver;
-            if (!_receivers.TryGetValue(_receiverType, out receiver))
+            if (_flow.ReceiverType == null)
             {
-                throw new InvalidOperationException("受け手を得る道が無い: " + _receiverType);
+                return null;
+            }
+
+            SdkReceiver receiver;
+            if (!_receivers.TryGetValue(_flow.ReceiverType, out receiver))
+            {
+                throw new InvalidOperationException("受け手を得る道が無い: " + _flow.ReceiverType);
             }
 
             return receiver(_connection);

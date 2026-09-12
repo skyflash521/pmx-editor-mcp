@@ -407,14 +407,8 @@ namespace PmxEditorMcp.Tests
                 receivers,
                 Lists(),
                 connection,
-                new PmxSession(
-                    relay,
-                    receivers,
-                    connection,
-                    StateReadKey,
-                    CommitKey,
-                    ConnectorType,
-                    typeof(Model)),
+                Session(relay, receivers, connection),
+                Session(relay, receivers, connection),
                 Calls(),
                 Aggregations(),
                 Elements());
@@ -429,6 +423,25 @@ namespace PmxEditorMcp.Tests
                     100000,
                     handles ?? Ledger(),
                     new EventQueue(new EventSequenceIssuer())));
+        }
+
+        /// <summary>題材の複製編集の流れ。受け手を取り、複製を1つだけ渡す形とする。</summary>
+        private static PmxSession Session(
+            SdkRelayTable relay,
+            IDictionary<string, SdkReceiver> receivers,
+            ResidentConnection connection)
+        {
+            return new PmxSession(
+                relay,
+                receivers,
+                connection,
+                new PmxFlow(
+                    StateReadKey,
+                    CommitKey,
+                    ConnectorType,
+                    new FlowSlot[0],
+                    new[] { FlowSlot.Pmx }),
+                typeof(Model));
         }
 
         private HandleLedger Ledger()

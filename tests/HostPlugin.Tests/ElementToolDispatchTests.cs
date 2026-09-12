@@ -43,6 +43,15 @@ namespace PmxEditorMcp.Tests
 
         private const string VeinsKey = "Sdk.Mark.Veins()";
 
+        private const string MakerType = "Sdk.Maker";
+
+        private const string AttachKey = "Sdk.Maker.Attach(Sdk.Model,Sdk.Item,System.String)";
+
+        private const string BridgeReadKey = "Sdk.Bridge.GetModel(Sdk.Connector)";
+
+        private const string BridgeCommitKey =
+            "Sdk.Bridge.Update(Sdk.Connector,Sdk.Model,System.Boolean)";
+
         private const string WidthKey = "Sdk.Mark.Width()";
 
         private const string SplitKey = "Sdk.Item.Split(out System.String,out System.String)";
@@ -56,6 +65,16 @@ namespace PmxEditorMcp.Tests
         private readonly Model _model = new Model();
 
         private int _commits;
+
+        private object _attachedModel;
+
+        private object _attachedItem;
+
+        private readonly Model _bridged = new Model();
+
+        private int _bridgeCommits;
+
+        private object[] _bridgeReflected;
 
         public ElementToolDispatchTests()
         {
@@ -970,6 +989,117 @@ namespace PmxEditorMcp.Tests
             };
         }
 
+        [Fact]
+        public void AnArgumentGivenAsAPositionReachesTheElementAtIt()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_attach_maker", Arguments("item", 1, "label", "付けた"));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[1], _attachedItem);
+            Assert.Same(_model, _attachedModel);
+            Assert.Equal(1, _commits);
+        }
+
+        [Fact]
+        public void APositionOutsideTheListIsRefused()
+        {
+            _model.Items.Add(new Item());
+
+            IDictionary<string, object> envelope = Call(
+                "model_attach_maker", Arguments("item", 3, "label", "付けた"));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, Code(envelope));
+            Assert.Equal(0, _commits);
+        }
+
+        [Fact]
+        public void APositionTooLargeForTheListIsRefusedInsteadOfWrappingRound()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_attach_maker",
+                Arguments("item", ((long)int.MaxValue + 1) * 2, "label", "付けた"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Null(_attachedItem);
+            Assert.Equal(0, _commits);
+        }
+
+        [Fact]
+        public void ANullPositionMeansThereIsNoRelation()
+        {
+            IDictionary<string, object> envelope = Call(
+                "model_attach_maker", Arguments("item", null, "label", "付けた"));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Null(_attachedItem);
+        }
+
+        [Fact]
+        public void AnArgumentTheHostFillsInIsNotPassedByTheCaller()
+        {
+            IDictionary<string, object> envelope = Call(
+                "model_attach_maker", Arguments("pmx", 1, "item", null, "label", "付けた"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("pmx", Message(envelope), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ACallThatFillsInThePmxSwitchesWhichOneItLooksAt()
+        {
+            HandleLedger handles = Ledger();
+            Model other = new Model();
+            other.Items.Add(new Item { Label = "別" });
+            int handle = handles.Issue(typeof(Model).FullName, other, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_attach_maker",
+                Arguments(PmxSession.HandleName, handle, "item", 0, "label", "付けた"),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(other, _attachedModel);
+            Assert.Same(other.Items[0], _attachedItem);
+            Assert.Equal(0, _commits);
+        }
+
+        [Fact]
+        public void ACallThroughTheBridgeTakesAndReflectsWithThatFlow()
+        {
+            _model.Items.Add(new Item { Label = "こちら" });
+            _bridged.Items.Add(new Item { Label = "橋渡し" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_attach_bridge", Arguments("item", 0, "label", "付けた"));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_bridged, _attachedModel);
+            Assert.Same(_bridged.Items[0], _attachedItem);
+            Assert.Equal(0, _commits);
+            Assert.Equal(1, _bridgeCommits);
+        }
+
+        [Fact]
+        public void TheBridgeFlowFillsTheConnectorAndWhetherToStackTheUndo()
+        {
+            _bridged.Items.Add(new Item());
+
+            Assert.True(
+                (bool)Call("model_attach_bridge", Arguments("item", 0, "label", "付けた"))["ok"],
+                "包みが成功でない。");
+
+            Assert.Equal(3, _bridgeReflected.Length);
+            Assert.NotNull(_bridgeReflected[0]);
+            Assert.Same(_bridged, _bridgeReflected[1]);
+            Assert.Equal(true, _bridgeReflected[2]);
+        }
+
         private static IDictionary<string, object> Assignment(int parent, int handle)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal)
@@ -1029,6 +1159,7 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, SdkReceiver>(StringComparer.Ordinal)
                 {
                     { ConnectorType, connection => new object() },
+                    { MakerType, connection => new object() },
                 };
             ResidentConnection connection = Connection();
             ToolDispatch.AddTo(
@@ -1037,13 +1168,17 @@ namespace PmxEditorMcp.Tests
                 receivers,
                 Lists(),
                 connection,
+                Session(relay, receivers, connection),
                 new PmxSession(
                     relay,
                     receivers,
                     connection,
-                    StateReadKey,
-                    CommitKey,
-                    ConnectorType,
+                    new PmxFlow(
+                        BridgeReadKey,
+                        BridgeCommitKey,
+                        null,
+                        new[] { FlowSlot.Connector },
+                        new[] { FlowSlot.Connector, FlowSlot.Pmx, FlowSlot.UndoLock }),
                     typeof(Model)),
                 Calls(),
                 Aggregations(),
@@ -1059,6 +1194,25 @@ namespace PmxEditorMcp.Tests
                     100000,
                     handles ?? Ledger(),
                     new EventQueue(new EventSequenceIssuer())));
+        }
+
+        /// <summary>題材の複製編集の流れ。受け手を取り、複製を1つだけ渡す形とする。</summary>
+        private static PmxSession Session(
+            SdkRelayTable relay,
+            IDictionary<string, SdkReceiver> receivers,
+            ResidentConnection connection)
+        {
+            return new PmxSession(
+                relay,
+                receivers,
+                connection,
+                new PmxFlow(
+                    StateReadKey,
+                    CommitKey,
+                    ConnectorType,
+                    new FlowSlot[0],
+                    new[] { FlowSlot.Pmx }),
+                typeof(Model));
         }
 
         private HandleLedger Ledger()
@@ -1093,6 +1247,26 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { NoteKey, (target, arguments) => ((Model)target).Note },
+                    { BridgeReadKey, (target, arguments) => _bridged },
+                    {
+                        BridgeCommitKey,
+                        (target, arguments) =>
+                        {
+                            _bridgeCommits++;
+                            _bridgeReflected = arguments;
+                            return null;
+                        }
+                    },
+                    {
+                        AttachKey,
+                        (target, arguments) =>
+                        {
+                            _attachedModel = arguments[0];
+                            _attachedItem = arguments[1];
+                            ((Model)arguments[0]).Note.Text = (string)arguments[2];
+                            return null;
+                        }
+                    },
                     {
                         LabelKey,
                         (target, arguments) => arguments.Length == 0
@@ -1359,6 +1533,40 @@ namespace PmxEditorMcp.Tests
                             new ToolArgument("left", typeof(string)),
                             new ToolArgument("right", typeof(string)),
                         },
+                        null)
+                },
+                {
+                    "model_attach_bridge",
+                    new ToolCall(
+                        AttachKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Connection, MakerType, EditKind.DuplicateEdit, true),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument("pmx", typeof(Model), true),
+                            new ToolArgument("item", typeof(Item), false, Direct()),
+                            new ToolArgument("label", typeof(string)),
+                        },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "model_attach_maker",
+                    new ToolCall(
+                        AttachKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Connection, MakerType, EditKind.DuplicateEdit),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument("pmx", typeof(Model), true),
+                            new ToolArgument("item", typeof(Item), false, Direct()),
+                            new ToolArgument("label", typeof(string)),
+                        },
+                        new ToolArgument[0],
                         null)
                 },
                 {

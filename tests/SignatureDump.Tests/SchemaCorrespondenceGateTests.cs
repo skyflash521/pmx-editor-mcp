@@ -202,14 +202,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
             TypeRole role = TypeRole.Dto,
             IDictionary<string, SignatureRecord> signatures = null,
             bool issues = false,
-            IDictionary<string, string> toolNames = null)
+            IDictionary<string, string> toolNames = null,
+            AccessPathKind kind = AccessPathKind.Element)
         {
             SchemaCorrespondenceGate.Require(
                 ToolMapJsonReader.Read(map ?? MapJson()),
                 ToolSchemaJsonReader.Read(schemas),
                 Roles(role, issues),
                 signatures ?? Signatures(),
-                toolNames ?? Names(Key, Tool));
+                toolNames ?? Names(Key, Tool),
+                Paths(kind));
+        }
+
+        /// <summary>受け手の型からその道へ。リストの中の1件かどうかだけを変えられる。</summary>
+        private static IDictionary<string, AccessPath> Paths(AccessPathKind kind)
+        {
+            bool listed = kind == AccessPathKind.Element;
+
+            return new Dictionary<string, AccessPath>(StringComparer.Ordinal)
+            {
+                {
+                    Vertex,
+                    new AccessPath(kind, "PEPlugin.Pmx.IPXPmx.Vertex()", null, listed, Vertex)
+                },
+            };
         }
 
         /// <summary>発行する数を受け取るツール1件。`count` の入力を差し替えられる。</summary>
@@ -254,7 +270,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     },
                     new ElementCollectionRecord[0]),
                 signatures,
-                Names(Key, Tool, otherKey, otherTool));
+                Names(Key, Tool, otherKey, otherTool),
+                Paths(AccessPathKind.Element));
         }
 
         [Fact]
@@ -334,6 +351,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "操作対象型の受け手を指す入力が無い", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AcceptsAnOperationTargetThatTheModelHoldsOneOfWithoutATargetSelector()
+        {
+            Require(SchemaJson(), role: TypeRole.OperationTarget, kind: AccessPathKind.Child);
         }
 
         [Fact]
@@ -525,7 +548,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     {
                         { key, signature },
                     },
-                    Names(key, Tool)));
+                    Names(key, Tool),
+                    new Dictionary<string, AccessPath>(StringComparer.Ordinal)
+                    {
+                        {
+                            Closed,
+                            new AccessPath(
+                                AccessPathKind.Element,
+                                "PEPlugin.Pmx.IPXPmx.Value()",
+                                null,
+                                true,
+                                Closed)
+                        },
+                    }));
 
             Assert.Contains(
                 "操作対象型の受け手を指す入力が無い", error.Message, StringComparison.Ordinal);
@@ -542,7 +577,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolSchemaJsonReader.Read(@"{ ""tools"": [] }"),
                 Roles(TypeRole.OperationTarget),
                 Signatures(),
-                new Dictionary<string, string>(StringComparer.Ordinal));
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                Paths(AccessPathKind.Element));
         }
 
         [Fact]
@@ -553,17 +589,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
             TypeRoleTable roles = Roles(TypeRole.Dto);
             IDictionary<string, SignatureRecord> signatures = Signatures();
             IDictionary<string, string> names = Names(Key, Tool);
+            IDictionary<string, AccessPath> paths = Paths(AccessPathKind.Element);
 
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(null, schemas, roles, signatures, names));
+                () => SchemaCorrespondenceGate.Require(
+                    null, schemas, roles, signatures, names, paths));
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(map, null, roles, signatures, names));
+                () => SchemaCorrespondenceGate.Require(map, null, roles, signatures, names, paths));
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(map, schemas, null, signatures, names));
+                () => SchemaCorrespondenceGate.Require(map, schemas, null, signatures, names, paths));
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(map, schemas, roles, null, names));
+                () => SchemaCorrespondenceGate.Require(map, schemas, roles, null, names, paths));
             Assert.Throws<ArgumentNullException>(
-                () => SchemaCorrespondenceGate.Require(map, schemas, roles, signatures, null));
+                () => SchemaCorrespondenceGate.Require(map, schemas, roles, signatures, null, paths));
+            Assert.Throws<ArgumentNullException>(
+                () => SchemaCorrespondenceGate.Require(map, schemas, roles, signatures, names, null));
         }
     }
 }

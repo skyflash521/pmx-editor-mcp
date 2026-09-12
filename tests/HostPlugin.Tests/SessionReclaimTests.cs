@@ -66,7 +66,8 @@ namespace PmxEditorMcp.Tests
 
             Assert.True(WaitForCount(store, 0), "所有者が終わってもセッションが残っている。");
             Assert.Null(store.Find(session.Id));
-            Assert.True(session.Handles.IsClosed);
+            Assert.True(
+                WaitUntil(() => session.Handles.IsClosed), "台帳が閉じられていない。");
             Assert.Equal(0, session.Handles.Count);
         }
 
@@ -79,7 +80,8 @@ namespace PmxEditorMcp.Tests
             Assert.True(store.TryResolve(null, StubClientProcess.Exited(ClientId), out session));
 
             Assert.True(WaitForCount(store, 0), "終わっている所有者のセッションが残っている。");
-            Assert.True(session.Handles.IsClosed);
+            Assert.True(
+                WaitUntil(() => session.Handles.IsClosed), "台帳が閉じられていない。");
         }
 
         [Fact]

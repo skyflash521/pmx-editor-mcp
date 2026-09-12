@@ -85,7 +85,13 @@ namespace PmxEditorMcp.SignatureDump
                 TypeRoleTable owned = TypeGroupRule.Resolve(
                     roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
                 toolNames = ToolNameEvidence.Resolve(map, owned, assignments, signatures);
-                SchemaCorrespondenceGate.Require(map, schemas, owned, signatures, toolNames);
+                SchemaCorrespondenceGate.Require(
+                    map,
+                    schemas,
+                    owned,
+                    signatures,
+                    toolNames,
+                    ElementPathEvidence.Resolve(inventory, owned));
             }
             catch (InvalidOperationException exception)
             {

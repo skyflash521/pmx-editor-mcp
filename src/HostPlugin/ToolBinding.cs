@@ -168,7 +168,8 @@ namespace PmxEditorMcp
     /// <summary>ツールが受け取る引数1件。並びはSDKのシグネチャの引数の並びと同じ。</summary>
     public sealed class ToolArgument
     {
-        public ToolArgument(string name, Type type)
+        public ToolArgument(
+            string name, Type type, bool injected = false, ToolAccess referenced = null)
         {
             if (name == null)
             {
@@ -182,6 +183,8 @@ namespace PmxEditorMcp
 
             Name = name;
             Type = type;
+            Injected = injected;
+            Referenced = referenced;
         }
 
         /// <summary>要求の引数の名前。</summary>
@@ -189,6 +192,14 @@ namespace PmxEditorMcp
 
         /// <summary>その引数の宣言型。</summary>
         public Type Type { get; }
+
+        /// <summary>ホストが自分で入れる引数か。呼び出す側はこの引数を渡さない。</summary>
+        public bool Injected { get; }
+
+        /// <summary>
+        /// その引数が指す実体を並べるリストへの道。位置で受け取る引数だけが持ち、ほかは null。
+        /// </summary>
+        public ToolAccess Referenced { get; }
     }
 
     /// <summary>項目を集めるツールが持つ項目1件。</summary>
@@ -229,11 +240,13 @@ namespace PmxEditorMcp
     /// <summary>受け手の得方と、呼び出しがエディタの状態へどう作用するか。</summary>
     public sealed class ToolReceiver
     {
-        public ToolReceiver(ToolReceiverKind kind, string typeName, EditKind edit)
+        public ToolReceiver(
+            ToolReceiverKind kind, string typeName, EditKind edit, bool bridged = false)
         {
             Kind = kind;
             TypeName = typeName;
             Edit = edit;
+            Bridged = bridged;
         }
 
         public ToolReceiverKind Kind { get; }
@@ -243,6 +256,12 @@ namespace PmxEditorMcp
 
         /// <summary>呼び出しの分類。複製編集型はまとめて反映するところまでを1回で行う。</summary>
         public EditKind Edit { get; }
+
+        /// <summary>
+        /// Cプラグイン連携の橋渡しから受け手を得るか。複製と反映も、そちらの流れで行う——片方の
+        /// 流れで作った中身は、もう片方の流れでは反映できない。
+        /// </summary>
+        public bool Bridged { get; }
     }
 
     /// <summary>SDKのメンバーへ中継するツール1件。</summary>

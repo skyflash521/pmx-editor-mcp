@@ -110,7 +110,7 @@ namespace PmxEditorMcp.SignatureDump
             foreach (ParameterRecord parameter in signature.Parameters)
             {
                 foreach (SchemaItem item in schema.Branches
-                    .SelectMany(b => b.Inputs.SelectMany(i => i.WithNested))
+                    .SelectMany(b => b.Inputs.Where(i => !i.Injected).SelectMany(i => i.WithNested))
                     .Concat(schema.Output == null ? new SchemaItem[0] : schema.Output.WithNested)
                     .Where(i => string.Equals(i.Name, parameter.Name, StringComparison.Ordinal)))
                 {

@@ -20,6 +20,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string CommitKey = Connector + ".Update(PEPlugin.Pmx.IPXPmx)";
 
+        private const string Bridge = "PXCPlugin.PXCBridge";
+
+        private const string BridgeConnector = "PXCPlugin.IPXCPluginConnector";
+
+        private const string BridgeReadKey = Bridge + ".GetCurrentPmx(" + BridgeConnector + ")";
+
+        private const string BridgeCommitKey =
+            Bridge + ".UpdatePmx(" + BridgeConnector + ",PEPlugin.Pmx.IPXPmx,System.Boolean)";
+
         private const string Pmx = "PEPlugin.Pmx.IPXPmx";
 
         private const string ListKey = Pmx + ".Vertex()";
@@ -210,10 +219,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolBindingSource source = Build(Collection());
 
             Assert.Contains(
-                "internal const string StateRead = \"" + StateReadKey + "\";", source.Text);
-            Assert.Contains("internal const string Commit = \"" + CommitKey + "\";", source.Text);
+                "new PmxFlow(\"" + StateReadKey + "\", \"" + CommitKey + "\", \"" + Connector
+                    + "\", new FlowSlot[] {  }, new FlowSlot[] { FlowSlot.Pmx });",
+                source.Text);
             Assert.Contains(
-                "internal const string Receiver = \"" + Connector + "\";", source.Text);
+                "new PmxFlow(\"" + BridgeReadKey + "\", \"" + BridgeCommitKey
+                    + "\", null, new FlowSlot[] { FlowSlot.Connector },"
+                    + " new FlowSlot[] { FlowSlot.Connector, FlowSlot.Pmx, FlowSlot.UndoLock });",
+                source.Text);
         }
 
         [Fact]
@@ -226,6 +239,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + "\", new ToolHop[] { new ToolHop(\"" + ListKey + "\", true) },"
                     + " true, typeof(global::" + Weight + "), item => item is global::" + Weight
                     + ", \"weight\", null, typeof(global::" + Vertex + "))",
+                source.Text);
+        }
+
+        [Fact]
+        public void ThePmxComesFromTheHostAndOtherOperationTargetsComeAsPositions()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                Form + ".Shape(" + Pmx + "," + Vertex + ")",
+                Form,
+                MemberKind.Method,
+                "Shape",
+                false,
+                0,
+                new[]
+                {
+                    new ParameterRecord("pmx", Pmx, ParameterDirection.In, false),
+                    new ParameterRecord("vertex", Vertex, ParameterDirection.In, false),
+                },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Write);
+
+            ToolBindingSource source = Build(
+                Collection(), Dispatched("session_shape_form_connector", signature));
+
+            Assert.Contains(
+                "new ToolArgument(\"pmx\", typeof(global::" + Pmx + "), true),"
+                    + " new ToolArgument(\"vertex\", typeof(global::" + Vertex + "), false,"
+                    + " new ToolAccess(ToolAccessKind.Element, \"" + ListKey
+                    + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
+                    + "), item => item is global::" + Vertex + ", \"vertex\", null, null))",
                 source.Text);
         }
 
@@ -343,6 +388,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     false,
                     false,
                     OperationDirection.Write),
+                new SignatureRecord(
+                    BridgeReadKey,
+                    Bridge,
+                    MemberKind.Method,
+                    "GetCurrentPmx",
+                    true,
+                    0,
+                    new[]
+                    {
+                        new ParameterRecord("c", BridgeConnector, ParameterDirection.In, false),
+                    },
+                    "PEPlugin.Pmx.IPXPmx",
+                    false,
+                    false,
+                    OperationDirection.Read),
+                new SignatureRecord(
+                    BridgeCommitKey,
+                    Bridge,
+                    MemberKind.Method,
+                    "UpdatePmx",
+                    true,
+                    0,
+                    new[]
+                    {
+                        new ParameterRecord("c", BridgeConnector, ParameterDirection.In, false),
+                        new ParameterRecord(
+                            "pmx", "PEPlugin.Pmx.IPXPmx", ParameterDirection.In, false),
+                        new ParameterRecord("undo", "System.Boolean", ParameterDirection.In, false),
+                    },
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
             };
         }
 
@@ -355,6 +433,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         StateReadKey, CommonAssignmentKind.InternalFlow, "stateRead", "題材の根拠。"),
                     new CommonAssignmentRecord(
                         CommitKey,
+                        CommonAssignmentKind.InternalFlow,
+                        "duplicateEdit",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        BridgeReadKey,
+                        CommonAssignmentKind.InternalFlow,
+                        "stateRead",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        BridgeCommitKey,
                         CommonAssignmentKind.InternalFlow,
                         "duplicateEdit",
                         "題材の根拠。"),

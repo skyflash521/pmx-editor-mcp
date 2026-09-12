@@ -1966,6 +1966,132 @@
       "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲は引数で受け取り、反映の後の表示更新はこの流れを起こしたツールの行が決めるので、この行は持たない。"
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddBox(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して直方体のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddCylinder(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して円柱のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddPlane(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,System.Int32,System.Boolean,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して平面のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddSphere(System.Int32,PEPlugin.SDX.V3,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して球のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddText(System.Int32,PEPlugin.SDX.V3,System.Drawing.Font,System.String,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して文字のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddTorus(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して輪のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBody.AHR()",
       "editKind": "duplicateEdit",
       "updateSpec": {
@@ -2721,6 +2847,132 @@
       "signatureKey": "PXCPlugin.IPXCPluginRunArgs.Connector()",
       "editKind": "read",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddBox(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して直方体のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddCylinder(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して円柱のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddPlane(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,System.Int32,System.Boolean,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して平面のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddSphere(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して球のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddText(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Drawing.Font,System.String,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して文字のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddTorus(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "editKind": "duplicateEdit",
+      "updateSpec": {
+        "refresh": []
+      },
+      "basis": "いまのPMXを複製して輪のプリミティブを足し、まとめて反映するので、複製編集型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "readback",
+          "comparison": "anyChanged",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.Builder()",

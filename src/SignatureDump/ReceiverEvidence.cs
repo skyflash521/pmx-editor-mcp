@@ -7,10 +7,11 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>接続の根から受け手の型へ至る道。根と、根から進む一歩の並びからなる。</summary>
     public sealed class ReceiverPath
     {
-        public ReceiverPath(string root, string steps)
+        public ReceiverPath(string root, string steps, string initialize = null)
         {
             Root = root;
             Steps = steps;
+            Initialize = initialize;
         }
 
         /// <summary>辿り始める接続の根の型名。</summary>
@@ -18,6 +19,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>根から進む一歩の名前を点でつないだもの。根そのものでは空。</summary>
         public string Steps { get; }
+
+        /// <summary>
+        /// 辿る前に呼ぶ初期化のメンバー名。初期化を持たない道では null。初期化は呼ぶ側の
+        /// スレッドの状態を作るので、辿るのと同じ呼び出しの中で呼ぶ。
+        /// </summary>
+        public string Initialize { get; }
     }
 
     /// <summary>
@@ -59,12 +66,42 @@ namespace PmxEditorMcp.SignatureDump
                     ReceiverPath found;
                     if (!paths.TryGetValue(type, out found) || Shorter(steps, found.Steps))
                     {
-                        paths[type] = new ReceiverPath(root, steps);
+                        paths[type] = new ReceiverPath(
+                            root, steps, Initializer(inventory, root, steps));
                     }
                 }
             }
 
             return paths;
+        }
+
+        /// <summary>
+        /// その道を辿る前に呼ぶ初期化のメンバー名。根が、最初の一歩と同じ名前に初期化を続けた
+        /// メソッドを宣言していて、それが常駐コネクタだけを取るときに限る。持たなければ null。
+        /// </summary>
+        private static string Initializer(InventoryRecord inventory, string root, string steps)
+        {
+            if (steps.Length == 0)
+            {
+                return null;
+            }
+
+            string first = steps.Split('.')[0];
+            string named = first.EndsWith("()", StringComparison.Ordinal)
+                ? first.Substring(0, first.Length - 2)
+                : first;
+            string initialize = named + "Initialize";
+
+            return inventory.Signatures.Any(s => s.MemberKind == MemberKind.Method
+                && string.Equals(s.DeclaringType, root, StringComparison.Ordinal)
+                && string.Equals(s.MemberName, initialize, StringComparison.Ordinal)
+                && s.Parameters.Count == 1
+                && string.Equals(
+                    s.Parameters[0].TypeName,
+                    TypeRoleEvidence.InjectedConnector,
+                    StringComparison.Ordinal))
+                ? initialize
+                : null;
         }
 
         /// <summary>一歩の数で比べる。根の並びで先に見つけたものを残すので、同数では入れ替えない。</summary>

@@ -116,6 +116,9 @@ namespace PmxEditorMcp.SignatureDump
                 BudgetDocument.ReadTokenLimit(ipc));
         }
 
+        /// <summary>操作対象型を指す位置の綴り。位置は0から数える整数である。</summary>
+        private const string PositionShape = "number";
+
         /// <summary>型から値の表現の綴りへ。綴りが1つに決まらない包む型は持たない。</summary>
         private static IDictionary<string, string> ShapesByType(string contract)
         {
@@ -143,7 +146,23 @@ namespace PmxEditorMcp.SignatureDump
                 Map,
                 inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
                 ToolsByRow(inventory),
-                _shapesByType);
+                Positioned());
+        }
+
+        /// <summary>
+        /// 型から値の表現の綴りへ。操作対象型は要素の位置で写すので、型役割表からその綴りを足す。
+        /// </summary>
+        private IDictionary<string, string> Positioned()
+        {
+            Dictionary<string, string> shapes =
+                new Dictionary<string, string>(_shapesByType, StringComparer.Ordinal);
+            foreach (TypeRoleRecord role in _roles.Types
+                .Where(t => t.Role == TypeRole.OperationTarget))
+            {
+                shapes[role.TypeName] = PositionShape;
+            }
+
+            return shapes;
         }
 
         /// <summary>確認を要するツールの名前。行の側の判定をツールの名前へ写す。</summary>

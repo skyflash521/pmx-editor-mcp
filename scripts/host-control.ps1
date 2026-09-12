@@ -37,7 +37,7 @@ param(
     # 状態が変わるのを待つ上限の秒数。0以下だと、状態を変えておきながら一度も観測しないまま
     # 失敗しうるので受け付けない。上限は、終了待ちへミリ秒で渡せる範囲に収める。
     [ValidateRange(1, 2147483)]
-    [int]$TimeoutSeconds = 60
+    [int]$TimeoutSeconds = 20
 )
 
 Set-StrictMode -Version Latest
@@ -82,6 +82,22 @@ public static class HostControlWindow {
       if (caption.ToString() != title) { return true; }
 
       found.Add(window);
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
+  /// <summary>題を問わず、種類だけで絞って返す。</summary>
+  public static IntPtr[] FindByClass(int owner, string className) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      var name = new StringBuilder(256);
+      GetClassName(window, name, name.Capacity);
+      if (name.ToString() == className) { found.Add(window); }
       return true;
     }, IntPtr.Zero);
     return found.ToArray();
@@ -148,6 +164,9 @@ $PollIntervalMs = 500
 
 # 閉じるためのウィンドウメッセージ(WM_CLOSE)。
 $WindowMessageClose = 0x0010
+
+# 了解の押しボタンの番号(IDOK)。表示の文言は環境で変わるので、番号で選ぶ。
+$DialogAcceptId = "1"
 
 $EditMenuBars = @()
 
@@ -295,6 +314,17 @@ function Get-MenuShadows {
         ForEach-Object { $_.Current.NativeWindowHandle })
 }
 
+function Get-EditorDialogs {
+    <#
+        .SYNOPSIS
+        対象のエディタが出している状態表示のウィンドウのハンドルを返す。所有された窓なので
+        デスクトップ直下の列挙には現れず、Win32の列挙で探す。
+    #>
+    param([int]$OwnerProcessId)
+
+    @([HostControlWindow]::FindByClass($OwnerProcessId, $DialogClassName))
+}
+
 function Close-MenuShadow {
     <#
         .SYNOPSIS
@@ -345,6 +375,31 @@ function Close-OpenMenuSafely {
     }
     catch {
         Write-Warning "開いたメニューを閉じられなかった: $($_.Exception.Message)" -WarningAction Continue
+    }
+}
+
+function Confirm-EditorDialog {
+    <#
+        .SYNOPSIS
+        終了の確認を、了解の押しボタンを押して閉じる。押せなければ何もしない——押せない形の
+        表示は、待ちの側が上限で見切る。
+    #>
+    param([int]$Handle)
+
+    $dialog = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Handle)
+    if ($null -eq $dialog) { return }
+
+    $buttons = @($dialog.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        (New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::Button))))
+    foreach ($button in $buttons) {
+        if ($button.Current.AutomationId -ne $DialogAcceptId) { continue }
+
+        try { Invoke-Element -Element $button } catch { }
+
+        return
     }
 }
 
@@ -804,11 +859,20 @@ switch ($Action) {
                 throw
             }
 
-            foreach ($handle in $windows) {
-                if ((Get-Date) -ge $deadline) { break }
+            # 終了の確認は押しボタンを押して閉じる。答えないまま閉じる要求を送り直すと確認は
+            # 取り消され、次の要求がまた確認を出すので、確認だけが積み上がる。
+            $dialogs = @(Get-EditorDialogs -OwnerProcessId $ProcessId)
+            foreach ($dialog in $dialogs) {
+                Confirm-EditorDialog -Handle $dialog
+            }
 
-                [void][HostControlWindow]::PostMessage(
-                    [IntPtr]$handle, $WindowMessageClose, [IntPtr]::Zero, [IntPtr]::Zero)
+            if ($dialogs.Count -eq 0) {
+                foreach ($handle in $windows) {
+                    if ((Get-Date) -ge $deadline) { break }
+
+                    [void][HostControlWindow]::PostMessage(
+                        [IntPtr]$handle, $WindowMessageClose, [IntPtr]::Zero, [IntPtr]::Zero)
+                }
             }
 
             $remaining = [int]($deadline - (Get-Date)).TotalMilliseconds

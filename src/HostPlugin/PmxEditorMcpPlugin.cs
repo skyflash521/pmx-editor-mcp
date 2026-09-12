@@ -165,12 +165,10 @@ namespace PmxEditorMcp
                     GeneratedSdkLists.Create(),
                     _resident,
                     new PmxSession(
-                        relay,
-                        receivers,
-                        _resident,
-                        GeneratedSdkFlows.StateRead,
-                        GeneratedSdkFlows.Commit,
-                        GeneratedSdkFlows.Receiver,
+                        relay, receivers, _resident, GeneratedSdkFlows.Current,
+                        GeneratedSdkFlows.Pmx),
+                    new PmxSession(
+                        relay, receivers, _resident, GeneratedSdkFlows.Bridge,
                         GeneratedSdkFlows.Pmx),
                     GeneratedTools.Calls(),
                     GeneratedTools.Aggregations(),

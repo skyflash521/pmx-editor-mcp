@@ -260,7 +260,14 @@ namespace PmxEditorMcp.SignatureDump
                     : step);
             }
 
-            return expression;
+            if (path.Initialize == null)
+            {
+                return expression;
+            }
+
+            // 初期化を済ませるまで、その窓口は中身を持たない。受け手を得る道の中で呼ぶ。
+            return "{ " + Root(path.Root) + "." + path.Initialize
+                + "(connection.Use()); return " + expression + "; }";
         }
 
         /// <summary>

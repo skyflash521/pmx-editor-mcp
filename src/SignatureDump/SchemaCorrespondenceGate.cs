@@ -31,7 +31,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchemaTable schemas,
             TypeRoleTable roles,
             IDictionary<string, SignatureRecord> signatures,
-            IDictionary<string, string> toolNames)
+            IDictionary<string, string> toolNames,
+            IDictionary<string, AccessPath> paths)
         {
             if (map == null)
             {
@@ -58,6 +59,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(toolNames));
             }
 
+            if (paths == null)
+            {
+                throw new ArgumentNullException(nameof(paths));
+            }
+
             IDictionary<string, ToolSchema> byTool = schemas.Tools.ToDictionary(
                 t => t.Tool, t => t, StringComparer.Ordinal);
             HashSet<string> issuing = new HashSet<string>(
@@ -80,7 +86,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 RequireArguments(signature, schema);
-                RequireReceiver(signature, schema, byType);
+                RequireReceiver(signature, schema, byType, paths);
                 RequireOutput(signature, schema);
                 if (issuing.Contains(row.SignatureKey))
                 {
@@ -116,7 +122,10 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>受け手の入力が、宣言型の役割から決まる形であることを求める。</summary>
         private static void RequireReceiver(
-            SignatureRecord signature, ToolSchema schema, IDictionary<string, TypeRole> byType)
+            SignatureRecord signature,
+            ToolSchema schema,
+            IDictionary<string, TypeRole> byType,
+            IDictionary<string, AccessPath> paths)
         {
             TypeRole role;
             if (signature.IsStatic
@@ -127,11 +136,10 @@ namespace PmxEditorMcp.SignatureDump
                 return;
             }
 
-            // 所有の根そのものは、どのPMXを見るかの切り替えで選ぶので対象の集合を持たない。
-            bool rooted = ElementCollectionEvidence.OwnershipRoots.Contains(
-                TypeDefinitionName.OfElement(signature.DeclaringType), StringComparer.Ordinal);
+            // 対象の集合を持つのは、リストの中の1件を相手にする受け手だけである。所有の根そのものも、
+            // 根から1つに決まる子も、どのPMXを見るかの切り替えだけで相手が決まる。
             if (role == TypeRole.OperationTarget
-                && !rooted
+                && Listed(paths, signature.DeclaringType)
                 && !schema.Branches.All(b => TargetSelectors.Any(n => HasDirectInput(b, n))))
             {
                 throw new InvalidOperationException(
@@ -151,6 +159,15 @@ namespace PmxEditorMcp.SignatureDump
                 throw new InvalidOperationException(
                     "コネクタ型なのに受け手を指す入力がある: " + schema.Tool);
             }
+        }
+
+        /// <summary>その型の受け手が、リストの中の1件として指されるか。</summary>
+        private static bool Listed(IDictionary<string, AccessPath> paths, string declaringType)
+        {
+            AccessPath path;
+
+            return paths.TryGetValue(TypeDefinitionName.OfElement(declaringType), out path)
+                && path.Kind == AccessPathKind.Element;
         }
 
         /// <summary>

@@ -75,6 +75,206 @@
       }
     },
     {
+      "tool": "model_add_box_c_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "pmx",
+              "injected": true
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "width",
+              "required": true
+            },
+            {
+              "name": "height",
+              "required": true
+            },
+            {
+              "name": "depth",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_box_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "width",
+              "required": true
+            },
+            {
+              "name": "height",
+              "required": true
+            },
+            {
+              "name": "depth",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_cylinder_c_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "pmx",
+              "injected": true
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "r1",
+              "required": true
+            },
+            {
+              "name": "r2",
+              "required": true
+            },
+            {
+              "name": "length",
+              "required": true
+            },
+            {
+              "name": "slices",
+              "required": true
+            },
+            {
+              "name": "stacks",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_cylinder_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "r1",
+              "required": true
+            },
+            {
+              "name": "r2",
+              "required": true
+            },
+            {
+              "name": "length",
+              "required": true
+            },
+            {
+              "name": "slices",
+              "required": true
+            },
+            {
+              "name": "stacks",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "model_add_faces",
       "branches": [
         {
@@ -525,6 +725,122 @@
       }
     },
     {
+      "tool": "model_add_plane_c_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "pmx",
+              "injected": true
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "width",
+              "required": true
+            },
+            {
+              "name": "height",
+              "required": true
+            },
+            {
+              "name": "uc",
+              "required": true
+            },
+            {
+              "name": "vc",
+              "required": true
+            },
+            {
+              "name": "dir",
+              "required": true
+            },
+            {
+              "name": "uv",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_plane_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "width",
+              "required": true
+            },
+            {
+              "name": "height",
+              "required": true
+            },
+            {
+              "name": "uc",
+              "required": true
+            },
+            {
+              "name": "vc",
+              "required": true
+            },
+            {
+              "name": "dir",
+              "required": true
+            },
+            {
+              "name": "uv",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "model_add_soft_bodies",
       "branches": [
         {
@@ -642,6 +958,298 @@
             }
           }
         ]
+      }
+    },
+    {
+      "tool": "model_add_sphere_c_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "pmx",
+              "injected": true
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "r",
+              "required": true
+            },
+            {
+              "name": "slices",
+              "required": true
+            },
+            {
+              "name": "stacks",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_sphere_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "r",
+              "required": true
+            },
+            {
+              "name": "slices",
+              "required": true
+            },
+            {
+              "name": "stacks",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_text_c_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "pmx",
+              "injected": true
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "font",
+              "required": true
+            },
+            {
+              "name": "text",
+              "required": true
+            },
+            {
+              "name": "d",
+              "required": true
+            },
+            {
+              "name": "ex",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_text_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "font",
+              "required": true
+            },
+            {
+              "name": "text",
+              "required": true
+            },
+            {
+              "name": "d",
+              "required": true
+            },
+            {
+              "name": "ex",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_torus_c_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "pmx",
+              "injected": true
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "r1",
+              "required": true
+            },
+            {
+              "name": "r2",
+              "required": true
+            },
+            {
+              "name": "sides",
+              "required": true
+            },
+            {
+              "name": "rings",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_add_torus_primitive_builder",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "material",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "r1",
+              "required": true
+            },
+            {
+              "name": "r2",
+              "required": true
+            },
+            {
+              "name": "sides",
+              "required": true
+            },
+            {
+              "name": "rings",
+              "required": true
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
       }
     },
     {

@@ -290,8 +290,8 @@ namespace PmxEditorMcp.Tests
                 receivers,
                 new Dictionary<string, SdkList>(StringComparer.Ordinal),
                 connection,
-                new PmxSession(
-                    relay, receivers, connection, CountKey, CountKey, TargetType, typeof(object)),
+                Session(relay, receivers, connection),
+                Session(relay, receivers, connection),
                 Calls(),
                 Aggregations(),
                 new Dictionary<string, ToolElements>(StringComparer.Ordinal));
@@ -300,6 +300,20 @@ namespace PmxEditorMcp.Tests
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
 
             return method;
+        }
+
+        /// <summary>題材の複製編集の流れ。PMXを相手にしない題材なので、同じ行を両端に置く。</summary>
+        private static PmxSession Session(
+            SdkRelayTable relay,
+            IDictionary<string, SdkReceiver> receivers,
+            ResidentConnection connection)
+        {
+            return new PmxSession(
+                relay,
+                receivers,
+                connection,
+                new PmxFlow(CountKey, CountKey, TargetType, new FlowSlot[0], new[] { FlowSlot.Pmx }),
+                typeof(object));
         }
 
         private HandleLedger Ledger()

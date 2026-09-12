@@ -43,6 +43,9 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string PmxTypeName = "PEPlugin.Pmx.IPXPmx";
 
+        /// <summary>Cプラグイン連携の橋渡しの型。ここから得る受け手は、そちらの流れで扱う。</summary>
+        private const string BridgeTypeName = "PXCPlugin.PXCBridge";
+
         /// <summary>
         /// 表を組み立てる。<paramref name="toolNames"/> は行キーからツールの名前へ、
         /// <paramref name="roles"/> は担当群を解いた型役割表、<paramref name="assignments"/> は
@@ -90,6 +93,7 @@ namespace PmxEditorMcp.SignatureDump
                 map, signatures, roles);
             IDictionary<string, AccessPath> paths = ElementPathEvidence.Resolve(inventory, roles);
             ISet<string> issued = ElementPathEvidence.Issued(inventory, roles);
+            ISet<string> bridged = Bridged(inventory);
             IDictionary<string, TypeRole> roleOf = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
             IDictionary<string, IList<string>> concrete =
@@ -126,7 +130,17 @@ namespace PmxEditorMcp.SignatureDump
                 if (toolNames.TryGetValue(row.SignatureKey, out tool))
                 {
                     calls.Add(
-                        tool, Call(row, signature, path, dangerous, signatures, concrete, byType));
+                        tool,
+                        Call(
+                            row,
+                            signature,
+                            path,
+                            dangerous,
+                            signatures,
+                            concrete,
+                            byType,
+                            paths,
+                            bridged));
                     Listing(lists, path, signatures, byType);
                     continue;
                 }
@@ -185,7 +199,14 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new ToolBindingSource(
-                Compose(calls, fields, aggregated, elements, lists, Flows(assignments, signatures)),
+                Compose(
+                    calls,
+                    fields,
+                    aggregated,
+                    elements,
+                    lists,
+                    Flows(assignments, signatures),
+                    signatures),
                 calls.Keys.ToList(),
                 fields.Keys.ToList(),
                 elements.Keys.ToList());
@@ -345,7 +366,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, DangerKind> dangerous,
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, IList<string>> concrete,
-            IDictionary<string, TypeRoleRecord> byType)
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, AccessPath> paths,
+            ISet<string> bridged)
         {
             DangerKind kind;
             string danger = dangerous.TryGetValue(signature.Key, out kind)
@@ -353,7 +376,7 @@ namespace PmxEditorMcp.SignatureDump
                 : "DangerKind.None";
             string[] arguments = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.Out)
-                .Select(p => "new ToolArgument(" + Literal(p.Name) + ", " + TypeOf(p.TypeName) + ")")
+                .Select(p => Argument(p, signatures, concrete, byType, paths))
                 .ToArray();
             string[] outputs = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.In)
@@ -361,7 +384,7 @@ namespace PmxEditorMcp.SignatureDump
                 .ToArray();
 
             return "new ToolCall(" + Literal(signature.Key) + ", "
-                + Receiver(row, signature, path) + ", "
+                + Receiver(row, signature, path, null, bridged) + ", "
                 + Access(path, signatures, concrete, byType) + ", "
                 + danger + ", new ToolArgument[] { " + string.Join(", ", arguments) + " }, "
                 + "new ToolArgument[] { " + string.Join(", ", outputs) + " }, "
@@ -369,6 +392,37 @@ namespace PmxEditorMcp.SignatureDump
                     ? "null"
                     : TypeOf(signature.ValueType))
                 + ")";
+        }
+
+        /// <summary>
+        /// 引数1件をC#の式にする。相手にするPMXを取る引数はホストが入れ、ほかの操作対象型を取る
+        /// 引数はその実体を並べるリストの中の位置で受け取る。
+        /// </summary>
+        private static string Argument(
+            ParameterRecord parameter,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete,
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, AccessPath> paths)
+        {
+            string written = "new ToolArgument(" + Literal(parameter.Name) + ", "
+                + TypeOf(parameter.TypeName);
+            string typeName = TypeDefinitionName.OfElement(parameter.TypeName);
+            if (string.Equals(typeName, PmxTypeName, StringComparison.Ordinal))
+            {
+                return written + ", true)";
+            }
+
+            TypeRoleRecord role;
+            AccessPath listed;
+            if (!byType.TryGetValue(typeName, out role)
+                || role.Role != TypeRole.OperationTarget
+                || !paths.TryGetValue(typeName, out listed))
+            {
+                return written + ")";
+            }
+
+            return written + ", false, " + Access(listed, signatures, concrete, byType) + ")";
         }
 
         private static string Aggregation(
@@ -402,6 +456,22 @@ namespace PmxEditorMcp.SignatureDump
             return "new ToolElements(" + (removes ? "true" : "false") + ", "
                 + Receiver(row, signature, path, ToolMapEditKind.DuplicateEdit)
                 + ", " + Access(path, signatures, concrete, byType) + ")";
+        }
+
+        /// <summary>
+        /// Cプラグイン連携の橋渡しが直に返す型。そこから得た受け手は、複製と反映もそちらの流れで
+        /// 行う——片方の流れで作った中身は、もう片方の流れでは反映できない。
+        /// </summary>
+        private static ISet<string> Bridged(InventoryRecord inventory)
+        {
+            return new HashSet<string>(
+                inventory.Signatures
+                    .Where(s => string.Equals(
+                        TypeDefinitionName.OfElement(s.DeclaringType),
+                        BridgeTypeName,
+                        StringComparison.Ordinal))
+                    .Select(s => TypeDefinitionName.OfElement(s.ValueType)),
+                StringComparer.Ordinal);
         }
 
         /// <summary>相手にするPMXから受け手へ至る道をC#の式にする。</summary>
@@ -496,23 +566,34 @@ namespace PmxEditorMcp.SignatureDump
             ToolMapRow row,
             SignatureRecord signature,
             AccessPath path,
-            ToolMapEditKind? edit = null)
+            ToolMapEditKind? edit = null,
+            ISet<string> bridged = null)
         {
-            return Receiver(signature.DeclaringType, signature.IsStatic, path, edit ?? row.EditKind);
+            return Receiver(
+                signature.DeclaringType, signature.IsStatic, path, edit ?? row.EditKind, bridged);
         }
 
         /// <summary>受け手の得方を、宣言型と道から決める。</summary>
         private static string Receiver(
-            string declaringType, bool isStatic, AccessPath path, ToolMapEditKind edit)
+            string declaringType,
+            bool isStatic,
+            AccessPath path,
+            ToolMapEditKind edit,
+            ISet<string> bridged = null)
         {
             string declaring = TypeDefinitionName.OfElement(declaringType);
             bool rooted = string.Equals(declaring, PmxTypeName, StringComparison.Ordinal)
                 || (path != null && path.Kind != AccessPathKind.Whole);
             string type = isStatic || rooted ? "null" : Literal(declaring);
+            // 所有の根から得る受け手は、そのPMXの流れで複製と反映を行う。橋渡しから得る受け手だけが
+            // Cプラグイン連携の流れに乗る。
+            string bridge = !rooted && bridged != null && bridged.Contains(declaring)
+                ? ", true"
+                : string.Empty;
 
             return "new ToolReceiver(ToolReceiverKind."
                 + (rooted ? "Pmx" : "Connection") + ", " + type + ", EditKind."
-                + Edit(edit) + ")";
+                + Edit(edit) + bridge + ")";
         }
 
         private static string Edit(ToolMapEditKind kind)
@@ -537,18 +618,63 @@ namespace PmxEditorMcp.SignatureDump
         /// 複製編集の流れが通る行キー。状態取得は引数を取らないもの、反映は複製だけを取るものを
         /// 採る。ほかの形は反映する範囲を別に受け取るので、流れの既定にはしない。
         /// </summary>
-        private static KeyValuePair<string, string> Flows(
+        private static IList<string> Flows(
             CommonAssignmentTable assignments, IDictionary<string, SignatureRecord> signatures)
         {
-            string read = Flow(assignments, signatures, "stateRead", p => p.Count == 0);
-            string commit = Flow(
-                assignments,
-                signatures,
-                "duplicateEdit",
-                p => p.Count == 1
-                    && string.Equals(p[0].TypeName, PmxTypeName, StringComparison.Ordinal));
+            return new[]
+            {
+                Flow(assignments, signatures, "stateRead", p => p.Count == 0),
+                Flow(
+                    assignments,
+                    signatures,
+                    "duplicateEdit",
+                    p => p.Count == 1
+                        && string.Equals(p[0].TypeName, PmxTypeName, StringComparison.Ordinal)),
+                Flow(
+                    assignments,
+                    signatures,
+                    "stateRead",
+                    p => p.Count == 1 && IsConnector(p[0])),
+                Flow(
+                    assignments,
+                    signatures,
+                    "duplicateEdit",
+                    p => p.Count == 3 && IsConnector(p[0])),
+            };
+        }
 
-            return new KeyValuePair<string, string>(read, commit);
+        /// <summary>その引数が、ホストが入れる常駐コネクタを取るか。</summary>
+        private static bool IsConnector(ParameterRecord parameter)
+        {
+            return string.Equals(
+                parameter.TypeName, TypeRoleEvidence.InjectedConnector, StringComparison.Ordinal);
+        }
+
+        /// <summary>その行が取る引数の置き場。並びは引数の並びと同じ。</summary>
+        private static string Slots(
+            IDictionary<string, SignatureRecord> signatures, string rowKey)
+        {
+            string[] slots = signatures[rowKey].Parameters
+                .Select(p => "FlowSlot." + (IsConnector(p)
+                    ? "Connector"
+                    : string.Equals(p.TypeName, PmxTypeName, StringComparison.Ordinal)
+                        ? "Pmx"
+                        : "UndoLock"))
+                .ToArray();
+
+            return "new FlowSlot[] { " + string.Join(", ", slots) + " }";
+        }
+
+        /// <summary>複製編集の流れ1つをC#の式にする。</summary>
+        private static string FlowText(
+            IDictionary<string, SignatureRecord> signatures,
+            string read,
+            string commit,
+            bool received)
+        {
+            return "new PmxFlow(" + Literal(read) + ", " + Literal(commit) + ", "
+                + (received ? Literal(DeclaringTypeOf(read)) : "null") + ", "
+                + Slots(signatures, read) + ", " + Slots(signatures, commit) + ")";
         }
 
         private static string Flow(
@@ -606,7 +732,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> aggregated,
             IDictionary<string, string> elements,
             IDictionary<string, string> lists,
-            KeyValuePair<string, string> flows)
+            IList<string> flows,
+            IDictionary<string, SignatureRecord> signatures)
         {
             StringBuilder text = new StringBuilder();
             text.Append("// この本文はビルドのたびに作り直す。手で直さない。\n");
@@ -699,17 +826,16 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("\n");
             text.Append("    internal static class GeneratedSdkFlows\n");
             text.Append("    {\n");
-            text.Append("        /// <summary>現在のPMXの複製を得る行。</summary>\n");
-            text.Append("        internal const string StateRead = ").Append(Literal(flows.Key))
+            text.Append("        /// <summary>PMXのコネクタが受け持つ、複製編集の流れ。</summary>\n");
+            text.Append("        internal static readonly PmxFlow Current =\n");
+            text.Append("            ").Append(FlowText(signatures, flows[0], flows[1], true))
                 .Append(";\n");
             text.Append("\n");
-            text.Append("        /// <summary>複製した中身をまとめて反映する行。</summary>\n");
-            text.Append("        internal const string Commit = ").Append(Literal(flows.Value))
+            text.Append(
+                "        /// <summary>Cプラグイン連携の橋渡しが受け持つ、複製編集の流れ。</summary>\n");
+            text.Append("        internal static readonly PmxFlow Bridge =\n");
+            text.Append("            ").Append(FlowText(signatures, flows[2], flows[3], false))
                 .Append(";\n");
-            text.Append("\n");
-            text.Append("        /// <summary>この2つの行の受け手を引く鍵。</summary>\n");
-            text.Append("        internal const string Receiver = ")
-                .Append(Literal(DeclaringTypeOf(flows.Key))).Append(";\n");
             text.Append("\n");
             text.Append("        /// <summary>PMXの実体の型。ハンドルの型を見分けるのに使う。</summary>\n");
             text.Append("        internal static readonly Type Pmx = ")
