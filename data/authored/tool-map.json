@@ -3328,6 +3328,528 @@
       "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。"
     },
     {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.CenterOrigin()",
+      "editKind": "viewSession",
+      "basis": "変形の中心に重心を使うかどうかという頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.CenterValue()",
+      "editKind": "viewSession",
+      "basis": "値で指定する変形の中心の座標という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.ControlYDirection()",
+      "editKind": "viewSession",
+      "basis": "Y軸を縦向きとして操作するかどうかという頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.EditObject()",
+      "editKind": "read",
+      "basis": "いま頂点とボーンのどちらを編集しているかを返すだけで、エディタの状態を動かさない。書き込みはSDKが設定不可と述べているので、更新へは入れない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.GetVertexMemory(System.Int32)",
+      "editKind": "read",
+      "basis": "記憶域に控えてある頂点のリストの中の位置を取り出すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.MirrorMode()",
+      "editKind": "viewSession",
+      "basis": "鏡像で編集するかどうかという頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.Move()",
+      "editKind": "directChange",
+      "basis": "頂点を単位量だけ動かす。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.Move(PEPlugin.Pmd.IPEVector3)",
+      "editKind": "directChange",
+      "basis": "頂点を渡された量だけ動かす。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.MoveNormalAxis()",
+      "editKind": "directChange",
+      "basis": "頂点を法線の軸に沿って単位量だけ押し出す。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.MoveNormalAxis(System.Single)",
+      "editKind": "directChange",
+      "basis": "頂点を法線の軸に沿って渡された量だけ押し出す。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.MoveNormalAxisValue()",
+      "editKind": "viewSession",
+      "basis": "値で指定する法線の軸に沿った移動の量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.MoveOffset()",
+      "editKind": "viewSession",
+      "basis": "移動の単位量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.MoveValue()",
+      "editKind": "viewSession",
+      "basis": "値で指定する移動の量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.NormalAxisMoveOffset()",
+      "editKind": "viewSession",
+      "basis": "法線の軸に沿った移動の単位量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.NormalControlXDirection()",
+      "editKind": "viewSession",
+      "basis": "法線を操作するときにX軸を縦向きとして扱うかどうかという頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.Rotate()",
+      "editKind": "directChange",
+      "basis": "頂点を単位量だけ回す。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.Rotate(PEPlugin.Pmd.IPEVector3)",
+      "editKind": "directChange",
+      "basis": "頂点を渡された量だけ回す。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.RotateNormal()",
+      "editKind": "directChange",
+      "basis": "頂点の法線を単位量だけ回す。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.RotateNormal(PEPlugin.Pmd.IPEVector3)",
+      "editKind": "directChange",
+      "basis": "頂点の法線を渡された量だけ回す。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.RotateNormalOffset()",
+      "editKind": "viewSession",
+      "basis": "法線の回転の単位量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.RotateNormalValue()",
+      "editKind": "viewSession",
+      "basis": "値で指定する法線の回転の量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.RotateOffset()",
+      "editKind": "viewSession",
+      "basis": "回転の単位量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.RotateValue()",
+      "editKind": "viewSession",
+      "basis": "値で指定する回転の量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.ScaleOffset()",
+      "editKind": "viewSession",
+      "basis": "拡大縮小の単位量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.ScaleValue()",
+      "editKind": "viewSession",
+      "basis": "値で指定する拡大縮小の量という頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_vertex_edit_connector",
+        "model_update_vertex_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.Scaling()",
+      "editKind": "directChange",
+      "basis": "頂点を単位量だけ拡大縮小する。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.Scaling(PEPlugin.Pmd.IPEVector3)",
+      "editKind": "directChange",
+      "basis": "頂点を渡された量だけ拡大縮小する。変更は選んでいる頂点へ及ぶので、直接変更型に当たる。選ぶのは画面での操作なので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "vertex"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.SetVertexMemory(System.Int32,System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "頂点のリストの中の位置を編集画面の記憶域へ控えるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.BeginDraw()",
+      "editKind": "viewSession",
+      "basis": "ウェイトを塗っている状態にするだけで、モデルのデータにもファイルにも作用しない。実際に塗るのは画面での操作である。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.DrawSize()",
+      "editKind": "viewSession",
+      "basis": "塗る筆の大きさという描画の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_weight_edit_connector",
+        "model_update_weight_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.Drawing()",
+      "editKind": "viewSession",
+      "basis": "ウェイトを塗っている最中かどうかという描画の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_weight_edit_connector",
+        "model_update_weight_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.EndDraw()",
+      "editKind": "viewSession",
+      "basis": "ウェイトを塗っている状態を解くだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.IsGradation()",
+      "editKind": "viewSession",
+      "basis": "ぼかして塗るかべた塗りかという描画の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_weight_edit_connector",
+        "model_update_weight_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.Spray()",
+      "editKind": "viewSession",
+      "basis": "スプレーで塗るかどうかという描画の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_weight_edit_connector",
+        "model_update_weight_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.SprayInterval()",
+      "editKind": "viewSession",
+      "basis": "スプレーで塗る間隔という描画の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_weight_edit_connector",
+        "model_update_weight_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.SprayOff()",
+      "editKind": "viewSession",
+      "basis": "スプレーで塗る状態を解くだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.SprayOffset()",
+      "editKind": "viewSession",
+      "basis": "スプレーで塗る量を足すか引くかという描画の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_weight_edit_connector",
+        "model_update_weight_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.SprayOn()",
+      "editKind": "viewSession",
+      "basis": "スプレーで塗る状態にするだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.SprayPower()",
+      "editKind": "viewSession",
+      "basis": "スプレーの強さという描画の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_weight_edit_connector",
+        "model_update_weight_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEWeightEditConnector.WeightValue()",
+      "editKind": "viewSession",
+      "basis": "塗るウェイトの値という描画の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "model_get_weight_edit_connector",
+        "model_update_weight_edit_connector"
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.ReleaseViewEventListener(PXCPlugin.Event.IPXViewEventListener)",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるリスナへ直に作用して使えなくするので、直接変更型に当たる。"

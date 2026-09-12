@@ -67,6 +67,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
         }
 
+        /// <summary>受け手の指し方と同じ名前のSDKの引数を、呼び分けの直下に置いた形。</summary>
+        private static string SdkNamedSelectorSchemaJson(string name)
+        {
+            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                  { ""name"": """ + name + @""", ""required"": true }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
         /// <summary>受け手の指し方を組の中へ入れた形。呼び分けの直下には現れない。</summary>
         private static string NestedSelectorSchemaJson()
         {
@@ -172,7 +181,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string valueType = "System.Single",
             bool isStatic = false,
             MemberKind memberKind = MemberKind.Method,
-            ParameterDirection direction = ParameterDirection.In)
+            ParameterDirection direction = ParameterDirection.In,
+            string parameterName = "distance")
         {
             SignatureRecord signature = new SignatureRecord(
                 Key,
@@ -183,7 +193,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 0,
                 new[]
                 {
-                    new ParameterRecord("distance", "System.Single", direction, false),
+                    new ParameterRecord(parameterName, "System.Single", direction, false),
                 },
                 valueType,
                 false,
@@ -385,6 +395,41 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "コネクタ型なのに受け手を指す入力がある", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AConnectorMayTakeAnSdkArgumentNamedLikeATargetSelector()
+        {
+            Require(
+                SdkNamedSelectorSchemaJson("indices"),
+                role: TypeRole.Connector,
+                signatures: Signatures(parameterName: "indices"));
+        }
+
+        [Fact]
+        public void AnSdkArgumentNamedLikeATargetSelectorDoesNotPointTheReceiver()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    SdkNamedSelectorSchemaJson("indices"),
+                    role: TypeRole.OperationTarget,
+                    signatures: Signatures(parameterName: "indices")));
+
+            Assert.Contains(
+                "操作対象型の受け手を指す入力が無い", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnSdkArgumentNamedLikeAHandleDoesNotPointTheReceiver()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    SdkNamedSelectorSchemaJson("handles"),
+                    role: TypeRole.HandleTarget,
+                    signatures: Signatures(parameterName: "handles")));
+
+            Assert.Contains(
+                "ハンドル操作型の受け手を指す入力が無い", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]

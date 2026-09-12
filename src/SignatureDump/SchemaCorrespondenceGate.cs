@@ -220,10 +220,11 @@ namespace PmxEditorMcp.SignatureDump
             return Named(branch.Inputs.SelectMany(i => i.WithNested), name);
         }
 
-        /// <summary>呼び分けの直下に、その名前の入力を持つか。</summary>
+        /// <summary>呼び分けの直下に、その名前でホストが決める入力を持つか。</summary>
         private static bool HasDirectInput(SchemaBranch branch, string name)
         {
-            return Named(branch.Inputs, name);
+            return Named(
+                branch.Inputs.Where(i => i.Origin == ItemOrigin.HostInput), name);
         }
 
         private static bool Named(IEnumerable<SchemaItem> items, string name)

@@ -1290,6 +1290,19 @@
       }
     },
     {
+      "tool": "model_begin_draw",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "model_body",
       "branches": [
         {
@@ -1655,6 +1668,19 @@
       }
     },
     {
+      "tool": "model_end_draw",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "model_face",
       "branches": [
         {
@@ -1799,6 +1825,148 @@
         "members": [
           {
             "name": "currentPath"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_get_vertex_edit_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "centerOrigin"
+          },
+          {
+            "name": "centerValue"
+          },
+          {
+            "name": "controlYDirection"
+          },
+          {
+            "name": "editObject"
+          },
+          {
+            "name": "mirrorMode"
+          },
+          {
+            "name": "moveNormalAxisValue"
+          },
+          {
+            "name": "moveOffset"
+          },
+          {
+            "name": "moveValue"
+          },
+          {
+            "name": "normalAxisMoveOffset"
+          },
+          {
+            "name": "normalControlXDirection"
+          },
+          {
+            "name": "rotateNormalOffset"
+          },
+          {
+            "name": "rotateNormalValue"
+          },
+          {
+            "name": "rotateOffset"
+          },
+          {
+            "name": "rotateValue"
+          },
+          {
+            "name": "scaleOffset"
+          },
+          {
+            "name": "scaleValue"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_get_vertex_memory",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "num",
+              "required": true,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 4
+              },
+              "source": "SDKの添付文書 PEPlugin.XML: 記憶域[0-4]"
+            }
+          ]
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "model_get_weight_edit_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "drawSize"
+          },
+          {
+            "name": "drawing"
+          },
+          {
+            "name": "isGradation"
+          },
+          {
+            "name": "spray"
+          },
+          {
+            "name": "sprayInterval"
+          },
+          {
+            "name": "sprayOffset"
+          },
+          {
+            "name": "sprayPower"
+          },
+          {
+            "name": "weightValue"
           }
         ]
       }
@@ -5158,6 +5326,50 @@
       "output": {}
     },
     {
+      "tool": "model_move",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "val",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_move_normal_axis",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "val",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "model_node",
       "branches": [
         {
@@ -6484,6 +6696,72 @@
       }
     },
     {
+      "tool": "model_rotate",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "rot",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_rotate_normal",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "rot",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_scaling",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "val",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "model_set_local_axis_bone",
       "branches": [
         {
@@ -6786,6 +7064,34 @@
       }
     },
     {
+      "tool": "model_set_vertex_memory",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "num",
+              "required": true,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 4
+              },
+              "source": "SDKの添付文書 PEPlugin.XML: 記憶域[0-4]"
+            },
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "model_soft_body",
       "branches": [
         {
@@ -6804,6 +7110,32 @@
         }
       ],
       "output": {}
+    },
+    {
+      "tool": "model_spray_off",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_spray_on",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
     },
     {
       "tool": "model_to_file_pmx",
@@ -6890,7 +7222,12 @@
                 },
                 {
                   "name": "group",
-                  "required": false
+                  "required": false,
+                  "bounds": {
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  "source": "SDKの添付文書 PEPlugin.XML: グループNo 0~15"
                 },
                 {
                   "name": "mass",
@@ -6950,7 +7287,12 @@
                   },
                   {
                     "name": "group",
-                    "required": false
+                    "required": false,
+                    "bounds": {
+                      "minimum": 0,
+                      "maximum": 15
+                    },
+                    "source": "SDKの添付文書 PEPlugin.XML: グループNo 0~15"
                   },
                   {
                     "name": "mass",
@@ -7040,7 +7382,12 @@
                 },
                 {
                   "name": "group",
-                  "required": false
+                  "required": false,
+                  "bounds": {
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  "source": "SDKの添付文書 PEPlugin.XML: グループNo 0~15"
                 },
                 {
                   "name": "mass",
@@ -7100,7 +7447,12 @@
                   },
                   {
                     "name": "group",
-                    "required": false
+                    "required": false,
+                    "bounds": {
+                      "minimum": 0,
+                      "maximum": 15
+                    },
+                    "source": "SDKの添付文書 PEPlugin.XML: グループNo 0~15"
                   },
                   {
                     "name": "mass",
@@ -7633,7 +7985,12 @@
                 },
                 {
                   "name": "uvaCount",
-                  "required": false
+                  "required": false,
+                  "bounds": {
+                    "minimum": 0,
+                    "maximum": 4
+                  },
+                  "source": "SDKの添付文書 PEPlugin.XML: 追加UV数(0～4)"
                 },
                 {
                   "name": "version",
@@ -11467,7 +11824,12 @@
                 },
                 {
                   "name": "group",
-                  "required": false
+                  "required": false,
+                  "bounds": {
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  "source": "SDKの添付文書 PEPlugin.XML: グループNo 0~15"
                 },
                 {
                   "name": "khr",
@@ -11623,7 +11985,12 @@
                   },
                   {
                     "name": "group",
-                    "required": false
+                    "required": false,
+                    "bounds": {
+                      "minimum": 0,
+                      "maximum": 15
+                    },
+                    "source": "SDKの添付文書 PEPlugin.XML: グループNo 0~15"
                   },
                   {
                     "name": "khr",
@@ -11809,7 +12176,12 @@
                 },
                 {
                   "name": "group",
-                  "required": false
+                  "required": false,
+                  "bounds": {
+                    "minimum": 0,
+                    "maximum": 15
+                  },
+                  "source": "SDKの添付文書 PEPlugin.XML: グループNo 0~15"
                 },
                 {
                   "name": "khr",
@@ -11965,7 +12337,12 @@
                   },
                   {
                     "name": "group",
-                    "required": false
+                    "required": false,
+                    "bounds": {
+                      "minimum": 0,
+                      "maximum": 15
+                    },
+                    "source": "SDKの添付文書 PEPlugin.XML: グループNo 0~15"
                   },
                   {
                     "name": "khr",
@@ -12335,6 +12712,93 @@
               "names": [
                 "value",
                 "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_vertex_edit_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "centerOrigin"
+            },
+            {
+              "name": "centerValue"
+            },
+            {
+              "name": "controlYDirection"
+            },
+            {
+              "name": "mirrorMode"
+            },
+            {
+              "name": "moveNormalAxisValue"
+            },
+            {
+              "name": "moveOffset"
+            },
+            {
+              "name": "moveValue"
+            },
+            {
+              "name": "normalAxisMoveOffset"
+            },
+            {
+              "name": "normalControlXDirection"
+            },
+            {
+              "name": "rotateNormalOffset"
+            },
+            {
+              "name": "rotateNormalValue"
+            },
+            {
+              "name": "rotateOffset"
+            },
+            {
+              "name": "rotateValue"
+            },
+            {
+              "name": "scaleOffset"
+            },
+            {
+              "name": "scaleValue"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "centerOrigin",
+                "centerValue",
+                "controlYDirection",
+                "mirrorMode",
+                "moveNormalAxisValue",
+                "moveOffset",
+                "moveValue",
+                "normalAxisMoveOffset",
+                "normalControlXDirection",
+                "rotateNormalOffset",
+                "rotateNormalValue",
+                "rotateOffset",
+                "rotateValue",
+                "scaleOffset",
+                "scaleValue"
               ],
               "required": true
             }
@@ -12734,6 +13198,70 @@
               "names": [
                 "value",
                 "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_weight_edit_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "drawSize"
+            },
+            {
+              "name": "drawing"
+            },
+            {
+              "name": "isGradation"
+            },
+            {
+              "name": "spray"
+            },
+            {
+              "name": "sprayInterval"
+            },
+            {
+              "name": "sprayOffset"
+            },
+            {
+              "name": "sprayPower",
+              "bounds": {
+                "minimum": 1,
+                "maximum": 30
+              },
+              "source": "SDKの添付文書 PEPlugin.XML: スプレー強度(1～30)"
+            },
+            {
+              "name": "weightValue"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "drawSize",
+                "drawing",
+                "isGradation",
+                "spray",
+                "sprayInterval",
+                "sprayOffset",
+                "sprayPower",
+                "weightValue"
               ],
               "required": true
             }
