@@ -180,7 +180,8 @@ namespace PmxEditorMcp
             bool injected = false,
             ToolAccess referenced = null,
             bool connector = false,
-            Type held = null)
+            Type held = null,
+            string resident = null)
         {
             if (name == null)
             {
@@ -198,6 +199,7 @@ namespace PmxEditorMcp
             Referenced = referenced;
             Connector = connector;
             Held = held;
+            Resident = resident;
         }
 
         /// <summary>要求の引数の名前。</summary>
@@ -221,6 +223,12 @@ namespace PmxEditorMcp
 
         /// <summary>その引数が指す実体の型。ハンドルで受け取る引数だけが持ち、ほかは null。</summary>
         public Type Held { get; }
+
+        /// <summary>
+        /// その引数へ入れる常駐の受け手を引く鍵。接続の道から得る受け手を取る引数だけが持ち、
+        /// ほかは null。
+        /// </summary>
+        public string Resident { get; }
     }
 
     /// <summary>項目を集めるツールが持つ項目1件。</summary>
@@ -318,7 +326,8 @@ namespace PmxEditorMcp
             Type result,
             Type issues = null,
             IList<ToolField> projected = null,
-            string releases = null)
+            string releases = null,
+            bool releasesIssued = false)
         {
             if (rowKey == null)
             {
@@ -355,6 +364,7 @@ namespace PmxEditorMcp
             Issues = issues;
             Projected = projected == null ? null : new ReadOnlyCollection<ToolField>(projected);
             Releases = releases;
+            ReleasesIssued = releasesIssued;
         }
 
         /// <summary>呼ぶ行のキー。</summary>
@@ -389,6 +399,12 @@ namespace PmxEditorMcp
         /// null で、台帳の失効だけで足りる。
         /// </summary>
         public string Releases { get; }
+
+        /// <summary>
+        /// 手放す呼び出しが、預けた生成物を引数に取るか。真なら受け手はこの呼び出しの受け手で、
+        /// 偽なら生成物そのものが受け手になる。
+        /// </summary>
+        public bool ReleasesIssued { get; }
 
         /// <summary>
         /// 返す値が値として写せない型のとき、その中の項目を読む行。ほかは null で、値をそのまま

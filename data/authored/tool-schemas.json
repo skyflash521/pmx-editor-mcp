@@ -13391,6 +13391,23 @@
       }
     },
     {
+      "tool": "session_create_event_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "c",
+              "origin": "hostInput",
+              "shape": "number",
+              "injected": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "session_find_c_plugins",
       "branches": [
         {
@@ -14000,6 +14017,25 @@
       }
     },
     {
+      "tool": "session_get_view_axis",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "c",
+              "origin": "hostInput",
+              "shape": "number",
+              "injected": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
       "tool": "session_import_x_file",
       "branches": [
         {
@@ -14536,6 +14572,42 @@
       }
     },
     {
+      "tool": "view_create_event_listener_ui_model",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "c",
+                  "required": true
+                },
+                {
+                  "name": "materials",
+                  "required": true,
+                  "element": {}
+                }
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "view_create_text_control",
       "branches": [
         {
@@ -14563,6 +14635,26 @@
             },
             {
               "name": "f",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "view_create_view_event_listener_event_connector",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
               "required": true
             }
           ]
@@ -15065,7 +15157,7 @@
       "output": {}
     },
     {
-      "tool": "view_get_selected_body_indices",
+      "tool": "view_get_selected_body_indices_c_plugin_connector",
       "branches": [
         {
           "branch": "only",
@@ -15077,7 +15169,31 @@
       }
     },
     {
-      "tool": "view_get_selected_bone_indices",
+      "tool": "view_get_selected_body_indices_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_bone_indices_c_plugin_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_bone_indices_pmd_view_connector",
       "branches": [
         {
           "branch": "only",
@@ -15102,7 +15218,7 @@
       }
     },
     {
-      "tool": "view_get_selected_face_indices",
+      "tool": "view_get_selected_face_indices_c_plugin_connector",
       "branches": [
         {
           "branch": "only",
@@ -15114,7 +15230,7 @@
       }
     },
     {
-      "tool": "view_get_selected_joint_indices",
+      "tool": "view_get_selected_face_indices_pmd_view_connector",
       "branches": [
         {
           "branch": "only",
@@ -15126,7 +15242,43 @@
       }
     },
     {
-      "tool": "view_get_selected_vertex_indices",
+      "tool": "view_get_selected_joint_indices_c_plugin_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_joint_indices_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_vertex_indices_c_plugin_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_vertex_indices_pmd_view_connector",
       "branches": [
         {
           "branch": "only",
@@ -15649,6 +15801,18 @@
       }
     },
     {
+      "tool": "view_get_visible_material_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
       "tool": "view_get_world_ui_model",
       "branches": [
         {
@@ -15886,6 +16050,729 @@
         "origin": "hostOutput",
         "shape": "null_value"
       }
+    },
+    {
+      "tool": "view_poll_events",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 100,
+              "bounds": {
+                "minimum": 1,
+                "maximum": 1000
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "events",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "seq",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "type",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "sourceHandle",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "payload",
+                  "origin": "hostOutput"
+                }
+              ]
+            }
+          },
+          {
+            "name": "dropped",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "remaining",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      },
+      "payloads": [
+        {
+          "type": "ui_model_mouse_click",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "ui_model_mouse_double_click",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "ui_model_mouse_down",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "ui_model_mouse_drag",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            },
+            {
+              "name": "stX",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "stY",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vDrag",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "ui_model_mouse_drag_end",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            },
+            {
+              "name": "stX",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "stY",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vDrag",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "ui_model_mouse_enter",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "ui_model_mouse_leave",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "ui_model_mouse_over",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "ui_model_mouse_up",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "view_key_down",
+          "members": [
+            {
+              "name": "keyCode",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "keyValue",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "alt",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            },
+            {
+              "name": "control",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            },
+            {
+              "name": "shift",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            }
+          ]
+        },
+        {
+          "type": "view_key_up",
+          "members": [
+            {
+              "name": "keyCode",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "keyValue",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "alt",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            },
+            {
+              "name": "control",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            },
+            {
+              "name": "shift",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            }
+          ]
+        },
+        {
+          "type": "view_model_updated",
+          "members": []
+        },
+        {
+          "type": "view_mouse_click",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "view_mouse_double_click",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "view_mouse_down",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "view_mouse_move",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "view_mouse_up",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "view_mouse_wheel",
+          "members": [
+            {
+              "name": "button",
+              "origin": "hostOutput",
+              "shape": "enum_name"
+            },
+            {
+              "name": "clicks",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "x",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "y",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "delta",
+              "origin": "hostOutput",
+              "shape": "number"
+            },
+            {
+              "name": "vPoint",
+              "origin": "hostOutput",
+              "shape": "number_array"
+            }
+          ]
+        },
+        {
+          "type": "view_object_selected",
+          "members": [
+            {
+              "name": "vertex",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            },
+            {
+              "name": "face",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            },
+            {
+              "name": "bone",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            },
+            {
+              "name": "body",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            },
+            {
+              "name": "joint",
+              "origin": "hostOutput",
+              "shape": "boolean"
+            }
+          ]
+        },
+        {
+          "type": "view_redo",
+          "members": []
+        },
+        {
+          "type": "view_undo",
+          "members": []
+        }
+      ]
     },
     {
       "tool": "view_reset_bone_ui_model",
@@ -16661,7 +17548,35 @@
       }
     },
     {
-      "tool": "view_set_selected_body_indices",
+      "tool": "view_set_mouse_drag_move",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "uim",
+              "required": true
+            },
+            {
+              "name": "listener",
+              "required": true
+            },
+            {
+              "name": "viewCtrl",
+              "origin": "hostInput",
+              "shape": "number",
+              "injected": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_body_indices_c_plugin_connector",
       "branches": [
         {
           "branch": "only",
@@ -16680,7 +17595,7 @@
       }
     },
     {
-      "tool": "view_set_selected_bone_indices",
+      "tool": "view_set_selected_body_indices_pmd_view_connector",
       "branches": [
         {
           "branch": "only",
@@ -16699,7 +17614,7 @@
       }
     },
     {
-      "tool": "view_set_selected_face_indices",
+      "tool": "view_set_selected_bone_indices_c_plugin_connector",
       "branches": [
         {
           "branch": "only",
@@ -16718,7 +17633,7 @@
       }
     },
     {
-      "tool": "view_set_selected_joint_indices",
+      "tool": "view_set_selected_bone_indices_pmd_view_connector",
       "branches": [
         {
           "branch": "only",
@@ -16737,7 +17652,102 @@
       }
     },
     {
-      "tool": "view_set_selected_vertex_indices",
+      "tool": "view_set_selected_face_indices_c_plugin_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_face_indices_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_joint_indices_c_plugin_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_joint_indices_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_vertex_indices_c_plugin_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_vertex_indices_pmd_view_connector",
       "branches": [
         {
           "branch": "only",

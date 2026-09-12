@@ -5786,9 +5786,325 @@
       ]
     },
     {
+      "signatureKey": "PXCPlugin.Event.IPXEventConnector.CreateViewEventListener()",
+      "editKind": "viewSession",
+      "basis": "画面で起きたことを受け取る口を作るだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "view_poll_events",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.ReleaseViewEventListener(PXCPlugin.Event.IPXViewEventListener)",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるリスナへ直に作用して使えなくするので、直接変更型に当たる。"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseClick()",
+      "editKind": "read",
+      "basis": "UIモデルをクリックしたことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_click"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseDoubleClick()",
+      "editKind": "read",
+      "basis": "UIモデルをダブルクリックしたことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_double_click"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseDown()",
+      "editKind": "read",
+      "basis": "UIモデルでボタンを押したことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_down"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseDrag()",
+      "editKind": "read",
+      "basis": "UIモデルを引いたことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_drag"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseDragEnd()",
+      "editKind": "read",
+      "basis": "UIモデルを引き終えたことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_drag_end"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseEnter()",
+      "editKind": "read",
+      "basis": "UIモデルへマウスが入ったことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_enter"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseLeave()",
+      "editKind": "read",
+      "basis": "UIモデルからマウスが出たことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_leave"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseOver()",
+      "editKind": "read",
+      "basis": "UIモデルの上にマウスがあることを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_over"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXUIModelEventListener.MouseUp()",
+      "editKind": "read",
+      "basis": "UIモデルでボタンを離したことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "ui_model_mouse_up"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.KeyDown()",
+      "editKind": "read",
+      "basis": "キーを押したことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_key_down"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.KeyUp()",
+      "editKind": "read",
+      "basis": "キーを離したことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_key_up"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.ModelUpdated()",
+      "editKind": "read",
+      "basis": "モデルの表示が更新されたことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_model_updated"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.MouseClick()",
+      "editKind": "read",
+      "basis": "画面をクリックしたことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_mouse_click"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.MouseDoubleClick()",
+      "editKind": "read",
+      "basis": "画面をダブルクリックしたことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_mouse_double_click"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.MouseDown()",
+      "editKind": "read",
+      "basis": "画面でボタンを押したことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_mouse_down"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.MouseMove()",
+      "editKind": "read",
+      "basis": "画面の上でマウスを動かしたことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_mouse_move"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.MouseUp()",
+      "editKind": "read",
+      "basis": "画面でボタンを離したことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_mouse_up"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.MouseWheel()",
+      "editKind": "read",
+      "basis": "画面でホイールを回したことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_mouse_wheel"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.ObjectSelected()",
+      "editKind": "read",
+      "basis": "画面で対象を選んだことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_object_selected"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.Redo()",
+      "editKind": "read",
+      "basis": "やり直しを行ったことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_redo"
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.IPXViewEventListener.Undo()",
+      "editKind": "read",
+      "basis": "元に戻すを行ったことを知らせるだけで、エディタの状態を動かさない。",
+      "eventType": "view_undo"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.GetSelectedBodyIndices()",
+      "editKind": "read",
+      "basis": "剛体について、いまその画面で選ばれているものの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.GetSelectedBoneIndices()",
+      "editKind": "read",
+      "basis": "ボーンについて、いまその画面で選ばれているものの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.GetSelectedFaceIndices()",
+      "editKind": "read",
+      "basis": "面について、いまその画面で選ばれているものの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.GetSelectedJointIndices()",
+      "editKind": "read",
+      "basis": "Jointについて、いまその画面で選ばれているものの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.GetSelectedVertexIndices()",
+      "editKind": "read",
+      "basis": "頂点について、いまその画面で選ばれているものの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.GetVisibleMaterialIndices()",
+      "editKind": "read",
+      "basis": "いま画面へ見せている材質の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBodyIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "剛体の選び方を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBoneIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "ボーンの選び方を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedFaceIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "面の選び方を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedJointIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "Jointの選び方を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedVertexIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "頂点の選び方を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PXCPlugin.IPXCPluginRunArgs.Connector()",
@@ -6356,9 +6672,44 @@
       "basis": "長寿命のオブジェクトであるビルダへ直に作用して使える状態にするので、直接変更型に当たる。"
     },
     {
+      "signatureKey": "PXCPlugin.PXCBridge.CreateEventConnector(PXCPlugin.IPXCPluginConnector)",
+      "editKind": "viewSession",
+      "basis": "イベントの受け口をこの接続のために作るだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "view_poll_events",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.PXCBridge.GetCurrentPmx(PXCPlugin.IPXCPluginConnector)",
       "editKind": "read",
       "basis": "現在のPMXの複製を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.GetViewAxis(PXCPlugin.IPXCPluginConnector)",
+      "editKind": "read",
+      "basis": "いまの視点が向いている軸を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.PrimitiveBuilder()",
@@ -6462,6 +6813,23 @@
       "embeddedIn": [
         "session_get_c_plugin_info_system_control",
         "session_get_pe_plugin_info"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.CreateEventListener(PXCPlugin.Event.IPXEventConnector,System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "UIモデルで起きたことを受け取る口を作るだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "view_poll_events",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -6982,6 +7350,19 @@
           "observerArgs": {
             "handles": "result:"
           },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper.SetMouseDragMove(PXCPlugin.UIModel.IPXUIModel,PXCPlugin.Event.IPXUIModelEventListener,PXCPlugin.IPXViewControl)",
+      "editKind": "viewSession",
+      "basis": "マウスで引いた分だけUIモデルを動かす受け手を足すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
           "comparison": "exists"
         }
       ]

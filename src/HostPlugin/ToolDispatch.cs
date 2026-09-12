@@ -74,6 +74,8 @@ namespace PmxEditorMcp
 
         private readonly SdkRelayTable _relay;
 
+        private readonly EventBindingTable _events;
+
         private readonly IDictionary<string, SdkReceiver> _receivers;
 
         private readonly IDictionary<string, SdkList> _lists;
@@ -96,8 +98,10 @@ namespace PmxEditorMcp
             PmxSession pmx,
             PmxSession bridged,
             UndoRecovery recovery,
-            IModifierKeys modifiers)
+            IModifierKeys modifiers,
+            EventBindingTable events)
         {
+            _events = events;
             _relay = relay;
             _receivers = receivers;
             _lists = lists;
@@ -122,7 +126,8 @@ namespace PmxEditorMcp
             IDictionary<string, ToolFields> aggregations,
             IDictionary<string, ToolElements> elements,
             IDictionary<string, ToolPrecondition> preconditions,
-            IModifierKeys modifiers)
+            IModifierKeys modifiers,
+            EventBindingTable events)
         {
             if (methods == null)
             {
@@ -189,8 +194,13 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(modifiers));
             }
 
+            if (events == null)
+            {
+                throw new ArgumentNullException(nameof(events));
+            }
+
             ToolDispatch dispatch = new ToolDispatch(
-                relay, receivers, lists, connection, pmx, bridged, recovery, modifiers);
+                relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
                 IList<ToolCall> bound = call.Value;
@@ -740,6 +750,7 @@ namespace PmxEditorMcp
             }
 
             object result = null;
+            object called = null;
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
@@ -764,6 +775,7 @@ namespace PmxEditorMcp
                     return;
                 }
 
+                called = column[0].Item;
                 stage = Changing(call.Receiver, target);
                 object value;
                 SdkRelayRefusal refusal;
@@ -804,7 +816,7 @@ namespace PmxEditorMcp
 
             if (call.Issues != null)
             {
-                return Issued(context, call, result);
+                return Issued(context, call, result, called);
             }
 
             if (call.Projected != null)
@@ -821,7 +833,13 @@ namespace PmxEditorMcp
         /// 生成物を台帳へ預け、そのハンドルを返す。生成物はエディタの状態の外で生きるので、
         /// 解放するか、リストへ加えて消費するまで台帳が保つ。
         /// </summary>
-        private object Issued(McpMethodContext context, ToolCall call, object result)
+        private object Issued(
+            McpMethodContext context,
+            ToolCall call,
+            object result,
+            object receiver,
+            int at = 0,
+            int? held = null)
         {
             if (result == null)
             {
@@ -829,26 +847,82 @@ namespace PmxEditorMcp
                     ToolEnvelope.NotApplicable, "生成物を返さなかった: " + call.RowKey);
             }
 
-            return ToolEnvelope.Success(context.Handles.Issue(
+            Action detach = () => { };
+            int id = context.Handles.Issue(
                 call.Issues.FullName,
                 result,
-                Releasing(context, call, result),
-                Involved(context, call)));
+                () =>
+                {
+                    detach();
+                    Releasing(context, call, result, receiver)();
+                },
+                Involved(context, call, Passed(context, call, at), held));
+            detach = Listening(context, call.Issues.FullName, result, id);
+
+            return ToolEnvelope.Success(id);
         }
 
         /// <summary>
-        /// その生成に関与したハンドル。ハンドルで受け取った引数がこれに当たり、生成物はそれらより
-        /// 先に解放される——生成物は関与した実体を持ち続けるので、先に手放されると使えなくなる。
+        /// 預けた実体がリスナなら、その公開イベントへ受け手を掛ける。掛けた受け手は、ハンドルが
+        /// 失効するときに外す。受け手はエディタのUIスレッドで走るので、溜め場へ入れるところで
+        /// 起きた誤りは記録だけにして、エディタの側へ返さない。
         /// </summary>
-        private static IEnumerable<int> Involved(McpMethodContext context, ToolCall call)
+        private Action Listening(
+            McpMethodContext context, string typeName, object issued, int id)
+        {
+            EventAttach attach;
+            if (!_events.Attachments.TryGetValue(typeName, out attach))
+            {
+                return () => { };
+            }
+
+            return attach(issued, (type, args) =>
+            {
+                context.Events.Enqueue(type, id, Read(type, args));
+            });
+        }
+
+        /// <summary>
+        /// イベント固有の値を組へ直す。写せなかった値は落として組を空にする——受け手はエディタの
+        /// UIスレッドで走るので、ここで投げるとエディタの側へ抜ける。
+        /// </summary>
+        private object Read(string type, object args)
+        {
+            PayloadReader read;
+            if (!_events.Payloads.TryGetValue(type, out read))
+            {
+                return null;
+            }
+
+            try
+            {
+                return read(args);
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// その生成に関与したハンドル。ハンドルで受け取った引数と、ハンドルで指した受け手がこれに
+        /// 当たり、生成物はそれらより先に解放される——生成物は関与した実体を持ち続けるので、先に
+        /// 手放されると使えなくなる。
+        /// </summary>
+        private static IEnumerable<int> Involved(
+            McpMethodContext context, ToolCall call, IDictionary<string, object> given, int? held)
         {
             List<int> involved = new List<int>();
+            if (held.HasValue)
+            {
+                involved.Add(held.Value);
+            }
+
             foreach (ToolArgument argument in call.Arguments.Where(a => a.Held != null))
             {
                 object json;
                 long id;
-                if (context.Params.TryGetValue(argument.Name, out json)
-                    && TryInteger(json, out id))
+                if (given.TryGetValue(argument.Name, out json) && TryInteger(json, out id))
                 {
                     involved.Add((int)id);
                 }
@@ -858,10 +932,54 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
+        /// その位置の対象を指したハンドル。ハンドル以外で指した対象では null——位置で指した対象は
+        /// リストが持つので、生成物より先に手放されることがない。
+        /// </summary>
+        private static int? Held(Pointed pointed, int at)
+        {
+            if (pointed == null || !pointed.ByHandle || pointed.Elements == null)
+            {
+                return null;
+            }
+
+            IList<long> handles = pointed.Elements.Handles;
+
+            return handles != null && at < handles.Count ? (int?)handles[at] : null;
+        }
+
+        /// <summary>その呼び出しの引数を渡された組。器の中へ入れて渡す呼び出しはその器を見る。</summary>
+        private static IDictionary<string, object> Passed(
+            McpMethodContext context, ToolCall call, int at)
+        {
+            if (!Many(call.Access, call.Receiver))
+            {
+                return context.Params;
+            }
+
+            object single;
+            if (context.Params.TryGetValue(ArgsName, out single))
+            {
+                return single as IDictionary<string, object>
+                    ?? new Dictionary<string, object>(StringComparer.Ordinal);
+            }
+
+            object many;
+            object[] items = context.Params.TryGetValue(ArgsListName, out many)
+                ? many as object[]
+                : null;
+
+            return items != null && at < items.Length
+                ? items[at] as IDictionary<string, object>
+                    ?? new Dictionary<string, object>(StringComparer.Ordinal)
+                : new Dictionary<string, object>(StringComparer.Ordinal);
+        }
+
+        /// <summary>
         /// 預けた生成物を手放す手順。手放す行を持たない生成物では何もしない。手順を持つ生成物は
         /// SDKを呼ぶので、ほかの中継と同じくUIスレッドで行う。
         /// </summary>
-        private Action Releasing(McpMethodContext context, ToolCall call, object result)
+        private Action Releasing(
+            McpMethodContext context, ToolCall call, object result, object receiver)
         {
             if (call.Releases == null)
             {
@@ -869,6 +987,8 @@ namespace PmxEditorMcp
             }
 
             IUiInvoker invoker = context.Ui;
+            object target = call.ReleasesIssued ? receiver : result;
+            object[] arguments = call.ReleasesIssued ? new[] { result } : new object[0];
 
             return () =>
             {
@@ -877,7 +997,7 @@ namespace PmxEditorMcp
                     object ignored;
                     SdkRelayRefusal refusal;
                     if (!_relay.TryInvoke(
-                        call.Releases, result, new object[0], out ignored, out refusal))
+                        call.Releases, target, arguments, out ignored, out refusal))
                     {
                         throw new InvalidOperationException(
                             "手放す呼び出しを断られた: " + call.Releases);
@@ -935,6 +1055,7 @@ namespace PmxEditorMcp
 
             int invoked = 0;
             List<object> results = new List<object>();
+            List<object> receivers = new List<object>();
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
@@ -992,6 +1113,7 @@ namespace PmxEditorMcp
                     }
 
                     results.Add(projected);
+                    receivers.Add(column[at].Item);
                 }
 
                 invoked = column.Count;
@@ -1010,6 +1132,11 @@ namespace PmxEditorMcp
             if (refused != null)
             {
                 return refused.Envelope;
+            }
+
+            if (call.Issues != null)
+            {
+                return Handed(context, call, results, receivers, pointed, invoked);
             }
 
             if (call.Result == null && call.Outputs.Count == 0)
@@ -1046,6 +1173,35 @@ namespace PmxEditorMcp
             }
 
             return ToolEnvelope.Success(SetResponse.PerTarget(written, invoked), warnings);
+        }
+
+        /// <summary>
+        /// 対象ごとの生成物を台帳へ預け、そのハンドルを対象の並びで返す。対象の組へ及ぶ呼び出しが
+        /// 生成物を返すときの応答で、1件ずつの発行は受け手ごとに行う。
+        /// </summary>
+        private object Handed(
+            McpMethodContext context,
+            ToolCall call,
+            IList<object> results,
+            IList<object> receivers,
+            Pointed pointed,
+            int invoked)
+        {
+            List<object> handed = new List<object>(results.Count);
+            for (int at = 0; at < results.Count; at++)
+            {
+                IDictionary<string, object> envelope = (IDictionary<string, object>)Issued(
+                    context, call, results[at], receivers[at], at, Held(pointed, at));
+                object value;
+                if (!envelope.TryGetValue(ToolEnvelope.ValueName, out value))
+                {
+                    return envelope;
+                }
+
+                handed.Add(value);
+            }
+
+            return ToolEnvelope.Success(SetResponse.PerTarget(handed, invoked));
         }
 
         /// <summary>要素のメソッドへ渡す引数。全件へ同じ組を配るか、対象ごとの組の並びを取る。</summary>
@@ -1142,9 +1298,7 @@ namespace PmxEditorMcp
                 ToolArgument argument = call.Arguments[at];
                 if (argument.Injected)
                 {
-                    object given = argument.Connector
-                        ? _connection.Use()
-                        : (target == null ? null : target.Pmx);
+                    object given = Injected(argument, target);
                     foreach (object[] one in passing)
                     {
                         one[at] = given;
@@ -3178,6 +3332,29 @@ namespace PmxEditorMcp
         /// 受け手。接続の道から得るものはビルド時に決めた道を辿り、PMXから得るものはその実体を
         /// そのまま渡す。静的なメンバーは相手を取らない。
         /// </summary>
+        /// <summary>ホストが入れる引数の値。取る型で、どこから得るかが決まる。</summary>
+        private object Injected(ToolArgument argument, PmxTarget target)
+        {
+            if (argument.Connector)
+            {
+                return _connection.Use();
+            }
+
+            if (argument.Resident != null)
+            {
+                SdkReceiver found;
+                if (!_receivers.TryGetValue(argument.Resident, out found))
+                {
+                    throw new InvalidOperationException(
+                        "受け手を得る道が無い: " + argument.Resident);
+                }
+
+                return found(_connection);
+            }
+
+            return target == null ? null : target.Pmx;
+        }
+
         private object Receiver(ToolReceiver receiver, PmxTarget target)
         {
             if (receiver.Kind == ToolReceiverKind.Pmx)

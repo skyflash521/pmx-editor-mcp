@@ -304,6 +304,101 @@ namespace PmxEditorMcp.Tests
             Assert.False(ledger.IsValid(issued));
         }
 
+        /// <summary>
+        /// 預けた実体がリスナなら、その公開イベントへ受け手が掛かり、起きたことはそのハンドルを
+        /// 発生元として溜まる。ハンドルが失効すると受け手は外れる。
+        /// </summary>
+        [Fact]
+        public void AnIssuedListenerIsSubscribedAndUnsubscribedWithItsHandle()
+        {
+            Target source = new Target { Made = new Target() };
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("source", 1L);
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, source, () => { });
+            EventQueue queue = Events();
+            EventSink held = null;
+            bool detached = false;
+            EventBindingTable events = new EventBindingTable(
+                new Dictionary<string, EventAttach>(StringComparer.Ordinal)
+                {
+                    {
+                        typeof(Target).FullName,
+                        (listener, sink) =>
+                        {
+                            held = sink;
+
+                            return () => detached = true;
+                        }
+                    },
+                },
+                new Dictionary<string, PayloadReader>(StringComparer.Ordinal)
+                {
+                    {
+                        "session_made",
+                        args => new Dictionary<string, object>(StringComparer.Ordinal)
+                        {
+                            { "note", args },
+                        }
+                    },
+                });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held", events)(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, queue));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            int issued = Convert.ToInt32(
+                envelope[ToolEnvelope.ValueName], CultureInfo.InvariantCulture);
+            Assert.NotNull(held);
+
+            held("session_made", "題材");
+
+            EventDrainResult drained = queue.Drain(10);
+            QueuedEvent queued = Assert.Single(drained.Events);
+            Assert.Equal("session_made", queued.Type);
+            Assert.Equal(issued, queued.SourceHandle);
+            Assert.Equal(
+                "題材", ((IDictionary<string, object>)queued.Payload)["note"]);
+
+            HandleReleaseResult released;
+            Assert.True(ledger.TryRelease(issued, out released));
+            Assert.True(detached);
+        }
+
+        /// <summary>
+        /// 受け手も引数もハンドルで指す呼び出しでは、そのどちらより先に生成物が解放される。生成物は
+        /// どちらの実体も持ち続けるので、先に手放されると使えない相手を指したままになる。
+        /// </summary>
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void WhatAHeldCallMakesIsReleasedBeforeBothTheReceiverAndTheArgument(int first)
+        {
+            Target owner = new Target { Made = new Target() };
+            Target source = new Target();
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", new object[] { 1L });
+            arguments.Add(
+                "args",
+                new Dictionary<string, object>(StringComparer.Ordinal) { { "source", 2L } });
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, owner, () => { });
+            ledger.Issue(typeof(Target).FullName, source, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_on_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            object[] handed = (object[])envelope[ToolEnvelope.ValueName];
+            int issued = Convert.ToInt32(handed[0], CultureInfo.InvariantCulture);
+
+            HandleReleaseResult released;
+            Assert.True(ledger.TryRelease(first, out released));
+            Assert.False(ledger.IsValid(issued));
+        }
+
         [Fact]
         public void ACallOnAHeldReceiverRunsOnEveryHandle()
         {
@@ -569,6 +664,11 @@ namespace PmxEditorMcp.Tests
 
         private McpMethod Method(string tool)
         {
+            return Method(tool, EventBindingFixture.Empty());
+        }
+
+        private McpMethod Method(string tool, EventBindingTable events)
+        {
             McpMethodTable methods = new McpMethodTable();
             SdkRelayTable relay = Relay();
             IDictionary<string, SdkReceiver> receivers = Receivers();
@@ -587,7 +687,8 @@ namespace PmxEditorMcp.Tests
                 Aggregations(),
                 new Dictionary<string, ToolElements>(StringComparer.Ordinal),
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
-                new StillModifierKeys());
+                new StillModifierKeys(),
+                events);
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
@@ -634,7 +735,8 @@ namespace PmxEditorMcp.Tests
                 {
                     { "session_count", precondition },
                 },
-                new StillModifierKeys());
+                new StillModifierKeys(),
+                EventBindingFixture.Empty());
 
             McpMethod method;
             Assert.True(methods.TryGet("session_count", out method));
@@ -672,7 +774,8 @@ namespace PmxEditorMcp.Tests
                             new string[0])
                     },
                 },
-                modifiers);
+                modifiers,
+                EventBindingFixture.Empty());
 
             McpMethod method;
             Assert.True(methods.TryGet("session_count", out method));
@@ -737,7 +840,11 @@ namespace PmxEditorMcp.Tests
                     { InfoOptionKey, (target, arguments) => ((Info)target).Option },
                     { OptionBootupKey, (target, arguments) => ((Option)target).Bootup },
                     { InfoRawKey, (target, arguments) => new Target() },
-                    { MakeKey, (target, arguments) => ((Target)arguments[0]).Made },
+                    {
+                        MakeKey,
+                        (target, arguments) => ((Target)(target ?? arguments[0])).Made
+                            ?? ((Target)arguments[0]).Made
+                    },
                     {
                         DropKey,
                         (target, arguments) =>
@@ -873,6 +980,27 @@ namespace PmxEditorMcp.Tests
                         typeof(Target),
                         null,
                         DropKey)
+                },
+                {
+                    "session_make_on_held",
+                    new ToolCall(
+                        MakeKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            TargetType,
+                            EditKind.ViewSession,
+                            false,
+                            typeof(Target)),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument(
+                                "source", typeof(Target), false, null, false, typeof(Target)),
+                        },
+                        new ToolArgument[0],
+                        typeof(Target),
+                        typeof(Target))
                 },
                 {
                     "session_picked",

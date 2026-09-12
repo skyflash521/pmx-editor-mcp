@@ -69,8 +69,14 @@ namespace PmxEditorMcp.SignatureDump
             TypeRoleTable roles,
             InventoryRecord inventory,
             IDictionary<string, string> toolNames,
-            CommonAssignmentTable assignments)
+            CommonAssignmentTable assignments,
+            ToolSchemaTable schemas)
         {
+            if (schemas == null)
+            {
+                throw new ArgumentNullException(nameof(schemas));
+            }
+
             if (map == null)
             {
                 throw new ArgumentNullException(nameof(map));
@@ -226,6 +232,8 @@ namespace PmxEditorMcp.SignatureDump
 
             SortedDictionary<string, string> preconditions =
                 Preconditions(map, signatures, toolNames, calls);
+            SortedDictionary<string, List<string>> listened = Listened(map, signatures);
+            SortedDictionary<string, string> payloads = Payloads(map, signatures, schemas);
 
             return new ToolBindingSource(
                 Compose(
@@ -235,6 +243,8 @@ namespace PmxEditorMcp.SignatureDump
                     elements,
                     lists,
                     preconditions,
+                    listened,
+                    payloads,
                     Flows(assignments, signatures),
                     signatures,
                     assignments),
@@ -419,10 +429,14 @@ namespace PmxEditorMcp.SignatureDump
                 .ToArray();
 
             bool issuing = Issues(row, signature);
+            string[] release = issuing
+                ? Releases(signature, signatures, assignments)
+                : new string[0];
             string tail = Tail(
                 issuing ? TypeOf(signature.ValueType) : null,
                 projected,
-                issuing ? Releases(signature.ValueType, signatures, assignments) : null);
+                release.Length == 0 ? null : release[0],
+                release.Length == 0 ? null : release[1]);
 
             return "new ToolCall(" + Literal(signature.Key) + ", "
                 + Receiver(
@@ -456,15 +470,17 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その型の実体を手放す行のキー。手放す手順を持たない型では null。解放のツールが受け持つと
-        /// 定めた、引数を取らないその型のメンバーがこれに当たる。手順が在るのに受け手をその実体から
-        /// 得られない形なら、預けても手放せないので <see cref="InvalidOperationException"/>。
+        /// その実体を手放す行のキーと、手放す呼び出しが生成物を引数に取るか。手順を持たない型では
+        /// 空。解放のツールが受け持つと定めたメンバーのうち、その型が宣言する引数なしのものか、
+        /// 預ける呼び出しと同じ型が宣言してその実体を1つだけ引数に取るものがこれに当たる。どちらの
+        /// 形でも呼べないなら、預けても手放せないので <see cref="InvalidOperationException"/>。
         /// </summary>
-        private static string Releases(
-            string valueType,
+        private static string[] Releases(
+            SignatureRecord issuing,
             IDictionary<string, SignatureRecord> signatures,
             CommonAssignmentTable assignments)
         {
+            string valueType = issuing.ValueType;
             string held = TypeDefinitionName.OfElement(valueType);
             SignatureRecord[] members = assignments.Assignments
                 .Where(a => a.Assignment == CommonAssignmentKind.Tool
@@ -478,19 +494,34 @@ namespace PmxEditorMcp.SignatureDump
             SignatureRecord[] callable = members
                 .Where(r => Declares(r, held) && r.Parameters.Count == 0)
                 .ToArray();
-            if (callable.Length > 1)
+            SignatureRecord[] owned = members
+                .Where(r => Declares(r, TypeDefinitionName.OfElement(issuing.DeclaringType))
+                    && r.Parameters.Count == 1
+                    && Takes(r, held))
+                .ToArray();
+            if (callable.Length + owned.Length > 1)
             {
                 throw new InvalidOperationException(
                     "手放す行が2つ以上ある型を預けている: " + held);
             }
 
-            if (callable.Length == 0 && members.Length != 0)
+            if (callable.Length != 0)
+            {
+                return new[] { Literal(callable[0].Key), "false" };
+            }
+
+            if (owned.Length != 0)
+            {
+                return new[] { Literal(owned[0].Key), "true" };
+            }
+
+            if (members.Length != 0)
             {
                 throw new InvalidOperationException(
                     "手放す手順を呼べない形の型を預けている: " + held + "(" + members[0].Key + ")");
             }
 
-            return callable.Length == 0 ? null : Literal(callable[0].Key);
+            return new string[0];
         }
 
         /// <summary>そのメンバーをその型が宣言するか。</summary>
@@ -550,6 +581,11 @@ namespace PmxEditorMcp.SignatureDump
             if (byType.TryGetValue(typeName, out role) && role.Role == TypeRole.HandleTarget)
             {
                 return written + ", false, null, false, " + TypeOf(parameter.TypeName) + ")";
+            }
+
+            if (byType.TryGetValue(typeName, out role) && role.Role == TypeRole.Connector)
+            {
+                return written + ", true, null, false, null, " + Literal(typeName) + ")";
             }
 
             if (!byType.TryGetValue(typeName, out role)
@@ -1039,6 +1075,100 @@ namespace PmxEditorMcp.SignatureDump
             return head.Substring(0, head.LastIndexOf('.'));
         }
 
+        /// <summary>リスナの型ごとに、公開イベントへ受け手を掛ける文を書き出す。</summary>
+        private static void Attachments(
+            StringBuilder text, IDictionary<string, List<string>> listened)
+        {
+            text.Append("\n");
+            text.Append("        /// <summary>リスナの公開イベントへ受け手を掛ける。</summary>\n");
+            text.Append("        internal static Dictionary<string, EventAttach> Attachments()\n");
+            text.Append("        {\n");
+            text.Append("            Dictionary<string, EventAttach> attachments =\n");
+            text.Append(
+                "                new Dictionary<string, EventAttach>(StringComparer.Ordinal);\n");
+            foreach (KeyValuePair<string, List<string>> listener in listened)
+            {
+                text.Append(Indent).Append("attachments.Add(").Append(Literal(listener.Key))
+                    .Append(", (listener, sink) =>\n");
+                text.Append(Indent).Append("{\n");
+                text.Append(Indent).Append("    ").Append(Code(listener.Key))
+                    .Append(" typed = (").Append(Code(listener.Key)).Append(")listener;\n");
+                for (int at = 0; at < listener.Value.Count; at++)
+                {
+                    string[] parts = listener.Value[at].Split('|');
+                    text.Append(Indent).Append("    ").Append(parts[0]).Append(" held")
+                        .Append(at).Append(" = (sender, e) => sink(").Append(parts[2])
+                        .Append(", ").Append(parts[3]).Append(");\n");
+                    text.Append(Indent).Append("    typed.").Append(parts[1]).Append(" += held")
+                        .Append(at).Append(";\n");
+                }
+
+                text.Append(Indent).Append("    return () =>\n");
+                text.Append(Indent).Append("    {\n");
+                for (int at = 0; at < listener.Value.Count; at++)
+                {
+                    text.Append(Indent).Append("        typed.")
+                        .Append(listener.Value[at].Split('|')[1]).Append(" -= held").Append(at)
+                        .Append(";\n");
+                }
+
+                text.Append(Indent).Append("    };\n");
+                text.Append(Indent).Append("});\n");
+            }
+
+            text.Append("\n");
+            text.Append("            return attachments;\n");
+            text.Append("        }\n");
+        }
+
+        /// <summary>イベント種別ごとに、値を組へ直す文を書き出す。</summary>
+        private static void Payloads(StringBuilder text, IDictionary<string, string> payloads)
+        {
+            text.Append("\n");
+            text.Append("        /// <summary>イベント固有の値を組へ直す。</summary>\n");
+            text.Append("        internal static Dictionary<string, PayloadReader> Payloads()\n");
+            text.Append("        {\n");
+            text.Append("            Dictionary<string, PayloadReader> payloads =\n");
+            text.Append(
+                "                new Dictionary<string, PayloadReader>(StringComparer.Ordinal);\n");
+            foreach (KeyValuePair<string, string> payload in payloads)
+            {
+                string[] parts = payload.Value.Split('|');
+                string[] members = parts[1].Length == 0 ? new string[0] : parts[1].Split(',');
+                text.Append(Indent).Append("payloads.Add(").Append(Literal(payload.Key))
+                    .Append(", args =>\n");
+                text.Append(Indent).Append("{\n");
+                text.Append(Indent).Append("    Dictionary<string, object> read =\n");
+                text.Append(Indent)
+                    .Append("        new Dictionary<string, object>(StringComparer.Ordinal);\n");
+                if (members.Length != 0)
+                {
+                    text.Append(Indent).Append("    ").Append(Code(parts[0])).Append(" taken = (")
+                        .Append(Code(parts[0])).Append(")args;\n");
+                }
+
+                foreach (string member in members)
+                {
+                    text.Append(Indent).Append("    read.Add(").Append(Literal(member))
+                        .Append(", EventPayload.Of(taken.").Append(Declared(member))
+                        .Append("));\n");
+                }
+
+                text.Append(Indent).Append("    return read;\n");
+                text.Append(Indent).Append("});\n");
+            }
+
+            text.Append("\n");
+            text.Append("            return payloads;\n");
+            text.Append("        }\n");
+        }
+
+        /// <summary>応答の項目の名前から、それを持つメンバーの名前。頭を大文字へ戻す。</summary>
+        private static string Declared(string name)
+        {
+            return char.ToUpperInvariant(name[0]) + name.Substring(1);
+        }
+
         /// <summary>列挙が書く型名から、その型の綴り。</summary>
         private static string Code(string typeName)
         {
@@ -1054,6 +1184,89 @@ namespace PmxEditorMcp.SignatureDump
         private static string Literal(string text)
         {
             return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        }
+
+        /// <summary>
+        /// リスナの型ごとの、公開イベントへ受け手を掛ける文。掛けた受け手は同じ並びで外す。
+        /// </summary>
+        private static SortedDictionary<string, List<string>> Listened(
+            ToolMap map, IDictionary<string, SignatureRecord> signatures)
+        {
+            SortedDictionary<string, List<string>> listened =
+                new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows
+                .Where(r => r.EventType != null && signatures.ContainsKey(r.SignatureKey))
+                .OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
+            {
+                SignatureRecord signature = signatures[row.SignatureKey];
+                List<string> events;
+                if (!listened.TryGetValue(signature.DeclaringType, out events))
+                {
+                    events = new List<string>();
+                    listened.Add(signature.DeclaringType, events);
+                }
+
+                string carried = Carried(signature.ValueType);
+                events.Add(
+                    (carried == null
+                        ? "EventHandler"
+                        : "EventHandler<" + Code(carried) + ">")
+                    + "|" + signature.MemberName + "|" + Literal(row.EventType)
+                    + "|" + (carried == null ? "null" : "e"));
+            }
+
+            return listened;
+        }
+
+        /// <summary>そのイベントの受け手が受け取る値の型。値を持たないイベントでは null。</summary>
+        private static string Carried(string handlerType)
+        {
+            int opened = handlerType.IndexOf('<');
+
+            return opened < 0
+                ? null
+                : handlerType.Substring(opened + 1, handlerType.Length - opened - 2);
+        }
+
+        /// <summary>
+        /// イベント種別ごとの、値を組へ直す文。項目の名前と綴りはスキーマ正本が持つ——取り出しは
+        /// 1つのSDKメンバーへ写らない合成ツールなので、その形の正本はそちらにある。
+        /// </summary>
+        private static SortedDictionary<string, string> Payloads(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            ToolSchemaTable schemas)
+        {
+            IDictionary<string, SchemaPayload> described = schemas.Tools
+                .Where(t => t.Payloads != null)
+                .SelectMany(t => t.Payloads)
+                .ToDictionary(p => p.Type, p => p, StringComparer.Ordinal);
+            SortedDictionary<string, string> payloads =
+                new SortedDictionary<string, string>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows
+                .Where(r => r.EventType != null && signatures.ContainsKey(r.SignatureKey))
+                .OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
+            {
+                if (payloads.ContainsKey(row.EventType))
+                {
+                    continue;
+                }
+
+                SchemaPayload payload;
+                if (!described.TryGetValue(row.EventType, out payload))
+                {
+                    throw new InvalidOperationException(
+                        "イベント種別の値の形がスキーマ正本に無い: " + row.EventType);
+                }
+
+                payloads.Add(
+                    row.EventType,
+                    Carried(signatures[row.SignatureKey].ValueType) + "|"
+                        + string.Join(
+                            ",", payload.Members.Select(m => m.Name).ToArray()));
+            }
+
+            return payloads;
         }
 
         /// <summary>
@@ -1108,6 +1321,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> elements,
             IDictionary<string, string> lists,
             IDictionary<string, string> preconditions,
+            IDictionary<string, List<string>> listened,
+            IDictionary<string, string> payloads,
             IList<string> flows,
             IDictionary<string, SignatureRecord> signatures,
             CommonAssignmentTable assignments)
@@ -1155,6 +1370,8 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("\n");
             text.Append("            return preconditions;\n");
             text.Append("        }\n");
+            Attachments(text, listened);
+            Payloads(text, payloads);
             text.Append("\n");
             text.Append("        /// <summary>項目を集めるツール。</summary>\n");
             text.Append("        internal static Dictionary<string, ToolFields> Aggregations()\n");

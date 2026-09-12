@@ -32,12 +32,12 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 6)
+            if (args.Length != 7)
             {
                 error.WriteLine(
-                    "引数は6つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                    "引数は7つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
                         + " <型役割表の正本のパス> <共通契約割当の正本のパス>"
-                        + " <能力対応表の正本のパス> <書き出し先パス>");
+                        + " <能力対応表の正本のパス> <スキーマ正本のパス> <書き出し先パス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -53,12 +53,14 @@ namespace PmxEditorMcp.SignatureDump
             TypeRoleTable roles;
             CommonAssignmentTable assignments;
             ToolMap map;
+            ToolSchemaTable schemas;
             try
             {
                 ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[2], "型役割表の正本"));
                 assignments = CommonAssignmentJsonReader.Read(Read(args[3], "共通契約割当の正本"));
                 map = ToolMapJsonReader.Read(Read(args[4], "能力対応表の正本"));
+                schemas = ToolSchemaJsonReader.Read(Read(args[5], "スキーマ正本"));
             }
             catch (Exception exception)
             {
@@ -90,7 +92,8 @@ namespace PmxEditorMcp.SignatureDump
                     owned,
                     inventory,
                     ToolNameEvidence.Resolve(map, owned, assignments, signatures),
-                    assignments);
+                    assignments,
+                    schemas);
             }
             catch (InvalidOperationException exception)
             {
@@ -101,11 +104,11 @@ namespace PmxEditorMcp.SignatureDump
 
             try
             {
-                WriteIfChanged(args[5], source.Text);
+                WriteIfChanged(args[6], source.Text);
             }
             catch (Exception exception)
             {
-                error.WriteLine("書き出せない: " + args[5]);
+                error.WriteLine("書き出せない: " + args[6]);
                 error.WriteLine(exception.Message);
                 return ExitCodes.WriteFailed;
             }

@@ -32,6 +32,19 @@ namespace PmxEditorMcp
         public object Payload { get; }
     }
 
+    /// <summary>取り出しの判定が、そのイベントをどう扱うかを返す。</summary>
+    public enum EventFit
+    {
+        /// <summary>取り出す。</summary>
+        Take,
+
+        /// <summary>収まらないので捨てる。捨てた件数へ数える。</summary>
+        Drop,
+
+        /// <summary>ここで打ち切る。列には残す。</summary>
+        Stop,
+    }
+
     /// <summary>キューから取り出した結果。</summary>
     public sealed class EventDrainResult
     {
@@ -173,10 +186,25 @@ namespace PmxEditorMcp
         /// </summary>
         public EventDrainResult Drain(int limit)
         {
+            return Drain(limit, queued => EventFit.Take);
+        }
+
+        /// <summary>
+        /// 古い順に <paramref name="limit"/> 件まで、<paramref name="decide"/> が取り出すと判じた
+        /// ものを取り出す。捨てると判じたものは列から外して捨てた件数へ数え、打ち切ると判じたものは
+        /// 列に残す。捨てた件数は返したところで0へ戻す。
+        /// </summary>
+        public EventDrainResult Drain(int limit, Func<QueuedEvent, EventFit> decide)
+        {
             if (limit < 1 || limit > MaxLimit)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(limit), limit, "1以上 " + MaxLimit + " 以下でなければならない。");
+            }
+
+            if (decide == null)
+            {
+                throw new ArgumentNullException(nameof(decide));
             }
 
             lock (_gate)
@@ -185,7 +213,21 @@ namespace PmxEditorMcp
                 List<QueuedEvent> taken = new List<QueuedEvent>();
                 while (taken.Count < limit && _events.Count != 0)
                 {
-                    taken.Add(_events.Dequeue());
+                    EventFit fit = decide(_events.Peek());
+                    if (fit == EventFit.Stop)
+                    {
+                        break;
+                    }
+
+                    QueuedEvent queued = _events.Dequeue();
+                    if (fit == EventFit.Take)
+                    {
+                        taken.Add(queued);
+                    }
+                    else
+                    {
+                        _dropped++;
+                    }
                 }
 
                 int dropped = _dropped;

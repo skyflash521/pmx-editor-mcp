@@ -178,8 +178,11 @@ namespace PmxEditorMcp
                     GeneratedTools.Aggregations(),
                     GeneratedTools.Elements(),
                     GeneratedTools.Preconditions(),
-                    new PressedModifierKeys());
+                    new PressedModifierKeys(),
+                    new EventBindingTable(
+                        GeneratedTools.Attachments(), GeneratedTools.Payloads()));
                 HandleRelease.AddTo(methods);
+                EventPoll.AddTo(methods);
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);
                 DebugLargeText.AddTo(methods, debugHooks);

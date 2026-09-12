@@ -49,6 +49,7 @@
     <LedgerPath>$(MSBuildThisFileDirectory)..\..\data\observed\capability-ledger.json</LedgerPath>
     <TypeRolesPath>$(MSBuildThisFileDirectory)..\..\data\authored\type-roles.json</TypeRolesPath>
     <CommonAssignmentsPath>$(MSBuildThisFileDirectory)..\..\data\authored\common-assignments.json</CommonAssignmentsPath>
+    <ToolSchemasPath>$(MSBuildThisFileDirectory)..\..\data\authored\tool-schemas.json</ToolSchemasPath>
   </PropertyGroup>
 
   <Target Name="BuildRelayGenerator">
@@ -70,7 +71,7 @@
   <Target Name="GenerateToolBindingSource"
           BeforeTargets="BeforeCompile"
           DependsOnTargets="EnsurePmxEditorDir;BuildRelayGenerator">
-    <Exec Command="&quot;$(RelayGeneratorPath)&quot; tool-bindings &quot;$(PmxEditorDir)&quot; &quot;$(LedgerPath)&quot; &quot;$(TypeRolesPath)&quot; &quot;$(CommonAssignmentsPath)&quot; &quot;$(ToolMapPath)&quot; &quot;$(ToolBindingSourcePath)&quot;" />
+    <Exec Command="&quot;$(RelayGeneratorPath)&quot; tool-bindings &quot;$(PmxEditorDir)&quot; &quot;$(LedgerPath)&quot; &quot;$(TypeRolesPath)&quot; &quot;$(CommonAssignmentsPath)&quot; &quot;$(ToolMapPath)&quot; &quot;$(ToolSchemasPath)&quot; &quot;$(ToolBindingSourcePath)&quot;" />
     <ItemGroup>
       <Compile Include="$(ToolBindingSourcePath)" Exclude="@(Compile)" />
     </ItemGroup>

@@ -144,7 +144,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
-                    + Held + ".Drop()\")",
+                    + Held + ".Drop()\", false)",
                 source.Text);
         }
 
@@ -158,12 +158,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "typeof(global::" + Held + "), typeof(global::" + Held + "))", source.Text);
         }
 
+        /// <summary>
+        /// 手放す呼び出しが生成物を引数に取る形では、預ける呼び出しと同じ受け手の上で呼ぶ。
+        /// </summary>
         [Fact]
-        public void AThingWhoseWayToLetItGoCannotBeReachedFromItselfIsRefused()
+        public void AThingLetGoByItsOwnerCarriesTheRowAndTheMarkOfThatForm()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_it", Method("MakeIt", Held)),
+                Released(Taking("LetGo", "System.Void", Held)));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
+                    + Form + ".LetGo(" + Held + ")\", true)",
+                source.Text);
+        }
+
+        [Fact]
+        public void AThingWhoseWayToLetItGoCannotBeReachedIsRefused()
         {
             InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
                 () => Build(
-                    Issuing("session_make_it", Method("MakeIt", Held)),
+                    Issuing("session_make_it", HeldMethod("MakeIt", Held)),
                     Released(Taking("LetGo", "System.Void", Held))));
 
             Assert.Contains("手放す手順を呼べない形", thrown.Message);
@@ -443,7 +459,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     signatures.Values.ToList()),
                 bindings.Where(b => b.Tool != null)
                     .ToDictionary(b => b.Signature.Key, b => b.Tool, StringComparer.Ordinal),
-                Assignments());
+                Assignments(),
+                new ToolSchemaTable(new ToolSchema[0]));
         }
 
         /// <summary>複製編集の流れが通る2つのシグネチャ。組み立てはこの2つを名指しする。</summary>

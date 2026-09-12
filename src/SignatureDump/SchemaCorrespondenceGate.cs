@@ -25,7 +25,10 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>発行する数を受け取る入力の名前。</summary>
         private const string CountName = "count";
 
-        /// <summary>ホストが入れる引数の型。呼び出す側は持てないので、入力として受け取らない。</summary>
+        /// <summary>
+        /// ホストが入れる引数の型。呼び出す側は持てないので、入力として受け取らない。接続の道から
+        /// 得る受け手を取る引数も同じで、そちらは型役割から分かる。
+        /// </summary>
         private static readonly string[] HostSupplied =
         {
             ElementPathEvidence.PmxTypeName, TypeRoleEvidence.InjectedConnector,
@@ -92,7 +95,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 RequireArguments(signature, schema);
-                RequireInjection(signature, schema);
+                RequireInjection(signature, schema, byType);
                 RequireReceiver(signature, schema, byType, paths);
                 RequireOutput(signature, schema);
                 if (issuing.Contains(row.SignatureKey))
@@ -130,12 +133,17 @@ namespace PmxEditorMcp.SignatureDump
         /// 同じ——印がずれると、呼ぶ側は渡すよう求められた値をホストに捨てられるか、渡せない値を
         /// 求められる。
         /// </summary>
-        private static void RequireInjection(SignatureRecord signature, ToolSchema schema)
+        private static void RequireInjection(
+            SignatureRecord signature,
+            ToolSchema schema,
+            IDictionary<string, TypeRole> byType)
         {
             foreach (ParameterRecord parameter in signature.Parameters)
             {
-                bool host = HostSupplied.Contains(
-                    TypeDefinitionName.OfElement(parameter.TypeName), StringComparer.Ordinal);
+                string typeName = TypeDefinitionName.OfElement(parameter.TypeName);
+                TypeRole role;
+                bool host = HostSupplied.Contains(typeName, StringComparer.Ordinal)
+                    || (byType.TryGetValue(typeName, out role) && role == TypeRole.Connector);
                 foreach (SchemaItem input in schema.Branches
                     .SelectMany(b => b.Inputs)
                     .SelectMany(i => i.WithNested)

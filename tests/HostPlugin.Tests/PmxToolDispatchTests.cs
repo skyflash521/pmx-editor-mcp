@@ -415,7 +415,8 @@ namespace PmxEditorMcp.Tests
                 Aggregations(),
                 Elements(),
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
-                new StillModifierKeys());
+                new StillModifierKeys(),
+                EventBindingFixture.Empty());
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);

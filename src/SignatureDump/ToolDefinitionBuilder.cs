@@ -325,10 +325,19 @@ namespace PmxEditorMcp.SignatureDump
             ListingLimits listing,
             IDictionary<SchemaItem, int> limits,
             int? issued,
-            IDictionary<SchemaItem, string> sdkShapes)
+            IDictionary<SchemaItem, string> sdkShapes,
+            bool distributed = false)
         {
             JsonObjectText written = Shape(
-                schema, branch, item, listing, limits, issued, sdkShapes);
+                schema,
+                branch,
+                item,
+                listing,
+                limits,
+                issued,
+                sdkShapes,
+                distributed || string.Equals(
+                    item.Name, ElementLimitRule.DistributedName, StringComparison.Ordinal));
 
             if (item.Bounds != null)
             {
@@ -367,7 +376,8 @@ namespace PmxEditorMcp.SignatureDump
             ListingLimits listing,
             IDictionary<SchemaItem, int> limits,
             int? issued,
-            IDictionary<SchemaItem, string> sdkShapes)
+            IDictionary<SchemaItem, string> sdkShapes,
+            bool distributed)
         {
             if (item.Members != null)
             {
@@ -377,7 +387,9 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     members.Add(
                         member.Name,
-                        Item(schema, branch, member, listing, limits, issued, sdkShapes));
+                        Item(
+                            schema, branch, member, listing, limits, issued, sdkShapes,
+                            distributed));
                     if (member.Required.HasValue && member.Required.Value)
                     {
                         required.Add(member.Name);
@@ -401,7 +413,9 @@ namespace PmxEditorMcp.SignatureDump
                     .Add("type", TypeOf(ArrayType, item.Nullable));
                 body.Add(
                     "items",
-                    Item(schema, branch, item.Element, listing, limits, issued, sdkShapes));
+                    Item(
+                        schema, branch, item.Element, listing, limits, issued, sdkShapes,
+                        distributed));
                 if (NonEmptyArrayRule.NonEmpty(item))
                 {
                     body.AddNumber("minItems", 1);
@@ -411,6 +425,10 @@ namespace PmxEditorMcp.SignatureDump
                 if (item.MaxItems.HasValue)
                 {
                     maxItems = item.MaxItems.Value;
+                }
+                else if (distributed)
+                {
+                    return body;
                 }
                 else if (!limits.TryGetValue(item, out maxItems))
                 {
