@@ -25,7 +25,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> typeNames,
             ISet<string> embeddedTypes,
             ISet<string> independentTypes,
-            ISet<string> carried = null)
+            ISet<string> carried = null,
+            ISet<string> reachedTypes = null)
         {
             if (provided == null)
             {
@@ -64,6 +65,7 @@ namespace PmxEditorMcp.SignatureDump
 
             Provided = provided;
             Carried = carried ?? new HashSet<string>(StringComparer.Ordinal);
+            ReachedTypes = reachedTypes ?? new HashSet<string>(StringComparer.Ordinal);
             Signatures = new ReadOnlyDictionary<string, SignatureRecord>(
                 new Dictionary<string, SignatureRecord>(signatures, StringComparer.Ordinal));
             UpdateKinds = updateKinds;
@@ -99,6 +101,11 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>独立したツールを持つ役割の型の名前。総称と配列の印を外した鍵で持つ。</summary>
         public ISet<string> IndependentTypes { get; }
+
+        /// <summary>
+        /// プロパティ以外の道で実体を得られる型の名前。総称と配列の印を外した鍵で持つ。
+        /// </summary>
+        public ISet<string> ReachedTypes { get; }
 
         /// <summary>導けないものがあれば <see cref="InvalidOperationException"/>。</summary>
         public static ToolMapEvidence Collect(
@@ -149,7 +156,11 @@ namespace PmxEditorMcp.SignatureDump
                 new HashSet<string>(types.Select(t => t.Name), StringComparer.Ordinal),
                 EmbeddedTypeNames(roles),
                 IndependentToolTypeNames(roles),
-                CarriedTypes(inventory, provided));
+                CarriedTypes(inventory, provided),
+                HandleRouteEvidence.Reached(
+                    inventory.Signatures.ToDictionary(
+                        s => s.Key, s => s, StringComparer.Ordinal),
+                    roles));
         }
 
         /// <summary>

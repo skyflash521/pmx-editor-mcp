@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AnAssignedSignatureTakesTheCommonContractKind()
         {
             Assert.Equal(
-                ToolMapRowKind.CommonContract, RowKindRule.Of(MemberKind.Method, true, false, false));
+                ToolMapRowKind.CommonContract, RowKindRule.Of(MemberKind.Method, true, false, false, true));
         }
 
         [Theory]
@@ -19,13 +19,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TheSpecialRuleTableComesBeforeTheMemberKind(MemberKind memberKind)
         {
             Assert.Equal(
-                ToolMapRowKind.CommonContract, RowKindRule.Of(memberKind, true, false, false));
+                ToolMapRowKind.CommonContract, RowKindRule.Of(memberKind, true, false, false, true));
         }
 
         [Fact]
         public void AnEventTakesTheEventBranchKind()
         {
-            Assert.Equal(ToolMapRowKind.EventBranch, RowKindRule.Of(MemberKind.Event, false, false, false));
+            Assert.Equal(ToolMapRowKind.EventBranch, RowKindRule.Of(MemberKind.Event, false, false, false, true));
         }
 
         [Theory]
@@ -33,7 +33,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(MemberKind.Field)]
         public void APropertyOrFieldTakesTheSchemaEmbeddedKind(MemberKind memberKind)
         {
-            Assert.Equal(ToolMapRowKind.SchemaEmbedded, RowKindRule.Of(memberKind, false, false, false));
+            Assert.Equal(ToolMapRowKind.SchemaEmbedded, RowKindRule.Of(memberKind, false, false, false, true));
         }
 
         [Theory]
@@ -41,7 +41,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(MemberKind.Constructor)]
         public void AMethodOrConstructorTakesTheDirectDispatchKind(MemberKind memberKind)
         {
-            Assert.Equal(ToolMapRowKind.DirectDispatch, RowKindRule.Of(memberKind, false, false, false));
+            Assert.Equal(ToolMapRowKind.DirectDispatch, RowKindRule.Of(memberKind, false, false, false, true));
         }
 
         [Fact]
@@ -49,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Equal(
                 ToolMapRowKind.SchemaEmbedded,
-                RowKindRule.Of(MemberKind.Constructor, false, true, false));
+                RowKindRule.Of(MemberKind.Constructor, false, true, false, true));
         }
 
         [Theory]
@@ -59,21 +59,31 @@ namespace PmxEditorMcp.SignatureDump.Tests
             MemberKind memberKind)
         {
             Assert.Equal(
-                ToolMapRowKind.RoleAccess, RowKindRule.Of(memberKind, false, false, true));
+                ToolMapRowKind.RoleAccess, RowKindRule.Of(memberKind, false, false, true, true));
+        }
+
+        [Theory]
+        [InlineData(MemberKind.Property)]
+        [InlineData(MemberKind.Field)]
+        public void APropertyThatIsTheOnlyWayToItsTypeTakesTheDirectDispatchKind(
+            MemberKind memberKind)
+        {
+            Assert.Equal(
+                ToolMapRowKind.DirectDispatch, RowKindRule.Of(memberKind, false, false, true, false));
         }
 
         [Fact]
         public void AMethodThatReachesATypeWithItsOwnToolStillTakesTheDirectDispatchKind()
         {
             Assert.Equal(
-                ToolMapRowKind.DirectDispatch, RowKindRule.Of(MemberKind.Method, false, false, true));
+                ToolMapRowKind.DirectDispatch, RowKindRule.Of(MemberKind.Method, false, false, true, true));
         }
 
         [Fact]
         public void AMethodOfATypeWithoutItsOwnToolStillTakesTheDirectDispatchKind()
         {
             Assert.Equal(
-                ToolMapRowKind.DirectDispatch, RowKindRule.Of(MemberKind.Method, false, true, false));
+                ToolMapRowKind.DirectDispatch, RowKindRule.Of(MemberKind.Method, false, true, false, true));
         }
     }
 }

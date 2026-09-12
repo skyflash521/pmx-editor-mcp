@@ -19,7 +19,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, SignatureRecord> signatures,
             ISet<string> embeddedTypes,
             ISet<string> assigned,
-            ISet<string> independentTypes)
+            ISet<string> independentTypes,
+            ISet<string> reachedTypes)
         {
             if (map == null)
             {
@@ -46,6 +47,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(independentTypes));
             }
 
+            if (reachedTypes == null)
+            {
+                throw new ArgumentNullException(nameof(reachedTypes));
+            }
+
             Dictionary<string, ToolMapRowKind> kinds =
                 new Dictionary<string, ToolMapRowKind>(StringComparer.Ordinal);
             foreach (ToolMapRow row in map.Rows)
@@ -56,14 +62,15 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
+                string value = TypeDefinitionName.OfElement(
+                    ValueTypeName.Contained(signature.ValueType));
                 kinds.Add(row.SignatureKey, Of(
                     signature.MemberKind,
                     assigned.Contains(row.SignatureKey),
                     embeddedTypes.Contains(
                         TypeDefinitionName.OfElement(signature.DeclaringType)),
-                    independentTypes.Contains(
-                        TypeDefinitionName.OfElement(
-                            ValueTypeName.Contained(signature.ValueType)))));
+                    independentTypes.Contains(value),
+                    reachedTypes.Contains(value)));
             }
 
             return new ReadOnlyDictionary<string, ToolMapRowKind>(kinds);
@@ -72,10 +79,11 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// その行が採る種別。<paramref name="embedded"/> は、宣言型が独立したツールを持たない役割
         /// (イベント引数型・DTO型)かどうか。<paramref name="reaches"/> は、値の型が並びの印を
-        /// 外した先で独立したツールを持つ役割の型かどうか。
+        /// 外した先で独立したツールを持つ役割の型かどうか。<paramref name="reached"/> は、その値の
+        /// 型の実体をプロパティ以外の道でも得られるかどうか。
         /// </summary>
         public static ToolMapRowKind Of(
-            MemberKind memberKind, bool assigned, bool embedded, bool reaches)
+            MemberKind memberKind, bool assigned, bool embedded, bool reaches, bool reached)
         {
             if (assigned)
             {
@@ -89,7 +97,14 @@ namespace PmxEditorMcp.SignatureDump
 
                 case MemberKind.Property:
                 case MemberKind.Field:
-                    return reaches ? ToolMapRowKind.RoleAccess : ToolMapRowKind.SchemaEmbedded;
+                    if (!reaches)
+                    {
+                        return ToolMapRowKind.SchemaEmbedded;
+                    }
+
+                    return reached
+                        ? ToolMapRowKind.RoleAccess
+                        : ToolMapRowKind.DirectDispatch;
 
                 case MemberKind.Constructor:
                     return embedded
