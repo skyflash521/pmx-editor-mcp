@@ -4103,6 +4103,195 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.BoneItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶボーンの数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.BoneSelected()",
+      "editKind": "viewSession",
+      "basis": "ボーンを選んでいるかどうかという選択の状態を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector",
+        "view_update_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.ExpressionItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ表情の数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedBoneIndices()",
+      "editKind": "read",
+      "basis": "一覧で印を付けたボーンのリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedExpressionIndices()",
+      "editKind": "read",
+      "basis": "一覧で印を付けた表情のリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedMaterialIndices()",
+      "editKind": "read",
+      "basis": "一覧で印を付けた材質のリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.MaterialItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ材質の数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.RangeBegin()",
+      "editKind": "viewSession",
+      "basis": "選ぶ範囲の始まりという選択の状態を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector",
+        "view_update_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.RangeEnd()",
+      "editKind": "viewSession",
+      "basis": "選ぶ範囲の終わりという選択の状態を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector",
+        "view_update_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SelectObject()",
+      "editKind": "viewSession",
+      "basis": "何を選ぶ一覧かという選択の状態を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector",
+        "view_update_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SelectedBoneIndex()",
+      "editKind": "viewSession",
+      "basis": "選んでいるボーンのリストの中の位置という選択の状態を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector",
+        "view_update_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SelectedExpressionIndex()",
+      "editKind": "viewSession",
+      "basis": "選んでいる表情のリストの中の位置という選択の状態を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector",
+        "view_update_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SelectedMaterialIndex()",
+      "editKind": "viewSession",
+      "basis": "選んでいる材質のリストの中の位置という選択の状態を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector",
+        "view_update_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SelectedPartsVisible()",
+      "editKind": "viewSession",
+      "basis": "選んでいる部位を見せるかどうかという選択の状態を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_parts_select_connector",
+        "view_update_parts_select_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedBoneIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "一覧で印を付けるボーンを決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedExpressionIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "一覧で印を付ける表情を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedMaterialIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "一覧で印を付ける材質を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.View.IPEVertexEditConnector.CenterOrigin()",
       "editKind": "viewSession",
       "basis": "変形の中心に重心を使うかどうかという頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
@@ -4498,6 +4687,399 @@
           "kind": "callLogOnly",
           "comparison": "exists"
         }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexGuideConnector.GetVertexIndices()",
+      "editKind": "read",
+      "basis": "目印を付けている頂点のリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexGuideConnector.SelectVertex()",
+      "editKind": "viewSession",
+      "basis": "目印を付けている頂点を選んだ状態にするだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexGuideConnector.SetVertexIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "目印を付ける頂点を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.AAType()",
+      "editKind": "viewSession",
+      "basis": "線のぎざつきを抑える方式という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.AmbientColor()",
+      "editKind": "viewSession",
+      "basis": "環境光の色という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.BackColor()",
+      "editKind": "viewSession",
+      "basis": "背景の色という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.ColorBlending()",
+      "editKind": "viewSession",
+      "basis": "色を混ぜて描くかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Edge()",
+      "editKind": "viewSession",
+      "basis": "縁を描くかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.EdgeSize()",
+      "editKind": "viewSession",
+      "basis": "縁の太さという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.FillMode()",
+      "editKind": "viewSession",
+      "basis": "面の塗り方という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.InitializeLight()",
+      "editKind": "viewSession",
+      "basis": "光の設定を初めの値へ戻すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.InitializeViewSetting()",
+      "editKind": "viewSession",
+      "basis": "表示の設定を初めの値へ戻すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.JointPointSize()",
+      "editKind": "viewSession",
+      "basis": "ジョイントの点の大きさという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.LightColor()",
+      "editKind": "viewSession",
+      "basis": "光の色という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.LightDirection()",
+      "editKind": "viewSession",
+      "basis": "光の向きという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.LoadViewSetting(System.String)",
+      "editKind": "viewSession",
+      "basis": "指したファイルから表示の設定を読んで当てるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.ModelSize()",
+      "editKind": "viewSession",
+      "basis": "モデルの大きさという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.NonWeightingVertexColor()",
+      "editKind": "viewSession",
+      "basis": "ウェイトの無い頂点の色という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.NormalColor()",
+      "editKind": "viewSession",
+      "basis": "法線の色という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.NormalLength()",
+      "editKind": "viewSession",
+      "basis": "法線の長さという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.OnlyWeighting()",
+      "editKind": "viewSession",
+      "basis": "ウェイトのある頂点だけを見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Perspective()",
+      "editKind": "viewSession",
+      "basis": "遠近の強さという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.SaveViewSetting(System.String)",
+      "editKind": "directChange",
+      "basis": "いまの表示の設定を指したパスへ書き出すので、ファイルへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "fileWritten",
+          "effectKey": "path",
+          "kind": "file",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.SelectedNormalColor()",
+      "editKind": "viewSession",
+      "basis": "選んでいる法線の色という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.SelectedTabPage()",
+      "editKind": "viewSession",
+      "basis": "開いている頁という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.SelectedVertexPointColor()",
+      "editKind": "viewSession",
+      "basis": "選んでいる頂点の点の色という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.ToonType()",
+      "editKind": "viewSession",
+      "basis": "陰の付け方という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.VertexPointColor()",
+      "editKind": "viewSession",
+      "basis": "頂点の点の色という表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.VertexPointSize()",
+      "editKind": "viewSession",
+      "basis": "頂点の点の大きさという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_Body()",
+      "editKind": "viewSession",
+      "basis": "剛体を見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_Bone()",
+      "editKind": "viewSession",
+      "basis": "ボーンを見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_Joint()",
+      "editKind": "viewSession",
+      "basis": "ジョイントを見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_Normal()",
+      "editKind": "viewSession",
+      "basis": "法線を見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_SelectedFace()",
+      "editKind": "viewSession",
+      "basis": "選んでいる面を見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_SelectedNormal()",
+      "editKind": "viewSession",
+      "basis": "選んでいる法線を見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_SelectedVertex()",
+      "editKind": "viewSession",
+      "basis": "選んでいる頂点を見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_SolidBody()",
+      "editKind": "viewSession",
+      "basis": "剛体を塗りつぶして見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_UnvisibleVertex()",
+      "editKind": "viewSession",
+      "basis": "隠れている頂点を見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_Vertex()",
+      "editKind": "viewSession",
+      "basis": "頂点を見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_WeightMap()",
+      "editKind": "viewSession",
+      "basis": "ウェイトの分布を見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_setting_connector",
+        "view_update_view_setting_connector"
       ]
     },
     {

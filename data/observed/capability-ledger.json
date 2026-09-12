@@ -1874,9 +1874,9 @@
       "id": "CAP-234",
       "category": "頂点ガイド",
       "target": "IPEVertexGuideConnector.GetSelectedCurrentVertex",
-      "status": "提供",
-      "owner": "ビュー",
-      "remarks": ""
+      "status": "非対応",
+      "owner": "",
+      "remarks": "呼び出しが戻らず、UIスレッドが止まったままになるため"
     },
     {
       "id": "CAP-235",

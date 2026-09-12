@@ -14225,6 +14225,42 @@
       }
     },
     {
+      "tool": "view_get_checked_bone_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_checked_expression_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_checked_material_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
       "tool": "view_get_client_image",
       "branches": [
         {
@@ -14244,6 +14280,63 @@
       ],
       "output": {
         "element": {}
+      }
+    },
+    {
+      "tool": "view_get_parts_select_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "boneItemsCount"
+          },
+          {
+            "name": "boneSelected"
+          },
+          {
+            "name": "expressionItemsCount"
+          },
+          {
+            "name": "materialItemsCount"
+          },
+          {
+            "name": "rangeBegin"
+          },
+          {
+            "name": "rangeEnd"
+          },
+          {
+            "name": "selectObject"
+          },
+          {
+            "name": "selectedBoneIndex"
+          },
+          {
+            "name": "selectedExpressionIndex"
+          },
+          {
+            "name": "selectedMaterialIndex"
+          },
+          {
+            "name": "selectedPartsVisible"
+          }
+        ]
       }
     },
     {
@@ -14406,7 +14499,19 @@
       }
     },
     {
-      "tool": "view_get_vertex_indices",
+      "tool": "view_get_vertex_indices_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_vertex_indices_vertex_guide_connector",
       "branches": [
         {
           "branch": "only",
@@ -14509,7 +14614,202 @@
       "output": {}
     },
     {
+      "tool": "view_get_view_setting_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "aaType"
+          },
+          {
+            "name": "ambientColor"
+          },
+          {
+            "name": "backColor"
+          },
+          {
+            "name": "colorBlending"
+          },
+          {
+            "name": "edge"
+          },
+          {
+            "name": "edgeSize"
+          },
+          {
+            "name": "fillMode"
+          },
+          {
+            "name": "jointPointSize"
+          },
+          {
+            "name": "lightColor"
+          },
+          {
+            "name": "lightDirection"
+          },
+          {
+            "name": "modelSize"
+          },
+          {
+            "name": "nonWeightingVertexColor"
+          },
+          {
+            "name": "normalColor"
+          },
+          {
+            "name": "normalLength"
+          },
+          {
+            "name": "onlyWeighting"
+          },
+          {
+            "name": "perspective"
+          },
+          {
+            "name": "selectedNormalColor"
+          },
+          {
+            "name": "selectedTabPage"
+          },
+          {
+            "name": "selectedVertexPointColor"
+          },
+          {
+            "name": "toonType"
+          },
+          {
+            "name": "vertexPointColor"
+          },
+          {
+            "name": "vertexPointSize"
+          },
+          {
+            "name": "visibleBody"
+          },
+          {
+            "name": "visibleBone"
+          },
+          {
+            "name": "visibleJoint"
+          },
+          {
+            "name": "visibleNormal"
+          },
+          {
+            "name": "visibleSelectedFace"
+          },
+          {
+            "name": "visibleSelectedNormal"
+          },
+          {
+            "name": "visibleSelectedVertex"
+          },
+          {
+            "name": "visibleSolidBody"
+          },
+          {
+            "name": "visibleUnvisibleVertex"
+          },
+          {
+            "name": "visibleVertex"
+          },
+          {
+            "name": "visibleWeightMap"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_initialize_light",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_initialize_view_setting",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_load_view_setting",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "view_play_vmd_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_save_view_setting",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_select_vertex",
       "branches": [
         {
           "branch": "only",
@@ -14583,6 +14883,63 @@
             {
               "name": "upVector",
               "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_checked_bone_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_checked_expression_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_checked_material_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
             }
           ]
         }
@@ -14733,7 +15090,26 @@
       }
     },
     {
-      "tool": "view_set_vertex_indices",
+      "tool": "view_set_vertex_indices_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_vertex_indices_vertex_guide_connector",
       "branches": [
         {
           "branch": "only",
@@ -14892,6 +15268,65 @@
       }
     },
     {
+      "tool": "view_update_parts_select_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "boneSelected"
+            },
+            {
+              "name": "rangeBegin"
+            },
+            {
+              "name": "rangeEnd"
+            },
+            {
+              "name": "selectObject"
+            },
+            {
+              "name": "selectedBoneIndex"
+            },
+            {
+              "name": "selectedExpressionIndex"
+            },
+            {
+              "name": "selectedMaterialIndex"
+            },
+            {
+              "name": "selectedPartsVisible"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "boneSelected",
+                "rangeBegin",
+                "rangeEnd",
+                "selectObject",
+                "selectedBoneIndex",
+                "selectedExpressionIndex",
+                "selectedMaterialIndex",
+                "selectedPartsVisible"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_update_pmd_view_connector",
       "branches": [
         {
@@ -15008,6 +15443,165 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_view_setting_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "aaType"
+            },
+            {
+              "name": "ambientColor"
+            },
+            {
+              "name": "backColor"
+            },
+            {
+              "name": "colorBlending"
+            },
+            {
+              "name": "edge"
+            },
+            {
+              "name": "edgeSize"
+            },
+            {
+              "name": "fillMode"
+            },
+            {
+              "name": "jointPointSize"
+            },
+            {
+              "name": "lightColor"
+            },
+            {
+              "name": "lightDirection"
+            },
+            {
+              "name": "modelSize"
+            },
+            {
+              "name": "nonWeightingVertexColor"
+            },
+            {
+              "name": "normalColor"
+            },
+            {
+              "name": "normalLength"
+            },
+            {
+              "name": "onlyWeighting"
+            },
+            {
+              "name": "perspective"
+            },
+            {
+              "name": "selectedNormalColor"
+            },
+            {
+              "name": "selectedTabPage"
+            },
+            {
+              "name": "selectedVertexPointColor"
+            },
+            {
+              "name": "toonType"
+            },
+            {
+              "name": "vertexPointColor"
+            },
+            {
+              "name": "vertexPointSize"
+            },
+            {
+              "name": "visibleBody"
+            },
+            {
+              "name": "visibleBone"
+            },
+            {
+              "name": "visibleJoint"
+            },
+            {
+              "name": "visibleNormal"
+            },
+            {
+              "name": "visibleSelectedFace"
+            },
+            {
+              "name": "visibleSelectedNormal"
+            },
+            {
+              "name": "visibleSelectedVertex"
+            },
+            {
+              "name": "visibleSolidBody"
+            },
+            {
+              "name": "visibleUnvisibleVertex"
+            },
+            {
+              "name": "visibleVertex"
+            },
+            {
+              "name": "visibleWeightMap"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "aaType",
+                "ambientColor",
+                "backColor",
+                "colorBlending",
+                "edge",
+                "edgeSize",
+                "fillMode",
+                "jointPointSize",
+                "lightColor",
+                "lightDirection",
+                "modelSize",
+                "nonWeightingVertexColor",
+                "normalColor",
+                "normalLength",
+                "onlyWeighting",
+                "perspective",
+                "selectedNormalColor",
+                "selectedTabPage",
+                "selectedVertexPointColor",
+                "toonType",
+                "vertexPointColor",
+                "vertexPointSize",
+                "visibleBody",
+                "visibleBone",
+                "visibleJoint",
+                "visibleNormal",
+                "visibleSelectedFace",
+                "visibleSelectedNormal",
+                "visibleSelectedVertex",
+                "visibleSolidBody",
+                "visibleUnvisibleVertex",
+                "visibleVertex",
+                "visibleWeightMap"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
