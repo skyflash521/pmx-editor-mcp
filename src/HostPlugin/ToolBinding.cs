@@ -13,6 +13,12 @@ namespace PmxEditorMcp
 
         /// <summary>どのPMXを見るかの切り替えで選ぶ。</summary>
         Pmx,
+
+        /// <summary>
+        /// 呼び出しが渡すハンドルから得る。どのリストにも並ばず、台帳が持つ間だけ生きる相手が
+        /// これに当たる。
+        /// </summary>
+        Handle,
     }
 
     /// <summary>受け手がPMXのどこに居るか。</summary>
@@ -169,7 +175,11 @@ namespace PmxEditorMcp
     public sealed class ToolArgument
     {
         public ToolArgument(
-            string name, Type type, bool injected = false, ToolAccess referenced = null)
+            string name,
+            Type type,
+            bool injected = false,
+            ToolAccess referenced = null,
+            bool connector = false)
         {
             if (name == null)
             {
@@ -185,6 +195,7 @@ namespace PmxEditorMcp
             Type = type;
             Injected = injected;
             Referenced = referenced;
+            Connector = connector;
         }
 
         /// <summary>要求の引数の名前。</summary>
@@ -195,6 +206,11 @@ namespace PmxEditorMcp
 
         /// <summary>ホストが自分で入れる引数か。呼び出す側はこの引数を渡さない。</summary>
         public bool Injected { get; }
+
+        /// <summary>
+        /// ホストが入れるのが、Cプラグイン連携のコネクタかどうか。偽なら相手にするPMXを入れる。
+        /// </summary>
+        public bool Connector { get; }
 
         /// <summary>
         /// その引数が指す実体を並べるリストへの道。位置で受け取る引数だけが持ち、ほかは null。
@@ -248,12 +264,22 @@ namespace PmxEditorMcp
     public sealed class ToolReceiver
     {
         public ToolReceiver(
-            ToolReceiverKind kind, string typeName, EditKind edit, bool bridged = false)
+            ToolReceiverKind kind,
+            string typeName,
+            EditKind edit,
+            bool bridged = false,
+            Type held = null)
         {
+            if (kind == ToolReceiverKind.Handle && held == null)
+            {
+                throw new ArgumentNullException(nameof(held));
+            }
+
             Kind = kind;
             TypeName = typeName;
             Edit = edit;
             Bridged = bridged;
+            Held = held;
         }
 
         public ToolReceiverKind Kind { get; }
@@ -269,6 +295,9 @@ namespace PmxEditorMcp
         /// 流れで作った中身は、もう片方の流れでは反映できない。
         /// </summary>
         public bool Bridged { get; }
+
+        /// <summary>ハンドルから得る受け手の型。ほかの得方では null。</summary>
+        public Type Held { get; }
     }
 
     /// <summary>SDKのメンバーへ中継するツール1件。</summary>

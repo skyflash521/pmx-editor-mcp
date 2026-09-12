@@ -70,7 +70,14 @@ namespace PmxEditorMcp.SignatureDump
                 string dispatched;
                 if (toolNames.TryGetValue(row.SignatureKey, out dispatched))
                 {
-                    Dispatched(shapes, byTool[dispatched], signature, shapesByType);
+                    ToolSchema called;
+                    if (!byTool.TryGetValue(dispatched, out called))
+                    {
+                        throw new InvalidOperationException(
+                            "スキーマ正本に無いツールを行が持っている: " + dispatched);
+                    }
+
+                    Dispatched(shapes, called, signature, shapesByType);
                     continue;
                 }
 
@@ -121,6 +128,14 @@ namespace PmxEditorMcp.SignatureDump
             if (schema.Output.Origin == null)
             {
                 Assign(shapes, schema.Tool, schema.Output, signature.ValueType, shapesByType);
+
+                return;
+            }
+
+            if (schema.Output.Element != null && schema.Output.Element.Origin == null)
+            {
+                Assign(
+                    shapes, schema.Tool, schema.Output.Element, signature.ValueType, shapesByType);
             }
         }
 

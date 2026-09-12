@@ -639,12 +639,12 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 引数を探す組。要素を相手にする呼び出しは組を別に渡すので、渡された組ぜんぶを見る。
+        /// 引数を探す組。対象の組へ及ぶ呼び出しは組を別に渡すので、渡された組ぜんぶを見る。
         /// </summary>
         private static IList<IDictionary<string, object>> Sets(
             McpMethodContext context, ToolCall call)
         {
-            if (call.Access.Kind != ToolAccessKind.Element)
+            if (!Many(call.Access, call.Receiver))
             {
                 return new[] { context.Params };
             }
@@ -687,11 +687,11 @@ namespace PmxEditorMcp
             return ValueInput.TryFromJson(argument.Type, given, out taken, out code, out message);
         }
 
-        /// <summary>SDKのメンバーを呼ぶ。要素を相手にする呼び出しは対象の全件へ及ぶ。</summary>
+        /// <summary>SDKのメンバーを呼ぶ。対象の組へ及ぶ呼び出しは、その全件へ及ぶ。</summary>
         private object Invoke(
             McpMethodContext context, ToolCall call, ResolvedPrecondition precondition)
         {
-            if (call.Access.Kind == ToolAccessKind.Element)
+            if (Many(call.Access, call.Receiver))
             {
                 if (precondition != null)
                 {
@@ -835,7 +835,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 要素のメソッドを、解いた対象の全件へ呼ぶ。引数は全件へ同じ組を配るか、対象ごとの組の
+        /// SDKのメンバーを、解いた対象の全件へ呼ぶ。引数は全件へ同じ組を配るか、対象ごとの組の
         /// 並びで受け取る。
         /// </summary>
         private object InvokeEach(McpMethodContext context, ToolCall call)
@@ -857,12 +857,14 @@ namespace PmxEditorMcp
                 known.Add(ConfirmName);
             }
 
-            known.AddRange(Pointing(call.Access, true));
+            known.AddRange(Pointing(call.Access, true, call.Receiver));
             if (!TryOnlyKnown(context, Known(known, Targets(call)), out code, out message)
                 || !TryConfirm(context, out confirm, out code, out message)
                 || !TryPmxHandle(context, Targets(call), out handle, out code, out message)
                 || !TryPassDanger(call, handle, confirm, out code, out message)
-                || !TryPointed(context, call.Access, true, handle, out pointed, out code, out message))
+                || !TryPointed(
+                    context, call.Access, true, handle, out pointed, out code, out message,
+                    call.Receiver))
             {
                 return ToolEnvelope.Failure(code, message);
             }
@@ -1083,9 +1085,12 @@ namespace PmxEditorMcp
                 ToolArgument argument = call.Arguments[at];
                 if (argument.Injected)
                 {
+                    object given = argument.Connector
+                        ? _connection.Use()
+                        : (target == null ? null : target.Pmx);
                     foreach (object[] one in passing)
                     {
-                        one[at] = target == null ? null : target.Pmx;
+                        one[at] = given;
                     }
 
                     continue;
@@ -1283,14 +1288,16 @@ namespace PmxEditorMcp
                 known.Add(LimitName);
             }
 
-            known.AddRange(Pointing(tool.Access, true));
+            known.AddRange(Pointing(tool.Access, true, tool.Receiver));
             bool divided = Divided(tool);
             if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
                 || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
                 || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
                 || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message)
                 || !TryFields(context, out requested, out code, out message)
-                || !TryPointed(context, tool.Access, true, handle, out pointed, out code, out message)
+                || !TryPointed(
+                    context, tool.Access, true, handle, out pointed, out code, out message,
+                    tool.Receiver)
                 || !FieldSelection.TryResolve(
                     requested,
                     tool.Fields.Select(f => f.Name).ToList(),
@@ -1531,7 +1538,7 @@ namespace PmxEditorMcp
             string itemType;
             Pointed pointed;
             List<string> known = new List<string> { ValueName };
-            if (tool.Access.Kind == ToolAccessKind.Element)
+            if (Many(tool.Access, tool.Receiver))
             {
                 known.Add(ValuesName);
             }
@@ -1541,11 +1548,13 @@ namespace PmxEditorMcp
                 known.Add(ItemTypeName);
             }
 
-            known.AddRange(Pointing(tool.Access, true));
+            known.AddRange(Pointing(tool.Access, true, tool.Receiver));
             if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
                 || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
                 || !TryItemType(context, tool, out itemType, out code, out message)
-                || !TryPointed(context, tool.Access, true, handle, out pointed, out code, out message))
+                || !TryPointed(
+                    context, tool.Access, true, handle, out pointed, out code, out message,
+                    tool.Receiver))
             {
                 return ToolEnvelope.Failure(code, message);
             }
@@ -1846,10 +1855,12 @@ namespace PmxEditorMcp
             string message;
             long? handle;
             Pointed pointed;
-            List<string> known = new List<string>(Pointing(tool.Access, false));
+            List<string> known = new List<string>(Pointing(tool.Access, false, tool.Receiver));
             if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
                 || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
-                || !TryPointed(context, tool.Access, false, handle, out pointed, out code, out message))
+                || !TryPointed(
+                    context, tool.Access, false, handle, out pointed, out code, out message,
+                    tool.Receiver))
             {
                 return ToolEnvelope.Failure(code, message);
             }
@@ -1955,9 +1966,29 @@ namespace PmxEditorMcp
             return ToolEnvelope.Success(value, warnings.Concat(page.Warnings).ToList());
         }
 
-        /// <summary>その道が受け取る対象の指し方の名前。要素を相手にしない道は何も受け取らない。</summary>
-        private static IEnumerable<string> Pointing(ToolAccess access, bool handles)
+        /// <summary>受け手をハンドルから得る呼び出しか。対象はハンドルでだけ指せる。</summary>
+        private static bool Handled(ToolReceiver receiver)
         {
+            return receiver.Kind == ToolReceiverKind.Handle;
+        }
+
+        /// <summary>その呼び出しが対象の組へ及ぶか。1つだけを相手にする呼び出しは当たらない。</summary>
+        private static bool Many(ToolAccess access, ToolReceiver receiver)
+        {
+            return access.Kind == ToolAccessKind.Element || Handled(receiver);
+        }
+
+        /// <summary>その道が受け取る対象の指し方の名前。要素を相手にしない道は何も受け取らない。</summary>
+        private static IEnumerable<string> Pointing(
+            ToolAccess access, bool handles, ToolReceiver receiver = null)
+        {
+            if (receiver != null && Handled(receiver))
+            {
+                yield return TargetNames.Element.Handles;
+
+                yield break;
+            }
+
             if (access.Kind != ToolAccessKind.Element)
             {
                 yield break;
@@ -2016,11 +2047,17 @@ namespace PmxEditorMcp
             long? pmxHandle,
             out Pointed pointed,
             out string code,
-            out string message)
+            out string message,
+            ToolReceiver receiver = null)
         {
             pointed = null;
             code = null;
             message = null;
+            if (receiver != null && Handled(receiver))
+            {
+                return TryHandled(context, out pointed, out code, out message);
+            }
+
             if (access.Kind != ToolAccessKind.Element)
             {
                 pointed = new Pointed(null, null, false);
@@ -2070,6 +2107,33 @@ namespace PmxEditorMcp
             return true;
         }
 
+        /// <summary>
+        /// ハンドルから受け手を得る呼び出しの指し方。ハンドル以外の指し方は、指す先のリストが
+        /// 無いので取らない。
+        /// </summary>
+        private static bool TryHandled(
+            McpMethodContext context, out Pointed pointed, out string code, out string message)
+        {
+            pointed = null;
+            TargetRequest held;
+            if (!TryTargets(context, TargetNames.Element, true, out held, out code, out message))
+            {
+                return false;
+            }
+
+            if (held.Handles == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = TargetNames.Element.Handles + " で対象を指す。";
+
+                return false;
+            }
+
+            pointed = new Pointed(held, null, true);
+
+            return true;
+        }
+
         /// <summary>その指定が何かを指しているか。</summary>
         private static bool Points(TargetRequest request)
         {
@@ -2096,6 +2160,12 @@ namespace PmxEditorMcp
         {
             column = null;
             refused = null;
+            if (Handled(receiver))
+            {
+                return TryHeld(
+                    context, access, new[] { receiver.Held }, pointed, out column, out refused);
+            }
+
             if (access.Kind == ToolAccessKind.Whole)
             {
                 column = new[] { new Spot(null, 0, -1, -1, Receiver(receiver, target)) };
@@ -2543,12 +2613,12 @@ namespace PmxEditorMcp
             object single;
             object many = null;
             bool hasSingle = context.Params.TryGetValue(ValueName, out single);
-            bool hasMany = tool.Access.Kind == ToolAccessKind.Element
+            bool hasMany = Many(tool.Access, tool.Receiver)
                 && context.Params.TryGetValue(ValuesName, out many);
             if (hasSingle == hasMany)
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = tool.Access.Kind == ToolAccessKind.Element
+                message = Many(tool.Access, tool.Receiver)
                     ? ValueName + " と " + ValuesName + " のどちらか一方を渡す。"
                     : ValueName + " を渡す。";
 

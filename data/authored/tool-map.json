@@ -6371,6 +6371,23 @@
       "basis": "長寿命のオブジェクトであるビルダへ直に作用して使える状態にするので、直接変更型に当たる。"
     },
     {
+      "signatureKey": "PXCPlugin.PXCBridge.RegisterUIModel(PXCPlugin.IPXCPluginConnector,PEPlugin.Pmx.IPXPmx,System.String,PEPlugin.SDX.M,System.Boolean,System.Boolean)",
+      "editKind": "directChange",
+      "basis": "画面へ重ねて見せるUIモデルを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "view_list_ui_models",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.PXCBridge.ReleaseEventConnector(PXCPlugin.Event.IPXEventConnector)",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるコネクタへ直に作用して使えなくするので、直接変更型に当たる。"
@@ -6448,6 +6465,170 @@
       ]
     },
     {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Depth()",
+      "editKind": "viewSession",
+      "basis": "奥行きを見るかどうかを持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_ui_models",
+        "view_update_ui_models"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.DrawMode()",
+      "editKind": "viewSession",
+      "basis": "描き方を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_ui_models",
+        "view_update_ui_models"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.FixedDrawScale()",
+      "editKind": "viewSession",
+      "basis": "描く大きさを固定するかどうかを持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_ui_models",
+        "view_update_ui_models"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.GetTransformedBoneMatrix(System.Int32)",
+      "editKind": "read",
+      "basis": "変形した後のボーンの姿勢を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "uiModel",
+              "tool": "session_register_ui_model"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.GetTransformedBonePosition(System.Int32)",
+      "editKind": "read",
+      "basis": "変形した後のボーンの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "uiModel",
+              "tool": "session_register_ui_model"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.GetTransformedVertexNormal(System.Int32)",
+      "editKind": "read",
+      "basis": "変形した後の頂点の法線を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "uiModel",
+              "tool": "session_register_ui_model"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.GetTransformedVertexPosition(System.Int32)",
+      "editKind": "read",
+      "basis": "変形した後の頂点の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "uiModel",
+              "tool": "session_register_ui_model"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.GetWorld()",
+      "editKind": "read",
+      "basis": "いまの置き場所と向きと大きさを返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "uiModel",
+              "tool": "session_register_ui_model"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Light()",
+      "editKind": "viewSession",
+      "basis": "照明を当てるかどうかを持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_ui_models",
+        "view_update_ui_models"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Name()",
+      "editKind": "read",
+      "basis": "そのUIモデルに付けた名前を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_list_ui_models"
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Release()",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるUIモデルへ直に作用して使えなくするので、直接変更型に当たる。"
@@ -6456,6 +6637,219 @@
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.ReleaseEventListener(PXCPlugin.Event.IPXUIModelEventListener)",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるリスナへ直に作用して使えなくするので、直接変更型に当たる。"
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.ResetBone()",
+      "editKind": "viewSession",
+      "basis": "ボーンの変形を戻すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.ResetMorph()",
+      "editKind": "viewSession",
+      "basis": "モーフの効き具合を戻すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetBillboard(System.Int32)",
+      "editKind": "viewSession",
+      "basis": "いつも正面を向く向き方を決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetBitmapTexture(System.Int32,System.Drawing.Bitmap,System.Int32)",
+      "editKind": "viewSession",
+      "basis": "材質に貼る絵を差し替えるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetBone(System.Int32,PEPlugin.SDX.V3,PEPlugin.SDX.Q,PEPlugin.SDX.V3)",
+      "editKind": "viewSession",
+      "basis": "ボーンの移動と回転と拡大をまとめて決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetBoneRotate(System.Int32,PEPlugin.SDX.Q)",
+      "editKind": "viewSession",
+      "basis": "ボーンの回転を決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetBoneScale(System.Int32,PEPlugin.SDX.V3)",
+      "editKind": "viewSession",
+      "basis": "ボーンの拡大を決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetBoneTranslate(System.Int32,PEPlugin.SDX.V3)",
+      "editKind": "viewSession",
+      "basis": "ボーンの移動を決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetMorph(System.Int32,System.Single)",
+      "editKind": "viewSession",
+      "basis": "モーフの効き具合を決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetWorld(PEPlugin.SDX.M)",
+      "editKind": "viewSession",
+      "basis": "置き場所と向きと大きさをまとめて決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.TopMost()",
+      "editKind": "viewSession",
+      "basis": "常に手前へ描くかどうかを持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_ui_models",
+        "view_update_ui_models"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.UpdateBitmapTexture(System.Int32,System.Drawing.Bitmap)",
+      "editKind": "viewSession",
+      "basis": "材質に貼っている絵を描き直すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.UpdateMaterialColor(System.Int32,System.Int32,PEPlugin.SDX.V4)",
+      "editKind": "viewSession",
+      "basis": "材質の色を決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.UpdateMaterialEdge(System.Int32,System.Boolean,System.Single)",
+      "editKind": "viewSession",
+      "basis": "材質の縁の出し方を決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.UpdateMaterialFlags(System.Int32,System.Int32,System.Boolean)",
+      "editKind": "viewSession",
+      "basis": "材質の描き方の切り替えを決めるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.UpdateTransform()",
+      "editKind": "viewSession",
+      "basis": "決めた変形を描画へ反映するだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Visible()",
+      "editKind": "viewSession",
+      "basis": "見せるかどうかを持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_ui_models",
+        "view_update_ui_models"
+      ]
     },
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Dispose()",

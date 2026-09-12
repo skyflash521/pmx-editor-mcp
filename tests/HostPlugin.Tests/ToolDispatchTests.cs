@@ -277,6 +277,80 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ACallOnAHeldReceiverRunsOnEveryHandle()
+        {
+            Target first = new Target { Count = 3 };
+            Target second = new Target { Count = 5 };
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", new object[] { 1L, 2L });
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, first, () => { });
+            ledger.Issue(typeof(Target).FullName, second, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_count_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.Equal(new object[] { 3, 5 }, (IEnumerable<object>)envelope[ToolEnvelope.ValueName]);
+        }
+
+        [Fact]
+        public void ACallOnAHeldReceiverIsRefusedWithoutHandles()
+        {
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_count_held")(
+                    new McpMethodContext(
+                        Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("handles", Message(envelope));
+        }
+
+        [Fact]
+        public void ACallOnAHeldReceiverIsRefusedWhenTheHandleIsNotItsType()
+        {
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", new object[] { 1L });
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Info).FullName, new Info(), () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_count_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidHandle, Code(envelope));
+        }
+
+        /// <summary>ハンドルで指した対象の組は、対象ごとの値の並びを受け取れる。</summary>
+        [Fact]
+        public void TheUpdatingToolOnHeldTargetsTakesAValueForEach()
+        {
+            Target first = new Target();
+            Target second = new Target { Flag = true };
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", new object[] { 1L, 2L });
+            arguments.Add(
+                "values",
+                new object[]
+                {
+                    new Dictionary<string, object>(StringComparer.Ordinal) { { "flag", true } },
+                    new Dictionary<string, object>(StringComparer.Ordinal) { { "flag", false } },
+                });
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, first, () => { });
+            ledger.Issue(typeof(Target).FullName, second, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_update_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.True(first.Flag);
+            Assert.False(second.Flag);
+        }
+
+        [Fact]
         public void TheGettingToolReturnsEveryReadableItem()
         {
             _target.Count = 3;
@@ -664,6 +738,22 @@ namespace PmxEditorMcp.Tests
                         null)
                 },
                 {
+                    "session_count_held",
+                    new ToolCall(
+                        CountKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            TargetType,
+                            EditKind.Read,
+                            false,
+                            typeof(Target)),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(int))
+                },
+                {
                     "session_picked",
                     new ToolCall(
                         PickedKey,
@@ -784,6 +874,20 @@ namespace PmxEditorMcp.Tests
                         true,
                         false,
                         Direct(),
+                        ToolAccess.Whole(),
+                        Set(new ToolField("flag", FlagKey, typeof(bool))))
+                },
+                {
+                    "session_update_held",
+                    new ToolFields(
+                        true,
+                        true,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            TargetType,
+                            EditKind.ViewSession,
+                            false,
+                            typeof(Target)),
                         ToolAccess.Whole(),
                         Set(new ToolField("flag", FlagKey, typeof(bool))))
                 },

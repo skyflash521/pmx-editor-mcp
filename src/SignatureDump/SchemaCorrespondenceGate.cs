@@ -25,6 +25,12 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>発行する数を受け取る入力の名前。</summary>
         private const string CountName = "count";
 
+        /// <summary>ホストが入れる引数の型。呼び出す側は持てないので、入力として受け取らない。</summary>
+        private static readonly string[] HostSupplied =
+        {
+            ElementPathEvidence.PmxTypeName, TypeRoleEvidence.InjectedConnector,
+        };
+
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
             ToolMap map,
@@ -86,11 +92,61 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 RequireArguments(signature, schema);
+                RequireInjection(signature, schema);
                 RequireReceiver(signature, schema, byType, paths);
                 RequireOutput(signature, schema);
                 if (issuing.Contains(row.SignatureKey))
                 {
                     RequireDerivedIssuanceLimit(schema);
+                }
+            }
+
+            RequireSetupTools(map, byTool);
+        }
+
+        /// <summary>
+        /// 事後条件の用意が呼ぶツールが、スキーマ正本に在ることを求める。無い名前を書いた用意は
+        /// 実行できない。
+        /// </summary>
+        private static void RequireSetupTools(
+            ToolMap map, IDictionary<string, ToolSchema> byTool)
+        {
+            foreach (SetupOperation operation in map.Rows
+                .OrderBy(r => r.SignatureKey, StringComparer.Ordinal)
+                .SelectMany(r => r.Postcondition ?? new Postcondition[0])
+                .SelectMany(p => p.Setup ?? new SetupOperation[0])
+                .Where(o => o.Tag == SetupTag.CallTool))
+            {
+                if (!byTool.ContainsKey(operation.ToolName))
+                {
+                    throw new InvalidOperationException(
+                        "用意が呼ぶツールがスキーマ正本に無い: " + operation.ToolName);
+                }
+            }
+        }
+
+        /// <summary>
+        /// ホストが入れる引数の入力だけが、受け取らない印を持つことを求める。器の内側へ置いた入力も
+        /// 同じ——印がずれると、呼ぶ側は渡すよう求められた値をホストに捨てられるか、渡せない値を
+        /// 求められる。
+        /// </summary>
+        private static void RequireInjection(SignatureRecord signature, ToolSchema schema)
+        {
+            foreach (ParameterRecord parameter in signature.Parameters)
+            {
+                bool host = HostSupplied.Contains(
+                    TypeDefinitionName.OfElement(parameter.TypeName), StringComparer.Ordinal);
+                foreach (SchemaItem input in schema.Branches
+                    .SelectMany(b => b.Inputs)
+                    .SelectMany(i => i.WithNested)
+                    .Where(i => string.Equals(i.Name, parameter.Name, StringComparison.Ordinal))
+                    .Where(i => i.Injected != host))
+                {
+                    throw new InvalidOperationException(
+                        (host
+                            ? "ホストが入れる引数の入力が受け取る形になっている: "
+                            : "呼ぶ側が渡す引数の入力がホストの入れる形になっている: ")
+                            + schema.Tool + "(" + input.Name + ")");
                 }
             }
         }

@@ -150,14 +150,15 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 型から値の表現の綴りへ。操作対象型は要素の位置で写すので、型役割表からその綴りを足す。
+        /// 型から値の表現の綴りへ。操作対象型は要素の位置で、ハンドル操作型はハンドルの番号で写すので、
+        /// 型役割表からその綴りを足す。どちらも数で写るが、指すものは位置と番号で別である。
         /// </summary>
         private IDictionary<string, string> Positioned()
         {
             Dictionary<string, string> shapes =
                 new Dictionary<string, string>(_shapesByType, StringComparer.Ordinal);
             foreach (TypeRoleRecord role in _roles.Types
-                .Where(t => t.Role == TypeRole.OperationTarget))
+                .Where(t => t.Role == TypeRole.OperationTarget || t.Role == TypeRole.HandleTarget))
             {
                 shapes[role.TypeName] = PositionShape;
             }

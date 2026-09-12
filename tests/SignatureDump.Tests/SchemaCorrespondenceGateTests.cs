@@ -41,6 +41,36 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return names;
         }
 
+        /// <summary>用意がツールを1回呼ぶ行。呼ぶツールの名前を差し替えられる。</summary>
+        private static string SetupRow(string called)
+        {
+            return @"{ ""signatureKey"": """ + Key + @""",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
+                ""postcondition"": [{ ""effectType"": ""valueRead"", ""effectKey"": """",
+                  ""kind"": ""callLogOnly"", ""comparison"": ""exists"",
+                  ""setup"": [{ ""tag"": ""callTool"", ""args"": {},
+                    ""tool"": """ + called + @""" }] }] }";
+        }
+
+        /// <summary>器の中の入力がホストの入れる印を持つ形。</summary>
+        private static string NestedInjectedSchemaJson()
+        {
+            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                  { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
+                    ""members"": [{ ""name"": ""distance"", ""injected"": true }] }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
+        /// <summary>入力がホストの入れる印を持つ形。呼ぶ側は渡さない。</summary>
+        private static string InjectedSchemaJson()
+        {
+            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                  { ""name"": ""distance"", ""injected"": true }] }],
+                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
+        }
+
         /// <summary>入力の名前と応答の綴りを差し替えられる入出力の形。</summary>
         private static string SchemaJson(string inputs = @"""distance""", string shape = "number")
         {
@@ -182,7 +212,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             bool isStatic = false,
             MemberKind memberKind = MemberKind.Method,
             ParameterDirection direction = ParameterDirection.In,
-            string parameterName = "distance")
+            string parameterName = "distance",
+            string parameterType = "System.Single")
         {
             SignatureRecord signature = new SignatureRecord(
                 Key,
@@ -193,7 +224,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 0,
                 new[]
                 {
-                    new ParameterRecord(parameterName, "System.Single", direction, false),
+                    new ParameterRecord(parameterName, parameterType, direction, false),
                 },
                 valueType,
                 false,
@@ -282,6 +313,74 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 signatures,
                 Names(Key, Tool, otherKey, otherTool),
                 Paths(AccessPathKind.Element));
+        }
+
+        /// <summary>ホストが入れる引数は、呼ぶ側へ求めずその印を持つ。</summary>
+        [Theory]
+        [InlineData("PEPlugin.Pmx.IPXPmx")]
+        [InlineData("PXCPlugin.IPXCPluginConnector")]
+        public void AcceptsAHostSuppliedArgumentTheSchemaDoesNotAskFor(string parameterType)
+        {
+            Require(
+                InjectedSchemaJson(), signatures: Signatures(parameterType: parameterType));
+        }
+
+        [Theory]
+        [InlineData("PEPlugin.Pmx.IPXPmx")]
+        [InlineData("PXCPlugin.IPXCPluginConnector")]
+        public void RejectsAHostSuppliedArgumentTheSchemaAsksFor(string parameterType)
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    SchemaJson(), signatures: Signatures(parameterType: parameterType)));
+
+            Assert.Contains("ホストが入れる", thrown.Message);
+        }
+
+        [Fact]
+        public void RejectsAnArgumentTheSchemaMarksAsPutInByTheHost()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => Require(InjectedSchemaJson()));
+
+            Assert.Contains("呼ぶ側が渡す", thrown.Message);
+        }
+
+        /// <summary>印の照合は器の内側の入力にも掛かる。引数の対応と同じ範囲を見る。</summary>
+        [Fact]
+        public void RejectsAHostSuppliedArgumentTheSchemaAsksForInsideAContainer()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    NestedSchemaJson(),
+                    signatures: Signatures(parameterType: "PEPlugin.Pmx.IPXPmx")));
+
+            Assert.Contains("ホストが入れる", thrown.Message);
+        }
+
+        [Fact]
+        public void RejectsAnArgumentInsideAContainerThatTheSchemaMarksAsPutInByTheHost()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => Require(NestedInjectedSchemaJson()));
+
+            Assert.Contains("呼ぶ側が渡す", thrown.Message);
+        }
+
+        [Fact]
+        public void AcceptsASetupThatCallsAToolTheSchemaHas()
+        {
+            Require(SchemaJson(), map: @"{ ""rows"": [" + SetupRow(Tool) + "] }");
+        }
+
+        [Fact]
+        public void RejectsASetupThatCallsAToolTheSchemaDoesNotHave()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    SchemaJson(), map: @"{ ""rows"": [" + SetupRow("model_move_vertex") + "] }"));
+
+            Assert.Contains("model_move_vertex", thrown.Message);
         }
 
         [Fact]

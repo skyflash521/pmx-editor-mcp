@@ -420,7 +420,13 @@ namespace PmxEditorMcp.SignatureDump
                 : (issues.Length == 0 ? ", null" : issues) + ", " + projected;
 
             return "new ToolCall(" + Literal(signature.Key) + ", "
-                + Receiver(row, signature, path, null, Bridges(signature, path, bridged)) + ", "
+                + Receiver(
+                    row,
+                    signature,
+                    path,
+                    null,
+                    Bridges(signature, path, bridged),
+                    Held(signature.DeclaringType, byType)) + ", "
                 + Access(path, signatures, concrete, byType) + ", "
                 + danger + ", new ToolArgument[] { " + string.Join(", ", arguments) + " }, "
                 + "new ToolArgument[] { " + string.Join(", ", outputs) + " }, "
@@ -442,8 +448,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 引数1件をC#の式にする。相手にするPMXを取る引数はホストが入れ、ほかの操作対象型を取る
-        /// 引数はその実体を並べるリストの中の位置で受け取る。
+        /// 引数1件をC#の式にする。ホストが入れる引数はその印を持ち、操作対象型を取る引数はその実体を
+        /// 並べるリストの中の位置で受け取る。
         /// </summary>
         private static string Argument(
             ParameterRecord parameter,
@@ -460,6 +466,11 @@ namespace PmxEditorMcp.SignatureDump
                 return written + ", true)";
             }
 
+            if (IsConnector(parameter))
+            {
+                return written + ", true, null, true)";
+            }
+
             TypeRoleRecord role;
             AccessPath listed;
             if (!byType.TryGetValue(typeName, out role)
@@ -470,6 +481,16 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return written + ", false, " + Access(listed, signatures, concrete, byType) + ")";
+        }
+
+        /// <summary>その型の受け手をハンドルから得るか。ハンドル操作型だけが当たる。</summary>
+        private static bool Held(
+            string declaringType, IDictionary<string, TypeRoleRecord> byType)
+        {
+            TypeRoleRecord role;
+
+            return byType.TryGetValue(TypeDefinitionName.OfElement(declaringType), out role)
+                && role.Role == TypeRole.HandleTarget;
         }
 
         /// <summary>その行の受け手を、橋渡しから得るか。所有の根から得る受け手は当たらない。</summary>
@@ -494,7 +515,13 @@ namespace PmxEditorMcp.SignatureDump
         {
             return "new ToolFields(" + (writes ? "true" : "false") + ", "
                 + (owner.Role == TypeRole.Connector ? "false" : "true") + ", "
-                + Receiver(owner.TypeName, false, path, writes ? row.EditKind : ToolMapEditKind.Read)
+                + Receiver(
+                    owner.TypeName,
+                    false,
+                    path,
+                    writes ? row.EditKind : ToolMapEditKind.Read,
+                    false,
+                    owner.Role == TypeRole.HandleTarget)
                 + ", " + Access(path, signatures, concrete, byType) + ", new ToolFieldSet[]";
         }
 
@@ -738,10 +765,16 @@ namespace PmxEditorMcp.SignatureDump
             SignatureRecord signature,
             AccessPath path,
             ToolMapEditKind? edit = null,
-            bool bridged = false)
+            bool bridged = false,
+            bool held = false)
         {
             return Receiver(
-                signature.DeclaringType, signature.IsStatic, path, edit ?? row.EditKind, bridged);
+                signature.DeclaringType,
+                signature.IsStatic,
+                path,
+                edit ?? row.EditKind,
+                bridged,
+                held);
         }
 
         /// <summary>受け手の得方を、宣言型と道から決める。</summary>
@@ -750,12 +783,18 @@ namespace PmxEditorMcp.SignatureDump
             bool isStatic,
             AccessPath path,
             ToolMapEditKind edit,
-            bool bridged = false)
+            bool bridged = false,
+            bool held = false)
         {
             string declaring = TypeDefinitionName.OfElement(declaringType);
             bool rooted = string.Equals(declaring, PmxTypeName, StringComparison.Ordinal)
                 || (path != null && path.Kind != AccessPathKind.Whole);
             string type = isStatic || rooted ? "null" : Literal(declaring);
+            if (held)
+            {
+                return "new ToolReceiver(ToolReceiverKind.Handle, " + Literal(declaring)
+                    + ", EditKind." + Edit(edit) + ", false, " + TypeOf(declaringType) + ")";
+            }
 
             return "new ToolReceiver(ToolReceiverKind."
                 + (rooted ? "Pmx" : "Connection") + ", " + type + ", EditKind."

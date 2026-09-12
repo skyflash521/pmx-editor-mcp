@@ -10,6 +10,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Form = "PEPlugin.Form.IPEFormConnector";
 
+        private const string Held = "PXCPlugin.UIModel.IPXUIModel";
+
+        private const string CPluginConnector = "PXCPlugin.IPXCPluginConnector";
+
         private const string GetTool = "session_get_form_connector";
 
         private const string UpdateTool = "session_update_form_connector";
@@ -95,6 +99,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "new ToolCall(\"Sdk.Bridge.Ping()\","
                     + " new ToolReceiver(ToolReceiverKind.Connection, null, EditKind.DirectChange),"
                     + " ToolAccess.Whole(), DangerKind.None,",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallOnAHandleTargetTakesItsReceiverFromAHandle()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("view_do_it_held_thing", HeldMethod("DoIt", "System.Void")));
+
+            Assert.Contains(
+                "new ToolReceiver(ToolReceiverKind.Handle, \"" + Held + "\","
+                    + " EditKind.DirectChange, false, typeof(global::" + Held + "))",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallOnAConnectorDoesNotTakeItsReceiverFromAHandle()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_do_it", Method("DoIt", "System.Void")));
+
+            Assert.DoesNotContain("ToolReceiverKind.Handle", source.Text);
+        }
+
+        [Fact]
+        public void TheConnectorArgumentIsPutInByTheHost()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_take_it", Taking("TakeIt", "System.Void", CPluginConnector)));
+
+            Assert.Contains(
+                "new ToolArgument(\"one\", typeof(global::" + CPluginConnector + "), true, null, true)",
                 source.Text);
         }
 
@@ -572,6 +608,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "weight",
                         "weights",
                         CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Held,
+                        TypeRole.HandleTarget,
+                        "題材の根拠。",
+                        "held_thing",
+                        "held_things",
+                        CapabilityOwner.View),
                     new TypeRoleRecord(Info, TypeRole.Dto, "題材の根拠。"),
                     new TypeRoleRecord(Option, TypeRole.Dto, "題材の根拠。"),
                 },
@@ -625,6 +668,40 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     null,
                     null,
                     tools));
+        }
+
+        /// <summary>ハンドル操作型が宣言するメソッド。</summary>
+        private static SignatureRecord HeldMethod(string member, string valueType)
+        {
+            return new SignatureRecord(
+                Held + "." + member + "()",
+                Held,
+                MemberKind.Method,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                false,
+                false,
+                OperationDirection.Read);
+        }
+
+        /// <summary>引数1つを取るメソッド。引数の型は題材の側で決める。</summary>
+        private static SignatureRecord Taking(string member, string valueType, string parameterType)
+        {
+            return new SignatureRecord(
+                Form + "." + member + "(" + parameterType + ")",
+                Form,
+                MemberKind.Method,
+                member,
+                false,
+                0,
+                new[] { new ParameterRecord("one", parameterType, ParameterDirection.In, false) },
+                valueType,
+                false,
+                false,
+                OperationDirection.Read);
         }
 
         private static SignatureRecord Method(
