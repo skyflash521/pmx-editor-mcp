@@ -4248,6 +4248,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.BootupVmdView(PEPlugin.Pmx.IPXPmx,PEPlugin.Vmd.IPEVmd)",
+      "editKind": "viewSession",
+      "basis": "渡したモデルとモーションでモーションの確認画面を立ち上げ、立ち上がっていれば渡したもので差し替えるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.CameraPosition()",
       "editKind": "viewSession",
       "basis": "視点の位置という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
@@ -4574,6 +4587,32 @@
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetVertexIndices(System.Int32[])",
       "editKind": "viewSession",
       "basis": "表示する頂点を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetVmeEvent(PEPlugin.Vme.IPEVme,System.Int32,System.Int32)",
+      "editKind": "viewSession",
+      "basis": "モーションの確認画面へ、渡したVMEのイベントを効かせるコマの範囲とともに渡すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetVmeEvent(PEPlugin.Vme.IPEVmeResult,System.Int32,System.Int32)",
+      "editKind": "viewSession",
+      "basis": "モーションの確認画面へ、渡したVMEの結果を効かせるコマの範囲とともに渡すだけで、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -7131,6 +7170,192 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.BS()",
+      "editKind": "read",
+      "basis": "いまのボーンの状態を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.D()",
+      "editKind": "read",
+      "basis": "方向のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.Direction()",
+      "editKind": "read",
+      "basis": "方向のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.InitialPosition()",
+      "editKind": "directChange",
+      "basis": "ボーンの初期位置を決める。ボーンは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vme_bones",
+        "motion_update_vme_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.IsTransformed()",
+      "editKind": "read",
+      "basis": "変形の対象かどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.P()",
+      "editKind": "read",
+      "basis": "位置のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.Position()",
+      "editKind": "read",
+      "basis": "位置のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.R()",
+      "editKind": "read",
+      "basis": "回転量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.Rotate()",
+      "editKind": "read",
+      "basis": "回転量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.S()",
+      "editKind": "read",
+      "basis": "大きさのイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.Scale()",
+      "editKind": "read",
+      "basis": "大きさのイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.T()",
+      "editKind": "read",
+      "basis": "移動量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.ToBS(PEPlugin.Vme.IPEVmeEventState)",
+      "editKind": "read",
+      "basis": "渡したイベントの状態でのボーンの状態を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.ToBoneState(PEPlugin.Vme.IPEVmeEventState)",
+      "editKind": "read",
+      "basis": "渡したイベントの状態でのボーンの状態を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBone.Translate()",
+      "editKind": "read",
+      "basis": "移動量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeBoneState.D()",
       "editKind": "read",
       "basis": "いまの向きを返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
@@ -7251,6 +7476,260 @@
       "signatureKey": "PEPlugin.Vme.IPEVmeBoneState.Translation()",
       "editKind": "read",
       "basis": "いまの移動量を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Enable()",
+      "editKind": "read",
+      "basis": "登録したイベントがあって働くかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_cameras"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.FOV()",
+      "editKind": "read",
+      "basis": "パース角度を動かす単値の要素を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.GetCameraPos()",
+      "editKind": "read",
+      "basis": "いまのカメラの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "element",
+              "tool": "motion_add_morph_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "object",
+              "tool": "motion_extern_vme_element"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "camera",
+              "tool": "motion_camera_vme_object"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.GetCameraTgt()",
+      "editKind": "read",
+      "basis": "いまのカメラの注視点を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "element",
+              "tool": "motion_add_morph_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "object",
+              "tool": "motion_extern_vme_element"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "camera",
+              "tool": "motion_camera_vme_object"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.GetCameraUp()",
+      "editKind": "read",
+      "basis": "いまのカメラの上方向を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "element",
+              "tool": "motion_add_morph_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "object",
+              "tool": "motion_extern_vme_element"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "camera",
+              "tool": "motion_camera_vme_object"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.GetViewMatrix()",
+      "editKind": "read",
+      "basis": "いまの視点の行列を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "element",
+              "tool": "motion_add_morph_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "object",
+              "tool": "motion_extern_vme_element"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "camera",
+              "tool": "motion_camera_vme_object"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Pos()",
+      "editKind": "read",
+      "basis": "カメラの位置を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Position()",
+      "editKind": "read",
+      "basis": "カメラの位置を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Target()",
+      "editKind": "read",
+      "basis": "カメラの注視点を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Tgt()",
+      "editKind": "read",
+      "basis": "カメラの注視点を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Up()",
+      "editKind": "read",
+      "basis": "原点を中心に向きで指すカメラの上方向を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
