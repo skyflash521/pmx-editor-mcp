@@ -16,6 +16,13 @@ namespace PmxEditorMcp
         /// 出し、押されている修飾キーで相手の決まり方が変わる。
         /// </summary>
         PickedObjects,
+
+        /// <summary>
+        /// 取り消せる編集が残っていると、エディタが人の応答を待つ表示を出すことがある。出すかどうかは
+        /// エディタが持つ保存済みの印との差で決まり、その印は読めない。プラグインからの保存もその印を
+        /// 更新しないので、こちらから出ないと言えるのは、取り消せる編集が残っていないときだけである。
+        /// </summary>
+        SavedEdits,
     }
 
     /// <summary>
@@ -25,21 +32,33 @@ namespace PmxEditorMcp
     /// </summary>
     public sealed class ToolPrecondition
     {
-        public ToolPrecondition(PreconditionKind kind, IEnumerable<string> reading)
+        public ToolPrecondition(
+            PreconditionKind kind, IEnumerable<string> reading, IEnumerable<string> counting)
         {
             if (reading == null)
             {
                 throw new ArgumentNullException(nameof(reading));
             }
 
+            if (counting == null)
+            {
+                throw new ArgumentNullException(nameof(counting));
+            }
+
             Kind = kind;
             Reading = new ReadOnlyCollection<string>(reading.ToList());
+            Counting = new ReadOnlyCollection<string>(counting.ToList());
         }
 
         /// <summary>確かめることの種別。</summary>
         public PreconditionKind Kind { get; }
 
-        /// <summary>確かめる材料を得る読み取りのツールの名前。</summary>
+        /// <summary>確かめる材料を得る読み取りのツールの名前。別の受け手から読むものが入る。</summary>
         public IList<string> Reading { get; }
+
+        /// <summary>
+        /// 確かめる材料を得る行キー。呼ぶ先と同じ受け手の上で読むものが入るので、受け手を解き直さない。
+        /// </summary>
+        public IList<string> Counting { get; }
     }
 }

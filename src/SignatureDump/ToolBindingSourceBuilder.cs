@@ -939,9 +939,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// ツールの名前から、呼ぶ前に確かめることの組み立て文へ。確かめる材料は読み取りのツールで
-        /// 得るので、そのツールの名前を添える。材料のツールが1つも無ければ確かめようがないので、
-        /// <see cref="InvalidOperationException"/>。
+        /// ツールの名前から、呼ぶ前に確かめることの組み立て文へ。確かめる材料は、別の受け手から読む
+        /// ものは読み取りのツールの名前で、同じ受け手の上で読むものは行キーで添える。材料が揃って
+        /// いるかを見るのは、これを読んで組み立てる側である。
         /// </summary>
         private static SortedDictionary<string, string> Preconditions(
             ToolMap map,
@@ -951,6 +951,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             SortedDictionary<string, string> preconditions =
                 new SortedDictionary<string, string>(StringComparer.Ordinal);
+            string counting = PreconditionRule.Counting(signatures.Values);
             string[] picked = PreconditionRule.Picked(signatures.Values)
                 .Where(toolNames.ContainsKey)
                 .Select(k => toolNames[k])
@@ -970,15 +971,13 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
-                if (picked.Length == 0)
-                {
-                    throw new InvalidOperationException(
-                        "選ばれているものを読むツールが無い: " + row.SignatureKey);
-                }
-
+                string[] tools = kind == PreconditionKind.PickedObjects ? picked : new string[0];
+                string[] rows = kind == PreconditionKind.SavedEdits && counting != null
+                    ? new[] { counting }
+                    : new string[0];
                 preconditions[tool] = "new ToolPrecondition(PreconditionKind." + kind
-                    + ", new string[] { "
-                    + string.Join(", ", picked.Select(Literal)) + " })";
+                    + ", new string[] { " + string.Join(", ", tools.Select(Literal))
+                    + " }, new string[] { " + string.Join(", ", rows.Select(Literal)) + " })";
             }
 
             return preconditions;

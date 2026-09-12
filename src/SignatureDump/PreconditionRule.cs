@@ -16,6 +16,13 @@ namespace PmxEditorMcp.SignatureDump
         /// 出し、押されている修飾キーで相手の決まり方が変わる。どちらも呼ぶ前に確かめられる。
         /// </summary>
         PickedObjects,
+
+        /// <summary>
+        /// 取り消せる編集が残っていると、エディタが人の応答を待つ表示を出すことがある。出すかどうかは
+        /// エディタが持つ保存済みの印との差で決まり、その印は読めない。プラグインからの保存もその印を
+        /// 更新しないので、こちらから出ないと言えるのは、取り消せる編集が残っていないときだけである。
+        /// </summary>
+        SavedEdits,
     }
 
     /// <summary>
@@ -29,6 +36,12 @@ namespace PmxEditorMcp.SignatureDump
         private const string PickingMemberName = "GetSelectedCurrentVertex";
 
         private const string ViewTypeName = "PEPlugin.View.IPEPMDViewConnector";
+
+        private const string FormTypeName = "PEPlugin.Form.IPEFormConnector";
+
+        private const string ClosingMemberName = "Close";
+
+        private const string UndoCountMemberName = "UndoCount";
 
         private static readonly ReadOnlyCollection<string> PickedMembers =
             Array.AsReadOnly(new[]
@@ -49,18 +62,44 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             kind = PreconditionKind.None;
-            if (!string.Equals(
-                    TypeDefinitionName.Of(signature.DeclaringType),
-                    GuideTypeName,
-                    StringComparison.Ordinal)
-                || !string.Equals(signature.MemberName, PickingMemberName, StringComparison.Ordinal))
+            string type = TypeDefinitionName.Of(signature.DeclaringType);
+            if (string.Equals(type, GuideTypeName, StringComparison.Ordinal)
+                && string.Equals(signature.MemberName, PickingMemberName, StringComparison.Ordinal))
             {
-                return false;
+                kind = PreconditionKind.PickedObjects;
+
+                return true;
             }
 
-            kind = PreconditionKind.PickedObjects;
+            if (string.Equals(type, FormTypeName, StringComparison.Ordinal)
+                && string.Equals(signature.MemberName, ClosingMemberName, StringComparison.Ordinal))
+            {
+                kind = PreconditionKind.SavedEdits;
 
-            return true;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 取り消せる編集の数を読むシグネチャの行キー。閉じる呼び出しと同じ受け手の上に在るので、
+        /// 受け手を解き直さずに読める。見つからなければ null。
+        /// </summary>
+        public static string Counting(IEnumerable<SignatureRecord> signatures)
+        {
+            if (signatures == null)
+            {
+                throw new ArgumentNullException(nameof(signatures));
+            }
+
+            return signatures
+                .Where(s => string.Equals(
+                        TypeDefinitionName.Of(s.DeclaringType), FormTypeName, StringComparison.Ordinal)
+                    && string.Equals(s.MemberName, UndoCountMemberName, StringComparison.Ordinal))
+                .Select(s => s.Key)
+                .OrderBy(k => k, StringComparer.Ordinal)
+                .FirstOrDefault();
         }
 
         /// <summary>

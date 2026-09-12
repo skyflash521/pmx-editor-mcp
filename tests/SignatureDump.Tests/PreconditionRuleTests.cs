@@ -12,6 +12,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string ViewType = "PEPlugin.View.IPEPMDViewConnector";
 
+        private const string FormType = "PEPlugin.Form.IPEFormConnector";
+
         [Fact]
         public void TakingWhatIsPickedNeedsSomethingPicked()
         {
@@ -65,6 +67,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ClosingTheEditorNeedsNothingLeftToUndo()
+        {
+            PreconditionKind kind;
+
+            Assert.True(
+                PreconditionRule.TryClassify(Signature(FormType, "Close"), out kind));
+            Assert.Equal(PreconditionKind.SavedEdits, kind);
+        }
+
+        [Fact]
+        public void WhatCanBeUndoneIsReadFromTheFormsCount()
+        {
+            Assert.Equal(
+                FormType + ".UndoCount()",
+                PreconditionRule.Counting(
+                    new[]
+                    {
+                        Signature(ViewType, "UndoCount"),
+                        Signature(FormType, "UndoCount"),
+                        Signature(FormType, "Undo"),
+                    }));
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             PreconditionKind kind;
@@ -72,6 +98,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentNullException>(
                 () => PreconditionRule.TryClassify(null, out kind));
             Assert.Throws<ArgumentNullException>(() => PreconditionRule.Picked(null));
+            Assert.Throws<ArgumentNullException>(() => PreconditionRule.Counting(null));
         }
 
         private static SignatureRecord Signature(string declaringType, string memberName)

@@ -234,7 +234,10 @@ namespace PmxEditorMcp
         /// <paramref name="refused"/> に断りを持たせる。
         /// </summary>
         private bool TryMet(
-            McpMethodContext context, ResolvedPrecondition precondition, out Refusal refused)
+            McpMethodContext context,
+            ResolvedPrecondition precondition,
+            object receiver,
+            out Refusal refused)
         {
             refused = null;
             if (precondition == null)
@@ -244,7 +247,10 @@ namespace PmxEditorMcp
 
             string message;
             if (PreconditionGate.TryAccept(
-                precondition.Kind, Picked(context, precondition), _modifiers.AnyHeld(), out message))
+                precondition.Kind,
+                Counted(context, precondition, receiver),
+                _modifiers.AnyHeld(),
+                out message))
             {
                 return true;
             }
@@ -252,6 +258,36 @@ namespace PmxEditorMcp
             refused = new Refusal(ToolEnvelope.Failure(ToolEnvelope.NotApplicable, message));
 
             return false;
+        }
+
+        /// <summary>
+        /// 確かめる材料の数。別の受け手から読むものは並びの長さを足し合わせ、同じ受け手の上で読む
+        /// ものはその値を数とする。1つでも読めなければ null。
+        /// </summary>
+        private int? Counted(
+            McpMethodContext context, ResolvedPrecondition precondition, object receiver)
+        {
+            int? picked = Picked(context, precondition);
+            if (picked == null)
+            {
+                return null;
+            }
+
+            int counted = picked.Value;
+            foreach (string rowKey in precondition.Counting)
+            {
+                object value;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(rowKey, receiver, new object[0], out value, out refusal)
+                    || !(value is int))
+                {
+                    return null;
+                }
+
+                counted += (int)value;
+            }
+
+            return counted;
         }
 
         /// <summary>
@@ -328,7 +364,39 @@ namespace PmxEditorMcp
                 reading.AddRange(found);
             }
 
-            return new ResolvedPrecondition(precondition.Kind, reading);
+            RequireMaterials(precondition, reading, tool);
+
+            return new ResolvedPrecondition(precondition.Kind, reading, precondition.Counting);
+        }
+
+        /// <summary>
+        /// 種別が要る材料を持っているか。種別ごとに読む先が違うので、数だけでなくどちらを持つかまで
+        /// 見る——取り違えたまま通すと、別の意味の数を足し合わせて確かめたことにしてしまう。
+        /// </summary>
+        private static void RequireMaterials(
+            ToolPrecondition precondition, IList<ToolCall> reading, string tool)
+        {
+            bool met;
+            switch (precondition.Kind)
+            {
+                case PreconditionKind.PickedObjects:
+                    met = reading.Count != 0 && precondition.Counting.Count == 0;
+                    break;
+
+                case PreconditionKind.SavedEdits:
+                    met = reading.Count == 0 && precondition.Counting.Count != 0;
+                    break;
+
+                default:
+                    met = false;
+                    break;
+            }
+
+            if (!met)
+            {
+                throw new InvalidOperationException(
+                    "呼ぶ前に確かめる材料がその種別に合わない: " + tool);
+            }
         }
 
         /// <summary>
@@ -348,10 +416,12 @@ namespace PmxEditorMcp
         /// <summary>名前を呼び出しへ解いた後の、呼ぶ前に確かめること。</summary>
         private sealed class ResolvedPrecondition
         {
-            public ResolvedPrecondition(PreconditionKind kind, IList<ToolCall> reading)
+            public ResolvedPrecondition(
+                PreconditionKind kind, IList<ToolCall> reading, IList<string> counting)
             {
                 Kind = kind;
                 Reading = reading;
+                Counting = counting;
             }
 
             /// <summary>確かめることの種別。</summary>
@@ -359,6 +429,9 @@ namespace PmxEditorMcp
 
             /// <summary>確かめる材料を得る読み取りの呼び出し。</summary>
             public IList<ToolCall> Reading { get; }
+
+            /// <summary>確かめる材料を得る、呼ぶ先と同じ受け手の上の行キー。</summary>
+            public IList<string> Counting { get; }
         }
 
         /// <summary>呼び分けが揃って持つ編集の分類。揃っていなければ組み立てが誤っている。</summary>
@@ -675,11 +748,6 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
-                if (!TryMet(context, precondition, out refused))
-                {
-                    return;
-                }
-
                 if (!TryTake(context, call.Receiver, Targets(call), handle, false, out target, out refused)
                     || !TryColumn(
                         context,
@@ -690,7 +758,8 @@ namespace PmxEditorMcp
                         Accepted(call.Access, null, false),
                         out column,
                         out refused)
-                    || !TryBound(call, target, new[] { arguments }, out refused))
+                    || !TryBound(call, target, new[] { arguments }, out refused)
+                    || !TryMet(context, precondition, column[0].Item, out refused))
                 {
                     return;
                 }

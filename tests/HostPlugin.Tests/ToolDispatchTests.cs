@@ -191,6 +191,38 @@ namespace PmxEditorMcp.Tests
                 Message(envelope));
         }
 
+        [Theory]
+        [InlineData(PreconditionKind.PickedObjects, false, false)]
+        [InlineData(PreconditionKind.PickedObjects, false, true)]
+        [InlineData(PreconditionKind.PickedObjects, true, true)]
+        [InlineData(PreconditionKind.SavedEdits, false, false)]
+        [InlineData(PreconditionKind.SavedEdits, true, false)]
+        [InlineData(PreconditionKind.SavedEdits, true, true)]
+        public void AToolWhoseMaterialDoesNotMatchItsKindStopsTheBuild(
+            PreconditionKind kind, bool reading, bool counting)
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => Registered(
+                    new ToolPrecondition(
+                        kind,
+                        reading ? new[] { "session_picked" } : new string[0],
+                        counting ? new[] { PickedKey } : new string[0])));
+        }
+
+        [Theory]
+        [InlineData(PreconditionKind.PickedObjects, true, false)]
+        [InlineData(PreconditionKind.SavedEdits, false, true)]
+        public void AToolWhoseMaterialMatchesItsKindIsBuilt(
+            PreconditionKind kind, bool reading, bool counting)
+        {
+            Assert.NotNull(
+                Registered(
+                    new ToolPrecondition(
+                        kind,
+                        reading ? new[] { "session_picked" } : new string[0],
+                        counting ? new[] { PickedKey } : new string[0])));
+        }
+
         [Fact]
         public void AToolThatNeedsSomethingPickedRunsWhenSomethingIsPicked()
         {
@@ -410,6 +442,38 @@ namespace PmxEditorMcp.Tests
                 new UndoSuppression(_log));
         }
 
+        /// <summary>その前提条件を持つツールとして登録し、引いた呼び出しを返す。</summary>
+        private McpMethod Registered(ToolPrecondition precondition)
+        {
+            McpMethodTable methods = new McpMethodTable();
+            SdkRelayTable relay = Relay();
+            IDictionary<string, SdkReceiver> receivers = Receivers();
+            ResidentConnection connection = Connection();
+            PmxSession session = Session(relay, receivers, connection);
+            ToolDispatch.AddTo(
+                methods,
+                relay,
+                receivers,
+                new Dictionary<string, SdkList>(StringComparer.Ordinal),
+                connection,
+                session,
+                Session(relay, receivers, connection),
+                new UndoRecovery(new UndoSuppression(_log), session.UndoLock),
+                Calls(),
+                Aggregations(),
+                new Dictionary<string, ToolElements>(StringComparer.Ordinal),
+                new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal)
+                {
+                    { "session_count", precondition },
+                },
+                new StillModifierKeys());
+
+            McpMethod method;
+            Assert.True(methods.TryGet("session_count", out method));
+
+            return method;
+        }
+
         /// <summary>選ばれているものが要るツールとして、題材の呼び出しを引く。</summary>
         private McpMethod Picking(IModifierKeys modifiers)
         {
@@ -435,7 +499,9 @@ namespace PmxEditorMcp.Tests
                     {
                         "session_count",
                         new ToolPrecondition(
-                            PreconditionKind.PickedObjects, new[] { "session_picked" })
+                            PreconditionKind.PickedObjects,
+                            new[] { "session_picked" },
+                            new string[0])
                     },
                 },
                 modifiers);

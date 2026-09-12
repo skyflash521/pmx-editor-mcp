@@ -46,6 +46,37 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ClosingWithNothingToUndoPasses()
+        {
+            string message;
+
+            Assert.True(
+                PreconditionGate.TryAccept(PreconditionKind.SavedEdits, 0, true, out message));
+            Assert.Null(message);
+        }
+
+        [Fact]
+        public void ClosingWithSomethingToUndoStops()
+        {
+            string message;
+
+            Assert.False(
+                PreconditionGate.TryAccept(PreconditionKind.SavedEdits, 2, false, out message));
+            Assert.Contains("取り消せる編集が残っている", message);
+            Assert.Contains("ことがあり", message);
+        }
+
+        [Fact]
+        public void ClosingWithoutKnowingWhatCanBeUndoneStops()
+        {
+            string message;
+
+            Assert.False(
+                PreconditionGate.TryAccept(PreconditionKind.SavedEdits, null, false, out message));
+            Assert.Contains("読めなかった", message);
+        }
+
+        [Fact]
         public void AHeldModifierStopsEvenWithSomethingPicked()
         {
             string message;
