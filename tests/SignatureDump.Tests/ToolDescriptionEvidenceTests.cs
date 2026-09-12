@@ -69,6 +69,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheSourceNoteOfAFieldComesFromTheSameDocumentAsAProperty()
+        {
+            IList<ToolDescriptionMaterial> materials = ToolDescriptionEvidence.Collect(
+                Map(Row("Tint", "model_get_vertex", null)).Map,
+                Roles(),
+                Names(),
+                Inventory(),
+                Named(Key("Tint"), "model_get_vertex"),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                MethodNotes(),
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { Owner + ".Tint", "色合い" },
+                });
+
+            Assert.Equal("色合い", Assert.Single(materials).SourceNote);
+        }
+
+        [Fact]
         public void AMemberTheDocumentDoesNotCarryHasNoSourceNote()
         {
             Assert.Null(Only(Map(Row("Erase", ListTool, null))).SourceNote);
@@ -457,6 +476,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static readonly string[] Methods = { "Draw", "Erase" };
 
+        private static readonly string[] Fields = { "Tint" };
+
+        /// <summary>題材のメンバーの種類。名前で決める。</summary>
+        private static MemberKind Kind(string memberName)
+        {
+            if (Methods.Contains(memberName))
+            {
+                return MemberKind.Method;
+            }
+
+            return Fields.Contains(memberName) ? MemberKind.Field : MemberKind.Property;
+        }
+
         private const string Bone = "PEPlugin.Pmx.IPXBone";
 
         /// <summary>宣言型だけが違う、埋め込みの行。</summary>
@@ -494,7 +526,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static InventoryRecord Inventory()
         {
             List<SignatureRecord> signatures = new List<SignatureRecord>();
-            foreach (string memberName in new[] { "Draw", "Erase", "Index", "Depth" })
+            foreach (string memberName in new[] { "Draw", "Erase", "Index", "Depth", "Tint" })
             {
                 signatures.Add(Signature(memberName));
             }
@@ -533,7 +565,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new SignatureRecord(
                 SignatureKeyBuilder.Build(Owner, memberName, 0, new ParameterRecord[0], "System.Int32"),
                 Owner,
-                Methods.Contains(memberName) ? MemberKind.Method : MemberKind.Property,
+                Kind(memberName),
                 memberName,
                 false,
                 0,

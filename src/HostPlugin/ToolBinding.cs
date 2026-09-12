@@ -179,7 +179,8 @@ namespace PmxEditorMcp
             Type type,
             bool injected = false,
             ToolAccess referenced = null,
-            bool connector = false)
+            bool connector = false,
+            Type held = null)
         {
             if (name == null)
             {
@@ -196,6 +197,7 @@ namespace PmxEditorMcp
             Injected = injected;
             Referenced = referenced;
             Connector = connector;
+            Held = held;
         }
 
         /// <summary>要求の引数の名前。</summary>
@@ -216,6 +218,9 @@ namespace PmxEditorMcp
         /// その引数が指す実体を並べるリストへの道。位置で受け取る引数だけが持ち、ほかは null。
         /// </summary>
         public ToolAccess Referenced { get; }
+
+        /// <summary>その引数が指す実体の型。ハンドルで受け取る引数だけが持ち、ほかは null。</summary>
+        public Type Held { get; }
     }
 
     /// <summary>項目を集めるツールが持つ項目1件。</summary>
@@ -312,7 +317,8 @@ namespace PmxEditorMcp
             IList<ToolArgument> outputs,
             Type result,
             Type issues = null,
-            IList<ToolField> projected = null)
+            IList<ToolField> projected = null,
+            string releases = null)
         {
             if (rowKey == null)
             {
@@ -348,6 +354,7 @@ namespace PmxEditorMcp
             Result = result;
             Issues = issues;
             Projected = projected == null ? null : new ReadOnlyCollection<ToolField>(projected);
+            Releases = releases;
         }
 
         /// <summary>呼ぶ行のキー。</summary>
@@ -376,6 +383,12 @@ namespace PmxEditorMcp
         /// ほかは null で、返す値をそのまま写す。
         /// </summary>
         public Type Issues { get; }
+
+        /// <summary>
+        /// 預けた生成物を手放すときに呼ぶ行のキー。手放す手順を持つ型を預ける行だけが持ち、ほかは
+        /// null で、台帳の失効だけで足りる。
+        /// </summary>
+        public string Releases { get; }
 
         /// <summary>
         /// 返す値が値として写せない型のとき、その中の項目を読む行。ほかは null で、値をそのまま

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using PEPlugin;
@@ -41,6 +42,10 @@ namespace PmxEditorMcp.Tests
         private const string InfoLostKey = "Sdk.Info.Lost()";
 
         private const string InfoRawKey = "Sdk.Info.Raw()";
+
+        private const string MakeKey = "Sdk.Form.Make(Sdk.Form)";
+
+        private const string DropKey = "Sdk.Form.Drop()";
 
         private readonly string _root;
 
@@ -277,6 +282,29 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ReleasingWhatTheIssuedThingWasMadeFromAlsoReleasesTheIssuedThing()
+        {
+            Target source = new Target { Made = new Target() };
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("source", 1L);
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, source, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            int issued = Convert.ToInt32(
+                envelope[ToolEnvelope.ValueName], CultureInfo.InvariantCulture);
+
+            HandleReleaseResult released;
+            Assert.True(ledger.TryRelease(1, out released));
+
+            Assert.Empty(released.Failed);
+            Assert.False(ledger.IsValid(issued));
+        }
+
+        [Fact]
         public void ACallOnAHeldReceiverRunsOnEveryHandle()
         {
             Target first = new Target { Count = 3 };
@@ -320,6 +348,72 @@ namespace PmxEditorMcp.Tests
                     new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
 
             Assert.Equal(ToolEnvelope.InvalidHandle, Code(envelope));
+        }
+
+        [Fact]
+        public void AnArgumentTakenAsAHandleReachesTheCallAsTheHeldThing()
+        {
+            Target made = new Target();
+            Target source = new Target { Made = made };
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("source", 1L);
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, source, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            object issued = envelope[ToolEnvelope.ValueName];
+            object held;
+            Assert.True(ledger.TryGet(
+                Convert.ToInt32(issued, CultureInfo.InvariantCulture),
+                typeof(Target).FullName,
+                out held));
+            Assert.Same(made, held);
+        }
+
+        [Fact]
+        public void AnArgumentTakenAsAHandleIsRefusedWhenItIsNotTheThingTheCallTakes()
+        {
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("source", 1L);
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Info).FullName, new Info(), () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidHandle, Code(envelope));
+            Assert.Contains("source", Message(envelope), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ReleasingAHandleAlsoLetsTheSdkGoOfTheIssuedThing()
+        {
+            Target made = new Target();
+            Target source = new Target { Made = made };
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("source", 1L);
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, source, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.False(made.Dropped);
+
+            HandleReleaseResult released;
+            Assert.True(ledger.TryRelease(
+                Convert.ToInt32(
+                    envelope[ToolEnvelope.ValueName], CultureInfo.InvariantCulture),
+                out released));
+
+            Assert.Empty(released.Failed);
+            Assert.True(made.Dropped);
         }
 
         /// <summary>ハンドルで指した対象の組は、対象ごとの値の並びを受け取れる。</summary>
@@ -643,6 +737,15 @@ namespace PmxEditorMcp.Tests
                     { InfoOptionKey, (target, arguments) => ((Info)target).Option },
                     { OptionBootupKey, (target, arguments) => ((Option)target).Bootup },
                     { InfoRawKey, (target, arguments) => new Target() },
+                    { MakeKey, (target, arguments) => ((Target)arguments[0]).Made },
+                    {
+                        DropKey,
+                        (target, arguments) =>
+                        {
+                            ((Target)target).Dropped = true;
+                            return null;
+                        }
+                    },
                 };
 
             return new SdkRelayTable(SdkVersion, Digest, calls, new[] { LostKey });
@@ -752,6 +855,24 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         new ToolArgument[0],
                         typeof(int))
+                },
+                {
+                    "session_make_held",
+                    new ToolCall(
+                        MakeKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument(
+                                "source", typeof(Target), false, null, false, typeof(Target)),
+                        },
+                        new ToolArgument[0],
+                        typeof(Target),
+                        typeof(Target),
+                        null,
+                        DropKey)
                 },
                 {
                     "session_picked",
@@ -916,6 +1037,10 @@ namespace PmxEditorMcp.Tests
             public bool Flag { get; set; }
 
             public int Count { get; set; }
+
+            public Target Made { get; set; }
+
+            public bool Dropped { get; set; }
         }
 
         /// <summary>独立したツールを持たず、返す値の中だけに現れる題材。</summary>

@@ -821,7 +821,7 @@ namespace PmxEditorMcp
         /// 生成物を台帳へ預け、そのハンドルを返す。生成物はエディタの状態の外で生きるので、
         /// 解放するか、リストへ加えて消費するまで台帳が保つ。
         /// </summary>
-        private static object Issued(McpMethodContext context, ToolCall call, object result)
+        private object Issued(McpMethodContext context, ToolCall call, object result)
         {
             if (result == null)
             {
@@ -829,9 +829,66 @@ namespace PmxEditorMcp
                     ToolEnvelope.NotApplicable, "生成物を返さなかった: " + call.RowKey);
             }
 
-            // 生成物はメモリの上の値で、手放すのに要る手順を持たない。
-            return ToolEnvelope.Success(
-                context.Handles.Issue(call.Issues.FullName, result, () => { }));
+            return ToolEnvelope.Success(context.Handles.Issue(
+                call.Issues.FullName,
+                result,
+                Releasing(context, call, result),
+                Involved(context, call)));
+        }
+
+        /// <summary>
+        /// その生成に関与したハンドル。ハンドルで受け取った引数がこれに当たり、生成物はそれらより
+        /// 先に解放される——生成物は関与した実体を持ち続けるので、先に手放されると使えなくなる。
+        /// </summary>
+        private static IEnumerable<int> Involved(McpMethodContext context, ToolCall call)
+        {
+            List<int> involved = new List<int>();
+            foreach (ToolArgument argument in call.Arguments.Where(a => a.Held != null))
+            {
+                object json;
+                long id;
+                if (context.Params.TryGetValue(argument.Name, out json)
+                    && TryInteger(json, out id))
+                {
+                    involved.Add((int)id);
+                }
+            }
+
+            return involved;
+        }
+
+        /// <summary>
+        /// 預けた生成物を手放す手順。手放す行を持たない生成物では何もしない。手順を持つ生成物は
+        /// SDKを呼ぶので、ほかの中継と同じくUIスレッドで行う。
+        /// </summary>
+        private Action Releasing(McpMethodContext context, ToolCall call, object result)
+        {
+            if (call.Releases == null)
+            {
+                return () => { };
+            }
+
+            IUiInvoker invoker = context.Ui;
+
+            return () =>
+            {
+                UiInvocation ran = invoker.TryInvokeOnUi(() =>
+                {
+                    object ignored;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(
+                        call.Releases, result, new object[0], out ignored, out refusal))
+                    {
+                        throw new InvalidOperationException(
+                            "手放す呼び出しを断られた: " + call.Releases);
+                    }
+                });
+                if (!ran.DidRun)
+                {
+                    throw new InvalidOperationException(
+                        "手放す呼び出しをUIスレッドで行えなかった: " + call.Releases);
+                }
+            };
         }
 
         /// <summary>
@@ -1035,7 +1092,7 @@ namespace PmxEditorMcp
             if (hasSingle)
             {
                 object[] taken;
-                if (!TryPass(call, single, out taken, out code, out message))
+                if (!TryPass(context, call, single, out taken, out code, out message))
                 {
                     return false;
                 }
@@ -1058,7 +1115,7 @@ namespace PmxEditorMcp
             foreach (object item in items)
             {
                 object[] taken;
-                if (!TryPass(call, item, out taken, out code, out message))
+                if (!TryPass(context, call, item, out taken, out code, out message))
                 {
                     return false;
                 }
@@ -1196,9 +1253,49 @@ namespace PmxEditorMcp
             return false;
         }
 
+        /// <summary>
+        /// ハンドルで受け取る引数を、そのハンドルが指す実体へ直す。指していなければ断る。
+        /// </summary>
+        private static bool TryHeldArgument(
+            McpMethodContext context,
+            ToolArgument argument,
+            object json,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            long id;
+            if (!TryInteger(json, out id))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " はハンドルの番号でなければならない。";
+
+                return false;
+            }
+
+            value = Held(context, new[] { argument.Held }, id);
+            if (value != null)
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidHandle;
+            message = argument.Name + " が指すハンドルは、この呼び出しが相手にする実体を指していない。";
+
+            return false;
+        }
+
         /// <summary>引数の組1つを、シグネチャの並びの値へ直す。</summary>
         private static bool TryPass(
-            ToolCall call, object given, out object[] passed, out string code, out string message)
+            McpMethodContext context,
+            ToolCall call,
+            object given,
+            out object[] passed,
+            out string code,
+            out string message)
         {
             passed = null;
             code = null;
@@ -1246,6 +1343,17 @@ namespace PmxEditorMcp
                 if (argument.Referenced != null)
                 {
                     if (!TryReference(argument, value, out taken[at], out code, out message))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (argument.Held != null)
+                {
+                    if (!TryHeldArgument(
+                        context, argument, value, out taken[at], out code, out message))
                     {
                         return false;
                     }
@@ -3551,6 +3659,11 @@ namespace PmxEditorMcp
             if (argument.Referenced != null)
             {
                 return TryReference(argument, json, out value, out code, out message);
+            }
+
+            if (argument.Held != null)
+            {
+                return TryHeldArgument(context, argument, json, out value, out code, out message);
             }
 
             if (ValueInput.TryFromJson(argument.Type, json, out value, out code, out message))

@@ -57,6 +57,8 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>Cプラグイン連携の橋渡しの型。ここから得る受け手は、そちらの流れで扱う。</summary>
         private const string BridgeTypeName = "PXCPlugin.PXCBridge";
 
+        private const string ReleaseToolName = "session_release_handle";
+
         /// <summary>
         /// 表を組み立てる。<paramref name="toolNames"/> は行キーからツールの名前へ、
         /// <paramref name="roles"/> は担当群を解いた型役割表、<paramref name="assignments"/> は
@@ -163,7 +165,8 @@ namespace PmxEditorMcp.SignatureDump
                             byType,
                             paths,
                             bridged,
-                            projections.TryGetValue(tool, out carried) ? carried : null));
+                            projections.TryGetValue(tool, out carried) ? carried : null,
+                            assignments));
                     Listing(lists, path, signatures, byType);
                     continue;
                 }
@@ -399,7 +402,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, AccessPath> paths,
             ISet<string> bridged,
-            string projected)
+            string projected,
+            CommonAssignmentTable assignments)
         {
             DangerKind kind;
             string danger = dangerous.TryGetValue(signature.Key, out kind)
@@ -414,10 +418,11 @@ namespace PmxEditorMcp.SignatureDump
                 .Select(p => "new ToolArgument(" + Literal(p.Name) + ", " + TypeOf(p.TypeName) + ")")
                 .ToArray();
 
-            string issues = Issues(row, signature) ? ", " + TypeOf(signature.ValueType) : string.Empty;
-            string tail = projected == null
-                ? issues
-                : (issues.Length == 0 ? ", null" : issues) + ", " + projected;
+            bool issuing = Issues(row, signature);
+            string tail = Tail(
+                issuing ? TypeOf(signature.ValueType) : null,
+                projected,
+                issuing ? Releases(signature.ValueType, signatures, assignments) : null);
 
             return "new ToolCall(" + Literal(signature.Key) + ", "
                 + Receiver(
@@ -434,6 +439,75 @@ namespace PmxEditorMcp.SignatureDump
                     ? "null"
                     : TypeOf(signature.ValueType))
                 + tail + ")";
+        }
+
+        /// <summary>
+        /// 既定を採る引数の並び。後ろから続く既定だけの並びは書かずに済ませる。
+        /// </summary>
+        private static string Tail(params string[] given)
+        {
+            int last = given.Length;
+            while (last > 0 && given[last - 1] == null)
+            {
+                last--;
+            }
+
+            return string.Concat(given.Take(last).Select(g => ", " + (g ?? "null")));
+        }
+
+        /// <summary>
+        /// その型の実体を手放す行のキー。手放す手順を持たない型では null。解放のツールが受け持つと
+        /// 定めた、引数を取らないその型のメンバーがこれに当たる。手順が在るのに受け手をその実体から
+        /// 得られない形なら、預けても手放せないので <see cref="InvalidOperationException"/>。
+        /// </summary>
+        private static string Releases(
+            string valueType,
+            IDictionary<string, SignatureRecord> signatures,
+            CommonAssignmentTable assignments)
+        {
+            string held = TypeDefinitionName.OfElement(valueType);
+            SignatureRecord[] members = assignments.Assignments
+                .Where(a => a.Assignment == CommonAssignmentKind.Tool
+                    && string.Equals(a.Target, ReleaseToolName, StringComparison.Ordinal))
+                .Select(a => a.SignatureKey)
+                .Where(k => signatures.ContainsKey(k))
+                .Select(k => signatures[k])
+                .Where(r => Declares(r, held) || Takes(r, held))
+                .OrderBy(r => r.Key, StringComparer.Ordinal)
+                .ToArray();
+            SignatureRecord[] callable = members
+                .Where(r => Declares(r, held) && r.Parameters.Count == 0)
+                .ToArray();
+            if (callable.Length > 1)
+            {
+                throw new InvalidOperationException(
+                    "手放す行が2つ以上ある型を預けている: " + held);
+            }
+
+            if (callable.Length == 0 && members.Length != 0)
+            {
+                throw new InvalidOperationException(
+                    "手放す手順を呼べない形の型を預けている: " + held + "(" + members[0].Key + ")");
+            }
+
+            return callable.Length == 0 ? null : Literal(callable[0].Key);
+        }
+
+        /// <summary>そのメンバーをその型が宣言するか。</summary>
+        private static bool Declares(SignatureRecord signature, string typeName)
+        {
+            return string.Equals(
+                TypeDefinitionName.OfElement(signature.DeclaringType),
+                typeName,
+                StringComparison.Ordinal);
+        }
+
+        /// <summary>そのメンバーがその型の実体を引数に取るか。</summary>
+        private static bool Takes(SignatureRecord signature, string typeName)
+        {
+            return signature.Parameters.Any(
+                p => string.Equals(
+                    TypeDefinitionName.OfElement(p.TypeName), typeName, StringComparison.Ordinal));
         }
 
         /// <summary>
@@ -473,6 +547,11 @@ namespace PmxEditorMcp.SignatureDump
 
             TypeRoleRecord role;
             AccessPath listed;
+            if (byType.TryGetValue(typeName, out role) && role.Role == TypeRole.HandleTarget)
+            {
+                return written + ", false, null, false, " + TypeOf(parameter.TypeName) + ")";
+            }
+
             if (!byType.TryGetValue(typeName, out role)
                 || role.Role != TypeRole.OperationTarget
                 || !paths.TryGetValue(typeName, out listed))

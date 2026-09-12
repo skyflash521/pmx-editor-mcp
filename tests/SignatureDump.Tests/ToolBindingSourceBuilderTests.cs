@@ -124,6 +124,52 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnArgumentOfAHandleTargetIsTakenAsAHandle()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_take_it", Taking("TakeIt", "System.Void", Held)));
+
+            Assert.Contains(
+                "new ToolArgument(\"one\", typeof(global::" + Held + "), false, null, false,"
+                    + " typeof(global::" + Held + "))",
+                source.Text);
+        }
+
+        [Fact]
+        public void AnIssuingCallCarriesTheRowThatLetsTheIssuedThingGo()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_it", Method("MakeIt", Held)),
+                Released(HeldMethod("Drop", "System.Void")));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
+                    + Held + ".Drop()\")",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallThatIssuesAThingWithNoWayToLetItGoCarriesNoSuchRow()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_it", Method("MakeIt", Held)));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "), typeof(global::" + Held + "))", source.Text);
+        }
+
+        [Fact]
+        public void AThingWhoseWayToLetItGoCannotBeReachedFromItselfIsRefused()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => Build(
+                    Issuing("session_make_it", Method("MakeIt", Held)),
+                    Released(Taking("LetGo", "System.Void", Held))));
+
+            Assert.Contains("手放す手順を呼べない形", thrown.Message);
+        }
+
+        [Fact]
         public void TheConnectorArgumentIsPutInByTheHost()
         {
             ToolBindingSource source = Build(
@@ -499,6 +545,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[]
                 {
                     new CommonAssignmentRecord(
+                        Held + ".Drop()",
+                        CommonAssignmentKind.Tool,
+                        "session_release_handle",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        Form + ".LetGo(" + Held + ")",
+                        CommonAssignmentKind.Tool,
+                        "session_release_handle",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
                         StateReadKey, CommonAssignmentKind.InternalFlow, "stateRead", "題材の根拠。"),
                     new CommonAssignmentRecord(
                         CommitKey,
@@ -653,6 +709,46 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     },
                     null,
                     null));
+        }
+
+        /// <summary>生成物を返す呼び出しの束縛。返り値を台帳へ預ける行になる。</summary>
+        private static Binding Issuing(string tool, SignatureRecord signature)
+        {
+            return new Binding(
+                signature,
+                tool,
+                new ToolMapRow(
+                    signature.Key,
+                    ToolMapEditKind.DirectChange,
+                    null,
+                    "題材の根拠。",
+                    new[]
+                    {
+                        new Postcondition(
+                            EffectType.HandleCreated,
+                            string.Empty,
+                            EffectCheckKind.CallLogOnly,
+                            null,
+                            null,
+                            null,
+                            EffectComparison.Exists,
+                            null,
+                            false,
+                            null),
+                    },
+                    null,
+                    null));
+        }
+
+        /// <summary>解放のツールが受け持つと定めたメンバーの束縛。独立したツールを持たない。</summary>
+        private static Binding Released(SignatureRecord signature)
+        {
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    signature.Key, ToolMapEditKind.DirectChange, null, "題材の根拠。",
+                    null, null, null));
         }
 
         private static Binding Embedded(SignatureRecord signature, params string[] tools)

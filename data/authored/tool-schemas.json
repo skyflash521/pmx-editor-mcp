@@ -14507,6 +14507,287 @@
       }
     },
     {
+      "tool": "view_clear_text_control",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_create_text_control",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "uim",
+              "required": true
+            },
+            {
+              "name": "mx",
+              "required": true
+            },
+            {
+              "name": "width",
+              "required": true
+            },
+            {
+              "name": "height",
+              "required": true
+            },
+            {
+              "name": "backCol",
+              "required": true
+            },
+            {
+              "name": "f",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "view_draw_text_text_control",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "text",
+                  "required": true
+                },
+                {
+                  "name": "br",
+                  "required": true
+                },
+                {
+                  "name": "f",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "text",
+                    "required": true
+                  },
+                  {
+                    "name": "br",
+                    "required": true
+                  },
+                  {
+                    "name": "f",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "positioned",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "text",
+                  "required": true
+                },
+                {
+                  "name": "pos",
+                  "required": true
+                },
+                {
+                  "name": "br",
+                  "required": true
+                },
+                {
+                  "name": "f",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "text",
+                    "required": true
+                  },
+                  {
+                    "name": "pos",
+                    "required": true
+                  },
+                  {
+                    "name": "br",
+                    "required": true
+                  },
+                  {
+                    "name": "f",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "bounded",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "text",
+                  "required": true
+                },
+                {
+                  "name": "rect",
+                  "required": true
+                },
+                {
+                  "name": "br",
+                  "required": true
+                },
+                {
+                  "name": "f",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "text",
+                    "required": true
+                  },
+                  {
+                    "name": "rect",
+                    "required": true
+                  },
+                  {
+                    "name": "br",
+                    "required": true
+                  },
+                  {
+                    "name": "f",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_focus",
       "branches": [
         {
@@ -15414,6 +15695,84 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_list_text_controls",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "backColor"
+                },
+                {
+                  "name": "font"
+                },
+                {
+                  "name": "foreColor"
+                },
+                {
+                  "name": "image"
+                },
+                {
+                  "name": "materialIndex"
+                }
+              ]
+            }
+          }
+        ]
       }
     },
     {
@@ -17147,6 +17506,112 @@
         "members": [
           {
             "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_update_text_controls",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "backColor",
+                  "required": false
+                },
+                {
+                  "name": "font",
+                  "required": false
+                },
+                {
+                  "name": "foreColor",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "backColor",
+                    "required": false
+                  },
+                  {
+                    "name": "font",
+                    "required": false
+                  },
+                  {
+                    "name": "foreColor",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_update_text_image_text_control",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "invoked",
             "origin": "hostOutput",
             "shape": "number"
           }

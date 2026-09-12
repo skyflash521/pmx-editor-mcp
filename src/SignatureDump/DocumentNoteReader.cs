@@ -11,24 +11,36 @@ using System.Xml.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 配布物のドキュメントXMLから、公開プロパティとメソッドの記載を取り出す。名前を採るのも、
-    /// 決め方を分けるために同一型内で数えるのも同じ文字列を見るので、取り出し方をここ1つに置く。
+    /// 配布物のドキュメントXMLから、公開プロパティ・フィールドとメソッドの記載を取り出す。名前を
+    /// 採るのも、決め方を分けるために同一型内で数えるのも同じ文字列を見るので、取り出し方をここ1つに
+    /// 置く。
     /// </summary>
     public static class DocumentNoteReader
     {
         private const string PropertyPrefix = "P:";
+
+        private const string FieldPrefix = "F:";
 
         private const string MethodPrefix = "M:";
 
         private static readonly string[] AccessorSuffixes = { "get/set", "get", "set" };
 
         /// <summary>
-        /// member 名(接頭辞 <c>P:</c> を除いたもの)から記載への対応を返す。記載を取り出せない
-        /// member は入れない。形が違えば <see cref="FormatException"/>。
+        /// member 名(接頭辞 <c>P:</c>・<c>F:</c> を除いたもの)から記載への対応を返す。値を持つ
+        /// メンバーは、プロパティでもフィールドでも同じ名前で引ける——C#は同じ型の中で名前を
+        /// 重ねられない。記載を取り出せない member は入れない。形が違えば
+        /// <see cref="FormatException"/>。
         /// </summary>
         public static IDictionary<string, string> Read(string xml)
         {
-            return Read(xml, PropertyPrefix, true);
+            Dictionary<string, string> notes = new Dictionary<string, string>(
+                Read(xml, PropertyPrefix, true), StringComparer.Ordinal);
+            foreach (KeyValuePair<string, string> field in Read(xml, FieldPrefix, true))
+            {
+                notes.Add(field.Key, field.Value);
+            }
+
+            return new ReadOnlyDictionary<string, string>(notes);
         }
 
         /// <summary>

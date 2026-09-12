@@ -387,7 +387,8 @@ namespace PmxEditorMcp.SignatureDump
                     : null;
             }
 
-            if (signature.MemberKind != MemberKind.Property)
+            if (signature.MemberKind != MemberKind.Property
+                && signature.MemberKind != MemberKind.Field)
             {
                 return null;
             }
@@ -399,8 +400,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// プロパティの行キーごとの日本語名。名前を起こした項目は正本から採り、ほかは記載から採る
-        /// ——正本に載るのは記載を引けない項目だけなので、載っていなければ記載が名前になる。
+        /// 値を持つメンバーの行キーごとの日本語名。名前を起こした項目は正本から採り、ほかは記載から
+        /// 採る——正本に載るのは記載を引けない項目だけなので、載っていなければ記載が名前になる。
         /// </summary>
         private static IDictionary<string, string> JapaneseNames(
             IList<PropertyNameRecord> names,
@@ -411,7 +412,8 @@ namespace PmxEditorMcp.SignatureDump
                 n => n.DeclaringType + "|" + n.MemberName, n => n.JapaneseName, StringComparer.Ordinal);
             Dictionary<string, string> japanese = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (SignatureRecord signature in signatures.Values
-                .Where(s => s.MemberKind == MemberKind.Property))
+                .Where(s => s.MemberKind == MemberKind.Property
+                    || s.MemberKind == MemberKind.Field))
             {
                 string name;
                 if (!authored.TryGetValue(

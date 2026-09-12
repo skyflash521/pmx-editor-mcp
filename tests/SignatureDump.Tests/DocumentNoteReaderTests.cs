@@ -68,7 +68,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void MembersThatAreNotPropertiesAreSkipped()
+        public void AFieldNoteIsReadUnderItsMemberName()
+        {
+            IDictionary<string, string> notes = DocumentNoteReader.Read(Document(
+                "<member name=\"P:N.IThing.Size\"><summary>大きさ</summary></member>"
+                + "<member name=\"F:N.IThing.Color\"><summary>色</summary></member>"));
+
+            Assert.Equal("大きさ", notes["N.IThing.Size"]);
+            Assert.Equal("色", notes["N.IThing.Color"]);
+        }
+
+        [Fact]
+        public void MembersThatDoNotHoldAValueAreSkipped()
         {
             IDictionary<string, string> notes = DocumentNoteReader.Read(Document(
                 "<member name=\"T:N.IThing\"><summary>もの</summary></member>"

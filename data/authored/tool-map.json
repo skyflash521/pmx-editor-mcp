@@ -6852,9 +6852,139 @@
       ]
     },
     {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.BackColor()",
+      "editKind": "viewSession",
+      "basis": "文字を書く絵の背景色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_text_controls",
+        "view_update_text_controls"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Clear()",
+      "editKind": "viewSession",
+      "basis": "文字を書く絵を背景色で塗り潰すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Dispose()",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるテキストコントロールへ直に作用して使えなくするので、直接変更型に当たる。"
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.DrawText(System.String,System.Drawing.Brush,System.Drawing.Font)",
+      "editKind": "viewSession",
+      "basis": "文字を書く絵の左上へ文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.DrawText(System.String,System.Drawing.Point,System.Drawing.Brush,System.Drawing.Font)",
+      "editKind": "viewSession",
+      "basis": "文字を書く絵の指した位置から文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.DrawText(System.String,System.Drawing.Rectangle,System.Drawing.Brush,System.Drawing.Font)",
+      "editKind": "viewSession",
+      "basis": "文字を書く絵の指した範囲へ文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Font()",
+      "editKind": "viewSession",
+      "basis": "文字の書体を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_text_controls",
+        "view_update_text_controls"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.ForeColor()",
+      "editKind": "viewSession",
+      "basis": "文字の色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_list_text_controls",
+        "view_update_text_controls"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Image()",
+      "editKind": "read",
+      "basis": "文字を書く絵を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_list_text_controls"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.MaterialIndex()",
+      "editKind": "read",
+      "basis": "貼り付け先の材質の位置を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_list_text_controls"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.UIModel()",
+      "editKind": "read",
+      "basis": "貼り付け先のUIモデルを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.UpdateTextImage()",
+      "editKind": "viewSession",
+      "basis": "書いた絵をUIモデルの材質へ貼り直すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper.CreateTextControl(PXCPlugin.UIModel.IPXUIModel,System.Int32,System.Int32,System.Int32,System.Drawing.Color,System.Drawing.Font)",
+      "editKind": "viewSession",
+      "basis": "UIモデルの材質へ貼る絵を作って差し替え、その絵へ文字を書く手立てを返すが、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "view_list_text_controls",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
     }
   ]
 }
