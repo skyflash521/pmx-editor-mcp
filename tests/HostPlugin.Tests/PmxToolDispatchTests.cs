@@ -413,7 +413,9 @@ namespace PmxEditorMcp.Tests
                 new UndoRecovery(new UndoSuppression(_log), session.UndoLock),
                 Calls(),
                 Aggregations(),
-                Elements());
+                Elements(),
+                new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
+                new StillModifierKeys());
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);

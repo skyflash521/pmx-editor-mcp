@@ -86,6 +86,8 @@ namespace PmxEditorMcp
 
         private readonly UndoRecovery _recovery;
 
+        private readonly IModifierKeys _modifiers;
+
         private ToolDispatch(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
@@ -93,7 +95,8 @@ namespace PmxEditorMcp
             ResidentConnection connection,
             PmxSession pmx,
             PmxSession bridged,
-            UndoRecovery recovery)
+            UndoRecovery recovery,
+            IModifierKeys modifiers)
         {
             _relay = relay;
             _receivers = receivers;
@@ -102,6 +105,7 @@ namespace PmxEditorMcp
             _pmx = pmx;
             _bridged = bridged;
             _recovery = recovery;
+            _modifiers = modifiers;
         }
 
         /// <summary>結び付きの表が持つツールをすべて登録する。</summary>
@@ -116,7 +120,9 @@ namespace PmxEditorMcp
             UndoRecovery recovery,
             IDictionary<string, IList<ToolCall>> calls,
             IDictionary<string, ToolFields> aggregations,
-            IDictionary<string, ToolElements> elements)
+            IDictionary<string, ToolElements> elements,
+            IDictionary<string, ToolPrecondition> preconditions,
+            IModifierKeys modifiers)
         {
             if (methods == null)
             {
@@ -173,19 +179,32 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(elements));
             }
 
-            ToolDispatch dispatch =
-                new ToolDispatch(relay, receivers, lists, connection, pmx, bridged, recovery);
+            if (preconditions == null)
+            {
+                throw new ArgumentNullException(nameof(preconditions));
+            }
+
+            if (modifiers == null)
+            {
+                throw new ArgumentNullException(nameof(modifiers));
+            }
+
+            ToolDispatch dispatch = new ToolDispatch(
+                relay, receivers, lists, connection, pmx, bridged, recovery, modifiers);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
                 IList<ToolCall> bound = call.Value;
+                ResolvedPrecondition precondition = Required(preconditions, calls, call.Key);
                 methods.Add(
                     call.Key,
-                    dispatch.Guarded(Edit(bound), context => dispatch.Invoke(context, bound)));
+                    dispatch.Guarded(
+                        Edit(bound), context => dispatch.Invoke(context, bound, precondition)));
             }
 
             foreach (KeyValuePair<string, ToolFields> aggregation in aggregations)
             {
                 ToolFields bound = aggregation.Value;
+                RequireNoPrecondition(preconditions, aggregation.Key);
                 methods.Add(
                     aggregation.Key,
                     dispatch.Guarded(
@@ -198,6 +217,7 @@ namespace PmxEditorMcp
             foreach (KeyValuePair<string, ToolElements> element in elements)
             {
                 ToolElements bound = element.Value;
+                RequireNoPrecondition(preconditions, element.Key);
                 methods.Add(
                     element.Key,
                     dispatch.Guarded(
@@ -206,6 +226,139 @@ namespace PmxEditorMcp
                             ? dispatch.Remove(context, bound)
                             : dispatch.Add(context, bound)));
             }
+        }
+
+        /// <summary>
+        /// 呼ぶ前に確かめることを満たしているか。UIスレッドの中で呼ぶこと——確かめるのと本体を
+        /// 呼ぶのが分かれていると、その間に人が選択やキーを変えられる。満たしていなければ偽で、
+        /// <paramref name="refused"/> に断りを持たせる。
+        /// </summary>
+        private bool TryMet(
+            McpMethodContext context, ResolvedPrecondition precondition, out Refusal refused)
+        {
+            refused = null;
+            if (precondition == null)
+            {
+                return true;
+            }
+
+            string message;
+            if (PreconditionGate.TryAccept(
+                precondition.Kind, Picked(context, precondition), _modifiers.AnyHeld(), out message))
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(ToolEnvelope.NotApplicable, message));
+
+            return false;
+        }
+
+        /// <summary>
+        /// いま選ばれているものの数。1つでも読めなければ null——読めなかったことと0件は別で、
+        /// 前者を後者として扱うと、選び直しても直らない断り方になる。
+        /// </summary>
+        private int? Picked(McpMethodContext context, ResolvedPrecondition precondition)
+        {
+            int picked = 0;
+            foreach (ToolCall reading in precondition.Reading)
+            {
+                PmxTarget target;
+                IList<Spot> column;
+                Refusal unreadable;
+                if (!TryTake(context, reading.Receiver, false, null, false, out target, out unreadable)
+                    || !TryColumn(
+                        context,
+                        reading.Access,
+                        reading.Receiver,
+                        target,
+                        Pointed.None,
+                        Accepted(reading.Access, null, false),
+                        out column,
+                        out unreadable))
+                {
+                    return null;
+                }
+
+                object value;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(
+                    reading.RowKey, column[0].Item, new object[0], out value, out refusal))
+                {
+                    return null;
+                }
+
+                System.Collections.ICollection values = value as System.Collections.ICollection;
+                if (values == null)
+                {
+                    return null;
+                }
+
+                picked += values.Count;
+            }
+
+            return picked;
+        }
+
+        /// <summary>
+        /// そのツールが呼ぶ前に確かめること。持たなければ null。材料の名前はここで呼び出しへ解く。
+        /// 解けない名前が在れば、確かめられないまま素通りさせずに組み立てで落とす。
+        /// </summary>
+        private static ResolvedPrecondition Required(
+            IDictionary<string, ToolPrecondition> preconditions,
+            IDictionary<string, IList<ToolCall>> calls,
+            string tool)
+        {
+            ToolPrecondition precondition;
+            if (!preconditions.TryGetValue(tool, out precondition))
+            {
+                return null;
+            }
+
+            List<ToolCall> reading = new List<ToolCall>();
+            foreach (string name in precondition.Reading)
+            {
+                IList<ToolCall> found;
+                if (!calls.TryGetValue(name, out found))
+                {
+                    throw new InvalidOperationException(
+                        "確かめる材料を得るツールが無い: " + name);
+                }
+
+                reading.AddRange(found);
+            }
+
+            return new ResolvedPrecondition(precondition.Kind, reading);
+        }
+
+        /// <summary>
+        /// 項目を集めるツールと要素を出し入れするツールは、呼ぶ前に確かめることを扱えない。持つ形が
+        /// 現れたら、扱えないまま素通りさせずに組み立てで落とす。
+        /// </summary>
+        private static void RequireNoPrecondition(
+            IDictionary<string, ToolPrecondition> preconditions, string tool)
+        {
+            if (preconditions.ContainsKey(tool))
+            {
+                throw new InvalidOperationException(
+                    "呼ぶ前に確かめることを扱えないツールが持っている: " + tool);
+            }
+        }
+
+        /// <summary>名前を呼び出しへ解いた後の、呼ぶ前に確かめること。</summary>
+        private sealed class ResolvedPrecondition
+        {
+            public ResolvedPrecondition(PreconditionKind kind, IList<ToolCall> reading)
+            {
+                Kind = kind;
+                Reading = reading;
+            }
+
+            /// <summary>確かめることの種別。</summary>
+            public PreconditionKind Kind { get; }
+
+            /// <summary>確かめる材料を得る読み取りの呼び出し。</summary>
+            public IList<ToolCall> Reading { get; }
         }
 
         /// <summary>呼び分けが揃って持つ編集の分類。揃っていなければ組み立てが誤っている。</summary>
@@ -361,7 +514,8 @@ namespace PmxEditorMcp
         /// SDKのメンバーへ中継する。同じ名前のオーバーロードは1つのツールへ集まるので、まず
         /// 渡された引数の名前でどれを呼ぶかを決める。
         /// </summary>
-        private object Invoke(McpMethodContext context, IList<ToolCall> calls)
+        private object Invoke(
+            McpMethodContext context, IList<ToolCall> calls, ResolvedPrecondition precondition)
         {
             ToolCall call;
             string code;
@@ -371,7 +525,7 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(code, message);
             }
 
-            return Invoke(context, call);
+            return Invoke(context, call, precondition);
         }
 
         /// <summary>
@@ -461,15 +615,26 @@ namespace PmxEditorMcp
         }
 
         /// <summary>SDKのメンバーを呼ぶ。要素を相手にする呼び出しは対象の全件へ及ぶ。</summary>
-        private object Invoke(McpMethodContext context, ToolCall call)
+        private object Invoke(
+            McpMethodContext context, ToolCall call, ResolvedPrecondition precondition)
         {
-            return call.Access.Kind == ToolAccessKind.Element
-                ? InvokeEach(context, call)
-                : InvokeOnce(context, call);
+            if (call.Access.Kind == ToolAccessKind.Element)
+            {
+                if (precondition != null)
+                {
+                    throw new InvalidOperationException(
+                        "呼ぶ前に確かめることを扱えない呼び出しが持っている: " + call.RowKey);
+                }
+
+                return InvokeEach(context, call);
+            }
+
+            return InvokeOnce(context, call, precondition);
         }
 
         /// <summary>SDKのメンバーを、受け手そのものへ1度呼ぶ。</summary>
-        private object InvokeOnce(McpMethodContext context, ToolCall call)
+        private object InvokeOnce(
+            McpMethodContext context, ToolCall call, ResolvedPrecondition precondition)
         {
             string code;
             string message;
@@ -510,6 +675,11 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
+                if (!TryMet(context, precondition, out refused))
+                {
+                    return;
+                }
+
                 if (!TryTake(context, call.Receiver, Targets(call), handle, false, out target, out refused)
                     || !TryColumn(
                         context,

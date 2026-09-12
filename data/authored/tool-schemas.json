@@ -14514,6 +14514,19 @@
       }
     },
     {
+      "tool": "view_get_selected_current_vertex",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "view_get_selected_face_indices",
       "branches": [
         {

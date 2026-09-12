@@ -131,6 +131,7 @@ namespace PmxEditorMcp.SignatureDump
 
             IDictionary<string, string> projections =
                 Projections(map, signatures, byType, toolNames);
+
             foreach (ToolMapRow row in map.Rows.OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
             {
                 SignatureRecord signature;
@@ -220,6 +221,9 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
+            SortedDictionary<string, string> preconditions =
+                Preconditions(map, signatures, toolNames, calls);
+
             return new ToolBindingSource(
                 Compose(
                     calls,
@@ -227,6 +231,7 @@ namespace PmxEditorMcp.SignatureDump
                     aggregated,
                     elements,
                     lists,
+                    preconditions,
                     Flows(assignments, signatures),
                     signatures,
                     assignments),
@@ -933,12 +938,59 @@ namespace PmxEditorMcp.SignatureDump
             return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
         }
 
+        /// <summary>
+        /// ツールの名前から、呼ぶ前に確かめることの組み立て文へ。確かめる材料は読み取りのツールで
+        /// 得るので、そのツールの名前を添える。材料のツールが1つも無ければ確かめようがないので、
+        /// <see cref="InvalidOperationException"/>。
+        /// </summary>
+        private static SortedDictionary<string, string> Preconditions(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> toolNames,
+            IDictionary<string, List<string>> calls)
+        {
+            SortedDictionary<string, string> preconditions =
+                new SortedDictionary<string, string>(StringComparer.Ordinal);
+            string[] picked = PreconditionRule.Picked(signatures.Values)
+                .Where(toolNames.ContainsKey)
+                .Select(k => toolNames[k])
+                .Where(calls.ContainsKey)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .ToArray();
+            foreach (ToolMapRow row in map.Rows)
+            {
+                SignatureRecord signature;
+                PreconditionKind kind;
+                string tool;
+                if (!signatures.TryGetValue(row.SignatureKey, out signature)
+                    || !PreconditionRule.TryClassify(signature, out kind)
+                    || !toolNames.TryGetValue(row.SignatureKey, out tool))
+                {
+                    continue;
+                }
+
+                if (picked.Length == 0)
+                {
+                    throw new InvalidOperationException(
+                        "選ばれているものを読むツールが無い: " + row.SignatureKey);
+                }
+
+                preconditions[tool] = "new ToolPrecondition(PreconditionKind." + kind
+                    + ", new string[] { "
+                    + string.Join(", ", picked.Select(Literal)) + " })";
+            }
+
+            return preconditions;
+        }
+
         private static string Compose(
             IDictionary<string, List<string>> calls,
             IDictionary<string, SortedDictionary<string, List<string>>> fields,
             IDictionary<string, string> aggregated,
             IDictionary<string, string> elements,
             IDictionary<string, string> lists,
+            IDictionary<string, string> preconditions,
             IList<string> flows,
             IDictionary<string, SignatureRecord> signatures,
             CommonAssignmentTable assignments)
@@ -968,6 +1020,23 @@ namespace PmxEditorMcp.SignatureDump
 
             text.Append("\n");
             text.Append("            return calls;\n");
+            text.Append("        }\n");
+            text.Append("\n");
+            text.Append("        /// <summary>呼ぶ前に確かめることを持つツール。</summary>\n");
+            text.Append(
+                "        internal static Dictionary<string, ToolPrecondition> Preconditions()\n");
+            text.Append("        {\n");
+            text.Append("            Dictionary<string, ToolPrecondition> preconditions =\n");
+            text.Append(
+                "                new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal);\n");
+            foreach (KeyValuePair<string, string> precondition in preconditions)
+            {
+                text.Append(Indent).Append("preconditions.Add(").Append(Literal(precondition.Key))
+                    .Append(", ").Append(precondition.Value).Append(");\n");
+            }
+
+            text.Append("\n");
+            text.Append("            return preconditions;\n");
             text.Append("        }\n");
             text.Append("\n");
             text.Append("        /// <summary>項目を集めるツール。</summary>\n");

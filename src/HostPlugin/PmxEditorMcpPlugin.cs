@@ -176,7 +176,9 @@ namespace PmxEditorMcp
                     recovery,
                     GeneratedTools.Calls(),
                     GeneratedTools.Aggregations(),
-                    GeneratedTools.Elements());
+                    GeneratedTools.Elements(),
+                    GeneratedTools.Preconditions(),
+                    new PressedModifierKeys());
                 HandleRelease.AddTo(methods);
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);

@@ -22,6 +22,8 @@ namespace PmxEditorMcp.Tests
 
         private const string CountKey = "Sdk.Form.Count()";
 
+        private const string PickedKey = "Sdk.Form.Picked()";
+
         private const string FlagKey = "Sdk.Form.Flag()";
 
         private const string LostKey = "Sdk.Form.Lost()";
@@ -190,6 +192,59 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AToolThatNeedsSomethingPickedRunsWhenSomethingIsPicked()
+        {
+            _target.Picked = new[] { 3 };
+            _target.Count = 7;
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Picking(new StillModifierKeys())(
+                    new McpMethodContext(Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.Equal(7, envelope[ToolEnvelope.ValueName]);
+        }
+
+        [Fact]
+        public void AToolThatNeedsSomethingPickedIsRefusedWhenNothingIsPicked()
+        {
+            _target.Picked = new int[0];
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Picking(new StillModifierKeys())(
+                    new McpMethodContext(Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Contains("選ばれていない", Message(envelope));
+        }
+
+        [Fact]
+        public void AToolThatNeedsSomethingPickedIsRefusedWhenWhatIsPickedCannotBeRead()
+        {
+            _target.Picked = null;
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Picking(new StillModifierKeys())(
+                    new McpMethodContext(Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Contains("数えられなかった", Message(envelope));
+        }
+
+        [Fact]
+        public void AToolThatNeedsSomethingPickedIsRefusedWhileAModifierIsHeld()
+        {
+            _target.Picked = new[] { 3 };
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Picking(new HeldModifierKeys())(
+                    new McpMethodContext(Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Contains("修飾キー", Message(envelope));
+        }
+
+        [Fact]
         public void TheGettingToolReturnsEveryReadableItem()
         {
             _target.Count = 3;
@@ -330,7 +385,9 @@ namespace PmxEditorMcp.Tests
                 new UndoRecovery(new UndoSuppression(_log), session.UndoLock),
                 Calls(),
                 Aggregations(),
-                new Dictionary<string, ToolElements>(StringComparer.Ordinal));
+                new Dictionary<string, ToolElements>(StringComparer.Ordinal),
+                new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
+                new StillModifierKeys());
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
@@ -351,6 +408,42 @@ namespace PmxEditorMcp.Tests
                 new PmxFlow(CountKey, CountKey, TargetType, new FlowSlot[0], new[] { FlowSlot.Pmx }),
                 typeof(object),
                 new UndoSuppression(_log));
+        }
+
+        /// <summary>選ばれているものが要るツールとして、題材の呼び出しを引く。</summary>
+        private McpMethod Picking(IModifierKeys modifiers)
+        {
+            McpMethodTable methods = new McpMethodTable();
+            SdkRelayTable relay = Relay();
+            IDictionary<string, SdkReceiver> receivers = Receivers();
+            ResidentConnection connection = Connection();
+            PmxSession session = Session(relay, receivers, connection);
+            ToolDispatch.AddTo(
+                methods,
+                relay,
+                receivers,
+                new Dictionary<string, SdkList>(StringComparer.Ordinal),
+                connection,
+                session,
+                Session(relay, receivers, connection),
+                new UndoRecovery(new UndoSuppression(_log), session.UndoLock),
+                Calls(),
+                Aggregations(),
+                new Dictionary<string, ToolElements>(StringComparer.Ordinal),
+                new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal)
+                {
+                    {
+                        "session_count",
+                        new ToolPrecondition(
+                            PreconditionKind.PickedObjects, new[] { "session_picked" })
+                    },
+                },
+                modifiers);
+
+            McpMethod method;
+            Assert.True(methods.TryGet("session_count", out method));
+
+            return method;
         }
 
         private HandleLedger Ledger()
@@ -397,6 +490,7 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { CountKey, (target, arguments) => ((Target)target).Count },
+                    { PickedKey, (target, arguments) => ((Target)target).Picked },
                     {
                         FlagKey,
                         (target, arguments) => arguments.Length == 0
@@ -502,6 +596,17 @@ namespace PmxEditorMcp.Tests
                         new[] { new ToolArgument("path", typeof(string)) },
                         new ToolArgument[0],
                         null)
+                },
+                {
+                    "session_picked",
+                    new ToolCall(
+                        PickedKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(int[]))
                 },
                 {
                     "session_count",
@@ -634,6 +739,8 @@ namespace PmxEditorMcp.Tests
         /// <summary>中継が読み書きする題材。</summary>
         private sealed class Target
         {
+            public int[] Picked { get; set; } = new int[0];
+
             public string Saved { get; set; }
 
             public bool Flag { get; set; }

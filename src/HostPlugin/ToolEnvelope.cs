@@ -37,7 +37,8 @@ namespace PmxEditorMcp
 
         private const string OkName = "ok";
 
-        private const string ValueName = "value";
+        /// <summary>値を載せる項目の名前。</summary>
+        public const string ValueName = "value";
 
         /// <summary>誤りを載せる項目の名前。</summary>
         public const string ErrorName = "error";
@@ -61,6 +62,19 @@ namespace PmxEditorMcp
         public static IList<string> ErrorCodes
         {
             get { return Codes; }
+        }
+
+        /// <summary>その包みが成功かどうか。</summary>
+        public static bool Succeeded(IDictionary<string, object> envelope)
+        {
+            if (envelope == null)
+            {
+                throw new ArgumentNullException(nameof(envelope));
+            }
+
+            object ok;
+
+            return envelope.TryGetValue(OkName, out ok) && Equals(ok, true);
         }
 
         /// <summary>成功の包み。値が無いツールは null を渡す。</summary>

@@ -4770,6 +4770,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.View.IPEVertexGuideConnector.GetSelectedCurrentVertex()",
+      "editKind": "viewSession",
+      "basis": "いま選ばれている対象を目印の一覧へ取り込むだけで、モデルのデータにもファイルにも波及しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.View.IPEVertexGuideConnector.GetVertexIndices()",
       "editKind": "read",
       "basis": "目印を付けている頂点のリストの中の位置を返すだけで、エディタの状態を動かさない。",

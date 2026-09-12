@@ -1,0 +1,45 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
+namespace PmxEditorMcp
+{
+    /// <summary>呼ぶ前に確かめることの種別。</summary>
+    public enum PreconditionKind
+    {
+        /// <summary>確かめることは無い。</summary>
+        None,
+
+        /// <summary>
+        /// いま選ばれている対象を相手にする。選ばれているものが無いとエディタが人の応答を待つ表示を
+        /// 出し、押されている修飾キーで相手の決まり方が変わる。
+        /// </summary>
+        PickedObjects,
+    }
+
+    /// <summary>
+    /// 呼ぶ前に確かめること。確かめる材料は、名前で挙げた読み取りのツールから得る。名前で持つのは、
+    /// 同じ呼び出しをここでもう一度組み立てないためで、名前から呼び出しへ解くのは登録のときとする
+    /// ——解いたものを使えば、確かめるのと本体を呼ぶのは同じUIスレッドの一区切りに収まる。
+    /// </summary>
+    public sealed class ToolPrecondition
+    {
+        public ToolPrecondition(PreconditionKind kind, IEnumerable<string> reading)
+        {
+            if (reading == null)
+            {
+                throw new ArgumentNullException(nameof(reading));
+            }
+
+            Kind = kind;
+            Reading = new ReadOnlyCollection<string>(reading.ToList());
+        }
+
+        /// <summary>確かめることの種別。</summary>
+        public PreconditionKind Kind { get; }
+
+        /// <summary>確かめる材料を得る読み取りのツールの名前。</summary>
+        public IList<string> Reading { get; }
+    }
+}

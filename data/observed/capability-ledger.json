@@ -1874,9 +1874,9 @@
       "id": "CAP-234",
       "category": "頂点ガイド",
       "target": "IPEVertexGuideConnector.GetSelectedCurrentVertex",
-      "status": "非対応",
-      "owner": "",
-      "remarks": "呼び出しが戻らず、UIスレッドが止まったままになるため"
+      "status": "提供",
+      "owner": "ビュー",
+      "remarks": ""
     },
     {
       "id": "CAP-235",
@@ -1892,7 +1892,7 @@
       "target": "IPEVertexGuideConnector.GetVertexIndices",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "一覧をエディタ側が満たしたときは取得が落ちる。入れる値が表示用の文字列で、取得が整数へ変換するため。プラグインの側から入れたものは読み戻せる"
     },
     {
       "id": "CAP-237",
