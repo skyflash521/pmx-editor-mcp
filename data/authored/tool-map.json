@@ -7792,6 +7792,74 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeDirectionOperator.Clear()",
+      "editKind": "directChange",
+      "basis": "持っている方向を初期化する。方向は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeDirectionOperator.Get()",
+      "editKind": "read",
+      "basis": "いまの方向を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_d_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeDirectionOperator.Set(SlimDX.Quaternion,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "いまの方向を、渡した回転で置くか、足すか、掛ける。方向は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeElement.Enable()",
       "editKind": "directChange",
       "basis": "動かす相手にするかどうかを持つ。要素は長寿命の持ち物なので、それへ直に作用する。",
@@ -8404,6 +8472,333 @@
       "signatureKey": "PEPlugin.Vme.IPEVmePath.SetPoint(SlimDX.Vector3[])",
       "editKind": "directChange",
       "basis": "通る点を並びごと置き換える。空間パスは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.Clear()",
+      "editKind": "directChange",
+      "basis": "持っている位置を初期化する。位置は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.Get()",
+      "editKind": "read",
+      "basis": "いまの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_p_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.GetIP()",
+      "editKind": "read",
+      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_p_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.Set(SlimDX.Vector3,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "いまの位置を、渡した位置で置くか、足すか、掛ける。置いた分は移動量として持つ。位置は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.Clear()",
+      "editKind": "directChange",
+      "basis": "持っている量をすべて初期化する。回転量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.ClearA()",
+      "editKind": "directChange",
+      "basis": "回転の加速度を単位の量で初期化する。回転量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.ClearV()",
+      "editKind": "directChange",
+      "basis": "回転の速度を単位の量で初期化する。回転量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.Get()",
+      "editKind": "read",
+      "basis": "いまの回転量を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_r_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.GetA()",
+      "editKind": "read",
+      "basis": "回転の加速度を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_r_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.GetV()",
+      "editKind": "read",
+      "basis": "回転の速度を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_r_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.Set(SlimDX.Quaternion,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "いまの回転量を、渡した回転で置くか、足すか、掛ける。回転量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.SetA(SlimDX.Quaternion,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "回転の加速度を、渡した回転で置くか、足すか、掛ける。回転量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.SetV(SlimDX.Quaternion,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "回転の速度を、渡した回転で置くか、足すか、掛ける。回転量は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueOperator.Update()",
+      "editKind": "directChange",
+      "basis": "回転の速度と加速度から、いまの回転量を進める。回転量は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
