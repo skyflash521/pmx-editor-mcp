@@ -8183,6 +8183,223 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.Clear()",
+      "editKind": "directChange",
+      "basis": "持っている量をすべて初期化する。単値は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.ClearA()",
+      "editKind": "directChange",
+      "basis": "加速度を初期化する。単値は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.ClearV()",
+      "editKind": "directChange",
+      "basis": "速度を初期化する。単値は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.Get()",
+      "editKind": "read",
+      "basis": "いまの量を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "element",
+              "tool": "motion_add_morph_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_vs_vme_single_value_element"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_v_vme_single_value_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.GetA()",
+      "editKind": "read",
+      "basis": "いまの加速度を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "element",
+              "tool": "motion_add_morph_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_vs_vme_single_value_element"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_v_vme_single_value_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.GetV()",
+      "editKind": "read",
+      "basis": "いまの速度を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "element",
+              "tool": "motion_add_morph_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_vs_vme_single_value_element"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_v_vme_single_value_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.Set(System.Single,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "いまの量を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.SetA(System.Single,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "加速度を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.SetV(System.Single,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "速度を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.Update()",
+      "editKind": "directChange",
+      "basis": "速度と加速度から、いまの量を進める。単値は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueState.V()",
       "editKind": "read",
       "basis": "いまの単値を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
