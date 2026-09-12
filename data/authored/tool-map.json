@@ -9088,6 +9088,61 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeScalingOperator.GetGS()",
+      "editKind": "read",
+      "basis": "全体にかかる大きさを返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "bone",
+              "tool": "motion_add_bone_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_bs_vme_bone"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "value",
+              "tool": "motion_s_vme_bone_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeScalingOperator.SetGS(SlimDX.Vector3,PEPlugin.Vme.OpType)",
+      "editKind": "directChange",
+      "basis": "全体にかかる大きさを、渡したベクトルで置くか、足すか、掛ける。大きさは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToVS(PEPlugin.Vme.IPEVmeEventState)",
       "editKind": "read",
       "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
@@ -9146,6 +9201,123 @@
       "postcondition": [
         {
           "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.Set(System.Int32,System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる値を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.Set(System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの値を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetA(System.Int32,System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる加速度を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetA(System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの加速度を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetV(System.Int32,System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる速度を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetV(System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの速度を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetZero(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの値を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetZeroA(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの加速度を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetZeroV(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの速度を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
           "effectKey": "",
           "kind": "callLogOnly",
           "comparison": "exists"
@@ -9389,6 +9561,175 @@
       "postcondition": [
         {
           "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.Set(System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマのベクトル量を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.Set(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたるベクトル量を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetA(System.Int32,SlimDX.Matrix,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの加速度を、渡した行列で置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetA(System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの加速度を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetA(System.Int32,System.Int32,SlimDX.Matrix,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる加速度を、渡した行列で置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetA(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる加速度を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetV(System.Int32,SlimDX.Matrix,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの速度を、渡した行列で置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetV(System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの速度を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetV(System.Int32,System.Int32,SlimDX.Matrix,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる速度を、渡した行列で置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetV(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる速度を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetZero(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマのベクトル量を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetZeroA(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの加速度を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetZeroV(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの速度を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
           "effectKey": "",
           "kind": "callLogOnly",
           "comparison": "exists"
