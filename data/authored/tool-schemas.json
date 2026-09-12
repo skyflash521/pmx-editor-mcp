@@ -14198,6 +14198,543 @@
           }
         ]
       }
+    },
+    {
+      "tool": "view_bootup_vmd_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_get_client_image",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "view_get_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "bodyVisible",
+            "element": {}
+          },
+          {
+            "name": "cameraPosition"
+          },
+          {
+            "name": "cameraRotateCenter"
+          },
+          {
+            "name": "cameraTarget"
+          },
+          {
+            "name": "cameraUpVector"
+          },
+          {
+            "name": "enableCameraVmdView"
+          },
+          {
+            "name": "enableHandleEdit"
+          },
+          {
+            "name": "isShaderMode"
+          },
+          {
+            "name": "isVmdViewBootup"
+          },
+          {
+            "name": "selectedBodyIndex"
+          },
+          {
+            "name": "selectedJointIndex"
+          },
+          {
+            "name": "showBoneVmdView"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_get_selected_body_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_bone_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_face_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_joint_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_selected_vertex_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_vertex_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_view_axis",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_play_vmd_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_camera_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "target",
+              "required": true
+            },
+            {
+              "name": "position",
+              "required": true
+            },
+            {
+              "name": "upVector",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_body_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_bone_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_face_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_joint_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_selected_vertex_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_vertex_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_stop_vmd_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_model",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_model_body",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_model_bone",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_model_joint",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_model_material",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "index",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_model_size",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": [
+            {
+              "name": "scale",
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "scale",
+              "required": true
+            },
+            {
+              "name": "edge",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_model_vertex",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_model_weight",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "cameraPosition"
+            },
+            {
+              "name": "cameraRotateCenter"
+            },
+            {
+              "name": "cameraTarget"
+            },
+            {
+              "name": "cameraUpVector"
+            },
+            {
+              "name": "enableCameraVmdView"
+            },
+            {
+              "name": "enableHandleEdit"
+            },
+            {
+              "name": "selectedBodyIndex"
+            },
+            {
+              "name": "selectedJointIndex"
+            },
+            {
+              "name": "showBoneVmdView"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "cameraPosition",
+                "cameraRotateCenter",
+                "cameraTarget",
+                "cameraUpVector",
+                "enableCameraVmdView",
+                "enableHandleEdit",
+                "selectedBodyIndex",
+                "selectedJointIndex",
+                "showBoneVmdView"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_update_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
     }
   ]
 }

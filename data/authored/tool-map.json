@@ -3594,6 +3594,515 @@
       "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。"
     },
     {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.BodyVisible()",
+      "editKind": "read",
+      "basis": "剛体ひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.BootupVmdView()",
+      "editKind": "viewSession",
+      "basis": "いま編集しているモデルでモーションの確認画面を立ち上げるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.CameraPosition()",
+      "editKind": "viewSession",
+      "basis": "視点の位置という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.CameraRotateCenter()",
+      "editKind": "viewSession",
+      "basis": "視点を回す中心という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.CameraTarget()",
+      "editKind": "viewSession",
+      "basis": "視点が向く先という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.CameraUpVector()",
+      "editKind": "viewSession",
+      "basis": "視点の上の向きという画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.EnableCameraVmdView()",
+      "editKind": "viewSession",
+      "basis": "モーションの確認画面でカメラと照明を効かせるかという画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.EnableHandleEdit()",
+      "editKind": "viewSession",
+      "basis": "ハンドルでの編集を効かせるかという画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetClientImage()",
+      "editKind": "read",
+      "basis": "表示している画面を写した絵を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetSelectedBodyIndices()",
+      "editKind": "read",
+      "basis": "選んでいる剛体のリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetSelectedBoneIndices()",
+      "editKind": "read",
+      "basis": "選んでいるボーンのリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetSelectedFaceIndices()",
+      "editKind": "read",
+      "basis": "選んでいる面のリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetSelectedJointIndices()",
+      "editKind": "read",
+      "basis": "選んでいるジョイントのリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetSelectedVertexIndices()",
+      "editKind": "read",
+      "basis": "選んでいる頂点のリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetVertexIndices()",
+      "editKind": "read",
+      "basis": "表示している頂点のリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetViewAxis()",
+      "editKind": "read",
+      "basis": "画面が向いている3つの軸を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.IsShaderMode()",
+      "editKind": "read",
+      "basis": "シェーダを使える環境かどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.IsVmdViewBootup()",
+      "editKind": "read",
+      "basis": "モーションの確認画面が立ち上がっているかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.PlayVmdView()",
+      "editKind": "viewSession",
+      "basis": "モーションの確認画面の再生を始めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SelectedBodyIndex()",
+      "editKind": "viewSession",
+      "basis": "いま選んでいる剛体の位置という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SelectedJointIndex()",
+      "editKind": "viewSession",
+      "basis": "いま選んでいるジョイントの位置という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetCameraView(PEPlugin.Pmd.IPEVector3,PEPlugin.Pmd.IPEVector3,PEPlugin.Pmd.IPEVector3)",
+      "editKind": "viewSession",
+      "basis": "視点の向く先と位置と上の向きをまとめて決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedBodyIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "選ぶ剛体を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedBoneIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "選ぶボーンを画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedFaceIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "選ぶ面を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedJointIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "選ぶジョイントを画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedVertexIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "選ぶ頂点を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetVertexIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "表示する頂点を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.ShowBoneVmdView()",
+      "editKind": "viewSession",
+      "basis": "モーションの確認画面でボーンを見せるかという画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_pmd_view_connector",
+        "view_update_pmd_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.StopVmdView()",
+      "editKind": "viewSession",
+      "basis": "モーションの確認画面の再生を止めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel()",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルの見え方を作り直すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModelSize(System.Single)",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルの大きさを作り直すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModelSize(System.Single,System.Boolean)",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルの大きさを、縁の太さの倍率も指して作り直すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Body()",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルの剛体の見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Bone()",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルのボーンの見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Joint()",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルのジョイントの見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Material(System.Int32)",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルの材質ひとつの見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Vertex()",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルの頂点の見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Weight()",
+      "editKind": "viewSession",
+      "basis": "画面が持つモデルのウェイトの見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateView()",
+      "editKind": "viewSession",
+      "basis": "画面を描き直すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.View.IPEVertexEditConnector.CenterOrigin()",
       "editKind": "viewSession",
       "basis": "変形の中心に重心を使うかどうかという頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
