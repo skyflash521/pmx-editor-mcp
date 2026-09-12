@@ -7027,6 +7027,285 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Bone(System.Int32,System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマのボーンの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.BoneCount()",
+      "editKind": "read",
+      "basis": "結果が持つボーンの本数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Camera(System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマのカメラの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.EnableBone()",
+      "editKind": "read",
+      "basis": "ボーンの結果を持つかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.EnableCamera()",
+      "editKind": "read",
+      "basis": "カメラの結果を持つかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.EnableLight()",
+      "editKind": "read",
+      "basis": "照明の結果を持つかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.EnableMorph()",
+      "editKind": "read",
+      "basis": "モーフの結果を持つかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.FrameCount()",
+      "editKind": "read",
+      "basis": "結果が持つコマの数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetBoneNames()",
+      "editKind": "read",
+      "basis": "ボーンの名前を並べて返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "result",
+              "tool": "motion_run_vme"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetBoneResult(System.Int32,System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマのボーンの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetCameraResult(System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマのカメラの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetLightResult(System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマの照明の結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetMorphNames()",
+      "editKind": "read",
+      "basis": "モーフの名前を並べて返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vme",
+              "tool": "motion_create_vme"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "result",
+              "tool": "motion_run_vme"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetMorphResult(System.Int32,System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマのモーフの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Light(System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマの照明の結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Morph(System.Int32,System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマのモーフの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.MorphCount()",
+      "editKind": "read",
+      "basis": "結果が持つモーフの数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.StartFrame()",
+      "editKind": "read",
+      "basis": "結果が始まるコマを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToCameraVmd(System.Boolean,System.Boolean)",
+      "editKind": "directChange",
+      "basis": "カメラの結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmds",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToLightVmd(System.Boolean)",
+      "editKind": "directChange",
+      "basis": "照明の結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmds",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToMotionVmd(System.Boolean)",
+      "editKind": "directChange",
+      "basis": "ボーンとモーフの結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmds",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.PEVmePreviewOption.BeginFrame()",
       "editKind": "viewSession",
       "basis": "再生を始めるコマを持つ。表示だけを動かす指定なので、画面の状態に当たる。",
