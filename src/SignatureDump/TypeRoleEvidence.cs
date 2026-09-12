@@ -369,7 +369,8 @@ namespace PmxEditorMcp.SignatureDump
             return members;
         }
 
-        private static IDictionary<string, IList<string>> BaseTypes(InventoryRecord inventory)
+        /// <summary>型ごとの継承元。実装するインターフェイスと基底クラスの両方が入る。</summary>
+        public static IDictionary<string, IList<string>> BaseTypes(InventoryRecord inventory)
         {
             Dictionary<string, IList<string>> bases =
                 new Dictionary<string, IList<string>>(StringComparer.Ordinal);

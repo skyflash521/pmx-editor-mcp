@@ -66,9 +66,71 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("Connector.Sub", path.Steps);
         }
 
+        [Fact]
+        public void ATypeWithNoPathOfItsOwnGoesThroughTheOneTypeThatCanBeReached()
+        {
+            ReceiverPath path = Through("Sdk.Absent", View)["Sdk.Absent"];
+
+            Assert.Equal(RunArgs, path.Root);
+            Assert.Equal("Host.View", path.Steps);
+        }
+
+        [Fact]
+        public void ACandidateThatNoRootReachesLeavesTheTypeWithoutAPath()
+        {
+            Assert.Empty(Through("Sdk.Absent", "Sdk.Elsewhere"));
+        }
+
+        [Fact]
+        public void TwoCandidatesThatCanBothBeReachedStop()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Through("Sdk.Absent", View, Sub));
+
+            Assert.Contains("Sdk.Absent", error.Message);
+        }
+
+        [Fact]
+        public void ACandidateThatCannotBeReachedDoesNotMakeTheChoiceAmbiguous()
+        {
+            ReceiverPath path = Through("Sdk.Absent", View, "Sdk.Elsewhere")["Sdk.Absent"];
+
+            Assert.Equal("Host.View", path.Steps);
+        }
+
+        [Fact]
+        public void ACandidateIsNotAnsweredUnlessItWasAsked()
+        {
+            Assert.Equal(new[] { "Sdk.Absent" }, Through("Sdk.Absent", View).Keys);
+        }
+
+        [Fact]
+        public void ATypeThatHasItsOwnPathIgnoresTheCandidates()
+        {
+            ReceiverPath path = Through(Sub, View)[Sub];
+
+            Assert.Equal(CRunArgs, path.Root);
+            Assert.Equal("Connector.Sub", path.Steps);
+        }
+
         private static IDictionary<string, ReceiverPath> Resolve(params string[] types)
         {
             return ReceiverEvidence.Resolve(Inventory(), types);
+        }
+
+        /// <summary>
+        /// <paramref name="type"/> の受け手を <paramref name="candidates"/> のどれかを通して求める。
+        /// </summary>
+        private static IDictionary<string, ReceiverPath> Through(
+            string type, params string[] candidates)
+        {
+            return ReceiverEvidence.Resolve(
+                Inventory(),
+                new[] { type },
+                new Dictionary<string, ISet<string>>(StringComparer.Ordinal)
+                {
+                    { type, new HashSet<string>(candidates, StringComparer.Ordinal) },
+                });
         }
 
         private static InventoryRecord Inventory()

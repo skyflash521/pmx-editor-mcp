@@ -750,6 +750,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         + " <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.RelaySourceCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <能力台帳のパス>"
+                    + " <書き出し先パス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ToolBindingsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス> <書き出し先パス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ToolDefinitionsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
+                    + " <IPC仕様書のパス> <アーキテクチャ仕様書のパス> <型役割表の正本のパス>"
+                    + " <日本語名の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <書き出し先パス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.E2eCasesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
+                    + " <IPC仕様書のパス> <アーキテクチャ仕様書のパス> <型役割表の正本のパス>"
+                    + " <日本語名の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <書き出し先パス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.ReflectionFreeCommand
+                    + " <PMXエディタ導入ディレクトリ> <検査するアセンブリのパス>",
+                usage,
+                StringComparison.Ordinal);
         }
 
         /// <summary>値は呼び出し元が見分けに使うものそのもの。重ねると、直し方の違う失敗が同じに見える。</summary>

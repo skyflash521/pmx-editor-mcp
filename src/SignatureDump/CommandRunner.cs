@@ -259,7 +259,8 @@ namespace PmxEditorMcp.SignatureDump
                         + " <能力対応表の正本のパス> <スキーマ正本のパス>");
             error.WriteLine(
                 RelaySourceCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <書き出し先パス>");
+                    + " <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <能力台帳のパス>"
+                    + " <書き出し先パス>");
             error.WriteLine(
                 ToolBindingsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"

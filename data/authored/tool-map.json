@@ -3594,6 +3594,37 @@
       "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。"
     },
     {
+      "signatureKey": "PEPlugin.View.IPEBaseWindowConnector.Focus()",
+      "editKind": "viewSession",
+      "basis": "窓へ焦点を移すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEBaseWindowConnector.Location()",
+      "editKind": "viewSession",
+      "basis": "窓の左上の位置という窓の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_base_window_connector",
+        "view_update_base_window_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEBaseWindowConnector.Visible()",
+      "editKind": "viewSession",
+      "basis": "窓を見せるかどうかという窓の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_base_window_connector",
+        "view_update_base_window_connector"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.BodyVisible()",
       "editKind": "read",
       "basis": "剛体ひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
@@ -4282,6 +4313,55 @@
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedMaterialIndices(System.Int32[])",
       "editKind": "viewSession",
       "basis": "一覧で印を付ける材質を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPESizableWindowConnector.Size()",
+      "editKind": "viewSession",
+      "basis": "窓の大きさという窓の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_sizable_window_connector",
+        "view_update_sizable_window_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPESizableWindowConnector.WindowState()",
+      "editKind": "viewSession",
+      "basis": "窓の開き方という窓の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_sizable_window_connector",
+        "view_update_sizable_window_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPESubViewConnector.GetClientImage()",
+      "editKind": "read",
+      "basis": "サブ画面が表示している絵を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPESubViewConnector.UpdateView()",
+      "editKind": "viewSession",
+      "basis": "サブ画面を描き直すだけで、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -5204,6 +5284,68 @@
       "embeddedIn": [
         "model_get_weight_edit_connector",
         "model_update_weight_edit_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.GetBodyVisibles()",
+      "editKind": "read",
+      "basis": "剛体ひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.GetJointVisibles()",
+      "editKind": "read",
+      "basis": "ジョイントひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.SetBodyVisibles(System.Boolean[])",
+      "editKind": "viewSession",
+      "basis": "剛体ひとつずつの表示を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.SetJointVisibles(System.Boolean[])",
+      "editKind": "viewSession",
+      "basis": "ジョイントひとつずつの表示を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {

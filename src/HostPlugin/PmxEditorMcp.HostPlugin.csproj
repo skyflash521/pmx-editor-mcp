@@ -60,7 +60,7 @@
   <Target Name="GenerateRelaySource"
           BeforeTargets="BeforeCompile"
           DependsOnTargets="EnsurePmxEditorDir;BuildRelayGenerator">
-    <Exec Command="&quot;$(RelayGeneratorPath)&quot; relay-source &quot;$(PmxEditorDir)&quot; &quot;$(ToolMapPath)&quot; &quot;$(RelaySourcePath)&quot;" />
+    <Exec Command="&quot;$(RelayGeneratorPath)&quot; relay-source &quot;$(PmxEditorDir)&quot; &quot;$(ToolMapPath)&quot; &quot;$(LedgerPath)&quot; &quot;$(RelaySourcePath)&quot;" />
     <ItemGroup>
       <Compile Include="$(RelaySourcePath)" Exclude="@(Compile)" />
     </ItemGroup>

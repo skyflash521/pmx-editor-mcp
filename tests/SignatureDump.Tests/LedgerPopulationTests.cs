@@ -44,6 +44,37 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheTypeWrittenAtTheHeadOfTheNameIsKeptForEverySignatureTheRowCovers()
+        {
+            LedgerPopulation population = Resolve(
+                Inventory(
+                    Types(
+                        Type("N.IBase", TypeKind.Interface),
+                        Type("N.IDerived", TypeKind.Interface, "N.IBase")),
+                    Signatures(
+                        Signature("N.IBase.Visible()", "N.IBase", "Visible"),
+                        Signature("N.IDerived.Update()", "N.IDerived", "Update"))),
+                Row("CAP-001", "IDerived.Visible"));
+
+            Assert.Equal(new[] { "N.IDerived" }, population.WrittenOwners["N.IBase.Visible()"]);
+            Assert.False(population.WrittenOwners.ContainsKey("N.IDerived.Update()"));
+        }
+
+        [Fact]
+        public void TheTypeAWholeTypeRowNamesIsNotKeptForTheSignaturesItCovers()
+        {
+            LedgerPopulation population = Resolve(
+                Inventory(
+                    Types(
+                        Type("N.IBase", TypeKind.Interface),
+                        Type("N.IDerived", TypeKind.Interface, "N.IBase")),
+                    Signatures(Signature("N.IBase.Visible()", "N.IBase", "Visible"))),
+                Row("CAP-001", "IDerived"));
+
+            Assert.Empty(population.WrittenOwners);
+        }
+
+        [Fact]
         public void BaseTypesAreIncludedInTheTypeSetForMemberNamedRowsToo()
         {
             LedgerPopulation population = Resolve(

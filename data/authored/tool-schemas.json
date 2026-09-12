@@ -14213,7 +14213,59 @@
       }
     },
     {
-      "tool": "view_get_body_visibles",
+      "tool": "view_focus",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "view_get_base_window_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "location"
+          },
+          {
+            "name": "visible"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_get_body_visibles_body_joint_visibility",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_body_visibles_view_control",
       "branches": [
         {
           "branch": "only",
@@ -14261,7 +14313,7 @@
       }
     },
     {
-      "tool": "view_get_client_image",
+      "tool": "view_get_client_image_pmd_view_connector",
       "branches": [
         {
           "branch": "only",
@@ -14271,7 +14323,29 @@
       "output": {}
     },
     {
-      "tool": "view_get_joint_visibles",
+      "tool": "view_get_client_image_sub_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "view_get_joint_visibles_body_joint_visibility",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "view_get_joint_visibles_view_control",
       "branches": [
         {
           "branch": "only",
@@ -14473,6 +14547,36 @@
       ],
       "output": {
         "element": {}
+      }
+    },
+    {
+      "tool": "view_get_sizable_window_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "size"
+          },
+          {
+            "name": "windowState"
+          }
+        ]
       }
     },
     {
@@ -14822,7 +14926,26 @@
       }
     },
     {
-      "tool": "view_set_body_visibles",
+      "tool": "view_set_body_visibles_body_joint_visibility",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "v",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_body_visibles_view_control",
       "branches": [
         {
           "branch": "only",
@@ -14950,7 +15073,26 @@
       }
     },
     {
-      "tool": "view_set_joint_visibles",
+      "tool": "view_set_joint_visibles_body_joint_visibility",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "v",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_joint_visibles_view_control",
       "branches": [
         {
           "branch": "only",
@@ -15138,6 +15280,41 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_base_window_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "location"
+            },
+            {
+              "name": "visible"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "location",
+                "visible"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -15390,6 +15567,41 @@
       }
     },
     {
+      "tool": "view_update_sizable_window_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "size"
+            },
+            {
+              "name": "windowState"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "size",
+                "windowState"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_update_view_control",
       "branches": [
         {
@@ -15602,6 +15814,19 @@
             "shape": "number"
           }
         ]
+      }
+    },
+    {
+      "tool": "view_update_view_sub_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
       }
     },
     {

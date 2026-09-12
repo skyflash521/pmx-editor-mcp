@@ -33,12 +33,14 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> types,
             ISet<string> signatures,
             IDictionary<string, ISet<string>> owners,
-            IDictionary<string, ISet<string>> namedTypes)
+            IDictionary<string, ISet<string>> namedTypes,
+            IDictionary<string, ISet<string>> writtenOwners)
         {
             Types = types;
             Signatures = signatures;
             Owners = owners;
             NamedTypes = namedTypes;
+            WrittenOwners = writtenOwners;
         }
 
         /// <summary>台帳のどれかの行が指す公開型の名前。</summary>
@@ -55,6 +57,13 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>行キーから、それを指す行の能力ID。1つのシグネチャが複数の行に属してよい。</summary>
         public IDictionary<string, ISet<string>> Owners { get; }
+
+        /// <summary>
+        /// 行キーから、そのメンバーを名前で指す行が名前の頭に書いた型。継承したメンバーを指す行では、
+        /// 宣言する型ではなく書かれた型が入る。型の名前だけを書く行は、その型のどのメンバーを指したかを
+        /// 述べていないので入らない。まとめて指す書き方の行も型の名前を書かないので入らない。
+        /// </summary>
+        public IDictionary<string, ISet<string>> WrittenOwners { get; }
 
         /// <summary>
         /// 指す先を決められない行があれば <see cref="InvalidOperationException"/>。解決の結果が
@@ -78,6 +87,8 @@ namespace PmxEditorMcp.SignatureDump
                 new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
             Dictionary<string, ISet<string>> named =
                 new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
+            Dictionary<string, ISet<string>> written =
+                new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
             HashSet<string> patternRows = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (CapabilityRecord row in ledger)
@@ -91,7 +102,7 @@ namespace PmxEditorMcp.SignatureDump
 
                 foreach (string name in row.TargetNames)
                 {
-                    ResolveName(row, name, index, types, owners, named);
+                    ResolveName(row, name, index, types, owners, named, written);
                 }
             }
 
@@ -101,7 +112,8 @@ namespace PmxEditorMcp.SignatureDump
                 types,
                 new HashSet<string>(owners.Keys, StringComparer.Ordinal),
                 new ReadOnlyDictionary<string, ISet<string>>(owners),
-                new ReadOnlyDictionary<string, ISet<string>>(named));
+                new ReadOnlyDictionary<string, ISet<string>>(named),
+                new ReadOnlyDictionary<string, ISet<string>>(written));
         }
 
         private static void ResolvePattern(
@@ -162,7 +174,8 @@ namespace PmxEditorMcp.SignatureDump
             Index index,
             ISet<string> types,
             IDictionary<string, ISet<string>> owners,
-            IDictionary<string, ISet<string>> named)
+            IDictionary<string, ISet<string>> named,
+            IDictionary<string, ISet<string>> written)
         {
             string type = index.FindType(name, row);
             if (type != null)
@@ -214,6 +227,7 @@ namespace PmxEditorMcp.SignatureDump
                     if (string.Equals(signature.MemberName, member, StringComparison.Ordinal))
                     {
                         Own(owners, signature.Key, row.Id);
+                        Own(written, signature.Key, owner);
                         found = true;
                     }
                 }
