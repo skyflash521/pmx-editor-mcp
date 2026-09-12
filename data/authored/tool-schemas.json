@@ -1481,17 +1481,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -1574,9 +1574,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -1761,9 +1761,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -2167,9 +2167,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -2355,9 +2355,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -2665,17 +2665,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -2868,17 +2868,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -2956,9 +2956,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -3122,9 +3122,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -3300,9 +3300,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -3613,17 +3613,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -3701,9 +3701,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -3917,9 +3917,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -4126,17 +4126,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -4214,9 +4214,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -4385,9 +4385,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -4604,9 +4604,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -4895,17 +4895,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -4983,9 +4983,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -5146,9 +5146,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -5456,9 +5456,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -5523,9 +5523,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -5621,17 +5621,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -5684,9 +5684,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -5782,17 +5782,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -5857,9 +5857,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -5924,9 +5924,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6022,17 +6022,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6085,9 +6085,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6152,9 +6152,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6250,17 +6250,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6313,9 +6313,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6380,9 +6380,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6447,9 +6447,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6545,17 +6545,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6608,9 +6608,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6675,9 +6675,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             }
@@ -6839,9 +6839,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -6990,9 +6990,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -7337,9 +7337,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -7738,9 +7738,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -8130,17 +8130,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -8336,17 +8336,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -8437,9 +8437,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -8668,9 +8668,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -9043,9 +9043,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -9500,17 +9500,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -9675,9 +9675,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -9926,17 +9926,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -10029,9 +10029,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -10216,17 +10216,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -10327,9 +10327,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -10514,17 +10514,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -10617,9 +10617,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -10812,17 +10812,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -10931,9 +10931,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -11126,17 +11126,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -11229,9 +11229,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -11406,9 +11406,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -11581,9 +11581,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -12091,9 +12091,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -12563,17 +12563,17 @@
           "choices": [
             {
               "names": [
+                "parentAll",
                 "parentIndices",
-                "parentRange",
-                "parentAll"
+                "parentRange"
               ],
               "required": true
             },
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -12656,9 +12656,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -13014,9 +13014,9 @@
           "choices": [
             {
               "names": [
+                "all",
                 "indices",
-                "range",
-                "all"
+                "range"
               ],
               "required": true
             },
@@ -13457,6 +13457,42 @@
       }
     },
     {
+      "tool": "session_get_body_group_colors",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "session_get_body_mode_colors",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "session_get_bone_kind_colors",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
       "tool": "session_get_c_plugin_info_system_connector",
       "branches": [
         {
@@ -13569,6 +13605,18 @@
       }
     },
     {
+      "tool": "session_get_expression_category_colors",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
       "tool": "session_get_form_connector",
       "branches": [
         {
@@ -13590,10 +13638,58 @@
         "origin": "hostOutput",
         "members": [
           {
+            "name": "bodyItemsCount"
+          },
+          {
+            "name": "boneItemsCount"
+          },
+          {
             "name": "enableFacePage"
           },
           {
             "name": "enableTexUpdateWatch"
+          },
+          {
+            "name": "expressionItemsCount"
+          },
+          {
+            "name": "expressionOffsetItemsCount"
+          },
+          {
+            "name": "faceItemsCount"
+          },
+          {
+            "name": "frameBoneBoneItemsCount"
+          },
+          {
+            "name": "frameBoneItemsCount"
+          },
+          {
+            "name": "frameExpressionItemsCount"
+          },
+          {
+            "name": "ikItemsCount"
+          },
+          {
+            "name": "ikLinkItemsCount"
+          },
+          {
+            "name": "jointItemsCount"
+          },
+          {
+            "name": "location"
+          },
+          {
+            "name": "materialItemsCount"
+          },
+          {
+            "name": "morphItemsCount"
+          },
+          {
+            "name": "nodeElementItemsCount"
+          },
+          {
+            "name": "nodeItemsCount"
           },
           {
             "name": "pmxFormActivate"
@@ -13602,7 +13698,55 @@
             "name": "redoCount"
           },
           {
+            "name": "selectedBodyIndex"
+          },
+          {
+            "name": "selectedBoneIndex"
+          },
+          {
+            "name": "selectedExpressionIndex"
+          },
+          {
+            "name": "selectedExpressionOffsetIndex"
+          },
+          {
+            "name": "selectedFaceIndex"
+          },
+          {
+            "name": "selectedFrameBoneBoneIndex"
+          },
+          {
+            "name": "selectedFrameBoneIndex"
+          },
+          {
+            "name": "selectedFrameExpressionIndex"
+          },
+          {
+            "name": "selectedIkIndex"
+          },
+          {
+            "name": "selectedIkLinkIndex"
+          },
+          {
+            "name": "selectedJointIndex"
+          },
+          {
+            "name": "selectedMaterialIndex"
+          },
+          {
+            "name": "selectedTabPage"
+          },
+          {
+            "name": "selectedVertexIndex"
+          },
+          {
+            "name": "topMost"
+          },
+          {
             "name": "undoCount"
+          },
+          {
+            "name": "vertexItemsCount"
           }
         ]
       }
@@ -13690,6 +13834,18 @@
             "name": "version"
           }
         ]
+      }
+    },
+    {
+      "tool": "session_get_selected_material_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
       }
     },
     {
@@ -14110,6 +14266,25 @@
       }
     },
     {
+      "tool": "session_set_selected_material_indices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "indices",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "session_set_share_data",
       "branches": [
         {
@@ -14173,7 +14348,55 @@
               "name": "enableTexUpdateWatch"
             },
             {
+              "name": "location"
+            },
+            {
               "name": "pmxFormActivate"
+            },
+            {
+              "name": "selectedBodyIndex"
+            },
+            {
+              "name": "selectedBoneIndex"
+            },
+            {
+              "name": "selectedExpressionIndex"
+            },
+            {
+              "name": "selectedExpressionOffsetIndex"
+            },
+            {
+              "name": "selectedFaceIndex"
+            },
+            {
+              "name": "selectedFrameBoneBoneIndex"
+            },
+            {
+              "name": "selectedFrameBoneIndex"
+            },
+            {
+              "name": "selectedFrameExpressionIndex"
+            },
+            {
+              "name": "selectedIkIndex"
+            },
+            {
+              "name": "selectedIkLinkIndex"
+            },
+            {
+              "name": "selectedJointIndex"
+            },
+            {
+              "name": "selectedMaterialIndex"
+            },
+            {
+              "name": "selectedTabPage"
+            },
+            {
+              "name": "selectedVertexIndex"
+            },
+            {
+              "name": "topMost"
             }
           ],
           "choices": [
@@ -14181,7 +14404,23 @@
               "names": [
                 "enableFacePage",
                 "enableTexUpdateWatch",
-                "pmxFormActivate"
+                "location",
+                "pmxFormActivate",
+                "selectedBodyIndex",
+                "selectedBoneIndex",
+                "selectedExpressionIndex",
+                "selectedExpressionOffsetIndex",
+                "selectedFaceIndex",
+                "selectedFrameBoneBoneIndex",
+                "selectedFrameBoneIndex",
+                "selectedFrameExpressionIndex",
+                "selectedIkIndex",
+                "selectedIkLinkIndex",
+                "selectedJointIndex",
+                "selectedMaterialIndex",
+                "selectedTabPage",
+                "selectedVertexIndex",
+                "topMost"
               ],
               "required": true
             }
@@ -14197,6 +14436,24 @@
             "shape": "number"
           }
         ]
+      }
+    },
+    {
+      "tool": "session_update_list",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "page",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
       }
     },
     {

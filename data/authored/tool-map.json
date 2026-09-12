@@ -37,6 +37,22 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.BodyItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ剛体の件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.BoneItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶボーンの件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.Close()",
       "editKind": "viewSession",
       "basis": "エディタの終了を求めるだけで、モデルのデータにもファイルにも作用しない。未保存の編集があるときは、エディタが確認を出して終わらないことがある。",
@@ -65,6 +81,160 @@
       "embeddedIn": [
         "session_get_form_connector",
         "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.ExpressionItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ表情の件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.ExpressionOffsetItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ表情のオフセットの件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.FaceItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ面の件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.FrameBoneItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ表示枠のボーンの件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.FrameBone_BoneItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ表示枠のボーンが持つボーンの件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.FrameExpressionItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ表示枠の表情の件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.GetBodyGroupColors()",
+      "editKind": "read",
+      "basis": "剛体のグループごとの表示色を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.GetBodyModeColors()",
+      "editKind": "read",
+      "basis": "剛体の動き方ごとの表示色を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.GetBoneKindColors()",
+      "editKind": "read",
+      "basis": "ボーンの種類ごとの表示色を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.GetExpressionCategoryColors()",
+      "editKind": "read",
+      "basis": "表情の分類ごとの表示色を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.GetSelectedMaterialIndices()",
+      "editKind": "read",
+      "basis": "選んでいる材質のリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.IKItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶIKの件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.IKLinkItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶIKリンクの件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
       ]
     },
     {
@@ -127,6 +297,55 @@
             }
           ]
         }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.JointItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶJointの件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.Location()",
+      "editKind": "viewSession",
+      "basis": "窓の左上の位置を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.MaterialItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ材質の件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.MorphItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶモーフの件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.NodeElementItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ表示枠の要素の件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.NodeItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ表示枠の件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
       ]
     },
     {
@@ -249,6 +468,154 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedBodyIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている剛体を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedBoneIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれているボーンを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedExpressionIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている表情を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedExpressionOffsetIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている表情のオフセットを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedFaceIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている面を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedFrameBoneIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている表示枠のボーンを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedFrameBone_BoneIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている表示枠のボーンが持つボーンを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedFrameExpressionIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている表示枠の表情を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedIKIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれているIKを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedIKLinkIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれているIKリンクを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedJointIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれているJointを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedMaterialIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている材質を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedTabPage()",
+      "editKind": "viewSession",
+      "basis": "開いているタブを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SelectedVertexIndex()",
+      "editKind": "viewSession",
+      "basis": "選ばれている頂点を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SetSelectedMaterialIndices(System.Int32[])",
+      "editKind": "viewSession",
+      "basis": "選ぶ材質を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.TopMost()",
+      "editKind": "viewSession",
+      "basis": "窓を常に手前へ出すかどうかを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "session_get_form_connector",
+        "session_update_form_connector"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.Undo()",
       "editKind": "directChange",
       "basis": "直前の編集をモデルから取り消すので、直接変更型に当たる。",
@@ -274,6 +641,27 @@
       "signatureKey": "PEPlugin.Form.IPEFormConnector.UndoCount()",
       "editKind": "read",
       "basis": "取り消せる件数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_form_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.UpdateList(PEPlugin.Pmd.UpdateObject)",
+      "editKind": "viewSession",
+      "basis": "指したページの一覧を作り直すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.VertexItemsCount()",
+      "editKind": "read",
+      "basis": "一覧に並ぶ頂点の件数を返すだけで、エディタの状態を動かさない。",
       "embeddedIn": [
         "session_get_form_connector"
       ]
