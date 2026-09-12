@@ -69,7 +69,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value["remaining"]);
         }
 
-        /// <summary>溜められる件数を超えて捨てたぶんは、次の取り出しが知らせて0へ戻る。</summary>
         [Fact]
         public void WhatTheQueueThrewAwayIsToldOnceAndThenForgotten()
         {
@@ -83,7 +82,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, Value(Poll(queue, Arguments()))["dropped"]);
         }
 
-        /// <summary>1件だけでも値の枠に収まらないイベントは、捨てて数える。</summary>
         [Fact]
         public void AnEventThatDoesNotFitOnItsOwnIsThrownAwayAndCounted()
         {

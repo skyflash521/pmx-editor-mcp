@@ -25,10 +25,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new SortedSet<string>(embedded, StringComparer.Ordinal));
         }
 
-        /// <summary>
-        /// 型役割表は総称型を引数の数で書き、引き当てる側は列挙の表記から写すので、鍵は同じ形へ
-        /// そろえて持つ。
-        /// </summary>
         [Fact]
         public void AGenericTypeIsKeptByItsDefinitionName()
         {

@@ -12,9 +12,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 2, 0, 1 }, Resolve(new[] { 2, 0, 1 }, 3));
         }
 
-        /// <summary>
-        /// 参照は対象ではなく値なので、同じ位置を二度並べても同じ要素を二度指す指定にはならない。
-        /// </summary>
         [Fact]
         public void TheSamePositionCanBeWrittenTwice()
         {

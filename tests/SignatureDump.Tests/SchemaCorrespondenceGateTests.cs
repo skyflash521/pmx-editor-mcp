@@ -281,9 +281,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }";
         }
 
-        /// <summary>
-        /// 発行の検査は行キーで掛かる先を選ぶ。発行しない行のツールは、上限を書いても落ちない。
-        /// </summary>
         [Fact]
         public void LeavesTheWrittenCountOfTheRowThatDoesNotIssue()
         {
@@ -315,7 +312,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Paths(AccessPathKind.Element));
         }
 
-        /// <summary>ホストが入れる引数は、呼ぶ側へ求めずその印を持つ。</summary>
         [Theory]
         [InlineData("PEPlugin.Pmx.IPXPmx")]
         [InlineData("PXCPlugin.IPXCPluginConnector")]
@@ -346,7 +342,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("呼ぶ側が渡す", thrown.Message);
         }
 
-        /// <summary>印の照合は器の内側の入力にも掛かる。引数の対応と同じ範囲を見る。</summary>
         [Fact]
         public void RejectsAHostSuppliedArgumentTheSchemaAsksForInsideAContainer()
         {
@@ -389,7 +384,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Require(IssuingSchemaJson(@", ""bounds"": { ""minimum"": 1 }"), issues: true);
         }
 
-        /// <summary>上限を書いた呼び分けが2つ目でも落ちる。発行しない行のツールは落ちない。</summary>
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -427,7 +421,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("distance", error.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>値を返さない行の応答はホストが決めるので、出所を書かなければ落ちる。</summary>
         [Fact]
         public void RejectsAnOutputWithoutAnOriginOnAVoidSignature()
         {
@@ -645,10 +638,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 SchemaJson(shape: "null_value"), signatures: Signatures(valueType: "System.Void"));
         }
 
-        /// <summary>
-        /// 型役割表は総称型を引数の数で書き、列挙は型引数の名前で書くので、役割の引き当ては同じ鍵へ
-        /// 写してから行う。写さずに引くと、受け手の検査が黙って素通りする。
-        /// </summary>
         [Fact]
         public void AGenericDeclaringTypeIsFoundByItsDefinitionName()
         {

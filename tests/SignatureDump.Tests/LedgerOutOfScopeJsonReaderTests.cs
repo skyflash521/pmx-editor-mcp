@@ -125,7 +125,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "{\"types\":[],\"signatures\":[{\"key\":\"\"}]}"));
         }
 
-        /// <summary>理由は導く値なので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenReasonThrows()
         {

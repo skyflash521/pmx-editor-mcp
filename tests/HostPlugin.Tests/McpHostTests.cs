@@ -200,10 +200,6 @@ namespace PmxEditorMcp.Tests
             Assert.True(CanConnect(_pipeName, ConnectTimeoutMs));
         }
 
-        /// <summary>
-        /// 1本目を処理している最中でも2本目を受ける。待たせると、繋ぎ直しや2つ目のクライアントが
-        /// 前の接続の終わりまで開けない。
-        /// </summary>
         [Fact]
         public void AnotherConnectionIsAcceptedWhileOneIsBeingServed()
         {
@@ -301,10 +297,6 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        /// <summary>
-        /// 接続の処理は待受とは別のスレッドで走るので、待受が終わっただけでは止まり切っていない。
-        /// 残っている処理を数えないと、前の稼働世代の処理と次の稼働世代の要求が並んでしまう。
-        /// </summary>
         [Fact]
         public void StoppingLastsWhileAConnectionIsStillBeingServed()
         {

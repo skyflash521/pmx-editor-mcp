@@ -111,9 +111,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("second", await ReadMessage(channel));
         }
 
-        /// <summary>
-        /// 区切りを決めるのはLFなので、単独のCRは本文の一部である。
-        /// </summary>
         [Fact]
         public async Task CrInsideBodyIsKept()
         {
@@ -152,9 +149,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Null(read.Message);
         }
 
-        /// <summary>
-        /// 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
-        /// </summary>
         [Fact]
         public async Task ReadStopsOnceLimitIsExceededWithoutSeparator()
         {
@@ -196,9 +190,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeMessageOutcome.TooLarge, read.Outcome);
         }
 
-        /// <summary>
-        /// 区切りのCRは本文から外れるので、上限の判定には数えない。
-        /// </summary>
         [Fact]
         public async Task BodyAtLimitIsReadWithCrlfSeparator()
         {
@@ -207,10 +198,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("1234", await ReadMessage(channel));
         }
 
-        /// <summary>
-        /// 上限を1バイト超えた時点で打ち切る作りだと、続くLFで本文から外れるCRを待てずに
-        /// 上限超過にしてしまう。
-        /// </summary>
         [Fact]
         public async Task BodyAtLimitIsReadWhenCrAndLfArriveApart()
         {
@@ -223,9 +210,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("1234", await ReadMessage(channel));
         }
 
-        /// <summary>
-        /// 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
-        /// </summary>
         [Fact]
         public async Task OverLimitBodyNotEndingWithCrIsCutWithoutWaitingForSeparator()
         {

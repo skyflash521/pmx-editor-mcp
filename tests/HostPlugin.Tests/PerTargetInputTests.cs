@@ -48,10 +48,6 @@ namespace PmxEditorMcp.Tests
             Refused(null, new[] { One }, 2, "長さが対象の件数と違う");
         }
 
-        /// <summary>
-        /// 長さは対象の件数に従うので、対象が0件のときは空の並びが正しい。要素数の下限で弾くと、
-        /// 共通の組なら通る空集合への呼び出しが、要素ごとの指定でだけ拒まれる。
-        /// </summary>
         [Fact]
         public void AnEmptyListIsRightWhenThereIsNoTarget()
         {

@@ -17,7 +17,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolMapDigest.Of("{\"rows\":[]}"));
         }
 
-        /// <summary>行キーが同じでも、行の他の項目が変わればツールが変わる。</summary>
         [Fact]
         public void TheSameRowKeyWithADifferentKindGivesADifferentDigest()
         {
@@ -26,7 +25,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolMapDigest.Of("{\"rows\":[{\"signatureKey\":\"A\",\"editKind\":\"write\"}]}"));
         }
 
-        /// <summary>改行の綴りは置き場によって変わるので、同じ中身を別の指紋にしない。</summary>
         [Theory]
         [InlineData("{\r\n  \"rows\": []\r\n}")]
         [InlineData("{\r  \"rows\": []\r}")]

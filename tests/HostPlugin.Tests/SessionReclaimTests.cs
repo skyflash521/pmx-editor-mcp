@@ -103,10 +103,6 @@ namespace PmxEditorMcp.Tests
             Assert.False(second.Handles.IsClosed);
         }
 
-        /// <summary>
-        /// 所有者を保持しているあいだ、そのプロセスオブジェクトは残るのでIDは再利用されない。
-        /// 回収したあとに同じIDのプロセスが現れても、識別子は既に無いので引き継げない。
-        /// </summary>
         [Fact]
         public void TheIdentifierIsGoneEvenIfTheProcessIdComesBack()
         {
@@ -181,10 +177,6 @@ namespace PmxEditorMcp.Tests
             Assert.True(ledger.IsClosed);
         }
 
-        /// <summary>
-        /// 繋いでいる最中に別の経路がそのセッションを終わらせたら、次の要求で断られる。次の要求が
-        /// handshake の受け直しであっても同じで、そこを素通りすると終わったセッションが生き返る。
-        /// </summary>
         [Theory]
         [InlineData("handshake")]
         [InlineData("ping")]
@@ -230,10 +222,6 @@ namespace PmxEditorMcp.Tests
             Assert.True(session.Handles.IsClosed);
         }
 
-        /// <summary>
-        /// セッションを終わらせる要求も、ほかの要求と同じ直列区間の中で処理する。外で走らせると、
-        /// 別の接続が使っている最中の台帳と溜め場を閉じてしまう。
-        /// </summary>
         [Fact]
         public void EndingASessionWaitsForTheRequestThatIsRunning()
         {
@@ -275,10 +263,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, connection.Sessions.Count);
         }
 
-        /// <summary>
-        /// 所有者の終了による回収も、明示の終了と同じ直列区間を通る。通さないと、走っている要求が
-        /// 使っている最中の台帳と溜め場を閉じてしまう。
-        /// </summary>
         [Fact]
         public void TheOwnerLeavingWaitsForTheRequestThatIsRunning()
         {

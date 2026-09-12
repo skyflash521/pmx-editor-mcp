@@ -26,7 +26,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(BridgeDeclaration.IsDeclared(debugHooksValue, declareValue));
         }
 
-        /// <summary>名前は起動側が打つ文字列そのものなので、定数と実装を揃えて変えても気づける。</summary>
         [Fact]
         public void TheVariableNamesAreACallerContract()
         {

@@ -6,7 +6,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ToolNameRuleTests
     {
-        /// <summary>コネクタ型は自分1つを指すので、取得も更新も単数の名詞を採る。</summary>
         [Theory]
         [InlineData(TypeRole.Connector, ToolVerb.Get, "view_get_pmx_view")]
         [InlineData(TypeRole.Connector, ToolVerb.Update, "view_update_pmx_view")]

@@ -24,7 +24,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, answer["removed"]);
         }
 
-        /// <summary>加えるとハンドルは消えるので、以後どの位置で指せばよいかを応答が伝える。</summary>
         [Fact]
         public void TheAddAnswerCarriesTheCountAndThePositionsInTheOrderTheyWereAdded()
         {
@@ -53,7 +52,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(4, answer["applied"]);
         }
 
-        /// <summary>件数は対象の件数に従うので、対象が0件なら0が正しい。</summary>
         [Fact]
         public void EveryCountIsZeroWhenThereIsNoTarget()
         {

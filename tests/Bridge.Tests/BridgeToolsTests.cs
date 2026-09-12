@@ -43,10 +43,6 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.ServerInfo.Version);
         }
 
-        /// <summary>
-        /// 登録するのは基盤の中継と、ビルド時に組み立てた定義のすべてである。定義は本文が持つので、
-        /// 期待する名前もその本文から取る。
-        /// </summary>
         [Fact]
         public async Task TheBaseRelayAndEveryGeneratedDefinitionAreRegistered()
         {
@@ -58,9 +54,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(Expected(false), Sorted(tools.Select(tool => tool.Name)));
         }
 
-        /// <summary>
-        /// 組み立てた定義の入力の形と説明文が、そのまま一覧へ出る。ブリッジは形を作り直さない。
-        /// </summary>
         [Fact]
         public async Task AGeneratedDefinitionKeepsItsDescriptionAndInputSchema()
         {
@@ -79,10 +72,6 @@ namespace PmxEditorMcp.Bridge.Tests
             }
         }
 
-        /// <summary>
-        /// 検査からだけ使う入口の下に置くので、開いた起動でだけ一覧に現れる。閉じた起動で現れると、
-        /// 通常の配布と運用で検査専用のツールが見えることになる。
-        /// </summary>
         [Fact]
         public async Task TheLargeTextToolAppearsOnlyWithTheDebugEntry()
         {
@@ -178,10 +167,6 @@ namespace PmxEditorMcp.Bridge.Tests
                 tool => Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(tool)));
         }
 
-        /// <summary>
-        /// 接続は最初のツール呼び出しまで行わないので、待ち受けていないパイプを指していても
-        /// 一覧はブリッジ自身の設定値から答えられる。
-        /// </summary>
         [Fact]
         public async Task ToolDefinitionIsAvailableWithoutHostConnection()
         {
@@ -237,10 +222,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.NotEmpty(await client.ListToolsAsync(cancellationToken: limit.Token));
         }
 
-        /// <summary>
-        /// 接続先の決定は実行経路の入口にあるので、単体では組み合わせまでしか確かめられない。
-        /// 実行ファイルを起動して、指した相手から応答が返るところまでを見る。
-        /// </summary>
         [Fact]
         public async Task TestOnlyEnvironmentVariablePinsRelayTarget()
         {
@@ -282,11 +263,6 @@ namespace PmxEditorMcp.Bridge.Tests
                 await client.CallToolAsync("ping", cancellationToken: limit.Token), host);
         }
 
-        /// <summary>
-        /// 名前の似た別の環境変数まで接続先として読む実装だと、エンドユーザーが起動設定で接続先を
-        /// 選べる余地が残る。読まないはずの名前へ待ち受けていない名前を与えても、待受の
-        /// 列挙で決めることを見る。読んでいれば、その名前へ繋ごうとして失敗する。
-        /// </summary>
         [Fact]
         public async Task OnlyTestOnlyEnvironmentVariableNamesTheTarget()
         {
@@ -306,10 +282,6 @@ namespace PmxEditorMcp.Bridge.Tests
                 await client.CallToolAsync("ping", cancellationToken: limit.Token), host);
         }
 
-        /// <summary>
-        /// どのエディタの応答かを、その応答だけを見て分かるようにする。過去の知らせを
-        /// 覚えていることに頼ると、文脈が失われた時点で相手が分からなくなる。
-        /// </summary>
         [Fact]
         public async Task SuccessfulResultAnnouncesTargetOnFirstLine()
         {
@@ -329,10 +301,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("接続先: " + host.PipeName + "\npong", TextOf(result));
         }
 
-        /// <summary>
-        /// 一度きりの知らせだと、呼び出し元がそれを覚えていることに頼ることになる。文脈が
-        /// 失われた後の応答からも相手が分かるよう、同じ相手のままでも毎回名乗る。
-        /// </summary>
         [Fact]
         public async Task LaterSuccessfulResultsAlsoAnnounceTarget()
         {
@@ -354,10 +322,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(second));
         }
 
-        /// <summary>
-        /// 失敗の本文は「コード: 説明」の形で読まれるので、接続先の行を足して形を崩さない。
-        /// 接続先が変わった事実は、次に成功した結果で必ず伝わる。
-        /// </summary>
         [Fact]
         public async Task FailedResultReturnsOnlyCodeAndDescription()
         {

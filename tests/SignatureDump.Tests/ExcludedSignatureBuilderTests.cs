@@ -1109,9 +1109,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(FrozenFactoryConstructor, Build().Select(r => r.Key));
         }
 
-        /// <summary>
-        /// 形式が同じかどうかは一次資料でしか決まらないので、除外するか残すかを機械で決められない。
-        /// </summary>
         [Theory]
         [InlineData(FromStream)]
         [InlineData(ToStream)]

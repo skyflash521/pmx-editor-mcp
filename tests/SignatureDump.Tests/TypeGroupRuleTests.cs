@@ -29,7 +29,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(Type, error.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>担当が複数ある型と、担当を一つも与えられていない型は書き手が決める。</summary>
         [Fact]
         public void TheGroupOfATypeTheLedgerDoesNotDecideIsTheWrittenOne()
         {
@@ -57,7 +56,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(Type, error.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>独立したツールを持たない役割は担当群を持たないので、解決の対象にならない。</summary>
         [Fact]
         public void ARoleWithoutAnIndependentToolIsLeftAsItIs()
         {

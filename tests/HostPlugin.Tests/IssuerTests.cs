@@ -108,10 +108,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(issued.Length, issued.Distinct().Count());
         }
 
-        /// <summary>
-        /// 台帳を捨てて作り直すのが繋ぎ直しに当たる。作り直した先が1へ戻れば、前の台帳が出した
-        /// IDと重なる。
-        /// </summary>
         [Fact]
         public void HandleIdsDoNotRepeatAfterTheLedgerIsMadeAgain()
         {

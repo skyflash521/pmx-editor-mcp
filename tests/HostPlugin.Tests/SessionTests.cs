@@ -152,10 +152,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, ledger.Count);
         }
 
-        /// <summary>
-        /// セッションの集まりはホストにひとつなので、別のプロセスからの提示は同じホストへ届く。
-        /// 2本目の接続の接続元だけを別のプロセスにして確かめる。
-        /// </summary>
         [Fact]
         public void AnIdentifierPresentedFromAnotherProcessIsRefused()
         {
@@ -168,10 +164,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(JsonRpcErrorCodes.SessionRefused, ErrorCodeOf(response));
         }
 
-        /// <summary>
-        /// 例外で抜けた接続でも、所有者のハンドルはセッションのものなので閉じない。閉じると、
-        /// 同じ識別子で繋ぎ直したときに終わったかどうかを判じられなくなる。
-        /// </summary>
         [Fact]
         public void TheOwnerSurvivesAConnectionThatEndsWithAnException()
         {
@@ -189,10 +181,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(id, SessionOf(Exchange(connection, Handshake(id))[0]));
         }
 
-        /// <summary>
-        /// 2本の接続から時間の重なる要求を送っても、処理の区間は重ならない。SDKのスレッド
-        /// セーフティを仮定しないので、ここで直列化する。
-        /// </summary>
         [Fact]
         public void RequestsFromTwoConnectionsDoNotOverlap()
         {

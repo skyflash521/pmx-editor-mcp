@@ -57,17 +57,12 @@ namespace PmxEditorMcp.Tests
             Refused(new[] { new TemplateTarget(" ", "bone1") }, "種別を持たない");
         }
 
-        /// <summary>組そのものが中身を持たない要求も、要求の誤りとして断る。</summary>
         [Fact]
         public void AGroupWithNothingInItIsRefused()
         {
             Refused(new TemplateTarget[] { null }, "種別を持たない");
         }
 
-        /// <summary>
-        /// 1件でも解けなければ何も適用しないので、解けるかは適用の前に全件を見る。指し方は正しく、
-        /// いまの状態に対象が無いだけなので、指し方の誤りとは別のコードで断る。
-        /// </summary>
         [Fact]
         public void ATargetThatPointsAtNothingIsRefused()
         {
@@ -77,7 +72,6 @@ namespace PmxEditorMcp.Tests
                 ToolEnvelope.NotApplicable);
         }
 
-        /// <summary>指し方そのものの誤りは、対象が在るかを見る前に断る。</summary>
         [Fact]
         public void ARepeatedTargetIsRefusedBeforeTheTargetIsLookedUp()
         {

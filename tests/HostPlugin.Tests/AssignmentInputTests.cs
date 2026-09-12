@@ -36,7 +36,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, taken.ChildCount);
         }
 
-        /// <summary>親の型がハンドルを発行しないリストは、位置でしか親を指せない。</summary>
         [Fact]
         public void PointingAtAParentByHandleIsRefusedWhereTheListDoesNotAllowIt()
         {
@@ -83,7 +82,6 @@ namespace PmxEditorMcp.Tests
                 "同じ親を二度以上");
         }
 
-        /// <summary>指し方そのものの誤りは、位置が範囲の中にあるかを見る前に断る。</summary>
         [Fact]
         public void ARepeatedParentIsRefusedBeforeTheRangeIsChecked()
         {
@@ -114,9 +112,6 @@ namespace PmxEditorMcp.Tests
             Refused(new[] { ByHandle(9, 100) }, ToolEnvelope.InvalidHandle, "parentHandle");
         }
 
-        /// <summary>
-        /// 組ごとに見るだけでは、先の組で消費したハンドルを後の組が使う要求が通ってしまう。
-        /// </summary>
         [Fact]
         public void AHandleThatAppearsInTwoGroupsIsRefused()
         {
@@ -158,7 +153,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, taken.ChildCount);
         }
 
-        /// <summary>参照先の位置も、加える前に参照先のリストの中にあることを見る。</summary>
         [Fact]
         public void AReferencePositionOutsideTheReferencedListIsRefused()
         {
@@ -169,7 +163,6 @@ namespace PmxEditorMcp.Tests
                 AssignmentChild.RefIndices);
         }
 
-        /// <summary>参照は対象ではなく値なので、同じ位置を複数の組へ書いてよい。</summary>
         [Fact]
         public void TheSameReferencePositionCanAppearInTwoGroups()
         {
@@ -203,7 +196,6 @@ namespace PmxEditorMcp.Tests
                 "区分と合わない");
         }
 
-        /// <summary>上限は組ごとではなく、全部の組の子の合計に掛かる。</summary>
         [Fact]
         public void TheLimitIsOnTheTotalOfEveryGroup()
         {

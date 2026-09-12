@@ -185,9 +185,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "typeof(global::" + Held + "), typeof(global::" + Held + "))", source.Text);
         }
 
-        /// <summary>
-        /// 手放す呼び出しが生成物を引数に取る形では、預ける呼び出しと同じ受け手の上で呼ぶ。
-        /// </summary>
         [Fact]
         public void AThingLetGoByItsOwnerCarriesTheRowAndTheMarkOfThatForm()
         {

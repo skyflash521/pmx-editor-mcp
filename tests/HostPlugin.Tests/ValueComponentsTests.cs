@@ -63,11 +63,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(names.Count, names.Distinct(StringComparer.Ordinal).Count());
         }
 
-        /// <summary>
-        /// 成分名と読み書きの並びは別々に書き下ろすので、ずれても往復では気づけない。名前が指す
-        /// メンバーを引いて、その位置の数と合うことまで見る。名前で引くのはこの検査だけで、
-        /// 配布物はしない。
-        /// </summary>
         [Theory]
         [MemberData(nameof(ComponentTypes))]
         public void EachNameCarriesTheNumberAtItsOwnPosition(Type declared, int count)

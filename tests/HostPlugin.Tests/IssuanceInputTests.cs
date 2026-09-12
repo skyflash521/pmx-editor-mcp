@@ -33,7 +33,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(PerTargetForm.Shared, taken.Args.Form);
         }
 
-        /// <summary>並びの長さが発行する数になるので、発行する数を別に受け取らない。</summary>
         [Fact]
         public void TheLengthOfTheListIsTheNumberToIssue()
         {
@@ -78,7 +77,6 @@ namespace PmxEditorMcp.Tests
             Refused(IssuanceKind.Factory, argsList: new object[0], expected: "空である");
         }
 
-        /// <summary>受け手に紐づくメソッドは、受け手1件につき1個を発行する。</summary>
         [Fact]
         public void TheReceiverBoundMethodIssuesOnePerReceiver()
         {

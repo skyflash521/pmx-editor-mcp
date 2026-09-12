@@ -24,7 +24,6 @@ namespace PmxEditorMcp.Tests
             Assert.False(DebugHooks.IsEnabled(rawValue));
         }
 
-        /// <summary>名前は起動側が打つ文字列そのものなので、定数と実装を揃えて変えても気づける。</summary>
         [Fact]
         public void TheVariableNameIsACallerContract()
         {

@@ -214,10 +214,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { LostKey }, Assert.IsType<object[]>(body["disabledRows"]));
         }
 
-        /// <summary>
-        /// 中継を作った表の指紋は接続の確立で名乗る。ブリッジはこれと自分の指紋を照らし合わせて、
-        /// 別の表から作られた組み合わせを断る。
-        /// </summary>
         [Fact]
         public void TheHandshakeNamesTheDigestOfTheTableTheRelayWasBuiltFrom()
         {

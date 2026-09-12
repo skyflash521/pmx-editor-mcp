@@ -257,9 +257,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(TimeSpan.FromSeconds(120), JsonRpcConnection.DefaultRequestTimeout);
         }
 
-        /// <summary>
-        /// メソッドの検索より先に判定するので、既知・未知・空のいずれでも同じ扱いになる。
-        /// </summary>
         [Theory]
         [InlineData("ping")]
         [InlineData("unknown")]
@@ -509,9 +506,6 @@ namespace PmxEditorMcp.Tests
                 log);
         }
 
-        /// <summary>
-        /// 不正な引数の説明は要求の値を指しうるので、記録するのはコードだけにする。
-        /// </summary>
         [Fact]
         public void ErrorResponseDescriptionIsNotRecorded()
         {
@@ -530,9 +524,6 @@ namespace PmxEditorMcp.Tests
             Assert.DoesNotContain("params はオブジェクトでなければならない。", log);
         }
 
-        /// <summary>
-        /// 相手はエラーをいくらでも起こせる。毎回記録すると有用な履歴が押し流される。
-        /// </summary>
         [Fact]
         public void RepeatedErrorCodeIsRecordedOnceWithRunningTotal()
         {
@@ -624,9 +615,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("pong", ResultOf(responses[2]));
         }
 
-        /// <summary>
-        /// 解析していないので識別子は判別できない。切断まで含めて入力の上限超過と同じ扱いにする。
-        /// </summary>
         [Fact]
         public void RequestOverStructureLimitIsRejectedAndDisconnects()
         {
@@ -647,9 +635,6 @@ namespace PmxEditorMcp.Tests
             Assert.Null(IdOf(responses[1]));
         }
 
-        /// <summary>
-        /// 区切りが来る前に上限を超えるので、識別子は判別できない。
-        /// </summary>
         [Fact]
         public void InputOverLimitIsRejectedAndDisconnects()
         {
@@ -1115,10 +1100,6 @@ namespace PmxEditorMcp.Tests
             Assert.Same(seen[0].Events, seen[1].Events);
         }
 
-        /// <summary>
-        /// 切断はセッションの終わりではないので、台帳は閉じず、ハンドルもそのまま残る。
-        /// 繋ぎ直した接続が同じハンドルへ戻れることが、この形の目的である。
-        /// </summary>
         [Fact]
         public void TheHandlesOutliveTheConnectionThatIssuedThem()
         {
@@ -1138,10 +1119,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, ledger.Count);
         }
 
-        /// <summary>
-        /// 応答を書けなかった呼び出しが発行したハンドルは、呼び出し側へ届かないので失効させる。
-        /// これは接続の終わりではなく、その呼び出しの結果を捨てることによる失効である。
-        /// </summary>
         [Fact]
         public void TheHandlesOfAnUnwritableResponseAreReleased()
         {

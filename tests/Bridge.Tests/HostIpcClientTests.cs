@@ -141,9 +141,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        /// <summary>
-        /// 同じ不正でも、handshakeが成立する前なら不成立として区分する。
-        /// </summary>
         [Fact]
         public async Task HandshakeResponseWithInvalidUtf8FailsAndClosesConnection()
         {
@@ -172,10 +169,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        /// <summary>
-        /// 応答を受け取る前に相手が消えただけなので、版やプロトコルの食い違いを示唆する
-        /// 不成立ではなく切断として区分する。
-        /// </summary>
         [Fact]
         public async Task DisconnectWhileAwaitingHandshakeIsReturnedAsDisconnect()
         {
@@ -206,10 +199,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        /// <summary>
-        /// ホストの中継とブリッジのツール定義は同じ能力対応表から作る。別の表から作られた組み合わせ
-        /// では、どのツールが中継できるかが食い違うので、繋がずに断る。
-        /// </summary>
         [Fact]
         public async Task ADifferentToolMapClosesConnectionShowingBothDigests()
         {
@@ -247,9 +236,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Contains("toolMapDigest", error.Message);
         }
 
-        /// <summary>
-        /// 予算の不一致でプロセスを終えないので、設定を直したホストへ繋ぎ直せば回復する。
-        /// </summary>
         [Fact]
         public async Task ReconnectingToMatchingBudgetHostRestoresNormalOperation()
         {
@@ -494,9 +480,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pong", (string)(await second.CallAsync("ping", null, CancellationToken.None)).Result);
         }
 
-        /// <summary>
-        /// 接続を確立できたかどうかを判断するのは接続役で、こちらはその結果を包み直さない。
-        /// </summary>
         [Fact]
         public async Task ConnectorFailureIsReturnedToCaller()
         {
@@ -510,10 +493,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        /// <summary>
-        /// 接続先を決めた時点でそのパイプは待ち受けていたので、開けないのは待って解決する
-        /// 話ではない。待ち続けると要求全体の上限まで使い、原因も分からなくなる。
-        /// </summary>
         [Fact]
         public async Task PipeThatIsNotListeningFailsToConnectWithoutWaiting()
         {
@@ -550,10 +529,6 @@ namespace PmxEditorMcp.Bridge.Tests
                 NamedPipeHostConnector.ConnectWaitLimit + TimeSpan.FromSeconds(5));
         }
 
-        /// <summary>
-        /// 明示指定は黙って自動発見へ落とさないので、空の名前もそのまま接続先になる。
-        /// パイプを開く処理は製品と同じものを通し、OSの拒否がどう表れるかまで見る。
-        /// </summary>
         [Fact]
         public async Task NameRejectedByOsFailsToConnect()
         {
@@ -566,10 +541,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
         }
 
-        /// <summary>
-        /// 上限による打ち切りと呼び出し側の取り消しは、どちらも同じ種類の例外で表れる。
-        /// 取り消しまで接続の失敗へ変えると、呼び出し側が自分で止めたことが分からなくなる。
-        /// </summary>
         [Fact]
         public async Task CancellationDuringConnectIsReturnedAsCancellationNotFailure()
         {
@@ -586,10 +557,6 @@ namespace PmxEditorMcp.Bridge.Tests
             await WithinTestWait(Assert.ThrowsAnyAsync<OperationCanceledException>(() => opening));
         }
 
-        /// <summary>
-        /// 決めてから開くまでの短い隙にパイプが入れ替わる場合まで落とさない。即座に諦める
-        /// 作りだと、ホストが繋ぎ直しの合間にいるだけで理由もなく失敗する。
-        /// </summary>
         [Fact]
         public async Task PipeAppearingSlightlyLateIsAcceptedWithinLimit()
         {
@@ -629,10 +596,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
         }
 
-        /// <summary>
-        /// エディタを起動し直すとパイプ名は変わる。決め直さずに握り続けると、繋ぎ直しが
-        /// 消えたエディタを指したままになる。
-        /// </summary>
         [Fact]
         public async Task TargetIsResolvedAgainOnEveryConnect()
         {
@@ -735,10 +698,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("接続先: " + host.PipeName, response.TargetNotice);
         }
 
-        /// <summary>
-        /// 変わっていないのに変わったと言えば、呼び出し元は起きていない切り替えを疑って
-        /// 手を止める。毎回名乗るのは、その応答だけで相手が分かるようにするためである。
-        /// </summary>
         [Fact]
         public async Task NoticeKeepsOnlyAnnouncingWhenTargetIsUnchanged()
         {
@@ -756,11 +715,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("接続先: " + host.PipeName, response.TargetNotice);
         }
 
-        /// <summary>
-        /// 繋ぎ直しのたびに接続先を決め直すので、利用者がホストを動かすエディタを切り替えると
-        /// 相手が入れ替わる。黙って続けると、呼び出し元は前の応答で作った前提のまま別の
-        /// エディタを操作する。間に失敗を挟んでも、変わった事実は次に成功した応答で伝わる。
-        /// </summary>
         [Fact]
         public async Task ChangedTargetIsReportedWithPreviousTarget()
         {

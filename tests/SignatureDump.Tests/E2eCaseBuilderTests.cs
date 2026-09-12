@@ -62,7 +62,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(one.Arguments);
         }
 
-        /// <summary>確認を要する行のほかの検査は、確認を渡したうえで見る。</summary>
         [Fact]
         public void TheOtherChecksOfADangerousRowCarryTheConfirmation()
         {
@@ -84,7 +83,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("Host.Connector.Pmx", one.ConnectionPath);
         }
 
-        /// <summary>行から名前を導かない共通契約のツールも母集団に入る。</summary>
         [Fact]
         public void AToolThatNoRowNamesIsStillChecked()
         {

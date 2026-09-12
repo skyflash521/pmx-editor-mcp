@@ -610,7 +610,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("入出力の形が無いツール", error.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>分岐を持つ合成ツールの形は、分岐の出どころのイベント行が無ければ書けない。</summary>
         [Fact]
         public void ABranchingComposedToolWithoutASchemaIsNotDemandedWithoutEventRows()
         {

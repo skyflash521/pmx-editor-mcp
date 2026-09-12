@@ -114,9 +114,6 @@ namespace PmxEditorMcp.Tests
             Assert.Null(message);
         }
 
-        /// <summary>
-        /// 余分な1バイトを無条件に保留すると、区切りが来ないまま待ち続けてしまう。
-        /// </summary>
         [Fact]
         public void BodyOneByteOverLimitExceedsWithoutWaitingForSeparator()
         {
@@ -141,9 +138,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new string('a', 16), message);
         }
 
-        /// <summary>
-        /// 全文を読んでから長さを判定する作りでは、入力の全体が読まれてしまう。
-        /// </summary>
         [Fact]
         public void ReadStopsOnceLimitIsExceededWithoutSeparator()
         {

@@ -121,7 +121,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("読めない", error.ToString(), StringComparison.Ordinal);
         }
 
-        /// <summary>担当群を台帳が決める型でも、名前を導いて入出力の形と突き合わせられる。</summary>
         [Fact]
         public void AToolOnATypeWhoseGroupTheLedgerDecidesIsChecked()
         {

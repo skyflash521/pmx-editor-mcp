@@ -84,10 +84,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(next.IsCompletedSuccessfully);
         }
 
-        /// <summary>
-        /// 待つ相手がいないときに取り消しを見ずに通す作りだと、取り消した呼び出しが
-        /// そのまま順番を握り、以後の呼び出しを塞いでしまう。
-        /// </summary>
         [Fact]
         public void AlreadyCancelledTokenDoesNotPassWithoutHolder()
         {

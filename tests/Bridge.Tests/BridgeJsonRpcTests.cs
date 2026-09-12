@@ -40,9 +40,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(1, (int)parsed["params"]["protocol"]);
         }
 
-        /// <summary>
-        /// 本文は1行として送るので、区切りと紛れる文字がそのまま入ってはならない。
-        /// </summary>
         [Fact]
         public void BuiltRequestContainsNoNewline()
         {
@@ -88,10 +85,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("未知のメソッド", result.Response.ErrorMessage);
         }
 
-        /// <summary>
-        /// ホストは要求の識別子を判別できないときや応答が上限を超えたときにnullを載せる。
-        /// ここで弾くと、ホストが返した理由がブリッジ側の不正として塗り潰される。
-        /// </summary>
         [Fact]
         public void AcceptsErrorResponseWithNullId()
         {
@@ -104,9 +97,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(string.Empty, result.Response.ErrorMessage);
         }
 
-        /// <summary>
-        /// 応答が上限を超えたときは、どのコードでもホストが識別子をnullへ落とす契約である。
-        /// </summary>
         [Theory]
         [InlineData(-32700)]
         [InlineData(-32004)]

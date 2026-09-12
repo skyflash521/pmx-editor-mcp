@@ -72,9 +72,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new[] { "UV", "UVA1" }, records.Select(r => r.MemberName));
         }
 
-        /// <summary>
-        /// 並びは宣言型を先に比べるので、宣言型が別の宣言型の接頭辞でも列挙側と同じ位置に入る。
-        /// </summary>
         [Fact]
         public void ADeclaringTypeThatIsAPrefixOfAnotherComesFirst()
         {
@@ -85,7 +82,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[] { "N.IThing", "N.IThingMore" }, records.Select(r => r.DeclaringType));
         }
 
-        /// <summary>プロパティの型は列挙が持つので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenPropertyTypeStops()
         {
@@ -95,7 +91,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}"));
         }
 
-        /// <summary>決め方は記載の出現数から導けるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenDecisionStops()
         {

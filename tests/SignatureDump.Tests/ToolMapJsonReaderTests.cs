@@ -94,28 +94,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(Common(@", ""reason"": ""余分。"""));
         }
 
-        /// <summary>提供能力のIDは台帳から引けるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenCapabilityIdStops()
         {
             Rejects(Common(@", ""capabilityIds"": [""CAP-001""]"));
         }
 
-        /// <summary>操作の向きはシグネチャから決まるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenDirectionStops()
         {
             Rejects(Common(@", ""direction"": ""read"""));
         }
 
-        /// <summary>危険の種別は危険操作の規則が判定するので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenDangerKindStops()
         {
             Rejects(Common(@", ""dangerKind"": ""overwrite"""));
         }
 
-        /// <summary>注記は台帳から引けるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenNoteStops()
         {
@@ -128,35 +124,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(@"{ ""signatureKey"": ""T.M()"", ""editKind"": ""read"" }");
         }
 
-        /// <summary>行の種別は行の外の材料から導くので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenRowKindStops()
         {
             Rejects(Common(@", ""rowKind"": ""commonContract"""));
         }
 
-        /// <summary>ツールの名前は担当群と動作の語と要素名詞から決まるので、書けば落ちる。</summary>
         [Fact]
         public void AWrittenToolNameStops()
         {
             Rejects(Common(@", ""tool"": ""model_list_vertices"""));
         }
 
-        /// <summary>割当は共通契約割当の正本が持つので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenAssignmentStops()
         {
             Rejects(Common(@", ""assignment"": ""internalFlow"""));
         }
 
-        /// <summary>割当の対象名も同じ正本が持つので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenTargetStops()
         {
             Rejects(Common(@", ""target"": ""stateRead"""));
         }
 
-        /// <summary>束縛はシグネチャから導くので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenSlotBindingStops()
         {

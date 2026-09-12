@@ -927,9 +927,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(Ledger(), Signatures())));
         }
 
-        /// <summary>
-        /// 台帳へ行を挿し込んだだけで凍結の並びが変わると、行単位の差分が実際の変化を指さなくなる。
-        /// </summary>
         [Fact]
         public void LedgerOrderDoesNotChangeTheFrozenSet()
         {
@@ -939,9 +936,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(reversed, shuffled)));
         }
 
-        /// <summary>
-        /// 重なると、除外一覧の照合でどちらの根拠にも通ってしまい、件数の一致も崩れる。
-        /// </summary>
         [Fact]
         public void TheSameSignatureIsNotPlacedUnderTwoCapabilities()
         {
@@ -951,9 +945,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(all.Count, all.Distinct(StringComparer.Ordinal).Count());
         }
 
-        /// <summary>
-        /// 台帳を正としない集合を凍結すると、根拠の無い除外がそのまま正本になる。
-        /// </summary>
         [Fact]
         public void CapabilityMissingFromLedgerThrows()
         {
@@ -962,9 +953,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(ledger, Signatures()));
         }
 
-        /// <summary>
-        /// 能力の単位で1件でも残れば通す作りだと、並べた名前のうち1つが指す先を失っても気づけない。
-        /// </summary>
         [Fact]
         public void NameWithoutAnyTargetThrows()
         {
@@ -974,9 +962,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
         }
 
-        /// <summary>
-        /// 1件でも欠けたまま凍結すると、以後その1件は資格を失ったことに気づけない。
-        /// </summary>
         [Fact]
         public void MissingNamedSignatureThrows()
         {
@@ -986,10 +971,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
         }
 
-        /// <summary>
-        /// 凍結できるのは台帳がすでに非対応と記していた範囲だけ。能力IDだけを見る作りだと、
-        /// 台帳の記載を書き換えても同じ組を凍結でき、根拠にならない。
-        /// </summary>
         [Fact]
         public void LedgerWordingDifferentFromFreezePremiseThrows()
         {
@@ -1017,9 +998,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("CAP-459", target.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>
-        /// どの記載を根拠にしたのかが定まらないまま凍結すると、後から根拠をたどれない。
-        /// </summary>
         [Fact]
         public void CapabilityAppearingTwiceInLedgerThrows()
         {
@@ -1032,9 +1010,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("CAP-459", doubled.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>
-        /// 台帳の側が合わないのか、渡された公開シグネチャが空なのかで直し方が違う。
-        /// </summary>
         [Fact]
         public void FailureReasonCarriesTheComparedSignatureCount()
         {

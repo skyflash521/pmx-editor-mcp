@@ -20,7 +20,6 @@ namespace PmxEditorMcp.Tests
         private static readonly string[] Drag =
             { "button", "clicks", "x", "y", "delta", "vPoint", "stX", "stY", "vDrag" };
 
-        /// <summary>すべての種別が読み方を持つ。</summary>
         [Fact]
         public void EveryBranchOfThePollingToolHasAWayToReadItsValue()
         {
@@ -108,7 +107,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(true, read["shift"]);
         }
 
-        /// <summary>値を持たないイベントは、空の組になる。</summary>
         [Theory]
         [InlineData("view_model_updated")]
         [InlineData("view_redo")]
@@ -118,7 +116,6 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(Readers[branch](null));
         }
 
-        /// <summary>受け手を掛ける型は、公開イベントを持つリスナの型ちょうどである。</summary>
         [Fact]
         public void EveryListenerTypeHasAWayToAttachToIt()
         {

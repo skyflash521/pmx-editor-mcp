@@ -316,10 +316,6 @@ namespace PmxEditorMcp.Tests
             Assert.False(ledger.IsValid(issued));
         }
 
-        /// <summary>
-        /// 預けた実体がリスナなら、その公開イベントへ受け手が掛かり、起きたことはそのハンドルを
-        /// 発生元として溜まる。ハンドルが失効すると受け手は外れる。
-        /// </summary>
         [Fact]
         public void AnIssuedListenerIsSubscribedAndUnsubscribedWithItsHandle()
         {
@@ -378,10 +374,6 @@ namespace PmxEditorMcp.Tests
             Assert.True(detached);
         }
 
-        /// <summary>
-        /// 受け手も引数もハンドルで指す呼び出しでは、そのどちらより先に生成物が解放される。生成物は
-        /// どちらの実体も持ち続けるので、先に手放されると使えない相手を指したままになる。
-        /// </summary>
         [Theory]
         [InlineData(1)]
         [InlineData(2)]
@@ -435,10 +427,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(3, ledger.LastIssuedId);
         }
 
-        /// <summary>
-        /// 受け手をハンドルで指していても、ホストが入れるPMXはいま相手にしているものになる。
-        /// ハンドルで指した対象はどのPMXにも属さないが、引数のPMXはそれとは別に決まる。
-        /// </summary>
         [Fact]
         public void TheHostPutsInTheCurrentPmxEvenWhenTheReceiverComesFromAHandle()
         {
@@ -456,10 +444,6 @@ namespace PmxEditorMcp.Tests
             Assert.NotNull(held.Taken);
         }
 
-        /// <summary>
-        /// 受け手をハンドルで指す呼び出しは、どのPMXを見るかの指定を取らない。取れてしまうと、
-        /// いま相手にしているものへ入れるという決まりを迂回できる。
-        /// </summary>
         [Fact]
         public void ACallOnAHeldReceiverDoesNotTakeWhichPmxToLookAt()
         {
@@ -662,7 +646,6 @@ namespace PmxEditorMcp.Tests
             Assert.True(made.Dropped);
         }
 
-        /// <summary>ハンドルで指した対象の組は、対象ごとの値の並びを受け取れる。</summary>
         [Fact]
         public void TheUpdatingToolOnHeldTargetsTakesAValueForEach()
         {

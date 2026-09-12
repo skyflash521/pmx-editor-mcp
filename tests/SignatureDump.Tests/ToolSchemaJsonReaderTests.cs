@@ -312,7 +312,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Null(input.Source);
         }
 
-        /// <summary>共通契約が定める値は転記元を要さないので、一次資料の要素数と同居できる。</summary>
         [Fact]
         public void ReadsACountFromThePrimarySourceBesideAValueTheCommonContractDecides()
         {
@@ -379,7 +378,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
         }
 
-        /// <summary>空にできるかどうかは名前から決まるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenMinimumItemCountStops()
         {
@@ -539,7 +537,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.True(input.Nullable);
         }
 
-        /// <summary>SDKに由来する項目の出所と表現は、シグネチャから決まるので書けば落ちる。</summary>
         [Fact]
         public void AWrittenSdkOriginStops()
         {

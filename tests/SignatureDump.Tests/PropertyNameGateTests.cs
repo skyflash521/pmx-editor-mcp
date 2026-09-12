@@ -72,7 +72,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("表に同じ項目が二度在る", error.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>同じ記載を持つ項目は、どちらも記載を引けないので両方が表に載る。</summary>
         [Fact]
         public void TwoItemsSharingANoteAreBothAuthored()
         {
@@ -82,7 +81,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Notes("N.IThing.Size", "同じ記載", "N.IThing.Weight", "同じ記載"));
         }
 
-        /// <summary>数えるのは同じ宣言型の中だけなので、別の型の同じ記載は引ける。</summary>
         [Fact]
         public void TheSameNoteInAnotherTypeDoesNotForceAuthoring()
         {

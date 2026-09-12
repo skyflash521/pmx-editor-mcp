@@ -27,10 +27,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new[] { reference }, ReflectionFreeGate.Find(new[] { reference }));
         }
 
-        /// <summary>
-        /// 名前で引ける型のメンバーは、挙げていなければ落とす。1つずつ数え上げる形では、数え
-        /// 落としたものが抜け道になる。
-        /// </summary>
         [Theory]
         [InlineData("System.Type.GetInterface")]
         [InlineData("System.Type.GetNestedType")]
@@ -70,7 +66,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(ReflectionFreeGate.Find(new[] { reference }));
         }
 
-        /// <summary>属性は組み立てられた先で何も引かないので、ビルドが置いたぶんも通す。</summary>
         [Fact]
         public void BuildingAnAttributeIsAllowed()
         {
@@ -78,10 +73,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 typeof(AssemblyTitleAttribute).GetConstructors().First()));
         }
 
-        /// <summary>
-        /// 綴りが Attribute で終わるだけの型は属性ではない。綴りで判じると、名前で引ける型が同じ
-        /// 綴りを名乗るだけで通ってしまう。
-        /// </summary>
         [Fact]
         public void BuildingSomethingThatOnlySpellsLikeAnAttributeIsNotAllowed()
         {

@@ -211,7 +211,6 @@ namespace PmxEditorMcp.Tests
             Assert.Throws<ArgumentNullException>(() => DebugEventInjection.Enqueue(null));
         }
 
-        /// <summary>名前は検査が打つ文字列そのものなので、定数と実装を揃えて変えても気づける。</summary>
         [Fact]
         public void TheMethodNameIsACallerContract()
         {

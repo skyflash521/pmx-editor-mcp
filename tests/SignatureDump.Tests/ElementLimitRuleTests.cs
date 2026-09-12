@@ -176,10 +176,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(1000, limits[targets]);
         }
 
-        /// <summary>
-        /// ホストが自分で入れる引数は要求に現れないので、要求の外枠にも数えない。数えると、
-        /// 実際より小さい上限を並びへ与えることになる。
-        /// </summary>
         [Fact]
         public void TheInputsTheHostFillsInAreNotCountedInTheEnvelope()
         {

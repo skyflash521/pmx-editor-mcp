@@ -16338,6 +16338,52 @@
       }
     },
     {
+      "tool": "motion_group_bone_vme",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_group_morph_vme",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
       "tool": "motion_ik_vmd_visible_ik_key",
       "branches": [
         {
@@ -16427,6 +16473,236 @@
             "shape": "number"
           }
         ]
+      }
+    },
+    {
+      "tool": "motion_ipl_d_vmd_camera_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_fov_vmd_camera_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_r_vmd_bone_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_r_vmd_camera_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_x_vmd_bone_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_x_vmd_camera_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_y_vmd_bone_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_y_vmd_camera_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_z_vmd_bone_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_ipl_z_vmd_camera_key",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
       }
     },
     {
@@ -26074,6 +26350,29 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_ui_model_text_control",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
       }
     },
     {

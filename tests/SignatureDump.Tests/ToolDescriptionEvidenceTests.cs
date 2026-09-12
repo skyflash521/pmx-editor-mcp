@@ -126,7 +126,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Assert.Single(materials, m => m.Tool == ListTool).IndexTerms);
         }
 
-        /// <summary>正本に載らない項目の日本語名は、記載から採る。</summary>
         [Fact]
         public void TheIndexTermOfAnItemOutsideTheTableComesFromTheNote()
         {
@@ -282,10 +281,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     map, Roles(), Names(), Inventory(), empty, empty, MethodNotes(), null));
         }
 
-        /// <summary>
-        /// 型役割表は総称型を引数の数で書き、列挙は型引数の名前で書くので、引き当ては同じ鍵へ写して
-        /// から行う。写さずに引くと、正しく書いた行が「型役割表に無い」で落ちる。
-        /// </summary>
         [Fact]
         public void AGenericDeclaringTypeIsFoundByItsDefinitionName()
         {

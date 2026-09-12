@@ -77,7 +77,8 @@ namespace PmxEditorMcp.SignatureDump
                 new HashSet<string>(
                     assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal),
                 evidence.IndependentTypes,
-                evidence.ReachedTypes);
+                evidence.HandleTypes,
+                evidence.ElementCollections);
         }
 
         /// <summary>

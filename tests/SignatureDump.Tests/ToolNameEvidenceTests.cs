@@ -55,7 +55,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("model_save_pmx_connector", names[second]);
         }
 
-        /// <summary>同名のオーバーロードは1つのツールへ集まるので、衝突として数えない。</summary>
         [Fact]
         public void OverloadsOfOneConnectorMethodDoNotCollide()
         {
@@ -109,7 +108,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("model_to_key_array_vertex", names[key]);
         }
 
-        /// <summary>共通契約が受け持つ行は独立したツールを持たないので、名前も持たない。</summary>
         [Fact]
         public void ARowTheAssignmentCanonHasIsNotInTheTable()
         {
@@ -147,7 +145,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(names);
         }
 
-        /// <summary>公開API列挙に無い行キーは、実在するかどうかを能力対応表の照合が見る。</summary>
         [Fact]
         public void ARowKeyOutsideTheEnumerationIsNotInTheTable()
         {
@@ -201,6 +198,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => ToolNameEvidence.Resolve(map, roles, assignments, null));
         }
 
+        [Fact]
+        public void APropertyThatListsAHandledTypeTakesNoNameWhileOneThatHoldsItDoes()
+        {
+            const string owner = "PEPlugin.Vme.IPEVmeOwner";
+            const string held = "PEPlugin.Vme.IPEVmeHeld";
+            string one = owner + ".Held()";
+            string many = owner + ".Items()";
+            IDictionary<string, string> names = Resolve(
+                Map(one, many),
+                Roles(
+                    TypeRole.HandleTarget,
+                    owner,
+                    "vme_owner",
+                    new[] { Type(held, TypeRole.HandleTarget, "vme_held") },
+                    new[] { new ElementCollectionRecord(many, true, "根拠。", new[] { many }) }),
+                Signatures(
+                    Method(one, owner, "Held", held, MemberKind.Property),
+                    Method(
+                        many,
+                        owner,
+                        "Items",
+                        "System.Collections.Generic.IList<" + held + ">",
+                        MemberKind.Property)));
+
+            Assert.Equal("model_held_vme_owner", names[one]);
+            Assert.False(names.ContainsKey(many));
+        }
+
         private static IDictionary<string, string> Resolve(
             string map, TypeRoleTable roles, IDictionary<string, SignatureRecord> signatures)
         {
@@ -236,7 +261,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             TypeRole role = TypeRole.OperationTarget,
             string typeName = Vertex,
             string elementNoun = "vertex",
-            IList<TypeRoleRecord> more = null)
+            IList<TypeRoleRecord> more = null,
+            IList<ElementCollectionRecord> collections = null)
         {
             List<TypeRoleRecord> types = new List<TypeRoleRecord>
             {
@@ -248,7 +274,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
 
             return new TypeRoleTable(
-                types, new HandleIssuanceRecord[0], new ElementCollectionRecord[0]);
+                types,
+                new HandleIssuanceRecord[0],
+                collections ?? new ElementCollectionRecord[0]);
         }
 
         private static TypeRoleRecord Type(string typeName, TypeRole role, string elementNoun)

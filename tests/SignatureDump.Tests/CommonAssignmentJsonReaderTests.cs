@@ -112,7 +112,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Assert.Single(Read(Item("N.A.M()", "commonArg", "suppressUndo"))).Target);
         }
 
-        /// <summary>束縛はシグネチャから導くので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenSlotBindingStops()
         {

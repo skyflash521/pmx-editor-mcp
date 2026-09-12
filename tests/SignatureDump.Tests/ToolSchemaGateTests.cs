@@ -102,10 +102,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Require(LimitSchemaJson(@", ""bounds"": { ""minimum"": 1 }"), MapJson());
         }
 
-        /// <summary>
-        /// 一覧でない応答は総数か切り出しのどちらかを欠く。イベントの取り出しの件数のように、
-        /// 共通契約が値を定める `limit` はこの検査に掛からない。
-        /// </summary>
         [Theory]
         [InlineData(@"{ ""origin"": ""hostOutput"", ""members"": [
             { ""name"": ""items"", ""origin"": ""hostOutput"",
@@ -126,7 +122,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Require(LimitSchemaJson(written, written, output), MapJson());
         }
 
-        /// <summary>既定と上限のどちらでも、どの呼び分けに書いても落ちる。</summary>
         [Theory]
         [InlineData(@", ""default"": 100", true)]
         [InlineData(@", ""bounds"": { ""minimum"": 1, ""maximum"": 100 }", true)]
@@ -171,7 +166,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             get { return new Dictionary<string, ComposedTool>(StringComparer.Ordinal); }
         }
 
-        /// <summary>合成ツールは行を持たないので、出所を書かない項目は導く先を持てない。</summary>
         [Fact]
         public void RejectsAComposedToolItemWithoutAnOrigin()
         {

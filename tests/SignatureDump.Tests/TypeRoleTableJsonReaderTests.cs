@@ -81,7 +81,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("担当群", error.Message);
         }
 
-        /// <summary>担当群は台帳が決める型では書かないので、欠けていても読める。</summary>
         [Fact]
         public void ARoleWithAnIndependentToolWithoutAGroupIsRead()
         {
@@ -333,7 +332,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("types", error.Message);
         }
 
-        /// <summary>ツール名は担当群と要素名詞から決まるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenToolNameStops()
         {
@@ -343,7 +341,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         + ",\"tools\":{\"list\":\"model_list_alphas\"}")));
         }
 
-        /// <summary>接続の経路は列挙から辿れるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenConnectionPathStops()
         {
@@ -352,7 +349,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "\"elementNoun\":\"alpha\",\"connectionPath\":\"Host.Alpha\"")));
         }
 
-        /// <summary>発行の種別はレシーバーから決まるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenIssuanceKindStops()
         {
@@ -360,7 +356,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Issuance("N.A.Make()", "\"issues\":true,\"kind\":\"factory\"")));
         }
 
-        /// <summary>許容する具象型は列挙から導けるので、書けば知らない項目として落ちる。</summary>
         [Fact]
         public void AWrittenConcreteTypeStops()
         {

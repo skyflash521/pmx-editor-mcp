@@ -305,7 +305,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => TypeRoleEvidence.ReachableFromRoots(Inventory(), new[] { " " }));
         }
 
-        /// <summary>経路を要らない側は、一歩の見分けだけを確かめる。</summary>
         [Fact]
         public void RequiringTheStepsAloneStopsOnTheSameAmbiguity()
         {

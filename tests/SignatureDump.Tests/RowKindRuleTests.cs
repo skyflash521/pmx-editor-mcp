@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -55,21 +57,33 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData(MemberKind.Property)]
         [InlineData(MemberKind.Field)]
-        public void APropertyThatReachesATypeWithItsOwnToolTakesTheRoleAccessKind(
+        public void APropertyThatListsSuchInstancesTakesTheRoleAccessKind(
             MemberKind memberKind)
         {
             Assert.Equal(
-                ToolMapRowKind.RoleAccess, RowKindRule.Of(memberKind, false, false, true, true));
+                ToolMapRowKind.RoleAccess, RowKindRule.Of(memberKind, false, false, true, false));
         }
 
         [Theory]
         [InlineData(MemberKind.Property)]
         [InlineData(MemberKind.Field)]
-        public void APropertyThatIsTheOnlyWayToItsTypeTakesTheDirectDispatchKind(
+        public void APropertyThatHoldsAnInstanceHandlesPointAtTakesTheDirectDispatchKind(
             MemberKind memberKind)
         {
             Assert.Equal(
-                ToolMapRowKind.DirectDispatch, RowKindRule.Of(memberKind, false, false, true, false));
+                ToolMapRowKind.DirectDispatch, RowKindRule.Of(memberKind, false, false, true, true));
+        }
+
+        [Fact]
+        public void APropertyThatHoldsOneOfAHandledTypeIsResolvedToTheDirectDispatchKind()
+        {
+            Assert.Equal(ToolMapRowKind.DirectDispatch, Resolved(Held, One));
+        }
+
+        [Fact]
+        public void APropertyThatListsAHandledTypeIsResolvedToTheRoleAccessKind()
+        {
+            Assert.Equal(ToolMapRowKind.RoleAccess, Resolved(HeldList, Many));
         }
 
         [Fact]
@@ -84,6 +98,45 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Equal(
                 ToolMapRowKind.DirectDispatch, RowKindRule.Of(MemberKind.Method, false, true, false, true));
+        }
+
+        private const string Held = "N.IHeld";
+
+        private const string HeldList = "System.Collections.Generic.IList<N.IHeld>";
+
+        private const string One = "N.IOwner.Held()";
+
+        private const string Many = "N.IOwner.Items()";
+
+        /// <summary>行の外の材料から、その行キーが採る種別を引く。</summary>
+        private static ToolMapRowKind Resolved(string valueType, string rowKey)
+        {
+            SignatureRecord signature = new SignatureRecord(
+                rowKey,
+                "N.IOwner",
+                MemberKind.Property,
+                rowKey == One ? "Held" : "Items",
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                true,
+                false,
+                OperationDirection.Read);
+
+            return RowKindRule.Resolve(
+                ToolMapJsonReader.Read(
+                    @"{ ""rows"": [ { ""signatureKey"": """ + rowKey + @""","
+                        + @" ""editKind"": ""read"", ""basis"": ""持っているものを返すだけである。"" } ] }"),
+                new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
+                {
+                    { rowKey, signature },
+                },
+                new HashSet<string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal),
+                new HashSet<string>(new[] { Held }, StringComparer.Ordinal),
+                new HashSet<string>(new[] { Held }, StringComparer.Ordinal),
+                new HashSet<string>(new[] { Many }, StringComparer.Ordinal))[rowKey];
         }
     }
 }

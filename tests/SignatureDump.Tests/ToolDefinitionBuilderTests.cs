@@ -86,7 +86,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("\"depth\":{\"type\":\"number\",\"minimum\":1,\"maximum\":9,\"default\":3}", schema);
         }
 
-        /// <summary>並びの上限は予算から導く値なので、正本に無くても入る。</summary>
         [Fact]
         public void AnArrayWithoutAWrittenLimitTakesTheDerivedOne()
         {
@@ -103,7 +102,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Schema(Tool("one", Branch(Array("values", "number", 4)))));
         }
 
-        /// <summary>空にできない並びだけが下限を持つ。どれがそれかは項目の名前が決める。</summary>
         [Fact]
         public void OnlyAnArrayThatCannotBeEmptyCarriesALowerBound()
         {
@@ -115,7 +113,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Schema(Tool("one", Branch(Array("values", "number", null)))));
         }
 
-        /// <summary>ホストが自分で入れる引数は、呼び出す側へ現れない。</summary>
         [Fact]
         public void AnInputTheHostFillsInIsNotShownToTheCaller()
         {
@@ -127,7 +124,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("\"name\"", schema);
         }
 
-        /// <summary>値を持たないことを許す項目は、その形と null の両方を受け取る。</summary>
         [Fact]
         public void AnItemThatAllowsNoValueTakesNullToo()
         {
@@ -144,7 +140,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Schema(Tool("one", Branch(NullableArray("values", "number")))));
         }
 
-        /// <summary>値で分かれる呼び分けは、その項目の値そのものが分岐を選ぶ。</summary>
         [Fact]
         public void ABranchChosenByAValuePinsThatValue()
         {
@@ -166,7 +161,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("\"kind\":{\"type\":\"string\",\"const\":\"index\"}", schema);
         }
 
-        /// <summary>縛るのは分岐を選ぶ入力だけで、名前が同じだけの入れ子の項目は縛らない。</summary>
         [Fact]
         public void ANestedItemWithTheSameNameIsNotPinned()
         {
@@ -217,7 +211,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("\"index\":{\"type\":\"number\"}", schema);
         }
 
-        /// <summary>まとまりのうち1つだけを受け取る決まりは、形の上でも1つだけに閉じる。</summary>
         [Fact]
         public void ARequiredGroupOfAlternativesIsClosedToOne()
         {
@@ -260,7 +253,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("\"not\":{\"anyOf\":[", schema);
         }
 
-        /// <summary>一覧の件数は予算から導く値なので、正本に書かれていなくても既定と上限が入る。</summary>
         [Fact]
         public void TheNumberOfRowsAListReturnsComesFromTheBudget()
         {

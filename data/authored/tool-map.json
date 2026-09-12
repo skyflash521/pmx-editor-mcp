@@ -6384,23 +6384,55 @@
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplR()",
-      "editKind": "directChange",
-      "basis": "向きの補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "回転の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplX()",
-      "editKind": "directChange",
-      "basis": "横の移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "横の移動の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplY()",
-      "editKind": "directChange",
-      "basis": "縦の移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "縦の移動の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplZ()",
-      "editKind": "directChange",
-      "basis": "奥行きの移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "奥行きの移動の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.PhysicsOff()",
@@ -6556,33 +6588,81 @@
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplD()",
-      "editKind": "directChange",
-      "basis": "距離の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "距離の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplFOV()",
-      "editKind": "directChange",
-      "basis": "視野の広さの補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "写す広さの補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplR()",
-      "editKind": "directChange",
-      "basis": "向きの補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "回転の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplX()",
-      "editKind": "directChange",
-      "basis": "横の移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "横の移動の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplY()",
-      "editKind": "directChange",
-      "basis": "縦の移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "縦の移動の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IplZ()",
-      "editKind": "directChange",
-      "basis": "奥行きの移動の補間の値そのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "editKind": "read",
+      "basis": "奥行きの移動の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.IsPers()",
@@ -6897,12 +6977,28 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.GroupBone()",
       "editKind": "read",
-      "basis": "いま持っているボーンのまとまりを返すだけで、エディタの状態を動かさない。"
+      "basis": "いま持っているボーンのまとまりを返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.GroupMorph()",
       "editKind": "read",
-      "basis": "いま持っているモーフのまとまりを返すだけで、エディタの状態を動かさない。"
+      "basis": "いま持っているモーフのまとまりを返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.InitFromPmx(PEPlugin.Pmx.IPXPmx)",
@@ -10155,7 +10251,15 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.UIModel()",
       "editKind": "read",
-      "basis": "貼り付け先のUIモデルを返すだけで、エディタの状態を動かさない。"
+      "basis": "貼り付け先のUIモデルを返すだけで、エディタの状態を動かさない。貼り付け先は長寿命の持ち物なので、それを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
     },
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.UpdateTextImage()",
