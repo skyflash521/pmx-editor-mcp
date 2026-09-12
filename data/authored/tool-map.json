@@ -5013,6 +5013,178 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneRotate()",
+      "editKind": "viewSession",
+      "basis": "選んだボーンを、決めてある回転の値で回すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneRotate_XYZ()",
+      "editKind": "viewSession",
+      "basis": "回すときに使う成分ごとの値を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "motion_get_transform_view_connector",
+        "motion_update_transform_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneScale_XYZ()",
+      "editKind": "viewSession",
+      "basis": "伸び縮みさせるときに使う成分ごとの値を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "motion_get_transform_view_connector",
+        "motion_update_transform_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneScaling()",
+      "editKind": "viewSession",
+      "basis": "選んだボーンを、決めてある大きさの値で伸び縮みさせるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneTranslate()",
+      "editKind": "viewSession",
+      "basis": "選んだボーンを、決めてある移動の値で動かすだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneTranslate_XYZ()",
+      "editKind": "viewSession",
+      "basis": "動かすときに使う成分ごとの値を決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "motion_get_transform_view_connector",
+        "motion_update_transform_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.GetClientImage()",
+      "editKind": "read",
+      "basis": "変形の画面を写した絵を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.MorphChecker()",
+      "editKind": "viewSession",
+      "basis": "モーフを1つずつ確かめる表示にするかどうかを決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "motion_get_transform_view_connector",
+        "motion_update_transform_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.MorphValue()",
+      "editKind": "viewSession",
+      "basis": "選んだモーフの効き具合を決めると変形の状態も更新するが、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "motion_get_transform_view_connector",
+        "motion_update_transform_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.ResetTransform()",
+      "editKind": "viewSession",
+      "basis": "変形の状態を初期化するだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.SelectedBoneIndex()",
+      "editKind": "viewSession",
+      "basis": "どのボーンを選んでいるかを決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "motion_get_transform_view_connector",
+        "motion_update_transform_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.SelectedMorphIndex()",
+      "editKind": "viewSession",
+      "basis": "どのモーフを選んでいるかを決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "motion_get_transform_view_connector",
+        "motion_update_transform_view_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpd(System.String)",
+      "editKind": "viewSession",
+      "basis": "指したVPDのファイルを読んで、変形の状態をそれで決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpdFromText(System.String)",
+      "editKind": "viewSession",
+      "basis": "渡したVPD形式の文字列を読んで、変形の状態をそれで決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.UpdateView()",
+      "editKind": "viewSession",
+      "basis": "変形の画面を描き直すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.View.IPEVertexEditConnector.CenterOrigin()",
       "editKind": "viewSession",
       "basis": "変形の中心に重心を使うかどうかという頂点編集の設定を持つだけで、モデルのデータにもファイルにも作用しない。",

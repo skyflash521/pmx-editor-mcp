@@ -14277,6 +14277,45 @@
       }
     },
     {
+      "tool": "motion_bone_rotate",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "motion_bone_scaling",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "motion_bone_translate",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "motion_bone_vme_result",
       "branches": [
         {
@@ -16110,6 +16149,16 @@
       }
     },
     {
+      "tool": "motion_get_client_image",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "motion_get_distance_at_point_vme_path",
       "branches": [
         {
@@ -16774,6 +16823,51 @@
             }
           ]
         }
+      }
+    },
+    {
+      "tool": "motion_get_transform_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "boneRotateXyz"
+          },
+          {
+            "name": "boneScaleXyz"
+          },
+          {
+            "name": "boneTranslateXyz"
+          },
+          {
+            "name": "morphChecker"
+          },
+          {
+            "name": "morphValue"
+          },
+          {
+            "name": "selectedBoneIndex"
+          },
+          {
+            "name": "selectedMorphIndex"
+          }
+        ]
       }
     },
     {
@@ -20595,6 +20689,19 @@
             "shape": "number"
           }
         ]
+      }
+    },
+    {
+      "tool": "motion_reset_transform",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
       }
     },
     {
@@ -24487,6 +24594,36 @@
       }
     },
     {
+      "tool": "motion_set_vpd",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "motion_set_vpd_from_text",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "s",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "motion_set_zero_a_vme_quaternion_value_event_operator",
       "branches": [
         {
@@ -25914,6 +26051,74 @@
       "output": {
         "origin": "hostOutput",
         "element": {}
+      }
+    },
+    {
+      "tool": "motion_update_transform_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "boneRotateXyz"
+            },
+            {
+              "name": "boneScaleXyz"
+            },
+            {
+              "name": "boneTranslateXyz"
+            },
+            {
+              "name": "morphChecker"
+            },
+            {
+              "name": "morphValue"
+            },
+            {
+              "name": "selectedBoneIndex"
+            },
+            {
+              "name": "selectedMorphIndex"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "boneRotateXyz",
+                "boneScaleXyz",
+                "boneTranslateXyz",
+                "morphChecker",
+                "morphValue",
+                "selectedBoneIndex",
+                "selectedMorphIndex"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
       }
     },
     {
