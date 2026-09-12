@@ -14377,6 +14377,29 @@
       }
     },
     {
+      "tool": "motion_c_vme_light",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
       "tool": "motion_c_vme_light_state",
       "branches": [
         {
@@ -14776,7 +14799,94 @@
       }
     },
     {
+      "tool": "motion_clear_vme_bone_result",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_clear_vme_camera_result",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_clear_vme_direction_operator",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_clear_vme_morph_result",
       "branches": [
         {
           "branch": "held",
@@ -14947,6 +15057,29 @@
             "shape": "number"
           }
         ]
+      }
+    },
+    {
+      "tool": "motion_color_vme_light",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
       }
     },
     {
@@ -15323,6 +15456,29 @@
       "output": {}
     },
     {
+      "tool": "motion_cs_vme_camera_position",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
       "tool": "motion_d_vme_bone",
       "branches": [
         {
@@ -15347,6 +15503,29 @@
     },
     {
       "tool": "motion_d_vme_bone_state",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_d_vme_light",
       "branches": [
         {
           "branch": "held",
@@ -15416,6 +15595,29 @@
     },
     {
       "tool": "motion_direction_vme_bone_state",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_direction_vme_light",
       "branches": [
         {
           "branch": "held",
@@ -18208,6 +18410,87 @@
       }
     },
     {
+      "tool": "motion_list_vme_bone_results",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "r"
+                },
+                {
+                  "name": "rotation"
+                },
+                {
+                  "name": "s"
+                },
+                {
+                  "name": "scale"
+                },
+                {
+                  "name": "t"
+                },
+                {
+                  "name": "translation"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_list_vme_bones",
       "branches": [
         {
@@ -18269,6 +18552,153 @@
                 },
                 {
                   "name": "isTransformed"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vme_camera_positions",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "initialPosition"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vme_camera_results",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "fov"
+                },
+                {
+                  "name": "pos"
+                },
+                {
+                  "name": "position"
+                },
+                {
+                  "name": "target"
+                },
+                {
+                  "name": "tgt"
+                },
+                {
+                  "name": "up"
                 }
               ]
             }
@@ -18619,6 +19049,75 @@
       }
     },
     {
+      "tool": "motion_list_vme_morph_results",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "v"
+                },
+                {
+                  "name": "value"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_list_vme_paths",
       "branches": [
         {
@@ -18847,6 +19346,29 @@
             }
           }
         ]
+      }
+    },
+    {
+      "tool": "motion_ls_vme_light",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
       }
     },
     {
@@ -19313,6 +19835,29 @@
       }
     },
     {
+      "tool": "motion_p_vme_camera_position",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
       "tool": "motion_p_vme_camera_state",
       "branches": [
         {
@@ -19406,6 +19951,29 @@
     },
     {
       "tool": "motion_position_vme_camera",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_position_vme_camera_position",
       "branches": [
         {
           "branch": "held",
@@ -25291,6 +25859,29 @@
       }
     },
     {
+      "tool": "motion_t_vme_camera_position",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
       "tool": "motion_t_vme_camera_state",
       "branches": [
         {
@@ -25511,6 +26102,61 @@
       }
     },
     {
+      "tool": "motion_to_camera_state_vme_camera_position",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "state",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "state",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
       "tool": "motion_to_camera_vmd_vme_result",
       "branches": [
         {
@@ -25537,6 +26183,61 @@
                   "name": "margin",
                   "required": true
                 }
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_to_cs_vme_camera_position",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "state",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "state",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "args",
+                "argsList"
               ],
               "required": true
             }
@@ -25618,6 +26319,61 @@
       }
     },
     {
+      "tool": "motion_to_light_state_vme_light",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "state",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "state",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "args",
+                "argsList"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
       "tool": "motion_to_light_vmd_vme_result",
       "branches": [
         {
@@ -25640,6 +26396,61 @@
                   "name": "preSkip",
                   "required": true
                 }
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_to_ls_vme_light",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "args",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "state",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "argsList",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "state",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "args",
+                "argsList"
               ],
               "required": true
             }
@@ -25789,6 +26600,29 @@
     },
     {
       "tool": "motion_translate_vme_bone",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
+    },
+    {
+      "tool": "motion_translate_vme_camera_position",
       "branches": [
         {
           "branch": "held",
@@ -26853,6 +27687,67 @@
     },
     {
       "tool": "motion_update_vme_bones",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "initialPosition",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "initialPosition",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vme_camera_positions",
       "branches": [
         {
           "branch": "held",
