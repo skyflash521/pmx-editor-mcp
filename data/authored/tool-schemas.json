@@ -14213,6 +14213,18 @@
       }
     },
     {
+      "tool": "view_get_body_visibles",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
       "tool": "view_get_client_image",
       "branches": [
         {
@@ -14221,6 +14233,18 @@
         }
       ],
       "output": {}
+    },
+    {
+      "tool": "view_get_joint_visibles",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "element": {}
+      }
     },
     {
       "tool": "view_get_pmd_view_connector",
@@ -14284,6 +14308,21 @@
       }
     },
     {
+      "tool": "view_get_projection_matrix",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "screen",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "view_get_selected_body_indices",
       "branches": [
         {
@@ -14344,6 +14383,29 @@
       }
     },
     {
+      "tool": "view_get_v_axis",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "x"
+          },
+          {
+            "name": "y"
+          },
+          {
+            "name": "z"
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_get_vertex_indices",
       "branches": [
         {
@@ -14368,11 +14430,135 @@
       }
     },
     {
+      "tool": "view_get_view_control",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "cameraPosition"
+          },
+          {
+            "name": "cameraRotateCenter"
+          },
+          {
+            "name": "cameraTarget"
+          },
+          {
+            "name": "cameraUpVector"
+          },
+          {
+            "name": "clientSize"
+          },
+          {
+            "name": "enableVAxis"
+          },
+          {
+            "name": "projectionMatrix"
+          },
+          {
+            "name": "screenPosition"
+          },
+          {
+            "name": "vAxisOrigin"
+          },
+          {
+            "name": "vCursorPosition"
+          },
+          {
+            "name": "viewAxis",
+            "element": {}
+          },
+          {
+            "name": "viewMatrix"
+          },
+          {
+            "name": "viewport"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_get_view_matrix",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "screen",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "view_play_vmd_view",
       "branches": [
         {
           "branch": "only",
           "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_body_visibles",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "v",
+              "required": true,
+              "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_camera_parameter",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "target",
+              "required": true
+            },
+            {
+              "name": "pos",
+              "required": true
+            },
+            {
+              "name": "up",
+              "required": true
+            }
+          ]
         }
       ],
       "output": {
@@ -14397,6 +14583,25 @@
             {
               "name": "upVector",
               "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_joint_visibles",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "v",
+              "required": true,
+              "element": {}
             }
           ]
         }
@@ -14492,6 +14697,32 @@
               "name": "indices",
               "required": true,
               "element": {}
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_v_axis",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "x",
+              "required": true
+            },
+            {
+              "name": "y",
+              "required": true
+            },
+            {
+              "name": "z",
+              "required": true
             }
           ]
         }
@@ -14724,7 +14955,63 @@
       }
     },
     {
-      "tool": "view_update_view",
+      "tool": "view_update_view_control",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "cameraRotateCenter"
+            },
+            {
+              "name": "enableVAxis"
+            },
+            {
+              "name": "vAxisOrigin"
+            },
+            {
+              "name": "vCursorPosition"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "cameraRotateCenter",
+                "enableVAxis",
+                "vAxisOrigin",
+                "vCursorPosition"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_update_view_pmd_view_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_update_view_view_control",
       "branches": [
         {
           "branch": "only",

@@ -4625,6 +4625,42 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.View.IPXPmxViewConnector.GetProjectionMatrix(System.Int32)",
+      "editKind": "read",
+      "basis": "番号で指した画面の投影の行列を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPXPmxViewConnector.GetViewMatrix(System.Int32)",
+      "editKind": "read",
+      "basis": "番号で指した画面の視点の行列を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.ReleaseViewEventListener(PXCPlugin.Event.IPXViewEventListener)",
       "editKind": "directChange",
       "basis": "長寿命のオブジェクトであるリスナへ直に作用して使えなくするので、直接変更型に当たる。"
@@ -4955,6 +4991,233 @@
           "kind": "callLogOnly",
           "comparison": "exists"
         }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.CameraPosition()",
+      "editKind": "read",
+      "basis": "視点の位置を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.CameraRotateCenter()",
+      "editKind": "viewSession",
+      "basis": "視点を回す中心という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_control",
+        "view_update_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.CameraTarget()",
+      "editKind": "read",
+      "basis": "視点が向く先を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.CameraUpVector()",
+      "editKind": "read",
+      "basis": "視点の上の向きを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.ClientSize()",
+      "editKind": "read",
+      "basis": "描画している面の大きさを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.EnableVAxis()",
+      "editKind": "viewSession",
+      "basis": "仮想の軸を効かせるかという画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_control",
+        "view_update_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.GetBodyVisibles()",
+      "editKind": "read",
+      "basis": "剛体ひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.GetJointVisibles()",
+      "editKind": "read",
+      "basis": "ジョイントひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.GetVAxis(out PEPlugin.SDX.V3,out PEPlugin.SDX.V3,out PEPlugin.SDX.V3)",
+      "editKind": "read",
+      "basis": "仮想の軸のX・Y・Zを取り出すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.ProjectionMatrix()",
+      "editKind": "read",
+      "basis": "投影の行列を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.ScreenPosition()",
+      "editKind": "read",
+      "basis": "画面の左上の位置を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.SetBodyVisibles(System.Boolean[])",
+      "editKind": "viewSession",
+      "basis": "剛体ひとつずつの表示を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.SetCameraParameter(PEPlugin.SDX.V3,PEPlugin.SDX.V3,PEPlugin.SDX.V3)",
+      "editKind": "viewSession",
+      "basis": "視点の向く先と位置と上の向きをまとめて決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.SetJointVisibles(System.Boolean[])",
+      "editKind": "viewSession",
+      "basis": "ジョイントひとつずつの表示を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.SetVAxis(PEPlugin.SDX.V3,PEPlugin.SDX.V3,PEPlugin.SDX.V3)",
+      "editKind": "viewSession",
+      "basis": "仮想の軸のX・Y・Zをまとめて決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.UpdateView()",
+      "editKind": "viewSession",
+      "basis": "画面を描き直すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.VAxisOrigin()",
+      "editKind": "viewSession",
+      "basis": "仮想の軸の原点という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_control",
+        "view_update_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.VCursorPosition()",
+      "editKind": "viewSession",
+      "basis": "仮想のカーソルの位置という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_get_view_control",
+        "view_update_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.ViewAxis()",
+      "editKind": "read",
+      "basis": "画面が向いている3つの軸を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.ViewMatrix()",
+      "editKind": "read",
+      "basis": "視点の行列を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.Viewport()",
+      "editKind": "read",
+      "basis": "描画する枠の大きさを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_get_view_control"
       ]
     },
     {
