@@ -173,6 +173,7 @@ namespace PmxEditorMcp
                     GeneratedTools.Calls(),
                     GeneratedTools.Aggregations(),
                     GeneratedTools.Elements());
+                HandleRelease.AddTo(methods);
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);
                 DebugLargeText.AddTo(methods, debugHooks);

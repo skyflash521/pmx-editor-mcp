@@ -46,12 +46,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Dispatched("session_open_pmx_file", Method("OpenPMXFile", "System.Boolean", "path")));
 
             Assert.Contains(
-                "calls.Add(\"session_open_pmx_file\", new ToolCall(\"" + Form
+                "calls.Add(\"session_open_pmx_file\", new ToolCall[] { new ToolCall(\"" + Form
                     + ".OpenPMXFile(System.String)\", new ToolReceiver(ToolReceiverKind.Connection,"
                     + " \"" + Form + "\", EditKind.DirectChange), ToolAccess.Whole(),"
                     + " DangerKind.None, new ToolArgument[] { new ToolArgument(\"path\","
                     + " typeof(global::System.String)) }, new ToolArgument[] {  },"
-                    + " typeof(global::System.Boolean)));",
+                    + " typeof(global::System.Boolean)) });",
                 source.Text);
         }
 
@@ -62,7 +62,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Dispatched("session_undo", Method("Undo", "System.Void")));
 
             Assert.Contains(
-                "new ToolArgument[] {  }, new ToolArgument[] {  }, null));", source.Text);
+                "new ToolArgument[] {  }, new ToolArgument[] {  }, null) });", source.Text);
         }
 
         [Fact]

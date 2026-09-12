@@ -98,6 +98,7 @@ namespace PmxEditorMcp.SignatureDump
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
             IDictionary<string, IList<string>> concrete =
                 ElementCollectionEvidence.ConcreteTypes(inventory, roleOf);
+            ISet<string> built = Built(inventory, bridged, concrete);
             IDictionary<string, IList<string>> ownerPaths = roles.Collections
                 .Where(c => c.Owns && c.OwnerPath.Count != 0)
                 .ToDictionary(
@@ -105,8 +106,8 @@ namespace PmxEditorMcp.SignatureDump
                     c => (IList<string>)c.OwnerPath.Take(c.OwnerPath.Count - 1).ToList(),
                     StringComparer.Ordinal);
 
-            SortedDictionary<string, string> calls =
-                new SortedDictionary<string, string>(StringComparer.Ordinal);
+            SortedDictionary<string, List<string>> calls =
+                new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
             SortedDictionary<string, SortedDictionary<string, List<string>>> fields =
                 new SortedDictionary<string, SortedDictionary<string, List<string>>>(
                     StringComparer.Ordinal);
@@ -129,8 +130,14 @@ namespace PmxEditorMcp.SignatureDump
                 string tool;
                 if (toolNames.TryGetValue(row.SignatureKey, out tool))
                 {
-                    calls.Add(
-                        tool,
+                    List<string> overloads;
+                    if (!calls.TryGetValue(tool, out overloads))
+                    {
+                        overloads = new List<string>();
+                        calls.Add(tool, overloads);
+                    }
+
+                    overloads.Add(
                         Call(
                             row,
                             signature,
@@ -163,7 +170,7 @@ namespace PmxEditorMcp.SignatureDump
                             named,
                             Elements(
                                 row, signature, element, named, listed, signatures, concrete,
-                                byType));
+                                byType, built));
                     }
 
                     Listing(lists, listed, signatures, byType);
@@ -383,15 +390,28 @@ namespace PmxEditorMcp.SignatureDump
                 .Select(p => "new ToolArgument(" + Literal(p.Name) + ", " + TypeOf(p.TypeName) + ")")
                 .ToArray();
 
+            string issues = Issues(row, signature) ? ", " + TypeOf(signature.ValueType) : string.Empty;
+
             return "new ToolCall(" + Literal(signature.Key) + ", "
-                + Receiver(row, signature, path, null, bridged) + ", "
+                + Receiver(row, signature, path, null, Bridges(signature, path, bridged)) + ", "
                 + Access(path, signatures, concrete, byType) + ", "
                 + danger + ", new ToolArgument[] { " + string.Join(", ", arguments) + " }, "
                 + "new ToolArgument[] { " + string.Join(", ", outputs) + " }, "
                 + (string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
                     ? "null"
                     : TypeOf(signature.ValueType))
-                + ")";
+                + issues + ")";
+        }
+
+        /// <summary>
+        /// その行が返す値を台帳へ預けるか。返り値がどのリストにも居ない新しい実体なのかは列挙からは
+        /// 決まらないので、能力対応表がその行へ判じた効果から採る。
+        /// </summary>
+        private static bool Issues(ToolMapRow row, SignatureRecord signature)
+        {
+            return !string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
+                && row.Postcondition != null
+                && row.Postcondition.Any(p => p.EffectType == EffectType.HandleCreated);
         }
 
         /// <summary>
@@ -425,6 +445,17 @@ namespace PmxEditorMcp.SignatureDump
             return written + ", false, " + Access(listed, signatures, concrete, byType) + ")";
         }
 
+        /// <summary>その行の受け手を、橋渡しから得るか。所有の根から得る受け手は当たらない。</summary>
+        private static bool Bridges(
+            SignatureRecord signature, AccessPath path, ISet<string> bridged)
+        {
+            string declaring = TypeDefinitionName.OfElement(signature.DeclaringType);
+
+            return !string.Equals(declaring, PmxTypeName, StringComparison.Ordinal)
+                && (path == null || path.Kind == AccessPathKind.Whole)
+                && bridged.Contains(declaring);
+        }
+
         private static string Aggregation(
             ToolMapRow row,
             TypeRoleRecord owner,
@@ -448,13 +479,19 @@ namespace PmxEditorMcp.SignatureDump
             AccessPath path,
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, IList<string>> concrete,
-            IDictionary<string, TypeRoleRecord> byType)
+            IDictionary<string, TypeRoleRecord> byType,
+            ISet<string> built)
         {
             bool removes = string.Equals(
                 tool, ToolNameRule.OfRole(element, ToolVerb.Remove), StringComparison.Ordinal);
 
             return "new ToolElements(" + (removes ? "true" : "false") + ", "
-                + Receiver(row, signature, path, ToolMapEditKind.DuplicateEdit)
+                + Receiver(
+                    row,
+                    signature,
+                    path,
+                    ToolMapEditKind.DuplicateEdit,
+                    !removes && built.Contains(TypeDefinitionName.OfElement(element.TypeName)))
                 + ", " + Access(path, signatures, concrete, byType) + ")";
         }
 
@@ -472,6 +509,32 @@ namespace PmxEditorMcp.SignatureDump
                         StringComparison.Ordinal))
                     .Select(s => TypeDefinitionName.OfElement(s.ValueType)),
                 StringComparer.Ordinal);
+        }
+
+        /// <summary>
+        /// 橋渡しから得る窓口が作る型。この型の実体は、作った側の流れでしか反映できない。
+        /// </summary>
+        private static ISet<string> Built(
+            InventoryRecord inventory,
+            ISet<string> bridged,
+            IDictionary<string, IList<string>> concrete)
+        {
+            HashSet<string> built = new HashSet<string>(
+                inventory.Signatures
+                    .Where(s => s.MemberKind == MemberKind.Method
+                        && bridged.Contains(TypeDefinitionName.OfElement(s.DeclaringType)))
+                    .Select(s => TypeDefinitionName.OfElement(s.ValueType)),
+                StringComparer.Ordinal);
+
+            foreach (KeyValuePair<string, IList<string>> listed in concrete)
+            {
+                if (listed.Value.Any(built.Contains))
+                {
+                    built.Add(listed.Key);
+                }
+            }
+
+            return built;
         }
 
         /// <summary>相手にするPMXから受け手へ至る道をC#の式にする。</summary>
@@ -567,7 +630,7 @@ namespace PmxEditorMcp.SignatureDump
             SignatureRecord signature,
             AccessPath path,
             ToolMapEditKind? edit = null,
-            ISet<string> bridged = null)
+            bool bridged = false)
         {
             return Receiver(
                 signature.DeclaringType, signature.IsStatic, path, edit ?? row.EditKind, bridged);
@@ -579,21 +642,16 @@ namespace PmxEditorMcp.SignatureDump
             bool isStatic,
             AccessPath path,
             ToolMapEditKind edit,
-            ISet<string> bridged = null)
+            bool bridged = false)
         {
             string declaring = TypeDefinitionName.OfElement(declaringType);
             bool rooted = string.Equals(declaring, PmxTypeName, StringComparison.Ordinal)
                 || (path != null && path.Kind != AccessPathKind.Whole);
             string type = isStatic || rooted ? "null" : Literal(declaring);
-            // 所有の根から得る受け手は、そのPMXの流れで複製と反映を行う。橋渡しから得る受け手だけが
-            // Cプラグイン連携の流れに乗る。
-            string bridge = !rooted && bridged != null && bridged.Contains(declaring)
-                ? ", true"
-                : string.Empty;
 
             return "new ToolReceiver(ToolReceiverKind."
                 + (rooted ? "Pmx" : "Connection") + ", " + type + ", EditKind."
-                + Edit(edit) + bridge + ")";
+                + Edit(edit) + (bridged ? ", true" : string.Empty) + ")";
         }
 
         private static string Edit(ToolMapEditKind kind)
@@ -727,7 +785,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         private static string Compose(
-            IDictionary<string, string> calls,
+            IDictionary<string, List<string>> calls,
             IDictionary<string, SortedDictionary<string, List<string>>> fields,
             IDictionary<string, string> aggregated,
             IDictionary<string, string> elements,
@@ -745,14 +803,17 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("    internal static class GeneratedTools\n");
             text.Append("    {\n");
             text.Append("        /// <summary>SDKのメンバーへ中継するツール。</summary>\n");
-            text.Append("        internal static Dictionary<string, ToolCall> Calls()\n");
+            text.Append(
+                "        internal static Dictionary<string, IList<ToolCall>> Calls()\n");
             text.Append("        {\n");
-            text.Append("            Dictionary<string, ToolCall> calls =\n");
-            text.Append("                new Dictionary<string, ToolCall>(StringComparer.Ordinal);\n");
-            foreach (KeyValuePair<string, string> call in calls)
+            text.Append("            Dictionary<string, IList<ToolCall>> calls =\n");
+            text.Append(
+                "                new Dictionary<string, IList<ToolCall>>(StringComparer.Ordinal);\n");
+            foreach (KeyValuePair<string, List<string>> call in calls)
             {
-                text.Append(Indent).Append("calls.Add(").Append(Literal(call.Key)).Append(", ")
-                    .Append(call.Value).Append(");\n");
+                text.Append(Indent).Append("calls.Add(").Append(Literal(call.Key))
+                    .Append(", new ToolCall[] { ").Append(string.Join(", ", call.Value))
+                    .Append(" });\n");
             }
 
             text.Append("\n");

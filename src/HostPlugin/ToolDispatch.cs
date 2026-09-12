@@ -106,7 +106,7 @@ namespace PmxEditorMcp
             ResidentConnection connection,
             PmxSession pmx,
             PmxSession bridged,
-            IDictionary<string, ToolCall> calls,
+            IDictionary<string, IList<ToolCall>> calls,
             IDictionary<string, ToolFields> aggregations,
             IDictionary<string, ToolElements> elements)
         {
@@ -162,9 +162,9 @@ namespace PmxEditorMcp
 
             ToolDispatch dispatch =
                 new ToolDispatch(relay, receivers, lists, connection, pmx, bridged);
-            foreach (KeyValuePair<string, ToolCall> call in calls)
+            foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
-                ToolCall bound = call.Value;
+                IList<ToolCall> bound = call.Value;
                 methods.Add(call.Key, context => dispatch.Invoke(context, bound));
             }
 
@@ -187,6 +187,109 @@ namespace PmxEditorMcp
                         ? dispatch.Remove(context, bound)
                         : dispatch.Add(context, bound));
             }
+        }
+
+        /// <summary>
+        /// SDKのメンバーへ中継する。同じ名前のオーバーロードは1つのツールへ集まるので、まず
+        /// 渡された引数の名前でどれを呼ぶかを決める。
+        /// </summary>
+        private object Invoke(McpMethodContext context, IList<ToolCall> calls)
+        {
+            ToolCall call;
+            string code;
+            string message;
+            if (!TryOverload(context, calls, out call, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            return Invoke(context, call);
+        }
+
+        /// <summary>
+        /// 渡された引数に合う呼び分け。1つしか持たないツールはそれを採る。2つ以上を持つツールは、
+        /// 受け取る引数がすべて渡されていて、渡された値をその引数として受け取れるもののうち、
+        /// 引数の多いものを採る——引数を足した呼び分けは、その一部だけを取る呼び分けを兼ねる。
+        /// </summary>
+        private static bool TryOverload(
+            McpMethodContext context,
+            IList<ToolCall> calls,
+            out ToolCall chosen,
+            out string code,
+            out string message)
+        {
+            chosen = calls[0];
+            code = null;
+            message = null;
+            if (calls.Count == 1)
+            {
+                return true;
+            }
+
+            IList<IDictionary<string, object>> sets = Sets(context, calls[0]);
+            foreach (ToolCall call in calls.OrderByDescending(c => Given(c).Count))
+            {
+                if (sets.All(s => Given(call).All(a => Receivable(s, a))))
+                {
+                    chosen = call;
+
+                    return true;
+                }
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = "渡された引数に合う呼び分けが無い。";
+
+            return false;
+        }
+
+        /// <summary>
+        /// 引数を探す組。要素を相手にする呼び出しは組を別に渡すので、渡された組ぜんぶを見る。
+        /// </summary>
+        private static IList<IDictionary<string, object>> Sets(
+            McpMethodContext context, ToolCall call)
+        {
+            if (call.Access.Kind != ToolAccessKind.Element)
+            {
+                return new[] { context.Params };
+            }
+
+            object given;
+            if (context.Params.TryGetValue(ArgsName, out given))
+            {
+                return new[] { given as IDictionary<string, object> };
+            }
+
+            if (!context.Params.TryGetValue(ArgsListName, out given))
+            {
+                return new IDictionary<string, object>[0];
+            }
+
+            object[] items = given as object[];
+
+            return items == null
+                ? new IDictionary<string, object>[0]
+                : items.Select(i => i as IDictionary<string, object>).ToList();
+        }
+
+        /// <summary>その引数として受け取れる値が組に入っているか。</summary>
+        private static bool Receivable(IDictionary<string, object> set, ToolArgument argument)
+        {
+            object given;
+            if (set == null || !set.TryGetValue(argument.Name, out given))
+            {
+                return false;
+            }
+
+            object taken;
+            string code;
+            string message;
+            if (argument.Referenced != null)
+            {
+                return TryReference(argument, given, out taken, out code, out message);
+            }
+
+            return ValueInput.TryFromJson(argument.Type, given, out taken, out code, out message);
         }
 
         /// <summary>SDKのメンバーを呼ぶ。要素を相手にする呼び出しは対象の全件へ及ぶ。</summary>
@@ -287,9 +390,31 @@ namespace PmxEditorMcp
                 return Written(call, result);
             }
 
+            if (call.Issues != null)
+            {
+                return Issued(context, call, result);
+            }
+
             return call.Result == null
                 ? ToolEnvelope.Success(null)
                 : Written(call.Result, result);
+        }
+
+        /// <summary>
+        /// 生成物を台帳へ預け、そのハンドルを返す。生成物はエディタの状態の外で生きるので、
+        /// 解放するか、リストへ加えて消費するまで台帳が保つ。
+        /// </summary>
+        private static object Issued(McpMethodContext context, ToolCall call, object result)
+        {
+            if (result == null)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "生成物を返さなかった: " + call.RowKey);
+            }
+
+            // 生成物はメモリの上の値で、手放すのに要る手順を持たない。
+            return ToolEnvelope.Success(
+                context.Handles.Issue(call.Issues.FullName, result, () => { }));
         }
 
         /// <summary>
@@ -2499,7 +2624,7 @@ namespace PmxEditorMcp
         private static bool Targets(ToolCall call)
         {
             return call.Receiver.Kind == ToolReceiverKind.Pmx
-                || call.Arguments.Any(a => a.Injected);
+                || call.Arguments.Any(a => a.Injected || a.Referenced != null);
         }
 
         /// <summary>知らない名前の引数を渡す要求を断る。名前の検証は適用より先に済ませる。</summary>

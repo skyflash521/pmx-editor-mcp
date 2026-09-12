@@ -274,7 +274,8 @@ namespace PmxEditorMcp
             DangerKind danger,
             IList<ToolArgument> arguments,
             IList<ToolArgument> outputs,
-            Type result)
+            Type result,
+            Type issues = null)
         {
             if (rowKey == null)
             {
@@ -308,6 +309,7 @@ namespace PmxEditorMcp
             Arguments = new ReadOnlyCollection<ToolArgument>(arguments);
             Outputs = new ReadOnlyCollection<ToolArgument>(outputs);
             Result = result;
+            Issues = issues;
         }
 
         /// <summary>呼ぶ行のキー。</summary>
@@ -330,6 +332,12 @@ namespace PmxEditorMcp
 
         /// <summary>返す値の宣言型。値を返さないメンバーでは null。</summary>
         public Type Result { get; }
+
+        /// <summary>
+        /// 返す値を台帳へ預ける型。生成物を返す行だけが持ち、応答はその型のハンドルになる。
+        /// ほかは null で、返す値をそのまま写す。
+        /// </summary>
+        public Type Issues { get; }
     }
 
     /// <summary>実行時の型ごとに集める項目。型で分かれないツールは1件だけを持つ。</summary>

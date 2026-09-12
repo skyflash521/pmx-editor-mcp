@@ -205,6 +205,47 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
+        /// 指したハンドルをまとめて解放する。指したものとその依存子を合わせ、重なりを除いて
+        /// それぞれをちょうど一度だけ解放する。どれか1つでも台帳に無ければ、何も解放せず偽。
+        /// </summary>
+        public bool TryReleaseAll(IEnumerable<int> ids, out HandleReleaseResult result)
+        {
+            if (ids == null)
+            {
+                throw new ArgumentNullException(nameof(ids));
+            }
+
+            result = null;
+            int[] listed = ids.ToArray();
+            List<Taken> taken;
+            lock (_gate)
+            {
+                if (listed.Any(id => !_entries.ContainsKey(id)))
+                {
+                    return false;
+                }
+
+                List<int> order = new List<int>();
+                foreach (int id in listed)
+                {
+                    foreach (int dependent in Dependents(id).Concat(new[] { id }))
+                    {
+                        if (!order.Contains(dependent))
+                        {
+                            order.Add(dependent);
+                        }
+                    }
+                }
+
+                taken = Take(order);
+            }
+
+            result = ReleaseInOrder(taken);
+
+            return true;
+        }
+
+        /// <summary>
         /// 指定したIDより後に発行したハンドルを解放し、失効させる。解放の順はまとめて解放するときと
         /// 同じく子から依存元へ。結果を破棄する呼び出しの後始末に使うもので、台帳は閉じない。
         /// </summary>

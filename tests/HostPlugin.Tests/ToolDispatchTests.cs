@@ -385,9 +385,23 @@ namespace PmxEditorMcp.Tests
             return new ToolReceiver(ToolReceiverKind.Connection, TargetType, EditKind.DirectChange);
         }
 
-        private static IDictionary<string, ToolCall> Calls()
+        /// <summary>呼び分けを1つだけ持つツールの表。題材はどれも1つだけを持つ。</summary>
+        private static IDictionary<string, IList<ToolCall>> Singles(
+            IDictionary<string, ToolCall> calls)
         {
-            return new Dictionary<string, ToolCall>(StringComparer.Ordinal)
+            Dictionary<string, IList<ToolCall>> built =
+                new Dictionary<string, IList<ToolCall>>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, ToolCall> call in calls)
+            {
+                built.Add(call.Key, new[] { call.Value });
+            }
+
+            return built;
+        }
+
+        private static IDictionary<string, IList<ToolCall>> Calls()
+        {
+            return Singles(new Dictionary<string, ToolCall>(StringComparer.Ordinal)
             {
                 {
                     "session_save",
@@ -433,7 +447,7 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         null)
                 },
-            };
+            });
         }
 
         /// <summary>型で分かれないツールの、1つだけの項目の組。</summary>

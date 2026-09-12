@@ -1290,6 +1290,84 @@
       }
     },
     {
+      "tool": "model_body",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_bone",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_bone_morph_offset",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "bone",
+              "required": true
+            },
+            {
+              "name": "translation",
+              "required": true
+            },
+            {
+              "name": "rotation",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_bone_node_item",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "model_clear_material_morph_offset",
       "branches": [
         {
@@ -1577,6 +1655,16 @@
       }
     },
     {
+      "tool": "model_face",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "model_from_file_pmx",
       "branches": [
         {
@@ -1714,6 +1802,130 @@
           }
         ]
       }
+    },
+    {
+      "tool": "model_group_morph_offset",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "morph",
+              "required": true
+            },
+            {
+              "name": "ratio",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_ik_link",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "bone",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "bone",
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "bounded",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "bone",
+              "required": true
+            },
+            {
+              "name": "low",
+              "required": true
+            },
+            {
+              "name": "high",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_impulse_morph_offset",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "body",
+              "required": true
+            },
+            {
+              "name": "local",
+              "required": true
+            },
+            {
+              "name": "velocity",
+              "required": true
+            },
+            {
+              "name": "torque",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_joint",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
     },
     {
       "tool": "model_list_bodies",
@@ -4891,6 +5103,71 @@
       }
     },
     {
+      "tool": "model_material",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_material_morph_offset",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_morph",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_morph_node_item",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "morph",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_node",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
       "tool": "model_normalize_pmx",
       "branches": [
         {
@@ -4909,6 +5186,16 @@
         "origin": "hostOutput",
         "shape": "null_value"
       }
+    },
+    {
+      "tool": "model_pmx",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
     },
     {
       "tool": "model_remove_bodies",
@@ -6497,6 +6784,26 @@
           }
         ]
       }
+    },
+    {
+      "tool": "model_soft_body",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_soft_body_anchor",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
     },
     {
       "tool": "model_to_file_pmx",
@@ -12443,6 +12750,74 @@
           }
         ]
       }
+    },
+    {
+      "tool": "model_uv_morph_offset",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "vertex",
+              "required": true
+            },
+            {
+              "name": "offset",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_vertex",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "model_vertex_morph_offset",
+      "branches": [
+        {
+          "branch": "plain",
+          "inputs": []
+        },
+        {
+          "branch": "filled",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "vertex",
+              "required": true
+            },
+            {
+              "name": "offset",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
     },
     {
       "tool": "session_append_pmd_file",

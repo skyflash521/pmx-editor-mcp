@@ -284,6 +284,495 @@
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。"
     },
     {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Body()",
+      "editKind": "read",
+      "basis": "新しい剛体を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_bodies",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Bone()",
+      "editKind": "read",
+      "basis": "新しいボーンを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_bones",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.BoneMorphOffset()",
+      "editKind": "read",
+      "basis": "新しいボーンモーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.BoneMorphOffset(PEPlugin.Pmx.IPXBone,PEPlugin.SDX.V3,PEPlugin.SDX.Q)",
+      "editKind": "read",
+      "basis": "新しいボーンモーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.BoneNodeItem()",
+      "editKind": "read",
+      "basis": "新しい表示枠のボーン要素を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_node_items",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.BoneNodeItem(PEPlugin.Pmx.IPXBone)",
+      "editKind": "read",
+      "basis": "新しい表示枠のボーン要素を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_node_items",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Face()",
+      "editKind": "read",
+      "basis": "新しい面を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.GroupMorphOffset()",
+      "editKind": "read",
+      "basis": "新しいグループモーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.GroupMorphOffset(PEPlugin.Pmx.IPXMorph,System.Single)",
+      "editKind": "read",
+      "basis": "新しいグループモーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.IKLink()",
+      "editKind": "read",
+      "basis": "新しいIKリンクを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_ik_links",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.IKLink(PEPlugin.Pmx.IPXBone)",
+      "editKind": "read",
+      "basis": "新しいIKリンクを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_ik_links",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.IKLink(PEPlugin.Pmx.IPXBone,PEPlugin.SDX.V3,PEPlugin.SDX.V3)",
+      "editKind": "read",
+      "basis": "新しいIKリンクを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_ik_links",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.ImpulseMorphOffset()",
+      "editKind": "read",
+      "basis": "新しいインパルスモーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.ImpulseMorphOffset(PEPlugin.Pmx.IPXBody,System.Boolean,PEPlugin.SDX.V3,PEPlugin.SDX.V3)",
+      "editKind": "read",
+      "basis": "新しいインパルスモーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Joint()",
+      "editKind": "read",
+      "basis": "新しいJointを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_joints",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Material()",
+      "editKind": "read",
+      "basis": "新しい材質を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_materials",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.MaterialMorphOffset()",
+      "editKind": "read",
+      "basis": "新しい材質モーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Morph()",
+      "editKind": "read",
+      "basis": "新しいモーフを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morphs",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.MorphNodeItem()",
+      "editKind": "read",
+      "basis": "新しい表示枠のモーフ要素を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_node_items",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.MorphNodeItem(PEPlugin.Pmx.IPXMorph)",
+      "editKind": "read",
+      "basis": "新しい表示枠のモーフ要素を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_node_items",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Node()",
+      "editKind": "read",
+      "basis": "新しい表示枠を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_nodes",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Pmx()",
+      "editKind": "read",
+      "basis": "新しいPMXを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_headers",
+          "observerArgs": {
+            "pmxHandle": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.SoftBody()",
+      "editKind": "read",
+      "basis": "新しいSoftBodyを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_soft_bodies",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.SoftBodyAnchor()",
+      "editKind": "read",
+      "basis": "新しいSoftBodyのアンカーを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_soft_body_anchors",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.UVMorphOffset()",
+      "editKind": "read",
+      "basis": "新しいUVモーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.UVMorphOffset(PEPlugin.Pmx.IPXVertex,PEPlugin.SDX.V4)",
+      "editKind": "read",
+      "basis": "新しいUVモーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.Vertex()",
+      "editKind": "read",
+      "basis": "新しい頂点を作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_vertices",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.VertexMorphOffset()",
+      "editKind": "read",
+      "basis": "新しい頂点モーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPXPmxBuilder.VertexMorphOffset(PEPlugin.Pmx.IPXVertex,PEPlugin.SDX.V3)",
+      "editKind": "read",
+      "basis": "新しい頂点モーフオフセットを作って返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "model_list_morph_offsets",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXBody.Bone()",
       "editKind": "read",
       "basis": "関連するボーンを返すだけで、エディタの状態を動かさない。"

@@ -45,6 +45,14 @@ namespace PmxEditorMcp.Tests
 
         private const string MakerType = "Sdk.Maker";
 
+        private const string MakeKey = "Sdk.Maker.Make()";
+
+        private const string MakeLabelledKey = "Sdk.Maker.Make(System.String)";
+
+        private const string MakeMarkedKey = "Sdk.Maker.Make(System.String,System.Int32)";
+
+        private const string MakeCountedKey = "Sdk.Maker.Make(System.Int32)";
+
         private const string AttachKey = "Sdk.Maker.Attach(Sdk.Model,Sdk.Item,System.String)";
 
         private const string BridgeReadKey = "Sdk.Bridge.GetModel(Sdk.Connector)";
@@ -69,6 +77,8 @@ namespace PmxEditorMcp.Tests
         private object _attachedModel;
 
         private object _attachedItem;
+
+        private string _madeBy;
 
         private readonly Model _bridged = new Model();
 
@@ -1100,6 +1110,88 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(true, _bridgeReflected[2]);
         }
 
+        [Fact]
+        public void AMemberThatMakesSomethingAnswersWithItsHandle()
+        {
+            HandleLedger handles = Ledger();
+
+            IDictionary<string, object> envelope = Call("model_make_item", Arguments(), handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            object made = envelope["value"];
+            Assert.IsType<int>(made);
+            object held;
+            Assert.True(handles.TryGet((int)made, typeof(Item).FullName, out held));
+            Assert.IsType<Item>(held);
+        }
+
+        [Fact]
+        public void TheHandleOfSomethingMadeCanPointTheElementTools()
+        {
+            HandleLedger handles = Ledger();
+            int handle = (int)Call("model_make_item", Arguments(), handles)["value"];
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles);
+
+            Assert.Single(Items(Value(envelope)));
+        }
+
+        [Theory]
+        [InlineData(MakeKey)]
+        [InlineData(MakeLabelledKey)]
+        [InlineData(MakeMarkedKey)]
+        public void TheOverloadThatTakesTheGivenArgumentsIsTheOneThatRuns(string expected)
+        {
+            IDictionary<string, object> arguments = Arguments();
+            if (expected != MakeKey)
+            {
+                arguments.Add("label", "名");
+            }
+
+            if (expected == MakeMarkedKey)
+            {
+                arguments.Add("mark", 3);
+            }
+
+            Assert.True((bool)Call("model_make_item", arguments)["ok"], "包みが成功でない。");
+            Assert.Equal(expected, _madeBy);
+        }
+
+        [Theory]
+        [InlineData("名", MakeLabelledKey)]
+        [InlineData(3, MakeCountedKey)]
+        public void OverloadsThatTakeTheSameNameAreToldApartByTheShapeOfTheValue(
+            object given, string expected)
+        {
+            Assert.True(
+                (bool)Call("model_make_item", Arguments("label", given))["ok"],
+                "包みが成功でない。");
+            Assert.Equal(expected, _madeBy);
+        }
+
+        [Fact]
+        public void AValueThatNoOverloadCanTakeIsRefused()
+        {
+            IDictionary<string, object> envelope = Call(
+                "model_make_item", Arguments("label", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Null(_madeBy);
+        }
+
+        [Fact]
+        public void AnArgumentOfAnOverloadWhoseOthersAreMissingIsRefused()
+        {
+            IDictionary<string, object> envelope = Call(
+                "model_make_item", Arguments("mark", 3));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Null(_madeBy);
+        }
+
         private static IDictionary<string, object> Assignment(int parent, int handle)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal)
@@ -1247,6 +1339,10 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { NoteKey, (target, arguments) => ((Model)target).Note },
+                    { MakeKey, (target, arguments) => Made(MakeKey) },
+                    { MakeLabelledKey, (target, arguments) => Made(MakeLabelledKey) },
+                    { MakeMarkedKey, (target, arguments) => Made(MakeMarkedKey) },
+                    { MakeCountedKey, (target, arguments) => Made(MakeCountedKey) },
                     { BridgeReadKey, (target, arguments) => _bridged },
                     {
                         BridgeCommitKey,
@@ -1318,6 +1414,14 @@ namespace PmxEditorMcp.Tests
                 };
 
             return new SdkRelayTable(SdkVersion, Digest, calls, new string[0]);
+        }
+
+        /// <summary>どの呼び分けが走ったかを控えて、生成物を返す。</summary>
+        private object Made(string rowKey)
+        {
+            _madeBy = rowKey;
+
+            return new Item();
         }
 
         private static object Written(Item item, string label)
@@ -1505,9 +1609,38 @@ namespace PmxEditorMcp.Tests
                 typeof(Group));
         }
 
-        private static IDictionary<string, ToolCall> Calls()
+        /// <summary>生成物を返す呼び分け1つ。引数はそのまま受け取る。</summary>
+        private static ToolCall Making(string rowKey, params ToolArgument[] arguments)
         {
-            return new Dictionary<string, ToolCall>(StringComparer.Ordinal)
+            return new ToolCall(
+                rowKey,
+                new ToolReceiver(ToolReceiverKind.Connection, MakerType, EditKind.Read),
+                ToolAccess.Whole(),
+                DangerKind.None,
+                arguments,
+                new ToolArgument[0],
+                typeof(Item),
+                typeof(Item));
+        }
+
+        /// <summary>呼び分けを1つだけ持つツールの表。題材はどれも1つだけを持つ。</summary>
+        private static IDictionary<string, IList<ToolCall>> Singles(
+            IDictionary<string, ToolCall> calls)
+        {
+            Dictionary<string, IList<ToolCall>> built =
+                new Dictionary<string, IList<ToolCall>>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, ToolCall> call in calls)
+            {
+                built.Add(call.Key, new[] { call.Value });
+            }
+
+            return built;
+        }
+
+        private static IDictionary<string, IList<ToolCall>> Calls()
+        {
+            IDictionary<string, IList<ToolCall>> calls =
+                Singles(new Dictionary<string, ToolCall>(StringComparer.Ordinal)
             {
                 {
                     "model_clear_item",
@@ -1580,7 +1713,22 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         null)
                 },
-            };
+            });
+
+            calls.Add(
+                "model_make_item",
+                new[]
+                {
+                    Making(MakeKey),
+                    Making(MakeLabelledKey, new ToolArgument("label", typeof(string))),
+                    Making(
+                        MakeMarkedKey,
+                        new ToolArgument("label", typeof(string)),
+                        new ToolArgument("mark", typeof(int))),
+                    Making(MakeCountedKey, new ToolArgument("label", typeof(int))),
+                });
+
+            return calls;
         }
 
         private static IDictionary<string, ToolFields> Aggregations()
