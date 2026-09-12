@@ -7792,6 +7792,32 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeDirectionEventOperator.Set(System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの方向を、渡した回転で置くか、足すか、掛ける形でイベントに積む。積んだ分は回転量として効く。方向のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeDirectionEventOperator.Set(System.Int32,System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる方向を、渡した回転で置くか、足すか、掛ける形でイベントに積む。積んだ分は回転量として効く。方向のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeDirectionOperator.Clear()",
       "editKind": "directChange",
       "basis": "持っている方向を初期化する。方向は長寿命の持ち物なので、それへ直に作用する。",
@@ -8482,6 +8508,84 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.Move(System.Int32,System.Int32,SlimDX.Vector3,SlimDX.Vector3,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲を渡した2つの位置の間で動かすイベントを、始めのコマへ置く位置と速度として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.MoveFree(System.Int32,SlimDX.Vector3[],System.Int32)",
+      "editKind": "directChange",
+      "basis": "渡した位置の並びを、始めのコマから1コマずつ辿るイベントとして積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.MoveRange(System.Int32,System.Int32,SlimDX.Vector3,SlimDX.Vector3,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲を渡した2つの位置の間で動かすイベントを、範囲のコマすべてへ置く位置として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.MoveTo(System.Int32,System.Int32,SlimDX.Vector3,System.Int32)",
+      "editKind": "directChange",
+      "basis": "始めのコマの位置から渡した位置まで動かすイベントを、始めのコマへ置く目標までの速度と、終わりのコマへ置く速度の初期化と目標の位置として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.Set(System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの位置を、渡した位置で置くか、足すか、掛ける形でイベントに積む。積んだ分は移動量として効く。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.Set(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる位置を、渡した位置で置くか、足すか、掛ける形でイベントに積む。積んだ分は移動量として効く。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.Clear()",
       "editKind": "directChange",
       "basis": "持っている位置を初期化する。位置は長寿命の持ち物なので、それへ直に作用する。",
@@ -8582,6 +8686,123 @@
       "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.Set(SlimDX.Vector3,PEPlugin.Vme.OpType)",
       "editKind": "directChange",
       "basis": "いまの位置を、渡した位置で置くか、足すか、掛ける。置いた分は移動量として持つ。位置は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.Set(System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの回転量を、渡した回転で置くか、足すか、掛ける形でイベントに積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.Set(System.Int32,System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる回転量を、渡した回転で置くか、足すか、掛ける形でイベントに積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.SetA(System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの回転の加速度を、渡した回転で置くか、足すか、掛ける形でイベントに積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.SetA(System.Int32,System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる回転の加速度を、渡した回転で置くか、足すか、掛ける形でイベントに積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.SetV(System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの回転の速度を、渡した回転で置くか、足すか、掛ける形でイベントに積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.SetV(System.Int32,System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる回転の速度を、渡した回転で置くか、足すか、掛ける形でイベントに積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.SetZero(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの回転量を初期化するイベントを積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.SetZeroA(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの回転の加速度を初期化するイベントを積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValueEventOperator.SetZeroV(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの回転の速度を初期化するイベントを積む。回転量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9083,6 +9304,32 @@
           "observerArgs": {
             "handles": "result:"
           },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeScalingEventOperator.SetGS(System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "そのコマの全体にかかる大きさを、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。大きさのイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeScalingEventOperator.SetGS(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
+      "editKind": "directChange",
+      "basis": "コマの範囲にわたる全体にかかる大きさを、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。大きさのイベント設定は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
           "comparison": "exists"
         }
       ]
