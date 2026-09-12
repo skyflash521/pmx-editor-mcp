@@ -86,7 +86,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.TokenLimit,
                     sdkShapes,
                     inputs.DangerousTools(inventory),
-                    inputs.ConditionalDangerousTools(inventory));
+                    inputs.ConditionalDangerousTools(inventory),
+                    inputs.SuppressingTools(inventory));
             }
             catch (InvalidOperationException exception)
             {

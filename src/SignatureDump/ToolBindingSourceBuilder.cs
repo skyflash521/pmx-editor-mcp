@@ -41,6 +41,17 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string VoidTypeName = "System.Void";
 
+        private const string FlagTypeName = "System.Boolean";
+
+        /// <summary>Undoの抑止を受け取る共通引数の対象名。</summary>
+        private const string SuppressUndoArgument = "suppressUndo";
+
+        /// <summary>Undoの記録を止めるメンバーの名前。</summary>
+        private const string StopUndoMember = "LockUndo";
+
+        /// <summary>止めたUndoの記録を戻すメンバーの名前。</summary>
+        private const string ResumeUndoMember = "UnlockUndo";
+
         private const string PmxTypeName = "PEPlugin.Pmx.IPXPmx";
 
         /// <summary>Cプラグイン連携の橋渡しの型。ここから得る受け手は、そちらの流れで扱う。</summary>
@@ -213,7 +224,8 @@ namespace PmxEditorMcp.SignatureDump
                     elements,
                     lists,
                     Flows(assignments, signatures),
-                    signatures),
+                    signatures,
+                    assignments),
                 calls.Keys.ToList(),
                 fields.Keys.ToList(),
                 elements.Keys.ToList());
@@ -725,14 +737,60 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>複製編集の流れ1つをC#の式にする。</summary>
         private static string FlowText(
+            CommonAssignmentTable assignments,
             IDictionary<string, SignatureRecord> signatures,
             string read,
             string commit,
             bool received)
         {
+            string paired = Suppressing(signatures, commit)
+                ? string.Empty
+                : ", " + Literal(UndoRow(assignments, signatures, commit, StopUndoMember))
+                    + ", " + Literal(UndoRow(assignments, signatures, commit, ResumeUndoMember));
+
             return "new PmxFlow(" + Literal(read) + ", " + Literal(commit) + ", "
                 + (received ? Literal(DeclaringTypeOf(read)) : "null") + ", "
-                + Slots(signatures, read) + ", " + Slots(signatures, commit) + ")";
+                + Slots(signatures, read) + ", " + Slots(signatures, commit) + paired + ")";
+        }
+
+        /// <summary>その反映が、Undoの記録を止めるかどうかを引数で取るか。</summary>
+        private static bool Suppressing(
+            IDictionary<string, SignatureRecord> signatures, string commit)
+        {
+            return signatures[commit].Parameters.Any(
+                p => string.Equals(p.TypeName, FlagTypeName, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// 反映と同じ受け手が持つ、Undoの記録を動かす行。抑止の共通引数へ割り当てた行のうち、
+        /// その名前のものを採る。1件に決まらなければ組み立てを止める。
+        /// </summary>
+        private static string UndoRow(
+            CommonAssignmentTable assignments,
+            IDictionary<string, SignatureRecord> signatures,
+            string commit,
+            string memberName)
+        {
+            string owner = DeclaringTypeOf(commit);
+            string[] found = assignments.Assignments
+                .Where(a => a.Assignment == CommonAssignmentKind.CommonArg
+                    && string.Equals(a.Target, SuppressUndoArgument, StringComparison.Ordinal)
+                    && signatures.ContainsKey(a.SignatureKey)
+                    && string.Equals(
+                        signatures[a.SignatureKey].DeclaringType, owner, StringComparison.Ordinal)
+                    && string.Equals(
+                        signatures[a.SignatureKey].MemberName, memberName, StringComparison.Ordinal))
+                .Select(a => a.SignatureKey)
+                .OrderBy(k => k, StringComparer.Ordinal)
+                .ToArray();
+            if (found.Length != 1)
+            {
+                throw new InvalidOperationException(
+                    "Undoの記録を動かす行が1件に決まらない: " + memberName
+                        + "(" + found.Length + " 件)");
+            }
+
+            return found[0];
         }
 
         private static string Flow(
@@ -791,7 +849,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> elements,
             IDictionary<string, string> lists,
             IList<string> flows,
-            IDictionary<string, SignatureRecord> signatures)
+            IDictionary<string, SignatureRecord> signatures,
+            CommonAssignmentTable assignments)
         {
             StringBuilder text = new StringBuilder();
             text.Append("// この本文はビルドのたびに作り直す。手で直さない。\n");
@@ -889,13 +948,15 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("    {\n");
             text.Append("        /// <summary>PMXのコネクタが受け持つ、複製編集の流れ。</summary>\n");
             text.Append("        internal static readonly PmxFlow Current =\n");
-            text.Append("            ").Append(FlowText(signatures, flows[0], flows[1], true))
+            text.Append("            ")
+                .Append(FlowText(assignments, signatures, flows[0], flows[1], true))
                 .Append(";\n");
             text.Append("\n");
             text.Append(
                 "        /// <summary>Cプラグイン連携の橋渡しが受け持つ、複製編集の流れ。</summary>\n");
             text.Append("        internal static readonly PmxFlow Bridge =\n");
-            text.Append("            ").Append(FlowText(signatures, flows[2], flows[3], false))
+            text.Append("            ")
+                .Append(FlowText(assignments, signatures, flows[2], flows[3], false))
                 .Append(";\n");
             text.Append("\n");
             text.Append("        /// <summary>PMXの実体の型。ハンドルの型を見分けるのに使う。</summary>\n");

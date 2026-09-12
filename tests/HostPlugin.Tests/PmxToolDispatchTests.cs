@@ -401,14 +401,16 @@ namespace PmxEditorMcp.Tests
                     { ConnectorType, connection => new object() },
                 };
             ResidentConnection connection = Connection();
+            PmxSession session = Session(relay, receivers, connection);
             ToolDispatch.AddTo(
                 methods,
                 relay,
                 receivers,
                 Lists(),
                 connection,
+                session,
                 Session(relay, receivers, connection),
-                Session(relay, receivers, connection),
+                new UndoRecovery(new UndoSuppression(_log), session.UndoLock),
                 Calls(),
                 Aggregations(),
                 Elements());
@@ -426,7 +428,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>題材の複製編集の流れ。受け手を取り、複製を1つだけ渡す形とする。</summary>
-        private static PmxSession Session(
+        private PmxSession Session(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
             ResidentConnection connection)
@@ -441,7 +443,8 @@ namespace PmxEditorMcp.Tests
                     ConnectorType,
                     new FlowSlot[0],
                     new[] { FlowSlot.Pmx }),
-                typeof(Model));
+                typeof(Model),
+                new UndoSuppression(_log));
         }
 
         private HandleLedger Ledger()

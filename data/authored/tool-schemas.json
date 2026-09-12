@@ -13391,6 +13391,50 @@
       }
     },
     {
+      "tool": "session_find_c_plugins",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "menuText",
+              "required": true,
+              "nullable": true
+            },
+            {
+              "name": "contains",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "session_find_pe_plugins",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "menuText",
+              "required": true,
+              "nullable": true
+            },
+            {
+              "name": "contains",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
       "tool": "session_get_form_connector",
       "branches": [
         {
@@ -13425,6 +13469,93 @@
           },
           {
             "name": "undoCount"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "session_get_share_buffer",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "key",
+              "required": true
+            },
+            {
+              "name": "clear",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_get_share_text",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "key",
+              "required": true
+            },
+            {
+              "name": "clear",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_get_share_value",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "key",
+              "required": true
+            },
+            {
+              "name": "clear",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_get_system_control",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "cPluginCount"
+          },
+          {
+            "name": "pePluginCount"
           }
         ]
       }
@@ -13540,6 +13671,57 @@
       }
     },
     {
+      "tool": "session_remove_share_data",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "key",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_run_c_plugin",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "n",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_run_pe_plugin",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "n",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "session_save_material_name",
       "branches": [
         {
@@ -13592,6 +13774,25 @@
         "origin": "hostOutput",
         "shape": "null_value"
       }
+    },
+    {
+      "tool": "session_set_share_data",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "key",
+              "required": true
+            },
+            {
+              "name": "data",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
     },
     {
       "tool": "session_undo",

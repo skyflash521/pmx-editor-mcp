@@ -16,6 +16,9 @@ namespace PmxEditorMcp
         /// <summary>危険操作の確認を受け取る共通引数の名前。</summary>
         public const string ConfirmName = "confirm";
 
+        /// <summary>Undoの記録を止めることを頼む共通引数の名前。</summary>
+        public const string SuppressName = "suppressUndo";
+
         /// <summary>返す項目を選ぶ共通引数の名前。</summary>
         public const string FieldsName = "fields";
 
@@ -81,13 +84,16 @@ namespace PmxEditorMcp
 
         private readonly PmxSession _bridged;
 
+        private readonly UndoRecovery _recovery;
+
         private ToolDispatch(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
             IDictionary<string, SdkList> lists,
             ResidentConnection connection,
             PmxSession pmx,
-            PmxSession bridged)
+            PmxSession bridged,
+            UndoRecovery recovery)
         {
             _relay = relay;
             _receivers = receivers;
@@ -95,6 +101,7 @@ namespace PmxEditorMcp
             _connection = connection;
             _pmx = pmx;
             _bridged = bridged;
+            _recovery = recovery;
         }
 
         /// <summary>結び付きの表が持つツールをすべて登録する。</summary>
@@ -106,6 +113,7 @@ namespace PmxEditorMcp
             ResidentConnection connection,
             PmxSession pmx,
             PmxSession bridged,
+            UndoRecovery recovery,
             IDictionary<string, IList<ToolCall>> calls,
             IDictionary<string, ToolFields> aggregations,
             IDictionary<string, ToolElements> elements)
@@ -145,6 +153,11 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(bridged));
             }
 
+            if (recovery == null)
+            {
+                throw new ArgumentNullException(nameof(recovery));
+            }
+
             if (calls == null)
             {
                 throw new ArgumentNullException(nameof(calls));
@@ -161,11 +174,13 @@ namespace PmxEditorMcp
             }
 
             ToolDispatch dispatch =
-                new ToolDispatch(relay, receivers, lists, connection, pmx, bridged);
+                new ToolDispatch(relay, receivers, lists, connection, pmx, bridged, recovery);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
                 IList<ToolCall> bound = call.Value;
-                methods.Add(call.Key, context => dispatch.Invoke(context, bound));
+                methods.Add(
+                    call.Key,
+                    dispatch.Guarded(Edit(bound), context => dispatch.Invoke(context, bound)));
             }
 
             foreach (KeyValuePair<string, ToolFields> aggregation in aggregations)
@@ -173,9 +188,11 @@ namespace PmxEditorMcp
                 ToolFields bound = aggregation.Value;
                 methods.Add(
                     aggregation.Key,
-                    context => bound.Writes
-                        ? dispatch.Write(context, bound)
-                        : dispatch.Read(context, bound));
+                    dispatch.Guarded(
+                        bound.Receiver.Edit,
+                        context => bound.Writes
+                            ? dispatch.Write(context, bound)
+                            : dispatch.Read(context, bound)));
             }
 
             foreach (KeyValuePair<string, ToolElements> element in elements)
@@ -183,10 +200,161 @@ namespace PmxEditorMcp
                 ToolElements bound = element.Value;
                 methods.Add(
                     element.Key,
-                    context => bound.Removes
-                        ? dispatch.Remove(context, bound)
-                        : dispatch.Add(context, bound));
+                    dispatch.Guarded(
+                        bound.Receiver.Edit,
+                        context => bound.Removes
+                            ? dispatch.Remove(context, bound)
+                            : dispatch.Add(context, bound)));
             }
+        }
+
+        /// <summary>呼び分けが揃って持つ編集の分類。揃っていなければ組み立てが誤っている。</summary>
+        private static EditKind Edit(IList<ToolCall> calls)
+        {
+            EditKind[] kinds = calls.Select(c => c.Receiver.Edit).Distinct().ToArray();
+            if (kinds.Length != 1)
+            {
+                throw new InvalidOperationException(
+                    "呼び分けの編集の分類が揃っていない: " + calls[0].RowKey);
+            }
+
+            return kinds[0];
+        }
+
+        /// <summary>
+        /// Undoの記録まわりの前置きを済ませてからツールを呼ぶ。止めることを頼めない分類が頼んで
+        /// いれば断る。止めたまま戻せていないものがあれば、まず戻しにいき、戻らなければ分類ごとの
+        /// 決まりで断るか警告を添える。
+        /// </summary>
+        private McpMethod Guarded(EditKind kind, McpMethod inner)
+        {
+            return context =>
+            {
+                bool suppress;
+                string code;
+                string message;
+                if (!TrySuppress(context, out suppress, out code, out message)
+                    || !UndoGate.TryAcceptSuppress(
+                        kind,
+                        context.Params.ContainsKey(PmxSession.HandleName),
+                        suppress,
+                        out code,
+                        out message))
+                {
+                    return ToolEnvelope.Failure(code, message);
+                }
+
+                List<string> notices = new List<string>();
+                string warning;
+                if (!_recovery.TryRecover(context.Ui)
+                    && !UndoGate.TryProceedWithLeftover(kind, out code, out message, out warning))
+                {
+                    return ToolEnvelope.Failure(code, message);
+                }
+
+                if (_recovery.TryTakeNotice())
+                {
+                    notices.Add(UndoGate.RecoveredWarning);
+                }
+
+                object answered = inner(context);
+                if (_recovery.HasLeftover)
+                {
+                    notices.Add(UndoGate.LeftoverWarning);
+                }
+
+                return notices.Count == 0 ? answered : Noted(answered, notices);
+            };
+        }
+
+        /// <summary>
+        /// 包みへ知らせを載せる。成功した呼び出しには警告として足し、失敗した呼び出しには誤りの
+        /// 説明へ足す——誤りだけを読む側にも、Undoの記録が止まったままであることが要るためである。
+        /// </summary>
+        private static object Noted(object answered, IList<string> notices)
+        {
+            IDictionary<string, object> envelope = answered as IDictionary<string, object>;
+            if (envelope == null)
+            {
+                return answered;
+            }
+
+            Dictionary<string, object> written =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, object> member in envelope)
+            {
+                written.Add(member.Key, member.Value);
+            }
+
+            object failed;
+            IDictionary<string, object> error =
+                written.TryGetValue(ToolEnvelope.ErrorName, out failed)
+                    ? failed as IDictionary<string, object>
+                    : null;
+            if (error != null)
+            {
+                Dictionary<string, object> explained =
+                    new Dictionary<string, object>(StringComparer.Ordinal);
+                foreach (KeyValuePair<string, object> member in error)
+                {
+                    explained.Add(member.Key, member.Value);
+                }
+
+                object said;
+                explained[ToolEnvelope.MessageName] =
+                    (explained.TryGetValue(ToolEnvelope.MessageName, out said) ? (string)said : null)
+                        + string.Concat(notices.Select(n => " " + n));
+                written[ToolEnvelope.ErrorName] = explained;
+
+                return written;
+            }
+
+            List<string> all = new List<string>();
+            object listed;
+            if (written.TryGetValue(ToolEnvelope.WarningsName, out listed) && listed is object[])
+            {
+                all.AddRange(((object[])listed).Select(w => (string)w));
+            }
+
+            all.AddRange(notices.Where(n => !all.Contains(n, StringComparer.Ordinal)));
+            written[ToolEnvelope.WarningsName] = all.Cast<object>().ToArray();
+
+            return written;
+        }
+
+        /// <summary>Undoの記録を止めることを頼んでいるか。真偽でなければ偽で、断る内容を渡す。</summary>
+        private static bool TrySuppress(
+            McpMethodContext context, out bool suppress, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            suppress = false;
+            object value;
+            if (!context.Params.TryGetValue(SuppressName, out value))
+            {
+                return true;
+            }
+
+            if (!(value is bool))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = SuppressName + " は真偽でなければならない。";
+
+                return false;
+            }
+
+            suppress = (bool)value;
+
+            return true;
+        }
+
+        /// <summary>止めることを頼まれているか。値の検証は前置きで済んでいる。</summary>
+        private static bool Suppressed(McpMethodContext context)
+        {
+            object value;
+
+            return context.Params.TryGetValue(SuppressName, out value)
+                && value is bool && (bool)value;
         }
 
         /// <summary>
@@ -369,7 +537,7 @@ namespace PmxEditorMcp
 
                 result = value;
                 stage = Reflecting(call.Receiver, target, stage);
-                refused = Commit(call.Receiver, target);
+                refused = Commit(context, call.Receiver, target);
             }, out failure))
             {
                 return Unavailable();
@@ -513,7 +681,7 @@ namespace PmxEditorMcp
 
                 invoked = column.Count;
                 stage = Reflecting(call.Receiver, target, stage);
-                refused = Commit(call.Receiver, target);
+                refused = Commit(context, call.Receiver, target);
             }, out failure))
             {
                 return Unavailable();
@@ -1187,7 +1355,7 @@ namespace PmxEditorMcp
 
                 updated = column.Count;
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(tool.Receiver, target);
+                refused = Commit(context, tool.Receiver, target);
             }, out failure))
             {
                 return Unavailable();
@@ -1307,7 +1475,7 @@ namespace PmxEditorMcp
                 }
 
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(tool.Receiver, target);
+                refused = Commit(context, tool.Receiver, target);
             }, out failure))
             {
                 return Unavailable();
@@ -1382,7 +1550,7 @@ namespace PmxEditorMcp
                 }
 
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(tool.Receiver, target);
+                refused = Commit(context, tool.Receiver, target);
             }, out failure))
             {
                 return Unavailable();
@@ -1453,7 +1621,7 @@ namespace PmxEditorMcp
 
                 removed = column.Count;
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(tool.Receiver, target);
+                refused = Commit(context, tool.Receiver, target);
             }, out failure))
             {
                 return Unavailable();
@@ -2522,7 +2690,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>複製編集型の呼び出しを、現在のPMXへ反映する。</summary>
-        private Refusal Commit(ToolReceiver receiver, PmxTarget target)
+        private Refusal Commit(
+            McpMethodContext context, ToolReceiver receiver, PmxTarget target)
         {
             if (!Reflects(receiver, target))
             {
@@ -2532,7 +2701,7 @@ namespace PmxEditorMcp
             string code;
             string message;
 
-            return Session(receiver).TryCommit(target, out code, out message)
+            return Session(receiver).TryCommit(target, Suppressed(context), out code, out message)
                 ? null
                 : new Refusal(ToolEnvelope.Failure(code, message));
         }
@@ -2609,7 +2778,7 @@ namespace PmxEditorMcp
         /// <summary>そのツールが受け取る名前。PMXから受け手を得るものは切り替えも受け取る。</summary>
         private static IList<string> Known(IList<string> names, bool targets)
         {
-            List<string> known = new List<string>(names);
+            List<string> known = new List<string>(names) { SuppressName };
             if (targets)
             {
                 known.Add(PmxSession.HandleName);

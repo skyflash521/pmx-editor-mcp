@@ -40,15 +40,19 @@ namespace PmxEditorMcp
 
         private readonly Type _pmxType;
 
+        private readonly UndoSuppression _undo;
+
         /// <summary>
-        /// 中継・受け手の道・常駐と、複製編集の流れ・PMXの実体の型を与えて生成する。
+        /// 中継・受け手の道・常駐と、複製編集の流れ・PMXの実体の型・Undoの抑止の枠を与えて
+        /// 生成する。抑止の枠は接続をまたぐ1つの状態なので、流れが2つでも同じものを渡す。
         /// </summary>
         public PmxSession(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
             ResidentConnection connection,
             PmxFlow flow,
-            Type pmxType)
+            Type pmxType,
+            UndoSuppression undo)
         {
             if (relay == null)
             {
@@ -75,11 +79,26 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(pmxType));
             }
 
+            if (undo == null)
+            {
+                throw new ArgumentNullException(nameof(undo));
+            }
+
             _relay = relay;
             _receivers = receivers;
             _connection = connection;
             _flow = flow;
             _pmxType = pmxType;
+            _undo = undo;
+        }
+
+        /// <summary>
+        /// この流れでUndoの記録を止め戻しする相手。反映する行が止めるかどうかを引数で取る流れは
+        /// 相手を持たないので null。
+        /// </summary>
+        public IUndoLock UndoLock
+        {
+            get { return _flow.StopUndo == null ? null : new UndoRows(this); }
         }
 
         /// <summary>
@@ -136,9 +155,11 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 変えた複製をまとめて反映する。現在のPMXを相手にしていない呼び出しでは何もしない。
+        /// <paramref name="suppressUndo"/> を頼まれたら、この反映をエディタのUndoへ積ませない。
         /// 反映できなければ偽で、断る内容を渡す。
         /// </summary>
-        public bool TryCommit(PmxTarget target, out string code, out string message)
+        public bool TryCommit(
+            PmxTarget target, bool suppressUndo, out string code, out string message)
         {
             if (target == null)
             {
@@ -152,14 +173,17 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            object ignored;
-            SdkRelayRefusal refusal;
-            if (_relay.TryInvoke(
-                _flow.Commit,
-                Receiver(),
-                Passed(_flow.Reflecting, target.Pmx),
-                out ignored,
-                out refusal))
+            bool reflected = false;
+            if (_flow.StopUndo != null && suppressUndo)
+            {
+                _undo.Run(new UndoRows(this), () => reflected = Reflect(target, false));
+            }
+            else
+            {
+                reflected = Reflect(target, suppressUndo);
+            }
+
+            if (reflected)
             {
                 return true;
             }
@@ -170,8 +194,22 @@ namespace PmxEditorMcp
             return false;
         }
 
+        /// <summary>まとめて反映する行を1度呼ぶ。</summary>
+        private bool Reflect(PmxTarget target, bool suppressUndo)
+        {
+            object ignored;
+            SdkRelayRefusal refusal;
+
+            return _relay.TryInvoke(
+                _flow.Commit,
+                Receiver(),
+                Passed(_flow.Reflecting, target.Pmx, suppressUndo),
+                out ignored,
+                out refusal);
+        }
+
         /// <summary>流れが取る引数。置き場の並びのまま値を入れる。</summary>
-        private object[] Passed(IList<FlowSlot> slots, object pmx)
+        private object[] Passed(IList<FlowSlot> slots, object pmx, bool suppressUndo = false)
         {
             object[] passed = new object[slots.Count];
             for (int at = 0; at < slots.Count; at++)
@@ -187,13 +225,44 @@ namespace PmxEditorMcp
                         break;
 
                     default:
-                        // 反映は取り消しへ積む。抑止は共通引数が別に受け持つ。
-                        passed[at] = true;
+                        passed[at] = suppressUndo;
                         break;
                 }
             }
 
             return passed;
+        }
+
+        /// <summary>SDKの行を呼んでUndoの記録を止め、また戻す相手。</summary>
+        private sealed class UndoRows : IUndoLock
+        {
+            private readonly PmxSession _session;
+
+            public UndoRows(PmxSession session)
+            {
+                _session = session;
+            }
+
+            public void Lock()
+            {
+                Invoke(_session._flow.StopUndo);
+            }
+
+            public void Unlock()
+            {
+                Invoke(_session._flow.ResumeUndo);
+            }
+
+            private void Invoke(string rowKey)
+            {
+                object ignored;
+                SdkRelayRefusal refusal;
+                if (!_session._relay.TryInvoke(
+                    rowKey, _session.Receiver(), new object[0], out ignored, out refusal))
+                {
+                    throw new InvalidOperationException("Undoの記録を動かせない: " + rowKey);
+                }
+            }
         }
 
         private object Receiver()

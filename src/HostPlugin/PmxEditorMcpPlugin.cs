@@ -156,20 +156,24 @@ namespace PmxEditorMcp
 
                 // 基盤メソッドは接続が受け持つので、ここへはツールだけを載せる。
                 McpMethodTable methods = new McpMethodTable();
+                UndoSuppression undo = new UndoSuppression(_log);
                 SdkRelayTable relay = GeneratedSdkRelay.Create();
                 Dictionary<string, SdkReceiver> receivers = GeneratedSdkReceivers.Create();
+                PmxSession current = new PmxSession(
+                    relay, receivers, _resident, GeneratedSdkFlows.Current,
+                    GeneratedSdkFlows.Pmx, undo);
+                UndoRecovery recovery = new UndoRecovery(undo, current.UndoLock);
                 ToolDispatch.AddTo(
                     methods,
                     relay,
                     receivers,
                     GeneratedSdkLists.Create(),
                     _resident,
-                    new PmxSession(
-                        relay, receivers, _resident, GeneratedSdkFlows.Current,
-                        GeneratedSdkFlows.Pmx),
+                    current,
                     new PmxSession(
                         relay, receivers, _resident, GeneratedSdkFlows.Bridge,
-                        GeneratedSdkFlows.Pmx),
+                        GeneratedSdkFlows.Pmx, undo),
+                    recovery,
                     GeneratedTools.Calls(),
                     GeneratedTools.Aggregations(),
                     GeneratedTools.Elements());
@@ -179,7 +183,7 @@ namespace PmxEditorMcp
                 DebugLargeText.AddTo(methods, debugHooks);
                 DebugConnectorExpiry.AddTo(methods, debugHooks, _resident);
                 _connection = new JsonRpcConnection(
-                    _log, methods, HostVersion, budget.Chars, relay, SdkVersion);
+                    _log, methods, HostVersion, budget.Chars, relay, SdkVersion, recovery);
 
                 _host = new McpHost(
                     McpHost.BuildPipeName(editorProcessId),

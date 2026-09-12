@@ -161,6 +161,8 @@ namespace PmxEditorMcp
         private readonly SdkRelayTable _relays;
         private readonly string _sdkVersion;
 
+        private readonly UndoRecovery _recovery;
+
         /// <summary>
         /// 要求の処理を直列化する錠。複数の接続を同時に受けるので、SDKを呼んでいる区間が重ならない
         /// ことと、要求1件が発行したハンドルがその要求のものに定まることを、ここで保証する
@@ -174,14 +176,18 @@ namespace PmxEditorMcp
         {
         }
 
-        /// <summary>行キーからSDKへの中継と、読み込まれているSDKの版も与えて生成する。</summary>
+        /// <summary>
+        /// 行キーからSDKへの中継と、読み込まれているSDKの版、Undoの記録を戻す窓口も与えて
+        /// 生成する。窓口を渡さない接続は、戻しにいく機会を持たない。
+        /// </summary>
         public JsonRpcConnection(
             HostLog log,
             McpMethodTable methods,
             string hostVersion,
             int budgetChars,
             SdkRelayTable relays,
-            string sdkVersion)
+            string sdkVersion,
+            UndoRecovery recovery = null)
             : this(
                 log,
                 methods,
@@ -191,7 +197,8 @@ namespace PmxEditorMcp
                 MessageChannel.DefaultMaxMessageBytes,
                 PipeClientProcess.TryOpen,
                 relays,
-                sdkVersion)
+                sdkVersion,
+                recovery)
         {
         }
 
@@ -253,7 +260,8 @@ namespace PmxEditorMcp
             int maxMessageBytes,
             ClientProcessOpener openClient,
             SdkRelayTable relays,
-            string sdkVersion)
+            string sdkVersion,
+            UndoRecovery recovery = null)
         {
             if (log == null)
             {
@@ -294,6 +302,7 @@ namespace PmxEditorMcp
             _openClient = openClient;
             _relays = relays;
             _sdkVersion = sdkVersion;
+            _recovery = recovery;
             _sessions = new SessionStore(log, _handleIds, _eventSequence, _requestGate);
         }
 
@@ -355,8 +364,27 @@ namespace PmxEditorMcp
                 }
                 finally
                 {
-                    errors.WriteSummary(_log);
+                    try
+                    {
+                        Recover(ui);
+                    }
+                    finally
+                    {
+                        errors.WriteSummary(_log);
+                    }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 止めたままのUndoの記録を戻しにいく。窓口を持たない接続では何もしない。応答を書いた
+        /// 後に呼ぶので、戻せたことを知らせるのはこの次の応答になる。
+        /// </summary>
+        private void Recover(IUiInvoker ui)
+        {
+            if (_recovery != null)
+            {
+                _recovery.TryRecover(ui);
             }
         }
 
@@ -445,6 +473,7 @@ namespace PmxEditorMcp
                         }
 
                         WriteResult(channel, errors, request.Id, BuildHandshakeResult(scope.Session));
+                        Recover(ui);
                     }
 
                     continue;

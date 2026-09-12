@@ -68,6 +68,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>危険操作の確認を受け取る共通引数の名前。</summary>
         public const string ConfirmName = "confirm";
 
+        /// <summary>Undoの記録を止めることを頼む共通引数の名前。</summary>
+        public const string SuppressName = "suppressUndo";
+
         /// <summary>どのPMXを見るかを切り替える共通引数の名前。</summary>
         public const string PmxHandleName = "pmxHandle";
 
@@ -87,7 +90,8 @@ namespace PmxEditorMcp.SignatureDump
             int tokenLimit,
             IDictionary<SchemaItem, string> sdkShapes,
             ISet<string> dangerous,
-            ISet<string> conditional)
+            ISet<string> conditional,
+            ISet<string> suppressing)
         {
             if (schemas == null)
             {
@@ -119,6 +123,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(conditional));
             }
 
+            if (suppressing == null)
+            {
+                throw new ArgumentNullException(nameof(suppressing));
+            }
+
             List<ToolDefinition> definitions = new List<ToolDefinition>();
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
@@ -139,7 +148,8 @@ namespace PmxEditorMcp.SignatureDump
                         tokenLimit,
                         sdkShapes,
                         dangerous.Contains(schema.Tool),
-                        conditional.Contains(schema.Tool))));
+                        conditional.Contains(schema.Tool),
+                        suppressing.Contains(schema.Tool))));
             }
 
             return definitions;
@@ -153,7 +163,8 @@ namespace PmxEditorMcp.SignatureDump
             int tokenLimit,
             IDictionary<SchemaItem, string> sdkShapes,
             bool confirms,
-            bool conditional)
+            bool conditional,
+            bool suppresses)
         {
             ListingLimits listing = IsListing(schema)
                 ? ListingLimitRule.Derive(schema, lengths, valueChars)
@@ -170,7 +181,8 @@ namespace PmxEditorMcp.SignatureDump
                     tokenLimit,
                     sdkShapes,
                     confirms,
-                    conditional))
+                    conditional,
+                    suppresses))
                 .ToList();
 
             if (branches.Count == 1)
@@ -192,7 +204,8 @@ namespace PmxEditorMcp.SignatureDump
             int tokenLimit,
             IDictionary<SchemaItem, string> sdkShapes,
             bool confirms,
-            bool conditional)
+            bool conditional,
+            bool suppresses)
         {
             IDictionary<SchemaItem, int> limits =
                 ElementLimitRule.Request(branch, lengths, requestBudgetBytes, tokenLimit);
@@ -234,6 +247,13 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     required.Add(ConfirmName);
                 }
+            }
+
+            // 抑止の共通引数も、どの行が複製編集型かの決め方が導くので正本に書かない。まとめて
+            // 反映する呼び出しにだけ現れ、渡さなければ止めない。
+            if (suppresses)
+            {
+                properties.Add(SuppressName, new JsonObjectText().AddText("type", "boolean").Text);
             }
 
             JsonObjectText body = new JsonObjectText().AddText("type", ObjectType);

@@ -20,6 +20,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string CommitKey = Connector + ".Update(PEPlugin.Pmx.IPXPmx)";
 
+        private const string StopUndoKey = Connector + ".LockUndo()";
+
+        private const string ResumeUndoKey = Connector + ".UnlockUndo()";
+
         private const string Bridge = "PXCPlugin.PXCBridge";
 
         private const string BridgeConnector = "PXCPlugin.IPXCPluginConnector";
@@ -220,7 +224,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "new PmxFlow(\"" + StateReadKey + "\", \"" + CommitKey + "\", \"" + Connector
-                    + "\", new FlowSlot[] {  }, new FlowSlot[] { FlowSlot.Pmx });",
+                    + "\", new FlowSlot[] {  }, new FlowSlot[] { FlowSlot.Pmx }, \"" + StopUndoKey
+                    + "\", \"" + ResumeUndoKey + "\");",
                 source.Text);
             Assert.Contains(
                 "new PmxFlow(\"" + BridgeReadKey + "\", \"" + BridgeCommitKey
@@ -421,6 +426,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     false,
                     false,
                     OperationDirection.Write),
+                new SignatureRecord(
+                    StopUndoKey,
+                    Connector,
+                    MemberKind.Method,
+                    "LockUndo",
+                    false,
+                    0,
+                    new ParameterRecord[0],
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
+                new SignatureRecord(
+                    ResumeUndoKey,
+                    Connector,
+                    MemberKind.Method,
+                    "UnlockUndo",
+                    false,
+                    0,
+                    new ParameterRecord[0],
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
             };
         }
 
@@ -445,6 +474,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         BridgeCommitKey,
                         CommonAssignmentKind.InternalFlow,
                         "duplicateEdit",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        StopUndoKey,
+                        CommonAssignmentKind.CommonArg,
+                        "suppressUndo",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        ResumeUndoKey,
+                        CommonAssignmentKind.CommonArg,
+                        "suppressUndo",
                         "題材の根拠。"),
                 });
         }

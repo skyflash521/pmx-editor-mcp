@@ -181,6 +181,27 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// Undoの記録を止めることを頼めるツールの名前。止めても効くのはまとめて反映するときの
+        /// 登録だけなので、複製編集型の行を持つツールに限る。
+        /// </summary>
+        public ISet<string> SuppressingTools(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            IDictionary<string, string> tools = ToolsByRow(inventory);
+
+            return new HashSet<string>(
+                Map.Rows
+                    .Where(r => r.EditKind == ToolMapEditKind.DuplicateEdit
+                        && tools.ContainsKey(r.SignatureKey))
+                    .Select(r => tools[r.SignatureKey]),
+                StringComparer.Ordinal);
+        }
+
+        /// <summary>
         /// 確認の要否が呼ぶ対象で分かれるツールの名前。所有の根そのものを空にする初期化だけが
         /// これに当たり、対象を指定した呼び出しはメモリの上の生成物を空にするので確認を要さない。
         /// </summary>

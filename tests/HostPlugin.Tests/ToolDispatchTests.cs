@@ -284,14 +284,16 @@ namespace PmxEditorMcp.Tests
             SdkRelayTable relay = Relay();
             IDictionary<string, SdkReceiver> receivers = Receivers();
             ResidentConnection connection = Connection();
+            PmxSession session = Session(relay, receivers, connection);
             ToolDispatch.AddTo(
                 methods,
                 relay,
                 receivers,
                 new Dictionary<string, SdkList>(StringComparer.Ordinal),
                 connection,
+                session,
                 Session(relay, receivers, connection),
-                Session(relay, receivers, connection),
+                new UndoRecovery(new UndoSuppression(_log), session.UndoLock),
                 Calls(),
                 Aggregations(),
                 new Dictionary<string, ToolElements>(StringComparer.Ordinal));
@@ -303,7 +305,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>題材の複製編集の流れ。PMXを相手にしない題材なので、同じ行を両端に置く。</summary>
-        private static PmxSession Session(
+        private PmxSession Session(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
             ResidentConnection connection)
@@ -313,7 +315,8 @@ namespace PmxEditorMcp.Tests
                 receivers,
                 connection,
                 new PmxFlow(CountKey, CountKey, TargetType, new FlowSlot[0], new[] { FlowSlot.Pmx }),
-                typeof(object));
+                typeof(object),
+                new UndoSuppression(_log));
         }
 
         private HandleLedger Ledger()

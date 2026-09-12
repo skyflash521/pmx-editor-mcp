@@ -43,6 +43,70 @@ namespace PmxEditorMcp.Tests
             }
         }
 
+        [Fact]
+        public void AHandshakeGoesToFetchBackTheUndoThatWasLeftStopped()
+        {
+            StubUndoLock target = new StubUndoLock(2);
+            UndoSuppression undo = new UndoSuppression(_log);
+            undo.Run(target, () => { });
+            Assert.True(undo.HasLeftover, "止めたままにできていない。");
+            bool leftWhenAsked = true;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("probe", context => leftWhenAsked = undo.HasLeftover);
+
+            Exchange(
+                CreateConnection(methods, new UndoRecovery(undo, target)),
+                Handshake(),
+                Request(2, "probe"));
+
+            Assert.False(leftWhenAsked, "握手のあとも止まったまま残っている。");
+        }
+
+        [Fact]
+        public void TheEndOfAConnectionGoesToFetchBackTheUndoThatWasLeftStopped()
+        {
+            StubUndoLock target = new StubUndoLock(3);
+            UndoSuppression undo = new UndoSuppression(_log);
+            undo.Run(target, () => { });
+            bool leftWhenAsked = false;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("probe", context => leftWhenAsked = undo.HasLeftover);
+
+            Exchange(
+                CreateConnection(methods, new UndoRecovery(undo, target)),
+                Handshake(),
+                Request(2, "probe"));
+
+            Assert.True(leftWhenAsked, "握手のときに戻ってしまい、後始末を確かめられない。");
+            Assert.False(undo.HasLeftover, "接続が終わっても止まったまま残っている。");
+        }
+
+        /// <summary>初めの何回かは戻せない相手。止めたまま残る様子を作るのに使う。</summary>
+        private sealed class StubUndoLock : IUndoLock
+        {
+            private readonly int _failures;
+
+            private int _attempts;
+
+            public StubUndoLock(int failures)
+            {
+                _failures = failures;
+            }
+
+            public void Lock()
+            {
+            }
+
+            public void Unlock()
+            {
+                _attempts++;
+                if (_attempts <= _failures)
+                {
+                    throw new InvalidOperationException("戻せない。");
+                }
+            }
+        }
+
         private static string Handshake(int id, int protocol)
         {
             return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"method\":\"handshake\",\"params\":{\"protocol\":" + protocol + "}}";
@@ -67,6 +131,22 @@ namespace PmxEditorMcp.Tests
         {
             return CreateConnection(
                 methods, JsonRpcConnection.DefaultRequestTimeout, MessageChannel.DefaultMaxMessageBytes);
+        }
+
+        private JsonRpcConnection CreateConnection(McpMethodTable methods, UndoRecovery recovery)
+        {
+            return new JsonRpcConnection(
+                _log,
+                methods,
+                HostVersion,
+                BudgetChars,
+                JsonRpcConnection.DefaultRequestTimeout,
+                MessageChannel.DefaultMaxMessageBytes,
+                StubClientProcess.Opener(LivingClientId),
+                new SdkRelayTable(
+                    string.Empty, string.Empty, new Dictionary<string, SdkCall>(), new string[0]),
+                string.Empty,
+                recovery);
         }
 
         private JsonRpcConnection CreateConnection(McpMethodTable methods, TimeSpan requestTimeout, int maxMessageBytes)

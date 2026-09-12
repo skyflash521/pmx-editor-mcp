@@ -3986,6 +3986,159 @@
       ]
     },
     {
+      "signatureKey": "PXCPlugin.IPXSystemControl.CPluginCount()",
+      "editKind": "read",
+      "basis": "登録されているCプラグインの数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.FindCPlugins(System.String,System.Boolean)",
+      "editKind": "read",
+      "basis": "メニューの文字列で登録済みのCプラグインを探し、見つかった序数を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.FindPEPlugins(System.String,System.Boolean)",
+      "editKind": "read",
+      "basis": "メニューの文字列で登録済みのPEプラグインを探し、見つかった序数を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.GetShareBuffer(System.String,System.Boolean)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有データからバイト列を取り出す。取り出した後に消すこともできるので、モデルのデータにもファイルにも作用しないが、セッションの状態は動く。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.GetShareText(System.String,System.Boolean)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有データから文字列を取り出す。取り出した後に消すこともできるので、モデルのデータにもファイルにも作用しないが、セッションの状態は動く。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.GetShareValue(System.String,System.Boolean)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有データから数を取り出す。取り出した後に消すこともできるので、モデルのデータにもファイルにも作用しないが、セッションの状態は動く。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.PEPluginCount()",
+      "editKind": "read",
+      "basis": "登録されているPEプラグインの数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_control"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.RemoveShareData(System.String)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有データからキーの項目を消すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.RunCPlugin(System.Int32)",
+      "editKind": "directChange",
+      "basis": "登録済みのCプラグインを、メニューから呼んだのと同じように走らせる。走らせたものがモデルのデータへ直に作用しうるので、直接変更型に当たる。何が起きるかは走らせた先が決めるので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.RunPEPlugin(System.Int32)",
+      "editKind": "directChange",
+      "basis": "登録済みのPEプラグインを、メニューから呼んだのと同じように走らせる。走らせたものがモデルのデータへ直に作用しうるので、直接変更型に当たる。何が起きるかは走らせた先が決めるので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.SetShareData(System.String,System.String)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有データへキーと文字列を登録するだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.PXCBridge.Builder()",
       "editKind": "read",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。"

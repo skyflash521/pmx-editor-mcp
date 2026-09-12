@@ -13,7 +13,7 @@ namespace PmxEditorMcp
         /// <summary>現在のPMXの複製。</summary>
         Pmx,
 
-        /// <summary>反映のときにUndoを積むかどうか。</summary>
+        /// <summary>反映のときにUndoの記録を止めるかどうか。</summary>
         UndoLock,
     }
 
@@ -28,7 +28,9 @@ namespace PmxEditorMcp
             string commit,
             string receiverType,
             IList<FlowSlot> reading,
-            IList<FlowSlot> reflecting)
+            IList<FlowSlot> reflecting,
+            string stopUndo = null,
+            string resumeUndo = null)
         {
             if (stateRead == null)
             {
@@ -55,6 +57,8 @@ namespace PmxEditorMcp
             ReceiverType = receiverType;
             Reading = new ReadOnlyCollection<FlowSlot>(reading);
             Reflecting = new ReadOnlyCollection<FlowSlot>(reflecting);
+            StopUndo = stopUndo;
+            ResumeUndo = resumeUndo;
         }
 
         /// <summary>現在のPMXの複製を得る行。</summary>
@@ -71,5 +75,13 @@ namespace PmxEditorMcp
 
         /// <summary>反映する行が取る引数の置き場。並びは引数の並びと同じ。</summary>
         public IList<FlowSlot> Reflecting { get; }
+
+        /// <summary>
+        /// Undoの記録を止める行。反映する行が止めるかどうかを引数で取る流れでは null。
+        /// </summary>
+        public string StopUndo { get; }
+
+        /// <summary>止めたUndoの記録を戻す行。<see cref="StopUndo"/> と対で持つ。</summary>
+        public string ResumeUndo { get; }
     }
 }

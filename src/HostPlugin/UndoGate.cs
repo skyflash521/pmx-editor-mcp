@@ -5,15 +5,32 @@ namespace PmxEditorMcp
     /// <summary>Undoの抑止を頼まれた呼び出しと、戻せていない記録が残る呼び出しの扱いを決める。</summary>
     public static class UndoGate
     {
+        /// <summary>止めたUndoの記録を戻せていないことを知らせる文。</summary>
+        public const string LeftoverWarning = "Undoの記録を止めたまま戻せていない。";
+
+        /// <summary>止めたままだったUndoの記録を戻せたことを知らせる文。</summary>
+        public const string RecoveredWarning = "止めたままだったUndoの記録を戻した。";
+
         /// <summary>
-        /// 抑止を頼める呼び出しかを見る。頼めない分類が頼んでいれば偽を返し、断る内容を渡す。
-        /// 真を返したときは <paramref name="code"/> も <paramref name="message"/> も持たない。
+        /// 抑止を頼める呼び出しかを見る。頼めない分類が頼んでいるときと、まとめて反映しない
+        /// 相手を <paramref name="pointed"/> で指している呼び出しが頼んでいるときは偽を返し、
+        /// 断る内容を渡す。真を返したときは <paramref name="code"/> も
+        /// <paramref name="message"/> も持たない。
         /// </summary>
         public static bool TryAcceptSuppress(
-            EditKind kind, bool suppressUndo, out string code, out string message)
+            EditKind kind, bool pointed, bool suppressUndo, out string code, out string message)
         {
             code = null;
             message = null;
+            if (pointed && suppressUndo)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = "ハンドルで指したPMXへの呼び出しは suppressUndo を頼めない。"
+                    + "まとめて反映しないので、頼んでも何も起きない。";
+
+                return false;
+            }
+
             switch (kind)
             {
                 case EditKind.DuplicateEdit:
@@ -50,7 +67,7 @@ namespace PmxEditorMcp
         {
             code = null;
             message = null;
-            warning = "Undoの記録を止めたまま戻せていない。";
+            warning = LeftoverWarning;
             switch (kind)
             {
                 case EditKind.Read:

@@ -23,6 +23,10 @@ namespace PmxEditorMcp.Tests
 
         private const string CommitKey = "Sdk.PmxConnector.Update(Sdk.Pmx)";
 
+        private const string StopUndoKey = "Sdk.PmxConnector.LockUndo()";
+
+        private const string ResumeUndoKey = "Sdk.PmxConnector.UnlockUndo()";
+
         private const string ItemsKey = "Sdk.Pmx.Items()";
 
         private const string GroupsKey = "Sdk.Pmx.Groups()";
@@ -80,6 +84,16 @@ namespace PmxEditorMcp.Tests
 
         private string _madeBy;
 
+        private readonly List<string> _undoCalls = new List<string>();
+
+        private bool _resumeFails;
+
+        private UndoSuppression _undo;
+
+        private PmxSession _session;
+
+        private UndoRecovery _recovery;
+
         private readonly Model _bridged = new Model();
 
         private int _bridgeCommits;
@@ -92,6 +106,7 @@ namespace PmxEditorMcp.Tests
                 Path.GetTempPath(), "pmx-editor-mcp-element-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_root);
             _log = new HostLog(Path.Combine(_root, "host.log"));
+            _undo = new UndoSuppression(_log);
         }
 
         public void Dispose()
@@ -1095,19 +1110,26 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _bridgeCommits);
         }
 
-        [Fact]
-        public void TheBridgeFlowFillsTheConnectorAndWhetherToStackTheUndo()
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(false, false)]
+        [InlineData(true, true)]
+        public void TheBridgeFlowFillsTheConnectorAndWhetherToStopTheUndo(
+            bool? asked, bool stopped)
         {
             _bridged.Items.Add(new Item());
+            IDictionary<string, object> arguments = Arguments("item", 0, "label", "付けた");
+            if (asked.HasValue)
+            {
+                arguments.Add(ToolDispatch.SuppressName, asked.Value);
+            }
 
-            Assert.True(
-                (bool)Call("model_attach_bridge", Arguments("item", 0, "label", "付けた"))["ok"],
-                "包みが成功でない。");
+            Assert.True((bool)Call("model_attach_bridge", arguments)["ok"], "包みが成功でない。");
 
             Assert.Equal(3, _bridgeReflected.Length);
             Assert.NotNull(_bridgeReflected[0]);
             Assert.Same(_bridged, _bridgeReflected[1]);
-            Assert.Equal(true, _bridgeReflected[2]);
+            Assert.Equal(stopped, _bridgeReflected[2]);
         }
 
         [Fact]
@@ -1192,6 +1214,210 @@ namespace PmxEditorMcp.Tests
             Assert.Null(_madeBy);
         }
 
+        [Fact]
+        public void AskingToStopTheUndoWrapsTheReflectionInTheLockingRows()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "同"),
+                    ToolDispatch.SuppressName, true));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(new[] { StopUndoKey, CommitKey, ResumeUndoKey }, _undoCalls.ToArray());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData(false)]
+        public void NotAskingToStopTheUndoLeavesTheLockingRowsAlone(bool? asked)
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            IDictionary<string, object> arguments = Arguments(
+                TargetNames.Element.All, true, ToolDispatch.ValueName, Value("label", "同"));
+            if (asked.HasValue)
+            {
+                arguments.Add(ToolDispatch.SuppressName, asked.Value);
+            }
+
+            Assert.True(
+                (bool)Call("model_update_items", arguments)["ok"], "包みが成功でない。");
+
+            Assert.Equal(new[] { CommitKey }, _undoCalls.ToArray());
+        }
+
+        [Fact]
+        public void OnlyADuplicateEditMayAskToStopTheUndo()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items",
+                Arguments(TargetNames.Element.All, true, ToolDispatch.SuppressName, true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Empty(_undoCalls);
+        }
+
+        [Fact]
+        public void AReadMayCarryTheAskingArgumentWhenItDoesNotAsk()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items",
+                Arguments(TargetNames.Element.All, true, ToolDispatch.SuppressName, false));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+        }
+
+        [Fact]
+        public void AnAskingArgumentThatIsNotATruthValueIsRefused()
+        {
+            IDictionary<string, object> envelope = Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "同"),
+                    ToolDispatch.SuppressName, 1));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Empty(_undoCalls);
+        }
+
+        [Fact]
+        public void PointingThePmxByHandleMayNotAskToStopTheUndo()
+        {
+            HandleLedger handles = Ledger();
+            Model other = new Model();
+            other.Items.Add(new Item { Label = "別" });
+            int handle = handles.Issue(typeof(Model).FullName, other, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_attach_maker",
+                Arguments(
+                    PmxSession.HandleName, handle,
+                    "item", 0,
+                    "label", "付けた",
+                    ToolDispatch.SuppressName, true),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Empty(_undoCalls);
+        }
+
+        [Fact]
+        public void ARecordThatCouldNotBeResumedIsToldInTheAnswerThatLeftIt()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _resumeFails = true;
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "同"),
+                    ToolDispatch.SuppressName, true));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Contains(
+                UndoGate.LeftoverWarning,
+                ((object[])envelope[ToolEnvelope.WarningsName]).Select(w => (string)w));
+        }
+
+        [Fact]
+        public void AnEditThatWouldRunWithALeftoverIsRefusedWithoutTouchingTheModel()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _resumeFails = true;
+            Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "同"),
+                    ToolDispatch.SuppressName, true));
+            _undoCalls.Clear();
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "別")));
+
+            Assert.Equal(ToolEnvelope.OperationFailed, Code(envelope));
+            Assert.Contains("戻せていない", Message(envelope), StringComparison.Ordinal);
+            Assert.Equal("同", _model.Items[0].Label);
+        }
+
+        [Fact]
+        public void AReadRunsWithALeftoverAndSaysSo()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _resumeFails = true;
+            Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "同"),
+                    ToolDispatch.SuppressName, true));
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items", Arguments(TargetNames.Element.All, true));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Contains(
+                UndoGate.LeftoverWarning,
+                ((object[])envelope[ToolEnvelope.WarningsName]).Select(w => (string)w));
+        }
+
+        [Fact]
+        public void ARecordResumedLaterIsToldOnceInTheNextAnswer()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _resumeFails = true;
+            Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "同"),
+                    ToolDispatch.SuppressName, true));
+            _resumeFails = false;
+
+            IDictionary<string, object> resumed = Call(
+                "model_list_items", Arguments(TargetNames.Element.All, true));
+            IDictionary<string, object> after = Call(
+                "model_list_items", Arguments(TargetNames.Element.All, true));
+
+            Assert.Contains(
+                UndoGate.RecoveredWarning,
+                ((object[])resumed[ToolEnvelope.WarningsName]).Select(w => (string)w));
+            Assert.False(
+                after.ContainsKey(ToolEnvelope.WarningsName), "警告が二度目にも載っている。");
+        }
+
+        [Fact]
+        public void AFailingAnswerCarriesTheLeftoverInItsExplanation()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _resumeFails = true;
+            Call(
+                "model_update_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("label", "同"),
+                    ToolDispatch.SuppressName, true));
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items", Arguments(TargetNames.Element.Indices, new object[] { 99 }));
+
+            Assert.False((bool)envelope["ok"], "包みが成功になっている。");
+            Assert.Contains(
+                UndoGate.LeftoverWarning, Message(envelope), StringComparison.Ordinal);
+        }
+
         private static IDictionary<string, object> Assignment(int parent, int handle)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal)
@@ -1254,13 +1480,19 @@ namespace PmxEditorMcp.Tests
                     { MakerType, connection => new object() },
                 };
             ResidentConnection connection = Connection();
+            if (_session == null)
+            {
+                _session = Session(relay, receivers, connection);
+                _recovery = new UndoRecovery(_undo, _session.UndoLock);
+            }
+
             ToolDispatch.AddTo(
                 methods,
                 relay,
                 receivers,
                 Lists(),
                 connection,
-                Session(relay, receivers, connection),
+                _session,
                 new PmxSession(
                     relay,
                     receivers,
@@ -1271,7 +1503,9 @@ namespace PmxEditorMcp.Tests
                         null,
                         new[] { FlowSlot.Connector },
                         new[] { FlowSlot.Connector, FlowSlot.Pmx, FlowSlot.UndoLock }),
-                    typeof(Model)),
+                    typeof(Model),
+                    _undo),
+                _recovery,
                 Calls(),
                 Aggregations(),
                 Elements());
@@ -1289,7 +1523,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>題材の複製編集の流れ。受け手を取り、複製を1つだけ渡す形とする。</summary>
-        private static PmxSession Session(
+        private PmxSession Session(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
             ResidentConnection connection)
@@ -1303,8 +1537,11 @@ namespace PmxEditorMcp.Tests
                     CommitKey,
                     ConnectorType,
                     new FlowSlot[0],
-                    new[] { FlowSlot.Pmx }),
-                typeof(Model));
+                    new[] { FlowSlot.Pmx },
+                    StopUndoKey,
+                    ResumeUndoKey),
+                typeof(Model),
+                _undo);
         }
 
         private HandleLedger Ledger()
@@ -1335,6 +1572,28 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             _commits++;
+                            _undoCalls.Add(CommitKey);
+                            return null;
+                        }
+                    },
+                    {
+                        StopUndoKey,
+                        (target, arguments) =>
+                        {
+                            _undoCalls.Add(StopUndoKey);
+                            return null;
+                        }
+                    },
+                    {
+                        ResumeUndoKey,
+                        (target, arguments) =>
+                        {
+                            _undoCalls.Add(ResumeUndoKey);
+                            if (_resumeFails)
+                            {
+                                throw new InvalidOperationException("戻せない。");
+                            }
+
                             return null;
                         }
                     },

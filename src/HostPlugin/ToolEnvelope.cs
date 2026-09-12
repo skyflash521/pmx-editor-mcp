@@ -39,13 +39,16 @@ namespace PmxEditorMcp
 
         private const string ValueName = "value";
 
-        private const string ErrorName = "error";
+        /// <summary>誤りを載せる項目の名前。</summary>
+        public const string ErrorName = "error";
 
         private const string CodeName = "code";
 
-        private const string MessageName = "message";
+        /// <summary>誤りの説明を載せる項目の名前。</summary>
+        public const string MessageName = "message";
 
-        private const string WarningsName = "warnings";
+        /// <summary>警告を載せる項目の名前。</summary>
+        public const string WarningsName = "warnings";
 
         private static readonly ReadOnlyCollection<string> Codes = new ReadOnlyCollection<string>(
             new[]

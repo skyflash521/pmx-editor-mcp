@@ -9,7 +9,7 @@ namespace PmxEditorMcp.Tests
         public void DuplicateEditMayAskToSuppress()
         {
             Assert.True(UndoGate.TryAcceptSuppress(
-                EditKind.DuplicateEdit, suppressUndo: true,
+                EditKind.DuplicateEdit, pointed: false, suppressUndo: true,
                 code: out string code, message: out string message));
             Assert.Null(code);
             Assert.Null(message);
@@ -22,7 +22,8 @@ namespace PmxEditorMcp.Tests
         public void AnyOtherKindAskingToSuppressIsAnInvalidArgument(EditKind kind)
         {
             Assert.False(UndoGate.TryAcceptSuppress(
-                kind, suppressUndo: true, code: out string code, message: out string message));
+                kind, pointed: false, suppressUndo: true,
+                code: out string code, message: out string message));
             Assert.Equal(ToolEnvelope.InvalidArgument, code);
             Assert.Contains("複製編集型", message);
         }
@@ -35,7 +36,33 @@ namespace PmxEditorMcp.Tests
         public void NotAskingToSuppressPassesForEveryKind(EditKind kind)
         {
             Assert.True(UndoGate.TryAcceptSuppress(
-                kind, suppressUndo: false, code: out string code, message: out string _));
+                kind, pointed: false, suppressUndo: false,
+                code: out string code, message: out string _));
+            Assert.Null(code);
+        }
+
+        [Theory]
+        [InlineData(EditKind.DuplicateEdit)]
+        [InlineData(EditKind.Read)]
+        [InlineData(EditKind.DirectChange)]
+        [InlineData(EditKind.ViewSession)]
+        public void PointingTheTargetByHandleMayNotAskToSuppress(EditKind kind)
+        {
+            Assert.False(UndoGate.TryAcceptSuppress(
+                kind, pointed: true, suppressUndo: true,
+                code: out string code, message: out string message));
+            Assert.Equal(ToolEnvelope.InvalidArgument, code);
+            Assert.Contains("ハンドルで指した", message);
+        }
+
+        [Theory]
+        [InlineData(EditKind.DuplicateEdit)]
+        [InlineData(EditKind.Read)]
+        public void PointingTheTargetByHandleWithoutAskingPasses(EditKind kind)
+        {
+            Assert.True(UndoGate.TryAcceptSuppress(
+                kind, pointed: true, suppressUndo: false,
+                code: out string code, message: out string _));
             Assert.Null(code);
         }
 
@@ -70,7 +97,8 @@ namespace PmxEditorMcp.Tests
         public void AKindThatIsNotKnownStopsWhateverTheRequestAsksFor(bool suppressUndo)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => UndoGate.TryAcceptSuppress(
-                (EditKind)99, suppressUndo, code: out string _, message: out string _));
+                (EditKind)99, pointed: false, suppressUndo,
+                code: out string _, message: out string _));
         }
 
         [Fact]
