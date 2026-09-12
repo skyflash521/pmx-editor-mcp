@@ -336,7 +336,8 @@ namespace PmxEditorMcp
             Type issues = null,
             IList<ToolField> projected = null,
             string releases = null,
-            bool releasesIssued = false)
+            bool releasesIssued = false,
+            bool returnsMany = false)
         {
             if (rowKey == null)
             {
@@ -374,6 +375,7 @@ namespace PmxEditorMcp
             Projected = projected == null ? null : new ReadOnlyCollection<ToolField>(projected);
             Releases = releases;
             ReleasesIssued = releasesIssued;
+            ReturnsMany = returnsMany;
         }
 
         /// <summary>呼ぶ行のキー。</summary>
@@ -402,6 +404,12 @@ namespace PmxEditorMcp
         /// ほかは null で、返す値をそのまま写す。
         /// </summary>
         public Type Issues { get; }
+
+        /// <summary>
+        /// 返す値が並びか。真なら1件ずつを預ける・写して、その並びを返す。値としてそのまま写せる
+        /// 並びでは偽——写し方の側が並びを扱う。
+        /// </summary>
+        public bool ReturnsMany { get; }
 
         /// <summary>
         /// 預けた生成物を手放すときに呼ぶ行のキー。手放す手順を持つ型を預ける行だけが持ち、ほかは

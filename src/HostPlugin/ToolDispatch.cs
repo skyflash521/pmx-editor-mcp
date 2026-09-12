@@ -841,25 +841,97 @@ namespace PmxEditorMcp
             int at = 0,
             int? held = null)
         {
-            if (result == null)
+            IList<object> made;
+            IDictionary<string, object> refused;
+            if (!TryMade(call, result, out made, out refused))
             {
-                return ToolEnvelope.Failure(
-                    ToolEnvelope.NotApplicable, "生成物を返さなかった: " + call.RowKey);
+                return refused;
             }
 
+            List<object> issued = new List<object>(made.Count);
+            foreach (object one in made)
+            {
+                issued.Add(One(context, call, one, receiver, at, held));
+            }
+
+            return call.ReturnsMany
+                ? ToolEnvelope.Success(issued.ToArray())
+                : ToolEnvelope.Success(issued[0]);
+        }
+
+        private static bool TryMade(
+            ToolCall call,
+            object result,
+            out IList<object> made,
+            out IDictionary<string, object> refused)
+        {
+            made = null;
+            refused = null;
+            if (result == null)
+            {
+                refused = ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "生成物を返さなかった: " + call.RowKey);
+
+                return false;
+            }
+
+            if (!call.ReturnsMany)
+            {
+                made = new[] { result };
+
+                return true;
+            }
+
+            System.Collections.IEnumerable row = result as System.Collections.IEnumerable;
+            if (row == null)
+            {
+                refused = ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "生成物を並べて返さなかった: " + call.RowKey);
+
+                return false;
+            }
+
+            List<object> each = new List<object>();
+            foreach (object one in row)
+            {
+                if (one == null)
+                {
+                    refused = ToolEnvelope.Failure(
+                        ToolEnvelope.NotApplicable, "生成物の並びに空きがある: " + call.RowKey);
+
+                    return false;
+                }
+
+                each.Add(one);
+            }
+
+            made = each;
+
+            return true;
+        }
+
+        /// <summary>生成物1件を台帳へ預け、そのハンドルを返す。</summary>
+        private int One(
+            McpMethodContext context,
+            ToolCall call,
+            object made,
+            object receiver,
+            int at,
+            int? held)
+        {
             Action detach = () => { };
             int id = context.Handles.Issue(
                 call.Issues.FullName,
-                result,
+                made,
                 () =>
                 {
                     detach();
-                    Releasing(context, call, result, receiver)();
+                    Releasing(context, call, made, receiver)();
                 },
                 Involved(context, call, Passed(context, call, at), held));
-            detach = Listening(context, call.Issues.FullName, result, id);
+            detach = Listening(context, call.Issues.FullName, made, id);
 
-            return ToolEnvelope.Success(id);
+            return id;
         }
 
         /// <summary>
@@ -1194,6 +1266,16 @@ namespace PmxEditorMcp
             Pointed pointed,
             int invoked)
         {
+            foreach (object one in results)
+            {
+                IList<object> made;
+                IDictionary<string, object> refused;
+                if (!TryMade(call, one, out made, out refused))
+                {
+                    return refused;
+                }
+            }
+
             List<object> handed = new List<object>(results.Count);
             for (int at = 0; at < results.Count; at++)
             {
@@ -4093,15 +4175,49 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            IDictionary<string, object> members;
-            if (!TryCarried(call.Projected, value, out members, out refused))
+            if (!call.ReturnsMany)
             {
-                projected = null;
+                IDictionary<string, object> members;
+                if (!TryCarried(call.Projected, value, out members, out refused))
+                {
+                    projected = null;
+
+                    return false;
+                }
+
+                projected = members;
+
+                return true;
+            }
+
+            projected = null;
+            if (value == null)
+            {
+                return true;
+            }
+
+            System.Collections.IEnumerable each = value as System.Collections.IEnumerable;
+            if (each == null)
+            {
+                refused = new Refusal(ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "値を並べて返さなかった: " + call.RowKey));
 
                 return false;
             }
 
-            projected = members;
+            List<object> written = new List<object>();
+            foreach (object one in each)
+            {
+                IDictionary<string, object> carried;
+                if (!TryCarried(call.Projected, one, out carried, out refused))
+                {
+                    return false;
+                }
+
+                written.Add(carried);
+            }
+
+            projected = written.ToArray();
 
             return true;
         }

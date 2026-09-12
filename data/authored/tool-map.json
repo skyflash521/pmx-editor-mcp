@@ -735,6 +735,36 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState()",
+      "editKind": "directChange",
+      "basis": "ボーンの変形状態を作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmdIPL()",
+      "editKind": "directChange",
+      "basis": "補間の値を作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdLightKey()",
       "editKind": "directChange",
       "basis": "照明のキーを作って持ち物にするので、直接変更型に当たる。",
@@ -6335,6 +6365,104 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.Clear()",
+      "editKind": "directChange",
+      "basis": "持っている変形状態をすべて消す。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.FromPoseArray(PEPlugin.Vmd.PEVmdBonePose[])",
+      "editKind": "directChange",
+      "basis": "渡された変形状態の並びで中身を置き換える。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.FromVmd(PEPlugin.Vmd.IPEVmd,System.Int32)",
+      "editKind": "directChange",
+      "basis": "モーションのデータのボーン1本ぶんを読み取って中身を作り直す。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.GetPose(System.Int32)",
+      "editKind": "read",
+      "basis": "そのコマの変形状態を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_create_vmd_bone_pose_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.ToBoneKeyArray(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "ボーンのキーを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmd_bone_keys",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.ToPoseArray()",
+      "editKind": "read",
+      "basis": "持っている変形状態を並べて返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "state",
+              "tool": "motion_create_vmd_bone_pose_state"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.Angle()",
       "editKind": "directChange",
       "basis": "カメラの向きを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
@@ -6437,6 +6565,55 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIPL.SetLinear()",
+      "editKind": "directChange",
+      "basis": "補間の形を直線に戻す。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIPL.X1()",
+      "editKind": "directChange",
+      "basis": "補間の始点側の横の位置を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_ipls",
+        "motion_update_vmd_ipls"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIPL.X2()",
+      "editKind": "directChange",
+      "basis": "補間の終点側の横の位置を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_ipls",
+        "motion_update_vmd_ipls"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIPL.Y1()",
+      "editKind": "directChange",
+      "basis": "補間の始点側の縦の位置を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_ipls",
+        "motion_update_vmd_ipls"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIPL.Y2()",
+      "editKind": "directChange",
+      "basis": "補間の終点側の縦の位置を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_ipls",
+        "motion_update_vmd_ipls"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmdLightKey.Color()",
       "editKind": "directChange",
       "basis": "照明の色を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
@@ -6488,6 +6665,53 @@
       "embeddedIn": [
         "motion_list_vmd_self_shadow_keys",
         "motion_update_vmd_self_shadow_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdVisibleIKKey.IK()",
+      "editKind": "directChange",
+      "basis": "そのコマで効かせるIKの並びそのものを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdVisibleIKKey.SetIK(System.Int32[],System.Boolean[])",
+      "editKind": "directChange",
+      "basis": "どのIKを効かせるかをまとめて決める。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdVisibleIKKey.Visible()",
+      "editKind": "directChange",
+      "basis": "そのコマでモデルを表示するかどうかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmd_visible_ik_keys",
+        "motion_update_vmd_visible_ik_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.PEVmdBonePose.R()",
+      "editKind": "directChange",
+      "basis": "ボーンの向きを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_from_pose_array_vmd_bone_pose_state",
+        "motion_get_pose_vmd_bone_pose_state",
+        "motion_to_pose_array_vmd_bone_pose_state"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.PEVmdBonePose.T()",
+      "editKind": "directChange",
+      "basis": "ボーンの移動を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_from_pose_array_vmd_bone_pose_state",
+        "motion_get_pose_vmd_bone_pose_state",
+        "motion_to_pose_array_vmd_bone_pose_state"
       ]
     },
     {

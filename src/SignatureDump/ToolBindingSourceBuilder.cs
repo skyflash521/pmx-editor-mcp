@@ -435,11 +435,15 @@ namespace PmxEditorMcp.SignatureDump
             string[] release = issuing
                 ? Releases(signature, signatures, assignments)
                 : new string[0];
+            string made = ValueTypeName.Contained(signature.ValueType);
+            bool many = (issuing || projected != null)
+                && !string.Equals(made, signature.ValueType, StringComparison.Ordinal);
             string tail = Tail(
-                issuing ? TypeOf(signature.ValueType) : null,
+                issuing ? TypeOf(made) : null,
                 projected,
                 release.Length == 0 ? null : release[0],
-                release.Length == 0 ? null : release[1]);
+                release.Length != 0 ? release[1] : many ? "false" : null,
+                many ? "true" : null);
 
             return "new ToolCall(" + Literal(signature.Key) + ", "
                 + Receiver(

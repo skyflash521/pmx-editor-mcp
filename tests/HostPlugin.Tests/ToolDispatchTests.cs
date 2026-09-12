@@ -33,6 +33,8 @@ namespace PmxEditorMcp.Tests
 
         private const string InfoKey = "Sdk.Form.Info()";
 
+        private const string InfosKey = "Sdk.Form.Infos()";
+
         private const string InfoNameKey = "Sdk.Info.Name()";
 
         private const string InfoOptionKey = "Sdk.Info.Option()";
@@ -49,6 +51,8 @@ namespace PmxEditorMcp.Tests
 
         private const string MakeKey = "Sdk.Form.Make(Sdk.Form)";
 
+        private const string MakeManyKey = "Sdk.Form.MakeMany()";
+
         private const string DropKey = "Sdk.Form.Drop()";
 
         private readonly string _root;
@@ -58,6 +62,8 @@ namespace PmxEditorMcp.Tests
         private readonly Target _target = new Target();
 
         private Info _info;
+
+        private Info[] _infos;
 
         public ToolDispatchTests()
         {
@@ -403,6 +409,30 @@ namespace PmxEditorMcp.Tests
             Assert.False(ledger.IsValid(issued));
         }
 
+        [Fact]
+        public void WhatAHeldCallMakesForEarlierTargetsIsNotLeftWhenALaterOneMakesNothing()
+        {
+            Target first = new Target { Made = new Target() };
+            Target second = new Target();
+            Target source = new Target();
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", new object[] { 1L, 2L });
+            arguments.Add(
+                "args",
+                new Dictionary<string, object>(StringComparer.Ordinal) { { "source", 3L } });
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, first, () => { });
+            ledger.Issue(typeof(Target).FullName, second, () => { });
+            ledger.Issue(typeof(Target).FullName, source, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_on_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Equal(3, ledger.LastIssuedId);
+        }
+
         /// <summary>
         /// 受け手をハンドルで指していても、ホストが入れるPMXはいま相手にしているものになる。
         /// ハンドルで指した対象はどのPMXにも属さないが、引数のPMXはそれとは別に決まる。
@@ -478,6 +508,44 @@ namespace PmxEditorMcp.Tests
 
             Assert.True(ToolEnvelope.Succeeded(envelope));
             Assert.Equal(new object[] { 7 }, (IEnumerable<object>)envelope[ToolEnvelope.ValueName]);
+        }
+
+        [Fact]
+        public void EachThingOfAnIssuedRowGoesIntoTheLedgerUnderItsOwnHandle()
+        {
+            Target first = new Target();
+            Target second = new Target();
+            _target.Twins = new[] { first, second };
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_many")(
+                    new McpMethodContext(
+                        Arguments(), new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            object[] handed = (object[])envelope[ToolEnvelope.ValueName];
+            Assert.Equal(2, handed.Length);
+            object held;
+            Assert.True(ledger.TryGet((int)handed[0], typeof(Target).FullName, out held));
+            Assert.Same(first, held);
+            Assert.True(ledger.TryGet((int)handed[1], typeof(Target).FullName, out held));
+            Assert.Same(second, held);
+        }
+
+        [Fact]
+        public void AGapInAnIssuedRowIsRefusedWithNoHandleLeftInTheLedger()
+        {
+            _target.Twins = new Target[] { new Target(), null };
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_many")(
+                    new McpMethodContext(
+                        Arguments(), new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Equal(0, ledger.LastIssuedId);
         }
 
         [Fact]
@@ -957,6 +1025,7 @@ namespace PmxEditorMcp.Tests
                     },
                     { ThrowKey, (target, arguments) => { throw new InvalidOperationException("題材の失敗。"); } },
                     { InfoKey, (target, arguments) => _info },
+                    { InfosKey, (target, arguments) => _infos },
                     { InfoNameKey, (target, arguments) => ((Info)target).Name },
                     { InfoOptionKey, (target, arguments) => ((Info)target).Option },
                     { OptionBootupKey, (target, arguments) => ((Option)target).Bootup },
@@ -974,6 +1043,7 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) => ((Target)(target ?? arguments[0])).Made
                             ?? ((Target)arguments[0]).Made
                     },
+                    { MakeManyKey, (target, arguments) => ((Target)target).Twins },
                     {
                         TakesKey,
                         (target, arguments) =>
@@ -1034,6 +1104,19 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("題材", value["name"]);
             Assert.Equal(
                 true, ((IDictionary<string, object>)value["option"])["bootup"]);
+        }
+
+        [Fact]
+        public void ValuesThatAreNotAShapeOfTheirOwnComeBackAsItemsOneByOne()
+        {
+            _infos = new[] { new Info { Name = "一" }, new Info { Name = "二" } };
+
+            IDictionary<string, object> envelope = Call("session_infos", Arguments());
+
+            object[] value = (object[])envelope["value"];
+            Assert.Equal(
+                new[] { "一", "二" },
+                value.Select(one => ((IDictionary<string, object>)one)["name"]).ToArray());
         }
 
         [Fact]
@@ -1099,6 +1182,22 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         new ToolArgument[0],
                         typeof(int))
+                },
+                {
+                    "session_make_many",
+                    new ToolCall(
+                        MakeManyKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Target[]),
+                        typeof(Target),
+                        null,
+                        null,
+                        false,
+                        true)
                 },
                 {
                     "session_make_held",
@@ -1233,6 +1332,22 @@ namespace PmxEditorMcp.Tests
                         })
                 },
                 {
+                    "session_infos",
+                    new ToolCall(
+                        InfosKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Info[]),
+                        null,
+                        new[] { new ToolField("name", InfoNameKey, typeof(string)) },
+                        null,
+                        false,
+                        true)
+                },
+                {
                     "session_info_lost",
                     new ToolCall(
                         InfoKey,
@@ -1360,6 +1475,8 @@ namespace PmxEditorMcp.Tests
             public Note[] Notes { get; set; }
 
             public object Taken { get; set; }
+
+            public Target[] Twins { get; set; }
         }
 
         /// <summary>題材を継いだ型。台帳はこちらの名前で覚える。</summary>

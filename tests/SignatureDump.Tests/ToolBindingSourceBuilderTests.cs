@@ -149,6 +149,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ACallThatIssuesThingsInARowCarriesTheElementTypeAndTheMarkOfThat()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_them", Method("MakeThem", Held + "[]")),
+                Released(HeldMethod("Drop", "System.Void")));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "[]), typeof(global::" + Held + "), null, \""
+                    + Held + ".Drop()\", false, true)",
+                source.Text);
+        }
+
+        [Fact]
         public void ACallThatIssuesAThingWithNoWayToLetItGoCarriesNoSuchRow()
         {
             ToolBindingSource source = Build(
@@ -616,6 +629,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + " \"" + Info + ".Option()\", typeof(global::" + Option + "),"
                     + " new ToolField[] { new ToolField(\"bootup\", \"" + Option
                     + ".Bootup()\", typeof(global::System.Boolean)) }) })",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsCarriedTypesInARowCarriesTheMarkOfWritingThemOneByOne()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_infos", Method("GetInfos", Info + "[]")),
+                Embedded(Carried(Info, "Name", "System.String"), "session_infos"));
+
+            Assert.Contains(
+                "typeof(global::" + Info + "[]), null, new ToolField[] { new ToolField(\"name\", \""
+                    + Info + ".Name()\", typeof(global::System.String)) }, null, false, true)",
                 source.Text);
         }
 
