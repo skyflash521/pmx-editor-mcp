@@ -14886,6 +14886,35 @@
       }
     },
     {
+      "tool": "motion_clear_vme_light_result",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_clear_vme_morph_result",
       "branches": [
         {
@@ -18773,6 +18802,75 @@
       }
     },
     {
+      "tool": "motion_list_vme_directions",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "d"
+                },
+                {
+                  "name": "direction"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_list_vme_elements",
       "branches": [
         {
@@ -19049,6 +19147,81 @@
       }
     },
     {
+      "tool": "motion_list_vme_light_results",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "c"
+                },
+                {
+                  "name": "color"
+                },
+                {
+                  "name": "d"
+                },
+                {
+                  "name": "direction"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_list_vme_morph_results",
       "branches": [
         {
@@ -19190,6 +19363,156 @@
       }
     },
     {
+      "tool": "motion_list_vme_positions",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "ip"
+                },
+                {
+                  "name": "initialPosition"
+                },
+                {
+                  "name": "p"
+                },
+                {
+                  "name": "position"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vme_quaternion_values",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "a"
+                },
+                {
+                  "name": "acceleration"
+                },
+                {
+                  "name": "v"
+                },
+                {
+                  "name": "velocity"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_list_vme_results",
       "branches": [
         {
@@ -19269,6 +19592,225 @@
                 },
                 {
                   "name": "startFrame"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vme_scales",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "gs"
+                },
+                {
+                  "name": "globalScale"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vme_single_values",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "a"
+                },
+                {
+                  "name": "acceleration"
+                },
+                {
+                  "name": "v"
+                },
+                {
+                  "name": "velocity"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_list_vme_vector_values",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "a"
+                },
+                {
+                  "name": "acceleration"
+                },
+                {
+                  "name": "v"
+                },
+                {
+                  "name": "velocity"
                 }
               ]
             }
@@ -27808,6 +28350,75 @@
       }
     },
     {
+      "tool": "motion_update_vme_directions",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "d",
+                  "required": false
+                },
+                {
+                  "name": "direction",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "d",
+                    "required": false
+                  },
+                  {
+                    "name": "direction",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_update_vme_elements",
       "branches": [
         {
@@ -27938,6 +28549,75 @@
       }
     },
     {
+      "tool": "motion_update_vme_positions",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "p",
+                  "required": false
+                },
+                {
+                  "name": "position",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "p",
+                    "required": false
+                  },
+                  {
+                    "name": "position",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_update_vme_quaternion_value_operator",
       "branches": [
         {
@@ -27960,6 +28640,160 @@
         "members": [
           {
             "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vme_quaternion_values",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "a",
+                  "required": false
+                },
+                {
+                  "name": "acceleration",
+                  "required": false
+                },
+                {
+                  "name": "v",
+                  "required": false
+                },
+                {
+                  "name": "velocity",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "a",
+                    "required": false
+                  },
+                  {
+                    "name": "acceleration",
+                    "required": false
+                  },
+                  {
+                    "name": "v",
+                    "required": false
+                  },
+                  {
+                    "name": "velocity",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vme_scales",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "gs",
+                  "required": false
+                },
+                {
+                  "name": "globalScale",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "gs",
+                    "required": false
+                  },
+                  {
+                    "name": "globalScale",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
             "origin": "hostOutput",
             "shape": "number"
           }
@@ -27996,6 +28830,91 @@
       }
     },
     {
+      "tool": "motion_update_vme_single_values",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "a",
+                  "required": false
+                },
+                {
+                  "name": "acceleration",
+                  "required": false
+                },
+                {
+                  "name": "v",
+                  "required": false
+                },
+                {
+                  "name": "velocity",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "a",
+                    "required": false
+                  },
+                  {
+                    "name": "acceleration",
+                    "required": false
+                  },
+                  {
+                    "name": "v",
+                    "required": false
+                  },
+                  {
+                    "name": "velocity",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_update_vme_vector_value_operator",
       "branches": [
         {
@@ -28018,6 +28937,91 @@
         "members": [
           {
             "name": "invoked",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "motion_update_vme_vector_values",
+      "branches": [
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "a",
+                  "required": false
+                },
+                {
+                  "name": "acceleration",
+                  "required": false
+                },
+                {
+                  "name": "v",
+                  "required": false
+                },
+                {
+                  "name": "velocity",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "a",
+                    "required": false
+                  },
+                  {
+                    "name": "acceleration",
+                    "required": false
+                  },
+                  {
+                    "name": "v",
+                    "required": false
+                  },
+                  {
+                    "name": "velocity",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
             "origin": "hostOutput",
             "shape": "number"
           }

@@ -787,7 +787,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// そのリストが並べうる具象の型。要素の型が抽象で実体が複数の型に分かれるリストだけが持つ。
+        /// 位置で指す型のリストが並べうる具象の型。
         /// </summary>
         private static string Items(
             AccessPath path,
@@ -796,11 +796,18 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType)
         {
             SignatureRecord signature;
+            TypeRoleRecord element;
             IList<string> listed;
-            if (!signatures.TryGetValue(path.RowKey, out signature)
-                || !concrete.TryGetValue(
-                    TypeDefinitionName.OfElement(ValueTypeName.Contained(signature.ValueType)),
-                    out listed))
+            if (!signatures.TryGetValue(path.RowKey, out signature))
+            {
+                return "null";
+            }
+
+            string value = TypeDefinitionName.OfElement(
+                ValueTypeName.Contained(signature.ValueType));
+            if (!byType.TryGetValue(value, out element)
+                || element.Role != TypeRole.OperationTarget
+                || !concrete.TryGetValue(value, out listed))
             {
                 return "null";
             }

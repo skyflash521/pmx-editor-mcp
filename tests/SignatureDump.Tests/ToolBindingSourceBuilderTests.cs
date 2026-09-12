@@ -43,6 +43,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Vertex = "PEPlugin.Pmx.IPXVertex";
 
+        private const string Leaf = "PEPlugin.Pmx.IPXLeaf";
+
+        private const string Kept = "PEPlugin.Vme.IPEVmeKept";
+
+        private const string KeptLeaf = "PEPlugin.Vme.IPEVmeKeptLeaf";
+
+        private const string KeptListKey = Pmx + ".Kept()";
+
         private const string Weight = "PEPlugin.Pmx.IPXWeight";
 
         private const string Info = "Sdk.Info";
@@ -328,6 +336,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AListOfPositionedItemsCarriesTheTypesItsItemsCanTake()
+        {
+            ToolBindingSource source = Build(Kinds(Vertex, Leaf), Collection());
+
+            Assert.Contains(
+                "new ToolItem(\"leaf\", typeof(global::" + Leaf + "), item => item is global::"
+                    + Leaf + ")",
+                source.Text);
+        }
+
+        [Fact]
+        public void AListOfHandledItemsCarriesNoSuchTypes()
+        {
+            ToolBindingSource source = Build(Kinds(Kept, KeptLeaf), Kepts());
+
+            Assert.DoesNotContain("new ToolItem(", source.Text);
+        }
+
+        [Fact]
         public void AnOwningListAlsoBringsTheRelayThatReadsAndWritesIt()
         {
             ToolBindingSource source = Build(Collection());
@@ -405,6 +432,53 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 source.Text);
         }
 
+        /// <summary>継いだ型を1つ持つ題材の型の並び。</summary>
+        private static IList<TypeRecord> Kinds(string baseType, string derived)
+        {
+            return new[]
+            {
+                new TypeRecord(
+                    baseType,
+                    TypeKind.Interface,
+                    false,
+                    false,
+                    false,
+                    new string[0],
+                    new string[0]),
+                new TypeRecord(
+                    derived,
+                    TypeKind.Interface,
+                    false,
+                    false,
+                    false,
+                    new[] { baseType },
+                    new string[0]),
+            };
+        }
+
+        /// <summary>ハンドルで指す型を並べるリストの題材。</summary>
+        private static Binding Kepts()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                KeptListKey,
+                Pmx,
+                MemberKind.Property,
+                "Kept",
+                false,
+                0,
+                new ParameterRecord[0],
+                "System.Collections.Generic.IList<" + Kept + ">",
+                true,
+                false,
+                OperationDirection.Read);
+
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    KeptListKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
+        }
+
         private static Binding Collection()
         {
             SignatureRecord signature = new SignatureRecord(
@@ -465,6 +539,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static ToolBindingSource Build(params Binding[] bindings)
         {
+            return Build(new TypeRecord[0], bindings);
+        }
+
+        private static ToolBindingSource Build(
+            IList<TypeRecord> types, params Binding[] bindings)
+        {
             Dictionary<string, SignatureRecord> signatures = bindings.ToDictionary(
                 b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal);
             foreach (SignatureRecord flow in Flows())
@@ -478,7 +558,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new InventoryRecord(
                     "題材",
                     "0.0.0.0",
-                    new TypeRecord[0],
+                    types.ToList(),
                     new TypeRecord[0],
                     signatures.Values.ToList()),
                 bindings.Where(b => b.Tool != null)
@@ -710,6 +790,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "題材の根拠。",
                         "vertex",
                         "vertices",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Leaf,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "leaf",
+                        "leaves",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Kept,
+                        TypeRole.HandleTarget,
+                        "題材の根拠。",
+                        "kept",
+                        "kepts",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        KeptLeaf,
+                        TypeRole.HandleTarget,
+                        "題材の根拠。",
+                        "kept_leaf",
+                        "kept_leaves",
                         CapabilityOwner.Model),
                     new TypeRoleRecord(
                         Weight,

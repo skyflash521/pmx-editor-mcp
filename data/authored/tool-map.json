@@ -8186,6 +8186,24 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeDirection.D()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である方向へ直に作用して、いまの方向を決め、決めた分は回転量として効く。",
+      "embeddedIn": [
+        "motion_list_vme_directions",
+        "motion_update_vme_directions"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeDirection.Direction()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である方向へ直に作用して、いまの方向を決め、決めた分は回転量として効く。",
+      "embeddedIn": [
+        "motion_list_vme_directions",
+        "motion_update_vme_directions"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeDirectionEventOperator.Set(System.Int32,SlimDX.Quaternion,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
       "basis": "そのコマの方向を、渡した回転で置くか、足すか、掛ける形でイベントに積む。積んだ分は回転量として効く。方向のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
@@ -8710,6 +8728,51 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.C()",
+      "editKind": "read",
+      "basis": "そのコマの照明の色を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_light_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.Clear()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である、ハンドルが指す照明の演算結果へ直に作用して、それを初期化する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.Color()",
+      "editKind": "read",
+      "basis": "そのコマの照明の色を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_light_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.D()",
+      "editKind": "read",
+      "basis": "そのコマの照明の方向を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_light_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.Direction()",
+      "editKind": "read",
+      "basis": "そのコマの照明の方向を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_light_results"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightState.C()",
       "editKind": "read",
       "basis": "いまの色を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
@@ -9022,6 +9085,40 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmePosition.IP()",
+      "editKind": "read",
+      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_positions"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePosition.InitialPosition()",
+      "editKind": "read",
+      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_positions"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePosition.P()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である位置へ直に作用して、いまの位置を決め、決めた分は移動量として効く。",
+      "embeddedIn": [
+        "motion_list_vme_positions",
+        "motion_update_vme_positions"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePosition.Position()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である位置へ直に作用して、いまの位置を決め、決めた分は移動量として効く。",
+      "embeddedIn": [
+        "motion_list_vme_positions",
+        "motion_update_vme_positions"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.Move(System.Int32,System.Int32,SlimDX.Vector3,SlimDX.Vector3,System.Int32)",
       "editKind": "directChange",
       "basis": "コマの範囲を渡した2つの位置の間で動かすイベントを、始めのコマへ置く位置と速度として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
@@ -9207,6 +9304,42 @@
           "kind": "callLogOnly",
           "comparison": "exists"
         }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.A()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の加速度を決める。",
+      "embeddedIn": [
+        "motion_list_vme_quaternion_values",
+        "motion_update_vme_quaternion_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.Acceleration()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の加速度を決める。",
+      "embeddedIn": [
+        "motion_list_vme_quaternion_values",
+        "motion_update_vme_quaternion_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.V()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の速度を決める。",
+      "embeddedIn": [
+        "motion_list_vme_quaternion_values",
+        "motion_update_vme_quaternion_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.Velocity()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の速度を決める。",
+      "embeddedIn": [
+        "motion_list_vme_quaternion_values",
+        "motion_update_vme_quaternion_values"
       ]
     },
     {
@@ -9823,6 +9956,24 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeScale.GS()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である大きさへ直に作用して、全体にかかる大きさを決める。",
+      "embeddedIn": [
+        "motion_list_vme_scales",
+        "motion_update_vme_scales"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeScale.GlobalScale()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である大きさへ直に作用して、全体にかかる大きさを決める。",
+      "embeddedIn": [
+        "motion_list_vme_scales",
+        "motion_update_vme_scales"
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeScalingEventOperator.SetGS(System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
       "basis": "そのコマの全体にかかる大きさを、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。大きさのイベント設定は長寿命の持ち物なので、それへ直に作用する。",
@@ -9901,6 +10052,42 @@
           "kind": "callLogOnly",
           "comparison": "exists"
         }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.A()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の加速度を決める。",
+      "embeddedIn": [
+        "motion_list_vme_single_values",
+        "motion_update_vme_single_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.Acceleration()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の加速度を決める。",
+      "embeddedIn": [
+        "motion_list_vme_single_values",
+        "motion_update_vme_single_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.V()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の速度を決める。",
+      "embeddedIn": [
+        "motion_list_vme_single_values",
+        "motion_update_vme_single_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.Velocity()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の速度を決める。",
+      "embeddedIn": [
+        "motion_list_vme_single_values",
+        "motion_update_vme_single_values"
       ]
     },
     {
@@ -10326,6 +10513,42 @@
           "kind": "callLogOnly",
           "comparison": "exists"
         }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.A()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の加速度を行列で決める。",
+      "embeddedIn": [
+        "motion_list_vme_vector_values",
+        "motion_update_vme_vector_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.Acceleration()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の加速度を行列で決める。",
+      "embeddedIn": [
+        "motion_list_vme_vector_values",
+        "motion_update_vme_vector_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.V()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の速度を行列で決める。",
+      "embeddedIn": [
+        "motion_list_vme_vector_values",
+        "motion_update_vme_vector_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.Velocity()",
+      "editKind": "directChange",
+      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の速度を行列で決める。",
+      "embeddedIn": [
+        "motion_list_vme_vector_values",
+        "motion_update_vme_vector_values"
       ]
     },
     {
