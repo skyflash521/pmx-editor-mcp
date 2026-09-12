@@ -31,12 +31,12 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(assignments));
             }
 
+            IDictionary<string, ToolMapRowKind> kinds = RowKinds(map, evidence, assignments);
             foreach (ToolMapRow row in map.Rows)
             {
-                RequireProvided(row, evidence);
+                RequireProvided(row, evidence, kinds);
             }
 
-            IDictionary<string, ToolMapRowKind> kinds = RowKinds(map, evidence, assignments);
             foreach (ToolMapRow row in map.Rows)
             {
                 RequireFields(row, kinds[row.SignatureKey]);
@@ -79,9 +79,30 @@ namespace PmxEditorMcp.SignatureDump
                 evidence.IndependentTypes);
         }
 
-        private static void RequireProvided(ToolMapRow row, ToolMapEvidence evidence)
+        /// <summary>
+        /// その行が、引数の組の項目そのものを表す行か。組の項目を持ち込む種別のうち、項目になる
+        /// プロパティとフィールドに限る——ほかは組の項目にならないので、台帳が数えない行だけが
+        /// 残る。
+        /// </summary>
+        private static bool Carried(
+            ToolMapRow row, ToolMapEvidence evidence, IDictionary<string, ToolMapRowKind> kinds)
         {
-            if (!evidence.Provided.Contains(row.SignatureKey))
+            ToolMapRowKind kind;
+            SignatureRecord signature;
+
+            return kinds.TryGetValue(row.SignatureKey, out kind)
+                && kind == ToolMapRowKind.SchemaEmbedded
+                && evidence.Signatures.TryGetValue(row.SignatureKey, out signature)
+                && (signature.MemberKind == MemberKind.Property
+                    || signature.MemberKind == MemberKind.Field)
+                && evidence.Carried.Contains(signature.DeclaringType);
+        }
+
+        private static void RequireProvided(
+            ToolMapRow row, ToolMapEvidence evidence, IDictionary<string, ToolMapRowKind> kinds)
+        {
+            if (!evidence.Provided.Contains(row.SignatureKey)
+                && !Carried(row, evidence, kinds))
             {
                 throw new InvalidOperationException(
                     "提供対象でないシグネチャの行がある: " + row.SignatureKey);

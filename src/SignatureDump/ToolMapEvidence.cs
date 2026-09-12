@@ -24,7 +24,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> elementNouns,
             ISet<string> typeNames,
             ISet<string> embeddedTypes,
-            ISet<string> independentTypes)
+            ISet<string> independentTypes,
+            ISet<string> carried = null)
         {
             if (provided == null)
             {
@@ -62,6 +63,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             Provided = provided;
+            Carried = carried ?? new HashSet<string>(StringComparer.Ordinal);
             Signatures = new ReadOnlyDictionary<string, SignatureRecord>(
                 new Dictionary<string, SignatureRecord>(signatures, StringComparer.Ordinal));
             UpdateKinds = updateKinds;
@@ -73,6 +75,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>提供対象のシグネチャの行キー。</summary>
         public ISet<string> Provided { get; }
+
+        /// <summary>
+        /// 提供対象のシグネチャの引数の型としてだけ現れる型の名前。台帳は能力として数えないが、
+        /// その組の書き方は引数を取る行の側で要るので、組の項目を持ち込むメンバーは行を持てる。
+        /// </summary>
+        public ISet<string> Carried { get; }
 
         /// <summary>行キーから公開API列挙の記録を引く表。</summary>
         public IDictionary<string, SignatureRecord> Signatures { get; }
@@ -128,8 +136,11 @@ namespace PmxEditorMcp.SignatureDump
                     "反映の指定の列挙型が公開API列挙に無い: " + UpdateKindType);
             }
 
+            ISet<string> provided = TypeRolePopulation.Resolve(
+                ledger, inventory, excluded).Signatures;
+
             return new ToolMapEvidence(
-                TypeRolePopulation.Resolve(ledger, inventory, excluded).Signatures,
+                provided,
                 inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
                 new HashSet<string>(updateKind.EnumMembers, StringComparer.Ordinal),
                 new HashSet<string>(
@@ -137,7 +148,24 @@ namespace PmxEditorMcp.SignatureDump
                     StringComparer.Ordinal),
                 new HashSet<string>(types.Select(t => t.Name), StringComparer.Ordinal),
                 EmbeddedTypeNames(roles),
-                IndependentToolTypeNames(roles));
+                IndependentToolTypeNames(roles),
+                CarriedTypes(inventory, provided));
+        }
+
+        /// <summary>
+        /// 提供対象のシグネチャの引数の型としてだけ現れる型の名前。台帳が行を作らない型のうち、
+        /// その理由がこれに当たるものを採る。
+        /// </summary>
+        private static ISet<string> CarriedTypes(
+            InventoryRecord inventory, ISet<string> provided)
+        {
+            OutOfScopeClassifier classifier = new OutOfScopeClassifier(inventory, provided);
+
+            return new HashSet<string>(
+                inventory.Types
+                    .Select(t => t.Name)
+                    .Where(n => classifier.ClassifyType(n) == OutOfScopeReason.ArgumentOnly),
+                StringComparer.Ordinal);
         }
 
         /// <summary>

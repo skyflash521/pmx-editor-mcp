@@ -63,6 +63,12 @@ namespace PmxEditorMcp.Tests
 
         private const string MakeHeldKey = "Sdk.Maker.Make(Sdk.Item)";
 
+        private const string MakeNotedKey = "Sdk.Maker.Make(Sdk.Note)";
+
+        private const string TouchKey = "Sdk.Item.Touch()";
+
+        private const string TouchNamedKey = "Sdk.Item.Touch(System.String)";
+
         private const string AttachKey = "Sdk.Maker.Attach(Sdk.Model,Sdk.Item,System.String)";
 
         private const string BridgeReadKey = "Sdk.Bridge.GetModel(Sdk.Connector)";
@@ -1285,6 +1291,59 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheOverloadThatTakesAMadeUpValueIsToldApartByTheGroupGivenForIt()
+        {
+            IDictionary<string, object> envelope = Call(
+                "model_make_item",
+                Arguments(
+                    "note",
+                    new Dictionary<string, object>(StringComparer.Ordinal) { { "text", "覚え" } }));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(MakeNotedKey, _madeBy);
+        }
+
+        [Fact]
+        public void TheOverloadThatTakesNothingRunsWhenTheRequestPointsAtNoArguments()
+        {
+            Assert.True((bool)Call("model_make_item", Arguments())["ok"], "包みが成功でない。");
+            Assert.Equal(MakeKey, _madeBy);
+        }
+
+        [Fact]
+        public void AHeldOverloadThatTakesNothingRunsWhenNoGroupIsGiven()
+        {
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_touch_item",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(TouchKey, _madeBy);
+        }
+
+        [Fact]
+        public void AHeldOverloadThatTakesAnArgumentRunsWhenTheGroupCarriesIt()
+        {
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_touch_item",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { handle },
+                    ToolDispatch.ArgsName,
+                    new Dictionary<string, object>(StringComparer.Ordinal) { { "label", "名" } }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(TouchNamedKey, _madeBy);
+        }
+
+        [Fact]
         public void AValueThatNoOverloadCanTakeIsRefused()
         {
             IDictionary<string, object> envelope = Call(
@@ -1717,6 +1776,9 @@ namespace PmxEditorMcp.Tests
                     { MakeMarkedKey, (target, arguments) => Made(MakeMarkedKey) },
                     { MakeCountedKey, (target, arguments) => Made(MakeCountedKey) },
                     { MakeHeldKey, (target, arguments) => Made(MakeHeldKey) },
+                    { MakeNotedKey, (target, arguments) => Made(MakeNotedKey) },
+                    { TouchKey, (target, arguments) => Made(TouchKey) },
+                    { TouchNamedKey, (target, arguments) => Made(TouchNamedKey) },
                     { BridgeReadKey, (target, arguments) => _bridged },
                     {
                         BridgeCommitKey,
@@ -2132,9 +2194,54 @@ namespace PmxEditorMcp.Tests
                         MakeHeldKey,
                         new ToolArgument(
                             "source", typeof(Item), false, null, false, typeof(Item))),
+                    Making(
+                        MakeNotedKey,
+                        new ToolArgument(
+                            "note",
+                            typeof(Note),
+                            false,
+                            null,
+                            false,
+                            null,
+                            null,
+                            new ToolValueShape(
+                                () => new Note(),
+                                new[]
+                                {
+                                    new ToolValueMember(
+                                        "text",
+                                        typeof(string),
+                                        (made, value) => ((Note)made).Text = (string)value),
+                                }))),
+                });
+
+            calls.Add(
+                "model_touch_item",
+                new[]
+                {
+                    Touching(TouchKey),
+                    Touching(TouchNamedKey, new ToolArgument("label", typeof(string))),
                 });
 
             return calls;
+        }
+
+        /// <summary>ハンドルで指した要素の上で呼ぶ呼び分け1つ。値は返さない。</summary>
+        private static ToolCall Touching(string rowKey, params ToolArgument[] arguments)
+        {
+            return new ToolCall(
+                rowKey,
+                new ToolReceiver(
+                    ToolReceiverKind.Handle,
+                    "Sdk.Item",
+                    EditKind.ViewSession,
+                    false,
+                    item => item is Item),
+                ToolAccess.Whole(),
+                DangerKind.None,
+                arguments,
+                new ToolArgument[0],
+                null);
         }
 
         private static IDictionary<string, ToolFields> Aggregations()

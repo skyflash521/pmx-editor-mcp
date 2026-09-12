@@ -48,7 +48,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IList<ParameterRecord> parameters = null,
             MemberKind memberKind = MemberKind.Method,
             ISet<string> embeddedTypes = null,
-            ISet<string> independentTypes = null)
+            ISet<string> independentTypes = null,
+            ISet<string> carried = null)
         {
             ToolMapGate.Require(
                 ToolMapJsonReader.Read(mapJson),
@@ -65,7 +66,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     typeNames ?? new HashSet<string>(
                         new[] { "PEPlugin.SDX.V3" }, StringComparer.Ordinal),
                     embeddedTypes ?? new HashSet<string>(StringComparer.Ordinal),
-                    independentTypes ?? new HashSet<string>(StringComparer.Ordinal)),
+                    independentTypes ?? new HashSet<string>(StringComparer.Ordinal),
+                    carried),
                 CommonAssignmentJsonReader.Read(assignmentsJson));
         }
 
@@ -241,6 +243,64 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(provided: new HashSet<string>(StringComparer.Ordinal)));
+
+            Assert.Contains("提供対象でない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TakesAnEmbeddedRowForAPropertyOfATypeThatOnlyAppearsAsAnArgument()
+        {
+            Require(
+                mapJson: Embedded(),
+                assignmentsJson: @"{ ""assignments"": [] }",
+                provided: new HashSet<string>(StringComparer.Ordinal),
+                memberKind: MemberKind.Property,
+                carried: new HashSet<string>(
+                    new[] { "PEPlugin.Pmx.IPXPmxConnector" }, StringComparer.Ordinal));
+        }
+
+        [Fact]
+        public void RejectsARowThatOnlyReachesAnotherToolForSuchAType()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: Embedded(),
+                    assignmentsJson: @"{ ""assignments"": [] }",
+                    provided: new HashSet<string>(StringComparer.Ordinal),
+                    memberKind: MemberKind.Property,
+                    independentTypes: new HashSet<string>(
+                        new[] { "PEPlugin.Pmx.IPXPmx" }, StringComparer.Ordinal),
+                    carried: new HashSet<string>(
+                        new[] { "PEPlugin.Pmx.IPXPmxConnector" }, StringComparer.Ordinal)));
+
+            Assert.Contains("提供対象でない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsAConstructorRowForATypeThatOnlyAppearsAsAnArgument()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: Embedded(),
+                    assignmentsJson: @"{ ""assignments"": [] }",
+                    provided: new HashSet<string>(StringComparer.Ordinal),
+                    memberKind: MemberKind.Constructor,
+                    embeddedTypes: new HashSet<string>(
+                        new[] { "PEPlugin.Pmx.IPXPmxConnector" }, StringComparer.Ordinal),
+                    carried: new HashSet<string>(
+                        new[] { "PEPlugin.Pmx.IPXPmxConnector" }, StringComparer.Ordinal)));
+
+            Assert.Contains("提供対象でない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsAMethodRowForATypeThatOnlyAppearsAsAnArgument()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    provided: new HashSet<string>(StringComparer.Ordinal),
+                    carried: new HashSet<string>(
+                        new[] { "PEPlugin.Pmx.IPXPmxConnector" }, StringComparer.Ordinal)));
 
             Assert.Contains("提供対象でない", error.Message, StringComparison.Ordinal);
         }

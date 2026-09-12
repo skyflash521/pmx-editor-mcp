@@ -6780,6 +6780,277 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVme.AddBone(System.String,SlimDX.Vector3)",
+      "editKind": "directChange",
+      "basis": "動かすボーンを足して、その実体を持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.AddMorph(System.String)",
+      "editKind": "directChange",
+      "basis": "動かすモーフを足して、その実体を持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.Clear()",
+      "editKind": "directChange",
+      "basis": "登録したものをすべて取り除く。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupBone(System.Boolean)",
+      "editKind": "directChange",
+      "basis": "ボーンのまとまりを作って持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupBone(System.Int32[])",
+      "editKind": "directChange",
+      "basis": "選んだボーンのまとまりを作って持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupMorph(System.Boolean)",
+      "editKind": "directChange",
+      "basis": "モーフのまとまりを作って持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.CreateGroupMorph(System.Int32[])",
+      "editKind": "directChange",
+      "basis": "選んだモーフのまとまりを作って持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.EnablePmd()",
+      "editKind": "read",
+      "basis": "PMDから作ったかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vmes"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.EnablePmx()",
+      "editKind": "read",
+      "basis": "PMXから作ったかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vmes"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.GroupBone()",
+      "editKind": "read",
+      "basis": "いま持っているボーンのまとまりを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.GroupMorph()",
+      "editKind": "read",
+      "basis": "いま持っているモーフのまとまりを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.InitFromPmx(PEPlugin.Pmx.IPXPmx)",
+      "editKind": "directChange",
+      "basis": "モデルに合わせて中身を作り直す。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.LastFrame()",
+      "editKind": "read",
+      "basis": "登録したイベントが終わるコマを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vmes"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.Pmx()",
+      "editKind": "read",
+      "basis": "作るときに合わせたモデルを返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.Preview(PEPlugin.Pmx.IPXPmx,PEPlugin.Vme.PEVmePreviewOption)",
+      "editKind": "viewSession",
+      "basis": "登録したイベントを画面で再生してみせる。表示だけを動かし、モデルもVMEのデータも変えない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.Preview(PEPlugin.Vme.PEVmePreviewOption)",
+      "editKind": "viewSession",
+      "basis": "登録したイベントを画面で再生してみせる。表示だけを動かし、モデルもVMEのデータも変えない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.RemoveBone(PEPlugin.Vme.IPEVmeBone)",
+      "editKind": "directChange",
+      "basis": "動かすボーンを取り除く。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.RemoveMorph(PEPlugin.Vme.IPEVmeSingleValueElement)",
+      "editKind": "directChange",
+      "basis": "動かすモーフを取り除く。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.Run()",
+      "editKind": "directChange",
+      "basis": "登録したイベントを走らせて、その結果を持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.Run(System.Int32,System.Int32)",
+      "editKind": "directChange",
+      "basis": "登録したイベントをコマの範囲で走らせて、その結果を持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.SetVmd(PEPlugin.Vmd.IPEVmd)",
+      "editKind": "directChange",
+      "basis": "結果を書き出す先のモーションのデータを決める。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVme.SetVmeResult(PEPlugin.Vme.IPEVmeResult)",
+      "editKind": "directChange",
+      "basis": "前に走らせた結果を引き継ぐ。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.PEVmePreviewOption.BeginFrame()",
+      "editKind": "viewSession",
+      "basis": "再生を始めるコマを持つ。表示だけを動かす指定なので、画面の状態に当たる。",
+      "embeddedIn": [
+        "motion_preview_vme"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.PEVmePreviewOption.EndFrame()",
+      "editKind": "viewSession",
+      "basis": "再生を終えるコマを持つ。表示だけを動かす指定なので、画面の状態に当たる。",
+      "embeddedIn": [
+        "motion_preview_vme"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.PEVmePreviewOption.ShowBone()",
+      "editKind": "viewSession",
+      "basis": "ボーンを見せるかどうかを持つ。表示だけを動かす指定なので、画面の状態に当たる。",
+      "embeddedIn": [
+        "motion_preview_vme"
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.CreateViewEventListener()",
       "editKind": "viewSession",
       "basis": "画面で起きたことを受け取る口を作るだけで、モデルのデータにもファイルにも作用しない。",

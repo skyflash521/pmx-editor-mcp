@@ -615,6 +615,7 @@ namespace PmxEditorMcp
         /// 渡された引数に合う呼び分け。1つしか持たないツールはそれを採る。2つ以上を持つツールは、
         /// 受け取る引数がすべて渡されていて、渡された値をその引数として受け取れるもののうち、
         /// 引数の多いものを採る——引数を足した呼び分けは、その一部だけを取る呼び分けを兼ねる。
+        /// 引数を受け取る呼び分けは、組を1つも渡さない要求には合わない。
         /// </summary>
         private static bool TryOverload(
             McpMethodContext context,
@@ -632,9 +633,9 @@ namespace PmxEditorMcp
             }
 
             IList<IDictionary<string, object>> sets = Sets(context, calls[0]);
-            foreach (ToolCall call in calls.OrderByDescending(c => Given(c).Count))
+            foreach (ToolCall call in calls.OrderByDescending(c => c.Arguments.Count))
             {
-                if (sets.All(s => Given(call).All(a => Receivable(s, a))))
+                if (Fits(sets, Given(call)))
                 {
                     chosen = call;
 
@@ -677,6 +678,14 @@ namespace PmxEditorMcp
                 : items.Select(i => i as IDictionary<string, object>).ToList();
         }
 
+        /// <summary>渡された組のどれでも、その呼び分けが受け取る引数がすべて揃うか。</summary>
+        private static bool Fits(
+            IList<IDictionary<string, object>> sets, IList<ToolArgument> arguments)
+        {
+            return arguments.Count == 0
+                || (sets.Count != 0 && sets.All(s => arguments.All(a => Receivable(s, a))));
+        }
+
         /// <summary>その引数として受け取れる値が組に入っているか。</summary>
         private static bool Receivable(IDictionary<string, object> set, ToolArgument argument)
         {
@@ -701,7 +710,25 @@ namespace PmxEditorMcp
                 return TryInteger(given, out id);
             }
 
+            if (argument.Built != null)
+            {
+                return Built(given);
+            }
+
             return ValueInput.TryFromJson(argument.Type, given, out taken, out code, out message);
+        }
+
+        /// <summary>組から作る引数として受け取れる形か。1つの組と、組の並びのどちらも取る。</summary>
+        private static bool Built(object given)
+        {
+            if (given is IDictionary<string, object>)
+            {
+                return true;
+            }
+
+            object[] items = given as object[];
+
+            return items != null && items.All(i => i is IDictionary<string, object>);
         }
 
         /// <summary>SDKのメンバーを呼ぶ。対象の組へ及ぶ呼び出しは、その全件へ及ぶ。</summary>
