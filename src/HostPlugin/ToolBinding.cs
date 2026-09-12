@@ -223,7 +223,10 @@ namespace PmxEditorMcp
         /// </summary>
         public ToolAccess Referenced { get; }
 
-        /// <summary>その引数が指す実体の型。ハンドルで受け取る引数だけが持ち、ほかは null。</summary>
+        /// <summary>
+        /// その引数が指す実体の型。ハンドルで受け取る引数だけが持ち、ほかは null。並びを取る引数
+        /// では、並びの要素1つが指す実体の型になる。
+        /// </summary>
         public Type Held { get; }
 
         /// <summary>

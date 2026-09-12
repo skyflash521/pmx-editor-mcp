@@ -7027,6 +7027,222 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.AddElement(PEPlugin.Vme.IPEVmeEventElement)",
+      "editKind": "directChange",
+      "basis": "まとまりへ要素を1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.AddElements(PEPlugin.Vme.IPEVmeEventElement[])",
+      "editKind": "directChange",
+      "basis": "まとまりへ要素をまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.ClearGroup()",
+      "editKind": "directChange",
+      "basis": "まとまりから要素をすべて取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GetElement(System.Int32)",
+      "editKind": "read",
+      "basis": "その位置の要素を返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GetGroupElements()",
+      "editKind": "read",
+      "basis": "まとまりが持つ要素を並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GroupCount()",
+      "editKind": "read",
+      "basis": "まとまりが持つ要素の数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vme_groups"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.RemoveElement(PEPlugin.Vme.IPEVmeEventElement)",
+      "editKind": "directChange",
+      "basis": "まとまりから要素を1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.AddBone(PEPlugin.Vme.IPEVmeBone)",
+      "editKind": "directChange",
+      "basis": "まとまりへボーンを1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.AddBones(PEPlugin.Vme.IPEVmeBone[])",
+      "editKind": "directChange",
+      "basis": "まとまりへボーンをまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetBone(System.Int32)",
+      "editKind": "read",
+      "basis": "その位置のボーンを返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetGroupBones()",
+      "editKind": "read",
+      "basis": "まとまりが持つボーンを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.RemoveBone(PEPlugin.Vme.IPEVmeBone)",
+      "editKind": "directChange",
+      "basis": "まとまりからボーンを1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.AddMorph(PEPlugin.Vme.IPEVmeSingleValueElement)",
+      "editKind": "directChange",
+      "basis": "まとまりへモーフを1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.AddMorphs(PEPlugin.Vme.IPEVmeSingleValueElement[])",
+      "editKind": "directChange",
+      "basis": "まとまりへモーフをまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.GetGroupMorphs()",
+      "editKind": "read",
+      "basis": "まとまりが持つモーフを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.GetMorph(System.Int32)",
+      "editKind": "read",
+      "basis": "その位置のモーフを返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.RemoveMorph(PEPlugin.Vme.IPEVmeSingleValueElement)",
+      "editKind": "directChange",
+      "basis": "まとまりからモーフを1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.AddPoint(SlimDX.Vector3)",
       "editKind": "directChange",
       "basis": "通る点を末尾へ足す。空間パスは長寿命の持ち物なので、それへ直に作用する。",

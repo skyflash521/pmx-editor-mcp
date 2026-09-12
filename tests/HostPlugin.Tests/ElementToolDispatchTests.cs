@@ -65,6 +65,8 @@ namespace PmxEditorMcp.Tests
 
         private const string MakeNotedKey = "Sdk.Maker.Make(Sdk.Note)";
 
+        private const string MakeFromManyKey = "Sdk.Maker.Make(Sdk.Item[])";
+
         private const string TouchKey = "Sdk.Item.Touch()";
 
         private const string TouchNamedKey = "Sdk.Item.Touch(System.String)";
@@ -95,6 +97,8 @@ namespace PmxEditorMcp.Tests
         private object _attachedItem;
 
         private string _madeBy;
+
+        private Item[] _fromMany;
 
         private readonly List<string> _undoCalls = new List<string>();
 
@@ -1344,6 +1348,40 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AnArgumentThatTakesHandlesInARowReachesTheCallAsTheHeldThings()
+        {
+            HandleLedger handles = Ledger();
+            Item first = new Item();
+            Item second = new Item();
+            int one = handles.Issue(typeof(Item).FullName, first, () => { });
+            int two = handles.Issue(typeof(Item).FullName, second, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_make_item",
+                Arguments("sources", new object[] { (long)one, (long)two }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(MakeFromManyKey, _madeBy);
+            Assert.Equal(new[] { first, second }, _fromMany);
+        }
+
+        [Fact]
+        public void AnArgumentThatTakesHandlesInARowIsRefusedWhenOneOfThemIsUnknown()
+        {
+            HandleLedger handles = Ledger();
+            int one = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_make_item",
+                Arguments("sources", new object[] { (long)one, 9L }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidHandle, Code(envelope));
+            Assert.Null(_madeBy);
+        }
+
+        [Fact]
         public void AValueThatNoOverloadCanTakeIsRefused()
         {
             IDictionary<string, object> envelope = Call(
@@ -1777,6 +1815,15 @@ namespace PmxEditorMcp.Tests
                     { MakeCountedKey, (target, arguments) => Made(MakeCountedKey) },
                     { MakeHeldKey, (target, arguments) => Made(MakeHeldKey) },
                     { MakeNotedKey, (target, arguments) => Made(MakeNotedKey) },
+                    {
+                        MakeFromManyKey,
+                        (target, arguments) =>
+                        {
+                            _fromMany = (Item[])arguments[0];
+
+                            return Made(MakeFromManyKey);
+                        }
+                    },
                     { TouchKey, (target, arguments) => Made(TouchKey) },
                     { TouchNamedKey, (target, arguments) => Made(TouchNamedKey) },
                     { BridgeReadKey, (target, arguments) => _bridged },
@@ -2194,6 +2241,10 @@ namespace PmxEditorMcp.Tests
                         MakeHeldKey,
                         new ToolArgument(
                             "source", typeof(Item), false, null, false, typeof(Item))),
+                    Making(
+                        MakeFromManyKey,
+                        new ToolArgument(
+                            "sources", typeof(Item[]), false, null, false, typeof(Item))),
                     Making(
                         MakeNotedKey,
                         new ToolArgument(

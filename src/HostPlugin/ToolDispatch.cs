@@ -707,7 +707,7 @@ namespace PmxEditorMcp
             {
                 long id;
 
-                return TryInteger(given, out id);
+                return argument.Type.IsArray ? Handles(given) : TryInteger(given, out id);
             }
 
             if (argument.Built != null)
@@ -716,6 +716,14 @@ namespace PmxEditorMcp
             }
 
             return ValueInput.TryFromJson(argument.Type, given, out taken, out code, out message);
+        }
+
+        /// <summary>ハンドルの並びを取る引数として受け取れる形か。</summary>
+        private static bool Handles(object given)
+        {
+            object[] items = given as object[];
+
+            return items != null && items.All(ValueInput.IsNumber);
         }
 
         /// <summary>組から作る引数として受け取れる形か。1つの組と、組の並びのどちらも取る。</summary>
@@ -1534,6 +1542,49 @@ namespace PmxEditorMcp
         /// ハンドルで受け取る引数を、そのハンドルが指す実体へ直す。指していなければ断る。
         /// </summary>
         private static bool TryHeldArgument(
+            McpMethodContext context,
+            ToolArgument argument,
+            object json,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            if (!argument.Type.IsArray)
+            {
+                return TryOneHeld(context, argument, json, out value, out code, out message);
+            }
+
+            object[] items = json as object[];
+            if (items == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " はハンドルの番号の配列でなければならない。";
+
+                return false;
+            }
+
+            Array taken = Array.CreateInstance(argument.Held, items.Length);
+            for (int at = 0; at < items.Length; at++)
+            {
+                object one;
+                if (!TryOneHeld(context, argument, items[at], out one, out code, out message))
+                {
+                    return false;
+                }
+
+                taken.SetValue(one, at);
+            }
+
+            value = taken;
+
+            return true;
+        }
+
+        /// <summary>ハンドル1件を、それが指す実体へ直す。指していなければ断る。</summary>
+        private static bool TryOneHeld(
             McpMethodContext context,
             ToolArgument argument,
             object json,
