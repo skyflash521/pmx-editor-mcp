@@ -205,7 +205,7 @@ namespace PmxEditorMcp
     /// <summary>項目を集めるツールが持つ項目1件。</summary>
     public sealed class ToolField
     {
-        public ToolField(string name, string rowKey, Type type)
+        public ToolField(string name, string rowKey, Type type, IList<ToolField> members = null)
         {
             if (name == null)
             {
@@ -225,6 +225,7 @@ namespace PmxEditorMcp
             Name = name;
             RowKey = rowKey;
             Type = type;
+            Members = members == null ? null : new ReadOnlyCollection<ToolField>(members);
         }
 
         /// <summary>応答と要求に現れる項目の名前。</summary>
@@ -235,6 +236,12 @@ namespace PmxEditorMcp
 
         /// <summary>その項目の宣言型。</summary>
         public Type Type { get; }
+
+        /// <summary>
+        /// その項目が値として写せない型のとき、その中の項目。写せる型では null で、値をそのまま
+        /// 写す。
+        /// </summary>
+        public IList<ToolField> Members { get; }
     }
 
     /// <summary>受け手の得方と、呼び出しがエディタの状態へどう作用するか。</summary>
@@ -275,7 +282,8 @@ namespace PmxEditorMcp
             IList<ToolArgument> arguments,
             IList<ToolArgument> outputs,
             Type result,
-            Type issues = null)
+            Type issues = null,
+            IList<ToolField> projected = null)
         {
             if (rowKey == null)
             {
@@ -310,6 +318,7 @@ namespace PmxEditorMcp
             Outputs = new ReadOnlyCollection<ToolArgument>(outputs);
             Result = result;
             Issues = issues;
+            Projected = projected == null ? null : new ReadOnlyCollection<ToolField>(projected);
         }
 
         /// <summary>呼ぶ行のキー。</summary>
@@ -338,6 +347,12 @@ namespace PmxEditorMcp
         /// ほかは null で、返す値をそのまま写す。
         /// </summary>
         public Type Issues { get; }
+
+        /// <summary>
+        /// 返す値が値として写せない型のとき、その中の項目を読む行。ほかは null で、値をそのまま
+        /// 写す。
+        /// </summary>
+        public IList<ToolField> Projected { get; }
     }
 
     /// <summary>実行時の型ごとに集める項目。型で分かれないツールは1件だけを持つ。</summary>

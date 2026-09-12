@@ -41,6 +41,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Weight = "PEPlugin.Pmx.IPXWeight";
 
+        private const string Info = "Sdk.Info";
+
+        private const string Option = "Sdk.Option";
+
         private const string WeightKey = Vertex + ".Weight()";
 
         [Fact]
@@ -488,6 +492,46 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 });
         }
 
+        [Fact]
+        public void ACallThatReturnsACarriedTypeAlsoCarriesTheRowsOfItsItems()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_info", Method("GetInfo", Info)),
+                Embedded(Carried(Info, "Name", "System.String"), "session_info"),
+                Embedded(Carried(Info, "Option", Option), "session_info"),
+                Embedded(Carried(Option, "Bootup", "System.Boolean"), "session_info"));
+
+            Assert.Contains(
+                "typeof(global::" + Info + "), null, new ToolField[] { new ToolField(\"name\", \""
+                    + Info + ".Name()\", typeof(global::System.String)), new ToolField(\"option\","
+                    + " \"" + Info + ".Option()\", typeof(global::" + Option + "),"
+                    + " new ToolField[] { new ToolField(\"bootup\", \"" + Option
+                    + ".Bootup()\", typeof(global::System.Boolean)) }) })",
+                source.Text);
+        }
+
+        [Fact]
+        public void OnlyTheItemsThatCanBeReadGoIntoWhatTheCallReturns()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_info", Method("GetInfo", Info)),
+                Embedded(Carried(Info, "Name", "System.String"), "session_info"),
+                Embedded(Written(Info, "Hidden", "System.String"), "session_info"));
+
+            Assert.Contains("\"name\"", source.Text);
+            Assert.DoesNotContain("\"hidden\"", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsACarriedTypeWithoutItsItemsIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Build(Dispatched("session_info", Method("GetInfo", Info))));
+
+            Assert.StartsWith(
+                "返す運搬用の型の項目を持ち込む行が無い:", error.Message, StringComparison.Ordinal);
+        }
+
         private static TypeRoleTable Roles()
         {
             return new TypeRoleTable(
@@ -528,6 +572,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "weight",
                         "weights",
                         CapabilityOwner.Model),
+                    new TypeRoleRecord(Info, TypeRole.Dto, "題材の根拠。"),
+                    new TypeRoleRecord(Option, TypeRole.Dto, "題材の根拠。"),
                 },
                 new HandleIssuanceRecord[0],
                 new[]
@@ -599,6 +645,40 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 false,
                 false,
                 OperationDirection.Write);
+        }
+
+        /// <summary>運搬用の型が持つ、書き込みだけの項目。</summary>
+        private static SignatureRecord Written(string owner, string member, string valueType)
+        {
+            return new SignatureRecord(
+                owner + "." + member + "()",
+                owner,
+                MemberKind.Property,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                false,
+                true,
+                OperationDirection.Write);
+        }
+
+        /// <summary>運搬用の型が持つ、読み取りだけの項目。</summary>
+        private static SignatureRecord Carried(string owner, string member, string valueType)
+        {
+            return new SignatureRecord(
+                owner + "." + member + "()",
+                owner,
+                MemberKind.Property,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                true,
+                false,
+                OperationDirection.Read);
         }
 
         private static SignatureRecord Property(

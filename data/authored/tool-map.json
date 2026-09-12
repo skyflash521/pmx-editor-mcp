@@ -279,9 +279,275 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.IPEPluginOption.Bootup()",
+      "editKind": "read",
+      "basis": "起動のときに走らせるかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEPluginOption.RegisterMenu()",
+      "editKind": "read",
+      "basis": "メニューへ登録するかどうかを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEPluginOption.RegisterMenuText()",
+      "editKind": "read",
+      "basis": "メニューへ登録する文字列を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPERegisteredPluginInfo.AssemblyPath()",
+      "editKind": "read",
+      "basis": "登録プラグインのアセンブリの場所を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPERegisteredPluginInfo.ClassName()",
+      "editKind": "read",
+      "basis": "登録プラグインのクラスの名前を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPERegisteredPluginInfo.Description()",
+      "editKind": "read",
+      "basis": "登録プラグインの説明を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPERegisteredPluginInfo.Name()",
+      "editKind": "read",
+      "basis": "登録プラグインの名前を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPERegisteredPluginInfo.Option()",
+      "editKind": "read",
+      "basis": "登録プラグインの起動のしかたの設定を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPERegisteredPluginInfo.Version()",
+      "editKind": "read",
+      "basis": "登録プラグインの版を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_plugin_info",
+        "session_get_c_plugin_info_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.DefaultPluginFolderPath()",
+      "editKind": "read",
+      "basis": "プラグインのDLLを置く標準の場所を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.FindRegisteredPluginsFromMenuText(System.String,System.Boolean)",
+      "editKind": "read",
+      "basis": "メニューへの登録の文字列で登録済みのプラグインを探し、見つかった序数を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.GetCPluginInfo(System.Int32)",
+      "editKind": "read",
+      "basis": "序数で指した登録Cプラグインの情報を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.IPESystemConnector.GetCPluginRunArgsClone(System.String)",
       "editKind": "read",
       "basis": "接続の根の複製を返すだけで、モデルのデータにも長寿命のオブジェクトにもファイルにも作用しない。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.GetPluginInfo(System.Int32)",
+      "editKind": "read",
+      "basis": "序数で指した登録プラグインの情報を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.GetShareObject(System.String,System.Boolean)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有オブジェクトから値を取り出す。取り出した後に消すこともできるので、モデルのデータにもファイルにも作用しないが、セッションの状態は動く。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.HostApplicationPath()",
+      "editKind": "read",
+      "basis": "プラグインを載せている本体の場所を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.PEPluginAssemblyPath()",
+      "editKind": "read",
+      "basis": "PEプラグインのアセンブリの場所を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.PEPluginAssemblyVersion()",
+      "editKind": "read",
+      "basis": "PEプラグインのアセンブリの版を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.RegisteredCPluginCount()",
+      "editKind": "read",
+      "basis": "登録されているCプラグインの数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.RegisteredPluginCount()",
+      "editKind": "read",
+      "basis": "登録されているプラグインの数を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_connector"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.RemoveShareObject(System.String)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有オブジェクトからキーの項目を消すだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.RunCPlugin(System.Int32)",
+      "editKind": "directChange",
+      "basis": "登録済みのCプラグインを、メニューから呼んだのと同じように走らせる。走らせたものがモデルのデータへ直に作用しうるので、直接変更型に当たる。何が起きるかは走らせた先が決めるので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.RunPlugin(System.Int32)",
+      "editKind": "directChange",
+      "basis": "登録済みのプラグインを、メニューから呼んだのと同じように走らせる。走らせたものがモデルのデータへ直に作用しうるので、直接変更型に当たる。何が起きるかは走らせた先が決めるので、効果は呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "observableChange",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.SetShareObject(System.String,System.Object)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有オブジェクトへキーと値を登録するだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.SlimDXAssemblyPath()",
+      "editKind": "read",
+      "basis": "描画ライブラリのアセンブリの場所を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_system_connector"
+      ]
     },
     {
       "signatureKey": "PEPlugin.IPXPmxBuilder.Body()",
@@ -3860,6 +4126,14 @@
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。"
     },
     {
+      "signatureKey": "PXCPlugin.IPXCPluginRunArgs.ModulePath()",
+      "editKind": "read",
+      "basis": "このプラグイン自身のDLLの場所を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_c_plugin_run_args"
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddBox(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
       "editKind": "duplicateEdit",
       "updateSpec": {
@@ -4030,6 +4304,42 @@
       ]
     },
     {
+      "signatureKey": "PXCPlugin.IPXSystemControl.GetCPluginInfo(System.Int32)",
+      "editKind": "read",
+      "basis": "序数で指した登録Cプラグインの情報を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.GetPEPluginInfo(System.Int32)",
+      "editKind": "read",
+      "basis": "序数で指した登録PEプラグインの情報を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.IPXSystemControl.GetShareBuffer(System.String,System.Boolean)",
       "editKind": "viewSession",
       "basis": "プラグインどうしが受け渡す共有データからバイト列を取り出す。取り出した後に消すこともできるので、モデルのデータにもファイルにも作用しないが、セッションの状態は動く。",
@@ -4185,6 +4495,60 @@
       "signatureKey": "PXCPlugin.PXCBridge.ViewCtrl(PXCPlugin.IPXCPluginConnector)",
       "editKind": "read",
       "basis": "コネクタの実体を返すだけで、エディタの状態を動かさない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXPluginInfo.AssemblyPath()",
+      "editKind": "read",
+      "basis": "プラグインのアセンブリの場所を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_c_plugin_info_system_control",
+        "session_get_pe_plugin_info"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.PXPluginInfo.ClassName()",
+      "editKind": "read",
+      "basis": "プラグインのクラスの名前を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_c_plugin_info_system_control",
+        "session_get_pe_plugin_info"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.PXPluginInfo.Description()",
+      "editKind": "read",
+      "basis": "プラグインの説明を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_c_plugin_info_system_control",
+        "session_get_pe_plugin_info"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.PXPluginInfo.MenuText()",
+      "editKind": "read",
+      "basis": "プラグインのメニューへの登録の文字列を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_c_plugin_info_system_control",
+        "session_get_pe_plugin_info"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.PXPluginInfo.Name()",
+      "editKind": "read",
+      "basis": "プラグインの名前を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_c_plugin_info_system_control",
+        "session_get_pe_plugin_info"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.PXPluginInfo.Version()",
+      "editKind": "read",
+      "basis": "プラグインの版を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "session_get_c_plugin_info_system_control",
+        "session_get_pe_plugin_info"
+      ]
     },
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.Release()",

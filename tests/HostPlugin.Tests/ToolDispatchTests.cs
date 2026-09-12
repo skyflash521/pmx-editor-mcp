@@ -28,11 +28,25 @@ namespace PmxEditorMcp.Tests
 
         private const string ThrowKey = "Sdk.Form.Throw()";
 
+        private const string InfoKey = "Sdk.Form.Info()";
+
+        private const string InfoNameKey = "Sdk.Info.Name()";
+
+        private const string InfoOptionKey = "Sdk.Info.Option()";
+
+        private const string OptionBootupKey = "Sdk.Option.Bootup()";
+
+        private const string InfoLostKey = "Sdk.Info.Lost()";
+
+        private const string InfoRawKey = "Sdk.Info.Raw()";
+
         private readonly string _root;
 
         private readonly HostLog _log;
 
         private readonly Target _target = new Target();
+
+        private Info _info;
 
         public ToolDispatchTests()
         {
@@ -370,6 +384,11 @@ namespace PmxEditorMcp.Tests
                             : Write((Target)target, (bool)arguments[0])
                     },
                     { ThrowKey, (target, arguments) => { throw new InvalidOperationException("題材の失敗。"); } },
+                    { InfoKey, (target, arguments) => _info },
+                    { InfoNameKey, (target, arguments) => ((Info)target).Name },
+                    { InfoOptionKey, (target, arguments) => ((Info)target).Option },
+                    { OptionBootupKey, (target, arguments) => ((Option)target).Bootup },
+                    { InfoRawKey, (target, arguments) => new Target() },
                 };
 
             return new SdkRelayTable(SdkVersion, Digest, calls, new[] { LostKey });
@@ -402,6 +421,53 @@ namespace PmxEditorMcp.Tests
             return built;
         }
 
+        [Fact]
+        public void AValueThatIsNotAShapeOfItsOwnComesBackAsItsItems()
+        {
+            _info = new Info { Name = "題材", Option = new Option { Bootup = true } };
+
+            IDictionary<string, object> envelope = Call("session_info", Arguments());
+
+            IDictionary<string, object> value =
+                (IDictionary<string, object>)envelope["value"];
+            Assert.Equal("題材", value["name"]);
+            Assert.Equal(
+                true, ((IDictionary<string, object>)value["option"])["bootup"]);
+        }
+
+        [Fact]
+        public void AValueThatIsNotAShapeOfItsOwnComesBackEmptyWhenThereIsNone()
+        {
+            _info = null;
+
+            IDictionary<string, object> envelope = Call("session_info", Arguments());
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Null(envelope["value"]);
+        }
+
+        [Fact]
+        public void AnItemWithoutARelayIsRefusedTheSameWayAsAnyOtherCall()
+        {
+            _info = new Info { Name = "題材" };
+
+            IDictionary<string, object> envelope = Call("session_info_lost", Arguments());
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Contains(InfoLostKey, Message(envelope), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnItemThatCannotBeWrittenAsAValueIsRefusedWithItsOwnReason()
+        {
+            _info = new Info { Name = "題材" };
+
+            IDictionary<string, object> envelope = Call("session_info_raw", Arguments());
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Contains("写せない", Message(envelope), StringComparison.Ordinal);
+        }
+
         private static IDictionary<string, IList<ToolCall>> Calls()
         {
             return Singles(new Dictionary<string, ToolCall>(StringComparer.Ordinal)
@@ -427,6 +493,53 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         new ToolArgument[0],
                         typeof(int))
+                },
+                {
+                    "session_info",
+                    new ToolCall(
+                        InfoKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Info),
+                        null,
+                        new[]
+                        {
+                            new ToolField("name", InfoNameKey, typeof(string)),
+                            new ToolField(
+                                "option",
+                                InfoOptionKey,
+                                typeof(Option),
+                                new[] { new ToolField("bootup", OptionBootupKey, typeof(bool)) }),
+                        })
+                },
+                {
+                    "session_info_lost",
+                    new ToolCall(
+                        InfoKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Info),
+                        null,
+                        new[] { new ToolField("lost", InfoLostKey, typeof(string)) })
+                },
+                {
+                    "session_info_raw",
+                    new ToolCall(
+                        InfoKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Info),
+                        null,
+                        new[] { new ToolField("raw", InfoRawKey, typeof(Target)) })
                 },
                 {
                     "session_lost",
@@ -506,6 +619,19 @@ namespace PmxEditorMcp.Tests
             public bool Flag { get; set; }
 
             public int Count { get; set; }
+        }
+
+        /// <summary>独立したツールを持たず、返す値の中だけに現れる題材。</summary>
+        private sealed class Info
+        {
+            public string Name { get; set; }
+
+            public Option Option { get; set; }
+        }
+
+        private sealed class Option
+        {
+            public bool Bootup { get; set; }
         }
 
         /// <summary>受付を止めた稼働世代のように、委譲された処理を実行しない。</summary>

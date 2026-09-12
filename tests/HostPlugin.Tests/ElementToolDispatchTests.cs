@@ -27,6 +27,10 @@ namespace PmxEditorMcp.Tests
 
         private const string ResumeUndoKey = "Sdk.PmxConnector.UnlockUndo()";
 
+        private const string ItemInfoKey = "Sdk.Item.Info()";
+
+        private const string InfoLabelKey = "Sdk.ItemInfo.Label()";
+
         private const string ItemsKey = "Sdk.Pmx.Items()";
 
         private const string GroupsKey = "Sdk.Pmx.Groups()";
@@ -1418,6 +1422,22 @@ namespace PmxEditorMcp.Tests
                 UndoGate.LeftoverWarning, Message(envelope), StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void EachElementAnswersWithTheItemsOfWhatItReturns()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_info_items", Arguments(TargetNames.Element.All, true));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            object[] listed = (object[])envelope["value"];
+            Assert.Equal(
+                new[] { "一", "二" },
+                listed.Select(v => (string)((IDictionary<string, object>)v)["label"]).ToArray());
+        }
+
         private static IDictionary<string, object> Assignment(int parent, int handle)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal)
@@ -1598,6 +1618,11 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { NoteKey, (target, arguments) => ((Model)target).Note },
+                    {
+                        ItemInfoKey,
+                        (target, arguments) => new ItemInfo { Label = ((Item)target).Label }
+                    },
+                    { InfoLabelKey, (target, arguments) => ((ItemInfo)target).Label },
                     { MakeKey, (target, arguments) => Made(MakeKey) },
                     { MakeLabelledKey, (target, arguments) => Made(MakeLabelledKey) },
                     { MakeMarkedKey, (target, arguments) => Made(MakeMarkedKey) },
@@ -1913,6 +1938,19 @@ namespace PmxEditorMcp.Tests
                         null)
                 },
                 {
+                    "model_info_items",
+                    new ToolCall(
+                        ItemInfoKey,
+                        Rooted(EditKind.Read),
+                        Direct(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(ItemInfo),
+                        null,
+                        new[] { new ToolField("label", InfoLabelKey, typeof(string)) })
+                },
+                {
                     "model_split_item",
                     new ToolCall(
                         SplitKey,
@@ -2115,6 +2153,12 @@ namespace PmxEditorMcp.Tests
         private abstract class Leaf
         {
             public string Tag { get; set; }
+        }
+
+        /// <summary>独立したツールを持たず、返す値の中だけに現れる題材。</summary>
+        private sealed class ItemInfo
+        {
+            public string Label { get; set; }
         }
 
         /// <summary>ツールが相手にする具象の型。</summary>

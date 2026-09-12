@@ -129,6 +129,8 @@ namespace PmxEditorMcp.SignatureDump
             SortedDictionary<string, string> lists =
                 new SortedDictionary<string, string>(StringComparer.Ordinal);
 
+            IDictionary<string, string> projections =
+                Projections(map, signatures, byType, toolNames);
             foreach (ToolMapRow row in map.Rows.OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
             {
                 SignatureRecord signature;
@@ -148,6 +150,7 @@ namespace PmxEditorMcp.SignatureDump
                         calls.Add(tool, overloads);
                     }
 
+                    string carried;
                     overloads.Add(
                         Call(
                             row,
@@ -158,7 +161,8 @@ namespace PmxEditorMcp.SignatureDump
                             concrete,
                             byType,
                             paths,
-                            bridged));
+                            bridged,
+                            projections.TryGetValue(tool, out carried) ? carried : null));
                     Listing(lists, path, signatures, byType);
                     continue;
                 }
@@ -243,7 +247,9 @@ namespace PmxEditorMcp.SignatureDump
         {
             string declaring = TypeDefinitionName.OfElement(signature.DeclaringType);
             TypeRoleRecord owner;
-            if (row.EmbeddedIn == null || !byType.TryGetValue(declaring, out owner))
+            if (row.EmbeddedIn == null
+                || !byType.TryGetValue(declaring, out owner)
+                || owner.Role == TypeRole.Dto)
             {
                 yield break;
             }
@@ -387,7 +393,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, AccessPath> paths,
-            ISet<string> bridged)
+            ISet<string> bridged,
+            string projected)
         {
             DangerKind kind;
             string danger = dangerous.TryGetValue(signature.Key, out kind)
@@ -403,6 +410,9 @@ namespace PmxEditorMcp.SignatureDump
                 .ToArray();
 
             string issues = Issues(row, signature) ? ", " + TypeOf(signature.ValueType) : string.Empty;
+            string tail = projected == null
+                ? issues
+                : (issues.Length == 0 ? ", null" : issues) + ", " + projected;
 
             return "new ToolCall(" + Literal(signature.Key) + ", "
                 + Receiver(row, signature, path, null, Bridges(signature, path, bridged)) + ", "
@@ -412,7 +422,7 @@ namespace PmxEditorMcp.SignatureDump
                 + (string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
                     ? "null"
                     : TypeOf(signature.ValueType))
-                + issues + ")";
+                + tail + ")";
         }
 
         /// <summary>
@@ -627,10 +637,91 @@ namespace PmxEditorMcp.SignatureDump
                 + "(owner, index) => " + owner + ".RemoveAt(index))";
         }
 
-        private static string Field(SignatureRecord signature)
+        private static string Field(SignatureRecord signature, string members = null)
         {
             return "new ToolField(" + Literal(SdkShapeEvidence.MemberNameOf(signature.MemberName))
-                + ", " + Literal(signature.Key) + ", " + TypeOf(signature.ValueType) + ")";
+                + ", " + Literal(signature.Key) + ", " + TypeOf(signature.ValueType)
+                + (members == null ? string.Empty : ", " + members) + ")";
+        }
+
+        /// <summary>
+        /// ツールごとの、返す値の中の項目。運搬用の型を返す行だけが持ち、その型の項目を持ち込む
+        /// 行から組み立てる。中がまた運搬用の型なら、その中も同じ規則で組み立てる。
+        /// </summary>
+        private static IDictionary<string, string> Projections(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, string> toolNames)
+        {
+            Dictionary<string, string> projected =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows)
+            {
+                SignatureRecord signature;
+                string tool;
+                if (!signatures.TryGetValue(row.SignatureKey, out signature)
+                    || !toolNames.TryGetValue(row.SignatureKey, out tool)
+                    || !Carried(signature.ValueType, byType))
+                {
+                    continue;
+                }
+
+                projected.Add(tool, Carrying(signature.ValueType, tool, map, signatures, byType));
+            }
+
+            return projected;
+        }
+
+        /// <summary>その型が、独立したツールを持たない運搬用の型か。</summary>
+        private static bool Carried(
+            string typeName, IDictionary<string, TypeRoleRecord> byType)
+        {
+            TypeRoleRecord record;
+
+            return byType.TryGetValue(TypeDefinitionName.OfElement(typeName), out record)
+                && record.Role == TypeRole.Dto;
+        }
+
+        /// <summary>その運搬用の型の項目を、そのツールへ持ち込む行から組み立てる。</summary>
+        private static string Carrying(
+            string typeName,
+            string tool,
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, TypeRoleRecord> byType)
+        {
+            string carried = TypeDefinitionName.OfElement(typeName);
+            List<string> fields = new List<string>();
+            foreach (ToolMapRow row in map.Rows.OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
+            {
+                SignatureRecord signature;
+                if (row.EmbeddedIn == null
+                    || !row.EmbeddedIn.Contains(tool, StringComparer.Ordinal)
+                    || !signatures.TryGetValue(row.SignatureKey, out signature)
+                    || !signature.CanRead
+                    || !string.Equals(
+                        TypeDefinitionName.OfElement(signature.DeclaringType),
+                        carried,
+                        StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                fields.Add(Field(
+                    signature,
+                    Carried(signature.ValueType, byType)
+                        ? Carrying(signature.ValueType, tool, map, signatures, byType)
+                        : null));
+            }
+
+            if (fields.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    "返す運搬用の型の項目を持ち込む行が無い: " + tool + "(" + carried + ")");
+            }
+
+            return "new ToolField[] { " + string.Join(", ", fields) + " }";
         }
 
         /// <summary>

@@ -535,7 +535,11 @@ namespace PmxEditorMcp
                     return;
                 }
 
-                result = value;
+                if (!TryProjected(call, value, out result, out refused))
+                {
+                    return;
+                }
+
                 stage = Reflecting(call.Receiver, target, stage);
                 refused = Commit(context, call.Receiver, target);
             }, out failure))
@@ -561,6 +565,11 @@ namespace PmxEditorMcp
             if (call.Issues != null)
             {
                 return Issued(context, call, result);
+            }
+
+            if (call.Projected != null)
+            {
+                return ToolEnvelope.Success(result);
             }
 
             return call.Result == null
@@ -676,7 +685,13 @@ namespace PmxEditorMcp
                         return;
                     }
 
-                    results.Add(value);
+                    object projected;
+                    if (!TryProjected(call, value, out projected, out refused))
+                    {
+                        return;
+                    }
+
+                    results.Add(projected);
                 }
 
                 invoked = column.Count;
@@ -706,6 +721,13 @@ namespace PmxEditorMcp
             List<string> warnings = new List<string>();
             foreach (object one in results)
             {
+                if (call.Projected != null)
+                {
+                    written.Add(one);
+
+                    continue;
+                }
+
                 IDictionary<string, object> envelope = call.Outputs.Count != 0
                     ? Written(call, one)
                     : Written(call.Result, one);
@@ -3263,6 +3285,101 @@ namespace PmxEditorMcp
             }
 
             return ToolEnvelope.Success(members, warnings);
+        }
+
+        /// <summary>
+        /// 返す値が値として写せない型なら、その中の項目を読んで組へ直す。写せる型ではそのまま返す。
+        /// SDKを呼ぶので、呼び出しと同じUIスレッドの中で行う。読めない項目と写せない項目は、
+        /// ほかの中継と同じ断り方で返す。
+        /// </summary>
+        private bool TryProjected(
+            ToolCall call, object value, out object projected, out Refusal refused)
+        {
+            refused = null;
+            if (call.Projected == null)
+            {
+                projected = value;
+
+                return true;
+            }
+
+            IDictionary<string, object> members;
+            if (!TryCarried(call.Projected, value, out members, out refused))
+            {
+                projected = null;
+
+                return false;
+            }
+
+            projected = members;
+
+            return true;
+        }
+
+        /// <summary>運搬用の型の項目を読んで組へ直す。中がまた運搬用の型なら、その中も同じに扱う。</summary>
+        private bool TryCarried(
+            IList<ToolField> fields,
+            object value,
+            out IDictionary<string, object> carried,
+            out Refusal refused)
+        {
+            carried = null;
+            refused = null;
+            if (value == null)
+            {
+                return true;
+            }
+
+            Dictionary<string, object> members =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (ToolField field in fields)
+            {
+                object read;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(field.RowKey, value, new object[0], out read, out refusal))
+                {
+                    refused = Refusal.Of(field.RowKey, refusal);
+
+                    return false;
+                }
+
+                if (field.Members != null)
+                {
+                    IDictionary<string, object> inner;
+                    if (!TryCarried(field.Members, read, out inner, out refused))
+                    {
+                        return false;
+                    }
+
+                    members.Add(field.Name, inner);
+
+                    continue;
+                }
+
+                object json;
+                IList<string> ignored;
+                string code;
+                string message;
+                if (!ValueShape.TryToJson(
+                    field.Type,
+                    read,
+                    ImageTransfer.DefaultMaxLongSide,
+                    out json,
+                    out ignored,
+                    out code,
+                    out message))
+                {
+                    refused = new Refusal(Unwritable(field.Type, code, message));
+
+                    return false;
+                }
+
+                members.Add(field.Name, json);
+            }
+
+            carried = members;
+
+            return true;
         }
 
         private static IDictionary<string, object> Written(Type declared, object value)

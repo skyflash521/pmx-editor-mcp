@@ -13435,6 +13435,140 @@
       }
     },
     {
+      "tool": "session_find_registered_plugins_from_menu_text",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "menuText",
+              "required": true,
+              "nullable": true
+            },
+            {
+              "name": "contains",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "element": {}
+      }
+    },
+    {
+      "tool": "session_get_c_plugin_info_system_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "n",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "assemblyPath"
+          },
+          {
+            "name": "className"
+          },
+          {
+            "name": "description"
+          },
+          {
+            "name": "name"
+          },
+          {
+            "name": "option",
+            "members": [
+              {
+                "name": "bootup"
+              },
+              {
+                "name": "registerMenu"
+              },
+              {
+                "name": "registerMenuText"
+              }
+            ]
+          },
+          {
+            "name": "version"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "session_get_c_plugin_info_system_control",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "n",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "assemblyPath"
+          },
+          {
+            "name": "className"
+          },
+          {
+            "name": "description"
+          },
+          {
+            "name": "menuText"
+          },
+          {
+            "name": "name"
+          },
+          {
+            "name": "version"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "session_get_c_plugin_run_args",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "modulePath"
+          }
+        ]
+      }
+    },
+    {
       "tool": "session_get_form_connector",
       "branches": [
         {
@@ -13474,7 +13608,111 @@
       }
     },
     {
+      "tool": "session_get_pe_plugin_info",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "n",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "assemblyPath"
+          },
+          {
+            "name": "className"
+          },
+          {
+            "name": "description"
+          },
+          {
+            "name": "menuText"
+          },
+          {
+            "name": "name"
+          },
+          {
+            "name": "version"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "session_get_plugin_info",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "n",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "assemblyPath"
+          },
+          {
+            "name": "className"
+          },
+          {
+            "name": "description"
+          },
+          {
+            "name": "name"
+          },
+          {
+            "name": "option",
+            "members": [
+              {
+                "name": "bootup"
+              },
+              {
+                "name": "registerMenu"
+              },
+              {
+                "name": "registerMenuText"
+              }
+            ]
+          },
+          {
+            "name": "version"
+          }
+        ]
+      }
+    },
+    {
       "tool": "session_get_share_buffer",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "key",
+              "required": true
+            },
+            {
+              "name": "clear",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_get_share_object",
       "branches": [
         {
           "branch": "only",
@@ -13529,6 +13767,51 @@
         }
       ],
       "output": {}
+    },
+    {
+      "tool": "session_get_system_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "defaultPluginFolderPath"
+          },
+          {
+            "name": "hostApplicationPath"
+          },
+          {
+            "name": "pePluginAssemblyPath"
+          },
+          {
+            "name": "pePluginAssemblyVersion"
+          },
+          {
+            "name": "registeredCPluginCount"
+          },
+          {
+            "name": "registeredPluginCount"
+          },
+          {
+            "name": "slimDxAssemblyPath"
+          }
+        ]
+      }
     },
     {
       "tool": "session_get_system_control",
@@ -13686,7 +13969,40 @@
       "output": {}
     },
     {
-      "tool": "session_run_c_plugin",
+      "tool": "session_remove_share_object",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "key",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_run_c_plugin_system_connector",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "n",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_run_c_plugin_system_control",
       "branches": [
         {
           "branch": "only",
@@ -13705,6 +14021,24 @@
     },
     {
       "tool": "session_run_pe_plugin",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "n",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_run_plugin",
       "branches": [
         {
           "branch": "only",
@@ -13787,6 +14121,25 @@
             },
             {
               "name": "data",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {}
+    },
+    {
+      "tool": "session_set_share_object",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "key",
+              "required": true
+            },
+            {
+              "name": "obj",
               "required": true
             }
           ]
