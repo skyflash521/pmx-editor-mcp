@@ -26,6 +26,7 @@ $assignments = "$authored/common-assignments.json"
 $toolMap = "$authored/tool-map.json"
 $toolSchemas = "$authored/tool-schemas.json"
 $sampleValues = "$authored/sample-values.json"
+$discoveryTasks = "$authored/discovery-tasks.json"
 $contract = "$specs/pmx-editor-mcp-common-contract.md"
 $procedure = 'docs/conventions/verification.md'
 
@@ -173,6 +174,13 @@ try {
     $checks['サンプル値の照合'] = @{
         Needs = $buildOutput
         Body = { & $dump sample-values $editorDir $contract $sampleValues }
+    }
+    $checks['発見可能性の照合'] = @{
+        Needs = $buildOutput
+        Body = {
+            & $dump discovery $editorDir $ledger $contract $roles $names `
+                $assignments $toolMap $discoveryTasks
+        }
     }
     $checks['スキーマ対応の照合'] = @{
         Needs = $buildOutput

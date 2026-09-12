@@ -1,0 +1,190 @@
+{
+  "tasks": [
+    {
+      "task": "モデルの構造の把握",
+      "searches": [
+        [
+          "動作 list",
+          "出所 PEPlugin.Pmx"
+        ]
+      ],
+      "tools": [
+        "model_list_bodies",
+        "model_list_bones",
+        "model_list_headers",
+        "model_list_ik_links",
+        "model_list_iks",
+        "model_list_joints",
+        "model_list_materials",
+        "model_list_model_infos",
+        "model_list_morph_offsets",
+        "model_list_morphs",
+        "model_list_node_items",
+        "model_list_nodes",
+        "model_list_pmxes",
+        "model_list_soft_bodies",
+        "model_list_soft_body_anchors",
+        "model_list_vertices"
+      ]
+    },
+    {
+      "task": "要素の一括編集と取り消し",
+      "searches": [
+        [
+          "動作 add",
+          "出所 PEPlugin.Pmx.IPXPmx"
+        ],
+        [
+          "動作 remove",
+          "出所 PEPlugin.Pmx.IPXPmx"
+        ],
+        [
+          "動作 update",
+          "出所 PEPlugin.Pmx.IPXVertex"
+        ],
+        [
+          "動作 update",
+          "出所 PEPlugin.Pmx.IPXBone"
+        ],
+        [
+          "動作 update",
+          "出所 PEPlugin.Pmx.IPXMaterial"
+        ],
+        [
+          "動作 update",
+          "出所 PEPlugin.Pmx.IPXMorph"
+        ],
+        [
+          "動作 update",
+          "出所 PEPlugin.Pmx.IPXBody"
+        ],
+        [
+          "動作 update",
+          "出所 PEPlugin.Pmx.IPXJoint"
+        ],
+        [
+          "動作 update",
+          "出所 PEPlugin.Pmx.IPXNode"
+        ],
+        [
+          "動作 update",
+          "出所 PEPlugin.Pmx.IPXSoftBody"
+        ],
+        [
+          "動作 undo"
+        ]
+      ],
+      "tools": [
+        "model_add_bodies",
+        "model_add_bones",
+        "model_add_joints",
+        "model_add_materials",
+        "model_add_morphs",
+        "model_add_nodes",
+        "model_add_soft_bodies",
+        "model_add_vertices",
+        "model_remove_bodies",
+        "model_remove_bones",
+        "model_remove_joints",
+        "model_remove_materials",
+        "model_remove_morphs",
+        "model_remove_nodes",
+        "model_remove_soft_bodies",
+        "model_remove_vertices",
+        "model_update_bodies",
+        "model_update_bones",
+        "model_update_joints",
+        "model_update_materials",
+        "model_update_morph_offsets",
+        "model_update_morphs",
+        "model_update_nodes",
+        "model_update_soft_bodies",
+        "model_update_soft_body_anchors",
+        "model_update_vertices",
+        "session_undo"
+      ]
+    },
+    {
+      "task": "保存と読み込み",
+      "searches": [
+        [
+          "動作 open_pmx_file"
+        ],
+        [
+          "動作 save_pmx_file"
+        ],
+        [
+          "動作 from_file",
+          "対象 pmx"
+        ],
+        [
+          "動作 to_file",
+          "対象 pmx"
+        ]
+      ],
+      "tools": [
+        "model_from_file_pmx",
+        "model_to_file_pmx",
+        "session_open_pmx_file",
+        "session_save_pmx_file"
+      ]
+    },
+    {
+      "task": "見た目の確認",
+      "searches": [
+        [
+          "動作 set_camera_view"
+        ],
+        [
+          "動作 get_client_image",
+          "対象 pmd_view_connector"
+        ]
+      ],
+      "tools": [
+        "view_get_client_image_pmd_view_connector",
+        "view_set_camera_view"
+      ]
+    },
+    {
+      "task": "モーションの構築",
+      "searches": [
+        [
+          "動作 create_vmd",
+          "IPEVmdインスタンス生成"
+        ],
+        [
+          "対象 vmd_bone_key",
+          "動作 add"
+        ],
+        [
+          "動作 to_file",
+          "対象 vmd"
+        ],
+        [
+          "ハンドルを解放"
+        ]
+      ],
+      "tools": [
+        "motion_add_vmd_bone_keys",
+        "motion_create_vmd",
+        "motion_to_file_vmd",
+        "session_release_handle"
+      ]
+    },
+    {
+      "task": "画面の操作の受け取り",
+      "searches": [
+        [
+          "動作 create_view_event_listener"
+        ],
+        [
+          "イベントを取り出す"
+        ]
+      ],
+      "tools": [
+        "view_create_view_event_listener_event_connector",
+        "view_poll_events"
+      ]
+    }
+  ]
+}

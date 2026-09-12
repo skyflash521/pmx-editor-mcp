@@ -20,6 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\SignatureDump\FixedToolTable.cs" Link="FixedToolTable.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
     <!-- ModelContextProtocol が推移的に持つのは Hosting.Abstractions だけで、
          Generic Host の実装は含まれないため直接参照する。 -->

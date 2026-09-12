@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
+using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp.Bridge
 {
@@ -18,7 +19,7 @@ namespace PmxEditorMcp.Bridge
         public const string ResultSizeMetaKey = "anthropic/maxResultSizeChars";
 
         /// <summary>指定した文字数のテキストを返す、検査からだけ使うホストのメソッドの名前。</summary>
-        public const string LargeTextMethod = "debug_large_text";
+        public const string LargeTextMethod = FixedToolTable.LargeTextName;
 
         /// <summary>そのメソッドへ渡す、返すテキストの文字数の引数の名前。</summary>
         public const string LargeTextCharsParameter = "chars";
@@ -36,19 +37,17 @@ namespace PmxEditorMcp.Bridge
                 throw new ArgumentNullException(nameof(client));
             }
 
-            List<McpServerTool> tools = new List<McpServerTool>
+            List<McpServerTool> tools = new List<McpServerTool>();
+            foreach (KeyValuePair<string, string> own in FixedToolTable.Descriptions(debugHooks))
             {
-                Relay(client, declared, "ping", "ホストが応答することを確かめる。"),
-            };
+                tools.Add(own.Key == FixedToolTable.LargeTextName
+                    ? LargeText(client, declared, own.Value)
+                    : Relay(client, declared, own.Key, own.Value));
+            }
 
             foreach (GeneratedToolDefinition definition in GeneratedToolDefinitions.Create())
             {
                 tools.Add(Generated(definition, client, declared));
-            }
-
-            if (debugHooks)
-            {
-                tools.Add(LargeText(client, declared));
             }
 
             return tools;
@@ -58,7 +57,8 @@ namespace PmxEditorMcp.Bridge
         /// 指定した文字数のテキストを返すツールを作る。応答の大きさをMCPクライアントがどう扱うかを
         /// 確かめるために要るもので、検査からだけ使う入口が開いているときだけ登録する。
         /// </summary>
-        private static McpServerTool LargeText(HostIpcClient client, bool declared)
+        private static McpServerTool LargeText(
+            HostIpcClient client, bool declared, string description)
         {
             return McpServerTool.Create(
                 (int chars, CancellationToken cancellationToken) => RelayAsync(
@@ -69,7 +69,7 @@ namespace PmxEditorMcp.Bridge
                 new McpServerToolCreateOptions
                 {
                     Name = LargeTextMethod,
-                    Description = "指定した文字数のテキストをホストから受け取る。検査に使う。",
+                    Description = description,
                     Meta = declared
                         ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
                         : null,
