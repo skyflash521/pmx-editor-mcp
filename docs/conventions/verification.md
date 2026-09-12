@@ -125,7 +125,7 @@ pwsh -File scripts/verify.ps1
 1. 検査を組み立てる。書き出し先は追跡下に置かない。
 
    ```
-   src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe e2e-cases <PMXエディタ導入ディレクトリ> data/observed/capability-ledger.json docs/specs/pmx-editor-mcp-common-contract.md docs/specs/pmx-editor-mcp-ipc.md docs/specs/pmx-editor-mcp-architecture.md data/authored/type-roles.json data/authored/property-names.json data/authored/common-assignments.json data/authored/tool-map.json data/authored/tool-schemas.json .scratch/e2e-cases.json
+   src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe e2e-cases <PMXエディタ導入ディレクトリ> data/observed/capability-ledger.json docs/specs/pmx-editor-mcp-common-contract.md docs/specs/pmx-editor-mcp-ipc.md docs/specs/pmx-editor-mcp-architecture.md data/authored/type-roles.json data/authored/property-names.json data/authored/common-assignments.json data/authored/tool-map.json data/authored/tool-schemas.json data/authored/sample-values.json .scratch/e2e-cases.json
    ```
 
 2. エディタを起動し([エディタとホストの操作](#エディタとホストの操作)の `launch`)、実行する。

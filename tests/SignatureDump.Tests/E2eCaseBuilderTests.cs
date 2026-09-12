@@ -41,6 +41,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AGroupWithASampleValueLeavesTheHandleCheck()
+        {
+            ToolSchema schema = Shaped("model_paint_items");
+            SchemaItem color = schema.Branches[0].Inputs.Single(i => i.Name == "color");
+            E2eCase one = Assert.Single(E2eCaseBuilder.Build(
+                Map(RowKey),
+                new ToolSchemaTable(new[] { schema }),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes(),
+                new Dictionary<SchemaItem, string> { { color, "Sdk.Paint" } },
+                new SampleValueTable(new[] { new SampleValueRow("Sdk.Paint", "赤", "青") })));
+
+            Assert.Equal("TOOL_INVALID_HANDLE", one.Code);
+            Assert.Equal("赤", one.Arguments["color"]);
+        }
+
+        [Fact]
         public void AToolThatTakesACountIsCheckedAtTheEdgeOfThePage()
         {
             E2eCase one = Assert.Single(Build(Tool("model_list_bone", Limit())));

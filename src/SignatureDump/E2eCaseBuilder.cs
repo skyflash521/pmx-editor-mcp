@@ -56,7 +56,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> toolsByRow,
             IDictionary<string, string> connectionPaths,
             ISet<string> dangerous,
-            IDictionary<SchemaItem, string> sdkShapes)
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, string> sdkTypes = null,
+            SampleValueTable samples = null)
         {
             if (map == null)
             {
@@ -108,7 +110,13 @@ namespace PmxEditorMcp.SignatureDump
             {
                 ToolMapRow row;
                 byTool.TryGetValue(schema.Tool, out row);
-                cases.AddRange(Cases(row, schema, connectionPaths, dangerous, sdkShapes));
+                cases.AddRange(Cases(
+                    row,
+                    schema,
+                    connectionPaths,
+                    dangerous,
+                    sdkShapes,
+                    Sampled(sdkTypes, samples)));
             }
 
             return cases;
@@ -119,7 +127,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema,
             IDictionary<string, string> connectionPaths,
             ISet<string> dangerous,
-            IDictionary<SchemaItem, string> sdkShapes)
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, object> sampled)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -145,7 +154,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 IDictionary<string, object> arguments =
                     Single(handles.Name, new object[] { UnknownHandle }, confirmed);
-                if (!TryFill(schema, sdkShapes, arguments))
+                if (!TryFill(schema, sdkShapes, sampled, arguments))
                 {
                     continue;
                 }
@@ -182,6 +191,7 @@ namespace PmxEditorMcp.SignatureDump
         private static bool TryFill(
             ToolSchema schema,
             IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, object> sampled,
             IDictionary<string, object> arguments)
         {
             foreach (SchemaBranch branch in schema.Branches)
@@ -197,7 +207,7 @@ namespace PmxEditorMcp.SignatureDump
                     SchemaItem item = branch.Inputs.FirstOrDefault(
                         i => string.Equals(i.Name, choice.Names[0], StringComparison.Ordinal));
                     object value;
-                    if (item == null || !TryMinimal(item, sdkShapes, out value))
+                    if (item == null || !TryMinimal(item, sdkShapes, sampled, out value))
                     {
                         return false;
                     }
@@ -216,7 +226,7 @@ namespace PmxEditorMcp.SignatureDump
                         branch.SelectorName, item.Name, StringComparison.Ordinal)
                             ? branch.SelectorValue
                             : null;
-                    if (value == null && !TryMinimal(item, sdkShapes, out value))
+                    if (value == null && !TryMinimal(item, sdkShapes, sampled, out value))
                     {
                         return false;
                     }
@@ -233,7 +243,10 @@ namespace PmxEditorMcp.SignatureDump
         /// その綴りが受け取る最も短い値とする。綴りから値を決められなければ偽。
         /// </summary>
         private static bool TryMinimal(
-            SchemaItem item, IDictionary<SchemaItem, string> sdkShapes, out object value)
+            SchemaItem item,
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, object> sampled,
+            out object value)
         {
             value = null;
             if (item.Members != null)
@@ -243,7 +256,7 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (SchemaItem member in item.Members.Where(m => m.Required == true))
                 {
                     object one;
-                    if (!TryMinimal(member, sdkShapes, out one))
+                    if (!TryMinimal(member, sdkShapes, sampled, out one))
                     {
                         return false;
                     }
@@ -259,7 +272,7 @@ namespace PmxEditorMcp.SignatureDump
             if (item.Element != null)
             {
                 object one;
-                if (!TryMinimal(item.Element, sdkShapes, out one))
+                if (!TryMinimal(item.Element, sdkShapes, sampled, out one))
                 {
                     return false;
                 }
@@ -273,6 +286,14 @@ namespace PmxEditorMcp.SignatureDump
             if (!sdkShapes.TryGetValue(item, out shape))
             {
                 shape = item.Shape;
+            }
+
+            object sample;
+            if (sampled.TryGetValue(item, out sample))
+            {
+                value = sample;
+
+                return true;
             }
 
             switch (shape)
@@ -293,6 +314,35 @@ namespace PmxEditorMcp.SignatureDump
                 default:
                     return false;
             }
+        }
+
+        /// <summary>その型のサンプル値を持つ項目から、その値へ。</summary>
+        private static IDictionary<SchemaItem, object> Sampled(
+            IDictionary<SchemaItem, string> sdkTypes, SampleValueTable samples)
+        {
+            Dictionary<SchemaItem, object> sampled = new Dictionary<SchemaItem, object>();
+            if (sdkTypes == null || samples == null)
+            {
+                return sampled;
+            }
+
+            Dictionary<string, object> byType =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (SampleValueRow row in samples.Types)
+            {
+                byType[row.TypeName] = row.First;
+            }
+
+            foreach (KeyValuePair<SchemaItem, string> one in sdkTypes)
+            {
+                object value;
+                if (byType.TryGetValue(one.Value, out value))
+                {
+                    sampled[one.Key] = value;
+                }
+            }
+
+            return sampled;
         }
 
         /// <summary>ハンドルの並びを受け取る入力。型役割がハンドルの型を指す並びである。</summary>

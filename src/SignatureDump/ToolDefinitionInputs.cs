@@ -133,6 +133,29 @@ namespace PmxEditorMcp.SignatureDump
             return shapes;
         }
 
+        /// <summary>SDKに由来する項目から、その項目が写す型の名前へ。</summary>
+        public IDictionary<SchemaItem, string> SdkTypes(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            Dictionary<string, string> itself =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (string name in Positioned().Keys)
+            {
+                itself[name] = name;
+            }
+
+            return SdkShapeEvidence.Resolve(
+                Schemas,
+                Map,
+                inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
+                ToolsByRow(inventory),
+                itself);
+        }
+
         /// <summary>SDKに由来する項目から表現の綴りへ。正本が綴りを書かない項目をここで補う。</summary>
         public IDictionary<SchemaItem, string> SdkShapes(InventoryRecord inventory)
         {
