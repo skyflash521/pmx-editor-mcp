@@ -267,7 +267,7 @@ namespace PmxEditorMcp.SignatureDump
             TypeRoleRecord owner;
             if (row.EmbeddedIn == null
                 || !byType.TryGetValue(declaring, out owner)
-                || owner.Role == TypeRole.Dto)
+                || !TypeRoleRecord.HasIndependentTool(owner.Role))
             {
                 yield break;
             }

@@ -152,7 +152,8 @@ namespace PmxEditorMcp.SignatureDump
             {
                 string declaring = DeclaringTypeOf(row.SignatureKey);
                 TypeRoleRecord owner;
-                if (!byType.TryGetValue(declaring, out owner))
+                if (!byType.TryGetValue(declaring, out owner)
+                    || !TypeRoleRecord.HasIndependentTool(owner.Role))
                 {
                     continue;
                 }

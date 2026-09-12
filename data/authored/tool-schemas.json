@@ -16144,9 +16144,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16179,9 +16177,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16214,9 +16210,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16249,24 +16243,16 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             },
             {
-              "name": "stX",
-              "origin": "hostOutput",
-              "shape": "number"
+              "name": "stX"
             },
             {
-              "name": "stY",
-              "origin": "hostOutput",
-              "shape": "number"
+              "name": "stY"
             },
             {
-              "name": "vDrag",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vDrag"
             }
           ]
         },
@@ -16299,24 +16285,16 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             },
             {
-              "name": "stX",
-              "origin": "hostOutput",
-              "shape": "number"
+              "name": "stX"
             },
             {
-              "name": "stY",
-              "origin": "hostOutput",
-              "shape": "number"
+              "name": "stY"
             },
             {
-              "name": "vDrag",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vDrag"
             }
           ]
         },
@@ -16349,9 +16327,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16384,9 +16360,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16419,9 +16393,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16454,9 +16426,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16553,9 +16523,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16588,9 +16556,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16623,9 +16589,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16658,9 +16622,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16693,9 +16655,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16728,9 +16688,7 @@
               "shape": "number"
             },
             {
-              "name": "vPoint",
-              "origin": "hostOutput",
-              "shape": "number_array"
+              "name": "vPoint"
             }
           ]
         },
@@ -16738,29 +16696,19 @@
           "type": "view_object_selected",
           "members": [
             {
-              "name": "vertex",
-              "origin": "hostOutput",
-              "shape": "boolean"
+              "name": "vertex"
             },
             {
-              "name": "face",
-              "origin": "hostOutput",
-              "shape": "boolean"
+              "name": "face"
             },
             {
-              "name": "bone",
-              "origin": "hostOutput",
-              "shape": "boolean"
+              "name": "bone"
             },
             {
-              "name": "body",
-              "origin": "hostOutput",
-              "shape": "boolean"
+              "name": "body"
             },
             {
-              "name": "joint",
-              "origin": "hostOutput",
-              "shape": "boolean"
+              "name": "joint"
             }
           ]
         },

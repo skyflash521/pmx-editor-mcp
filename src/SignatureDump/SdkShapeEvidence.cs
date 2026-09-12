@@ -59,6 +59,10 @@ namespace PmxEditorMcp.SignatureDump
             Dictionary<SchemaItem, string> shapes = new Dictionary<SchemaItem, string>();
             IDictionary<string, ToolSchema> byTool = schemas.Tools.ToDictionary(
                 t => t.Tool, t => t, StringComparer.Ordinal);
+            IDictionary<string, SchemaPayload> byBranch = schemas.Tools
+                .Where(t => t.Payloads != null)
+                .SelectMany(t => t.Payloads)
+                .ToDictionary(p => p.Type, p => p, StringComparer.Ordinal);
             foreach (ToolMapRow row in map.Rows.OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
             {
                 SignatureRecord signature;
@@ -87,6 +91,14 @@ namespace PmxEditorMcp.SignatureDump
                     if (byTool.TryGetValue(embedded, out schema))
                     {
                         Embedded(shapes, schema, signature, shapesByType);
+
+                        continue;
+                    }
+
+                    SchemaPayload branch;
+                    if (byBranch.TryGetValue(embedded, out branch))
+                    {
+                        Carried(shapes, embedded, branch, signature, shapesByType);
                     }
                 }
             }
@@ -136,6 +148,34 @@ namespace PmxEditorMcp.SignatureDump
             {
                 Assign(
                     shapes, schema.Tool, schema.Output.Element, signature.ValueType, shapesByType);
+            }
+        }
+
+        /// <summary>
+        /// イベントの分岐へ項目を持ち込む行。分岐の値の組に同じ名前の項目が在り、その綴りは
+        /// 持ち込む行の値の型から決まる。
+        /// </summary>
+        private static void Carried(
+            IDictionary<SchemaItem, string> shapes,
+            string branch,
+            SchemaPayload payload,
+            SignatureRecord signature,
+            IDictionary<string, string> shapesByType)
+        {
+            string member = MemberNameOf(signature.MemberName);
+            SchemaItem[] items = payload.Members
+                .SelectMany(m => m.WithNested)
+                .Where(i => string.Equals(i.Name, member, StringComparison.Ordinal))
+                .ToArray();
+            if (items.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    "イベントの分岐に持ち込む項目が無い: " + branch + "." + member);
+            }
+
+            foreach (SchemaItem item in items)
+            {
+                Assign(shapes, branch, item, signature.ValueType, shapesByType);
             }
         }
 

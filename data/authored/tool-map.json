@@ -5934,6 +5934,95 @@
       "eventType": "view_undo"
     },
     {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.StX()",
+      "editKind": "read",
+      "basis": "引き始めた位置の横を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.StY()",
+      "editKind": "read",
+      "basis": "引き始めた位置の縦を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.VDrag()",
+      "editKind": "read",
+      "basis": "引いた分を、視点に依らない軸の上の移動量で持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewMouse.VPoint()",
+      "editKind": "read",
+      "basis": "画面のどこを指したかを、視点に依らない座標で持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_mouse_click",
+        "view_mouse_double_click",
+        "view_mouse_down",
+        "view_mouse_move",
+        "view_mouse_up",
+        "view_mouse_wheel",
+        "ui_model_mouse_click",
+        "ui_model_mouse_double_click",
+        "ui_model_mouse_down",
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end",
+        "ui_model_mouse_enter",
+        "ui_model_mouse_leave",
+        "ui_model_mouse_over",
+        "ui_model_mouse_up"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected.Body()",
+      "editKind": "read",
+      "basis": "剛体が選ばれたかどうかを持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_object_selected"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected.Bone()",
+      "editKind": "read",
+      "basis": "ボーンが選ばれたかどうかを持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_object_selected"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected.Face()",
+      "editKind": "read",
+      "basis": "面が選ばれたかどうかを持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_object_selected"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected.Joint()",
+      "editKind": "read",
+      "basis": "Jointが選ばれたかどうかを持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_object_selected"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected.Vertex()",
+      "editKind": "read",
+      "basis": "頂点が選ばれたかどうかを持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_object_selected"
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.GetSelectedBodyIndices()",
       "editKind": "read",
       "basis": "剛体について、いまその画面で選ばれているものの位置を返すだけで、エディタの状態を動かさない。",
