@@ -45,6 +45,8 @@ namespace PmxEditorMcp.Tests
 
         private const string NotedKey = "Sdk.Form.Noted(Sdk.Note[])";
 
+        private const string TakesKey = "Sdk.Form.Takes(System.Object)";
+
         private const string MakeKey = "Sdk.Form.Make(Sdk.Form)";
 
         private const string DropKey = "Sdk.Form.Drop()";
@@ -399,6 +401,48 @@ namespace PmxEditorMcp.Tests
             HandleReleaseResult released;
             Assert.True(ledger.TryRelease(first, out released));
             Assert.False(ledger.IsValid(issued));
+        }
+
+        /// <summary>
+        /// 受け手をハンドルで指していても、ホストが入れるPMXはいま相手にしているものになる。
+        /// ハンドルで指した対象はどのPMXにも属さないが、引数のPMXはそれとは別に決まる。
+        /// </summary>
+        [Fact]
+        public void TheHostPutsInTheCurrentPmxEvenWhenTheReceiverComesFromAHandle()
+        {
+            Target held = new Target();
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", new object[] { 1L });
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_takes_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.NotNull(held.Taken);
+        }
+
+        /// <summary>
+        /// 受け手をハンドルで指す呼び出しは、どのPMXを見るかの指定を取らない。取れてしまうと、
+        /// いま相手にしているものへ入れるという決まりを迂回できる。
+        /// </summary>
+        [Fact]
+        public void ACallOnAHeldReceiverDoesNotTakeWhichPmxToLookAt()
+        {
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", new object[] { 1L });
+            arguments.Add(PmxSession.HandleName, 2L);
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, new Target(), () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_takes_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains(PmxSession.HandleName, Message(envelope), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -915,6 +959,14 @@ namespace PmxEditorMcp.Tests
                             ?? ((Target)arguments[0]).Made
                     },
                     {
+                        TakesKey,
+                        (target, arguments) =>
+                        {
+                            ((Target)target).Taken = arguments[0];
+                            return null;
+                        }
+                    },
+                    {
                         DropKey,
                         (target, arguments) =>
                         {
@@ -1070,6 +1122,22 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         typeof(Target),
                         typeof(Target))
+                },
+                {
+                    "session_takes_held",
+                    new ToolCall(
+                        TakesKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            TargetType,
+                            EditKind.DirectChange,
+                            false,
+                            typeof(Target)),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[] { new ToolArgument("pmx", typeof(object), true) },
+                        new ToolArgument[0],
+                        null)
                 },
                 {
                     "session_noted",
@@ -1274,6 +1342,8 @@ namespace PmxEditorMcp.Tests
             public bool Dropped { get; set; }
 
             public Note[] Notes { get; set; }
+
+            public object Taken { get; set; }
         }
 
         /// <summary>組で受け取ってSDKへ渡す題材。</summary>

@@ -729,9 +729,9 @@ namespace PmxEditorMcp
                 known.Add(ConfirmName);
             }
 
-            if (!TryOnlyKnown(context, Known(known, Targets(call)), out code, out message)
+            if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
                 || !TryConfirm(context, out confirm, out code, out message)
-                || !TryPmxHandle(context, Targets(call), out handle, out code, out message)
+                || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
                 || !TryPassDanger(call, handle, confirm, out code, out message))
             {
                 return ToolEnvelope.Failure(code, message);
@@ -1035,9 +1035,9 @@ namespace PmxEditorMcp
             }
 
             known.AddRange(Pointing(call.Access, true, call.Receiver));
-            if (!TryOnlyKnown(context, Known(known, Targets(call)), out code, out message)
+            if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
                 || !TryConfirm(context, out confirm, out code, out message)
-                || !TryPmxHandle(context, Targets(call), out handle, out code, out message)
+                || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
                 || !TryPassDanger(call, handle, confirm, out code, out message)
                 || !TryPointed(
                     context, call.Access, true, handle, out pointed, out code, out message,
@@ -1064,7 +1064,14 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
-                if (!TryTake(context, call.Receiver, Targets(call), handle, pointed.Held, out target, out refused)
+                if (!TryTake(
+                        context,
+                        call.Receiver,
+                        Targets(call),
+                        handle,
+                        pointed.Held && !Takes(call),
+                        out target,
+                        out refused)
                     || !TryColumn(
                         context,
                         call.Access,
@@ -3531,6 +3538,25 @@ namespace PmxEditorMcp
             }
 
             return known;
+        }
+
+        /// <summary>
+        /// どのPMXを見るかの指定を受け取る呼び出しか。受け手をハンドルで指す呼び出しは受け取らない
+        /// ——ハンドルが指す実体はどのPMXにも属さないので、指定しても相手は変わらない。
+        /// </summary>
+        private static bool Accepts(ToolCall call)
+        {
+            return Targets(call) && !Handled(call.Receiver);
+        }
+
+        /// <summary>
+        /// 相手にするPMXそのものを引数として要る呼び出しか。受け手をハンドルで指していても、
+        /// 引数へ入れるPMXはいま相手にしているものを採る。
+        /// </summary>
+        private static bool Takes(ToolCall call)
+        {
+            return call.Arguments.Any(
+                a => (a.Injected && !a.Connector && a.Resident == null) || a.Referenced != null);
         }
 
         /// <summary>

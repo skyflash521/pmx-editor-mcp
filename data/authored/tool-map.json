@@ -667,6 +667,40 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmd()",
+      "editKind": "directChange",
+      "basis": "空のモーションのデータを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmds",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.IPEBuilder.CreateVmd(System.String[],System.String[])",
+      "editKind": "directChange",
+      "basis": "ボーンとモーフの名前を入れたモーションのデータを作って持ち物にするので、直接変更型に当たる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "handle",
+          "observerTool": "motion_list_vmds",
+          "observerArgs": {
+            "handles": "result:"
+          },
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.IPEPluginOption.Bootup()",
       "editKind": "read",
       "basis": "起動のときに走らせるかどうかを返すだけで、エディタの状態を動かさない。",
@@ -5782,6 +5816,350 @@
               "tag": "initPmx"
             }
           ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.ClearKeys()",
+      "editKind": "directChange",
+      "basis": "すべてのキーを取り除く。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.FilePath()",
+      "editKind": "directChange",
+      "basis": "読み書きしたファイルの位置を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmds",
+        "motion_update_vmds"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.FromFile(System.String)",
+      "editKind": "directChange",
+      "basis": "ファイルから読み込んで中身を置き換える。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.GetBoneIndex(System.String)",
+      "editKind": "read",
+      "basis": "名前からボーンの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vmd",
+              "tool": "motion_create_vmd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.GetBoneName(System.Int32)",
+      "editKind": "read",
+      "basis": "位置からボーンの名前を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vmd",
+              "tool": "motion_create_vmd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.GetBoneNames()",
+      "editKind": "read",
+      "basis": "ボーンの名前を並べて返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vmd",
+              "tool": "motion_create_vmd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.GetMorphIndex(System.String)",
+      "editKind": "read",
+      "basis": "名前からモーフの位置を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vmd",
+              "tool": "motion_create_vmd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.GetMorphName(System.Int32)",
+      "editKind": "read",
+      "basis": "位置からモーフの名前を返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vmd",
+              "tool": "motion_create_vmd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.GetMorphNames()",
+      "editKind": "read",
+      "basis": "モーフの名前を並べて返すだけで、エディタの状態を動かさない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            },
+            {
+              "tag": "callTool",
+              "args": {},
+              "out": "vmd",
+              "tool": "motion_create_vmd"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.Init(PEPlugin.Pmx.IPXPmx)",
+      "editKind": "directChange",
+      "basis": "モデルに合わせて中身を作り直す。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.ModelName()",
+      "editKind": "directChange",
+      "basis": "相手にするモデルの名前を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "embeddedIn": [
+        "motion_list_vmds",
+        "motion_update_vmds"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.NormalizeKeys()",
+      "editKind": "directChange",
+      "basis": "キーの並びを整える。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.SetBoneNames(System.String[])",
+      "editKind": "directChange",
+      "basis": "ボーンの名前を置き換える。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.SetModelNameForCameraLight()",
+      "editKind": "directChange",
+      "basis": "カメラと照明のモーションが使うモデル名を入れる。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.SetMorphNames(System.String[])",
+      "editKind": "directChange",
+      "basis": "モーフの名前を置き換える。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.ToFile(System.String,System.Boolean)",
+      "editKind": "directChange",
+      "basis": "ファイルへ書き出す。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.TrimBoneKeys()",
+      "editKind": "directChange",
+      "basis": "ボーンのキーから要らないものを取り除く。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.TrimCameraKeys()",
+      "editKind": "directChange",
+      "basis": "カメラのキーから要らないものを取り除く。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.TrimKeys()",
+      "editKind": "directChange",
+      "basis": "すべての種類のキーから要らないものを取り除く。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.TrimLightKeys()",
+      "editKind": "directChange",
+      "basis": "照明のキーから要らないものを取り除く。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.TrimMorphKeys()",
+      "editKind": "directChange",
+      "basis": "モーフのキーから要らないものを取り除く。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.TrimStartBlankKeys()",
+      "editKind": "directChange",
+      "basis": "先頭の空きを詰める。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
         }
       ]
     },
