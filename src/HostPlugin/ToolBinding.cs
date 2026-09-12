@@ -181,7 +181,8 @@ namespace PmxEditorMcp
             ToolAccess referenced = null,
             bool connector = false,
             Type held = null,
-            string resident = null)
+            string resident = null,
+            ToolValueShape built = null)
         {
             if (name == null)
             {
@@ -200,6 +201,7 @@ namespace PmxEditorMcp
             Connector = connector;
             Held = held;
             Resident = resident;
+            Built = built;
         }
 
         /// <summary>要求の引数の名前。</summary>
@@ -229,6 +231,11 @@ namespace PmxEditorMcp
         /// ほかは null。
         /// </summary>
         public string Resident { get; }
+
+        /// <summary>
+        /// その引数の組み立て方。組で受け取ってSDKへ渡す実体を作る引数だけが持ち、ほかは null。
+        /// </summary>
+        public ToolValueShape Built { get; }
     }
 
     /// <summary>項目を集めるツールが持つ項目1件。</summary>

@@ -43,6 +43,8 @@ namespace PmxEditorMcp.Tests
 
         private const string InfoRawKey = "Sdk.Info.Raw()";
 
+        private const string NotedKey = "Sdk.Form.Noted(Sdk.Note[])";
+
         private const string MakeKey = "Sdk.Form.Make(Sdk.Form)";
 
         private const string DropKey = "Sdk.Form.Drop()";
@@ -540,6 +542,65 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AnArgumentTakenAsSetsOfMembersReachesTheCallAsBuiltThings()
+        {
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add(
+                "notes",
+                new object[]
+                {
+                    Members(1, true),
+                    Members(2, false),
+                });
+
+            IDictionary<string, object> envelope = Call("session_noted", arguments);
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.Equal(2, _target.Notes.Length);
+            Assert.Equal(1, _target.Notes[0].Count);
+            Assert.True(_target.Notes[0].Flag);
+            Assert.Equal(2, _target.Notes[1].Count);
+            Assert.False(_target.Notes[1].Flag);
+        }
+
+        [Fact]
+        public void ASetWithAnItemTheCallDoesNotTakeIsRefused()
+        {
+            IDictionary<string, object> arguments = Arguments();
+            IDictionary<string, object> members = Members(1, true);
+            members.Add("unknown", 0L);
+            arguments.Add("notes", new object[] { members });
+
+            IDictionary<string, object> envelope = Call("session_noted", arguments);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("unknown", Message(envelope), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ASetMissingAnItemTheCallTakesIsRefused()
+        {
+            IDictionary<string, object> arguments = Arguments();
+            IDictionary<string, object> members = Members(1, true);
+            members.Remove("flag");
+            arguments.Add("notes", new object[] { members });
+
+            IDictionary<string, object> envelope = Call("session_noted", arguments);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("flag", Message(envelope), StringComparison.Ordinal);
+        }
+
+        private static IDictionary<string, object> Members(int count, bool flag)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { "count", (long)count },
+                { "flag", flag },
+            };
+        }
+
+        [Fact]
         public void TheGettingToolReturnsEveryReadableItem()
         {
             _target.Count = 3;
@@ -841,6 +902,14 @@ namespace PmxEditorMcp.Tests
                     { OptionBootupKey, (target, arguments) => ((Option)target).Bootup },
                     { InfoRawKey, (target, arguments) => new Target() },
                     {
+                        NotedKey,
+                        (target, arguments) =>
+                        {
+                            ((Target)target).Notes = (Note[])arguments[0];
+                            return null;
+                        }
+                    },
+                    {
                         MakeKey,
                         (target, arguments) => ((Target)(target ?? arguments[0])).Made
                             ?? ((Target)arguments[0]).Made
@@ -1001,6 +1070,40 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         typeof(Target),
                         typeof(Target))
+                },
+                {
+                    "session_noted",
+                    new ToolCall(
+                        NotedKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument(
+                                "notes",
+                                typeof(Note[]),
+                                false,
+                                null,
+                                false,
+                                null,
+                                null,
+                                new ToolValueShape(
+                                    () => new Note(),
+                                    new[]
+                                    {
+                                        new ToolValueMember(
+                                            "count",
+                                            typeof(int),
+                                            (made, value) => ((Note)made).Count = (int)value),
+                                        new ToolValueMember(
+                                            "flag",
+                                            typeof(bool),
+                                            (made, value) => ((Note)made).Flag = (bool)value),
+                                    })),
+                        },
+                        new ToolArgument[0],
+                        null)
                 },
                 {
                     "session_picked",
@@ -1169,6 +1272,16 @@ namespace PmxEditorMcp.Tests
             public Target Made { get; set; }
 
             public bool Dropped { get; set; }
+
+            public Note[] Notes { get; set; }
+        }
+
+        /// <summary>組で受け取ってSDKへ渡す題材。</summary>
+        private sealed class Note
+        {
+            public int Count { get; set; }
+
+            public bool Flag { get; set; }
         }
 
         /// <summary>独立したツールを持たず、返す値の中だけに現れる題材。</summary>

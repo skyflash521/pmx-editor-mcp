@@ -1442,6 +1442,115 @@ namespace PmxEditorMcp
             return false;
         }
 
+        /// <summary>
+        /// 組で受け取る引数を、SDKへ渡す実体へ組み立てる。並びを取る引数は要素ごとに組み立てる。
+        /// </summary>
+        private static bool TryBuilt(
+            ToolArgument argument,
+            object json,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            if (!argument.Type.IsArray)
+            {
+                return TryOne(argument, argument.Type, json, out value, out code, out message);
+            }
+
+            object[] items = json as object[];
+            if (items == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " は組の配列でなければならない。";
+
+                return false;
+            }
+
+            Type element = argument.Type.GetElementType();
+            Array built = Array.CreateInstance(element, items.Length);
+            for (int at = 0; at < items.Length; at++)
+            {
+                object one;
+                if (!TryOne(argument, element, items[at], out one, out code, out message))
+                {
+                    return false;
+                }
+
+                built.SetValue(one, at);
+            }
+
+            value = built;
+
+            return true;
+        }
+
+        /// <summary>組1つを実体へ組み立てる。知らない項目と足りない項目は断る。</summary>
+        private static bool TryOne(
+            ToolArgument argument,
+            Type type,
+            object json,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            IDictionary<string, object> members = json as IDictionary<string, object>;
+            if (members == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " は項目の組でなければならない。";
+
+                return false;
+            }
+
+            string unknown = members.Keys
+                .Where(n => !argument.Built.Members.Any(
+                    m => string.Equals(m.Name, n, StringComparison.Ordinal)))
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (unknown != null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " が知らない項目を持っている: " + unknown;
+
+                return false;
+            }
+
+            object made = argument.Built.Create();
+            foreach (ToolValueMember member in argument.Built.Members)
+            {
+                object given;
+                if (!members.TryGetValue(member.Name, out given))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = argument.Name + " の項目が足りない: " + member.Name;
+
+                    return false;
+                }
+
+                object typed;
+                if (!ValueInput.TryFromJson(member.Type, given, out typed, out code, out message))
+                {
+                    code = code ?? ToolEnvelope.NotApplicable;
+                    message = message
+                        ?? (member.Name + " は値として受け取れない型を取る。");
+
+                    return false;
+                }
+
+                member.Write(made, typed);
+            }
+
+            value = made;
+
+            return true;
+        }
+
         /// <summary>引数の組1つを、シグネチャの並びの値へ直す。</summary>
         private static bool TryPass(
             McpMethodContext context,
@@ -1508,6 +1617,16 @@ namespace PmxEditorMcp
                 {
                     if (!TryHeldArgument(
                         context, argument, value, out taken[at], out code, out message))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (argument.Built != null)
+                {
+                    if (!TryBuilt(argument, value, out taken[at], out code, out message))
                     {
                         return false;
                     }
@@ -3841,6 +3960,11 @@ namespace PmxEditorMcp
             if (argument.Held != null)
             {
                 return TryHeldArgument(context, argument, json, out value, out code, out message);
+            }
+
+            if (argument.Built != null)
+            {
+                return TryBuilt(argument, json, out value, out code, out message);
             }
 
             if (ValueInput.TryFromJson(argument.Type, json, out value, out code, out message))

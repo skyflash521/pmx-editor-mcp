@@ -17524,6 +17524,76 @@
       }
     },
     {
+      "tool": "view_set_mouse_over_color",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "uim",
+              "required": true
+            },
+            {
+              "name": "listener",
+              "required": true
+            },
+            {
+              "name": "para",
+              "required": true,
+              "element": {
+                "members": [
+                  {
+                    "name": "materialIndex",
+                    "required": true
+                  },
+                  {
+                    "name": "enableDiffuse",
+                    "required": true
+                  },
+                  {
+                    "name": "diffuseA",
+                    "required": true
+                  },
+                  {
+                    "name": "diffuseB",
+                    "required": true
+                  },
+                  {
+                    "name": "enableSpecular",
+                    "required": true
+                  },
+                  {
+                    "name": "specularA",
+                    "required": true
+                  },
+                  {
+                    "name": "specularB",
+                    "required": true
+                  },
+                  {
+                    "name": "enableAmbient",
+                    "required": true
+                  },
+                  {
+                    "name": "ambientA",
+                    "required": true
+                  },
+                  {
+                    "name": "ambientB",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "null_value"
+      }
+    },
+    {
       "tool": "view_set_selected_body_indices_c_plugin_connector",
       "branches": [
         {

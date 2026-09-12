@@ -172,7 +172,9 @@ namespace PmxEditorMcp.SignatureDump
                             paths,
                             bridged,
                             projections.TryGetValue(tool, out carried) ? carried : null,
-                            assignments));
+                            assignments,
+                            map,
+                            tool));
                     Listing(lists, path, signatures, byType);
                     continue;
                 }
@@ -413,7 +415,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, AccessPath> paths,
             ISet<string> bridged,
             string projected,
-            CommonAssignmentTable assignments)
+            CommonAssignmentTable assignments,
+            ToolMap map,
+            string tool)
         {
             DangerKind kind;
             string danger = dangerous.TryGetValue(signature.Key, out kind)
@@ -421,7 +425,7 @@ namespace PmxEditorMcp.SignatureDump
                 : "DangerKind.None";
             string[] arguments = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.Out)
-                .Select(p => Argument(p, signatures, concrete, byType, paths))
+                .Select(p => Argument(p, signatures, concrete, byType, paths, map, tool))
                 .ToArray();
             string[] outputs = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.In)
@@ -561,7 +565,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, TypeRoleRecord> byType,
-            IDictionary<string, AccessPath> paths)
+            IDictionary<string, AccessPath> paths,
+            ToolMap map = null,
+            string tool = null)
         {
             string written = "new ToolArgument(" + Literal(parameter.Name) + ", "
                 + TypeOf(parameter.TypeName);
@@ -586,6 +592,12 @@ namespace PmxEditorMcp.SignatureDump
             if (byType.TryGetValue(typeName, out role) && role.Role == TypeRole.Connector)
             {
                 return written + ", true, null, false, null, " + Literal(typeName) + ")";
+            }
+
+            if (map != null && byType.TryGetValue(typeName, out role) && role.Role == TypeRole.Dto)
+            {
+                return written + ", false, null, false, null, null, "
+                    + Building(typeName, tool, map, signatures) + ")";
             }
 
             if (!byType.TryGetValue(typeName, out role)
@@ -828,6 +840,49 @@ namespace PmxEditorMcp.SignatureDump
 
             return byType.TryGetValue(TypeDefinitionName.OfElement(typeName), out record)
                 && record.Role == TypeRole.Dto;
+        }
+
+        /// <summary>
+        /// 組で受け取る引数の組み立て方。書き込める項目をそのツールへ持ち込む行から採る。持ち込む
+        /// 行が無ければ、渡された組から実体を作れないので <see cref="InvalidOperationException"/>。
+        /// </summary>
+        private static string Building(
+            string typeName,
+            string tool,
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures)
+        {
+            List<string> members = new List<string>();
+            foreach (ToolMapRow row in map.Rows.OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
+            {
+                SignatureRecord signature;
+                if (row.EmbeddedIn == null
+                    || !row.EmbeddedIn.Contains(tool, StringComparer.Ordinal)
+                    || !signatures.TryGetValue(row.SignatureKey, out signature)
+                    || !signature.CanWrite
+                    || !string.Equals(
+                        TypeDefinitionName.OfElement(signature.DeclaringType),
+                        typeName,
+                        StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                members.Add("new ToolValueMember("
+                    + Literal(SdkShapeEvidence.MemberNameOf(signature.MemberName)) + ", "
+                    + TypeOf(signature.ValueType) + ", (made, value) => ((" + Code(typeName)
+                    + ")made)." + signature.MemberName + " = (" + Code(signature.ValueType)
+                    + ")value)");
+            }
+
+            if (members.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    "組で受け取る引数の項目を持ち込む行が無い: " + tool + "(" + typeName + ")");
+            }
+
+            return "new ToolValueShape(() => new " + Code(typeName)
+                + "(), new ToolValueMember[] { " + string.Join(", ", members) + " })";
         }
 
         /// <summary>その運搬用の型の項目を、そのツールへ持ち込む行から組み立てる。</summary>

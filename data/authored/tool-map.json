@@ -7309,6 +7309,86 @@
       ]
     },
     {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.AmbientA()",
+      "editKind": "viewSession",
+      "basis": "マウスが外にあるときの環境色を持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.AmbientB()",
+      "editKind": "viewSession",
+      "basis": "マウスが上にあるときの環境色を持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.DiffuseA()",
+      "editKind": "viewSession",
+      "basis": "マウスが外にあるときの拡散色を持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.DiffuseB()",
+      "editKind": "viewSession",
+      "basis": "マウスが上にあるときの拡散色を持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.EnableAmbient()",
+      "editKind": "viewSession",
+      "basis": "環境色を変えるかどうかを持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.EnableDiffuse()",
+      "editKind": "viewSession",
+      "basis": "拡散色を変えるかどうかを持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.EnableSpecular()",
+      "editKind": "viewSession",
+      "basis": "反射色を変えるかどうかを持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.MaterialIndex()",
+      "editKind": "viewSession",
+      "basis": "色を変える材質の位置を持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.SpecularA()",
+      "editKind": "viewSession",
+      "basis": "マウスが外にあるときの反射色を持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara.SpecularB()",
+      "editKind": "viewSession",
+      "basis": "マウスが上にあるときの反射色を持つ。これを渡す呼び出しが受け手を足すだけなので、モデルのデータにもファイルにも作用しない。",
+      "embeddedIn": [
+        "view_set_mouse_over_color"
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.BackColor()",
       "editKind": "viewSession",
       "basis": "文字を書く絵の背景色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
@@ -7447,6 +7527,19 @@
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper.SetMouseDragMove(PXCPlugin.UIModel.IPXUIModel,PXCPlugin.Event.IPXUIModelEventListener,PXCPlugin.IPXViewControl)",
       "editKind": "viewSession",
       "basis": "マウスで引いた分だけUIモデルを動かす受け手を足すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper.SetMouseOverColor(PXCPlugin.UIModel.IPXUIModel,PXCPlugin.Event.IPXUIModelEventListener,PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara[])",
+      "editKind": "viewSession",
+      "basis": "マウスの出入りで材質の色を変える受け手を足すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
