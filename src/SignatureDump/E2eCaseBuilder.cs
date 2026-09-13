@@ -333,6 +333,22 @@ namespace PmxEditorMcp.SignatureDump
                 E2eExpectation.Dispatched,
                 null);
 
+            // 読み取りの行は呼んでも何も動かないので、実際に呼んで値が返ることまで確かめる。
+            IDictionary<string, object> reading;
+            if (row != null && row.EditKind == ToolMapEditKind.Read && !confirmed
+                && TryReading(schema, sdkShapes, sampled, out reading))
+            {
+                yield return new E2eCase(
+                    rowKey,
+                    editKind,
+                    path,
+                    tool,
+                    "呼び出して値を返せること",
+                    reading,
+                    E2eExpectation.Success,
+                    null);
+            }
+
             if (confirmed)
             {
                 yield return new E2eCase(
@@ -378,6 +394,41 @@ namespace PmxEditorMcp.SignatureDump
                     E2eExpectation.Refusal,
                     InvalidArgument);
             }
+        }
+
+        /// <summary>
+        /// 読み取りの行を実際に呼ぶときの引数。対象を選ばずに呼べるなら空でよく、要る組を持つ
+        /// 呼び分けが1つだけなら最小の値で埋める。対象を指す組が要る呼び分けは偽——何を指すかが
+        /// ここでは決まらない。呼び分けが2つ以上あるときも偽で、どれを選ぶかが決まらない。
+        /// </summary>
+        private static bool TryReading(
+            ToolSchema schema,
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, object> sampled,
+            out IDictionary<string, object> arguments)
+        {
+            arguments = new Dictionary<string, object>(StringComparer.Ordinal);
+            if (Unchosen(schema) != null)
+            {
+                return true;
+            }
+
+            if (schema.Branches.Count != 1 || Pointed(schema.Branches[0]))
+            {
+                return false;
+            }
+
+            return TryFill(schema, sdkShapes, sampled, arguments);
+        }
+
+        /// <summary>その呼び分けが、対象を指す組を必ず要るか。</summary>
+        private static bool Pointed(SchemaBranch branch)
+        {
+            return branch.Inputs.Any(i => i.Required == true
+                    && !i.Injected
+                    && PointingNames.Contains(i.Name, StringComparer.Ordinal))
+                || branch.Choices.Any(c => c.Required
+                    && c.Names.Any(n => PointingNames.Contains(n, StringComparer.Ordinal)));
         }
 
         /// <summary>
