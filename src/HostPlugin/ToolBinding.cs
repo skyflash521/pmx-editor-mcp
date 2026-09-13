@@ -244,7 +244,12 @@ namespace PmxEditorMcp
     /// <summary>項目を集めるツールが持つ項目1件。</summary>
     public sealed class ToolField
     {
-        public ToolField(string name, string rowKey, Type type, IList<ToolField> members = null)
+        public ToolField(
+            string name,
+            string rowKey,
+            Type type,
+            IList<ToolField> members = null,
+            ToolAccess referenced = null)
         {
             if (name == null)
             {
@@ -265,6 +270,7 @@ namespace PmxEditorMcp
             RowKey = rowKey;
             Type = type;
             Members = members == null ? null : new ReadOnlyCollection<ToolField>(members);
+            Referenced = referenced;
         }
 
         /// <summary>応答と要求に現れる項目の名前。</summary>
@@ -281,6 +287,12 @@ namespace PmxEditorMcp
         /// 写す。
         /// </summary>
         public IList<ToolField> Members { get; }
+
+        /// <summary>
+        /// その項目が操作対象の実体を指すとき、位置を数えるリストへの道。値はこの列の中の位置で
+        /// 写り、列に居ない実体は null で写る。指さない項目では null。
+        /// </summary>
+        public ToolAccess Referenced { get; }
     }
 
     /// <summary>受け手の得方と、呼び出しがエディタの状態へどう作用するか。</summary>

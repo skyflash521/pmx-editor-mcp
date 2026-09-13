@@ -88,7 +88,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.SdkShapes(inventory),
                     inputs.SdkTypes(inventory),
                     samples,
-                    inputs.ViewImages);
+                    inputs.ViewImages,
+                    inputs.PositionedTypes());
             }
             catch (InvalidOperationException exception)
             {

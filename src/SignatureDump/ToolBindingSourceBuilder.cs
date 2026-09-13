@@ -238,7 +238,10 @@ namespace PmxEditorMcp.SignatureDump
                         sets.Add(kind, members);
                     }
 
-                    members.Add(Field(signature));
+                    members.Add(Field(
+                        signature,
+                        null,
+                        Positioning(signature, signatures, concrete, byType, paths)));
                 }
             }
 
@@ -889,11 +892,43 @@ namespace PmxEditorMcp.SignatureDump
                 + "(owner, index) => " + owner + ".RemoveAt(index))";
         }
 
-        private static string Field(SignatureRecord signature, string members = null)
+        private static string Field(
+            SignatureRecord signature, string members = null, string referenced = null)
         {
-            return "new ToolField(" + Literal(SdkShapeEvidence.MemberNameOf(signature.MemberName))
-                + ", " + Literal(signature.Key) + ", " + TypeOf(signature.ValueType)
-                + (members == null ? string.Empty : ", " + members) + ")";
+            string written = "new ToolField("
+                + Literal(SdkShapeEvidence.MemberNameOf(signature.MemberName))
+                + ", " + Literal(signature.Key) + ", " + TypeOf(signature.ValueType);
+            if (members == null && referenced == null)
+            {
+                return written + ")";
+            }
+
+            written += ", " + (members ?? "null");
+
+            return (referenced == null ? written : written + ", " + referenced) + ")";
+        }
+
+        /// <summary>
+        /// その項目の値が操作対象の実体なら、位置を数えるリストへの道。指さない項目では null。
+        /// </summary>
+        private static string Positioning(
+            SignatureRecord signature,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete,
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, AccessPath> paths)
+        {
+            string value = TypeDefinitionName.Of(signature.ValueType);
+            TypeRoleRecord role;
+            AccessPath listed;
+            if (!byType.TryGetValue(value, out role)
+                || role.Role != TypeRole.OperationTarget
+                || !paths.TryGetValue(value, out listed))
+            {
+                return null;
+            }
+
+            return Access(listed, signatures, concrete, byType);
         }
 
         /// <summary>

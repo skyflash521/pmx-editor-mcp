@@ -1517,6 +1517,133 @@ namespace PmxEditorMcp
             return true;
         }
 
+        /// <summary>
+        /// 位置で指す項目へ渡された値。位置の整数か、指さないことを表す null でなければ断る。
+        /// </summary>
+        private static bool TryGivenPosition(
+            ToolField field, object given, out object position, out string code, out string message)
+        {
+            position = null;
+            code = null;
+            message = null;
+            if (given == null)
+            {
+                return true;
+            }
+
+            int index;
+            if (TryIndex(given, out index))
+            {
+                position = index;
+
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = field.Name + " は位置の整数でなければならない。";
+
+            return false;
+        }
+
+        /// <summary>
+        /// 書き込む組ごとに、位置で預かった値が指す実体を解く。1つでも解けなければ、どれも
+        /// 書き込まないまま断る。
+        /// </summary>
+        private bool TryPointing(
+            IList<Change> writing,
+            PmxTarget target,
+            out IList<object[]> pointing,
+            out Refusal refused)
+        {
+            pointing = null;
+            refused = null;
+            List<object[]> resolved = new List<object[]>(writing.Count);
+            foreach (Change one in writing)
+            {
+                object[] given = new object[one.Fields.Count];
+                for (int field = 0; field < one.Fields.Count; field++)
+                {
+                    if (!TryPointed(
+                        one.Fields[field], one.Values[field], target, out given[field], out refused))
+                    {
+                        return false;
+                    }
+                }
+
+                resolved.Add(given);
+            }
+
+            pointing = resolved;
+
+            return true;
+        }
+
+        /// <summary>位置で預かった値が指す実体。指さない項目と null はそのまま渡す。</summary>
+        private bool TryPointed(
+            ToolField field, object value, PmxTarget target, out object pointed, out Refusal refused)
+        {
+            pointed = value;
+            refused = null;
+            if (field.Referenced == null || value == null)
+            {
+                return true;
+            }
+
+            IList<object> listed;
+            if (!TryListed(field.Referenced, target, out listed, out refused))
+            {
+                return false;
+            }
+
+            int index = (int)value;
+            if (index < 0 || index >= listed.Count)
+            {
+                refused = new Refusal(ToolEnvelope.Failure(
+                    ToolEnvelope.IndexOutOfRange,
+                    field.Name + " の位置が範囲の外にある: " + index
+                        + "(リストの件数は " + listed.Count + ")"));
+
+                return false;
+            }
+
+            pointed = listed[index];
+
+            return true;
+        }
+
+        /// <summary>
+        /// 指している実体の、位置を数えるリストの中での位置。列に居ない実体と、指していない項目は
+        /// null で写る。
+        /// </summary>
+        private bool TryPosition(
+            ToolField field, object value, PmxTarget target, out object json, out Refusal refused)
+        {
+            json = null;
+            refused = null;
+            if (value == null)
+            {
+                return true;
+            }
+
+            IList<object> listed;
+            if (!TryListed(field.Referenced, target, out listed, out refused))
+            {
+                return false;
+            }
+
+            for (int at = 0; at < listed.Count; at++)
+            {
+                if (ReferenceEquals(listed[at], value))
+                {
+                    json = at;
+
+                    return true;
+                }
+            }
+
+            return true;
+        }
+
         /// <summary>その道が指すリストの要素。位置で受け取る引数は、この列の中の位置で指す。</summary>
         private bool TryListed(
             ToolAccess access, PmxTarget target, out IList<object> listed, out Refusal refused)
@@ -1955,6 +2082,12 @@ namespace PmxEditorMcp
                             return;
                         }
 
+                        if (fields[at].Referenced != null
+                            && !TryPosition(fields[at], value, target, out value, out refused))
+                        {
+                            return;
+                        }
+
                         read[at] = value;
                     }
 
@@ -1991,10 +2124,18 @@ namespace PmxEditorMcp
 
                 for (int at = 0; at < reading[spot].Count; at++)
                 {
+                    ToolField field = reading[spot][at];
                     object json;
                     IList<string> written;
+                    if (field.Referenced != null)
+                    {
+                        item.Add(field.Name, values[spot][at]);
+
+                        continue;
+                    }
+
                     if (!ValueShape.TryToJson(
-                        reading[spot][at].Type,
+                        field.Type,
                         values[spot][at],
                         ImageTransfer.DefaultMaxLongSide,
                         out json,
@@ -2002,10 +2143,10 @@ namespace PmxEditorMcp
                         out code,
                         out message))
                     {
-                        return Unwritable(reading[spot][at].Type, code, message);
+                        return Unwritable(field.Type, code, message);
                     }
 
-                    item.Add(reading[spot][at].Name, json);
+                    item.Add(field.Name, json);
                     warnings.AddRange(written);
                 }
 
@@ -2174,6 +2315,7 @@ namespace PmxEditorMcp
             int updated = 0;
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
+            IList<object[]> pointing = null;
             Exception failure;
             UiInvocation unavailable;
             if (!Run(context, () =>
@@ -2204,10 +2346,16 @@ namespace PmxEditorMcp
                     return;
                 }
 
+                if (!TryPointing(writing, target, out pointing, out refused))
+                {
+                    return;
+                }
+
                 stage = Changing(tool.Receiver, target);
                 for (int at = 0; at < column.Count; at++)
                 {
-                    Change one = spread ? writing[0] : writing[at];
+                    int which = spread ? 0 : at;
+                    Change one = writing[which];
                     for (int field = 0; field < one.Fields.Count; field++)
                     {
                         object ignored;
@@ -2215,7 +2363,7 @@ namespace PmxEditorMcp
                         if (!_relay.TryInvoke(
                             one.Fields[field].RowKey,
                             column[at].Item,
-                            new[] { one.Values[field] },
+                            new[] { pointing[which][field] },
                             out ignored,
                             out refusal))
                         {
@@ -3304,6 +3452,19 @@ namespace PmxEditorMcp
             foreach (ToolField field in writing)
             {
                 object value;
+                if (field.Referenced != null)
+                {
+                    if (!TryGivenPosition(field, members[field.Name], out value, out code,
+                        out message))
+                    {
+                        return false;
+                    }
+
+                    values.Add(value);
+
+                    continue;
+                }
+
                 if (!ValueInput.TryFromJson(
                     field.Type, members[field.Name], out value, out code, out message))
                 {

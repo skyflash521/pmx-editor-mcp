@@ -89,6 +89,16 @@ namespace PmxEditorMcp.SignatureDump
             get { return _composedTools; }
         }
 
+        /// <summary>値を要素の位置で写す型の名前。</summary>
+        public ISet<string> PositionedTypes()
+        {
+            return new HashSet<string>(
+                _roles.Types
+                    .Where(t => t.Role == TypeRole.OperationTarget)
+                    .Select(t => t.TypeName),
+                StringComparer.Ordinal);
+        }
+
         /// <summary>ビューの絵を返すツールの名前から、そのビューの名前へ。</summary>
         public IDictionary<string, string> ViewImages
         {

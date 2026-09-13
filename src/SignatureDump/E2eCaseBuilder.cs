@@ -22,11 +22,35 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>引数の値が不正であることを断る綴り。</summary>
         public const string InvalidArgument = "TOOL_INVALID_ARGUMENT";
 
+        /// <summary>範囲の外の位置を断る綴り。</summary>
+        public const string IndexOutOfRange = "TOOL_INDEX_OUT_OF_RANGE";
+
         /// <summary>一覧が何件返すかを受け取る入力の名前。</summary>
         public const string LimitName = "limit";
 
         /// <summary>ハンドルの並びを受け取る入力の名前。</summary>
         public const string HandlesName = "handles";
+
+        /// <summary>対象を全件にする入力の名前。</summary>
+        private const string WholeName = "all";
+
+        /// <summary>親を全件にする入力の名前。</summary>
+        private const string ParentWholeName = "parentAll";
+
+        /// <summary>値の組を受け取る入力の名前。</summary>
+        private const string ValueName = "value";
+
+        /// <summary>値の組の並びを受け取る入力の名前。</summary>
+        private const string ValuesName = "values";
+
+        /// <summary>並べたものを載せる応答の項目の名前。</summary>
+        private const string ItemsName = "items";
+
+        /// <summary>
+        /// 位置で指す項目へ渡す、どのリストにも無い位置。負でない整数の上限なので、要素の数が
+        /// これに届くことはない。
+        /// </summary>
+        private const int UnknownPosition = int.MaxValue;
 
         /// <summary>
         /// 対象を指す項目の名前。対象が決まっている呼び出しでは、この組を埋めない——ハンドルで
@@ -59,7 +83,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, string> sdkTypes = null,
             SampleValueTable samples = null,
-            IDictionary<string, string> viewImages = null)
+            IDictionary<string, string> viewImages = null,
+            ISet<string> positioned = null)
         {
             if (map == null)
             {
@@ -119,6 +144,9 @@ namespace PmxEditorMcp.SignatureDump
                     sdkShapes,
                     Sampled(sdkTypes, samples)));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
+                cases.AddRange(ReadingCases(row, schema, connectionPaths));
+                cases.AddRange(PositionCases(
+                    row, schema, connectionPaths, sdkTypes, positioned, dangerous));
             }
 
             return cases;
@@ -386,6 +414,54 @@ namespace PmxEditorMcp.SignatureDump
             return sampled;
         }
 
+        /// <summary>対象を全件にする入力。位置で指す呼び分けだけが持つ。</summary>
+        private static IEnumerable<SchemaItem> WholeInputs(SchemaBranch branch)
+        {
+            return branch.Inputs.Where(i => !i.Injected
+                && (string.Equals(i.Name, WholeName, StringComparison.Ordinal)
+                    || string.Equals(i.Name, ParentWholeName, StringComparison.Ordinal)));
+        }
+
+        /// <summary>
+        /// 全件を指すだけで呼べる呼び分けか。対象を選ぶ必須の組が、どれも全件の指定で満たせる
+        /// ものをいう——ハンドルや位置を要る呼び分けは、何を渡すかがここでは決まらない。
+        /// </summary>
+        private static bool Wholly(SchemaBranch branch)
+        {
+            ISet<string> whole = new HashSet<string>(
+                WholeInputs(branch).Select(i => i.Name), StringComparer.Ordinal);
+            if (whole.Count == 0 || branch.Inputs.Any(i => i.Required == true && !i.Injected
+                && !whole.Contains(i.Name)))
+            {
+                return false;
+            }
+
+            return branch.Choices
+                .Where(c => c.Required)
+                .All(c => c.Names.Any(whole.Contains)
+                    || c.Names.Any(n => string.Equals(n, ValueName, StringComparison.Ordinal)));
+        }
+
+        /// <summary>
+        /// 数えて並べる呼び分け。件数と項目の並びを返す形を持ち、値を書き込む組を受け取らない
+        /// ものがこれに当たる。
+        /// </summary>
+        private static SchemaBranch Listing(ToolSchema schema)
+        {
+            if (schema.Output == null
+                || schema.Output.Members == null
+                || !schema.Output.Members.Any(
+                    m => string.Equals(m.Name, ItemsName, StringComparison.Ordinal)))
+            {
+                return null;
+            }
+
+            return schema.Branches.FirstOrDefault(
+                b => Wholly(b)
+                    && !b.Inputs.Any(i => string.Equals(i.Name, ValueName, StringComparison.Ordinal)
+                        || string.Equals(i.Name, ValuesName, StringComparison.Ordinal)));
+        }
+
         /// <summary>ハンドルの並びを受け取る入力。型役割がハンドルの型を指す並びである。</summary>
         private static IEnumerable<SchemaItem> HandleInputs(ToolSchema schema)
         {
@@ -402,6 +478,105 @@ namespace PmxEditorMcp.SignatureDump
                 .SelectMany(b => b.Inputs)
                 .Where(i => !i.Injected
                     && string.Equals(i.Name, LimitName, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// 並べたものを全件そのまま読む検査。項目を選ばずに呼ぶので、公開した項目のどれか1つでも
+        /// 値として写せなければ落ちる。
+        /// </summary>
+        private static IEnumerable<E2eCase> ReadingCases(
+            ToolMapRow row,
+            ToolSchema schema,
+            IDictionary<string, string> connectionPaths)
+        {
+            SchemaBranch listing = Listing(schema);
+            if (listing == null)
+            {
+                yield break;
+            }
+
+            IDictionary<string, object> arguments =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (SchemaItem whole in WholeInputs(listing))
+            {
+                arguments[whole.Name] = true;
+            }
+
+            string rowKey = row == null ? string.Empty : row.SignatureKey;
+            yield return new E2eCase(
+                rowKey,
+                row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind),
+                row == null ? string.Empty : ConnectionPath(rowKey, connectionPaths),
+                schema.Tool,
+                "並べたものを項目を選ばずに読めること",
+                arguments,
+                E2eExpectation.Success,
+                null);
+        }
+
+        /// <summary>
+        /// 位置で指す項目へ、どのリストにも無い位置を書く検査。位置から実体を解く経路と、その
+        /// 範囲の検査が働いていなければ落ちる。
+        /// </summary>
+        private static IEnumerable<E2eCase> PositionCases(
+            ToolMapRow row,
+            ToolSchema schema,
+            IDictionary<string, string> connectionPaths,
+            IDictionary<SchemaItem, string> sdkTypes,
+            ISet<string> positioned,
+            ISet<string> dangerous)
+        {
+            string rowKey = row == null ? string.Empty : row.SignatureKey;
+            if (sdkTypes == null || positioned == null || dangerous.Contains(rowKey))
+            {
+                yield break;
+            }
+
+            foreach (SchemaBranch branch in schema.Branches)
+            {
+                SchemaItem group = branch.Inputs.FirstOrDefault(
+                    i => string.Equals(i.Name, ValueName, StringComparison.Ordinal));
+                if (group == null || group.Members == null || !Wholly(branch))
+                {
+                    continue;
+                }
+
+                foreach (SchemaItem member in group.Members)
+                {
+                    string typeName;
+                    if (!sdkTypes.TryGetValue(member, out typeName)
+                        || !positioned.Contains(typeName))
+                    {
+                        continue;
+                    }
+
+                    IDictionary<string, object> arguments =
+                        new Dictionary<string, object>(StringComparer.Ordinal);
+                    foreach (SchemaItem whole in WholeInputs(branch))
+                    {
+                        arguments[whole.Name] = true;
+                    }
+
+                    if (branch.SelectorName != null)
+                    {
+                        arguments[branch.SelectorName] = branch.SelectorValue;
+                    }
+
+                    arguments[ValueName] = new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { member.Name, UnknownPosition },
+                    };
+                    yield return new E2eCase(
+                        rowKey,
+                        row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind),
+                        row == null ? string.Empty : ConnectionPath(rowKey, connectionPaths),
+                        schema.Tool,
+                        "どのリストにも無い位置を指す書き込みを断ること",
+                        arguments,
+                        E2eExpectation.Refusal,
+                        IndexOutOfRange);
+                }
+            }
         }
 
         /// <summary>その1件だけを渡す引数。確認を要する行では確認も渡す。</summary>
