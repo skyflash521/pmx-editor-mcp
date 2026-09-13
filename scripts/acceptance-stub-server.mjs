@@ -211,9 +211,11 @@ function compose(step, broken, recorded, options, remembered) {
     if (expect.events !== undefined) {
         const wanted = fill(expect.events, remembered);
         value = value ?? {};
-        value.events = broken === "events"
-            ? []
-            : [{ seq: 1, type: wanted.type, sourceHandle: wanted.sourceHandle, payload: {} }];
+        // 違えるときは並びを逆にする——同じものが揃っていても順が違えば期待を満たさない。
+        const told = broken === "events" ? [...wanted.types].reverse() : wanted.types;
+        value.events = told.map((type, at) => ({
+            seq: at + 1, type, sourceHandle: wanted.sourceHandle, payload: {},
+        }));
         value.dropped = 0;
         value.remaining = 0;
     }

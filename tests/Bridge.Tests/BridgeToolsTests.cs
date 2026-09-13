@@ -202,6 +202,65 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public async Task AGeneratedToolReturnsTheValueOutOfTheEnvelope()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(request => Result(request, "{\"ok\":true,\"value\":{\"total\":1}}"))
+                .Start();
+
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeAsync(host.PipeName, null, limit.Token);
+
+            CallToolResult result = await client.CallToolAsync(
+                GeneratedName(), cancellationToken: limit.Token);
+
+            Assert.NotEqual(true, result.IsError);
+            Assert.Equal(Relayed(host.PipeName, "{\"total\":1}"), TextOf(result));
+        }
+
+        [Fact]
+        public async Task AGeneratedToolThatTheHostRefusesComesBackAsAnError()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(request => Result(
+                    request,
+                    "{\"ok\":false,\"error\":{\"code\":\"TOOL_CONFIRM_REQUIRED\""
+                        + ",\"message\":\"確認が要る。\"}}"))
+                .Start();
+
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeAsync(host.PipeName, null, limit.Token);
+
+            CallToolResult result = await client.CallToolAsync(
+                GeneratedName(), cancellationToken: limit.Token);
+
+            Assert.True(result.IsError);
+            Assert.Equal(
+                Relayed(host.PipeName, "TOOL_CONFIRM_REQUIRED: 確認が要る。"), TextOf(result));
+        }
+
+        [Fact]
+        public async Task AGeneratedToolThatDoesNotComeBackInAnEnvelopeIsAProtocolError()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(request => Result(request, "\"包みではない\""))
+                .Start();
+
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeAsync(host.PipeName, null, limit.Token);
+
+            CallToolResult result = await client.CallToolAsync(
+                GeneratedName(), cancellationToken: limit.Token);
+
+            Assert.True(result.IsError);
+            Assert.StartsWith(
+                BridgeErrorCodes.ProtocolError, TextOf(result), StringComparison.Ordinal);
+        }
+
+        [Fact]
         public async Task RelayFailureReturnsToolErrorWithoutCrashing()
         {
             // ホストの応答サイズ予算をブリッジと食い違わせる。待ちに入らず決まった失敗になる。
@@ -433,6 +492,15 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             return (int)System.Text.Json.Nodes.JsonNode.Parse(request)
                 .AsObject()["params"][BridgeTools.LargeTextCharsParameter];
+        }
+
+        /// <summary>組み立てた定義のうちの1つの名前。包みで返る経路を通せればどれでもよい。</summary>
+        private static string GeneratedName()
+        {
+            return GeneratedToolDefinitions.Create()
+                .Select(definition => definition.Name)
+                .OrderBy(name => name, StringComparer.Ordinal)
+                .First();
         }
 
         /// <summary>接続先の行を先頭に置いた、要求元へ返る本文を組み立てる。</summary>

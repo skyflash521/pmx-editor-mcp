@@ -56,7 +56,8 @@ namespace PmxEditorMcp.Bridge
             AIFunctionArguments arguments, CancellationToken cancellationToken)
         {
             return await BridgeTools
-                .RelayAsync(_client, _definition.Name, Parameters(arguments), cancellationToken)
+                .RelayEnvelopeAsync(
+                    _client, _definition.Name, Parameters(arguments), cancellationToken)
                 .ConfigureAwait(false);
         }
 

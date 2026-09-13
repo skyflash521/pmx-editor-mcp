@@ -118,6 +118,38 @@ namespace PmxEditorMcp.Bridge
                 });
         }
 
+        /// <summary>
+        /// 包みで返るツールを中継する。ホストの包みは値と誤りと警告に分かれているので、MCPの結果へ
+        /// 写し直す——包みのまま返すと、呼び出し元は成否を結果の印から読めず、値も包みごと受け取る。
+        /// 包みとして読めない応答は契約から外れているので、接続を捨てて誤りにする。
+        /// </summary>
+        internal static async Task<CallToolResult> RelayEnvelopeAsync(
+            HostIpcClient client,
+            string method,
+            JsonObject parameters,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                HostCallResult response = await client
+                    .CallAsync(method, parameters, cancellationToken)
+                    .ConfigureAwait(false);
+                try
+                {
+                    return ToolEnvelopeResult.From(
+                        response.Result, response.TargetNotice, client.BudgetChars);
+                }
+                catch (FormatException broken)
+                {
+                    throw client.Reject(broken.Message);
+                }
+            }
+            catch (BridgeException error)
+            {
+                return error.ToToolResult();
+            }
+        }
+
         internal static async Task<CallToolResult> RelayAsync(
             HostIpcClient client,
             string method,

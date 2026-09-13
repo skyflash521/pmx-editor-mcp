@@ -418,15 +418,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "capture",
-          "editor": {
-            "$from": "editorA"
-          },
-          "view": "transform",
-          "record": {
-            "name": "transformViewSize",
-            "shape": "size"
+          "kind": "tool",
+          "tool": "view_bootup_vmd_view",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -435,9 +431,7 @@
           "arguments": {},
           "expect": {
             "ok": true,
-            "image": {
-              "capturedAs": "transformViewSize"
-            }
+            "image": {}
           }
         },
         {
@@ -483,7 +477,7 @@
           },
           "record": {
             "name": "viewListener",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -505,11 +499,13 @@
           "expect": {
             "ok": true,
             "events": {
-              "type": "view_mouse_click",
+              "types": [
+                "view_mouse_down",
+                "view_mouse_up"
+              ],
               "sourceHandle": {
                 "$from": "viewListener"
-              },
-              "atLeast": 1
+              }
             }
           }
         },
@@ -584,15 +580,15 @@
             "values": [
               {
                 "position": [
-                  0,
-                  0,
+                  -10,
+                  -10,
                   0
                 ]
               },
               {
                 "position": [
                   10,
-                  0,
+                  -10,
                   0
                 ]
               },
@@ -656,6 +652,29 @@
         },
         {
           "kind": "tool",
+          "tool": "model_update_materials",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "material"
+              }
+            ],
+            "value": {
+              "bothDraw": true
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_add_materials",
           "arguments": {
             "handles": [
@@ -697,15 +716,9 @@
               }
             ],
             "value": {
-              "vertex1": {
-                "$from": "cornerA"
-              },
-              "vertex2": {
-                "$from": "cornerB"
-              },
-              "vertex3": {
-                "$from": "cornerC"
-              }
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
             }
           },
           "expect": {
@@ -724,9 +737,7 @@
           "arguments": {
             "assignments": [
               {
-                "parentHandle": {
-                  "$from": "material"
-                },
+                "parentIndex": 0,
                 "handles": [
                   {
                     "$from": "face"
@@ -740,6 +751,25 @@
             "values": [
               {
                 "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_faces",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
                 "equals": 1
               }
             ]
@@ -848,12 +878,20 @@
           },
           "record": {
             "name": "uiListener",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
             "ok": true
           }
+        },
+        {
+          "kind": "control",
+          "action": "capture",
+          "editor": {
+            "$from": "editorA"
+          },
+          "view": "pmx"
         },
         {
           "kind": "control",
@@ -870,11 +908,13 @@
           "expect": {
             "ok": true,
             "events": {
-              "type": "ui_model_mouse_down",
+              "types": [
+                "ui_model_mouse_down",
+                "ui_model_mouse_up"
+              ],
               "sourceHandle": {
                 "$from": "uiListener"
-              },
-              "atLeast": 1
+              }
             }
           }
         },
@@ -1053,12 +1093,6 @@
           "tool": "session_release_handle",
           "arguments": {
             "handles": [
-              {
-                "$from": "firstKey"
-              },
-              {
-                "$from": "lastKey"
-              },
               {
                 "$from": "vmd"
               }

@@ -469,7 +469,13 @@ function judgeImage(expected, parsed, remembered) {
     }
 
     if (expected.capturedAs === undefined) {
-        return null;
+        // 写しと結び付けない絵でも、縮めたと言うからには縮めた先を述べていなければならない。
+        const named = parsed.warnings.some((warning) => warning.includes(describeSize(returned)));
+
+        return parsed.warnings.length === 0 || named
+            ? null
+            : "警告が返った絵の寸法 " + describeSize(returned) + " を述べていません: "
+                + parsed.warnings.join(" / ");
     }
 
     if (!remembered.has(expected.capturedAs)) {
@@ -497,7 +503,10 @@ function judgeImage(expected, parsed, remembered) {
     return null;
 }
 
-/** 取り出したイベントの期待を確かめる。 */
+/**
+ * 取り出したイベントの期待を確かめる。並べた種別は、その順に現れることまで見る——起きた順に
+ * 読み戻せることが要求なので、揃っているだけでは足りない。
+ */
 function judgeEvents(expected, parsed, remembered) {
     let value;
     try {
@@ -512,11 +521,21 @@ function judgeEvents(expected, parsed, remembered) {
     }
 
     const wanted = fill(expected, remembered);
-    const matched = events.filter((event) => event !== null && typeof event === "object"
-        && event.type === wanted.type && event.sourceHandle === wanted.sourceHandle);
-    if (matched.length < wanted.atLeast) {
-        return "対象の操作が " + wanted.atLeast + " 件以上取れていません(取れたのは "
-            + matched.length + " 件、返ったのは " + events.length + " 件)。";
+    const mine = events.filter((event) => event !== null && typeof event === "object"
+        && event.sourceHandle === wanted.sourceHandle);
+
+    let at = 0;
+    for (const type of wanted.types) {
+        while (at < mine.length && mine[at].type !== type) {
+            at += 1;
+        }
+
+        if (at >= mine.length) {
+            return "この発生元の操作が " + JSON.stringify(wanted.types)
+                + " の順に取れていません: " + JSON.stringify(mine.map((e) => e.type));
+        }
+
+        at += 1;
     }
 
     return null;

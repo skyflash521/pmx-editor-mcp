@@ -112,6 +112,11 @@ namespace PmxEditorMcp.Tests
 
         private UndoRecovery _recovery;
 
+        private McpMethodTable _methods;
+
+        /// <summary>真にすると、親のリストへ加える呼び出しがSDKの側で失敗する。</summary>
+        private bool _joinBreaks;
+
         private readonly Model _bridged = new Model();
 
         private int _bridgeCommits;
@@ -834,11 +839,12 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void APositionCannotBeWrittenIntoAnItemPointedAtByHandle()
+        public void APositionWrittenIntoAnItemPointedAtByHandleIsNotResolvedYet()
         {
             _model.Items.Add(new Item { Label = "一" });
             HandleLedger handles = Ledger();
-            int handle = handles.Issue(typeof(Item).FullName, _model.Items[0], () => { });
+            Item made = new Item { Label = "二" };
+            int handle = handles.Issue(typeof(Item).FullName, made, () => { });
 
             IDictionary<string, object> envelope = Call(
                 "model_update_mates",
@@ -847,8 +853,151 @@ namespace PmxEditorMcp.Tests
                     ToolDispatch.ValueName, Value("mate", 0)),
                 handles);
 
-            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
-            Assert.Null(_model.Items[0].Mate);
+            // 位置はPMXの中のリストで数えるので、まだ属していない相手には書き込めない。受け取った
+            // ことだけを返し、書き込みは並びへ加える呼び出しへ預ける。
+            Assert.Equal(1, Value(envelope)["updated"]);
+            Assert.Null(made.Mate);
+        }
+
+        [Fact]
+        public void ThePositionIsWrittenWhenTheItemIsAddedToTheModel()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            HandleLedger handles = Ledger();
+            Item made = new Item { Label = "二" };
+            int handle = handles.Issue(typeof(Item).FullName, made, () => { });
+
+            Call(
+                "model_update_mates",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { handle },
+                    ToolDispatch.ValueName, Value("mate", 0)),
+                handles);
+            IDictionary<string, object> envelope = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], made.Mate);
+        }
+
+        [Fact]
+        public void APositionOutsideTheListIsRefusedWhenTheItemIsAdded()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(typeof(Item).FullName, new Item { Label = "二" }, () => { });
+
+            Call(
+                "model_update_mates",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { handle },
+                    ToolDispatch.ValueName, Value("mate", 3)),
+                handles);
+            IDictionary<string, object> envelope = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, Code(envelope));
+            Assert.Single(_model.Items);
+        }
+
+        [Fact]
+        public void AFailedAddKeepsThePositionsItAlreadyWroteInHandSoTheCallCanBeMadeAgain()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            HandleLedger handles = Ledger();
+            Item first = new Item { Label = "二" };
+            Item second = new Item { Label = "三" };
+            int held = handles.Issue(typeof(Item).FullName, first, () => { });
+            int other = handles.Issue(typeof(Item).FullName, second, () => { });
+
+            Write(handles, held, 0);
+            Write(handles, other, 3);
+            IDictionary<string, object> refused = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, new object[] { held, other }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, Code(refused));
+
+            // 実物は断られた呼び出しの複製ごと捨てるので、先に書き込んだぶんも残らない。この題材は
+            // 複製を作らず実体をそのまま渡すため、書き込みだけをこちらで戻して同じ状況を作る。
+            first.Mate = null;
+
+            // 預かりを外していなければ、投げ直したときに解き直される。
+            IDictionary<string, object> envelope = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, new object[] { held }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], first.Mate);
+        }
+
+        [Fact]
+        public void APositionSurvivesBeingPutUnderAHeldParentAndIsWrittenWhenThatParentIsAdded()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            HandleLedger handles = Ledger();
+            Group parent = new Group();
+            Item child = new Item { Label = "二" };
+            int under = handles.Issue(typeof(Group).FullName, parent, () => { });
+            int held = handles.Issue(typeof(Item).FullName, child, () => { });
+
+            Write(handles, held, 0);
+            Call(
+                "model_add_leaves",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { HeldAssignment(under, held) }),
+                handles);
+
+            // 親もまだどのPMXにも属していないので、この時点では解けない。
+            Assert.Null(child.Mate);
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_groups",
+                Arguments(TargetNames.Element.Handles, new object[] { under }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], child.Mate);
+        }
+
+        [Fact]
+        public void AnAddThatBreaksLeavesThePositionWithTheChildSoItCanBePutSomewhereElse()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            HandleLedger handles = Ledger();
+            Group parent = new Group();
+            Item child = new Item { Label = "二" };
+            int under = handles.Issue(typeof(Group).FullName, parent, () => { });
+            int held = handles.Issue(typeof(Item).FullName, child, () => { });
+
+            Write(handles, held, 0);
+            _joinBreaks = true;
+            IDictionary<string, object> broken = Call(
+                "model_add_leaves",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { HeldAssignment(under, held) }),
+                handles);
+
+            Assert.False((bool)broken["ok"], "包みが成功している。");
+            Assert.Empty(parent.Leaves);
+
+            // 加わらなかった子の預かりは子のもとに在るので、直にPMXへ加えれば解ける。
+            _joinBreaks = false;
+            IDictionary<string, object> envelope = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, new object[] { held }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], child.Mate);
         }
 
         [Fact]
@@ -1723,6 +1872,28 @@ namespace PmxEditorMcp.Tests
             return arguments;
         }
 
+        /// <summary>親のリストへ加える。題材の側で失敗させたいときは、そう頼まれたとおり投げる。</summary>
+        private void Join(Group owner, Leaf leaf)
+        {
+            if (_joinBreaks)
+            {
+                throw new InvalidOperationException("加えられない。");
+            }
+
+            owner.Leaves.Add(leaf);
+        }
+
+        /// <summary>ハンドルで持つ相手へ、位置で指す項目を書く。</summary>
+        private void Write(HandleLedger handles, int handle, int position)
+        {
+            Call(
+                "model_update_mates",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { handle },
+                    ToolDispatch.ValueName, Value("mate", position)),
+                handles);
+        }
+
         private static IDictionary<string, object> Value(string name, object value)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal) { { name, value } };
@@ -1755,6 +1926,13 @@ namespace PmxEditorMcp.Tests
         private IDictionary<string, object> Call(
             string tool, IDictionary<string, object> arguments, HandleLedger handles = null)
         {
+            // 振り分けは題材ごとに1つだけ組む。呼び出しのたびに組み直すと、ハンドルで持つ相手への
+            // 書き込みの預かりのように、呼び出しをまたいで持つものが失われる。
+            if (_methods != null)
+            {
+                return Run(_methods, tool, arguments, handles);
+            }
+
             McpMethodTable methods = new McpMethodTable();
             SdkRelayTable relay = Relay();
             IDictionary<string, SdkReceiver> receivers =
@@ -1797,6 +1975,17 @@ namespace PmxEditorMcp.Tests
                 new StillModifierKeys(),
                 EventBindingFixture.Empty());
 
+            _methods = methods;
+
+            return Run(methods, tool, arguments, handles);
+        }
+
+        private IDictionary<string, object> Run(
+            McpMethodTable methods,
+            string tool,
+            IDictionary<string, object> arguments,
+            HandleLedger handles)
+        {
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
 
@@ -2029,7 +2218,7 @@ namespace PmxEditorMcp.Tests
             return null;
         }
 
-        private static IDictionary<string, SdkList> Lists()
+        private IDictionary<string, SdkList> Lists()
         {
             return new Dictionary<string, SdkList>(StringComparer.Ordinal)
             {
@@ -2054,7 +2243,7 @@ namespace PmxEditorMcp.Tests
                     new SdkList(
                         owner => ((Group)owner).Leaves.Count,
                         (owner, index) => ((Group)owner).Leaves[index],
-                        (owner, item) => ((Group)owner).Leaves.Add((Leaf)item),
+                        (owner, item) => Join((Group)owner, (Leaf)item),
                         (owner, index) => ((Group)owner).Leaves.RemoveAt(index))
                 },
                 {
@@ -2101,6 +2290,19 @@ namespace PmxEditorMcp.Tests
                 typeof(Item),
                 item => item is Item,
                 "item");
+        }
+
+        /// <summary>PMXが直に持つ、親になれる要素のリストへ至る道。</summary>
+        private static ToolAccess Grouped()
+        {
+            return new ToolAccess(
+                ToolAccessKind.Element,
+                GroupsKey,
+                null,
+                true,
+                typeof(Group),
+                item => item is Group,
+                "group");
         }
 
         /// <summary>親のリストを1つ挟んだ先の、要素のリストへ至る道。</summary>
@@ -2499,6 +2701,8 @@ namespace PmxEditorMcp.Tests
         {
             return new Dictionary<string, ToolElements>(StringComparer.Ordinal)
             {
+                { "model_add_items", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Direct()) },
+                { "model_add_groups", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Grouped()) },
                 { "model_add_leaves", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Nested()) },
                 { "model_remove_leaves", new ToolElements(true, Rooted(EditKind.DuplicateEdit), Nested()) },
                 { "model_add_veins", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Veined()) },

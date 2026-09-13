@@ -351,8 +351,8 @@ $PluginName = "PMX Editor MCP"
 # 編集メニューの中で1回分の取り消しを起こす項目の名前。実機の編集メニューが持つ綴りである。
 $UndoItemName = "元に戻す(U)"
 
-# 取り消した分をやり直す項目の名前。取り消しが1回起きたことは、この項目が使えるようになることで
-# 分かる——押した結果は編集の中身に出るので、それ自体はここからは読めない。
+# 取り消した分をやり直す項目の名前。取り消しが1回起きていれば、この項目は使える——押した結果は
+# 編集の中身に出るので、それ自体はここからは読めない。
 $RedoItemName = "やり直し(R)"
 
 # 状態表示のウィンドウクラス。標準のメッセージボックスのもの。
@@ -912,17 +912,23 @@ function Invoke-UndoOnce {
             throw "取り消せる編集が無い: プロセスID $OwnerProcessId"
         }
 
-        # やり直しが既に使えると、押した結果として使えるようになったのか、元からそうだったのかを
-        # 見分けられない。見分けられない状態では、起きたかどうかを確かめずに成功を返さない。
         $redo = Get-MenuItem -Menu $edit -Name $RedoItemName -Deadline $deadline
-        if ($redo.Current.IsEnabled) {
-            throw "やり直せる状態なので取り消しが起きたことを確かめられない: プロセスID $OwnerProcessId"
-        }
 
         Invoke-Element -Element $target
 
-        # 取り消しが1回起きたことを、やり直せるようになったことで確かめる。押しただけでは、
-        # 届いたかどうかも、何も起きなかったのかも分からない。
+        # 押したあと、エディタが入力待ちへ戻るのを待つ。取り消しを続けて起こすと、やり直しは
+        # 2回目以降すでに使えているので、使えるようになる変わり目では起きたかどうかを見分け
+        # られない。メニューの項目の使用可否も窓の題も、取り消しのたびには変わらないので、
+        # ここで確かめられるのは「押せて、やり直せる編集が在る」ところまでである。取り消しが
+        # 実際に何を戻したかは編集の中身に出るので、そこは呼び出し側が読んで確かめる。
+        $process = Get-EditorProcess -OwnerProcessId $OwnerProcessId
+        $remaining = [int]($deadline - (Get-Date)).TotalMilliseconds
+        if ($remaining -le 0 -or -not $process.WaitForInputIdle($remaining)) {
+            throw "エディタが入力待ちへ戻らなかった: プロセスID $OwnerProcessId"
+        }
+
+        # 取り消しが1回起きていれば、やり直せる編集が在る。在らないなら、押した先で何も
+        # 起きていない。
         while (-not $redo.Current.IsEnabled) {
             if ((Get-Date) -ge $deadline) {
                 throw "取り消しが起きなかった: プロセスID $OwnerProcessId"

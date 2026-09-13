@@ -90,6 +90,15 @@ namespace PmxEditorMcp
 
         private readonly IModifierKeys _modifiers;
 
+        /// <summary>
+        /// ハンドルで持つ実体へ書かれた、位置で指す項目の値。位置はPMXの中のリストで数えるので、
+        /// 書いた時点では解けない——ハンドルで持つ実体はまだどのPMXにも属していない。値のまま
+        /// 預かり、その実体を並びへ加える呼び出しが、自分が相手にするPMXの中で解いて書き込む。
+        /// 実体が捨てられれば預かりも消えるように、実体を弱く指す表に持つ。
+        /// </summary>
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, IList<DeferredWrite>> _deferred =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<object, IList<DeferredWrite>>();
+
         private ToolDispatch(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
@@ -1580,7 +1589,10 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>位置で預かった値が指す実体。指さない項目と null はそのまま渡す。</summary>
+        /// <summary>
+        /// 位置で預かった値が指す実体。指さない項目と null はそのまま渡す。相手がハンドルで持つ
+        /// 実体のときは、数える先のリストがまだ無いので解かず、預かりとして渡す。
+        /// </summary>
         private bool TryPointed(
             ToolField field, object value, PmxTarget target, out object pointed, out Refusal refused)
         {
@@ -1588,6 +1600,13 @@ namespace PmxEditorMcp
             refused = null;
             if (field.Referenced == null || value == null)
             {
+                return true;
+            }
+
+            if (target.Pmx == null)
+            {
+                pointed = new DeferredPosition(field, (int)value);
+
                 return true;
             }
 
@@ -1651,6 +1670,115 @@ namespace PmxEditorMcp
             json = positions.ToArray();
 
             return true;
+        }
+
+        /// <summary>
+        /// ハンドルで持つ実体への、位置で指す項目の書き込みを預かる。預かる先は、解く呼び出しまで
+        /// 生き残る実体である——子を親へ加えたあとは親が預かる。
+        /// </summary>
+        private void Defer(object keeper, DeferredWrite pending)
+        {
+            IList<DeferredWrite> held;
+            if (!_deferred.TryGetValue(keeper, out held))
+            {
+                held = new List<DeferredWrite>();
+                _deferred.Add(keeper, held);
+            }
+
+            // 同じ相手の同じ項目を二度書いたら、後の値だけを残す——直に書くときと同じ結末にする。
+            for (int at = 0; at < held.Count; at++)
+            {
+                if (ReferenceEquals(held[at].Target, pending.Target)
+                    && string.Equals(
+                        held[at].Field.RowKey, pending.Field.RowKey, StringComparison.Ordinal))
+                {
+                    held[at] = pending;
+
+                    return;
+                }
+            }
+
+            held.Add(pending);
+        }
+
+        /// <summary>
+        /// ハンドルで持つ親へ子を加えるときに、子の預かりを親へ移す。まだどのPMXにも属していない
+        /// 親の下では位置を解けないので、解くのは親が並びへ加わるときになる。
+        /// </summary>
+        private void Carry(object item, object owner)
+        {
+            IList<DeferredWrite> held;
+            if (!_deferred.TryGetValue(item, out held))
+            {
+                return;
+            }
+
+            foreach (DeferredWrite pending in held)
+            {
+                Defer(owner, pending);
+            }
+
+            _deferred.Remove(item);
+        }
+
+        /// <summary>
+        /// 並びへ加える実体に預かりがあれば、加える先のPMXの中で位置を解いて書き込む。預かりは
+        /// ここでは外さない——同じ呼び出しの後の段で断られると複製ごと捨てられ、書き込んだ相手は
+        /// 残らないので、外してしまうと投げ直しても解き直せなくなる。外すのは反映まで済んでからで、
+        /// <see cref="Settle"/> が行う。
+        /// </summary>
+        private bool TryApplyDeferred(object item, PmxTarget target, out Refusal refused)
+        {
+            refused = null;
+            IList<DeferredWrite> held;
+            if (!_deferred.TryGetValue(item, out held))
+            {
+                return true;
+            }
+
+            foreach (DeferredWrite pending in held)
+            {
+                IList<object> listed;
+                if (!TryListed(pending.Field.Referenced, target, out listed, out refused))
+                {
+                    return false;
+                }
+
+                if (pending.Position < 0 || pending.Position >= listed.Count)
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(
+                        ToolEnvelope.IndexOutOfRange,
+                        pending.Field.Name + " の位置が範囲の外にある: " + pending.Position
+                            + "(リストの件数は " + listed.Count + ")"));
+
+                    return false;
+                }
+
+                object ignored;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(
+                    pending.Field.RowKey,
+                    pending.Target,
+                    new[] { listed[pending.Position] },
+                    out ignored,
+                    out refusal))
+                {
+                    refused = Refusal.Of(pending.Field.RowKey, refusal);
+
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>反映まで済んだ実体の預かりを外す。捨てられた複製へ解いたものは残す。</summary>
+        private void Settle(IEnumerable<object> applied)
+        {
+            foreach (object item in applied)
+            {
+                _deferred.Remove(item);
+            }
         }
 
         /// <summary>その実体の、列の中での位置。列に居なければ null。</summary>
@@ -2392,6 +2520,16 @@ namespace PmxEditorMcp
                     Change one = writing[which];
                     for (int field = 0; field < one.Fields.Count; field++)
                     {
+                        DeferredPosition waiting = pointing[which][field] as DeferredPosition;
+                        if (waiting != null)
+                        {
+                            Defer(
+                                column[at].Item,
+                                new DeferredWrite(column[at].Item, waiting.Field, waiting.Position));
+
+                            continue;
+                        }
+
                         object ignored;
                         SdkRelayRefusal refusal;
                         if (!_relay.TryInvoke(
@@ -2526,12 +2664,21 @@ namespace PmxEditorMcp
                 stage = Changing(tool.Receiver, target);
                 for (int at = 0; at < items.Length; at++)
                 {
+                    if (!TryApplyDeferred(items[at], target, out refused))
+                    {
+                        return;
+                    }
+
                     list.Add(target.Pmx, items[at]);
                     indices[at] = list.Count(target.Pmx) - 1;
                 }
 
                 stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(context, tool.Receiver, target);
+                if (refused == null)
+                {
+                    Settle(items);
+                }
             }, out failure, out unavailable))
             {
                 return Unavailable(unavailable);
@@ -2601,13 +2748,29 @@ namespace PmxEditorMcp
                     object owner = byHandle ? assignment.Owner : owners[assignment.Parent];
                     foreach (object item in assignment.Items)
                     {
+                        if (!byHandle && !TryApplyDeferred(item, target, out refused))
+                        {
+                            return;
+                        }
+
                         list.Add(owner, item);
                         indices.Add(list.Count(owner) - 1);
+
+                        // 預かりを移すのは加わってからとする。加わらないまま移すと、預かりは親の
+                        // もとに在るのに子はそこに居ないので、その子を別の親へ加え直しても解けない。
+                        if (byHandle)
+                        {
+                            Carry(item, owner);
+                        }
                     }
                 }
 
                 stage = Reflecting(tool.Receiver, target, stage);
                 refused = Commit(context, tool.Receiver, target);
+                if (refused == null)
+                {
+                    Settle(assignments.SelectMany(a => a.Items));
+                }
             }, out failure, out unavailable))
             {
                 return Unavailable(unavailable);
