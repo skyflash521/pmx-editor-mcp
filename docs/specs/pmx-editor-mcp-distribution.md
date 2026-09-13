@@ -29,10 +29,7 @@ PMXエディタの導入先は環境ごとに異なるため、リポジトリ�
 5点だけ**とする。
 
 - `PmxEditorMcp.dll`(ホスト。Releaseビルド)
-- `PmxEditorMcp.Bridge.exe`(ブリッジ。Release・win-x64・自己完結・単一ファイルで発行する。発行の
-  プロパティは `SelfContained=true`・`RuntimeIdentifier=win-x64`・`PublishSingleFile=true`・
-  `IncludeNativeLibrariesForSelfExtract=true` を明示し、ネイティブのDLLも単一のexeへ含める——**exe
-  1ファイルだけで動く**のが契約である)
+- `PmxEditorMcp.Bridge.exe`(ブリッジ)
 - `README.txt`(エンドユーザー向けの手順の正本。追跡下のテンプレート `docs/guides/package-readme.txt` を
   無加工で収める。持つ手順は下記のとおりで、**単体で導入を完了できる全手順**とする。配布先では
   リポジトリ内のパスを解決できないので、参照だけの記載にしない)

@@ -331,6 +331,10 @@ try {
                 $assignments $toolMap $toolSchemas $acceptance $requirements
         }
     }
+    $checks['ブリッジの単独起動'] = @{
+        Needs = $noArtifact
+        Body = { pwsh -NoProfile -File scripts/bridge-standalone.ps1 }
+    }
     $checks['受入の実行器の照合'] = @{
         Needs = $noArtifact
         Body = {

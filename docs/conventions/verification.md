@@ -39,6 +39,7 @@ pwsh -File scripts/verify.ps1
 | 規則適合検査 | 終了コード0 |
 | 受入シナリオの照合 | 終了コード0 |
 | 受入の実行器の照合 | 終了コード0 |
+| ブリッジの単独起動 | 終了コード0 |
 
 **この表は[実行器](../../scripts/verify.ps1)が読む**ので、行を足すときはスクリプトの側にも足す(片方だけを
 足せば落ちる)。照合はどれも、入力のどれかが欠けても読めなくても読み解けなくても終了コード3、
@@ -157,9 +158,12 @@ pwsh -File scripts/verify.ps1
 1. ブリッジをMCPサーバーとして登録する。パスは空白を含みうるので引用符で囲む。
 
    ```
-   dotnet publish src/Bridge/PmxEditorMcp.Bridge.csproj
+   pwsh -File scripts/publish-bridge.ps1 -Destination <発行先>
    claude mcp add pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶対パス>"
    ```
+
+   **発行はこのスクリプトを通す。** 発行の指定はここだけが持つので、`dotnet publish` を直に
+   打つと、配布するものとは別の成果物を確かめることになる。
 
    開発中は発行せず、ビルド成果物
    `src/Bridge/bin/Debug/net10.0/PmxEditorMcp.Bridge.exe` を同じように登録してよい。

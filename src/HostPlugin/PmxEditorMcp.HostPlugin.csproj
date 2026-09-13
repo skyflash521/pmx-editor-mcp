@@ -44,7 +44,6 @@
     <!-- 中間の置き場は本文の評価の時点では決まっていないので、その元から組み立てる。 -->
     <RelaySourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedSdkRelay.g.cs</RelaySourcePath>
     <ToolBindingSourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedTools.g.cs</ToolBindingSourcePath>
-    <RelayGeneratorPath>$(MSBuildThisFileDirectory)..\SignatureDump\bin\$(Configuration)\net48\PmxEditorMcp.SignatureDump.exe</RelayGeneratorPath>
     <ToolMapPath>$(MSBuildThisFileDirectory)..\..\data\authored\tool-map.json</ToolMapPath>
     <LedgerPath>$(MSBuildThisFileDirectory)..\..\data\observed\capability-ledger.json</LedgerPath>
     <TypeRolesPath>$(MSBuildThisFileDirectory)..\..\data\authored\type-roles.json</TypeRolesPath>
@@ -53,9 +52,16 @@
     <CommonContractPath>$(MSBuildThisFileDirectory)..\..\data\authored\common-contract.json</CommonContractPath>
   </PropertyGroup>
 
+  <!-- 生成器の在り処は、組み立てた側が返すものを使う。組み立ての指定によって出力先は動くので、
+       こちらで綴りから組み立てると、実際に出来た場所と食い違う。 -->
   <Target Name="BuildRelayGenerator">
     <MSBuild Projects="$(MSBuildThisFileDirectory)..\SignatureDump\PmxEditorMcp.SignatureDump.csproj"
-             Properties="Configuration=$(Configuration)" />
+             Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="RelayGeneratorOutput" />
+    </MSBuild>
+    <PropertyGroup>
+      <RelayGeneratorPath>@(RelayGeneratorOutput)</RelayGeneratorPath>
+    </PropertyGroup>
   </Target>
 
   <!-- 作り直しの要否は生成器の側が中身で判じるので、ここでは入力と出力の比べをしない。 -->
