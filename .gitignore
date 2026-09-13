@@ -21,6 +21,8 @@ ehthumbs_vista.db
 # ビルド成果物
 bin/
 obj/
+# 配布パッケージの組み立て先。中身はビルドから作り直せる。
+/dist/
 
 ### VisualStudioCode ###
 .vscode/*

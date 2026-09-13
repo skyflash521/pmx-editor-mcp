@@ -191,6 +191,65 @@ function Test-AcceptanceRunner {
     }
 }
 
+function Test-PackageContents {
+    <#
+        .SYNOPSIS
+        内容物を確かめる側が、中身を違えたときに落ちることを見る。組み立てたものが通ることだけを
+        見ても、確かめる側が何も見ていない場合と区別できない。写しへ違えを入れて確かめる——
+        組み立てた本体は配布物なので、こちらで傷つけない。
+    #>
+    $expected = @('PmxEditorMcp.dll', 'PmxEditorMcp.Bridge.exe', 'LICENSE.txt')
+    $version = (Get-Content Directory.Build.props -Raw -Encoding UTF8 |
+        Select-String -Pattern '<Version>([^<]+)</Version>').Matches[0].Groups[1].Value
+    $staged = Join-Path 'dist' "pmx-editor-mcp-$version"
+    $copy = Join-Path ([System.IO.Path]::GetTempPath()) ('contents-' + [guid]::NewGuid().ToString('N'))
+    Copy-Item -Path $staged -Destination $copy -Recurse
+
+    try {
+        foreach ($spoiled in @(
+                @{ Name = '再配布できない物'; Do = {
+                    Copy-Item (Join-Path $copy 'LICENSE.txt') (Join-Path $copy 'PEPlugin.dll') } },
+                @{ Name = '写しの書き換え'; Do = {
+                    Add-Content -Path (Join-Path $copy 'LICENSE.txt') -Value 'x' } },
+                @{ Name = '内容物の欠落'; Do = {
+                    Remove-Item (Join-Path $copy 'PmxEditorMcp.dll') -Force } })) {
+            & $spoiled.Do
+            $broke = $false
+            try {
+                & scripts/package-contents.ps1 -Staged $copy -Version $version `
+                    -Expected $expected | Out-Null
+            } catch {
+                $broke = $true
+            }
+
+            if (-not $broke) { throw "$($spoiled.Name)を入れても落ちない。" }
+            Remove-Item -Path $copy -Recurse -Force
+            Copy-Item -Path $staged -Destination $copy -Recurse
+        }
+
+        $broke = $false
+        try {
+            & scripts/package-contents.ps1 -Staged $copy -Version '9.9.9' `
+                -Expected $expected | Out-Null
+        } catch {
+            $broke = $true
+        }
+
+        if (-not $broke) { throw "版が合わなくても落ちない。" }
+
+        # 版を固定値で持つ実装は、正本を変えても追随しない。組み立てる側にその綴りが1つも
+        # 現れないことで見る——現れないなら、名前も照合も正本を読んで決めている。
+        $literal = @(Get-ChildItem scripts/package*.ps1 |
+            Select-String -Pattern $version -SimpleMatch)
+        if ($literal.Count -ne 0) {
+            throw ("組み立てる側が版を綴りで持っている: " +
+                (($literal | ForEach-Object { $_.Path + ':' + $_.LineNumber }) -join '・'))
+        }
+    } finally {
+        Remove-Item -Path $copy -Recurse -Force -ErrorAction Ignore
+    }
+}
+
 $build = 'ビルド'
 $derivation = '除外一覧の導出'
 
@@ -334,6 +393,17 @@ try {
     $checks['ブリッジの単独起動'] = @{
         Needs = $noArtifact
         Body = { pwsh -NoProfile -File scripts/bridge-standalone.ps1 }
+    }
+    $checks['配布パッケージの生成'] = @{
+        Needs = $noArtifact
+        Body = {
+            # 1コマンドで組み立てられること。中身を違えたときに落ちることは、確かめる側を
+            # 直に呼んで見る——落ちない検査は、通っても何も言っていない。
+            pwsh -NoProfile -File scripts/package.ps1
+            if ($LASTEXITCODE -ne 0) { throw "配布パッケージを組み立てられない。" }
+
+            Test-PackageContents
+        }
     }
     $checks['受入の実行器の照合'] = @{
         Needs = $noArtifact
