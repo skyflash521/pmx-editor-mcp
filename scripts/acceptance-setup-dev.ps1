@@ -16,21 +16,10 @@ $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $false
 
 $root = Split-Path -Parent $PSScriptRoot
-$hostProject = Join-Path $root "src/HostPlugin/PmxEditorMcp.HostPlugin.csproj"
 $bridgeProject = Join-Path $root "src/Bridge/PmxEditorMcp.Bridge.csproj"
 $bridgeExe = Join-Path $root "src/Bridge/bin/Debug/net10.0/PmxEditorMcp.Bridge.exe"
 
-# 配置先は起動中のエディタがロックしている。開いたままだとコピーに失敗するので先に閉じる。
-# 数えるのは動いているエディタで、待受ではない——ホストを停止させたエディタはパイプを持たないが、
-# 配置先のDLLは掴んだままである。
-& (Join-Path $PSScriptRoot "host-control.ps1") -Action editors |
-    ForEach-Object { [int]$_ } |
-    ForEach-Object {
-        & (Join-Path $PSScriptRoot "host-control.ps1") -Action close -ProcessId $_ | Out-Null
-    }
-
-dotnet build $hostProject -t:Deploy | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "ホストの配置に失敗した(終了コード $LASTEXITCODE)。" }
+& (Join-Path $PSScriptRoot "deploy-host.ps1") | Out-Null
 
 dotnet build $bridgeProject | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "ブリッジのビルドに失敗した(終了コード $LASTEXITCODE)。" }

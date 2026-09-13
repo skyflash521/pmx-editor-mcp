@@ -4,9 +4,14 @@
 組み立てが成り立つことは[検証手順](verification.md)の常設の検査が持つ。**ここが持つのは、
 そのどちらでも表せない決めごとだけ**とする。
 
+## 発行は発行のスクリプトを通す
+
+ブリッジの発行の指定は [publish-bridge.ps1](../../scripts/publish-bridge.ps1) だけが持つ。
+`dotnet publish` を直に打つと、配布するものとは別の成果物を渡すことになる。
+
 ## 版は配布のたびに手で上げる
 
-版の正本は [Directory.Build.props](../../Directory.Build.props) の `Version` で、ホストとブリッジの
+版は [Directory.Build.props](../../Directory.Build.props) の `Version` が定め、ホストとブリッジの
 成果物も、配布するパッケージの名前もこの値を共有する。
 
 - **自動で採番しない。** 何が変わったときに上げるかは、変えた側にしか決められない。

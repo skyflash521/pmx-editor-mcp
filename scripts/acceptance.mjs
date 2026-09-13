@@ -12,8 +12,13 @@ import process from "node:process";
 import url from "node:url";
 import { McpClient } from "./mcp-client.mjs";
 
-/** 1件の応答を待つ上限。操作役を起こすのにも同じ上限を使う。 */
-const RESPONSE_TIMEOUT_MS = 130000;
+/**
+ * 操作役と前置を待つ上限。操作役は1回の呼び出しの中で待ちを最大3つ重ねる(押す・待受が
+ * 消える・状態区分が変わる)ので、その1つあたりの上限の3倍を上回る値を採る。ここが先に
+ * 切れると、操作役が自分の上限で諦める前に外から打ち切ることになり、何が起きたのかが
+ * 分からなくなる。
+ */
+const CONTROL_TIMEOUT_MS = 180000;
 
 /** 待受のパイプ名の付け方。ホスト側の実装が定める。 */
 const PIPE_PREFIX = "pmx-editor-mcp-";
@@ -111,7 +116,7 @@ function invokeScript(script, args, timeoutMs) {
  * 知るところではなく、最後の行へ置いた組だけを読む。
  */
 function prepare(setup, setupArgs) {
-    const done = invokeScript(setup, ["-Action", "prepare", ...setupArgs], RESPONSE_TIMEOUT_MS);
+    const done = invokeScript(setup, ["-Action", "prepare", ...setupArgs], CONTROL_TIMEOUT_MS);
     if (done.written === null) {
         return { server: null, unavailable: done.unavailable };
     }
@@ -476,7 +481,7 @@ function takeFromResponse(step, response) {
  * 持たないが、実行ファイルは掴んだまま残るので、閉じ残すと次の配置が失敗する。
  */
 function listEditors(control) {
-    const done = invokeScript(control, ["-Action", "editors"], RESPONSE_TIMEOUT_MS);
+    const done = invokeScript(control, ["-Action", "editors"], CONTROL_TIMEOUT_MS);
     if (done.written === null) {
         throw new Error(done.unavailable);
     }
@@ -493,7 +498,7 @@ function operate(step, remembered, control) {
             const done = invokeScript(
                 control,
                 ["-Action", "close", "-ProcessId", String(editor)],
-                RESPONSE_TIMEOUT_MS);
+                CONTROL_TIMEOUT_MS);
             if (done.written === null) {
                 throw new Error(done.unavailable);
             }
@@ -514,7 +519,7 @@ function operate(step, remembered, control) {
         args.push("-Path", path.join(os.tmpdir(), "pmx-editor-mcp-acceptance-view.png"));
     }
 
-    const done = invokeScript(control, args, RESPONSE_TIMEOUT_MS);
+    const done = invokeScript(control, args, CONTROL_TIMEOUT_MS);
     if (done.written === null) {
         throw new Error(done.unavailable);
     }

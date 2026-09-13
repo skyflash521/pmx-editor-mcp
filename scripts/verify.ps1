@@ -10,6 +10,7 @@ $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot 'editor-dir.ps1')
 . (Join-Path $PSScriptRoot 'acceptance-stub-shared.ps1')
+. (Join-Path $PSScriptRoot 'checks.ps1')
 
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
@@ -34,48 +35,6 @@ $procedure = 'docs/conventions/verification.md'
 
 $baseline = [System.IO.Path]::GetTempFileName()
 $excluded = [System.IO.Path]::GetTempFileName()
-
-function Invoke-Check {
-    param([string]$Name, [scriptblock]$Body)
-
-    $global:LASTEXITCODE = 0
-    try {
-        $log = & $Body 2>&1
-        $code = $LASTEXITCODE
-    } catch {
-        $log = $_
-        $code = 1
-    }
-
-    if ($code -eq 0) {
-        Write-Host "OK   $Name"
-        return $null
-    }
-
-    Write-Host "NG   $Name (終了コード $code)"
-    # 誤りの記録をパイプへ流すと、停止の設定の下では書き出す側で終了エラーになる。文字列にして出す。
-    foreach ($line in @($log)) { Write-Host ('     ' + [string]$line) }
-
-    return $Name
-}
-
-function Get-ListedChecks {
-    <#
-        .SYNOPSIS
-        常設の検査の節に並ぶ検査の名前。
-    #>
-    $lines = Get-Content $procedure
-    $from = [array]::IndexOf($lines, '## 常設の検査')
-    if ($from -lt 0) { throw "$procedure に常設の検査の節が無い。" }
-    $rest = $lines[($from + 1)..($lines.Count - 1)]
-    $to = ($rest | Select-String -Pattern '^## ' | Select-Object -First 1).LineNumber
-    if ($to) { $rest = $rest[0..($to - 2)] }
-
-    $rest |
-        Select-String -Pattern '^\| ([^|]+?) \| ' |
-        ForEach-Object { $_.Matches[0].Groups[1].Value } |
-        Where-Object { $_ -ne '検査' }
-}
 
 function Invoke-AcceptanceRunner {
     <#
@@ -238,8 +197,8 @@ function Test-PackageContents {
 
         if (-not $broke) { throw "版が合わなくても落ちない。" }
 
-        # 版を固定値で持つ実装は、正本を変えても追随しない。組み立てる側にその綴りが1つも
-        # 現れないことで見る——現れないなら、名前も照合も正本を読んで決めている。
+        # 版を固定値で持つ実装は、Directory.Build.props を変えても追随しない。組み立てる側に
+        # その綴りが1つも現れないことで見る——現れないなら、名前も照合もそこを読んで決めている。
         $literal = @(Get-ChildItem scripts/package*.ps1 |
             Select-String -Pattern $version -SimpleMatch)
         if ($literal.Count -ne 0) {
@@ -267,7 +226,15 @@ try {
     }
     $checks['スクリプト構文'] = @{
         Needs = $noArtifact
-        Body = { node --check scripts/e2e-check.mjs }
+        Body = {
+            $bad = @()
+            foreach ($file in Get-ChildItem scripts/*.mjs) {
+                $said = node --check $file.FullName 2>&1
+                if ($LASTEXITCODE -ne 0) { $bad += ($file.Name + ': ' + (@($said) -join '; ')) }
+            }
+            $global:LASTEXITCODE = 0
+            if ($bad) { throw ($bad -join "`n") }
+        }
     }
     $checks['スクリプト構文(PowerShell)'] = @{
         Needs = $noArtifact
@@ -309,7 +276,7 @@ try {
         Needs = $buildOutput
         Body = { dotnet test PmxEditorMcp.sln }
     }
-    $checks['台帳と正本の照合'] = @{
+    $checks['台帳とSDKの照合'] = @{
         Needs = $exclusionList
         Body = { & $dump ledger-coverage $editorDir $ledger $excluded $outOfScope }
     }
@@ -341,7 +308,7 @@ try {
         Needs = $exclusionList
         Body = { & $dump map-coverage $editorDir $ledger $excluded $roles $toolMap }
     }
-    $checks['スキーマ正本の照合'] = @{
+    $checks['スキーマ定義の照合'] = @{
         Needs = $buildOutput
         Body = { & $dump tool-schemas $contract $toolMap $toolSchemas }
     }
@@ -423,15 +390,7 @@ try {
         }
     }
 
-    $listed = @(Get-ListedChecks)
-    $missing = @($checks.Keys | Where-Object { $listed -notcontains $_ })
-    $extra = @($listed | Where-Object { $checks.Keys -notcontains $_ })
-    if ($missing.Count -gt 0 -or $extra.Count -gt 0) {
-        throw ("$procedure の一覧とこのスクリプトの検査がずれている。手順書に無い: " +
-            (($missing -join '・'), '(無し)')[$missing.Count -eq 0] +
-            ' / このスクリプトに無い: ' +
-            (($extra -join '・'), '(無し)')[$extra.Count -eq 0])
-    }
+    Assert-ListedChecks -Path $procedure -Section '## 常設の検査' -Names @($checks.Keys)
 
     $failed = @()
     $skipped = @()
@@ -456,17 +415,4 @@ try {
     Remove-Item $baseline, $excluded -ErrorAction SilentlyContinue
 }
 
-Write-Host ''
-if ($skipped.Count -gt 0) {
-    Write-Host ('走らせていない: ' + ($skipped -join '・'))
-}
-
-if ($failed.Count -gt 0) {
-    Write-Host ('不合格: ' + ($failed -join '・'))
-}
-
-if ($failed.Count -gt 0 -or $skipped.Count -gt 0) {
-    exit 1
-}
-
-Write-Host 'すべて合格'
+exit (Write-CheckSummary -Failed $failed -Skipped $skipped)

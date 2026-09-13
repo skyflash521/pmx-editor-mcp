@@ -74,7 +74,7 @@
     </ItemGroup>
   </Target>
 
-  <!-- ツールの名前から呼ぶ行への結び付きも、同じ正本からビルドのたびに作り直して組み込む。 -->
+  <!-- ツールの名前から呼ぶ行への結び付きも、同じ定義からビルドのたびに作り直して組み込む。 -->
   <Target Name="GenerateToolBindingSource"
           BeforeTargets="BeforeCompile"
           DependsOnTargets="EnsurePmxEditorDir;BuildRelayGenerator">
