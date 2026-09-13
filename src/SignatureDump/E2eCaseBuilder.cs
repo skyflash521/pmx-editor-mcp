@@ -146,6 +146,9 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
+            ISet<string> reading = new HashSet<string>(
+                readers == null ? new string[0] : readers.Values.ToArray(),
+                StringComparer.Ordinal);
             List<E2eCase> cases = new List<E2eCase>(SetupCases(schemas, factories));
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
@@ -159,7 +162,7 @@ namespace PmxEditorMcp.SignatureDump
                     sdkShapes,
                     Sampled(sdkTypes, samples)));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
-                cases.AddRange(ReadingCases(row, schema, connectionPaths));
+                cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
                     row, schema, schemas, connectionPaths, sdkTypes, positioned, dangerous,
                     readers, unkept));
@@ -567,6 +570,17 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 対象を選ばずに呼べる呼び分け。要る組をどれも持たないものがこれに当たる——ハンドルで
+        /// 対象を指す呼び分けは、何を渡すかがここでは決まらない。
+        /// </summary>
+        private static SchemaBranch Unchosen(ToolSchema schema)
+        {
+            return schema.Branches.FirstOrDefault(
+                b => !b.Inputs.Any(i => i.Required == true && !i.Injected)
+                    && !b.Choices.Any(c => c.Required));
+        }
+
+        /// <summary>
         /// 数えて並べる呼び分け。件数と項目の並びを返す形を持ち、値を書き込む組を受け取らない
         /// ものがこれに当たる。
         /// </summary>
@@ -605,23 +619,27 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 並べたものを全件そのまま読む検査。項目を選ばずに呼ぶので、公開した項目のどれか1つでも
-        /// 値として写せなければ落ちる。
+        /// その型の項目を集めて読むツールを、項目を選ばずに呼ぶ検査。公開した項目のどれか1つでも
+        /// 値として写せなければ落ちる。要素を並べる型は全件を、自分1つを指す型はそれ自身を読む。
         /// </summary>
         private static IEnumerable<E2eCase> ReadingCases(
             ToolMapRow row,
             ToolSchema schema,
-            IDictionary<string, string> connectionPaths)
+            IDictionary<string, string> connectionPaths,
+            ISet<string> reading)
         {
             SchemaBranch listing = Listing(schema);
-            if (listing == null)
+            if (!reading.Contains(schema.Tool)
+                || (listing == null && Unchosen(schema) == null))
             {
                 yield break;
             }
 
             IDictionary<string, object> arguments =
                 new Dictionary<string, object>(StringComparer.Ordinal);
-            foreach (SchemaItem whole in WholeInputs(listing))
+            foreach (SchemaItem whole in listing == null
+                ? new SchemaItem[0]
+                : WholeInputs(listing).ToArray())
             {
                 arguments[whole.Name] = true;
             }
@@ -632,7 +650,9 @@ namespace PmxEditorMcp.SignatureDump
                 row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind),
                 row == null ? string.Empty : ConnectionPath(rowKey, connectionPaths),
                 schema.Tool,
-                "並べたものを項目を選ばずに読めること",
+                listing == null
+                    ? "その型の項目を選ばずに読めること"
+                    : "並べたものを項目を選ばずに読めること",
                 arguments,
                 E2eExpectation.Success,
                 null);
