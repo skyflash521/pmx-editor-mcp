@@ -123,24 +123,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             E2eCase one = Assert.Single(
                 Build(Tool("model_get_name", new SchemaItem[0]), rowKey: RowKey),
-                c => c.Expectation == E2eExpectation.Success);
+                c => c.Expectation == E2eExpectation.Called);
 
             Assert.Equal("model_get_name", one.Tool);
             Assert.Equal(RowKey, one.RowKey);
-            Assert.Empty(one.Arguments);
-        }
-
-        [Fact]
-        public void ARowThatPromptsIsCalledAndMustTellThatThePromptCameUp()
-        {
-            E2eCase one = Assert.Single(
-                Build(
-                    Tool("model_get_name", new SchemaItem[0]),
-                    rowKey: RowKey,
-                    prompting: new HashSet<string>(new[] { RowKey }, StringComparer.Ordinal)),
-                c => c.Expectation == E2eExpectation.Refusal);
-
-            Assert.Equal("TOOL_NOT_APPLICABLE", one.Code);
             Assert.Empty(one.Arguments);
         }
 
@@ -291,8 +277,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static IList<E2eCase> Build(
             ToolSchema schema,
             string rowKey = null,
-            bool dangerous = false,
-            ISet<string> prompting = null)
+            bool dangerous = false)
         {
             Dictionary<string, string> named = new Dictionary<string, string>(StringComparer.Ordinal);
             if (rowKey != null)
@@ -315,8 +300,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 null,
                 null,
-                null,
-                prompting);
+                null);
         }
 
         /// <summary>SDKに由来する項目の綴り。題材では引く先を持たない。</summary>

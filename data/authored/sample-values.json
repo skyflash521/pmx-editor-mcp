@@ -418,5 +418,719 @@
       "default": "Left",
       "second": "Right"
     }
+  ],
+  "rows": [
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendPMDFile(System.String)",
+      "arguments": {
+        "path": "在りもしない位置.pmd"
+      },
+      "basis": "読み込めるモデルのファイルを検査の側で用意できないので、在りもしない位置を渡す。エディタは読み込みの失敗を人へ尋ねるので、その表示を知らせることまでを確かめる。"
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendXFile(System.String)",
+      "arguments": {
+        "path": "在りもしない位置.x"
+      },
+      "basis": "読み込める形状のファイルを検査の側で用意できないので、在りもしない位置を渡す。エディタは読み込みの失敗を人へ尋ねるので、その表示を知らせることまでを確かめる。"
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.ImportXFile(System.String)",
+      "arguments": {
+        "path": "在りもしない位置.x"
+      },
+      "basis": "読み込める形状のファイルを検査の側で用意できないので、在りもしない位置を渡す。エディタは読み込みの失敗を人へ尋ねるので、その表示を知らせることまでを確かめる。"
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMDFile(System.String)",
+      "arguments": {
+        "path": "在りもしない位置.pmd"
+      },
+      "basis": "読み込めるモデルのファイルを検査の側で用意できないので、在りもしない位置を渡す。エディタは読み込みの失敗を人へ尋ねるので、その表示を知らせることまでを確かめる。"
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMXFile(System.String)",
+      "arguments": {
+        "path": "在りもしない位置.pmx"
+      },
+      "basis": "読み込めるモデルのファイルを検査の側で用意できないので、在りもしない位置を渡して、その位置が無いことを知らせる側で確かめる。",
+      "refused": "TOOL_OPERATION_FAILED",
+      "says": "見つかりませんでした"
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SetSelectedMaterialIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "一覧に並ぶ先頭の材質を選ぶ。段取りが材質を1つ入れているので、位置0は必ず在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.UpdateList(PEPlugin.Pmd.UpdateObject)",
+      "arguments": {
+        "page": "Vertex"
+      },
+      "basis": "頂点の一覧を選んで更新させる。何も選ばない値では、更新する先が無いまま返る。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.GetShareObject(System.String,System.Boolean)",
+      "arguments": {
+        "key": "検査",
+        "clear": false
+      },
+      "basis": "受け渡し用の名前を1つ決めて引く。消さずに引くので、ほかの検査が使う値を落とさない。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.RemoveShareObject(System.String)",
+      "arguments": {
+        "key": "検査"
+      },
+      "basis": "受け渡し用の名前を1つ決めて外す。"
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.RunCPlugin(System.Int32)",
+      "arguments": {
+        "n": 2147483647
+      },
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
+      "refused": "TOOL_OPERATION_FAILED",
+      "says": "指定のプラグインは存在しません"
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.RunPlugin(System.Int32)",
+      "arguments": {
+        "n": 2147483647
+      },
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
+      "refused": "TOOL_OPERATION_FAILED",
+      "says": "指定のプラグインは存在しません"
+    },
+    {
+      "signatureKey": "PEPlugin.IPESystemConnector.SetShareObject(System.String,System.Object)",
+      "arguments": {
+        "key": "検査",
+        "obj": "値"
+      },
+      "basis": "受け渡し用の名前へ文字列を1つ置く。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.FromFile(System.String)",
+      "arguments": {
+        "path": "在りもしない位置.pmx"
+      },
+      "basis": "読み込めるモデルのファイルを検査の側で用意できないので、在りもしない位置を渡して、その位置が無いことを知らせる側で確かめる。",
+      "refused": "TOOL_OPERATION_FAILED",
+      "says": "見つかりませんでした"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddBox(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "width": 1,
+        "height": 1,
+        "depth": 1
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。辺の長さは正の値でなければ面を持たない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddCylinder(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "r1": 1,
+        "r2": 1,
+        "length": 2,
+        "slices": 8,
+        "stacks": 2
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddPlane(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,System.Int32,System.Boolean,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "width": 1,
+        "height": 1,
+        "uc": 1,
+        "vc": 1,
+        "dir": 1,
+        "uv": true
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は1以上でなければ面を張れない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddSphere(System.Int32,PEPlugin.SDX.V3,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "r": 1,
+        "slices": 8,
+        "stacks": 8
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddText(System.Int32,PEPlugin.SDX.V3,System.Drawing.Font,System.String,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "font": {
+          "family": "MS Gothic",
+          "size": 9,
+          "style": "Regular"
+        },
+        "text": "文字",
+        "d": 1,
+        "ex": 0
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。字が無いと面を1つも作らない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddTorus(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "r1": 2,
+        "r2": 1,
+        "sides": 8,
+        "rings": 8
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetCameraView(PEPlugin.Pmd.IPEVector3,PEPlugin.Pmd.IPEVector3,PEPlugin.Pmd.IPEVector3)",
+      "arguments": {
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "position": [
+          0,
+          0,
+          10
+        ],
+        "upVector": [
+          0,
+          1,
+          0
+        ]
+      },
+      "basis": "原点を正面から見る向きを渡す。上を指す向きは長さのある値でなければ向きが決まらない。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedBodyIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedBoneIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedFaceIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedJointIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedVertexIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetVertexIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModelSize(System.Single)",
+      "arguments": {
+        "scale": 1
+      },
+      "basis": "等倍を渡す。0を渡すと大きさが失われ、元へ戻せない。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModelSize(System.Single,System.Boolean)",
+      "arguments": {
+        "scale": 1,
+        "edge": true
+      },
+      "basis": "等倍と、縁も合わせる指定を渡す。0を渡すと大きさが失われ、元へ戻せない。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Material(System.Int32)",
+      "arguments": {
+        "index": 0
+      },
+      "basis": "段取りが入れた先頭の材質を指す。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedBoneIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedExpressionIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedMaterialIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpd(System.String)",
+      "arguments": {
+        "path": "在りもしない位置.vpd"
+      },
+      "basis": "読み込めるモデルのファイルを検査の側で用意できないので、在りもしない位置を渡して、その位置が無いことを知らせる側で確かめる。",
+      "refused": "TOOL_OPERATION_FAILED",
+      "says": "見つかりませんでした"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpdFromText(System.String)",
+      "arguments": {
+        "s": "Vocaloid Pose Data file"
+      },
+      "basis": "読めるポーズの本文を検査の側で用意できないので、ポーズを1つも持たない見出しだけを渡して、読み解けないことを知らせる側で確かめる。",
+      "refused": "TOOL_OPERATION_FAILED",
+      "says": "オブジェクト参照がオブジェクト インスタンスに設定されていません"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexEditConnector.SetVertexMemory(System.Int32,System.Int32[])",
+      "arguments": {
+        "num": 0,
+        "indices": [
+          0
+        ]
+      },
+      "basis": "先頭の記憶域へ、段取りが入れた先頭の頂点を覚えさせる。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEVertexGuideConnector.SetVertexIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の頂点を指す。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.LoadViewSetting(System.String)",
+      "arguments": {
+        "path": "在りもしない位置.ini"
+      },
+      "basis": "読み込める設定のファイルを検査の側で用意できないので、在りもしない位置を渡す。エディタは位置が無くても設定を変えずに返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.SetBodyVisibles(System.Boolean[])",
+      "arguments": {
+        "v": [
+          true
+        ]
+      },
+      "basis": "先頭の1件を見えるようにする。空の並びでは、見え方が1件も変わらない。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.SetJointVisibles(System.Boolean[])",
+      "arguments": {
+        "v": [
+          true
+        ]
+      },
+      "basis": "先頭の1件を見えるようにする。空の並びでは、見え方が1件も変わらない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBodyIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBoneIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedFaceIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedJointIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedVertexIndices(System.Int32[])",
+      "arguments": {
+        "indices": [
+          0
+        ]
+      },
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddBox(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "width": 1,
+        "height": 1,
+        "depth": 1
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。辺の長さは正の値でなければ面を持たない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddCylinder(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "r1": 1,
+        "r2": 1,
+        "length": 2,
+        "slices": 8,
+        "stacks": 2
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddPlane(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,System.Int32,System.Boolean,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "width": 1,
+        "height": 1,
+        "uc": 1,
+        "vc": 1,
+        "dir": 1,
+        "uv": true
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は1以上でなければ面を張れない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddSphere(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "r": 1,
+        "slices": 8,
+        "stacks": 8
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddText(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Drawing.Font,System.String,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "font": {
+          "family": "MS Gothic",
+          "size": 9,
+          "style": "Regular"
+        },
+        "text": "文字",
+        "d": 1,
+        "ex": 0
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。字が無いと面を1つも作らない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddTorus(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
+      "arguments": {
+        "material": 0,
+        "pos": [
+          0,
+          0,
+          0
+        ],
+        "bone": 0,
+        "r1": 2,
+        "r2": 1,
+        "sides": 8,
+        "rings": 8
+      },
+      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.GetShareBuffer(System.String,System.Boolean)",
+      "arguments": {
+        "key": "検査",
+        "clear": false
+      },
+      "basis": "受け渡し用の名前を1つ決めて引く。消さずに引く。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.GetShareText(System.String,System.Boolean)",
+      "arguments": {
+        "key": "検査",
+        "clear": false
+      },
+      "basis": "受け渡し用の名前を1つ決めて引く。消さずに引く。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.GetShareValue(System.String,System.Boolean)",
+      "arguments": {
+        "key": "検査",
+        "clear": false
+      },
+      "basis": "受け渡し用の名前を1つ決めて引く。消さずに引く。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.RemoveShareData(System.String)",
+      "arguments": {
+        "key": "検査"
+      },
+      "basis": "受け渡し用の名前を1つ決めて外す。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.RunCPlugin(System.Int32)",
+      "arguments": {
+        "n": 2147483647
+      },
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡す。エディタは番号が無くても何も走らせずに返す。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.RunPEPlugin(System.Int32)",
+      "arguments": {
+        "n": 2147483647
+      },
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡す。エディタは番号が無くても何も走らせずに返す。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.SetShareData(System.String,System.Byte[])",
+      "arguments": {
+        "dataShape": "buffer",
+        "key": "検査",
+        "data": [
+          1,
+          2
+        ]
+      },
+      "basis": "受け渡し用の名前へ、空でない並びを置く。空の並びでは中身が渡らない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.SetShareData(System.String,System.Int32)",
+      "arguments": {
+        "dataShape": "value",
+        "key": "検査",
+        "data": 1
+      },
+      "basis": "受け渡し用の名前へ数を1つ置く。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.SetShareData(System.String,System.String)",
+      "arguments": {
+        "dataShape": "text",
+        "key": "検査",
+        "data": "値"
+      },
+      "basis": "受け渡し用の名前へ文字列を1つ置く。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.SetBodyVisibles(System.Boolean[])",
+      "arguments": {
+        "v": [
+          true
+        ]
+      },
+      "basis": "先頭の1件を見えるようにする。空の並びでは、見え方が1件も変わらない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.SetCameraParameter(PEPlugin.SDX.V3,PEPlugin.SDX.V3,PEPlugin.SDX.V3)",
+      "arguments": {
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "pos": [
+          0,
+          0,
+          10
+        ],
+        "up": [
+          0,
+          1,
+          0
+        ]
+      },
+      "basis": "原点を正面から見る向きを渡す。上を指す向きは長さのある値でなければ向きが決まらない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.SetJointVisibles(System.Boolean[])",
+      "arguments": {
+        "v": [
+          true
+        ]
+      },
+      "basis": "先頭の1件を見えるようにする。空の並びでは、見え方が1件も変わらない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXViewControl.SetVAxis(PEPlugin.SDX.V3,PEPlugin.SDX.V3,PEPlugin.SDX.V3)",
+      "arguments": {
+        "x": [
+          1,
+          0,
+          0
+        ],
+        "y": [
+          0,
+          1,
+          0
+        ],
+        "z": [
+          0,
+          0,
+          1
+        ]
+      },
+      "basis": "互いに直交する3つの向きを渡す。同じ向きを重ねると軸が決まらない。"
+    },
+    {
+      "signatureKey": "PXCPlugin.PXCBridge.RegisterUIModel(PXCPlugin.IPXCPluginConnector,PEPlugin.Pmx.IPXPmx,System.String,PEPlugin.SDX.M,System.Boolean,System.Boolean)",
+      "arguments": {
+        "name": "検査",
+        "m": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "visible": true,
+        "transform": false
+      },
+      "basis": "描くものを持たない模型を1つ登録しようとする。中身のある模型を検査の側で用意できないので、登録できないことを知らせる側で確かめる。",
+      "refused": "TOOL_OPERATION_FAILED",
+      "says": "オブジェクト参照がオブジェクト インスタンスに設定されていません"
+    }
   ]
 }

@@ -32,6 +32,12 @@ namespace PmxEditorMcp
         /// </summary>
         public const string NotStarted = "TOOL_NOT_STARTED";
 
+        /// <summary>
+        /// 人の応答を待つ表示が出ていて進められないことを断る綴り。始めたかどうかは表示へ答えた
+        /// あとにしか決まらないので、始めていないことがはっきりしている断りとは分ける。
+        /// </summary>
+        public const string PromptShown = "TOOL_PROMPT_SHOWN";
+
         /// <summary>実行に失敗した。</summary>
         public const string OperationFailed = "TOOL_OPERATION_FAILED";
 
@@ -61,7 +67,7 @@ namespace PmxEditorMcp
             new[]
             {
                 IndexOutOfRange, InvalidArgument, InvalidHandle, ConfirmRequired, NotApplicable,
-                NotStarted, OperationFailed, ResponseTooLarge, RequestTooLarge,
+                NotStarted, PromptShown, OperationFailed, ResponseTooLarge, RequestTooLarge,
             });
 
         /// <summary>ツールが返しうるエラーコード。閉じた集合とする。</summary>

@@ -5,7 +5,8 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力対応表の行が、実機へ投げる検査のどれかに覆われることを確かめる。行は自分のツールで
+    /// 能力対応表の行が、実機へ投げる検査のうち振る舞いを確かめるもののどれかに覆われることを
+    /// 確かめる。行は自分のツールで
     /// 覆われるか、値を埋め込む先のツールで覆われるか、イベントを取り出すツールで覆われるか、
     /// 受け手へ至る道としてその先の型のツールで覆われる。共通契約が受け持つ行だけは、ツールに
     /// ならずホストの流れの中で呼ばれるので、割当をもって覆われたものとする。
@@ -63,8 +64,21 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(cases));
             }
 
+            // 覆いに数えるのは、呼び先まで届いたことが結末から分かる検査だけである。呼び先が在る
+            // ことしか見ていない検査と、入口で断られることを見る検査は、行の振る舞いを一度も
+            // 確かめないまま通るので数えない。
             HashSet<string> examined = new HashSet<string>(
-                cases.Select(c => c.Tool), StringComparer.Ordinal);
+                cases.Where(c => Reaching(c.Expectation)).Select(c => c.Tool),
+                StringComparer.Ordinal);
+
+            // 同じ名前のツールを複数の行が持つことがあり、そのときツールの名前だけでは、検査が
+            // どの行を通ったのかを言えない。自分の名前のツールを持つ行は、その行を名指しした
+            // 検査で数える。
+            HashSet<string> named = new HashSet<string>(
+                cases
+                    .Where(c => Reaching(c.Expectation) && !string.IsNullOrEmpty(c.RowKey))
+                    .Select(c => c.RowKey),
+                StringComparer.Ordinal);
             HashSet<string> assigned = new HashSet<string>(
                 assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal);
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
@@ -74,7 +88,7 @@ namespace PmxEditorMcp.SignatureDump
                 .Where(r => !assigned.Contains(r.SignatureKey))
                 .Where(r => !Covered(
                     r, signatures, toolsByRow, composedTools, byType, byOwner, traversed,
-                    examined))
+                    examined, named))
                 .Select(r => r.SignatureKey)
                 .OrderBy(k => k, StringComparer.Ordinal)
                 .ToArray();
@@ -87,6 +101,17 @@ namespace PmxEditorMcp.SignatureDump
                 "検査に覆われない行がある(" + uncovered.Length + "件): "
                     + string.Join("・", uncovered.Take(20))
                     + (uncovered.Length > 20 ? "・ほか" : string.Empty));
+        }
+
+        /// <summary>
+        /// その結末が、行の振る舞いを確かめたことを示すか。どんな応答でも通ってしまう結末だけが
+        /// 偽である——呼び先が在ることしか見ない検査は、引数の不足で断られた応答も通すので、
+        /// 何も確かめないまま覆った扱いになる。決まった断り方を求める検査は、その行のツールが
+        /// 何をどう断るかを確かめているので覆いに数える。
+        /// </summary>
+        private static bool Reaching(E2eExpectation expectation)
+        {
+            return expectation != E2eExpectation.Dispatched;
         }
 
         /// <summary>型の名前から、その型が宣言する行のツールの名前へ。</summary>
@@ -126,8 +151,21 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, ISet<string>> byOwner,
             ISet<string> traversed,
-            ISet<string> examined)
+            ISet<string> examined,
+            ISet<string> named)
         {
+            string dispatched;
+            if (toolsByRow.TryGetValue(row.SignatureKey, out dispatched))
+            {
+                // 自分の名前のツールを持つ行は、その行を名指しした検査で数える。多重定義が同じ
+                // 名前を共有する行だけは名指しできないので、その名前の検査で数える——どちらの
+                // 呼び分けを通ったかは名前から言えないが、ツールは実際に呼ばれている。
+                return toolsByRow.Count(t => string.Equals(
+                        t.Value, dispatched, StringComparison.Ordinal)) == 1
+                    ? named.Contains(row.SignatureKey)
+                    : examined.Contains(dispatched);
+            }
+
             return Covering(row, signatures, toolsByRow, composedTools, byType, byOwner, traversed)
                 .Any(examined.Contains);
         }
@@ -142,12 +180,6 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ISet<string>> byOwner,
             ISet<string> traversed)
         {
-            string dispatched;
-            if (toolsByRow.TryGetValue(row.SignatureKey, out dispatched))
-            {
-                yield return dispatched;
-            }
-
             foreach (string embedded in row.EmbeddedIn ?? new string[0])
             {
                 yield return embedded;

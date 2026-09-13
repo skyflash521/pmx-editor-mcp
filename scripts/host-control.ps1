@@ -257,6 +257,44 @@ public static class HostControlWindow {
   }
 
   /// <summary>題を問わず、種類だけで絞って返す。</summary>
+  // その持ち主の窓のうち、中に与えた言葉を持つ押しボタンが在るものを返す。例外を知らせる表示は
+  // 窓の中に現れるので、デスクトップ直下のクラスでは見つからない。
+  public static IntPtr[] FindByButton(int owner, string word) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      if (Button(window, word) != IntPtr.Zero) { found.Add(window); }
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
+  // その窓の中の、与えた言葉を持つ押しボタン。無ければゼロ。
+  public static IntPtr Button(IntPtr window, string word) {
+    IntPtr wanted = IntPtr.Zero;
+    EnumChildWindows(window, (child, state) => {
+      var name = new StringBuilder(256);
+      GetClassName(child, name, name.Capacity);
+      if (!name.ToString().StartsWith("Button", StringComparison.Ordinal)
+          && name.ToString().IndexOf("BUTTON", StringComparison.OrdinalIgnoreCase) < 0) {
+        return true;
+      }
+
+      var text = new StringBuilder(256);
+      GetWindowText(child, text, text.Capacity);
+      if (text.ToString().IndexOf(word, StringComparison.Ordinal) >= 0
+          && IsWindowVisible(child) && IsWindowEnabled(child)) {
+        wanted = child;
+        return false;
+      }
+      return true;
+    }, IntPtr.Zero);
+    return wanted;
+  }
+
   public static IntPtr[] FindByClass(int owner, string className) {
     var found = new System.Collections.Generic.List<IntPtr>();
     EnumWindows((window, state) => {
@@ -340,6 +378,18 @@ $ViewTitles = @{ pmx = "PmxView"; transform = "VMDView" }
 
 # 素性を読めなかった表示の言い方。
 $UnreadableDialog = "読めない表示"
+
+<#
+    .SYNOPSIS
+    投げられた例外を知らせる表示で、そのまま続けるほうの押しボタンが持つ言葉。
+#>
+$ContinueWord = "続行"
+
+<#
+    .SYNOPSIS
+    押しボタンが捌き終えるのを待つ上限。止まっている窓で待ち続けないための値。
+#>
+$ThrownNoticeLimitMs = 2000
 
 # 表示の文言は環境で変わるので、押しボタンは番号で選ぶ(IDCANCEL・IDNO・IDOK)。
 $IdsThatAvoidTheAffirmative = @(2, 7, 1)
@@ -500,6 +550,26 @@ function Get-EditorDialogs {
     param([int]$OwnerProcessId)
 
     @([HostControlWindow]::FindByClass($OwnerProcessId, $DialogClassName))
+}
+
+function Clear-ThrownNotice {
+    <#
+        .SYNOPSIS
+        投げられた例外を知らせる表示を閉じる。この表示は窓の中に現れるので、応答待ちの表示を
+        探す道では見つからない。閉じたものの数を返す。続けると選ぶのは、終わらせると編集中の
+        ものが失われるためである。
+    #>
+    param([int]$OwnerProcessId)
+
+    $closed = 0
+    foreach ($handle in [HostControlWindow]::FindByButton($OwnerProcessId, $ContinueWord)) {
+        $button = [HostControlWindow]::Button([IntPtr]$handle, $ContinueWord)
+        if ($button -eq [IntPtr]::Zero) { continue }
+
+        if ([HostControlWindow]::ClickCenter($button, $ThrownNoticeLimitMs)) { $closed++ }
+    }
+
+    return $closed
 }
 
 function Close-MenuShadow {
@@ -1258,7 +1328,9 @@ switch ($Action) {
             throw ("応答できない表示が残っている: " + ($left -join " / "))
         }
 
-        Write-Output @($cleared.Answered).Count
+        $thrown = Clear-ThrownNotice -OwnerProcessId $ProcessId
+
+        Write-Output (@($cleared.Answered).Count + $thrown)
     }
     "status" {
         Assert-ProcessId

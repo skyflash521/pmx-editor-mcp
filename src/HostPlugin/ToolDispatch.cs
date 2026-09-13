@@ -4656,7 +4656,7 @@ namespace PmxEditorMcp
             }
 
             return ToolEnvelope.Failure(
-                invocation.DidStart ? ToolEnvelope.NotApplicable : ToolEnvelope.NotStarted,
+                invocation.DidStart ? ToolEnvelope.PromptShown : ToolEnvelope.NotStarted,
                 invocation.Unavailable);
         }
 

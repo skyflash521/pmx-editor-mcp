@@ -11,7 +11,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             SampleValueTable table = SampleValueJsonReader.Read(
                 "{\"types\":[{\"typeName\":\"System.Int32\",\"default\":1,\"second\":2}"
-                + ",{\"typeName\":\"System.String\",\"default\":\"a\",\"second\":\"b\"}]}");
+                + ",{\"typeName\":\"System.String\",\"default\":\"a\",\"second\":\"b\"}],\"rows\":[]}");
 
             Assert.Equal(2, table.Types.Count);
             Assert.Equal("System.Int32", table.Types[0].TypeName);
@@ -23,7 +23,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnEmptyTableIsRead()
         {
-            Assert.Empty(SampleValueJsonReader.Read("{\"types\":[]}").Types);
+            Assert.Empty(SampleValueJsonReader.Read("{\"types\":[],\"rows\":[]}").Types);
         }
 
         [Fact]
@@ -31,7 +31,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             SampleValueTable table = SampleValueJsonReader.Read(
                 "{\"types\":[{\"typeName\":\"PEPlugin.SDX.V3\",\"default\":[1,2,3]"
-                + ",\"second\":{\"x\":1}}]}");
+                + ",\"second\":{\"x\":1}}],\"rows\":[]}");
 
             Assert.Equal(new object[] { 1, 2, 3 }, Assert.IsType<object[]>(table.Types[0].First));
             Assert.IsType<Dictionary<string, object>>(table.Types[0].Second);
@@ -41,7 +41,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ANullSampleIsKept()
         {
             SampleValueTable table = SampleValueJsonReader.Read(
-                "{\"types\":[{\"typeName\":\"System.Object\",\"default\":null,\"second\":1}]}");
+                "{\"types\":[{\"typeName\":\"System.Object\",\"default\":null,\"second\":1}],\"rows\":[]}");
 
             Assert.Null(table.Types[0].First);
         }
@@ -49,13 +49,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData("{")]
         [InlineData("[]")]
-        [InlineData("{\"other\":[]}")]
-        [InlineData("{\"types\":{}}")]
-        [InlineData("{\"types\":[1]}")]
-        [InlineData("{\"types\":[{\"typeName\":\"T\",\"default\":1}]}")]
-        [InlineData("{\"types\":[{\"typeName\":\"T\",\"default\":1,\"second\":2,\"extra\":3}]}")]
-        [InlineData("{\"types\":[{\"typeName\":\"\",\"default\":1,\"second\":2}]}")]
-        [InlineData("{\"types\":[{\"typeName\":1,\"default\":1,\"second\":2}]}")]
+        [InlineData("{\"other\":[],\"rows\":[]}")]
+        [InlineData("{\"types\":{},\"rows\":[]}")]
+        [InlineData("{\"types\":[1],\"rows\":[]}")]
+        [InlineData("{\"types\":[{\"typeName\":\"T\",\"default\":1}],\"rows\":[]}")]
+        [InlineData("{\"types\":[{\"typeName\":\"T\",\"default\":1,\"second\":2,\"extra\":3}],\"rows\":[]}")]
+        [InlineData("{\"types\":[{\"typeName\":\"\",\"default\":1,\"second\":2}],\"rows\":[]}")]
+        [InlineData("{\"types\":[{\"typeName\":1,\"default\":1,\"second\":2}],\"rows\":[]}")]
         public void AShapeThatIsNotTheCanonStops(string json)
         {
             Assert.Throws<FormatException>(() => SampleValueJsonReader.Read(json));
@@ -68,7 +68,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => SampleValueJsonReader.Read(
                     "{\"types\":[{\"typeName\":\"System.String\",\"default\":\"a\""
                     + ",\"second\":\"b\"},{\"typeName\":\"System.Int32\",\"default\":1"
-                    + ",\"second\":2}]}"));
+                    + ",\"second\":2}],\"rows\":[]}"));
 
             Assert.Contains("序数の昇順", error.Message, StringComparison.Ordinal);
         }
@@ -78,7 +78,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             SampleValueRow row = Assert.Single(SampleValueJsonReader.Read(
                 "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2,\"file\":" +
-                "{\"kind\":\"image\",\"extension\":\".png\",\"purpose\":\"渡す。\"}}]}").Types);
+                "{\"kind\":\"image\",\"extension\":\".png\",\"purpose\":\"渡す。\"}}],\"rows\":[]}").Types);
 
             Assert.Equal("image", row.File.Kind);
             Assert.Equal(".png", row.File.Extension);
@@ -89,7 +89,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ARowWithoutTheFileMemberCarriesNone()
         {
             SampleValueRow row = Assert.Single(SampleValueJsonReader.Read(
-                "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2}]}").Types);
+                "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2}],\"rows\":[]}").Types);
 
             Assert.Null(row.File);
         }
@@ -99,7 +99,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Throws<FormatException>(() => SampleValueJsonReader.Read(
                 "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2,\"file\":" +
-                "{\"kind\":\"image\",\"extension\":\"png\",\"purpose\":\"渡す。\"}}]}"));
+                "{\"kind\":\"image\",\"extension\":\"png\",\"purpose\":\"渡す。\"}}],\"rows\":[]}"));
         }
 
         [Fact]
@@ -107,7 +107,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Throws<FormatException>(() => SampleValueJsonReader.Read(
                 "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2,\"file\":" +
-                "{\"kind\":\"image\"}}]}"));
+                "{\"kind\":\"image\"}}],\"rows\":[]}"));
         }
 
         [Fact]
@@ -117,7 +117,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "{\"types\":[{\"typeName\":\"A\",\"default\":1,\"second\":2,\"file\":" +
                 "{\"kind\":\"image\",\"extension\":\".png\",\"purpose\":\"渡す。\"}}," +
                 "{\"typeName\":\"B\",\"default\":1,\"second\":2,\"file\":" +
-                "{\"kind\":\"image\",\"extension\":\".bmp\",\"purpose\":\"渡す。\"}}]}"));
+                "{\"kind\":\"image\",\"extension\":\".bmp\",\"purpose\":\"渡す。\"}}],\"rows\":[]}"));
         }
 
         [Fact]

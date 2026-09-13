@@ -25,9 +25,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>範囲の外の位置を断る綴り。</summary>
         public const string IndexOutOfRange = "TOOL_INDEX_OUT_OF_RANGE";
 
-        /// <summary>その相手には当てはまらないことを断る綴り。</summary>
-        public const string NotApplicable = "TOOL_NOT_APPLICABLE";
-
         /// <summary>一覧が何件返すかを受け取る入力の名前。</summary>
         public const string LimitName = "limit";
 
@@ -103,7 +100,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> factories = null,
             IDictionary<string, string> readers = null,
             IDictionary<string, ISet<string>> unkept = null,
-            ISet<string> prompting = null)
+            ISet<string> handled = null,
+            ISet<string> picking = null)
         {
             if (map == null)
             {
@@ -153,19 +151,36 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> reading = new HashSet<string>(
                 readers == null ? new string[0] : readers.Values.ToArray(),
                 StringComparer.Ordinal);
+            IDictionary<string, IDictionary<string, object>> given =
+                Given(samples, toolsByRow, schemas);
+            IDictionary<string, SampleCallRow> refused = samples == null
+                ? new Dictionary<string, SampleCallRow>(StringComparer.Ordinal)
+                : samples.Calls
+                    .Where(c => c.Refused != null)
+                    .ToDictionary(c => c.SignatureKey, c => c, StringComparer.Ordinal);
             List<E2eCase> cases = new List<E2eCase>(SetupCases(schemas, factories));
 
             // 直に呼ぶと状態が動く行は、その動きが後の検査の見るものを変える——取り消しは段取りが
             // 作った要素を消し、再生の開始はビューを動かし続ける。順に並べる中では避けられないので、
             // 最後へ回して、あとに続く検査を持たせない。
             List<E2eCase> trailing = new List<E2eCase>();
+
+            // 選ばれている対象を相手にする呼び出しは、対象を選ぶ呼び出しより後でなければ、
+            // 選ぶものが無いことを尋ねる表示が出る。名前の順ではそれが先に来るので、最後へ回す。
+            List<E2eCase> picked = new List<E2eCase>();
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
                 ToolMapRow row;
                 byTool.TryGetValue(schema.Tool, out row);
-                List<E2eCase> held = row != null && row.EditKind != ToolMapEditKind.Read
-                    ? trailing
-                    : cases;
+                List<E2eCase> held = cases;
+                if (row != null && picking != null && picking.Contains(row.SignatureKey))
+                {
+                    held = picked;
+                }
+                else if (row != null && row.EditKind != ToolMapEditKind.Read)
+                {
+                    held = trailing;
+                }
                 held.AddRange(Cases(
                     row,
                     schema,
@@ -173,7 +188,9 @@ namespace PmxEditorMcp.SignatureDump
                     dangerous,
                     sdkShapes,
                     Sampled(sdkTypes, samples),
-                    prompting));
+                    given,
+                    refused,
+                    Handles(schema, sdkTypes, handled)));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -182,6 +199,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             cases.AddRange(trailing);
+            cases.AddRange(picked);
 
             return cases;
         }
@@ -330,7 +348,9 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> dangerous,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
-            ISet<string> prompting)
+            IDictionary<string, IDictionary<string, object>> given,
+            IDictionary<string, SampleCallRow> refused,
+            IEnumerable<SchemaItem> handed)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -344,9 +364,8 @@ namespace PmxEditorMcp.SignatureDump
             // 別に確かめない——同じ呼び出しを二度することになる。
             IDictionary<string, object> calling =
                 new Dictionary<string, object>(StringComparer.Ordinal);
-            bool prompts = prompting != null && prompting.Contains(rowKey);
             bool calls = row != null && !confirmed
-                && TryCalling(row, schema, sdkShapes, sampled, out calling);
+                && TryCalling(row, schema, sdkShapes, sampled, given, out calling);
             if (!calls)
             {
                 yield return new E2eCase(
@@ -360,6 +379,8 @@ namespace PmxEditorMcp.SignatureDump
                     null);
             }
 
+            SampleCallRow denied;
+            bool denies = row != null && refused.TryGetValue(rowKey, out denied);
             if (calls)
             {
                 yield return new E2eCase(
@@ -367,14 +388,19 @@ namespace PmxEditorMcp.SignatureDump
                     editKind,
                     path,
                     tool,
-                    prompts
-                        ? "呼び出すと出る表示を戻り値で知らせること"
+                    denies
+                        ? "成り立たない値を渡す呼び出しを、その理由で断ること"
                         : row.EditKind == ToolMapEditKind.Read
                             ? "呼び出して値を返せること"
                             : "呼び出して成功すること",
                     calling,
-                    prompts ? E2eExpectation.Refusal : E2eExpectation.Success,
-                    prompts ? NotApplicable : null);
+                    denies ? E2eExpectation.Denied : E2eExpectation.Called,
+                    denies ? refused[rowKey].Refused : null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    denies ? refused[rowKey].Says : null);
             }
 
             if (confirmed)
@@ -410,6 +436,28 @@ namespace PmxEditorMcp.SignatureDump
                     InvalidHandle);
             }
 
+            foreach (SchemaItem one in handed)
+            {
+                IDictionary<string, object> arguments =
+                    Single(one.Name, UnknownHandle, confirmed);
+                SchemaBranch holding = schema.Branches.First(
+                    b => b.Inputs.Any(i => ReferenceEquals(i, one)));
+                if (!TryFill(holding, sdkShapes, sampled, arguments))
+                {
+                    continue;
+                }
+
+                yield return new E2eCase(
+                    rowKey,
+                    editKind,
+                    path,
+                    tool,
+                    "台帳に無いハンドルを1つ渡す呼び出しを断ること",
+                    arguments,
+                    E2eExpectation.Refusal,
+                    InvalidHandle);
+            }
+
             foreach (SchemaItem limit in LimitInputs(schema))
             {
                 yield return new E2eCase(
@@ -425,6 +473,79 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 渡す値がその呼び分けに収まるか。受け取らない項目を含まず、必ず要る組をどれも欠かさない
+        /// ことをいう——どちらかが外れていると、呼び先まで届く前に断られる。
+        /// </summary>
+        private static bool Fits(SchemaBranch branch, IDictionary<string, object> arguments)
+        {
+            IDictionary<string, SchemaItem> taken = branch.Inputs
+                .Where(i => !i.Injected)
+                .GroupBy(i => i.Name, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+
+            return arguments.Keys.All(taken.ContainsKey)
+                && branch.Inputs
+                    .Where(i => i.Required == true && !i.Injected)
+                    .All(i => arguments.ContainsKey(i.Name))
+                && branch.Choices.All(c => !c.Required
+                    || c.Names.Count(arguments.ContainsKey) == 1)
+                && arguments.All(a => Shaped(taken[a.Key], a.Value));
+        }
+
+        /// <summary>
+        /// その値が、項目の受け取る形をしているか。並びは要素まで、組は項目まで見る——外側だけを
+        /// 見ると、中身の形が違う値も通ってしまう。綴りを持たない項目はSDKに由来する値なので、
+        /// ここでは形を決められず真とする。
+        /// </summary>
+        private static bool Shaped(SchemaItem item, object value)
+        {
+            if (item.Element != null)
+            {
+                object[] items = value as object[];
+
+                return items != null && items.All(one => Shaped(item.Element, one));
+            }
+
+            if (item.Members != null)
+            {
+                IDictionary<string, object> members = value as IDictionary<string, object>;
+                if (members == null)
+                {
+                    return false;
+                }
+
+                IDictionary<string, SchemaItem> taken = item.Members
+                    .GroupBy(m => m.Name, StringComparer.Ordinal)
+                    .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+
+                return members.Keys.All(taken.ContainsKey)
+                    && item.Members.Where(m => m.Required == true).All(
+                        m => members.ContainsKey(m.Name))
+                    && members.All(m => Shaped(taken[m.Key], m.Value));
+            }
+
+            if (item.Shape == null)
+            {
+                return true;
+            }
+
+            switch (item.Shape)
+            {
+                case "text":
+                    return value is string;
+
+                case "boolean":
+                    return value is bool;
+
+                case "number":
+                    return value is int || value is double || value is float || value is long;
+
+                default:
+                    return true;
+            }
+        }
+
+        /// <summary>
         /// その行を実際に呼ぶときの引数。読み取りの行は最小の値で埋めて呼べる——何を渡しても
         /// エディタは動かないので、値が意味を成さなくても呼び先までは届く。状態を動かす行は
         /// 引数を渡さずに呼べるものだけを呼ぶ——最小の値は、在りもしないファイルや範囲の外の
@@ -435,6 +556,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
+            IDictionary<string, IDictionary<string, object>> given,
             out IDictionary<string, object> arguments)
         {
             if (row.EditKind == ToolMapEditKind.Read)
@@ -442,10 +564,56 @@ namespace PmxEditorMcp.SignatureDump
                 return TryReading(schema, sdkShapes, sampled, out arguments);
             }
 
+            if (given != null && given.TryGetValue(row.SignatureKey, out arguments))
+            {
+                return true;
+            }
+
             arguments = new Dictionary<string, object>(StringComparer.Ordinal);
 
-            return Unchosen(schema) != null
-                && !schema.Branches.Any(b => b.Inputs.Any(i => !i.Injected));
+            return Unchosen(schema) != null;
+        }
+
+        /// <summary>
+        /// 行ごとに渡すと決めた値。書かれた行がその名前のツールを持ち、渡す項目がそのツールの
+        /// 受け取る入力であることをここで確かめる——書いた値が届かないまま検査が増えたように
+        /// 見えるのを防ぐ。
+        /// </summary>
+        private static IDictionary<string, IDictionary<string, object>> Given(
+            SampleValueTable samples,
+            IDictionary<string, string> toolsByRow,
+            ToolSchemaTable schemas)
+        {
+            Dictionary<string, IDictionary<string, object>> given =
+                new Dictionary<string, IDictionary<string, object>>(StringComparer.Ordinal);
+            if (samples == null)
+            {
+                return given;
+            }
+
+            IDictionary<string, ToolSchema> byName = schemas.Tools.ToDictionary(
+                t => t.Tool, t => t, StringComparer.Ordinal);
+            foreach (SampleCallRow call in samples.Calls)
+            {
+                string tool;
+                if (!toolsByRow.TryGetValue(call.SignatureKey, out tool))
+                {
+                    throw new InvalidOperationException(
+                        "渡す値を書いた行が、自分の名前のツールを持っていない: " + call.SignatureKey);
+                }
+
+                if (!byName[tool].Branches.Any(b => Fits(b, call.Arguments)))
+                {
+                    throw new InvalidOperationException(
+                        "渡す値が、どの呼び分けにも収まらない: " + tool + "("
+                            + string.Join("・", call.Arguments.Keys.OrderBy(
+                                n => n, StringComparer.Ordinal).ToArray()) + ")");
+                }
+
+                given[call.SignatureKey] = call.Arguments;
+            }
+
+            return given;
         }
 
         /// <summary>
@@ -494,6 +662,23 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, object> arguments)
         {
             foreach (SchemaBranch branch in schema.Branches)
+            {
+                if (!TryFill(branch, sdkShapes, sampled, arguments))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>その呼び分け1つで、必ず要る組を最小の値で埋める。</summary>
+        private static bool TryFill(
+            SchemaBranch branch,
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, object> sampled,
+            IDictionary<string, object> arguments)
+        {
             {
                 foreach (SchemaChoice choice in branch.Choices)
                 {
@@ -701,6 +886,39 @@ namespace PmxEditorMcp.SignatureDump
                 b => Wholly(b)
                     && !b.Inputs.Any(i => string.Equals(i.Name, ValueName, StringComparison.Ordinal)
                         || string.Equals(i.Name, ValuesName, StringComparison.Ordinal)));
+        }
+
+        /// <summary>
+        /// ハンドルを1つだけ受け取る入力。ハンドルで指す型を値に取る項目がこれに当たり、並びで
+        /// 受け取る入力とは別に、1つだけ渡す形でも断ることを確かめる。
+        /// </summary>
+        private static IEnumerable<SchemaItem> Handles(
+            ToolSchema schema,
+            IDictionary<SchemaItem, string> sdkTypes,
+            ISet<string> handled)
+        {
+            if (sdkTypes == null || handled == null)
+            {
+                return new SchemaItem[0];
+            }
+
+            return schema.Branches
+                .SelectMany(b => b.Inputs)
+                .Where(i => i.Required == true
+                    && !i.Injected
+                    && i.Element == null
+                    && Handled(i, sdkTypes, handled))
+                .GroupBy(i => i.Name, StringComparer.Ordinal)
+                .Select(g => g.First())
+                .ToArray();
+        }
+
+        private static bool Handled(
+            SchemaItem item, IDictionary<SchemaItem, string> sdkTypes, ISet<string> handled)
+        {
+            string typeName;
+
+            return sdkTypes.TryGetValue(item, out typeName) && handled.Contains(typeName);
         }
 
         /// <summary>ハンドルの並びを受け取る入力。型役割がハンドルの型を指す並びである。</summary>

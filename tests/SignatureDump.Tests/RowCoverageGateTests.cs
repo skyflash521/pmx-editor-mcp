@@ -40,6 +40,50 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ACaseThatDoesNotNameTheRowDoesNotCoverAToolOnlyThatRowNames()
+        {
+            SignatureRecord signature =
+                Signature(Wipe, Bone, "Wipe", "System.Void", MemberKind.Method);
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RowCoverageGate.Require(
+                    Row(Wipe),
+                    Signatures(signature),
+                    new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { signature.Key, "model_wipe_bone" },
+                    },
+                    new Dictionary<string, ComposedTool>(StringComparer.Ordinal),
+                    CommonAssignmentJsonReader.Read(@"{ ""assignments"": [] }"),
+                    Roles(),
+                    new HashSet<string>(StringComparer.Ordinal),
+                    new[] { Case("model_wipe_bone") }));
+
+            Assert.Contains(Wipe, error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ACaseThatOnlyLooksForSomethingToCallDoesNotCoverTheRow()
+        {
+            SignatureRecord signature =
+                Signature(Wipe, Bone, "Wipe", "System.Void", MemberKind.Method);
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RowCoverageGate.Require(
+                    Row(Wipe),
+                    Signatures(signature),
+                    new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { signature.Key, "model_wipe_bone" },
+                    },
+                    new Dictionary<string, ComposedTool>(StringComparer.Ordinal),
+                    CommonAssignmentJsonReader.Read(@"{ ""assignments"": [] }"),
+                    Roles(),
+                    new HashSet<string>(StringComparer.Ordinal),
+                    new[] { Dispatched("model_wipe_bone") }));
+
+            Assert.Contains(Wipe, error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void ARowIsCoveredByTheToolItIsEmbeddedIn()
         {
             Require(
@@ -149,7 +193,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 traversed
                     ? new HashSet<string>(new[] { signature.Key }, StringComparer.Ordinal)
                     : new HashSet<string>(StringComparer.Ordinal),
-                new[] { Case(examined ?? "model_list_bones") });
+                new[]
+                {
+                    Case(
+                        examined ?? "model_list_bones",
+                        string.Equals(examined, named, StringComparison.Ordinal)
+                            ? signature.Key
+                            : string.Empty),
+                });
         }
 
         private static IDictionary<string, SignatureRecord> Signatures(SignatureRecord signature)
@@ -175,7 +226,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
             });
         }
 
-        private static E2eCase Case(string tool)
+        /// <summary>振る舞いを確かめる検査。覆いに数えるのはこちらだけである。</summary>
+        private static E2eCase Case(string tool, string rowKey = "")
+        {
+            return new E2eCase(
+                rowKey,
+                string.Empty,
+                string.Empty,
+                tool,
+                "呼び出して成功すること",
+                new Dictionary<string, object>(StringComparer.Ordinal),
+                E2eExpectation.Called,
+                null);
+        }
+
+        /// <summary>呼び先が在ることしか見ない検査。</summary>
+        private static E2eCase Dispatched(string tool)
         {
             return new E2eCase(
                 string.Empty,

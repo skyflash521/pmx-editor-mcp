@@ -68,6 +68,11 @@ namespace PmxEditorMcp.SignatureDump
                 written.Add("expected", Expected(one.Expected));
             }
 
+            if (one.Says != null)
+            {
+                written.AddText("says", one.Says);
+            }
+
             return written.Text;
         }
 
@@ -89,6 +94,12 @@ namespace PmxEditorMcp.SignatureDump
 
                 case E2eExpectation.Reads:
                     return "reads";
+
+                case E2eExpectation.Called:
+                    return "called";
+
+                case E2eExpectation.Denied:
+                    return "denied";
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expectation));

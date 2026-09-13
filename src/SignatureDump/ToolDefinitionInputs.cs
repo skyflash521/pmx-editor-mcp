@@ -156,6 +156,41 @@ namespace PmxEditorMcp.SignatureDump
             return AggregationToolRule.Readers(OwnedRoles(inventory).Types);
         }
 
+        /// <summary>
+        /// いま選ばれている対象を相手にする行の行キー。呼ぶ前に確かめることの規則がこれらを分けて
+        /// いる——選ばれているものが無いと、エディタが人の応答を待つ表示を出す。
+        /// </summary>
+        public ISet<string> PickingRows(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            HashSet<string> picking = new HashSet<string>(StringComparer.Ordinal);
+            foreach (SignatureRecord signature in inventory.Signatures)
+            {
+                PreconditionKind kind;
+                if (PreconditionRule.TryClassify(signature, out kind)
+                    && kind == PreconditionKind.PickedObjects)
+                {
+                    picking.Add(signature.Key);
+                }
+            }
+
+            return picking;
+        }
+
+        /// <summary>値をハンドルの番号で写す型の名前。</summary>
+        public ISet<string> HandledTypes()
+        {
+            return new HashSet<string>(
+                _roles.Types
+                    .Where(t => t.Role == TypeRole.HandleTarget)
+                    .Select(t => t.TypeName),
+                StringComparer.Ordinal);
+        }
+
         /// <summary>値を要素の位置で写す型の名前。</summary>
         public ISet<string> PositionedTypes()
         {
@@ -178,32 +213,6 @@ namespace PmxEditorMcp.SignatureDump
         public IDictionary<string, ISet<string>> UnkeptMembers
         {
             get { return _unkeptMembers; }
-        }
-
-        /// <summary>
-        /// 呼ぶと人の応答を待つ表示が出る行の行キー。呼ぶ前に確かめることの規則が、選ばれている
-        /// 対象を相手にする呼び出しとして分けている行がこれに当たる——選ばれているものが無いと
-        /// 表示が出る。
-        /// </summary>
-        public ISet<string> PromptingRows(InventoryRecord inventory)
-        {
-            if (inventory == null)
-            {
-                throw new ArgumentNullException(nameof(inventory));
-            }
-
-            HashSet<string> prompting = new HashSet<string>(StringComparer.Ordinal);
-            foreach (SignatureRecord signature in inventory.Signatures)
-            {
-                PreconditionKind kind;
-                if (PreconditionRule.TryClassify(signature, out kind)
-                    && kind == PreconditionKind.PickedObjects)
-                {
-                    prompting.Add(signature.Key);
-                }
-            }
-
-            return prompting;
         }
 
         public IDictionary<string, int> Lengths { get; }

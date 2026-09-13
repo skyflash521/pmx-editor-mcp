@@ -55,10 +55,56 @@ namespace PmxEditorMcp.SignatureDump
         public SampleFile File { get; }
     }
 
-    /// <summary>型ごとのサンプル値の表。</summary>
+    /// <summary>行ごとに渡す値の表の1行。</summary>
+    public sealed class SampleCallRow
+    {
+        public SampleCallRow(
+            string signatureKey,
+            IDictionary<string, object> arguments,
+            string basis,
+            string refused = null,
+            string says = null)
+        {
+            PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
+            PropertyRecord.RequireText(basis, nameof(basis));
+            if (arguments == null)
+            {
+                throw new ArgumentNullException(nameof(arguments));
+            }
+
+            SignatureKey = signatureKey;
+            Arguments = new ReadOnlyDictionary<string, object>(arguments);
+            Basis = basis;
+            Refused = refused;
+            Says = says;
+        }
+
+        /// <summary>値を渡す相手の行キー。</summary>
+        public string SignatureKey { get; }
+
+        /// <summary>その行を呼ぶときに渡す引数。</summary>
+        public IDictionary<string, object> Arguments { get; }
+
+        /// <summary>その値を選んだ根拠の一文。</summary>
+        public string Basis { get; }
+
+        /// <summary>
+        /// 渡した値を断ることを確かめるときの、断る理由の綴り。呼び出しが成り立つ値を検査の側で
+        /// 用意できない行だけが持ち、ほかは null。
+        /// </summary>
+        public string Refused { get; }
+
+        /// <summary>
+        /// 断る理由を見分ける文面。断ることを確かめる行だけが持ち、ほかは null。綴りだけでは
+        /// 狙った理由とほかの失敗を見分けられないので、文面まで一致を求める。
+        /// </summary>
+        public string Says { get; }
+    }
+
+    /// <summary>型ごとのサンプル値と、行ごとに渡す値の表。</summary>
     public sealed class SampleValueTable
     {
-        public SampleValueTable(IList<SampleValueRow> types)
+        public SampleValueTable(IList<SampleValueRow> types, IList<SampleCallRow> calls = null)
         {
             if (types == null)
             {
@@ -66,15 +112,34 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             Types = new ReadOnlyCollection<SampleValueRow>(types);
+            Calls = new ReadOnlyCollection<SampleCallRow>(calls ?? new SampleCallRow[0]);
         }
 
         public IList<SampleValueRow> Types { get; }
+
+        /// <summary>
+        /// 行ごとに渡す値。型から決められる最小の値では意味を成さない呼び出しだけが持つ
+        /// ——在りもしないファイルの位置や、要素を持たない立体の大きさになってしまう。
+        /// </summary>
+        public IList<SampleCallRow> Calls { get; }
     }
 
     /// <summary>型ごとのサンプル値の正本をJSONから読み取る。</summary>
     public static class SampleValueJsonReader
     {
         private const string TypesName = "types";
+
+        private const string RowsName = "rows";
+
+        private const string SignatureKeyName = "signatureKey";
+
+        private const string ArgumentsName = "arguments";
+
+        private const string BasisName = "basis";
+
+        private const string RefusedName = "refused";
+
+        private const string SaysName = "says";
 
         private const string TypeNameName = "typeName";
 
@@ -98,7 +163,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            Dictionary<string, object> root = Members(Parse(json), TypesName);
+            Dictionary<string, object> root = Members(Parse(json), TypesName, RowsName);
             List<SampleValueRow> rows = new List<SampleValueRow>();
             HashSet<string> kinds = new HashSet<string>(StringComparer.Ordinal);
             string previous = null;
@@ -124,7 +189,53 @@ namespace PmxEditorMcp.SignatureDump
                     typeName, members[DefaultName], members[SecondName], file));
             }
 
-            return new SampleValueTable(rows);
+            return new SampleValueTable(rows, Calls(root));
+        }
+
+        /// <summary>行ごとに渡す値。行キーの序数の昇順で並ぶ。</summary>
+        private static IList<SampleCallRow> Calls(Dictionary<string, object> root)
+        {
+            List<SampleCallRow> calls = new List<SampleCallRow>();
+            string previous = null;
+            foreach (object item in Array(root[RowsName], RowsName))
+            {
+                Dictionary<string, object> members = Members(
+                    item,
+                    new[] { SignatureKeyName, ArgumentsName, BasisName },
+                    RefusedName,
+                    SaysName);
+                string key = Text(members[SignatureKeyName], SignatureKeyName);
+                if (previous != null && string.CompareOrdinal(previous, key) > 0)
+                {
+                    throw new FormatException("序数の昇順で並んでいない: " + key);
+                }
+
+                previous = key;
+                Dictionary<string, object> arguments =
+                    members[ArgumentsName] as Dictionary<string, object>;
+                if (arguments == null)
+                {
+                    throw new FormatException(ArgumentsName + " は項目の組でなければならない。");
+                }
+
+                object refused;
+                object says;
+                bool denies = members.TryGetValue(RefusedName, out refused);
+                if (denies != members.TryGetValue(SaysName, out says))
+                {
+                    throw new FormatException(
+                        RefusedName + " と " + SaysName + " は揃って書く: " + key);
+                }
+
+                calls.Add(new SampleCallRow(
+                    key,
+                    arguments,
+                    Text(members[BasisName], BasisName),
+                    denies ? Text(refused, RefusedName) : null,
+                    denies ? Text(says, SaysName) : null));
+            }
+
+            return calls;
         }
 
         /// <summary>ファイルの決めごと。持たない行では null。拡張子は点から始まる。</summary>

@@ -29,6 +29,20 @@ namespace PmxEditorMcp.SignatureDump
         /// <see cref="E2eCase.Expected"/> が持つ。
         /// </summary>
         Reads,
+
+        /// <summary>
+        /// 呼び出しが呼び先まで届くこと。成功するか、人の応答を待つ表示が出たことを戻り値で
+        /// 知らせるかのどちらかであればよい——表示が出るかどうかはエディタの状態で決まり、
+        /// 出たときにそれを知らせるのが決められた振る舞いである。
+        /// </summary>
+        Called,
+
+        /// <summary>
+        /// 呼び先まで届いたうえで、渡した値を呼び先が断ること。断る理由の綴りは
+        /// <see cref="E2eCase.Code"/> が、その理由を見分ける文面は <see cref="E2eCase.Says"/> が
+        /// 持つ。入口で断られる呼び出しと違い、この断りは呼び先まで届いた証しになる。
+        /// </summary>
+        Denied,
     }
 
     /// <summary>読み返して確かめる項目と、その項目が持つはずの値。</summary>
@@ -67,7 +81,8 @@ namespace PmxEditorMcp.SignatureDump
             string view = null,
             string produces = null,
             IDictionary<string, string> borrowed = null,
-            E2eExpectedMember expected = null)
+            E2eExpectedMember expected = null,
+            string says = null)
         {
             RowKey = rowKey;
             EditKind = editKind;
@@ -84,6 +99,7 @@ namespace PmxEditorMcp.SignatureDump
                 ? null
                 : new ReadOnlyDictionary<string, string>(borrowed);
             Expected = expected;
+            Says = says;
         }
 
         /// <summary>能力対応表の行キー。合否はこの単位でも数える。</summary>
@@ -125,5 +141,11 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>読み返して確かめる項目。読み返す検査だけが持ち、ほかは null。</summary>
         public E2eExpectedMember Expected { get; }
+
+        /// <summary>
+        /// 断る理由を見分ける文面。呼び先が断ることを確かめる検査だけが持ち、ほかは null。
+        /// 綴りだけでは、狙った理由とほかの失敗を見分けられない。
+        /// </summary>
+        public string Says { get; }
     }
 }

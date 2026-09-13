@@ -205,7 +205,7 @@ namespace PmxEditorMcp.Tests
                     Ledger(),
                     Events()));
 
-            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Equal(ToolEnvelope.PromptShown, Code(envelope));
             Assert.Equal(
                 "エディタが人の応答を待つ表示を出していて進められない。"
                     + "表示: 確認: 未保存の編集項目があります",

@@ -30,6 +30,9 @@ const CONTROL_SCRIPT = path.join(
 /** 呼び出しを始めていないことを表す断りの綴り。共通契約が定める。 */
 const NOT_STARTED = "TOOL_NOT_STARTED";
 
+/** 人の応答を待つ表示が出ていて進められないことを表す断りの綴り。共通契約が定める。 */
+const PROMPT_SHOWN = "TOOL_PROMPT_SHOWN";
+
 /** 写しを取れるビューの名前。ほかのビューは自分の窓を持たない。 */
 const CAPTURED_VIEW = "pmx";
 
@@ -138,6 +141,30 @@ function judge(one, response, capture) {
 
     if (one.expect === "success") {
         return envelope.ok === true ? null : "成功するはずが断られました: " + describe(envelope);
+    }
+
+    if (one.expect === "called") {
+        if (envelope.ok === true) {
+            return null;
+        }
+
+        return envelope.error !== undefined && envelope.error.code === PROMPT_SHOWN
+            ? null
+            : "呼び先まで届くはずが断られました: " + describe(envelope);
+    }
+
+    if (one.expect === "denied") {
+        if (envelope.ok !== false) {
+            return "断るはずが成功しました。";
+        }
+        if (envelope.error === undefined || envelope.error.code !== one.code) {
+            return "断る理由が " + one.code + " ではありません: " + describe(envelope);
+        }
+
+        return envelope.error.message.indexOf(one.says) >= 0
+            ? null
+            : "断る理由が " + JSON.stringify(one.says) + " を述べていません: "
+                + envelope.error.message;
     }
 
     if (one.expect === "reads") {
@@ -340,6 +367,29 @@ function answerDialogs(processId) {
     return Number.isInteger(answered) ? answered : 0;
 }
 
+/** 表示へ何度まで続けて答えるか。1つ答えると次が出る作りがあるので、1度では足りない。 */
+const ANSWERING_ROUNDS = 8;
+
+/**
+ * 出ている表示へ、出なくなるまで答える。答え切れたときだけ答えた総数を返す。1つも答えられ
+ * なかったときと、上限まで答えても出続けたときは0で、そのときは投げ直しても同じところで止まる。
+ */
+function clearPrompts(processId) {
+    let answered = 0;
+    for (let round = 0; round < ANSWERING_ROUNDS; round++) {
+        const cleared = answerDialogs(processId);
+        if (cleared === 0) {
+            return answered;
+        }
+
+        answered += cleared;
+    }
+
+    // 上限まで答えても出続けるなら、まだ出ている。答えられたことにすると、残った表示に
+    // 続きの検査が巻き添えで落ちる。
+    return 0;
+}
+
 /** ホストが呼び出しを始めていないと言っているか。始めていなければ投げ直せる。 */
 function notStarted(response) {
     const envelope = response.result;
@@ -350,6 +400,21 @@ function notStarted(response) {
         && envelope.ok === false
         && envelope.error !== undefined
         && envelope.error.code === NOT_STARTED;
+}
+
+/**
+ * 表示が出たことを知らせる断りか。次の検査へ進む前に表示へ答えるので、出たままにならない。
+ */
+function prompted(response) {
+    const envelope = response.result;
+
+    return envelope !== null
+        && envelope !== undefined
+        && typeof envelope === "object"
+        && !Array.isArray(envelope)
+        && envelope.ok === false
+        && envelope.error !== undefined
+        && envelope.error.code === PROMPT_SHOWN;
 }
 
 /**
@@ -519,9 +584,20 @@ function run(pipeName, cases, processId) {
 
                 const one = cases[index];
                 if (notStarted(response) && retried !== index
-                    && answerDialogs(processId) > 0) {
+                    && clearPrompts(processId) > 0) {
                     retried = index;
                     send(requestId(index), one.tool, borrowing(one, remembered));
+                    continue;
+                }
+
+                // 片付かない表示を残したまま先へ進むと、後の検査が巻き添えで落ちる。
+                if (prompted(response) && clearPrompts(processId) === 0) {
+                    results.push({
+                        case: one,
+                        reason: "出ている表示を片付けられませんでした。",
+                    });
+                    next();
+
                     continue;
                 }
 

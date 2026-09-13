@@ -93,7 +93,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.ElementFactories(inventory),
                     inputs.Readers(inventory),
                     inputs.UnkeptMembers,
-                    inputs.PromptingRows(inventory));
+                    inputs.HandledTypes(),
+                    inputs.PickingRows(inventory));
             }
             catch (InvalidOperationException exception)
             {

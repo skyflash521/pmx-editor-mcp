@@ -18,7 +18,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Table =
             "{\"types\":[{\"typeName\":\"PEPlugin.Pmx.PmxUpdateObject\",\"default\":\"Vertex\""
             + ",\"second\":\"Bone\"},{\"typeName\":\"PEPlugin.SDX.V3\",\"default\":[1,2,3]"
-            + ",\"second\":[4,5,6]},{\"typeName\":\"System.Int32\",\"default\":1,\"second\":2}]}\n";
+            + ",\"second\":[4,5,6]},{\"typeName\":\"System.Int32\",\"default\":1,\"second\":2}],\"rows\":[]}\n";
 
         private readonly string _root;
 
