@@ -33,7 +33,7 @@ namespace PmxEditorMcp.SignatureDump
             if (args.Length != 3)
             {
                 error.WriteLine(
-                    "引数は3つ: <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
+                    "引数は3つ: <PMXエディタ導入ディレクトリ> <共通契約の正本のパス>"
                         + " <サンプル値の正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
@@ -51,9 +51,10 @@ namespace PmxEditorMcp.SignatureDump
             SampleValueTable table;
             try
             {
-                string contract = Read(args[1], "共通契約仕様書");
-                shapes = ValueShapeDocument.Read(contract);
-                components = ValueShapeDocument.ReadComponents(contract);
+                CommonContractTable contract =
+                    CommonContractJsonReader.Read(Read(args[1], "共通契約の正本"));
+                shapes = contract.Types;
+                components = contract.Components;
                 table = SampleValueJsonReader.Read(Read(args[2], "サンプル値の正本"));
             }
             catch (Exception exception)

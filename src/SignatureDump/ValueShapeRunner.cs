@@ -32,7 +32,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 error.WriteLine(
                     "引数は4つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
-                        + " <共通契約仕様書のパス>");
+                        + " <共通契約の正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -51,7 +51,8 @@ namespace PmxEditorMcp.SignatureDump
             {
                 ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
                 excluded = ExcludedSignatureJsonReader.Read(Read(args[2], "除外一覧"));
-                rows = ValueShapeDocument.Read(Read(args[3], "共通契約仕様書"));
+                rows = CommonContractJsonReader
+                    .Read(Read(args[3], "共通契約の正本")).Types;
             }
             catch (Exception exception)
             {

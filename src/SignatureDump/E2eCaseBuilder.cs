@@ -47,7 +47,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// 検査を組み立てる。<paramref name="connectionPaths"/> は型から接続の経路へ、
         /// <paramref name="dangerous"/> は確認を要する行キーの集合。断る理由の綴りはここが名指し
-        /// する——どの綴りがどの断り方を指すかは仕様書の説明文にしか無く、機械では導けない。
+        /// する——どの綴りがどの断り方を指すかは機械では導けない。
         /// 名指しが実装とずれていれば、その検査が実機で落ちて分かる。
         /// </summary>
         public static IList<E2eCase> Build(

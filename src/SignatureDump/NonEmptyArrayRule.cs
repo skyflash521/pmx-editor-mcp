@@ -9,7 +9,7 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class NonEmptyArrayRule
     {
-        /// <summary>共通契約仕様書とツール仕様書が空にできないと定める並びの名前。</summary>
+        /// <summary>空にできない並びの名前。</summary>
         private static readonly ReadOnlyCollection<string> Names = Array.AsReadOnly(new[]
         {
             "assignments",

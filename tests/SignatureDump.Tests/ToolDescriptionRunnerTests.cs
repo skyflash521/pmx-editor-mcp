@@ -23,9 +23,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string EmptyNames = "{\"propertyNames\":[]}\n";
 
-        private const string Contract =
-            "### 合成ツール\n\n| ツール | 分岐 | 受け持つこと |\n|---|---|---|\n"
-            + "| `session_release_handle` | 持たない | 解放する |\n";
+        private static readonly string Contract = new CommonContractJsonBuilder()
+            .AddComposedTool("session_release_handle", false, "解放する")
+            .ToString();
 
         private const string EmptyMap = "{\"rows\":[]}\n";
 
@@ -77,7 +77,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     Path.Combine(_root, "missing"),
                     Write("l.md", Ledger(typeof(ToolDescriptionRunnerTests).Assembly)),
-                    Write("c.md", Contract),
+                    Write("c.json", Contract),
                     Write("r.json", Roles),
                     Write("n.json", EmptyNames),
                     Write("a.json", EmptyAssignments),
@@ -183,7 +183,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 EditorDirectory(),
                 Write("ledger.md", Ledger(typeof(ToolDescriptionRunnerTests).Assembly)),
-                Write("contract.md", Contract),
+                Write("contract.json", Contract),
                 Write("roles.json", Roles),
                 Write("names.json", EmptyNames),
                 Write("assignments.json", EmptyAssignments),

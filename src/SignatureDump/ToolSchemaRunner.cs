@@ -31,7 +31,7 @@ namespace PmxEditorMcp.SignatureDump
             if (args.Length != 3)
             {
                 error.WriteLine(
-                    "引数は3つ: <共通契約仕様書のパス> <能力対応表の正本のパス>"
+                    "引数は3つ: <共通契約の正本のパス> <能力対応表の正本のパス>"
                         + " <スキーマ正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
@@ -43,10 +43,11 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchemaTable schemas;
             try
             {
-                string contract = Read(args[0], "共通契約仕様書");
-                spellings = ValueShapeDocument.ReadSpellings(contract);
-                lengths = AssumedLengthDocument.Read(contract);
-                composedTools = ComposedToolDocument.Read(contract);
+                CommonContractTable contract =
+                    CommonContractJsonReader.Read(Read(args[0], "共通契約の正本"));
+                spellings = contract.SpellingNames();
+                lengths = contract.AssumedChars();
+                composedTools = contract.ComposedTools;
                 map = ToolMapJsonReader.Read(Read(args[1], "能力対応表の正本"));
                 schemas = ToolSchemaJsonReader.Read(Read(args[2], "スキーマ正本"));
             }

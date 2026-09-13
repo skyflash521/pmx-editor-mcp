@@ -10,7 +10,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 11, 13 })
+            foreach (int count in new[] { 0, 1, 9, 11 })
             {
                 StringWriter error = new StringWriter();
 
@@ -30,9 +30,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string assemblyPath = SdkAssemblyLocator.GetAssemblyPath(root);
             Directory.CreateDirectory(Path.GetDirectoryName(assemblyPath));
             File.Copy(new Uri(typeof(Sample.ISampleApi).Assembly.CodeBase).LocalPath, assemblyPath);
-            string[] args = Enumerable.Repeat(Path.Combine(root, "other.json"), 12).ToArray();
+            string[] args = Enumerable.Repeat(Path.Combine(root, "other.json"), 10).ToArray();
             args[0] = root;
-            args[10] = Path.Combine(root, "samples.json");
+            args[8] = Path.Combine(root, "samples.json");
             StringWriter error = new StringWriter();
 
             try

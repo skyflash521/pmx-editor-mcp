@@ -8,11 +8,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class SampleValueRunnerTests : IDisposable
     {
-        private const string Contract =
-            "### 型ごとの表現\n\n| 型 | 表現 |\n|---|---|\n| `System.Int32` | `number` |\n"
-            + "| `PEPlugin.Pmx.PmxUpdateObject` | `enum_name` |\n"
-            + "| `PEPlugin.SDX.V3` | `number_array` |\n"
-            + "\n### 成分の並び\n\n| 型 | 成分 |\n|---|---|\n| `PEPlugin.SDX.V3` | 3 |\n";
+        private static readonly string Contract = new CommonContractJsonBuilder()
+            .AddType("System.Int32", "number")
+            .AddType("PEPlugin.Pmx.PmxUpdateObject", "enum_name")
+            .AddType("PEPlugin.SDX.V3", "number_array")
+            .AddComponent("PEPlugin.SDX.V3", 3)
+            .ToString();
 
         private const string Table =
             "{\"types\":[{\"typeName\":\"PEPlugin.Pmx.PmxUpdateObject\",\"default\":\"Vertex\""
@@ -60,7 +61,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = SampleValueRunner.Run(
-                new[] { Path.Combine(_root, "missing"), Write("c.md", Contract), Write("s.json", Table) },
+                new[] { Path.Combine(_root, "missing"), Write("c.json", Contract), Write("s.json", Table) },
                 new StringWriter(),
                 error);
 
@@ -85,17 +86,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ADocumentWithoutTheComponentSectionIsInputUnavailable()
+        public void ASourceWithoutTheComponentsIsInputUnavailable()
         {
             string[] args = Arguments(Table);
             args[1] = Write(
-                "c2.md", "### 型ごとの表現\n\n| 型 | 表現 |\n|---|---|\n| `System.Int32` | `number` |\n");
+                "c2.json",
+                "{\"spellings\":[{\"spelling\":\"number\",\"assumedChars\":11}]"
+                    + ",\"types\":[{\"typeName\":\"System.Int32\",\"shape\":\"number\"}]}");
             StringWriter error = new StringWriter();
 
             int code = SampleValueRunner.Run(args, new StringWriter(), error);
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
-            Assert.Contains("成分の並び", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("components", error.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -152,7 +155,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private string[] Arguments(string table)
         {
-            return new[] { EditorDirectory(), Write("contract.md", Contract), Write("table.json", table) };
+            return new[] { EditorDirectory(), Write("contract.json", Contract), Write("table.json", table) };
         }
 
         /// <summary>題材のアセンブリを対象として置いた導入ディレクトリを作る。</summary>

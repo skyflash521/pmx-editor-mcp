@@ -6,8 +6,8 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 項目1件をJSONへ写したときの想定文字数。上限ではなく、一覧の件数を逆算するための取り決めで、
-    /// 綴りごとの値は共通契約仕様書の表が正本である。
+    /// 項目1件をJSONへ写したときの想定文字数。上限ではなく、一覧の件数を逆算するための
+    /// 取り決めである。
     /// </summary>
     public sealed class AssumedLength
     {

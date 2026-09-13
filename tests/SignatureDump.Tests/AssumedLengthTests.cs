@@ -6,7 +6,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class AssumedLengthTests
     {
-        /// <summary>題材の表。実物の値は仕様書が持つので、ここでは読み方だけを見る。</summary>
+        /// <summary>題材の表。実物の値は共通契約の正本が持つので、ここでは読み方だけを見る。</summary>
         private static readonly AssumedLength Lengths = new AssumedLength(
             new Dictionary<string, int>(StringComparer.Ordinal)
             {

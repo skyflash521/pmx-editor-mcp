@@ -1,0 +1,314 @@
+{
+  "spellings": [
+    {
+      "spelling": "base64",
+      "assumedChars": 256
+    },
+    {
+      "spelling": "boolean",
+      "assumedChars": 5
+    },
+    {
+      "spelling": "brush",
+      "assumedChars": 48
+    },
+    {
+      "spelling": "color",
+      "assumedChars": 48
+    },
+    {
+      "spelling": "enum_name",
+      "assumedChars": 32
+    },
+    {
+      "spelling": "font",
+      "assumedChars": 299
+    },
+    {
+      "spelling": "image",
+      "assumedChars": 256
+    },
+    {
+      "spelling": "json",
+      "assumedChars": 256
+    },
+    {
+      "spelling": "null_value",
+      "assumedChars": 4
+    },
+    {
+      "spelling": "number",
+      "assumedChars": 11
+    },
+    {
+      "spelling": "number_array",
+      "assumedChars": 48
+    },
+    {
+      "spelling": "point",
+      "assumedChars": 24
+    },
+    {
+      "spelling": "rectangle",
+      "assumedChars": 48
+    },
+    {
+      "spelling": "size",
+      "assumedChars": 24
+    },
+    {
+      "spelling": "text",
+      "assumedChars": 256
+    }
+  ],
+  "components": [
+    {
+      "typeName": "PEPlugin.Pmd.IPEQuaternion",
+      "count": 4
+    },
+    {
+      "typeName": "PEPlugin.Pmd.IPEVector3",
+      "count": 3
+    },
+    {
+      "typeName": "PEPlugin.SDX.M",
+      "count": 16
+    },
+    {
+      "typeName": "PEPlugin.SDX.Q",
+      "count": 4
+    },
+    {
+      "typeName": "PEPlugin.SDX.V2",
+      "count": 2
+    },
+    {
+      "typeName": "PEPlugin.SDX.V3",
+      "count": 3
+    },
+    {
+      "typeName": "PEPlugin.SDX.V4",
+      "count": 4
+    },
+    {
+      "typeName": "SlimDX.Matrix",
+      "count": 16
+    },
+    {
+      "typeName": "SlimDX.Quaternion",
+      "count": 4
+    },
+    {
+      "typeName": "SlimDX.Vector3",
+      "count": 3
+    }
+  ],
+  "types": [
+    {
+      "typeName": "PEPlugin.Pmd.BodyBoxKind",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.BodyMode",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.BoneKind",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.IPEQuaternion",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.IPEVector3",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.UpdateObject",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.JointKind",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.MorphKind",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.PmxUpdateObject",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.PrimitiveType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.SoftBodyShape",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.SphereType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.SDX.M",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.SDX.Q",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.SDX.V2",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.SDX.V3",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.SDX.V4",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.View.AntiAliasingType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.View.FillMode",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.View.PartsSelectObject",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.View.ToonType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.View.VertexEditObject",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Vme.OpType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Vme.PEVmePathType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "SlimDX.Matrix",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "SlimDX.Quaternion",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "SlimDX.Vector3",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "System.Boolean",
+      "shape": "boolean"
+    },
+    {
+      "typeName": "System.Byte",
+      "shape": "number"
+    },
+    {
+      "typeName": "System.Collections.Generic.IList<1>",
+      "shape": null
+    },
+    {
+      "typeName": "System.Double",
+      "shape": "number"
+    },
+    {
+      "typeName": "System.Drawing.Bitmap",
+      "shape": "image"
+    },
+    {
+      "typeName": "System.Drawing.Brush",
+      "shape": "brush"
+    },
+    {
+      "typeName": "System.Drawing.Color",
+      "shape": "color"
+    },
+    {
+      "typeName": "System.Drawing.Font",
+      "shape": "font"
+    },
+    {
+      "typeName": "System.Drawing.Point",
+      "shape": "point"
+    },
+    {
+      "typeName": "System.Drawing.Rectangle",
+      "shape": "rectangle"
+    },
+    {
+      "typeName": "System.Drawing.Size",
+      "shape": "size"
+    },
+    {
+      "typeName": "System.Int32",
+      "shape": "number"
+    },
+    {
+      "typeName": "System.Nullable<1>",
+      "shape": null
+    },
+    {
+      "typeName": "System.Object",
+      "shape": "json"
+    },
+    {
+      "typeName": "System.Single",
+      "shape": "number"
+    },
+    {
+      "typeName": "System.String",
+      "shape": "text"
+    },
+    {
+      "typeName": "System.Version",
+      "shape": "text"
+    },
+    {
+      "typeName": "System.Void",
+      "shape": "null_value"
+    },
+    {
+      "typeName": "System.Windows.Forms.FormWindowState",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "System.Windows.Forms.MouseButtons",
+      "shape": "enum_name"
+    }
+  ],
+  "composedTools": [
+    {
+      "tool": "session_release_handle",
+      "branching": false,
+      "duty": "台帳が発行したハンドルを解放する"
+    },
+    {
+      "tool": "view_poll_events",
+      "branching": true,
+      "duty": "溜まったイベントを取り出す"
+    }
+  ],
+  "budgets": {
+    "responseDefaultChars": 100000,
+    "warningRoomChars": 2000,
+    "requestBytes": 8000000,
+    "structureTokenLimit": 200000
+  }
+}

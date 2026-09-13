@@ -15,7 +15,6 @@ Set-Location (Split-Path -Parent $PSScriptRoot)
 $editorDir = Get-EditorDirectory
 $dump = 'src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe'
 $hostDll = 'src/HostPlugin/bin/Debug/net48/PmxEditorMcp.dll'
-$specs = 'docs/specs'
 $observed = 'data/observed'
 $authored = 'data/authored'
 $ledger = "$observed/capability-ledger.json"
@@ -27,7 +26,7 @@ $toolMap = "$authored/tool-map.json"
 $toolSchemas = "$authored/tool-schemas.json"
 $sampleValues = "$authored/sample-values.json"
 $discoveryTasks = "$authored/discovery-tasks.json"
-$contract = "$specs/pmx-editor-mcp-common-contract.md"
+$contract = "$authored/common-contract.json"
 $procedure = 'docs/conventions/verification.md'
 
 $baseline = [System.IO.Path]::GetTempFileName()

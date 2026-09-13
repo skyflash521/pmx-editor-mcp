@@ -6,7 +6,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class ElementLimitRuleTests
     {
-        /// <summary>題材の表。実物の値は仕様書が持つ。</summary>
+        /// <summary>題材の表。実物の値は共通契約の正本が持つ。</summary>
         private static readonly AssumedLength Lengths = new AssumedLength(
             new Dictionary<string, int>(StringComparer.Ordinal) { { "number", 11 } });
 

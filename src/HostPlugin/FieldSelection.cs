@@ -3,9 +3,7 @@ using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 要素のどの項目を返すかを決める。頼み方は共通契約仕様書の返す項目が定める。
-    /// </summary>
+    /// <summary>要素のどの項目を返すかを決める。</summary>
     public static class FieldSelection
     {
         /// <summary>

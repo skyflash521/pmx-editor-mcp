@@ -23,7 +23,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const int TokenLimit = 200000;
 
-        /// <summary>想定文字数の題材。綴りごとの値は共通契約仕様書の表が正本である。</summary>
+        /// <summary>想定文字数の題材。</summary>
         private static readonly IDictionary<string, int> Lengths =
             new Dictionary<string, int>(StringComparer.Ordinal)
             {

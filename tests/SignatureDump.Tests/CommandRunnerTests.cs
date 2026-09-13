@@ -317,13 +317,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new LedgerJsonBuilder().ToString());
             string excludedPath = Path.Combine(_root, "shapes-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
-            string documentPath = Path.Combine(_root, "shapes-contract.md");
+            string documentPath = Path.Combine(_root, "shapes-contract.json");
             File.WriteAllText(
                 documentPath,
-                ValueShapeDocument.SectionHeading + Environment.NewLine + Environment.NewLine
-                    + "| 型 | 表現 |" + Environment.NewLine
-                    + "|---|---|" + Environment.NewLine
-                    + "| `System.Int32` | `number` |" + Environment.NewLine);
+                new CommonContractJsonBuilder().AddType("System.Int32", "number").ToString());
             string editorDirectory = CreateEditorDirectory();
 
             int code = CommandRunner.Run(
@@ -460,27 +457,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ToolSchemasSubcommandRunsTheCollation()
         {
-            string contractPath = Path.Combine(_root, "schemas-contract.md");
+            string contractPath = Path.Combine(_root, "schemas-contract.json");
             File.WriteAllText(
                 contractPath,
-                "### 表現の綴り" + Environment.NewLine
-                    + Environment.NewLine
-                    + "| 綴り | JSONの形 |" + Environment.NewLine
-                    + "|---|---|" + Environment.NewLine
-                    + "| `number` | 数値 |" + Environment.NewLine
-                    + Environment.NewLine
-                    + "#### 想定文字数" + Environment.NewLine
-                    + Environment.NewLine
-                    + "| 綴り | 想定文字数 |" + Environment.NewLine
-                    + "|---|---|" + Environment.NewLine
-                    + "| `number` | 11 |" + Environment.NewLine
-                    + Environment.NewLine
-                    + "### 合成ツール" + Environment.NewLine
-                    + Environment.NewLine
-                    + "| ツール | 分岐 | 受け持つこと |" + Environment.NewLine
-                    + "|---|---|---|" + Environment.NewLine
-                    + "| `session_release_handle` | 持たない | 解放する |" + Environment.NewLine
-                    + "| `view_poll_events` | 持つ | 取り出す |" + Environment.NewLine);
+                new CommonContractJsonBuilder()
+                    .AddSpelling("number", 11)
+                    .AddComposedTool("session_release_handle", false, "解放する")
+                    .AddComposedTool("view_poll_events", true, "取り出す")
+                    .ToString());
             string mapPath = Path.Combine(_root, "schemas-map.json");
             File.WriteAllText(mapPath, "{\"rows\":[]}");
             string schemasPath = Path.Combine(_root, "schemas-tools.json");
@@ -507,7 +491,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[]
                 {
                     CommandRunner.ToolSchemasCommand,
-                    Path.Combine(_root, "none.md"),
+                    Path.Combine(_root, "none.json"),
                     mapPath,
                     schemasPath,
                 },
@@ -703,7 +687,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 CommandRunner.ValueShapesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
-                    + " <共通契約仕様書のパス>",
+                    + " <共通契約の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
@@ -719,19 +703,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ToolSchemasCommand
-                    + " <共通契約仕様書のパス> <能力対応表の正本のパス> <スキーマ正本のパス>",
+                    + " <共通契約の正本のパス> <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ToolDescriptionsCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
                     + " <型役割表の正本のパス> <日本語名の正本のパス>"
                     + " <共通契約割当の正本のパス> <能力対応表の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.SampleValuesCommand
-                    + " <PMXエディタ導入ディレクトリ> <共通契約仕様書のパス>"
+                    + " <PMXエディタ導入ディレクトリ> <共通契約の正本のパス>"
                     + " <サンプル値の正本のパス>",
                 usage,
                 StringComparison.Ordinal);
@@ -744,7 +728,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ToolMappingCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
                         + " <型役割表の正本のパス> <共通契約割当の正本のパス>"
                         + " <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
@@ -763,17 +747,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ToolDefinitionsCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
-                    + " <IPC仕様書のパス> <アーキテクチャ仕様書のパス> <型役割表の正本のパス>"
-                    + " <日本語名の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
                     + " <スキーマ正本のパス> <書き出し先パス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.E2eCasesCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約仕様書のパス>"
-                    + " <IPC仕様書のパス> <アーキテクチャ仕様書のパス> <型役割表の正本のパス>"
-                    + " <日本語名の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
                     + " <スキーマ正本のパス> <サンプル値の正本のパス> <書き出し先パス>",
                 usage,
                 StringComparison.Ordinal);

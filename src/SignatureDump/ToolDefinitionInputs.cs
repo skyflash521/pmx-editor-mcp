@@ -90,42 +90,40 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(args));
             }
 
-            string map = ReadFile(args[8], "能力対応表の正本");
-            string contract = ReadFile(args[2], "共通契約仕様書");
-            string ipc = ReadFile(args[3], "IPC仕様書");
-            string architecture = ReadFile(args[4], "アーキテクチャ仕様書");
+            string map = ReadFile(args[6], "能力対応表の正本");
+            CommonContractTable contract =
+                CommonContractJsonReader.Read(ReadFile(args[2], "共通契約の正本"));
             string document = ReadFile(
                 SdkAssemblyLocator.GetDocumentPath(editorDirectory), "ドキュメントXML");
 
             return new ToolDefinitionInputs(
                 LedgerJsonReader.Read(ReadFile(args[1], "能力台帳")),
-                TypeRoleTableJsonReader.ReadTypeRoles(ReadFile(args[5], "型役割表の正本")),
-                PropertyNameJsonReader.ReadPropertyNames(ReadFile(args[6], "日本語名の正本")),
-                CommonAssignmentJsonReader.Read(ReadFile(args[7], "共通契約割当の正本")),
-                ComposedToolDocument.Read(contract),
+                TypeRoleTableJsonReader.ReadTypeRoles(ReadFile(args[3], "型役割表の正本")),
+                PropertyNameJsonReader.ReadPropertyNames(ReadFile(args[4], "日本語名の正本")),
+                CommonAssignmentJsonReader.Read(ReadFile(args[5], "共通契約割当の正本")),
+                contract.ComposedTools,
                 DocumentNoteReader.ReadMethods(document),
                 DocumentNoteReader.Read(document),
                 ShapesByType(contract),
                 ToolMapJsonReader.Read(map),
                 ToolMapDigest.Of(map),
-                ToolSchemaJsonReader.Read(ReadFile(args[9], "スキーマ正本")),
-                AssumedLengthDocument.Read(contract),
-                BudgetDocument.ReadDefault(architecture),
-                BudgetDocument.ReadWarningRoom(contract),
-                BudgetDocument.ReadRequestBytes(contract),
-                BudgetDocument.ReadTokenLimit(ipc));
+                ToolSchemaJsonReader.Read(ReadFile(args[7], "スキーマ正本")),
+                contract.AssumedChars(),
+                contract.Budgets.ResponseDefaultChars,
+                contract.Budgets.WarningRoomChars,
+                contract.Budgets.RequestBytes,
+                contract.Budgets.StructureTokenLimit);
         }
 
         /// <summary>操作対象型を指す位置の綴り。位置は0から数える整数である。</summary>
         private const string PositionShape = "number";
 
         /// <summary>型から値の表現の綴りへ。綴りが1つに決まらない包む型は持たない。</summary>
-        private static IDictionary<string, string> ShapesByType(string contract)
+        private static IDictionary<string, string> ShapesByType(CommonContractTable contract)
         {
             Dictionary<string, string> shapes =
                 new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (ValueShapeRow row in ValueShapeDocument.Read(contract)
-                .Where(r => r.Shape != null))
+            foreach (ValueShapeRow row in contract.Types.Where(r => r.Shape != null))
             {
                 shapes[row.TypeName] = row.Shape;
             }
@@ -251,7 +249,7 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
         }
 
-        /// <summary>ツール名から説明文へ。合成ツールは仕様書の受け持つことをそのまま使う。</summary>
+        /// <summary>ツール名から説明文へ。合成ツールは受け持つことをそのまま使う。</summary>
         public IDictionary<string, string> Descriptions(InventoryRecord inventory)
         {
             if (inventory == null)

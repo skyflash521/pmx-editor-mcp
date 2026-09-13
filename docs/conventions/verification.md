@@ -40,6 +40,9 @@ pwsh -File scripts/verify.ps1
 足せば落ちる)。照合はどれも、入力のどれかが欠けても読めなくても読み解けなくても終了コード3、
 規則に合わなければ5を返し、5のときは何がどう合わないかを標準エラー出力に書く。
 
+**検査からだけ使う入口を、ビルド構成で分けない。** 配布物へ入れたうえで既定は閉じておき、開く
+条件を実行時に置く。構成で分けると、配布するものと検査したものが別物になる。
+
 ## 実機に触る検査
 
 **エディタかMCPクライアントに触る変更のときに通す。** 手順内の各確認が期待どおりであることを合格
@@ -126,7 +129,7 @@ pwsh -File scripts/verify.ps1
 1. 検査を組み立てる。書き出し先は追跡下に置かない。
 
    ```
-   src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe e2e-cases <PMXエディタ導入ディレクトリ> data/observed/capability-ledger.json docs/specs/pmx-editor-mcp-common-contract.md docs/specs/pmx-editor-mcp-ipc.md docs/specs/pmx-editor-mcp-architecture.md data/authored/type-roles.json data/authored/property-names.json data/authored/common-assignments.json data/authored/tool-map.json data/authored/tool-schemas.json data/authored/sample-values.json .scratch/e2e-cases.json
+   src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe e2e-cases <PMXエディタ導入ディレクトリ> data/observed/capability-ledger.json data/authored/common-contract.json data/authored/type-roles.json data/authored/property-names.json data/authored/common-assignments.json data/authored/tool-map.json data/authored/tool-schemas.json data/authored/sample-values.json .scratch/e2e-cases.json
    ```
 
 2. エディタを起動し([エディタとホストの操作](#エディタとホストの操作)の `launch`)、実行する。
@@ -269,13 +272,11 @@ pwsh -File scripts/host-control.ps1 -Action show   -ProcessId <エディタの�
    ——実寸の長辺が指定値を超える呼び出しにだけ付く。省いた側と指定した側のそれぞれについて、
    記録した実寸からどちらであるかを判定する。**`maxLongSide` を省いた呼び出しで、MCPクライアントの
    出力が出力サイズの警告を含まないこと**も見る。
-   (**画像の中身がそのビューのものであることはここでは扱わない**。
-   [共通契約仕様書](../specs/pmx-editor-mcp-common-contract.md)が画像の受入条件として求める
-   突き合わせには画像そのものが要るが、MCPクライアントは画像を画面へ出すだけで比べられる形では
-   渡さない。この判定は、画像を受け取れる自動E2E検査が画像を返すツールごとに行う。)
+   (**画像の中身がそのビューのものであることはここでは扱わない**。突き合わせには画像そのものが
+   要るが、MCPクライアントは画像を画面へ出すだけで比べられる形では渡さない。この判定は、画像を
+   受け取れる自動E2E検査が画像を返すツールごとに行う。)
    `maxLongSide` の最大値2048の妥当性は、ビューポートをそれ以上に
-   広げないと長辺2048の応答を作れないためここでは確かめない(ツール仕様書が未検証として
-   記録する)。
+   広げないと長辺2048の応答を作れないためここでは確かめない。
 6. **イベント**: イベントコネクタを生成→Viewイベントリスナを作成(対象イベント:
    マウス左クリック)→エディタのビュー中央で左クリックを1回→`view_poll_events` で取得→
    リスナ解放→コネクタ解放。期待: `type` が対象イベントの識別子・`sourceHandle` が
@@ -326,7 +327,7 @@ pwsh -File scripts/host-control.ps1 -Action show   -ProcessId <エディタの�
    **後処理**: 完了後、2つ目のエディタを `close` して単一エディタ状態へ戻し、1つ目のホストを
    `start` して `ping` を2回呼んで確認する(一度目は切断の検出になる)。
 
-シナリオで用いる具体のツール名・引数名・スキーマは、[ツール仕様書](../specs/pmx-editor-mcp-tools.md)の
+シナリオで用いる具体のツール名・引数名・スキーマは、[スキーマ正本](../../data/authored/tool-schemas.json)の
 確定値を用いる。座標・保存先・視点・イベント種別・ボーン名・フレーム・範囲外インデックスの
 試験値は、上に書いたものを用いる。
 
@@ -350,7 +351,7 @@ pwsh -File scripts/host-control.ps1 -Action show   -ProcessId <エディタの�
   後は、そのシナリオから独立に再実行できる。修正が恒久文書の定める設計値に影響するときは、その
   設計値を決め直して恒久文書へ反映してから再実行する。
 - [受入シナリオ](#受入シナリオ)5で、既定の呼び出しの出力に出力サイズの警告が含まれた場合:
-  `maxLongSide` の既定を最小の256へ下げて共通契約仕様書へ反映し、シナリオ5を再実行する。256でも
+  `maxLongSide` の既定を最小の256へ下げてスキーマ正本へ反映し、シナリオ5を再実行する。256でも
   含まれる場合は、画像を返すツールの応答から画像を外して寸法だけを返す形へ改め、あわせてこの項目を
   シナリオ5の期待から外す。
 - [ブリッジの実機動作確認](#ブリッジの実機動作確認)の不合格: 原因を修正したうえで、全エディタを

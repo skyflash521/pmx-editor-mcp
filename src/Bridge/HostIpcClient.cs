@@ -451,8 +451,7 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
-        /// ホストが応答を返したあとに切断する契約のエラーコードかどうか。IPC仕様書のエラー表が
-        /// コードごとに接続を切るか保つかを定めており、切る側をここで数える。
+        /// ホストが応答を返したあとに切断する契約のエラーコードかどうか。
         /// </summary>
         private static bool HostDisconnectsAfter(int hostErrorCode)
         {

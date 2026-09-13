@@ -6,8 +6,8 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力対応表とスキーマ正本が、ツール仕様書の写像の規則に合うことを確かめる。埋め込み先も
-    /// 呼び分けの見分けも機械で決まるので、書き手が別のものを書けばここで落ちる。
+    /// 能力対応表とスキーマ正本が、写像の規則に合うことを確かめる。埋め込み先も呼び分けの
+    /// 見分けも機械で決まるので、書き手が別のものを書けばここで落ちる。
     /// </summary>
     public static class ToolMappingGate
     {

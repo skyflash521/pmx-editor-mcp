@@ -36,7 +36,6 @@
     <!-- 中間の置き場は本文の評価の時点では決まっていないので、その元から組み立てる。 -->
     <ToolDefinitionPath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedToolDefinitions.g.cs</ToolDefinitionPath>
     <DefinitionGeneratorPath>$(MSBuildThisFileDirectory)..\SignatureDump\bin\$(Configuration)\net48\PmxEditorMcp.SignatureDump.exe</DefinitionGeneratorPath>
-    <SpecsDirectory>$(MSBuildThisFileDirectory)..\..\docs\specs</SpecsDirectory>
     <ObservedDirectory>$(MSBuildThisFileDirectory)..\..\data\observed</ObservedDirectory>
     <AuthoredDirectory>$(MSBuildThisFileDirectory)..\..\data\authored</AuthoredDirectory>
   </PropertyGroup>
@@ -50,7 +49,7 @@
   <Target Name="GenerateToolDefinitions"
           BeforeTargets="BeforeCompile"
           DependsOnTargets="EnsurePmxEditorDir;BuildDefinitionGenerator">
-    <Exec Command="&quot;$(DefinitionGeneratorPath)&quot; tool-definitions &quot;$(PmxEditorDir)&quot; &quot;$(ObservedDirectory)\capability-ledger.json&quot; &quot;$(SpecsDirectory)\pmx-editor-mcp-common-contract.md&quot; &quot;$(SpecsDirectory)\pmx-editor-mcp-ipc.md&quot; &quot;$(SpecsDirectory)\pmx-editor-mcp-architecture.md&quot; &quot;$(AuthoredDirectory)\type-roles.json&quot; &quot;$(AuthoredDirectory)\property-names.json&quot; &quot;$(AuthoredDirectory)\common-assignments.json&quot; &quot;$(AuthoredDirectory)\tool-map.json&quot; &quot;$(AuthoredDirectory)\tool-schemas.json&quot; &quot;$(ToolDefinitionPath)&quot;" />
+    <Exec Command="&quot;$(DefinitionGeneratorPath)&quot; tool-definitions &quot;$(PmxEditorDir)&quot; &quot;$(ObservedDirectory)\capability-ledger.json&quot; &quot;$(AuthoredDirectory)\common-contract.json&quot; &quot;$(AuthoredDirectory)\type-roles.json&quot; &quot;$(AuthoredDirectory)\property-names.json&quot; &quot;$(AuthoredDirectory)\common-assignments.json&quot; &quot;$(AuthoredDirectory)\tool-map.json&quot; &quot;$(AuthoredDirectory)\tool-schemas.json&quot; &quot;$(ToolDefinitionPath)&quot;" />
     <ItemGroup>
       <Compile Include="$(ToolDefinitionPath)" Exclude="@(Compile)" />
     </ItemGroup>

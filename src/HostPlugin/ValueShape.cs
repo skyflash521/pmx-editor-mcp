@@ -7,8 +7,8 @@ using System.Globalization;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// 値をJSONへ写す。写し方と写せる型は共通契約仕様書の値の表現が定める。表に載らない型は役割を
-    /// 持つ型なので、ここでは写さず偽を返し、断る内容も持たせない。
+    /// 値をJSONへ写す。ここで写せない型は役割を持つ型なので、写さず偽を返し、断る内容も
+    /// 持たせない。
     /// </summary>
     public static class ValueShape
     {

@@ -10,13 +10,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Tool = "model_list_vertices";
 
-        private const string Spellings =
-            "### 表現の綴り\n\n| 綴り | JSONの形 |\n|---|---|\n| `number` | 数値 |\n";
-
-        private const string Contract = Spellings
-            + "\n#### 想定文字数\n\n| 綴り | 想定文字数 |\n|---|---|\n| `number` | 11 |\n"
-            + "\n### 合成ツール\n\n| ツール | 分岐 | 受け持つこと |\n|---|---|---|\n"
-            + "| `view_poll_events` | 持つ | 取り出す |\n";
+        private static readonly string Contract = new CommonContractJsonBuilder()
+            .AddSpelling("number", 11)
+            .AddComposedTool("view_poll_events", true, "取り出す")
+            .ToString();
 
         private const string EmptyMap = "{\"rows\":[]}\n";
 
@@ -86,14 +83,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ADocumentWithoutTheSpellingSectionIsInputUnavailable()
+        public void ASourceWithoutTheSpellingsIsInputUnavailable()
         {
             StringWriter error = new StringWriter();
 
             int code = ToolSchemaRunner.Run(
                 new[]
                 {
-                    Write("c2.md", "## 値の表現\n"),
+                    Write("c2.json", "{\"types\":[]}"),
                     Write("m2.json", EmptyMap),
                     Write("s2.json", EmptySchemas),
                 },
@@ -101,20 +98,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 error);
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
-            Assert.Contains("節が無い", error.ToString(), StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void ADocumentWithoutTheAssumedLengthSectionIsInputUnavailable()
-        {
-            string[] args = Arguments(EmptyMap, EmptySchemas);
-            args[0] = Write("c3.md", Spellings);
-            StringWriter error = new StringWriter();
-
-            int code = ToolSchemaRunner.Run(args, new StringWriter(), error);
-
-            Assert.Equal(ExitCodes.InputUnavailable, code);
-            Assert.Contains("想定文字数", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("spellings", error.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -185,7 +169,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return new[]
             {
-                Write("c.md", Contract),
+                Write("c.json", Contract),
                 Write("m.json", map),
                 Write("s.json", schemas),
             };

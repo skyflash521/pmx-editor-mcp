@@ -65,7 +65,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AMissingInputFileIsInputUnavailable()
         {
             string[] args = Arguments(Sdk(), Table());
-            args[3] = Path.Combine(_root, "none.md");
+            args[3] = Path.Combine(_root, "none.json");
 
             Assert.Equal(
                 ExitCodes.InputUnavailable,
@@ -82,16 +82,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ADocumentWithoutTheSectionIsInputUnavailable()
+        public void ASourceWithoutTheTypesIsInputUnavailable()
         {
             StringWriter error = new StringWriter();
 
             int code = ValueShapeRunner.Run(
-                Arguments(Sdk(), "## 別の節\n\n本文だけ。\n"), new StringWriter(), error);
+                Arguments(Sdk(), "{\"spellings\":[]}"), new StringWriter(), error);
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
-            Assert.Contains(
-                ValueShapeDocument.SectionHeading, error.ToString(), StringComparison.Ordinal);
+            Assert.False(string.IsNullOrWhiteSpace(error.ToString()));
         }
 
         [Fact]
@@ -164,22 +163,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        /// <summary>題材の値として写せる型を並べた仕様書。除く型を渡すとその行だけを落とす。</summary>
+        /// <summary>題材の値として写せる型を並べた正本。除く型を渡すとその行だけを落とす。</summary>
         private static string Table(string dropped = null)
         {
             ValueRepresentationRule rule = ValueRepresentationRule.Create(
                 AssemblyEnumerator.Enumerate(Sample));
-            StringBuilder builder = new StringBuilder("## 値の表現\n\n")
-                .Append(ValueShapeDocument.SectionHeading)
-                .Append("\n\n| 型 | 表現 |\n|---|---|\n");
-            foreach (string type in Mapped().Where(t => !string.Equals(t, dropped, StringComparison.Ordinal)))
+            CommonContractJsonBuilder builder = new CommonContractJsonBuilder();
+            foreach (string type in Mapped()
+                .Where(t => !string.Equals(t, dropped, StringComparison.Ordinal)))
             {
                 ValueRepresentation representation;
-                builder.Append("| `").Append(type).Append("` | ")
-                    .Append(rule.TryClassify(type, out representation)
-                        ? "`" + representation.Identifier + "`"
-                        : "要素の表現を包む")
-                    .Append(" |\n");
+                builder.AddType(
+                    type,
+                    rule.TryClassify(type, out representation)
+                        ? representation.Identifier
+                        : null);
             }
 
             return builder.ToString();
@@ -243,14 +241,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             get { return typeof(ValueShapeRunnerTests).Assembly; }
         }
 
-        private string[] Arguments(string editorDirectory, string document)
+        private string[] Arguments(string editorDirectory, string contract)
         {
             return new[]
             {
                 editorDirectory,
                 Write("l.json", Ledger()),
                 Write("e.json", EmptyExcluded),
-                Write("c.md", document),
+                Write("c.json", contract),
             };
         }
 

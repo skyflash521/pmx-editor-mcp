@@ -31,11 +31,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 12)
+            if (args.Length != 10)
             {
                 error.WriteLine(
-                    "引数は12個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
-                        + " <共通契約仕様書のパス> <IPC仕様書のパス> <アーキテクチャ仕様書のパス>"
+                    "引数は10個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <共通契約の正本のパス>"
                         + " <型役割表の正本のパス> <日本語名の正本のパス>"
                         + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
                         + " <スキーマ正本のパス> <サンプル値の正本のパス> <書き出し先パス>");
@@ -55,7 +55,7 @@ namespace PmxEditorMcp.SignatureDump
             try
             {
                 samples = SampleValueJsonReader.Read(
-                    File.ReadAllText(args[10], Encoding.UTF8));
+                    File.ReadAllText(args[8], Encoding.UTF8));
                 inputs = ToolDefinitionInputs.Read(editorDirectory, args);
             }
             catch (Exception exception)
@@ -98,11 +98,11 @@ namespace PmxEditorMcp.SignatureDump
 
             try
             {
-                WriteIfChanged(args[11], E2eCaseJson.Compose(cases));
+                WriteIfChanged(args[9], E2eCaseJson.Compose(cases));
             }
             catch (Exception exception)
             {
-                error.WriteLine("書き出せない: " + args[11]);
+                error.WriteLine("書き出せない: " + args[9]);
                 error.WriteLine(exception.Message);
                 return ExitCodes.WriteFailed;
             }

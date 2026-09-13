@@ -5,7 +5,7 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// スキーマ正本を能力対応表と仕様書の表と照合し、あわせて仕様書の2つの表どうしが対応することを
+    /// スキーマ正本を能力対応表と共通契約の正本と照合し、あわせて正本の2つの表どうしが対応することを
     /// 確かめる。
     /// </summary>
     public static class ToolSchemaGate
@@ -86,7 +86,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 在る合成ツールの形について、イベントの分岐の有無が仕様書の分岐の欄と合うことを求める。
+        /// 在る合成ツールの形について、イベントの分岐の有無が正本の分岐の欄と合うことを求める。
         /// 欄は形を求めるかどうかを決めるので、形と照らさないと書き換えだけで検査を外せる。
         /// </summary>
         private static void RequireSameBranching(
@@ -208,7 +208,7 @@ namespace PmxEditorMcp.SignatureDump
                         && m.Element != null);
         }
 
-        /// <summary>綴りの閉じた集合は仕様書が持つので、そこに実在することまで求める。</summary>
+        /// <summary>綴りの閉じた集合は共通契約の正本が持つので、そこに実在することまで求める。</summary>
         private static void RequireShapes(ToolSchema schema, ISet<string> spellings)
         {
             foreach (SchemaItem item in schema.AllItems.Where(i => i.Shape != null))
@@ -216,7 +216,7 @@ namespace PmxEditorMcp.SignatureDump
                 if (!spellings.Contains(item.Shape))
                 {
                     throw new InvalidOperationException(
-                        "表現の綴りが仕様書に無い: " + schema.Tool + "(" + item.Shape + ")");
+                        "表現の綴りが正本に無い: " + schema.Tool + "(" + item.Shape + ")");
                 }
             }
         }

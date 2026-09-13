@@ -33,7 +33,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 error.WriteLine(
                     "引数は7つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
-                        + " <共通契約仕様書のパス> <型役割表の正本のパス>"
+                        + " <共通契約の正本のパス> <型役割表の正本のパス>"
                         + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
                         + " <スキーマ正本のパス>");
                 return ExitCodes.InvalidArguments;
@@ -56,7 +56,8 @@ namespace PmxEditorMcp.SignatureDump
             try
             {
                 ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
-                composedTools = ComposedToolDocument.Read(Read(args[2], "共通契約仕様書"));
+                composedTools = CommonContractJsonReader
+                    .Read(Read(args[2], "共通契約の正本")).ComposedTools;
                 roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
                 assignments = CommonAssignmentJsonReader.Read(Read(args[4], "共通契約割当の正本"));
                 map = ToolMapJsonReader.Read(Read(args[5], "能力対応表の正本"));

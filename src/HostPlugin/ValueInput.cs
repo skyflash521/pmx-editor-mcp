@@ -8,7 +8,7 @@ namespace PmxEditorMcp
 {
     /// <summary>
     /// JSONから値を組み立てる。写せる型と綴りの判定は <see cref="ValueShape"/> が持ち、こちらは
-    /// その逆向きだけを持つ。形が合わない値は、共通契約仕様書の値の表現のとおり断る。
+    /// その逆向きだけを持つ。形が合わない値は断る。
     /// </summary>
     public static class ValueInput
     {

@@ -224,7 +224,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(SchemaJson(shape: "number"), MapJson(), "text"));
 
-            Assert.Contains("表現の綴りが仕様書に無い", error.Message, StringComparison.Ordinal);
+            Assert.Contains("表現の綴りが正本に無い", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -237,7 +237,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolAndEvent,
                 "number"));
 
-            Assert.Contains("表現の綴りが仕様書に無い", error.Message, StringComparison.Ordinal);
+            Assert.Contains("表現の綴りが正本に無い", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]

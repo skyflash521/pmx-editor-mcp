@@ -297,7 +297,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Theory]
-        // IPC仕様書のエラー表で、ホストが応答のあと切断すると定めているコード。
+        // ホストが応答のあと切断すると定めているコード。
         [InlineData(-32700)]
         [InlineData(-32001)]
         [InlineData(-32003)]

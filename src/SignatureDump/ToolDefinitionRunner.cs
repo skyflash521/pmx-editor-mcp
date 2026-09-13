@@ -31,11 +31,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 11)
+            if (args.Length != 9)
             {
                 error.WriteLine(
-                    "引数は11個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
-                        + " <共通契約仕様書のパス> <IPC仕様書のパス> <アーキテクチャ仕様書のパス>"
+                    "引数は9個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <共通契約の正本のパス>"
                         + " <型役割表の正本のパス> <日本語名の正本のパス>"
                         + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
                         + " <スキーマ正本のパス> <書き出し先パス>");
@@ -99,11 +99,11 @@ namespace PmxEditorMcp.SignatureDump
             string digest = inputs.MapDigest;
             try
             {
-                WriteIfChanged(args[10], ToolDefinitionSource.Compose(definitions, digest));
+                WriteIfChanged(args[8], ToolDefinitionSource.Compose(definitions, digest));
             }
             catch (Exception exception)
             {
-                error.WriteLine("書き出せない: " + args[10]);
+                error.WriteLine("書き出せない: " + args[8]);
                 error.WriteLine(exception.Message);
                 return ExitCodes.WriteFailed;
             }
