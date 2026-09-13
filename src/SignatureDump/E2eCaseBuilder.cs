@@ -58,7 +58,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> dangerous,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, string> sdkTypes = null,
-            SampleValueTable samples = null)
+            SampleValueTable samples = null,
+            IDictionary<string, string> viewImages = null)
         {
             if (map == null)
             {
@@ -117,9 +118,39 @@ namespace PmxEditorMcp.SignatureDump
                     dangerous,
                     sdkShapes,
                     Sampled(sdkTypes, samples)));
+                cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
             }
 
             return cases;
+        }
+
+        /// <summary>
+        /// ビューの絵を返すツールの検査。写し取れるのは窓を持つビューだけなので、その1枚を相手に
+        /// 全系統を見比べ、そのビューを返す行だけが合うことを確かめる。
+        /// </summary>
+        private static IEnumerable<E2eCase> ImageCases(
+            ToolMapRow row,
+            ToolSchema schema,
+            IDictionary<string, string> connectionPaths,
+            IDictionary<string, string> viewImages)
+        {
+            string view;
+            if (viewImages == null || !viewImages.TryGetValue(schema.Tool, out view))
+            {
+                yield break;
+            }
+
+            string rowKey = row == null ? string.Empty : row.SignatureKey;
+            yield return new E2eCase(
+                rowKey,
+                row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind),
+                row == null ? string.Empty : ConnectionPath(rowKey, connectionPaths),
+                schema.Tool,
+                "返す絵が写し取ったビューの姿と合うこと",
+                new Dictionary<string, object>(StringComparer.Ordinal),
+                E2eExpectation.ViewImage,
+                null,
+                view);
         }
 
         private static IEnumerable<E2eCase> Cases(

@@ -131,6 +131,37 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolThatReturnsAViewImageIsCheckedAgainstTheCapturedView()
+        {
+            const string Named = "view_get_client_image";
+            E2eCase one = Assert.Single(
+                E2eCaseBuilder.Build(
+                    Map(RowKey),
+                    new ToolSchemaTable(new[] { Tool(Named, new SchemaItem[0]) }),
+                    new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Named } },
+                    Paths(),
+                    new HashSet<string>(StringComparer.Ordinal),
+                    Shapes(),
+                    null,
+                    null,
+                    new Dictionary<string, string>(StringComparer.Ordinal) { { Named, "pmx" } }),
+                c => c.Expectation == E2eExpectation.ViewImage);
+
+            Assert.Equal(Named, one.Tool);
+            Assert.Equal("pmx", one.View);
+            Assert.Equal(RowKey, one.RowKey);
+            Assert.Empty(one.Arguments);
+        }
+
+        [Fact]
+        public void AToolThatReturnsNoViewImageIsNotCheckedAgainstAnyView()
+        {
+            Assert.DoesNotContain(
+                Build(Tool("model_get_name", new SchemaItem[0])),
+                c => c.Expectation == E2eExpectation.ViewImage);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             ToolSchemaTable schemas = new ToolSchemaTable(new ToolSchema[0]);

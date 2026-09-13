@@ -86,12 +86,14 @@ namespace PmxEditorMcp.SignatureDump
             IList<ValueShapeRow> types,
             IDictionary<string, int> components,
             IDictionary<string, ComposedTool> composedTools,
+            IDictionary<string, string> viewImages,
             SizeBudgets budgets)
         {
             Spellings = new ReadOnlyCollection<ValueSpellingRow>(spellings);
             Types = new ReadOnlyCollection<ValueShapeRow>(types);
             Components = new ReadOnlyDictionary<string, int>(components);
             ComposedTools = new ReadOnlyDictionary<string, ComposedTool>(composedTools);
+            ViewImages = new ReadOnlyDictionary<string, string>(viewImages);
             Budgets = budgets;
         }
 
@@ -103,6 +105,12 @@ namespace PmxEditorMcp.SignatureDump
         public IDictionary<string, int> Components { get; }
 
         public IDictionary<string, ComposedTool> ComposedTools { get; }
+
+        /// <summary>
+        /// ビューの絵を返すツールの名前から、そのビューの名前へ。絵がどのビューのものかは
+        /// 呼び先の型からは決まらないので、ここが決める。
+        /// </summary>
+        public IDictionary<string, string> ViewImages { get; }
 
         public SizeBudgets Budgets { get; }
 
@@ -129,6 +137,10 @@ namespace PmxEditorMcp.SignatureDump
         private const string ComponentsName = "components";
 
         private const string ComposedToolsName = "composedTools";
+
+        private const string ViewImagesName = "viewImages";
+
+        private const string ViewName = "view";
 
         private const string BudgetsName = "budgets";
 
@@ -178,6 +190,12 @@ namespace PmxEditorMcp.SignatureDump
                     JsonForm.Member(BranchingName, JsonForm.Flag()),
                     JsonForm.Member(DutyName, JsonForm.Text())),
                 ToolName)),
+            JsonForm.Member(ViewImagesName, JsonForm.Array(
+                JsonForm.Object(
+                    JsonForm.Member(ToolName, JsonForm.Text()),
+                    JsonForm.Member(ViewName, JsonForm.Text())),
+                ToolName,
+                allowEmpty: true)),
             JsonForm.Member(BudgetsName, JsonForm.Object(
                 JsonForm.Member(ResponseDefaultCharsName, JsonForm.Count()),
                 JsonForm.Member(WarningRoomCharsName, JsonForm.Count()),
@@ -207,6 +225,10 @@ namespace PmxEditorMcp.SignatureDump
                 Rows(root, ComposedToolsName).ToDictionary(
                     r => (string)r[ToolName],
                     r => new ComposedTool((bool)r[BranchingName], (string)r[DutyName]),
+                    StringComparer.Ordinal),
+                Rows(root, ViewImagesName).ToDictionary(
+                    r => (string)r[ToolName],
+                    r => (string)r[ViewName],
                     StringComparer.Ordinal),
                 new SizeBudgets(
                     (int)budgets[ResponseDefaultCharsName],

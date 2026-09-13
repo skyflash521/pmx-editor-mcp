@@ -21,6 +21,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private readonly SortedDictionary<string, string> _shapes =
             new SortedDictionary<string, string>(StringComparer.Ordinal);
 
+        private readonly SortedDictionary<string, string> _views =
+            new SortedDictionary<string, string>(StringComparer.Ordinal);
+
         private int _responseDefaultChars = 100000;
 
         private int _warningRoomChars = 2000;
@@ -59,6 +62,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Quoted(tool),
                 branching ? "true" : "false",
                 Quoted(duty));
+
+            return this;
+        }
+
+        public CommonContractJsonBuilder AddViewImage(string tool, string view)
+        {
+            _views[tool] = string.Format(
+                CultureInfo.InvariantCulture,
+                "{{\"tool\":{0},\"view\":{1}}}",
+                Quoted(tool),
+                Quoted(view));
 
             return this;
         }
@@ -102,6 +116,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Append("],\"composedTools\":[")
                 .Append(string.Join(",", Filled(
                     _composed.Values.ToList(), Composed("session_release_handle"))))
+                .Append("],\"viewImages\":[")
+                .Append(string.Join(",", _views.Values))
                 .Append("],\"budgets\":{")
                 .AppendFormat(
                     CultureInfo.InvariantCulture,

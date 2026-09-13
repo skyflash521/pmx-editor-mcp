@@ -6,6 +6,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import net from "node:net";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import url from "node:url";
@@ -28,6 +29,16 @@ const CONTROL_SCRIPT = path.join(
 
 /** 呼び出しを始めていないことを表す断りの綴り。共通契約が定める。 */
 const NOT_STARTED = "TOOL_NOT_STARTED";
+
+/** 写しを取れるビューの名前。ほかのビューは自分の窓を持たない。 */
+const CAPTURED_VIEW = "pmx";
+
+/** 同じビューを写した2枚と見なす明るさの差の上限。 */
+const MATCHING_IMAGE_LIMIT = 0.1;
+
+/** ビューの写しと絵を見比べるスクリプト。 */
+const COMPARE_SCRIPT = path.join(
+    path.dirname(url.fileURLToPath(import.meta.url)), "compare-view-image.ps1");
 
 /** ホストが発行するセッションの識別子の形。128ビットを16進で表した文字列である。 */
 const SESSION_PATTERN = /^[0-9a-f]{32}$/;
@@ -107,9 +118,13 @@ function handshake(result) {
  * 1件の検査の結末。合っていれば null、違っていればその理由を返す。
  * 包みの形は共通契約が定めるので、ここでは成功・失敗と理由の綴りだけを見る。
  */
-function judge(one, response) {
+function judge(one, response, capture) {
     if (one.expect === "dispatched") {
         return dispatched(response);
+    }
+
+    if (one.expect === "viewImage") {
+        return viewImage(one, response, capture);
     }
 
     if (response.error !== undefined) {
@@ -152,6 +167,71 @@ function dispatched(response) {
     return null;
 }
 
+/** ビューの写しを1枚だけ取る。取れなければその事情を返す。 */
+function captureView(processId) {
+    const destination = path.join(os.tmpdir(), "pmx-editor-mcp-view.png");
+    const done = invokeControl([
+        "-File", CONTROL_SCRIPT, "-Action", "capture",
+        "-ProcessId", String(processId), "-View", CAPTURED_VIEW, "-Path", destination,
+    ]);
+
+    return done.written === null
+        ? { path: null, unavailable: done.unavailable }
+        : { path: destination, unavailable: null };
+}
+
+/** 写しと絵の明るさの差。比べられなければその事情を返す。 */
+function difference(reference, image) {
+    const candidate = path.join(os.tmpdir(), "pmx-editor-mcp-view.b64");
+    fs.writeFileSync(candidate, image, "utf8");
+    const done = invokeControl([
+        "-File", COMPARE_SCRIPT, "-Reference", reference, "-Candidate", candidate,
+    ]);
+    if (done.written === null) {
+        return { measured: null, unavailable: done.unavailable };
+    }
+
+    const measured = Number.parseFloat(done.written);
+
+    return Number.isFinite(measured)
+        ? { measured, unavailable: null }
+        : { measured: null, unavailable: "明るさの差を数として読めません: " + done.written };
+}
+
+/**
+ * 返した絵が、写し取ったビューの姿と合うか。写せるビューを返す行は合い、ほかのビューを返す行は
+ * 合わないことを確かめる。
+ */
+function viewImage(one, response, capture) {
+    if (capture.path === null) {
+        return "ビューを写し取れませんでした: " + capture.unavailable;
+    }
+
+    const envelope = response.result;
+    if (envelope === null || typeof envelope !== "object" || envelope.ok !== true) {
+        return "絵が返りませんでした: " + JSON.stringify(response).slice(0, 200);
+    }
+    if (typeof envelope.value !== "string" || envelope.value.length === 0) {
+        return "絵が文字列で返りませんでした。";
+    }
+
+    const compared = difference(capture.path, envelope.value);
+    if (compared.measured === null) {
+        return "絵を写しと見比べられませんでした: " + compared.unavailable;
+    }
+
+    const matches = compared.measured <= MATCHING_IMAGE_LIMIT;
+    if (one.view === CAPTURED_VIEW) {
+        return matches
+            ? null
+            : "写したビューの姿と合いません(明るさの差 " + compared.measured + ")。";
+    }
+
+    return matches
+        ? "別のビューの絵が写したビューの姿と合いました(明るさの差 " + compared.measured + ")。"
+        : null;
+}
+
 function describe(envelope) {
     return envelope.error === undefined
         ? JSON.stringify(envelope)
@@ -189,19 +269,37 @@ function report(results, key, title) {
     }
 }
 
+/**
+ * 操作役のスクリプトを起こし、書き出したものと、落ちたときの事情を返す。
+ * PowerShellの出力の文字コードは端末の設定で変わるので、読めない並びは読めないまま置いて、
+ * 数と綴りだけを確かに読めるようにする。
+ */
+function invokeControl(args) {
+    const done = spawnSync("pwsh", ["-NoProfile", ...args], { encoding: "utf8" });
+    if (done.error !== undefined) {
+        return { written: null, unavailable: "pwsh を起こせません: " + done.error.message };
+    }
+    if (done.status !== 0) {
+        return {
+            written: null,
+            unavailable: "pwsh が " + done.status + " で終わりました: "
+                + ((done.stderr ?? "").trim() || "(何も言いませんでした)"),
+        };
+    }
+
+    return { written: (done.stdout ?? "").trim(), unavailable: null };
+}
+
 /** エディタが出している応答待ちの表示へ応答して閉じ、閉じた数を返す。 */
 function answerDialogs(processId) {
-    // 端末の文字コードは環境で変わる。
-    const done = spawnSync(
-        "pwsh",
-        ["-NoProfile", "-File", CONTROL_SCRIPT, "-Action", "answer",
-            "-ProcessId", String(processId)],
-        { encoding: "latin1" });
-    if (done.status !== 0) {
+    const done = invokeControl([
+        "-File", CONTROL_SCRIPT, "-Action", "answer", "-ProcessId", String(processId),
+    ]);
+    if (done.written === null) {
         return 0;
     }
 
-    const answered = Number.parseInt((done.stdout ?? "").trim(), 10);
+    const answered = Number.parseInt(done.written, 10);
 
     return Number.isInteger(answered) ? answered : 0;
 }
@@ -230,6 +328,9 @@ function run(pipeName, cases, processId) {
     let retried = -1;
     let settled = false;
     const results = [];
+    const capture = cases.some((one) => one.expect === "viewImage")
+        ? captureView(processId)
+        : { path: null, unavailable: "絵を確かめる検査がありません。" };
 
     return new Promise((resolve) => {
         const settle = (code, message) => {
@@ -347,7 +448,7 @@ function run(pipeName, cases, processId) {
                     continue;
                 }
 
-                results.push({ case: one, reason: judge(one, response) });
+                results.push({ case: one, reason: judge(one, response, capture) });
                 next();
             }
         });

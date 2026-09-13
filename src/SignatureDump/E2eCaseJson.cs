@@ -48,6 +48,11 @@ namespace PmxEditorMcp.SignatureDump
                 written.AddText("code", one.Code);
             }
 
+            if (one.View != null)
+            {
+                written.AddText("view", one.View);
+            }
+
             return written.Text;
         }
 
@@ -63,6 +68,9 @@ namespace PmxEditorMcp.SignatureDump
 
                 case E2eExpectation.Dispatched:
                     return "dispatched";
+
+                case E2eExpectation.ViewImage:
+                    return "viewImage";
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expectation));

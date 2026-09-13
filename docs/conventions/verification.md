@@ -212,8 +212,10 @@ pwsh -File scripts/host-control.ps1 -Action start  -ProcessId <エディタの�
 pwsh -File scripts/host-control.ps1 -Action close  -ProcessId <エディタのプロセスID>
 pwsh -File scripts/host-control.ps1 -Action acl    -ProcessId <エディタのプロセスID>
 pwsh -File scripts/host-control.ps1 -Action undo   -ProcessId <エディタのプロセスID>
-pwsh -File scripts/host-control.ps1 -Action click  -ProcessId <エディタのプロセスID> -View <ビューの名前>
+pwsh -File scripts/host-control.ps1 -Action answer -ProcessId <エディタのプロセスID>
 pwsh -File scripts/host-control.ps1 -Action show   -ProcessId <エディタのプロセスID> -View <ビューの名前>
+pwsh -File scripts/host-control.ps1 -Action click  -ProcessId <エディタのプロセスID> -View <ビューの名前>
+pwsh -File scripts/host-control.ps1 -Action capture -ProcessId <エディタのプロセスID> -View <ビューの名前> -Path <書き出し先>
 ```
 
 `pipes` は待ち受けているホストのパイプ名を一覧する。`launch` は起動したエディタのプロセスIDを
@@ -222,9 +224,16 @@ pwsh -File scripts/host-control.ps1 -Action show   -ProcessId <エディタの�
 `undo` は編集メニューから1回分の取り消しを起こす。取り消せる編集が無ければ失敗し、押したあとは
 やり直しが使えるようになるまで待つので、成功は取り消しが1回起きたことを意味する。
 
-**エディタの画面への操作はUI Automationで行う。** `undo` は取り消しを1回行う。`click` は指定した
-ビューの中央を左クリックする。`show` は指定したビューを表示する。`-View` はビューの名前で、PMX
-ビュー・変形ビュー・サブビューのいずれかを指す。
+`answer` はエディタが出している応答待ちの表示へ応答して閉じ、閉じた数を返す。応答に選ぶのは
+何も起こさない側の押しボタンで、肯定は選ばない。
+
+**エディタの画面への操作は、窓へ直に知らせる形で行う。画面の指し手は動かさない。** `undo` は
+取り消しを1回行う。`show` は指定したビューの窓を手前へ出す。`click` はその描画面の中央を左
+クリックする。`capture` はその描画面に中身を描かせてPNGへ書き出し、写した大きさを返す
+——画面に出ている姿ではないので、窓が手前に出ていなくても、覆われていても中身が取れる。
+`-View` は `pmx`(PMXビュー)か
+`transform`(変形ビュー)で、**サブビューはPMXビューの中に描かれて自分の窓を持たないので、
+画面への操作の相手にならない**。ビューの窓がまだ無いときは、何を探したかを言って失敗する。
 
 **状態を変える操作は、その結果が観測できるようになるまで待ってから戻る。** `start` と `launch`
 は待受のパイプが現れるまで、`stop` と `close` はそれが消えるまで待つ。待受の公開も停止処理も
@@ -268,7 +277,7 @@ pwsh -File scripts/host-control.ps1 -Action show   -ProcessId <エディタの�
    画像の取得を `maxLongSide` を省いて1回、`maxLongSide: 256` を指定して1回行う。
    **画像を返すツールは3系統ある**(PMXビュー・変形ビュー・サブビューのクライアント画像取得。
    CAP-120・CAP-168・CAP-239)。**3系統すべてについて画像を取得する**(変形ビュー・サブビューは
-   既定の `maxLongSide` で1回ずつでよい。表示されていないビューは表示してから実行する)。3系統を
+   既定の `maxLongSide` で1回ずつでよい。**どのビューも、画面に出ていなくても画像は返る**)。3系統を
    消化しないと完全一致のゲートを満たせない。期待: いずれも画像コンテンツが返ること。縮小の
    `warnings`(元寸法と縮小後寸法)が付くかは、**記録した実寸の長辺と指定値の大小で決まる**
    ——実寸の長辺が指定値を超える呼び出しにだけ付く。省いた側と指定した側のそれぞれについて、

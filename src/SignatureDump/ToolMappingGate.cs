@@ -11,6 +11,9 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class ToolMappingGate
     {
+        /// <summary>絵として写す値の綴り。共通契約の正本が定める。</summary>
+        private const string ImageShape = "image";
+
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
             ToolMap map,
@@ -19,7 +22,9 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchemaTable schemas,
             IDictionary<string, string> toolNames,
             IDictionary<string, ComposedTool> composedTools,
-            IDictionary<string, IList<string>> concrete)
+            IDictionary<string, IList<string>> concrete,
+            IDictionary<string, string> viewImages,
+            IDictionary<string, string> shapesByType)
         {
             if (map == null)
             {
@@ -56,6 +61,18 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(concrete));
             }
 
+            if (viewImages == null)
+            {
+                throw new ArgumentNullException(nameof(viewImages));
+            }
+
+            if (shapesByType == null)
+            {
+                throw new ArgumentNullException(nameof(shapesByType));
+            }
+
+            RequireViewImages(map, signatures, toolNames, viewImages, shapesByType);
+
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
 
@@ -82,6 +99,54 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     RequireEmbedded(embedded, signature, byType, map, toolNames, concrete);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 絵を返す行のツールと、ビューの名前を引く表が一対一で対応することを確かめる。対応が
+        /// 欠けると、その絵がどのビューのものかを確かめる検査だけが黙って減る。
+        /// </summary>
+        private static void RequireViewImages(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> toolNames,
+            IDictionary<string, string> viewImages,
+            IDictionary<string, string> shapesByType)
+        {
+            HashSet<string> drawing = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows)
+            {
+                SignatureRecord signature;
+                string shape;
+                string tool;
+                if (signatures.TryGetValue(row.SignatureKey, out signature)
+                    && shapesByType.TryGetValue(
+                        TypeDefinitionName.OfElement(
+                            ValueTypeName.Contained(signature.ValueType)), out shape)
+                    && string.Equals(shape, ImageShape, StringComparison.Ordinal)
+                    && toolNames.TryGetValue(row.SignatureKey, out tool))
+                {
+                    drawing.Add(tool);
+                }
+            }
+
+            string[] unnamed = drawing.Where(t => !viewImages.ContainsKey(t))
+                .OrderBy(t => t, StringComparer.Ordinal)
+                .ToArray();
+            if (unnamed.Length != 0)
+            {
+                throw new InvalidOperationException(
+                    "絵を返すのにビューを名指しされていないツールがある: "
+                        + string.Join("・", unnamed));
+            }
+
+            string[] extra = viewImages.Keys.Where(t => !drawing.Contains(t))
+                .OrderBy(t => t, StringComparer.Ordinal)
+                .ToArray();
+            if (extra.Length != 0)
+            {
+                throw new InvalidOperationException(
+                    "絵を返さないツールがビューを名指しされている: " + string.Join("・", extra));
             }
         }
 

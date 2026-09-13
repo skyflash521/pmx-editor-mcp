@@ -17,6 +17,12 @@ namespace PmxEditorMcp.SignatureDump
         /// 呼び先が在ること。実装の無い行はホストが未知のメソッドとして断るので、そこだけが落ちる。
         /// </summary>
         Dispatched,
+
+        /// <summary>
+        /// 返す絵が、写し取ったビューの姿と合うこと。合う相手は <see cref="E2eCase.View"/> が持ち、
+        /// 別のビューを返す行はその写しと合わないことを確かめる。
+        /// </summary>
+        ViewImage,
     }
 
     /// <summary>実機のエディタへ1件だけ投げる検査。</summary>
@@ -30,7 +36,8 @@ namespace PmxEditorMcp.SignatureDump
             string purpose,
             IDictionary<string, object> arguments,
             E2eExpectation expectation,
-            string code)
+            string code,
+            string view = null)
         {
             RowKey = rowKey;
             EditKind = editKind;
@@ -41,6 +48,7 @@ namespace PmxEditorMcp.SignatureDump
                 arguments ?? new Dictionary<string, object>(StringComparer.Ordinal));
             Expectation = expectation;
             Code = code;
+            View = view;
         }
 
         /// <summary>能力対応表の行キー。合否はこの単位でも数える。</summary>
@@ -66,5 +74,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>断ることを確かめるとき、その理由の綴り。成功を確かめるときは null。</summary>
         public string Code { get; }
+
+        /// <summary>返す絵が写すビューの名前。絵を確かめる検査だけが持ち、ほかは null。</summary>
+        public string View { get; }
     }
 }

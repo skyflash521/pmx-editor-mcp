@@ -667,27 +667,92 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, ComposedTool> composed =
                 new Dictionary<string, ComposedTool>(StringComparer.Ordinal);
 
+            IDictionary<string, string> empty =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    null, roles, signatures, schemas, names, composed, Concrete()));
+                    null, roles, signatures, schemas, names, composed, Concrete(), empty, empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, null, signatures, schemas, names, composed, Concrete()));
+                    map, null, signatures, schemas, names, composed, Concrete(), empty, empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, null, schemas, names, composed, Concrete()));
+                    map, roles, null, schemas, names, composed, Concrete(), empty, empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, null, names, composed, Concrete()));
+                    map, roles, signatures, null, names, composed, Concrete(), empty, empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, null, composed, Concrete()));
+                    map, roles, signatures, schemas, null, composed, Concrete(), empty, empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, null, Concrete()));
+                    map, roles, signatures, schemas, names, null, Concrete(), empty, empty));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, null));
+                    map, roles, signatures, schemas, names, composed, null, empty, empty));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolMappingGate.Require(
+                    map, roles, signatures, schemas, names, composed, Concrete(), null, empty));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolMappingGate.Require(
+                    map, roles, signatures, schemas, names, composed, Concrete(), empty, null));
+        }
+
+        [Fact]
+        public void ARowThatReturnsAnImageMustHaveItsViewNamed()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireImage(new Dictionary<string, string>(StringComparer.Ordinal)));
+
+            Assert.Contains("ビューを名指しされていない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatReturnsNoImageMustNotHaveAViewNamed()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireImage(new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { ImageTool, "pmx" },
+                    { "view_get_name", "sub" },
+                }));
+
+            Assert.Contains("絵を返さないツール", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ANamedViewForEveryImageRowPasses()
+        {
+            RequireImage(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { ImageTool, "pmx" },
+            });
+        }
+
+        private const string ImageTool = "view_get_client_image";
+
+        private const string ImageKey = "PEPlugin.View.IPEPMDViewConnector.GetClientImage()";
+
+        /// <summary>絵を返す行を1つだけ持つ表で、ビューの名指しの過不足だけを見る呼び出し。</summary>
+        private static void RequireImage(IDictionary<string, string> viewImages)
+        {
+            const string Bitmap = "System.Drawing.Bitmap";
+            Require(
+                ToolMapJsonReader.Read(
+                    @"{ ""rows"": [ { ""signatureKey"": """ + ImageKey + @""","
+                        + @" ""editKind"": ""read"", ""basis"": ""描いた絵を返すだけである。"" } ] }"),
+                Roles(),
+                new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
+                {
+                    { ImageKey, Method(ImageKey, Vertex, "GetClientImage", Bitmap) },
+                },
+                toolNames: Names(ImageKey, ImageTool),
+                viewImages: viewImages,
+                shapesByType: new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { Bitmap, "image" },
+                });
         }
 
         /// <summary>入出力の形を持たないスキーマ正本。埋め込み先だけを見る試験が使う。</summary>
@@ -701,7 +766,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string schemas = null,
             IDictionary<string, string> toolNames = null,
             IDictionary<string, ComposedTool> composedTools = null,
-            IDictionary<string, IList<string>> concrete = null)
+            IDictionary<string, IList<string>> concrete = null,
+            IDictionary<string, string> viewImages = null,
+            IDictionary<string, string> shapesByType = null)
         {
             IDictionary<string, string> names =
                 toolNames ?? new Dictionary<string, string>(StringComparer.Ordinal);
@@ -712,7 +779,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolSchemaJsonReader.Read(schemas ?? Schemas(names.Values.ToArray())),
                 names,
                 composedTools ?? new Dictionary<string, ComposedTool>(StringComparer.Ordinal),
-                concrete ?? Concrete());
+                concrete ?? Concrete(),
+                viewImages ?? new Dictionary<string, string>(StringComparer.Ordinal),
+                shapesByType ?? new Dictionary<string, string>(StringComparer.Ordinal));
         }
 
         /// <summary>具象の型の表。題材のリストは抽象の型を並べない。</summary>

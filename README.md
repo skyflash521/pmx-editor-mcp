@@ -23,7 +23,7 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 |---|---|
 | .NET SDK | 10 以上。ブリッジが net10.0 を対象にする。net48 の参照アセンブリは `Microsoft.NETFramework.ReferenceAssemblies` で解決するので Developer Pack は要らない |
 | Node.js | 22以上。確認クライアントの実行に用いる |
-| PowerShell | `pwsh`。Windows標準の `powershell.exe` は別物で、DACLの確認に使う型を持たない |
+| PowerShell | `pwsh` 7.6以上。Windows標準の `powershell.exe` は別物で、スクリプトはこれでは動かない |
 | lychee | 文書のリンク検査に用いる。`winget install lycheeverse.lychee` |
 | Claude Code CLI | ブリッジをMCPサーバーとして登録し、そこから呼び出して確認する |
 | OS | Windows x64。表示言語は日本語([操作役のスクリプト](scripts/host-control.ps1)がメニューの文言と確認ボタンの表示名を手がかりにする) |

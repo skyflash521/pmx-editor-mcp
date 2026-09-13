@@ -18,6 +18,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly IDictionary<string, ComposedTool> _composedTools;
 
+        private readonly IDictionary<string, string> _viewImages;
+
         private readonly IDictionary<string, string> _methodNotes;
 
         private readonly IDictionary<string, string> _propertyNotes;
@@ -30,6 +32,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<PropertyNameRecord> names,
             CommonAssignmentTable assignments,
             IDictionary<string, ComposedTool> composedTools,
+            IDictionary<string, string> viewImages,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes,
             IDictionary<string, string> shapesByType,
@@ -47,6 +50,7 @@ namespace PmxEditorMcp.SignatureDump
             _names = names;
             _assignments = assignments;
             _composedTools = composedTools;
+            _viewImages = viewImages;
             _methodNotes = methodNotes;
             _propertyNotes = propertyNotes;
             _shapesByType = shapesByType;
@@ -85,6 +89,12 @@ namespace PmxEditorMcp.SignatureDump
             get { return _composedTools; }
         }
 
+        /// <summary>ビューの絵を返すツールの名前から、そのビューの名前へ。</summary>
+        public IDictionary<string, string> ViewImages
+        {
+            get { return _viewImages; }
+        }
+
         public IDictionary<string, int> Lengths { get; }
 
         public int BudgetChars { get; }
@@ -120,6 +130,7 @@ namespace PmxEditorMcp.SignatureDump
                 PropertyNameJsonReader.ReadPropertyNames(ReadFile(args[4], "日本語名の正本")),
                 CommonAssignmentJsonReader.Read(ReadFile(args[5], "共通契約割当の正本")),
                 contract.ComposedTools,
+                contract.ViewImages,
                 DocumentNoteReader.ReadMethods(document),
                 DocumentNoteReader.Read(document),
                 ShapesByType(contract),

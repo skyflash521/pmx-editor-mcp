@@ -305,6 +305,20 @@
       "duty": "溜まったイベントを取り出す"
     }
   ],
+  "viewImages": [
+    {
+      "tool": "motion_get_client_image",
+      "view": "transform"
+    },
+    {
+      "tool": "view_get_client_image_pmd_view_connector",
+      "view": "pmx"
+    },
+    {
+      "tool": "view_get_client_image_sub_view_connector",
+      "view": "sub"
+    }
+  ],
   "budgets": {
     "responseDefaultChars": 100000,
     "warningRoomChars": 2000,

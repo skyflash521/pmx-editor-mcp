@@ -48,7 +48,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             IList<CapabilityRecord> ledger;
-            IDictionary<string, ComposedTool> composedTools;
+            CommonContractTable contract;
             TypeRoleTable roles;
             CommonAssignmentTable assignments;
             ToolMap map;
@@ -56,8 +56,7 @@ namespace PmxEditorMcp.SignatureDump
             try
             {
                 ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
-                composedTools = CommonContractJsonReader
-                    .Read(Read(args[2], "共通契約の正本")).ComposedTools;
+                contract = CommonContractJsonReader.Read(Read(args[2], "共通契約の正本"));
                 roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
                 assignments = CommonAssignmentJsonReader.Read(Read(args[4], "共通契約割当の正本"));
                 map = ToolMapJsonReader.Read(Read(args[5], "能力対応表の正本"));
@@ -96,13 +95,17 @@ namespace PmxEditorMcp.SignatureDump
                     signatures,
                     schemas,
                     toolNames,
-                    composedTools,
+                    contract.ComposedTools,
                     ElementCollectionEvidence.ConcreteTypes(
                         inventory,
                         roles.Types.ToDictionary(
                             t => TypeDefinitionName.OfElement(t.TypeName),
                             t => t.Role,
-                            StringComparer.Ordinal)));
+                            StringComparer.Ordinal)),
+                    contract.ViewImages,
+                    contract.Types
+                        .Where(t => t.Shape != null)
+                        .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal));
             }
             catch (InvalidOperationException exception)
             {

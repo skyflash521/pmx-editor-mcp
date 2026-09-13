@@ -63,11 +63,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 1件以上の並び。鍵の名前を渡すと、その項目が二度現れないことと、序数の昇順に並ぶことを
-        /// 併せて求める。
+        /// 併せて求める。<paramref name="allowEmpty"/> を真にすると、1件も無い並びも受け付ける
+        /// ——載せるものが無いこと自体が正しい表がある。
         /// </summary>
-        public static JsonForm Array(JsonForm element, string key = null)
+        public static JsonForm Array(JsonForm element, string key = null, bool allowEmpty = false)
         {
-            return new ArrayForm(element, key);
+            return new ArrayForm(element, key, allowEmpty);
         }
 
         public static JsonMember Member(string name, JsonForm form)
@@ -221,7 +222,9 @@ namespace PmxEditorMcp.SignatureDump
 
             private readonly string _key;
 
-            internal ArrayForm(JsonForm element, string key)
+            private readonly bool _allowEmpty;
+
+            internal ArrayForm(JsonForm element, string key, bool allowEmpty)
             {
                 if (element == null)
                 {
@@ -230,6 +233,7 @@ namespace PmxEditorMcp.SignatureDump
 
                 _element = element;
                 _key = key;
+                _allowEmpty = allowEmpty;
             }
 
             internal override object Read(object value, string path)
@@ -240,7 +244,7 @@ namespace PmxEditorMcp.SignatureDump
                     throw Wrong(path, "項目の並び");
                 }
 
-                if (items.Length == 0)
+                if (items.Length == 0 && !_allowEmpty)
                 {
                     throw new FormatException(
                         (path.Length == 0 ? "根" : path) + " は1件以上でなければならない。");

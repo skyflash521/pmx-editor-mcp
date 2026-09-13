@@ -28,13 +28,24 @@ param(
     #   acl    指定したエディタの待受のパイプに掛かっている権限の規則を表示する
     #   undo   指定したエディタの編集を1回分だけ元に戻す
     #   answer 指定したエディタが出している応答待ちの表示へ応答して閉じ、閉じた数を返す
+    #   show    指定したビューの窓を手前へ出す
+    #   click   指定したビューの描画面の中央を左クリックする
+    #   capture 指定したビューの描画面に中身を描かせ、PNGへ書き出して大きさを返す
     [Parameter(Mandatory = $true)]
     [ValidateSet(
-        "pipes", "launch", "close", "status", "stop", "start", "acl", "undo", "answer")]
+        "pipes", "launch", "close", "status", "stop", "start", "acl", "undo", "answer",
+        "show", "click", "capture")]
     [string]$Action,
 
     # 操作の対象にするエディタのプロセスID。pipes と launch では使わない。
     [int]$ProcessId,
+
+    # 画面への操作の相手にするビューの名前。show・click・capture で使う。
+    [ValidateSet("pmx", "transform")]
+    [string]$View,
+
+    # 写し取った画像の書き出し先。capture で使う。
+    [string]$Path,
 
     # 状態が変わるのを待つ上限の秒数。0以下だと、状態を変えておきながら一度も観測しないまま
     # 失敗しうるので受け付けない。上限は、終了待ちへミリ秒で渡せる範囲に収める。
@@ -57,6 +68,133 @@ using System.Text;
 public static class HostControlWindow {
   [DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
   [DllImport("user32.dll")] private static extern IntPtr GetDlgItem(IntPtr dialog, int id);
+  [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumProc callback, IntPtr state);
+  [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr window, out Rect box);
+  [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr window, ref Spot spot);
+  [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr window);
+  [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr window, int how);
+  [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint kind);
+  [DllImport("user32.dll", SetLastError = true)]
+  private static extern IntPtr SendMessageTimeout(
+      IntPtr window, uint message, IntPtr first, IntPtr second, uint how, uint limitMs,
+      out IntPtr answer);
+  [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint from, uint to, bool attach);
+  [DllImport("user32.dll")] private static extern bool PrintWindow(IntPtr window, IntPtr canvas, uint how);
+  [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+
+  [StructLayout(LayoutKind.Sequential)] public struct Rect { public int Left, Top, Right, Bottom; }
+  [StructLayout(LayoutKind.Sequential)] public struct Spot { public int X, Y; }
+
+  /// <summary>ビューの中身が描かれる面。窓の中で一番広い子がそれに当たる。</summary>
+  public static IntPtr Surface(IntPtr window) {
+    IntPtr widest = IntPtr.Zero;
+    long area = 0;
+    EnumChildWindows(window, (child, state) => {
+      Rect box;
+      if (!IsWindowVisible(child) || !GetClientRect(child, out box)) { return true; }
+      long size = (long)(box.Right - box.Left) * (box.Bottom - box.Top);
+      if (size > area) { area = size; widest = child; }
+      return true;
+    }, IntPtr.Zero);
+    return widest;
+  }
+
+  /// <summary>その窓の中身が画面のどこに在るか。左上のX・Y・幅・高さの順。読めなければ空。</summary>
+  public static int[] ScreenBox(IntPtr window) {
+    Rect box;
+    Spot corner = new Spot();
+    if (!GetClientRect(window, out box) || !ClientToScreen(window, ref corner)) {
+      return new int[0];
+    }
+    return new int[] { corner.X, corner.Y, box.Right - box.Left, box.Bottom - box.Top };
+  }
+
+  /// <summary>
+  /// 窓を手前へ出すよう頼む。手前に出たかどうかは <see cref="IsInFront"/> で見る。
+  /// Windowsは、いま手前に在る窓と入力の列を共にしない側からの入れ替えを断る。
+  /// </summary>
+  public static void Raise(IntPtr window) {
+    const int SW_RESTORE = 9;
+    uint ours = GetCurrentThreadId();
+    uint theirs = 0;
+    IntPtr front = GetForegroundWindow();
+    if (front != IntPtr.Zero) { GetWindowThreadProcessId(front, out theirs); }
+
+    bool joined = theirs != 0 && theirs != ours && AttachThreadInput(ours, theirs, true);
+    try {
+      ShowWindow(window, SW_RESTORE);
+      SetForegroundWindow(window);
+    }
+    finally {
+      if (joined) { AttachThreadInput(ours, theirs, false); }
+    }
+  }
+
+  /// <summary>
+  /// 窓に自分の中身を描かせて写し取る。画面に出ている姿ではないので、手前に出ていなくても、
+  /// 別の窓に覆われていても中身が取れる。
+  /// </summary>
+  public static bool Draw(IntPtr window, IntPtr canvas) {
+    const uint PW_CLIENTONLY = 1;
+    const uint PW_RENDERFULLCONTENT = 2;
+    return PrintWindow(window, canvas, PW_CLIENTONLY | PW_RENDERFULLCONTENT);
+  }
+
+  /// <summary>その窓が手前に在るか。子は親の一部として数える。</summary>
+  public static bool IsInFront(IntPtr window) {
+    const uint GA_ROOT = 2;
+    IntPtr front = GetForegroundWindow();
+    return front != IntPtr.Zero
+        && (front == window || GetAncestor(front, GA_ROOT) == GetAncestor(window, GA_ROOT));
+  }
+
+  /// <summary>
+  /// その窓を持つスレッドが、積んだ知らせをそこまで捌いたか。捌けずに時間切れなら偽。
+  /// </summary>
+  public static bool HasCaughtUp(IntPtr window, int limitMs) {
+    const uint WM_NULL = 0x0000;
+    const uint SMTO_ABORTIFHUNG = 0x0002;
+    IntPtr answer;
+    return SendMessageTimeout(
+        window, WM_NULL, IntPtr.Zero, IntPtr.Zero, SMTO_ABORTIFHUNG, (uint)limitMs, out answer)
+      != IntPtr.Zero;
+  }
+
+  /// <summary>
+  /// 窓の中身の真ん中を左で押して離す。画面の指し手は動かさない。窓が捌き終えるまで戻らない
+  /// ので、戻った時点で押されている。押しと離しを合わせて <paramref name="limitMs"/> までに
+  /// 捌き終えなければ偽。
+  /// </summary>
+  public static bool ClickCenter(IntPtr window, int limitMs) {
+    Rect box;
+    if (!GetClientRect(window, out box)) { return false; }
+    const uint WM_LBUTTONDOWN = 0x0201;
+    const uint WM_LBUTTONUP = 0x0202;
+    const int MK_LBUTTON = 0x0001;
+    int x = (box.Right - box.Left) / 2;
+    int y = (box.Bottom - box.Top) / 2;
+    IntPtr spot = new IntPtr((y << 16) | (x & 0xFFFF));
+    var clock = System.Diagnostics.Stopwatch.StartNew();
+    bool pressed = Send(window, WM_LBUTTONDOWN, new IntPtr(MK_LBUTTON), spot, limitMs);
+    int left = limitMs - (int)clock.ElapsedMilliseconds;
+    bool released = left > 0 && Send(window, WM_LBUTTONUP, IntPtr.Zero, spot, left);
+    // 捌き終えるのを待てなかった離しは積んで残す。押しが後から捌かれたときに押しっぱなしが残る。
+    if (!released && PostMessage(window, WM_LBUTTONUP, IntPtr.Zero, spot) == IntPtr.Zero) {
+      return false;
+    }
+
+    return pressed && released;
+  }
+
+  /// <summary>窓が捌き終えるまで待って知らせを送る。捌き終えずに時間切れなら偽。</summary>
+  private static bool Send(IntPtr window, uint message, IntPtr first, IntPtr second, int limitMs) {
+    const uint SMTO_ABORTIFHUNG = 0x0002;
+    IntPtr answer;
+    return SendMessageTimeout(
+        window, message, first, second, SMTO_ABORTIFHUNG, (uint)limitMs, out answer)
+      != IntPtr.Zero;
+  }
   [DllImport("user32.dll")] private static extern bool IsWindowEnabled(IntPtr window);
 
   // 表示の押しボタンをその番号で押す。押せる相手が居なければ偽。
@@ -97,6 +235,22 @@ public static class HostControlWindow {
       if (caption.ToString() != title) { return true; }
 
       found.Add(window);
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
+  /// <summary>題がその文字列で始まる窓。ビューの窓はエディタが題を付けるので題で引く。</summary>
+  public static IntPtr[] FindByTitle(int owner, string head) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      var title = new StringBuilder(256);
+      GetWindowText(window, title, title.Capacity);
+      if (title.ToString().StartsWith(head, StringComparison.Ordinal)) { found.Add(window); }
       return true;
     }, IntPtr.Zero);
     return found.ToArray();
@@ -179,6 +333,10 @@ $PollIntervalMs = 500
 
 # 閉じるためのウィンドウメッセージ(WM_CLOSE)。
 $WindowMessageClose = 0x0010
+
+# ビューの名前から、そのビューを載せている窓の題の始まりへ。サブビューはPMXビューの中に
+# 描かれて自分の窓を持たないので、画面への操作の相手にならない。
+$ViewTitles = @{ pmx = "PmxView"; transform = "VMDView" }
 
 # 素性を読めなかった表示の言い方。
 $UnreadableDialog = "読めない表示"
@@ -879,6 +1037,100 @@ function Invoke-HostOperation {
     }
 }
 
+function Assert-View {
+    <#
+        .SYNOPSIS
+        画面への操作の相手にするビューが指定されていることを確かめる。
+    #>
+    if (-not $View) { throw "この操作には -View が要る: $Action" }
+}
+
+function Get-ViewSurface {
+    <#
+        .SYNOPSIS
+        そのビューの描画面の窓。窓そのものではなく、中身が描かれている面を相手にする。
+    #>
+    param([int]$OwnerProcessId, [string]$Name)
+
+    $surface = [HostControlWindow]::Surface(
+        (Get-ViewWindow -OwnerProcessId $OwnerProcessId -Name $Name))
+    if ($surface -eq [IntPtr]::Zero) { throw "そのビューの描画面が無い: $Name" }
+
+    $surface
+}
+
+function Get-ViewWindow {
+    <#
+        .SYNOPSIS
+        そのビューを載せている窓。見つからなければ何を探したかを言って失敗する——ビューがまだ
+        開かれていないことと、探し方が合っていないことを見分けられるようにする。
+    #>
+    param([int]$OwnerProcessId, [string]$Name)
+
+    $title = $ViewTitles[$Name]
+    $found = @([HostControlWindow]::FindByTitle($OwnerProcessId, $title))
+    if ($found.Count -eq 0) { throw "そのビューの窓が無い: $Name(題が $title で始まる窓)" }
+    if ($found.Count -gt 1) { throw "そのビューの窓が $($found.Count) 個ある: $Name" }
+
+    $found[0]
+}
+
+function Wait-ViewInFront {
+    <#
+        .SYNOPSIS
+        その窓が手前に出るまで待つ。出なければ失敗する——頼んだだけでは手前に出たことにならず、
+        出ていない窓を人が見ることはできない。
+    #>
+    param([IntPtr]$Window)
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ($true) {
+        if ([HostControlWindow]::IsInFront($Window)) { return }
+        if ((Get-Date) -ge $deadline) {
+            throw "ビューの窓が $TimeoutSeconds 秒以内に手前へ出なかった: $View"
+        }
+
+        [HostControlWindow]::Raise($Window)
+        Wait-Interval -Deadline $deadline
+    }
+}
+
+function Save-ViewImage {
+    <#
+        .SYNOPSIS
+        描画面に中身を描かせてPNGへ書き出し、写した大きさを返す。
+    #>
+    param([IntPtr]$Surface, [string]$Destination)
+
+    $box = [HostControlWindow]::ScreenBox($Surface)
+    if ($box.Length -ne 4 -or $box[2] -le 0 -or $box[3] -le 0) {
+        throw "描画面の大きさを読めない。"
+    }
+
+    Add-Type -AssemblyName System.Drawing
+    $image = New-Object System.Drawing.Bitmap($box[2], $box[3])
+    try {
+        $canvas = [System.Drawing.Graphics]::FromImage($image)
+        $handle = $canvas.GetHdc()
+        try {
+            if (-not [HostControlWindow]::Draw($Surface, $handle)) {
+                throw "描画面に中身を描かせられない。"
+            }
+        }
+        finally {
+            $canvas.ReleaseHdc($handle)
+            $canvas.Dispose()
+        }
+
+        $image.Save($Destination, [System.Drawing.Imaging.ImageFormat]::Png)
+    }
+    finally {
+        $image.Dispose()
+    }
+
+    "$($box[2])x$($box[3])"
+}
+
 function Assert-ProcessId {
     <#
         .SYNOPSIS
@@ -968,6 +1220,33 @@ switch ($Action) {
         Assert-ProcessId
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         Invoke-UndoOnce -OwnerProcessId $ProcessId -Deadline $null
+    }
+    "show" {
+        Assert-ProcessId
+        Assert-View
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        Wait-ViewInFront -Window (Get-ViewWindow -OwnerProcessId $ProcessId -Name $View)
+    }
+    "click" {
+        Assert-ProcessId
+        Assert-View
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        $surface = Get-ViewSurface -OwnerProcessId $ProcessId -Name $View
+        if (-not [HostControlWindow]::ClickCenter($surface, $TimeoutSeconds * 1000)) {
+            throw "描画面の中央を $TimeoutSeconds 秒以内に押せなかった: $View"
+        }
+    }
+    "capture" {
+        Assert-ProcessId
+        Assert-View
+        if (-not $Path) { throw "この操作には -Path が要る: $Action" }
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        $surface = Get-ViewSurface -OwnerProcessId $ProcessId -Name $View
+        if (-not [HostControlWindow]::HasCaughtUp($surface, $TimeoutSeconds * 1000)) {
+            throw "ビューの描画面が $TimeoutSeconds 秒以内に描き終えなかった: $View"
+        }
+
+        Write-Output (Save-ViewImage -Surface $surface -Destination $Path)
     }
     "answer" {
         Assert-ProcessId
