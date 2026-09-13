@@ -25,6 +25,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>範囲の外の位置を断る綴り。</summary>
         public const string IndexOutOfRange = "TOOL_INDEX_OUT_OF_RANGE";
 
+        /// <summary>その相手には当てはまらないことを断る綴り。</summary>
+        public const string NotApplicable = "TOOL_NOT_APPLICABLE";
+
         /// <summary>一覧が何件返すかを受け取る入力の名前。</summary>
         public const string LimitName = "limit";
 
@@ -99,7 +102,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> positioned = null,
             IDictionary<string, string> factories = null,
             IDictionary<string, string> readers = null,
-            IDictionary<string, ISet<string>> unkept = null)
+            IDictionary<string, ISet<string>> unkept = null,
+            ISet<string> prompting = null)
         {
             if (map == null)
             {
@@ -150,23 +154,34 @@ namespace PmxEditorMcp.SignatureDump
                 readers == null ? new string[0] : readers.Values.ToArray(),
                 StringComparer.Ordinal);
             List<E2eCase> cases = new List<E2eCase>(SetupCases(schemas, factories));
+
+            // 直に呼ぶと状態が動く行は、その動きが後の検査の見るものを変える——取り消しは段取りが
+            // 作った要素を消し、再生の開始はビューを動かし続ける。順に並べる中では避けられないので、
+            // 最後へ回して、あとに続く検査を持たせない。
+            List<E2eCase> trailing = new List<E2eCase>();
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
                 ToolMapRow row;
                 byTool.TryGetValue(schema.Tool, out row);
-                cases.AddRange(Cases(
+                List<E2eCase> held = row != null && row.EditKind != ToolMapEditKind.Read
+                    ? trailing
+                    : cases;
+                held.AddRange(Cases(
                     row,
                     schema,
                     connectionPaths,
                     dangerous,
                     sdkShapes,
-                    Sampled(sdkTypes, samples)));
+                    Sampled(sdkTypes, samples),
+                    prompting));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
                     row, schema, schemas, connectionPaths, sdkTypes, positioned, dangerous,
                     readers, unkept));
             }
+
+            cases.AddRange(trailing);
 
             return cases;
         }
@@ -314,7 +329,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> connectionPaths,
             ISet<string> dangerous,
             IDictionary<SchemaItem, string> sdkShapes,
-            IDictionary<SchemaItem, object> sampled)
+            IDictionary<SchemaItem, object> sampled,
+            ISet<string> prompting)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -323,30 +339,42 @@ namespace PmxEditorMcp.SignatureDump
             string editKind = row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind);
             bool confirmed = row != null && dangerous.Contains(rowKey);
 
-            yield return new E2eCase(
-                rowKey,
-                editKind,
-                path,
-                tool,
-                "未知のメソッドとして断られないこと",
-                new Dictionary<string, object>(StringComparer.Ordinal),
-                E2eExpectation.Dispatched,
-                null);
-
-            // 読み取りの行は呼んでも何も動かないので、実際に呼んで値が返ることまで確かめる。
-            IDictionary<string, object> reading;
-            if (row != null && row.EditKind == ToolMapEditKind.Read && !confirmed
-                && TryReading(schema, sdkShapes, sampled, out reading))
+            // 呼び先が在るだけでは、その行の振る舞いを一度も確かめない。確認を要さず、渡すものが
+            // 決まる行は実際に呼ぶ。実際に呼ぶなら、呼び先が在ることはその呼び出しで分かるので、
+            // 別に確かめない——同じ呼び出しを二度することになる。
+            IDictionary<string, object> calling =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            bool prompts = prompting != null && prompting.Contains(rowKey);
+            bool calls = row != null && !confirmed
+                && TryCalling(row, schema, sdkShapes, sampled, out calling);
+            if (!calls)
             {
                 yield return new E2eCase(
                     rowKey,
                     editKind,
                     path,
                     tool,
-                    "呼び出して値を返せること",
-                    reading,
-                    E2eExpectation.Success,
+                    "未知のメソッドとして断られないこと",
+                    new Dictionary<string, object>(StringComparer.Ordinal),
+                    E2eExpectation.Dispatched,
                     null);
+            }
+
+            if (calls)
+            {
+                yield return new E2eCase(
+                    rowKey,
+                    editKind,
+                    path,
+                    tool,
+                    prompts
+                        ? "呼び出すと出る表示を戻り値で知らせること"
+                        : row.EditKind == ToolMapEditKind.Read
+                            ? "呼び出して値を返せること"
+                            : "呼び出して成功すること",
+                    calling,
+                    prompts ? E2eExpectation.Refusal : E2eExpectation.Success,
+                    prompts ? NotApplicable : null);
             }
 
             if (confirmed)
@@ -394,6 +422,30 @@ namespace PmxEditorMcp.SignatureDump
                     E2eExpectation.Refusal,
                     InvalidArgument);
             }
+        }
+
+        /// <summary>
+        /// その行を実際に呼ぶときの引数。読み取りの行は最小の値で埋めて呼べる——何を渡しても
+        /// エディタは動かないので、値が意味を成さなくても呼び先までは届く。状態を動かす行は
+        /// 引数を渡さずに呼べるものだけを呼ぶ——最小の値は、在りもしないファイルや範囲の外の
+        /// 位置になり、確かめたい振る舞いではなくその断りを見ることになる。
+        /// </summary>
+        private static bool TryCalling(
+            ToolMapRow row,
+            ToolSchema schema,
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, object> sampled,
+            out IDictionary<string, object> arguments)
+        {
+            if (row.EditKind == ToolMapEditKind.Read)
+            {
+                return TryReading(schema, sdkShapes, sampled, out arguments);
+            }
+
+            arguments = new Dictionary<string, object>(StringComparer.Ordinal);
+
+            return Unchosen(schema) != null
+                && !schema.Branches.Any(b => b.Inputs.Any(i => !i.Injected));
         }
 
         /// <summary>

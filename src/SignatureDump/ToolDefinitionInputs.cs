@@ -180,6 +180,32 @@ namespace PmxEditorMcp.SignatureDump
             get { return _unkeptMembers; }
         }
 
+        /// <summary>
+        /// 呼ぶと人の応答を待つ表示が出る行の行キー。呼ぶ前に確かめることの規則が、選ばれている
+        /// 対象を相手にする呼び出しとして分けている行がこれに当たる——選ばれているものが無いと
+        /// 表示が出る。
+        /// </summary>
+        public ISet<string> PromptingRows(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            HashSet<string> prompting = new HashSet<string>(StringComparer.Ordinal);
+            foreach (SignatureRecord signature in inventory.Signatures)
+            {
+                PreconditionKind kind;
+                if (PreconditionRule.TryClassify(signature, out kind)
+                    && kind == PreconditionKind.PickedObjects)
+                {
+                    prompting.Add(signature.Key);
+                }
+            }
+
+            return prompting;
+        }
+
         public IDictionary<string, int> Lengths { get; }
 
         public int BudgetChars { get; }
