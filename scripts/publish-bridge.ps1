@@ -10,7 +10,11 @@ param(
 
     # ランタイムを同梱するか。偽にできるのは、同梱しない実行ファイルが共有ランタイムを
     # 解決できない環境で起動に失敗することを確かめる検査のためだけである。
-    [bool]$SelfContained = $true
+    [bool]$SelfContained = $true,
+
+    # 出荷台帳の書き出し先。渡すと、この発行が解決した資産をそのまま書き出す——別に解決を
+    # 走らせると、数えた物と出荷した物が別の結果になりうる。
+    [string]$Ledger
 )
 
 Set-StrictMode -Version Latest
@@ -21,13 +25,20 @@ $PSNativeCommandUseErrorActionPreference = $false
 
 $project = Join-Path (Split-Path -Parent $PSScriptRoot) "src/Bridge/PmxEditorMcp.Bridge.csproj"
 
+$ledgering = @()
+if ($Ledger) {
+    $ledgering = @(
+        "-p:CustomAfterMicrosoftCommonTargets=$(Join-Path $PSScriptRoot 'shipping-ledger.targets')",
+        "-p:ShippingLedgerPath=$Ledger")
+}
+
 dotnet publish $project `
     -c Release `
     -r win-x64 `
     -o $Destination `
     "-p:SelfContained=$($SelfContained.ToString().ToLowerInvariant())" `
     -p:PublishSingleFile=true `
-    -p:IncludeNativeLibrariesForSelfExtract=true | Out-Null
+    -p:IncludeNativeLibrariesForSelfExtract=true @ledgering | Out-Null
 if ($LASTEXITCODE -ne 0) {
     throw "ブリッジの発行に失敗した(ランタイムの同梱=$SelfContained)。"
 }

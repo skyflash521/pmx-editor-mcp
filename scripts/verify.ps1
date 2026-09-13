@@ -198,7 +198,8 @@ function Test-PackageContents {
         見ても、確かめる側が何も見ていない場合と区別できない。写しへ違えを入れて確かめる——
         組み立てた本体は配布物なので、こちらで傷つけない。
     #>
-    $expected = @('PmxEditorMcp.dll', 'PmxEditorMcp.Bridge.exe', 'LICENSE.txt')
+    $expected = @('PmxEditorMcp.dll', 'PmxEditorMcp.Bridge.exe', 'LICENSE.txt',
+        'ThirdPartyNotices.txt')
     $version = (Get-Content Directory.Build.props -Raw -Encoding UTF8 |
         Select-String -Pattern '<Version>([^<]+)</Version>').Matches[0].Groups[1].Value
     $staged = Join-Path 'dist' "pmx-editor-mcp-$version"

@@ -27,7 +27,12 @@ $Forbidden = @("PEPlugin.dll", "SlimDX.dll")
 # 版を名乗るはずの実行ファイル。
 $Versioned = @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe")
 
-$license = Join-Path (Split-Path -Parent $PSScriptRoot) "LICENSE"
+# 配布物へ入る写しと、その原本。写した先が1バイトも違わないことを見る。
+$Copies = [ordered]@{
+    "LICENSE.txt" = "LICENSE"
+}
+
+$repository = Split-Path -Parent $PSScriptRoot
 
 $found = @(Get-ChildItem -Path $Staged -Recurse -File | ForEach-Object { $_.Name } | Sort-Object)
 $wanted = @($Expected | Sort-Object)
@@ -39,9 +44,12 @@ foreach ($name in $Forbidden) {
     if ($found -contains $name) { throw "再配布できない物が混じっている: $name" }
 }
 
-$copied = Join-Path $Staged "LICENSE.txt"
-if ((Get-FileHash $copied).Hash -ne (Get-FileHash $license).Hash) {
-    throw "LICENSE.txt がリポジトリの LICENSE と一致しない。"
+foreach ($name in $Copies.Keys) {
+    $origin = Join-Path $repository $Copies[$name]
+    $copied = Join-Path $Staged $name
+    if ((Get-FileHash $copied).Hash -ne (Get-FileHash $origin).Hash) {
+        throw "$name が $($Copies[$name]) と一致しない。"
+    }
 }
 
 # 名乗る版は4つ組で、正本は3つ組で書く。書き出しが同じだけでは合ったことにならない
