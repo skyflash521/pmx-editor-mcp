@@ -1,0 +1,1429 @@
+{
+  "scenarios": [
+    {
+      "id": 1,
+      "title": "疎通と初期化",
+      "requirements": [
+        "標準のMCPで動く製品にし、特定のクライアントに縛られない"
+      ],
+      "steps": [
+        {
+          "kind": "control",
+          "action": "closeAll"
+        },
+        {
+          "kind": "control",
+          "action": "launch",
+          "record": {
+            "name": "editorA",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "editor": {
+                "$from": "editorA"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "読み取り",
+      "requirements": [
+        "モデルの構造の把握"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "model_list_model_infos",
+          "arguments": {
+            "fields": [
+              "modelName"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "編集と取り消し",
+      "requirements": [
+        "要素の一括編集と取り消し"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "vertex",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vertex"
+              }
+            ],
+            "value": {
+              "position": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_vertices",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vertex"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "all": true,
+            "value": {
+              "position": [
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "保存の確認要求",
+      "requirements": [
+        "保存と読み込み",
+        "危険操作の境界は、ツールの分離とクライアント側の許可で作る"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "file",
+          "action": "ensureDirectory",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance"
+        },
+        {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\test.pmx"
+        },
+        {
+          "kind": "tool",
+          "tool": "session_save_pmx_file",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\test.pmx",
+            "confirm": false
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_CONFIRM_REQUIRED"
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\test.pmx"
+        },
+        {
+          "kind": "tool",
+          "tool": "session_save_pmx_file",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\test.pmx",
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectPresent",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\test.pmx"
+        },
+        {
+          "kind": "file",
+          "action": "removeTree",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "ビュー",
+      "requirements": [
+        "見た目の確認"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "view_set_camera_view",
+          "arguments": {
+            "position": [
+              0,
+              0,
+              -30
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "upVector": [
+              0,
+              1,
+              0
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "control",
+          "action": "capture",
+          "editor": {
+            "$from": "editorA"
+          },
+          "view": "pmx",
+          "record": {
+            "name": "pmxViewSize",
+            "shape": "size"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "image": {
+              "capturedAs": "pmxViewSize"
+            }
+          }
+        },
+        {
+          "kind": "control",
+          "action": "capture",
+          "editor": {
+            "$from": "editorA"
+          },
+          "view": "transform",
+          "record": {
+            "name": "transformViewSize",
+            "shape": "size"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_client_image",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "image": {
+              "capturedAs": "transformViewSize"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_sub_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "image": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "イベント",
+      "requirements": [
+        "画面の操作の受け取り"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_create_event_connector",
+          "arguments": {},
+          "record": {
+            "name": "eventConnector",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_create_view_event_listener_event_connector",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "eventConnector"
+              }
+            ]
+          },
+          "record": {
+            "name": "viewListener",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "control",
+          "action": "click",
+          "editor": {
+            "$from": "editorA"
+          },
+          "view": "pmx"
+        },
+        {
+          "kind": "tool",
+          "tool": "view_poll_events",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "events": {
+              "type": "view_mouse_click",
+              "sourceHandle": {
+                "$from": "viewListener"
+              },
+              "atLeast": 1
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "viewListener"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "cornerA",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "cornerB",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "cornerC",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cornerA"
+              },
+              {
+                "$from": "cornerB"
+              },
+              {
+                "$from": "cornerC"
+              }
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  10,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  10,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_vertices",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cornerA"
+              },
+              {
+                "$from": "cornerB"
+              },
+              {
+                "$from": "cornerC"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_material",
+          "arguments": {},
+          "record": {
+            "name": "material",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_materials",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "material"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "face",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "face"
+              }
+            ],
+            "value": {
+              "vertex1": {
+                "$from": "cornerA"
+              },
+              "vertex2": {
+                "$from": "cornerB"
+              },
+              "vertex3": {
+                "$from": "cornerC"
+              }
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "material"
+                },
+                "handles": [
+                  {
+                    "$from": "face"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_register_ui_model",
+          "arguments": {
+            "name": "acceptance-ui",
+            "m": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "visible": true,
+            "transform": false
+          },
+          "record": {
+            "name": "uiModel",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_ui_models",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel"
+              }
+            ],
+            "value": {
+              "visible": true,
+              "topMost": true
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_camera_view",
+          "arguments": {
+            "position": [
+              0,
+              0,
+              -30
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "upVector": [
+              0,
+              1,
+              0
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_create_event_listener_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel"
+              }
+            ],
+            "args": {
+              "c": {
+                "$from": "eventConnector"
+              },
+              "materials": [
+                0
+              ]
+            }
+          },
+          "record": {
+            "name": "uiListener",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "control",
+          "action": "click",
+          "editor": {
+            "$from": "editorA"
+          },
+          "view": "pmx"
+        },
+        {
+          "kind": "tool",
+          "tool": "view_poll_events",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "events": {
+              "type": "ui_model_mouse_down",
+              "sourceHandle": {
+                "$from": "uiListener"
+              },
+              "atLeast": 1
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiListener"
+              },
+              {
+                "$from": "uiModel"
+              },
+              {
+                "$from": "eventConnector"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "モーション",
+      "requirements": [
+        "モーションの構築"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd",
+          "arguments": {
+            "boneNames": [
+              "センター"
+            ],
+            "morphNames": []
+          },
+          "record": {
+            "name": "vmd",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bone_key",
+          "arguments": {},
+          "record": {
+            "name": "firstKey",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bone_key",
+          "arguments": {},
+          "record": {
+            "name": "lastKey",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_frame_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "firstKey"
+              },
+              {
+                "$from": "lastKey"
+              }
+            ],
+            "values": [
+              {
+                "frameIndex": 0
+              },
+              {
+                "frameIndex": 30
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_bone_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "firstKey"
+              },
+              {
+                "$from": "lastKey"
+              }
+            ],
+            "value": {
+              "boneIndex": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_bone_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "vmd"
+                },
+                "handles": [
+                  {
+                    "$from": "firstKey"
+                  },
+                  {
+                    "$from": "lastKey"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "firstKey"
+              },
+              {
+                "$from": "lastKey"
+              },
+              {
+                "$from": "vmd"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "エラー系",
+      "requirements": [
+        "一度だけ頼んだ操作を、二度実行しない"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              999999
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INDEX_OUT_OF_RANGE"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "closeAll"
+        },
+        {
+          "kind": "server",
+          "action": "restart"
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_NO_EDITOR"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "launch",
+          "record": {
+            "name": "editorB",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "editor": {
+                "$from": "editorB"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "control",
+          "action": "close",
+          "editor": {
+            "$from": "editorB"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_CONNECTION_LOST"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_NO_EDITOR"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "launch",
+          "record": {
+            "name": "editorC",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "changedFrom": {
+                "$from": "editorB"
+              },
+              "changedTo": {
+                "$from": "editorC"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "control",
+          "action": "stop",
+          "editor": {
+            "$from": "editorC"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_CONNECTION_LOST"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_NO_HOST"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "複数エディタ",
+      "requirements": [
+        "危険操作の境界は、ツールの分離とクライアント側の許可で作る"
+      ],
+      "steps": [
+        {
+          "kind": "control",
+          "action": "launch",
+          "record": {
+            "name": "editorD",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "changedFrom": {
+                "$from": "editorC"
+              },
+              "changedTo": {
+                "$from": "editorD"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_model_infos",
+          "arguments": {
+            "value": {
+              "modelName": "acceptance-b"
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "control",
+          "action": "start",
+          "editor": {
+            "$from": "editorC"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "stop",
+          "editor": {
+            "$from": "editorD"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_CONNECTION_LOST"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "changedFrom": {
+                "$from": "editorD"
+              },
+              "changedTo": {
+                "$from": "editorC"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "control",
+          "action": "start",
+          "editor": {
+            "$from": "editorD"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "stop",
+          "editor": {
+            "$from": "editorC"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_CONNECTION_LOST"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "start",
+          "editor": {
+            "$from": "editorC"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_MULTIPLE_HOSTS"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "stop",
+          "editor": {
+            "$from": "editorC"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_model_infos",
+          "arguments": {
+            "fields": [
+              "modelName"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "notice": {
+              "changedFrom": {
+                "$from": "editorC"
+              },
+              "changedTo": {
+                "$from": "editorD"
+              }
+            },
+            "values": [
+              {
+                "path": "items.0.modelName",
+                "equals": "acceptance-b"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "close",
+          "editor": {
+            "$from": "editorD"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "start",
+          "editor": {
+            "$from": "editorC"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_CONNECTION_LOST"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "changedFrom": {
+                "$from": "editorD"
+              },
+              "changedTo": {
+                "$from": "editorC"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

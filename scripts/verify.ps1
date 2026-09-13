@@ -9,6 +9,7 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot 'editor-dir.ps1')
+. (Join-Path $PSScriptRoot 'acceptance-stub-shared.ps1')
 
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
@@ -27,6 +28,8 @@ $toolSchemas = "$authored/tool-schemas.json"
 $sampleValues = "$authored/sample-values.json"
 $discoveryTasks = "$authored/discovery-tasks.json"
 $contract = "$authored/common-contract.json"
+$acceptance = "$authored/acceptance-scenarios.json"
+$requirements = 'docs/specs/requirements.md'
 $procedure = 'docs/conventions/verification.md'
 
 $baseline = [System.IO.Path]::GetTempFileName()
@@ -74,8 +77,123 @@ function Get-ListedChecks {
         Where-Object { $_ -ne '検査' }
 }
 
+function Invoke-AcceptanceRunner {
+    <#
+        .SYNOPSIS
+        応答を作る相手と操作役の代わりを立てて受入の実行器を通しで走らせ、終了コードと書き出した
+        ものを返す。Broken を与えると、At が指すツールの呼び出しで、その形の期待だけを違えさせる。
+    #>
+    param([string]$Cases, [string]$Broken, [int]$At)
+
+    $said = node scripts/acceptance.mjs --cases $Cases `
+        --setup scripts/acceptance-setup-stub.ps1 `
+        --control scripts/acceptance-stub-control.ps1 `
+        --setup-arg -Cases --setup-arg $Cases `
+        --setup-arg -Broken --setup-arg $Broken `
+        --setup-arg -At --setup-arg $At
+    $code = $LASTEXITCODE
+    $global:LASTEXITCODE = 0
+
+    [pscustomobject]@{ Code = $code; Said = ($said -join "`n") }
+}
+
+function Get-AcceptanceExpectationForms {
+    <#
+        .SYNOPSIS
+        期待の形ごとに、それが初めて現れるツールの呼び出しの番を返す。形の名前は定義から拾うので、
+        形を足しても拾い直しは要らない。接続先の知らせだけは、名乗る形と移った形を別の形と見る。
+    #>
+    param($Defined)
+
+    $forms = [ordered]@{}
+    $at = 0
+    foreach ($step in ($Defined.scenarios.steps | Where-Object { $_.kind -eq 'tool' })) {
+        $at++
+        foreach ($name in $step.expect.PSObject.Properties.Name) {
+            $form = $name
+            $told = $name -eq 'notice' -and
+                $step.expect.notice.PSObject.Properties.Name -notcontains 'editor'
+            if ($told) { $form = 'notice.changed' }
+
+            if (-not $forms.Contains($form)) { $forms[$form] = $at }
+        }
+    }
+
+    $forms
+}
+
+function Get-AcceptanceOperations {
+    <#
+        .SYNOPSIS
+        定義が求めるエディタとホストの操作を、頼まれる順に並べる。全エディタの終了は、まず動いて
+        いるエディタを数えるところから始まるので、その数え方の名前で現れる。
+    #>
+    param($Defined)
+
+    foreach ($step in ($Defined.scenarios.steps | Where-Object { $_.kind -eq 'control' })) {
+        if ($step.action -eq 'closeAll') { 'editors'; continue }
+
+        $asked = $step.action
+        if ($step.PSObject.Properties.Name -contains 'view') { $asked += ':' + $step.view }
+        $asked
+    }
+}
+
+function Test-AcceptanceRunner {
+    <#
+        .SYNOPSIS
+        受入の実行器が、定義どおりに段をこなし、返った結果を期待と突き合わせて合否を出すことを
+        確かめる。期待どおりの応答を与えた通しの実行は、全シナリオを合格で終え、定義に並ぶツールの
+        呼び出し・エディタとホストの操作・サーバーの起こし直しを1件残らずこなさなければならない
+        ——こなさない実行器はここで落ちる。数えるのはいずれも応答を作った側と操作役の代わりで、
+        実行器の自己申告ではない。そのうえで、期待の形ごとにその形だけを違えた実行が不合格に
+        なることを見る——その形を突き合わせない実行器はここで落ちる。
+    #>
+    param([string]$Cases, [string]$Progress, [string]$Operations)
+
+    $defined = Get-Content $Cases -Raw | ConvertFrom-Json
+    $calls = @($defined.scenarios.steps | Where-Object { $_.kind -eq 'tool' }).Count
+    $restarts = @($defined.scenarios.steps | Where-Object { $_.kind -eq 'server' }).Count
+    $asked = @(Get-AcceptanceOperations -Defined $defined)
+
+    $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken '' -At 0
+    if ($ran.Code -ne 0) {
+        throw "期待どおりの応答で通して走らせて合格しない: $($ran.Said)"
+    }
+
+    $held = Get-Content $Progress -Raw | ConvertFrom-Json
+    if ($held.calls -ne $calls) {
+        throw "定義に並ぶ $calls 件の呼び出しのうち $($held.calls) 件しか呼んでいない。"
+    }
+
+    # 起こし直す段のぶんだけ、応答を作る相手は起こし直される。最初の1回はその段に依らない。
+    if ($held.starts -ne ($restarts + 1)) {
+        throw ("サーバーを起こした回数が " + ($restarts + 1) + " ではない: $($held.starts)")
+    }
+
+    $done = @(Get-Content $Operations -Encoding UTF8)
+    if (($done -join '/') -ne ($asked -join '/')) {
+        throw "頼んだ操作が定義と違う。定義: $($asked -join '/') / 実際: $($done -join '/')"
+    }
+
+    foreach ($form in (Get-AcceptanceExpectationForms -Defined $defined).GetEnumerator()) {
+        $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken $form.Key -At $form.Value
+        if ($ran.Code -ne 1) {
+            throw ("$($form.Key) の期待を $($form.Value) 件目の呼び出しで違えても不合格に" +
+                "ならない: $($ran.Said)")
+        }
+    }
+
+    # 置き場が作られなければ、その実在を確かめる段が落とすはずである。
+    $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken 'file' -At 0
+    if ($ran.Code -ne 1) {
+        throw "書き込んだはずの置き場が無くても不合格にならない: $($ran.Said)"
+    }
+}
+
 $build = 'ビルド'
 $derivation = '除外一覧の導出'
+
 
 $noArtifact = 'なし'
 $buildOutput = 'ビルド成果物'
@@ -204,6 +322,29 @@ try {
         Body = {
             & $dump tool-mapping $editorDir $ledger $contract $roles $assignments `
                 $toolMap $toolSchemas
+        }
+    }
+    $checks['受入シナリオの照合'] = @{
+        Needs = $buildOutput
+        Body = {
+            & $dump acceptance-cases $editorDir $ledger $contract $roles $names `
+                $assignments $toolMap $toolSchemas $acceptance $requirements
+        }
+    }
+    $checks['受入の実行器の照合'] = @{
+        Needs = $noArtifact
+        Body = {
+            # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
+            $spoken = [Console]::OutputEncoding
+            [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+            try {
+                $temp = [System.IO.Path]::GetTempPath()
+                Test-AcceptanceRunner -Cases $acceptance `
+                    -Progress (Join-Path $temp $StubProgressStateName) `
+                    -Operations (Join-Path $temp $StubOperationLogName)
+            } finally {
+                [Console]::OutputEncoding = $spoken
+            }
         }
     }
 

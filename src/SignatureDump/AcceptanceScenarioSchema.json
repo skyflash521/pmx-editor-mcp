@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "required": ["scenarios"],
+  "additionalProperties": false,
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/step" }
+        }
+      },
+      "required": ["id", "title", "requirements", "steps"],
+      "additionalProperties": false
+    },
+    "step": {
+      "oneOf": [
+        { "$ref": "#/$defs/toolStep" },
+        { "$ref": "#/$defs/controlStep" },
+        { "$ref": "#/$defs/fileStep" },
+        { "$ref": "#/$defs/serverStep" }
+      ]
+    },
+    "toolStep": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "tool" },
+        "tool": { "type": "string", "minLength": 1 },
+        "arguments": { "type": "object" },
+        "expect": { "$ref": "#/$defs/expect" },
+        "record": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "path": { "type": "string" },
+            "shape": { "const": "number" }
+          },
+          "required": ["name", "path", "shape"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["kind", "tool", "arguments", "expect"],
+      "additionalProperties": false
+    },
+    "controlStep": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "control" },
+        "action": {
+          "enum": ["launch", "close", "closeAll", "stop", "start", "undo", "show", "click", "capture"]
+        },
+        "editor": { "$ref": "#/$defs/reference" },
+        "view": { "enum": ["pmx", "transform"] },
+        "record": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "shape": { "enum": ["number", "size"] }
+          },
+          "required": ["name", "shape"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["kind", "action"],
+      "additionalProperties": false
+    },
+    "fileStep": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "file" },
+        "action": {
+          "enum": ["ensureDirectory", "ensureMissing", "removeTree", "expectPresent", "expectMissing"]
+        },
+        "path": { "type": "string", "minLength": 1 }
+      },
+      "required": ["kind", "action", "path"],
+      "additionalProperties": false
+    },
+    "serverStep": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "server" },
+        "action": { "const": "restart" }
+      },
+      "required": ["kind", "action"],
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": "object",
+      "properties": { "$from": { "type": "string", "minLength": 1 } },
+      "required": ["$from"],
+      "additionalProperties": false
+    },
+    "expect": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "ok": { "type": "boolean" },
+        "code": { "type": "string", "minLength": 1 },
+        "notice": { "$ref": "#/$defs/notice" },
+        "body": {
+          "type": "object",
+          "properties": { "equals": { "type": "string" } },
+          "required": ["equals"],
+          "additionalProperties": false
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "equals": true
+            },
+            "required": ["path", "equals"],
+            "additionalProperties": false
+          }
+        },
+        "image": {
+          "type": "object",
+          "properties": { "capturedAs": { "type": "string", "minLength": 1 } },
+          "additionalProperties": false
+        },
+        "events": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "minLength": 1 },
+            "sourceHandle": { "$ref": "#/$defs/reference" },
+            "atLeast": { "type": "integer", "minimum": 1 }
+          },
+          "required": ["type", "sourceHandle", "atLeast"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "notice": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "editor": { "$ref": "#/$defs/reference" },
+        "changedFrom": { "$ref": "#/$defs/reference" },
+        "changedTo": { "$ref": "#/$defs/reference" }
+      },
+      "additionalProperties": false,
+      "not": {
+        "type": "object",
+        "required": ["editor"],
+        "anyOf": [
+          { "required": ["changedFrom"] },
+          { "required": ["changedTo"] }
+        ]
+      }
+    }
+  }
+}

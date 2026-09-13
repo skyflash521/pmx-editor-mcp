@@ -12,6 +12,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <!-- 入力の形の照合は、汎用のJSON Schemaの実装に任せる。自前で書くと、綴った規則のうち
+         実装した範囲だけが効く検査になる。 -->
+    <PackageReference Include="JsonSchema.Net" Version="9.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 受入シナリオの定義の形は、この宣言1つから照合する。 -->
+    <EmbeddedResource Include="AcceptanceScenarioSchema.json" />
   </ItemGroup>
 
   <ItemGroup>

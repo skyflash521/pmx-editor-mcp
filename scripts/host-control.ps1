@@ -20,6 +20,7 @@
 param(
     # 行う操作。
     #   pipes  待ち受けているホストのパイプ名を一覧する
+    #   editors 動いているPMXエディタのプロセスIDを一覧する(ホストの稼働状態を問わない)
     #   launch PMXエディタを起動し、そのホストの待受が現れるまで待ってプロセスIDを返す
     #   close  指定したエディタを通常の手順で終了し、終了と待受の消失を待つ
     #   status プラグインメニューの稼働状態を表示させ、本文を読んで閉じる
@@ -33,7 +34,7 @@ param(
     #   capture 指定したビューの描画面に中身を描かせ、PNGへ書き出して大きさを返す
     [Parameter(Mandatory = $true)]
     [ValidateSet(
-        "pipes", "launch", "close", "status", "stop", "start", "acl", "undo", "answer",
+        "pipes", "editors", "launch", "close", "status", "stop", "start", "acl", "undo", "answer",
         "show", "click", "capture")]
     [string]$Action,
 
@@ -465,6 +466,21 @@ function Get-EditorProcess {
     }
 
     $process
+}
+
+function Get-EditorProcessIds {
+    <#
+        .SYNOPSIS
+        この導入ディレクトリのPMXエディタとして動いているプロセスのIDを返す。ホストが待ち受けて
+        いるかどうかは問わない——停止させたホストのエディタも、実行ファイルを掴んだまま残る。
+    #>
+    $name = [System.IO.Path]::GetFileNameWithoutExtension("PmxEditor_x64.exe")
+    foreach ($candidate in @(Get-Process -Name $name -ErrorAction Ignore)) {
+        # 別の導入ディレクトリのエディタと、読めないプロセスは対象から外す。
+        try { [void](Get-EditorProcess -OwnerProcessId $candidate.Id) } catch { continue }
+
+        $candidate.Id
+    }
 }
 
 function Get-ProcessElements {
@@ -1215,6 +1231,9 @@ function Assert-ProcessId {
 switch ($Action) {
     "pipes" {
         Get-HostPipeNames
+    }
+    "editors" {
+        Get-EditorProcessIds
     }
     "launch" {
         $editorPath = Join-Path (Get-EditorDirectory) "PmxEditor_x64.exe"
