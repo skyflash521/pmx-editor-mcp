@@ -31,6 +31,12 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ハンドルの並びを受け取る入力の名前。</summary>
         public const string HandlesName = "handles";
 
+        /// <summary>親と要素の組を受け取る入力の名前。</summary>
+        private const string AssignmentsName = "assignments";
+
+        /// <summary>組の中で親を位置で指す項目の名前。</summary>
+        private const string ParentIndexName = "parentIndex";
+
         /// <summary>対象を全件にする入力の名前。</summary>
         private const string WholeName = "all";
 
@@ -51,6 +57,12 @@ namespace PmxEditorMcp.SignatureDump
         /// これに届くことはない。
         /// </summary>
         private const int UnknownPosition = int.MaxValue;
+
+        /// <summary>
+        /// 位置で指す項目へ渡す、並びの先頭。段取りがどの並びへも要素を1つ入れるので、この位置は
+        /// どの並びにも在る。
+        /// </summary>
+        private const int FirstPosition = 0;
 
         /// <summary>
         /// 対象を指す項目の名前。対象が決まっている呼び出しでは、この組を埋めない——ハンドルで
@@ -85,7 +97,9 @@ namespace PmxEditorMcp.SignatureDump
             SampleValueTable samples = null,
             IDictionary<string, string> viewImages = null,
             ISet<string> positioned = null,
-            IDictionary<string, string> factories = null)
+            IDictionary<string, string> factories = null,
+            IDictionary<string, string> readers = null,
+            IDictionary<string, ISet<string>> unkept = null)
         {
             if (map == null)
             {
@@ -147,7 +161,8 @@ namespace PmxEditorMcp.SignatureDump
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths));
                 cases.AddRange(PositionCases(
-                    row, schema, connectionPaths, sdkTypes, positioned, dangerous));
+                    row, schema, schemas, connectionPaths, sdkTypes, positioned, dangerous,
+                    readers, unkept));
             }
 
             return cases;
@@ -155,7 +170,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 先に流す段取り。要素を1つ作って並びへ加える。中身の無い並びでは、項目を読む検査が
-        /// 一度も項目を読まないまま通ってしまう。
+        /// 一度も項目を読まないまま通ってしまう。親の並びへ入れる要素を先に流す——親の並びが
+        /// 空のままでは、その中の並びへ入れる先を指せない。
         /// </summary>
         private static IEnumerable<E2eCase> SetupCases(
             ToolSchemaTable schemas, IDictionary<string, string> factories)
@@ -167,17 +183,17 @@ namespace PmxEditorMcp.SignatureDump
 
             ISet<string> named = new HashSet<string>(
                 schemas.Tools.Select(t => t.Tool), StringComparer.Ordinal);
-            ISet<string> handed = new HashSet<string>(
-                schemas.Tools
-                    .Where(t => t.Branches.Any(b => b.Inputs.All(
-                        i => i.Injected
-                            || string.Equals(i.Name, HandlesName, StringComparison.Ordinal))))
-                    .Select(t => t.Tool),
-                StringComparer.Ordinal);
-            foreach (KeyValuePair<string, string> pair in factories
-                .Where(f => handed.Contains(f.Key) && named.Contains(f.Value))
-                .OrderBy(f => f.Key, StringComparer.Ordinal))
+            IDictionary<string, ToolSchema> byTool = schemas.Tools.ToDictionary(
+                t => t.Tool, t => t, StringComparer.Ordinal);
+            KeyValuePair<string, string>[] adding = factories
+                .Where(f => named.Contains(f.Value) && byTool.ContainsKey(f.Key))
+                .OrderBy(f => f.Key, StringComparer.Ordinal)
+                .ToArray();
+            foreach (KeyValuePair<string, string> pair in adding
+                .Where(f => Handed(byTool[f.Key]))
+                .Concat(adding.Where(f => !Handed(byTool[f.Key]) && Assigned(byTool[f.Key]))))
             {
+                bool handed = Handed(byTool[pair.Key]);
                 yield return new E2eCase(
                     string.Empty,
                     string.Empty,
@@ -194,17 +210,70 @@ namespace PmxEditorMcp.SignatureDump
                     string.Empty,
                     string.Empty,
                     pair.Key,
-                    "作った要素を並びへ加えられること",
-                    new Dictionary<string, object>(StringComparer.Ordinal),
+                    handed
+                        ? "作った要素を並びへ加えられること"
+                        : "作った要素を親の並びの先頭へ加えられること",
+                    handed ? Empty() : IntoFirstParent(),
                     E2eExpectation.Success,
                     null,
                     null,
                     null,
                     new Dictionary<string, string>(StringComparer.Ordinal)
                     {
-                        { HandlesName, pair.Key },
+                        {
+                            handed ? HandlesName : AssignmentsName + "/0/" + HandlesName,
+                            pair.Key
+                        },
                     });
             }
+        }
+
+        private static IDictionary<string, object> Empty()
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal);
+        }
+
+        /// <summary>親の並びの先頭へ、借りたハンドルを入れる組。ハンドルは借りる側が埋める。</summary>
+        private static IDictionary<string, object> IntoFirstParent()
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                {
+                    AssignmentsName,
+                    new object[]
+                    {
+                        new Dictionary<string, object>(StringComparer.Ordinal)
+                        {
+                            { ParentIndexName, FirstPosition },
+                        },
+                    }
+                },
+            };
+        }
+
+        /// <summary>作った要素をハンドルで渡すだけで呼べるツールか。</summary>
+        private static bool Handed(ToolSchema schema)
+        {
+            return schema.Branches.Any(b => b.Inputs.All(
+                i => i.Injected
+                    || string.Equals(i.Name, HandlesName, StringComparison.Ordinal)));
+        }
+
+        /// <summary>
+        /// 作った要素を、親と要素の組で渡して呼べるツールか。組が親を位置で指すものだけを採る
+        /// ——ハンドルで親を指す組では、どの親を指すかがここでは決まらない。
+        /// </summary>
+        private static bool Assigned(ToolSchema schema)
+        {
+            return schema.Branches.Any(b => b.Inputs.All(i => i.Injected
+                    || string.Equals(i.Name, AssignmentsName, StringComparison.Ordinal))
+                && b.Inputs.Any(i => string.Equals(i.Name, AssignmentsName, StringComparison.Ordinal)
+                    && i.Element != null
+                    && i.Element.Members != null
+                    && i.Element.Members.Any(m => string.Equals(
+                        m.Name, ParentIndexName, StringComparison.Ordinal))
+                    && i.Element.Members.Any(m => string.Equals(
+                        m.Name, HandlesName, StringComparison.Ordinal))));
         }
 
         /// <summary>
@@ -576,10 +645,13 @@ namespace PmxEditorMcp.SignatureDump
         private static IEnumerable<E2eCase> PositionCases(
             ToolMapRow row,
             ToolSchema schema,
+            ToolSchemaTable schemas,
             IDictionary<string, string> connectionPaths,
             IDictionary<SchemaItem, string> sdkTypes,
             ISet<string> positioned,
-            ISet<string> dangerous)
+            ISet<string> dangerous,
+            IDictionary<string, string> readers,
+            IDictionary<string, ISet<string>> unkept)
         {
             string rowKey = row == null ? string.Empty : row.SignatureKey;
             if (sdkTypes == null || positioned == null || dangerous.Contains(rowKey))
@@ -617,21 +689,137 @@ namespace PmxEditorMcp.SignatureDump
                         arguments[branch.SelectorName] = branch.SelectorValue;
                     }
 
-                    arguments[ValueName] = new Dictionary<string, object>(StringComparer.Ordinal)
-                    {
-                        { member.Name, UnknownPosition },
-                    };
+                    string editKind = row == null
+                        ? string.Empty
+                        : ToolMapJsonReader.SpellingOf(row.EditKind);
+                    string path = row == null
+                        ? string.Empty
+                        : ConnectionPath(rowKey, connectionPaths);
                     yield return new E2eCase(
                         rowKey,
-                        row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind),
-                        row == null ? string.Empty : ConnectionPath(rowKey, connectionPaths),
+                        editKind,
+                        path,
                         schema.Tool,
                         "どのリストにも無い位置を指す書き込みを断ること",
-                        arguments,
+                        Pointing(arguments, member.Name, UnknownPosition),
                         E2eExpectation.Refusal,
                         IndexOutOfRange);
+
+                    yield return new E2eCase(
+                        rowKey,
+                        editKind,
+                        path,
+                        schema.Tool,
+                        "位置で指す項目へ関連が無いことを書けること",
+                        Pointing(arguments, member.Name, null),
+                        E2eExpectation.Success,
+                        null);
+                    yield return new E2eCase(
+                        rowKey,
+                        editKind,
+                        path,
+                        schema.Tool,
+                        "位置で指す項目へ並びの先頭を書けること",
+                        Pointing(arguments, member.Name, FirstPosition),
+                        E2eExpectation.Success,
+                        null);
+
+                    E2eCase read = Kept(unkept, schema.Tool, member.Name)
+                        ? ReadBackCase(
+                            rowKey, editKind, path, schema.Tool, schemas, readers, member.Name)
+                        : null;
+                    if (read != null)
+                    {
+                        yield return read;
+                    }
                 }
             }
+        }
+
+        /// <summary>
+        /// その項目へ書いた値を、モデルが持ち続けるか。持ち続けない項目は読み返して確かめられない
+        /// ——どれがそれに当たるかは呼び先の型からは決まらないので、共通契約の正本が名指しする。
+        /// </summary>
+        private static bool Kept(
+            IDictionary<string, ISet<string>> unkept, string tool, string member)
+        {
+            ISet<string> members;
+
+            return unkept == null
+                || !unkept.TryGetValue(tool, out members)
+                || !members.Contains(member);
+        }
+
+        /// <summary>対象を指す組はそのままに、位置で指す項目へその値を渡す引数。</summary>
+        private static IDictionary<string, object> Pointing(
+            IDictionary<string, object> pointing, string member, object value)
+        {
+            IDictionary<string, object> arguments =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, object> one in pointing)
+            {
+                arguments[one.Key] = one.Value;
+            }
+
+            arguments[ValueName] = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { member, value },
+            };
+
+            return arguments;
+        }
+
+        /// <summary>
+        /// 書いた値を読み返す検査。書き換えるツールと同じ型を読むツールへ、全件を指して問う。
+        /// 読む相手が決まらないツールでは null——読み返せないことは、書けたことを疑う理由に
+        /// ならない。
+        /// 読み返す相手に並びの先頭を選ぶのは、関連が無いことを書けても持ち続けられない項目が
+        /// あるからである——頂点の第1ウェイトのボーンは、モデルを整えるときに先頭のボーンへ
+        /// 戻る。
+        /// </summary>
+        private static E2eCase ReadBackCase(
+            string rowKey,
+            string editKind,
+            string path,
+            string tool,
+            ToolSchemaTable schemas,
+            IDictionary<string, string> readers,
+            string member)
+        {
+            string reader;
+            if (readers == null || !readers.TryGetValue(tool, out reader))
+            {
+                return null;
+            }
+
+            ToolSchema found = schemas.Tools.FirstOrDefault(
+                s => string.Equals(s.Tool, reader, StringComparison.Ordinal));
+            SchemaBranch listing = found == null ? null : Listing(found);
+            if (listing == null)
+            {
+                return null;
+            }
+
+            IDictionary<string, object> arguments =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (SchemaItem whole in WholeInputs(listing))
+            {
+                arguments[whole.Name] = true;
+            }
+
+            return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                reader,
+                "書いた位置を読み返せること",
+                arguments,
+                E2eExpectation.Reads,
+                null,
+                null,
+                null,
+                null,
+                new E2eExpectedMember(member, FirstPosition));
         }
 
         /// <summary>その1件だけを渡す引数。確認を要する行では確認も渡す。</summary>

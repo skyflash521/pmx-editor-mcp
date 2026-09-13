@@ -14,6 +14,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>絵として写す値の綴り。共通契約の正本が定める。</summary>
         private const string ImageShape = "image";
 
+        /// <summary>値の組を受け取る入力の名前。</summary>
+        private const string ValueName = "value";
+
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
             ToolMap map,
@@ -24,7 +27,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ComposedTool> composedTools,
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, string> viewImages,
-            IDictionary<string, string> shapesByType)
+            IDictionary<string, string> shapesByType,
+            IDictionary<string, ISet<string>> unkeptMembers)
         {
             if (map == null)
             {
@@ -71,7 +75,13 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(shapesByType));
             }
 
+            if (unkeptMembers == null)
+            {
+                throw new ArgumentNullException(nameof(unkeptMembers));
+            }
+
             RequireViewImages(map, signatures, toolNames, viewImages, shapesByType);
+            RequireUnkeptMembers(schemas, unkeptMembers);
 
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
@@ -98,6 +108,48 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (string embedded in row.EmbeddedIn)
                 {
                     RequireEmbedded(embedded, signature, byType, map, toolNames, concrete);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 書いてもモデルが持ち続けない項目として名指しされたものが、そのツールが書き換える項目に
+        /// 実在することを確かめる。名指しが実在しなくなると、読み返して確かめる検査だけが黙って
+        /// 減る。
+        /// </summary>
+        private static void RequireUnkeptMembers(
+            ToolSchemaTable schemas, IDictionary<string, ISet<string>> unkeptMembers)
+        {
+            IDictionary<string, ToolSchema> byTool = schemas.Tools.ToDictionary(
+                t => t.Tool, t => t, StringComparer.Ordinal);
+            foreach (KeyValuePair<string, ISet<string>> named in unkeptMembers
+                .OrderBy(u => u.Key, StringComparer.Ordinal))
+            {
+                ToolSchema schema;
+                if (!byTool.TryGetValue(named.Key, out schema))
+                {
+                    throw new InvalidOperationException(
+                        "持ち続けない項目の名指しが、スキーマ正本に無いツールを指している: "
+                            + named.Key);
+                }
+
+                ISet<string> written = new HashSet<string>(
+                    schema.Branches
+                        .SelectMany(b => b.Inputs)
+                        .Where(i => string.Equals(i.Name, ValueName, StringComparison.Ordinal)
+                            && i.Members != null)
+                        .SelectMany(i => i.Members)
+                        .Select(m => m.Name),
+                    StringComparer.Ordinal);
+                string missing = named.Value
+                    .Where(m => !written.Contains(m))
+                    .OrderBy(m => m, StringComparer.Ordinal)
+                    .FirstOrDefault();
+                if (missing != null)
+                {
+                    throw new InvalidOperationException(
+                        "持ち続けない項目の名指しが、そのツールが書き換えない項目を指している: "
+                            + named.Key + "." + missing);
                 }
             }
         }

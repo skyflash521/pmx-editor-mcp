@@ -105,7 +105,8 @@ namespace PmxEditorMcp.SignatureDump
                     contract.ViewImages,
                     contract.Types
                         .Where(t => t.Shape != null)
-                        .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal));
+                        .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal),
+                    contract.UnkeptMembers);
             }
             catch (InvalidOperationException exception)
             {

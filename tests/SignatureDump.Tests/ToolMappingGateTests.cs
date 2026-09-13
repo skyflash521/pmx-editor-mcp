@@ -655,6 +655,44 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnUnkeptMemberMustBeNamedOnAToolTheCanonCarries()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                    Roles(),
+                    Signatures(),
+                    schemas: Schemas(Release),
+                    composedTools: Composed(false),
+                    toolNames: new Dictionary<string, string>(StringComparer.Ordinal),
+                    unkeptMembers: Unkept("model_update_bones", "parent")));
+
+            Assert.Contains(
+                "スキーマ正本に無いツールを指している",
+                error.Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnUnkeptMemberMustBeOneTheToolWritesBack()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                    Roles(),
+                    Signatures(),
+                    schemas: Schemas(Release),
+                    composedTools: Composed(false),
+                    toolNames: new Dictionary<string, string>(StringComparer.Ordinal),
+                    unkeptMembers: Unkept(Release, "parent")));
+
+            Assert.Contains(
+                "そのツールが書き換えない項目を指している",
+                error.Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheArgumentsAreChecked()
         {
             ToolMap map = ToolMapJsonReader.Read(EmbeddedMapJson("model_list_vertexes"));
@@ -672,31 +710,36 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    null, roles, signatures, schemas, names, composed, Concrete(), empty, empty));
+                    null, roles, signatures, schemas, names, composed, Concrete(), empty, empty, Unkept()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, null, signatures, schemas, names, composed, Concrete(), empty, empty));
+                    map, null, signatures, schemas, names, composed, Concrete(), empty, empty, Unkept()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, null, schemas, names, composed, Concrete(), empty, empty));
+                    map, roles, null, schemas, names, composed, Concrete(), empty, empty, Unkept()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, null, names, composed, Concrete(), empty, empty));
+                    map, roles, signatures, null, names, composed, Concrete(), empty, empty, Unkept()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, null, composed, Concrete(), empty, empty));
+                    map, roles, signatures, schemas, null, composed, Concrete(), empty, empty, Unkept()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, null, Concrete(), empty, empty));
+                    map, roles, signatures, schemas, names, null, Concrete(), empty, empty, Unkept()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, null, empty, empty));
+                    map, roles, signatures, schemas, names, composed, null, empty, empty, Unkept()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, Concrete(), null, empty));
+                    map, roles, signatures, schemas, names, composed, Concrete(), null, empty, Unkept()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, Concrete(), empty, null));
+                    map, roles, signatures, schemas, names, composed, Concrete(), empty, null,
+                    Unkept()));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolMappingGate.Require(
+                    map, roles, signatures, schemas, names, composed, Concrete(), empty, empty,
+                    null));
         }
 
         [Fact]
@@ -768,7 +811,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, ComposedTool> composedTools = null,
             IDictionary<string, IList<string>> concrete = null,
             IDictionary<string, string> viewImages = null,
-            IDictionary<string, string> shapesByType = null)
+            IDictionary<string, string> shapesByType = null,
+            IDictionary<string, ISet<string>> unkeptMembers = null)
         {
             IDictionary<string, string> names =
                 toolNames ?? new Dictionary<string, string>(StringComparer.Ordinal);
@@ -781,7 +825,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 composedTools ?? new Dictionary<string, ComposedTool>(StringComparer.Ordinal),
                 concrete ?? Concrete(),
                 viewImages ?? new Dictionary<string, string>(StringComparer.Ordinal),
-                shapesByType ?? new Dictionary<string, string>(StringComparer.Ordinal));
+                shapesByType ?? new Dictionary<string, string>(StringComparer.Ordinal),
+                unkeptMembers ?? Unkept());
+        }
+
+        /// <summary>持ち続けない項目の表。名前を渡さなければ1件も名指ししない。</summary>
+        private static IDictionary<string, ISet<string>> Unkept(
+            string tool = null, string member = null)
+        {
+            Dictionary<string, ISet<string>> unkept =
+                new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
+            if (tool != null)
+            {
+                unkept[tool] = new HashSet<string>(new[] { member }, StringComparer.Ordinal);
+            }
+
+            return unkept;
         }
 
         /// <summary>具象の型の表。題材のリストは抽象の型を並べない。</summary>

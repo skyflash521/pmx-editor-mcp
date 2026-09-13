@@ -90,7 +90,9 @@ namespace PmxEditorMcp.SignatureDump
                     samples,
                     inputs.ViewImages,
                     inputs.PositionedTypes(),
-                    inputs.ElementFactories(inventory));
+                    inputs.ElementFactories(inventory),
+                    inputs.Readers(inventory),
+                    inputs.UnkeptMembers);
             }
             catch (InvalidOperationException exception)
             {

@@ -23,6 +23,33 @@ namespace PmxEditorMcp.SignatureDump
         /// 別のビューを返す行はその写しと合わないことを確かめる。
         /// </summary>
         ViewImage,
+
+        /// <summary>
+        /// 読み返した項目が、書いた値のまま読めること。どの項目が何を持つはずかは
+        /// <see cref="E2eCase.Expected"/> が持つ。
+        /// </summary>
+        Reads,
+    }
+
+    /// <summary>読み返して確かめる項目と、その項目が持つはずの値。</summary>
+    public sealed class E2eExpectedMember
+    {
+        public E2eExpectedMember(string member, object value)
+        {
+            if (string.IsNullOrEmpty(member))
+            {
+                throw new ArgumentException("読み返す項目の名前が要る。", nameof(member));
+            }
+
+            Member = member;
+            Value = value;
+        }
+
+        /// <summary>読み返す項目の名前。</summary>
+        public string Member { get; }
+
+        /// <summary>その項目が持つはずの値。関連が無いことは null で表す。</summary>
+        public object Value { get; }
     }
 
     /// <summary>実機のエディタへ1件だけ投げる検査。</summary>
@@ -39,7 +66,8 @@ namespace PmxEditorMcp.SignatureDump
             string code,
             string view = null,
             string produces = null,
-            IDictionary<string, string> borrowed = null)
+            IDictionary<string, string> borrowed = null,
+            E2eExpectedMember expected = null)
         {
             RowKey = rowKey;
             EditKind = editKind;
@@ -55,6 +83,7 @@ namespace PmxEditorMcp.SignatureDump
             Borrowed = borrowed == null
                 ? null
                 : new ReadOnlyDictionary<string, string>(borrowed);
+            Expected = expected;
         }
 
         /// <summary>能力対応表の行キー。合否はこの単位でも数える。</summary>
@@ -93,5 +122,8 @@ namespace PmxEditorMcp.SignatureDump
         /// 引数の名前から、覚えた値の名前へ。借りた値は1件の並びとして渡る。借りない検査は null。
         /// </summary>
         public IDictionary<string, string> Borrowed { get; }
+
+        /// <summary>読み返して確かめる項目。読み返す検査だけが持ち、ほかは null。</summary>
+        public E2eExpectedMember Expected { get; }
     }
 }

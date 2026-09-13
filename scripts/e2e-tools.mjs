@@ -140,6 +140,12 @@ function judge(one, response, capture) {
         return envelope.ok === true ? null : "成功するはずが断られました: " + describe(envelope);
     }
 
+    if (one.expect === "reads") {
+        return envelope.ok === true
+            ? reads(one.expected, envelope.value)
+            : "読み返せるはずが断られました: " + describe(envelope);
+    }
+
     if (envelope.ok !== false) {
         return "断るはずが成功しました。";
     }
@@ -232,6 +238,36 @@ function viewImage(one, response, capture) {
         : null;
 }
 
+/**
+ * 読み返した項目が、書いた値のまま読めているか。並べて返す形は全件を、1つを返す形はそれ自身を
+ * 見る。合っていれば null。1件も返らない並びは落とす——1件も見ないまま通ると、書き込みを
+ * 確かめない検査になる。
+ */
+function reads(expected, value) {
+    const items = value !== null && typeof value === "object" && Array.isArray(value.items)
+        ? value.items
+        : [value];
+    if (items.length === 0) {
+        return "読み返すものが1件もありません。書いた値をどれも確かめられません。";
+    }
+    for (let at = 0; at < items.length; at++) {
+        const item = items[at];
+        if (item === null || typeof item !== "object") {
+            return "読み返した" + at + "件目が項目の組ではありません。";
+        }
+        if (!Object.prototype.hasOwnProperty.call(item, expected.member)) {
+            return "読み返した" + at + "件目に " + expected.member + " がありません。";
+        }
+        if (item[expected.member] !== expected.value) {
+            return "読み返した" + at + "件目の " + expected.member + " が "
+                + JSON.stringify(expected.value) + " ではありません: "
+                + JSON.stringify(item[expected.member]);
+        }
+    }
+
+    return null;
+}
+
 function describe(envelope) {
     return envelope.error === undefined
         ? JSON.stringify(envelope)
@@ -316,19 +352,28 @@ function notStarted(response) {
         && envelope.error.code === NOT_STARTED;
 }
 
-/** 借りる値を差し込んだ引数。借りる名前をまだ覚えていなければ null。 */
+/**
+ * 借りる値を差し込んだ引数。差し込む先は引数の中の道で、斜線で区切った各段をたどる。借りる
+ * 名前をまだ覚えていなければ null。
+ */
 function borrowing(one, remembered) {
     if (one.borrowed === undefined) {
         return one.arguments;
     }
 
-    const given = { ...one.arguments };
-    for (const [name, from] of Object.entries(one.borrowed)) {
+    const given = JSON.parse(JSON.stringify(one.arguments));
+    for (const [path, from] of Object.entries(one.borrowed)) {
         if (!remembered.has(from)) {
             return null;
         }
 
-        given[name] = [remembered.get(from)];
+        const steps = path.split("/");
+        let held = given;
+        for (let at = 0; at < steps.length - 1; at++) {
+            held = held[steps[at]];
+        }
+
+        held[steps[steps.length - 1]] = [remembered.get(from)];
     }
 
     return given;

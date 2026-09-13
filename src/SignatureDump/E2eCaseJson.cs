@@ -63,6 +63,11 @@ namespace PmxEditorMcp.SignatureDump
                 written.Add("borrowed", Borrowed(one.Borrowed));
             }
 
+            if (one.Expected != null)
+            {
+                written.Add("expected", Expected(one.Expected));
+            }
+
             return written.Text;
         }
 
@@ -82,9 +87,20 @@ namespace PmxEditorMcp.SignatureDump
                 case E2eExpectation.ViewImage:
                     return "viewImage";
 
+                case E2eExpectation.Reads:
+                    return "reads";
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expectation));
             }
+        }
+
+        private static string Expected(E2eExpectedMember expected)
+        {
+            return new JsonObjectText()
+                .AddText("member", expected.Member)
+                .Add("value", Value(expected.Value))
+                .Text;
         }
 
         private static string Borrowed(IDictionary<string, string> borrowed)

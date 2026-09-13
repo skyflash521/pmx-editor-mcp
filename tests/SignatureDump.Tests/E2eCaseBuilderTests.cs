@@ -162,6 +162,80 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void APositionedMemberTakesNoRelationAndThenTheHeadOfTheList()
+        {
+            ToolSchema writing = Positioning("model_update_bones");
+            ToolSchema reading = Listed("model_list_bones");
+            IList<E2eCase> written = Positions(writing, reading, reading.Tool)
+                .Where(c => c.Tool == writing.Tool && c.Expectation == E2eExpectation.Success)
+                .ToList();
+
+            Assert.Equal(2, written.Count);
+            Assert.Equal(true, written[0].Arguments["all"]);
+            Assert.Null(((IDictionary<string, object>)written[0].Arguments["value"])["parent"]);
+            Assert.Equal(0, ((IDictionary<string, object>)written[1].Arguments["value"])["parent"]);
+        }
+
+        [Fact]
+        public void TheWrittenPositionIsReadBackFromTheToolThatListsTheSameType()
+        {
+            ToolSchema writing = Positioning("model_update_bones");
+            ToolSchema reading = Listed("model_list_bones");
+
+            E2eCase read = Assert.Single(
+                Positions(writing, reading, reading.Tool),
+                c => c.Expectation == E2eExpectation.Reads);
+            Assert.Equal(reading.Tool, read.Tool);
+            Assert.Equal(true, read.Arguments["all"]);
+            Assert.Equal("parent", read.Expected.Member);
+            Assert.Equal(0, read.Expected.Value);
+        }
+
+        [Fact]
+        public void APositionedMemberIsAlsoCheckedWithAPositionNoListCarries()
+        {
+            ToolSchema writing = Positioning("model_update_bones");
+            E2eCase one = Assert.Single(
+                Positions(writing, Listed("model_list_bones"), null),
+                c => c.Expectation == E2eExpectation.Refusal);
+
+            Assert.Equal("TOOL_INDEX_OUT_OF_RANGE", one.Code);
+            Assert.Equal(
+                int.MaxValue,
+                ((IDictionary<string, object>)one.Arguments["value"])["parent"]);
+        }
+
+        [Fact]
+        public void AMemberTheModelDoesNotKeepIsWrittenWithoutReadingItBack()
+        {
+            ToolSchema writing = Positioning("model_update_bones");
+            ToolSchema reading = Listed("model_list_bones");
+            IList<E2eCase> cases = Positions(
+                writing,
+                reading,
+                reading.Tool,
+                new Dictionary<string, ISet<string>>(StringComparer.Ordinal)
+                {
+                    { writing.Tool, new HashSet<string>(new[] { "parent" }, StringComparer.Ordinal) },
+                });
+
+            Assert.Contains(
+                cases, c => c.Tool == writing.Tool && c.Expectation == E2eExpectation.Success);
+            Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Reads);
+        }
+
+        [Fact]
+        public void AWriteWithNoReaderIsStillCheckedWithoutReadingItBack()
+        {
+            ToolSchema writing = Positioning("model_update_bones");
+            IList<E2eCase> cases = Positions(writing, Listed("model_list_bones"), null);
+
+            Assert.Contains(
+                cases, c => c.Tool == writing.Tool && c.Expectation == E2eExpectation.Success);
+            Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Reads);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             ToolSchemaTable schemas = new ToolSchemaTable(new ToolSchema[0]);
@@ -300,6 +374,94 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "number", null, null, "limit", ItemOrigin.HostInput, false, null, false,
                     null, null, null, false, null),
             };
+        }
+
+        /// <summary>位置で指す項目を持つツールと、それを読み返すツールの組で検査を組み立てる。</summary>
+        private static IList<E2eCase> Positions(
+            ToolSchema writing,
+            ToolSchema reading,
+            string reader,
+            IDictionary<string, ISet<string>> unkept = null)
+        {
+            SchemaItem member = writing.Branches[0].Inputs
+                .Single(i => i.Name == "value").Members.Single();
+
+            return E2eCaseBuilder.Build(
+                Map(RowKey),
+                new ToolSchemaTable(new[] { writing, reading }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, writing.Tool } },
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes(),
+                new Dictionary<SchemaItem, string> { { member, "Sdk.Bone" } },
+                null,
+                null,
+                new HashSet<string>(new[] { "Sdk.Bone" }, StringComparer.Ordinal),
+                null,
+                reader == null
+                    ? null
+                    : new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { writing.Tool, reader },
+                    },
+                unkept);
+        }
+
+        /// <summary>全件を指して値の組を書き換えるツール。値の組は位置で指す項目を1つ持つ。</summary>
+        private static ToolSchema Positioning(string name)
+        {
+            SchemaItem parent = new SchemaItem(
+                "number", null, null, "parent", ItemOrigin.HostInput, null, null, false,
+                null, null, null, false, null);
+            SchemaItem value = new SchemaItem(
+                null, new[] { parent }, null, "value", ItemOrigin.HostInput, null, null, false,
+                null, null, null, false, null);
+
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[] { Whole(), value },
+                        new[] { new SchemaChoice(new[] { "all", "indices" }, true) }),
+                },
+                Output(),
+                null);
+        }
+
+        /// <summary>全件を指して並べるツール。値の組は受け取らない。</summary>
+        private static ToolSchema Listed(string name)
+        {
+            SchemaItem items = new SchemaItem(
+                null, null, Element(), "items", ItemOrigin.HostOutput, null, null, false,
+                null, null, null, false, null);
+
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[] { Whole() },
+                        new[] { new SchemaChoice(new[] { "all", "indices" }, true) }),
+                },
+                new SchemaItem(
+                    null, new[] { items }, null, null, ItemOrigin.HostOutput, null, null, false,
+                    null, null, null, false, null),
+                null);
+        }
+
+        /// <summary>対象を全件にする入力。</summary>
+        private static SchemaItem Whole()
+        {
+            return new SchemaItem(
+                "boolean", null, null, "all", ItemOrigin.HostInput, false, null, false,
+                null, null, null, false, null);
         }
 
         private static SchemaItem Element()

@@ -1672,6 +1672,17 @@ namespace PmxEditorMcp
             ToolAccess access, PmxTarget target, out IList<object> listed, out Refusal refused)
         {
             listed = null;
+            refused = null;
+            if (target.Pmx == null)
+            {
+                refused = new Refusal(ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "位置はPMXの中のリストで数えるので、ハンドルで指した相手には位置で指す項目を"
+                        + "渡せない。"));
+
+                return false;
+            }
+
             IList<object> owners;
             if (!TryOwners(access, target, out owners, out refused))
             {

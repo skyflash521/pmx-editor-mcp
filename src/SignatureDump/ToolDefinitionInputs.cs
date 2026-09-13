@@ -20,6 +20,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly IDictionary<string, string> _viewImages;
 
+        private readonly IDictionary<string, ISet<string>> _unkeptMembers;
+
         private readonly IDictionary<string, string> _methodNotes;
 
         private readonly IDictionary<string, string> _propertyNotes;
@@ -33,6 +35,7 @@ namespace PmxEditorMcp.SignatureDump
             CommonAssignmentTable assignments,
             IDictionary<string, ComposedTool> composedTools,
             IDictionary<string, string> viewImages,
+            IDictionary<string, ISet<string>> unkeptMembers,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes,
             IDictionary<string, string> shapesByType,
@@ -51,6 +54,7 @@ namespace PmxEditorMcp.SignatureDump
             _assignments = assignments;
             _composedTools = composedTools;
             _viewImages = viewImages;
+            _unkeptMembers = unkeptMembers;
             _methodNotes = methodNotes;
             _propertyNotes = propertyNotes;
             _shapesByType = shapesByType;
@@ -138,6 +142,20 @@ namespace PmxEditorMcp.SignatureDump
                     TypeDefinitionName.Of(signature.ValueType), typeName, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// 値を書き換えるツールの名前から、同じ型を読むツールの名前へ。書いた値を読み返す検査が
+        /// 相手を決めるのに使う。
+        /// </summary>
+        public IDictionary<string, string> Readers(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            return AggregationToolRule.Readers(OwnedRoles(inventory).Types);
+        }
+
         /// <summary>値を要素の位置で写す型の名前。</summary>
         public ISet<string> PositionedTypes()
         {
@@ -152,6 +170,14 @@ namespace PmxEditorMcp.SignatureDump
         public IDictionary<string, string> ViewImages
         {
             get { return _viewImages; }
+        }
+
+        /// <summary>
+        /// 値を書き換えるツールの名前から、書いてもモデルが持ち続けない項目の名前へ。
+        /// </summary>
+        public IDictionary<string, ISet<string>> UnkeptMembers
+        {
+            get { return _unkeptMembers; }
         }
 
         public IDictionary<string, int> Lengths { get; }
@@ -190,6 +216,7 @@ namespace PmxEditorMcp.SignatureDump
                 CommonAssignmentJsonReader.Read(ReadFile(args[5], "共通契約割当の正本")),
                 contract.ComposedTools,
                 contract.ViewImages,
+                contract.UnkeptMembers,
                 DocumentNoteReader.ReadMethods(document),
                 DocumentNoteReader.Read(document),
                 ShapesByType(contract),

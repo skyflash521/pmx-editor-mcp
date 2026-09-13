@@ -319,6 +319,23 @@
       "view": "sub"
     }
   ],
+  "unkeptMembers": [
+    {
+      "tool": "model_update_faces",
+      "members": ["vertex1", "vertex2", "vertex3"],
+      "basis": "3つの頂点のどれかがモデルの頂点の並びに無い面は、まとめて反映するときに材質から取り除かれる。面を作ってから材質へ入れるまでの間にモデルの頂点を指す手立てが無いので、この道筋で作った面は残らず、書いた値を読み返せない。"
+    },
+    {
+      "tool": "model_update_ik_links",
+      "members": ["bone"],
+      "basis": "IKの内容が書き戻るのはIKの印が立っている骨だけである。印の無い骨では、まとめて反映するときにIKの組ごと捨てられ、その中の並びへ加えた要素も残らないので、書いた値を読み返せない。"
+    },
+    {
+      "tool": "model_update_iks",
+      "members": ["target"],
+      "basis": "IKの内容が書き戻るのはIKの印が立っている骨だけである。印の無い骨では、まとめて反映するときにIKの組が捨てられ、既定の組が読み返るので、書いた値を読み返せない。"
+    }
+  ],
   "budgets": {
     "responseDefaultChars": 100000,
     "warningRoomChars": 2000,

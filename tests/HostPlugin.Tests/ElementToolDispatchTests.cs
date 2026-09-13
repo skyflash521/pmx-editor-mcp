@@ -41,6 +41,8 @@ namespace PmxEditorMcp.Tests
 
         private const string LabelKey = "Sdk.Item.Label()";
 
+        private const string MateKey = "Sdk.Item.Mate()";
+
         private const string TextKey = "Sdk.Note.Text()";
 
         private const string ClearKey = "Sdk.Item.Clear(System.Single)";
@@ -770,6 +772,42 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
             Assert.Equal(new[] { 0f, 0f }, _model.Items.Select(i => i.Filled).ToArray());
+        }
+
+        [Fact]
+        public void APositionWrittenIntoAReferringItemPointsAtThatElementOfTheList()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_mates",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.ValueName, Value("mate", 1)));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(
+                new[] { "二", "二" },
+                _model.Items.Select(i => i.Mate.Label).ToArray());
+        }
+
+        [Fact]
+        public void APositionCannotBeWrittenIntoAnItemPointedAtByHandle()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(typeof(Item).FullName, _model.Items[0], () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_mates",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { handle },
+                    ToolDispatch.ValueName, Value("mate", 0)),
+                handles);
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Null(_model.Items[0].Mate);
         }
 
         [Fact]
@@ -1853,6 +1891,12 @@ namespace PmxEditorMcp.Tests
                             : Written(((Item)target), (string)arguments[0])
                     },
                     {
+                        MateKey,
+                        (target, arguments) => arguments.Length == 0
+                            ? ((Item)target).Mate
+                            : Mated((Item)target, (Item)arguments[0])
+                    },
+                    {
                         TextKey,
                         (target, arguments) => arguments.Length == 0
                             ? (object)((Note)target).Text
@@ -1905,6 +1949,13 @@ namespace PmxEditorMcp.Tests
             _madeBy = rowKey;
 
             return new Item();
+        }
+
+        private static object Mated(Item item, Item mate)
+        {
+            item.Mate = mate;
+
+            return null;
         }
 
         private static object Written(Item item, string label)
@@ -2314,6 +2365,18 @@ namespace PmxEditorMcp.Tests
                         true, true, Rooted(EditKind.DuplicateEdit), Direct(), Set(labels))
                 },
                 {
+                    "model_update_mates",
+                    new ToolFields(
+                        true,
+                        true,
+                        Rooted(EditKind.DuplicateEdit),
+                        Direct(),
+                        Set(new[]
+                        {
+                            new ToolField("mate", MateKey, typeof(Item), null, Direct()),
+                        }))
+                },
+                {
                     "model_list_leaves",
                     new ToolFields(false, true, Rooted(EditKind.Read), Nested(), Set(labels))
                 },
@@ -2439,6 +2502,9 @@ namespace PmxEditorMcp.Tests
             public string Label { get; set; }
 
             public float Filled { get; set; }
+
+            /// <summary>同じ並びの中の相手を指す項目。位置で写す。</summary>
+            public Item Mate { get; set; }
         }
 
         /// <summary>同じ並びに混じる、もう一つの具象の型。</summary>

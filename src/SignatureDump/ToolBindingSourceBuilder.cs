@@ -729,16 +729,37 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, TypeRoleRecord> byType)
         {
+            bool held = owner.Role == TypeRole.HandleTarget;
+
             return "new ToolFields(" + (writes ? "true" : "false") + ", "
                 + (owner.Role == TypeRole.Connector ? "false" : "true") + ", "
                 + Receiver(
                     owner.TypeName,
                     false,
                     path,
-                    writes ? row.EditKind : ToolMapEditKind.Read,
+                    Writing(row, owner, path, writes, held),
                     false,
-                    owner.Role == TypeRole.HandleTarget)
+                    held)
                 + ", " + Access(path, signatures, concrete, byType) + ", new ToolFieldSet[]";
+        }
+
+        /// <summary>
+        /// 項目を集めたツールの編集の流れ。いまのPMXから辿って得た相手はその複製なので、書き換えた
+        /// ぶんをまとめて反映する流れになる。行の分類は、その行のメンバーを1つ呼ぶときの流れで
+        /// あって、項目を集めたツールがどの流れで書くかを決めない——集める行のどれが先に現れるかで
+        /// ツールの流れが変わってしまう。
+        /// </summary>
+        private static ToolMapEditKind Writing(
+            ToolMapRow row, TypeRoleRecord owner, AccessPath path, bool writes, bool held)
+        {
+            if (!writes)
+            {
+                return ToolMapEditKind.Read;
+            }
+
+            return !held && Rooted(owner.TypeName, path)
+                ? ToolMapEditKind.DuplicateEdit
+                : row.EditKind;
         }
 
         private static string Elements(
@@ -1094,8 +1115,7 @@ namespace PmxEditorMcp.SignatureDump
             bool held = false)
         {
             string declaring = TypeDefinitionName.OfElement(declaringType);
-            bool rooted = string.Equals(declaring, PmxTypeName, StringComparison.Ordinal)
-                || (path != null && path.Kind != AccessPathKind.Whole);
+            bool rooted = Rooted(declaringType, path);
             string type = isStatic || rooted ? "null" : Literal(declaring);
             if (held)
             {
@@ -1107,6 +1127,16 @@ namespace PmxEditorMcp.SignatureDump
             return "new ToolReceiver(ToolReceiverKind."
                 + (rooted ? "Pmx" : "Connection") + ", " + type + ", EditKind."
                 + Edit(edit) + (bridged ? ", true" : string.Empty) + ")";
+        }
+
+        /// <summary>相手をいまのPMXから辿って得るか。辿って得た相手はその複製である。</summary>
+        private static bool Rooted(string declaringType, AccessPath path)
+        {
+            return string.Equals(
+                    TypeDefinitionName.OfElement(declaringType),
+                    PmxTypeName,
+                    StringComparison.Ordinal)
+                || (path != null && path.Kind != AccessPathKind.Whole);
         }
 
         private static string Edit(ToolMapEditKind kind)
