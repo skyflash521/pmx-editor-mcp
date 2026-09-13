@@ -16,7 +16,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AToolThatTakesHandlesIsCheckedWithAHandleTheLedgerDoesNotCarry()
         {
-            E2eCase one = Assert.Single(Build(Tool("session_release_handle", Handles())));
+            E2eCase one = Assert.Single(Refused(Build(Tool("session_release_handle", Handles()))));
 
             Assert.Equal("session_release_handle", one.Tool);
             Assert.Equal(E2eExpectation.Refusal, one.Expectation);
@@ -27,7 +27,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void TheHandleCheckAlsoCarriesTheOtherGroupsTheToolMustHave()
         {
-            E2eCase one = Assert.Single(Build(Valued("model_update_items")));
+            E2eCase one = Assert.Single(Refused(Build(Valued("model_update_items"))));
 
             Assert.Equal("TOOL_INVALID_HANDLE", one.Code);
             Assert.Equal(new[] { "handles", "value" }, one.Arguments.Keys.OrderBy(k => k).ToArray());
@@ -37,7 +37,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AGroupThatCannotBeFilledLeavesNoHandleCheck()
         {
-            Assert.Empty(Build(Shaped("model_paint_items")));
+            Assert.Empty(Refused(Build(Shaped("model_paint_items"))));
         }
 
         [Fact]
@@ -45,7 +45,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             ToolSchema schema = Shaped("model_paint_items");
             SchemaItem color = schema.Branches[0].Inputs.Single(i => i.Name == "color");
-            E2eCase one = Assert.Single(E2eCaseBuilder.Build(
+            E2eCase one = Assert.Single(Refused(E2eCaseBuilder.Build(
                 Map(RowKey),
                 new ToolSchemaTable(new[] { schema }),
                 new Dictionary<string, string>(StringComparer.Ordinal),
@@ -53,7 +53,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new HashSet<string>(StringComparer.Ordinal),
                 Shapes(),
                 new Dictionary<SchemaItem, string> { { color, "Sdk.Paint" } },
-                new SampleValueTable(new[] { new SampleValueRow("Sdk.Paint", "赤", "青") })));
+                new SampleValueTable(new[] { new SampleValueRow("Sdk.Paint", "赤", "青") }))));
 
             Assert.Equal("TOOL_INVALID_HANDLE", one.Code);
             Assert.Equal("赤", one.Arguments["color"]);
@@ -62,7 +62,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AToolThatTakesACountIsCheckedAtTheEdgeOfThePage()
         {
-            E2eCase one = Assert.Single(Build(Tool("model_list_bone", Limit())));
+            E2eCase one = Assert.Single(Refused(Build(Tool("model_list_bone", Limit()))));
 
             Assert.Equal("TOOL_INVALID_ARGUMENT", one.Code);
             Assert.Equal(0d, Convert.ToDouble(one.Arguments["limit"]));
@@ -76,7 +76,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 rowKey: RowKey,
                 dangerous: true);
 
-            E2eCase one = Assert.Single(cases);
+            E2eCase one = Assert.Single(Refused(cases));
             Assert.Equal("TOOL_CONFIRM_REQUIRED", one.Code);
             Assert.Empty(one.Arguments);
         }
@@ -95,7 +95,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AToolNamedByARowCarriesTheRowAndTheFlowAndThePath()
         {
             E2eCase one = Assert.Single(
-                Build(Tool("model_release", Handles()), rowKey: RowKey));
+                Refused(Build(Tool("model_release", Handles()), rowKey: RowKey)));
 
             Assert.Equal(RowKey, one.RowKey);
             Assert.Equal("read", one.EditKind);
@@ -105,7 +105,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AToolThatNoRowNamesIsStillChecked()
         {
-            E2eCase one = Assert.Single(Build(Tool("session_release_handle", Handles())));
+            E2eCase one = Assert.Single(Refused(Build(Tool("session_release_handle", Handles()))));
 
             Assert.Equal(string.Empty, one.RowKey);
             Assert.Equal(string.Empty, one.EditKind);
@@ -113,9 +113,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AToolWithoutAnythingToCheckGivesNoCase()
+        public void AToolWithoutAnythingToAbuseGivesNoRefusalCase()
         {
-            Assert.Empty(Build(Tool("model_get_name", new SchemaItem[0])));
+            Assert.Empty(Refused(Build(Tool("model_get_name", new SchemaItem[0]))));
+        }
+
+        [Fact]
+        public void EveryToolIsCheckedForHavingSomethingToCallBehindIt()
+        {
+            E2eCase one = Assert.Single(
+                Build(Tool("model_get_name", new SchemaItem[0])),
+                c => c.Expectation == E2eExpectation.Dispatched);
+
+            Assert.Equal("model_get_name", one.Tool);
+            Assert.Empty(one.Arguments);
+            Assert.Null(one.Code);
         }
 
         [Fact]
@@ -137,6 +149,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => E2eCaseBuilder.Build(Map(RowKey), schemas, named, Paths(), null, Shapes()));
             Assert.Throws<ArgumentNullException>(
                 () => E2eCaseBuilder.Build(Map(RowKey), schemas, named, Paths(), dangerous, null));
+        }
+
+        /// <summary>断りを見る検査だけ。呼び先が在ることの検査はどのツールにも付くので外す。</summary>
+        private static IList<E2eCase> Refused(IEnumerable<E2eCase> cases)
+        {
+            return cases.Where(c => c.Expectation != E2eExpectation.Dispatched).ToList();
         }
 
         private static IList<E2eCase> Build(ToolSchema schema, string rowKey = null, bool dangerous = false)

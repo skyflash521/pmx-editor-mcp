@@ -137,6 +137,16 @@ namespace PmxEditorMcp.SignatureDump
             string editKind = row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind);
             bool confirmed = row != null && dangerous.Contains(rowKey);
 
+            yield return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                tool,
+                "未知のメソッドとして断られないこと",
+                new Dictionary<string, object>(StringComparer.Ordinal),
+                E2eExpectation.Dispatched,
+                null);
+
             if (confirmed)
             {
                 yield return new E2eCase(

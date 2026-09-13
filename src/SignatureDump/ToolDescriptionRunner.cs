@@ -101,7 +101,7 @@ namespace PmxEditorMcp.SignatureDump
                     owned,
                     names,
                     inventory,
-                    ToolNameEvidence.Resolve(map, owned, assignments, signatures),
+                    ToolNameEvidence.Resolve(map, owned, assignments, inventory),
                     ToolMapEvidence.ContractNotesBySignature(
                         ToolMapEvidence.ProvidedOwners(
                             LedgerPopulation.Resolve(ledger, inventory).Owners, ledger),

@@ -839,7 +839,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
-            string unavailable;
+            UiInvocation unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -1216,7 +1216,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
-            string unavailable;
+            UiInvocation unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -1914,7 +1914,7 @@ namespace PmxEditorMcp
             List<object[]> values = new List<object[]>();
             Refusal refused = null;
             Exception failure;
-            string unavailable;
+            UiInvocation unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -2095,7 +2095,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = Changing(tool.Receiver, null);
             Exception failure;
-            string unavailable;
+            UiInvocation unavailable;
             if (!Run(context, () =>
             {
                 object ignored;
@@ -2175,7 +2175,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
-            string unavailable;
+            UiInvocation unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -2330,7 +2330,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
-            string unavailable;
+            UiInvocation unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -2387,7 +2387,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
-            string unavailable;
+            UiInvocation unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -2467,7 +2467,7 @@ namespace PmxEditorMcp
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
-            string unavailable;
+            UiInvocation unavailable;
             if (!Run(context, () =>
             {
                 PmxTarget target;
@@ -3748,7 +3748,10 @@ namespace PmxEditorMcp
         /// <paramref name="unavailable"/> にその理由を持たせる。
         /// </summary>
         private static bool Run(
-            McpMethodContext context, Action action, out Exception failure, out string unavailable)
+            McpMethodContext context,
+            Action action,
+            out Exception failure,
+            out UiInvocation unavailable)
         {
             Exception caught = null;
             UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
@@ -3763,7 +3766,7 @@ namespace PmxEditorMcp
                 }
             });
             failure = caught;
-            unavailable = invocation.Unavailable;
+            unavailable = invocation;
 
             return invocation.DidRun;
         }
@@ -4446,13 +4449,20 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 呼び出しをUIスレッドで行えなかったことを返す。<paramref name="unavailable"/> に事情が
-        /// 在るときはそれを説明とする——何が起きているかを知っているのは委譲した側である。
+        /// 呼び出しをUIスレッドで行えなかったことを返す。事情を知っているのは委譲した側なので
+        /// その説明をそのまま載せ、委譲を渡していない回は投げ直せる断り方で返す。
         /// </summary>
-        private static IDictionary<string, object> Unavailable(string unavailable = null)
+        private static IDictionary<string, object> Unavailable(UiInvocation invocation = null)
         {
+            if (invocation == null || invocation.Unavailable == null)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "いまは要求を受け付けていない。");
+            }
+
             return ToolEnvelope.Failure(
-                ToolEnvelope.NotApplicable, unavailable ?? "いまは要求を受け付けていない。");
+                invocation.DidStart ? ToolEnvelope.NotApplicable : ToolEnvelope.NotStarted,
+                invocation.Unavailable);
         }
 
         /// <summary>

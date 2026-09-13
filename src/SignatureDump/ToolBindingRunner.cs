@@ -94,7 +94,7 @@ namespace PmxEditorMcp.SignatureDump
                     map,
                     owned,
                     inventory,
-                    ToolNameEvidence.Resolve(map, owned, assignments, signatures),
+                    ToolNameEvidence.Resolve(map, owned, assignments, inventory),
                     assignments,
                     schemas,
                     contract.Types

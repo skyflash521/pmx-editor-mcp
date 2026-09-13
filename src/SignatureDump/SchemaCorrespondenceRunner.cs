@@ -84,7 +84,7 @@ namespace PmxEditorMcp.SignatureDump
                     .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
                 TypeRoleTable owned = TypeGroupRule.Resolve(
                     roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
-                toolNames = ToolNameEvidence.Resolve(map, owned, assignments, signatures);
+                toolNames = ToolNameEvidence.Resolve(map, owned, assignments, inventory);
                 SchemaCorrespondenceGate.Require(
                     map,
                     schemas,

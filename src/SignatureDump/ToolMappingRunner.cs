@@ -89,7 +89,7 @@ namespace PmxEditorMcp.SignatureDump
                     roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
                 signatures = inventory.Signatures.ToDictionary(
                     s => s.Key, s => s, StringComparer.Ordinal);
-                toolNames = ToolNameEvidence.Resolve(map, roles, assignments, signatures);
+                toolNames = ToolNameEvidence.Resolve(map, roles, assignments, inventory);
                 ToolMappingGate.Require(
                     map,
                     roles,

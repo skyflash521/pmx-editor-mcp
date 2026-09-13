@@ -192,6 +192,13 @@ try {
                 $toolMap $toolSchemas
         }
     }
+    $checks['行の検査の網羅'] = @{
+        Needs = $buildOutput
+        Body = {
+            & $dump row-coverage $editorDir $ledger $contract $roles $names `
+                $assignments $toolMap $toolSchemas $sampleValues
+        }
+    }
     $checks['規則適合検査'] = @{
         Needs = $buildOutput
         Body = {

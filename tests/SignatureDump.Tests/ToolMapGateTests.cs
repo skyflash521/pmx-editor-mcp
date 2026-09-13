@@ -49,7 +49,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             MemberKind memberKind = MemberKind.Method,
             ISet<string> embeddedTypes = null,
             ISet<string> independentTypes = null,
-            ISet<string> carried = null)
+            ISet<string> carried = null,
+            ISet<string> traversed = null)
         {
             ToolMapGate.Require(
                 ToolMapJsonReader.Read(mapJson),
@@ -67,7 +68,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         new[] { "PEPlugin.SDX.V3" }, StringComparer.Ordinal),
                     embeddedTypes ?? new HashSet<string>(StringComparer.Ordinal),
                     independentTypes ?? new HashSet<string>(StringComparer.Ordinal),
-                    carried),
+                    carried,
+                    traversed: traversed),
                 CommonAssignmentJsonReader.Read(assignmentsJson));
         }
 
@@ -260,7 +262,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void RejectsARowThatOnlyReachesAnotherToolForSuchAType()
+        public void RejectsARowThatOnlyLeadsToAnotherToolForSuchAType()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(
@@ -271,7 +273,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     independentTypes: new HashSet<string>(
                         new[] { "PEPlugin.Pmx.IPXPmx" }, StringComparer.Ordinal),
                     carried: new HashSet<string>(
-                        new[] { "PEPlugin.Pmx.IPXPmxConnector" }, StringComparer.Ordinal)));
+                        new[] { "PEPlugin.Pmx.IPXPmxConnector" }, StringComparer.Ordinal),
+                    traversed: new HashSet<string>(new[] { Key }, StringComparer.Ordinal)));
 
             Assert.Contains("提供対象でない", error.Message, StringComparison.Ordinal);
         }

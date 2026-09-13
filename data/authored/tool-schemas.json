@@ -2230,6 +2230,9 @@
               "origin": "hostOutput",
               "members": [
                 {
+                  "name": "bone"
+                },
+                {
                   "name": "boxKind"
                 },
                 {
@@ -2418,6 +2421,9 @@
               "origin": "hostOutput",
               "members": [
                 {
+                  "name": "appendParent"
+                },
+                {
                   "name": "appendRatio"
                 },
                 {
@@ -2472,10 +2478,304 @@
                   "name": "position"
                 },
                 {
+                  "name": "parent"
+                },
+                {
+                  "name": "toBone"
+                },
+                {
                   "name": "toOffset"
                 },
                 {
                   "name": "visible"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_list_faces",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentAll",
+                "parentIndices",
+                "parentRange"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "fields",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "items",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "parentIndex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "parentHandle",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "indexInParent",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "vertex1"
+                },
+                {
+                  "name": "vertex2"
+                },
+                {
+                  "name": "vertex3"
                 }
               ]
             }
@@ -2744,6 +3044,9 @@
                   "name": "indexInParent",
                   "origin": "hostOutput",
                   "shape": "number"
+                },
+                {
+                  "name": "bone"
                 },
                 {
                   "name": "high"
@@ -3038,6 +3341,9 @@
                 },
                 {
                   "name": "loopCount"
+                },
+                {
+                  "name": "target"
                 }
               ]
             }
@@ -3186,6 +3492,12 @@
               "members": [
                 {
                   "name": "kind"
+                },
+                {
+                  "name": "bodyA"
+                },
+                {
+                  "name": "bodyB"
                 },
                 {
                   "name": "limitAngleHigh"
@@ -3796,6 +4108,9 @@
                   "name": "edgeSize"
                 },
                 {
+                  "name": "material"
+                },
+                {
                   "name": "op"
                 },
                 {
@@ -3817,7 +4132,13 @@
                   "name": "offset"
                 },
                 {
+                  "name": "body"
+                },
+                {
                   "name": "local"
+                },
+                {
+                  "name": "morph"
                 },
                 {
                   "name": "ratio"
@@ -3833,6 +4154,12 @@
                 },
                 {
                   "name": "velocity"
+                },
+                {
+                  "name": "bone"
+                },
+                {
+                  "name": "vertex"
                 }
               ]
             }
@@ -4297,10 +4624,22 @@
                   "shape": "number"
                 },
                 {
+                  "name": "boneItem"
+                },
+                {
                   "name": "isBone"
                 },
                 {
                   "name": "isMorph"
+                },
+                {
+                  "name": "morphItem"
+                },
+                {
+                  "name": "bone"
+                },
+                {
+                  "name": "morph"
                 }
               ]
             }
@@ -4520,6 +4859,12 @@
               "members": [
                 {
                   "name": "filePath"
+                },
+                {
+                  "name": "expressionNode"
+                },
+                {
+                  "name": "rootNode"
                 }
               ]
             }
@@ -4721,6 +5066,9 @@
                   "name": "margin"
                 },
                 {
+                  "name": "material"
+                },
+                {
                   "name": "mt"
                 },
                 {
@@ -4734,6 +5082,10 @@
                 },
                 {
                   "name": "passGroup",
+                  "element": {}
+                },
+                {
+                  "name": "pins",
                   "element": {}
                 },
                 {
@@ -5061,7 +5413,13 @@
                   "shape": "number"
                 },
                 {
+                  "name": "body"
+                },
+                {
                   "name": "near"
+                },
+                {
+                  "name": "vertex"
                 }
               ]
             }
@@ -5208,6 +5566,18 @@
             "element": {
               "origin": "hostOutput",
               "members": [
+                {
+                  "name": "bone1"
+                },
+                {
+                  "name": "bone2"
+                },
+                {
+                  "name": "bone3"
+                },
+                {
+                  "name": "bone4"
+                },
                 {
                   "name": "edgeScale"
                 },
@@ -7209,6 +7579,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "bone",
+                  "required": false
+                },
+                {
                   "name": "boxKind",
                   "required": false
                 },
@@ -7273,6 +7647,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "bone",
+                    "required": false
+                  },
                   {
                     "name": "boxKind",
                     "required": false
@@ -7369,6 +7747,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "bone",
+                  "required": false
+                },
+                {
                   "name": "boxKind",
                   "required": false
                 },
@@ -7433,6 +7815,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "bone",
+                    "required": false
+                  },
                   {
                     "name": "boxKind",
                     "required": false
@@ -7564,6 +7950,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "appendParent",
+                  "required": false
+                },
+                {
                   "name": "appendRatio",
                   "required": false
                 },
@@ -7636,6 +8026,14 @@
                   "required": false
                 },
                 {
+                  "name": "parent",
+                  "required": false
+                },
+                {
+                  "name": "toBone",
+                  "required": false
+                },
+                {
                   "name": "toOffset",
                   "required": false
                 },
@@ -7651,6 +8049,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "appendParent",
+                    "required": false
+                  },
                   {
                     "name": "appendRatio",
                     "required": false
@@ -7721,6 +8123,14 @@
                   },
                   {
                     "name": "position",
+                    "required": false
+                  },
+                  {
+                    "name": "parent",
+                    "required": false
+                  },
+                  {
+                    "name": "toBone",
                     "required": false
                   },
                   {
@@ -7770,6 +8180,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "appendParent",
+                  "required": false
+                },
+                {
                   "name": "appendRatio",
                   "required": false
                 },
@@ -7842,6 +8256,14 @@
                   "required": false
                 },
                 {
+                  "name": "parent",
+                  "required": false
+                },
+                {
+                  "name": "toBone",
+                  "required": false
+                },
+                {
                   "name": "toOffset",
                   "required": false
                 },
@@ -7857,6 +8279,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "appendParent",
+                    "required": false
+                  },
                   {
                     "name": "appendRatio",
                     "required": false
@@ -7930,11 +8356,334 @@
                     "required": false
                   },
                   {
+                    "name": "parent",
+                    "required": false
+                  },
+                  {
+                    "name": "toBone",
+                    "required": false
+                  },
+                  {
                     "name": "toOffset",
                     "required": false
                   },
                   {
                     "name": "visible",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_faces",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "vertex1",
+                  "required": false
+                },
+                {
+                  "name": "vertex2",
+                  "required": false
+                },
+                {
+                  "name": "vertex3",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "vertex1",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex2",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex3",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentAll",
+                "parentIndices",
+                "parentRange"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "heldParent",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "vertex1",
+                  "required": false
+                },
+                {
+                  "name": "vertex2",
+                  "required": false
+                },
+                {
+                  "name": "vertex3",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "vertex1",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex2",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex3",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "held",
+          "inputs": [
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "vertex1",
+                  "required": false
+                },
+                {
+                  "name": "vertex2",
+                  "required": false
+                },
+                {
+                  "name": "vertex3",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "vertex1",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex2",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex3",
                     "required": false
                   }
                 ]
@@ -8092,6 +8841,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "bone",
+                  "required": false
+                },
+                {
                   "name": "high",
                   "required": false
                 },
@@ -8111,6 +8864,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "bone",
+                    "required": false
+                  },
                   {
                     "name": "high",
                     "required": false
@@ -8170,6 +8927,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "bone",
+                  "required": false
+                },
+                {
                   "name": "high",
                   "required": false
                 },
@@ -8189,6 +8950,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "bone",
+                    "required": false
+                  },
                   {
                     "name": "high",
                     "required": false
@@ -8312,6 +9077,10 @@
                 {
                   "name": "loopCount",
                   "required": false
+                },
+                {
+                  "name": "target",
+                  "required": false
                 }
               ]
             },
@@ -8327,6 +9096,10 @@
                   },
                   {
                     "name": "loopCount",
+                    "required": false
+                  },
+                  {
+                    "name": "target",
                     "required": false
                   }
                 ]
@@ -8413,6 +9186,10 @@
                 {
                   "name": "loopCount",
                   "required": false
+                },
+                {
+                  "name": "target",
+                  "required": false
                 }
               ]
             },
@@ -8428,6 +9205,10 @@
                   },
                   {
                     "name": "loopCount",
+                    "required": false
+                  },
+                  {
+                    "name": "target",
                     "required": false
                   }
                 ]
@@ -8475,6 +9256,10 @@
                 {
                   "name": "loopCount",
                   "required": false
+                },
+                {
+                  "name": "target",
+                  "required": false
                 }
               ]
             },
@@ -8490,6 +9275,10 @@
                   },
                   {
                     "name": "loopCount",
+                    "required": false
+                  },
+                  {
+                    "name": "target",
                     "required": false
                   }
                 ]
@@ -8570,6 +9359,14 @@
                   "required": false
                 },
                 {
+                  "name": "bodyA",
+                  "required": false
+                },
+                {
+                  "name": "bodyB",
+                  "required": false
+                },
+                {
                   "name": "limitAngleHigh",
                   "required": false
                 },
@@ -8619,6 +9416,14 @@
                 "members": [
                   {
                     "name": "kind",
+                    "required": false
+                  },
+                  {
+                    "name": "bodyA",
+                    "required": false
+                  },
+                  {
+                    "name": "bodyB",
                     "required": false
                   },
                   {
@@ -8704,6 +9509,14 @@
                   "required": false
                 },
                 {
+                  "name": "bodyA",
+                  "required": false
+                },
+                {
+                  "name": "bodyB",
+                  "required": false
+                },
+                {
                   "name": "limitAngleHigh",
                   "required": false
                 },
@@ -8753,6 +9566,14 @@
                 "members": [
                   {
                     "name": "kind",
+                    "required": false
+                  },
+                  {
+                    "name": "bodyA",
+                    "required": false
+                  },
+                  {
+                    "name": "bodyB",
                     "required": false
                   },
                   {
@@ -9422,6 +10243,10 @@
                   "required": false
                 },
                 {
+                  "name": "material",
+                  "required": false
+                },
+                {
                   "name": "op",
                   "required": false
                 },
@@ -9467,6 +10292,10 @@
                   },
                   {
                     "name": "edgeSize",
+                    "required": false
+                  },
+                  {
+                    "name": "material",
                     "required": false
                   },
                   {
@@ -9597,6 +10426,10 @@
                   "required": false
                 },
                 {
+                  "name": "material",
+                  "required": false
+                },
+                {
                   "name": "op",
                   "required": false
                 },
@@ -9642,6 +10475,10 @@
                   },
                   {
                     "name": "edgeSize",
+                    "required": false
+                  },
+                  {
+                    "name": "material",
                     "required": false
                   },
                   {
@@ -9733,6 +10570,10 @@
                   "required": false
                 },
                 {
+                  "name": "material",
+                  "required": false
+                },
+                {
                   "name": "op",
                   "required": false
                 },
@@ -9778,6 +10619,10 @@
                   },
                   {
                     "name": "edgeSize",
+                    "required": false
+                  },
+                  {
+                    "name": "material",
                     "required": false
                   },
                   {
@@ -9906,6 +10751,10 @@
                 {
                   "name": "offset",
                   "required": false
+                },
+                {
+                  "name": "vertex",
+                  "required": false
                 }
               ]
             },
@@ -9917,6 +10766,10 @@
                 "members": [
                   {
                     "name": "offset",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -10009,6 +10862,10 @@
                 {
                   "name": "offset",
                   "required": false
+                },
+                {
+                  "name": "vertex",
+                  "required": false
                 }
               ]
             },
@@ -10020,6 +10877,10 @@
                 "members": [
                   {
                     "name": "offset",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -10073,6 +10934,10 @@
                 {
                   "name": "offset",
                   "required": false
+                },
+                {
+                  "name": "vertex",
+                  "required": false
                 }
               ]
             },
@@ -10084,6 +10949,10 @@
                 "members": [
                   {
                     "name": "offset",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -10192,6 +11061,10 @@
                 {
                   "name": "translation",
                   "required": false
+                },
+                {
+                  "name": "bone",
+                  "required": false
                 }
               ]
             },
@@ -10207,6 +11080,10 @@
                   },
                   {
                     "name": "translation",
+                    "required": false
+                  },
+                  {
+                    "name": "bone",
                     "required": false
                   }
                 ]
@@ -10303,6 +11180,10 @@
                 {
                   "name": "translation",
                   "required": false
+                },
+                {
+                  "name": "bone",
+                  "required": false
                 }
               ]
             },
@@ -10318,6 +11199,10 @@
                   },
                   {
                     "name": "translation",
+                    "required": false
+                  },
+                  {
+                    "name": "bone",
                     "required": false
                   }
                 ]
@@ -10375,6 +11260,10 @@
                 {
                   "name": "translation",
                   "required": false
+                },
+                {
+                  "name": "bone",
+                  "required": false
                 }
               ]
             },
@@ -10390,6 +11279,10 @@
                   },
                   {
                     "name": "translation",
+                    "required": false
+                  },
+                  {
+                    "name": "bone",
                     "required": false
                   }
                 ]
@@ -10492,6 +11385,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "morph",
+                  "required": false
+                },
+                {
                   "name": "ratio",
                   "required": false
                 }
@@ -10503,6 +11400,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "morph",
+                    "required": false
+                  },
                   {
                     "name": "ratio",
                     "required": false
@@ -10595,6 +11496,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "morph",
+                  "required": false
+                },
+                {
                   "name": "ratio",
                   "required": false
                 }
@@ -10606,6 +11511,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "morph",
+                    "required": false
+                  },
                   {
                     "name": "ratio",
                     "required": false
@@ -10659,6 +11568,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "morph",
+                  "required": false
+                },
+                {
                   "name": "ratio",
                   "required": false
                 }
@@ -10670,6 +11583,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "morph",
+                    "required": false
+                  },
                   {
                     "name": "ratio",
                     "required": false
@@ -10774,6 +11691,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "body",
+                  "required": false
+                },
+                {
                   "name": "local",
                   "required": false
                 },
@@ -10793,6 +11714,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "body",
+                    "required": false
+                  },
                   {
                     "name": "local",
                     "required": false
@@ -10893,6 +11818,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "body",
+                  "required": false
+                },
+                {
                   "name": "local",
                   "required": false
                 },
@@ -10912,6 +11841,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "body",
+                    "required": false
+                  },
                   {
                     "name": "local",
                     "required": false
@@ -10973,6 +11906,10 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "body",
+                  "required": false
+                },
+                {
                   "name": "local",
                   "required": false
                 },
@@ -10992,6 +11929,10 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "body",
+                    "required": false
+                  },
                   {
                     "name": "local",
                     "required": false
@@ -11106,6 +12047,10 @@
                 {
                   "name": "offset",
                   "required": false
+                },
+                {
+                  "name": "vertex",
+                  "required": false
                 }
               ]
             },
@@ -11117,6 +12062,10 @@
                 "members": [
                   {
                     "name": "offset",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -11209,6 +12158,10 @@
                 {
                   "name": "offset",
                   "required": false
+                },
+                {
+                  "name": "vertex",
+                  "required": false
                 }
               ]
             },
@@ -11220,6 +12173,10 @@
                 "members": [
                   {
                     "name": "offset",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -11273,6 +12230,10 @@
                 {
                   "name": "offset",
                   "required": false
+                },
+                {
+                  "name": "vertex",
+                  "required": false
                 }
               ]
             },
@@ -11284,6 +12245,10 @@
                 "members": [
                   {
                     "name": "offset",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -11475,6 +12440,585 @@
                   },
                   {
                     "name": "panel",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_update_node_items",
+      "branches": [
+        {
+          "branch": "bone",
+          "selector": {
+            "name": "itemType",
+            "value": "bone_node_item"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "bone",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "bone",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentAll",
+                "parentIndices",
+                "parentRange"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "boneHeldParent",
+          "selector": {
+            "name": "itemType",
+            "value": "bone_node_item"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "bone",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "bone",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "boneHeld",
+          "selector": {
+            "name": "itemType",
+            "value": "bone_node_item"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "bone",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "bone",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "morph",
+          "selector": {
+            "name": "itemType",
+            "value": "morph_node_item"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "parentIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "parentRange",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "parentAll",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "morph",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "morph",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "parentAll",
+                "parentIndices",
+                "parentRange"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "morphHeldParent",
+          "selector": {
+            "name": "itemType",
+            "value": "morph_node_item"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "morph",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "morph",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            },
+            {
+              "names": [
+                "value",
+                "values"
+              ],
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "morphHeld",
+          "selector": {
+            "name": "itemType",
+            "value": "morph_node_item"
+          },
+          "inputs": [
+            {
+              "name": "itemType",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "handles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "value",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "morph",
+                  "required": false
+                }
+              ]
+            },
+            {
+              "name": "values",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "morph",
                     "required": false
                   }
                 ]
@@ -11848,6 +13392,10 @@
                   "required": false
                 },
                 {
+                  "name": "material",
+                  "required": false
+                },
+                {
                   "name": "mt",
                   "required": false
                 },
@@ -12006,6 +13554,10 @@
                   },
                   {
                     "name": "margin",
+                    "required": false
+                  },
+                  {
+                    "name": "material",
                     "required": false
                   },
                   {
@@ -12200,6 +13752,10 @@
                   "required": false
                 },
                 {
+                  "name": "material",
+                  "required": false
+                },
+                {
                   "name": "mt",
                   "required": false
                 },
@@ -12358,6 +13914,10 @@
                   },
                   {
                     "name": "margin",
+                    "required": false
+                  },
+                  {
+                    "name": "material",
                     "required": false
                   },
                   {
@@ -12541,7 +14101,15 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "body",
+                  "required": false
+                },
+                {
                   "name": "near",
+                  "required": false
+                },
+                {
+                  "name": "vertex",
                   "required": false
                 }
               ]
@@ -12553,7 +14121,15 @@
                 "origin": "hostInput",
                 "members": [
                   {
+                    "name": "body",
+                    "required": false
+                  },
+                  {
                     "name": "near",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -12634,7 +14210,15 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "body",
+                  "required": false
+                },
+                {
                   "name": "near",
+                  "required": false
+                },
+                {
+                  "name": "vertex",
                   "required": false
                 }
               ]
@@ -12646,7 +14230,15 @@
                 "origin": "hostInput",
                 "members": [
                   {
+                    "name": "body",
+                    "required": false
+                  },
+                  {
                     "name": "near",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -12688,7 +14280,15 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "body",
+                  "required": false
+                },
+                {
                   "name": "near",
+                  "required": false
+                },
+                {
+                  "name": "vertex",
                   "required": false
                 }
               ]
@@ -12700,7 +14300,15 @@
                 "origin": "hostInput",
                 "members": [
                   {
+                    "name": "body",
+                    "required": false
+                  },
+                  {
                     "name": "near",
+                    "required": false
+                  },
+                  {
+                    "name": "vertex",
                     "required": false
                   }
                 ]
@@ -12864,6 +14472,22 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "bone1",
+                  "required": false
+                },
+                {
+                  "name": "bone2",
+                  "required": false
+                },
+                {
+                  "name": "bone3",
+                  "required": false
+                },
+                {
+                  "name": "bone4",
+                  "required": false
+                },
+                {
                   "name": "edgeScale",
                   "required": false
                 },
@@ -12939,6 +14563,22 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "bone1",
+                    "required": false
+                  },
+                  {
+                    "name": "bone2",
+                    "required": false
+                  },
+                  {
+                    "name": "bone3",
+                    "required": false
+                  },
+                  {
+                    "name": "bone4",
+                    "required": false
+                  },
                   {
                     "name": "edgeScale",
                     "required": false
@@ -13046,6 +14686,22 @@
               "origin": "hostInput",
               "members": [
                 {
+                  "name": "bone1",
+                  "required": false
+                },
+                {
+                  "name": "bone2",
+                  "required": false
+                },
+                {
+                  "name": "bone3",
+                  "required": false
+                },
+                {
+                  "name": "bone4",
+                  "required": false
+                },
+                {
                   "name": "edgeScale",
                   "required": false
                 },
@@ -13121,6 +14777,22 @@
               "element": {
                 "origin": "hostInput",
                 "members": [
+                  {
+                    "name": "bone1",
+                    "required": false
+                  },
+                  {
+                    "name": "bone2",
+                    "required": false
+                  },
+                  {
+                    "name": "bone3",
+                    "required": false
+                  },
+                  {
+                    "name": "bone4",
+                    "required": false
+                  },
                   {
                     "name": "edgeScale",
                     "required": false
@@ -19880,6 +21552,9 @@
                 },
                 {
                   "name": "enablePmx"
+                },
+                {
+                  "name": "pmx"
                 },
                 {
                   "name": "lastFrame"

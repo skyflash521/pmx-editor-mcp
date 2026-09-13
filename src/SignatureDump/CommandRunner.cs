@@ -73,6 +73,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>実機のエディタへ投げる検査を組み立てて書き出す。</summary>
         public const string E2eCasesCommand = "e2e-cases";
 
+        /// <summary>能力対応表の行が実機の検査に覆われることを照合する。</summary>
+        public const string RowCoverageCommand = "row-coverage";
+
         /// <summary>配布物が実行時リフレクションを持たないことを照合する。</summary>
         public const string ReflectionFreeCommand = "reflection-free";
 
@@ -206,6 +209,11 @@ namespace PmxEditorMcp.SignatureDump
                 return E2eCaseRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], RowCoverageCommand, StringComparison.Ordinal))
+            {
+                return RowCoverageRunner.Run(rest, output, error);
+            }
+
             if (string.Equals(args[0], ReflectionFreeCommand, StringComparison.Ordinal))
             {
                 return ReflectionFreeRunner.Run(rest, output, error);
@@ -303,6 +311,12 @@ namespace PmxEditorMcp.SignatureDump
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
                     + " <型役割表の正本のパス> <日本語名の正本のパス> <共通契約割当の正本のパス>"
                     + " <能力対応表の正本のパス> <用途の作業の正本のパス>");
+            error.WriteLine(
+                RowCoverageCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <サンプル値の正本のパス>");
             error.WriteLine(
                 ReflectionFreeCommand + " <PMXエディタ導入ディレクトリ> <検査するアセンブリのパス>");
         }

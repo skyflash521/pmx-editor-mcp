@@ -67,6 +67,24 @@ namespace PmxEditorMcp.SignatureDump
 
         public ToolSchemaTable Schemas { get; }
 
+        /// <summary>型ごとの役割と、発行と並びの判定。</summary>
+        public TypeRoleTable Roles
+        {
+            get { return _roles; }
+        }
+
+        /// <summary>共通契約が受け持つ行の割当。</summary>
+        public CommonAssignmentTable Assignments
+        {
+            get { return _assignments; }
+        }
+
+        /// <summary>1つのSDKメンバーへ1対1で写らないツール。行を持たない。</summary>
+        public IDictionary<string, ComposedTool> ComposedTools
+        {
+            get { return _composedTools; }
+        }
+
         public IDictionary<string, int> Lengths { get; }
 
         public int BudgetChars { get; }
@@ -129,6 +147,18 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return shapes;
+        }
+
+        /// <summary>担当群を解いた型役割表。名前を決める側と同じ解き方をここ1つに置く。</summary>
+        public TypeRoleTable OwnedRoles(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            return TypeGroupRule.Resolve(
+                _roles, TypeGroupEvidence.OwnersByType(_ledger, inventory));
         }
 
         /// <summary>SDKに由来する項目から、その項目が写す型の名前へ。</summary>
@@ -259,8 +289,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(inventory));
             }
 
-            TypeRoleTable owned = TypeGroupRule.Resolve(
-                _roles, TypeGroupEvidence.OwnersByType(_ledger, inventory));
+            TypeRoleTable owned = OwnedRoles(inventory);
             IDictionary<string, SignatureRecord> signatures = inventory.Signatures
                 .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
             IList<ToolDescriptionMaterial> materials = ToolDescriptionEvidence.Collect(
@@ -268,7 +297,7 @@ namespace PmxEditorMcp.SignatureDump
                 owned,
                 _names,
                 inventory,
-                ToolNameEvidence.Resolve(Map, owned, _assignments, signatures),
+                ToolNameEvidence.Resolve(Map, owned, _assignments, inventory),
                 ToolMapEvidence.ContractNotesBySignature(
                     ToolMapEvidence.ProvidedOwners(
                         LedgerPopulation.Resolve(_ledger, inventory).Owners, _ledger),
@@ -299,14 +328,9 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(inventory));
             }
 
-            TypeRoleTable owned = TypeGroupRule.Resolve(
-                _roles, TypeGroupEvidence.OwnersByType(_ledger, inventory));
+            TypeRoleTable owned = OwnedRoles(inventory);
 
-            return ToolNameEvidence.Resolve(
-                Map,
-                owned,
-                _assignments,
-                inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal));
+            return ToolNameEvidence.Resolve(Map, owned, _assignments, inventory);
         }
 
         /// <summary>確認を要する行キー。名前で決まるので列挙から判じる。</summary>

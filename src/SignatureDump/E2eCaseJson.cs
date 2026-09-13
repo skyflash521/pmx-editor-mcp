@@ -41,7 +41,7 @@ namespace PmxEditorMcp.SignatureDump
                 .AddText("tool", one.Tool)
                 .AddText("purpose", one.Purpose)
                 .Add("arguments", Arguments(one.Arguments))
-                .AddText("expect", one.Expectation == E2eExpectation.Success ? "success" : "refusal");
+                .AddText("expect", Spelling(one.Expectation));
 
             if (one.Code != null)
             {
@@ -49,6 +49,24 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return written.Text;
+        }
+
+        private static string Spelling(E2eExpectation expectation)
+        {
+            switch (expectation)
+            {
+                case E2eExpectation.Success:
+                    return "success";
+
+                case E2eExpectation.Refusal:
+                    return "refusal";
+
+                case E2eExpectation.Dispatched:
+                    return "dispatched";
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(expectation));
+            }
         }
 
         private static string Arguments(IDictionary<string, object> arguments)

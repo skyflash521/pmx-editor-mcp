@@ -91,6 +91,31 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ADelegateHeldBehindAnotherOneIsSaidNotToHaveStarted()
+        {
+            StepDispatcher dispatcher = new StepDispatcher { Finishes = false };
+            HostGeneration generation = Generation(dispatcher, Shown);
+            generation.TryInvokeOnUi(() => { });
+
+            UiInvocation invocation = generation.TryInvokeOnUi(() => { });
+
+            Assert.False(invocation.DidRun);
+            Assert.False(invocation.DidStart);
+        }
+
+        [Fact]
+        public void ADelegateHeldAfterItStartedIsNotSaidToHaveBeenLeftUnstarted()
+        {
+            StepDispatcher dispatcher = new StepDispatcher { Finishes = false };
+            HostGeneration generation = Generation(dispatcher, Shown);
+
+            UiInvocation invocation = generation.TryInvokeOnUi(() => { });
+
+            Assert.False(invocation.DidRun);
+            Assert.True(invocation.DidStart);
+        }
+
+        [Fact]
         public void TheHeldDelegateIsSaidToBeUnfinishedWhenNothingIsShownAnyMore()
         {
             StepDispatcher dispatcher = new StepDispatcher { Finishes = false };

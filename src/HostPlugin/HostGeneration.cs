@@ -168,7 +168,7 @@ namespace PmxEditorMcp
                 {
                     if (!_uiDispatcher.Wait(_running, TimeSpan.Zero))
                     {
-                        return UiInvocation.Blocked(Standing());
+                        return UiInvocation.NotStarted(Standing());
                     }
 
                     Discard(_running);

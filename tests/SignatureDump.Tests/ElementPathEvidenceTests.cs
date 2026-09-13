@@ -211,8 +211,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheRowsOnTheWayAreTraversedAndTheOnesThatOnlyPointAreNot()
+        {
+            ISet<string> traversed = ElementPathEvidence.Traversed(Inventory(), Roles());
+
+            Assert.Contains(MorphList, traversed);
+            Assert.Contains(OffsetList, traversed);
+            Assert.Contains(IkKey, traversed);
+            Assert.Contains(HeaderKey, traversed);
+            Assert.DoesNotContain(LabelOfBone, traversed);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
+            Assert.Throws<ArgumentNullException>(
+                () => ElementPathEvidence.Traversed(null, Roles()));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementPathEvidence.Traversed(Inventory(), null));
             Assert.Throws<ArgumentNullException>(
                 () => ElementPathEvidence.Resolve(null, Roles()));
             Assert.Throws<ArgumentNullException>(

@@ -78,7 +78,8 @@ namespace PmxEditorMcp.SignatureDump
                     assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal),
                 evidence.IndependentTypes,
                 evidence.HandleTypes,
-                evidence.ElementCollections);
+                evidence.ElementCollections,
+                evidence.Traversed);
         }
 
         /// <summary>

@@ -59,8 +59,8 @@ namespace PmxEditorMcp.Tests
                 new[]
                 {
                     "TOOL_INDEX_OUT_OF_RANGE", "TOOL_INVALID_ARGUMENT", "TOOL_INVALID_HANDLE",
-                    "TOOL_CONFIRM_REQUIRED", "TOOL_NOT_APPLICABLE", "TOOL_OPERATION_FAILED",
-                    "TOOL_RESPONSE_TOO_LARGE", "TOOL_REQUEST_TOO_LARGE",
+                    "TOOL_CONFIRM_REQUIRED", "TOOL_NOT_APPLICABLE", "TOOL_NOT_STARTED",
+                    "TOOL_OPERATION_FAILED", "TOOL_RESPONSE_TOO_LARGE", "TOOL_REQUEST_TOO_LARGE",
                 },
                 ToolEnvelope.ErrorCodes);
         }

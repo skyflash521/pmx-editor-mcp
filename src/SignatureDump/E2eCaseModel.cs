@@ -12,6 +12,11 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>断ること。断る理由の綴りは <see cref="E2eCase.Code"/> が持つ。</summary>
         Refusal,
+
+        /// <summary>
+        /// 呼び先が在ること。実装の無い行はホストが未知のメソッドとして断るので、そこだけが落ちる。
+        /// </summary>
+        Dispatched,
     }
 
     /// <summary>実機のエディタへ1件だけ投げる検査。</summary>

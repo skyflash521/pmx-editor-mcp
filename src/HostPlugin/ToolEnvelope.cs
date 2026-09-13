@@ -26,6 +26,12 @@ namespace PmxEditorMcp
         /// <summary>現在の状態・提供範囲で適用できない。</summary>
         public const string NotApplicable = "TOOL_NOT_APPLICABLE";
 
+        /// <summary>
+        /// UIスレッドが空かず、呼び出しを始めていない。何も起きていないので、同じ要求を
+        /// 投げ直してよい。
+        /// </summary>
+        public const string NotStarted = "TOOL_NOT_STARTED";
+
         /// <summary>実行に失敗した。</summary>
         public const string OperationFailed = "TOOL_OPERATION_FAILED";
 
@@ -55,7 +61,7 @@ namespace PmxEditorMcp
             new[]
             {
                 IndexOutOfRange, InvalidArgument, InvalidHandle, ConfirmRequired, NotApplicable,
-                OperationFailed, ResponseTooLarge, RequestTooLarge,
+                NotStarted, OperationFailed, ResponseTooLarge, RequestTooLarge,
             });
 
         /// <summary>ツールが返しうるエラーコード。閉じた集合とする。</summary>

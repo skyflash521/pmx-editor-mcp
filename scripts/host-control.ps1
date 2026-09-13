@@ -27,8 +27,10 @@ param(
     #   start  停止済みのホストを開始し、待受が現れるまで待つ
     #   acl    指定したエディタの待受のパイプに掛かっている権限の規則を表示する
     #   undo   指定したエディタの編集を1回分だけ元に戻す
+    #   answer 指定したエディタが出している応答待ちの表示へ応答して閉じ、閉じた数を返す
     [Parameter(Mandatory = $true)]
-    [ValidateSet("pipes", "launch", "close", "status", "stop", "start", "acl", "undo")]
+    [ValidateSet(
+        "pipes", "launch", "close", "status", "stop", "start", "acl", "undo", "answer")]
     [string]$Action,
 
     # 操作の対象にするエディタのプロセスID。pipes と launch では使わない。
@@ -54,6 +56,19 @@ using System.Runtime.InteropServices;
 using System.Text;
 public static class HostControlWindow {
   [DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
+  [DllImport("user32.dll")] private static extern IntPtr GetDlgItem(IntPtr dialog, int id);
+  [DllImport("user32.dll")] private static extern bool IsWindowEnabled(IntPtr window);
+
+  // 表示の押しボタンをその番号で押す。押せる相手が居なければ偽。
+  // UIオートメーションは、止まっているUIスレッドの窓を押しボタンとして見せない。
+  public static bool Press(IntPtr dialog, int id) {
+    IntPtr control = GetDlgItem(dialog, id);
+    if (control == IntPtr.Zero || !IsWindowVisible(control) || !IsWindowEnabled(control)) {
+      return false;
+    }
+    const uint WM_COMMAND = 0x0111;
+    return PostMessage(dialog, WM_COMMAND, new IntPtr(id), control) != IntPtr.Zero;
+  }
 
   private delegate bool EnumProc(IntPtr window, IntPtr state);
   [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc callback, IntPtr state);
@@ -165,8 +180,12 @@ $PollIntervalMs = 500
 # 閉じるためのウィンドウメッセージ(WM_CLOSE)。
 $WindowMessageClose = 0x0010
 
-# 了解の押しボタンの番号(IDOK)。表示の文言は環境で変わるので、番号で選ぶ。
-$DialogAcceptId = "1"
+# 素性を読めなかった表示の言い方。
+$UnreadableDialog = "読めない表示"
+
+# 表示の文言は環境で変わるので、押しボタンは番号で選ぶ(IDCANCEL・IDNO・IDOK)。
+$IdsThatAvoidTheAffirmative = @(2, 7, 1)
+$IdsThatLetTheEditorClose = @(7, 1)
 
 $EditMenuBars = @()
 
@@ -381,26 +400,72 @@ function Close-OpenMenuSafely {
 function Confirm-EditorDialog {
     <#
         .SYNOPSIS
-        終了の確認を、了解の押しボタンを押して閉じる。押せなければ何もしない——押せない形の
-        表示は、待ちの側が上限で見切る。
+        応答待ちの表示へ、与えた番号のうち先に押せたもので応答して閉じる。応答できたら真を返す。
+        応答できない形の表示は偽を返す——待ちの側が上限で見切り、何が残っていたかを言えるように
+        するためである。
+    #>
+    param([int]$Handle, [Parameter(Mandatory = $true)][int[]]$Ids)
+
+    foreach ($id in $Ids) {
+        if ([HostControlWindow]::Press([IntPtr]$Handle, $id)) { return $true }
+    }
+
+    return $false
+}
+
+function Get-EditorDialogNote {
+    <#
+        .SYNOPSIS
+        応答待ちの表示の素性。応答できなかった表示を名指しで言うために使う。読めない窓は
+        読めない旨を返す——素性は診断のためのもので、これが取れないことで復旧や終了待ちを
+        止めない。
     #>
     param([int]$Handle)
 
-    $dialog = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Handle)
-    if ($null -eq $dialog) { return }
+    try {
+        $dialog = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Handle)
+        if ($null -eq $dialog) { return $UnreadableDialog }
 
-    $buttons = @($dialog.FindAll(
-        [System.Windows.Automation.TreeScope]::Descendants,
-        (New-Object System.Windows.Automation.PropertyCondition(
-            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-            [System.Windows.Automation.ControlType]::Button))))
-    foreach ($button in $buttons) {
-        if ($button.Current.AutomationId -ne $DialogAcceptId) { continue }
+        # 止まっているUIスレッドの窓は押しボタンとして見えないので、種別で絞らず名前を持つ
+        # ものをすべて並べる。
+        $parts = @($dialog.FindAll(
+            [System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.Condition]::TrueCondition) |
+            Where-Object { $_.Current.Name -ne "" } |
+            ForEach-Object { $_.Current.Name + "(" + $_.Current.AutomationId + ")" })
 
-        try { Invoke-Element -Element $button } catch { }
-
-        return
+        return ($dialog.Current.Name + ": " + ($parts -join " / "))
     }
+    catch {
+        return $UnreadableDialog
+    }
+}
+
+function Clear-EditorDialogs {
+    <#
+        .SYNOPSIS
+        出ている応答待ちの表示へすべて応答して閉じる。応答した表示と応答できなかった表示の
+        素性をそれぞれ返す。応答できない表示が残る限り、エディタは次の要求も終了要求も
+        受け付けない。応答した側も返すのは、応答しても出直す表示を待ちの側が言えるようにする
+        ためである。
+    #>
+    param([int]$OwnerProcessId, [Parameter(Mandatory = $true)][int[]]$Ids)
+
+    $answered = @()
+    $left = @()
+    foreach ($handle in Get-EditorDialogs -OwnerProcessId $OwnerProcessId) {
+        # UIオートメーションは、止まっているUIスレッドの窓で応答しないことがある。
+        $pressed = Confirm-EditorDialog -Handle $handle -Ids $Ids
+        $note = Get-EditorDialogNote -Handle $handle
+        if ($pressed) {
+            $answered += $note
+            continue
+        }
+
+        $left += $note
+    }
+
+    [pscustomobject]@{ Answered = $answered; Left = $left }
 }
 
 function Invoke-Element {
@@ -859,14 +924,13 @@ switch ($Action) {
                 throw
             }
 
-            # 終了の確認は押しボタンを押して閉じる。答えないまま閉じる要求を送り直すと確認は
-            # 取り消され、次の要求がまた確認を出すので、確認だけが積み上がる。
-            $dialogs = @(Get-EditorDialogs -OwnerProcessId $ProcessId)
-            foreach ($dialog in $dialogs) {
-                Confirm-EditorDialog -Handle $dialog
-            }
-
-            if ($dialogs.Count -eq 0) {
+            # 応答しないまま閉じる要求を送り直すと確認は取り消され、次の要求がまた確認を
+            # 出すので、確認だけが積み上がる。
+            $cleared = Clear-EditorDialogs -OwnerProcessId $ProcessId `
+                -Ids $IdsThatLetTheEditorClose
+            $standing = @($cleared.Left)
+            $repeating = @($cleared.Answered)
+            if ($repeating.Count -eq 0 -and $standing.Count -eq 0) {
                 foreach ($handle in $windows) {
                     if ((Get-Date) -ge $deadline) { break }
 
@@ -883,8 +947,16 @@ switch ($Action) {
                 $process.Refresh()
                 if ($process.HasExited) { break }
 
+                $shown = ""
+                if ($standing.Count -ne 0) {
+                    $shown = " 応答できない表示: " + ($standing -join " / ")
+                }
+                elseif ($repeating.Count -ne 0) {
+                    $shown = " 応答しても出直す表示: " + ($repeating -join " / ")
+                }
+
                 throw ("エディタが $TimeoutSeconds 秒以内に終了しなかった: $ProcessId " +
-                    "残っているウィンドウ: $left")
+                    "残っているウィンドウ: $left" + $shown)
             }
 
             if ($process.WaitForExit([Math]::Min($PollIntervalMs, $remaining))) { break }
@@ -896,6 +968,18 @@ switch ($Action) {
         Assert-ProcessId
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         Invoke-UndoOnce -OwnerProcessId $ProcessId -Deadline $null
+    }
+    "answer" {
+        Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        $cleared = Clear-EditorDialogs -OwnerProcessId $ProcessId `
+            -Ids $IdsThatAvoidTheAffirmative
+        $left = @($cleared.Left)
+        if ($left.Count -ne 0) {
+            throw ("応答できない表示が残っている: " + ($left -join " / "))
+        }
+
+        Write-Output @($cleared.Answered).Count
     }
     "status" {
         Assert-ProcessId

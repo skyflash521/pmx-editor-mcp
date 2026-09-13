@@ -11,6 +11,7 @@
       "tools": [
         "model_list_bodies",
         "model_list_bones",
+        "model_list_faces",
         "model_list_headers",
         "model_list_ik_links",
         "model_list_iks",
@@ -97,6 +98,7 @@
         "model_update_materials",
         "model_update_morph_offsets",
         "model_update_morphs",
+        "model_update_node_items",
         "model_update_nodes",
         "model_update_soft_bodies",
         "model_update_soft_body_anchors",

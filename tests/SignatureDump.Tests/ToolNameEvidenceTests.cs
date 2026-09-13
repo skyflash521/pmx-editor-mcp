@@ -20,7 +20,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AMethodTakesTheGroupAndTheActionWordAndTheElementNoun()
         {
             IDictionary<string, string> names = Resolve(
-                Map(Key), Roles(), Signatures(Method(Key, Vertex, "NormalizePmx")));
+                Map(Key), Roles(), Inventory(Method(Key, Vertex, "NormalizePmx")));
 
             Assert.Equal("model_normalize_pmx_vertex", names[Key]);
         }
@@ -32,7 +32,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, string> names = Resolve(
                 Map(key),
                 Roles(TypeRole.Connector, Connector, "pmx_connector"),
-                Signatures(Method(key, Connector, "Save")));
+                Inventory(Method(key, Connector, "Save")));
 
             Assert.Equal("model_save", names[key]);
         }
@@ -49,7 +49,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Connector,
                     "pmx_connector",
                     more: new[] { Type(Other, TypeRole.Connector, "other_connector") }),
-                Signatures(Method(first, Other, "Save"), Method(second, Connector, "Save")));
+                Inventory(Method(first, Other, "Save"), Method(second, Connector, "Save")));
 
             Assert.Equal("model_save_other_connector", names[first]);
             Assert.Equal("model_save_pmx_connector", names[second]);
@@ -63,7 +63,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, string> names = Resolve(
                 Map(first, second),
                 Roles(TypeRole.Connector, Connector, "pmx_connector"),
-                Signatures(Method(first, Connector, "Save"), Method(second, Connector, "Save")));
+                Inventory(Method(first, Connector, "Save"), Method(second, Connector, "Save")));
 
             Assert.Equal("model_save", names[first]);
             Assert.Equal("model_save", names[second]);
@@ -76,7 +76,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, string> names = Resolve(
                 Map(key),
                 Roles(TypeRole.HandleTarget, Model, "ui_model"),
-                Signatures(Method(key, Model, ".ctor", Model, MemberKind.Constructor)));
+                Inventory(Method(key, Model, ".ctor", Model, MemberKind.Constructor)));
 
             Assert.Equal("model_create_ui_model", names[key]);
         }
@@ -93,7 +93,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Model,
                     "ui_model",
                     more: new[] { Type(Builder, TypeRole.Connector, "builder") }),
-                Signatures(Method(key, Builder, "CreateModel", Model)));
+                Inventory(Method(key, Builder, "CreateModel", Model)));
 
             Assert.Equal("model_create_model", names[key]);
         }
@@ -103,7 +103,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             string key = Vertex + ".ToKeyArray()";
             IDictionary<string, string> names = Resolve(
-                Map(key), Roles(), Signatures(Method(key, Vertex, "ToKeyArray", Vertex + "[]")));
+                Map(key), Roles(), Inventory(Method(key, Vertex, "ToKeyArray", Vertex + "[]")));
 
             Assert.Equal("model_to_key_array_vertex", names[key]);
         }
@@ -115,7 +115,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolMapJsonReader.Read(Map(Key)),
                 Roles(),
                 CommonAssignmentJsonReader.Read(Assignments(Key)),
-                Signatures(Method(Key, Vertex, "NormalizePmx")));
+                Inventory(Method(Key, Vertex, "NormalizePmx")));
 
             Assert.Empty(names);
         }
@@ -127,7 +127,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, string> names = Resolve(
                 Map(key),
                 Roles(),
-                Signatures(Method(key, Vertex, "Index", "System.Int32", MemberKind.Property)));
+                Inventory(Method(key, Vertex, "Index", "System.Int32", MemberKind.Property)));
 
             Assert.Empty(names);
         }
@@ -140,7 +140,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, string> names = Resolve(
                 Map(key),
                 Roles(more: new[] { Embedded(Args, TypeRole.EventArgs) }),
-                Signatures(Method(key, Args, ".ctor", Args, MemberKind.Constructor)));
+                Inventory(Method(key, Args, ".ctor", Args, MemberKind.Constructor)));
 
             Assert.Empty(names);
         }
@@ -148,7 +148,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ARowKeyOutsideTheEnumerationIsNotInTheTable()
         {
-            Assert.Empty(Resolve(Map(Key), Roles(), Signatures()));
+            Assert.Empty(Resolve(Map(Key), Roles(), Inventory()));
         }
 
         [Fact]
@@ -158,7 +158,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => Resolve(
                     Map(Key),
                     Roles(typeName: "PEPlugin.Pmx.IPXOther"),
-                    Signatures(Method(Key, Vertex, "NormalizePmx"))));
+                    Inventory(Method(Key, Vertex, "NormalizePmx"))));
 
             Assert.Contains("型役割表に無い", error.Message, StringComparison.Ordinal);
         }
@@ -173,7 +173,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         new[] { Embedded(Vertex, TypeRole.Dto) },
                         new HandleIssuanceRecord[0],
                         new ElementCollectionRecord[0]),
-                    Signatures(Method(Key, Vertex, "NormalizePmx"))));
+                    Inventory(Method(Key, Vertex, "NormalizePmx"))));
 
             Assert.Contains("担当群を持たない型のツール", error.Message, StringComparison.Ordinal);
         }
@@ -185,15 +185,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             TypeRoleTable roles = Roles();
             CommonAssignmentTable assignments =
                 CommonAssignmentJsonReader.Read(@"{ ""assignments"": [] }");
-            IDictionary<string, SignatureRecord> signatures =
-                Signatures(Method(Key, Vertex, "NormalizePmx"));
+            InventoryRecord inventory = Inventory(Method(Key, Vertex, "NormalizePmx"));
 
             Assert.Throws<ArgumentNullException>(
-                () => ToolNameEvidence.Resolve(null, roles, assignments, signatures));
+                () => ToolNameEvidence.Resolve(null, roles, assignments, inventory));
             Assert.Throws<ArgumentNullException>(
-                () => ToolNameEvidence.Resolve(map, null, assignments, signatures));
+                () => ToolNameEvidence.Resolve(map, null, assignments, inventory));
             Assert.Throws<ArgumentNullException>(
-                () => ToolNameEvidence.Resolve(map, roles, null, signatures));
+                () => ToolNameEvidence.Resolve(map, roles, null, inventory));
             Assert.Throws<ArgumentNullException>(
                 () => ToolNameEvidence.Resolve(map, roles, assignments, null));
         }
@@ -213,7 +212,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "vme_owner",
                     new[] { Type(held, TypeRole.HandleTarget, "vme_held") },
                     new[] { new ElementCollectionRecord(many, true, "根拠。", new[] { many }) }),
-                Signatures(
+                Inventory(
                     Method(one, owner, "Held", held, MemberKind.Property),
                     Method(
                         many,
@@ -227,13 +226,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         private static IDictionary<string, string> Resolve(
-            string map, TypeRoleTable roles, IDictionary<string, SignatureRecord> signatures)
+            string map, TypeRoleTable roles, InventoryRecord inventory)
         {
             return ToolNameEvidence.Resolve(
                 ToolMapJsonReader.Read(map),
                 roles,
                 CommonAssignmentJsonReader.Read(@"{ ""assignments"": [] }"),
-                signatures);
+                inventory);
         }
 
         /// <summary>行キーだけを差し替える能力対応表。種別ごとの項目は照合が見るので持たせない。</summary>
@@ -292,17 +291,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 typeName, role, "根拠。", "embedded", "embeddeds", CapabilityOwner.None);
         }
 
-        private static IDictionary<string, SignatureRecord> Signatures(
-            params SignatureRecord[] records)
+        /// <summary>渡した行だけを持つ公開API列挙。型は道を辿る材料なので空でよい。</summary>
+        private static InventoryRecord Inventory(params SignatureRecord[] records)
         {
-            Dictionary<string, SignatureRecord> byKey =
-                new Dictionary<string, SignatureRecord>(StringComparer.Ordinal);
-            foreach (SignatureRecord record in records)
-            {
-                byKey.Add(record.Key, record);
-            }
-
-            return byKey;
+            return new InventoryRecord(
+                "PEPlugin", "0.0.0.0", new TypeRecord[0], new TypeRecord[0], records);
         }
 
         private static SignatureRecord Method(

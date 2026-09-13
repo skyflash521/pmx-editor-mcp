@@ -3,9 +3,12 @@
 // 行キー・編集の流れ・接続の経路ごとに数えて出す。
 // 検査の中身はこの実行器が決めず、生成器が書いたものだけを読む。
 
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import net from "node:net";
+import path from "node:path";
 import process from "node:process";
+import url from "node:url";
 
 /** 要求と応答の jsonrpc に固定で置く値。 */
 const JSONRPC_VERSION = "2.0";
@@ -18,6 +21,13 @@ const RESPONSE_TIMEOUT_MS = 130000;
 
 /** 待受のパイプ名の付け方。ホスト側の実装が定める。 */
 const PIPE_PREFIX = "pmx-editor-mcp-";
+
+/** 応答待ちの表示へ応答する操作役。画面を触るのはこの1本に寄せる。 */
+const CONTROL_SCRIPT = path.join(
+    path.dirname(url.fileURLToPath(import.meta.url)), "host-control.ps1");
+
+/** 呼び出しを始めていないことを表す断りの綴り。共通契約が定める。 */
+const NOT_STARTED = "TOOL_NOT_STARTED";
 
 /** ホストが発行するセッションの識別子の形。128ビットを16進で表した文字列である。 */
 const SESSION_PATTERN = /^[0-9a-f]{32}$/;
@@ -98,6 +108,10 @@ function handshake(result) {
  * 包みの形は共通契約が定めるので、ここでは成功・失敗と理由の綴りだけを見る。
  */
 function judge(one, response) {
+    if (one.expect === "dispatched") {
+        return dispatched(response);
+    }
+
     if (response.error !== undefined) {
         return "ホストが要求を断りました(" + response.error.code + "): " + response.error.message;
     }
@@ -117,6 +131,22 @@ function judge(one, response) {
 
     if (envelope.error === undefined || envelope.error.code !== one.code) {
         return "断る理由が " + one.code + " ではありません: " + describe(envelope);
+    }
+
+    return null;
+}
+
+/**
+ * 呼び先が在るか。未知のメソッドとホストの内部の失敗だけを落とし、引数の不足で断られた応答は
+ * 呼び先が在る証拠として通す。
+ */
+function dispatched(response) {
+    const unknown = -32601;
+    const internal = -32603;
+    if (response.error !== undefined
+        && (response.error.code === unknown || response.error.code === internal)) {
+        return "呼び先が無いか内部で失敗しました(" + response.error.code + "): "
+            + response.error.message;
     }
 
     return null;
@@ -159,15 +189,45 @@ function report(results, key, title) {
     }
 }
 
+/** エディタが出している応答待ちの表示へ応答して閉じ、閉じた数を返す。 */
+function answerDialogs(processId) {
+    // 端末の文字コードは環境で変わる。
+    const done = spawnSync(
+        "pwsh",
+        ["-NoProfile", "-File", CONTROL_SCRIPT, "-Action", "answer",
+            "-ProcessId", String(processId)],
+        { encoding: "latin1" });
+    if (done.status !== 0) {
+        return 0;
+    }
+
+    const answered = Number.parseInt((done.stdout ?? "").trim(), 10);
+
+    return Number.isInteger(answered) ? answered : 0;
+}
+
+/** ホストが呼び出しを始めていないと言っているか。始めていなければ投げ直せる。 */
+function notStarted(response) {
+    const envelope = response.result;
+
+    return envelope !== null
+        && typeof envelope === "object"
+        && !Array.isArray(envelope)
+        && envelope.ok === false
+        && envelope.error !== undefined
+        && envelope.error.code === NOT_STARTED;
+}
+
 /** その検査へ与える要求の識別子。ハンドシェイクが1で、検査は2から順に並ぶ。 */
 function requestId(index) {
     return index + 2;
 }
 
-function run(pipeName, cases) {
+function run(pipeName, cases, processId) {
     const socket = net.connect(toPipePath(pipeName));
     let buffer = "";
     let index = -1;
+    let retried = -1;
     let settled = false;
     const results = [];
 
@@ -279,7 +339,15 @@ function run(pipeName, cases) {
                     continue;
                 }
 
-                results.push({ case: cases[index], reason: judge(cases[index], response) });
+                const one = cases[index];
+                if (notStarted(response) && retried !== index
+                    && answerDialogs(processId) > 0) {
+                    retried = index;
+                    send(requestId(index), one.tool, one.arguments);
+                    continue;
+                }
+
+                results.push({ case: one, reason: judge(one, response) });
                 next();
             }
         });
@@ -315,4 +383,4 @@ if (cases.length === 0) {
     process.exit(EXIT_SUCCESS);
 }
 
-process.exit(await run(PIPE_PREFIX + processId, cases));
+process.exit(await run(PIPE_PREFIX + processId, cases, processId));

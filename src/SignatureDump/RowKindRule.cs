@@ -21,7 +21,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> assigned,
             ISet<string> independentTypes,
             ISet<string> handleTypes,
-            ISet<string> collections)
+            ISet<string> collections,
+            ISet<string> traversed)
         {
             if (map == null)
             {
@@ -58,6 +59,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(collections));
             }
 
+            if (traversed == null)
+            {
+                throw new ArgumentNullException(nameof(traversed));
+            }
+
             Dictionary<string, ToolMapRowKind> kinds =
                 new Dictionary<string, ToolMapRowKind>(StringComparer.Ordinal);
             foreach (ToolMapRow row in map.Rows)
@@ -76,7 +82,8 @@ namespace PmxEditorMcp.SignatureDump
                     embeddedTypes.Contains(
                         TypeDefinitionName.OfElement(signature.DeclaringType)),
                     independentTypes.Contains(value),
-                    handleTypes.Contains(value) && !collections.Contains(row.SignatureKey)));
+                    handleTypes.Contains(value) && !collections.Contains(row.SignatureKey),
+                    traversed.Contains(row.SignatureKey)));
             }
 
             return new ReadOnlyDictionary<string, ToolMapRowKind>(kinds);
@@ -87,9 +94,16 @@ namespace PmxEditorMcp.SignatureDump
         /// (イベント引数型・DTO型)かどうか。<paramref name="reaches"/> は、値の型が並びの印を
         /// 外した先で独立したツールを持つ役割の型かどうか。<paramref name="handed"/> は、値が
         /// ハンドルで指す型の実体で、かつ要素を並べるリストではないかどうか。
+        /// <paramref name="traversed"/> は、その行が受け手へ至る道の一歩かどうか——道であれば
+        /// その先の型のツールが通る経路で、道でなければ相手を値として指すだけの項目である。
         /// </summary>
         public static ToolMapRowKind Of(
-            MemberKind memberKind, bool assigned, bool embedded, bool reaches, bool handed)
+            MemberKind memberKind,
+            bool assigned,
+            bool embedded,
+            bool reaches,
+            bool handed,
+            bool traversed)
         {
             if (assigned)
             {
@@ -108,9 +122,14 @@ namespace PmxEditorMcp.SignatureDump
                         return ToolMapRowKind.SchemaEmbedded;
                     }
 
-                    return handed
-                        ? ToolMapRowKind.DirectDispatch
-                        : ToolMapRowKind.RoleAccess;
+                    if (handed)
+                    {
+                        return ToolMapRowKind.DirectDispatch;
+                    }
+
+                    return traversed
+                        ? ToolMapRowKind.RoleAccess
+                        : ToolMapRowKind.SchemaEmbedded;
 
                 case MemberKind.Constructor:
                     return embedded

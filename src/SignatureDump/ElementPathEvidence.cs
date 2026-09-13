@@ -127,6 +127,29 @@ namespace PmxEditorMcp.SignatureDump
             return new ReadOnlyDictionary<string, AccessPath>(paths);
         }
 
+        /// <summary>
+        /// 受け手へ至る道が辿る行のキー。ここに在る行は、その先の型のツールが相手を得るのに通る
+        /// 経路そのもので、値として写す相手ではない。
+        /// </summary>
+        public static ISet<string> Traversed(InventoryRecord inventory, TypeRoleTable roles)
+        {
+            HashSet<string> traversed = new HashSet<string>(StringComparer.Ordinal);
+            foreach (AccessPath path in Resolve(inventory, roles).Values)
+            {
+                if (path.RowKey != null)
+                {
+                    traversed.Add(path.RowKey);
+                }
+
+                foreach (string parent in path.Parents)
+                {
+                    traversed.Add(parent);
+                }
+            }
+
+            return traversed;
+        }
+
         /// <summary>その道で辿る一歩がリストの段かどうか。</summary>
         public static bool Listed(IDictionary<string, SignatureRecord> signatures, string rowKey)
         {

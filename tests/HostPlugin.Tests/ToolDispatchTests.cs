@@ -212,6 +212,21 @@ namespace PmxEditorMcp.Tests
                 Message(envelope));
         }
 
+        [Fact]
+        public void ACallTheHostNeverStartedIsRefusedSoTheCallerCanSendItAgain()
+        {
+            IDictionary<string, object> envelope = (IDictionary<string, object>)Method("session_count")(
+                new McpMethodContext(
+                    Arguments(),
+                    new UnstartedInvoker("前の呼び出しがまだ終わっていない。"),
+                    100000,
+                    Ledger(),
+                    Events()));
+
+            Assert.Equal(ToolEnvelope.NotStarted, Code(envelope));
+            Assert.Equal("前の呼び出しがまだ終わっていない。", Message(envelope));
+        }
+
         [Theory]
         [InlineData(PreconditionKind.PickedObjects, false, false)]
         [InlineData(PreconditionKind.PickedObjects, false, true)]
@@ -1622,6 +1637,22 @@ namespace PmxEditorMcp.Tests
             public UiInvocation TryInvokeOnUi(Action action)
             {
                 return UiInvocation.Blocked(_shown);
+            }
+        }
+
+        /// <summary>委譲を渡さないまま戻る稼働世代のように答える。</summary>
+        private sealed class UnstartedInvoker : IUiInvoker
+        {
+            private readonly string _standing;
+
+            public UnstartedInvoker(string standing)
+            {
+                _standing = standing;
+            }
+
+            public UiInvocation TryInvokeOnUi(Action action)
+            {
+                return UiInvocation.NotStarted(_standing);
             }
         }
 

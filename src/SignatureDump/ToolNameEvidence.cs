@@ -22,7 +22,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             TypeRoleTable roles,
             CommonAssignmentTable assignments,
-            IDictionary<string, SignatureRecord> signatures)
+            InventoryRecord inventory)
         {
             if (roles == null)
             {
@@ -34,11 +34,13 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(assignments));
             }
 
-            if (signatures == null)
+            if (inventory == null)
             {
-                throw new ArgumentNullException(nameof(signatures));
+                throw new ArgumentNullException(nameof(inventory));
             }
 
+            IDictionary<string, SignatureRecord> signatures = inventory.Signatures
+                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
             IDictionary<string, ToolMapRowKind> kinds = RowKindRule.Resolve(
                 map,
                 signatures,
@@ -47,7 +49,8 @@ namespace PmxEditorMcp.SignatureDump
                     assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal),
                 ToolMapEvidence.IndependentToolTypeNames(roles),
                 ToolMapEvidence.HandleTypeNames(roles),
-                ToolMapEvidence.ElementCollectionKeys(roles));
+                ToolMapEvidence.ElementCollectionKeys(roles),
+                ElementPathEvidence.Traversed(inventory, roles));
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
             IList<string> dispatched = kinds

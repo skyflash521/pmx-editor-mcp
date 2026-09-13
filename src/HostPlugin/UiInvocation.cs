@@ -8,20 +8,27 @@ namespace PmxEditorMcp
     /// </summary>
     public sealed class UiInvocation
     {
-        private UiInvocation(bool ran, string unavailable)
+        private UiInvocation(bool ran, bool started, string unavailable)
         {
             DidRun = ran;
+            DidStart = started;
             Unavailable = unavailable;
         }
 
         /// <summary>UIスレッドで実行した。</summary>
-        public static UiInvocation Done { get; } = new UiInvocation(true, null);
+        public static UiInvocation Done { get; } = new UiInvocation(true, true, null);
 
         /// <summary>受付を止めているので実行しなかった。</summary>
-        public static UiInvocation Declined { get; } = new UiInvocation(false, null);
+        public static UiInvocation Declined { get; } = new UiInvocation(false, false, null);
 
         /// <summary>実行したかどうか。</summary>
         public bool DidRun { get; }
+
+        /// <summary>
+        /// UIスレッドへ委譲を渡したかどうか。渡していなければ何も起きていないので、
+        /// 呼び出し側は同じ要求を投げ直せる。
+        /// </summary>
+        public bool DidStart { get; }
 
         /// <summary>
         /// UIスレッドで進められなかった事情。進められたときと、受付を止めていて実行しなかった
@@ -31,6 +38,19 @@ namespace PmxEditorMcp
 
         /// <summary>UIスレッドが進まず実行できなかった。事情はそのまま呼び出し元へ渡る。</summary>
         public static UiInvocation Blocked(string unavailable)
+        {
+            return new UiInvocation(false, true, Required(unavailable));
+        }
+
+        /// <summary>
+        /// UIスレッドが空かず、委譲を渡さないまま戻った。事情はそのまま呼び出し元へ渡る。
+        /// </summary>
+        public static UiInvocation NotStarted(string unavailable)
+        {
+            return new UiInvocation(false, false, Required(unavailable));
+        }
+
+        private static string Required(string unavailable)
         {
             if (unavailable == null)
             {
@@ -42,7 +62,7 @@ namespace PmxEditorMcp
                 throw new ArgumentException("進められなかった事情が空。", nameof(unavailable));
             }
 
-            return new UiInvocation(false, unavailable);
+            return unavailable;
         }
     }
 }

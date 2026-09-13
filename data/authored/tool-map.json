@@ -1643,7 +1643,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXBody.Bone()",
       "editKind": "read",
-      "basis": "関連するボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "関連するボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_bodies",
+        "model_update_bodies"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXBody.BoxKind()",
@@ -1812,7 +1816,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXBone.AppendParent()",
       "editKind": "read",
-      "basis": "付与の親ボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "付与の親ボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXBone.AppendRatio()",
@@ -2048,7 +2056,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXBone.Parent()",
       "editKind": "read",
-      "basis": "親ボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "親ボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXBone.Position()",
@@ -2115,7 +2127,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXBone.ToBone()",
       "editKind": "read",
-      "basis": "接続先のボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "接続先のボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_bones",
+        "model_update_bones"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXBone.ToOffset()",
@@ -2144,7 +2160,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXBoneMorphOffset.Bone()",
       "editKind": "read",
-      "basis": "動かすボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "動かすボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXBoneMorphOffset.Rotation()",
@@ -2173,27 +2193,47 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXBoneNodeItem.Bone()",
       "editKind": "read",
-      "basis": "表示枠が並べるボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "表示枠が並べるボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_node_items",
+        "model_update_node_items"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex1()",
       "editKind": "read",
-      "basis": "面の1つめの頂点を返すだけで、エディタの状態を動かさない。"
+      "basis": "面の1つめの頂点を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_faces",
+        "model_update_faces"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex2()",
       "editKind": "read",
-      "basis": "面の2つめの頂点を返すだけで、エディタの状態を動かさない。"
+      "basis": "面の2つめの頂点を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_faces",
+        "model_update_faces"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex3()",
       "editKind": "read",
-      "basis": "面の3つめの頂点を返すだけで、エディタの状態を動かさない。"
+      "basis": "面の3つめの頂点を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_faces",
+        "model_update_faces"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXGroupMorphOffset.Morph()",
       "editKind": "read",
-      "basis": "まとめて動かすモーフを返すだけで、エディタの状態を動かさない。"
+      "basis": "まとめて動かすモーフを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXGroupMorphOffset.Ratio()",
@@ -2275,12 +2315,20 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXIK.Target()",
       "editKind": "read",
-      "basis": "IKが合わせる先のボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "IKが合わせる先のボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_iks",
+        "model_update_iks"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXIKLink.Bone()",
       "editKind": "read",
-      "basis": "リンクのボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "リンクのボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_ik_links",
+        "model_update_ik_links"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXIKLink.High()",
@@ -2321,7 +2369,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXImpulseMorphOffset.Body()",
       "editKind": "read",
-      "basis": "力を加える剛体を返すだけで、エディタの状態を動かさない。"
+      "basis": "力を加える剛体を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXImpulseMorphOffset.Local()",
@@ -2362,12 +2414,20 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXJoint.BodyA()",
       "editKind": "read",
-      "basis": "接続する1つめの剛体を返すだけで、エディタの状態を動かさない。"
+      "basis": "接続する1つめの剛体を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXJoint.BodyB()",
       "editKind": "read",
-      "basis": "接続する2つめの剛体を返すだけで、エディタの状態を動かさない。"
+      "basis": "接続する2つめの剛体を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_joints",
+        "model_update_joints"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXJoint.Kind()",
@@ -2822,7 +2882,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Material()",
       "editKind": "read",
-      "basis": "オフセットを掛ける材質を返すだけで、エディタの状態を動かさない。"
+      "basis": "オフセットを掛ける材質を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Op()",
@@ -3056,7 +3120,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXMorphNodeItem.Morph()",
       "editKind": "read",
-      "basis": "表示枠が並べるモーフを返すだけで、エディタの状態を動かさない。"
+      "basis": "表示枠が並べるモーフを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_node_items",
+        "model_update_node_items"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXNode.Items()",
@@ -3090,7 +3158,10 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXNodeItem.BoneItem()",
       "editKind": "read",
-      "basis": "ボーンを指す表示枠の要素を返すだけで、エディタの状態を動かさない。"
+      "basis": "ボーンを指す表示枠の要素を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_node_items"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXNodeItem.IsBone()",
@@ -3111,7 +3182,10 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXNodeItem.MorphItem()",
       "editKind": "read",
-      "basis": "モーフを指す表示枠の要素を返すだけで、エディタの状態を動かさない。"
+      "basis": "モーフを指す表示枠の要素を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_node_items"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Body()",
@@ -3151,7 +3225,10 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.ExpressionNode()",
       "editKind": "read",
-      "basis": "表情の表示枠を返すだけで、エディタの状態を動かさない。"
+      "basis": "表情の表示枠を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_pmxes"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.FilePath()",
@@ -3249,7 +3326,10 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.RootNode()",
       "editKind": "read",
-      "basis": "ルートの表示枠を返すだけで、エディタの状態を動かさない。"
+      "basis": "ルートの表示枠を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_pmxes"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.SoftBody()",
@@ -3684,7 +3764,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Material()",
       "editKind": "read",
-      "basis": "対応する材質を返すだけで、エディタの状態を動かさない。"
+      "basis": "対応する材質を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_soft_bodies",
+        "model_update_soft_bodies"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Name()",
@@ -3745,7 +3829,10 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Pins()",
       "editKind": "read",
-      "basis": "Pinにする頂点のリストを返すだけで、エディタの状態を動かさない。"
+      "basis": "Pinにする頂点のリストを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_soft_bodies"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBody.RandomizeConstraints()",
@@ -3918,7 +4005,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBodyAnchor.Body()",
       "editKind": "read",
-      "basis": "繋ぐ剛体を返すだけで、エディタの状態を動かさない。"
+      "basis": "繋ぐ剛体を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_soft_body_anchors",
+        "model_update_soft_body_anchors"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBodyAnchor.Near()",
@@ -3935,7 +4026,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBodyAnchor.Vertex()",
       "editKind": "read",
-      "basis": "対応する頂点を返すだけで、エディタの状態を動かさない。"
+      "basis": "対応する頂点を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_soft_body_anchors",
+        "model_update_soft_body_anchors"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXUVMorphOffset.Offset()",
@@ -3952,27 +4047,47 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXUVMorphOffset.Vertex()",
       "editKind": "read",
-      "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。"
+      "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone1()",
       "editKind": "read",
-      "basis": "ウェイト1が指すボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "ウェイト1が指すボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone2()",
       "editKind": "read",
-      "basis": "ウェイト2が指すボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "ウェイト2が指すボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone3()",
       "editKind": "read",
-      "basis": "ウェイト3が指すボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "ウェイト3が指すボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXVertex.Bone4()",
       "editKind": "read",
-      "basis": "ウェイト4が指すボーンを返すだけで、エディタの状態を動かさない。"
+      "basis": "ウェイト4が指すボーンを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_vertices",
+        "model_update_vertices"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXVertex.EdgeScale()",
@@ -4193,7 +4308,11 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXVertexMorphOffset.Vertex()",
       "editKind": "read",
-      "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。"
+      "basis": "動かす頂点を返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "model_list_morph_offsets",
+        "model_update_morph_offsets"
+      ]
     },
     {
       "signatureKey": "PEPlugin.View.IPEBaseWindowConnector.Focus()",
@@ -7235,7 +7354,10 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.Pmx()",
       "editKind": "read",
-      "basis": "作るときに合わせたモデルを返すだけで、エディタの状態を動かさない。"
+      "basis": "作るときに合わせたモデルを返すだけで、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "motion_list_vmes"
+      ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.Preview(PEPlugin.Pmx.IPXPmx,PEPlugin.Vme.PEVmePreviewOption)",
