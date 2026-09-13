@@ -793,6 +793,47 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheItemPointedAtIsFoundByItselfAndNotByAnEqualOneStandingEarlier()
+        {
+            Item twin = new Item { Label = "同" };
+            Item mate = new Item { Label = "同" };
+            Item last = new Item { Label = "後" };
+            twin.Mate = mate;
+            _model.Items.Add(twin);
+            _model.Items.Add(mate);
+            _model.Items.Add(last);
+
+            IList<IDictionary<string, object>> items = Items(Value(Call(
+                "model_list_mates", Arguments(TargetNames.Element.All, true))));
+
+            Assert.Equal(new object[] { 1, null, null }, items.Select(i => i["mate"]).ToArray());
+        }
+
+        [Fact]
+        public void AnItemThatRefersToSomethingOutsideTheListReadsAsNoRelation()
+        {
+            _model.Items.Add(new Item { Label = "一", Mate = new Item { Label = "外" } });
+
+            IList<IDictionary<string, object>> items = Items(Value(Call(
+                "model_list_mates", Arguments(TargetNames.Element.All, true))));
+
+            Assert.True(items[0].ContainsKey("mate"), "指す項目が返っていない。");
+            Assert.Null(items[0]["mate"]);
+        }
+
+        [Fact]
+        public void AnItemThatRefersToNothingReadsAsNoRelation()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+
+            IList<IDictionary<string, object>> items = Items(Value(Call(
+                "model_list_mates", Arguments(TargetNames.Element.All, true))));
+
+            Assert.True(items[0].ContainsKey("mate"), "指す項目が返っていない。");
+            Assert.Null(items[0]["mate"]);
+        }
+
+        [Fact]
         public void APositionCannotBeWrittenIntoAnItemPointedAtByHandle()
         {
             _model.Items.Add(new Item { Label = "一" });
@@ -1401,7 +1442,9 @@ namespace PmxEditorMcp.Tests
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
             Assert.Equal(MakeFromManyKey, _madeBy);
-            Assert.Equal(new[] { first, second }, _fromMany);
+            Assert.Equal(2, _fromMany.Length);
+            Assert.Same(first, _fromMany[0]);
+            Assert.Same(second, _fromMany[1]);
         }
 
         [Fact]
@@ -2365,6 +2408,18 @@ namespace PmxEditorMcp.Tests
                         true, true, Rooted(EditKind.DuplicateEdit), Direct(), Set(labels))
                 },
                 {
+                    "model_list_mates",
+                    new ToolFields(
+                        false,
+                        true,
+                        Rooted(EditKind.Read),
+                        Direct(),
+                        Set(new[]
+                        {
+                            new ToolField("mate", MateKey, typeof(Item), null, Direct()),
+                        }))
+                },
+                {
                     "model_update_mates",
                     new ToolFields(
                         true,
@@ -2505,6 +2560,20 @@ namespace PmxEditorMcp.Tests
 
             /// <summary>同じ並びの中の相手を指す項目。位置で写す。</summary>
             public Item Mate { get; set; }
+
+            /// <summary>値の等しさで比べる型の題材。同じ名札を持つ実体どうしは等しい。</summary>
+            public override bool Equals(object other)
+            {
+                Item item = other as Item;
+
+                return item != null
+                    && string.Equals(item.Label, Label, StringComparison.Ordinal);
+            }
+
+            public override int GetHashCode()
+            {
+                return Label == null ? 0 : Label.GetHashCode();
+            }
         }
 
         /// <summary>同じ並びに混じる、もう一つの具象の型。</summary>
