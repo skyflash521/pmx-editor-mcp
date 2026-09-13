@@ -33,17 +33,33 @@ if ($View) { $asked += ":" + $View }
 Add-Content -Path (Join-Path ([System.IO.Path]::GetTempPath()) $StubOperationLogName) `
     -Value $asked -Encoding UTF8
 
+$state = Join-Path ([System.IO.Path]::GetTempPath()) $StubLaunchStateName
+$held = [pscustomobject]@{ Launched = 0; Live = @() }
+if (Test-Path $state) { $held = Get-Content $state -Raw -Encoding UTF8 | ConvertFrom-Json }
+$live = [System.Collections.ArrayList]@($held.Live | ForEach-Object { [int]$_ })
+
+function Save-StubEditors {
+    param([int]$Launched, $Live)
+
+    [pscustomobject]@{ Launched = $Launched; Live = @($Live) } |
+        ConvertTo-Json -Compress |
+        Set-Content -Path $state -Encoding UTF8 -NoNewline
+}
+
 switch ($Action) {
     "editors" {
-        # 閉じる相手は居ない。起動していないところから始めるのと同じ形にする。
+        $live
     }
     "launch" {
-        $state = Join-Path ([System.IO.Path]::GetTempPath()) $StubLaunchStateName
-        $launched = 0
-        if (Test-Path $state) { $launched = [int](Get-Content $state -Raw).Trim() }
-        $launched++
-        Set-Content -Path $state -Value $launched -NoNewline
-        $FirstStubEditorId + $launched - 1
+        $launched = [int]$held.Launched + 1
+        $editor = $FirstStubEditorId + $launched - 1
+        [void]$live.Add($editor)
+        Save-StubEditors -Launched $launched -Live $live
+        $editor
+    }
+    "close" {
+        $live.Remove($ProcessId)
+        Save-StubEditors -Launched ([int]$held.Launched) -Live $live
     }
     "capture" {
         if (-not $Path) { throw "この操作には -Path が要る: $Action" }

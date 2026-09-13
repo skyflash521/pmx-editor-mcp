@@ -491,18 +491,38 @@ function listEditors(control) {
         .filter((id) => Number.isInteger(id));
 }
 
+/**
+ * 後始末をして、成ったかどうかを返す。ここで投げさせると、走らせた結果の判定も終了区分も
+ * 書き出す前に失われる。
+ */
+function cleanUp(control) {
+    try {
+        closeEditors(control);
+
+        return true;
+    } catch (thrown) {
+        console.error("後始末に失敗しました: " + thrown.message);
+
+        return false;
+    }
+}
+
+function closeEditors(control) {
+    for (const editor of listEditors(control)) {
+        const done = invokeScript(
+            control,
+            ["-Action", "close", "-ProcessId", String(editor)],
+            CONTROL_TIMEOUT_MS);
+        if (done.written === null) {
+            throw new Error(done.unavailable);
+        }
+    }
+}
+
 /** エディタとホストの操作を1つ行い、覚える値があれば返す。 */
 function operate(step, remembered, control) {
     if (step.action === "closeAll") {
-        for (const editor of listEditors(control)) {
-            const done = invokeScript(
-                control,
-                ["-Action", "close", "-ProcessId", String(editor)],
-                CONTROL_TIMEOUT_MS);
-            if (done.written === null) {
-                throw new Error(done.unavailable);
-            }
-        }
+        closeEditors(control);
 
         return null;
     }
@@ -692,10 +712,12 @@ try {
 } catch (thrown) {
     console.error("走らせられませんでした: " + thrown.message);
     await client.stop();
+    cleanUp(parsed.control);
     process.exit(EXIT_INPUT_UNAVAILABLE);
 }
 
 await client.stop();
+const cleaned = cleanUp(parsed.control);
 
 console.log("");
 console.log(
@@ -703,4 +725,4 @@ console.log(
         + (failed === null ? scenarios.length : scenarios.indexOf(failed))
         + "・不合格 " + (failed === null ? 0 : 1));
 
-process.exit(failed === null ? EXIT_SUCCESS : EXIT_FAILED);
+process.exit(failed === null && cleaned ? EXIT_SUCCESS : EXIT_FAILED);

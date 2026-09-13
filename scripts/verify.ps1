@@ -84,17 +84,37 @@ function Get-AcceptanceExpectationForms {
 function Get-AcceptanceOperations {
     <#
         .SYNOPSIS
-        定義が求めるエディタとホストの操作を、頼まれる順に並べる。全エディタの終了は、まず動いて
-        いるエディタを数えるところから始まるので、その数え方の名前で現れる。
+        定義が求めるエディタとホストの操作を、頼まれる順に並べる。
     #>
     param($Defined)
 
+    $live = 0
     foreach ($step in ($Defined.scenarios.steps | Where-Object { $_.kind -eq 'control' })) {
-        if ($step.action -eq 'closeAll') { 'editors'; continue }
+        if ($step.action -eq 'closeAll') {
+            'editors'
+            for ($at = 0; $at -lt $live; $at++) { 'close' }
+            $live = 0
+            continue
+        }
 
         $asked = $step.action
         if ($step.PSObject.Properties.Name -contains 'view') { $asked += ':' + $step.view }
         $asked
+
+        if ($step.action -eq 'launch') { $live++ }
+        if ($step.action -eq 'close') { $live-- }
+    }
+
+    'editors'
+    for ($at = 0; $at -lt $live; $at++) { 'close' }
+}
+
+function Assert-NoEditorLeft {
+    param([string]$Editors, [string]$What)
+
+    $left = @((Get-Content $Editors -Raw -Encoding UTF8 | ConvertFrom-Json).Live)
+    if ($left.Count -ne 0) {
+        throw "${What}のあと、起こしたエディタが閉じられずに残っている: $($left -join '・')"
     }
 }
 
@@ -108,7 +128,7 @@ function Test-AcceptanceRunner {
         実行器の自己申告ではない。そのうえで、期待の形ごとにその形だけを違えた実行が不合格に
         なることを見る——その形を突き合わせない実行器はここで落ちる。
     #>
-    param([string]$Cases, [string]$Progress, [string]$Operations)
+    param([string]$Cases, [string]$Progress, [string]$Operations, [string]$Editors)
 
     $defined = Get-Content $Cases -Raw | ConvertFrom-Json
     $calls = @($defined.scenarios.steps | Where-Object { $_.kind -eq 'tool' }).Count
@@ -135,18 +155,41 @@ function Test-AcceptanceRunner {
         throw "頼んだ操作が定義と違う。定義: $($asked -join '/') / 実際: $($done -join '/')"
     }
 
+    Assert-NoEditorLeft -Editors $Editors -What '期待どおりの応答で通した実行'
+
     foreach ($form in (Get-AcceptanceExpectationForms -Defined $defined).GetEnumerator()) {
         $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken $form.Key -At $form.Value
         if ($ran.Code -ne 1) {
             throw ("$($form.Key) の期待を $($form.Value) 件目の呼び出しで違えても不合格に" +
                 "ならない: $($ran.Said)")
         }
+
+        Assert-NoEditorLeft -Editors $Editors -What "$($form.Key) の期待を違えた実行"
     }
 
     # 置き場が作られなければ、その実在を確かめる段が落とすはずである。
     $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken 'file' -At 0
     if ($ran.Code -ne 1) {
         throw "書き込んだはずの置き場が無くても不合格にならない: $($ran.Said)"
+    }
+
+    Assert-NoEditorLeft -Editors $Editors -What '置き場を作らせなかった実行'
+
+    $spoiled = [System.IO.Path]::GetTempFileName()
+    try {
+        $defined = Get-Content $Cases -Raw -Encoding UTF8 | ConvertFrom-Json
+        $defined.scenarios[-1].steps = $null
+        $defined | ConvertTo-Json -Depth 100 |
+            Set-Content -Path $spoiled -Encoding UTF8 -NoNewline
+
+        $ran = Invoke-AcceptanceRunner -Cases $spoiled -Broken '' -At 0
+        if ($ran.Code -ne 3) {
+            throw "段の並びが壊れていても実行不能で終わらない: $($ran.Code) $($ran.Said)"
+        }
+
+        Assert-NoEditorLeft -Editors $Editors -What '段の並びが壊れた定義での実行'
+    } finally {
+        Remove-Item $spoiled -ErrorAction SilentlyContinue
     }
 }
 
@@ -383,7 +426,8 @@ try {
                 $temp = [System.IO.Path]::GetTempPath()
                 Test-AcceptanceRunner -Cases $acceptance `
                     -Progress (Join-Path $temp $StubProgressStateName) `
-                    -Operations (Join-Path $temp $StubOperationLogName)
+                    -Operations (Join-Path $temp $StubOperationLogName) `
+                    -Editors (Join-Path $temp $StubLaunchStateName)
             } finally {
                 [Console]::OutputEncoding = $spoken
             }
