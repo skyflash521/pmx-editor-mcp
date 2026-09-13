@@ -30157,8 +30157,64 @@
       "tool": "session_set_share_data",
       "branches": [
         {
-          "branch": "only",
+          "branch": "text",
+          "selector": {
+            "name": "dataShape",
+            "value": "text"
+          },
           "inputs": [
+            {
+              "name": "dataShape",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "key",
+              "required": true
+            },
+            {
+              "name": "data",
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "buffer",
+          "selector": {
+            "name": "dataShape",
+            "value": "base64"
+          },
+          "inputs": [
+            {
+              "name": "dataShape",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "key",
+              "required": true
+            },
+            {
+              "name": "data",
+              "required": true
+            }
+          ]
+        },
+        {
+          "branch": "value",
+          "selector": {
+            "name": "dataShape",
+            "value": "number"
+          },
+          "inputs": [
+            {
+              "name": "dataShape",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
             {
               "name": "key",
               "required": true

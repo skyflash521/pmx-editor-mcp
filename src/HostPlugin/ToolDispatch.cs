@@ -632,6 +632,11 @@ namespace PmxEditorMcp
                 return true;
             }
 
+            if (calls[0].SelectorName != null)
+            {
+                return TrySelected(context, calls, out chosen, out code, out message);
+            }
+
             IList<IDictionary<string, object>> sets = Sets(context, calls[0]);
             foreach (ToolCall call in calls.OrderByDescending(c => c.Arguments.Count))
             {
@@ -645,6 +650,39 @@ namespace PmxEditorMcp
 
             code = ToolEnvelope.InvalidArgument;
             message = "渡された引数に合う呼び分けが無い。";
+
+            return false;
+        }
+
+        /// <summary>
+        /// 分岐を選ぶ項目で選んだ呼び分け。引数の名前が同じで型だけが違う呼び分けは名前でも値でも
+        /// 見分けられないので、呼ぶ側がこの項目で選ぶ。
+        /// </summary>
+        private static bool TrySelected(
+            McpMethodContext context,
+            IList<ToolCall> calls,
+            out ToolCall chosen,
+            out string code,
+            out string message)
+        {
+            chosen = calls[0];
+            code = null;
+            message = null;
+            string name = calls[0].SelectorName;
+            object given;
+            string value = context.Params.TryGetValue(name, out given) ? given as string : null;
+            foreach (ToolCall call in calls
+                .Where(c => string.Equals(c.SelectorValue, value, StringComparison.Ordinal)))
+            {
+                chosen = call;
+
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = name + " は "
+                + string.Join("・", calls.Select(c => c.SelectorValue).OrderBy(v => v, StringComparer.Ordinal))
+                + " のどれかでなければならない。";
 
             return false;
         }
@@ -769,6 +807,11 @@ namespace PmxEditorMcp
             if (call.Danger != DangerKind.None)
             {
                 known.Add(ConfirmName);
+            }
+
+            if (call.SelectorName != null)
+            {
+                known.Add(call.SelectorName);
             }
 
             if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)

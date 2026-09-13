@@ -32,12 +32,13 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 7)
+            if (args.Length != 8)
             {
                 error.WriteLine(
-                    "引数は7つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                    "引数は8つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
                         + " <型役割表の正本のパス> <共通契約割当の正本のパス>"
-                        + " <能力対応表の正本のパス> <スキーマ正本のパス> <書き出し先パス>");
+                        + " <能力対応表の正本のパス> <スキーマ正本のパス>"
+                        + " <共通契約の正本のパス> <書き出し先パス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -54,6 +55,7 @@ namespace PmxEditorMcp.SignatureDump
             CommonAssignmentTable assignments;
             ToolMap map;
             ToolSchemaTable schemas;
+            CommonContractTable contract;
             try
             {
                 ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
@@ -61,6 +63,7 @@ namespace PmxEditorMcp.SignatureDump
                 assignments = CommonAssignmentJsonReader.Read(Read(args[3], "共通契約割当の正本"));
                 map = ToolMapJsonReader.Read(Read(args[4], "能力対応表の正本"));
                 schemas = ToolSchemaJsonReader.Read(Read(args[5], "スキーマ正本"));
+                contract = CommonContractJsonReader.Read(Read(args[6], "共通契約の正本"));
             }
             catch (Exception exception)
             {
@@ -93,7 +96,10 @@ namespace PmxEditorMcp.SignatureDump
                     inventory,
                     ToolNameEvidence.Resolve(map, owned, assignments, signatures),
                     assignments,
-                    schemas);
+                    schemas,
+                    contract.Types
+                        .Where(t => t.Shape != null)
+                        .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal));
             }
             catch (InvalidOperationException exception)
             {
@@ -104,11 +110,11 @@ namespace PmxEditorMcp.SignatureDump
 
             try
             {
-                WriteIfChanged(args[6], source.Text);
+                WriteIfChanged(args[7], source.Text);
             }
             catch (Exception exception)
             {
-                error.WriteLine("書き出せない: " + args[6]);
+                error.WriteLine("書き出せない: " + args[7]);
                 error.WriteLine(exception.Message);
                 return ExitCodes.WriteFailed;
             }

@@ -40,6 +40,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>能力対応表の行が、シグネチャと台帳と特別規則の表に合うことを照合する。</summary>
         public const string ToolMapCommand = "tool-map";
 
+        /// <summary>提供対象のシグネチャと能力対応表の行が過不足なく対応することを照合する。</summary>
+        public const string MapCoverageCommand = "map-coverage";
+
         /// <summary>スキーマ正本が、能力対応表と表現の綴りに合うことを照合する。</summary>
         public const string ToolSchemasCommand = "tool-schemas";
 
@@ -148,6 +151,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ToolMapRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], MapCoverageCommand, StringComparison.Ordinal))
+            {
+                return MapCoverageRunner.Run(rest, output, error);
+            }
+
             if (string.Equals(args[0], ToolSchemasCommand, StringComparison.Ordinal))
             {
                 return ToolSchemaRunner.Run(rest, output, error);
@@ -244,6 +252,10 @@ namespace PmxEditorMcp.SignatureDump
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
                     + " <型役割表の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>");
             error.WriteLine(
+                MapCoverageCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス> <能力対応表の正本のパス>");
+            error.WriteLine(
                 ToolSchemasCommand
                     + " <共通契約の正本のパス> <能力対応表の正本のパス> <スキーマ正本のパス>");
             error.WriteLine(
@@ -272,7 +284,8 @@ namespace PmxEditorMcp.SignatureDump
             error.WriteLine(
                 ToolBindingsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
-                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス> <書き出し先パス>");
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス> <スキーマ正本のパス>"
+                    + " <共通契約の正本のパス> <書き出し先パス>");
             error.WriteLine(
                 ToolDefinitionsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"

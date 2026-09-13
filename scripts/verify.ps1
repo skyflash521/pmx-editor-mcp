@@ -159,6 +159,10 @@ try {
         Needs = $exclusionList
         Body = { & $dump tool-map $editorDir $ledger $excluded $roles $assignments $toolMap }
     }
+    $checks['提供対象の網羅'] = @{
+        Needs = $exclusionList
+        Body = { & $dump map-coverage $editorDir $ledger $excluded $roles $toolMap }
+    }
     $checks['スキーマ正本の照合'] = @{
         Needs = $buildOutput
         Body = { & $dump tool-schemas $contract $toolMap $toolSchemas }

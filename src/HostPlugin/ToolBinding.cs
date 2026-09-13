@@ -341,7 +341,9 @@ namespace PmxEditorMcp
             string releases = null,
             bool releasesIssued = false,
             bool returnsMany = false,
-            bool respondsMany = false)
+            bool respondsMany = false,
+            string selectorName = null,
+            string selectorValue = null)
         {
             if (rowKey == null)
             {
@@ -381,7 +383,15 @@ namespace PmxEditorMcp
             ReleasesIssued = releasesIssued;
             ReturnsMany = returnsMany;
             RespondsMany = respondsMany;
+            SelectorName = selectorName;
+            SelectorValue = selectorValue;
         }
+
+        /// <summary>呼び分けを選ぶ項目の名前。名前だけでは見分けられないツールが持つ。</summary>
+        public string SelectorName { get; }
+
+        /// <summary>この呼び分けを選ぶ値。</summary>
+        public string SelectorValue { get; }
 
         /// <summary>呼ぶ行のキー。</summary>
         public string RowKey { get; }

@@ -70,8 +70,14 @@ namespace PmxEditorMcp.SignatureDump
             InventoryRecord inventory,
             IDictionary<string, string> toolNames,
             CommonAssignmentTable assignments,
-            ToolSchemaTable schemas)
+            ToolSchemaTable schemas,
+            IDictionary<string, string> shapesByType)
         {
+            if (shapesByType == null)
+            {
+                throw new ArgumentNullException(nameof(shapesByType));
+            }
+
             if (schemas == null)
             {
                 throw new ArgumentNullException(nameof(schemas));
@@ -137,6 +143,8 @@ namespace PmxEditorMcp.SignatureDump
             SortedDictionary<string, string> lists =
                 new SortedDictionary<string, string>(StringComparer.Ordinal);
 
+            IDictionary<string, SchemaBranch> selected =
+                SelectedBranches(schemas, map, signatures, toolNames, shapesByType);
             IDictionary<string, string> projections =
                 Projections(map, signatures, byType, toolNames);
             ISet<string> responding = Responding(map, signatures, toolNames);
@@ -163,6 +171,7 @@ namespace PmxEditorMcp.SignatureDump
                     string carried;
                     overloads.Add(
                         Call(
+                            Held(selected, row.SignatureKey),
                             row,
                             signature,
                             path,
@@ -433,6 +442,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         private static string Call(
+            SchemaBranch selected,
             ToolMapRow row,
             SignatureRecord signature,
             AccessPath path,
@@ -484,6 +494,11 @@ namespace PmxEditorMcp.SignatureDump
                 returnsMany,
                 responds ? "true" : null);
 
+            string chosen = selected == null
+                ? string.Empty
+                : ", selectorName: " + Literal(selected.SelectorName)
+                    + ", selectorValue: " + Literal((string)selected.SelectorValue);
+
             return "new ToolCall(" + Literal(signature.Key) + ", "
                 + Receiver(
                     row,
@@ -498,7 +513,47 @@ namespace PmxEditorMcp.SignatureDump
                 + (string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
                     ? "null"
                     : TypeOf(signature.ValueType))
-                + tail + ")";
+                + tail + chosen + ")";
+        }
+
+        /// <summary>
+        /// 行キーから、その行が呼ばれる呼び分けへ。分岐を選ぶ項目を持つツールだけが項目を持つ。
+        /// </summary>
+        private static IDictionary<string, SchemaBranch> SelectedBranches(
+            ToolSchemaTable schemas,
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> toolNames,
+            IDictionary<string, string> shapesByType)
+        {
+            Dictionary<string, SchemaBranch> selected =
+                new Dictionary<string, SchemaBranch>(StringComparer.Ordinal);
+            foreach (ToolSchema schema in schemas.Tools
+                .Where(t => t.Branches.Any(b => b.SelectorName != null)))
+            {
+                IList<SignatureRecord> rows = map.Rows
+                    .Where(r => toolNames.ContainsKey(r.SignatureKey)
+                        && string.Equals(
+                            toolNames[r.SignatureKey], schema.Tool, StringComparison.Ordinal)
+                        && signatures.ContainsKey(r.SignatureKey))
+                    .Select(r => signatures[r.SignatureKey])
+                    .ToList();
+                foreach (KeyValuePair<string, SchemaBranch> pair in
+                    BranchRowRule.Resolve(schema, rows, shapesByType))
+                {
+                    selected.Add(pair.Key, pair.Value);
+                }
+            }
+
+            return selected;
+        }
+
+        private static SchemaBranch Held(
+            IDictionary<string, SchemaBranch> selected, string rowKey)
+        {
+            SchemaBranch branch;
+
+            return selected.TryGetValue(rowKey, out branch) ? branch : null;
         }
 
         /// <summary>

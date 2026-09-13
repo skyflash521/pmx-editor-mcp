@@ -564,7 +564,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 bindings.Where(b => b.Tool != null)
                     .ToDictionary(b => b.Signature.Key, b => b.Tool, StringComparer.Ordinal),
                 Assignments(),
-                new ToolSchemaTable(new ToolSchema[0]));
+                new ToolSchemaTable(new ToolSchema[0]),
+                new Dictionary<string, string>(StringComparer.Ordinal));
         }
 
         /// <summary>複製編集の流れが通る2つのシグネチャ。組み立てはこの2つを名指しする。</summary>

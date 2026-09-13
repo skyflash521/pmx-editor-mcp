@@ -702,6 +702,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
+                CommandRunner.MapCoverageCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス> <能力対応表の正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
                 CommandRunner.ToolSchemasCommand
                     + " <共通契約の正本のパス> <能力対応表の正本のパス> <スキーマ正本のパス>",
                 usage,
@@ -742,7 +748,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 CommandRunner.ToolBindingsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
-                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス> <書き出し先パス>",
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス> <スキーマ正本のパス>"
+                    + " <共通契約の正本のパス> <書き出し先パス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(

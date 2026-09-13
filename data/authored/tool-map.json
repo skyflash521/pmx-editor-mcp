@@ -11713,6 +11713,32 @@
       ]
     },
     {
+      "signatureKey": "PXCPlugin.IPXSystemControl.SetShareData(System.String,System.Byte[])",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有データへキーとバイト列を登録するだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.IPXSystemControl.SetShareData(System.String,System.Int32)",
+      "editKind": "viewSession",
+      "basis": "プラグインどうしが受け渡す共有データへキーと整数を登録するだけで、モデルのデータにもファイルにも作用しない。",
+      "postcondition": [
+        {
+          "effectType": "stateWritten",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.IPXSystemControl.SetShareData(System.String,System.String)",
       "editKind": "viewSession",
       "basis": "プラグインどうしが受け渡す共有データへキーと文字列を登録するだけで、モデルのデータにもファイルにも作用しない。",

@@ -84,6 +84,8 @@ namespace PmxEditorMcp.SignatureDump
                     Dispatched(
                         shapes,
                         called,
+                        Branch(called, dispatched, map, signatures, toolNames, shapesByType,
+                            row.SignatureKey),
                         signature,
                         shapesByType,
                         HandleIssuanceEvidence.Issues(row, signature));
@@ -124,17 +126,58 @@ namespace PmxEditorMcp.SignatureDump
             return built.ToString();
         }
 
+        /// <summary>
+        /// その行が呼ばれる呼び分け。分岐を選ぶ項目を持たないツールでは null で、そのときは
+        /// すべての呼び分けが行の引数を受け取る。
+        /// </summary>
+        private static SchemaBranch Branch(
+            ToolSchema schema,
+            string tool,
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> toolNames,
+            IDictionary<string, string> shapesByType,
+            string rowKey)
+        {
+            if (!schema.Branches.Any(b => b.SelectorName != null))
+            {
+                return null;
+            }
+
+            SchemaBranch branch;
+            BranchRowRule.Resolve(
+                schema,
+                map.Rows
+                    .Where(r => Called(toolNames, r.SignatureKey, tool))
+                    .Select(r => signatures[r.SignatureKey])
+                    .ToList(),
+                shapesByType)
+                .TryGetValue(rowKey, out branch);
+
+            return branch;
+        }
+
+        private static bool Called(
+            IDictionary<string, string> toolNames, string rowKey, string tool)
+        {
+            string named;
+
+            return toolNames.TryGetValue(rowKey, out named)
+                && string.Equals(named, tool, StringComparison.Ordinal);
+        }
+
         /// <summary>独立したツールを持つ行。引数が入力へ、戻り値が応答へ当たる。</summary>
         private static void Dispatched(
             IDictionary<SchemaItem, string> shapes,
             ToolSchema schema,
+            SchemaBranch called,
             SignatureRecord signature,
             IDictionary<string, string> shapesByType,
             bool issues)
         {
             foreach (ParameterRecord parameter in signature.Parameters)
             {
-                foreach (SchemaItem item in schema.Branches
+                foreach (SchemaItem item in (called == null ? schema.Branches : new[] { called })
                     .SelectMany(b => b.Inputs.Where(i => !i.Injected).SelectMany(i => i.WithNested))
                     .Concat(schema.Output == null ? new SchemaItem[0] : schema.Output.WithNested)
                     .Where(i => string.Equals(i.Name, parameter.Name, StringComparison.Ordinal)))
@@ -262,7 +305,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>その型を値として写す綴り。写せない型では null。</summary>
-        private static string ShapeOf(string typeName, IDictionary<string, string> shapesByType)
+        /// <summary>その型を写す表現の綴り。決まらなければ null。</summary>
+        public static string ShapeOf(string typeName, IDictionary<string, string> shapesByType)
         {
             string inner = ArgumentOf(typeName, NullableTypeName);
             if (inner != null)

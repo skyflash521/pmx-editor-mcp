@@ -57,6 +57,10 @@ namespace PmxEditorMcp.Tests
 
         private const string DropKey = "Sdk.Form.Drop()";
 
+        private const string ShareTextKey = "Sdk.Form.Share(System.String,System.String)";
+
+        private const string ShareBytesKey = "Sdk.Form.Share(System.String,System.Byte[])";
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -1020,6 +1024,22 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { CountKey, (target, arguments) => ((Target)target).Count },
+                    {
+                        ShareTextKey,
+                        (target, arguments) =>
+                        {
+                            ((Target)target).Shared = "text";
+                            return null;
+                        }
+                    },
+                    {
+                        ShareBytesKey,
+                        (target, arguments) =>
+                        {
+                            ((Target)target).Shared = "base64";
+                            return null;
+                        }
+                    },
                     { PickedKey, (target, arguments) => ((Target)target).Picked },
                     {
                         FlagKey,
@@ -1157,9 +1177,65 @@ namespace PmxEditorMcp.Tests
             Assert.Contains("写せない", Message(envelope), StringComparison.Ordinal);
         }
 
+        [Theory]
+        [InlineData("text", "text")]
+        [InlineData("base64", "base64")]
+        public void TheSelectorChoosesWhichOverloadRuns(string given, string ran)
+        {
+            Call("session_share", Arguments("dataShape", given, "key", "k", "data", "v"));
+
+            Assert.Equal(ran, _target.Shared);
+        }
+
+        [Theory]
+        [InlineData("json")]
+        [InlineData(null)]
+        public void AValueThatSelectsNoOverloadIsRefused(string given)
+        {
+            IDictionary<string, object> envelope = Call(
+                "session_share",
+                given == null
+                    ? Arguments("key", "k", "data", "v")
+                    : Arguments("dataShape", given, "key", "k", "data", "v"));
+
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ((IDictionary<string, object>)envelope["error"])["code"]);
+            Assert.Null(_target.Shared);
+        }
+
+        /// <summary>分岐を選ぶ項目で分かれる、引数の名前が同じ2つの呼び分け。</summary>
+        private static IList<ToolCall> Shared()
+        {
+            return new[]
+            {
+                Sharing(ShareTextKey, "text"),
+                Sharing(ShareBytesKey, "base64"),
+            };
+        }
+
+        private static ToolCall Sharing(string rowKey, string shape)
+        {
+            return new ToolCall(
+                rowKey,
+                Direct(),
+                ToolAccess.Whole(),
+                DangerKind.None,
+                new[]
+                {
+                    new ToolArgument("key", typeof(string)),
+                    new ToolArgument("data", typeof(string)),
+                },
+                new ToolArgument[0],
+                null,
+                selectorName: "dataShape",
+                selectorValue: shape);
+        }
+
         private static IDictionary<string, IList<ToolCall>> Calls()
         {
-            return Singles(new Dictionary<string, ToolCall>(StringComparer.Ordinal)
+            IDictionary<string, IList<ToolCall>> built =
+                Singles(new Dictionary<string, ToolCall>(StringComparer.Ordinal)
             {
                 {
                     "session_save",
@@ -1419,6 +1495,9 @@ namespace PmxEditorMcp.Tests
                         null)
                 },
             });
+            built.Add("session_share", Shared());
+
+            return built;
         }
 
         /// <summary>型で分かれないツールの、1つだけの項目の組。</summary>
@@ -1500,6 +1579,8 @@ namespace PmxEditorMcp.Tests
             public object Taken { get; set; }
 
             public Target[] Twins { get; set; }
+
+            public string Shared { get; set; }
         }
 
         /// <summary>題材を継いだ型。台帳はこちらの名前で覚える。</summary>
