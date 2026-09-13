@@ -84,7 +84,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<SchemaItem, string> sdkTypes = null,
             SampleValueTable samples = null,
             IDictionary<string, string> viewImages = null,
-            ISet<string> positioned = null)
+            ISet<string> positioned = null,
+            IDictionary<string, string> factories = null)
         {
             if (map == null)
             {
@@ -131,7 +132,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
-            List<E2eCase> cases = new List<E2eCase>();
+            List<E2eCase> cases = new List<E2eCase>(SetupCases(schemas, factories));
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
                 ToolMapRow row;
@@ -150,6 +151,60 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return cases;
+        }
+
+        /// <summary>
+        /// 先に流す段取り。要素を1つ作って並びへ加える。中身の無い並びでは、項目を読む検査が
+        /// 一度も項目を読まないまま通ってしまう。
+        /// </summary>
+        private static IEnumerable<E2eCase> SetupCases(
+            ToolSchemaTable schemas, IDictionary<string, string> factories)
+        {
+            if (factories == null)
+            {
+                yield break;
+            }
+
+            ISet<string> named = new HashSet<string>(
+                schemas.Tools.Select(t => t.Tool), StringComparer.Ordinal);
+            ISet<string> handed = new HashSet<string>(
+                schemas.Tools
+                    .Where(t => t.Branches.Any(b => b.Inputs.All(
+                        i => i.Injected
+                            || string.Equals(i.Name, HandlesName, StringComparison.Ordinal))))
+                    .Select(t => t.Tool),
+                StringComparer.Ordinal);
+            foreach (KeyValuePair<string, string> pair in factories
+                .Where(f => handed.Contains(f.Key) && named.Contains(f.Value))
+                .OrderBy(f => f.Key, StringComparer.Ordinal))
+            {
+                yield return new E2eCase(
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    pair.Value,
+                    "並びへ加える要素を1つ作れること",
+                    new Dictionary<string, object>(StringComparer.Ordinal),
+                    E2eExpectation.Success,
+                    null,
+                    null,
+                    pair.Key);
+                yield return new E2eCase(
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    pair.Key,
+                    "作った要素を並びへ加えられること",
+                    new Dictionary<string, object>(StringComparer.Ordinal),
+                    E2eExpectation.Success,
+                    null,
+                    null,
+                    null,
+                    new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { HandlesName, pair.Key },
+                    });
+            }
         }
 
         /// <summary>

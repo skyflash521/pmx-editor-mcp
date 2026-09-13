@@ -53,6 +53,16 @@ namespace PmxEditorMcp.SignatureDump
                 written.AddText("view", one.View);
             }
 
+            if (one.Produces != null)
+            {
+                written.AddText("produces", one.Produces);
+            }
+
+            if (one.Borrowed != null)
+            {
+                written.Add("borrowed", Borrowed(one.Borrowed));
+            }
+
             return written.Text;
         }
 
@@ -75,6 +85,18 @@ namespace PmxEditorMcp.SignatureDump
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expectation));
             }
+        }
+
+        private static string Borrowed(IDictionary<string, string> borrowed)
+        {
+            JsonObjectText written = new JsonObjectText();
+            foreach (KeyValuePair<string, string> one in borrowed
+                .OrderBy(b => b.Key, StringComparer.Ordinal))
+            {
+                written.AddText(one.Key, one.Value);
+            }
+
+            return written.Text;
         }
 
         private static string Arguments(IDictionary<string, object> arguments)

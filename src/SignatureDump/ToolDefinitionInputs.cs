@@ -89,6 +89,55 @@ namespace PmxEditorMcp.SignatureDump
             get { return _composedTools; }
         }
 
+        /// <summary>
+        /// 要素を並べるリストへ加えるツールの名前から、その要素を1つ作るツールの名前へ。作る
+        /// ツールが1つに決まらない型は持たない——どれを使うかがここでは決められない。
+        /// </summary>
+        public IDictionary<string, string> ElementFactories(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            TypeRoleTable owned = OwnedRoles(inventory);
+            IDictionary<string, string> tools = ToolsByRow(inventory);
+            IDictionary<string, SignatureRecord> signatures = inventory.Signatures
+                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+            Dictionary<string, string> factories =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (TypeRoleRecord role in owned.Types
+                .Where(t => t.Group != CapabilityOwner.None
+                    && !string.IsNullOrEmpty(t.ElementNoun)
+                    && !string.IsNullOrEmpty(t.ElementNounPlural)))
+            {
+                string[] making = tools
+                    .Where(t => Makes(signatures, t.Key, role.TypeName))
+                    .Select(t => t.Value)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+                if (making.Length == 1)
+                {
+                    factories[ToolNameRule.OfRole(role, ToolVerb.Add)] = making[0];
+                }
+            }
+
+            return factories;
+        }
+
+        /// <summary>その行が、その型の実体を引数無しで1つ作るか。</summary>
+        private static bool Makes(
+            IDictionary<string, SignatureRecord> signatures, string rowKey, string typeName)
+        {
+            SignatureRecord signature;
+
+            return signatures.TryGetValue(rowKey, out signature)
+                && signature.Parameters.Count == 0
+                && signature.MemberKind == MemberKind.Method
+                && string.Equals(
+                    TypeDefinitionName.Of(signature.ValueType), typeName, StringComparison.Ordinal);
+        }
+
         /// <summary>値を要素の位置で写す型の名前。</summary>
         public ISet<string> PositionedTypes()
         {

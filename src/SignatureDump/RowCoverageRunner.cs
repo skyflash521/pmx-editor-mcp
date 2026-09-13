@@ -88,7 +88,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.SdkTypes(inventory),
                     samples,
                     inputs.ViewImages,
-                    inputs.PositionedTypes());
+                    inputs.PositionedTypes(),
+                    inputs.ElementFactories(inventory));
                 RowCoverageGate.Require(
                     inputs.Map,
                     inventory.Signatures.ToDictionary(

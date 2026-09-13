@@ -316,6 +316,24 @@ function notStarted(response) {
         && envelope.error.code === NOT_STARTED;
 }
 
+/** 借りる値を差し込んだ引数。借りる名前をまだ覚えていなければ null。 */
+function borrowing(one, remembered) {
+    if (one.borrowed === undefined) {
+        return one.arguments;
+    }
+
+    const given = { ...one.arguments };
+    for (const [name, from] of Object.entries(one.borrowed)) {
+        if (!remembered.has(from)) {
+            return null;
+        }
+
+        given[name] = [remembered.get(from)];
+    }
+
+    return given;
+}
+
 /** その検査へ与える要求の識別子。ハンドシェイクが1で、検査は2から順に並ぶ。 */
 function requestId(index) {
     return index + 2;
@@ -328,9 +346,8 @@ function run(pipeName, cases, processId) {
     let retried = -1;
     let settled = false;
     const results = [];
-    const capture = cases.some((one) => one.expect === "viewImage")
-        ? captureView(processId)
-        : { path: null, unavailable: "絵を確かめる検査がありません。" };
+    const remembered = new Map();
+    let capture = null;
 
     return new Promise((resolve) => {
         const settle = (code, message) => {
@@ -361,7 +378,22 @@ function run(pipeName, cases, processId) {
             }
 
             const one = cases[index];
-            send(requestId(index), one.tool, one.arguments);
+            if (one.expect === "viewImage" && capture === null) {
+                capture = captureView(processId);
+            }
+
+            const given = borrowing(one, remembered);
+            if (given === null) {
+                results.push({
+                    case: one,
+                    reason: "借りる値をまだ覚えていません: " + JSON.stringify(one.borrowed),
+                });
+                next();
+
+                return;
+            }
+
+            send(requestId(index), one.tool, given);
         };
 
         const finish = () => {
@@ -444,11 +476,16 @@ function run(pipeName, cases, processId) {
                 if (notStarted(response) && retried !== index
                     && answerDialogs(processId) > 0) {
                     retried = index;
-                    send(requestId(index), one.tool, one.arguments);
+                    send(requestId(index), one.tool, borrowing(one, remembered));
                     continue;
                 }
 
-                results.push({ case: one, reason: judge(one, response, capture) });
+                const reason = judge(one, response, capture);
+                if (reason === null && one.produces !== undefined) {
+                    remembered.set(one.produces, response.result.value);
+                }
+
+                results.push({ case: one, reason });
                 next();
             }
         });

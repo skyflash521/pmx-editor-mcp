@@ -904,12 +904,20 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             written += ", " + (members ?? "null");
+            if (referenced == null)
+            {
+                return written + ")";
+            }
 
-            return (referenced == null ? written : written + ", " + referenced) + ")";
+            string element;
+            bool listed = ValueTypeName.TryElement(signature.ValueType, out element);
+
+            return written + ", " + referenced + ", " + (listed ? "true" : "false") + ")";
         }
 
         /// <summary>
-        /// その項目の値が操作対象の実体なら、位置を数えるリストへの道。指さない項目では null。
+        /// その項目の値が操作対象の実体か、その並びなら、位置を数えるリストへの道。指さない項目
+        /// では null。
         /// </summary>
         private static string Positioning(
             SignatureRecord signature,
@@ -918,7 +926,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, AccessPath> paths)
         {
-            string value = TypeDefinitionName.Of(signature.ValueType);
+            string value = TypeDefinitionName.OfElement(
+                ValueTypeName.Contained(signature.ValueType));
             TypeRoleRecord role;
             AccessPath listed;
             if (!byType.TryGetValue(value, out role)

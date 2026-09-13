@@ -37,7 +37,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, object> arguments,
             E2eExpectation expectation,
             string code,
-            string view = null)
+            string view = null,
+            string produces = null,
+            IDictionary<string, string> borrowed = null)
         {
             RowKey = rowKey;
             EditKind = editKind;
@@ -49,6 +51,10 @@ namespace PmxEditorMcp.SignatureDump
             Expectation = expectation;
             Code = code;
             View = view;
+            Produces = produces;
+            Borrowed = borrowed == null
+                ? null
+                : new ReadOnlyDictionary<string, string>(borrowed);
         }
 
         /// <summary>能力対応表の行キー。合否はこの単位でも数える。</summary>
@@ -77,5 +83,15 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>返す絵が写すビューの名前。絵を確かめる検査だけが持ち、ほかは null。</summary>
         public string View { get; }
+
+        /// <summary>
+        /// 返った値を覚えておく名前。あとの検査がこの名前で借りる。覚えない検査は null。
+        /// </summary>
+        public string Produces { get; }
+
+        /// <summary>
+        /// 引数の名前から、覚えた値の名前へ。借りた値は1件の並びとして渡る。借りない検査は null。
+        /// </summary>
+        public IDictionary<string, string> Borrowed { get; }
     }
 }

@@ -249,7 +249,8 @@ namespace PmxEditorMcp
             string rowKey,
             Type type,
             IList<ToolField> members = null,
-            ToolAccess referenced = null)
+            ToolAccess referenced = null,
+            bool listed = false)
         {
             if (name == null)
             {
@@ -271,6 +272,7 @@ namespace PmxEditorMcp
             Type = type;
             Members = members == null ? null : new ReadOnlyCollection<ToolField>(members);
             Referenced = referenced;
+            Listed = listed;
         }
 
         /// <summary>応答と要求に現れる項目の名前。</summary>
@@ -293,6 +295,9 @@ namespace PmxEditorMcp
         /// 写り、列に居ない実体は null で写る。指さない項目では null。
         /// </summary>
         public ToolAccess Referenced { get; }
+
+        /// <summary>その項目が実体を並びで指すか。1つだけ指す項目では偽。</summary>
+        public bool Listed { get; }
     }
 
     /// <summary>受け手の得方と、呼び出しがエディタの状態へどう作用するか。</summary>

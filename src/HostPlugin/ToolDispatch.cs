@@ -1532,7 +1532,7 @@ namespace PmxEditorMcp
             }
 
             int index;
-            if (TryIndex(given, out index))
+            if (!field.Listed && TryIndex(given, out index))
             {
                 position = index;
 
@@ -1540,7 +1540,9 @@ namespace PmxEditorMcp
             }
 
             code = ToolEnvelope.InvalidArgument;
-            message = field.Name + " は位置の整数でなければならない。";
+            message = field.Listed
+                ? field.Name + " は位置で指す並びなので、書き込みでは受け取らない。"
+                : field.Name + " は位置の整数でなければならない。";
 
             return false;
         }
@@ -1631,17 +1633,38 @@ namespace PmxEditorMcp
                 return false;
             }
 
+            System.Collections.IEnumerable given =
+                field.Listed ? (System.Collections.IEnumerable)value : null;
+            if (given == null)
+            {
+                json = Position(listed, value);
+
+                return true;
+            }
+
+            List<object> positions = new List<object>();
+            foreach (object one in given)
+            {
+                positions.Add(Position(listed, one));
+            }
+
+            json = positions.ToArray();
+
+            return true;
+        }
+
+        /// <summary>その実体の、列の中での位置。列に居なければ null。</summary>
+        private static object Position(IList<object> listed, object value)
+        {
             for (int at = 0; at < listed.Count; at++)
             {
                 if (ReferenceEquals(listed[at], value))
                 {
-                    json = at;
-
-                    return true;
+                    return at;
                 }
             }
 
-            return true;
+            return null;
         }
 
         /// <summary>その道が指すリストの要素。位置で受け取る引数は、この列の中の位置で指す。</summary>
