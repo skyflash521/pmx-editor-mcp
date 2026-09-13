@@ -21,6 +21,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 項目から綴りへ引く表。SDKに由来する項目をすべて持ち、ホストが決める項目は持たない。
+        /// 項目へ写す値は <paramref name="valuesByType"/> から引き、行と呼び分けの結び付けは
+        /// <paramref name="spellings"/> の綴りで決めるので、後者には型から綴りへの表を渡す。
         /// 綴りを導けない項目と、埋め込み先に持ち込む項目が無い行があれば
         /// <see cref="InvalidOperationException"/>。
         /// </summary>
@@ -29,7 +31,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, string> toolNames,
-            IDictionary<string, string> shapesByType)
+            IDictionary<string, string> valuesByType,
+            IDictionary<string, string> spellings)
         {
             if (schemas == null)
             {
@@ -51,9 +54,14 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(toolNames));
             }
 
-            if (shapesByType == null)
+            if (valuesByType == null)
             {
-                throw new ArgumentNullException(nameof(shapesByType));
+                throw new ArgumentNullException(nameof(valuesByType));
+            }
+
+            if (spellings == null)
+            {
+                throw new ArgumentNullException(nameof(spellings));
             }
 
             Dictionary<SchemaItem, string> shapes = new Dictionary<SchemaItem, string>();
@@ -84,10 +92,16 @@ namespace PmxEditorMcp.SignatureDump
                     Dispatched(
                         shapes,
                         called,
-                        Branch(called, dispatched, map, signatures, toolNames, shapesByType,
+                        Branch(
+                            called,
+                            dispatched,
+                            map,
+                            signatures,
+                            toolNames,
+                            spellings,
                             row.SignatureKey),
                         signature,
-                        shapesByType,
+                        valuesByType,
                         HandleIssuanceEvidence.Issues(row, signature));
                     continue;
                 }
@@ -97,7 +111,7 @@ namespace PmxEditorMcp.SignatureDump
                     ToolSchema schema;
                     if (byTool.TryGetValue(embedded, out schema))
                     {
-                        Embedded(shapes, schema, signature, shapesByType);
+                        Embedded(shapes, schema, signature, valuesByType);
 
                         continue;
                     }
@@ -105,7 +119,7 @@ namespace PmxEditorMcp.SignatureDump
                     SchemaPayload branch;
                     if (byBranch.TryGetValue(embedded, out branch))
                     {
-                        Carried(shapes, embedded, branch, signature, shapesByType);
+                        Carried(shapes, embedded, branch, signature, valuesByType);
                     }
                 }
             }
@@ -136,7 +150,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, string> toolNames,
-            IDictionary<string, string> shapesByType,
+            IDictionary<string, string> spellings,
             string rowKey)
         {
             if (!schema.Branches.Any(b => b.SelectorName != null))
@@ -151,7 +165,7 @@ namespace PmxEditorMcp.SignatureDump
                     .Where(r => Called(toolNames, r.SignatureKey, tool))
                     .Select(r => signatures[r.SignatureKey])
                     .ToList(),
-                shapesByType)
+                spellings)
                 .TryGetValue(rowKey, out branch);
 
             return branch;
@@ -172,7 +186,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema,
             SchemaBranch called,
             SignatureRecord signature,
-            IDictionary<string, string> shapesByType,
+            IDictionary<string, string> valuesByType,
             bool issues)
         {
             foreach (ParameterRecord parameter in signature.Parameters)
@@ -182,7 +196,7 @@ namespace PmxEditorMcp.SignatureDump
                     .Concat(schema.Output == null ? new SchemaItem[0] : schema.Output.WithNested)
                     .Where(i => string.Equals(i.Name, parameter.Name, StringComparison.Ordinal)))
                 {
-                    Assign(shapes, schema.Tool, item, parameter.TypeName, shapesByType);
+                    Assign(shapes, schema.Tool, item, parameter.TypeName, valuesByType);
                 }
             }
 
@@ -197,14 +211,14 @@ namespace PmxEditorMcp.SignatureDump
 
             if (output.Origin == null)
             {
-                Assign(shapes, schema.Tool, output, valueType, shapesByType);
+                Assign(shapes, schema.Tool, output, valueType, valuesByType);
 
                 return;
             }
 
             if (output.Element != null && output.Element.Origin == null)
             {
-                Assign(shapes, schema.Tool, output.Element, valueType, shapesByType);
+                Assign(shapes, schema.Tool, output.Element, valueType, valuesByType);
             }
         }
 
@@ -217,7 +231,7 @@ namespace PmxEditorMcp.SignatureDump
             string branch,
             SchemaPayload payload,
             SignatureRecord signature,
-            IDictionary<string, string> shapesByType)
+            IDictionary<string, string> valuesByType)
         {
             string member = MemberNameOf(signature.MemberName);
             SchemaItem[] items = payload.Members
@@ -232,7 +246,7 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (SchemaItem item in items)
             {
-                Assign(shapes, branch, item, signature.ValueType, shapesByType);
+                Assign(shapes, branch, item, signature.ValueType, valuesByType);
             }
         }
 
@@ -243,7 +257,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<SchemaItem, string> shapes,
             ToolSchema schema,
             SignatureRecord signature,
-            IDictionary<string, string> shapesByType)
+            IDictionary<string, string> valuesByType)
         {
             string member = MemberNameOf(signature.MemberName);
             IEnumerable<SchemaItem> items = schema.Output.WithNested
@@ -258,7 +272,7 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (SchemaItem item in items)
             {
-                Assign(shapes, schema.Tool, item, signature.ValueType, shapesByType);
+                Assign(shapes, schema.Tool, item, signature.ValueType, valuesByType);
             }
         }
 
@@ -271,7 +285,7 @@ namespace PmxEditorMcp.SignatureDump
             string tool,
             SchemaItem item,
             string typeName,
-            IDictionary<string, string> shapesByType)
+            IDictionary<string, string> valuesByType)
         {
             if (item.Members != null)
             {
@@ -288,12 +302,12 @@ namespace PmxEditorMcp.SignatureDump
                             + "(" + typeName + ")");
                 }
 
-                Assign(shapes, tool, item.Element, element, shapesByType);
+                Assign(shapes, tool, item.Element, element, valuesByType);
 
                 return;
             }
 
-            string shape = ShapeOf(typeName, shapesByType);
+            string shape = ShapeOf(typeName, valuesByType);
             if (shape == null)
             {
                 throw new InvalidOperationException(
@@ -304,14 +318,13 @@ namespace PmxEditorMcp.SignatureDump
             shapes[item] = shape;
         }
 
-        /// <summary>その型を値として写す綴り。写せない型では null。</summary>
-        /// <summary>その型を写す表現の綴り。決まらなければ null。</summary>
-        public static string ShapeOf(string typeName, IDictionary<string, string> shapesByType)
+        /// <summary>その型に対して表が持つ値。包みと配列の印を外して引き、無ければ null。</summary>
+        public static string ShapeOf(string typeName, IDictionary<string, string> byType)
         {
             string inner = ArgumentOf(typeName, NullableTypeName);
             if (inner != null)
             {
-                return ShapeOf(inner, shapesByType);
+                return ShapeOf(inner, byType);
             }
 
             string element = ElementTypeOf(typeName);
@@ -324,7 +337,7 @@ namespace PmxEditorMcp.SignatureDump
 
             string shape;
 
-            return shapesByType.TryGetValue(typeName, out shape) ? shape : null;
+            return byType.TryGetValue(typeName, out shape) ? shape : null;
         }
 
         /// <summary>一列に並ぶ配列とリストの要素の型。並びでない型では null。</summary>

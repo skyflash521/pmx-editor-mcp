@@ -150,6 +150,98 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.StartsWith("値として写せない型の項目がある:", error.Message, StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void TheBranchOfARowIsFoundFromTheSpellingTable()
+        {
+            IDictionary<string, SignatureRecord> signatures = Shares();
+            IDictionary<SchemaItem, string> shapes = SdkShapeEvidence.Resolve(
+                Schemas(SharingSchema()),
+                new ToolMap(signatures.Values.Select(SharingRow).ToList()),
+                signatures,
+                signatures.Keys.ToDictionary(
+                    k => k, k => "session_share", StringComparer.Ordinal),
+                ShapesByType.Keys.ToDictionary(k => k, k => k, StringComparer.Ordinal),
+                ShapesByType);
+
+            Assert.Equal(
+                new[] { "System.Int32", "System.String" },
+                shapes
+                    .Where(s => string.Equals(s.Key.Name, "data", StringComparison.Ordinal))
+                    .Select(s => s.Value)
+                    .OrderBy(v => v, StringComparer.Ordinal)
+                    .ToArray());
+        }
+
+        /// <summary>引数の名前が同じで型だけが違う2つの呼び分け。</summary>
+        private static string SharingSchema()
+        {
+            return "{\"tool\":\"session_share\",\"branches\":["
+                + SharingBranch("text") + "," + SharingBranch("number")
+                + "],\"output\":{}}";
+        }
+
+        private static string SharingBranch(string shape)
+        {
+            return "{\"branch\":\"" + shape + "\""
+                + ",\"selector\":{\"name\":\"dataShape\",\"value\":\"" + shape + "\"}"
+                + ",\"inputs\":[{\"name\":\"dataShape\",\"origin\":\"hostInput\""
+                + ",\"shape\":\"text\",\"required\":true}"
+                + ",{\"name\":\"key\",\"required\":true}"
+                + ",{\"name\":\"data\",\"required\":true}]}";
+        }
+
+        private static IDictionary<string, SignatureRecord> Shares()
+        {
+            return new[] { "System.String", "System.Int32" }
+                .Select(Sharing)
+                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+        }
+
+        private static SignatureRecord Sharing(string dataType)
+        {
+            return new SignatureRecord(
+                Form + ".Share(System.String," + dataType + ")",
+                Form,
+                MemberKind.Method,
+                "Share",
+                false,
+                0,
+                new[]
+                {
+                    new ParameterRecord("key", "System.String", ParameterDirection.In, false),
+                    new ParameterRecord("data", dataType, ParameterDirection.In, false),
+                },
+                "System.Boolean",
+                false,
+                false,
+                OperationDirection.Write);
+        }
+
+        private static ToolMapRow SharingRow(SignatureRecord signature)
+        {
+            return new ToolMapRow(
+                signature.Key,
+                ToolMapEditKind.DirectChange,
+                null,
+                "題材の根拠。",
+                new[]
+                {
+                    new Postcondition(
+                        EffectType.None,
+                        string.Empty,
+                        EffectCheckKind.CallLogOnly,
+                        null,
+                        null,
+                        null,
+                        EffectComparison.Exists,
+                        null,
+                        false,
+                        null),
+                },
+                null,
+                null);
+        }
+
         private static string Shape(IDictionary<SchemaItem, string> shapes, string name)
         {
             return shapes
@@ -164,7 +256,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, string> toolNames)
         {
-            return SdkShapeEvidence.Resolve(schemas, map, signatures, toolNames, ShapesByType);
+            return SdkShapeEvidence.Resolve(
+                schemas, map, signatures, toolNames, ShapesByType, ShapesByType);
         }
 
         private static ToolSchemaTable Schemas(params string[] tools)

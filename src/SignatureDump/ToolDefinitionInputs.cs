@@ -151,7 +151,8 @@ namespace PmxEditorMcp.SignatureDump
                 Map,
                 inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
                 ToolsByRow(inventory),
-                itself);
+                itself,
+                Positioned());
         }
 
         /// <summary>SDKに由来する項目から表現の綴りへ。正本が綴りを書かない項目をここで補う。</summary>
@@ -167,6 +168,7 @@ namespace PmxEditorMcp.SignatureDump
                 Map,
                 inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
                 ToolsByRow(inventory),
+                Positioned(),
                 Positioned());
         }
 
