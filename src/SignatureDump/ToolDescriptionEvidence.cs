@@ -369,7 +369,8 @@ namespace PmxEditorMcp.SignatureDump
                         "埋め込んだ項目の日本語名が無い: " + row.SignatureKey);
                 }
 
-                terms.Add(new IndexTerm(signature.MemberName, name));
+                terms.Add(new IndexTerm(
+                    SdkShapeEvidence.MemberNameOf(signature.MemberName), name));
             }
 
             return terms;

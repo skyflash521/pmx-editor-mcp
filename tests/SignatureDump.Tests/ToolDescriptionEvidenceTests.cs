@@ -110,9 +110,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Row("Draw", ListTool, null),
                 Row("Index", null, new[] { ListTool })));
 
-            Assert.Equal(new[] { "Index" }, material.IndexTerms.Select(t => t.Name).ToArray());
+            Assert.Equal(new[] { "index" }, material.IndexTerms.Select(t => t.Name).ToArray());
             Assert.Equal(
                 new[] { "頂点の番号" }, material.IndexTerms.Select(t => t.JapaneseName).ToArray());
+        }
+
+        [Fact]
+        public void TheIndexTermCarriesTheSpellingThatTravelsOnTheWire()
+        {
+            ToolDescriptionMaterial material = Only(Map(
+                Row("Draw", ListTool, null),
+                Row("IsIK", null, new[] { ListTool })));
+
+            Assert.Equal(new[] { "isIk" }, material.IndexTerms.Select(t => t.Name).ToArray());
         }
 
         [Fact]
@@ -164,7 +174,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolDescriptionMaterial material = Only(Map(
                 Row("Draw", ListTool, null), Embedded(Bone, "Index", ListTool)));
 
-            Assert.Equal(new[] { "Index" }, material.IndexTerms.Select(t => t.Name).ToArray());
+            Assert.Equal(new[] { "index" }, material.IndexTerms.Select(t => t.Name).ToArray());
             Assert.Equal(Owner, material.TypeName);
         }
 
@@ -521,7 +531,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static InventoryRecord Inventory()
         {
             List<SignatureRecord> signatures = new List<SignatureRecord>();
-            foreach (string memberName in new[] { "Draw", "Erase", "Index", "Depth", "Tint" })
+            foreach (string memberName in new[] { "Draw", "Erase", "Index", "IsIK", "Depth", "Tint" })
             {
                 signatures.Add(Signature(memberName));
             }
@@ -604,6 +614,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Owner, "Index", "頂点の番号", NameBasis.FromMemberShape(), "起こした。"),
                 new PropertyNameRecord(
                     Bone, "Index", "ボーンの番号", NameBasis.FromMemberShape(), "起こした。"),
+                new PropertyNameRecord(
+                    Owner, "IsIK", "IKかどうか", NameBasis.FromMemberShape(), "起こした。"),
             };
         }
     }
