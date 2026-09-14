@@ -30,6 +30,7 @@ $Versioned = @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe")
 # 配布物へ入る写しと、その原本。写した先が1バイトも違わないことを見る。
 $Copies = [ordered]@{
     "LICENSE.txt" = "LICENSE"
+    "INSTALL.md" = "docs/package/INSTALL.md"
 }
 
 $repository = Split-Path -Parent $PSScriptRoot

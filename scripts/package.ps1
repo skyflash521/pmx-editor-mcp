@@ -16,6 +16,7 @@ $generatorProject = Join-Path $repository "src/SignatureDump/PmxEditorMcp.Signat
 $generator = Join-Path $repository "src/SignatureDump/bin/Release/net48/PmxEditorMcp.SignatureDump.exe"
 $ledgerTargets = Join-Path $PSScriptRoot "shipping-ledger.targets"
 $license = Join-Path $repository "LICENSE"
+$instructions = Join-Path $repository "docs/package/INSTALL.md"
 $licenses = Join-Path $repository "catalog/observed/licenses"
 $distribution = Join-Path $repository "dist"
 
@@ -80,6 +81,7 @@ try {
     Copy-Item -Path (Join-Path $work "bridge/PmxEditorMcp.Bridge.exe") `
         -Destination $staged -Force
     Copy-Item -Path $license -Destination (Join-Path $staged "LICENSE.txt") -Force
+    Copy-Item -Path $instructions -Destination (Join-Path $staged "INSTALL.md") -Force
 
     & $generator thirdparty (Join-Path $staged "ThirdPartyNotices.txt") $licenses `
         $hostLedger $bridgeLedger | Out-Null
@@ -89,7 +91,7 @@ try {
 }
 
 & (Join-Path $PSScriptRoot "package-contents.ps1") -Staged $staged -Version $version `
-    -Expected @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe", "LICENSE.txt",
+    -Expected @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe", "INSTALL.md", "LICENSE.txt",
         "ThirdPartyNotices.txt") | Out-Null
 
 Compress-Archive -Path (Join-Path $staged "*") -DestinationPath $archive
