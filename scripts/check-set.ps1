@@ -16,8 +16,8 @@ Set-Location (Split-Path -Parent $PSScriptRoot)
 $editorDir = Get-EditorDirectory
 $dump = 'src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe'
 $hostDll = 'src/HostPlugin/bin/Debug/net48/PmxEditorMcp.dll'
-$observed = 'data/observed'
-$authored = 'data/authored'
+$observed = 'catalog/observed'
+$authored = 'catalog/authored'
 $ledger = "$observed/capability-ledger.json"
 $outOfScope = "$observed/ledger-out-of-scope.json"
 $roles = "$authored/type-roles.json"
@@ -442,11 +442,7 @@ $checkGroups = [ordered]@{
         '提供対象の網羅', 'スキーマ定義の照合', 'ツールの説明文の照合', 'サンプル値の照合',
         '発見可能性の照合', 'スキーマ対応の照合', '行の検査の網羅', '規則適合検査',
         '受入シナリオの照合', '受入の実行器の照合',
-        # ライセンス本文は data/observed/licenses/ にあり、組み立てがそれを読む。
         '配布パッケージの生成',
-        # ブリッジのビルドは data/ の台帳と定義からツール定義を生成する(Bridge.csproj の
-        # GenerateToolDefinitions)。生成した定義を突き合わせるのはテストで、発行を通すのが
-        # ブリッジの単独起動である。文書のリンクは data/ のファイルを指すリンクを見る。
         'テスト', 'ブリッジの単独起動', '文書のリンク')
     # 上の2群のどちらにも入らない検査をここへ並べる。全件を走らせるときにしか出番が無いという
     # 申告で、`@($checks.Keys)` のような一括の指定にはしない——一括にすると、新しい検査を上の2群へ

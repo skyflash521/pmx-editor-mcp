@@ -1,5 +1,5 @@
 # 常設の検査を全件走らせる。変更を確定させる前の1回はこれを通す。
-# 途中は、Markdown だけなら verify-docs.ps1、data/ だけなら verify-data.ps1 で足りる——
+# 途中は、Markdown だけなら verify-docs.ps1、catalog/ だけなら verify-catalog.ps1 で足りる——
 # 入力が変わっていない検査は、走らせても前と同じ答えが出るだけである。
 [CmdletBinding()]
 param()

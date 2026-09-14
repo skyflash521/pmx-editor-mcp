@@ -35,8 +35,8 @@
   <PropertyGroup>
     <!-- 中間の置き場は本文の評価の時点では決まっていないので、その元から組み立てる。 -->
     <ToolDefinitionPath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedToolDefinitions.g.cs</ToolDefinitionPath>
-    <ObservedDirectory>$(MSBuildThisFileDirectory)..\..\data\observed</ObservedDirectory>
-    <AuthoredDirectory>$(MSBuildThisFileDirectory)..\..\data\authored</AuthoredDirectory>
+    <ObservedDirectory>$(MSBuildThisFileDirectory)..\..\catalog\observed</ObservedDirectory>
+    <AuthoredDirectory>$(MSBuildThisFileDirectory)..\..\catalog\authored</AuthoredDirectory>
   </PropertyGroup>
 
   <!-- 生成器の在り処は、組み立てた側が返すものを使う。組み立ての指定によって出力先は動くので、

@@ -16,7 +16,7 @@ $generatorProject = Join-Path $repository "src/SignatureDump/PmxEditorMcp.Signat
 $generator = Join-Path $repository "src/SignatureDump/bin/Release/net48/PmxEditorMcp.SignatureDump.exe"
 $ledgerTargets = Join-Path $PSScriptRoot "shipping-ledger.targets"
 $license = Join-Path $repository "LICENSE"
-$licenses = Join-Path $repository "data/observed/licenses"
+$licenses = Join-Path $repository "catalog/observed/licenses"
 $distribution = Join-Path $repository "dist"
 
 function Get-Version {

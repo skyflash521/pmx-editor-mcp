@@ -28,14 +28,14 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "生成器のビルドに失敗した(終了コード $LASTEXITCODE)。" }
 
     & $dump e2e-cases (Get-EditorDirectory) `
-        data/observed/capability-ledger.json `
-        data/authored/common-contract.json `
-        data/authored/type-roles.json `
-        data/authored/property-names.json `
-        data/authored/common-assignments.json `
-        data/authored/tool-map.json `
-        data/authored/tool-schemas.json `
-        data/authored/sample-values.json `
+        catalog/observed/capability-ledger.json `
+        catalog/authored/common-contract.json `
+        catalog/authored/type-roles.json `
+        catalog/authored/property-names.json `
+        catalog/authored/common-assignments.json `
+        catalog/authored/tool-map.json `
+        catalog/authored/tool-schemas.json `
+        catalog/authored/sample-values.json `
         $cases
     if ($LASTEXITCODE -ne 0) { throw "検査を組み立てられない(終了コード $LASTEXITCODE)。" }
 

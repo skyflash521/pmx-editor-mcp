@@ -49,7 +49,7 @@ pwsh -File scripts/verify.ps1
 | 変えたもの | 実行器 |
 |---|---|
 | Markdown | `pwsh -File scripts/verify-docs.ps1` |
-| `data/` | `pwsh -File scripts/verify-data.ps1` |
+| `catalog/` | `pwsh -File scripts/verify-catalog.ps1` |
 | `src/`・`tests/`・`scripts/` | `pwsh -File scripts/verify.ps1`(全件) |
 
 ## 実機に触る検査
@@ -74,7 +74,7 @@ pwsh -File scripts/verify-live.ps1
   決め直して恒久文書へ反映してから再実行する。
 - 配布パッケージの生成が、第三者ライセンス表示の標準の本文を読めない旨で落ちた場合: 依存が増えて
   新しいライセンスが入っている。その本文をSPDXライセンスリストから
-  `data/observed/licenses/<SPDXの綴り>.txt` へ転記してから再実行する。**組み立ては外部へ問い
+  `catalog/observed/licenses/<SPDXの綴り>.txt` へ転記してから再実行する。**組み立ては外部へ問い
   合わせない**ので、本文は追跡下に無いと使えない。
 - 実機に触る検査の不合格: ホストのログを読んで原因を掴む。ログの所在は
   [操作役のスクリプト](../../scripts/host-control.ps1)の `status` が表示する。

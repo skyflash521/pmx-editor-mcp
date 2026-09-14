@@ -22,7 +22,7 @@ $checks['実機動作確認'] = { pwsh -NoProfile -File scripts/live-host.ps1 }
 $checks['自動E2E検査'] = { pwsh -NoProfile -File scripts/live-tools.ps1 }
 $checks['ブリッジの実機動作確認'] = { node scripts/live-bridge.mjs }
 $checks['受入シナリオ'] = {
-    node scripts/acceptance.mjs --cases data/authored/acceptance-scenarios.json `
+    node scripts/acceptance.mjs --cases catalog/authored/acceptance-scenarios.json `
         --setup scripts/acceptance-setup-dev.ps1
 }
 

@@ -44,12 +44,12 @@
     <!-- 中間の置き場は本文の評価の時点では決まっていないので、その元から組み立てる。 -->
     <RelaySourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedSdkRelay.g.cs</RelaySourcePath>
     <ToolBindingSourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedTools.g.cs</ToolBindingSourcePath>
-    <ToolMapPath>$(MSBuildThisFileDirectory)..\..\data\authored\tool-map.json</ToolMapPath>
-    <LedgerPath>$(MSBuildThisFileDirectory)..\..\data\observed\capability-ledger.json</LedgerPath>
-    <TypeRolesPath>$(MSBuildThisFileDirectory)..\..\data\authored\type-roles.json</TypeRolesPath>
-    <CommonAssignmentsPath>$(MSBuildThisFileDirectory)..\..\data\authored\common-assignments.json</CommonAssignmentsPath>
-    <ToolSchemasPath>$(MSBuildThisFileDirectory)..\..\data\authored\tool-schemas.json</ToolSchemasPath>
-    <CommonContractPath>$(MSBuildThisFileDirectory)..\..\data\authored\common-contract.json</CommonContractPath>
+    <ToolMapPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\tool-map.json</ToolMapPath>
+    <LedgerPath>$(MSBuildThisFileDirectory)..\..\catalog\observed\capability-ledger.json</LedgerPath>
+    <TypeRolesPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\type-roles.json</TypeRolesPath>
+    <CommonAssignmentsPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\common-assignments.json</CommonAssignmentsPath>
+    <ToolSchemasPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\tool-schemas.json</ToolSchemasPath>
+    <CommonContractPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\common-contract.json</CommonContractPath>
   </PropertyGroup>
 
   <!-- 生成器の在り処は、組み立てた側が返すものを使う。組み立ての指定によって出力先は動くので、
