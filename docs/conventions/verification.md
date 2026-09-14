@@ -9,7 +9,7 @@ pwsh -File scripts/verify.ps1
 ```
 
 これ1本ですべて走る。**落ちた検査も走らせていない検査も無ければ終了コード0**、あれば1で、その名前を
-並べる(要る出来上がりが揃わなかった検査は走らせない)。
+並べる(要る出来上がりが揃わなかった検査は走らせない)。**通すのは変更を確定させる前の1回**とする。
 
 | 検査 | 合格条件 |
 |---|---|
@@ -40,6 +40,17 @@ pwsh -File scripts/verify.ps1
 | 受入の実行器の照合 | 終了コード0 |
 | ブリッジの単独起動 | 終了コード0 |
 | 配布パッケージの生成 | 終了コード0 |
+
+## 途中で走らせる群
+
+作業の途中は、変えたものの群だけを走らせる。どの検査がどの群かは
+[check-set.ps1](../../scripts/check-set.ps1) が決める。
+
+| 変えたもの | 実行器 |
+|---|---|
+| Markdown | `pwsh -File scripts/verify-docs.ps1` |
+| `data/` | `pwsh -File scripts/verify-data.ps1` |
+| `src/`・`tests/`・`scripts/` | `pwsh -File scripts/verify.ps1`(全件) |
 
 ## 実機に触る検査
 

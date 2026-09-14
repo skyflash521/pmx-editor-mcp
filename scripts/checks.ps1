@@ -42,6 +42,24 @@ function Assert-ListedChecks {
         (($extra -join '・'), '(無し)')[$extra.Count -eq 0])
 }
 
+function Assert-GroupedChecks {
+    <#
+        .SYNOPSIS
+        どの検査も少なくとも1つの群に属し、群の側に知らない名前が無いことを確かめる。入れ忘れた
+        検査は誰も走らせないまま合格が出る。2つの入力を読む検査は両方の群に入れてよい。
+    #>
+    param($Grouped, [string[]]$Names)
+
+    $listed = @($Grouped.Values | ForEach-Object { $_ })
+    $missing = @($Names | Where-Object { $listed -notcontains $_ })
+    $unknown = @($listed | Where-Object { $Names -notcontains $_ })
+    if ($missing.Count -eq 0 -and $unknown.Count -eq 0) { return }
+
+    throw ('群の割り当てがずれている。どの群にも無い: ' +
+        (($missing -join '・'), '(無し)')[$missing.Count -eq 0] +
+        ' / 検査に無い: ' + (($unknown -join '・'), '(無し)')[$unknown.Count -eq 0])
+}
+
 function Invoke-Check {
     <#
         .SYNOPSIS
@@ -50,6 +68,7 @@ function Invoke-Check {
     param([string]$Name, [scriptblock]$Body)
 
     $global:LASTEXITCODE = 0
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
     try {
         $log = & $Body 2>&1
         $code = $LASTEXITCODE
@@ -57,13 +76,14 @@ function Invoke-Check {
         $log = $_
         $code = 1
     }
+    $took = '{0,5:0.0}秒' -f $watch.Elapsed.TotalSeconds
 
     if ($code -eq 0) {
-        Write-Host "OK   $Name"
+        Write-Host "OK   $took  $Name"
         return $null
     }
 
-    Write-Host "NG   $Name (終了コード $code)"
+    Write-Host "NG   $took  $Name (終了コード $code)"
     # 誤りの記録をパイプへ流すと、停止の設定の下では書き出す側で終了エラーになる。文字列にして出す。
     foreach ($line in @($log)) { Write-Host ('     ' + [string]$line) }
 
@@ -74,16 +94,19 @@ function Write-CheckSummary {
     <#
         .SYNOPSIS
         走らせた結末を書き、終わらせる終了コードを返す。落ちた検査も走らせていない検査も
-        無ければ0、あれば1とする。
+        無ければ0、あれば1とする。**合格の行には、何を何件走らせたかを書く**——一部だけを走らせた
+        結末が全部を通した結末と同じ文面になると、確かめていない検査を確かめたものとして読める。
+        呼び名は呼び出し側が渡す。この部品は常設の検査の実行器も実機に触る検査の実行器も使うので、
+        片方の語彙をここへ綴ると、もう片方が事実と違う文面を出す。
     #>
-    param([string[]]$Failed, [string[]]$Skipped)
+    param([string[]]$Failed, [string[]]$Skipped, [string]$Scope, [int]$Ran, [int]$Listed)
 
     Write-Host ''
     if ($Skipped.Count -gt 0) { Write-Host ('走らせていない: ' + ($Skipped -join '・')) }
     if ($Failed.Count -gt 0) { Write-Host ('不合格: ' + ($Failed -join '・')) }
     if ($Failed.Count -gt 0 -or $Skipped.Count -gt 0) { return 1 }
 
-    Write-Host 'すべて合格'
+    Write-Host ("$Scope の $Ran 件をすべて合格(全部で $Listed 件)")
 
     0
 }

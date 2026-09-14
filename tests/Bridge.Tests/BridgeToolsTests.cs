@@ -25,6 +25,13 @@ namespace PmxEditorMcp.Bridge.Tests
 
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(60);
 
+        /// <summary>
+        /// 起動したブリッジを畳むときの待ち。クライアントのSDKはここへ与えた時間をいっぱいまで
+        /// 待ってから落とすので、既定の5秒だとこの組の1件ごとに5秒が乗る。ブリッジは stdin が
+        /// 閉じれば0.1秒とかからず終わるので、待つのはその余裕だけでよい。
+        /// </summary>
+        private static readonly TimeSpan ShutdownWait = TimeSpan.FromMilliseconds(500);
+
         [Fact]
         public void ResultSizeDeclarationKeyMatchesContract()
         {
@@ -483,6 +490,7 @@ namespace PmxEditorMcp.Bridge.Tests
                     Name = "pmx-editor-mcp",
                     Command = Path.Combine(AppContext.BaseDirectory, "PmxEditorMcp.Bridge.exe"),
                     EnvironmentVariables = environment,
+                    ShutdownTimeout = ShutdownWait,
                 });
 
             return McpClient.CreateAsync(transport, cancellationToken: cancellationToken);

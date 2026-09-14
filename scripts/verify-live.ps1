@@ -29,12 +29,14 @@ $checks['受入シナリオ'] = {
 Assert-ListedChecks -Path $procedure -Section $section -Names @($checks.Keys)
 
 $failed = @()
+$ran = 0
 
 # どの検査もUTF-8で書く相手を起こす。端末の設定のまま読むと、落ちた理由が読めなくなる。
 $spoken = [Console]::OutputEncoding
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 try {
     foreach ($name in $checks.Keys) {
+        $ran++
         $result = Invoke-Check -Name $name -Body $checks[$name]
         if ($result) { $failed += $result }
     }
@@ -42,4 +44,5 @@ try {
     [Console]::OutputEncoding = $spoken
 }
 
-exit (Write-CheckSummary -Failed $failed -Skipped @())
+exit (Write-CheckSummary -Failed $failed -Skipped @() -Scope '実機に触る検査' `
+    -Ran $ran -Listed $checks.Count)
