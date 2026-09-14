@@ -68,8 +68,7 @@ pwsh -File scripts/publish-bridge.ps1 -Destination <発行先>
 claude mcp add pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶対パス>"
 ```
 
-開発中は発行せず、ビルド成果物 `src/Bridge/bin/Debug/net10.0/PmxEditorMcp.Bridge.exe` を同じように
-登録してよい。登録を解くのは `claude mcp remove pmx-editor-mcp`。
+登録を解くのは `claude mcp remove pmx-editor-mcp`。
 
 エディタの起動・終了、ホストの停止・開始、画面への操作は[操作役のスクリプト](scripts/host-control.ps1)が
 行うので、画面を人手で操作する必要はない。受け付ける操作はそのスクリプトの冒頭が並べる。
