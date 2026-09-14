@@ -157,8 +157,37 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Output("number"),
                 null));
 
-            Assert.Contains("\"kind\":{\"type\":\"string\",\"const\":\"name\"}", schema);
-            Assert.Contains("\"kind\":{\"type\":\"string\",\"const\":\"index\"}", schema);
+            Assert.Contains(
+                "\"kind\":{\"anyOf\":[{\"type\":\"string\",\"const\":\"name\"},"
+                    + "{\"type\":\"string\",\"const\":\"index\"}]}",
+                schema);
+        }
+
+        [Fact]
+        public void AnInputWhoseShapesOverlapStillTakesTheValuesBothAllowed()
+        {
+            SchemaItem WithMembers(params SchemaItem[] members) => new SchemaItem(
+                null, members, null, "value", ItemOrigin.HostInput, false, null, false, null, null,
+                null, false, null);
+
+            string schema = Schema(new ToolSchema(
+                "one",
+                new[]
+                {
+                    new SchemaBranch(
+                        "byOffset", null, null,
+                        new[] { WithMembers(Input("offset", "number", false)) },
+                        new SchemaChoice[0]),
+                    new SchemaBranch(
+                        "byRatio", null, null,
+                        new[] { WithMembers(Input("ratio", "number", false)) },
+                        new SchemaChoice[0]),
+                },
+                Output("number"),
+                null));
+
+            Assert.Contains("\"value\":{\"anyOf\":[", schema);
+            Assert.DoesNotContain("\"oneOf\":[{\"type\":\"object\"", schema);
         }
 
         [Fact]
@@ -194,7 +223,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void SeveralBranchesBecomeAChoiceOfShapes()
+        public void SeveralBranchesBecomeOneSetOfInputs()
         {
             string schema = Schema(new ToolSchema(
                 "one",
@@ -207,8 +236,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Output("number"),
                 null));
 
-            Assert.StartsWith("{\"type\":\"object\",\"oneOf\":[{\"type\":\"object\"", schema);
+            Assert.StartsWith("{\"type\":\"object\",\"properties\":{", schema);
+            Assert.Contains("\"name\":{\"type\":\"string\"}", schema);
             Assert.Contains("\"index\":{\"type\":\"number\"}", schema);
+        }
+
+        [Fact]
+        public void AnInputRequiredByOnlySomeBranchesIsNotRequiredOverall()
+        {
+            string schema = Schema(new ToolSchema(
+                "one",
+                new[]
+                {
+                    Branch(Input("name", "text", true)),
+                    new SchemaBranch(
+                        "other", null, null, new[] { Input("index", "number", true) }, new SchemaChoice[0]),
+                },
+                Output("number"),
+                null));
+
+            Assert.DoesNotContain("\"required\"", schema);
         }
 
         [Fact]

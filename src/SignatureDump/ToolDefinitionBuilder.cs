@@ -170,7 +170,7 @@ namespace PmxEditorMcp.SignatureDump
                 ? ListingLimitRule.Derive(schema, lengths, valueChars)
                 : null;
 
-            List<string> branches = schema.Branches
+            List<BranchShape> branches = schema.Branches
                 .Select(b => Branch(
                     schema,
                     b,
@@ -185,16 +185,32 @@ namespace PmxEditorMcp.SignatureDump
                     suppresses))
                 .ToList();
 
-            if (branches.Count == 1)
-            {
-                return branches[0];
-            }
-
-            return new JsonObjectText().AddText("type", ObjectType)
-                .Add("oneOf", JsonWriter.Array(branches)).Text;
+            return Compose(branches.Count == 1 ? branches[0] : Merge(branches));
         }
 
-        private static string Branch(
+        /// <summary>分岐1つ分の、まとめる前の構成要素。</summary>
+        private sealed class BranchShape
+        {
+            public BranchShape(
+                List<KeyValuePair<string, string>> properties,
+                List<string> required,
+                List<string> rules)
+            {
+                Properties = properties;
+                Required = required;
+                Rules = rules;
+            }
+
+            /// <summary>引数の名前と、その形を綴ったもの。</summary>
+            public List<KeyValuePair<string, string>> Properties { get; }
+
+            public List<string> Required { get; }
+
+            /// <summary>どれか1つだけ渡す、といった引数どうしの決まり。</summary>
+            public List<string> Rules { get; }
+        }
+
+        private static BranchShape Branch(
             ToolSchema schema,
             SchemaBranch branch,
             ListingLimits listing,
@@ -223,14 +239,15 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
-            JsonObjectText properties = new JsonObjectText();
+            List<KeyValuePair<string, string>> properties =
+                new List<KeyValuePair<string, string>>();
             List<string> required = new List<string>();
 
             // ホストが自分で入れる引数は、呼び出す側へ現れない。
             foreach (SchemaItem input in branch.Inputs.Where(i => !i.Injected))
             {
-                properties.Add(
-                    input.Name, Item(schema, branch, input, listing, limits, issued, sdkShapes));
+                properties.Add(new KeyValuePair<string, string>(
+                    input.Name, Item(schema, branch, input, listing, limits, issued, sdkShapes)));
                 if (input.Required.HasValue && input.Required.Value)
                 {
                     required.Add(input.Name);
@@ -242,7 +259,8 @@ namespace PmxEditorMcp.SignatureDump
             // 下の決まりで表す。
             if (confirms)
             {
-                properties.Add(ConfirmName, new JsonObjectText().AddText("type", "boolean").Text);
+                properties.Add(new KeyValuePair<string, string>(
+                    ConfirmName, new JsonObjectText().AddText("type", "boolean").Text));
                 if (!conditional)
                 {
                     required.Add(ConfirmName);
@@ -253,32 +271,87 @@ namespace PmxEditorMcp.SignatureDump
             // 反映する呼び出しにだけ現れ、渡さなければ止めない。
             if (suppresses)
             {
-                properties.Add(SuppressName, new JsonObjectText().AddText("type", "boolean").Text);
+                properties.Add(new KeyValuePair<string, string>(
+                    SuppressName, new JsonObjectText().AddText("type", "boolean").Text));
+            }
+
+            List<string> rules = (branch.Choices ?? new SchemaChoice[0]).Select(Choice).ToList();
+            if (confirms && conditional)
+            {
+                rules.Add(Conditional());
+            }
+
+            return new BranchShape(properties, required, rules);
+        }
+
+        /// <summary>分岐1つ分を、MCPのツール定義が読む形へ綴る。</summary>
+        private static string Compose(BranchShape shape)
+        {
+            JsonObjectText properties = new JsonObjectText();
+            foreach (KeyValuePair<string, string> property in shape.Properties)
+            {
+                properties.Add(property.Key, property.Value);
             }
 
             JsonObjectText body = new JsonObjectText().AddText("type", ObjectType);
             body.Add("properties", properties.Text);
-            if (required.Count > 0)
+            if (shape.Required.Count > 0)
             {
-                body.Add("required", JsonWriter.TextArray(required));
+                body.Add("required", JsonWriter.TextArray(shape.Required));
             }
 
             body.AddBoolean("additionalProperties", false);
 
-            List<string> all = new List<string> { body.Text };
-            all.AddRange((branch.Choices ?? new SchemaChoice[0]).Select(Choice));
-            if (confirms && conditional)
+            if (shape.Rules.Count > 0)
             {
-                all.Add(Conditional());
+                body.Add("allOf", JsonWriter.Array(shape.Rules));
             }
 
-            if (all.Count == 1)
+            return body.Text;
+        }
+
+        /// <summary>いくつもの分岐を1つの組へまとめる。</summary>
+        private static BranchShape Merge(List<BranchShape> branches)
+        {
+            List<string> names = new List<string>();
+            IDictionary<string, List<string>> forms =
+                new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            foreach (BranchShape branch in branches)
             {
-                return body.Text;
+                foreach (KeyValuePair<string, string> property in branch.Properties)
+                {
+                    List<string> found;
+                    if (!forms.TryGetValue(property.Key, out found))
+                    {
+                        found = new List<string>();
+                        forms.Add(property.Key, found);
+                        names.Add(property.Key);
+                    }
+
+                    if (!found.Contains(property.Value, StringComparer.Ordinal))
+                    {
+                        found.Add(property.Value);
+                    }
+                }
             }
 
-            return new JsonObjectText().AddText("type", ObjectType)
-                .Add("allOf", JsonWriter.Array(all)).Text;
+            List<KeyValuePair<string, string>> properties =
+                new List<KeyValuePair<string, string>>();
+            foreach (string name in names)
+            {
+                List<string> found = forms[name];
+                properties.Add(new KeyValuePair<string, string>(
+                    name,
+                    found.Count == 1
+                        ? found[0]
+                        : new JsonObjectText().Add("anyOf", JsonWriter.Array(found)).Text));
+            }
+
+            List<string> required = branches[0].Required
+                .Where(n => branches.All(b => b.Required.Contains(n, StringComparer.Ordinal)))
+                .ToList();
+
+            return new BranchShape(properties, required, new List<string>());
         }
 
         /// <summary>

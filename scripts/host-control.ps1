@@ -21,7 +21,8 @@ param(
     # 行う操作。
     #   pipes  待ち受けているホストのパイプ名を一覧する
     #   editors 動いているPMXエディタのプロセスIDを一覧する(ホストの稼働状態を問わない)
-    #   launch PMXエディタを起動し、そのホストの待受が現れるまで待ってプロセスIDを返す
+    #   launch PMXエディタを起動し、そのホストの待受が現れるまで待ってプロセスIDを返す。
+#          待受が現れないときは、起こしたエディタをこちらで閉じてから失敗する
     #   close  指定したエディタを通常の手順で終了し、終了と待受の消失を待つ
     #   status プラグインメニューの稼働状態を表示させ、本文を読んで閉じる
     #   stop   稼働中のホストを停止し、待受の消失と状態区分が停止済みになるまで待つ
@@ -1257,7 +1258,21 @@ switch ($Action) {
         if (-not (Test-Path $editorPath)) { throw "エディタの実行ファイルが無い: $editorPath" }
 
         $started = Start-Process -FilePath $editorPath -PassThru
-        Wait-HostPipe -OwnerProcessId $started.Id -Until Present
+        try {
+            Wait-HostPipe -OwnerProcessId $started.Id -Until Present
+        }
+        catch {
+            try {
+                & $PSCommandPath -Action close -ProcessId $started.Id `
+                    -TimeoutSeconds $TimeoutSeconds | Out-Null
+            }
+            catch {
+                Write-Error "起こしたエディタを閉じられなかった: $($started.Id)" -ErrorAction Continue
+            }
+
+            throw
+        }
+
         $started.Id
     }
     "close" {
