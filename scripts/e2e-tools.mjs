@@ -39,7 +39,7 @@ const CAPTURED_VIEW = "pmx";
 /** 同じビューを写した2枚と見なす明るさの差の上限。 */
 const MATCHING_IMAGE_LIMIT = 0.1;
 
-/** ビューの写しと絵を見比べるスクリプト。 */
+/** ビューの写しと画像を見比べるスクリプト。 */
 const COMPARE_SCRIPT = path.join(
     path.dirname(url.fileURLToPath(import.meta.url)), "compare-view-image.ps1");
 
@@ -213,7 +213,7 @@ function captureView(processId) {
         : { path: destination, unavailable: null };
 }
 
-/** 写しと絵の明るさの差。比べられなければその事情を返す。 */
+/** 写しと画像の明るさの差。比べられなければその事情を返す。 */
 function difference(reference, image) {
     const candidate = path.join(os.tmpdir(), "pmx-editor-mcp-view.b64");
     fs.writeFileSync(candidate, image, "utf8");
@@ -232,7 +232,7 @@ function difference(reference, image) {
 }
 
 /**
- * 返した絵が、写し取ったビューの姿と合うか。写せるビューを返す行は合い、ほかのビューを返す行は
+ * 返した画像が、写し取ったビューの姿と合うか。写せるビューを返す行は合い、ほかのビューを返す行は
  * 合わないことを確かめる。
  */
 function viewImage(one, response, capture) {
@@ -242,15 +242,15 @@ function viewImage(one, response, capture) {
 
     const envelope = response.result;
     if (envelope === null || typeof envelope !== "object" || envelope.ok !== true) {
-        return "絵が返りませんでした: " + JSON.stringify(response).slice(0, 200);
+        return "画像が返りませんでした: " + JSON.stringify(response).slice(0, 200);
     }
     if (typeof envelope.value !== "string" || envelope.value.length === 0) {
-        return "絵が文字列で返りませんでした。";
+        return "画像が文字列で返りませんでした。";
     }
 
     const compared = difference(capture.path, envelope.value);
     if (compared.measured === null) {
-        return "絵を写しと見比べられませんでした: " + compared.unavailable;
+        return "画像を写しと見比べられませんでした: " + compared.unavailable;
     }
 
     const matches = compared.measured <= MATCHING_IMAGE_LIMIT;
@@ -261,7 +261,7 @@ function viewImage(one, response, capture) {
     }
 
     return matches
-        ? "別のビューの絵が写したビューの姿と合いました(明るさの差 " + compared.measured + ")。"
+        ? "別のビューの画像が写したビューの姿と合いました(明るさの差 " + compared.measured + ")。"
         : null;
 }
 

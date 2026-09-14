@@ -43,7 +43,9 @@ namespace PmxEditorMcp.SignatureDump
                 text.Append("                new GeneratedToolDefinition(\n");
                 text.Append("                    ").Append(Literal(definition.Name)).Append(",\n");
                 text.Append("                    ").Append(Literal(definition.Description)).Append(",\n");
-                text.Append("                    ").Append(Literal(definition.InputSchema)).Append("),\n");
+                text.Append("                    ").Append(Literal(definition.InputSchema)).Append(",\n");
+                text.Append("                    ")
+                    .Append(definition.ReturnsImage ? "true" : "false").Append("),\n");
             }
 
             text.Append("            };\n");

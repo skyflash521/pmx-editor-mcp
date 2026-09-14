@@ -57,7 +57,11 @@ namespace PmxEditorMcp.Bridge
         {
             return await BridgeTools
                 .RelayEnvelopeAsync(
-                    _client, _definition.Name, Parameters(arguments), cancellationToken)
+                    _client,
+                    _definition.Name,
+                    Parameters(arguments),
+                    _definition.ReturnsImage,
+                    cancellationToken)
                 .ConfigureAwait(false);
         }
 

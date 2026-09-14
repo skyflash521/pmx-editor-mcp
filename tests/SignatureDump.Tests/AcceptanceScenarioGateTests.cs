@@ -191,7 +191,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static IList<ToolDefinition> Definitions()
         {
-            return new[] { new ToolDefinition(Listing, "頂点の一覧", ListingSchema) };
+            return new[] { new ToolDefinition(Listing, "頂点の一覧", ListingSchema, false) };
         }
 
         private static ISet<string> Fixed()

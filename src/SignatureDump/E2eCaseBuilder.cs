@@ -313,7 +313,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// ビューの絵を返すツールの検査。写し取れるのは窓を持つビューだけなので、その1枚を相手に
+        /// ビューの画像を返すツールの検査。写し取れるのは窓を持つビューだけなので、その1枚を相手に
         /// 全系統を見比べ、そのビューを返す行だけが合うことを確かめる。
         /// </summary>
         private static IEnumerable<E2eCase> ImageCases(
@@ -334,7 +334,7 @@ namespace PmxEditorMcp.SignatureDump
                 row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind),
                 row == null ? string.Empty : ConnectionPath(rowKey, connectionPaths),
                 schema.Tool,
-                "返す絵が写し取ったビューの姿と合うこと",
+                "返す画像が写し取ったビューの姿と合うこと",
                 new Dictionary<string, object>(StringComparer.Ordinal),
                 E2eExpectation.ViewImage,
                 null,

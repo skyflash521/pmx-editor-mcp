@@ -88,7 +88,8 @@ namespace PmxEditorMcp.SignatureDump
                     sdkShapes,
                     inputs.DangerousTools(inventory),
                     inputs.ConditionalDangerousTools(inventory),
-                    inputs.SuppressingTools(inventory));
+                    inputs.SuppressingTools(inventory),
+                    inputs.DrawingTools());
                 AcceptanceScenarioGate.Require(
                     scenarios,
                     definitions,

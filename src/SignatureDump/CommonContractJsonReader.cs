@@ -109,7 +109,7 @@ namespace PmxEditorMcp.SignatureDump
         public IDictionary<string, ComposedTool> ComposedTools { get; }
 
         /// <summary>
-        /// ビューの絵を返すツールの名前から、そのビューの名前へ。絵がどのビューのものかは
+        /// ビューの画像を返すツールの名前から、そのビューの名前へ。画像がどのビューのものかは
         /// 呼び先の型からは決まらないので、ここが決める。
         /// </summary>
         public IDictionary<string, string> ViewImages { get; }

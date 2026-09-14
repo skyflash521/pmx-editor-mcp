@@ -4436,7 +4436,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetClientImage()",
       "editKind": "read",
-      "basis": "表示している画面を写した絵を返すだけで、エディタの状態を動かさない。",
+      "basis": "表示している画面を写した画像を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -5103,7 +5103,7 @@
     {
       "signatureKey": "PEPlugin.View.IPESubViewConnector.GetClientImage()",
       "editKind": "read",
-      "basis": "サブ画面が表示している絵を返すだけで、エディタの状態を動かさない。",
+      "basis": "サブ画面が表示している画像を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -5200,7 +5200,7 @@
     {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.GetClientImage()",
       "editKind": "read",
-      "basis": "変形の画面を写した絵を返すだけで、エディタの状態を動かさない。",
+      "basis": "変形の画面を写した画像を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -12487,7 +12487,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.SetBitmapTexture(System.Int32,System.Drawing.Bitmap,System.Int32)",
       "editKind": "viewSession",
-      "basis": "材質に貼る絵を差し替えるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "材質に貼る画像を差し替えるだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -12587,7 +12587,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.UpdateBitmapTexture(System.Int32,System.Drawing.Bitmap)",
       "editKind": "viewSession",
-      "basis": "材質に貼っている絵を描き直すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "材質に貼っている画像を描き直すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -12741,7 +12741,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.BackColor()",
       "editKind": "viewSession",
-      "basis": "文字を書く絵の背景色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "文字を書く画像の背景色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "view_list_text_controls",
         "view_update_text_controls"
@@ -12750,7 +12750,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Clear()",
       "editKind": "viewSession",
-      "basis": "文字を書く絵を背景色で塗り潰すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "文字を書く画像を背景色で塗り潰すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -12768,7 +12768,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.DrawText(System.String,System.Drawing.Brush,System.Drawing.Font)",
       "editKind": "viewSession",
-      "basis": "文字を書く絵の左上へ文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "文字を書く画像の左上へ文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -12781,7 +12781,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.DrawText(System.String,System.Drawing.Point,System.Drawing.Brush,System.Drawing.Font)",
       "editKind": "viewSession",
-      "basis": "文字を書く絵の指した位置から文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "文字を書く画像の指した位置から文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -12794,7 +12794,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.DrawText(System.String,System.Drawing.Rectangle,System.Drawing.Brush,System.Drawing.Font)",
       "editKind": "viewSession",
-      "basis": "文字を書く絵の指した範囲へ文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "文字を書く画像の指した範囲へ文字を書くだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -12825,7 +12825,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Image()",
       "editKind": "read",
-      "basis": "文字を書く絵を返すだけで、エディタの状態を動かさない。",
+      "basis": "文字を書く画像を返すだけで、エディタの状態を動かさない。",
       "embeddedIn": [
         "view_list_text_controls"
       ]
@@ -12854,7 +12854,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.UpdateTextImage()",
       "editKind": "viewSession",
-      "basis": "書いた絵をUIモデルの材質へ貼り直すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "書いた画像をUIモデルの材質へ貼り直すだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -12867,7 +12867,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper.CreateTextControl(PXCPlugin.UIModel.IPXUIModel,System.Int32,System.Int32,System.Int32,System.Drawing.Color,System.Drawing.Font)",
       "editKind": "viewSession",
-      "basis": "UIモデルの材質へ貼る絵を作って差し替え、その絵へ文字を書く手立てを返すが、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "UIモデルの材質へ貼る画像を作って差し替え、その画像へ文字を書く手立てを返すが、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "handleCreated",

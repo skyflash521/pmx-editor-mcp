@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.Json.Nodes;
 using ModelContextProtocol.Protocol;
 
@@ -26,13 +27,24 @@ namespace PmxEditorMcp.Bridge
         private const string TooLargeCode = "TOOL_RESPONSE_TOO_LARGE";
 
         /// <summary>
+        /// 画像の種別。ホストが送り出す画像はPNGに決まっている(ImageTransfer が定める)ので、
+        /// 包みからは読まずここで名乗る。
+        /// </summary>
+        private const string ImageMimeType = "image/png";
+
+        /// <summary>
         /// 包みをツール結果へ写す。成功なら値を、失敗なら「コード: メッセージ」を本文にし、警告が
         /// あれば同じ本文の末尾へ行として足す。本文が <paramref name="budgetChars"/> を超えるときは
         /// 本文を返さず、大きすぎる旨の誤りにする。包みとして読めなければ
         /// <see cref="FormatException"/>——ホストの応答が契約から外れている。呼び出し側は、これを
         /// 受けたら接続を捨てて `BRIDGE_PROTOCOL_ERROR` にする。
+        ///
+        /// <paramref name="returnsImage"/> が真のツールは、成功した値を文字の本文へ入れず画像の
+        /// 本文として返す。文字列で返すとMCPクライアントは中身を見られず、しかも詰めた文字がそのまま本文の
+        /// 長さになって予算を超える。画像の大きさを抑えるのは長辺の上限で、本文の予算ではない。
         /// </summary>
-        public static CallToolResult From(JsonNode result, string targetNotice, int budgetChars)
+        public static CallToolResult From(
+            JsonNode result, string targetNotice, int budgetChars, bool returnsImage)
         {
             if (targetNotice == null)
             {
@@ -54,27 +66,67 @@ namespace PmxEditorMcp.Bridge
             }
 
             bool ok = Flag(envelope);
-            string body = ok ? Value(envelope) : Failure(envelope);
+            bool drawn = ok && returnsImage;
+            string image = drawn ? Image(envelope) : null;
+            string body = ok ? (drawn ? string.Empty : Value(envelope)) : Failure(envelope);
             foreach (string warning in Warnings(envelope))
             {
-                body += "\n" + WarningPrefix + warning;
+                body += (body.Length == 0 ? string.Empty : "\n") + WarningPrefix + warning;
             }
 
             if (body.Length > budgetChars)
             {
                 ok = false;
+                drawn = false;
+                image = null;
                 body = TooLargeCode + ": 応答が応答サイズ予算 " + budgetChars
                     + " 文字に収まらない(" + body.Length + " 文字)。";
+            }
+
+            List<ContentBlock> content = new List<ContentBlock>
+            {
+                new TextContentBlock
+                {
+                    Text = body.Length == 0 ? targetNotice : targetNotice + "\n" + body,
+                },
+            };
+            if (drawn)
+            {
+                // Data はBase64の綴りをUTF-8のバイトで持つ。ホストから届くのはBase64の文字列
+                // なので、復号して詰め直さずそのまま写す。
+                content.Add(new ImageContentBlock
+                {
+                    Data = Encoding.UTF8.GetBytes(image),
+                    MimeType = ImageMimeType,
+                });
             }
 
             return new CallToolResult
             {
                 IsError = !ok,
-                Content = new List<ContentBlock>
-                {
-                    new TextContentBlock { Text = targetNotice + "\n" + body },
-                },
+                Content = content,
             };
+        }
+
+        /// <summary>
+        /// 画像を返すツールの値。PNGを詰めた文字列でなければ契約から外れている——画像を返す
+        /// ツールかどうかはビルド時に決まっていて、実行時の値では変わらない。
+        /// </summary>
+        private static string Image(JsonObject envelope)
+        {
+            if (!envelope.ContainsKey(ValueName))
+            {
+                throw Broken("ツールの応答が値を持たない。");
+            }
+
+            JsonValue value = envelope[ValueName] as JsonValue;
+            string packed;
+            if (value == null || !value.TryGetValue(out packed) || packed.Length == 0)
+            {
+                throw Broken("画像を返すツールの値が、空でない文字列でない。");
+            }
+
+            return packed;
         }
 
         /// <summary>ホストの応答が契約から外れているときの誤り。</summary>

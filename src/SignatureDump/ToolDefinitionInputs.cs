@@ -201,7 +201,7 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
         }
 
-        /// <summary>ビューの絵を返すツールの名前から、そのビューの名前へ。</summary>
+        /// <summary>ビューの画像を返すツールの名前から、そのビューの名前へ。</summary>
         public IDictionary<string, string> ViewImages
         {
             get { return _viewImages; }
@@ -349,6 +349,15 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return shapes;
+        }
+
+        /// <summary>
+        /// 画像を返すツールの名前。ビューを名指しされたツールがそれで、名指しと画像を返すことの
+        /// 一致は[写像の規則](ToolMappingGate)が見る。
+        /// </summary>
+        public ISet<string> DrawingTools()
+        {
+            return new HashSet<string>(_viewImages.Keys, StringComparer.Ordinal);
         }
 
         /// <summary>確認を要するツールの名前。行の側の判定をツールの名前へ写す。</summary>

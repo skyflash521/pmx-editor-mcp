@@ -7,11 +7,13 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>MCPクライアントへ載せるツール定義の1件。</summary>
     public sealed class ToolDefinition
     {
-        public ToolDefinition(string name, string description, string inputSchema)
+        public ToolDefinition(
+            string name, string description, string inputSchema, bool returnsImage)
         {
             Name = name;
             Description = description;
             InputSchema = inputSchema;
+            ReturnsImage = returnsImage;
         }
 
         public string Name { get; }
@@ -20,6 +22,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>入力の形をJSON Schemaで綴ったもの。</summary>
         public string InputSchema { get; }
+
+        /// <summary>
+        /// 値が画像かどうか。ブリッジはこれを見て、結果を文字列でなく画像の本文として返す——画像を
+        /// 文字列で返すと、MCPクライアントは中身を見られない。
+        /// </summary>
+        public bool ReturnsImage { get; }
     }
 
     /// <summary>
@@ -91,7 +99,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<SchemaItem, string> sdkShapes,
             ISet<string> dangerous,
             ISet<string> conditional,
-            ISet<string> suppressing)
+            ISet<string> suppressing,
+            ISet<string> drawing)
         {
             if (schemas == null)
             {
@@ -128,6 +137,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(suppressing));
             }
 
+            if (drawing == null)
+            {
+                throw new ArgumentNullException(nameof(drawing));
+            }
+
             List<ToolDefinition> definitions = new List<ToolDefinition>();
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
@@ -149,7 +163,8 @@ namespace PmxEditorMcp.SignatureDump
                         sdkShapes,
                         dangerous.Contains(schema.Tool),
                         conditional.Contains(schema.Tool),
-                        suppressing.Contains(schema.Tool))));
+                        suppressing.Contains(schema.Tool)),
+                    drawing.Contains(schema.Tool)));
             }
 
             return definitions;

@@ -21,7 +21,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>数として覚える印。引数へ差し込めるのはこの印を持つものだけである。</summary>
         public const string NumberShape = "number";
 
-        /// <summary>写した大きさとして覚える印。絵の期待だけが指せる。</summary>
+        /// <summary>写した大きさとして覚える印。画像の期待だけが指せる。</summary>
         public const string SizeShape = "size";
 
         private const string SchemaResource =

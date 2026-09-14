@@ -7,7 +7,8 @@ namespace PmxEditorMcp.Bridge
     /// </summary>
     internal sealed class GeneratedToolDefinition
     {
-        internal GeneratedToolDefinition(string name, string description, string inputSchema)
+        internal GeneratedToolDefinition(
+            string name, string description, string inputSchema, bool returnsImage)
         {
             if (name == null)
             {
@@ -27,6 +28,7 @@ namespace PmxEditorMcp.Bridge
             Name = name;
             Description = description;
             InputSchema = inputSchema;
+            ReturnsImage = returnsImage;
         }
 
         internal string Name { get; }
@@ -35,5 +37,11 @@ namespace PmxEditorMcp.Bridge
 
         /// <summary>入力の形をJSON Schemaで綴ったもの。</summary>
         internal string InputSchema { get; }
+
+        /// <summary>
+        /// 値が画像かどうか。真なら結果を画像の本文として返す——文字列で返すと、MCPクライアントは
+        /// 中身を見られない。
+        /// </summary>
+        internal bool ReturnsImage { get; }
     }
 }

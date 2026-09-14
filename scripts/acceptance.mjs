@@ -40,7 +40,7 @@ const WARNING_PREFIX = "警告: ";
 const CONTROL_SCRIPT = path.join(
     path.dirname(url.fileURLToPath(import.meta.url)), "host-control.ps1");
 
-/** PNGの先頭に必ず並ぶ印。写した絵かどうかをこれで見分ける。 */
+/** PNGの先頭に必ず並ぶ印。写した画像かどうかをこれで見分ける。 */
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 /** PNGの幅が置かれている位置。印8バイト・長さ4バイト・種別4バイトの次から並ぶ。 */
@@ -205,13 +205,14 @@ function split(text) {
     }
 
     const lines = body.split("\n");
+    const warned = (line) => line.startsWith(WARNING_PREFIX);
 
+    // 警告は書き出しで見分ける。先頭の1行を値と決め打つと、値の行を持たない画像のツールで、
+    // 警告を値と読み違える。
     return {
         notice,
-        value: lines[0],
-        warnings: lines.slice(1)
-            .filter((line) => line.startsWith(WARNING_PREFIX))
-            .map((line) => line.slice(WARNING_PREFIX.length)),
+        value: lines.filter((line) => !warned(line)).join("\n"),
+        warnings: lines.filter(warned).map((line) => line.slice(WARNING_PREFIX.length)),
     };
 }
 
@@ -252,7 +253,7 @@ function same(left, right) {
         && names.every((name) => same(left[name], right[name]));
 }
 
-/** 写した絵の大きさ。PNGでなければ null。 */
+/** 写した画像の大きさ。PNGでなければ null。 */
 function imageSize(base64) {
     let bytes;
     try {
@@ -277,33 +278,34 @@ function describeSize(size) {
 }
 
 /**
- * 絵の期待を確かめる。返った絵が写しより小さければ縮小の警告が要り、同じ大きさなら要らない
- * ——どちらであるかは、写した実寸と返った絵の実寸だけで決まる。
+ * 画像の期待を確かめる。返った画像が写しより小さければ縮小の警告が要り、同じ大きさなら要らない
+ * ——どちらであるかは、写した実寸と返った画像の実寸だけで決まる。
+ *
+ * 画像は本文でなくMCPの画像の塊で返る。本文の文字列から読むと、文字列で返してしまっていても
+ * 気づけない。
  */
-function judgeImage(expected, parsed, remembered) {
-    let value;
-    try {
-        value = JSON.parse(parsed.value);
-    } catch (error) {
-        return "絵を読み解けません: " + error.message;
+function judgeImage(expected, response, parsed, remembered) {
+    if (response.images.length !== 1) {
+        return "画像が画像として1つ返りませんでした(" + response.images.length + " 個)。";
     }
 
-    if (typeof value !== "string" || value.length === 0) {
-        return "絵が文字列で返りませんでした。";
+    const [image] = response.images;
+    if (image.mimeType !== "image/png") {
+        return "画像の種別がPNGではありません: " + image.mimeType;
     }
 
-    const returned = imageSize(value);
+    const returned = imageSize(image.data);
     if (returned === null) {
         return "返ったものがPNGではありません。";
     }
 
     if (expected.capturedAs === undefined) {
-        // 写しと結び付けない絵でも、縮めたと言うからには縮めた先を述べていなければならない。
+        // 写しと結び付けない画像でも、縮めたと言うからには縮めた先を述べていなければならない。
         const named = parsed.warnings.some((warning) => warning.includes(describeSize(returned)));
 
         return parsed.warnings.length === 0 || named
             ? null
-            : "警告が返った絵の寸法 " + describeSize(returned) + " を述べていません: "
+            : "警告が返った画像の寸法 " + describeSize(returned) + " を述べていません: "
                 + parsed.warnings.join(" / ");
     }
 
@@ -313,7 +315,7 @@ function judgeImage(expected, parsed, remembered) {
 
     const captured = remembered.get(expected.capturedAs);
     if (returned.width > captured.width || returned.height > captured.height) {
-        return "返った絵が写した実寸 " + describeSize(captured) + " より大きい: "
+        return "返った画像が写した実寸 " + describeSize(captured) + " より大きい: "
             + describeSize(returned);
     }
 
@@ -321,12 +323,12 @@ function judgeImage(expected, parsed, remembered) {
     const warned = parsed.warnings.some((warning) => warning.includes(describeSize(captured))
         && warning.includes(describeSize(returned)));
     if (reduced && !warned) {
-        return "縮めた絵に、元寸法 " + describeSize(captured) + " と縮小後寸法 "
+        return "縮めた画像に、元寸法 " + describeSize(captured) + " と縮小後寸法 "
             + describeSize(returned) + " を述べる警告が付いていません。";
     }
 
     if (!reduced && parsed.warnings.length !== 0) {
-        return "縮めていない絵に警告が付きました: " + parsed.warnings.join(" / ");
+        return "縮めていない画像に警告が付きました: " + parsed.warnings.join(" / ");
     }
 
     return null;
@@ -440,7 +442,7 @@ function judge(expected, response, remembered) {
     }
 
     if (expected.image !== undefined) {
-        const broken = judgeImage(expected.image, parsed, remembered);
+        const broken = judgeImage(expected.image, response, parsed, remembered);
         if (broken !== null) {
             return broken;
         }

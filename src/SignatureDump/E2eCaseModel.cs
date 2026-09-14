@@ -19,7 +19,7 @@ namespace PmxEditorMcp.SignatureDump
         Dispatched,
 
         /// <summary>
-        /// 返す絵が、写し取ったビューの姿と合うこと。合う相手は <see cref="E2eCase.View"/> が持ち、
+        /// 返す画像が、写し取ったビューの姿と合うこと。合う相手は <see cref="E2eCase.View"/> が持ち、
         /// 別のビューを返す行はその写しと合わないことを確かめる。
         /// </summary>
         ViewImage,
@@ -126,7 +126,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>断ることを確かめるとき、その理由の綴り。成功を確かめるときは null。</summary>
         public string Code { get; }
 
-        /// <summary>返す絵が写すビューの名前。絵を確かめる検査だけが持ち、ほかは null。</summary>
+        /// <summary>返す画像が写すビューの名前。画像を確かめる検査だけが持ち、ほかは null。</summary>
         public string View { get; }
 
         /// <summary>

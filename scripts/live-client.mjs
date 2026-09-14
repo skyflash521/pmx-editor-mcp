@@ -29,6 +29,17 @@ const SETUP_SCRIPT = path.join(here, "acceptance-setup-dev.ps1");
 /** 登録するMCPサーバーの名前。ツールの綴りはこの名前から組み立てられる。 */
 const SERVER_NAME = "pmx-editor-mcp";
 
+/** 応答サイズ予算の文字数を与える環境変数。ホストとブリッジが同じ値を読む。 */
+const BUDGET_NAME = "PMX_EDITOR_MCP_BUDGET_CHARS";
+
+/**
+ * この検査で与える応答サイズ予算。受理される下限を採る——画像は予算で測ってはならないので、
+ * 測っていないことを見るには、どんなに軽いビューの画像でも予算を超える値が要る。この開発環境の
+ * 実測では、モデルを読み込んでいない起動直後のビューでも詰めた文字は15,174文字だったので、
+ * 下限の1万で足りる。既定のままだと、超えないぶん測っていても通ってしまう。
+ */
+const BUDGET_CHARS = "10000";
+
 /** ホストまで届いたうえで呼び出しが通らなかったことを指す書き出し。ホスト側の実装が定める。 */
 const TOOL_ERROR_PREFIX = "TOOL_";
 
@@ -46,7 +57,8 @@ const EXIT_FAILED = 1;
 const EXIT_INPUT_UNAVAILABLE = 3;
 
 /**
- * 呼ばせるツールと、乗っていなければならない引数。
+ * 呼ばせるツールと、乗っていなければならない引数。画像を返すツールは、返りが画像として届くことも
+ * 見る。
  * 組の直下を分岐で綴っていたときに引数が落ちたものから採る——落ちない形だけを並べると、
  * 落ちたことをこの検査が見逃す。
  */
@@ -55,11 +67,21 @@ const CASES = [
         tool: "model_list_materials",
         // 真偽と数を1つずつ含む。綴りが読まれないと、真偽が文字列になってホストが弾く。
         arguments: { all: true, limit: 3 },
+        image: false,
     },
     {
         tool: "model_list_morph_offsets",
         // 親を選ぶ綴りと自分を選ぶ綴りが重なる一覧。分岐がもっとも深くなる形である。
         arguments: { parentAll: true, all: true, limit: 3 },
+        image: false,
+    },
+    {
+        // ビューの画像。既定の窓の大きさのまま1回で得られること、そして文字列でなく画像として
+        // 届くことを見る——文字列で届くと、参照クライアントは中身を見られない。仕様に合っているかでは
+        // なく、クライアントが画像として受け取るかを見る。
+        tool: "view_get_client_image_pmd_view_connector",
+        arguments: {},
+        image: true,
     },
 ];
 
@@ -157,22 +179,32 @@ function readCalls(text) {
             }
 
             if (block.type === "tool_result") {
-                results.set(
-                    block.tool_use_id,
-                    Array.isArray(block.content)
-                        ? block.content.map((c) => String(c.text)).join("")
-                        : String(block.content));
+                const told = Array.isArray(block.content) ? block.content : [block.content];
+                results.set(block.tool_use_id, {
+                    // 画像の塊には text が無い。文字へ均すと、画像で届いたのか文字列で届いたのかを
+                    // 見分けられなくなる。
+                    said: told
+                        .filter((c) => c === null || typeof c !== "object" || c.type === "text")
+                        .map((c) => (c !== null && typeof c === "object" ? String(c.text) : String(c)))
+                        .join(""),
+                    images: told.filter(
+                        (c) => c !== null && typeof c === "object" && c.type === "image").length,
+                });
             }
         }
     }
 
-    return calls.map((call) => ({ ...call, said: results.get(call.id) }));
+    return calls.map((call) => ({ ...call, ...(results.get(call.id) ?? {}) }));
 }
 
 let editor = null;
 let room = null;
 let code = EXIT_SUCCESS;
 try {
+    // 起こす相手はこの環境を継ぐ。エディタの中のホストも、参照クライアントが起こすブリッジも
+    // 同じ値を読むので、ここで置けば両方がそろう。
+    process.env[BUDGET_NAME] = BUDGET_CHARS;
+
     const prepared = invokeScript(SETUP_SCRIPT, ["-Action", "prepare"]).split(/\r?\n/).pop();
     const server = JSON.parse(prepared);
 
@@ -194,9 +226,13 @@ try {
 
     const named = CASES.map((c) => "mcp__" + SERVER_NAME + "__" + c.tool);
     const orders = CASES
-        .map((c, i) => (i + 1) + ". " + "mcp__" + SERVER_NAME + "__" + c.tool + " を "
-            + Object.entries(c.arguments).map(([n, v]) => n + "=" + JSON.stringify(v)).join(", ")
-            + " の引数で1回だけ呼べ。")
+        .map((c, i) => {
+            const given = Object.entries(c.arguments)
+                .map(([n, v]) => n + "=" + JSON.stringify(v)).join(", ");
+
+            return (i + 1) + ". " + "mcp__" + SERVER_NAME + "__" + c.tool
+                + (given === "" ? " を引数無しで" : " を " + given + " の引数で") + "1回だけ呼べ。";
+        })
         .join("\n");
 
     // 参照クライアントの入口はWindowsでは .cmd なので、シェルを通さないと起こせない。
@@ -262,8 +298,27 @@ try {
                 continue;
             }
 
+            const drawn = call.images === undefined ? 0 : call.images;
+            if (probe.image && drawn !== 1) {
+                console.error(
+                    "画像が画像として届きませんでした: " + probe.tool
+                        + "\n  届いた画像の数: " + drawn
+                        + "\n  返り: " + said1.slice(0, 200));
+                code = EXIT_FAILED;
+                continue;
+            }
+
+            if (!probe.image && drawn !== 0) {
+                console.error(
+                    "画像を返さないツールが画像を返しました: " + probe.tool
+                        + "\n  届いた画像の数: " + drawn);
+                code = EXIT_FAILED;
+                continue;
+            }
+
             console.log(
-                "OK " + probe.tool + " " + JSON.stringify(call.input) + " -> " + line);
+                "OK " + probe.tool + " " + JSON.stringify(call.input) + " -> " + line
+                    + (probe.image ? " + 画像1枚" : ""));
         }
     }
 } catch (error) {

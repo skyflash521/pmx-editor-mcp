@@ -4777,6 +4777,10 @@ namespace PmxEditorMcp
             return true;
         }
 
+        /// <summary>
+        /// 値をそのまま返す呼び出しの応答。値そのものが画像である呼び出しはここを通り、その画像は
+        /// ブリッジがMCPの画像として返すので、長辺の上限も値の中へ詰めるときとは別のものを使う。
+        /// </summary>
         private static IDictionary<string, object> Written(Type declared, object value)
         {
             object json;
@@ -4786,7 +4790,7 @@ namespace PmxEditorMcp
             if (!ValueShape.TryToJson(
                 declared,
                 value,
-                ImageTransfer.DefaultMaxLongSide,
+                ImageTransfer.SoleValueMaxLongSide,
                 out json,
                 out warnings,
                 out code,

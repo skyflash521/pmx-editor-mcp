@@ -163,6 +163,14 @@ function png(width, height) {
 }
 
 /**
+ * 段が画像を期待していれば、返す画像を詰めた文字列。違えるときは大きさを変える——写した実寸と
+ * 合わないので、突き合わせている実行器だけが落ちる。
+ */
+function drawn(broken, options) {
+    return png(options.view.width + (broken === "image" ? 1 : 0), options.view.height);
+}
+
+/**
  * 接続先の知らせの行。期待が相手を述べていれば、その相手を名乗る。違えるときは別の相手を
  * 名乗る——知らせだけが期待から外れるので、知らせを突き合わせている実行器だけが落ちる。
  */
@@ -181,7 +189,7 @@ function notice(expect, remembered, firstEditor, broken) {
 }
 
 /**
- * 段が書いた期待から、それを満たす本文を作る。覚えさせる段には controlled の値を載せ、絵と
+ * 段が書いた期待から、それを満たす本文を作る。覚えさせる段には controlled の値を載せ、画像と
  * イベントは形だけを作る。作れない期待なら投げる。
  */
 function compose(step, broken, recorded, options, remembered) {
@@ -195,9 +203,9 @@ function compose(step, broken, recorded, options, remembered) {
     }
 
     if (expect.image !== undefined) {
-        // 違えるときは大きさを変える——写した実寸と合わないので、突き合わせている実行器だけが落ちる。
-        return JSON.stringify(png(
-            options.view.width + (broken === "image" ? 1 : 0), options.view.height));
+        // 画像は画像の塊で返すので本文は空にする。文字列で返させるのは違え方の1つで、画像を
+        // 本文から読んでいる実行器がそれで通ってしまう。
+        return options.broken === "imageAsText" ? JSON.stringify(drawn(broken, options)) : "";
     }
 
     let value = null;
@@ -353,19 +361,21 @@ function call(id, params) {
         fs.writeFileSync(params.arguments.path, "", "utf8");
     }
 
+    const body = compose(step, spoiled, calls, parsed, remembered);
+    const told = notice(
+        step.expect,
+        remembered,
+        parsed.firstEditor,
+        spoiled === "notice" || spoiled === "notice.changed");
+    const content = [{ type: "text", text: body === "" ? told : told + "\n" + body }];
+    if (step.expect.image !== undefined && parsed.broken !== "imageAsText") {
+        content.push({
+            type: "image", data: drawn(spoiled, parsed), mimeType: "image/png",
+        });
+    }
+
     keep();
-    reply(id, {
-        isError: spoiled === "ok" ? ok : !ok,
-        content: [{
-            type: "text",
-            text: notice(
-                step.expect,
-                remembered,
-                parsed.firstEditor,
-                spoiled === "notice" || spoiled === "notice.changed") + "\n"
-                + compose(step, spoiled, calls, parsed, remembered),
-        }],
-    });
+    reply(id, { isError: spoiled === "ok" ? ok : !ok, content });
 }
 
 process.stdin.setEncoding("utf8");

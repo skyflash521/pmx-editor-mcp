@@ -19,6 +19,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static readonly ISet<string> NoDangerousTools =
             new HashSet<string>(StringComparer.Ordinal);
 
+        private static readonly ISet<string> NoDrawingTools =
+            new HashSet<string>(StringComparer.Ordinal);
+
         private const int RequestBytes = 8000000;
 
         private const int TokenLimit = 200000;
@@ -336,7 +339,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 NoSdkShapes,
                 NoDangerousTools,
                 NoDangerousTools,
-                NoDangerousTools));
+                NoDangerousTools,
+                NoDrawingTools));
         }
 
         [Fact]
@@ -360,7 +364,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 NoSdkShapes,
                 NoDangerousTools,
                 NoDangerousTools,
-                NoDangerousTools);
+                NoDangerousTools,
+                NoDrawingTools);
 
             Assert.Equal(new[] { "first", "second" }, definitions.Select(d => d.Name).ToArray());
             Assert.Equal("ひとつめ", definitions[0].Description);
@@ -381,10 +386,53 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 NoSdkShapes,
                 NoDangerousTools,
                 NoDangerousTools,
-                new HashSet<string>(new[] { "one" }, StringComparer.Ordinal))[0].InputSchema;
+                new HashSet<string>(new[] { "one" }, StringComparer.Ordinal),
+                NoDrawingTools)[0].InputSchema;
 
             Assert.Contains("\"suppressUndo\":{\"type\":\"boolean\"}", written);
             Assert.DoesNotContain("suppressUndo\"]", written);
+        }
+
+        [Fact]
+        public void AToolNamedAsDrawingIsMarkedAsReturningAnImage()
+        {
+            ToolSchema schema = Tool("one", Branch(Input("name", "text", true)));
+
+            IList<ToolDefinition> definitions = ToolDefinitionBuilder.Build(
+                new ToolSchemaTable(new[] { schema }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { "one", "受け持つこと" } },
+                new AssumedLength(Lengths),
+                ValueChars,
+                RequestBytes,
+                TokenLimit,
+                NoSdkShapes,
+                NoDangerousTools,
+                NoDangerousTools,
+                NoDangerousTools,
+                new HashSet<string>(new[] { "one" }, StringComparer.Ordinal));
+
+            Assert.True(definitions[0].ReturnsImage);
+        }
+
+        [Fact]
+        public void AToolNotNamedAsDrawingIsNotMarkedAsReturningAnImage()
+        {
+            ToolSchema schema = Tool("one", Branch(Input("name", "text", true)));
+
+            IList<ToolDefinition> definitions = ToolDefinitionBuilder.Build(
+                new ToolSchemaTable(new[] { schema }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { "one", "受け持つこと" } },
+                new AssumedLength(Lengths),
+                ValueChars,
+                RequestBytes,
+                TokenLimit,
+                NoSdkShapes,
+                NoDangerousTools,
+                NoDangerousTools,
+                NoDangerousTools,
+                NoDrawingTools);
+
+            Assert.False(definitions[0].ReturnsImage);
         }
 
         [Fact]
@@ -410,7 +458,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 NoSdkShapes,
                 new HashSet<string>(new[] { "one" }, StringComparer.Ordinal),
                 NoDangerousTools,
-                NoDangerousTools)[0].InputSchema;
+                NoDangerousTools,
+                NoDrawingTools)[0].InputSchema;
 
             Assert.Contains("\"confirm\":{\"type\":\"boolean\"}", written);
             Assert.Contains("\"required\":[\"name\",\"confirm\"]", written);
@@ -433,7 +482,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 NoSdkShapes,
                 new HashSet<string>(new[] { "one" }, StringComparer.Ordinal),
                 new HashSet<string>(new[] { "one" }, StringComparer.Ordinal),
-                NoDangerousTools)[0].InputSchema;
+                NoDangerousTools,
+                NoDrawingTools)[0].InputSchema;
 
             Assert.Contains("\"confirm\":{\"type\":\"boolean\"}", written);
             Assert.Contains("\"required\":[\"name\"],\"additionalProperties\":false", written);
@@ -468,7 +518,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new Dictionary<SchemaItem, string> { { input, "text" } },
                 NoDangerousTools,
                 NoDangerousTools,
-                NoDangerousTools)[0].InputSchema;
+                NoDangerousTools,
+                NoDrawingTools)[0].InputSchema;
 
             Assert.Contains("\"path\":{\"type\":\"string\"}", written);
         }
@@ -510,7 +561,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 NoSdkShapes,
                 NoDangerousTools,
                 NoDangerousTools,
-                NoDangerousTools)[0].InputSchema;
+                NoDangerousTools,
+                NoDrawingTools)[0].InputSchema;
         }
 
         private static ToolSchema Tool(string name, SchemaBranch branch)

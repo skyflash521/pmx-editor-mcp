@@ -21,7 +21,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TheSchemaIsCarriedWithItsQuotesEscaped()
         {
             string text = ToolDefinitionSource.Compose(
-                new[] { new ToolDefinition("one", "受け持つこと", "{\"type\":\"object\"}") },
+                new[] { new ToolDefinition("one", "受け持つこと", "{\"type\":\"object\"}", false) },
                 "abc123");
 
             Assert.Contains("\"one\",", text);
@@ -35,7 +35,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 "\"a\\\\b\"",
                 ToolDefinitionSource.Compose(
-                    new[] { new ToolDefinition("one", "a\\b", "{}") }, "abc123"));
+                    new[] { new ToolDefinition("one", "a\\b", "{}", false) }, "abc123"));
         }
 
         [Fact]
@@ -44,7 +44,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 "\"a\\nb\"",
                 ToolDefinitionSource.Compose(
-                    new[] { new ToolDefinition("one", "a\nb", "{}") }, "abc123"));
+                    new[] { new ToolDefinition("one", "a\nb", "{}", false) }, "abc123"));
+        }
+
+        [Fact]
+        public void WhetherTheValueIsAnImageIsCarriedIntoTheText()
+        {
+            string drawn = ToolDefinitionSource.Compose(
+                new[] { new ToolDefinition("one", "受け持つこと", "{}", true) }, "abc123");
+            string plain = ToolDefinitionSource.Compose(
+                new[] { new ToolDefinition("one", "受け持つこと", "{}", false) }, "abc123");
+
+            Assert.Contains("\"{}\",\n                    true)", drawn);
+            Assert.Contains("\"{}\",\n                    false)", plain);
         }
 
         [Fact]

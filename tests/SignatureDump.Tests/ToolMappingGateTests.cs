@@ -761,7 +761,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     { "view_get_name", "sub" },
                 }));
 
-            Assert.Contains("絵を返さないツール", error.Message, StringComparison.Ordinal);
+            Assert.Contains("画像を返さないツール", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -777,14 +777,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string ImageKey = "PEPlugin.View.IPEPMDViewConnector.GetClientImage()";
 
-        /// <summary>絵を返す行を1つだけ持つ表で、ビューの名指しの過不足だけを見る呼び出し。</summary>
+        /// <summary>画像を返す行を1つだけ持つ表で、ビューの名指しの過不足だけを見る呼び出し。</summary>
         private static void RequireImage(IDictionary<string, string> viewImages)
         {
             const string Bitmap = "System.Drawing.Bitmap";
             Require(
                 ToolMapJsonReader.Read(
                     @"{ ""rows"": [ { ""signatureKey"": """ + ImageKey + @""","
-                        + @" ""editKind"": ""read"", ""basis"": ""描いた絵を返すだけである。"" } ] }"),
+                        + @" ""editKind"": ""read"", ""basis"": ""描いた画像を返すだけである。"" } ] }"),
                 Roles(),
                 new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
                 {

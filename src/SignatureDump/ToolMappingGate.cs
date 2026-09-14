@@ -11,7 +11,7 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class ToolMappingGate
     {
-        /// <summary>絵として写す値の綴り。共通契約の正本が定める。</summary>
+        /// <summary>画像として写す値の綴り。共通契約の正本が定める。</summary>
         private const string ImageShape = "image";
 
         /// <summary>値の組を受け取る入力の名前。</summary>
@@ -155,8 +155,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 絵を返す行のツールと、ビューの名前を引く表が一対一で対応することを確かめる。対応が
-        /// 欠けると、その絵がどのビューのものかを確かめる検査だけが黙って減る。
+        /// 画像を返す行のツールと、ビューの名前を引く表が一対一で対応することを確かめる。対応が
+        /// 欠けると、その画像がどのビューのものかを確かめる検査だけが黙って減る。
         /// </summary>
         private static void RequireViewImages(
             ToolMap map,
@@ -188,7 +188,7 @@ namespace PmxEditorMcp.SignatureDump
             if (unnamed.Length != 0)
             {
                 throw new InvalidOperationException(
-                    "絵を返すのにビューを名指しされていないツールがある: "
+                    "画像を返すのにビューを名指しされていないツールがある: "
                         + string.Join("・", unnamed));
             }
 
@@ -198,7 +198,7 @@ namespace PmxEditorMcp.SignatureDump
             if (extra.Length != 0)
             {
                 throw new InvalidOperationException(
-                    "絵を返さないツールがビューを名指しされている: " + string.Join("・", extra));
+                    "画像を返さないツールがビューを名指しされている: " + string.Join("・", extra));
             }
         }
 

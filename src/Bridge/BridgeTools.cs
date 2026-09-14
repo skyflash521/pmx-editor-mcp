@@ -127,6 +127,7 @@ namespace PmxEditorMcp.Bridge
             HostIpcClient client,
             string method,
             JsonObject parameters,
+            bool returnsImage,
             CancellationToken cancellationToken)
         {
             try
@@ -137,7 +138,7 @@ namespace PmxEditorMcp.Bridge
                 try
                 {
                     return ToolEnvelopeResult.From(
-                        response.Result, response.TargetNotice, client.BudgetChars);
+                        response.Result, response.TargetNotice, client.BudgetChars, returnsImage);
                 }
                 catch (FormatException broken)
                 {

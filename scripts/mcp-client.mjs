@@ -87,7 +87,7 @@ export class McpClient {
         });
     }
 
-    /** ツールを1件呼び、返った本文と誤りの印を返す。 */
+    /** ツールを1件呼び、返った本文と画像と誤りの印を返す。 */
     async callTool(name, args) {
         const response = await this._request("tools/call", { name, arguments: args });
         if (response.error !== undefined) {
@@ -101,14 +101,25 @@ export class McpClient {
             throw new Error("ツールの結果が content の並びを持ちません。");
         }
 
-        const texts = result.content
-            .filter((block) => block !== null && typeof block === "object" && block.type === "text")
+        const blocks = result.content
+            .filter((block) => block !== null && typeof block === "object");
+        const texts = blocks
+            .filter((block) => block.type === "text")
             .map((block) => String(block.text));
         if (texts.length === 0) {
             throw new Error("ツールの結果に本文がありません。");
         }
 
-        return { isError: result.isError === true, text: texts.join("\n") };
+        // 画像は本文と別の塊で届く。文字へ均してしまうと、画像として返ったのか文字列で返ったのかを
+        // このクライアントを使う検査が見分けられなくなる。
+        const images = blocks
+            .filter((block) => block.type === "image")
+            .map((block) => ({
+                data: String(block.data),
+                mimeType: block.mimeType === undefined ? null : String(block.mimeType),
+            }));
+
+        return { isError: result.isError === true, text: texts.join("\n"), images };
     }
 
     _request(method, params) {

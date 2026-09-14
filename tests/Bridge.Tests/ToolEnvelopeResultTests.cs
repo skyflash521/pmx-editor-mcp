@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text;
 using System.Text.Json.Nodes;
 using ModelContextProtocol.Protocol;
 using Xunit;
@@ -12,11 +13,14 @@ namespace PmxEditorMcp.Bridge.Tests
 
         private const int Budget = 100000;
 
+        /// <summary>PNGを詰めた文字列の代わり。中身は読まれないので、短い綴りで足りる。</summary>
+        private const string Png = "iVBORw0KGgo=";
+
         [Fact]
         public void ASuccessBecomesTheValueAsJson()
         {
             CallToolResult result = ToolEnvelopeResult.From(
-                JsonNode.Parse("{\"ok\":true,\"value\":{\"total\":2}}"), Notice, Budget);
+                JsonNode.Parse("{\"ok\":true,\"value\":{\"total\":2}}"), Notice, Budget, false);
 
             Assert.False(result.IsError ?? false);
             Assert.Equal(Notice + "\n{\"total\":2}", Text(result));
@@ -26,7 +30,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public void ASuccessWithoutAValueBecomesNull()
         {
             CallToolResult result = ToolEnvelopeResult.From(
-                JsonNode.Parse("{\"ok\":true,\"value\":null}"), Notice, Budget);
+                JsonNode.Parse("{\"ok\":true,\"value\":null}"), Notice, Budget, false);
 
             Assert.Equal(Notice + "\nnull", Text(result));
         }
@@ -39,7 +43,8 @@ namespace PmxEditorMcp.Bridge.Tests
                     "{\"ok\":false,\"error\":{\"code\":\"TOOL_INVALID_ARGUMENT\""
                         + ",\"message\":\"値が範囲の外にある。\"}}"),
                 Notice,
-                Budget);
+                Budget,
+                false);
 
             Assert.True(result.IsError);
             Assert.Equal(Notice + "\nTOOL_INVALID_ARGUMENT: 値が範囲の外にある。", Text(result));
@@ -52,7 +57,8 @@ namespace PmxEditorMcp.Bridge.Tests
                 JsonNode.Parse(
                     "{\"ok\":true,\"value\":1,\"warnings\":[\"表示の更新に失敗した。\",\"二つ目。\"]}"),
                 Notice,
-                Budget);
+                Budget,
+                false);
 
             Assert.Equal(Notice + "\n1\n警告: 表示の更新に失敗した。\n警告: 二つ目。", Text(result));
         }
@@ -65,7 +71,8 @@ namespace PmxEditorMcp.Bridge.Tests
                     "{\"ok\":false,\"error\":{\"code\":\"TOOL_OPERATION_FAILED\",\"message\":\"失敗。\"}"
                         + ",\"warnings\":[\"未変更。\"]}"),
                 Notice,
-                Budget);
+                Budget,
+                false);
 
             Assert.True(result.IsError);
             Assert.Equal(Notice + "\nTOOL_OPERATION_FAILED: 失敗。\n警告: 未変更。", Text(result));
@@ -75,7 +82,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public void TheResultIsOneTextContent()
         {
             CallToolResult result = ToolEnvelopeResult.From(
-                JsonNode.Parse("{\"ok\":true,\"value\":1}"), Notice, Budget);
+                JsonNode.Parse("{\"ok\":true,\"value\":1}"), Notice, Budget, false);
 
             Assert.Single(result.Content);
             Assert.IsType<TextContentBlock>(result.Content[0]);
@@ -97,14 +104,15 @@ namespace PmxEditorMcp.Bridge.Tests
         public void AnEnvelopeThatBreaksTheContractStops(string json)
         {
             Assert.Throws<FormatException>(
-                () => ToolEnvelopeResult.From(JsonNode.Parse(json), Notice, Budget));
+                () => ToolEnvelopeResult.From(JsonNode.Parse(json), Notice, Budget, false));
         }
 
         [Fact]
         public void TheTargetNoticeIsRequired()
         {
             Assert.Throws<ArgumentNullException>(
-                () => ToolEnvelopeResult.From(JsonNode.Parse("{\"ok\":true,\"value\":1}"), null, Budget));
+                () => ToolEnvelopeResult.From(
+                    JsonNode.Parse("{\"ok\":true,\"value\":1}"), null, Budget, false));
         }
 
         [Fact]
@@ -115,7 +123,8 @@ namespace PmxEditorMcp.Bridge.Tests
             CallToolResult result = ToolEnvelopeResult.From(
                 JsonNode.Parse("{\"ok\":true,\"value\":\"" + value + "\"}"),
                 Notice,
-                BridgeBudget.MinimumChars);
+                BridgeBudget.MinimumChars,
+                false);
 
             Assert.True(result.IsError);
             Assert.Contains("TOOL_RESPONSE_TOO_LARGE", Text(result), StringComparison.Ordinal);
@@ -130,7 +139,8 @@ namespace PmxEditorMcp.Bridge.Tests
             CallToolResult result = ToolEnvelopeResult.From(
                 JsonNode.Parse("{\"ok\":true,\"value\":\"" + value + "\"}"),
                 Notice,
-                BridgeBudget.MinimumChars);
+                BridgeBudget.MinimumChars,
+                false);
 
             Assert.False(result.IsError ?? false);
             Assert.Equal(Notice + "\n\"" + value + "\"", Text(result));
@@ -144,7 +154,8 @@ namespace PmxEditorMcp.Bridge.Tests
             CallToolResult result = ToolEnvelopeResult.From(
                 JsonNode.Parse("{\"ok\":true,\"value\":\"" + value + "\"}"),
                 new string('n', 100),
-                BridgeBudget.MinimumChars);
+                BridgeBudget.MinimumChars,
+                false);
 
             Assert.False(result.IsError ?? false);
         }
@@ -156,7 +167,79 @@ namespace PmxEditorMcp.Bridge.Tests
                 () => ToolEnvelopeResult.From(
                     JsonNode.Parse("{\"ok\":true,\"value\":1}"),
                     Notice,
-                    BridgeBudget.MinimumChars - 1));
+                    BridgeBudget.MinimumChars - 1,
+                    false));
+        }
+
+        [Fact]
+        public void AnImageBecomesAnImageContentAndLeavesTheBodyOut()
+        {
+            CallToolResult result = ToolEnvelopeResult.From(
+                JsonNode.Parse("{\"ok\":true,\"value\":\"" + Png + "\"}"), Notice, Budget, true);
+
+            Assert.False(result.IsError ?? false);
+            Assert.Equal(Notice, Text(result));
+            ImageContentBlock drawn = result.Content.OfType<ImageContentBlock>().Single();
+            Assert.Equal("image/png", drawn.MimeType);
+            Assert.Equal(Png, Encoding.UTF8.GetString(drawn.Data.ToArray()));
+        }
+
+        [Fact]
+        public void AnImageIsNotCountedInTheBudget()
+        {
+            string packed = new string('a', BridgeBudget.MinimumChars + 1);
+
+            CallToolResult result = ToolEnvelopeResult.From(
+                JsonNode.Parse("{\"ok\":true,\"value\":\"" + packed + "\"}"),
+                Notice,
+                BridgeBudget.MinimumChars,
+                true);
+
+            Assert.False(result.IsError ?? false);
+            Assert.Equal(
+                packed,
+                Encoding.UTF8.GetString(
+                    result.Content.OfType<ImageContentBlock>().Single().Data.ToArray()));
+        }
+
+        [Fact]
+        public void TheWarningsOfAnImageStillComeAsText()
+        {
+            CallToolResult result = ToolEnvelopeResult.From(
+                JsonNode.Parse(
+                    "{\"ok\":true,\"value\":\"" + Png + "\",\"warnings\":[\"画像を縮めた。\"]}"),
+                Notice,
+                Budget,
+                true);
+
+            Assert.Equal(Notice + "\n警告: 画像を縮めた。", Text(result));
+            Assert.Single(result.Content.OfType<ImageContentBlock>());
+        }
+
+        [Fact]
+        public void AFailureOfAnImageToolCarriesNoImage()
+        {
+            CallToolResult result = ToolEnvelopeResult.From(
+                JsonNode.Parse(
+                    "{\"ok\":false,\"error\":{\"code\":\"TOOL_NOT_APPLICABLE\""
+                        + ",\"message\":\"ビューが無い。\"}}"),
+                Notice,
+                Budget,
+                true);
+
+            Assert.True(result.IsError);
+            Assert.Empty(result.Content.OfType<ImageContentBlock>());
+        }
+
+        [Theory]
+        [InlineData("{\"ok\":true,\"value\":null}")]
+        [InlineData("{\"ok\":true,\"value\":\"\"}")]
+        [InlineData("{\"ok\":true,\"value\":1}")]
+        [InlineData("{\"ok\":true,\"value\":{\"data\":\"iVBORw0KGgo=\"}}")]
+        public void AnImageThatIsNotAStringBreaksTheContract(string json)
+        {
+            Assert.Throws<FormatException>(
+                () => ToolEnvelopeResult.From(JsonNode.Parse(json), Notice, Budget, true));
         }
 
         private static string Text(CallToolResult result)

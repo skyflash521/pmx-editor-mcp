@@ -174,6 +174,15 @@ function Test-AcceptanceRunner {
 
     Assert-NoEditorLeft -Editors $Editors -What '置き場を作らせなかった実行'
 
+    # 画像を画像でなく本文の文字列で返させる。期待の形から導けない違え方なので、ここで名指しする
+    # ——本文から読んでいる実行器は、文字列で返っても通してしまう。
+    $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken 'imageAsText' -At 0
+    if ($ran.Code -ne 1) {
+        throw "画像が文字列で返っても不合格にならない: $($ran.Said)"
+    }
+
+    Assert-NoEditorLeft -Editors $Editors -What '画像を文字列で返させた実行'
+
     $spoiled = [System.IO.Path]::GetTempFileName()
     try {
         $defined = Get-Content $Cases -Raw -Encoding UTF8 | ConvertFrom-Json

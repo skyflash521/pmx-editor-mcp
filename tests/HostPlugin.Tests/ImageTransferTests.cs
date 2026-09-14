@@ -8,13 +8,40 @@ namespace PmxEditorMcp.Tests
 {
     public class ImageTransferTests
     {
+        /// <summary>MCPクライアントが載せるモデルが画像を数える区画の一辺の画素数。</summary>
+        private const int PatchSide = 28;
+
+        /// <summary>そのモデルが再縮小せずに受け取る区画の数の上限。</summary>
+        private const int ModelPatchLimit = 1568;
+
+        /// <summary>その長辺の正方形が占める区画の数。縦横比が偏るほど少なくなる。</summary>
+        private static int Patches(int longSide)
+        {
+            int side = (longSide + PatchSide - 1) / PatchSide;
+
+            return side * side;
+        }
+
         [Fact]
         public void TheLimitsAreTheContract()
         {
             Assert.Equal(512, ImageTransfer.DefaultMaxLongSide);
+            Assert.Equal(1092, ImageTransfer.SoleValueMaxLongSide);
             Assert.Equal(256, ImageTransfer.MinimumMaxLongSide);
             Assert.Equal(2048, ImageTransfer.MaximumMaxLongSide);
             Assert.Equal(4096, ImageTransfer.MaximumInputSide);
+        }
+
+        /// <summary>
+        /// 値そのものが画像であるときの上限は、ビューの大きさにも縦横比にも依らず、モデルが
+        /// 再縮小しない大きさに収まっていなければならない。最悪となるのは正方形で、そのとき
+        /// 区画の数がモデルの上限を超えない最大がその値である。
+        /// </summary>
+        [Fact]
+        public void TheSoleValueLimitIsTheLargestThatTheModelNeverScalesDown()
+        {
+            Assert.True(Patches(ImageTransfer.SoleValueMaxLongSide) <= ModelPatchLimit);
+            Assert.True(Patches(ImageTransfer.SoleValueMaxLongSide + 1) > ModelPatchLimit);
         }
 
         [Fact]
