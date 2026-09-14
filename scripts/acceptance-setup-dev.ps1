@@ -19,10 +19,15 @@ $root = Split-Path -Parent $PSScriptRoot
 $bridgeProject = Join-Path $root "src/Bridge/PmxEditorMcp.Bridge.csproj"
 $bridgeExe = Join-Path $root "src/Bridge/bin/Debug/net10.0/PmxEditorMcp.Bridge.exe"
 
-& (Join-Path $PSScriptRoot "deploy-host.ps1") | Out-Null
+# 1回の実行の中で前置が何度も呼ばれる。実行器が先に配置とビルドを済ませていれば、同じことを
+# 繰り返さない——配置は動いているエディタを閉じるので、繰り返すと後の検査の分まで閉じにいく。
+# 単独で走らせたときは印が無いので、これまでどおり自分で済ませる。
+if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') {
+    & (Join-Path $PSScriptRoot "deploy-host.ps1") | Out-Null
 
-dotnet build $bridgeProject | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "ブリッジのビルドに失敗した(終了コード $LASTEXITCODE)。" }
+    dotnet build $bridgeProject | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "ブリッジのビルドに失敗した(終了コード $LASTEXITCODE)。" }
+}
 
 if (-not (Test-Path $bridgeExe)) { throw "ブリッジの実行ファイルが無い: $bridgeExe" }
 

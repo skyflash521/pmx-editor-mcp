@@ -57,11 +57,13 @@ param(
     # 状態そのものの変化はその後ろに付く数十ミリ秒しかない(停止を頼んでから待受が消えるまで
     # 0.02秒)ので、待ちの長さはほぼ探索の長さである。
     #
-    # この開発環境での実測(状態を変えない status を30回)は
-    # 最小18.32・中央20.41・95%25.75・最大26.46秒。既定はその最小の2倍を切りのよい値へ
-    # 切り上げて採る。最小の倍を採るのは、この上限が正常な動作を刻むためではなく応答しなく
-    # なった相手を諦めるためのもので、実測のばらつきを越えつつ、止まった相手を見限るまでを
-    # 短く保つためである。
+    # この開発環境での実測(状態を変えない status を5回)は 12.18・12.20・12.38・12.39・12.95秒。
+    #
+    # 既定は40秒とする。実測の最小の2倍という採り方ならこの値は30秒になるが、上を並べた
+    # 実測は他に何も動いていないときのもので、ばらつきを測れていない——実際、この上限が40秒で
+    # 足りずに落ちた回がある(検査を並行して走らせている最中で、当時の1回あたりは約22秒)。
+    # 探索が軽くなったぶんは余裕として残す。この上限は正常な動作を刻むためではなく、応答しなく
+    # なった相手を諦めるためのものである。
     [ValidateRange(1, 2147483)]
     [int]$TimeoutSeconds = 40
 )
@@ -409,6 +411,16 @@ $IdsThatAvoidTheAffirmative = @(2, 7, 1)
 $IdsThatLetTheEditorClose = @(7, 1)
 
 $EditMenuBars = @()
+$EditMenuLocated = $null
+
+# 編集メニューからプラグイン項目までの、子の番の並びを控える場所。呼び出しのたびに新しいプロセスに
+# なるので、プロセスの中だけの控えでは足りない。
+#
+# エディタごとには分けない。この並びはメニューの形が決めるもので、同じ導入物なら動いている
+# エディタが何であっても同じである。プロセスごとに分けると、エディタを起こすたびに探し直すことに
+# なり、探すのは辿るより重いので逆に遅くなる。
+# 控えが合わなくなっても、辿った先の名前が違うことで分かるので、そのとき探し直す。
+$MenuPathFileName = "pmx-editor-mcp-menu-path.txt"
 
 function Get-HostPipeNames {
     <#
@@ -498,19 +510,24 @@ function Get-EditorProcessIds {
 function Get-ProcessElements {
     <#
         .SYNOPSIS
-        指定したプロセスのウィンドウの中にある要素を、条件で絞って返す。
+        指定したプロセスのウィンドウの直下にある要素を、条件で絞って返す。
+
+        木の全体は辿らない。UI Automation の探索は辿った要素の一つずつにプロセスをまたぐ往復が
+        要るので、要素の数が少なくても全体を辿ると桁違いに遅い——この開発環境の実測で、要素309個
+        の木を辿るのに10.5秒(1要素あたり約34ミリ秒)かかり、直下の子だけなら0.18秒で済む。
+        メニューバーはフォームの直下の子なので、全体を辿る必要が無い。全体を辿ると、ウィンドウの
+        システムメニューまで拾って絞り込みの手間も増える。
     #>
     param([int]$OwnerProcessId, $Match)
 
-    # UI Automation の探索は、辿った要素の一つずつにプロセスをまたぐ往復が要る。デスクトップを
-    # 起点にすると他のプロセスの木まで辿るので、対象のウィンドウを起点にする。
+    # デスクトップを起点にすると他のプロセスの木まで辿るので、対象のウィンドウを起点にする。
     $root = [System.Windows.Automation.AutomationElement]::RootElement
     $condition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $OwnerProcessId)
 
     foreach ($window in $root.FindAll(
             [System.Windows.Automation.TreeScope]::Children, $condition)) {
-        $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $Match)
+        $window.FindAll([System.Windows.Automation.TreeScope]::Children, $Match)
     }
 }
 
@@ -730,6 +747,131 @@ function Invoke-Element {
     $Element.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
 }
 
+function Get-MenuPathFile {
+    Join-Path $env:TEMP $MenuPathFileName
+}
+
+function Read-MenuPath {
+    <#
+        .SYNOPSIS
+        控えてある道筋。無ければ空を返す。
+    #>
+    $path = Get-MenuPathFile
+    if (-not (Test-Path $path)) { return @() }
+
+    try {
+        @((Get-Content $path -Raw -Encoding UTF8).Trim() -split ',' |
+            ForEach-Object { [int]$_ })
+    }
+    catch {
+        @()
+    }
+}
+
+function Write-MenuPath {
+    param([int[]]$Path)
+
+    Set-Content -Path (Get-MenuPathFile) -Value ($Path -join ',') -Encoding UTF8 -NoNewline
+}
+
+function Get-ChildAt {
+    <#
+        .SYNOPSIS
+        その要素の指した番の子。番が範囲の外なら空を返す。
+    #>
+    param($Element, [int]$At)
+
+    $kids = @($Element.FindAll(
+        [System.Windows.Automation.TreeScope]::Children,
+        [System.Windows.Automation.Condition]::TrueCondition))
+    if ($At -lt 0 -or $At -ge $kids.Count) { return $null }
+
+    $kids[$At]
+}
+
+function Resolve-MenuPath {
+    <#
+        .SYNOPSIS
+        控えた道筋をたどって、編集メニューとプラグイン項目を返す。たどれない・辿り着いた先の名前が
+        違うときは空を返す——控えが古ければ探し直せばよい。道筋は編集メニューからプラグイン項目まで
+        の子の番の並びで、編集メニューそのものは名前で探す。
+    #>
+    param([int[]]$Path, $Bars)
+
+    # 空の並びは渡す途中で展開されて $null になる。数える前に受け止める。
+    $steps = @($Path)
+    if ($steps.Count -eq 0) { return $null }
+
+    # 該当を数え上げてから返す。1つ見つけた時点で返すと、プラグイン項目を持つ編集メニューが
+    # 複数ある状態を見逃し、探し直す経路(Find-EditMenu)が止める取り違えをここだけが素通りさせる。
+    $found = @()
+    foreach ($bar in @($Bars)) {
+        foreach ($menu in $bar.FindAll(
+                [System.Windows.Automation.TreeScope]::Children,
+                [System.Windows.Automation.Condition]::TrueCondition)) {
+            if ($menu.Current.Name -notlike "編集*") { continue }
+
+            $node = $menu
+            foreach ($at in $steps) {
+                $node = Get-ChildAt -Element $node -At $at
+                if (-not $node) { break }
+            }
+
+            if ($node -and $node.Current.Name -eq $PluginName) {
+                $found += [pscustomobject]@{ Menu = $menu; Item = $node }
+            }
+        }
+    }
+
+    if ($found.Count -gt 1) {
+        throw "「$PluginName」を含む編集メニューが $($found.Count) 個ある。"
+    }
+    if ($found.Count -eq 0) { return $null }
+
+    $found[0]
+}
+
+function Get-MenuPathTo {
+    <#
+        .SYNOPSIS
+        その要素からプラグイン項目までの、子の番の並び。見つからなければ空を返す。深さは実機で3で、
+        探索は幅優先に近い形で進めて浅い側から見る。
+    #>
+    param($Element, [int]$Depth = 1)
+
+    if ($Depth -gt 5) { return @() }
+
+    $kids = @($Element.FindAll(
+        [System.Windows.Automation.TreeScope]::Children,
+        [System.Windows.Automation.Condition]::TrueCondition))
+    for ($at = 0; $at -lt $kids.Count; $at++) {
+        if ($kids[$at].Current.Name -eq $PluginName) { return @($at) }
+    }
+
+    for ($at = 0; $at -lt $kids.Count; $at++) {
+        $deeper = @(Get-MenuPathTo -Element $kids[$at] -Depth ($Depth + 1))
+        if ($deeper.Count -gt 0) { return @($at) + $deeper }
+    }
+
+    @()
+}
+
+function Save-MenuPath {
+    <#
+        .SYNOPSIS
+        同定した編集メニューとプラグイン項目から道筋を組み立てて控える。組み立てられなければ
+        控えない——次の呼び出しが探し直すだけで、動作は変わらない。
+    #>
+    param($Located)
+
+    $inner = @(Get-MenuPathTo -Element $Located.Menu)
+    if ($inner.Count -eq 0) { return $false }
+
+    Write-MenuPath -Path $inner
+
+    $true
+}
+
 function Find-EditMenu {
     <#
         .SYNOPSIS
@@ -750,9 +892,11 @@ function Find-EditMenu {
                 [System.Windows.Automation.Condition]::TrueCondition)) {
             if ($item.Current.Name -notlike "編集*") { continue }
 
-            $plugin = @($item.FindAll(
-                [System.Windows.Automation.TreeScope]::Descendants, $pluginCondition))
-            if ($plugin.Count -ge 1) { $found += $item }
+            # 在るかどうかだけを見るので、1つ見つけた時点で打ち切る。全部を数え上げると、
+            # メニューの木を最後まで辿ることになる。
+            $plugin = $item.FindFirst(
+                [System.Windows.Automation.TreeScope]::Descendants, $pluginCondition)
+            if ($plugin) { $found += [pscustomobject]@{ Menu = $item; Item = $plugin } }
         }
     }
 
@@ -776,6 +920,11 @@ function Get-EditMenu {
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
         [System.Windows.Automation.ControlType]::MenuBar)
 
+    # 同定した結果も使い回す。1回の呼び出しの中でメニューを2度使う操作があり(停止は押してから
+    # 状態区分を読む)、同定はプラグイン項目までメニューの木を辿るので、そのたびに繰り返すと
+    # 探索の時間がそのまま倍になる。メニューもエディタが動いている間そのままである。
+    if ($script:EditMenuLocated) { return $script:EditMenuLocated }
+
     while ($true) {
         # 木を辿る探索は重い。メニューバーはエディタが動いている間そのままなので、この実行の
         # あいだは一度見つけたものを使い回す。待っているのはその下に現れるプラグインの項目である。
@@ -784,8 +933,19 @@ function Get-EditMenu {
                 Get-ProcessElements -OwnerProcessId $OwnerProcessId -Match $barCondition)
         }
 
-        $menu = Find-EditMenu -OwnerProcessId $OwnerProcessId -Bars $script:EditMenuBars
-        if ($menu) { return $menu }
+        # 前の呼び出しが控えた道筋があれば、それをたどる。たどった先の名前が合わなければ控えが
+        # 古いので、探し直して控え直す。探すのに要る時間は、たどるだけの倍以上である。
+        $located = Resolve-MenuPath -Path (Read-MenuPath) -Bars $script:EditMenuBars
+        if (-not $located) {
+            $located = Find-EditMenu -OwnerProcessId $OwnerProcessId -Bars $script:EditMenuBars
+            if ($located) { [void](Save-MenuPath -Located $located) }
+        }
+
+        if ($located) {
+            $script:EditMenuLocated = $located
+
+            return $located
+        }
         if ((Get-Date) -ge $Deadline) {
             throw "「$PluginName」を含む編集メニューが現れない: プロセスID $OwnerProcessId"
         }
@@ -815,11 +975,9 @@ function Show-StatusDialog {
     param([int]$OwnerProcessId, $Deadline)
 
     $deadline = Get-Deadline -Deadline $Deadline
-    $edit = Get-EditMenu -OwnerProcessId $OwnerProcessId -Deadline $deadline
+    $located = Get-EditMenu -OwnerProcessId $OwnerProcessId -Deadline $deadline
+    $edit = $located.Menu
     $shadows = @(Get-MenuShadows -OwnerProcessId $OwnerProcessId)
-
-    $nameCondition = New-Object System.Windows.Automation.PropertyCondition(
-        [System.Windows.Automation.AutomationElement]::NameProperty, $PluginName)
 
     # メニューを開く操作そのものも含めて、以降の失敗では影を片付ける。開く呼び出しが例外を
     # 返しても、画面には既に開いた跡が残りうる。
@@ -828,14 +986,9 @@ function Show-StatusDialog {
     try {
         Invoke-Element -Element $edit
 
-        $target = $null
-        while ($true) {
-            $target = $edit.FindFirst(
-                [System.Windows.Automation.TreeScope]::Descendants, $nameCondition)
-            if ($target) { break }
-            if ((Get-Date) -ge $deadline) { throw "メニュー項目が見つからない: $PluginName" }
-            Wait-Interval -Deadline $deadline
-        }
+        # 探し直さない。開く前に同定へ使った項目をそのまま押す——同じ木の同じ要素で、
+        # 探し直すとメニューの木をもう一度辿ることになる。
+        $target = $located.Item
 
         # ここから先の失敗は、押す操作が届いた後かもしれない。表示が出ている可能性を残したまま
         # 抜けないよう、失敗を控えて表示の待ちへ進む。
@@ -913,7 +1066,7 @@ function Invoke-UndoOnce {
     param([int]$OwnerProcessId, $Deadline)
 
     $deadline = Get-Deadline -Deadline $Deadline
-    $edit = Get-EditMenu -OwnerProcessId $OwnerProcessId -Deadline $deadline
+    $edit = (Get-EditMenu -OwnerProcessId $OwnerProcessId -Deadline $deadline).Menu
     $shadows = @(Get-MenuShadows -OwnerProcessId $OwnerProcessId)
 
     try {

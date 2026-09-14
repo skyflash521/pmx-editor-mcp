@@ -2,8 +2,12 @@
 # 合否は、実行したコマンドとクライアントが返す出力と終了コードだけで決める——画面の見た目は
 # 材料にしない。
 #
-# 段ごとにエディタを起こして閉じる。段の間で状態を持ち越すと、落ちた段の後始末が次の段の
-# 開始条件を崩し、どの段が何を確かめたのかが実行ごとに変わる。
+# エディタの状態を変える件は、件ごとに起こして閉じる。持ち越すと、落ちた件の後始末が次の件の
+# 開始条件を崩し、どの件が何を確かめたのかが実行ごとに変わる。
+#
+# 読むだけで変えない件は1つを共有する。崩す後始末が起きないので持ち越す状態が無く、起こし直しは
+# 待ち時間を増やすだけである。共有する側は Get-SharedEditor、自分で起こす側は Start-Editor を
+# 使い、どちらであるかを件ごとに決める。
 [CmdletBinding()]
 param()
 
@@ -126,6 +130,39 @@ function Start-Editor {
         Set-EnvironmentValue -Name $BudgetName -Value $budget
         Set-EnvironmentValue -Name $DebugHooksName -Value $hooks
     }
+}
+
+$script:SharedEditor = 0
+
+function Get-SharedEditor {
+    <#
+        .SYNOPSIS
+        読むだけの件が共有するエディタ。初めて要るときに起こし、実行の終わりまで開いたままに
+        する。起こし方は Start-Editor と同じで、既定の設定で動くものである。
+    #>
+    if ($script:SharedEditor -eq 0) { $script:SharedEditor = Start-Editor }
+
+    $script:SharedEditor
+}
+
+function Clear-SharedEditor {
+    <#
+        .SYNOPSIS
+        共有しているものを閉じた件が、閉じたことを知らせる。閉じ終えた相手をもう一度閉じにいかない
+        ようにする。
+    #>
+    $script:SharedEditor = 0
+}
+
+function Close-SharedEditor {
+    <#
+        .SYNOPSIS
+        共有したエディタを閉じる。起こしていなければ何もしない。
+    #>
+    if ($script:SharedEditor -eq 0) { return }
+
+    Stop-Editor -EditorProcessId $script:SharedEditor
+    $script:SharedEditor = 0
 }
 
 function Stop-Editor {
@@ -269,12 +306,9 @@ $cases['配置'] = {
 }
 
 $cases['疎通'] = {
-    $editor = Start-Editor
-    try {
-        Assert-Client -Ran (Invoke-Client -EditorProcessId $editor) -Code 0 -What '疎通'
-    } finally {
-        Stop-Editor -EditorProcessId $editor
-    }
+    # 繋いでパイプ名を確かめるだけで、エディタもホストも変えない。
+    $editor = Get-SharedEditor
+    Assert-Client -Ran (Invoke-Client -EditorProcessId $editor) -Code 0 -What '疎通'
 }
 
 $cases['起動の記録'] = {
@@ -290,56 +324,56 @@ $cases['起動の記録'] = {
 }
 
 $cases['エディタ2つ'] = {
+    # 2つへ同時に繋がることを見る。1つ目は共有のもので足りる——どちらも変えない。
     $editors = @()
+    $own = 0
     try {
-        $editors += Start-Editor
-        $editors += Start-Editor
+        $editors += Get-SharedEditor
+        $own = Start-Editor
+        $editors += $own
         foreach ($editor in $editors) {
             Assert-Client -Ran (Invoke-Client -EditorProcessId $editor) -Code 0 `
                 -Says (Get-PipeName -EditorProcessId $editor) -What "2つのうち $editor への疎通"
         }
     } finally {
-        foreach ($editor in $editors) { Stop-Editor -EditorProcessId $editor }
+        if ($own -ne 0) { Stop-Editor -EditorProcessId $own }
     }
 }
 
 $cases['版の食い違い'] = {
-    $editor = Start-Editor
-    try {
-        # 版が合わなければホストは断って接続を切る。切ったことは、こちらから閉じずに待てば分かる。
-        $ran = Invoke-Client -EditorProcessId $editor -Requests @('handshake', '{"protocol":2}')
-        Assert-Client -Ran $ran -Code 0 -Says $ClosedAfterDisconnectingError -What '版の食い違い'
-        if ($ran.Said -notmatch [regex]::Escape([string]$ProtocolMismatchCode)) {
-            throw "版の食い違い: $ProtocolMismatchCode を返していない。$($ran.Said)"
-        }
-    } finally {
-        Stop-Editor -EditorProcessId $editor
+    # 断られるのは繋ぎに来た側だけで、待受もホストの状態も変わらない。
+    $editor = Get-SharedEditor
+
+    # 版が合わなければホストは断って接続を切る。切ったことは、こちらから閉じずに待てば分かる。
+    $ran = Invoke-Client -EditorProcessId $editor -Requests @('handshake', '{"protocol":2}')
+    Assert-Client -Ran $ran -Code 0 -Says $ClosedAfterDisconnectingError -What '版の食い違い'
+    if ($ran.Said -notmatch [regex]::Escape([string]$ProtocolMismatchCode)) {
+        throw "版の食い違い: $ProtocolMismatchCode を返していない。$($ran.Said)"
     }
 }
 
 $cases['パイプの権限'] = {
-    $editor = Start-Editor
-    try {
-        $rules = @(Invoke-Control -Action 'acl' -EditorProcessId $editor)
-        $ours = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-        $described = ($rules | ForEach-Object {
-                "$($_.IdentityReference)/$($_.AccessControlType)/$($_.PipeAccessRights)"
-            }) -join '・'
-        if ($rules.Count -ne 1) { throw "権限の規則が1件ではなく $($rules.Count) 件: $described" }
+    # 待受に掛かっている規則を読むだけで、エディタもホストも変えない。
+    $editor = Get-SharedEditor
+    $rules = @(Invoke-Control -Action 'acl' -EditorProcessId $editor)
+    $ours = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $described = ($rules | ForEach-Object {
+            "$($_.IdentityReference)/$($_.AccessControlType)/$($_.PipeAccessRights)"
+        }) -join '・'
+    if ($rules.Count -ne 1) { throw "権限の規則が1件ではなく $($rules.Count) 件: $described" }
 
-        $only = $rules[0]
-        if ($only.AccessControlType -ne 'Allow' -or
-            $only.IdentityReference.Value -ne $ours -or
-            $only.PipeAccessRights -ne 'FullControl') {
-            throw "権限の規則が現在ユーザー($ours)のFullControlの許可ではない: $described"
-        }
-    } finally {
-        Stop-Editor -EditorProcessId $editor
+    $only = $rules[0]
+    if ($only.AccessControlType -ne 'Allow' -or
+        $only.IdentityReference.Value -ne $ours -or
+        $only.PipeAccessRights -ne 'FullControl') {
+        throw "権限の規則が現在ユーザー($ours)のFullControlの許可ではない: $described"
     }
 }
 
 $cases['エディタの終了'] = {
-    $editor = Start-Editor
+    # 終わらせる相手はどのエディタでもよい。共有しているものを使う——これより後の件は自分で
+    # 起こすので、ここで閉じても持ち越すものが無い。
+    $editor = Get-SharedEditor
     try {
         $held = Start-HoldingClient -EditorProcessId $editor
         Stop-Editor -EditorProcessId $editor
@@ -348,6 +382,7 @@ $cases['エディタの終了'] = {
         if (Test-PipePresent -EditorProcessId $editor) { throw '終了してもパイプが残っている。' }
     } finally {
         Stop-Editor -EditorProcessId $editor
+        Clear-SharedEditor
     }
 }
 
@@ -425,6 +460,9 @@ try {
     }
 } finally {
     [Console]::OutputEncoding = $spoken
+    # 共有したエディタは実行の終わりまで開いたままなので、ここで閉じる。閉じ残すと、次の実行の
+    # 「配置」が落ちる——配置は動いているエディタを閉じるところから始まる。
+    Close-SharedEditor
 }
 
 Write-Host ''

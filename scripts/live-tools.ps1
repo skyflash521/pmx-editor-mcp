@@ -39,7 +39,8 @@ try {
         $cases
     if ($LASTEXITCODE -ne 0) { throw "検査を組み立てられない(終了コード $LASTEXITCODE)。" }
 
-    & scripts/deploy-host.ps1 | Out-Null
+    # 実行器が先に配置を済ませていれば繰り返さない。単独で走らせたときは印が無いので自分で行う。
+    if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') { & scripts/deploy-host.ps1 | Out-Null }
 
     $editor = [int](& $control -Action launch)
 

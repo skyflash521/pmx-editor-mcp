@@ -486,11 +486,19 @@ function Invoke-Checks {
     $ran = 0
     $produced = @($noArtifact)
 
+    Start-CheckBudget
+
     try {
         foreach ($name in $checks.Keys) {
             if ($wanted -notcontains $name) { continue }
 
             if ($produced -notcontains $checks[$name].Needs) {
+                $skipped += $name
+                continue
+            }
+
+            # 上限を使い切ったら残りは始めない。始めれば超過がそのぶん伸びるだけで、結末は変わらない。
+            if (Test-CheckBudgetSpent) {
                 $skipped += $name
                 continue
             }

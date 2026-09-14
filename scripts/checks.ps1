@@ -2,6 +2,40 @@
 # 常設の検査の実行器と実機に触る検査の実行器が共に使う——表の読み方が分かれると、
 # どちらかの実行器だけが手順書とずれる。
 
+<#
+    1回の実行へ与える時間の上限の秒数。
+#>
+$CheckBudgetSeconds = 360
+
+$script:CheckBudgetWatch = $null
+
+function Start-CheckBudget {
+    <#
+        .SYNOPSIS
+        実行の時間を数え始める。実行器は1件目の検査より先にこれを呼ぶ。
+    #>
+    $script:CheckBudgetWatch = [System.Diagnostics.Stopwatch]::StartNew()
+}
+
+function Get-CheckBudgetElapsed {
+    <#
+        .SYNOPSIS
+        数え始めてからの秒数。数え始めていなければ0。
+    #>
+    if ($null -eq $script:CheckBudgetWatch) { return 0.0 }
+
+    $script:CheckBudgetWatch.Elapsed.TotalSeconds
+}
+
+function Test-CheckBudgetSpent {
+    <#
+        .SYNOPSIS
+        この実行が上限を使い切ったかどうか。実行器はこれが真になった時点で、残りの検査を
+        始めない——始めれば、上限を超えたぶんがさらに伸びる。
+    #>
+    (Get-CheckBudgetElapsed) -gt $CheckBudgetSeconds
+}
+
 function Get-ListedChecks {
     <#
         .SYNOPSIS
@@ -101,12 +135,17 @@ function Write-CheckSummary {
     #>
     param([string[]]$Failed, [string[]]$Skipped, [string]$Scope, [int]$Ran, [int]$Listed)
 
+    $elapsed = Get-CheckBudgetElapsed
+    $took = '{0:0.0}秒 / 上限 {1}秒' -f $elapsed, $CheckBudgetSeconds
+    $spent = Test-CheckBudgetSpent
+
     Write-Host ''
+    if ($spent) { Write-Host ("時間の上限を超えた: $took") }
     if ($Skipped.Count -gt 0) { Write-Host ('走らせていない: ' + ($Skipped -join '・')) }
     if ($Failed.Count -gt 0) { Write-Host ('不合格: ' + ($Failed -join '・')) }
-    if ($Failed.Count -gt 0 -or $Skipped.Count -gt 0) { return 1 }
+    if ($Failed.Count -gt 0 -or $Skipped.Count -gt 0 -or $spent) { return 1 }
 
-    Write-Host ("$Scope の $Ran 件をすべて合格(全部で $Listed 件)")
+    Write-Host ("$Scope の $Ran 件をすべて合格($took・全部で $Listed 件)")
 
     0
 }
