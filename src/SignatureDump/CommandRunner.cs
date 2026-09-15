@@ -73,6 +73,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>実機のエディタへ投げる検査を組み立てて書き出す。</summary>
         public const string E2eCasesCommand = "e2e-cases";
 
+        /// <summary>能力対応表の2つの版から、中身の変わった行のキーを書き出す。</summary>
+        public const string ChangedRowsCommand = "changed-rows";
+
         /// <summary>受入シナリオが、登録される定義と要求仕様書に合うことを照合する。</summary>
         public const string AcceptanceCasesCommand = "acceptance-cases";
 
@@ -215,6 +218,11 @@ namespace PmxEditorMcp.SignatureDump
                 return E2eCaseRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], ChangedRowsCommand, StringComparison.Ordinal))
+            {
+                return ChangedRowRunner.Run(rest, output, error);
+            }
+
             if (string.Equals(args[0], AcceptanceCasesCommand, StringComparison.Ordinal))
             {
                 return AcceptanceScenarioRunner.Run(rest, output, error);
@@ -322,6 +330,9 @@ namespace PmxEditorMcp.SignatureDump
                     + " <型役割表の正本のパス> <日本語名の正本のパス>"
                     + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
                     + " <スキーマ正本のパス> <サンプル値の正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                ChangedRowsCommand
+                    + " <前の能力対応表の正本のパス> <いまの能力対応表の正本のパス>");
             error.WriteLine(
                 AcceptanceCasesCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"

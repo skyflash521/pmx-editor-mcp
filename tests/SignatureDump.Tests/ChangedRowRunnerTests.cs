@@ -101,7 +101,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new StringWriter());
         }
 
-        [Fact(Skip = "impl pending: 能力対応表の2つの版から、中身の変わった行のキーを1行ずつ書き出す")]
+        [Fact]
         public void WritesTheKeysOfEveryRowWhoseContentChanged()
         {
             string[] selected = Selected(
@@ -115,7 +115,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new[] { "T.M()", "T.P()", "T.Q()" }, selected);
         }
 
-        [Fact(Skip = "impl pending: 能力対応表の2つの版から、足された行のキーを書き出す")]
+        [Fact]
         public void WritesTheKeyOfARowThatWasAdded()
         {
             string[] selected = Selected(
@@ -125,7 +125,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new[] { "T.N()" }, selected);
         }
 
-        [Fact(Skip = "impl pending: 消えた行のキーは書き出さない")]
+        [Fact]
         public void LeavesOutARowThatWasRemoved()
         {
             string[] selected = Selected(
@@ -135,7 +135,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(selected);
         }
 
-        [Fact(Skip = "impl pending: 中身の変わっていない行のキーは書き出さない")]
+        [Fact]
         public void LeavesOutRowsThatDidNotChange()
         {
             string map = Map(Row("T.M()"), Row("T.N()"));
@@ -143,7 +143,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(Selected(map, map));
         }
 
-        [Fact(Skip = "impl pending: 行キーの昇順で並んでいない入力を、読めないものとして断る")]
+        [Fact]
         public void RowsOutOfOrderEndWithInputUnavailable()
         {
             string ordered = Map(Row("T.M()"), Row("T.N()"));
@@ -153,7 +153,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(ExitCodes.InputUnavailable, Ends(ordered, reversed));
         }
 
-        [Fact(Skip = "impl pending: 同じ行キーが二度現れる入力を、読めないものとして断る")]
+        [Fact]
         public void ARepeatedKeyEndsWithInputUnavailable()
         {
             string once = Map(Row("T.M()"));
@@ -163,7 +163,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(ExitCodes.InputUnavailable, Ends(once, twice));
         }
 
-        [Fact(Skip = "impl pending: 引数の数が合わない呼び出しを、使い方を示して断る")]
+        [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
             foreach (int count in new[] { 0, 1, 3 })
@@ -180,7 +180,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        [Fact(Skip = "impl pending: どちらの版が無くても、読めないものとして断る")]
+        [Fact]
+        public void WrongArgumentCountShowsOnlyTheUsageOfThisCommand()
+        {
+            StringWriter error = new StringWriter();
+
+            CommandRunner.Run(new[] { Command }, new StringWriter(), error);
+
+            Assert.DoesNotContain(
+                CommandRunner.E2eCasesCommand, error.ToString(), StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AMissingInputEndsWithInputUnavailable()
         {
             string map = Map(Row("T.M()"));
@@ -198,7 +209,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        [Fact(Skip = "impl pending: どちらの版が行の並びを持たなくても、読めないものとして断る")]
+        [Fact]
         public void AnInputWithoutRowsEndsWithInputUnavailable()
         {
             string map = Map(Row("T.M()"));

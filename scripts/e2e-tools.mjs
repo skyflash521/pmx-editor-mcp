@@ -65,6 +65,9 @@ const EXIT_FAILED = 1;
 const EXIT_INVALID_ARGUMENTS = 2;
 const EXIT_INPUT_UNAVAILABLE = 3;
 
+/** 指した行に当たる検査を引けず、絞った実行ではその行を確かめられないことを表す。 */
+const EXIT_ROWS_UNCOVERED = 4;
+
 function toPipePath(name) {
     return "\\\\.\\pipe\\" + name;
 }
@@ -853,8 +856,35 @@ function readCases(path) {
     return read.cases;
 }
 
+/**
+ * 指した行の検査と、それが借りる値を出す検査を残す。残した検査の並びは元のままなので、出す側は
+ * 借りる側より先に来る。どの検査にも当たらない行は、引き方が壊れているので名前を挙げて返す。
+ */
+function only(cases, rows) {
+    const wanted = new Set(rows);
+    const source = new Map(
+        cases.filter((one) => one.produces !== undefined).map((one) => [one.produces, one]));
+    const queue = cases.filter((one) => wanted.has(one.rowKey));
+    const taken = new Set(queue);
+    while (queue.length !== 0) {
+        const one = queue.pop();
+        for (const from of Object.values(one.borrowed ?? {})) {
+            const produced = source.get(from.split("/")[0]);
+            if (produced !== undefined && !taken.has(produced)) {
+                taken.add(produced);
+                queue.push(produced);
+            }
+        }
+    }
+
+    const kept = cases.filter((one) => taken.has(one));
+    const held = new Set(kept.map((one) => one.rowKey));
+
+    return { kept, missing: [...wanted].filter((key) => !held.has(key)) };
+}
+
 const given = process.argv.slice(2);
-const named = { "--control": null, "--compare": null };
+const named = { "--control": null, "--compare": null, "--rows": null };
 const loose = [];
 for (let at = 0; at < given.length; at++) {
     if (!Object.prototype.hasOwnProperty.call(named, given[at])) {
@@ -871,7 +901,8 @@ if (processId === undefined || casesPath === undefined
     || Object.values(named).some((value) => value === undefined)) {
     console.error(
         "使い方: node e2e-tools.mjs <エディタのプロセスID> <検査のパス>"
-            + " [--control <操作役のパス>] [--compare <見比べるスクリプトのパス>]");
+            + " [--control <操作役のパス>] [--compare <見比べるスクリプトのパス>]"
+            + " [--rows <走らせる行のキーを並べたパス>]");
     process.exit(EXIT_INVALID_ARGUMENTS);
 }
 
@@ -889,6 +920,29 @@ try {
 } catch (error) {
     console.error("検査を読めません(" + casesPath + "): " + error.message);
     process.exit(EXIT_INPUT_UNAVAILABLE);
+}
+
+if (named["--rows"] !== null) {
+    let rows;
+    try {
+        rows = fs.readFileSync(named["--rows"], "utf8")
+            .split("\n").map((line) => line.trim()).filter((line) => line !== "");
+    } catch (error) {
+        console.error("走らせる行を読めません(" + named["--rows"] + "): " + error.message);
+        process.exit(EXIT_INPUT_UNAVAILABLE);
+    }
+
+    const chosen = only(cases, rows);
+    if (chosen.missing.length !== 0) {
+        console.error(
+            "どの検査にも当たらない行がある: " + chosen.missing.join("・"));
+        console.error("この行は絞った実行では確かめられない。絞らずに走らせること。");
+        process.exit(EXIT_ROWS_UNCOVERED);
+    }
+
+    console.log(
+        "指した行だけを走らせる: 行 " + rows.length + " 件・検査 " + chosen.kept.length + " 件");
+    cases = chosen.kept;
 }
 
 if (cases.length === 0) {
