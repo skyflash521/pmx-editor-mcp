@@ -78,5 +78,10 @@ $groupedUnknown = Test-Complaint -Wanted ("検査に無い: " + $dropped) -Body 
     Assert-GroupedChecks -Grouped ([ordered]@{ '題材の群' = $names }) -Names $fewer
 }
 
-"結果: $failed|$nonzero|$passed|$withFailure|$clean|$withSkip|$overBudget|" +
+# 走らせた結果は、名前と終了コードの組で綴る。書き出しは別の入口が持つので、ここで見るのは
+# 返った値だけである。
+$ran = ($failed.Name + ':' + $failed.Code) + '|' +
+    ($nonzero.Name + ':' + $nonzero.Code) + '|' + ($passed.Name + ':' + $passed.Code)
+
+"結果: $ran|$withFailure|$clean|$withSkip|$overBudget|" +
     "$listedMissing|$listedExtra|$groupedMissing|$groupedUnknown"

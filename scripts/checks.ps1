@@ -97,7 +97,9 @@ function Assert-GroupedChecks {
 function Invoke-Check {
     <#
         .SYNOPSIS
-        検査を1件走らせ、落ちたらその名前を返す。通れば何も返さない。
+        検査を1件走らせ、名前と終了コードと所要と書き出したものを返す。**ここでは書かない**
+        ——並列に走る検査が書いた先から出すと、どの行がどの検査のものか読み手に決められなくなる。
+        書くのは Write-CheckResult で、呼び出し側が検査ごとにまとめて呼ぶ。
     #>
     param([string]$Name, [scriptblock]$Body)
 
@@ -110,18 +112,50 @@ function Invoke-Check {
         $log = $_
         $code = 1
     }
-    $took = '{0,5:0.0}秒' -f $watch.Elapsed.TotalSeconds
 
-    if ($code -eq 0) {
-        Write-Host "OK   $took  $Name"
-        return $null
+    # 誤りの記録をそのまま持ち回すと、書き出す側が停止の設定で終了エラーになる。文字列にして返す。
+    [pscustomobject]@{
+        Name = $Name
+        Code = $code
+        Seconds = $watch.Elapsed.TotalSeconds
+        Log = @(@($log) | ForEach-Object { [string]$_ })
+        Skipped = $false
+    }
+}
+
+function New-SkippedCheck {
+    <#
+        .SYNOPSIS
+        走らせなかった検査の結果。要る出来上がりが揃わなかった検査がこれになる。
+    #>
+    param([string]$Name)
+
+    [pscustomobject]@{
+        Name = $Name
+        Code = 0
+        Seconds = 0.0
+        Log = @()
+        Skipped = $true
+    }
+}
+
+function Write-CheckResult {
+    <#
+        .SYNOPSIS
+        1件の結果を書く。走らせた順ではなく、検査ごとにまとめて書くための入口である。
+    #>
+    param($Result)
+
+    if ($Result.Skipped) { return }
+
+    $took = '{0,5:0.0}秒' -f $Result.Seconds
+    if ($Result.Code -eq 0) {
+        Write-Host ("OK   $took  " + $Result.Name)
+        return
     }
 
-    Write-Host "NG   $took  $Name (終了コード $code)"
-    # 誤りの記録をパイプへ流すと、停止の設定の下では書き出す側で終了エラーになる。文字列にして出す。
-    foreach ($line in @($log)) { Write-Host ('     ' + [string]$line) }
-
-    return $Name
+    Write-Host ("NG   $took  " + $Result.Name + " (終了コード " + $Result.Code + ")")
+    foreach ($line in $Result.Log) { Write-Host ('     ' + $line) }
 }
 
 function Write-CheckSummary {

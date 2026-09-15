@@ -57,7 +57,8 @@ try {
 
         $ran++
         $result = Invoke-Check -Name $name -Body $checks[$name]
-        if ($result) { $failed += $result }
+        Write-CheckResult -Result $result
+        if ($result.Code -ne 0) { $failed += $result.Name }
     }
 } finally {
     [Console]::OutputEncoding = $spoken

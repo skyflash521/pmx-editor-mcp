@@ -272,10 +272,11 @@ function Test-CheckSummary {
     $global:LASTEXITCODE = 0
     if ($code -ne 0) { throw "集計を確かめる実行が落ちた: $(@($said) -join "`n")" }
 
-    # 投げて落ちた検査の名前・非0で終わった検査の名前・通った検査の空・落ちた件があるときの1・
-    # 無いときの0・走らせていない件があるときの1・上限を超えたときの1・一覧と群の食い違いを
-    # 向きごとに咎めるか。並びは checks-stub-run.ps1 が決める。
-    $wanted = '結果: 落ちる題材|非0で終わる題材||1|0|1|1|とがめる|とがめる|とがめる|とがめる'
+    # 投げて落ちた検査・非0で終わった検査・通った検査の、名前と終了コードの組・落ちた件がある
+    # ときの1・無いときの0・走らせていない件があるときの1・上限を超えたときの1・一覧と群の
+    # 食い違いを向きごとに咎めるか。並びは checks-stub-run.ps1 が決める。
+    $wanted = '結果: 落ちる題材:1|非0で終わる題材:3|通る題材:0|1|0|1|1|' +
+        'とがめる|とがめる|とがめる|とがめる'
     if ((@($said) -join "`n") -notmatch [regex]::Escape($wanted)) {
         throw "集計の結末が「$wanted」ではない: $(@($said) -join "`n")"
     }
@@ -663,6 +664,11 @@ function Test-PackageContents {
 $build = 'ビルド'
 $derivation = '除外一覧の導出'
 
+# 同じ中間出力へ書く検査を並べる列の名前。MSBuild の列は obj・bin・dist を、除外一覧の列は
+# 導出が書く一時ファイルを共有するので、それぞれの中は直列に走らせる。
+$msbuildLane = 'MSBuild'
+$exclusionLane = '除外一覧'
+
 $noArtifact = 'なし'
 $buildOutput = 'ビルド成果物'
 $exclusionList = '除外一覧'
@@ -670,6 +676,7 @@ $exclusionList = '除外一覧'
 $checks = [ordered]@{}
 $checks[$build] = @{
     Needs = $noArtifact
+    Stage = 1
     Body = { dotnet build PmxEditorMcp.sln -warnaserror }
 }
 $checks['スクリプト構文'] = @{
@@ -706,6 +713,7 @@ $checks['文書のリンク'] = @{
 }
 $checks[$derivation] = @{
     Needs = $buildOutput
+    Lane = $exclusionLane
     Body = {
         # 凍結が落ちたらその終了コードのまま返したいので、続きを走らせずに抜ける。
         & $dump excluded-baseline $editorDir $ledger $baseline
@@ -718,42 +726,51 @@ $checks['実行時リフレクション'] = @{
 }
 $checks['整形'] = @{
     Needs = $buildOutput
+    Lane = $msbuildLane
     Body = { dotnet format PmxEditorMcp.sln --verify-no-changes }
 }
 $checks['テスト'] = @{
     Needs = $buildOutput
-    Body = { dotnet test PmxEditorMcp.sln }
+    Body = { dotnet test PmxEditorMcp.sln --no-build }
 }
 $checks['台帳とSDKの照合'] = @{
     Needs = $exclusionList
+    Lane = $exclusionLane
     Body = { & $dump ledger-coverage $editorDir $ledger $excluded $outOfScope }
 }
 $checks['日本語名の照合'] = @{
     Needs = $exclusionList
+    Lane = $exclusionLane
     Body = { & $dump property-names $editorDir $ledger $excluded $names }
 }
 $checks['型役割の照合'] = @{
     Needs = $exclusionList
+    Lane = $exclusionLane
     Body = { & $dump type-roles $editorDir $ledger $excluded $roles }
 }
 $checks['共通契約割当の照合'] = @{
     Needs = $exclusionList
+    Lane = $exclusionLane
     Body = { & $dump common-assignments $editorDir $ledger $excluded $roles $assignments }
 }
 $checks['値の表現の照合'] = @{
     Needs = $exclusionList
+    Lane = $exclusionLane
     Body = { & $dump value-shapes $editorDir $ledger $excluded $contract }
 }
 $checks['危険操作の照合'] = @{
     Needs = $exclusionList
+    Lane = $exclusionLane
     Body = { & $dump dangerous-operations $editorDir $ledger $excluded }
 }
 $checks['能力対応表の照合'] = @{
     Needs = $exclusionList
+    Lane = $exclusionLane
     Body = { & $dump tool-map $editorDir $ledger $excluded $roles $assignments $toolMap }
 }
 $checks['提供対象の網羅'] = @{
     Needs = $exclusionList
+    Lane = $exclusionLane
     Body = { & $dump map-coverage $editorDir $ledger $excluded $roles $toolMap }
 }
 $checks['スキーマ定義の照合'] = @{
@@ -808,10 +825,12 @@ $checks['受入シナリオの照合'] = @{
 }
 $checks['ブリッジの単独起動'] = @{
     Needs = $noArtifact
+    Lane = $msbuildLane
     Body = { pwsh -NoProfile -File scripts/bridge-standalone.ps1 }
 }
 $checks['配布パッケージの生成'] = @{
     Needs = $noArtifact
+    Lane = $msbuildLane
     Body = {
         # 1コマンドで組み立てられること。中身を違えたときに落ちることは、確かめる側を
         # 直に呼んで見る——落ちない検査は、通っても何も言っていない。
@@ -982,11 +1001,75 @@ function Select-CheckGroups {
     @($chosen.Keys)
 }
 
+function Get-CheckStage {
+    <#
+        .SYNOPSIS
+        その検査を走らせる段階。出来上がりを作る検査だけが1で、ほかは2である。段階1は直列で
+        通し、段階2は列ごとに並列で走らせる。
+    #>
+    param([string]$Name)
+
+    if ($checks[$Name].Contains('Stage')) { return $checks[$Name].Stage }
+
+    2
+}
+
+function Get-CheckLane {
+    <#
+        .SYNOPSIS
+        その検査が並ぶ列。同じ列の検査は直列に走る——同じ中間出力へ書くものを同時に走らせると、
+        互いの出来上がりを壊す。列を指していない検査は、自分だけの列に並ぶ。
+    #>
+    param([string]$Name)
+
+    if ($checks[$Name].Contains('Lane')) { return $checks[$Name].Lane }
+
+    $Name
+}
+
+function Invoke-Lane {
+    <#
+        .SYNOPSIS
+        1つの列の検査を順に走らせ、結果を返す。段階2の列ごとに、別の場所から1回ずつ呼ばれる。
+        受ける名前を Queued と呼ぶのは、検査の本体がこの関数のスコープで走るからである——
+        本体が読む変数と同じ名前を引数に付けると、その変数が引数に隠れて本体が別の値を読む。
+        上限の刻を受け取るのは、列が別のプロセスで走って親の数え始めを見られないからである。
+    #>
+    param([string[]]$Queued, [datetime]$Deadline)
+
+    try {
+        # 段階1が作った出来上がりは揃っている。列の中で作るのは除外一覧だけである。
+        $produced = @($noArtifact, $buildOutput)
+        foreach ($name in $Queued) {
+            # 上限を使い切ったら残りは始めない。始めれば超過がそのぶん伸びるだけで、結末は
+            # 変わらない。
+            if ((Get-Date) -gt $Deadline) {
+                New-SkippedCheck -Name $name
+                continue
+            }
+
+            if ($produced -notcontains $checks[$name].Needs) {
+                New-SkippedCheck -Name $name
+                continue
+            }
+
+            $result = Invoke-Check -Name $name -Body $checks[$name].Body
+            $result
+            if ($result.Code -eq 0 -and $name -eq $derivation) { $produced += $exclusionList }
+        }
+    } finally {
+        # この列がこの1本を読み込んだときに作った一時ファイルを片付ける。親が消せるのは親が
+        # 作ったものだけなので、列ごとの分は列が自分で消す。
+        Remove-Item $baseline, $excluded -ErrorAction SilentlyContinue
+    }
+}
+
 function Invoke-Checks {
     <#
         .SYNOPSIS
         指す群の検査を走らせ、終わらせる終了コードを返す。出来上がりが要る検査を選んだときは、
         それを作る検査も一緒に走らせる——選んだ群だけでは入力が揃わず、走らせられないままになる。
+        段階1を直列で通してから、段階2を列ごとに並列で走らせる。
     #>
     param([string[]]$Groups)
 
@@ -1003,41 +1086,72 @@ function Invoke-Checks {
         $wanted += $build
     }
 
-    $failed = @()
-    $skipped = @()
-    $ran = 0
-    $produced = @($noArtifact)
+    $results = @()
 
     Start-CheckBudget
 
     try {
+        # 段階1。段階2が要る出来上がりを作るので、先に直列で通す。
         foreach ($name in $checks.Keys) {
             if ($wanted -notcontains $name) { continue }
+            if ((Get-CheckStage -Name $name) -ne 1) { continue }
 
-            if ($produced -notcontains $checks[$name].Needs) {
-                $skipped += $name
-                continue
+            $results += Invoke-Check -Name $name -Body $checks[$name].Body
+        }
+
+        # 段階2の列。同じ列の中は直列で、列どうしは並列に走る。
+        $lanes = [ordered]@{}
+        foreach ($name in $checks.Keys) {
+            if ($wanted -notcontains $name) { continue }
+            if ((Get-CheckStage -Name $name) -ne 2) { continue }
+
+            $lane = Get-CheckLane -Name $name
+            if (-not $lanes.Contains($lane)) { $lanes[$lane] = @() }
+            $lanes[$lane] += $name
+        }
+
+        # 段階1が落ちたか上限を使い切ったら、段階2は始めない。出来上がりが揃わないまま走らせても
+        # 結末は変わらず、超えたぶんが伸びるだけである。
+        $ready = @($results | Where-Object { $_.Code -ne 0 }).Count -eq 0 -and -not (Test-CheckBudgetSpent)
+        if ($ready) {
+            # 上限の残りは親が数えている。列は別のプロセスで走るので、期限を刻にして渡す。
+            $deadline = (Get-Date).AddSeconds($CheckBudgetSeconds - (Get-CheckBudgetElapsed))
+            $root = (Get-Location).Path
+            $jobs = @()
+            foreach ($lane in $lanes.GetEnumerator()) {
+                # 名前の並びは using で渡す。引数の並びとして渡すと、並びがほどけて2件目から先が
+                # 別の引数になる。
+                $laneNames = @($lane.Value)
+                $jobs += Start-Job -ScriptBlock {
+                    Set-Location $using:root
+                    . (Join-Path $using:root 'scripts/check-set.ps1')
+                    Invoke-Lane -Queued $using:laneNames -Deadline $using:deadline
+                }
             }
 
-            # 上限を使い切ったら残りは始めない。始めれば超過がそのぶん伸びるだけで、結末は変わらない。
-            if (Test-CheckBudgetSpent) {
-                $skipped += $name
-                continue
+            $results += @(Receive-Job -Job (Wait-Job -Job $jobs))
+            Remove-Job -Job $jobs
+        } else {
+            foreach ($lane in $lanes.GetEnumerator()) {
+                foreach ($name in $lane.Value) { $results += New-SkippedCheck -Name $name }
             }
-
-            $ran++
-            $result = Invoke-Check -Name $name -Body $checks[$name].Body
-            if ($result) {
-                $failed += $result
-                continue
-            }
-
-            if ($name -eq $build) { $produced += $buildOutput }
-            if ($name -eq $derivation) { $produced += $exclusionList }
         }
     } finally {
         Remove-Item $baseline, $excluded -ErrorAction SilentlyContinue
     }
+
+    # 書くのは検査の定義の順にまとめて行う。走り終えた順に出すと、並列に走った列の行が混ざる。
+    $ordered = @()
+    foreach ($name in $checks.Keys) {
+        $ordered += @($results | Where-Object { $_.Name -eq $name })
+    }
+
+    foreach ($result in $ordered) { Write-CheckResult -Result $result }
+
+    $failed = @($ordered | Where-Object { -not $_.Skipped -and $_.Code -ne 0 } |
+        ForEach-Object { $_.Name })
+    $skipped = @($ordered | Where-Object { $_.Skipped } | ForEach-Object { $_.Name })
+    $ran = @($ordered | Where-Object { -not $_.Skipped }).Count
 
     Write-CheckSummary -Failed $failed -Skipped $skipped -Scope ($Groups -join '・') `
         -Ran $ran -Listed $checks.Count
