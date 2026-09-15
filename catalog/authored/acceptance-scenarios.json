@@ -76,7 +76,7 @@
           "arguments": {},
           "record": {
             "name": "subjectMaterial",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -109,7 +109,7 @@
           "arguments": {},
           "record": {
             "name": "subjectBody",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -360,7 +360,7 @@
           "arguments": {},
           "record": {
             "name": "vertex",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -547,37 +547,13 @@
         {
           "kind": "tool",
           "tool": "model_vertex",
-          "arguments": {},
-          "record": {
-            "name": "batchA",
-            "path": "",
-            "shape": "number"
+          "arguments": {
+            "count": 3
           },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "model_vertex",
-          "arguments": {},
           "record": {
-            "name": "batchB",
+            "name": "firstBatch",
             "path": "",
-            "shape": "number"
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "model_vertex",
-          "arguments": {},
-          "record": {
-            "name": "batchC",
-            "path": "",
-            "shape": "number"
+            "shape": "numbers"
           },
           "expect": {
             "ok": true
@@ -587,17 +563,9 @@
           "kind": "tool",
           "tool": "model_add_vertices",
           "arguments": {
-            "handles": [
-              {
-                "$from": "batchA"
-              },
-              {
-                "$from": "batchB"
-              },
-              {
-                "$from": "batchC"
-              }
-            ]
+            "handles": {
+              "$from": "firstBatch"
+            }
           },
           "expect": {
             "ok": true,
@@ -751,37 +719,13 @@
         {
           "kind": "tool",
           "tool": "model_vertex",
-          "arguments": {},
-          "record": {
-            "name": "batchD",
-            "path": "",
-            "shape": "number"
+          "arguments": {
+            "count": 3
           },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "model_vertex",
-          "arguments": {},
           "record": {
-            "name": "batchE",
+            "name": "secondBatch",
             "path": "",
-            "shape": "number"
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "model_vertex",
-          "arguments": {},
-          "record": {
-            "name": "batchF",
-            "path": "",
-            "shape": "number"
+            "shape": "numbers"
           },
           "expect": {
             "ok": true
@@ -791,17 +735,9 @@
           "kind": "tool",
           "tool": "model_add_vertices",
           "arguments": {
-            "handles": [
-              {
-                "$from": "batchD"
-              },
-              {
-                "$from": "batchE"
-              },
-              {
-                "$from": "batchF"
-              }
-            ]
+            "handles": {
+              "$from": "secondBatch"
+            }
           },
           "expect": {
             "ok": true,
@@ -819,7 +755,7 @@
           "arguments": {},
           "record": {
             "name": "batchMaterial",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -852,7 +788,7 @@
           "arguments": {},
           "record": {
             "name": "batchBone",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -1071,7 +1007,7 @@
           "arguments": {},
           "record": {
             "name": "batchBody",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -1692,7 +1628,7 @@
           "arguments": {},
           "record": {
             "name": "savedA",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -1705,7 +1641,7 @@
           "arguments": {},
           "record": {
             "name": "savedB",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -1718,7 +1654,7 @@
           "arguments": {},
           "record": {
             "name": "savedC",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -1757,7 +1693,7 @@
           "arguments": {},
           "record": {
             "name": "savedMaterial",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -1790,7 +1726,7 @@
           "arguments": {},
           "record": {
             "name": "savedBone",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2254,7 +2190,7 @@
           "arguments": {},
           "record": {
             "name": "eventConnector",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2325,7 +2261,7 @@
           "arguments": {},
           "record": {
             "name": "cornerA",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2338,7 +2274,7 @@
           "arguments": {},
           "record": {
             "name": "cornerB",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2351,7 +2287,7 @@
           "arguments": {},
           "record": {
             "name": "cornerC",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2439,7 +2375,7 @@
           "arguments": {},
           "record": {
             "name": "material",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2495,7 +2431,7 @@
           "arguments": {},
           "record": {
             "name": "face",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2599,7 +2535,7 @@
           },
           "record": {
             "name": "uiModel",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2764,7 +2700,7 @@
           },
           "record": {
             "name": "vmd",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2777,7 +2713,7 @@
           "arguments": {},
           "record": {
             "name": "firstKey",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2790,7 +2726,7 @@
           "arguments": {},
           "record": {
             "name": "lastKey",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {
@@ -2973,7 +2909,7 @@
           "arguments": {},
           "record": {
             "name": "readBack",
-            "path": "",
+            "path": "0",
             "shape": "number"
           },
           "expect": {

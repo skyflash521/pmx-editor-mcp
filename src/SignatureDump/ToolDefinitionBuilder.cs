@@ -254,6 +254,10 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
+            int? issuable = issued.HasValue
+                ? ElementLimitRule.Issued(limits.Values, issued.Value)
+                : (int?)null;
+
             List<KeyValuePair<string, string>> properties =
                 new List<KeyValuePair<string, string>>();
             List<string> required = new List<string>();
@@ -262,7 +266,7 @@ namespace PmxEditorMcp.SignatureDump
             foreach (SchemaItem input in branch.Inputs.Where(i => !i.Injected))
             {
                 properties.Add(new KeyValuePair<string, string>(
-                    input.Name, Item(schema, branch, input, listing, limits, issued, sdkShapes)));
+                    input.Name, Item(schema, branch, input, listing, limits, issuable, sdkShapes)));
                 if (input.Required.HasValue && input.Required.Value)
                 {
                     required.Add(input.Name);
@@ -412,7 +416,7 @@ namespace PmxEditorMcp.SignatureDump
             SchemaItem item,
             ListingLimits listing,
             IDictionary<SchemaItem, int> limits,
-            int? issued,
+            int? issuable,
             IDictionary<SchemaItem, string> sdkShapes,
             bool distributed = false)
         {
@@ -422,7 +426,7 @@ namespace PmxEditorMcp.SignatureDump
                 item,
                 listing,
                 limits,
-                issued,
+                issuable,
                 sdkShapes,
                 distributed || string.Equals(
                     item.Name, ElementLimitRule.DistributedName, StringComparison.Ordinal));
@@ -463,7 +467,7 @@ namespace PmxEditorMcp.SignatureDump
             SchemaItem item,
             ListingLimits listing,
             IDictionary<SchemaItem, int> limits,
-            int? issued,
+            int? issuable,
             IDictionary<SchemaItem, string> sdkShapes,
             bool distributed)
         {
@@ -476,7 +480,7 @@ namespace PmxEditorMcp.SignatureDump
                     members.Add(
                         member.Name,
                         Item(
-                            schema, branch, member, listing, limits, issued, sdkShapes,
+                            schema, branch, member, listing, limits, issuable, sdkShapes,
                             distributed));
                     if (member.Required.HasValue && member.Required.Value)
                     {
@@ -502,7 +506,7 @@ namespace PmxEditorMcp.SignatureDump
                 body.Add(
                     "items",
                     Item(
-                        schema, branch, item.Element, listing, limits, issued, sdkShapes,
+                        schema, branch, item.Element, listing, limits, issuable, sdkShapes,
                         distributed));
                 if (NonEmptyArrayRule.NonEmpty(item))
                 {
@@ -534,7 +538,7 @@ namespace PmxEditorMcp.SignatureDump
                     "形を持たない項目: " + schema.Tool + "." + item.Name);
             }
 
-            return Scalar(schema, branch, item, listing, issued, spelling);
+            return Scalar(schema, branch, item, listing, issuable, spelling);
         }
 
         private static JsonObjectText Scalar(
@@ -542,7 +546,7 @@ namespace PmxEditorMcp.SignatureDump
             SchemaBranch branch,
             SchemaItem item,
             ListingLimits listing,
-            int? issued,
+            int? issuable,
             string spelling)
         {
             int[] fixedArray;
@@ -601,12 +605,12 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             // 発行する数も、応答で返せる件数から導く値なので正本に書かない。
-            if (issued.HasValue
+            if (issuable.HasValue
                 && string.Equals(item.Name, CountName, StringComparison.Ordinal)
                 && branch.Inputs.Contains(item))
             {
                 written.AddNumber("minimum", 1);
-                written.AddNumber("maximum", issued.Value);
+                written.AddNumber("maximum", issuable.Value);
             }
 
             return written;

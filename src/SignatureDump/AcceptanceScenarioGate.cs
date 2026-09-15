@@ -18,8 +18,11 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>覚えた値を差し込む組の鍵。実行器の側と同じ綴りである。</summary>
         public const string ReferenceName = "$from";
 
-        /// <summary>数として覚える印。引数へ差し込めるのはこの印を持つものだけである。</summary>
+        /// <summary>数として覚える印。引数へ差し込めるのはこの印と数の並びの印だけである。</summary>
         public const string NumberShape = "number";
+
+        /// <summary>数の並びとして覚える印。1回の呼び出しで並びを返すツールの応答が当たる。</summary>
+        public const string NumbersShape = "numbers";
 
         /// <summary>写した大きさとして覚える印。画像の期待だけが指せる。</summary>
         public const string SizeShape = "size";
@@ -172,9 +175,9 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             JsonNode arguments = step["arguments"];
-            References(arguments, where, recorded, NumberShape);
+            References(arguments, where, recorded, NumberShape, NumbersShape);
             EvaluationResults evaluated = schema.Evaluate(
-                Element(Substitute(arguments)),
+                Element(Substitute(arguments, recorded)),
                 new EvaluationOptions { OutputFormat = OutputFormat.List });
             if (!evaluated.IsValid)
             {
@@ -254,7 +257,10 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>差し込む値の名前が、先に覚えた印と合うか。</summary>
         private static void References(
-            JsonNode node, string where, IDictionary<string, string> recorded, string shape)
+            JsonNode node,
+            string where,
+            IDictionary<string, string> recorded,
+            params string[] shapes)
         {
             if (node == null)
             {
@@ -265,7 +271,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 foreach (JsonNode item in (JsonArray)node)
                 {
-                    References(item, where, recorded, shape);
+                    References(item, where, recorded, shapes);
                 }
 
                 return;
@@ -287,10 +293,11 @@ namespace PmxEditorMcp.SignatureDump
                     throw Broken(where + " がまだ覚えていない値を差し込んでいる: " + name);
                 }
 
-                if (remembered != shape)
+                if (Array.IndexOf(shapes, remembered) < 0)
                 {
                     throw Broken(
-                        where + " が " + shape + " として覚えていない値を差し込んでいる: " + name);
+                        where + " が " + string.Join("・", shapes)
+                            + " として覚えていない値を差し込んでいる: " + name);
                 }
 
                 return;
@@ -298,19 +305,23 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (KeyValuePair<string, JsonNode> member in members)
             {
-                References(member.Value, where, recorded, shape);
+                References(member.Value, where, recorded, shapes);
             }
         }
 
-        /// <summary>覚えた値を差し込む組を、その印の値へ置き換えた写し。</summary>
-        private static JsonNode Substitute(JsonNode node)
+        /// <summary>
+        /// 覚えた値を差し込む組を、その印の値へ置き換えた写し。数の並びとして覚えた値は、1件だけ
+        /// 持つ並びへ置き換える——並びを取る入力へ数を1つ置くと、形が違うとして落ちる。
+        /// </summary>
+        private static JsonNode Substitute(
+            JsonNode node, IDictionary<string, string> recorded)
         {
             if (node is JsonArray)
             {
                 JsonArray items = new JsonArray();
                 foreach (JsonNode item in (JsonArray)node)
                 {
-                    items.Add(Substitute(item));
+                    items.Add(Substitute(item, recorded));
                 }
 
                 return items;
@@ -322,15 +333,21 @@ namespace PmxEditorMcp.SignatureDump
                 return node == null ? null : JsonNode.Parse(node.ToJsonString());
             }
 
-            if (members[ReferenceName] != null)
+            JsonNode reference = members[ReferenceName];
+            if (reference != null)
             {
-                return JsonValue.Create(SubstitutedNumber);
+                string remembered;
+                recorded.TryGetValue(reference.GetValue<string>(), out remembered);
+
+                return remembered == NumbersShape
+                    ? (JsonNode)new JsonArray(JsonValue.Create(SubstitutedNumber))
+                    : JsonValue.Create(SubstitutedNumber);
             }
 
             JsonObject copied = new JsonObject();
             foreach (KeyValuePair<string, JsonNode> member in members)
             {
-                copied.Add(member.Key, Substitute(member.Value));
+                copied.Add(member.Key, Substitute(member.Value, recorded));
             }
 
             return copied;

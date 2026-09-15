@@ -70,6 +70,9 @@ namespace PmxEditorMcp
         /// <summary>要素の実行時の型を表す項目の名前。</summary>
         public const string ItemTypeName = "itemType";
 
+        /// <summary>ハンドル1件が応答で使う文字数。IDの十進表記の最大の桁数と区切りの1文字。</summary>
+        private const int HandleChars = 11;
+
         private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
         private readonly SdkRelayTable _relay;
@@ -804,7 +807,10 @@ namespace PmxEditorMcp
             return InvokeOnce(context, call, precondition);
         }
 
-        /// <summary>SDKのメンバーを、受け手そのものへ1度呼ぶ。</summary>
+        /// <summary>
+        /// SDKのメンバーを、受け手そのものへ呼ぶ。ハンドルを発行する呼び出しは、頼まれた数だけ
+        /// 繰り返して、その全部を1つの応答で返す。
+        /// </summary>
         private object InvokeOnce(
             McpMethodContext context, ToolCall call, ResolvedPrecondition precondition)
         {
@@ -823,12 +829,30 @@ namespace PmxEditorMcp
                 known.Add(call.SelectorName);
             }
 
+            bool issues = call.Issues != null;
+            bool counts = issues && call.RespondsMany;
+            if (counts)
+            {
+                known.Add(IssuanceInput.CountName);
+            }
+
+            int count = 1;
+            int most = Most(context);
             if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
                 || !TryConfirm(context, out confirm, out code, out message)
                 || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
-                || !TryPassDanger(call, handle, confirm, out code, out message))
+                || !TryPassDanger(call, handle, confirm, out code, out message)
+                || (counts && !TryCount(
+                    context, IssuanceInput.CountName, 1, 1, out count, out code, out message)))
             {
                 return ToolEnvelope.Failure(code, message);
+            }
+
+            if (count > most)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.InvalidArgument,
+                    IssuanceInput.CountName + " は " + most + " 以下でなければならない。");
             }
 
             object[] arguments = new object[call.Arguments.Count];
@@ -845,6 +869,7 @@ namespace PmxEditorMcp
 
             object result = null;
             object called = null;
+            List<object> results = new List<object>();
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
             Exception failure;
@@ -871,19 +896,37 @@ namespace PmxEditorMcp
 
                 called = column[0].Item;
                 stage = Changing(call.Receiver, target);
-                object value;
-                SdkRelayRefusal refusal;
-                if (!_relay.TryInvoke(
-                    call.RowKey, column[0].Item, arguments, out value, out refusal))
-                {
-                    refused = Refusal.Of(call.RowKey, refusal);
 
-                    return;
-                }
-
-                if (!TryProjected(call, value, out result, out refused))
+                int drawn = 0;
+                for (int at = 0; at < count; at++)
                 {
-                    return;
+                    object value;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(
+                        call.RowKey, column[0].Item, arguments, out value, out refusal))
+                    {
+                        refused = Refusal.Of(call.RowKey, refusal);
+
+                        return;
+                    }
+
+                    if (!TryProjected(call, value, out result, out refused))
+                    {
+                        return;
+                    }
+
+                    drawn += Drawn(call, result);
+                    if (issues && drawn > most)
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(
+                            ToolEnvelope.ResponseTooLarge,
+                            "発行したハンドルが応答の枠に収まらない: " + drawn
+                                + "(枠は " + most + ")"));
+
+                        return;
+                    }
+
+                    results.Add(result);
                 }
 
                 stage = Reflecting(call.Receiver, target, stage);
@@ -908,9 +951,9 @@ namespace PmxEditorMcp
                 return Written(call, result);
             }
 
-            if (call.Issues != null)
+            if (issues)
             {
-                return Issued(context, call, result, called);
+                return Issued(context, call, results, called);
             }
 
             if (call.Projected != null)
@@ -921,6 +964,76 @@ namespace PmxEditorMcp
             return call.Result == null
                 ? ToolEnvelope.Success(null)
                 : Written(call.Result, result);
+        }
+
+        /// <summary>
+        /// 応答へ収められるハンドルの数。ハンドルはIDの整数1つとして写るので、1件ぶんを、intの
+        /// 十進表記の最大の桁数と区切りの1文字を合わせた長さとする。
+        /// </summary>
+        private static int Most(McpMethodContext context)
+        {
+            int most = ResponseSize.ValueChars(context.BudgetChars) / HandleChars;
+
+            return most < 1 ? 1 : most;
+        }
+
+        /// <summary>その呼び出し1度が作った生成物の数。並びを返す行では、その並びの件数になる。</summary>
+        private static int Drawn(ToolCall call, object result)
+        {
+            if (!call.ReturnsMany)
+            {
+                return 1;
+            }
+
+            System.Collections.ICollection listed = result as System.Collections.ICollection;
+            if (listed != null)
+            {
+                return listed.Count;
+            }
+
+            int drawn = 0;
+            System.Collections.IEnumerable row = result as System.Collections.IEnumerable;
+            if (row != null)
+            {
+                foreach (object one in row)
+                {
+                    drawn++;
+                }
+            }
+
+            return drawn;
+        }
+
+        /// <summary>
+        /// 頼まれた数だけ繰り返した生成物をまとめて台帳へ預け、そのハンドルの並びを返す。途中で
+        /// 断るときは、その呼び出しで預けたぶんを台帳から戻す——応答を返さない呼び出しのハンドルは
+        /// 誰も受け取らないので、解放を頼む相手が居ない。
+        /// </summary>
+        private object Issued(
+            McpMethodContext context, ToolCall call, IList<object> results, object receiver)
+        {
+            int issuedBefore = context.Handles.LastIssuedId;
+            List<object> issued = new List<object>(results.Count);
+            foreach (object result in results)
+            {
+                IList<object> made;
+                IDictionary<string, object> refused;
+                if (!TryMade(call, result, out made, out refused))
+                {
+                    context.Handles.ReleaseIssuedAfter(issuedBefore);
+
+                    return refused;
+                }
+
+                foreach (object one in made)
+                {
+                    issued.Add(One(context, call, one, receiver, 0, null));
+                }
+            }
+
+            return call.RespondsMany
+                ? ToolEnvelope.Success(issued.ToArray())
+                : ToolEnvelope.Success(issued[0]);
         }
 
         /// <summary>

@@ -147,7 +147,7 @@ namespace PmxEditorMcp.SignatureDump
                 SelectedBranches(schemas, map, signatures, toolNames, shapesByType);
             IDictionary<string, string> projections =
                 Projections(map, signatures, byType, toolNames);
-            ISet<string> responding = Responding(map, signatures, toolNames);
+            ISet<string> responding = Responding(map, signatures, toolNames, roleOf);
 
             foreach (ToolMapRow row in map.Rows.OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
             {
@@ -270,12 +270,14 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 応答をハンドルの並びで返すツールの名前。呼び分けのどれかが並びを預けるなら、どの
-        /// 呼び分けでも並びで返す——選んだ呼び分けで応答の形が変わらないようにする。
+        /// 呼び分けでも並びで返す——選んだ呼び分けで応答の形が変わらないようにする。頼まれた数だけ
+        /// 発行できる行も並びで返す——数によって応答の形が変わらないようにする。
         /// </summary>
         private static ISet<string> Responding(
             ToolMap map,
             IDictionary<string, SignatureRecord> signatures,
-            IDictionary<string, string> toolNames)
+            IDictionary<string, string> toolNames,
+            IDictionary<string, TypeRole> roleOf)
         {
             HashSet<string> responding = new HashSet<string>(StringComparer.Ordinal);
             foreach (ToolMapRow row in map.Rows)
@@ -283,10 +285,15 @@ namespace PmxEditorMcp.SignatureDump
                 SignatureRecord signature;
                 string tool;
                 string element;
-                if (signatures.TryGetValue(row.SignatureKey, out signature)
-                    && toolNames.TryGetValue(row.SignatureKey, out tool)
-                    && HandleIssuanceEvidence.Issues(row, signature)
-                    && ValueTypeName.TryElement(signature.ValueType, out element))
+                if (!signatures.TryGetValue(row.SignatureKey, out signature)
+                    || !toolNames.TryGetValue(row.SignatureKey, out tool))
+                {
+                    continue;
+                }
+
+                if ((HandleIssuanceEvidence.Issues(row, signature)
+                        && ValueTypeName.TryElement(signature.ValueType, out element))
+                    || HandleIssuanceEvidence.Batches(row, signature, roleOf))
                 {
                     responding.Add(tool);
                 }

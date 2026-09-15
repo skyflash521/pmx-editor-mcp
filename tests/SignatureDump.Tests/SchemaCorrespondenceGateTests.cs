@@ -405,6 +405,71 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
         }
 
+        /// <summary>ハンドルの発行を効果に持つ行を1つだけ持つ能力対応表。</summary>
+        private static string MakingMap()
+        {
+            return @"{ ""rows"": [{ ""signatureKey"": """ + Key + @""",
+                ""editKind"": ""read"", ""basis"": ""根拠。"",
+                ""postcondition"": [{ ""effectType"": ""handleCreated"", ""effectKey"": """",
+                  ""kind"": ""handle"", ""comparison"": ""exists"",
+                  ""observerTool"": """ + Tool + @""",
+                  ""observerArgs"": { ""handles"": ""result:"" } }] }] }";
+        }
+
+        /// <summary>頼まれた数だけ発行するツール1件。入力と応答を差し替えられる。</summary>
+        private static string MakingTool(string count, string output)
+        {
+            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                  { ""name"": ""distance"",
+                    ""required"": true }" + count + @"] }],
+                ""output"": " + output + "}] }";
+        }
+
+        private const string MadeCount =
+            @", { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
+                 ""required"": false }";
+
+        private const string MadeHandles =
+            @"{ ""origin"": ""hostOutput"",
+                ""element"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }";
+
+        [Fact]
+        public void AcceptsAToolThatTakesTheCountAndRespondsWithTheHandlesInARow()
+        {
+            Require(MakingTool(MadeCount, MadeHandles), MakingMap(), TypeRole.Connector);
+        }
+
+        [Fact]
+        public void RejectsAToolThatMakesHandlesWithoutTakingTheCount()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    MakingTool(string.Empty, MadeHandles),
+                    MakingMap(),
+                    TypeRole.Connector));
+
+            Assert.Contains(
+                "発行する数を受け取らない呼び分けがある",
+                error.Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsAToolThatMakesHandlesWithoutRespondingInARow()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    MakingTool(MadeCount, @"{ ""origin"": ""hostOutput"", ""shape"": ""number"" }"),
+                    MakingMap(),
+                    TypeRole.Connector));
+
+            Assert.Contains(
+                "発行したハンドルを並びで返さない",
+                error.Message,
+                StringComparison.Ordinal);
+        }
+
         [Fact]
         public void AcceptsASchemaThatCoversTheArgumentsAndTheReturnValue()
         {

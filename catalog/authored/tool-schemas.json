@@ -1307,27 +1307,57 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_bone",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_bone_morph_offset",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "filled",
@@ -1349,18 +1379,36 @@
             {
               "name": "rotation",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_bone_node_item",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "filled",
@@ -1374,11 +1422,21 @@
             {
               "name": "bone",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_clear_material_morph_offset",
@@ -1685,10 +1743,21 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_from_file_pmx",
@@ -1976,7 +2045,15 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "filled",
@@ -1994,18 +2071,36 @@
             {
               "name": "ratio",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_ik_link",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "bone",
@@ -2019,6 +2114,13 @@
             {
               "name": "bone",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         },
@@ -2042,18 +2144,36 @@
             {
               "name": "high",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_impulse_morph_offset",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "filled",
@@ -2079,21 +2199,42 @@
             {
               "name": "torque",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_joint",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_list_bodies",
@@ -5645,37 +5786,78 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_material_morph_offset",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_morph",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_morph_node_item",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "filled",
@@ -5689,11 +5871,21 @@
             {
               "name": "morph",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_move",
@@ -5744,10 +5936,21 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_normalize_pmx",
@@ -5774,10 +5977,21 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_remove_bodies",
@@ -7466,20 +7680,42 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_soft_body_anchor",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_spray_off",
@@ -14956,7 +15192,15 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "filled",
@@ -14974,28 +15218,57 @@
             {
               "name": "offset",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_vertex",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "model_vertex_morph_offset",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "filled",
@@ -15013,11 +15286,21 @@
             {
               "name": "offset",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_add_bone_vme",
@@ -17006,7 +17289,15 @@
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "named",
@@ -17020,38 +17311,78 @@
               "name": "morphNames",
               "required": true,
               "element": {}
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vmd_bas_camera_key",
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vmd_bone_key",
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vmd_bone_pose_state",
       "branches": [
         {
           "branch": "plain",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         },
         {
           "branch": "bone",
@@ -17063,6 +17394,13 @@
             {
               "name": "boneIndex",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         },
@@ -17077,6 +17415,13 @@
               "name": "boneIndices",
               "required": true,
               "element": {}
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
@@ -17091,70 +17436,147 @@
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vmd_light_key",
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vmd_morph_key",
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vmd_self_shadow_key",
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vme",
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vme_group",
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_create_vme_path",
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
+            }
+          ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "motion_cs_vme_camera_position",
@@ -30872,11 +31294,21 @@
               "origin": "hostInput",
               "shape": "number",
               "injected": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "session_find_c_plugins",
@@ -31621,11 +32053,21 @@
             {
               "name": "transform",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "session_release_handle",
@@ -32182,11 +32624,21 @@
             {
               "name": "f",
               "required": true
+            },
+            {
+              "name": "count",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1
             }
           ]
         }
       ],
-      "output": {}
+      "output": {
+        "origin": "hostOutput",
+        "element": {}
+      }
     },
     {
       "tool": "view_create_view_event_listener_event_connector",

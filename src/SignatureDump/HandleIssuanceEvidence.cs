@@ -71,6 +71,36 @@ namespace PmxEditorMcp.SignatureDump
             return new ReadOnlyDictionary<string, HandleIssuanceKind>(candidates);
         }
 
+        /// <summary>
+        /// その行が、1回の呼び出しで頼まれた数だけ発行できるか。コネクタから作る行と公開の
+        /// コンストラクタが当たる。受け手に紐づく発行は当たらない——受け手1件につき1個を発行する
+        /// ので、発行する数は受け手の件数が決める。
+        /// </summary>
+        public static bool Batches(
+            ToolMapRow row, SignatureRecord signature, IDictionary<string, TypeRole> roles)
+        {
+            if (roles == null)
+            {
+                throw new ArgumentNullException(nameof(roles));
+            }
+
+            if (!Issues(row, signature))
+            {
+                return false;
+            }
+
+            if (signature.MemberKind == MemberKind.Constructor)
+            {
+                return true;
+            }
+
+            TypeRole role;
+
+            return roles.TryGetValue(
+                    TypeDefinitionName.Of(signature.DeclaringType), out role)
+                && role == TypeRole.Connector;
+        }
+
         private static bool TryClassify(
             SignatureRecord signature,
             IDictionary<string, TypeRole> roles,

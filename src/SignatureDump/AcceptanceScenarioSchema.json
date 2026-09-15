@@ -50,7 +50,7 @@
           "properties": {
             "name": { "type": "string", "minLength": 1 },
             "path": { "type": "string" },
-            "shape": { "enum": ["number", "image"] }
+            "shape": { "enum": ["number", "numbers", "image"] }
           },
           "required": ["name", "path", "shape"],
           "additionalProperties": false

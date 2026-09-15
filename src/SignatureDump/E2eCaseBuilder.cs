@@ -412,7 +412,7 @@ namespace PmxEditorMcp.SignatureDump
                             handed
                                 ? Leaf(HandlesName)
                                 : Leaf(AssignmentsName + "/0/" + HandlesName),
-                            pair.Key
+                            Borrowed(pair.Key, byTool[pair.Value])
                         },
                     });
             }
@@ -428,6 +428,24 @@ namespace PmxEditorMcp.SignatureDump
         private static string Leaf(string path)
         {
             return path + "/0";
+        }
+
+        /// <summary>
+        /// 覚えた応答から、ハンドル1つを指す道。応答を並びで返すツールは、出たハンドルもその並びの
+        /// 中へ入れるので、借りるのはその先頭である。
+        /// </summary>
+        private static string Borrowed(string name, ToolSchema making)
+        {
+            return making != null && making.Output != null && making.Output.Element != null
+                ? Leaf(name)
+                : name;
+        }
+
+        /// <summary>その名前のツールの入出力の形。持たない名前では null。</summary>
+        private static ToolSchema Of(ToolSchemaTable schemas, string tool)
+        {
+            return schemas.Tools.FirstOrDefault(
+                t => string.Equals(t.Tool, tool, StringComparison.Ordinal));
         }
 
         /// <summary>ハンドルの並びだけを渡す引数。ハンドルは借りる側が埋める。</summary>
@@ -570,7 +588,7 @@ namespace PmxEditorMcp.SignatureDump
                     calls = true;
                     borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
                     {
-                        { Leaf(HandlesName), rowKey },
+                        { Leaf(HandlesName), Borrowed(rowKey, Of(schemas, maker)) },
                     };
                 }
             }
@@ -637,7 +655,7 @@ namespace PmxEditorMcp.SignatureDump
             foreach (Postcondition judgement in reads ? compared : new Postcondition[0])
             {
                 foreach (E2eCase one in
-                    Prepared(judgement, rowKey, editKind, path, adders, factories))
+                    Prepared(judgement, schemas, rowKey, editKind, path, adders, factories))
                 {
                     yield return one;
                 }
@@ -981,6 +999,7 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private static IEnumerable<E2eCase> Prepared(
             Postcondition judgement,
+            ToolSchemaTable schemas,
             string rowKey,
             string editKind,
             string path,
@@ -993,7 +1012,7 @@ namespace PmxEditorMcp.SignatureDump
                 if (operation.Tag == SetupTag.AddElement)
                 {
                     foreach (E2eCase one in
-                        Adding(operation, rowKey, editKind, path, adders, factories))
+                        Adding(operation, schemas, rowKey, editKind, path, adders, factories))
                     {
                         yield return one;
                     }
@@ -1022,6 +1041,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>要素を1つ作って並びへ加える段。作る手立ての無い要素型を指す判定は組み立てない。</summary>
         private static IEnumerable<E2eCase> Adding(
             SetupOperation operation,
+            ToolSchemaTable schemas,
             string rowKey,
             string editKind,
             string path,
@@ -1066,7 +1086,7 @@ namespace PmxEditorMcp.SignatureDump
                 null,
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
-                    { Leaf(HandlesName), held },
+                    { Leaf(HandlesName), Borrowed(held, Of(schemas, making)) },
                 });
         }
 

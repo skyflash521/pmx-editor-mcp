@@ -152,7 +152,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
-                    + Held + ".Drop()\", false)",
+                    + Held + ".Drop()\", false, false, true)",
                 source.Text);
         }
 
@@ -190,7 +190,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Issuing("session_make_it", Method("MakeIt", Held)));
 
             Assert.Contains(
-                "typeof(global::" + Held + "), typeof(global::" + Held + "))", source.Text);
+                "typeof(global::" + Held + "), typeof(global::" + Held
+                    + "), null, null, false, false, true)",
+                source.Text);
         }
 
         [Fact]
@@ -202,7 +204,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
-                    + Form + ".LetGo(" + Held + ")\", true)",
+                    + Form + ".LetGo(" + Held + ")\", true, false, true)",
                 source.Text);
         }
 

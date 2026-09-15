@@ -18,6 +18,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + @"""limit"":{""type"":""number"",""minimum"":1}},""required"":[""all""],"
                 + @"""additionalProperties"":false}";
 
+        private const string Adding = "model_add_vertices";
+
+        private const string AddingSchema =
+            @"{""type"":""object"",""properties"":{""handles"":{""type"":""array"","
+                + @"""items"":{""type"":""number""},""minItems"":1}},"
+                + @"""required"":[""handles""],""additionalProperties"":false}";
+
         [Fact]
         public void AScenarioThatCallsARegisteredToolWithArgumentsItsSchemaAcceptsIsAccepted()
         {
@@ -102,6 +109,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + @"""expect"":{""ok"":true}}";
 
             Require(Scenario(Task, recording + "," + borrowing));
+        }
+
+        [Fact]
+        public void AStepThatBorrowsARowOfNumbersIntoAnInputThatTakesARowIsAccepted()
+        {
+            string recording = @"{""kind"":""tool"",""tool"":""" + Listing
+                + @""",""arguments"":{""all"":true},""expect"":{""ok"":true},"
+                + @"""record"":{""name"":""made"",""path"":"""",""shape"":""numbers""}}";
+            string borrowing = @"{""kind"":""tool"",""tool"":""" + Adding
+                + @""",""arguments"":{""handles"":{""$from"":""made""}},"
+                + @"""expect"":{""ok"":true}}";
+
+            Require(Scenario(Task, recording + "," + borrowing));
+        }
+
+        [Fact]
+        public void AStepThatBorrowsARowOfNumbersIntoAnInputThatTakesOneNumberIsRejected()
+        {
+            string recording = @"{""kind"":""tool"",""tool"":""" + Listing
+                + @""",""arguments"":{""all"":true},""expect"":{""ok"":true},"
+                + @"""record"":{""name"":""made"",""path"":"""",""shape"":""numbers""}}";
+            string borrowing = @"{""kind"":""tool"",""tool"":""" + Listing
+                + @""",""arguments"":{""all"":true,""limit"":{""$from"":""made""}},"
+                + @"""expect"":{""ok"":true}}";
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(Scenario(Task, recording + "," + borrowing)));
+
+            Assert.Contains(Listing, error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -191,7 +226,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static IList<ToolDefinition> Definitions()
         {
-            return new[] { new ToolDefinition(Listing, "頂点の一覧", ListingSchema, false) };
+            return new[]
+            {
+                new ToolDefinition(Listing, "頂点の一覧", ListingSchema, false),
+                new ToolDefinition(Adding, "頂点の追加", AddingSchema, false),
+            };
         }
 
         private static ISet<string> Fixed()

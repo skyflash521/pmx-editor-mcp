@@ -81,6 +81,13 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRole> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
 
+            HashSet<string> batching = new HashSet<string>(
+                map.Rows
+                    .Where(r => toolNames.ContainsKey(r.SignatureKey)
+                        && HandleIssuanceEvidence.Batches(r, signatures[r.SignatureKey], byType))
+                    .Select(r => toolNames[r.SignatureKey]),
+                StringComparer.Ordinal);
+
             foreach (ToolMapRow row in map.Rows
                 .Where(r => toolNames.ContainsKey(r.SignatureKey))
                 .OrderBy(r => r.SignatureKey, StringComparer.Ordinal))
@@ -101,6 +108,11 @@ namespace PmxEditorMcp.SignatureDump
                 if (issuing.Contains(row.SignatureKey))
                 {
                     RequireDerivedIssuanceLimit(schema);
+                }
+
+                if (batching.Contains(tool))
+                {
+                    RequireBatchedIssuance(schema);
                 }
             }
 
@@ -251,6 +263,29 @@ namespace PmxEditorMcp.SignatureDump
 
                 throw new InvalidOperationException(
                     "発行する数の上限は導く値なので書かない: " + schema.Tool);
+            }
+        }
+
+        /// <summary>
+        /// 頼まれた数だけ発行できる行のツールが、発行する数をどの呼び分けでも受け取り、ハンドルを
+        /// 並びで返すことを求める。数を受け取らなければ、要素の数だけ呼び出しの往復が要る。並びで
+        /// 返さなければ、数を渡したときに2個目から先を受け取る場所が無い。
+        /// </summary>
+        private static void RequireBatchedIssuance(ToolSchema schema)
+        {
+            foreach (SchemaBranch branch in schema.Branches)
+            {
+                if (!HasDirectInput(branch, CountName))
+                {
+                    throw new InvalidOperationException(
+                        "発行する数を受け取らない呼び分けがある: " + schema.Tool);
+                }
+            }
+
+            if (schema.Output == null || schema.Output.Element == null)
+            {
+                throw new InvalidOperationException(
+                    "発行したハンドルを並びで返さない: " + schema.Tool);
             }
         }
 

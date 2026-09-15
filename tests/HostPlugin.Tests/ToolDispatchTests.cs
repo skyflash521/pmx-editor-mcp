@@ -558,6 +558,139 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AToolThatRespondsInARowMakesAsManyThingsAsAsked()
+        {
+            Target made = new Target();
+            _target.Made = made;
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_one")(
+                    new McpMethodContext(
+                        Arguments("count", 3L), new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            object[] handed = (object[])envelope[ToolEnvelope.ValueName];
+            Assert.Equal(3, handed.Length);
+            Assert.Equal(3, handed.Distinct().Count());
+            foreach (object one in handed)
+            {
+                object held;
+                Assert.True(ledger.TryGet((int)one, typeof(Target).FullName, out held));
+                Assert.Same(made, held);
+            }
+        }
+
+        [Fact]
+        public void EachThingOfAnIssuedRowIsMadeAsManyTimesAsAsked()
+        {
+            _target.Twins = new[] { new Target(), new Target() };
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_many")(
+                    new McpMethodContext(
+                        Arguments("count", 2L), new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.Equal(4, ((object[])envelope[ToolEnvelope.ValueName]).Length);
+        }
+
+        [Fact]
+        public void AskingForNoneOfAThingIsRefusedWithNoHandleLeftInTheLedger()
+        {
+            _target.Made = new Target();
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_one")(
+                    new McpMethodContext(
+                        Arguments("count", 0L), new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("count は 1 以上", Message(envelope));
+            Assert.Equal(0, ledger.LastIssuedId);
+        }
+
+        [Fact]
+        public void AskingForMoreThingsThanTheAnswerCanCarryIsRefused()
+        {
+            _target.Made = new Target();
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_one")(
+                    new McpMethodContext(
+                        Arguments("count", 728L), new InlineInvoker(), 10000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("count は 727 以下", Message(envelope));
+            Assert.Equal(0, ledger.LastIssuedId);
+        }
+
+        [Fact]
+        public void ARowThatMakesManyAtOnceStopsWhenTheAnswerCanCarryNoMore()
+        {
+            Target[] twins = new Target[728];
+            for (int at = 0; at < twins.Length; at++)
+            {
+                twins[at] = new Target();
+            }
+
+            _target.Twins = twins;
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_many")(
+                    new McpMethodContext(
+                        Arguments("count", 2L), new InlineInvoker(), 10000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.ResponseTooLarge, Code(envelope));
+            Assert.Equal(0, ledger.LastIssuedId);
+        }
+
+        [Fact]
+        public void ARowThatMakesManyAtOnceIsAlsoCheckedOnItsLastTurn()
+        {
+            Target[] twins = new Target[400];
+            for (int at = 0; at < twins.Length; at++)
+            {
+                twins[at] = new Target();
+            }
+
+            _target.Twins = twins;
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_many")(
+                    new McpMethodContext(
+                        Arguments("count", 2L), new InlineInvoker(), 10000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.ResponseTooLarge, Code(envelope));
+            Assert.Equal(0, ledger.LastIssuedId);
+        }
+
+        [Fact]
+        public void ACallThatRespondsWithOneHandleDoesNotTakeACount()
+        {
+            Target source = new Target { Made = new Target() };
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Target).FullName, source, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held")(
+                    new McpMethodContext(
+                        Arguments("source", 1L, "count", 2L),
+                        new InlineInvoker(),
+                        100000,
+                        ledger,
+                        Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("count", Message(envelope));
+        }
+
+        [Fact]
         public void AGapInAnIssuedRowIsRefusedWithNoHandleLeftInTheLedger()
         {
             _target.Twins = new Target[] { new Target(), null };
