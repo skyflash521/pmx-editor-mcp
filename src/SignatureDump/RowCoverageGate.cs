@@ -79,11 +79,24 @@ namespace PmxEditorMcp.SignatureDump
                     .Where(c => Reaching(c.Expectation) && !string.IsNullOrEmpty(c.RowKey))
                     .Select(c => c.RowKey),
                 StringComparer.Ordinal);
+            HashSet<string> arrived = new HashSet<string>(
+                cases
+                    .Where(c => Reached(c.Expectation) && !string.IsNullOrEmpty(c.RowKey))
+                    .Select(c => c.RowKey),
+                StringComparer.Ordinal);
+            HashSet<string> reachedTools = new HashSet<string>(
+                cases.Where(c => Reached(c.Expectation)).Select(c => c.Tool),
+                StringComparer.Ordinal);
             HashSet<string> assigned = new HashSet<string>(
                 assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal);
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
             IDictionary<string, ISet<string>> byOwner = ToolsByOwner(toolsByRow, signatures);
+            foreach (ToolMapRow row in map.Rows.Where(r => !assigned.Contains(r.SignatureKey)))
+            {
+                RequireReachedOrExplained(row, toolsByRow, arrived, reachedTools);
+            }
+
             string[] uncovered = map.Rows
                 .Where(r => !assigned.Contains(r.SignatureKey))
                 .Where(r => !Covered(
@@ -104,6 +117,40 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 自分の名前のツールを持つ行は、呼び先まで届く検査を持つか、届かせられない理由を述べる。
+        /// 理由を書かせるのは、届かせていない行が届かせられない行に紛れないようにするためである
+        /// ——紛れると、値を足せば届く行が足されないまま残る。多重定義が同じ名前を共有する行だけは
+        /// 名指しできないので、その名前の検査で見る。
+        /// </summary>
+        private static void RequireReachedOrExplained(
+            ToolMapRow row,
+            IDictionary<string, string> toolsByRow,
+            ISet<string> arrived,
+            ISet<string> reachedTools)
+        {
+            string dispatched;
+            if (!toolsByRow.TryGetValue(row.SignatureKey, out dispatched)
+                || row.Basis.IndexOf(
+                    E2eCaseBuilder.UnreachableReason, StringComparison.Ordinal) >= 0)
+            {
+                return;
+            }
+
+            bool alone = toolsByRow.Count(t => string.Equals(
+                t.Value, dispatched, StringComparison.Ordinal)) == 1;
+            if (alone
+                ? arrived.Contains(row.SignatureKey)
+                : reachedTools.Contains(dispatched))
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                "呼び先まで届く検査も、届かせられない理由も持たない行がある: " + row.SignatureKey
+                    + "(根拠へ「" + E2eCaseBuilder.UnreachableReason + "」を含む一文を書く)");
+        }
+
+        /// <summary>
         /// その結末が、行の振る舞いを確かめたことを示すか。どんな応答でも通ってしまう結末だけが
         /// 偽である——呼び先が在ることしか見ない検査は、引数の不足で断られた応答も通すので、
         /// 何も確かめないまま覆った扱いになる。決まった断り方を求める検査は、その行のツールが
@@ -112,6 +159,13 @@ namespace PmxEditorMcp.SignatureDump
         private static bool Reaching(E2eExpectation expectation)
         {
             return expectation != E2eExpectation.Dispatched;
+        }
+
+        /// <summary>その結末が、呼び先まで届いたことを示すか。入口で断られる検査は届いていない。</summary>
+        private static bool Reached(E2eExpectation expectation)
+        {
+            return expectation != E2eExpectation.Dispatched
+                && expectation != E2eExpectation.Refusal;
         }
 
         /// <summary>型の名前から、その型が宣言する行のツールの名前へ。</summary>

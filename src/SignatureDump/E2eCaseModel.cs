@@ -132,13 +132,14 @@ namespace PmxEditorMcp.SignatureDump
         public string View { get; }
 
         /// <summary>
-        /// 返った値を覚えておく名前。あとの検査がこの名前で借りる。覚えない検査は null。
+        /// 返った値を覚えておく名前。あとの検査はこの名前から借りる。覚えない検査は null。
         /// </summary>
         public string Produces { get; }
 
         /// <summary>
-        /// 引数の中の道から、覚えた値の名前へ。道は斜線で区切り、たどり着いた位置へ覚えた値が
-        /// そのまま入る。借りない検査は null。
+        /// 引数の中の道から、借りる元の道へ。どちらも斜線で区切る。借りる元は覚えた値の名前で
+        /// 始まり、続く段はその値の中を指す——指した先の値が、引数の道の行き着く位置へ入る。
+        /// 借りない検査は null。
         /// </summary>
         public IDictionary<string, string> Borrowed { get; }
 

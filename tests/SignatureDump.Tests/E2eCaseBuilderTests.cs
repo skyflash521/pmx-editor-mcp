@@ -269,6 +269,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolThatAnswersInAListLendsTheFirstOfTheAnswer()
+        {
+            IList<E2eCase> cases = Observed(
+                Handle("model_list_things", "handles"),
+                Listing("model_make_things"),
+                Observing("model_list_things", "handles", listed: true));
+
+            E2eCase call = Assert.Single(
+                cases,
+                c => c.Tool == "model_make_things" && c.Expectation == E2eExpectation.Called);
+            E2eCase drawn = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            E2eCase released = Assert.Single(
+                cases,
+                c => c.Tool == "session_release_handle"
+                    && c.Expectation == E2eExpectation.Success);
+
+            Assert.Equal(RowKey, call.Produces);
+            Assert.Equal(RowKey + "/0", drawn.Borrowed["handles/0"]);
+            Assert.Equal(RowKey + "/0", released.Borrowed["handles/0"]);
+        }
+
+        [Fact]
         public void TheObservationCarriesTheRowThatAskedForIt()
         {
             IList<E2eCase> cases = Observed(
@@ -806,6 +830,36 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ARowThatNeedsAHeldTargetIsGivenOneThatIsMadeFirst()
+        {
+            ToolSchema maker = Tool("model_make_bone", new SchemaItem[0]);
+            ToolSchema taker = Tool("model_bend_bones", Handles());
+            IList<E2eCase> cases = Making(maker, taker, "Sdk.Bone");
+
+            E2eCase made = Assert.Single(
+                cases, c => c.Tool == maker.Tool && c.Expectation == E2eExpectation.Success);
+            E2eCase called = Assert.Single(
+                cases, c => c.Tool == taker.Tool && c.Expectation == E2eExpectation.Called);
+
+            Assert.NotNull(made.Produces);
+            Assert.Equal(made.Produces, called.Borrowed["handles/0"]);
+            Assert.Equal(new object[] { null }, (object[])called.Arguments["handles"]);
+            Assert.True(cases.IndexOf(made) < cases.IndexOf(called));
+        }
+
+        [Fact]
+        public void ARowWhoseHeldTypeHasNoMakerIsOnlyCheckedForHavingSomethingBehindIt()
+        {
+            ToolSchema taker = Tool("model_bend_bones", Handles());
+            IList<E2eCase> cases = Making(null, taker, "Sdk.Bone");
+
+            Assert.DoesNotContain(
+                cases, c => c.Tool == taker.Tool && c.Expectation == E2eExpectation.Called);
+            Assert.Contains(
+                cases, c => c.Tool == taker.Tool && c.Expectation == E2eExpectation.Dispatched);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             ToolSchemaTable schemas = new ToolSchemaTable(new ToolSchema[0]);
@@ -889,6 +943,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 name,
                 new[] { new SchemaBranch("only", null, null, inputs, new SchemaChoice[0]) },
                 Output(),
+                null);
+        }
+
+        /// <summary>応答を並びで返すツール。出たハンドルはその並びの先頭に入る。</summary>
+        private static ToolSchema Listing(string name)
+        {
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch("only", null, null, new SchemaItem[0], new SchemaChoice[0]),
+                },
+                new SchemaItem(
+                    null, null, Output(), null, ItemOrigin.HostOutput, null, null, false,
+                    null, null, null, false, null),
                 null);
         }
 
@@ -1118,6 +1187,55 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static SchemaItem Only(ToolSchema schema)
         {
             return schema.Branches[0].Inputs.Single();
+        }
+
+        /// <summary>
+        /// 受け手をハンドルで要るツールと、その型を作るツールで検査を組み立てる。
+        /// <paramref name="maker"/> が null なら、その型を作るツールを持たない場を作る。
+        /// </summary>
+        private static IList<E2eCase> Making(ToolSchema maker, ToolSchema taker, string held)
+        {
+            IList<ToolSchema> tools = maker == null
+                ? new[] { taker }
+                : new[] { maker, taker };
+            IDictionary<string, string> named =
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { RowKey, taker.Tool },
+                };
+            IList<ToolMapRow> rows = new List<ToolMapRow>
+            {
+                new ToolMapRow(RowKey, ToolMapEditKind.Read, null, "触る。", null, null, null),
+            };
+            if (maker != null)
+            {
+                named["Sdk.Type.Make()"] = maker.Tool;
+                rows.Add(new ToolMapRow(
+                    "Sdk.Type.Make()", ToolMapEditKind.Read, null, "作る。", null, null, null));
+            }
+
+            return E2eCaseBuilder.Build(
+                new ToolMap(rows),
+                new ToolSchemaTable(tools),
+                named,
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes(),
+                new Dictionary<SchemaItem, string> { { Held(taker), held } },
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new HashSet<string>(new[] { held }, StringComparer.Ordinal),
+                null,
+                maker == null
+                    ? null
+                    : new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { RowKey, maker.Tool },
+                    });
         }
 
         /// <summary>その並びのツールを、どれも呼び先まで届く行として持つ能力対応表。</summary>

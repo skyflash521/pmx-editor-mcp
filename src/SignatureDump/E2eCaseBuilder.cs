@@ -31,6 +31,13 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ハンドルの並びを受け取る入力の名前。</summary>
         public const string HandlesName = "handles";
 
+        /// <summary>
+        /// 呼び先まで届かせられないと述べる言い回し。届かせる手立てが無い行は、そう書いて初めて
+        /// 覆いの判定から外れる。書いてある行へは受け手も作らない——作って呼べば、確かめているのは
+        /// 宣言した振る舞いでなくその失敗になる。
+        /// </summary>
+        public const string UnreachableReason = "呼び先まで届かせられない";
+
         /// <summary>ハンドルを台帳から外すツールの名前。共通契約が名前を定める。</summary>
         private const string ReleaseToolName = "session_release_handle";
 
@@ -133,7 +140,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> readers = null,
             IDictionary<string, ISet<string>> unkept = null,
             ISet<string> handled = null,
-            ISet<string> picking = null)
+            ISet<string> picking = null,
+            IDictionary<string, string> makers = null)
         {
             if (map == null)
             {
@@ -225,7 +233,8 @@ namespace PmxEditorMcp.SignatureDump
                     Sampled(sdkTypes, samples),
                     given,
                     refused,
-                    Handles(schema, sdkTypes, handled)));
+                    Handles(schema, sdkTypes, handled),
+                    Maker(row, makers, schemas)));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -470,7 +479,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<SchemaItem, object> sampled,
             IDictionary<string, IDictionary<string, object>> given,
             IDictionary<string, SampleCallRow> refused,
-            IEnumerable<SchemaItem> handed)
+            IEnumerable<SchemaItem> handed,
+            string maker)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -492,6 +502,22 @@ namespace PmxEditorMcp.SignatureDump
             if (calls && confirmed)
             {
                 calling = Confirmed(calling);
+            }
+
+            // 受け手をハンドルで要る行は、それだけを理由に呼ばれないままだった。その型を作る
+            // ツールが在るなら、1つ作ってから借りて渡せば呼び先まで届く。
+            IDictionary<string, string> borrowing = null;
+            if (!calls && row != null && !confirmed && maker != null)
+            {
+                calling = Lent();
+                if (TryFill(schema, sdkShapes, sampled, calling))
+                {
+                    calls = true;
+                    borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { Leaf(HandlesName), rowKey },
+                    };
+                }
             }
             if (!calls)
             {
@@ -522,6 +548,27 @@ namespace PmxEditorMcp.SignatureDump
             // 断られることを確かめる呼び出しは、断られた時点でハンドルを出さない。その行の観測は
             // 借りるものを持たないので組み立てない。
             bool draws = calls && !denies && drawn.Length != 0;
+
+            // 応答を並びで返すツールは、出たハンドルもその並びの中へ入れる。この検査が一度に
+            // 相手取るのは1つなので、借りるのはその先頭である。
+            string held = schema.Output != null && schema.Output.Element != null
+                ? Leaf(rowKey)
+                : rowKey;
+            if (borrowing != null)
+            {
+                yield return new E2eCase(
+                    rowKey,
+                    editKind,
+                    path,
+                    maker,
+                    "呼び出しの相手を1つ作れること",
+                    new Dictionary<string, object>(StringComparer.Ordinal),
+                    E2eExpectation.Success,
+                    null,
+                    null,
+                    rowKey);
+            }
+
             if (calls)
             {
                 yield return new E2eCase(
@@ -539,14 +586,14 @@ namespace PmxEditorMcp.SignatureDump
                     denies ? refused[rowKey].Refused : null,
                     null,
                     draws ? rowKey : null,
-                    null,
+                    borrowing,
                     null,
                     denies ? refused[rowKey].Says : null,
                     denies ? null : wrote);
 
                 foreach (Postcondition judgement in draws ? drawn : new Postcondition[0])
                 {
-                    yield return Drawing(judgement, schemas, rowKey, editKind, path);
+                    yield return Drawing(judgement, schemas, rowKey, editKind, path, held);
                 }
 
                 if (draws)
@@ -564,7 +611,7 @@ namespace PmxEditorMcp.SignatureDump
                         null,
                         new Dictionary<string, string>(StringComparer.Ordinal)
                         {
-                            { Leaf(HandlesName), rowKey },
+                            { Leaf(HandlesName), held },
                         });
                 }
             }
@@ -715,6 +762,31 @@ namespace PmxEditorMcp.SignatureDump
             return name;
         }
 
+        /// <summary>
+        /// その行の受け手を1つ作るツール。作るツールを持たない行では null——渡す相手が決まらない
+        /// 行は、呼び先が在ることしか確かめられない。作る側も対象を選ばずに呼べるものに限る
+        /// ——その作る側がまた受け手を要るなら、渡すものがここでは決まらない。
+        /// </summary>
+        private static string Maker(
+            ToolMapRow row, IDictionary<string, string> makers, ToolSchemaTable schemas)
+        {
+            string maker;
+            if (row == null || makers == null || !makers.TryGetValue(row.SignatureKey, out maker))
+            {
+                return null;
+            }
+
+            if (row.Basis.IndexOf(UnreachableReason, StringComparison.Ordinal) >= 0)
+            {
+                return null;
+            }
+
+            ToolSchema making = schemas.Tools.FirstOrDefault(
+                t => string.Equals(t.Tool, maker, StringComparison.Ordinal));
+
+            return making != null && Unchosen(making) != null ? maker : null;
+        }
+
         /// <summary>出たハンドルを観測すると宣言した判定。宣言しない行では空。</summary>
         private static IEnumerable<Postcondition> Drawn(ToolMapRow row)
         {
@@ -777,7 +849,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchemaTable schemas,
             string rowKey,
             string editKind,
-            string path)
+            string path,
+            string drawn)
         {
             IDictionary<string, object> arguments =
                 new Dictionary<string, object>(StringComparer.Ordinal);
@@ -788,7 +861,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 bool listed = taken.Value.Element != null;
                 arguments[taken.Key] = listed ? Slot() : null;
-                borrowed[listed ? Leaf(taken.Key) : taken.Key] = rowKey;
+                borrowed[listed ? Leaf(taken.Key) : taken.Key] = drawn;
             }
 
             ToolSchema observer = schemas.Tools.First(

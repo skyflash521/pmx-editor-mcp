@@ -496,8 +496,9 @@ function produced(response) {
 
 /**
  * 借りる値を差し込んだ引数。差し込む先は引数の中の道で、斜線で区切った各段をたどり、たどり着いた
- * 位置へ覚えた値をそのまま置く。並びで受け取る引数は生成器が空きを1つ置き、道がその中を指す。
- * 借りる名前をまだ覚えていなければ null。
+ * 位置へ覚えた値を置く。並びで受け取る引数は生成器が空きを1つ置き、道がその中を指す。借りる元も
+ * 斜線で位置を指せる——応答を並びで返すツールは、出たハンドルもその並びの中へ入れるので、その中の
+ * どれを借りるかを言う必要がある。借りる名前をまだ覚えていなければ null。
  */
 function borrowing(one, remembered) {
     if (one.borrowed === undefined) {
@@ -506,8 +507,18 @@ function borrowing(one, remembered) {
 
     const given = JSON.parse(JSON.stringify(one.arguments));
     for (const [path, from] of Object.entries(one.borrowed)) {
-        if (!remembered.has(from)) {
+        if (!remembered.has(from.split("/")[0])) {
             return null;
+        }
+
+        const taken = from.split("/");
+        let value = remembered.get(taken[0]);
+        for (let at = 1; at < taken.length; at++) {
+            if (value === null || typeof value !== "object") {
+                return null;
+            }
+
+            value = value[taken[at]];
         }
 
         const steps = path.split("/");
@@ -516,7 +527,7 @@ function borrowing(one, remembered) {
             held = held[steps[at]];
         }
 
-        held[steps[steps.length - 1]] = remembered.get(from);
+        held[steps[steps.length - 1]] = value;
     }
 
     return given;

@@ -129,6 +129,55 @@ namespace PmxEditorMcp.SignatureDump
             return factories;
         }
 
+        /// <summary>
+        /// 受け手をハンドルで要る行の行キーから、その受け手を1つ作るツールの名前へ。作るツールが
+        /// 1つに決まらない型は持たない——どれを使うかがここでは決められない。受け手の型は行の
+        /// 宣言型から取る。スキーマの側の型は呼び出しの引数だけを写すので、受け手は載らない。
+        /// </summary>
+        public IDictionary<string, string> HandleFactories(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            IDictionary<string, string> tools = ToolsByRow(inventory);
+            IDictionary<string, SignatureRecord> signatures = inventory.Signatures
+                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+            ISet<string> handled = HandledTypes();
+            Dictionary<string, string> makers =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (string typeName in handled)
+            {
+                string[] making = tools
+                    .Where(t => Makes(signatures, t.Key, typeName))
+                    .Select(t => t.Value)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+                if (making.Length == 1)
+                {
+                    makers[typeName] = making[0];
+                }
+            }
+
+            Dictionary<string, string> byRow =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, string> named in tools)
+            {
+                SignatureRecord signature;
+                string maker;
+                if (signatures.TryGetValue(named.Key, out signature)
+                    && makers.TryGetValue(
+                        TypeDefinitionName.Of(signature.DeclaringType), out maker)
+                    && !string.Equals(maker, named.Value, StringComparison.Ordinal))
+                {
+                    byRow[named.Key] = maker;
+                }
+            }
+
+            return byRow;
+        }
+
         /// <summary>その行が、その型の実体を引数無しで1つ作るか。</summary>
         private static bool Makes(
             IDictionary<string, SignatureRecord> signatures, string rowKey, string typeName)
