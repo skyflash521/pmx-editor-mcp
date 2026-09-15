@@ -247,6 +247,189 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Reads);
         }
 
+        [Fact(Skip = "impl pending: ハンドルを出す呼び出しの後に、そのハンドルを観測ツールで引く段を組み立てる")]
+        public void AHandlePostconditionDrawsTheCreatedHandleWithItsObserver()
+        {
+            IList<E2eCase> cases = Observed(
+                Handle("model_list_things", "handles"),
+                Tool("model_make_thing", new SchemaItem[0]),
+                Observing("model_list_things", "handles", listed: true));
+
+            E2eCase call = Assert.Single(
+                cases, c => c.Tool == "model_make_thing" && c.Expectation == E2eExpectation.Called);
+            E2eCase drawn = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+
+            Assert.NotNull(call.Produces);
+            Assert.Equal(new[] { "handles/0" }, drawn.Borrowed.Keys.ToArray());
+            Assert.Equal(call.Produces, drawn.Borrowed["handles/0"]);
+            Assert.Equal(new object[] { null }, (object[])drawn.Arguments["handles"]);
+            Assert.True(cases.IndexOf(call) < cases.IndexOf(drawn));
+        }
+
+        [Fact(Skip = "impl pending: 観測の段が、その段を生んだ行の行キーと編集の流れと接続の経路を運ぶ")]
+        public void TheObservationCarriesTheRowThatAskedForIt()
+        {
+            IList<E2eCase> cases = Observed(
+                Handle("model_list_things", "handles"),
+                Tool("model_make_thing", new SchemaItem[0]),
+                Observing("model_list_things", "handles", listed: true));
+
+            E2eCase drawn = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            E2eCase released = Assert.Single(
+                cases,
+                c => c.Tool == "session_release_handle"
+                    && c.Expectation == E2eExpectation.Success);
+
+            foreach (E2eCase one in new[] { drawn, released })
+            {
+                Assert.Equal(RowKey, one.RowKey);
+                Assert.Equal("directChange", one.EditKind);
+                Assert.Equal("Host.Connector.Pmx", one.ConnectionPath);
+            }
+        }
+
+        [Fact(Skip = "impl pending: 観測に使ったハンドルを、観測の後に解放する段を組み立てる")]
+        public void TheDrawnHandleIsReleasedAfterTheObservation()
+        {
+            IList<E2eCase> cases = Observed(
+                Handle("model_list_things", "handles"),
+                Tool("model_make_thing", new SchemaItem[0]),
+                Observing("model_list_things", "handles", listed: true));
+
+            E2eCase call = Assert.Single(
+                cases, c => c.Tool == "model_make_thing" && c.Expectation == E2eExpectation.Called);
+            E2eCase drawn = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            E2eCase released = Assert.Single(
+                cases,
+                c => c.Tool == "session_release_handle"
+                    && c.Expectation == E2eExpectation.Success);
+
+            Assert.Equal(new[] { "handles/0" }, released.Borrowed.Keys.ToArray());
+            Assert.Equal(call.Produces, released.Borrowed["handles/0"]);
+            Assert.Equal(new object[] { null }, (object[])released.Arguments["handles"]);
+            Assert.True(cases.IndexOf(drawn) < cases.IndexOf(released));
+        }
+
+        [Fact(Skip = "impl pending: ハンドルを1つだけ受け取る観測ツールへは、並びにせずそのまま渡す")]
+        public void AnObserverThatTakesTheHandleAloneGetsItWithoutAList()
+        {
+            IList<E2eCase> cases = Observed(
+                Handle("model_list_headers", "pmxHandle"),
+                Tool("model_make_thing", new SchemaItem[0]),
+                Taking("model_list_headers", "pmxHandle"));
+
+            E2eCase call = Assert.Single(
+                cases, c => c.Tool == "model_make_thing" && c.Expectation == E2eExpectation.Called);
+            E2eCase drawn = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_headers" && c.Expectation == E2eExpectation.Success);
+
+            Assert.Equal(new[] { "pmxHandle" }, drawn.Borrowed.Keys.ToArray());
+            Assert.Equal(call.Produces, drawn.Borrowed["pmxHandle"]);
+            Assert.Null(drawn.Arguments["pmxHandle"]);
+        }
+
+        [Fact(Skip = "impl pending: 確認を要して呼び出しを組み立てない行には観測の段を付けない")]
+        public void ARowWhoseCallNeedsAConfirmationGetsNoObservation()
+        {
+            IList<E2eCase> cases = Observed(
+                Handle("model_list_things", "handles"),
+                Tool("model_make_thing", new SchemaItem[0]),
+                Observing("model_list_things", "handles", listed: true),
+                dangerous: true);
+
+            Assert.DoesNotContain(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            Assert.DoesNotContain(cases, c => c.Produces != null);
+        }
+
+        [Fact(Skip = "impl pending: 渡す値が決まらず呼び出しを組み立てない行には観測の段を付けない")]
+        public void ARowWhoseArgumentsAreUndecidedGetsNoObservation()
+        {
+            IList<E2eCase> cases = Observed(
+                Handle("model_list_things", "handles"),
+                Tool("model_make_thing", Handles()),
+                Observing("model_list_things", "handles", listed: true));
+
+            Assert.DoesNotContain(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            Assert.DoesNotContain(cases, c => c.Produces != null);
+        }
+
+        [Fact(Skip = "impl pending: 観測ツールを宣言しない事後条件には観測の段を付けない")]
+        public void APostconditionWithoutAnObserverAddsNoObservation()
+        {
+            IList<E2eCase> cases = Observed(
+                new Postcondition(
+                    EffectType.HandleCreated,
+                    string.Empty,
+                    EffectCheckKind.CallLogOnly,
+                    null,
+                    null,
+                    null,
+                    EffectComparison.Exists,
+                    null,
+                    false,
+                    null),
+                Tool("model_make_thing", new SchemaItem[0]),
+                Observing("model_list_things", "handles", listed: true));
+
+            Assert.DoesNotContain(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            Assert.DoesNotContain(cases, c => c.Produces != null);
+        }
+
+        [Fact(Skip = "impl pending: どの呼び分けも受け取らない引数を指す事後条件は、組み立てられない旨で落とす")]
+        public void AnObserverThatCannotTakeTheHandleStopsTheBuild()
+        {
+            Assert.Throws<InvalidOperationException>(() => Observed(
+                Handle("model_list_things", "handles"),
+                Tool("model_make_thing", new SchemaItem[0]),
+                Observing("model_list_things", "limit", listed: false)));
+        }
+
+        [Fact(Skip = "impl pending: 借りた値を、引数の中の葉へ並びにせずそのまま置く")]
+        public void TheSetupThatLendsAnElementFillsTheSlotItLends()
+        {
+            IList<E2eCase> cases = Lending(Tool("model_add_things", Handles()));
+
+            E2eCase made = Assert.Single(cases, c => c.Produces == "model_add_things");
+            E2eCase added = Assert.Single(
+                cases, c => c.Tool == "model_add_things" && c.Borrowed != null);
+
+            Assert.Equal("model_thing", made.Tool);
+            Assert.Equal(new[] { "handles/0" }, added.Borrowed.Keys.ToArray());
+            Assert.Equal("model_add_things", added.Borrowed["handles/0"]);
+            Assert.Equal(new object[] { null }, (object[])added.Arguments["handles"]);
+        }
+
+        [Fact(Skip = "impl pending: 親の並びの先頭へ入れる段取りでも、借りた値を葉へそのまま置く")]
+        public void TheSetupThatLendsIntoAParentFillsTheSlotItLends()
+        {
+            IList<E2eCase> cases = Lending(Assigning("model_add_things"));
+
+            E2eCase added = Assert.Single(
+                cases, c => c.Tool == "model_add_things" && c.Borrowed != null);
+
+            Assert.Equal(
+                new[] { "assignments/0/handles/0" }, added.Borrowed.Keys.ToArray());
+            Assert.Equal("model_add_things", added.Borrowed["assignments/0/handles/0"]);
+
+            IDictionary<string, object> pair = (IDictionary<string, object>)
+                ((object[])added.Arguments["assignments"])[0];
+            Assert.Equal(0, pair["parentIndex"]);
+            Assert.Equal(new object[] { null }, (object[])pair["handles"]);
+        }
+
         [Fact]
         public void EveryArgumentIsRequired()
         {
@@ -373,6 +556,148 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         null,
                         Handles().Concat(new[] { color }).ToList(),
                         new[] { new SchemaChoice(new[] { "color", "brush" }, true) }),
+                },
+                Output(),
+                null);
+        }
+
+        /// <summary>ハンドルが出たことを、その名前のツールの引数で観測する事後条件。</summary>
+        private static Postcondition Handle(string observer, string argument)
+        {
+            return new Postcondition(
+                EffectType.HandleCreated,
+                string.Empty,
+                EffectCheckKind.Handle,
+                observer,
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { argument, ReferenceSpace.Result },
+                },
+                null,
+                EffectComparison.Exists,
+                null,
+                false,
+                null);
+        }
+
+        /// <summary>事後条件を持つ行と、その観測に使うツールの2つで検査を組み立てる。</summary>
+        private static IList<E2eCase> Observed(
+            Postcondition postcondition,
+            ToolSchema target,
+            ToolSchema observer,
+            bool dangerous = false)
+        {
+            return E2eCaseBuilder.Build(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(
+                        RowKey,
+                        ToolMapEditKind.DirectChange,
+                        null,
+                        "書き換える。",
+                        new[] { postcondition },
+                        null,
+                        null),
+                }),
+                new ToolSchemaTable(new[] { target, observer }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, target.Tool } },
+                Paths(),
+                dangerous
+                    ? new HashSet<string>(new[] { RowKey }, StringComparer.Ordinal)
+                    : new HashSet<string>(StringComparer.Ordinal),
+                Shapes());
+        }
+
+        /// <summary>要素を1つ作って、受け取る側のツールへ渡す段取りだけで検査を組み立てる。</summary>
+        private static IList<E2eCase> Lending(ToolSchema taker)
+        {
+            return E2eCaseBuilder.Build(
+                Map(RowKey),
+                new ToolSchemaTable(new[] { Tool("model_thing", new SchemaItem[0]), taker }),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes(),
+                null,
+                null,
+                null,
+                null,
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { taker.Tool, "model_thing" },
+                });
+        }
+
+        /// <summary>
+        /// 対象を位置で指す呼び分けを先に置き、その名前の項目はあとの呼び分けだけが受け取るツール。
+        /// </summary>
+        private static ToolSchema Observing(string name, string argument, bool listed)
+        {
+            SchemaItem taken = listed
+                ? new SchemaItem(
+                    null, null, Element(), argument, ItemOrigin.HostInput, true, null, false,
+                    null, null, null, false, null)
+                : new SchemaItem(
+                    "number", null, null, argument, ItemOrigin.HostInput, false, null, false,
+                    null, null, null, false, null);
+
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "position", null, null, new[] { Whole() }, new SchemaChoice[0]),
+                    new SchemaBranch("held", null, null, new[] { taken }, new SchemaChoice[0]),
+                },
+                Output(),
+                null);
+        }
+
+        /// <summary>その名前の項目を1つだけ、呼び分けを分けずに受け取るツール。</summary>
+        private static ToolSchema Taking(string name, string argument)
+        {
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[]
+                        {
+                            new SchemaItem(
+                                "number", null, null, argument, ItemOrigin.HostInput, false, null,
+                                false, null, null, null, false, null),
+                        },
+                        new SchemaChoice[0]),
+                },
+                Output(),
+                null);
+        }
+
+        /// <summary>親を位置で指し、その親へ入れるハンドルの並びを組で受け取るツール。</summary>
+        private static ToolSchema Assigning(string name)
+        {
+            SchemaItem parentIndex = new SchemaItem(
+                "number", null, null, "parentIndex", ItemOrigin.HostInput, true, null, false,
+                null, null, null, false, null);
+            SchemaItem handles = new SchemaItem(
+                null, null, Element(), "handles", ItemOrigin.HostInput, true, null, false,
+                null, null, null, false, null);
+            SchemaItem pair = new SchemaItem(
+                null, new[] { parentIndex, handles }, null, null, ItemOrigin.HostInput, null, null,
+                false, null, null, null, false, null);
+            SchemaItem assignments = new SchemaItem(
+                null, null, pair, "assignments", ItemOrigin.HostInput, true, null, false,
+                null, null, null, false, null);
+
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only", null, null, new[] { assignments }, new SchemaChoice[0]),
                 },
                 Output(),
                 null);
