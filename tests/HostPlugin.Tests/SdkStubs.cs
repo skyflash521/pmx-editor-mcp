@@ -14,19 +14,61 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public sealed class StubRunArgs : IPERunArgs
     {
+        private readonly bool? _bootup;
+
+        private readonly IPEPluginHost _host;
+
+        private readonly string _modulePath;
+
         public StubRunArgs(IPEPluginHost host, string modulePath)
         {
-            Host = host;
-            ModulePath = modulePath;
+            _host = host;
+            _modulePath = modulePath;
         }
 
-        public IPEPluginHost Host { get; }
+        /// <summary>起動時実行かどうかだけを答える題材。接続の経路は持たない。</summary>
+        public StubRunArgs(bool bootup)
+        {
+            _bootup = bootup;
+        }
 
-        public string ModulePath { get; }
+        public IPEPluginHost Host
+        {
+            get
+            {
+                if (_bootup != null)
+                {
+                    throw new NotSupportedException();
+                }
+
+                return _host;
+            }
+        }
+
+        public string ModulePath
+        {
+            get
+            {
+                if (_bootup != null)
+                {
+                    throw new NotSupportedException();
+                }
+
+                return _modulePath;
+            }
+        }
 
         public bool IsBootup
         {
-            get { throw new NotSupportedException(); }
+            get
+            {
+                if (_bootup == null)
+                {
+                    throw new NotSupportedException();
+                }
+
+                return _bootup.Value;
+            }
         }
     }
 

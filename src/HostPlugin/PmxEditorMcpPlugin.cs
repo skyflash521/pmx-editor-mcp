@@ -69,22 +69,34 @@ namespace PmxEditorMcp
         /// </summary>
         public override void Run(IPERunArgs args)
         {
+            Run(args, StartOnBootup, ShowStatus, () => _log);
+        }
+
+        /// <summary>
+        /// 実行の中身を受け取って呼ぶ入口。例外はどちらの中身から出ても外へ出さず、
+        /// <paramref name="log"/> が返す記録へ書く。記録を引くのは捕らえた後である——記録は
+        /// 実行の途中で作られるので、呼ぶ前に引くと、その回に作られたものへ書けない。
+        /// </summary>
+        internal static void Run(
+            IPERunArgs args, Action<IPERunArgs> bootup, Action status, Func<HostLog> log)
+        {
             try
             {
                 if (args != null && args.IsBootup)
                 {
-                    StartOnBootup(args);
+                    bootup(args);
                 }
                 else
                 {
-                    ShowStatus();
+                    status();
                 }
             }
             catch (Exception exception)
             {
-                if (_log != null)
+                HostLog written = log();
+                if (written != null)
                 {
-                    _log.WriteException("プラグインの実行で例外が起きた。", exception);
+                    written.WriteException("プラグインの実行で例外が起きた。", exception);
                 }
             }
         }
