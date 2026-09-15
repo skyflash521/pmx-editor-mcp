@@ -11,12 +11,47 @@ using Xunit;
 namespace PmxEditorMcp.Bridge.Tests
 {
     /// <summary>
+    /// 既定の設定で起こしたブリッジ。設定を変えず読むだけの件はこれを共有する——件ごとに
+    /// 起こすと、確かめる事柄の数だけ起動と畳みの待ちが積み上がる。設定を変える件と、ホストへ
+    /// 繋ぐ件は、自分で起こして自分で畳む。
+    /// </summary>
+    public sealed class SharedBridge : IAsyncLifetime
+    {
+        /// <summary>共有するクライアント。どの件も設定を変えずに読むだけである。</summary>
+        public McpClient Client { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            using (CancellationTokenSource limit =
+                new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+            {
+                Client = await BridgeToolsTests.StartBridgeAsync(null, null, limit.Token);
+            }
+        }
+
+        public async Task DisposeAsync()
+        {
+            if (Client != null)
+            {
+                await Client.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>
     /// ブリッジをMCPサーバーとして起動し、クライアントから見える契約を確かめる。ツール定義も
     /// ツールの中継も、実行ファイルを起動して stdio 越しに見る——登録の配線まで含めて確かめたい
     /// ので、SDKの型を直接読むのでは通らない経路が残る。
     /// </summary>
-    public class BridgeToolsTests
+    public class BridgeToolsTests : IClassFixture<SharedBridge>
     {
+        private readonly SharedBridge _shared;
+
+        public BridgeToolsTests(SharedBridge shared)
+        {
+            _shared = shared;
+        }
+
         /// <summary>
         /// 接続先として読んではならない環境変数の名前。接頭辞が同じで紛らわしいので、
         /// 子プロセスへ渡す環境からは必ず消し、読まれていないことも確かめる。
@@ -42,7 +77,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task ServerAnnouncesContractNameAndBridgeVersion()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
-            await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
+            McpClient client = _shared.Client;
 
             Assert.Equal("pmx-editor-mcp", client.ServerInfo.Name);
             Assert.Equal(
@@ -54,7 +89,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task TheBaseRelayAndEveryGeneratedDefinitionAreRegistered()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
-            await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
+            McpClient client = _shared.Client;
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
@@ -65,7 +100,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task AGeneratedDefinitionKeepsItsDescriptionAndInputSchema()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
-            await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
+            McpClient client = _shared.Client;
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
@@ -123,7 +158,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task ToolDefinitionDeclaresDefaultResponseBudget()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
-            await using McpClient client = await StartBridgeAsync(null, null, limit.Token);
+            McpClient client = _shared.Client;
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
@@ -443,7 +478,7 @@ namespace PmxEditorMcp.Bridge.Tests
         /// ブリッジの実行ファイルをMCPサーバーとして起動する。接続先と応答サイズ予算は、
         /// このテストを走らせるプロセスの環境に左右されないよう明示して渡す。
         /// </summary>
-        private static Task<McpClient> StartBridgeAsync(
+        internal static Task<McpClient> StartBridgeAsync(
             string pipeName,
             string budgetChars,
             CancellationToken cancellationToken,

@@ -493,15 +493,25 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
+        /// <summary>
+        /// 待つ上限の既定。実時間を使わずに固定する——与えた上限で打ち切ることは、短い上限を
+        /// 渡す下の件が確かめる。
+        /// </summary>
+        [Fact]
+        public void TheConnectWaitLimitDefaultsToFiveSeconds()
+        {
+            Assert.Equal(TimeSpan.FromSeconds(5), NamedPipeHostConnector.ConnectWaitLimit);
+        }
+
         [Fact]
         public async Task PipeThatIsNotListeningFailsToConnectWithoutWaiting()
         {
-            Assert.Equal(TimeSpan.FromSeconds(5), NamedPipeHostConnector.ConnectWaitLimit);
+            // 待つ上限は短い値を与える。既定の5秒を待ち切ると、この1件だけで実時間を5秒使う。
+            TimeSpan limit = TimeSpan.FromMilliseconds(300);
 
             // 接続先の決定だけを固定し、パイプを開く処理は製品と同じものを通す。
             string absent = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
-            NamedPipeHostConnector connector = new NamedPipeHostConnector(
-                () => absent, NamedPipeHostConnector.OpenNamedPipeAsync);
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(() => absent, limit);
 
             Stopwatch elapsed = Stopwatch.StartNew();
             BridgeException error = await ThrowsWithin<BridgeException>(
@@ -517,16 +527,18 @@ namespace PmxEditorMcp.Bridge.Tests
             // 候補以外の原因もありうるので、観測した事実から候補の列挙を経て断定していない
             // ことを示す語尾までを、一続きの文として固定する。
             Assert.Contains(
-                ConnectWaitLimitSeconds + " 秒以内に接続できなかった。接続先のエディタが終了している、"
+                Seconds(limit) + " 秒以内に接続できなかった。接続先のエディタが終了している、"
                     + "またはエディタでホストが停止している可能性がある。",
                 error.Message);
 
             // 打ち切りは公開した上限で決まる。上下から挟まないと、上限を名乗りながら実際には
             // ずっと短い値で諦める作りも、上限と無関係に長く待つ作りも通ってしまう。
+            // 上側は、与えた上限を捨てて既定の5秒を待ち切る作りが入らない幅にする。幅を比べる
+            // 相手より大きく取ると、注入した値が効いていなくてもこの件が通る。
             Assert.InRange(
                 elapsed.Elapsed,
-                NamedPipeHostConnector.ConnectWaitLimit - TimeSpan.FromMilliseconds(500),
-                NamedPipeHostConnector.ConnectWaitLimit + TimeSpan.FromSeconds(5));
+                limit - TimeSpan.FromMilliseconds(100),
+                limit + TimeSpan.FromSeconds(1));
         }
 
         [Fact]
@@ -618,14 +630,10 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(new string[] { "pmx-editor-mcp-1", "pmx-editor-mcp-2" }, opened);
         }
 
-        /// <summary>接続の待機上限を、本文に現れるのと同じ表記で得る。</summary>
-        private static string ConnectWaitLimitSeconds
+        /// <summary>待機の上限を、本文に現れるのと同じ表記で得る。</summary>
+        private static string Seconds(TimeSpan limit)
         {
-            get
-            {
-                return NamedPipeHostConnector.ConnectWaitLimit.TotalSeconds
-                    .ToString(CultureInfo.InvariantCulture);
-            }
+            return limit.TotalSeconds.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>上限付きで例外を待つ。製品側が待つ上限を掛け忘れても有限時間で失敗する。</summary>

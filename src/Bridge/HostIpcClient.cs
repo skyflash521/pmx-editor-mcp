@@ -67,6 +67,7 @@ namespace PmxEditorMcp.Bridge
 
         private readonly Func<string> _resolvePipeName;
         private readonly Func<string, CancellationToken, Task<Stream>> _openPipe;
+        private readonly TimeSpan _waitLimit;
 
         /// <summary>
         /// 待ち受けているホストから接続先を決め、名前付きパイプを開く既定の処理で生成する。
@@ -84,9 +85,30 @@ namespace PmxEditorMcp.Bridge
         internal NamedPipeHostConnector(
             Func<string> resolvePipeName,
             Func<string, CancellationToken, Task<Stream>> openPipe)
+            : this(resolvePipeName, openPipe, ConnectWaitLimit)
+        {
+        }
+
+        /// <summary>
+        /// 待つ上限を差し替えて生成する。パイプを開く処理は製品と同じものを通す。既定の上限は
+        /// 開かない相手を待ち切るのに実時間を費やすので、その振る舞いを確かめるときだけ短くする。
+        /// </summary>
+        internal NamedPipeHostConnector(Func<string> resolvePipeName, TimeSpan waitLimit)
+            : this(
+                resolvePipeName,
+                (name, cancellationToken) => OpenNamedPipeAsync(name, cancellationToken, waitLimit),
+                waitLimit)
+        {
+        }
+
+        private NamedPipeHostConnector(
+            Func<string> resolvePipeName,
+            Func<string, CancellationToken, Task<Stream>> openPipe,
+            TimeSpan waitLimit)
         {
             _resolvePipeName = resolvePipeName;
             _openPipe = openPipe;
+            _waitLimit = waitLimit;
         }
 
         /// <summary>
@@ -107,7 +129,7 @@ namespace PmxEditorMcp.Bridge
                 // どの原因でここへ来たかは区別できないので、事実だけを述べて考えられる原因を並べる。
                 throw new BridgeException(
                     BridgeErrorCodes.ConnectFailed,
-                    "ホストのパイプ " + pipeName + " へ " + Describe(ConnectWaitLimit)
+                    "ホストのパイプ " + pipeName + " へ " + Describe(_waitLimit)
                         + "以内に接続できなかった。接続先のエディタが終了している、またはエディタで"
                         + "ホストが停止している可能性がある。");
             }
@@ -143,14 +165,25 @@ namespace PmxEditorMcp.Bridge
         /// 名前付きパイプを実際に開く既定の処理。接続先の決定だけを差し替えて、この経路を
         /// そのまま通すために内部へ開けている。
         /// </summary>
-        internal static async Task<Stream> OpenNamedPipeAsync(string pipeName, CancellationToken cancellationToken)
+        internal static Task<Stream> OpenNamedPipeAsync(
+            string pipeName, CancellationToken cancellationToken)
+        {
+            return OpenNamedPipeAsync(pipeName, cancellationToken, ConnectWaitLimit);
+        }
+
+        /// <summary>
+        /// 待つ上限を差し替えて開く。上限を外から与えるのは、開かない相手への振る舞いを確かめる
+        /// ときに既定の上限ぶんの実時間を費やさないためである。
+        /// </summary>
+        internal static async Task<Stream> OpenNamedPipeAsync(
+            string pipeName, CancellationToken cancellationToken, TimeSpan waitLimit)
         {
             NamedPipeClientStream pipe = new NamedPipeClientStream(
                 ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             try
             {
                 // 上限を付けずに待つと、パイプが無いだけの場合まで要求全体の上限まで待ってしまう。
-                await pipe.ConnectAsync((int)ConnectWaitLimit.TotalMilliseconds, cancellationToken)
+                await pipe.ConnectAsync((int)waitLimit.TotalMilliseconds, cancellationToken)
                     .ConfigureAwait(false);
                 return pipe;
             }
