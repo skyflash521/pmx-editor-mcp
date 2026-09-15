@@ -10,6 +10,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Form = "PEPlugin.Form.IPEFormConnector";
 
+        private const string BendTool = "session_bend";
+
+        private const string TurnTool = "session_turn";
+
+        private const int DefinitionValueChars = 98000;
+
+        private const int DefinitionRequestBytes = 8000000;
+
+        private const int DefinitionTokenLimit = 200000;
+
         private const string Held = "PXCPlugin.UIModel.IPXUIModel";
 
         private const string CPluginConnector = "PXCPlugin.IPXCPluginConnector";
@@ -1027,6 +1037,139 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 canRead,
                 canWrite,
                 canWrite ? OperationDirection.Write : OperationDirection.Read);
+        }
+
+        /// <summary>
+        /// ブリッジが載せるツール定義の名前はスキーマ正本の綴りで、ホストが登録する結線の名前は
+        /// 能力対応表と型役割から導かれる。出所が別なので綴りは食い違いうるが、食い違えば
+        /// クライアントが呼べる名前をホストが未知のメソッドとして断る。同じ能力対応表から結線を
+        /// 導き、スキーマ正本が持つ綴りと同じ集合になることを見る。
+        /// </summary>
+        [Fact]
+        public void TheDefinitionsAndTheBindingsCarryTheSameToolNames()
+        {
+            ToolSchemaTable schemas = Schemas(BendTool, TurnTool);
+
+            Assert.Equal(Defined(schemas), Bound(Derived(schemas, Bending())));
+        }
+
+        /// <summary>
+        /// スキーマ正本だけが持つ名前は、集合を比べれば見つかる。見つからなければ、載せた名前を
+        /// ホストが受け持たないまま通ってしまう。どの行も名指ししないツールが正本に載っている形
+        /// なので、組み立ては両方とも同じ正本を受け取る。
+        /// </summary>
+        [Fact]
+        public void ANameThatOnlyTheSchemaCarriesBreaksTheAgreement()
+        {
+            ToolSchemaTable schemas = Schemas(BendTool, TurnTool, "session_fold");
+
+            Assert.NotEqual(Defined(schemas), Bound(Derived(schemas, Bending())));
+        }
+
+        /// <summary>
+        /// 結線だけが持つ名前も見つかる。能力対応表が2行を持つのにスキーマ正本が1つしか綴りを
+        /// 持たないとき、残る1つはクライアントへ載らないので呼ばれないが、載る名前との対応は
+        /// ここで崩れている。
+        /// </summary>
+        [Fact]
+        public void ANameThatOnlyTheBindingsCarryBreaksTheAgreement()
+        {
+            ToolSchemaTable schemas = Schemas(BendTool);
+
+            Assert.NotEqual(Defined(schemas), Bound(Derived(schemas, Bending())));
+        }
+
+        /// <summary>ツールの名前を持たせず、行とシグネチャだけを持つ題材。</summary>
+        private static Binding[] Bending()
+        {
+            return new[]
+            {
+                Dispatched(null, Method("Bend", "System.Void")),
+                Dispatched(null, Method("Turn", "System.Void")),
+            };
+        }
+
+        /// <summary>
+        /// ツールの名前を能力対応表と型役割から導いて組み立てた結線。題材が名前を渡さないので、
+        /// スキーマ正本の綴りとは別の道で決まる。
+        /// </summary>
+        private static ToolBindingSource Derived(
+            ToolSchemaTable schemas, params Binding[] bindings)
+        {
+            Dictionary<string, SignatureRecord> signatures = bindings.ToDictionary(
+                b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal);
+            foreach (SignatureRecord flow in Flows())
+            {
+                signatures.Add(flow.Key, flow);
+            }
+
+            InventoryRecord inventory = new InventoryRecord(
+                "題材",
+                "0.0.0.0",
+                new TypeRecord[0],
+                new TypeRecord[0],
+                signatures.Values.ToList());
+            ToolMap map = new ToolMap(bindings.Select(b => b.Row).ToList());
+
+            return ToolBindingSourceBuilder.Build(
+                map,
+                Roles(),
+                inventory,
+                ToolNameEvidence.Resolve(map, Roles(), Assignments(), inventory),
+                Assignments(),
+                schemas,
+                new Dictionary<string, string>(StringComparer.Ordinal));
+        }
+
+        /// <summary>ホストが結線として登録する名前。3つの群をすべて無条件に登録する。</summary>
+        private static IList<string> Bound(ToolBindingSource source)
+        {
+            return source.Calls
+                .Concat(source.Aggregations)
+                .Concat(source.Elements)
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .ToList();
+        }
+
+        /// <summary>ブリッジの定義が載せる名前。</summary>
+        private static IList<string> Defined(ToolSchemaTable schemas)
+        {
+            return ToolDefinitionBuilder.Build(
+                schemas,
+                schemas.Tools.ToDictionary(
+                    t => t.Tool, t => "題材の説明。", StringComparer.Ordinal),
+                new AssumedLength(
+                    new Dictionary<string, int>(StringComparer.Ordinal) { { "boolean", 5 } },
+                    new Dictionary<SchemaItem, string>()),
+                DefinitionValueChars,
+                DefinitionRequestBytes,
+                DefinitionTokenLimit,
+                new Dictionary<SchemaItem, string>(),
+                new HashSet<string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal))
+                .Select(d => d.Name)
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .ToList();
+        }
+
+        /// <summary>引数を取らないツールだけを並べたスキーマ正本。</summary>
+        private static ToolSchemaTable Schemas(params string[] tools)
+        {
+            return new ToolSchemaTable(tools
+                .Select(t => new ToolSchema(
+                    t,
+                    new[]
+                    {
+                        new SchemaBranch(
+                            "only", null, null, new SchemaItem[0], new SchemaChoice[0]),
+                    },
+                    new SchemaItem(
+                        "boolean", null, null, null, ItemOrigin.HostOutput, null, null, false,
+                        null, null, null, false, null),
+                    null))
+                .ToList());
         }
 
         /// <summary>1つの行と、そのシグネチャと、持つならツールの名前。</summary>
