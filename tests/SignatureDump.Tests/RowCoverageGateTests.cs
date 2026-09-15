@@ -62,28 +62,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ACaseThatOnlyLooksForSomethingToCallDoesNotCoverTheRow()
-        {
-            SignatureRecord signature =
-                Signature(Wipe, Bone, "Wipe", "System.Void", MemberKind.Method);
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => RowCoverageGate.Require(
-                    Row(Wipe),
-                    Signatures(signature),
-                    new Dictionary<string, string>(StringComparer.Ordinal)
-                    {
-                        { signature.Key, "model_wipe_bone" },
-                    },
-                    new Dictionary<string, ComposedTool>(StringComparer.Ordinal),
-                    CommonAssignmentJsonReader.Read(@"{ ""assignments"": [] }"),
-                    Roles(),
-                    new HashSet<string>(StringComparer.Ordinal),
-                    new[] { Dispatched("model_wipe_bone") }));
-
-            Assert.Contains(Wipe, error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
         public void ARowIsCoveredByTheToolItIsEmbeddedIn()
         {
             Require(
@@ -153,7 +131,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void ARowThatSaysItCannotBeReachedIsLeftOutOfTheJudgement()
         {
-            Judge(Unreachable(Wipe), Dispatched("model_wipe_bone"));
+            Judge(Unreachable(Wipe), Refused("model_wipe_bone", Wipe));
         }
 
         [Fact]
@@ -379,20 +357,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "呼び出して成功すること",
                 new Dictionary<string, object>(StringComparer.Ordinal),
                 E2eExpectation.Called,
-                null);
-        }
-
-        /// <summary>呼び先が在ることしか見ない検査。</summary>
-        private static E2eCase Dispatched(string tool)
-        {
-            return new E2eCase(
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                tool,
-                "呼び先が在ること",
-                new Dictionary<string, object>(StringComparer.Ordinal),
-                E2eExpectation.Dispatched,
                 null);
         }
 

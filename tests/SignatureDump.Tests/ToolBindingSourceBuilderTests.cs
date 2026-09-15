@@ -557,6 +557,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static ToolBindingSource Build(
             IList<TypeRecord> types, params Binding[] bindings)
         {
+            return Build(new ToolSchemaTable(new ToolSchema[0]), types, bindings);
+        }
+
+        /// <summary>載せる正本を差し替えて組み立てる。応える先の照合だけがこれを見る。</summary>
+        private static ToolBindingSource Build(
+            ToolSchemaTable schemas, IList<TypeRecord> types, params Binding[] bindings)
+        {
             Dictionary<string, SignatureRecord> signatures = bindings.ToDictionary(
                 b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal);
             foreach (SignatureRecord flow in Flows())
@@ -576,8 +583,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 bindings.Where(b => b.Tool != null)
                     .ToDictionary(b => b.Signature.Key, b => b.Tool, StringComparer.Ordinal),
                 Assignments(),
-                new ToolSchemaTable(new ToolSchema[0]),
-                new Dictionary<string, string>(StringComparer.Ordinal));
+                schemas,
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                new string[0]);
         }
 
         /// <summary>複製編集の流れが通る2つのシグネチャ。組み立てはこの2つを名指しする。</summary>
@@ -1054,16 +1062,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// スキーマ正本だけが持つ名前は、集合を比べれば見つかる。見つからなければ、載せた名前を
-        /// ホストが受け持たないまま通ってしまう。どの行も名指ししないツールが正本に載っている形
-        /// なので、組み立ては両方とも同じ正本を受け取る。
+        /// スキーマ正本だけが持つ名前は、応える先が無いので組み立てが断る。ブリッジは正本の名前を
+        /// そのままクライアントへ載せ、ホストは登録に無い名前を未知のメソッドとして断るので、
+        /// 受け持つものの無い名前を載せたまま出荷させない。
         /// </summary>
         [Fact]
-        public void ANameThatOnlyTheSchemaCarriesBreaksTheAgreement()
+        public void AToolThatNothingAnswersIsRefused()
         {
-            ToolSchemaTable schemas = Schemas(BendTool, TurnTool, "session_fold");
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Derived(Schemas(BendTool, TurnTool, "session_fold"), Bending()));
 
-            Assert.NotEqual(Defined(schemas), Bound(Derived(schemas, Bending())));
+            Assert.Contains("session_fold", error.Message, StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -1077,6 +1086,46 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolSchemaTable schemas = Schemas(BendTool);
 
             Assert.NotEqual(Defined(schemas), Bound(Derived(schemas, Bending())));
+        }
+
+        /// <summary>
+        /// 応える先は中継の群だけではない。項目を集める群と要素の群の名前も正本に載るので、
+        /// 3つの群をすべて数えないと、載っている名前を応える先の無いものとして断ってしまう。
+        /// </summary>
+        [Fact]
+        public void TheAggregatingAndElementToolsAnswerForTheirOwnNames()
+        {
+            ToolBindingSource aggregating = Build(
+                Schemas(GetTool, UpdateTool),
+                new TypeRecord[0],
+                Embedded(Property("UndoCount", "System.Int32", true, false), GetTool),
+                Embedded(
+                    Property("PmxFormActivate", "System.Boolean", true, true), GetTool, UpdateTool));
+
+            Assert.Equal(new[] { GetTool, UpdateTool }, aggregating.Aggregations.ToArray());
+
+            ToolBindingSource holding = Build(
+                Schemas("model_add_vertices", "model_remove_vertices"),
+                new TypeRecord[0],
+                Collection());
+
+            Assert.Equal(
+                new[] { "model_add_vertices", "model_remove_vertices" },
+                holding.Elements.ToArray());
+        }
+
+        /// <summary>
+        /// 共通契約が合成のツールとして載せた名前は、結線に現れなくても応える先として数える
+        /// ——ホストが手書きのクラスで受け持ち、行から結線を組み立てられない。
+        /// </summary>
+        [Fact]
+        public void AComposedToolAnswersForItsNameWithoutABinding()
+        {
+            ToolSchemaTable schemas = Schemas(BendTool, TurnTool, "session_compose");
+
+            Assert.Equal(
+                new[] { BendTool, TurnTool },
+                Bound(Derived(schemas, new[] { "session_compose" }, Bending())).ToArray());
         }
 
         /// <summary>ツールの名前を持たせず、行とシグネチャだけを持つ題材。</summary>
@@ -1095,6 +1144,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// </summary>
         private static ToolBindingSource Derived(
             ToolSchemaTable schemas, params Binding[] bindings)
+        {
+            return Derived(schemas, new string[0], bindings);
+        }
+
+        /// <summary>合成のツールを載せて組み立てる。応える先の照合だけがこれを見る。</summary>
+        private static ToolBindingSource Derived(
+            ToolSchemaTable schemas, IList<string> composed, params Binding[] bindings)
         {
             Dictionary<string, SignatureRecord> signatures = bindings.ToDictionary(
                 b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal);
@@ -1118,7 +1174,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ToolNameEvidence.Resolve(map, Roles(), Assignments(), inventory),
                 Assignments(),
                 schemas,
-                new Dictionary<string, string>(StringComparer.Ordinal));
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                composed);
         }
 
         /// <summary>ホストが結線として登録する名前。3つの群をすべて無条件に登録する。</summary>

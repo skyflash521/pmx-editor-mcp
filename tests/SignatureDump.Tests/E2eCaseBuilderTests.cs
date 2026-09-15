@@ -146,16 +146,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Called);
         }
 
+        /// <summary>
+        /// 呼び先まで届かせられないツールは、断られなかったことだけを見る検査も持たない——その
+        /// 検査は行の振る舞いへ一度も入らないので、通っても分かることが無い。
+        /// </summary>
         [Fact]
-        public void EveryToolIsCheckedForHavingSomethingToCallBehindIt()
+        public void AToolWithNothingToCallBehindItGetsNoCaseThatOnlyLooksForDispatch()
         {
-            E2eCase one = Assert.Single(
+            Assert.DoesNotContain(
                 Build(Tool("model_wipe_bones", Handles())),
-                c => c.Expectation == E2eExpectation.Dispatched);
-
-            Assert.Equal("model_wipe_bones", one.Tool);
-            Assert.Empty(one.Arguments);
-            Assert.Null(one.Code);
+                c => c.Tool == "model_wipe_bones" && c.Code == null);
         }
 
         [Fact]
@@ -168,9 +168,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("model_get_name", one.Tool);
             Assert.Equal(string.Empty, one.RowKey);
             Assert.Empty(one.Arguments);
-            Assert.DoesNotContain(
-                Build(Tool("model_get_name", new SchemaItem[0])),
-                c => c.Expectation == E2eExpectation.Dispatched);
         }
 
         [Fact]
@@ -407,8 +404,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Observing("model_list_things", "handles", listed: true)));
         }
 
+        /// <summary>
+        /// ほかの行の段取りとしてしか呼ばれないツールは、自分の行を名指しした検査を持たないが、
+        /// 共通の入口の断りは代表を取ったツールだけが残す。
+        /// </summary>
         [Fact]
-        public void ARowCalledOnlyAsAnotherRowsSetupKeepsItsShrunkRefusal()
+        public void ARowCalledOnlyAsAnotherRowsSetupKeepsNoRefusalOfItsOwn()
         {
             ToolSchema wipe = Tool("model_bend_bones", new SchemaItem[0]);
             ToolSchema aim = Tool("model_aim_bones", Handles());
@@ -456,7 +457,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 c => c.Tool == touch.Tool && c.RowKey == RowKey
                     && c.Expectation == E2eExpectation.Success);
             Assert.Contains(cases, c => c.Tool == aim.Tool && c.Code == "TOOL_INVALID_HANDLE");
-            Assert.Contains(cases, c => c.Tool == touch.Tool && c.Code == "TOOL_INVALID_HANDLE");
+            Assert.DoesNotContain(
+                cases, c => c.Tool == touch.Tool && c.Code == "TOOL_INVALID_HANDLE");
         }
 
         [Fact]
@@ -882,8 +884,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("model_release_bodies", one.Tool);
         }
 
+        /// <summary>
+        /// どちらも呼び先まで届く検査を持たない2つのツールでも、共通の入口の断りは種別ごとの
+        /// 代表1件だけを残す。
+        /// </summary>
         [Fact]
-        public void ARowWithNoOtherCheckKeepsTheRefusalThatReachesIt()
+        public void ARowWithNoOtherCheckIsLeftWithTheRepresentativeRefusalOnly()
         {
             ToolSchema first = Tool("model_release_bones", Handles());
             ToolSchema second = Tool("model_release_bodies", Handles());
@@ -904,12 +910,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new HashSet<string>(StringComparer.Ordinal),
                 Shapes());
 
-            Assert.Equal(
-                new[] { "model_release_bodies", "model_release_bones" },
-                cases.Where(c => c.Code == "TOOL_INVALID_HANDLE")
-                    .Select(c => c.Tool)
-                    .OrderBy(t => t, StringComparer.Ordinal)
-                    .ToArray());
+            E2eCase one = Assert.Single(cases, c => c.Code == "TOOL_INVALID_HANDLE");
+            Assert.Equal("model_release_bodies", one.Tool);
         }
 
         [Fact]
@@ -947,12 +949,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
             E2eCase one = Assert.Single(cases, c => c.Code == "TOOL_CONFIRM_REQUIRED");
             Assert.Equal("model_erase", one.Tool);
 
-            // 代表を取られた行が残すのは、入口をいちばん深くまで進む台帳の断り1件である。
-            E2eCase left = Assert.Single(cases, c => c.Tool == "model_wipe" && c.Code != null);
-            Assert.Equal("TOOL_INVALID_HANDLE", left.Code);
-
             // 2つの種類の代表を兼ねる行は、その2件を残す。
             Assert.Equal(2, cases.Count(c => c.Tool == "model_erase" && c.Code != null));
+
+            // 代表を取られた行は、どちらの種別の断りも残さない。
+            Assert.DoesNotContain(cases, c => c.Tool == "model_wipe" && c.Code != null);
         }
 
         [Fact]
@@ -1058,16 +1059,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.True(cases.IndexOf(made) < cases.IndexOf(called));
         }
 
+        /// <summary>受け手を作るツールが無い行は呼べないままで、ほかの検査も持たない。</summary>
         [Fact]
-        public void ARowWhoseHeldTypeHasNoMakerIsOnlyCheckedForHavingSomethingBehindIt()
+        public void ARowWhoseHeldTypeHasNoMakerIsNotCalledAtAll()
         {
             ToolSchema taker = Tool("model_bend_bones", Handles());
             IList<E2eCase> cases = Making(null, taker, "Sdk.Bone");
 
             Assert.DoesNotContain(
                 cases, c => c.Tool == taker.Tool && c.Expectation == E2eExpectation.Called);
-            Assert.Contains(
-                cases, c => c.Tool == taker.Tool && c.Expectation == E2eExpectation.Dispatched);
+            Assert.DoesNotContain(cases, c => c.Tool == taker.Tool && c.Code == null);
         }
 
         [Fact]

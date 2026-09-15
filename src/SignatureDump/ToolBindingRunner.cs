@@ -99,7 +99,8 @@ namespace PmxEditorMcp.SignatureDump
                     schemas,
                     contract.Types
                         .Where(t => t.Shape != null)
-                        .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal));
+                        .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal),
+                    contract.ComposedTools.Keys);
             }
             catch (InvalidOperationException exception)
             {

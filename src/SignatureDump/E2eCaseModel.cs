@@ -14,11 +14,6 @@ namespace PmxEditorMcp.SignatureDump
         Refusal,
 
         /// <summary>
-        /// 呼び先が在ること。実装の無い行はホストが未知のメソッドとして断るので、そこだけが落ちる。
-        /// </summary>
-        Dispatched,
-
-        /// <summary>
         /// 返す画像が、写し取ったビューの姿と合うこと。合う相手は <see cref="E2eCase.View"/> が持ち、
         /// 別のビューを返す行はその写しと合わないことを確かめる。
         /// </summary>

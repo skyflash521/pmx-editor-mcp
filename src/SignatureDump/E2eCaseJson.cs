@@ -96,9 +96,6 @@ namespace PmxEditorMcp.SignatureDump
                 case E2eExpectation.Refusal:
                     return "refusal";
 
-                case E2eExpectation.Dispatched:
-                    return "dispatched";
-
                 case E2eExpectation.ViewImage:
                     return "viewImage";
 

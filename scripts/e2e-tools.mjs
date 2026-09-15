@@ -139,10 +139,6 @@ function handshake(result) {
  * 包みの形は共通契約が定めるので、ここでは成功・失敗と理由の綴りだけを見る。
  */
 function judge(one, response, capture, remembered) {
-    if (one.expect === "dispatched") {
-        return dispatched(response);
-    }
-
     if (one.expect === "viewImage") {
         return viewImage(one, response, capture);
     }
@@ -202,22 +198,6 @@ function judge(one, response, capture, remembered) {
 
     if (envelope.error === undefined || envelope.error.code !== one.code) {
         return "断る理由が " + one.code + " ではありません: " + describe(envelope);
-    }
-
-    return null;
-}
-
-/**
- * 呼び先が在るか。未知のメソッドとホストの内部の失敗だけを落とし、引数の不足で断られた応答は
- * 呼び先が在る証拠として通す。
- */
-function dispatched(response) {
-    const unknown = -32601;
-    const internal = -32603;
-    if (response.error !== undefined
-        && (response.error.code === unknown || response.error.code === internal)) {
-        return "呼び先が無いか内部で失敗しました(" + response.error.code + "): "
-            + response.error.message;
     }
 
     return null;

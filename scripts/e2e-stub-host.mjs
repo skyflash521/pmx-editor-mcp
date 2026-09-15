@@ -112,12 +112,6 @@ function borrowed(one, params, remembered) {
  */
 function answer(one, broken, params, remembered, round) {
     const wrong = broken === one.expect;
-    if (one.expect === "dispatched") {
-        return wrong
-            ? { error: { code: UNKNOWN_METHOD, message: "知らない呼び先。" } }
-            : { result: { ok: true, value: null } };
-    }
-
     if (one.expect === "refusal") {
         return wrong
             ? { result: { ok: true, value: null } }

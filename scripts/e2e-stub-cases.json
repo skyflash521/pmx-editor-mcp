@@ -19,15 +19,6 @@
       "expect": "called"
     },
     {
-      "rowKey": "Stub.Type.Missing()",
-      "editKind": "read",
-      "connectionPath": "Host.Stub",
-      "tool": "stub_missing",
-      "purpose": "未知のメソッドとして断られないこと",
-      "arguments": {},
-      "expect": "dispatched"
-    },
-    {
       "rowKey": "Stub.Type.Refuse()",
       "editKind": "read",
       "connectionPath": "Host.Stub",

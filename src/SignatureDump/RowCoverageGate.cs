@@ -64,9 +64,8 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(cases));
             }
 
-            // 覆いに数えるのは、呼び先まで届いたことが結末から分かる検査だけである。呼び先が在る
-            // ことしか見ていない検査と、入口で断られることを見る検査は、行の振る舞いを一度も
-            // 確かめないまま通るので数えない。
+            // 覆いに数えるのは、呼び先まで届いたことが結末から分かる検査だけである。入口で断られる
+            // ことを見る検査は、行の振る舞いを一度も確かめないまま通るので数えない。
             HashSet<string> arrivedTools = new HashSet<string>(
                 cases.Where(c => Reached(c.Expectation)).Select(c => c.Tool),
                 StringComparer.Ordinal);
@@ -191,14 +190,12 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その結末が、呼び先まで届いたことを示すか。呼び先が在ることしか見ない検査は、引数の
-        /// 不足で断られた応答も通すので届いていない。入口で断られることを見る検査も、断り方を
+        /// その結末が、呼び先まで届いたことを示すか。入口で断られることを見る検査は、断り方を
         /// 確かめてはいるが、その行の振る舞いには一度も入っていないので届いていない。
         /// </summary>
         private static bool Reached(E2eExpectation expectation)
         {
-            return expectation != E2eExpectation.Dispatched
-                && expectation != E2eExpectation.Refusal;
+            return expectation != E2eExpectation.Refusal;
         }
 
         /// <summary>型の名前から、その型が宣言する行のツールの名前へ。</summary>

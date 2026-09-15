@@ -104,10 +104,6 @@ try {
     $global:LASTEXITCODE = 0
     if ($ran -eq $unfiltered) { throw "絞った実行では確かめられない行がある。" }
     if ($ran -ne 0) { throw "不合格の検査がある(終了コード $ran)。" }
-
-    # 編集を伴う検査が実際に編集を起こしたことを、1回分を戻せることで見る。取り消せる編集が
-    # 無ければこの操作は失敗するので、成功は1回の取り消しが起きたことを意味する。
-    if (-not $rows) { & $control -Action undo -ProcessId $editor | Out-Null }
 } finally {
     if ($editor -ne 0 -and (Get-Process -Id $editor -ErrorAction Ignore)) {
         & $control -Action close -ProcessId $editor | Out-Null

@@ -267,30 +267,16 @@ namespace PmxEditorMcp.SignatureDump
             cases.AddRange(trailing);
             cases.AddRange(picked);
 
-            return Shrunk(cases, toolsByRow);
+            return Shrunk(cases);
         }
 
         /// <summary>
         /// 共通の入口が断ることを確かめる検査を代表へ縮めた並び。残すのは、種別ごとに並びの順で
-        /// 最初に当たった1件と、代表を1つも持たずほかへ届く検査も持たないツールの1件——後者を
-        /// 残すのは、落とすとそのツールが一度も呼び先まで届かなくなるからである。数える単位が
-        /// ツールなのは、行がその型を読むツールを通しても覆われるためで、ツールを通らなくすると
-        /// そのツールが受け持つ行がまとめて通らなくなる。
+        /// 最初に当たった1件だけである。同じ入口へ同じ断り方をもう一度通しても、分かることは
+        /// 増えない。
         /// </summary>
-        private static IList<E2eCase> Shrunk(
-            IList<E2eCase> cases, IDictionary<string, string> toolsByRow)
+        private static IList<E2eCase> Shrunk(IList<E2eCase> cases)
         {
-            // 行を持つツールでは、その行を名指しした検査だけを数える。ほかの行の段取りとして
-            // 呼ばれただけの検査で代表を落とすと、その行が自分を名指しした検査を1つも持たない
-            // まま残る。行を持たないツールは名指しされる行がそもそも無いので、どの検査でも数える。
-            ISet<string> owned = new HashSet<string>(toolsByRow.Values, StringComparer.Ordinal);
-            ISet<string> reached = new HashSet<string>(
-                cases
-                    .Where(c => c.Expectation != E2eExpectation.Dispatched && Shared(c) < 0)
-                    .Where(c => Named(c, toolsByRow, owned))
-                    .Select(c => c.Tool),
-                StringComparer.Ordinal);
-
             ISet<int> kept = new HashSet<int>();
             ISet<string> shown = new HashSet<string>(StringComparer.Ordinal);
             for (int at = 0; at < cases.Count; at++)
@@ -302,48 +288,9 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
-            ISet<string> standing = new HashSet<string>(
-                kept.Select(at => cases[at].Tool), StringComparer.Ordinal);
-            IDictionary<string, int> alone = new Dictionary<string, int>(StringComparer.Ordinal);
-            for (int at = 0; at < cases.Count; at++)
-            {
-                E2eCase one = cases[at];
-                int kind = Shared(one);
-                if (kind < 0 || reached.Contains(one.Tool) || standing.Contains(one.Tool))
-                {
-                    continue;
-                }
-
-                int held;
-                if (!alone.TryGetValue(one.Tool, out held) || kind < Shared(cases[held]))
-                {
-                    alone[one.Tool] = at;
-                }
-            }
-
-            foreach (int at in alone.Values)
-            {
-                kept.Add(at);
-            }
-
             return cases
                 .Where((one, at) => Shared(one) < 0 || kept.Contains(at))
                 .ToList();
-        }
-
-        /// <summary>
-        /// その検査を、呼ぶツールの覆いに数えてよいか。行を持たないツールはどの検査でも数え、
-        /// 行を持つツールはその行を名指しした検査だけを数える。
-        /// </summary>
-        private static bool Named(
-            E2eCase one, IDictionary<string, string> toolsByRow, ISet<string> owned)
-        {
-            string dispatched;
-
-            return !owned.Contains(one.Tool)
-                || (!string.IsNullOrEmpty(one.RowKey)
-                    && toolsByRow.TryGetValue(one.RowKey, out dispatched)
-                    && string.Equals(dispatched, one.Tool, StringComparison.Ordinal));
         }
 
         /// <summary>
@@ -553,9 +500,8 @@ namespace PmxEditorMcp.SignatureDump
             string editKind = row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind);
             bool confirmed = row != null && dangerous.Contains(rowKey);
 
-            // 呼び先が在るだけでは、その行の振る舞いを一度も確かめない。確認を要さず、渡すものが
-            // 決まる行は実際に呼ぶ。実際に呼ぶなら、呼び先が在ることはその呼び出しで分かるので、
-            // 別に確かめない——同じ呼び出しを二度することになる。
+            // 確認を要さず、渡すものが決まる行は実際に呼ぶ。呼べない行は呼び先まで届く検査を1つも
+            // 持たないままになる——呼び先が在ることだけを見ても、その行の振る舞いは確かめられない。
             // 確認を要する行を呼ぶのは、渡す値が正本に書かれている行に限る。値を書くのは書く側の
             // 明示の選択なので、エディタを閉じる行やモデルを消す行が黙って呼ばれることがない。
             bool written = row != null && given != null && given.ContainsKey(rowKey);
@@ -565,8 +511,8 @@ namespace PmxEditorMcp.SignatureDump
                 && TryCalling(row, schema, sdkShapes, sampled, given, out calling);
 
             // 行を持たないツールも、引数を要さないなら呼ぶ。呼べるのに呼ばないままだと、この
-            // ツールが覆う行は、呼び先が在ることしか確かめられないまま通る。項目を選ばずに読む
-            // 検査を別に持つツールだけは呼ばない——同じ引数で同じツールを二度呼ぶことになる。
+            // ツールが覆う行は呼び先まで届く検査を1つも持たず、網羅の判定で落ちる。項目を選ばず
+            // に読む検査を別に持つツールだけは呼ばない——同じ引数で同じツールを二度呼ぶことになる。
             if (row == null && Unchosen(schema) != null && !reading.Contains(schema.Tool))
             {
                 calls = true;
@@ -592,19 +538,6 @@ namespace PmxEditorMcp.SignatureDump
                     };
                 }
             }
-            if (!calls)
-            {
-                yield return new E2eCase(
-                    rowKey,
-                    editKind,
-                    path,
-                    tool,
-                    "未知のメソッドとして断られないこと",
-                    new Dictionary<string, object>(StringComparer.Ordinal),
-                    E2eExpectation.Dispatched,
-                    null);
-            }
-
             SampleCallRow denied;
             bool denies = row != null && refused.TryGetValue(rowKey, out denied);
 
@@ -878,7 +811,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// その行の受け手を1つ作るツール。作るツールを持たない行では null——渡す相手が決まらない
-        /// 行は、呼び先が在ることしか確かめられない。作る側も対象を選ばずに呼べるものに限る
+        /// 行は呼べないままで、呼び先まで届く検査を1つも持たない。作る側も対象を選ばずに呼べる
+        /// ものに限る
         /// ——その作る側がまた受け手を要るなら、渡すものがここでは決まらない。
         /// </summary>
         private static string Maker(

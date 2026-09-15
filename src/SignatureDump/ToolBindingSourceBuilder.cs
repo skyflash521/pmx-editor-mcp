@@ -71,11 +71,17 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> toolNames,
             CommonAssignmentTable assignments,
             ToolSchemaTable schemas,
-            IDictionary<string, string> shapesByType)
+            IDictionary<string, string> shapesByType,
+            IEnumerable<string> composedTools)
         {
             if (shapesByType == null)
             {
                 throw new ArgumentNullException(nameof(shapesByType));
+            }
+
+            if (composedTools == null)
+            {
+                throw new ArgumentNullException(nameof(composedTools));
             }
 
             if (schemas == null)
@@ -250,6 +256,9 @@ namespace PmxEditorMcp.SignatureDump
             SortedDictionary<string, List<string>> listened = Listened(map, signatures);
             SortedDictionary<string, string> payloads = Payloads(map, signatures, schemas);
 
+            RequireAnsweringTools(
+                schemas, calls.Keys, fields.Keys, elements.Keys, composedTools);
+
             return new ToolBindingSource(
                 Compose(
                     calls,
@@ -266,6 +275,36 @@ namespace PmxEditorMcp.SignatureDump
                 calls.Keys.ToList(),
                 fields.Keys.ToList(),
                 elements.Keys.ToList());
+        }
+
+        /// <summary>
+        /// スキーマ正本が載せるツールに、応える先が在ることを求める。ブリッジは正本の名前をその
+        /// ままクライアントへ載せ、ホストは登録に無い名前を未知のメソッドとして断るので、受け持つ
+        /// ものの無い名前を正本へ足すと、呼んだ側はその断りを受け取る。応える先は、いま組み立てた
+        /// 3つの群のどれかか、共通契約が合成のツールとして載せたもの——ホストが手書きのクラスで
+        /// 受け持ち、行から結線を組み立てられないので3つの群に現れない——である。合成のツールを
+        /// ホストが実際に登録しているかは、受入シナリオが実機で呼んで確かめる。
+        /// </summary>
+        private static void RequireAnsweringTools(
+            ToolSchemaTable schemas,
+            IEnumerable<string> calls,
+            IEnumerable<string> aggregations,
+            IEnumerable<string> elements,
+            IEnumerable<string> composed)
+        {
+            HashSet<string> answering = new HashSet<string>(
+                calls.Concat(aggregations).Concat(elements).Concat(composed),
+                StringComparer.Ordinal);
+            string[] unanswered = schemas.Tools
+                .Select(t => t.Tool)
+                .Where(t => !answering.Contains(t))
+                .OrderBy(t => t, StringComparer.Ordinal)
+                .ToArray();
+            if (unanswered.Length != 0)
+            {
+                throw new InvalidOperationException(
+                    "応える先の無いツールがスキーマ正本に在る: " + string.Join("・", unanswered));
+            }
         }
 
         /// <summary>
