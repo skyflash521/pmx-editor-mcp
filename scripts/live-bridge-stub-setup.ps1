@@ -1,4 +1,4 @@
-# 受入の導入の前置のうち、実行器自身を確かめる経路。
+# ブリッジの実機動作確認の前置のうち、実行器自身を確かめる経路。
 # 実機を導入せず、応答を作って返すだけのMCPサーバーを起こす相手として返す。
 # 前置が差し替え点として分かれていることは、この経路が成り立つことで確かめられる。
 [CmdletBinding()]
@@ -8,20 +8,11 @@ param(
     [ValidateSet("prepare")]
     [string]$Action,
 
-    # 応答を作る相手に読ませる定義。
-    [Parameter(Mandatory = $true)]
-    [string]$Cases,
-
     # 期待と違えるものの名前。空だと何も違えない。
     [Parameter(Mandatory = $true)]
     [AllowEmptyString()]
-    [ValidateSet(
-        "", "ok", "notice", "notice.changed", "body", "values", "values.absent", "values.present",
-        "code", "image", "image.differsFrom", "imageAsText", "events", "file")]
-    [string]$Broken,
-
-    # 期待と違えるツールの呼び出しの番。
-    [int]$At = 0
+    [ValidateSet("", "code", "target", "pong", "moved", "order", "listed")]
+    [string]$Broken
 )
 
 Set-StrictMode -Version Latest
@@ -29,12 +20,12 @@ $ErrorActionPreference = "Stop"
 
 . (Join-Path $PSScriptRoot 'stub-shared.ps1')
 
-$server = Join-Path $PSScriptRoot "acceptance-stub-server.mjs"
+$server = Join-Path $PSScriptRoot "live-bridge-stub-server.mjs"
 if (-not (Test-Path $server)) { throw "応答を作る相手が無い: $server" }
 
-# 持ち越しは1回の実行の中だけのものなので、始める前に捨てる。
+# 起こしたエディタの並びと数は1回の実行の中だけのものなので、始める前に捨てる。
 $temp = [System.IO.Path]::GetTempPath()
-foreach ($name in @($StubLaunchStateName, $StubProgressStateName, $StubOperationLogName)) {
+foreach ($name in @($LiveStubEditorsName, $LiveStubLaunchedName)) {
     Remove-Item -Path (Join-Path $temp $name) -Force -ErrorAction Ignore
 }
 
@@ -42,10 +33,6 @@ foreach ($name in @($StubLaunchStateName, $StubProgressStateName, $StubOperation
     command   = "node"
     arguments = @(
         (Resolve-Path $server).Path,
-        "--cases", (Resolve-Path $Cases).Path,
-        "--broken", $Broken,
-        "--at", "$At",
         "--first-editor", "$FirstStubEditorId",
-        "--view", ("$StubViewWidth" + "x" + "$StubViewHeight"),
-        "--progress", (Join-Path $temp $StubProgressStateName))
+        "--broken", $Broken)
 } | ConvertTo-Json -Compress

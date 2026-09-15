@@ -9,7 +9,17 @@
 # 待ち時間を増やすだけである。共有する側は Get-SharedEditor、自分で起こす側は Start-Editor を
 # 使い、どちらであるかを件ごとに決める。
 [CmdletBinding()]
-param()
+param(
+    # エディタとホストの操作役。差し替えられるのは、この実行器そのものを実機のエディタ無しで
+    # 確かめるためである——既定は実物で、開くのは実行時の引数に限る。
+    [string]$Control = 'scripts/host-control.ps1',
+
+    # 待受へ繋いで応答を確かめる確認クライアント。
+    [string]$Client = 'scripts/e2e-check.mjs',
+
+    # ホストを配置する手順。
+    [string]$Deploy = 'scripts/deploy-host.ps1'
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -19,8 +29,9 @@ $PSNativeCommandUseErrorActionPreference = $false
 
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
-$control = 'scripts/host-control.ps1'
-$client = 'scripts/e2e-check.mjs'
+$control = $Control
+$client = $Client
+$deploy = $Deploy
 
 # ホストが待受に使うパイプ名の付け方。ホスト側の実装が定める。
 $PipePrefix = 'pmx-editor-mcp-'
@@ -302,7 +313,7 @@ $cases = [ordered]@{}
 
 $cases['配置'] = {
     # 配置そのものが、動いているエディタを閉じるところから始まる。閉じ残しがあれば落ちる。
-    & scripts/deploy-host.ps1 | Out-Null
+    & $deploy | Out-Null
 }
 
 $cases['疎通'] = {
@@ -345,11 +356,9 @@ $cases['版の食い違い'] = {
     $editor = Get-SharedEditor
 
     # 版が合わなければホストは断って接続を切る。切ったことは、こちらから閉じずに待てば分かる。
+    # 求める言い分はコードを名指ししているので、コードが違えばこの1つで落ちる。
     $ran = Invoke-Client -EditorProcessId $editor -Requests @('handshake', '{"protocol":2}')
     Assert-Client -Ran $ran -Code 0 -Says $ClosedAfterDisconnectingError -What '版の食い違い'
-    if ($ran.Said -notmatch [regex]::Escape([string]$ProtocolMismatchCode)) {
-        throw "版の食い違い: $ProtocolMismatchCode を返していない。$($ran.Said)"
-    }
 }
 
 $cases['パイプの権限'] = {

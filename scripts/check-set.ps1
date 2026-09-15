@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot 'editor-dir.ps1')
-. (Join-Path $PSScriptRoot 'acceptance-stub-shared.ps1')
+. (Join-Path $PSScriptRoot 'stub-shared.ps1')
 . (Join-Path $PSScriptRoot 'checks.ps1')
 
 Set-Location (Split-Path -Parent $PSScriptRoot)
@@ -53,6 +53,277 @@ function Invoke-AcceptanceRunner {
     $global:LASTEXITCODE = 0
 
     [pscustomobject]@{ Code = $code; Said = ($said -join "`n") }
+}
+
+function Get-FreeStubPipe {
+    <#
+        .SYNOPSIS
+        いま誰も待ち受けていない名前の番号を選ぶ。確認クライアントは番号でしか相手を指せないので、
+        待ち受けている実機のエディタと同じ番号を選ぶと、開けなかった題材の代わりに実物のホストへ
+        繋いでしまう——そのとき結末は題材と関わりのない理由で決まる。
+    #>
+    foreach ($try in 1..20) {
+        $pipe = Get-Random -Minimum 900000 -Maximum 999999
+        $opened = @([System.IO.Directory]::GetFileSystemEntries("\\.\pipe\") |
+            ForEach-Object { Split-Path -Leaf $_ })
+        if ($opened -notcontains ("pmx-editor-mcp-" + $pipe)) { return $pipe }
+    }
+
+    throw "空いている待受の名前を選べない。"
+}
+
+function Invoke-CheckClient {
+    <#
+        .SYNOPSIS
+        応答を作る待受の代わりを立てて確認クライアントを走らせ、終了コードと書き出したものを返す。
+        Broken を与えると、その項目だけを違えた応答を返させる。
+    #>
+    param([string]$Broken)
+
+    $pipe = Get-FreeStubPipe
+    $given = @('scripts/e2e-check-stub-host.mjs', '--pipe', "$pipe")
+    if ($Broken) { $given += @('--broken', $Broken) }
+
+    $told = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-stub-" + $pipe + ".log")
+    $stub = Start-Process -FilePath 'node' -PassThru -WindowStyle Hidden `
+        -RedirectStandardError $told -ArgumentList $given
+    try {
+        Wait-StubPipe -Name ("pmx-editor-mcp-" + $pipe) -Stub $stub -Said $told
+        $said = node scripts/e2e-check.mjs $pipe 2>&1
+        $code = $LASTEXITCODE
+        $global:LASTEXITCODE = 0
+    } finally {
+        Stop-Process -Id $stub.Id -Force -ErrorAction SilentlyContinue
+        Remove-Item $told -Force -ErrorAction SilentlyContinue
+    }
+
+    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
+}
+
+function Test-CheckClient {
+    <#
+        .SYNOPSIS
+        確認クライアントが、返った応答を契約と突き合わせて合否を出すことを確かめる。契約どおりの
+        応答で通し、そのうえで応答の項目ごとに、その1つだけを違えた実行が不合格になる——その項目を
+        見ていないクライアントはここで落ちる。
+    #>
+    # 前半は応答の中身を見る層、後半はその手前で行そのものを見る層。どちらも見落とせば、契約に
+    # 合わない応答を通してしまう。
+    $forms = [ordered]@{
+        'handshake.error'       = '成功応答であるべきところがエラー応答です。'
+        'handshake.result'      = 'result がJSONのオブジェクトではありません。'
+        'handshake.protocol'    = 'result の protocol が'
+        'handshake.hostVersion' = 'result の hostVersion が'
+        'handshake.budgetChars' = 'result の budgetChars が'
+        'handshake.session'     = 'result の session が'
+        'ping.error'            = '成功応答であるべきところがエラー応答です。'
+        'ping.value'            = 'result が pong ではありません。'
+        'wire.oversize'         = '上限の'
+        'wire.utf8'             = 'UTF-8として解釈できません'
+        'wire.bom'              = '先頭にBOMが付いています'
+        'wire.cr'               = '行末にCRが付いています'
+        'wire.json'             = 'JSONとして解釈できません'
+        'wire.object'           = '応答がJSONのオブジェクトではありません'
+        'wire.jsonrpc'          = '応答の jsonrpc が'
+        'wire.id.missing'       = '応答が id を持ちません'
+        'wire.id.other'         = '応答の識別子が要求の識別子'
+        'wire.unidentified'     = '識別子を持たない応答が成功応答'
+        'wire.both'             = 'result と error のどちらか一方だけ'
+        'wire.error.shape'      = 'エラー応答の error がJSONのオブジェクトではありません'
+        'wire.error.code'       = 'エラー応答が数値の code を持ちません'
+        'wire.error.message'    = 'エラー応答が文字列の message を持ちません'
+    }
+
+    $ran = Invoke-CheckClient -Broken ''
+    if ($ran.Code -ne 0) { throw "契約どおりの応答で走らせて合格しない: $($ran.Said)" }
+
+    foreach ($form in $forms.GetEnumerator()) {
+        $ran = Invoke-CheckClient -Broken $form.Key
+        if ($ran.Code -eq 0) {
+            throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
+        }
+
+        if ($ran.Said -notmatch [regex]::Escape($form.Value)) {
+            throw "$($form.Key) を違えたのに、その項目を咎めていない: $($ran.Said)"
+        }
+    }
+}
+
+function Invoke-LiveHostRunner {
+    <#
+        .SYNOPSIS
+        エディタと待受と確認クライアントの代わりを立てて実機動作確認を走らせ、終了コードと
+        書き出したものを返す。Broken を与えると、その観測だけを違えさせる。
+    #>
+    param([string]$Broken)
+
+    $spoken = [System.Environment]::GetEnvironmentVariable($LiveHostStubBrokenName)
+    [System.Environment]::SetEnvironmentVariable($LiveHostStubBrokenName, $Broken)
+    try {
+        $said = pwsh -NoProfile -File scripts/live-host.ps1 `
+            -Control scripts/live-host-stub-control.ps1 `
+            -Client scripts/live-host-stub-client.mjs `
+            -Deploy scripts/live-host-stub-deploy.ps1 2>&1
+        $code = $LASTEXITCODE
+        $global:LASTEXITCODE = 0
+    } finally {
+        [System.Environment]::SetEnvironmentVariable($LiveHostStubBrokenName, $spoken)
+    }
+
+    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
+}
+
+function Test-LiveHostRunner {
+    <#
+        .SYNOPSIS
+        実機動作確認が、観測したものを期待と突き合わせて合否を出すことを確かめる。期待どおりの
+        観測で全件を合格で終え、そのうえで観測の種類ごとに、その1つだけを違えた実行で当の件が
+        落ちる——その観測を突き合わせない実行器はここで落ちる。
+    #>
+    $forms = [ordered]@{
+        'client.code'  = '疎通'
+        'client.says'  = 'エディタ2つ'
+        'pipe'         = '停止と開始'
+        'acl'          = 'パイプの権限'
+        'log.started'  = '起動の記録'
+        'log.renewal'  = 'コネクタの取り直し'
+        'status'       = '停止と開始'
+    }
+
+    $ran = Invoke-LiveHostRunner -Broken ''
+    if ($ran.Code -ne 0) { throw "期待どおりの観測で走らせて合格しない: $($ran.Said)" }
+
+    foreach ($form in $forms.GetEnumerator()) {
+        $ran = Invoke-LiveHostRunner -Broken $form.Key
+        if ($ran.Code -eq 0) {
+            throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
+        }
+
+        if ($ran.Said -notmatch ('不合格: .*' + [regex]::Escape($form.Value))) {
+            throw "$($form.Key) を違えたのに $($form.Value) が落ちていない: $($ran.Said)"
+        }
+    }
+}
+
+function Invoke-LiveBridgeRunner {
+    <#
+        .SYNOPSIS
+        応答を作るMCPサーバーと操作役の代わりを立ててブリッジの実機動作確認を走らせ、終了コードと
+        書き出したものを返す。Broken を与えると、その形の本文だけを違えさせる。
+    #>
+    param([string]$Broken)
+
+    $said = node scripts/live-bridge.mjs `
+        --control scripts/live-stub-control.ps1 `
+        --setup scripts/live-bridge-stub-setup.ps1 `
+        --setup-arg -Broken --setup-arg $Broken 2>&1
+    $code = $LASTEXITCODE
+    $global:LASTEXITCODE = 0
+
+    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
+}
+
+function Test-LiveBridgeRunner {
+    <#
+        .SYNOPSIS
+        ブリッジの実機動作確認が、返った本文を期待と突き合わせて合否を出すことを確かめる。期待
+        どおりの本文で通し、そのうえで本文の形ごとに、その1つだけを違えた実行が当の場面で落ちる。
+    #>
+    $forms = [ordered]@{
+        'code'   = 'エディタが1つも無いとき'
+        'target' = 'エディタが1つのとき'
+        'pong'   = 'エディタが1つのとき'
+        'moved'  = '1つに戻ったとき'
+        'order'  = '2つ待ち受けているとき'
+        'listed' = '2つ待ち受けているとき'
+    }
+
+    $ran = Invoke-LiveBridgeRunner -Broken ''
+    if ($ran.Code -ne 0) { throw "期待どおりの本文で走らせて合格しない: $($ran.Said)" }
+
+    foreach ($form in $forms.GetEnumerator()) {
+        $ran = Invoke-LiveBridgeRunner -Broken $form.Key
+        if ($ran.Code -eq 0) {
+            throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
+        }
+
+        if ($ran.Said -notmatch [regex]::Escape($form.Value + ': ')) {
+            throw "$($form.Key) を違えたのに $($form.Value) が落ちていない: $($ran.Said)"
+        }
+    }
+}
+
+function Invoke-LiveClientRunner {
+    <#
+        .SYNOPSIS
+        呼び出しの記録を作るクライアントと操作役の代わりを立てて参照クライアントの実機動作確認を
+        走らせ、終了コードと書き出したものを返す。Broken を与えると、その項目だけを違えさせる。
+    #>
+    param([string]$Broken)
+
+    $client = 'node scripts/live-client-stub.mjs'
+    if ($Broken) { $client += ' --broken ' + $Broken }
+
+    $said = node scripts/live-client.mjs `
+        --control scripts/live-stub-control.ps1 `
+        --setup scripts/live-client-stub-setup.ps1 `
+        --client $client 2>&1
+    $code = $LASTEXITCODE
+    $global:LASTEXITCODE = 0
+
+    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
+}
+
+function Test-LiveClientRunner {
+    <#
+        .SYNOPSIS
+        参照クライアントの実機動作確認が、呼び出しの記録を期待と突き合わせて合否を出すことを
+        確かめる。期待どおりの記録で通し、そのうえで記録の項目ごとに、その1つだけを違えた実行が
+        当の咎めで落ちる。
+    #>
+    $forms = [ordered]@{
+        'call'          = '引数が渡りませんでした'
+        'arguments'     = '引数が渡りませんでした'
+        'result'        = '呼び出しの返りが取れませんでした'
+        'refused'       = '呼び出しが通りませんでした'
+        'image.missing' = '画像が画像として届きませんでした'
+        'image.extra'   = '画像を返さないツールが画像を返しました'
+    }
+
+    $ran = Invoke-LiveClientRunner -Broken ''
+    if ($ran.Code -ne 0) { throw "期待どおりの記録で走らせて合格しない: $($ran.Said)" }
+
+    foreach ($form in $forms.GetEnumerator()) {
+        $ran = Invoke-LiveClientRunner -Broken $form.Key
+        if ($ran.Code -eq 0) {
+            throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
+        }
+
+        if ($ran.Said -notmatch [regex]::Escape($form.Value)) {
+            throw "$($form.Key) を違えたのに、その項目を咎めていない: $($ran.Said)"
+        }
+    }
+}
+
+function Test-CheckSummary {
+    <#
+        .SYNOPSIS
+        検査の集計が、落ちた検査を落ちたものとして数え、走らせていない検査を残ったものとして
+        数えることを確かめる。ここが壊れると、どの検査が落ちても全件が緑で終わる——足した4件の
+        照合も含め、何も言わなくなる。
+    #>
+    $said = pwsh -NoProfile -File scripts/checks-stub-run.ps1 2>&1
+    $code = $LASTEXITCODE
+    $global:LASTEXITCODE = 0
+    if ($code -ne 0) { throw "集計を確かめる実行が落ちた: $(@($said) -join "`n")" }
+
+    # 投げて落ちた検査の名前・非0で終わった検査の名前・通った検査の空・落ちた件があるときの1・
+    # 無いときの0・走らせていない件があるときの1・上限を超えたときの1・一覧と群の食い違いを
+    # 向きごとに咎めるか。並びは checks-stub-run.ps1 が決める。
+    $wanted = '結果: 落ちる題材|非0で終わる題材||1|0|1|1|とがめる|とがめる|とがめる|とがめる'
+    if ((@($said) -join "`n") -notmatch [regex]::Escape($wanted)) {
+        throw "集計の結末が「$wanted」ではない: $(@($said) -join "`n")"
+    }
 }
 
 function Get-AcceptanceExpectationForms {
@@ -599,6 +870,72 @@ $checks['E2Eの実行器の照合'] = @{
     }
 }
 
+$checks['検査の集計の照合'] = @{
+    Needs = $noArtifact
+    Body = {
+        $spoken = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+        try {
+            Test-CheckSummary
+        } finally {
+            [Console]::OutputEncoding = $spoken
+        }
+    }
+}
+
+$checks['確認クライアントの照合'] = @{
+    Needs = $noArtifact
+    Body = {
+        # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
+        $spoken = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+        try {
+            Test-CheckClient
+        } finally {
+            [Console]::OutputEncoding = $spoken
+        }
+    }
+}
+
+$checks['実機動作確認の実行器の照合'] = @{
+    Needs = $noArtifact
+    Body = {
+        $spoken = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+        try {
+            Test-LiveHostRunner
+        } finally {
+            [Console]::OutputEncoding = $spoken
+        }
+    }
+}
+
+$checks['ブリッジの実行器の照合'] = @{
+    Needs = $noArtifact
+    Body = {
+        $spoken = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+        try {
+            Test-LiveBridgeRunner
+        } finally {
+            [Console]::OutputEncoding = $spoken
+        }
+    }
+}
+
+$checks['参照クライアントの実行器の照合'] = @{
+    Needs = $noArtifact
+    Body = {
+        $spoken = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+        try {
+            Test-LiveClientRunner
+        } finally {
+            [Console]::OutputEncoding = $spoken
+        }
+    }
+}
+
 $checks['受入の実行器の照合'] = @{
     Needs = $noArtifact
     Body = {
@@ -634,7 +971,8 @@ $checkGroups = [ordered]@{
     # 申告で、`@($checks.Keys)` のような一括の指定にはしない——一括にすると、新しい検査を上の2群へ
     # 入れ忘れても全件の側が黙って拾い、入れ忘れを落とす検査が素通りになる。
     '全件のみ' = @($build, 'スクリプト構文', 'スクリプト構文(PowerShell)', '実行時リフレクション',
-        '整形', 'E2Eの実行器の照合')
+        '整形', 'E2Eの実行器の照合', '検査の集計の照合', '確認クライアントの照合',
+        '実機動作確認の実行器の照合', 'ブリッジの実行器の照合', '参照クライアントの実行器の照合')
 }
 
 function Invoke-Checks {

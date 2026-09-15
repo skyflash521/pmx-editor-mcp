@@ -17,17 +17,22 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import url from "node:url";
+import { CASES, SERVER_NAME, named } from "./live-client-cases.mjs";
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 
-/** エディタとホストの操作役。稼働状態と画面を触るのはこの1本に寄せる。 */
-const CONTROL_SCRIPT = path.join(here, "host-control.ps1");
+/**
+ * エディタとホストの操作役。稼働状態と画面を触るのはこの1本に寄せる。
+ * 差し替えられるのは、この実行器そのものを実機のエディタ無しで確かめるためである——既定は
+ * 実物で、開くのは実行時の引数に限る。
+ */
+let CONTROL_SCRIPT = path.join(here, "host-control.ps1");
 
 /** 導入の前置。ホストを配置し、MCPサーバーとして起こす相手を書き出す。 */
-const SETUP_SCRIPT = path.join(here, "acceptance-setup-dev.ps1");
+let SETUP_SCRIPT = path.join(here, "acceptance-setup-dev.ps1");
 
-/** 登録するMCPサーバーの名前。ツールの綴りはこの名前から組み立てられる。 */
-const SERVER_NAME = "pmx-editor-mcp";
+/** 呼ばせる相手。参照クライアントの入口の綴りで、実行時の引数で差し替えられる。 */
+let CLIENT_COMMAND = "claude";
 
 /** 応答サイズ予算の文字数を与える環境変数。ホストとブリッジが同じ値を読む。 */
 const BUDGET_NAME = "PMX_EDITOR_MCP_BUDGET_CHARS";
@@ -54,36 +59,8 @@ const CLIENT_TIMEOUT_MS = 300000;
 
 const EXIT_SUCCESS = 0;
 const EXIT_FAILED = 1;
+const EXIT_INVALID_ARGUMENTS = 2;
 const EXIT_INPUT_UNAVAILABLE = 3;
-
-/**
- * 呼ばせるツールと、乗っていなければならない引数。画像を返すツールは、返りが画像として届くことも
- * 見る。
- * 組の直下を分岐で綴っていたときに引数が落ちたものから採る——落ちない形だけを並べると、
- * 落ちたことをこの検査が見逃す。
- */
-const CASES = [
-    {
-        tool: "model_list_materials",
-        // 真偽と数を1つずつ含む。綴りが読まれないと、真偽が文字列になってホストが弾く。
-        arguments: { all: true, limit: 3 },
-        image: false,
-    },
-    {
-        tool: "model_list_morph_offsets",
-        // 親を選ぶ綴りと自分を選ぶ綴りが重なる一覧。分岐がもっとも深くなる形である。
-        arguments: { parentAll: true, all: true, limit: 3 },
-        image: false,
-    },
-    {
-        // ビューの画像。既定の窓の大きさのまま1回で得られること、そして文字列でなく画像として
-        // 届くことを見る——文字列で届くと、参照クライアントは中身を見られない。仕様に合っているかでは
-        // なく、クライアントが画像として受け取るかを見る。
-        tool: "view_get_client_image_pmd_view_connector",
-        arguments: {},
-        image: true,
-    },
-];
 
 function invokeScript(script, args) {
     const done = spawnSync(
@@ -197,6 +174,47 @@ function readCalls(text) {
     return calls.map((call) => ({ ...call, ...(results.get(call.id) ?? {}) }));
 }
 
+/** 引数を読み分ける。差し替え点はどれも綴りで受け取り、中身は解さない。 */
+function parseArguments(args) {
+    const named1 = { "--control": null, "--setup": null, "--client": null };
+    for (let at = 0; at < args.length; at += 2) {
+        const name = args[at];
+        const value = args[at + 1];
+        if (value === undefined) {
+            return { error: name + " に値がありません。" };
+        }
+
+        if (named1[name] === undefined) {
+            return { error: "知らない引数: " + name };
+        }
+
+        named1[name] = value;
+    }
+
+    return { parsed: named1 };
+}
+
+const read = parseArguments(process.argv.slice(2));
+if (read.error !== undefined) {
+    console.error(read.error);
+    console.error(
+        "使い方: node live-client.mjs [--control <操作役のパス>] [--setup <前置のパス>]"
+            + " [--client <呼ばせる相手の綴り>]");
+    process.exit(EXIT_INVALID_ARGUMENTS);
+}
+
+if (read.parsed["--control"] !== null) {
+    CONTROL_SCRIPT = read.parsed["--control"];
+}
+
+if (read.parsed["--setup"] !== null) {
+    SETUP_SCRIPT = read.parsed["--setup"];
+}
+
+if (read.parsed["--client"] !== null) {
+    CLIENT_COMMAND = read.parsed["--client"];
+}
+
 let editor = null;
 let room = null;
 let code = EXIT_SUCCESS;
@@ -224,13 +242,13 @@ try {
         }),
         "utf8");
 
-    const named = CASES.map((c) => "mcp__" + SERVER_NAME + "__" + c.tool);
+    const naming = CASES.map((c) => named(c.tool));
     const orders = CASES
         .map((c, i) => {
             const given = Object.entries(c.arguments)
                 .map(([n, v]) => n + "=" + JSON.stringify(v)).join(", ");
 
-            return (i + 1) + ". " + "mcp__" + SERVER_NAME + "__" + c.tool
+            return (i + 1) + ". " + named(c.tool)
                 + (given === "" ? " を引数無しで" : " を " + given + " の引数で") + "1回だけ呼べ。";
         })
         .join("\n");
@@ -238,12 +256,12 @@ try {
     // 参照クライアントの入口はWindowsでは .cmd なので、シェルを通さないと起こせない。
     const quoted = (value) => "\"" + value + "\"";
     const said = spawnSync(
-        "claude",
+        CLIENT_COMMAND,
         [
             "-p",
             "--mcp-config", quoted(config),
             "--strict-mcp-config",
-            "--allowedTools", quoted(named.join(",")),
+            "--allowedTools", quoted(naming.join(",")),
             "--output-format", "stream-json",
             "--verbose",
         ],
@@ -263,12 +281,12 @@ try {
     } else {
         const calls = readCalls(said.stdout);
         for (const probe of CASES) {
-            const named1 = "mcp__" + SERVER_NAME + "__" + probe.tool;
+            const naming1 = named(probe.tool);
             const call = calls.find(
-                (c) => c.name === named1 && carries(c.input, probe.arguments));
+                (c) => c.name === naming1 && carries(c.input, probe.arguments));
             if (call === undefined) {
                 const tried = calls
-                    .filter((c) => c.name === named1)
+                    .filter((c) => c.name === naming1)
                     .map((c) => JSON.stringify(c.input))
                     .join(" / ");
                 console.error(

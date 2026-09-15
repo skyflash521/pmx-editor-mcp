@@ -24,7 +24,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-. (Join-Path $PSScriptRoot 'acceptance-stub-shared.ps1')
+. (Join-Path $PSScriptRoot 'stub-shared.ps1')
 
 # 頼まれた操作をそのまま書き留める。実行器が段をこなしたかどうかは、これでしか外から分からない
 # ——起動と写し以外の操作は、実行器の側に何も返さないからである。

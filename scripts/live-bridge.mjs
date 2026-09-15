@@ -13,11 +13,15 @@ import { McpClient } from "./mcp-client.mjs";
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 
-/** エディタとホストの操作役。稼働状態と画面を触るのはこの1本に寄せる。 */
-const CONTROL_SCRIPT = path.join(here, "host-control.ps1");
+/**
+ * エディタとホストの操作役。稼働状態と画面を触るのはこの1本に寄せる。
+ * 差し替えられるのは、この実行器そのものを実機のエディタ無しで確かめるためである——既定は
+ * 実物で、開くのは実行時の引数に限る。
+ */
+let CONTROL_SCRIPT = path.join(here, "host-control.ps1");
 
 /** 導入の前置。ホストを配置し、MCPサーバーとして起こす相手を書き出す。 */
-const SETUP_SCRIPT = path.join(here, "acceptance-setup-dev.ps1");
+let SETUP_SCRIPT = path.join(here, "acceptance-setup-dev.ps1");
 
 /** ホストが応答することを確かめるツールの名前。ブリッジの実装が定める。 */
 const PING = "ping";
@@ -46,6 +50,7 @@ const CONTROL_TIMEOUT_MS = 180000;
 
 const EXIT_SUCCESS = 0;
 const EXIT_FAILED = 1;
+const EXIT_INVALID_ARGUMENTS = 2;
 const EXIT_INPUT_UNAVAILABLE = 3;
 
 /** 操作役か前置を呼び、書き出したものを返す。落ちたら、その言い分を添えて投げる。 */
@@ -120,10 +125,36 @@ function expectPong(said, editorProcessId, what, moved) {
     expect(said, PONG, what);
 }
 
-async function main() {
+/** 引数を読み分ける。差し替え点はどちらも道で受け取り、中身は解さない。 */
+function parseArguments(args) {
+    const named = { "--control": null, "--setup": null, "--setup-arg": [] };
+    for (let at = 0; at < args.length; at += 2) {
+        const name = args[at];
+        const value = args[at + 1];
+        if (value === undefined) {
+            return { error: name + " に値がありません。" };
+        }
+
+        if (named[name] === undefined) {
+            return { error: "知らない引数: " + name };
+        }
+
+        if (name === "--setup-arg") {
+            named[name].push(value);
+            continue;
+        }
+
+        named[name] = value;
+    }
+
+    return { parsed: named };
+}
+
+async function main(setupArgs) {
     let server;
     try {
-        server = JSON.parse(invokeScript(SETUP_SCRIPT, ["-Action", "prepare"]).split(/\r?\n/).pop());
+        server = JSON.parse(
+            invokeScript(SETUP_SCRIPT, ["-Action", "prepare", ...setupArgs]).split(/\r?\n/).pop());
     } catch (error) {
         console.error("導入の前置を行えません: " + error.message);
         return EXIT_INPUT_UNAVAILABLE;
@@ -201,4 +232,21 @@ async function main() {
     return EXIT_SUCCESS;
 }
 
-process.exit(await main());
+const read = parseArguments(process.argv.slice(2));
+if (read.error !== undefined) {
+    console.error(read.error);
+    console.error(
+        "使い方: node live-bridge.mjs [--control <操作役のパス>] [--setup <前置のパス>]"
+            + " [--setup-arg <前置へ渡す値>]...");
+    process.exit(EXIT_INVALID_ARGUMENTS);
+}
+
+if (read.parsed["--control"] !== null) {
+    CONTROL_SCRIPT = read.parsed["--control"];
+}
+
+if (read.parsed["--setup"] !== null) {
+    SETUP_SCRIPT = read.parsed["--setup"];
+}
+
+process.exit(await main(read.parsed["--setup-arg"]));
