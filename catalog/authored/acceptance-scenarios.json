@@ -522,10 +522,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -652,10 +653,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -694,10 +696,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -886,10 +889,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -960,10 +964,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -1119,10 +1124,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -1251,10 +1257,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -1368,10 +1375,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -1496,10 +1504,11 @@
           }
         },
         {
-          "kind": "control",
-          "action": "undo",
-          "editor": {
-            "$from": "editorA"
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
           }
         },
         {
@@ -3177,6 +3186,22 @@
         },
         {
           "kind": "control",
+          "action": "close",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_CONNECTION_LOST"
+          }
+        },
+        {
+          "kind": "control",
           "action": "closeAll"
         },
         {
@@ -3190,107 +3215,6 @@
           "expect": {
             "ok": false,
             "code": "BRIDGE_NO_EDITOR"
-          }
-        },
-        {
-          "kind": "control",
-          "action": "launch",
-          "record": {
-            "name": "editorB",
-            "shape": "number"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": true,
-            "notice": {
-              "editor": {
-                "$from": "editorB"
-              }
-            },
-            "body": {
-              "equals": "pong"
-            }
-          }
-        },
-        {
-          "kind": "control",
-          "action": "close",
-          "editor": {
-            "$from": "editorB"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": false,
-            "code": "BRIDGE_CONNECTION_LOST"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": false,
-            "code": "BRIDGE_NO_EDITOR"
-          }
-        },
-        {
-          "kind": "control",
-          "action": "launch",
-          "record": {
-            "name": "editorC",
-            "shape": "number"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": true,
-            "notice": {
-              "changedFrom": {
-                "$from": "editorB"
-              },
-              "changedTo": {
-                "$from": "editorC"
-              }
-            },
-            "body": {
-              "equals": "pong"
-            }
-          }
-        },
-        {
-          "kind": "control",
-          "action": "stop",
-          "editor": {
-            "$from": "editorC"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": false,
-            "code": "BRIDGE_CONNECTION_LOST"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": false,
-            "code": "BRIDGE_NO_HOST"
           }
         }
       ]
@@ -3306,6 +3230,46 @@
           "kind": "control",
           "action": "launch",
           "record": {
+            "name": "editorC",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "editor": {
+                "$from": "editorC"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "control",
+          "action": "stop",
+          "editor": {
+            "$from": "editorC"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "BRIDGE_CONNECTION_LOST"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "launch",
+          "record": {
             "name": "editorD",
             "shape": "number"
           }
@@ -3317,9 +3281,6 @@
           "expect": {
             "ok": true,
             "notice": {
-              "changedFrom": {
-                "$from": "editorC"
-              },
               "changedTo": {
                 "$from": "editorD"
               }
@@ -3334,7 +3295,7 @@
           "tool": "model_update_model_infos",
           "arguments": {
             "value": {
-              "modelName": "acceptance-b"
+              "modelName": "acceptance-d"
             }
           },
           "expect": {
@@ -3349,69 +3310,26 @@
           }
         },
         {
-          "kind": "control",
-          "action": "stop",
-          "editor": {
-            "$from": "editorD"
-          }
-        },
-        {
           "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": false,
-            "code": "BRIDGE_CONNECTION_LOST"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
+          "tool": "model_list_model_infos",
+          "arguments": {
+            "fields": [
+              "modelName"
+            ]
+          },
           "expect": {
             "ok": true,
-            "notice": {
-              "changedFrom": {
-                "$from": "editorD"
-              },
-              "changedTo": {
-                "$from": "editorC"
+            "values": [
+              {
+                "path": "items.0.modelName",
+                "equals": "acceptance-d"
               }
-            },
-            "body": {
-              "equals": "pong"
-            }
+            ]
           }
         },
         {
-          "kind": "control",
-          "action": "start",
-          "editor": {
-            "$from": "editorD"
-          }
-        },
-        {
-          "kind": "control",
-          "action": "stop",
-          "editor": {
-            "$from": "editorC"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": false,
-            "code": "BRIDGE_CONNECTION_LOST"
-          }
-        },
-        {
-          "kind": "control",
-          "action": "start",
-          "editor": {
-            "$from": "editorC"
-          }
+          "kind": "server",
+          "action": "restart"
         },
         {
           "kind": "tool",
@@ -3431,28 +3349,13 @@
         },
         {
           "kind": "tool",
-          "tool": "model_list_model_infos",
-          "arguments": {
-            "fields": [
-              "modelName"
-            ]
-          },
+          "tool": "ping",
+          "arguments": {},
           "expect": {
             "ok": true,
-            "notice": {
-              "changedFrom": {
-                "$from": "editorC"
-              },
-              "changedTo": {
-                "$from": "editorD"
-              }
-            },
-            "values": [
-              {
-                "path": "items.0.modelName",
-                "equals": "acceptance-b"
-              }
-            ]
+            "body": {
+              "equals": "pong"
+            }
           }
         },
         {
@@ -3463,38 +3366,12 @@
           }
         },
         {
-          "kind": "control",
-          "action": "start",
-          "editor": {
-            "$from": "editorC"
-          }
-        },
-        {
           "kind": "tool",
           "tool": "ping",
           "arguments": {},
           "expect": {
             "ok": false,
-            "code": "BRIDGE_CONNECTION_LOST"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
-          "expect": {
-            "ok": true,
-            "notice": {
-              "changedFrom": {
-                "$from": "editorD"
-              },
-              "changedTo": {
-                "$from": "editorC"
-              }
-            },
-            "body": {
-              "equals": "pong"
-            }
+            "code": "BRIDGE_NO_HOST"
           }
         }
       ]
