@@ -95,6 +95,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
 ] }";
         }
 
+        /// <summary>ハンドルが出たことを呼び出しの記録だけで確かめる行の表。</summary>
+        private static string DrawnOnlyByLog(string basis)
+        {
+            return @"{ ""rows"": [
+  { ""signatureKey"": """ + Key + @""",
+    ""editKind"": ""read"",
+    ""basis"": """ + basis + @""",
+    ""postcondition"": [{ ""effectType"": ""handleCreated"", ""effectKey"": """",
+      ""kind"": ""callLogOnly"", ""comparison"": ""exists"" }] }
+] }";
+        }
+
         /// <summary>要素型とサンプル値の型を指す用意の操作を持つ表。</summary>
         private static string SetupMap(string elementType, string sample)
         {
@@ -238,6 +250,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     memberKind: MemberKind.Constructor));
 
             Assert.Contains("導いた種別が求める項目が無い", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact(Skip = "impl pending: ハンドルが出たことを記録だけで確かめる行に、引けない理由を求める")]
+        public void RejectsAHandleThatIsOnlyLoggedWithoutSayingWhyItCannotBeDrawn()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: DrawnOnlyByLog("現在のPMXの複製を返すだけである。"),
+                    assignmentsJson: @"{ ""assignments"": [] }"));
+
+            Assert.Contains("引けない理由", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TakesAHandleThatIsOnlyLoggedWhenItSaysWhyItCannotBeDrawn()
+        {
+            Require(
+                mapJson: DrawnOnlyByLog(
+                    "現在のPMXの複製を返す。出たハンドルを引ける一覧のツールが無いので、"
+                        + "出たことは呼び出しの記録で確かめる。"),
+                assignmentsJson: @"{ ""assignments"": [] }");
         }
 
         [Fact]
