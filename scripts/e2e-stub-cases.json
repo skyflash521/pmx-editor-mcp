@@ -1,0 +1,166 @@
+{
+  "cases": [
+    {
+      "rowKey": "Stub.Type.Read()",
+      "editKind": "read",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_read",
+      "purpose": "呼び出して値を返せること",
+      "arguments": {},
+      "expect": "success"
+    },
+    {
+      "rowKey": "Stub.Type.Call()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_call",
+      "purpose": "呼び出して呼び先まで届くこと",
+      "arguments": {},
+      "expect": "called"
+    },
+    {
+      "rowKey": "Stub.Type.Missing()",
+      "editKind": "read",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_missing",
+      "purpose": "未知のメソッドとして断られないこと",
+      "arguments": {},
+      "expect": "dispatched"
+    },
+    {
+      "rowKey": "Stub.Type.Refuse()",
+      "editKind": "read",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_refuse",
+      "purpose": "台帳に無いハンドルを渡す呼び出しを断ること",
+      "arguments": {
+        "handles": [
+          2147483647
+        ]
+      },
+      "expect": "refusal",
+      "code": "TOOL_INVALID_HANDLE"
+    },
+    {
+      "rowKey": "Stub.Type.Deny()",
+      "editKind": "read",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_deny",
+      "purpose": "成り立たない値を渡す呼び出しを、その理由で断ること",
+      "arguments": {
+        "path": "在りもしない位置"
+      },
+      "expect": "denied",
+      "code": "TOOL_OPERATION_FAILED",
+      "says": "見つかりませんでした"
+    },
+    {
+      "rowKey": "Stub.Type.Write()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_write",
+      "purpose": "呼び出して成功すること",
+      "arguments": {
+        "path": "%TEMP%\\pmx-editor-mcp-e2e-stub\\書いた.txt"
+      },
+      "expect": "success",
+      "writes": "path"
+    },
+    {
+      "rowKey": "Stub.Type.Make()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_make",
+      "purpose": "呼び出して成功すること",
+      "arguments": {},
+      "expect": "success",
+      "produces": "Stub.Type.Make()"
+    },
+    {
+      "rowKey": "Stub.Type.Make()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_list",
+      "purpose": "呼び出しが出したハンドルを観測ツールで引けること",
+      "arguments": {
+        "handles": [
+          null
+        ]
+      },
+      "expect": "success",
+      "borrowed": {
+        "handles/0": "Stub.Type.Make()/0"
+      }
+    },
+    {
+      "rowKey": "Stub.Type.Position()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_position",
+      "purpose": "書いた位置を読み返せること",
+      "arguments": {
+        "all": true
+      },
+      "expect": "reads",
+      "expected": {
+        "member": "position",
+        "value": 1
+      }
+    },
+    {
+      "rowKey": "Stub.Type.Change()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_before",
+      "purpose": "呼ぶ前の姿を読めること",
+      "arguments": {
+        "all": true,
+        "limit": 1
+      },
+      "expect": "success",
+      "produces": "Stub.Type.Change()#stub_before"
+    },
+    {
+      "rowKey": "Stub.Type.Change()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_change",
+      "purpose": "呼び出して成功すること",
+      "arguments": {},
+      "expect": "success"
+    },
+    {
+      "rowKey": "Stub.Type.Change()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_before",
+      "purpose": "呼び出しの後に読めるものが、呼ぶ前と違うこと",
+      "arguments": {
+        "all": true,
+        "limit": 1
+      },
+      "expect": "changed",
+      "differs": "Stub.Type.Change()#stub_before"
+    },
+    {
+      "rowKey": "Stub.Type.View()",
+      "editKind": "read",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_view",
+      "purpose": "写し取ったビューの姿と合う画像を返せること",
+      "arguments": {},
+      "expect": "viewImage",
+      "view": "pmx"
+    },
+    {
+      "rowKey": "Stub.Type.OtherView()",
+      "editKind": "read",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_other_view",
+      "purpose": "別のビューの画像が、写し取ったビューの姿と合わないこと",
+      "arguments": {},
+      "expect": "viewImage",
+      "view": "transform"
+    }
+  ]
+}

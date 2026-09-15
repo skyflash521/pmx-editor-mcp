@@ -31,9 +31,16 @@ const PIPE_PREFIX = "pmx-editor-mcp-";
  */
 const STALLED_LIMIT = 1;
 
-/** 応答待ちの表示へ応答する操作役。画面を触るのはこの1本に寄せる。 */
-const CONTROL_SCRIPT = path.join(
-    path.dirname(url.fileURLToPath(import.meta.url)), "host-control.ps1");
+/** この実行器と同じ置き場にある道具を指す。 */
+function beside(name) {
+    return path.join(path.dirname(url.fileURLToPath(import.meta.url)), name);
+}
+
+/**
+ * 応答待ちの表示へ応答する操作役。画面を触るのはこの1本に寄せる。実機のエディタを相手にしない
+ * 実行では代わりを差し替える——この実行器そのものを確かめる検査が、画面も実機も無しで走る。
+ */
+let CONTROL_SCRIPT = beside("host-control.ps1");
 
 /** 呼び出しを始めていないことを表す断りの綴り。共通契約が定める。 */
 const NOT_STARTED = "TOOL_NOT_STARTED";
@@ -48,8 +55,7 @@ const CAPTURED_VIEW = "pmx";
 const MATCHING_IMAGE_LIMIT = 0.1;
 
 /** ビューの写しと画像を見比べるスクリプト。 */
-const COMPARE_SCRIPT = path.join(
-    path.dirname(url.fileURLToPath(import.meta.url)), "compare-view-image.ps1");
+let COMPARE_SCRIPT = beside("compare-view-image.ps1");
 
 /** ホストが発行するセッションの識別子の形。128ビットを16進で表した文字列である。 */
 const SESSION_PATTERN = /^[0-9a-f]{32}$/;
@@ -847,10 +853,34 @@ function readCases(path) {
     return read.cases;
 }
 
-const [processId, casesPath] = process.argv.slice(2);
-if (processId === undefined || casesPath === undefined) {
-    console.error("使い方: node e2e-tools.mjs <エディタのプロセスID> <検査のパス>");
+const given = process.argv.slice(2);
+const named = { "--control": null, "--compare": null };
+const loose = [];
+for (let at = 0; at < given.length; at++) {
+    if (!Object.prototype.hasOwnProperty.call(named, given[at])) {
+        loose.push(given[at]);
+        continue;
+    }
+
+    named[given[at]] = given[at + 1];
+    at += 1;
+}
+
+const [processId, casesPath] = loose;
+if (processId === undefined || casesPath === undefined
+    || Object.values(named).some((value) => value === undefined)) {
+    console.error(
+        "使い方: node e2e-tools.mjs <エディタのプロセスID> <検査のパス>"
+            + " [--control <操作役のパス>] [--compare <見比べるスクリプトのパス>]");
     process.exit(EXIT_INVALID_ARGUMENTS);
+}
+
+if (named["--control"] !== null) {
+    CONTROL_SCRIPT = named["--control"];
+}
+
+if (named["--compare"] !== null) {
+    COMPARE_SCRIPT = named["--compare"];
 }
 
 let cases;

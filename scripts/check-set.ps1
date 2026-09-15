@@ -117,6 +117,138 @@ function Assert-NoEditorLeft {
     }
 }
 
+# 待受の代わりがパイプを開くまでの上限の秒数。この開発環境での実測(5回)は 0.16・0.18・0.19・
+# 0.20・0.23秒で、上限はその最大の40倍(9.2秒)を秒の位で切り上げた10秒とする。正常な動作を
+# 刻むための値ではなく、開きも落ちもしない相手を諦めるための値である。落ちた相手はその場で
+# 分かるので、この上限は待たずに抜ける。
+$StubPipeLimitSeconds = 10
+
+function Wait-StubPipe {
+    <#
+        .SYNOPSIS
+        待受の代わりが名前付きパイプを開くまで待つ。開く前に投げると、実行器は接続できずに
+        落ちる——待たずに始めると、この検査の合否が起動の速さで揺れる。
+    #>
+    param([string]$Name, $Stub, [string]$Said)
+
+    $until = (Get-Date).AddSeconds($StubPipeLimitSeconds)
+    while ((Get-Date) -lt $until) {
+        # 名前付きパイプは Test-Path では見つからないので、待受の一覧から名前で探す。
+        $opened = @([System.IO.Directory]::GetFileSystemEntries("\\.\pipe\") |
+            ForEach-Object { Split-Path -Leaf $_ })
+        if ($opened -contains $Name) { return }
+        if ($Stub.HasExited) {
+            # 落ちた理由は待受の代わりが述べる。隠れた窓の中へは届かないので、受け取った先から
+            # 読んで載せる——理由の無い「開かなかった」だけでは、手で起こし直すところから
+            # やり直すことになる。
+            $told = if (Test-Path $Said) { (Get-Content $Said -Raw -Encoding UTF8).Trim() } else { '' }
+            throw ("待受の代わりが開く前に終わった: $Name " + $told)
+        }
+
+        Start-Sleep -Milliseconds 50
+    }
+
+    throw "待受の代わりが $StubPipeLimitSeconds 秒以内にパイプを開かない: $Name"
+}
+
+function Invoke-E2eRunner {
+    <#
+        .SYNOPSIS
+        応答を作る相手と操作役の代わりを立てて自動E2E検査の実行器を走らせ、終了コードと
+        書き出したものを返す。Broken を与えると、At が指す検査でその形の期待だけを違えさせる。
+    #>
+    param([string]$Cases, [string]$Broken, [int]$At, [string]$Pipe)
+
+    # 違える形を渡さない実行では、その引数ごと外す。空の文字列は引数として渡らないので、
+    # 名前だけが残って待受の代わりが値の無い引数で落ちる。
+    $given = @('scripts/e2e-stub-host.mjs', '--cases', $Cases, '--pipe', $Pipe, '--at', "$At")
+    if ($Broken) { $given += @('--broken', $Broken) }
+
+    $told = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-stub-" + $Pipe + ".log")
+    $stub = Start-Process -FilePath 'node' -PassThru -WindowStyle Hidden `
+        -RedirectStandardError $told -ArgumentList $given
+    try {
+        Wait-StubPipe -Name ("pmx-editor-mcp-" + $Pipe) -Stub $stub -Said $told
+        $said = node scripts/e2e-tools.mjs $Pipe $Cases `
+            --control scripts/e2e-stub-control.ps1 `
+            --compare scripts/e2e-stub-compare.ps1
+        $code = $LASTEXITCODE
+        $global:LASTEXITCODE = 0
+    } finally {
+        Stop-Process -Id $stub.Id -Force -ErrorAction SilentlyContinue
+        Remove-Item $told -Force -ErrorAction SilentlyContinue
+    }
+
+    [pscustomobject]@{ Code = $code; Said = ($said -join "`n") }
+}
+
+function Get-E2eExpectationForms {
+    <#
+        .SYNOPSIS
+        結末の形ごとに、それが初めて現れる検査の番を返す。形の名前は定義から拾うので、形を足しても
+        拾い直しは要らない。ビューの画像だけは、写したビューと合うことを見る形と、ほかのビューが
+        合わないことを見る形を別の形と見る。書き込んだ置き場を確かめる段は結末の名前を持たないので、
+        その名前を足す。
+    #>
+    param($Defined)
+
+    $forms = [ordered]@{}
+    $at = -1
+    foreach ($one in $Defined.cases) {
+        $at++
+        $form = $one.expect
+        if ($form -eq 'viewImage' -and $one.view -ne 'pmx') { $form = 'viewImage.other' }
+        if (-not $forms.Contains($form)) { $forms[$form] = $at }
+
+        $writes = $one.PSObject.Properties.Name -contains 'writes'
+        if ($writes -and -not $forms.Contains('file')) { $forms['file'] = $at }
+    }
+
+    $forms
+}
+
+function Test-E2eRunner {
+    <#
+        .SYNOPSIS
+        自動E2E検査の実行器が、返った応答を期待と突き合わせて合否を出すことを確かめる。期待
+        どおりの応答を与えた通しの実行は全件を合格で終え、そのうえで、期待の形ごとにその形だけを
+        違えた実行が不合格になる——その形を突き合わせない実行器はここで落ちる。
+    #>
+    param([string]$Cases)
+
+    $defined = Get-Content $Cases -Raw -Encoding UTF8 | ConvertFrom-Json
+
+    # 待受の名前は、実機のホストが使う名前と紛れない形にする。ホストはエディタのプロセスIDを
+    # 繋ぐので、数だけの接尾辞では、その番号のエディタが起きている実行で相手を取り違える。
+    $pipe = 'stub-' + [guid]::NewGuid().ToString('N')
+
+    $ran = Invoke-E2eRunner -Cases $Cases -Broken '' -At -1 -Pipe $pipe
+    if ($ran.Code -ne 0) {
+        throw "期待どおりの応答で通して走らせて合格しない: $($ran.Said)"
+    }
+
+    $counted = @($defined.cases).Count
+    if ($ran.Said -notmatch ("検査: " + $counted + " 件・合格 " + $counted)) {
+        throw "定義に並ぶ $counted 件をすべて合格で終えていない: $($ran.Said)"
+    }
+
+    foreach ($form in (Get-E2eExpectationForms -Defined $defined).GetEnumerator()) {
+        $pipe = 'stub-' + [guid]::NewGuid().ToString('N')
+        $broken = if ($form.Key -eq 'viewImage.other') { 'viewImage' } else { $form.Key }
+        $ran = Invoke-E2eRunner -Cases $Cases -Broken $broken -At $form.Value -Pipe $pipe
+        if ($ran.Code -ne 1) {
+            throw "$($form.Key) の期待を違えても不合格にならない: $($ran.Said)"
+        }
+
+        # 違えた当の検査が落ちたことまで見る。ほかの検査が落ちて終了コードが1になったのでは、
+        # その形を突き合わせている証拠にならない。
+        $tool = $defined.cases[$form.Value].tool
+        if ($ran.Said -notmatch ("不合格: " + [regex]::Escape($tool) + " ")) {
+            throw "$($form.Key) の期待を違えたのに $tool が落ちていない: $($ran.Said)"
+        }
+    }
+}
+
 function Test-AcceptanceRunner {
     <#
         .SYNOPSIS
@@ -422,6 +554,20 @@ $checks['配布パッケージの生成'] = @{
         Test-PackageContents
     }
 }
+$checks['E2Eの実行器の照合'] = @{
+    Needs = $noArtifact
+    Body = {
+        # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
+        $spoken = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+        try {
+            Test-E2eRunner -Cases 'scripts/e2e-stub-cases.json'
+        } finally {
+            [Console]::OutputEncoding = $spoken
+        }
+    }
+}
+
 $checks['受入の実行器の照合'] = @{
     Needs = $noArtifact
     Body = {
@@ -457,7 +603,7 @@ $checkGroups = [ordered]@{
     # 申告で、`@($checks.Keys)` のような一括の指定にはしない——一括にすると、新しい検査を上の2群へ
     # 入れ忘れても全件の側が黙って拾い、入れ忘れを落とす検査が素通りになる。
     '全件のみ' = @($build, 'スクリプト構文', 'スクリプト構文(PowerShell)', '実行時リフレクション',
-        '整形')
+        '整形', 'E2Eの実行器の照合')
 }
 
 function Invoke-Checks {
