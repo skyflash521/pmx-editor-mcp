@@ -11112,16 +11112,12 @@
     {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.CreateViewEventListener()",
       "editKind": "viewSession",
-      "basis": "画面で起きたことを受け取る口を作るだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "画面で起きたことを受け取る口を作るだけで、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "handle",
-          "observerTool": "view_poll_events",
-          "observerArgs": {
-            "handles": "result:"
-          },
+          "kind": "callLogOnly",
           "comparison": "exists"
         }
       ]
@@ -12113,16 +12109,12 @@
     {
       "signatureKey": "PXCPlugin.PXCBridge.CreateEventConnector(PXCPlugin.IPXCPluginConnector)",
       "editKind": "viewSession",
-      "basis": "イベントの受け口をこの接続のために作るだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "イベントの受け口をこの接続のために作るだけで、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "handle",
-          "observerTool": "view_poll_events",
-          "observerArgs": {
-            "handles": "result:"
-          },
+          "kind": "callLogOnly",
           "comparison": "exists"
         }
       ]
@@ -12257,16 +12249,12 @@
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.CreateEventListener(PXCPlugin.Event.IPXEventConnector,System.Int32[])",
       "editKind": "viewSession",
-      "basis": "UIモデルで起きたことを受け取る口を作るだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "UIモデルで起きたことを受け取る口を作るだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "handle",
-          "observerTool": "view_poll_events",
-          "observerArgs": {
-            "handles": "result:"
-          },
+          "kind": "callLogOnly",
           "comparison": "exists"
         }
       ]

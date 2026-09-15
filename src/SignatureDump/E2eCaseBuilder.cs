@@ -31,6 +31,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ハンドルの並びを受け取る入力の名前。</summary>
         public const string HandlesName = "handles";
 
+        /// <summary>ハンドルを台帳から外すツールの名前。共通契約が名前を定める。</summary>
+        private const string ReleaseToolName = "session_release_handle";
+
         /// <summary>親と要素の組を受け取る入力の名前。</summary>
         private const string AssignmentsName = "assignments";
 
@@ -51,6 +54,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>並べたものを載せる応答の項目の名前。</summary>
         private const string ItemsName = "items";
+
+        /// <summary>返す項目を選ぶ入力の名前。</summary>
+        private const string FieldsName = "fields";
+
+        /// <summary>名前を載せる応答の項目の名前。</summary>
+        private const string NameName = "name";
 
         /// <summary>
         /// 位置で指す項目へ渡す、どのリストにも無い位置。負でない整数の上限なので、要素の数が
@@ -184,6 +193,7 @@ namespace PmxEditorMcp.SignatureDump
                 held.AddRange(Cases(
                     row,
                     schema,
+                    schemas,
                     connectionPaths,
                     dangerous,
                     sdkShapes,
@@ -249,7 +259,7 @@ namespace PmxEditorMcp.SignatureDump
                     handed
                         ? "作った要素を並びへ加えられること"
                         : "作った要素を親の並びの先頭へ加えられること",
-                    handed ? Empty() : IntoFirstParent(),
+                    handed ? Lent() : IntoFirstParent(),
                     E2eExpectation.Success,
                     null,
                     null,
@@ -257,16 +267,34 @@ namespace PmxEditorMcp.SignatureDump
                     new Dictionary<string, string>(StringComparer.Ordinal)
                     {
                         {
-                            handed ? HandlesName : AssignmentsName + "/0/" + HandlesName,
+                            handed
+                                ? Leaf(HandlesName)
+                                : Leaf(AssignmentsName + "/0/" + HandlesName),
                             pair.Key
                         },
                     });
             }
         }
 
-        private static IDictionary<string, object> Empty()
+        /// <summary>借りたハンドルを1つ入れる空き。借りる側がこの位置を埋める。</summary>
+        private static object[] Slot()
         {
-            return new Dictionary<string, object>(StringComparer.Ordinal);
+            return new object[] { null };
+        }
+
+        /// <summary>その空きの中の、借りた値を置く位置までの道。</summary>
+        private static string Leaf(string path)
+        {
+            return path + "/0";
+        }
+
+        /// <summary>ハンドルの並びだけを渡す引数。ハンドルは借りる側が埋める。</summary>
+        private static IDictionary<string, object> Lent()
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { HandlesName, Slot() },
+            };
         }
 
         /// <summary>親の並びの先頭へ、借りたハンドルを入れる組。ハンドルは借りる側が埋める。</summary>
@@ -281,6 +309,7 @@ namespace PmxEditorMcp.SignatureDump
                         new Dictionary<string, object>(StringComparer.Ordinal)
                         {
                             { ParentIndexName, FirstPosition },
+                            { HandlesName, Slot() },
                         },
                     }
                 },
@@ -344,6 +373,7 @@ namespace PmxEditorMcp.SignatureDump
         private static IEnumerable<E2eCase> Cases(
             ToolMapRow row,
             ToolSchema schema,
+            ToolSchemaTable schemas,
             IDictionary<string, string> connectionPaths,
             ISet<string> dangerous,
             IDictionary<SchemaItem, string> sdkShapes,
@@ -381,6 +411,18 @@ namespace PmxEditorMcp.SignatureDump
 
             SampleCallRow denied;
             bool denies = row != null && refused.TryGetValue(rowKey, out denied);
+
+            // 観測の段を組み立てられるかは、呼び出しを組み立てるかに依らず確かめる。受け取らない
+            // 引数を指す宣言は正本の誤りで、呼び出しの有無で見え隠れしてよいものではない。
+            Postcondition[] drawn = Drawn(row).ToArray();
+            foreach (Postcondition judgement in drawn)
+            {
+                Observed(judgement, schemas, rowKey);
+            }
+
+            // 断られることを確かめる呼び出しは、断られた時点でハンドルを出さない。その行の観測は
+            // 借りるものを持たないので組み立てない。
+            bool draws = calls && !denies && drawn.Length != 0;
             if (calls)
             {
                 yield return new E2eCase(
@@ -397,10 +439,34 @@ namespace PmxEditorMcp.SignatureDump
                     denies ? E2eExpectation.Denied : E2eExpectation.Called,
                     denies ? refused[rowKey].Refused : null,
                     null,
-                    null,
+                    draws ? rowKey : null,
                     null,
                     null,
                     denies ? refused[rowKey].Says : null);
+
+                foreach (Postcondition judgement in draws ? drawn : new Postcondition[0])
+                {
+                    yield return Drawing(judgement, schemas, rowKey, editKind, path);
+                }
+
+                if (draws)
+                {
+                    yield return new E2eCase(
+                        rowKey,
+                        editKind,
+                        path,
+                        ReleaseToolName,
+                        "観測に使ったハンドルを解放できること",
+                        Lent(),
+                        E2eExpectation.Success,
+                        null,
+                        null,
+                        null,
+                        new Dictionary<string, string>(StringComparer.Ordinal)
+                        {
+                            { Leaf(HandlesName), rowKey },
+                        });
+                }
             }
 
             if (confirmed)
@@ -470,6 +536,125 @@ namespace PmxEditorMcp.SignatureDump
                     E2eExpectation.Refusal,
                     InvalidArgument);
             }
+        }
+
+        /// <summary>
+        /// 並べたものが名前を載せる観測ツールか。在ることを見るだけなので返す項目は要らないが、
+        /// 1つも選ばない頼み方は断られる。名前を載せるならそれ1つに絞る——項目を選ばずに頼むと
+        /// 位置で指す項目まで返そうとして、まだどのPMXにも入っていない実体では解けずに断られる。
+        /// 名前を載せないツールでは絞る相手が無いので、項目を選ばずに頼む。
+        /// </summary>
+        private static bool Named(ToolSchema observer)
+        {
+            SchemaItem items = observer.Output == null || observer.Output.Members == null
+                ? null
+                : observer.Output.Members.FirstOrDefault(
+                    m => string.Equals(m.Name, ItemsName, StringComparison.Ordinal));
+            SchemaItem element = items == null ? observer.Output : items.Element;
+
+            return observer.Branches.SelectMany(b => b.Inputs).Any(
+                    i => !i.Injected && string.Equals(i.Name, FieldsName, StringComparison.Ordinal))
+                && element != null
+                && element.Members != null
+                && element.Members.Any(
+                    m => string.Equals(m.Name, NameName, StringComparison.Ordinal));
+        }
+
+        /// <summary>出たハンドルを観測すると宣言した判定。宣言しない行では空。</summary>
+        private static IEnumerable<Postcondition> Drawn(ToolMapRow row)
+        {
+            return row == null || row.Postcondition == null
+                ? new Postcondition[0]
+                : row.Postcondition.Where(p => p.Kind == EffectCheckKind.Handle);
+        }
+
+        /// <summary>
+        /// 観測ツールが、判定の指す引数を受け取るか。受け取る項目を名前ごとに返す。どの呼び分けも
+        /// 受け取らない引数を指す判定は、実機へ投げても断られるだけなので、ここで組み立てを止める。
+        /// </summary>
+        private static IDictionary<string, SchemaItem> Observed(
+            Postcondition judgement, ToolSchemaTable schemas, string rowKey)
+        {
+            if (judgement.ObserverArgs == null)
+            {
+                throw new InvalidOperationException(
+                    "出たハンドルを引く観測を宣言していない判定は組み立てられない: " + rowKey);
+            }
+
+            ToolSchema observer = schemas.Tools.FirstOrDefault(
+                t => string.Equals(t.Tool, judgement.ObserverTool, StringComparison.Ordinal));
+            Dictionary<string, SchemaItem> taken =
+                new Dictionary<string, SchemaItem>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, string> bound in judgement.ObserverArgs)
+            {
+                if (!bound.Value.StartsWith(ReferenceSpace.Result, StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException(
+                        "出たハンドル以外を観測へ渡す判定は組み立てられない: "
+                            + judgement.ObserverTool + "(" + bound.Key + "=" + bound.Value + ")");
+                }
+
+                SchemaItem item = observer == null
+                    ? null
+                    : observer.Branches
+                        .SelectMany(b => b.Inputs)
+                        .FirstOrDefault(i => !i.Injected
+                            && string.Equals(i.Name, bound.Key, StringComparison.Ordinal));
+                if (item == null)
+                {
+                    throw new InvalidOperationException(
+                        "観測ツールが、判定の指す引数をどの呼び分けでも受け取らない: "
+                            + judgement.ObserverTool + "(" + bound.Key + ")");
+                }
+
+                taken[bound.Key] = item;
+            }
+
+            return taken;
+        }
+
+        /// <summary>
+        /// 呼び出しが出したハンドルを観測ツールで引く検査。並びで受け取る引数へは空きを1つ置いて
+        /// その中を借り、1つだけ受け取る引数へはその位置を借りる。
+        /// </summary>
+        private static E2eCase Drawing(
+            Postcondition judgement,
+            ToolSchemaTable schemas,
+            string rowKey,
+            string editKind,
+            string path)
+        {
+            IDictionary<string, object> arguments =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            IDictionary<string, string> borrowed =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, SchemaItem> taken in
+                Observed(judgement, schemas, rowKey))
+            {
+                bool listed = taken.Value.Element != null;
+                arguments[taken.Key] = listed ? Slot() : null;
+                borrowed[listed ? Leaf(taken.Key) : taken.Key] = rowKey;
+            }
+
+            ToolSchema observer = schemas.Tools.First(
+                t => string.Equals(t.Tool, judgement.ObserverTool, StringComparison.Ordinal));
+            if (Named(observer))
+            {
+                arguments[FieldsName] = new object[] { NameName };
+            }
+
+            return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                judgement.ObserverTool,
+                "呼び出しが出したハンドルを観測ツールで引けること",
+                arguments,
+                E2eExpectation.Success,
+                null,
+                null,
+                null,
+                borrowed);
         }
 
         /// <summary>

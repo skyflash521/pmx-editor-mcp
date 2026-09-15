@@ -135,7 +135,8 @@ namespace PmxEditorMcp.SignatureDump
         public string Produces { get; }
 
         /// <summary>
-        /// 引数の名前から、覚えた値の名前へ。借りた値は1件の並びとして渡る。借りない検査は null。
+        /// 引数の中の道から、覚えた値の名前へ。道は斜線で区切り、たどり着いた位置へ覚えた値が
+        /// そのまま入る。借りない検査は null。
         /// </summary>
         public IDictionary<string, string> Borrowed { get; }
 

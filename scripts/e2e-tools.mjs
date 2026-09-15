@@ -418,8 +418,24 @@ function prompted(response) {
 }
 
 /**
- * 借りる値を差し込んだ引数。差し込む先は引数の中の道で、斜線で区切った各段をたどる。借りる
- * 名前をまだ覚えていなければ null。
+ * 返った値を覚えられるか。成功して値を載せた応答だけが覚える相手で、表示が出たことを知らせる
+ * 断りのように値を持たない応答は覚えない——覚えると、借りる側が値の無いものを渡してしまう。
+ */
+function produced(response) {
+    const envelope = response.result;
+
+    return envelope !== null
+        && envelope !== undefined
+        && typeof envelope === "object"
+        && !Array.isArray(envelope)
+        && envelope.ok === true
+        && envelope.value !== undefined;
+}
+
+/**
+ * 借りる値を差し込んだ引数。差し込む先は引数の中の道で、斜線で区切った各段をたどり、たどり着いた
+ * 位置へ覚えた値をそのまま置く。並びで受け取る引数は生成器が空きを1つ置き、道がその中を指す。
+ * 借りる名前をまだ覚えていなければ null。
  */
 function borrowing(one, remembered) {
     if (one.borrowed === undefined) {
@@ -438,7 +454,7 @@ function borrowing(one, remembered) {
             held = held[steps[at]];
         }
 
-        held[steps[steps.length - 1]] = [remembered.get(from)];
+        held[steps[steps.length - 1]] = remembered.get(from);
     }
 
     return given;
@@ -602,7 +618,7 @@ function run(pipeName, cases, processId) {
                 }
 
                 const reason = judge(one, response, capture);
-                if (reason === null && one.produces !== undefined) {
+                if (reason === null && one.produces !== undefined && produced(response)) {
                     remembered.set(one.produces, response.result.value);
                 }
 
