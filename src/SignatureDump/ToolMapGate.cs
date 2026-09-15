@@ -10,6 +10,11 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class ToolMapGate
     {
+        /// <summary>
+        /// 効果を呼び出しの記録だけで確かめると述べる言い回し。正本が既に使っているものへ揃える。
+        /// </summary>
+        private const string LoggedOnlyReason = "呼び出しの記録で確かめる";
+
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
             ToolMap map,
@@ -42,6 +47,7 @@ namespace PmxEditorMcp.SignatureDump
                 RequireFields(row, kinds[row.SignatureKey]);
                 RequireUpdateKind(row, evidence);
                 RequireSetup(row, evidence);
+                RequireDrawnOrExplained(row);
                 RequireSdkArguments(row, evidence);
             }
 
@@ -160,6 +166,27 @@ namespace PmxEditorMcp.SignatureDump
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 出たハンドルを呼び出しの記録だけで確かめる行に、引けない理由を求める。引けるのに引いて
+        /// いないのか、引けないから記録で済ませているのかは、行を読むだけでは分かれない。理由の
+        /// 言い回しをここが指定するので、書き手が書いたかどうかは機械で見える——書いた理由が本当
+        /// かどうかは見えないので、そこはレビューが受け持つ。
+        /// </summary>
+        private static void RequireDrawnOrExplained(ToolMapRow row)
+        {
+            if (row.Postcondition == null
+                || !row.Postcondition.Any(j => j.EffectType == EffectType.HandleCreated
+                    && j.Kind == EffectCheckKind.CallLogOnly)
+                || row.Basis.IndexOf(LoggedOnlyReason, StringComparison.Ordinal) >= 0)
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                "出たハンドルを引けない理由を述べていない: " + row.SignatureKey
+                    + "(根拠へ「" + LoggedOnlyReason + "」を含む一文を書く)");
         }
 
         /// <summary>

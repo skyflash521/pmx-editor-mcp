@@ -737,7 +737,7 @@
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState()",
       "editKind": "directChange",
-      "basis": "ボーンの変形状態を作って持ち物にするので、直接変更型に当たる。",
+      "basis": "ボーンの変形状態を作って持ち物にするので、直接変更型に当たる。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -750,7 +750,7 @@
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd,System.Int32)",
       "editKind": "directChange",
-      "basis": "モーションのデータのボーン1本ぶんから変形状態を作って持ち物にするので、直接変更型に当たる。",
+      "basis": "モーションのデータのボーン1本ぶんから変形状態を作って持ち物にするので、直接変更型に当たる。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -763,7 +763,7 @@
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd,System.Int32[])",
       "editKind": "directChange",
-      "basis": "モーションのデータのボーンごとに変形状態をまとめて作って持ち物にするので、直接変更型に当たる。",
+      "basis": "モーションのデータのボーンごとに変形状態をまとめて作って持ち物にするので、直接変更型に当たる。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -849,8 +849,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmes",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -862,15 +866,19 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_groups",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
     {
       "signatureKey": "PEPlugin.IPEBuilder.CreateVmePath()",
       "editKind": "directChange",
-      "basis": "VMEの空間パスを作って持ち物にするので、直接変更型に当たる。",
+      "basis": "VMEの空間パスを作って持ち物にするので、直接変更型に当たる。作った直後の経路は点を1つも持たず、一覧のツールが返す項目を解けないので引けない。出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -1261,8 +1269,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "model_list_faces",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6720,8 +6732,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6733,8 +6749,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6746,8 +6766,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6759,8 +6783,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6924,8 +6952,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6937,8 +6969,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6950,8 +6986,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6963,8 +7003,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6976,8 +7020,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -6989,8 +7037,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vmd_ipls",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7145,7 +7197,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdVisibleIKKey.IK()",
       "editKind": "read",
-      "basis": "そのコマで効かせるIKの並びを返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "そのコマで効かせるIKの並びを返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7205,8 +7257,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_bones",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7218,8 +7274,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_elements",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7244,8 +7304,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_frame_events",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7257,8 +7321,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_frame_events",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7270,8 +7338,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_frame_events",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7283,8 +7355,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_frame_events",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7312,8 +7388,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_frame_events",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7325,8 +7405,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_frame_events",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7419,8 +7503,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7432,8 +7520,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7471,15 +7563,19 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.D()",
       "editKind": "read",
-      "basis": "方向のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "方向のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7492,7 +7588,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.Direction()",
       "editKind": "read",
-      "basis": "方向のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "方向のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7522,7 +7618,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.P()",
       "editKind": "read",
-      "basis": "位置のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "位置のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7535,7 +7631,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.Position()",
       "editKind": "read",
-      "basis": "位置のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "位置のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7548,7 +7644,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.R()",
       "editKind": "read",
-      "basis": "回転量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "回転量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7561,7 +7657,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.Rotate()",
       "editKind": "read",
-      "basis": "回転量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "回転量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7574,7 +7670,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.S()",
       "editKind": "read",
-      "basis": "大きさのイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "大きさのイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7587,7 +7683,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.Scale()",
       "editKind": "read",
-      "basis": "大きさのイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "大きさのイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7600,7 +7696,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.T()",
       "editKind": "read",
-      "basis": "移動量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "移動量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7618,8 +7714,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7631,15 +7731,19 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBone.Translate()",
       "editKind": "read",
-      "basis": "移動量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "移動量のイベント設定を返すだけで、エディタの状態を動かさない。ボーンは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -7718,8 +7822,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_directions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7731,8 +7839,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_directions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7744,8 +7856,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7757,8 +7873,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7770,8 +7890,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_quaternion_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7783,8 +7907,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_quaternion_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7796,8 +7924,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_scales",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7809,8 +7941,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_scales",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7822,8 +7958,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_vector_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7835,8 +7975,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_vector_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -7856,8 +8000,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_elements",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8037,8 +8185,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_camera_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8050,8 +8202,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_camera_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8063,8 +8219,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_camera_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8076,8 +8236,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_camera_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8089,8 +8253,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_camera_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8102,8 +8270,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8119,7 +8291,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.P()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして位置のイベント設定を返すだけで、エディタの状態を動かさない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして位置のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8132,7 +8304,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.Position()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして位置のイベント設定を返すだけで、エディタの状態を動かさない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして位置のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8145,7 +8317,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.T()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして移動量のイベント設定を返すだけで、エディタの状態を動かさない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして移動量のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8163,8 +8335,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8176,15 +8352,19 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.Translate()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして移動量のイベント設定を返すだけで、エディタの状態を動かさない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして移動量のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8263,8 +8443,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8276,8 +8460,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_positions",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8289,8 +8477,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_vector_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8302,8 +8494,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_vector_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8431,7 +8627,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeElement.Extern()",
       "editKind": "read",
-      "basis": "要素が属する登録先を返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "要素が属する登録先を返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8453,7 +8649,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeEventState.Extern()",
       "editKind": "read",
-      "basis": "その状態が属する登録先を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "その状態が属する登録先を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8589,15 +8785,19 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_elements",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GetGroupElements()",
       "editKind": "read",
-      "basis": "まとまりが持つ要素を並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "まとまりが持つ要素を並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8662,15 +8862,19 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_bones",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetGroupBones()",
       "editKind": "read",
-      "basis": "まとまりが持つボーンを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "まとまりが持つボーンを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8722,7 +8926,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.GetGroupMorphs()",
       "editKind": "read",
-      "basis": "まとまりが持つモーフを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "まとまりが持つモーフを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8740,8 +8944,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_elements",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8761,7 +8969,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.C()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして色のイベント設定を返すだけで、エディタの状態を動かさない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして色のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8774,7 +8982,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.Color()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして色のイベント設定を返すだけで、エディタの状態を動かさない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして色のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8787,7 +8995,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.D()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして方向のイベント設定を返すだけで、エディタの状態を動かさない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして方向のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8800,7 +9008,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.Direction()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして方向のイベント設定を返すだけで、エディタの状態を動かさない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして方向のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8818,8 +9026,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8831,8 +9043,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8844,8 +9060,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8902,8 +9122,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_vector_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8915,8 +9139,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_vector_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8928,8 +9156,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_vector_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8941,8 +9173,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_vector_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -8988,8 +9224,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_cameras",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -9001,8 +9241,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_elements",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -9806,8 +10050,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_bone_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -9827,8 +10075,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_camera_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -9910,8 +10162,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_bone_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -9923,8 +10179,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_camera_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -9936,8 +10196,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_light_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -9979,8 +10243,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_morph_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -9992,8 +10260,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_light_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -10005,8 +10277,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_morph_results",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -10220,8 +10496,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -10233,15 +10513,19 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.V()",
       "editKind": "read",
-      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10259,15 +10543,19 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_event_states",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.Value()",
       "editKind": "read",
-      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
+      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10619,8 +10907,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_single_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -10632,8 +10924,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "motion_list_vme_single_values",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },
@@ -12834,8 +13130,12 @@
         {
           "effectType": "handleCreated",
           "effectKey": "",
-          "kind": "callLogOnly",
-          "comparison": "exists"
+          "kind": "handle",
+          "comparison": "exists",
+          "observerTool": "view_list_ui_models",
+          "observerArgs": {
+            "handles": "result:"
+          }
         }
       ]
     },

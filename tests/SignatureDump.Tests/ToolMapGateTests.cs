@@ -252,7 +252,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("導いた種別が求める項目が無い", error.Message, StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: ハンドルが出たことを記録だけで確かめる行に、引けない理由を求める")]
+        [Fact]
         public void RejectsAHandleThatIsOnlyLoggedWithoutSayingWhyItCannotBeDrawn()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
