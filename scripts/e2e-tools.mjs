@@ -418,6 +418,60 @@ function prompted(response) {
 }
 
 /**
+ * 環境変数の名前を値へ広げる。広げられない名前があればその名前を投げる。検査が書き先に使う位置は
+ * 走らせる機械ごとに変わるので、正本は名前で書き、ここで値にする。
+ */
+function expand(text) {
+    return text.replace(/%([^%]+)%/g, (whole, name) => {
+        const value = process.env[name];
+        if (value === undefined) {
+            throw new Error("環境変数が定義されていません: " + name);
+        }
+
+        return value;
+    });
+}
+
+/** 文字列の中の環境変数を、組も並びもたどって広げた値。 */
+function expanded(value) {
+    if (typeof value === "string") {
+        return expand(value);
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(expanded);
+    }
+
+    if (value !== null && typeof value === "object") {
+        const filled = {};
+        for (const [name, held] of Object.entries(value)) {
+            filled[name] = expanded(held);
+        }
+
+        return filled;
+    }
+
+    return value;
+}
+
+/**
+ * その検査が書くファイルの位置。書かない検査では null。呼ぶ前に置き場を用意して、そこに在る古い
+ * ものを消す——置き場が無いことで断られると書けたかどうかを確かめられず、前の実行が残したものを
+ * 残すと、何も書かない呼び出しでも在ることになる。
+ */
+function written(one, given) {
+    if (one.writes === undefined) {
+        return null;
+    }
+
+    const target = given[one.writes];
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.rmSync(target, { force: true });
+
+    return target;
+}
+
+/**
  * 返った値を覚えられるか。成功して値を載せた応答だけが覚える相手で、表示が出たことを知らせる
  * 断りのように値を持たない応答は覚えない——覚えると、借りる側が値の無いものを渡してしまう。
  */
@@ -474,6 +528,7 @@ function run(pipeName, cases, processId) {
     const results = [];
     const remembered = new Map();
     let capture = null;
+    let wrote = null;
 
     return new Promise((resolve) => {
         const settle = (code, message) => {
@@ -508,7 +563,7 @@ function run(pipeName, cases, processId) {
                 capture = captureView(processId);
             }
 
-            const given = borrowing(one, remembered);
+            const given = expanded(borrowing(one, remembered));
             if (given === null) {
                 results.push({
                     case: one,
@@ -519,6 +574,7 @@ function run(pipeName, cases, processId) {
                 return;
             }
 
+            wrote = written(one, given);
             send(requestId(index), one.tool, given);
         };
 
@@ -602,7 +658,7 @@ function run(pipeName, cases, processId) {
                 if (notStarted(response) && retried !== index
                     && clearPrompts(processId) > 0) {
                     retried = index;
-                    send(requestId(index), one.tool, borrowing(one, remembered));
+                    send(requestId(index), one.tool, expanded(borrowing(one, remembered)));
                     continue;
                 }
 
@@ -617,7 +673,11 @@ function run(pipeName, cases, processId) {
                     continue;
                 }
 
-                const reason = judge(one, response, capture);
+                let reason = judge(one, response, capture);
+                if (reason === null && wrote !== null && !fs.existsSync(wrote)) {
+                    reason = "書いたはずのファイルがありません: " + wrote;
+                }
+
                 if (reason === null && one.produces !== undefined && produced(response)) {
                     remembered.set(one.produces, response.result.value);
                 }

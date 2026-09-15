@@ -458,6 +458,27 @@
       "says": "見つかりませんでした"
     },
     {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SaveMaterialName(System.String)",
+      "arguments": {
+        "path": "%TEMP%\\pmx-editor-mcp-e2e\\材質名.txt"
+      },
+      "basis": "確認を要する行なので、渡す値を書かなければ呼ばれない。書き先には一時の置き場を渡す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SavePMDFile(System.String)",
+      "arguments": {
+        "path": "%TEMP%\\pmx-editor-mcp-e2e\\保存.pmd"
+      },
+      "basis": "開いているモデルを書き出すだけなので、一時の置き場へ書かせて、書けたことを確かめる。"
+    },
+    {
+      "signatureKey": "PEPlugin.Form.IPEFormConnector.SavePMXFile(System.String)",
+      "arguments": {
+        "path": "%TEMP%\\pmx-editor-mcp-e2e\\保存.pmx"
+      },
+      "basis": "開いているモデルを書き出すだけなので、一時の置き場へ書かせて、書けたことを確かめる。"
+    },
+    {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.SetSelectedMaterialIndices(System.Int32[])",
       "arguments": {
         "indices": [
@@ -522,6 +543,13 @@
       "basis": "読み込めるモデルのファイルを検査の側で用意できないので、在りもしない位置を渡して、その位置が無いことを知らせる側で確かめる。",
       "refused": "TOOL_OPERATION_FAILED",
       "says": "見つかりませんでした"
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.ToFile(System.String)",
+      "arguments": {
+        "path": "%TEMP%\\pmx-editor-mcp-e2e\\書き出し.pmx"
+      },
+      "basis": "持っているモデルを書き出すだけなので、一時の置き場へ書かせて、書けたことを確かめる。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddBox(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
@@ -797,6 +825,13 @@
         "path": "在りもしない位置.ini"
       },
       "basis": "読み込める設定のファイルを検査の側で用意できないので、在りもしない位置を渡す。エディタは位置が無くても設定を変えずに返す。"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEViewSettingConnector.SaveViewSetting(System.String)",
+      "arguments": {
+        "path": "%TEMP%\\pmx-editor-mcp-e2e\\表示設定.xml"
+      },
+      "basis": "いまの表示の設定を書き出すだけなので、一時の置き場へ書かせて、書けたことを確かめる。"
     },
     {
       "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.SetBodyVisibles(System.Boolean[])",
@@ -1128,9 +1163,7 @@
         "visible": true,
         "transform": false
       },
-      "basis": "描くものを持たない模型を1つ登録しようとする。中身のある模型を検査の側で用意できないので、登録できないことを知らせる側で確かめる。",
-      "refused": "TOOL_OPERATION_FAILED",
-      "says": "オブジェクト参照がオブジェクト インスタンスに設定されていません"
+      "basis": "描くものを持たない模型を1つ登録する。登録は模型の中身を要さないので、出たハンドルを一覧のツールで引けるところまで確かめる。"
     }
   ]
 }

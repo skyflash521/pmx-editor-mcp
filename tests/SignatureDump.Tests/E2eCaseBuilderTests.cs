@@ -497,7 +497,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new object[] { null }, (object[])pair["handles"]);
         }
 
-        [Fact(Skip = "impl pending: 確認を要する行でも、渡す値が書かれていれば確認を添えて呼ぶ")]
+        [Fact]
         public void AConfirmedRowWithGivenValuesIsCalledWithTheConfirmation()
         {
             IList<E2eCase> cases = Writing("path", given: true, confirmed: true);
@@ -510,7 +510,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("書き出す位置", call.Arguments["path"]);
         }
 
-        [Fact(Skip = "impl pending: ファイルを書く呼び出しへ、書いた先を指す引数の名前を持たせる")]
+        [Fact]
         public void AFilePostconditionMakesTheCallPointAtThePathItWrote()
         {
             IList<E2eCase> cases = Writing("path", given: true, confirmed: true);
@@ -522,7 +522,86 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("path", call.Writes);
         }
 
-        [Fact(Skip = "impl pending: ファイルを書くと宣言しない行には、書いた先を指す引数を持たせない")]
+        [Fact]
+        public void ACallWhosePostconditionIsCheckedComesBeforeTheOnesThatMoveTheState()
+        {
+            ToolSchema moving = Tool("model_move_thing", new SchemaItem[0]);
+            IList<E2eCase> cases = E2eCaseBuilder.Build(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(
+                        RowKey,
+                        ToolMapEditKind.DirectChange,
+                        null,
+                        "ファイルへ書く。",
+                        new[]
+                        {
+                            new Postcondition(
+                                EffectType.FileWritten,
+                                "path",
+                                EffectCheckKind.File,
+                                null,
+                                null,
+                                null,
+                                EffectComparison.Exists,
+                                null,
+                                false,
+                                null),
+                        },
+                        null,
+                        null),
+                    new ToolMapRow(
+                        "Sdk.Type.Move()",
+                        ToolMapEditKind.DirectChange,
+                        null,
+                        "状態を動かす。",
+                        null,
+                        null,
+                        null),
+                }),
+                new ToolSchemaTable(new[] { Saving(), moving }),
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { RowKey, "session_save_thing" },
+                    { "Sdk.Type.Move()", moving.Tool },
+                },
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes(),
+                null,
+                new SampleValueTable(
+                    new SampleValueRow[0],
+                    new[]
+                    {
+                        new SampleCallRow(
+                            RowKey,
+                            new Dictionary<string, object>(StringComparer.Ordinal)
+                            {
+                                { "path", "書き出す位置" },
+                            },
+                            "書ける位置を渡す。"),
+                    }));
+
+            E2eCase wrote = Assert.Single(cases, c => c.Writes != null);
+            E2eCase moved = Assert.Single(
+                cases, c => c.Tool == moving.Tool && c.Expectation == E2eExpectation.Called);
+
+            Assert.True(cases.IndexOf(wrote) < cases.IndexOf(moved));
+        }
+
+        [Fact]
+        public void ARowWhoseCallIsExpectedToBeRefusedPointsAtNoPath()
+        {
+            IList<E2eCase> cases = Writing(
+                "path", given: true, confirmed: true, refused: "TOOL_OPERATION_FAILED");
+
+            Assert.Contains(
+                cases,
+                c => c.Tool == "session_save_thing" && c.Expectation == E2eExpectation.Denied);
+            Assert.DoesNotContain(cases, c => c.Writes != null);
+        }
+
+        [Fact]
         public void ARowThatDeclaresNoFileWrittenPointsAtNoPath()
         {
             IList<E2eCase> cases = Writing(
@@ -534,7 +613,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(cases, c => c.Writes != null);
         }
 
-        [Fact(Skip = "impl pending: 確認を要する行は、渡す値が書かれていなければ呼ばない")]
+        [Fact]
         public void AConfirmedRowWithoutGivenValuesIsNotCalled()
         {
             IList<E2eCase> cases = Writing("path", given: false, confirmed: true);
@@ -543,7 +622,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(cases, c => c.Writes != null);
         }
 
-        [Fact(Skip = "impl pending: 呼び出しを組み立てない行には、書いた先を指す引数を持たせない")]
+        [Fact]
         public void ARowWhoseCallIsNotBuiltPointsAtNoPath()
         {
             IList<E2eCase> cases = Writing("path", given: false, confirmed: false);
@@ -551,7 +630,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(cases, c => c.Writes != null);
         }
 
-        [Fact(Skip = "impl pending: 書いた先を指す引数をツールが受け取らない事後条件は、呼び出しの有無に依らず組み立てられない旨で落とす")]
+        [Fact]
         public void AFilePostconditionWhoseKeyIsNoArgumentStopsTheBuild()
         {
             Assert.Throws<InvalidOperationException>(
@@ -861,20 +940,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null);
         }
 
-        /// <summary>
-        /// 書き出す先を取るツールを持つ行で検査を組み立てる。その引数は、実機と同じく並びの先頭では
-        /// ない。<paramref name="writesFile"/> が偽なら、同じツールでファイルを書くとは宣言しない。
-        /// </summary>
-        private static IList<E2eCase> Writing(
-            string effectKey, bool given, bool confirmed, bool writesFile = true)
+        /// <summary>書き出す先を取るツール。その引数は、実機と同じく並びの先頭ではない。</summary>
+        private static ToolSchema Saving()
         {
-            const string Tool = "session_save_thing";
             SchemaItem holder = new SchemaItem(
                 "number", null, null, "pmxHandle", ItemOrigin.HostInput, false, null, false,
                 null, null, null, false, null);
             SchemaItem path = new SchemaItem(
                 "text", null, null, "path", ItemOrigin.HostInput, true, null, false,
                 null, null, null, false, null);
+
+            return new ToolSchema(
+                "session_save_thing",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only", null, null, new[] { holder, path }, new SchemaChoice[0]),
+                },
+                Output(),
+                null);
+        }
+
+        /// <summary>
+        /// 書き出す先を取るツールを持つ行で検査を組み立てる。その引数は、実機と同じく並びの先頭では
+        /// ない。<paramref name="writesFile"/> が偽なら、同じツールでファイルを書くとは宣言しない。
+        /// </summary>
+        private static IList<E2eCase> Writing(
+            string effectKey,
+            bool given,
+            bool confirmed,
+            bool writesFile = true,
+            string refused = null)
+        {
+            const string Tool = "session_save_thing";
 
             return E2eCaseBuilder.Build(
                 new ToolMap(new[]
@@ -913,22 +1011,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         null,
                         null),
                 }),
-                new ToolSchemaTable(new[]
-                {
-                    new ToolSchema(
-                        Tool,
-                        new[]
-                        {
-                            new SchemaBranch(
-                                "only",
-                                null,
-                                null,
-                                new[] { holder, path },
-                                new SchemaChoice[0]),
-                        },
-                        Output(),
-                        null),
-                }),
+                new ToolSchemaTable(new[] { Saving() }),
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } },
                 Paths(),
                 confirmed
@@ -947,7 +1030,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                                 {
                                     { "path", "書き出す位置" },
                                 },
-                                "書ける位置を渡す。"),
+                                "書ける位置を渡す。",
+                                refused,
+                                refused == null ? null : "断る文面"),
                         })
                     : null);
         }

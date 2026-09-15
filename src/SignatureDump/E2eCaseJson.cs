@@ -73,6 +73,11 @@ namespace PmxEditorMcp.SignatureDump
                 written.AddText("says", one.Says);
             }
 
+            if (one.Writes != null)
+            {
+                written.AddText("writes", one.Writes);
+            }
+
             return written.Text;
         }
 

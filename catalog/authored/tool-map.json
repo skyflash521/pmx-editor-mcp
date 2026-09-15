@@ -431,12 +431,12 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.SaveMaterialName(System.String)",
       "editKind": "directChange",
-      "basis": "材質名をファイルへ書き出すので、直接変更型に当たる。",
+      "basis": "材質名をファイルへ書き出すので、直接変更型に当たる。渡したパスにもエディタの導入先にもファイルが現れず、書けたことを外から確かめられないので、呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "fileWritten",
-          "effectKey": "path",
-          "kind": "file",
+          "effectKey": "",
+          "kind": "callLogOnly",
           "comparison": "exists"
         }
       ]

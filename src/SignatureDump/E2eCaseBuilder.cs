@@ -171,7 +171,8 @@ namespace PmxEditorMcp.SignatureDump
 
             // 直に呼ぶと状態が動く行は、その動きが後の検査の見るものを変える——取り消しは段取りが
             // 作った要素を消し、再生の開始はビューを動かし続ける。順に並べる中では避けられないので、
-            // 最後へ回して、あとに続く検査を持たせない。
+            // 最後へ回して、あとに続く検査を持たせない。事後条件を実機で確かめる行だけは回さない
+            // ——回すと、確かめる相手が既に使えなくなっている。
             List<E2eCase> trailing = new List<E2eCase>();
 
             // 選ばれている対象を相手にする呼び出しは、対象を選ぶ呼び出しより後でなければ、
@@ -186,7 +187,8 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     held = picked;
                 }
-                else if (row != null && row.EditKind != ToolMapEditKind.Read)
+                else if (row != null && !Verified(row)
+                    && row.EditKind != ToolMapEditKind.Read)
                 {
                     held = trailing;
                 }
@@ -392,10 +394,17 @@ namespace PmxEditorMcp.SignatureDump
             // 呼び先が在るだけでは、その行の振る舞いを一度も確かめない。確認を要さず、渡すものが
             // 決まる行は実際に呼ぶ。実際に呼ぶなら、呼び先が在ることはその呼び出しで分かるので、
             // 別に確かめない——同じ呼び出しを二度することになる。
+            // 確認を要する行を呼ぶのは、渡す値が正本に書かれている行に限る。値を書くのは書く側の
+            // 明示の選択なので、エディタを閉じる行やモデルを消す行が黙って呼ばれることがない。
+            bool written = row != null && given != null && given.ContainsKey(rowKey);
             IDictionary<string, object> calling =
                 new Dictionary<string, object>(StringComparer.Ordinal);
-            bool calls = row != null && !confirmed
+            bool calls = row != null && (!confirmed || written)
                 && TryCalling(row, schema, sdkShapes, sampled, given, out calling);
+            if (calls && confirmed)
+            {
+                calling = Confirmed(calling);
+            }
             if (!calls)
             {
                 yield return new E2eCase(
@@ -420,6 +429,8 @@ namespace PmxEditorMcp.SignatureDump
                 Observed(judgement, schemas, rowKey);
             }
 
+            string wrote = Wrote(row, schema, rowKey);
+
             // 断られることを確かめる呼び出しは、断られた時点でハンドルを出さない。その行の観測は
             // 借りるものを持たないので組み立てない。
             bool draws = calls && !denies && drawn.Length != 0;
@@ -442,7 +453,8 @@ namespace PmxEditorMcp.SignatureDump
                     draws ? rowKey : null,
                     null,
                     null,
-                    denies ? refused[rowKey].Says : null);
+                    denies ? refused[rowKey].Says : null,
+                    denies ? null : wrote);
 
                 foreach (Postcondition judgement in draws ? drawn : new Postcondition[0])
                 {
@@ -558,6 +570,61 @@ namespace PmxEditorMcp.SignatureDump
                 && element.Members != null
                 && element.Members.Any(
                     m => string.Equals(m.Name, NameName, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// 事後条件を実機で確かめる行か。確かめる行を最後へ回さないのは、直に呼ぶと状態が動く行の
+        /// 中に、呼び先を使えなくするものがあるからである——在りもしないファイルの読み込みは、
+        /// 断られたあとエディタを受け手の無い状態にする。そのあとで確かめても、見ているのは宣言した
+        /// 効果ではなくその失敗になる。
+        /// </summary>
+        private static bool Verified(ToolMapRow row)
+        {
+            return row.Postcondition != null
+                && row.Postcondition.Any(p => p.Kind == EffectCheckKind.File
+                    || p.Kind == EffectCheckKind.Handle);
+        }
+
+        /// <summary>確認も渡す引数。渡された組は書き換えず、写しへ足す。</summary>
+        private static IDictionary<string, object> Confirmed(IDictionary<string, object> arguments)
+        {
+            IDictionary<string, object> given =
+                new Dictionary<string, object>(arguments, StringComparer.Ordinal);
+            given[ConfirmName] = true;
+
+            return given;
+        }
+
+        /// <summary>
+        /// その行がファイルを書くと宣言した先を渡す引数の名前。宣言しない行では null。指す引数を
+        /// ツールが受け取らない宣言は、実機へ投げても在りもしない位置を見に行くだけなので、ここで
+        /// 組み立てを止める。1回の呼び出しで確かめられる書き先は1つまでとする。
+        /// </summary>
+        private static string Wrote(ToolMapRow row, ToolSchema schema, string rowKey)
+        {
+            Postcondition[] writing = row == null || row.Postcondition == null
+                ? new Postcondition[0]
+                : row.Postcondition.Where(p => p.Kind == EffectCheckKind.File).ToArray();
+            if (writing.Length == 0)
+            {
+                return null;
+            }
+
+            if (writing.Length > 1)
+            {
+                throw new InvalidOperationException(
+                    "1回の呼び出しで2つ以上の書き先は確かめられない: " + rowKey);
+            }
+
+            string name = writing[0].EffectKey;
+            if (!schema.Branches.SelectMany(b => b.Inputs).Any(
+                i => !i.Injected && string.Equals(i.Name, name, StringComparison.Ordinal)))
+            {
+                throw new InvalidOperationException(
+                    "書いた先を渡す引数を、ツールが受け取らない: " + schema.Tool + "(" + name + ")");
+            }
+
+            return name;
         }
 
         /// <summary>出たハンドルを観測すると宣言した判定。宣言しない行では空。</summary>
