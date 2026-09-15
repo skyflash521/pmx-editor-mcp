@@ -29,7 +29,8 @@ param(
     #   start  停止済みのホストを開始し、待受が現れるまで待つ
     #   acl    指定したエディタの待受のパイプに掛かっている権限の規則を表示する
     #   undo   指定したエディタの編集を1回分だけ元に戻す
-    #   answer 指定したエディタが出している応答待ちの表示へ応答して閉じ、閉じた数を返す
+    #   answer 指定したエディタが出している応答待ちの表示へ応答して閉じ、閉じたものの素性を
+    #          1行ずつ返す
     #   show    指定したビューの窓を手前へ出す
     #   click   指定したビューの描画面の中央を左クリックする
     #   capture 指定したビューの描画面に中身を描かせ、PNGへ書き出して大きさを返す
@@ -391,6 +392,10 @@ $WindowMessageClose = 0x0010
 # 描かれて自分の窓を持たないので、画面への操作の相手にならない。
 $ViewTitles = @{ pmx = "PmxView"; transform = "VMDView" }
 
+# 窓の中に現れる知らせは、応答待ちの表示を探す道では見つからず素性も読めない。閉じたものを
+# 数えるために、この名前で1件ずつ並べる。
+$ThrownNoticeName = "投げられた例外の知らせ"
+
 # 素性を読めなかった表示の言い方。
 $UnreadableDialog = "読めない表示"
 
@@ -707,7 +712,9 @@ function Get-EditorDialogNote {
             Where-Object { $_.Current.Name -ne "" } |
             ForEach-Object { $_.Current.Name + "(" + $_.Current.AutomationId + ")" })
 
-        return ($dialog.Current.Name + ": " + ($parts -join " / "))
+        # 素性は1行で返す契約なので、本文に混じる改行はここで潰す。割れて届くと、1つの表示が
+        # 2つに見える。
+        return (($dialog.Current.Name + ": " + ($parts -join " / ")) -replace "\s*[\r\n]+\s*", " ")
     }
     catch {
         return $UnreadableDialog
@@ -727,9 +734,11 @@ function Clear-EditorDialogs {
     $answered = @()
     $left = @()
     foreach ($handle in Get-EditorDialogs -OwnerProcessId $OwnerProcessId) {
+        # 素性は応答する前に読む。応答した窓は閉じるので、後から読むと名前も中身も残っていない。
+        $note = Get-EditorDialogNote -Handle $handle
+
         # UIオートメーションは、止まっているUIスレッドの窓で応答しないことがある。
         $pressed = Confirm-EditorDialog -Handle $handle -Ids $Ids
-        $note = Get-EditorDialogNote -Handle $handle
         if ($pressed) {
             $answered += $note
             continue
@@ -1534,7 +1543,10 @@ switch ($Action) {
 
         $thrown = Clear-ThrownNotice -OwnerProcessId $ProcessId
 
-        Write-Output (@($cleared.Answered).Count + $thrown)
+        # 閉じたものの素性を1行ずつ返す。数だけでは、どの表示が呼び出しを止めたのかを呼んだ側が
+        # 言えない。
+        foreach ($note in @($cleared.Answered)) { Write-Output $note }
+        for ($at = 0; $at -lt $thrown; $at++) { Write-Output $ThrownNoticeName }
     }
     "status" {
         Assert-ProcessId

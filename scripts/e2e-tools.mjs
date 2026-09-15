@@ -383,41 +383,56 @@ function invokeControl(args) {
     return { written: (done.stdout ?? "").trim(), unavailable: null };
 }
 
-/** エディタが出している応答待ちの表示へ応答して閉じ、閉じた数を返す。 */
+/**
+ * エディタが出している応答待ちの表示へ応答して閉じ、閉じたものの素性を返す。応答できない表示が
+ * 残ったときは操作役が理由を述べて落ちるので、その文言を返す——答えるものが無かったときと同じ
+ * 空の並びにすると、最も素性が要る場面で何も言えなくなる。
+ */
 function answerDialogs(processId) {
     const done = invokeControl([
         "-File", CONTROL_SCRIPT, "-Action", "answer", "-ProcessId", String(processId),
     ]);
     if (done.written === null) {
-        return 0;
+        return { answered: null, unavailable: done.unavailable };
     }
 
-    const answered = Number.parseInt(done.written, 10);
-
-    return Number.isInteger(answered) ? answered : 0;
+    return {
+        answered: done.written.split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line !== ""),
+        unavailable: null,
+    };
 }
 
 /** 表示へ何度まで続けて答えるか。1つ答えると次が出る作りがあるので、1度では足りない。 */
 const ANSWERING_ROUNDS = 8;
 
 /**
- * 出ている表示へ、出なくなるまで答える。答え切れたときだけ答えた総数を返す。1つも答えられ
- * なかったときと、上限まで答えても出続けたときは0で、そのときは投げ直しても同じところで止まる。
+ * 出ている表示へ、出なくなるまで答える。答え切れたときだけ、答えた表示の素性を並びで返す。
+ * 答え切れなかったときは null で、そのときは投げ直しても同じところで止まる。理由はそのまま
+ * 呼んだ側へ渡す。
  */
 function clearPrompts(processId) {
-    let answered = 0;
+    const answered = [];
     for (let round = 0; round < ANSWERING_ROUNDS; round++) {
         const cleared = answerDialogs(processId);
-        if (cleared === 0) {
-            return answered;
+        if (cleared.answered === null) {
+            return { answered: null, unavailable: cleared.unavailable };
         }
 
-        answered += cleared;
+        if (cleared.answered.length === 0) {
+            return { answered, unavailable: null };
+        }
+
+        answered.push(...cleared.answered);
     }
 
     // 上限まで答えても出続けるなら、まだ出ている。答えられたことにすると、残った表示に
     // 続きの検査が巻き添えで落ちる。
-    return 0;
+    return {
+        answered: null,
+        unavailable: "上限まで答えても表示が出続けました: " + answered.join(" / "),
+    };
 }
 
 /** ホストが呼び出しを始めていないと言っているか。始めていなければ投げ直せる。 */
@@ -573,6 +588,10 @@ function run(pipeName, cases, processId) {
     let capture = null;
     let wrote = null;
 
+    // いま投げている検査のために片付けた表示の素性。片付けた場所と結末を記録する場所が離れて
+    // いるので、検査ごとにここへ溜めて結末へ渡す。
+    let noted = [];
+
     return new Promise((resolve) => {
         const settle = (code, message) => {
             if (settled) {
@@ -596,6 +615,7 @@ function run(pipeName, cases, processId) {
 
         const next = () => {
             index += 1;
+            noted = [];
             if (index >= cases.length) {
                 finish();
                 return;
@@ -611,6 +631,7 @@ function run(pipeName, cases, processId) {
                 results.push({
                     case: one,
                     reason: "借りる値をまだ覚えていません: " + JSON.stringify(one.borrowed),
+                    stopped: noted,
                 });
                 next();
 
@@ -628,10 +649,26 @@ function run(pipeName, cases, processId) {
                     "不合格: " + result.case.tool + " — " + result.case.purpose + " — " + result.reason);
             }
 
+            // 表示で止まった検査も、呼び先までは届いているので合格に数える。合格の中で何件が
+            // 表示で止まったのかを内訳として添える——合格から引くと、行キーごとの内訳が数える
+            // 合格と食い違う。
+            const stopped = results.filter(
+                (r) => r.reason === null && Array.isArray(r.stopped) && r.stopped.length !== 0);
+            if (stopped.length !== 0) {
+                console.log("");
+                console.log("表示で止まった検査: " + stopped.length + " 件");
+                for (const result of stopped) {
+                    console.log("  " + result.case.tool + " — " + result.case.purpose);
+                    for (const note of result.stopped) {
+                        console.log("    " + note);
+                    }
+                }
+            }
+
             console.log("");
             console.log(
                 "検査: " + results.length + " 件・合格 " + (results.length - failed.length) +
-                "・不合格 " + failed.length);
+                "(うち表示で止まった " + stopped.length + ")・不合格 " + failed.length);
             report(results, "rowKey", "行キー");
             report(results, "editKind", "編集の流れ");
             report(results, "connectionPath", "接続の経路");
@@ -657,7 +694,9 @@ function run(pipeName, cases, processId) {
                 return;
             }
 
-            if (waited !== index && clearPrompts(processId) > 0) {
+            const cleared = clearPrompts(processId);
+            noted.push(...(cleared.answered ?? []));
+            if (waited !== index && cleared.answered !== null && cleared.answered.length > 0) {
                 waited = index;
                 socket.setTimeout(RESPONSE_TIMEOUT_MS);
 
@@ -668,7 +707,10 @@ function run(pipeName, cases, processId) {
                 case: one,
                 reason: waited === index
                     ? "応答が時間内に返りませんでした。出ている表示を片付けても進みませんでした。"
-                    : "応答が時間内に返りませんでした。出ている表示は見つかりませんでした。",
+                    : "応答が時間内に返りませんでした。" + (cleared.unavailable === null
+                        ? "出ている表示は見つかりませんでした。"
+                        : cleared.unavailable),
+                stopped: noted,
             });
 
             stalled += 1;
@@ -750,22 +792,33 @@ function run(pipeName, cases, processId) {
                 }
 
                 const one = cases[index];
-                if (notStarted(response) && retried !== index
-                    && clearPrompts(processId) > 0) {
+                const before = notStarted(response) && retried !== index
+                    ? clearPrompts(processId)
+                    : null;
+                if (before !== null) {
+                    noted.push(...(before.answered ?? []));
+                }
+
+                if (before !== null && before.answered !== null && before.answered.length > 0) {
                     retried = index;
                     send(requestId(index), one.tool, expanded(borrowing(one, remembered)));
                     continue;
                 }
 
                 // 片付かない表示を残したまま先へ進むと、後の検査が巻き添えで落ちる。
-                if (prompted(response) && clearPrompts(processId) === 0) {
-                    results.push({
-                        case: one,
-                        reason: "出ている表示を片付けられませんでした。",
-                    });
-                    next();
+                if (prompted(response)) {
+                    const cleared = clearPrompts(processId);
+                    noted.push(...(cleared.answered ?? []));
+                    if (cleared.answered === null) {
+                        results.push({
+                            case: one,
+                            reason: "出ている表示を片付けられませんでした: " + cleared.unavailable,
+                            stopped: noted,
+                        });
+                        next();
 
-                    continue;
+                        continue;
+                    }
                 }
 
                 let reason = judge(one, response, capture, remembered);
@@ -777,7 +830,7 @@ function run(pipeName, cases, processId) {
                     remembered.set(one.produces, response.result.value);
                 }
 
-                results.push({ case: one, reason });
+                results.push({ case: one, reason, stopped: noted });
                 next();
             }
         });
