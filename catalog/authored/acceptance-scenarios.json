@@ -56,6 +56,133 @@
       "steps": [
         {
           "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_material",
+          "arguments": {},
+          "record": {
+            "name": "subjectMaterial",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_materials",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "subjectMaterial"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_body",
+          "arguments": {},
+          "record": {
+            "name": "subjectBody",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_bodies",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "subjectBody"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_sphere_primitive_builder",
+          "arguments": {
+            "material": 0,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "bone": 0,
+            "r": 5,
+            "slices": 32,
+            "stacks": 32
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "ensureDirectory",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance"
+        },
+        {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\題材.pmx"
+        },
+        {
+          "kind": "tool",
+          "tool": "session_save_pmx_file",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\題材.pmx",
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectPresent",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\題材.pmx"
+        },
+        {
+          "kind": "tool",
           "tool": "model_list_model_infos",
           "arguments": {
             "fields": [
@@ -74,18 +201,148 @@
         },
         {
           "kind": "tool",
-          "tool": "model_list_vertices",
+          "tool": "model_list_materials",
           "arguments": {
-            "all": true
+            "all": true,
+            "fields": [
+              "name"
+            ]
           },
           "expect": {
             "ok": true,
             "values": [
               {
                 "path": "total",
-                "equals": 0
+                "equals": 1
+              },
+              {
+                "path": "nextOffset",
+                "absent": true
               }
             ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "name"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "name"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "record": {
+            "name": "pagedNext",
+            "path": "nextOffset",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "nextOffset",
+                "present": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "offset": {
+              "$from": "pagedNext"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "nextOffset",
+                "present": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "limit": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "nextOffset",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "offset": 1,
+            "limit": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "nextOffset",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
           }
         }
       ]
@@ -810,6 +1067,532 @@
         },
         {
           "kind": "tool",
+          "tool": "model_body",
+          "arguments": {},
+          "record": {
+            "name": "batchBody",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_bodies",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "batchBody"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "name": "材質の名前"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "name"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.name",
+                "equals": "材質の名前"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "name": "付け替えた材質の名前"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "name"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.name",
+                "equals": "付け替えた材質の名前"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "name"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.name",
+                "equals": "材質の名前"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "diffuse": [
+                0.25,
+                0.5,
+                0.75,
+                1
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "diffuse"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.diffuse",
+                "equals": [
+                  0.25,
+                  0.5,
+                  0.75,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "diffuse": [
+                0.5,
+                0.25,
+                0.125,
+                1
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "diffuse"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.diffuse",
+                "equals": [
+                  0.5,
+                  0.25,
+                  0.125,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "diffuse"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.diffuse",
+                "equals": [
+                  0.25,
+                  0.5,
+                  0.75,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bodies",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "mass": 2.5
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "mass"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.mass",
+                "equals": 2.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bodies",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "mass": 4.5
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "mass"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.mass",
+                "equals": 4.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "mass"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.mass",
+                "equals": 2.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "position": [
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "position": [
+                4,
+                5,
+                6
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  4,
+                  5,
+                  6
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "session_initialize_pmx",
           "arguments": {
             "confirm": true
@@ -904,9 +1687,398 @@
           "path": "%TEMP%\\pmx-editor-mcp-acceptance\\test.pmx"
         },
         {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "savedA",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "savedB",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "savedC",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_vertices",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "savedA"
+              },
+              {
+                "$from": "savedB"
+              },
+              {
+                "$from": "savedC"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_material",
+          "arguments": {},
+          "record": {
+            "name": "savedMaterial",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_materials",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "savedMaterial"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_bone",
+          "arguments": {},
+          "record": {
+            "name": "savedBone",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_bones",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "savedBone"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "name": "保存した材質"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "position": [
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "bone1": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_model_infos",
+          "arguments": {
+            "value": {
+              "modelName": "保存したモデル"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
           "kind": "file",
-          "action": "removeTree",
-          "path": "%TEMP%\\pmx-editor-mcp-acceptance"
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\往復.pmx"
+        },
+        {
+          "kind": "tool",
+          "tool": "session_save_pmx_file",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\往復.pmx",
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectPresent",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\往復.pmx"
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_open_pmx_file",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\往復.pmx"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_model_infos",
+          "arguments": {
+            "fields": [
+              "modelName"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.modelName",
+                "equals": "保存したモデル"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "fields": [
+              "name"
+            ],
+            "indices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.name",
+                "equals": "保存した材質"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "fields": [
+              "position"
+            ],
+            "indices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "fields": [
+              "bone1"
+            ],
+            "indices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.bone1",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\test.pmx"
+        },
+        {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\往復.pmx"
         }
       ]
     },
@@ -917,6 +2089,16 @@
         "見た目の確認"
       ],
       "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_open_pmx_file",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\題材.pmx"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
         {
           "kind": "tool",
           "tool": "view_set_camera_view",
@@ -942,6 +2124,14 @@
           }
         },
         {
+          "kind": "tool",
+          "tool": "view_update_view_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
           "kind": "control",
           "action": "capture",
           "editor": {
@@ -961,6 +2151,55 @@
             "ok": true,
             "image": {
               "capturedAs": "pmxViewSize"
+            }
+          },
+          "record": {
+            "name": "frontImage",
+            "path": "",
+            "shape": "image"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_camera_view",
+          "arguments": {
+            "position": [
+              30,
+              20,
+              0
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "upVector": [
+              0,
+              1,
+              0
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "image": {
+              "capturedAs": "pmxViewSize",
+              "differsFrom": "frontImage"
             }
           }
         },
@@ -988,6 +2227,16 @@
           "expect": {
             "ok": true,
             "image": {}
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
           }
         }
       ]
@@ -1591,9 +2840,24 @@
                 "$from": "lastKey"
               }
             ],
-            "value": {
-              "boneIndex": 0
-            }
+            "values": [
+              {
+                "boneIndex": 0,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "boneIndex": 0,
+                "translation": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
           },
           "expect": {
             "ok": true,
@@ -1601,6 +2865,40 @@
               {
                 "path": "updated",
                 "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vmd_frame_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "firstKey"
+              },
+              {
+                "$from": "lastKey"
+              }
+            ],
+            "fields": [
+              "frameIndex"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.frameIndex",
+                "equals": 0
+              },
+              {
+                "path": "items.1.frameIndex",
+                "equals": 30
               }
             ]
           }
@@ -1636,6 +2934,260 @@
           }
         },
         {
+          "kind": "file",
+          "action": "ensureDirectory",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance"
+        },
+        {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\動き.vmd"
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_to_file_vmd",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmd"
+              }
+            ],
+            "args": {
+              "path": "%TEMP%\\pmx-editor-mcp-acceptance\\動き.vmd",
+              "trimKeys": false
+            },
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectPresent",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\動き.vmd"
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd",
+          "arguments": {},
+          "record": {
+            "name": "readBack",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_bone_index_vmd",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "readBack"
+              }
+            ],
+            "args": {
+              "name": "センター"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": -1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_from_file_vmd",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "readBack"
+              }
+            ],
+            "args": {
+              "path": "%TEMP%\\pmx-editor-mcp-acceptance\\動き.vmd"
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_bone_index_vmd",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "readBack"
+              }
+            ],
+            "args": {
+              "name": "センター"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_bone_index_vmd",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "readBack"
+              }
+            ],
+            "args": {
+              "name": "左腕"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": -1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bone_pose_state",
+          "arguments": {
+            "vmd": {
+              "$from": "readBack"
+            },
+            "boneIndex": 0
+          },
+          "record": {
+            "name": "restoredPose",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_pose_vmd_bone_pose_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "restoredPose"
+              }
+            ],
+            "args": {
+              "frame": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0.t",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_pose_vmd_bone_pose_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "restoredPose"
+              }
+            ],
+            "args": {
+              "frame": 30
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0.t",
+                "equals": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "restoredPose"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_bone_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "readBack"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "readBack"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
           "kind": "tool",
           "tool": "session_release_handle",
           "arguments": {
@@ -1648,6 +3200,11 @@
           "expect": {
             "ok": true
           }
+        },
+        {
+          "kind": "file",
+          "action": "removeTree",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance"
         }
       ]
     },

@@ -24,6 +24,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>写した大きさとして覚える印。画像の期待だけが指せる。</summary>
         public const string SizeShape = "size";
 
+        /// <summary>返った画像そのものを覚える印。</summary>
+        public const string ImageShape = "image";
+
         private const string SchemaResource =
             "PmxEditorMcp.SignatureDump.AcceptanceScenarioSchema.json";
 
@@ -189,21 +192,44 @@ namespace PmxEditorMcp.SignatureDump
             References(expect["events"], where, recorded, NumberShape);
 
             JsonNode image = expect["image"];
-            if (image == null || image["capturedAs"] == null)
+            if (image == null)
             {
                 return;
             }
 
-            string name = image["capturedAs"].GetValue<string>();
-            string shape;
-            if (!recorded.TryGetValue(name, out shape))
+            if (image["capturedAs"] != null)
             {
-                throw Broken(where + " がまだ写していない大きさを指している: " + name);
+                Recorded(
+                    image["capturedAs"].GetValue<string>(), where, recorded, SizeShape, "大きさ");
             }
 
-            if (shape != SizeShape)
+            if (image["differsFrom"] != null)
             {
-                throw Broken(where + " が写した大きさでないものを指している: " + name);
+                Recorded(
+                    image["differsFrom"].GetValue<string>(), where, recorded, ImageShape, "画像");
+            }
+        }
+
+        /// <summary>
+        /// 指した名前が、その印で覚えたものか。<paramref name="what"/> は印が指すものの呼び名で、
+        /// 「まだ覚えていない〇〇」「〇〇でないもの」の両方に収まる単体の名詞を渡す。
+        /// </summary>
+        private static void Recorded(
+            string name,
+            string where,
+            IDictionary<string, string> recorded,
+            string shape,
+            string what)
+        {
+            string held;
+            if (!recorded.TryGetValue(name, out held))
+            {
+                throw Broken(where + " がまだ覚えていない" + what + "を指している: " + name);
+            }
+
+            if (held != shape)
+            {
+                throw Broken(where + " が" + what + "でないものを指している: " + name);
             }
         }
 

@@ -50,7 +50,7 @@
           "properties": {
             "name": { "type": "string", "minLength": 1 },
             "path": { "type": "string" },
-            "shape": { "const": "number" }
+            "shape": { "enum": ["number", "image"] }
           },
           "required": ["name", "path", "shape"],
           "additionalProperties": false
@@ -128,15 +128,25 @@
             "type": "object",
             "properties": {
               "path": { "type": "string", "minLength": 1 },
-              "equals": true
+              "equals": true,
+              "absent": { "const": true },
+              "present": { "const": true }
             },
-            "required": ["path", "equals"],
+            "required": ["path"],
+            "oneOf": [
+              { "required": ["equals"] },
+              { "required": ["absent"] },
+              { "required": ["present"] }
+            ],
             "additionalProperties": false
           }
         },
         "image": {
           "type": "object",
-          "properties": { "capturedAs": { "type": "string", "minLength": 1 } },
+          "properties": {
+            "capturedAs": { "type": "string", "minLength": 1 },
+            "differsFrom": { "type": "string", "minLength": 1 }
+          },
           "additionalProperties": false
         },
         "events": {

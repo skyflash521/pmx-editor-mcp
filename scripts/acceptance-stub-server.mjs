@@ -21,6 +21,12 @@ const TARGET_CHANGED_PREFIX = "接続先が変わった: ";
 const TARGET_CHANGED_MIDDLE = " から ";
 const TARGET_CHANGED_SUFFIX = " へ。以前の応答は別のエディタのものである。";
 
+/** 作った画像を塗る値。 */
+const PLAIN_SHADE = 0x00;
+
+/** 先に返したものと違う画像を求められたとき、塗る値。 */
+const DIFFERING_SHADE = 0xff;
+
 /** 待受のパイプ名の付け方。ホスト側の実装が定める。 */
 const PIPE_PREFIX = "pmx-editor-mcp-";
 
@@ -135,9 +141,15 @@ function fill(node, remembered) {
     return filled;
 }
 
-/** 指定した大きさのPNGを詰めた文字列。中身は一色で、見るのは大きさだけである。 */
-function png(width, height) {
-    const raw = Buffer.alloc((width * 3 + 1) * height);
+/**
+ * 指定した大きさのPNGを詰めた文字列。中身は shade の一色で塗る——先に返した画像と違う
+ * ものを返す段が、大きさを変えずに別の画像を作れるようにするためである。
+ */
+function png(width, height, shade) {
+    // 各行の先頭の1バイトは絞り方の指定なので0のまま置き、その後ろだけを塗る。
+    const line = Buffer.alloc(width * 3 + 1);
+    line.fill(shade, 1);
+    const raw = Buffer.concat(Array.from({ length: height }, () => line));
     const chunk = (kind, body) => {
         const named = Buffer.concat([Buffer.from(kind, "ascii"), body]);
         const length = Buffer.alloc(4);
@@ -164,10 +176,14 @@ function png(width, height) {
 
 /**
  * 段が画像を期待していれば、返す画像を詰めた文字列。違えるときは大きさを変える——写した実寸と
- * 合わないので、突き合わせている実行器だけが落ちる。
+ * 合わないので、突き合わせている実行器だけが落ちる。先に覚えた画像と違うことを求める段では、
+ * 塗る値を変えて別の画像を返す。大きさで違えると、写した実寸との突き合わせを同じ段へ書けなく
+ * なる。違えるときだけ同じ値で塗る——同じ画像を通す実行器がそこで落ちる。
  */
-function drawn(broken, options) {
-    return png(options.view.width + (broken === "image" ? 1 : 0), options.view.height);
+function drawn(broken, options, differing) {
+    const shade = differing && broken !== "image.differsFrom" ? DIFFERING_SHADE : PLAIN_SHADE;
+
+    return png(options.view.width + (broken === "image" ? 1 : 0), options.view.height, shade);
 }
 
 /**
@@ -205,13 +221,35 @@ function compose(step, broken, recorded, options, remembered) {
     if (expect.image !== undefined) {
         // 画像は画像の塊で返すので本文は空にする。文字列で返させるのは違え方の1つで、画像を
         // 本文から読んでいる実行器がそれで通ってしまう。
-        return options.broken === "imageAsText" ? JSON.stringify(drawn(broken, options)) : "";
+        return options.broken === "imageAsText"
+            ? JSON.stringify(drawn(broken, options, expect.image.differsFrom !== undefined))
+            : "";
     }
 
     let value = null;
     if (expect.values !== undefined) {
         value = {};
         for (const wanted of expect.values) {
+            // 返らないことを求める項目は載せない。違えるときだけ載せる——載っていても通す
+            // 実行器がそこで落ちる。
+            if (wanted.absent === true) {
+                if (broken === "values.absent") {
+                    put(value, wanted.path, 0);
+                }
+
+                continue;
+            }
+
+            // 返ること自体を求める項目は、値を選ばずに載せる。違えるときは載せない——返らなくても
+            // 通す実行器がそこで落ちる。
+            if (wanted.present === true) {
+                if (broken !== "values.present") {
+                    put(value, wanted.path, 0);
+                }
+
+                continue;
+            }
+
             put(value, wanted.path, broken === "values" ? differ(wanted.equals) : wanted.equals);
         }
     }
@@ -241,9 +279,20 @@ function compose(step, broken, recorded, options, remembered) {
     }
 
     value = value ?? {};
-    put(value, step.record.path, recorded);
+
+    // 載せないと決めた道へは、覚えさせる値も載せない。ここで載せ直すと、違えた回でも項目が
+    // 揃ってしまい、落ちるはずの実行器が通る。
+    if (!omitted(step.expect.values, broken, step.record.path)) {
+        put(value, step.record.path, recorded);
+    }
 
     return JSON.stringify(value);
+}
+
+/** この回、その道の項目を載せないか。 */
+function omitted(values, broken, path) {
+    return broken === "values.present"
+        && (values ?? []).some((wanted) => wanted.path === path && wanted.present === true);
 }
 
 /** 段が呼ばれる順と引数が定義どおりか。合っていれば null。 */
@@ -356,9 +405,13 @@ function call(id, params) {
     // 書き込みに成功したことにした段では、渡された置き場を実際に作る。後の段がその実在を
     // 確かめるので、作らないと実行器の側の誤りに見える。作らないこと自体も違え方の1つで、
     // 実在を確かめる段をこなしていない実行器がこれで落ちる。
-    if (ok && parsed.broken !== "file" && typeof params.arguments.path === "string") {
-        fs.mkdirSync(path.dirname(params.arguments.path), { recursive: true });
-        fs.writeFileSync(params.arguments.path, "", "utf8");
+    // 置き場は、直に受け取るツールと、受け手ごとの組で受け取るツールのどちらの綴りでも来る。
+    const written = typeof params.arguments.path === "string"
+        ? params.arguments.path
+        : (params.arguments.args ?? {}).path;
+    if (ok && parsed.broken !== "file" && typeof written === "string") {
+        fs.mkdirSync(path.dirname(written), { recursive: true });
+        fs.writeFileSync(written, "", "utf8");
     }
 
     const body = compose(step, spoiled, calls, parsed, remembered);
@@ -370,7 +423,9 @@ function call(id, params) {
     const content = [{ type: "text", text: body === "" ? told : told + "\n" + body }];
     if (step.expect.image !== undefined && parsed.broken !== "imageAsText") {
         content.push({
-            type: "image", data: drawn(spoiled, parsed), mimeType: "image/png",
+            type: "image",
+            data: drawn(spoiled, parsed, step.expect.image.differsFrom !== undefined),
+            mimeType: "image/png",
         });
     }
 

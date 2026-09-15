@@ -299,6 +299,17 @@ function judgeImage(expected, response, parsed, remembered) {
         return "返ったものがPNGではありません。";
     }
 
+    if (expected.differsFrom !== undefined) {
+        if (!remembered.has(expected.differsFrom)) {
+            return "まだ覚えていない画像を指しています: " + expected.differsFrom;
+        }
+
+        // 視点を変えて撮った2枚が同じ中身なら、指した視点が画像へ効いていない。
+        if (remembered.get(expected.differsFrom) === image.data) {
+            return "覚えた画像と同じものが返りました: " + expected.differsFrom;
+        }
+    }
+
     if (expected.capturedAs === undefined) {
         // 写しと結び付けない画像でも、縮めたと言うからには縮めた先を述べていなければならない。
         const named = parsed.warnings.some((warning) => warning.includes(describeSize(returned)));
@@ -433,6 +444,22 @@ function judge(expected, response, remembered) {
 
         for (const wanted of expected.values) {
             const taken = select(value, wanted.path);
+            if (wanted.absent === true) {
+                if (taken !== undefined) {
+                    return wanted.path + " が返っています: " + JSON.stringify(taken);
+                }
+
+                continue;
+            }
+
+            if (wanted.present === true) {
+                if (taken === undefined) {
+                    return wanted.path + " が返っていません。";
+                }
+
+                continue;
+            }
+
             const compared = fill(wanted.equals, remembered);
             if (!same(taken, compared)) {
                 return wanted.path + " が " + JSON.stringify(compared) + " ではありません: "
@@ -471,6 +498,16 @@ function remember(step, taken, remembered) {
 function takeFromResponse(step, response) {
     if (step.record === undefined) {
         return null;
+    }
+
+    // 画像は本文に現れないので、返った画像そのものを覚える。
+    if (step.record.shape === "image") {
+        if (response.images.length !== 1) {
+            throw new Error(
+                "覚える画像が1つ返っていません(" + response.images.length + " 個)。");
+        }
+
+        return response.images[0].data;
     }
 
     const parsed = split(response.text);

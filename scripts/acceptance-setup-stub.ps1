@@ -16,8 +16,8 @@ param(
     [Parameter(Mandatory = $true)]
     [AllowEmptyString()]
     [ValidateSet(
-        "", "ok", "notice", "notice.changed", "body", "values", "code", "image", "imageAsText",
-        "events", "file")]
+        "", "ok", "notice", "notice.changed", "body", "values", "values.absent", "values.present",
+        "code", "image", "image.differsFrom", "imageAsText", "events", "file")]
     [string]$Broken,
 
     # 期待と違えるツールの呼び出しの番。

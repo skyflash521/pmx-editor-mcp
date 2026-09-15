@@ -67,17 +67,48 @@ function Get-AcceptanceExpectationForms {
     $at = 0
     foreach ($step in ($Defined.scenarios.steps | Where-Object { $_.kind -eq 'tool' })) {
         $at++
-        foreach ($name in $step.expect.PSObject.Properties.Name) {
-            $form = $name
-            $told = $name -eq 'notice' -and
-                $step.expect.notice.PSObject.Properties.Name -notcontains 'editor'
-            if ($told) { $form = 'notice.changed' }
-
+        foreach ($form in (Get-ExpectationForms -Expect $step.expect)) {
             if (-not $forms.Contains($form)) { $forms[$form] = $at }
         }
     }
 
     $forms
+}
+
+function Get-ExpectationForms {
+    <#
+        .SYNOPSIS
+        その段の期待が立てている形を並べる。1つの期待が2つの形を立てることがあるので、期待の
+        名前ではなく中身で決める——名前ごとに1つへ決めると、2つ立てた段の片方が導出から落ち、
+        その形を違えた実行が一度も走らないまま合格が出る。
+    #>
+    param($Expect)
+
+    foreach ($name in $Expect.PSObject.Properties.Name) {
+        switch ($name) {
+            'notice' {
+                if ($Expect.notice.PSObject.Properties.Name -contains 'editor') { 'notice' }
+                else { 'notice.changed' }
+            }
+            'image' {
+                # 画像であることだけを求める段は、大きさを違えても落ちない。その段を受け持つのは
+                # 画像を文字列で返させる違え方で、形からは導けないので名指しで違えさせている。
+                if ($null -ne $Expect.image.PSObject.Properties['capturedAs']) { 'image' }
+                if ($null -ne $Expect.image.PSObject.Properties['differsFrom']) {
+                    'image.differsFrom'
+                }
+            }
+            'values' {
+                if (@($Expect.values | Where-Object {
+                        $null -ne $_.PSObject.Properties['equals'] })) { 'values' }
+                if (@($Expect.values | Where-Object {
+                        $null -ne $_.PSObject.Properties['absent'] })) { 'values.absent' }
+                if (@($Expect.values | Where-Object {
+                        $null -ne $_.PSObject.Properties['present'] })) { 'values.present' }
+            }
+            default { $name }
+        }
+    }
 }
 
 function Get-AcceptanceOperations {
