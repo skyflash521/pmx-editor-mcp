@@ -286,6 +286,553 @@
               }
             ]
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "batchA",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "batchB",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "batchC",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_vertices",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "batchA"
+              },
+              {
+                "$from": "batchB"
+              },
+              {
+                "$from": "batchC"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "all": true,
+            "value": {
+              "position": [
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.position",
+                "equals": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "batchD",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "batchE",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex",
+          "arguments": {},
+          "record": {
+            "name": "batchF",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_vertices",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "batchD"
+              },
+              {
+                "$from": "batchE"
+              },
+              {
+                "$from": "batchF"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_material",
+          "arguments": {},
+          "record": {
+            "name": "batchMaterial",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_materials",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "batchMaterial"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_bone",
+          "arguments": {},
+          "record": {
+            "name": "batchBone",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_bones",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "batchBone"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "all": true,
+            "value": {
+              "position": [
+                4,
+                5,
+                6
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_box_primitive_builder",
+          "arguments": {
+            "material": 0,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "width": 1,
+            "height": 1,
+            "depth": 1,
+            "bone": 0,
+            "suppressUndo": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 27
+              },
+              {
+                "path": "items.0.position",
+                "equals": [
+                  4,
+                  5,
+                  6
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_remove_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorA"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
         }
       ]
     },
