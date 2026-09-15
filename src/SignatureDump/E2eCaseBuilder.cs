@@ -34,6 +34,29 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ハンドルを台帳から外すツールの名前。共通契約が名前を定める。</summary>
         private const string ReleaseToolName = "session_release_handle";
 
+        /// <summary>台帳に無いハンドルを並びで渡す検査が確かめること。</summary>
+        private const string ListedHandleRefusal = "台帳に無いハンドルを渡す呼び出しを断ること";
+
+        /// <summary>台帳に無いハンドルを1つだけ渡す検査が確かめること。</summary>
+        private const string LoneHandleRefusal = "台帳に無いハンドルを1つ渡す呼び出しを断ること";
+
+        /// <summary>件数に0を渡す検査が確かめること。</summary>
+        private const string CountRefusal = "件数に0を渡す呼び出しを断ること";
+
+        /// <summary>確認を渡さない検査が確かめること。</summary>
+        private const string ConfirmRefusal = "確認を渡さない呼び出しを断ること";
+
+        /// <summary>
+        /// 共通の入口が断ることを確かめる検査。どれもツールごとに違う振る舞いを見ておらず、同じ
+        /// 経路を繰り返し通すだけなので、代表だけを実機へ投げる。断る経路そのものはホストの単体
+        /// テストが固定している。並びは入口をどこまで進むかの順で、深いものが先に来る——1件しか
+        /// 残せないツールには、深くまで進むものを残す。
+        /// </summary>
+        private static readonly string[] SharedRefusals =
+        {
+            ListedHandleRefusal, LoneHandleRefusal, CountRefusal, ConfirmRefusal,
+        };
+
         /// <summary>親と要素の組を受け取る入力の名前。</summary>
         private const string AssignmentsName = "assignments";
 
@@ -213,7 +236,72 @@ namespace PmxEditorMcp.SignatureDump
             cases.AddRange(trailing);
             cases.AddRange(picked);
 
-            return cases;
+            return Shrunk(cases);
+        }
+
+        /// <summary>
+        /// 共通の入口が断ることを確かめる検査を代表へ縮めた並び。残すのは、種別ごとに並びの順で
+        /// 最初に当たった1件と、代表を1つも持たずほかへ届く検査も持たないツールの1件——後者を
+        /// 残すのは、落とすとそのツールが一度も呼び先まで届かなくなるからである。数える単位が
+        /// ツールなのは、行がその型を読むツールを通しても覆われるためで、ツールを通らなくすると
+        /// そのツールが受け持つ行がまとめて通らなくなる。
+        /// </summary>
+        private static IList<E2eCase> Shrunk(IList<E2eCase> cases)
+        {
+            ISet<string> reached = new HashSet<string>(
+                cases
+                    .Where(c => c.Expectation != E2eExpectation.Dispatched && Shared(c) < 0)
+                    .Select(c => c.Tool),
+                StringComparer.Ordinal);
+
+            ISet<int> kept = new HashSet<int>();
+            ISet<string> shown = new HashSet<string>(StringComparer.Ordinal);
+            for (int at = 0; at < cases.Count; at++)
+            {
+                int kind = Shared(cases[at]);
+                if (kind >= 0 && shown.Add(SharedRefusals[kind]))
+                {
+                    kept.Add(at);
+                }
+            }
+
+            ISet<string> standing = new HashSet<string>(
+                kept.Select(at => cases[at].Tool), StringComparer.Ordinal);
+            IDictionary<string, int> alone = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int at = 0; at < cases.Count; at++)
+            {
+                E2eCase one = cases[at];
+                int kind = Shared(one);
+                if (kind < 0 || reached.Contains(one.Tool) || standing.Contains(one.Tool))
+                {
+                    continue;
+                }
+
+                int held;
+                if (!alone.TryGetValue(one.Tool, out held) || kind < Shared(cases[held]))
+                {
+                    alone[one.Tool] = at;
+                }
+            }
+
+            foreach (int at in alone.Values)
+            {
+                kept.Add(at);
+            }
+
+            return cases
+                .Where((one, at) => Shared(one) < 0 || kept.Contains(at))
+                .ToList();
+        }
+
+        /// <summary>
+        /// その検査が確かめるのが共通の入口の断りなら、その種別の位置。ほかの検査では負。
+        /// </summary>
+        private static int Shared(E2eCase one)
+        {
+            return one.Expectation != E2eExpectation.Refusal
+                ? -1
+                : Array.IndexOf(SharedRefusals, one.Purpose);
         }
 
         /// <summary>
@@ -488,7 +576,7 @@ namespace PmxEditorMcp.SignatureDump
                     editKind,
                     path,
                     tool,
-                    "確認を渡さない呼び出しを断ること",
+                    ConfirmRefusal,
                     Arguments(false),
                     E2eExpectation.Refusal,
                     ConfirmRequired);
@@ -508,7 +596,7 @@ namespace PmxEditorMcp.SignatureDump
                     editKind,
                     path,
                     tool,
-                    "台帳に無いハンドルを渡す呼び出しを断ること",
+                    ListedHandleRefusal,
                     arguments,
                     E2eExpectation.Refusal,
                     InvalidHandle);
@@ -530,7 +618,7 @@ namespace PmxEditorMcp.SignatureDump
                     editKind,
                     path,
                     tool,
-                    "台帳に無いハンドルを1つ渡す呼び出しを断ること",
+                    LoneHandleRefusal,
                     arguments,
                     E2eExpectation.Refusal,
                     InvalidHandle);
@@ -543,7 +631,7 @@ namespace PmxEditorMcp.SignatureDump
                     editKind,
                     path,
                     tool,
-                    "件数に0を渡す呼び出しを断ること",
+                    CountRefusal,
                     Single(limit.Name, 0, confirmed),
                     E2eExpectation.Refusal,
                     InvalidArgument);

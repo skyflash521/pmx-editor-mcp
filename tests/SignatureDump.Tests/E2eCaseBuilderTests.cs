@@ -637,24 +637,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => Writing("elsewhere", given: false, confirmed: false));
         }
 
-        [Fact(Skip = "impl pending: 台帳に無いハンドルを並びで渡す断りは、全体で1件だけ確かめる")]
+        [Fact]
         public void TheLedgerRefusalIsCheckedOnceAcrossHandledTypes()
         {
-            ToolSchema bones = Tool("model_release_bones", Handles());
-            ToolSchema bodies = Tool("model_release_bodies", Handles());
-            IList<E2eCase> cases = Refusals(
-                new[] { bones, bodies },
-                new Dictionary<SchemaItem, string>
-                {
-                    { Held(bones), "Sdk.Bone" },
-                    { Held(bodies), "Sdk.Body" },
-                });
+            IList<E2eCase> cases = Reached(
+                "model_release_bones", "model_release_bodies", typed: true);
 
             E2eCase one = Assert.Single(cases, c => c.Code == "TOOL_INVALID_HANDLE");
             Assert.Equal("model_release_bodies", one.Tool);
         }
 
-        [Fact(Skip = "impl pending: ほかに呼び先まで届く検査を持たない行は、断りの検査を残す")]
+        [Fact]
         public void ARowWithNoOtherCheckKeepsTheRefusalThatReachesIt()
         {
             ToolSchema first = Tool("model_release_bones", Handles());
@@ -684,18 +677,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     .ToArray());
         }
 
-        [Fact(Skip = "impl pending: 件数に0を渡す呼び出しを断ることは、全体で1件だけ確かめる")]
+        [Fact]
         public void TheCountRefusalIsCheckedOnce()
         {
-            IList<E2eCase> cases = Refusals(
-                new[] { Tool("model_list_bones", Limit()), Tool("model_list_bodies", Limit()) },
-                new Dictionary<SchemaItem, string>());
+            IList<E2eCase> cases = Reached("model_list_bones", "model_list_bodies");
 
             E2eCase one = Assert.Single(cases, c => c.Code == "TOOL_INVALID_ARGUMENT");
             Assert.Equal("model_list_bodies", one.Tool);
         }
 
-        [Fact(Skip = "impl pending: 確認を渡さない呼び出しを断ることは、全体で1件だけ確かめる")]
+        [Fact]
         public void TheConfirmationRefusalIsCheckedOnce()
         {
             ToolSchema wipe = Tool("model_wipe", Handles());
@@ -729,7 +720,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(2, cases.Count(c => c.Tool == "model_erase" && c.Code != null));
         }
 
-        [Fact(Skip = "impl pending: 呼び先まで届く検査を持つ行は、縮められる断りを1件も残さない")]
+        [Fact]
         public void ARowThatIsReachedOtherwiseKeepsNoShrunkRefusal()
         {
             ToolSchema plain = Tool("model_bend_bones", Handles());
@@ -780,24 +771,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(cases, c => c.Tool == plain.Tool && c.Code == "TOOL_INVALID_HANDLE");
         }
 
-        [Fact(Skip = "impl pending: ハンドルを1つだけ渡す断りは、並びで渡す断りとは別に1件だけ確かめる")]
+        [Fact]
         public void TheLoneHandleRefusalIsCheckedApartFromTheListedOne()
         {
-            ToolSchema first = Taking("model_bind_bone", "bone", required: true);
-            ToolSchema second = Taking("model_aim_bone", "bone", required: true);
+            ToolSchema bind = Taking("model_bind_bone", "bone", required: true);
+            ToolSchema aim = Taking("model_aim_bone", "bone", required: true);
+            ToolSchema release = Tool("model_release_bones", Handles());
             IList<E2eCase> cases = E2eCaseBuilder.Build(
-                Map(RowKey),
-                new ToolSchemaTable(new[] { first, second, Tool("model_release_bones", Handles()) }),
-                new Dictionary<string, string>(StringComparer.Ordinal),
+                Reaching(new[] { bind, aim, release }),
+                new ToolSchemaTable(new[] { bind, aim, release }),
+                Named(new[] { bind, aim, release }),
                 Paths(),
                 new HashSet<string>(StringComparer.Ordinal),
                 Shapes(),
                 new Dictionary<SchemaItem, string>
                 {
-                    { Only(first), "Sdk.Bone" },
-                    { Only(second), "Sdk.Bone" },
+                    { Only(bind), "Sdk.Bone" },
+                    { Only(aim), "Sdk.Bone" },
                 },
-                null,
+                Values(new[] { bind, aim, release }),
                 null,
                 null,
                 null,
@@ -1128,18 +1120,69 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return schema.Branches[0].Inputs.Single();
         }
 
-        /// <summary>行の名前を持たないツールだけで、断りを見る検査を組み立てる。</summary>
-        private static IList<E2eCase> Refusals(
-            IList<ToolSchema> tools, IDictionary<SchemaItem, string> types)
+        /// <summary>その並びのツールを、どれも呼び先まで届く行として持つ能力対応表。</summary>
+        private static ToolMap Reaching(IList<ToolSchema> tools)
         {
+            return new ToolMap(tools
+                .Select(t => new ToolMapRow(
+                    "Sdk.Type." + t.Tool + "()",
+                    ToolMapEditKind.DirectChange,
+                    null,
+                    "呼ぶ。",
+                    null,
+                    null,
+                    null))
+                .ToList());
+        }
+
+        /// <summary>その並びのツールを、行キーから名前へ結んだ表。</summary>
+        private static IDictionary<string, string> Named(IList<ToolSchema> tools)
+        {
+            return tools.ToDictionary(
+                t => "Sdk.Type." + t.Tool + "()", t => t.Tool, StringComparer.Ordinal);
+        }
+
+        /// <summary>その並びのツールを、どれも呼べるようにする渡す値。</summary>
+        private static SampleValueTable Values(IList<ToolSchema> tools)
+        {
+            return new SampleValueTable(
+                new SampleValueRow[0],
+                tools
+                    .Select(t => new SampleCallRow(
+                        "Sdk.Type." + t.Tool + "()",
+                        t.Branches[0].Inputs.ToDictionary(
+                            i => i.Name,
+                            i => i.Element == null ? (object)0 : new object[] { 0 },
+                            StringComparer.Ordinal),
+                        "使える値を渡す。"))
+                    .ToList());
+        }
+
+        /// <summary>
+        /// そのどれもが呼び先まで届く2つのツールで、断りを見る検査を組み立てる。
+        /// <paramref name="typed"/> が真なら、2つのハンドルへ別々の型を割り当てる。
+        /// </summary>
+        private static IList<E2eCase> Reached(string first, string second, bool typed = false)
+        {
+            ToolSchema one = Tool(first, Handles().Concat(Limit()).ToList());
+            ToolSchema other = Tool(second, Handles().Concat(Limit()).ToList());
+            IList<ToolSchema> tools = new[] { one, other };
+
             return E2eCaseBuilder.Build(
-                Map(RowKey),
+                Reaching(tools),
                 new ToolSchemaTable(tools),
-                new Dictionary<string, string>(StringComparer.Ordinal),
+                Named(tools),
                 Paths(),
                 new HashSet<string>(StringComparer.Ordinal),
                 Shapes(),
-                types);
+                typed
+                    ? new Dictionary<SchemaItem, string>
+                    {
+                        { Held(one), "Sdk.Bone" },
+                        { Held(other), "Sdk.Body" },
+                    }
+                    : null,
+                Values(tools));
         }
 
         /// <summary>書き出す先を取るツール。その引数は、実機と同じく並びの先頭ではない。</summary>
