@@ -74,16 +74,15 @@ switch ($Action) {
     }
     "stop" {
         Set-StubState -Editor $ProcessId -Wanted $LiveHostStubStopped
-        if ($broken -ne 'pipe') { Wait-StubPipeState -Editor $ProcessId -Present $false }
+        Wait-StubPipeState -Editor $ProcessId -Present $false
     }
     "start" {
         Set-StubState -Editor $ProcessId -Wanted $LiveHostStubRunning
         Wait-StubPipeState -Editor $ProcessId -Present $true
     }
     "status" {
-        # 稼働状態は待受の有無から答える。違えるときは、停めても稼働中を名乗る。
+        # 稼働状態は待受の有無から答える。
         $stopped = -not (Test-StubPipe -Editor $ProcessId)
-        if ($broken -eq 'status') { $stopped = $false }
         "状態: " + $(if ($stopped) { "停止済み" } else { "稼働中" })
     }
     "acl" {

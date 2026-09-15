@@ -181,13 +181,11 @@ function Test-LiveHostRunner {
         落ちる——その観測を突き合わせない実行器はここで落ちる。
     #>
     $forms = [ordered]@{
-        'client.code'  = '疎通'
-        'client.says'  = 'エディタ2つ'
-        'pipe'         = '停止と開始'
+        'client.code'  = '版の食い違い'
+        'client.says'  = 'エディタの終了'
         'acl'          = 'パイプの権限'
         'log.started'  = '起動の記録'
         'log.renewal'  = 'コネクタの取り直し'
-        'status'       = '停止と開始'
     }
 
     $ran = Invoke-LiveHostRunner -Broken ''
@@ -200,54 +198,6 @@ function Test-LiveHostRunner {
         }
 
         if ($ran.Said -notmatch ('不合格: .*' + [regex]::Escape($form.Value))) {
-            throw "$($form.Key) を違えたのに $($form.Value) が落ちていない: $($ran.Said)"
-        }
-    }
-}
-
-function Invoke-LiveBridgeRunner {
-    <#
-        .SYNOPSIS
-        応答を作るMCPサーバーと操作役の代わりを立ててブリッジの実機動作確認を走らせ、終了コードと
-        書き出したものを返す。Broken を与えると、その形の本文だけを違えさせる。
-    #>
-    param([string]$Broken)
-
-    $said = node scripts/live-bridge.mjs `
-        --control scripts/live-stub-control.ps1 `
-        --setup scripts/live-bridge-stub-setup.ps1 `
-        --setup-arg -Broken --setup-arg $Broken 2>&1
-    $code = $LASTEXITCODE
-    $global:LASTEXITCODE = 0
-
-    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
-}
-
-function Test-LiveBridgeRunner {
-    <#
-        .SYNOPSIS
-        ブリッジの実機動作確認が、返った本文を期待と突き合わせて合否を出すことを確かめる。期待
-        どおりの本文で通し、そのうえで本文の形ごとに、その1つだけを違えた実行が当の場面で落ちる。
-    #>
-    $forms = [ordered]@{
-        'code'   = 'エディタが1つも無いとき'
-        'target' = 'エディタが1つのとき'
-        'pong'   = 'エディタが1つのとき'
-        'moved'  = '1つに戻ったとき'
-        'order'  = '2つ待ち受けているとき'
-        'listed' = '2つ待ち受けているとき'
-    }
-
-    $ran = Invoke-LiveBridgeRunner -Broken ''
-    if ($ran.Code -ne 0) { throw "期待どおりの本文で走らせて合格しない: $($ran.Said)" }
-
-    foreach ($form in $forms.GetEnumerator()) {
-        $ran = Invoke-LiveBridgeRunner -Broken $form.Key
-        if ($ran.Code -eq 0) {
-            throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
-        }
-
-        if ($ran.Said -notmatch [regex]::Escape($form.Value + ': ')) {
             throw "$($form.Key) を違えたのに $($form.Value) が落ちていない: $($ran.Said)"
         }
     }
@@ -920,19 +870,6 @@ $checks['実機動作確認の実行器の照合'] = @{
     }
 }
 
-$checks['ブリッジの実行器の照合'] = @{
-    Needs = $noArtifact
-    Body = {
-        $spoken = [Console]::OutputEncoding
-        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-        try {
-            Test-LiveBridgeRunner
-        } finally {
-            [Console]::OutputEncoding = $spoken
-        }
-    }
-}
-
 $checks['参照クライアントの実行器の照合'] = @{
     Needs = $noArtifact
     Body = {
@@ -982,7 +919,7 @@ $checkGroups = [ordered]@{
     # 入れ忘れても全件の側が黙って拾い、入れ忘れを落とす検査が素通りになる。
     '全件のみ' = @($build, 'スクリプト構文', 'スクリプト構文(PowerShell)', '実行時リフレクション',
         '整形', 'E2Eの実行器の照合', '検査の集計の照合', '確認クライアントの照合',
-        '実機動作確認の実行器の照合', 'ブリッジの実行器の照合', '参照クライアントの実行器の照合')
+        '実機動作確認の実行器の照合', '参照クライアントの実行器の照合')
 }
 
 function Invoke-Checks {

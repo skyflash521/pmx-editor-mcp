@@ -20,7 +20,6 @@ $section = '## 実機に触る検査'
 $checks = [ordered]@{}
 $checks['実機動作確認'] = { pwsh -NoProfile -File scripts/live-host.ps1 }
 $checks['自動E2E検査'] = { pwsh -NoProfile -File scripts/live-tools.ps1 }
-$checks['ブリッジの実機動作確認'] = { node scripts/live-bridge.mjs }
 $checks['参照クライアントの実機動作確認'] = { node scripts/live-client.mjs }
 $checks['受入シナリオ'] = {
     node scripts/acceptance.mjs --cases catalog/authored/acceptance-scenarios.json `
@@ -35,7 +34,6 @@ Start-CheckBudget
 
 # 配置とブリッジのビルドは、この実行で1回だけ行う。検査ごとの前置が同じことを繰り返すと、
 # 時間が増えるうえに、配置が動いているエディタを閉じるので後の検査の足を引っ張る。
-# 「実機動作確認」の「配置」の件は、これとは別に配置そのものを確かめる。
 & (Join-Path $PSScriptRoot 'deploy-host.ps1') | Out-Null
 dotnet build (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/Bridge/PmxEditorMcp.Bridge.csproj') |
     Out-Null

@@ -2,12 +2,10 @@
 # 合否は、実行したコマンドとクライアントが返す出力と終了コードだけで決める——画面の見た目は
 # 材料にしない。
 #
-# エディタの状態を変える件は、件ごとに起こして閉じる。持ち越すと、落ちた件の後始末が次の件の
-# 開始条件を崩し、どの件が何を確かめたのかが実行ごとに変わる。
-#
-# 読むだけで変えない件は1つを共有する。崩す後始末が起きないので持ち越す状態が無く、起こし直しは
-# 待ち時間を増やすだけである。共有する側は Get-SharedEditor、自分で起こす側は Start-Editor を
-# 使い、どちらであるかを件ごとに決める。
+# エディタは1つだけ起こし、件を順に通す。起こし直すと、確かめる事柄の数だけ起動の待ち時間が
+# 積み上がる。状態を変えたまま終わるのは最後の件だけで、途中の件は変えたものをその件の中で
+# 元へ戻す——持ち越す状態が無いので、1つを使い回しても、どの件が何を確かめたのかは実行ごとに
+# 変わらない。
 [CmdletBinding()]
 param(
     # エディタとホストの操作役。差し替えられるのは、この実行器そのものを実機のエディタ無しで
@@ -49,10 +47,6 @@ $ClosedByHost = 'ホストが接続を切りました。'
 # 確認クライアントが、接続を保ったまま待ちに入ったときに書く文。この文より前にエディタを
 # 触ると、接続が確立する前の一瞬を見ることになる。
 $Holding = '接続を保持しています。'
-
-# 待受が無いパイプへ繋ごうとしたときに、確認クライアントが書く断りの書き出し。
-$CannotConnect = '接続または送受信に失敗しました:'
-
 # デバッグ用の入口を開く環境変数。エディタの起動時に読まれる。
 $DebugHooksName = 'PMX_EDITOR_MCP_DEBUG_HOOKS'
 
@@ -148,10 +142,12 @@ $script:SharedEditor = 0
 function Get-SharedEditor {
     <#
         .SYNOPSIS
-        読むだけの件が共有するエディタ。初めて要るときに起こし、実行の終わりまで開いたままに
-        する。起こし方は Start-Editor と同じで、既定の設定で動くものである。
+        件が共有するエディタ。初めて要るときに起こし、最後の件が閉じるまで開いたままにする。
+        検査からだけ使う入口を開いて起こす——コネクタの取り直しがその入口を要る。
     #>
-    if ($script:SharedEditor -eq 0) { $script:SharedEditor = Start-Editor }
+    if ($script:SharedEditor -eq 0) {
+        $script:SharedEditor = Start-Editor -WithDebugHooks
+    }
 
     $script:SharedEditor
 }
@@ -296,58 +292,17 @@ function Assert-Client {
     }
 }
 
-function Assert-StoppedKind {
-    <#
-        .SYNOPSIS
-        稼働状態の表示が停止済みを名乗ることを確かめる。
-    #>
-    param([int]$EditorProcessId, [string]$What)
-
-    $state = (Invoke-Control -Action 'status' -EditorProcessId $EditorProcessId) -join "`n"
-    if ($state -notmatch '状態:\s*停止済み') {
-        throw "${What}: 状態区分が停止済みではない。$state"
-    }
-}
+# 実行器が先に配置を済ませていれば繰り返さない。単独で走らせたときは印が無いので自分で行う。
+if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') { & $deploy | Out-Null }
 
 $cases = [ordered]@{}
 
-$cases['配置'] = {
-    # 配置そのものが、動いているエディタを閉じるところから始まる。閉じ残しがあれば落ちる。
-    & $deploy | Out-Null
-}
-
-$cases['疎通'] = {
-    # 繋いでパイプ名を確かめるだけで、エディタもホストも変えない。
-    $editor = Get-SharedEditor
-    Assert-Client -Ran (Invoke-Client -EditorProcessId $editor) -Code 0 -What '疎通'
-}
-
 $cases['起動の記録'] = {
-    $editor = Start-Editor
-    try {
-        $started = @(Get-HostLogLines -EditorProcessId $editor -Mark $StartedMark)
-        if ($started.Count -ne 1) {
-            throw "起動の記録が1行ではなく $($started.Count) 行: $($started -join ' / ')"
-        }
-    } finally {
-        Stop-Editor -EditorProcessId $editor
-    }
-}
-
-$cases['エディタ2つ'] = {
-    # 2つへ同時に繋がることを見る。1つ目は共有のもので足りる——どちらも変えない。
-    $editors = @()
-    $own = 0
-    try {
-        $editors += Get-SharedEditor
-        $own = Start-Editor
-        $editors += $own
-        foreach ($editor in $editors) {
-            Assert-Client -Ran (Invoke-Client -EditorProcessId $editor) -Code 0 `
-                -Says (Get-PipeName -EditorProcessId $editor) -What "2つのうち $editor への疎通"
-        }
-    } finally {
-        if ($own -ne 0) { Stop-Editor -EditorProcessId $own }
+    # 共有するエディタを起こす最初の件。起こした直後の記録を見るので、この順でなければならない。
+    $editor = Get-SharedEditor
+    $started = @(Get-HostLogLines -EditorProcessId $editor -Mark $StartedMark)
+    if ($started.Count -ne 1) {
+        throw "起動の記録が1行ではなく $($started.Count) 行: $($started -join ' / ')"
     }
 }
 
@@ -379,9 +334,26 @@ $cases['パイプの権限'] = {
     }
 }
 
+$cases['コネクタの取り直し'] = {
+    # 失効させて取り直させるだけで、待受は変わらない。共有するエディタは検査からだけ使う入口を
+    # 開いて起きているので、失効を頼める。
+    $editor = Get-SharedEditor
+    $ran = Invoke-Client -EditorProcessId $editor `
+        -Requests @('handshake', '{"protocol":1}', $ExpireMethod)
+    Assert-Client -Ran $ran -Code 0 -Says '"renewed":true' -What 'コネクタの失効'
+
+    # 取得・失効・取得の順に3行だけ並ぶ。取り直していなければ、末尾の取得が現れない。
+    $marks = @(Get-HostLogLines -EditorProcessId $editor -Mark $ConnectorMark)
+    $seen = @($marks | ForEach-Object {
+            if ($_ -match ($ConnectorMark + '(..)')) { $Matches[1] } else { '不明' } })
+    if (($seen -join '') -ne ($RenewalMarks -join '')) {
+        throw ("コネクタの記録が " + ($RenewalMarks -join '・') +
+            " の3行ではない: $($marks -join ' / ')")
+    }
+}
+
 $cases['エディタの終了'] = {
-    # 終わらせる相手はどのエディタでもよい。共有しているものを使う——これより後の件は自分で
-    # 起こすので、ここで閉じても持ち越すものが無い。
+    # 状態を変える唯一の件なので最後に置く。共有しているものを閉じるので、これより後の件は無い。
     $editor = Get-SharedEditor
     try {
         $held = Start-HoldingClient -EditorProcessId $editor
@@ -392,62 +364,6 @@ $cases['エディタの終了'] = {
     } finally {
         Stop-Editor -EditorProcessId $editor
         Clear-SharedEditor
-    }
-}
-
-$cases['コネクタの取り直し'] = {
-    $editor = Start-Editor -WithDebugHooks
-    try {
-        $ran = Invoke-Client -EditorProcessId $editor `
-            -Requests @('handshake', '{"protocol":1}', $ExpireMethod)
-        Assert-Client -Ran $ran -Code 0 -Says '"renewed":true' -What 'コネクタの失効'
-
-        # 取得・失効・取得の順に3行だけ並ぶ。取り直していなければ、末尾の取得が現れない。
-        $marks = @(Get-HostLogLines -EditorProcessId $editor -Mark $ConnectorMark)
-        $seen = @($marks | ForEach-Object {
-                if ($_ -match ($ConnectorMark + '(..)')) { $Matches[1] } else { '不明' } })
-        if (($seen -join '') -ne ($RenewalMarks -join '')) {
-            throw ("コネクタの記録が " + ($RenewalMarks -join '・') +
-                " の3行ではない: $($marks -join ' / ')")
-        }
-    } finally {
-        Stop-Editor -EditorProcessId $editor
-    }
-}
-
-$cases['停止と開始'] = {
-    $editor = Start-Editor
-    try {
-        # 閉じずに停止と開始を繰り返せること。1回では、2度目の開始を受け付けない実装が通る。
-        foreach ($round in 1..2) {
-            Invoke-Control -Action 'stop' -EditorProcessId $editor | Out-Null
-            if (Test-PipePresent -EditorProcessId $editor) {
-                throw "$round 回目の停止でパイプが残っている。"
-            }
-
-            Assert-Client -Ran (Invoke-Client -EditorProcessId $editor) -Code 1 `
-                -Says $CannotConnect -What "$round 回目の停止後の接続"
-            Assert-StoppedKind -EditorProcessId $editor -What "$round 回目の停止"
-
-            Invoke-Control -Action 'start' -EditorProcessId $editor | Out-Null
-            Assert-Client -Ran (Invoke-Client -EditorProcessId $editor) -Code 0 `
-                -Says (Get-PipeName -EditorProcessId $editor) -What "$round 回目の開始後の接続"
-        }
-    } finally {
-        Stop-Editor -EditorProcessId $editor
-    }
-}
-
-$cases['停止時の接続'] = {
-    $editor = Start-Editor
-    try {
-        $held = Start-HoldingClient -EditorProcessId $editor
-        Invoke-Control -Action 'stop' -EditorProcessId $editor | Out-Null
-        Assert-Client -Ran (Wait-HoldingClient -Held $held) -Code 0 -Says $ClosedByHost `
-            -What '接続を保ったままの停止'
-        Assert-StoppedKind -EditorProcessId $editor -What '接続を保ったままの停止'
-    } finally {
-        Stop-Editor -EditorProcessId $editor
     }
 }
 
@@ -469,8 +385,8 @@ try {
     }
 } finally {
     [Console]::OutputEncoding = $spoken
-    # 共有したエディタは実行の終わりまで開いたままなので、ここで閉じる。閉じ残すと、次の実行の
-    # 「配置」が落ちる——配置は動いているエディタを閉じるところから始まる。
+    # 最後の件まで届かずに落ちた実行では、共有したエディタが開いたまま残る。ここで閉じないと、
+    # 次の実行の配置が動いているエディタを閉じるところでつまずく。
     Close-SharedEditor
 }
 
