@@ -20,15 +20,16 @@ $failed = Invoke-Check -Name '落ちる題材' -Body { throw '作った失敗で
 $nonzero = Invoke-Check -Name '非0で終わる題材' -Body { pwsh -NoProfile -Command 'exit 3' }
 $passed = Invoke-Check -Name '通る題材' -Body { }
 
-$withFailure = Write-CheckSummary -Failed @('落ちる題材') -Skipped @() -Scope '題材' -Ran 1 -Listed 1
-$clean = Write-CheckSummary -Failed @() -Skipped @() -Scope '題材' -Ran 1 -Listed 1
-$withSkip = Write-CheckSummary -Failed @() -Skipped @('走らせない題材') -Scope '題材' -Ran 0 -Listed 1
+$withFailure = Write-CheckSummary -Failed @('落ちる題材') -Skipped @() -Scope '題材' -Ran 1 `
+    -Listed 1 -Limit 9
+$clean = Write-CheckSummary -Failed @() -Skipped @() -Scope '題材' -Ran 1 -Listed 1 -Limit 9
+$withSkip = Write-CheckSummary -Failed @() -Skipped @('走らせない題材') -Scope '題材' -Ran 0 `
+    -Listed 1 -Limit 9
 
-# 上限を0にして数え始めると、どの実行も使い切った側になる。時間を超えた実行が合格で終わらない
-# ことは、これでしか確かめられない。
-$CheckBudgetSeconds = 0
+# 持ち分を0にして数え始めると、どの実行も超えた側になる。持ち分を超えた実行が合格で終わらない
+# ことは、これでしか確かめられない——止める仕掛けは、最後に始めた1件が伸びた実行を捕まえない。
 Start-CheckBudget
-$overBudget = Write-CheckSummary -Failed @() -Skipped @() -Scope '題材' -Ran 1 -Listed 1
+$overLimit = Write-CheckSummary -Failed @() -Skipped @() -Scope '題材' -Ran 1 -Listed 1 -Limit 0
 
 function Test-Complaint {
     <#
@@ -48,6 +49,19 @@ function Test-Complaint {
 
     'とがめない'
 }
+
+# 出来上がりを作る検査が落ちたとき、それを要る検査は始まらない。門が働かなければ、入力の
+# 無い状態で走って別の理由で落ちる。
+$readyWhenMade = Test-CheckReady -Needs '作った出来上がり' -Produced @('なし', '作った出来上がり')
+$readyWhenNot = Test-CheckReady -Needs '作った出来上がり' -Produced @('なし')
+
+# 列が配分の和を超えて止められたとき、結果の出ていない検査の先頭が止められたものになり、
+# 後ろは走らせていないものとして数えられる。止める仕組みはこの割り出しに掛かっている。
+$stopped = @(Split-LaneResults -Done @(Invoke-Check -Name '走った題材' -Body { }) `
+    -Queued @('走った題材', '止められた題材', '始まらない題材') -Limit 9)
+$laneSplit = ($stopped[0].Name + ':' + $stopped[0].Code) + '/' +
+    ($stopped[1].Name + ':' + $stopped[1].Code) + '/' +
+    ($stopped[2].Name + ':' + $stopped[2].Skipped)
 
 # 手順書の一覧と群の割り当ては、食い違いの向きが2つある。実物の並びを起点に片側だけを崩して
 # 渡す——両側を同時に崩すと、片方の照合を落としてももう片方が投げ続けて気づけない。
@@ -83,5 +97,5 @@ $groupedUnknown = Test-Complaint -Wanted ("検査に無い: " + $dropped) -Body 
 $ran = ($failed.Name + ':' + $failed.Code) + '|' +
     ($nonzero.Name + ':' + $nonzero.Code) + '|' + ($passed.Name + ':' + $passed.Code)
 
-"結果: $ran|$withFailure|$clean|$withSkip|$overBudget|" +
+"結果: $ran|$withFailure|$clean|$withSkip|$overLimit|$readyWhenMade|$readyWhenNot|$laneSplit|" +
     "$listedMissing|$listedExtra|$groupedMissing|$groupedUnknown"

@@ -3,11 +3,38 @@
 # どちらかの実行器だけが手順書とずれる。
 
 <#
-    1回の実行へ与える時間の上限の秒数。
+    常設の検査と実機に触る検査を合算した上限の秒数。検査ごとの配分の合計がこの値であることは、
+    配分の照合が見る。
 #>
-$CheckBudgetSeconds = 360
+$TotalBudgetSeconds = 360
+
+<#
+    実機に触る検査の全体へ与える秒数。検査ごとの配分は実機を測ってから置くので、いまはこの
+    合計だけを持つ。合算の上限から常設の配分を引いた残りである。
+#>
+$LiveBudgetSeconds = 233
 
 $script:CheckBudgetWatch = $null
+
+<#
+    出来上がりを要さない検査の印。どちらの実行器も、この印の検査は何も待たずに走らせる。
+#>
+$noArtifact = 'なし'
+
+<#
+    組み立てが作る出来上がりの印。
+#>
+$buildOutput = 'ビルド成果物'
+
+<#
+    除外一覧の導出が作る出来上がりの印。
+#>
+$exclusionList = '除外一覧'
+
+<#
+    実機の前置が作る出来上がりの印。配置済みのホストと、組み立て済みのブリッジを指す。
+#>
+$liveSetup = '実機の前置'
 
 function Start-CheckBudget {
     <#
@@ -25,15 +52,6 @@ function Get-CheckBudgetElapsed {
     if ($null -eq $script:CheckBudgetWatch) { return 0.0 }
 
     $script:CheckBudgetWatch.Elapsed.TotalSeconds
-}
-
-function Test-CheckBudgetSpent {
-    <#
-        .SYNOPSIS
-        この実行が上限を使い切ったかどうか。実行器はこれが真になった時点で、残りの検査を
-        始めない——始めれば、上限を超えたぶんがさらに伸びる。
-    #>
-    (Get-CheckBudgetElapsed) -gt $CheckBudgetSeconds
 }
 
 function Get-ListedChecks {
@@ -94,6 +112,17 @@ function Assert-GroupedChecks {
         ' / 検査に無い: ' + (($unknown -join '・'), '(無し)')[$unknown.Count -eq 0])
 }
 
+function Test-CheckReady {
+    <#
+        .SYNOPSIS
+        その検査が要る出来上がりが揃っているか。揃っていない検査は始めない——作る側が落ちた後に
+        走らせても、入力の無い状態で配分ぶんの時間を使ってから落ちるだけである。
+    #>
+    param([string]$Needs, [string[]]$Produced)
+
+    $Produced -contains $Needs
+}
+
 function Invoke-Check {
     <#
         .SYNOPSIS
@@ -139,6 +168,41 @@ function New-SkippedCheck {
     }
 }
 
+function New-StoppedCheck {
+    <#
+        .SYNOPSIS
+        列が配分の和を超えて止められたときの、結果を返していない検査の結果。列の外からは
+        どの検査が長引いたかを言えないので、止まった時点で結果の出ていない先頭をこれにする。
+        所要は分からないので0とし、止めた理由だけを書き出す。
+    #>
+    param([string]$Name, [int]$Limit)
+
+    [pscustomobject]@{
+        Name = $Name
+        Code = 124
+        Seconds = 0.0
+        Log = @("この検査が属する列が、配分の和($Limit 秒)を超えたので止められた。")
+        Skipped = $false
+    }
+}
+
+function Split-LaneResults {
+    <#
+        .SYNOPSIS
+        列が返した結果と、その列に並べた検査の名前から、報告する結果の並びを作る。止められた
+        列では結果の出ていない検査が残るので、その先頭を止められたものとし、後ろは走らせて
+        いないものとして数える。
+    #>
+    param($Done, [string[]]$Queued, [int]$Limit)
+
+    @($Done)
+    $rest = @($Queued | Where-Object { @($Done).Name -notcontains $_ })
+    if ($rest.Count -eq 0) { return }
+
+    New-StoppedCheck -Name $rest[0] -Limit $Limit
+    foreach ($name in @($rest | Select-Object -Skip 1)) { New-SkippedCheck -Name $name }
+}
+
 function Write-CheckResult {
     <#
         .SYNOPSIS
@@ -167,17 +231,21 @@ function Write-CheckSummary {
         呼び名は呼び出し側が渡す。この部品は常設の検査の実行器も実機に触る検査の実行器も使うので、
         片方の語彙をここへ綴ると、もう片方が事実と違う文面を出す。
     #>
-    param([string[]]$Failed, [string[]]$Skipped, [string]$Scope, [int]$Ran, [int]$Listed)
+    param([string[]]$Failed, [string[]]$Skipped, [string]$Scope, [int]$Ran, [int]$Listed,
+        [int]$Limit)
 
+    # 持ち分を超えた実行は合格にしない。検査ごと・列ごとに止める仕掛けは、始める前と列の途中
+    # でしか働かないので、最後に始めた1件が伸びた実行と、止める仕掛けを通らない検査が伸びた
+    # 実行は、ここでしか捕まえられない。
     $elapsed = Get-CheckBudgetElapsed
-    $took = '{0:0.0}秒 / 上限 {1}秒' -f $elapsed, $CheckBudgetSeconds
-    $spent = Test-CheckBudgetSpent
+    $took = '{0:0.0}秒 / 持ち分 {1}秒' -f $elapsed, $Limit
+    $over = $elapsed -gt $Limit
 
     Write-Host ''
-    if ($spent) { Write-Host ("時間の上限を超えた: $took") }
+    if ($over) { Write-Host ("持ち分を超えた: $took") }
     if ($Skipped.Count -gt 0) { Write-Host ('走らせていない: ' + ($Skipped -join '・')) }
     if ($Failed.Count -gt 0) { Write-Host ('不合格: ' + ($Failed -join '・')) }
-    if ($Failed.Count -gt 0 -or $Skipped.Count -gt 0 -or $spent) { return 1 }
+    if ($Failed.Count -gt 0 -or $Skipped.Count -gt 0 -or $over) { return 1 }
 
     Write-Host ("$Scope の $Ran 件をすべて合格($took・全部で $Listed 件)")
 

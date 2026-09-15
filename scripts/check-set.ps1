@@ -273,9 +273,11 @@ function Test-CheckSummary {
     if ($code -ne 0) { throw "集計を確かめる実行が落ちた: $(@($said) -join "`n")" }
 
     # 投げて落ちた検査・非0で終わった検査・通った検査の、名前と終了コードの組・落ちた件がある
-    # ときの1・無いときの0・走らせていない件があるときの1・上限を超えたときの1・一覧と群の
-    # 食い違いを向きごとに咎めるか。並びは checks-stub-run.ps1 が決める。
-    $wanted = '結果: 落ちる題材:1|非0で終わる題材:3|通る題材:0|1|0|1|1|' +
+    # ときの1・無いときの0・走らせていない件があるときの1・持ち分を超えたときの1・出来上がりが
+    # 揃ったときと揃わないときの門・止められた列の割り出し・一覧と群の食い違いを向きごとに
+    # 咎めるか。並びは checks-stub-run.ps1 が決める。
+    $wanted = '結果: 落ちる題材:1|非0で終わる題材:3|通る題材:0|1|0|1|1|True|False|' +
+        '走った題材:0/止められた題材:124/始まらない題材:True|' +
         'とがめる|とがめる|とがめる|とがめる'
     if ((@($said) -join "`n") -notmatch [regex]::Escape($wanted)) {
         throw "集計の結末が「$wanted」ではない: $(@($said) -join "`n")"
@@ -669,17 +671,16 @@ $derivation = '除外一覧の導出'
 $msbuildLane = 'MSBuild'
 $exclusionLane = '除外一覧'
 
-$noArtifact = 'なし'
-$buildOutput = 'ビルド成果物'
-$exclusionList = '除外一覧'
 
 $checks = [ordered]@{}
 $checks[$build] = @{
+    Budget = 7
     Needs = $noArtifact
     Stage = 1
     Body = { dotnet build PmxEditorMcp.sln -warnaserror }
 }
 $checks['スクリプト構文'] = @{
+    Budget = 5
     Needs = $noArtifact
     Body = {
         $bad = @()
@@ -692,6 +693,7 @@ $checks['スクリプト構文'] = @{
     }
 }
 $checks['スクリプト構文(PowerShell)'] = @{
+    Budget = 3
     Needs = $noArtifact
     Body = {
         $bad = @()
@@ -705,6 +707,7 @@ $checks['スクリプト構文(PowerShell)'] = @{
     }
 }
 $checks['文書のリンク'] = @{
+    Budget = 3
     Needs = $noArtifact
     Body = {
         lychee --offline --no-progress --include-fragments `
@@ -712,6 +715,7 @@ $checks['文書のリンク'] = @{
     }
 }
 $checks[$derivation] = @{
+    Budget = 3
     Needs = $buildOutput
     Lane = $exclusionLane
     Body = {
@@ -721,63 +725,76 @@ $checks[$derivation] = @{
     }
 }
 $checks['実行時リフレクション'] = @{
+    Budget = 3
     Needs = $buildOutput
     Body = { & $dump reflection-free $editorDir $hostDll }
 }
 $checks['整形'] = @{
+    Budget = 53
     Needs = $buildOutput
     Lane = $msbuildLane
     Body = { dotnet format PmxEditorMcp.sln --verify-no-changes }
 }
 $checks['テスト'] = @{
+    Budget = 62
     Needs = $buildOutput
     Body = { dotnet test PmxEditorMcp.sln --no-build }
 }
 $checks['台帳とSDKの照合'] = @{
+    Budget = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump ledger-coverage $editorDir $ledger $excluded $outOfScope }
 }
 $checks['日本語名の照合'] = @{
+    Budget = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump property-names $editorDir $ledger $excluded $names }
 }
 $checks['型役割の照合'] = @{
+    Budget = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump type-roles $editorDir $ledger $excluded $roles }
 }
 $checks['共通契約割当の照合'] = @{
+    Budget = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump common-assignments $editorDir $ledger $excluded $roles $assignments }
 }
 $checks['値の表現の照合'] = @{
+    Budget = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump value-shapes $editorDir $ledger $excluded $contract }
 }
 $checks['危険操作の照合'] = @{
+    Budget = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump dangerous-operations $editorDir $ledger $excluded }
 }
 $checks['能力対応表の照合'] = @{
+    Budget = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump tool-map $editorDir $ledger $excluded $roles $assignments $toolMap }
 }
 $checks['提供対象の網羅'] = @{
+    Budget = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump map-coverage $editorDir $ledger $excluded $roles $toolMap }
 }
 $checks['スキーマ定義の照合'] = @{
+    Budget = 3
     Needs = $buildOutput
     Body = { & $dump tool-schemas $contract $toolMap $toolSchemas }
 }
 $checks['ツールの説明文の照合'] = @{
+    Budget = 3
     Needs = $buildOutput
     Body = {
         & $dump tool-descriptions $editorDir $ledger $contract $roles $names `
@@ -785,10 +802,12 @@ $checks['ツールの説明文の照合'] = @{
     }
 }
 $checks['サンプル値の照合'] = @{
+    Budget = 3
     Needs = $buildOutput
     Body = { & $dump sample-values $editorDir $contract $sampleValues }
 }
 $checks['発見可能性の照合'] = @{
+    Budget = 3
     Needs = $buildOutput
     Body = {
         & $dump discovery $editorDir $ledger $contract $roles $names `
@@ -796,6 +815,7 @@ $checks['発見可能性の照合'] = @{
     }
 }
 $checks['スキーマ対応の照合'] = @{
+    Budget = 3
     Needs = $buildOutput
     Body = {
         & $dump schema-correspondence $editorDir $ledger $roles $assignments `
@@ -803,6 +823,7 @@ $checks['スキーマ対応の照合'] = @{
     }
 }
 $checks['行の検査の網羅'] = @{
+    Budget = 5
     Needs = $buildOutput
     Body = {
         & $dump row-coverage $editorDir $ledger $contract $roles $names `
@@ -810,6 +831,7 @@ $checks['行の検査の網羅'] = @{
     }
 }
 $checks['規則適合検査'] = @{
+    Budget = 3
     Needs = $buildOutput
     Body = {
         & $dump tool-mapping $editorDir $ledger $contract $roles $assignments `
@@ -817,6 +839,7 @@ $checks['規則適合検査'] = @{
     }
 }
 $checks['受入シナリオの照合'] = @{
+    Budget = 5
     Needs = $buildOutput
     Body = {
         & $dump acceptance-cases $editorDir $ledger $contract $roles $names `
@@ -824,11 +847,13 @@ $checks['受入シナリオの照合'] = @{
     }
 }
 $checks['ブリッジの単独起動'] = @{
+    Budget = 17
     Needs = $noArtifact
     Lane = $msbuildLane
     Body = { pwsh -NoProfile -File scripts/bridge-standalone.ps1 }
 }
 $checks['配布パッケージの生成'] = @{
+    Budget = 21
     Needs = $noArtifact
     Lane = $msbuildLane
     Body = {
@@ -841,6 +866,7 @@ $checks['配布パッケージの生成'] = @{
     }
 }
 $checks['E2Eの実行器の照合'] = @{
+    Budget = 63
     Needs = $noArtifact
     Body = {
         # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
@@ -854,7 +880,21 @@ $checks['E2Eの実行器の照合'] = @{
     }
 }
 
+$checks['配分の照合'] = @{
+    Budget = 3
+    Needs = $noArtifact
+    Body = {
+        # 常設の持ち分と、実機の合計を足す。実機は直列なので合計をそのまま足せる。
+        $standing = Get-StandingBudget
+        $total = $standing + $LiveBudgetSeconds
+        if ($total -ne $TotalBudgetSeconds) {
+            throw ("配分の合計が $TotalBudgetSeconds 秒ではない: 常設 $standing・" +
+                "実機 $LiveBudgetSeconds・合計 $total")
+        }
+    }
+}
 $checks['検査の集計の照合'] = @{
+    Budget = 5
     Needs = $noArtifact
     Body = {
         $spoken = [Console]::OutputEncoding
@@ -868,6 +908,7 @@ $checks['検査の集計の照合'] = @{
 }
 
 $checks['確認クライアントの照合'] = @{
+    Budget = 32
     Needs = $noArtifact
     Body = {
         # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
@@ -882,6 +923,7 @@ $checks['確認クライアントの照合'] = @{
 }
 
 $checks['実機動作確認の実行器の照合'] = @{
+    Budget = 37
     Needs = $noArtifact
     Body = {
         $spoken = [Console]::OutputEncoding
@@ -895,6 +937,7 @@ $checks['実機動作確認の実行器の照合'] = @{
 }
 
 $checks['参照クライアントの実行器の照合'] = @{
+    Budget = 46
     Needs = $noArtifact
     Body = {
         $spoken = [Console]::OutputEncoding
@@ -908,6 +951,7 @@ $checks['参照クライアントの実行器の照合'] = @{
 }
 
 $checks['受入の実行器の照合'] = @{
+    Budget = 120
     Needs = $noArtifact
     Body = {
         # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
@@ -943,7 +987,7 @@ $checkGroups = [ordered]@{
     # ためである。
     'スクリプト' = @('スクリプト構文', 'スクリプト構文(PowerShell)', '検査の集計の照合',
         'E2Eの実行器の照合', '確認クライアントの照合', '実機動作確認の実行器の照合',
-        '参照クライアントの実行器の照合', '受入の実行器の照合', '文書のリンク')
+        '参照クライアントの実行器の照合', '受入の実行器の照合', '文書のリンク', '配分の照合')
     'ブリッジ配布' = @('ブリッジの単独起動', '配布パッケージの生成')
     # 上の群のどれにも入らない検査をここへ並べる。全件を走らせるときにしか出番が無いという
     # 申告で、`@($checks.Keys)` のような一括の指定にはしない——一括にすると、新しい検査を上の群へ
@@ -1001,6 +1045,26 @@ function Select-CheckGroups {
     @($chosen.Keys)
 }
 
+function Get-StandingBudget {
+    <#
+        .SYNOPSIS
+        常設の検査の持ち分の秒数。段階1の配分の和と、段階2の最も長い列の和を足した値である。
+        段階2は列どうしが並列に走るので、最も長い列がそのまま壁時計になる。
+    #>
+    $first = (@($checks.Keys | Where-Object { (Get-CheckStage -Name $_) -eq 1 } |
+        ForEach-Object { $checks[$_].Budget }) | Measure-Object -Sum).Sum
+    $lanes = @{}
+    foreach ($name in $checks.Keys) {
+        if ((Get-CheckStage -Name $name) -ne 2) { continue }
+
+        $lane = Get-CheckLane -Name $name
+        if (-not $lanes.Contains($lane)) { $lanes[$lane] = 0 }
+        $lanes[$lane] += $checks[$name].Budget
+    }
+
+    $first + (@($lanes.Values) | Measure-Object -Maximum).Maximum
+}
+
 function Get-CheckStage {
     <#
         .SYNOPSIS
@@ -1033,22 +1097,15 @@ function Invoke-Lane {
         1つの列の検査を順に走らせ、結果を返す。段階2の列ごとに、別の場所から1回ずつ呼ばれる。
         受ける名前を Queued と呼ぶのは、検査の本体がこの関数のスコープで走るからである——
         本体が読む変数と同じ名前を引数に付けると、その変数が引数に隠れて本体が別の値を読む。
-        上限の刻を受け取るのは、列が別のプロセスで走って親の数え始めを見られないからである。
+        配分を超えた列を止めるのは呼ぶ側で、こちらは止められるまで順に走らせる。
     #>
-    param([string[]]$Queued, [datetime]$Deadline)
+    param([string[]]$Queued)
 
     try {
         # 段階1が作った出来上がりは揃っている。列の中で作るのは除外一覧だけである。
         $produced = @($noArtifact, $buildOutput)
         foreach ($name in $Queued) {
-            # 上限を使い切ったら残りは始めない。始めれば超過がそのぶん伸びるだけで、結末は
-            # 変わらない。
-            if ((Get-Date) -gt $Deadline) {
-                New-SkippedCheck -Name $name
-                continue
-            }
-
-            if ($produced -notcontains $checks[$name].Needs) {
+            if (-not (Test-CheckReady -Needs $checks[$name].Needs -Produced $produced)) {
                 New-SkippedCheck -Name $name
                 continue
             }
@@ -1061,6 +1118,40 @@ function Invoke-Lane {
         # この列がこの1本を読み込んだときに作った一時ファイルを片付ける。親が消せるのは親が
         # 作ったものだけなので、列ごとの分は列が自分で消す。
         Remove-Item $baseline, $excluded -ErrorAction SilentlyContinue
+    }
+}
+
+function Wait-LanesWithinBudget {
+    <#
+        .SYNOPSIS
+        列が終わるのを待ち、自分の配分の和を超えた列を止める。止めないと、1本の検査が長引いた
+        ぶんだけ実行の全体が伸びる。
+    #>
+    param($Jobs, $LimitOf)
+
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    while (@($Jobs | Where-Object { $_.State -eq 'Running' }).Count -gt 0) {
+        Start-Sleep -Milliseconds 200
+        foreach ($job in $Jobs) {
+            if ($job.State -ne 'Running') { continue }
+            if ($watch.Elapsed.TotalSeconds -le $LimitOf[$job.Id]) { continue }
+
+            Stop-Job -Job $job
+        }
+    }
+}
+
+function Read-LaneResults {
+    <#
+        .SYNOPSIS
+        列が返した結果を読む。並びの割り出しは、ジョブを起こさずに確かめられるよう別の入口が
+        持つ。
+    #>
+    param($Jobs, $QueuedOf, $LimitOf)
+
+    foreach ($job in $Jobs) {
+        Split-LaneResults -Done @(Receive-Job -Job $job) -Queued $QueuedOf[$job.Id] `
+            -Limit $LimitOf[$job.Id]
     }
 }
 
@@ -1110,27 +1201,32 @@ function Invoke-Checks {
             $lanes[$lane] += $name
         }
 
-        # 段階1が落ちたか上限を使い切ったら、段階2は始めない。出来上がりが揃わないまま走らせても
-        # 結末は変わらず、超えたぶんが伸びるだけである。
-        $ready = @($results | Where-Object { $_.Code -ne 0 }).Count -eq 0 -and -not (Test-CheckBudgetSpent)
+        # 段階1が落ちたら段階2は始めない。出来上がりが揃わないまま走らせても結末は変わらない。
+        $ready = @($results | Where-Object { $_.Code -ne 0 }).Count -eq 0
         if ($ready) {
-            # 上限の残りは親が数えている。列は別のプロセスで走るので、期限を刻にして渡す。
-            $deadline = (Get-Date).AddSeconds($CheckBudgetSeconds - (Get-CheckBudgetElapsed))
             $root = (Get-Location).Path
             $jobs = @()
+            $queuedOf = @{}
+            $limitOf = @{}
             foreach ($lane in $lanes.GetEnumerator()) {
                 # 名前の並びは using で渡す。引数の並びとして渡すと、並びがほどけて2件目から先が
                 # 別の引数になる。
                 $laneNames = @($lane.Value)
-                $jobs += Start-Job -ScriptBlock {
+                $job = Start-Job -ScriptBlock {
                     Set-Location $using:root
                     . (Join-Path $using:root 'scripts/check-set.ps1')
-                    Invoke-Lane -Queued $using:laneNames -Deadline $using:deadline
+                    Invoke-Lane -Queued $using:laneNames
                 }
+
+                $jobs += $job
+                $queuedOf[$job.Id] = $laneNames
+                $limitOf[$job.Id] = (@($laneNames |
+                    ForEach-Object { $checks[$_].Budget }) | Measure-Object -Sum).Sum
             }
 
-            $results += @(Receive-Job -Job (Wait-Job -Job $jobs))
-            Remove-Job -Job $jobs
+            Wait-LanesWithinBudget -Jobs $jobs -LimitOf $limitOf
+            $results += @(Read-LaneResults -Jobs $jobs -QueuedOf $queuedOf -LimitOf $limitOf)
+            Remove-Job -Job $jobs -Force
         } else {
             foreach ($lane in $lanes.GetEnumerator()) {
                 foreach ($name in $lane.Value) { $results += New-SkippedCheck -Name $name }
@@ -1154,7 +1250,7 @@ function Invoke-Checks {
     $ran = @($ordered | Where-Object { -not $_.Skipped }).Count
 
     Write-CheckSummary -Failed $failed -Skipped $skipped -Scope ($Groups -join '・') `
-        -Ran $ran -Listed $checks.Count
+        -Ran $ran -Listed $checks.Count -Limit (Get-StandingBudget)
 }
 
 Assert-ListedChecks -Path $procedure -Section '## 常設の検査' -Names @($checks.Keys)
