@@ -131,13 +131,15 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 届かせられない理由を述べた行か。理由を述べた行は、共通契約が受け持つ行と同じく覆いの
-        /// 判定から外す——届かせる手立ての無い行へ検査を求めても、増えるのは通らない要求だけである。
+        /// 届かせられない理由、または呼ぶと確認の表示が出る理由を述べた行か。理由を述べた行は、
+        /// 共通契約が受け持つ行と同じく覆いの判定から外す——届かせる手立ての無い行へ検査を求めて
+        /// も、増えるのは通らない要求だけである。
         /// </summary>
         private static bool Excused(ToolMapRow row)
         {
             return row.Basis.IndexOf(
-                E2eCaseBuilder.UnreachableReason, StringComparison.Ordinal) >= 0;
+                E2eCaseBuilder.UnreachableReason, StringComparison.Ordinal) >= 0
+                || E2eCaseBuilder.Prompts(row);
         }
 
         /// <summary>その行を覆えるツールが1つ以上あり、そのどれもが届かせられないか。</summary>

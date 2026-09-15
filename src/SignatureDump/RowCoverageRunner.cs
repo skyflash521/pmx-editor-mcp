@@ -13,6 +13,15 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class RowCoverageRunner
     {
+        /// <summary>
+        /// 届かせられない理由のうち、組み立ての側の限界を述べるものが含む語。分けて数えるのは、
+        /// 手立てを足せば届く行と、正本へ値を足せば届く行とで、足す相手が違うからである。
+        /// </summary>
+        private static readonly string[] GeneratorLimits = { "この検査", "この生成器" };
+
+        /// <summary>届かせられない理由のうち、正本の側の欠けを述べるものが含む語。</summary>
+        private const string MissingSource = "正本";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -114,14 +123,47 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.Unresolved;
             }
 
+            ToolMapRow[] unreachable = inputs.Map.Rows
+                .Where(r => r.Basis.IndexOf(
+                    E2eCaseBuilder.UnreachableReason, StringComparison.Ordinal) >= 0)
+                .ToArray();
+            int limited = unreachable.Count(Limited);
+            int missing = unreachable.Count(r => !Limited(r) && Missing(r));
+
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: 行 {0} 件・検査 {1} 件・ツール {2} 件",
+                "照合した: 行 {0} 件・検査 {1} 件・ツール {2} 件。"
+                    + "届かせられない {3} 件(生成器の限界 {4}・正本の欠け {5}・ほか {6})、"
+                    + "確認の表示で止まる {7} 件",
                 inputs.Map.Rows.Count,
                 cases.Count,
-                cases.Select(c => c.Tool).Distinct(StringComparer.Ordinal).Count()));
+                cases.Select(c => c.Tool).Distinct(StringComparer.Ordinal).Count(),
+                unreachable.Length,
+                limited,
+                missing,
+                unreachable.Length - limited - missing,
+                inputs.Map.Rows.Count(E2eCaseBuilder.Prompts)));
 
             return ExitCodes.Success;
+        }
+
+        /// <summary>
+        /// 届かせられない理由が、いまの組み立てでは届かせようがないと述べているか。受け手を作る
+        /// 手立てを足せば届くようになる行がこちらで、足す仕事は検査を増やす側にある。
+        /// </summary>
+        public static bool Limited(ToolMapRow row)
+        {
+            return GeneratorLimits.Any(
+                word => row.Basis.IndexOf(word, StringComparison.Ordinal) >= 0);
+        }
+
+        /// <summary>
+        /// 届かせられない理由が、正本の側に値が無いと述べているか。正本へ値を足せば届くように
+        /// なる行がこちらで、足す仕事は正本を書く側にある。
+        /// </summary>
+        public static bool Missing(ToolMapRow row)
+        {
+            return row.Basis.IndexOf(MissingSource, StringComparison.Ordinal) >= 0;
         }
     }
 }

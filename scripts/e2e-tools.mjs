@@ -162,7 +162,8 @@ function judge(one, response, capture, remembered) {
         }
 
         return envelope.error !== undefined && envelope.error.code === PROMPT_SHOWN
-            ? null
+            ? "確認の表示で止まりました。この行の根拠へ「確認の表示が出る」を含む一文を"
+                + "書いてください: " + describe(envelope)
             : "呼び先まで届くはずが断られました: " + describe(envelope);
     }
 

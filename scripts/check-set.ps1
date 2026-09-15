@@ -502,6 +502,12 @@ function Get-E2eExpectationForms {
         if ($form -eq 'viewImage' -and $one.view -ne 'pmx') { $form = 'viewImage.other' }
         if (-not $forms.Contains($form)) { $forms[$form] = $at }
 
+        # 呼び先まで届く段は、断られたときだけでなく確認の表示で止まったときも落ちる。止まった
+        # 応答を通す実行器は、表示が出たことを宣言した振る舞いの代わりに数えてしまう。
+        if ($form -eq 'called' -and -not $forms.Contains('called.prompt')) {
+            $forms['called.prompt'] = $at
+        }
+
         $writes = $one.PSObject.Properties.Name -contains 'writes'
         if ($writes -and -not $forms.Contains('file')) { $forms['file'] = $at }
     }
@@ -536,7 +542,11 @@ function Test-E2eRunner {
 
     foreach ($form in (Get-E2eExpectationForms -Defined $defined).GetEnumerator()) {
         $pipe = 'stub-' + [guid]::NewGuid().ToString('N')
-        $broken = if ($form.Key -eq 'viewImage.other') { 'viewImage' } else { $form.Key }
+        $broken = switch ($form.Key) {
+            'viewImage.other' { 'viewImage' }
+            'called.prompt' { 'prompt' }
+            default { $form.Key }
+        }
         $ran = Invoke-E2eRunner -Cases $Cases -Broken $broken -At $form.Value -Pipe $pipe
         if ($ran.Code -ne 1) {
             throw "$($form.Key) の期待を違えても不合格にならない: $($ran.Said)"

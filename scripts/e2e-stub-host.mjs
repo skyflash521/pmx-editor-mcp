@@ -34,6 +34,12 @@ const OTHER_VIEW = "ちがうすがた";
 /** 書き込んだ置き場を確かめる段を違えるときの名前。結末の名前ではないのでここで名指しする。 */
 const BROKEN_FILE = "file";
 
+/** 違える形のうち、呼び先まで届く段を確認の表示で止めるもの。 */
+const BROKEN_PROMPT = "prompt";
+
+/** 確認の表示が出て止まったことを知らせる断りの綴り。ホストの包みが定める。 */
+const PROMPT_SHOWN = "TOOL_PROMPT_SHOWN";
+
 /** 写しを取れるビューの名前。実行器はこのビューの画像だけを、写しと合うことを求める。 */
 const CAPTURED_VIEW = "pmx";
 
@@ -112,6 +118,15 @@ function borrowed(one, params, remembered) {
  */
 function answer(one, broken, params, remembered, round) {
     const wrong = broken === one.expect;
+    if (one.expect === "called" && broken === BROKEN_PROMPT) {
+        return {
+            result: {
+                ok: false,
+                error: { code: PROMPT_SHOWN, message: "確認の表示が出た。" },
+            },
+        };
+    }
+
     if (one.expect === "refusal") {
         return wrong
             ? { result: { ok: true, value: null } }

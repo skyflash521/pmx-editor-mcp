@@ -265,6 +265,33 @@ namespace PmxEditorMcp.SignatureDump.Tests
             });
         }
 
+        /// <summary>
+        /// 呼ぶと確認の表示が出ると根拠が述べる行は、届かせられない行と同じく覆いの判定から
+        /// 外れる。表示は呼んだ側では閉じられないので、検査を求めても通らない要求が増えるだけ
+        /// である。
+        /// </summary>
+        [Fact]
+        public void ARowThatSaysCallingItShowsAPromptIsLeftOutOfTheJudgement()
+        {
+            Judge(Prompting(Wipe), Refused("model_wipe_bone", Wipe));
+        }
+
+        /// <summary>呼ぶと確認の表示が出ると根拠が述べる行を1つだけ持つ能力対応表。</summary>
+        private static ToolMap Prompting(string key)
+        {
+            return new ToolMap(new[]
+            {
+                new ToolMapRow(
+                    key,
+                    ToolMapEditKind.Read,
+                    null,
+                    "呼ぶと" + E2eCaseBuilder.PromptShownReason + "。",
+                    null,
+                    null,
+                    null),
+            });
+        }
+
         /// <summary>届かせられない理由を述べる行1件の表。</summary>
         private static ToolMap Unreachable(string key)
         {

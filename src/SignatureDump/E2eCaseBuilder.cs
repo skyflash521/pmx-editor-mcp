@@ -41,6 +41,14 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         public const string UnreachableReason = "呼び先まで届かせられない";
 
+        /// <summary>
+        /// 呼ぶと確認の表示が出て止まると述べる言い回し。表示はエディタが出すもので、呼んだ側は
+        /// 閉じるまで応答を受け取れない。そう書いてある行は呼ばず、覆いの判定からも外れる
+        /// ——表示で止まった応答を合格にすると、確かめているのは宣言した振る舞いでなく表示が
+        /// 出たことになる。
+        /// </summary>
+        public const string PromptShownReason = "確認の表示が出る";
+
         /// <summary>ハンドルを台帳から外すツールの名前。共通契約が名前を定める。</summary>
         private const string ReleaseToolName = "session_release_handle";
 
@@ -293,6 +301,13 @@ namespace PmxEditorMcp.SignatureDump
                 .ToList();
         }
 
+        /// <summary>呼ぶと確認の表示が出ると根拠が述べている行か。</summary>
+        internal static bool Prompts(ToolMapRow row)
+        {
+            return row != null
+                && row.Basis.IndexOf(PromptShownReason, StringComparison.Ordinal) >= 0;
+        }
+
         /// <summary>
         /// その検査が確かめるのが共通の入口の断りなら、その種別の位置。ほかの検査では負。
         /// </summary>
@@ -507,7 +522,7 @@ namespace PmxEditorMcp.SignatureDump
             bool written = row != null && given != null && given.ContainsKey(rowKey);
             IDictionary<string, object> calling =
                 new Dictionary<string, object>(StringComparer.Ordinal);
-            bool calls = row != null && (!confirmed || written)
+            bool calls = row != null && !Prompts(row) && (!confirmed || written)
                 && TryCalling(row, schema, sdkShapes, sampled, given, out calling);
 
             // 行を持たないツールも、引数を要さないなら呼ぶ。呼べるのに呼ばないままだと、この
@@ -824,7 +839,8 @@ namespace PmxEditorMcp.SignatureDump
                 return null;
             }
 
-            if (row.Basis.IndexOf(UnreachableReason, StringComparison.Ordinal) >= 0)
+            if (row.Basis.IndexOf(UnreachableReason, StringComparison.Ordinal) >= 0
+                || Prompts(row))
             {
                 return null;
             }
