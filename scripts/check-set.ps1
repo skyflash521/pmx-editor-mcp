@@ -29,6 +29,11 @@ $sampleValues = "$authored/sample-values.json"
 $discoveryTasks = "$authored/discovery-tasks.json"
 $contract = "$authored/common-contract.json"
 $acceptance = "$authored/acceptance-scenarios.json"
+
+# 受入の実行器の照合が使う題材。実物の定義で走らせると、突き合わせに要らない段まで通すことに
+# なる。突き合わせが見るのは期待の形と、操作・置き場・起こし直しの各段が頼む行いの種類で、
+# そのどれも1段ずつあれば足りる。題材がそれらを漏れなく持つことは受入シナリオの照合が見る。
+$acceptanceStub = 'scripts/acceptance-stub-cases.json'
 $requirements = 'docs/specs/requirements.md'
 $procedure = 'docs/conventions/verification.md'
 
@@ -798,7 +803,7 @@ $checks['受入シナリオの照合'] = @{
     Needs = $buildOutput
     Body = {
         & $dump acceptance-cases $editorDir $ledger $contract $roles $names `
-            $assignments $toolMap $toolSchemas $acceptance $requirements
+            $assignments $toolMap $toolSchemas $acceptance $requirements $acceptanceStub
     }
 }
 $checks['ブリッジの単独起動'] = @{
@@ -891,7 +896,7 @@ $checks['受入の実行器の照合'] = @{
         [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
         try {
             $temp = [System.IO.Path]::GetTempPath()
-            Test-AcceptanceRunner -Cases $acceptance `
+            Test-AcceptanceRunner -Cases $acceptanceStub `
                 -Progress (Join-Path $temp $StubProgressStateName) `
                 -Operations (Join-Path $temp $StubOperationLogName) `
                 -Editors (Join-Path $temp $StubLaunchStateName)

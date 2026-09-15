@@ -36,6 +36,15 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>引数の形を確かめるとき、覚えた値の代わりに差し込む数。</summary>
         private const int SubstitutedNumber = 1;
 
+        /// <summary>エディタとホストを操作する段の種別。</summary>
+        private const string ControlStep = "control";
+
+        /// <summary>置き場を用意する・確かめる段の種別。</summary>
+        private const string FileStep = "file";
+
+        /// <summary>応答を作る相手を起こし直す段の種別。</summary>
+        private const string ServerStep = "server";
+
         /// <summary>形が違えば <see cref="FormatException"/>。</summary>
         public static JsonNode Read(string json)
         {
@@ -63,6 +72,140 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return read;
+        }
+
+        /// <summary>
+        /// 実物の定義が立てる期待の形と、エディタとホストの操作・置き場・応答を作る相手の
+        /// 起こし直しの各段が頼む行いの種類が、突き合わせの題材にも在ることを求める。実行器が
+        /// それらを突き合わせているかを見る照合は題材で走るので、題材に無いものは、実行器が
+        /// 見ていなくても気づけないまま通る。
+        /// </summary>
+        public static void RequireCoveredByStub(JsonNode scenarios, JsonNode stub)
+        {
+            if (scenarios == null)
+            {
+                throw new ArgumentNullException(nameof(scenarios));
+            }
+
+            if (stub == null)
+            {
+                throw new ArgumentNullException(nameof(stub));
+            }
+
+            RequireCovered("期待の形", Forms(scenarios), Forms(stub));
+            RequireCovered(
+                "操作の種類", Actions(scenarios, ControlStep), Actions(stub, ControlStep));
+            RequireCovered(
+                "置き場の段の種類", Actions(scenarios, FileStep), Actions(stub, FileStep));
+            RequireCovered(
+                "サーバーの段の種類", Actions(scenarios, ServerStep), Actions(stub, ServerStep));
+        }
+
+        /// <summary>覆えていないものがあれば <see cref="InvalidOperationException"/>。</summary>
+        private static void RequireCovered(string what, ISet<string> wanted, ISet<string> held)
+        {
+            string[] missing = wanted
+                .Where(one => !held.Contains(one))
+                .OrderBy(one => one, StringComparer.Ordinal)
+                .ToArray();
+            if (missing.Length != 0)
+            {
+                throw new InvalidOperationException(
+                    "突き合わせの題材に" + what + "が無い: " + string.Join("・", missing));
+            }
+        }
+
+        /// <summary>
+        /// その定義が立てる期待の形。1つの期待が2つの形を立てることがあるので、期待の名前では
+        /// なく中身で決める——名前ごとに1つへ決めると、2つ立てた段の片方が数えられないまま残る。
+        /// </summary>
+        private static ISet<string> Forms(JsonNode defined)
+        {
+            HashSet<string> forms = new HashSet<string>(StringComparer.Ordinal);
+            foreach (JsonNode step in Steps(defined))
+            {
+                JsonNode expect = step["expect"];
+                if (expect == null)
+                {
+                    continue;
+                }
+
+                foreach (KeyValuePair<string, JsonNode> one in expect.AsObject())
+                {
+                    foreach (string form in FormsOf(one.Key, one.Value))
+                    {
+                        forms.Add(form);
+                    }
+                }
+            }
+
+            return forms;
+        }
+
+        /// <summary>1つの期待が立てる形。</summary>
+        private static IEnumerable<string> FormsOf(string name, JsonNode value)
+        {
+            if (name == "notice")
+            {
+                yield return value["editor"] != null ? "notice" : "notice.changed";
+                yield break;
+            }
+
+            if (name == "image")
+            {
+                if (value["capturedAs"] != null)
+                {
+                    yield return "image";
+                }
+
+                if (value["differsFrom"] != null)
+                {
+                    yield return "image.differsFrom";
+                }
+
+                yield break;
+            }
+
+            if (name == "values")
+            {
+                foreach (JsonNode one in value.AsArray())
+                {
+                    if (one["equals"] != null)
+                    {
+                        yield return "values";
+                    }
+
+                    if (one["absent"] != null)
+                    {
+                        yield return "values.absent";
+                    }
+
+                    if (one["present"] != null)
+                    {
+                        yield return "values.present";
+                    }
+                }
+
+                yield break;
+            }
+
+            yield return name;
+        }
+
+        /// <summary>その定義が、指した種別の段で頼む行いの種類。</summary>
+        private static ISet<string> Actions(JsonNode defined, string kind)
+        {
+            return new HashSet<string>(
+                Steps(defined)
+                    .Where(step => (string)step["kind"] == kind)
+                    .Select(step => (string)step["action"]),
+                StringComparer.Ordinal);
+        }
+
+        /// <summary>その定義が並べる段。</summary>
+        private static IEnumerable<JsonNode> Steps(JsonNode defined)
+        {
+            return defined["scenarios"].AsArray().SelectMany(one => one["steps"].AsArray());
         }
 
         /// <summary>

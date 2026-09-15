@@ -1,0 +1,249 @@
+{
+  "scenarios": [
+    {
+      "id": 1,
+      "title": "題材",
+      "requirements": [
+        "実行器が段をこなし、期待の形ごとに突き合わせること"
+      ],
+      "steps": [
+        {
+          "kind": "file",
+          "action": "ensureDirectory",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-cases"
+        },
+        {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-cases\\stub.pmx"
+        },
+        {
+          "kind": "control",
+          "action": "closeAll"
+        },
+        {
+          "kind": "control",
+          "action": "launch",
+          "record": {
+            "name": "editorOne",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "stub_ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "editor": {
+                "$from": "editorOne"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "stub_refuse",
+          "arguments": {},
+          "expect": {
+            "ok": false,
+            "code": "TOOL_STUB_REFUSED"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "stub_list",
+          "arguments": {},
+          "record": {
+            "name": "stubHandle",
+            "path": "nextOffset",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "nextOffset",
+                "present": true
+              },
+              {
+                "path": "missing",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "stub_save",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance-cases\\stub.pmx"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectPresent",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-cases\\stub.pmx"
+        },
+        {
+          "kind": "control",
+          "action": "capture",
+          "editor": {
+            "$from": "editorOne"
+          },
+          "view": "pmx",
+          "record": {
+            "name": "stubViewSize",
+            "shape": "size"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "stub_image",
+          "arguments": {},
+          "record": {
+            "name": "stubImage",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "capturedAs": "stubViewSize"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "stub_image_again",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "image": {
+              "capturedAs": "stubViewSize",
+              "differsFrom": "stubImage"
+            }
+          }
+        },
+        {
+          "kind": "control",
+          "action": "click",
+          "editor": {
+            "$from": "editorOne"
+          },
+          "view": "pmx"
+        },
+        {
+          "kind": "tool",
+          "tool": "stub_events",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "events": {
+              "types": [
+                "view_mouse_down",
+                "view_mouse_up"
+              ],
+              "sourceHandle": {
+                "$from": "stubHandle"
+              }
+            }
+          }
+        },
+        {
+          "kind": "control",
+          "action": "undo",
+          "editor": {
+            "$from": "editorOne"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "stop",
+          "editor": {
+            "$from": "editorOne"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "start",
+          "editor": {
+            "$from": "editorOne"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "close",
+          "editor": {
+            "$from": "editorOne"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "題材の続き",
+      "requirements": [
+        "実行器が起こし直しと移った知らせを突き合わせること"
+      ],
+      "steps": [
+        {
+          "kind": "server",
+          "action": "restart"
+        },
+        {
+          "kind": "control",
+          "action": "launch",
+          "record": {
+            "name": "editorTwo",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "stub_ping_again",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "changedTo": {
+                "$from": "editorTwo"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
+          }
+        },
+        {
+          "kind": "control",
+          "action": "close",
+          "editor": {
+            "$from": "editorTwo"
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-cases\\absent.pmx"
+        },
+        {
+          "kind": "file",
+          "action": "removeTree",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-cases"
+        }
+      ]
+    }
+  ]
+}

@@ -30,13 +30,14 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 10)
+            if (args.Length != 11)
             {
                 error.WriteLine(
-                    "引数は10個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                    "引数は11個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
                         + " <共通契約の正本のパス> <型役割表の正本のパス> <日本語名の正本のパス>"
                         + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
-                        + " <スキーマ正本のパス> <受入シナリオの正本のパス> <要求仕様書のパス>");
+                        + " <スキーマ正本のパス> <受入シナリオの正本のパス> <要求仕様書のパス>"
+                        + " <突き合わせの題材のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -50,12 +51,14 @@ namespace PmxEditorMcp.SignatureDump
 
             ToolDefinitionInputs inputs;
             JsonNode scenarios;
+            JsonNode stub;
             RequirementNames requirements;
             try
             {
                 inputs = ToolDefinitionInputs.Read(editorDirectory, args);
                 scenarios = AcceptanceScenarioGate.Read(Read(args[8], "受入シナリオの正本"));
                 requirements = RequirementDocumentReader.Read(Read(args[9], "要求仕様書"));
+                stub = AcceptanceScenarioGate.Read(Read(args[10], "突き合わせの題材"));
             }
             catch (Exception exception)
             {
@@ -96,6 +99,7 @@ namespace PmxEditorMcp.SignatureDump
                     new HashSet<string>(
                         FixedToolTable.Descriptions(debugHooks: true).Keys, StringComparer.Ordinal),
                     requirements);
+                AcceptanceScenarioGate.RequireCoveredByStub(scenarios, stub);
             }
             catch (InvalidOperationException exception)
             {

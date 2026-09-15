@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Nodes;
 using System.Collections.Generic;
 using Xunit;
 
@@ -205,6 +206,98 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Definitions(),
                 Fixed(),
                 Requirements());
+        }
+
+        /// <summary>
+        /// 実物が立てる期待の形が題材に無ければ落ちる。突き合わせは題材で走るので、題材に無い
+        /// 形は、実行器がそれを見ていなくても気づけないまま通る。
+        /// </summary>
+        [Fact]
+        public void AFormTheStubDoesNotCarryIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AcceptanceScenarioGate.RequireCoveredByStub(
+                    Cases(@"{""kind"":""tool"",""tool"":""one"",""arguments"":{},"
+                        + @"""expect"":{""ok"":true,""code"":""TOOL_X""}}"),
+                    Cases(@"{""kind"":""tool"",""tool"":""one"",""arguments"":{},"
+                        + @"""expect"":{""ok"":true}}")));
+
+            Assert.Contains("code", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// 同じ名前でも中身が別の形を立てる期待は、別の形として数える。名前だけで数えると、
+        /// 題材が片方しか持たないまま覆えたことになる。
+        /// </summary>
+        [Fact]
+        public void TwoFormsUnderTheSameNameAreCountedApart()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AcceptanceScenarioGate.RequireCoveredByStub(
+                    Cases(@"{""kind"":""tool"",""tool"":""one"",""arguments"":{},"
+                        + @"""expect"":{""ok"":true,""notice"":{""changedTo"":{""$from"":""a""}}}}"),
+                    Cases(@"{""kind"":""tool"",""tool"":""one"",""arguments"":{},"
+                        + @"""expect"":{""ok"":true,""notice"":{""editor"":{""$from"":""a""}}}}")));
+
+            Assert.Contains("notice.changed", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>実物が頼む操作の種類が題材に無ければ落ちる。</summary>
+        [Fact]
+        public void AnActionTheStubDoesNotCarryIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AcceptanceScenarioGate.RequireCoveredByStub(
+                    Cases(@"{""kind"":""control"",""action"":""undo"","
+                        + @"""editor"":{""$from"":""a""}}"),
+                    Cases(@"{""kind"":""control"",""action"":""closeAll""}")));
+
+            Assert.Contains("undo", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>題材が実物の形と操作をすべて持つなら通る。</summary>
+        [Fact]
+        public void AStubThatCarriesEveryFormAndActionPasses()
+        {
+            AcceptanceScenarioGate.RequireCoveredByStub(
+                Cases(@"{""kind"":""control"",""action"":""closeAll""}"),
+                Cases(@"{""kind"":""control"",""action"":""closeAll""},"
+                    + @"{""kind"":""control"",""action"":""undo"",""editor"":{""$from"":""a""}}"));
+        }
+
+        /// <summary>実物が置く置き場の段の種類が題材に無ければ落ちる。</summary>
+        [Fact]
+        public void AFileActionTheStubDoesNotCarryIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AcceptanceScenarioGate.RequireCoveredByStub(
+                    Cases(@"{""kind"":""file"",""action"":""removeTree"",""path"":""held""}"),
+                    Cases(@"{""kind"":""file"",""action"":""ensureDirectory"","
+                        + @"""path"":""held""}")));
+
+            Assert.Contains("removeTree", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// 実物が応答を作る相手を起こし直すのに題材が起こし直さなければ落ちる。起こした回数を
+        /// 見る突き合わせは、段が0件でも数が合ってしまうので、この経路が走らないまま通る。
+        /// </summary>
+        [Fact]
+        public void ARestartTheStubDoesNotCarryIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => AcceptanceScenarioGate.RequireCoveredByStub(
+                    Cases(@"{""kind"":""server"",""action"":""restart""}"),
+                    Cases(@"{""kind"":""control"",""action"":""closeAll""}")));
+
+            Assert.Contains("restart", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>段だけを差し替えた定義。形と操作の照合はこれだけを読む。</summary>
+        private static JsonNode Cases(string steps)
+        {
+            return JsonNode.Parse(
+                @"{""scenarios"":[" + Body(1, "読み取りができる", steps) + "]}");
         }
 
         private static string Scenario(string requirement, string steps)
