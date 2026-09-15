@@ -23,6 +23,14 @@ const RESPONSE_TIMEOUT_MS = 130000;
 /** 待受のパイプ名の付け方。ホスト側の実装が定める。 */
 const PIPE_PREFIX = "pmx-editor-mcp-";
 
+/**
+ * 答えの返らない検査が続けて何件出たら、塞がりが解けていないと見なして実行を打ち切るか。
+ * 1件は転びうる——表示を片付ければ次から進む。続けて2件なら、片付けが効いていないか、
+ * 片付けられない塞がり方をしている。そこから先はどの検査も同じところで止まるので、残りを
+ * 通しても分かることが増えない。
+ */
+const STALLED_LIMIT = 2;
+
 /** 応答待ちの表示へ応答する操作役。画面を触るのはこの1本に寄せる。 */
 const CONTROL_SCRIPT = path.join(
     path.dirname(url.fileURLToPath(import.meta.url)), "host-control.ps1");
@@ -524,6 +532,8 @@ function run(pipeName, cases, processId) {
     let buffer = "";
     let index = -1;
     let retried = -1;
+    let waited = -1;
+    let stalled = 0;
     let settled = false;
     const results = [];
     const remembered = new Map();
@@ -597,7 +607,49 @@ function run(pipeName, cases, processId) {
         };
 
         socket.on("error", (error) => settle(EXIT_INPUT_UNAVAILABLE, "接続に失敗しました: " + error.message));
-        socket.on("timeout", () => settle(EXIT_INPUT_UNAVAILABLE, "応答が時間内に返りませんでした。"));
+        // 応答が返らないのは、答えられない表示がUIスレッドを塞いでいるときである。表示を片付け
+        // れば、塞がっていた呼び出しが終わって応答が返るので、投げ直さずにもう1回ぶん待つ——
+        // 実行されたかどうかが分からない要求を投げ直すと、一度だけ頼んだ操作が二度実行されうる。
+        // それでも返らなければ、その検査を不合格にして先へ進む。1件のために残りを見ないまま
+        // 終えると、落ちた理由がどこにあるのかも分からなくなる。
+        socket.on("timeout", () => {
+            if (settled) {
+                return;
+            }
+
+            const one = cases[index];
+            if (one === undefined) {
+                settle(EXIT_INPUT_UNAVAILABLE, "応答が時間内に返りませんでした。");
+
+                return;
+            }
+
+            if (waited !== index && clearPrompts(processId) > 0) {
+                waited = index;
+                socket.setTimeout(RESPONSE_TIMEOUT_MS);
+
+                return;
+            }
+
+            results.push({
+                case: one,
+                reason: waited === index
+                    ? "応答が時間内に返りませんでした。出ている表示を片付けても進みませんでした。"
+                    : "応答が時間内に返りませんでした。出ている表示は見つかりませんでした。",
+            });
+
+            stalled += 1;
+            if (stalled >= STALLED_LIMIT) {
+                console.error(
+                    "応答の返らない検査が " + stalled + " 件続いたので、"
+                        + one.tool + " で打ち切りました。");
+                finish();
+
+                return;
+            }
+
+            next();
+        });
         socket.on("close", () => settle(EXIT_INPUT_UNAVAILABLE, "ホストが接続を切りました。"));
 
         socket.on("connect", () => {
@@ -629,6 +681,16 @@ function run(pipeName, cases, processId) {
                     settle(EXIT_INPUT_UNAVAILABLE, "応答を読み解けませんでした: " + error.message);
                     return;
                 }
+
+                // 先へ進んだあとに遅れて返った応答は、もう待っている相手が居ない。読み飛ばす
+                // ——番号で取り違えないためにここで落とす。
+                if (typeof response.id === "number" && response.id < requestId(index)) {
+                    continue;
+                }
+
+                // 答えが届いたので、続けて答えの返らなかった数は数え直す。判定まで進まない
+                // 断りも、ホストが答えたことに変わりはない。
+                stalled = 0;
 
                 const broken = contract(response, requestId(index));
                 if (broken !== null) {
