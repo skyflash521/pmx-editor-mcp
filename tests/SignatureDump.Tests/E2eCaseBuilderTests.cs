@@ -497,6 +497,67 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new object[] { null }, (object[])pair["handles"]);
         }
 
+        [Fact(Skip = "impl pending: 確認を要する行でも、渡す値が書かれていれば確認を添えて呼ぶ")]
+        public void AConfirmedRowWithGivenValuesIsCalledWithTheConfirmation()
+        {
+            IList<E2eCase> cases = Writing("path", given: true, confirmed: true);
+
+            E2eCase call = Assert.Single(
+                cases,
+                c => c.Tool == "session_save_thing" && c.Expectation == E2eExpectation.Called);
+
+            Assert.Equal(true, call.Arguments["confirm"]);
+            Assert.Equal("書き出す位置", call.Arguments["path"]);
+        }
+
+        [Fact(Skip = "impl pending: ファイルを書く呼び出しへ、書いた先を指す引数の名前を持たせる")]
+        public void AFilePostconditionMakesTheCallPointAtThePathItWrote()
+        {
+            IList<E2eCase> cases = Writing("path", given: true, confirmed: true);
+
+            E2eCase call = Assert.Single(
+                cases,
+                c => c.Tool == "session_save_thing" && c.Expectation == E2eExpectation.Called);
+
+            Assert.Equal("path", call.Writes);
+        }
+
+        [Fact(Skip = "impl pending: ファイルを書くと宣言しない行には、書いた先を指す引数を持たせない")]
+        public void ARowThatDeclaresNoFileWrittenPointsAtNoPath()
+        {
+            IList<E2eCase> cases = Writing(
+                "path", given: true, confirmed: true, writesFile: false);
+
+            Assert.Contains(
+                cases,
+                c => c.Tool == "session_save_thing" && c.Expectation == E2eExpectation.Called);
+            Assert.DoesNotContain(cases, c => c.Writes != null);
+        }
+
+        [Fact(Skip = "impl pending: 確認を要する行は、渡す値が書かれていなければ呼ばない")]
+        public void AConfirmedRowWithoutGivenValuesIsNotCalled()
+        {
+            IList<E2eCase> cases = Writing("path", given: false, confirmed: true);
+
+            Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Called);
+            Assert.DoesNotContain(cases, c => c.Writes != null);
+        }
+
+        [Fact(Skip = "impl pending: 呼び出しを組み立てない行には、書いた先を指す引数を持たせない")]
+        public void ARowWhoseCallIsNotBuiltPointsAtNoPath()
+        {
+            IList<E2eCase> cases = Writing("path", given: false, confirmed: false);
+
+            Assert.DoesNotContain(cases, c => c.Writes != null);
+        }
+
+        [Fact(Skip = "impl pending: 書いた先を指す引数をツールが受け取らない事後条件は、呼び出しの有無に依らず組み立てられない旨で落とす")]
+        public void AFilePostconditionWhoseKeyIsNoArgumentStopsTheBuild()
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => Writing("elsewhere", given: false, confirmed: false));
+        }
+
         [Fact]
         public void EveryArgumentIsRequired()
         {
@@ -798,6 +859,97 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 },
                 Output(),
                 null);
+        }
+
+        /// <summary>
+        /// 書き出す先を取るツールを持つ行で検査を組み立てる。その引数は、実機と同じく並びの先頭では
+        /// ない。<paramref name="writesFile"/> が偽なら、同じツールでファイルを書くとは宣言しない。
+        /// </summary>
+        private static IList<E2eCase> Writing(
+            string effectKey, bool given, bool confirmed, bool writesFile = true)
+        {
+            const string Tool = "session_save_thing";
+            SchemaItem holder = new SchemaItem(
+                "number", null, null, "pmxHandle", ItemOrigin.HostInput, false, null, false,
+                null, null, null, false, null);
+            SchemaItem path = new SchemaItem(
+                "text", null, null, "path", ItemOrigin.HostInput, true, null, false,
+                null, null, null, false, null);
+
+            return E2eCaseBuilder.Build(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(
+                        RowKey,
+                        ToolMapEditKind.DirectChange,
+                        null,
+                        "ファイルへ書く。",
+                        new[]
+                        {
+                            writesFile
+                                ? new Postcondition(
+                                    EffectType.FileWritten,
+                                    effectKey,
+                                    EffectCheckKind.File,
+                                    null,
+                                    null,
+                                    null,
+                                    EffectComparison.Exists,
+                                    null,
+                                    false,
+                                    null)
+                                : new Postcondition(
+                                    EffectType.StateWritten,
+                                    string.Empty,
+                                    EffectCheckKind.CallLogOnly,
+                                    null,
+                                    null,
+                                    null,
+                                    EffectComparison.Exists,
+                                    null,
+                                    false,
+                                    null),
+                        },
+                        null,
+                        null),
+                }),
+                new ToolSchemaTable(new[]
+                {
+                    new ToolSchema(
+                        Tool,
+                        new[]
+                        {
+                            new SchemaBranch(
+                                "only",
+                                null,
+                                null,
+                                new[] { holder, path },
+                                new SchemaChoice[0]),
+                        },
+                        Output(),
+                        null),
+                }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } },
+                Paths(),
+                confirmed
+                    ? new HashSet<string>(new[] { RowKey }, StringComparer.Ordinal)
+                    : new HashSet<string>(StringComparer.Ordinal),
+                Shapes(),
+                null,
+                given
+                    ? new SampleValueTable(
+                        new SampleValueRow[0],
+                        new[]
+                        {
+                            new SampleCallRow(
+                                RowKey,
+                                new Dictionary<string, object>(StringComparer.Ordinal)
+                                {
+                                    { "path", "書き出す位置" },
+                                },
+                                "書ける位置を渡す。"),
+                        })
+                    : null);
         }
 
         /// <summary>親を位置で指し、その親へ入れるハンドルの並びを組で受け取るツール。</summary>

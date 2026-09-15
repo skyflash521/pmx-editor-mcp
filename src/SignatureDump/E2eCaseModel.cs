@@ -82,7 +82,8 @@ namespace PmxEditorMcp.SignatureDump
             string produces = null,
             IDictionary<string, string> borrowed = null,
             E2eExpectedMember expected = null,
-            string says = null)
+            string says = null,
+            string writes = null)
         {
             RowKey = rowKey;
             EditKind = editKind;
@@ -100,6 +101,7 @@ namespace PmxEditorMcp.SignatureDump
                 : new ReadOnlyDictionary<string, string>(borrowed);
             Expected = expected;
             Says = says;
+            Writes = writes;
         }
 
         /// <summary>能力対応表の行キー。合否はこの単位でも数える。</summary>
@@ -148,5 +150,11 @@ namespace PmxEditorMcp.SignatureDump
         /// 綴りだけでは、狙った理由とほかの失敗を見分けられない。
         /// </summary>
         public string Says { get; }
+
+        /// <summary>
+        /// 書いた先のパスを渡す引数の名前。呼び出しが成功したあと、その位置にファイルが在ることを
+        /// 確かめる。ファイルを書かない検査は null。
+        /// </summary>
+        public string Writes { get; }
     }
 }
