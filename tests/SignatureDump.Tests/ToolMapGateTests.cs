@@ -107,6 +107,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
 ] }";
         }
 
+        /// <summary>見える状態が変わったことを呼び出しの記録だけで確かめる行の表。</summary>
+        private static string ChangedOnlyByLog(string basis)
+        {
+            return @"{ ""rows"": [
+  { ""signatureKey"": """ + Key + @""",
+    ""editKind"": ""read"",
+    ""basis"": """ + basis + @""",
+    ""postcondition"": [{ ""effectType"": ""observableChange"", ""effectKey"": """",
+      ""kind"": ""callLogOnly"", ""comparison"": ""anyChanged"",
+      ""setup"": [{ ""tag"": ""initPmx"" }] }] }
+] }";
+        }
+
         /// <summary>要素型とサンプル値の型を指す用意の操作を持つ表。</summary>
         private static string SetupMap(string elementType, string sample)
         {
@@ -260,7 +273,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     mapJson: DrawnOnlyByLog("現在のPMXの複製を返すだけである。"),
                     assignmentsJson: @"{ ""assignments"": [] }"));
 
-            Assert.Contains("引けない理由", error.Message, StringComparison.Ordinal);
+            Assert.Contains("確かめられない理由", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsAChangeThatIsOnlyLoggedWithoutSayingWhyItCannotBeRead()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: ChangedOnlyByLog("開いているモデルの中身を置き換える。"),
+                    assignmentsJson: @"{ ""assignments"": [] }"));
+
+            Assert.Contains("確かめられない理由", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TakesAChangeThatIsOnlyLoggedWhenItSaysWhyItCannotBeRead()
+        {
+            Require(
+                mapJson: ChangedOnlyByLog(
+                    "開いているモデルの中身を置き換える。読み比べられる一覧が無いので、"
+                        + "変わったことは呼び出しの記録で確かめる。"),
+                assignmentsJson: @"{ ""assignments"": [] }");
         }
 
         [Fact]

@@ -381,11 +381,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void RejectsAReadbackThatDoesNotSayWhichListToCompare()
+        {
+            Rejects(Dispatch(
+                @"[{ ""effectType"": ""observableChange"", ""effectKey"": """",
+                     ""kind"": ""readback"", ""comparison"": ""anyChanged"",
+                     ""setup"": [{ ""tag"": ""initPmx"" }] }]",
+                string.Empty));
+        }
+
+        [Fact]
         public void ReadsTheSetupOfAnObservableChange()
         {
             ToolMapRow row = Single(Dispatch(
                 @"[{ ""effectType"": ""observableChange"", ""effectKey"": """",
-                     ""kind"": ""readback"", ""comparison"": ""anyChanged"",
+                     ""kind"": ""readback"", ""observerTool"": ""model_list_vertices"",
+                     ""comparison"": ""anyChanged"",
                      ""setup"": [
                        { ""tag"": ""initPmx"" },
                        { ""tag"": ""addElement"", ""elementType"": ""vertex"", ""out"": ""added"" },

@@ -3,12 +3,12 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendPMDFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだPMDをいま開いているモデルへ足すので、直接変更型に当たる。",
+      "basis": "読み込んだPMDをいま開いているモデルへ足すので、直接変更型に当たる。この行の呼び出しは、読み込めない位置を渡して、エディタが人へ出す表示を呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
           "effectKey": "",
-          "kind": "readback",
+          "kind": "callLogOnly",
           "comparison": "anyChanged",
           "setup": [
             {
@@ -21,12 +21,12 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendXFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだXファイルをいま開いているモデルへ足すので、直接変更型に当たる。",
+      "basis": "読み込んだXファイルをいま開いているモデルへ足すので、直接変更型に当たる。Xのファイルを書き出す手立てがSDKに無く、読み込む中身をこの検査では用意できないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
           "effectKey": "",
-          "kind": "readback",
+          "kind": "callLogOnly",
           "comparison": "anyChanged",
           "setup": [
             {
@@ -240,12 +240,12 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.ImportXFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだXファイルをいま開いているモデルへ取り込むので、直接変更型に当たる。",
+      "basis": "読み込んだXファイルをいま開いているモデルへ取り込むので、直接変更型に当たる。Xのファイルを書き出す手立てがSDKに無く、読み込む中身をこの検査では用意できないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
           "effectKey": "",
-          "kind": "readback",
+          "kind": "callLogOnly",
           "comparison": "anyChanged",
           "setup": [
             {
@@ -273,7 +273,8 @@
               "tag": "addElement",
               "elementType": "vertex"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -295,7 +296,8 @@
               "tag": "addElement",
               "elementType": "vertex"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -351,12 +353,12 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMDFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだPMDでいま開いているモデルを置き換えるので、直接変更型に当たる。",
+      "basis": "読み込んだPMDでいま開いているモデルを置き換えるので、直接変更型に当たる。この行の呼び出しは、読み込めない位置を渡して、エディタが人へ出す表示を呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
           "effectKey": "",
-          "kind": "readback",
+          "kind": "callLogOnly",
           "comparison": "anyChanged",
           "setup": [
             {
@@ -369,12 +371,12 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMXFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだPMXでいま開いているモデルを置き換えるので、直接変更型に当たる。",
+      "basis": "読み込んだPMXでいま開いているモデルを置き換えるので、直接変更型に当たる。この行の呼び出しは、在りもしない位置を渡して、その位置が無いことを呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
           "effectKey": "",
-          "kind": "readback",
+          "kind": "callLogOnly",
           "comparison": "anyChanged",
           "setup": [
             {
@@ -405,9 +407,6 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
-            },
-            {
               "tag": "addElement",
               "elementType": "vertex"
             },
@@ -416,7 +415,8 @@
               "args": {},
               "tool": "session_undo"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -627,13 +627,11 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
-            },
-            {
               "tag": "addElement",
               "elementType": "vertex"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -2107,7 +2105,8 @@
               "tag": "addElement",
               "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_bones"
         }
       ]
     },
@@ -2132,7 +2131,8 @@
               "tag": "addElement",
               "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_bones"
         }
       ]
     },
@@ -2851,7 +2851,8 @@
               "tag": "addElement",
               "elementType": "morph"
             }
-          ]
+          ],
+          "observerTool": "model_list_morph_offsets"
         }
       ]
     },
@@ -3230,7 +3231,8 @@
               "tag": "addElement",
               "elementType": "vertex"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -3257,7 +3259,7 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.FromFile(System.String)",
       "editKind": "duplicateEdit",
-      "basis": "いまのPMXを複製して読み込んだ内容で置き換え、まとめて反映するので、複製編集型に当たる。",
+      "basis": "いまのPMXを複製して読み込んだ内容で置き換え、まとめて反映するので、複製編集型に当たる。この行の呼び出しは、在りもしない位置を渡して、その位置が無いことを呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "updateSpec": {
         "refresh": []
       },
@@ -3265,7 +3267,7 @@
         {
           "effectType": "observableChange",
           "effectKey": "",
-          "kind": "readback",
+          "kind": "callLogOnly",
           "comparison": "anyChanged",
           "setup": [
             {
@@ -3308,7 +3310,7 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Normalize()",
       "editKind": "duplicateEdit",
-      "basis": "いまのPMXを複製して整え、まとめて反映するので、複製編集型に当たる。",
+      "basis": "いまのPMXを複製して整え、まとめて反映するので、複製編集型に当たる。正規化が初期化するのは参照先を失った関係だけなので、切れた参照が無い呼び出しでは何も動かない。呼べば必ず何かが変わる行ではないため、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "updateSpec": {
         "refresh": []
       },
@@ -3316,7 +3318,7 @@
         {
           "effectType": "observableChange",
           "effectKey": "",
-          "kind": "readback",
+          "kind": "callLogOnly",
           "comparison": "anyChanged",
           "setup": [
             {
@@ -3429,9 +3431,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -3450,9 +3458,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -3471,9 +3485,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -3492,9 +3512,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -3513,9 +3539,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -3534,9 +3566,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -11839,9 +11877,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -11860,9 +11904,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -11881,9 +11931,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -11902,9 +11958,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -11923,9 +11985,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },
@@ -11944,9 +12012,15 @@
           "comparison": "anyChanged",
           "setup": [
             {
-              "tag": "initPmx"
+              "tag": "addElement",
+              "elementType": "material"
+            },
+            {
+              "tag": "addElement",
+              "elementType": "bone"
             }
-          ]
+          ],
+          "observerTool": "model_list_vertices"
         }
       ]
     },

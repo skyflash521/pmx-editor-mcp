@@ -340,7 +340,12 @@ namespace PmxEditorMcp.SignatureDump
 
             bool observed = (kind == EffectCheckKind.Readback || kind == EffectCheckKind.Handle)
                 && comparison != EffectComparison.AnyChanged;
-            RequirePresence(members, ObserverToolName, observed);
+
+            // 呼ぶ前と後で読み比べる判定も、どの一覧を読むかは述べる。渡すものは述べない——
+            // 一覧の全体を読むので、指す対象が無い。
+            bool compared = kind == EffectCheckKind.Readback
+                && comparison == EffectComparison.AnyChanged;
+            RequirePresence(members, ObserverToolName, observed || compared);
             RequirePresence(members, ObserverArgsName, observed);
             RequirePresence(
                 members,

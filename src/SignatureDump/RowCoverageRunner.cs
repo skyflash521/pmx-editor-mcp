@@ -94,7 +94,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.UnkeptMembers,
                     inputs.HandledTypes(),
                     inputs.PickingRows(inventory),
-                    inputs.HandleFactories(inventory));
+                    inputs.HandleFactories(inventory),
+                    inputs.ElementAdders(inventory));
                 RowCoverageGate.Require(
                     inputs.Map,
                     inventory.Signatures.ToDictionary(

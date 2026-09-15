@@ -28,6 +28,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>一覧が何件返すかを受け取る入力の名前。</summary>
         public const string LimitName = "limit";
 
+        /// <summary>並びの全体を相手にすると述べる入力の名前。</summary>
+        public const string AllName = "all";
+
         /// <summary>ハンドルの並びを受け取る入力の名前。</summary>
         public const string HandlesName = "handles";
 
@@ -40,6 +43,21 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>ハンドルを台帳から外すツールの名前。共通契約が名前を定める。</summary>
         private const string ReleaseToolName = "session_release_handle";
+
+        /// <summary>いま開いているモデルを空へ戻すツールの名前。共通契約が名前を定める。</summary>
+        private const string InitializeToolName = "session_initialize_pmx";
+
+        /// <summary>
+        /// 覚えておく名前を行ごとに分ける区切り。読み比べる段は行ごとに同じツールを2度呼ぶので、
+        /// 名前を分けないと別の行の覚えた値を借りる。
+        /// </summary>
+        private const string Scoped = "#";
+
+        /// <summary>
+        /// 呼ぶ前と後で読むときに受け取る件数。一覧は総数も返すので、1件だけ読めば総数の変化は
+        /// 見える——全件を読むと、要素の多いモデルでは読むだけで時間の上限に届く。
+        /// </summary>
+        private const int ReadbackLimit = 1;
 
         /// <summary>台帳に無いハンドルを並びで渡す検査が確かめること。</summary>
         private const string ListedHandleRefusal = "台帳に無いハンドルを渡す呼び出しを断ること";
@@ -141,7 +159,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ISet<string>> unkept = null,
             ISet<string> handled = null,
             ISet<string> picking = null,
-            IDictionary<string, string> makers = null)
+            IDictionary<string, string> makers = null,
+            IDictionary<string, string> adders = null)
         {
             if (map == null)
             {
@@ -234,7 +253,9 @@ namespace PmxEditorMcp.SignatureDump
                     given,
                     refused,
                     Handles(schema, sdkTypes, handled),
-                    Maker(row, makers, schemas)));
+                    Maker(row, makers, schemas),
+                    adders,
+                    factories));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -245,7 +266,7 @@ namespace PmxEditorMcp.SignatureDump
             cases.AddRange(trailing);
             cases.AddRange(picked);
 
-            return Shrunk(cases);
+            return Shrunk(cases, toolsByRow);
         }
 
         /// <summary>
@@ -255,11 +276,17 @@ namespace PmxEditorMcp.SignatureDump
         /// ツールなのは、行がその型を読むツールを通しても覆われるためで、ツールを通らなくすると
         /// そのツールが受け持つ行がまとめて通らなくなる。
         /// </summary>
-        private static IList<E2eCase> Shrunk(IList<E2eCase> cases)
+        private static IList<E2eCase> Shrunk(
+            IList<E2eCase> cases, IDictionary<string, string> toolsByRow)
         {
+            // 行を持つツールでは、その行を名指しした検査だけを数える。ほかの行の段取りとして
+            // 呼ばれただけの検査で代表を落とすと、その行が自分を名指しした検査を1つも持たない
+            // まま残る。行を持たないツールは名指しされる行がそもそも無いので、どの検査でも数える。
+            ISet<string> owned = new HashSet<string>(toolsByRow.Values, StringComparer.Ordinal);
             ISet<string> reached = new HashSet<string>(
                 cases
                     .Where(c => c.Expectation != E2eExpectation.Dispatched && Shared(c) < 0)
+                    .Where(c => Named(c, toolsByRow, owned))
                     .Select(c => c.Tool),
                 StringComparer.Ordinal);
 
@@ -301,6 +328,21 @@ namespace PmxEditorMcp.SignatureDump
             return cases
                 .Where((one, at) => Shared(one) < 0 || kept.Contains(at))
                 .ToList();
+        }
+
+        /// <summary>
+        /// その検査を、呼ぶツールの覆いに数えてよいか。行を持たないツールはどの検査でも数え、
+        /// 行を持つツールはその行を名指しした検査だけを数える。
+        /// </summary>
+        private static bool Named(
+            E2eCase one, IDictionary<string, string> toolsByRow, ISet<string> owned)
+        {
+            string dispatched;
+
+            return !owned.Contains(one.Tool)
+                || (!string.IsNullOrEmpty(one.RowKey)
+                    && toolsByRow.TryGetValue(one.RowKey, out dispatched)
+                    && string.Equals(dispatched, one.Tool, StringComparison.Ordinal));
         }
 
         /// <summary>
@@ -480,7 +522,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IDictionary<string, object>> given,
             IDictionary<string, SampleCallRow> refused,
             IEnumerable<SchemaItem> handed,
-            string maker)
+            string maker,
+            IDictionary<string, string> adders,
+            IDictionary<string, string> factories)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -543,11 +587,21 @@ namespace PmxEditorMcp.SignatureDump
                 Observed(judgement, schemas, rowKey);
             }
 
+            Postcondition[] compared = Compared(row).ToArray();
+            foreach (Postcondition judgement in compared)
+            {
+                Reader(judgement, schemas, rowKey);
+            }
+
             string wrote = Wrote(row, schema, rowKey);
 
             // 断られることを確かめる呼び出しは、断られた時点でハンドルを出さない。その行の観測は
             // 借りるものを持たないので組み立てない。
             bool draws = calls && !denies && drawn.Length != 0;
+
+            // 断られる呼び出しは何も動かさないので、読み比べても違いが出ない。確かめているのが
+            // 行の効果でなく断りになるので、その行の読み比べは組み立てない。
+            bool reads = calls && !denies && compared.Length != 0;
 
             // 応答を並びで返すツールは、出たハンドルもその並びの中へ入れる。この検査が一度に
             // 相手取るのは1つなので、借りるのはその先頭である。
@@ -567,6 +621,18 @@ namespace PmxEditorMcp.SignatureDump
                     null,
                     null,
                     rowKey);
+            }
+
+            foreach (Postcondition judgement in reads ? compared : new Postcondition[0])
+            {
+                foreach (E2eCase one in
+                    Prepared(judgement, rowKey, editKind, path, adders, factories))
+                {
+                    yield return one;
+                }
+
+                yield return Recording(
+                    judgement, Reader(judgement, schemas, rowKey), rowKey, editKind, path);
             }
 
             if (calls)
@@ -594,6 +660,12 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (Postcondition judgement in draws ? drawn : new Postcondition[0])
                 {
                     yield return Drawing(judgement, schemas, rowKey, editKind, path, held);
+                }
+
+                foreach (Postcondition judgement in reads ? compared : new Postcondition[0])
+                {
+                    yield return Changing(
+                        judgement, Reader(judgement, schemas, rowKey), rowKey, editKind, path);
                 }
 
                 if (draws)
@@ -717,7 +789,8 @@ namespace PmxEditorMcp.SignatureDump
         {
             return row.Postcondition != null
                 && row.Postcondition.Any(p => p.Kind == EffectCheckKind.File
-                    || p.Kind == EffectCheckKind.Handle);
+                    || p.Kind == EffectCheckKind.Handle
+                    || p.Kind == EffectCheckKind.Readback);
         }
 
         /// <summary>確認も渡す引数。渡された組は書き換えず、写しへ足す。</summary>
@@ -793,6 +866,232 @@ namespace PmxEditorMcp.SignatureDump
             return row == null || row.Postcondition == null
                 ? new Postcondition[0]
                 : row.Postcondition.Where(p => p.Kind == EffectCheckKind.Handle);
+        }
+
+        /// <summary>呼ぶ前と後で読み比べる判定。</summary>
+        private static IEnumerable<Postcondition> Compared(ToolMapRow row)
+        {
+            return row == null || row.Postcondition == null
+                ? new Postcondition[0]
+                : row.Postcondition.Where(p => p.Kind == EffectCheckKind.Readback
+                    && p.Comparison == EffectComparison.AnyChanged);
+        }
+
+        /// <summary>
+        /// 呼ぶ前と後で読むツール。宣言の無い判定と、並びの全体を読めないツールを指す判定は、
+        /// 何と何を読み比べるのかが決まらないので、ここで組み立てを止める。
+        /// </summary>
+        private static ToolSchema Reader(
+            Postcondition judgement, ToolSchemaTable schemas, string rowKey)
+        {
+            ToolSchema observer = schemas.Tools.FirstOrDefault(
+                t => string.Equals(t.Tool, judgement.ObserverTool, StringComparison.Ordinal));
+            if (observer == null)
+            {
+                throw new InvalidOperationException(
+                    "読み比べる相手を宣言していない判定は組み立てられない: " + rowKey);
+            }
+
+            if (Reading(observer) == null)
+            {
+                throw new InvalidOperationException(
+                    "並びの全体を読めないツールとは読み比べられない: "
+                        + judgement.ObserverTool + "(" + rowKey + ")");
+            }
+
+            return observer;
+        }
+
+        /// <summary>その行がその判定のために覚えておく名前。</summary>
+        private static string Remembered(string rowKey, Postcondition judgement)
+        {
+            return rowKey + Scoped + judgement.ObserverTool;
+        }
+
+        /// <summary>
+        /// 呼ぶ前と後で読むときに渡す引数。並びの全体をどう指すかは呼び分けごとに違うので、指せる
+        /// 呼び分けを探してその指し方で埋める。どの呼び分けでも指せなければ null。
+        /// </summary>
+        private static IDictionary<string, object> Reading(ToolSchema observer)
+        {
+            foreach (SchemaBranch branch in observer.Branches)
+            {
+                IDictionary<string, object> arguments = Whole(branch);
+                if (arguments != null && Fits(branch, arguments))
+                {
+                    return arguments;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// その呼び分けで並びの全体を指す引数。位置や範囲でしか指せない組を持つ呼び分けでは null
+        /// ——どこを指すかがここでは決まらない。
+        /// </summary>
+        private static IDictionary<string, object> Whole(SchemaBranch branch)
+        {
+            IDictionary<string, object> arguments =
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { LimitName, ReadbackLimit },
+                };
+            foreach (SchemaChoice choice in branch.Choices.Where(c => c.Required))
+            {
+                string whole = choice.Names.FirstOrDefault(
+                    n => n.EndsWith(AllName, StringComparison.OrdinalIgnoreCase));
+                if (whole == null)
+                {
+                    return null;
+                }
+
+                arguments[whole] = true;
+            }
+
+            return arguments;
+        }
+
+        /// <summary>
+        /// 読み比べの始まりを決まった姿へ揃える段。揃えずに読み比べると、呼ぶ前から同じ姿だった回に
+        /// 変わらないことが起き、確かめているのが行の効果でなくその回の巡り合わせになる。
+        /// </summary>
+        private static IEnumerable<E2eCase> Prepared(
+            Postcondition judgement,
+            string rowKey,
+            string editKind,
+            string path,
+            IDictionary<string, string> adders,
+            IDictionary<string, string> factories)
+        {
+            foreach (SetupOperation operation in
+                judgement.Setup ?? (IList<SetupOperation>)new SetupOperation[0])
+            {
+                if (operation.Tag == SetupTag.AddElement)
+                {
+                    foreach (E2eCase one in
+                        Adding(operation, rowKey, editKind, path, adders, factories))
+                    {
+                        yield return one;
+                    }
+
+                    continue;
+                }
+
+                bool initializes = operation.Tag == SetupTag.InitPmx;
+                yield return new E2eCase(
+                    rowKey,
+                    editKind,
+                    path,
+                    initializes ? InitializeToolName : operation.ToolName,
+                    initializes
+                        ? "読み比べの始まりを空のモデルへ揃えられること"
+                        : "読み比べの始まりを作る呼び出しが通ること",
+                    initializes
+                        ? Confirmed(new Dictionary<string, object>(StringComparer.Ordinal))
+                        : operation.Args
+                            ?? new Dictionary<string, object>(StringComparer.Ordinal),
+                    E2eExpectation.Success,
+                    null);
+            }
+        }
+
+        /// <summary>要素を1つ作って並びへ加える段。作る手立ての無い要素型を指す判定は組み立てない。</summary>
+        private static IEnumerable<E2eCase> Adding(
+            SetupOperation operation,
+            string rowKey,
+            string editKind,
+            string path,
+            IDictionary<string, string> adders,
+            IDictionary<string, string> factories)
+        {
+            string adding;
+            string making;
+            if (adders == null
+                || operation.ElementType == null
+                || !adders.TryGetValue(operation.ElementType, out adding)
+                || factories == null
+                || !factories.TryGetValue(adding, out making))
+            {
+                throw new InvalidOperationException(
+                    "並びへ加える手立ての無い要素型を用意の操作が指している: "
+                        + operation.ElementType + "(" + rowKey + ")");
+            }
+
+            string held = rowKey + Scoped + adding;
+            yield return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                making,
+                "読み比べの始まりへ加える要素を1つ作れること",
+                new Dictionary<string, object>(StringComparer.Ordinal),
+                E2eExpectation.Success,
+                null,
+                null,
+                held);
+            yield return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                adding,
+                "作った要素を読み比べの始まりへ加えられること",
+                Lent(),
+                E2eExpectation.Success,
+                null,
+                null,
+                null,
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { Leaf(HandlesName), held },
+                });
+        }
+
+        /// <summary>呼ぶ前の姿を読んで覚える検査。</summary>
+        private static E2eCase Recording(
+            Postcondition judgement,
+            ToolSchema observer,
+            string rowKey,
+            string editKind,
+            string path)
+        {
+            return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                judgement.ObserverTool,
+                "呼ぶ前の姿を読めること",
+                Reading(observer),
+                E2eExpectation.Success,
+                null,
+                null,
+                Remembered(rowKey, judgement));
+        }
+
+        /// <summary>呼んだ後の姿が、呼ぶ前の姿と違うことを確かめる検査。</summary>
+        private static E2eCase Changing(
+            Postcondition judgement,
+            ToolSchema observer,
+            string rowKey,
+            string editKind,
+            string path)
+        {
+            return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                judgement.ObserverTool,
+                "呼び出しの後に読めるものが、呼ぶ前と違うこと",
+                Reading(observer),
+                E2eExpectation.Changed,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                Remembered(rowKey, judgement));
         }
 
         /// <summary>

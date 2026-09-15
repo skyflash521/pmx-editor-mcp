@@ -31,6 +31,13 @@ namespace PmxEditorMcp.SignatureDump
         Reads,
 
         /// <summary>
+        /// 呼ぶ前に読んだものと違うものが読めること。何と比べるかは <see cref="E2eCase.Differs"/>
+        /// が持つ。どこがどう変わるかまでは述べない行のために在る——変わったことだけが、その行の
+        /// 述べる効果である。
+        /// </summary>
+        Changed,
+
+        /// <summary>
         /// 呼び出しが呼び先まで届くこと。成功するか、人の応答を待つ表示が出たことを戻り値で
         /// 知らせるかのどちらかであればよい——表示が出るかどうかはエディタの状態で決まり、
         /// 出たときにそれを知らせるのが決められた振る舞いである。
@@ -83,7 +90,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> borrowed = null,
             E2eExpectedMember expected = null,
             string says = null,
-            string writes = null)
+            string writes = null,
+            string differs = null)
         {
             RowKey = rowKey;
             EditKind = editKind;
@@ -102,6 +110,7 @@ namespace PmxEditorMcp.SignatureDump
             Expected = expected;
             Says = says;
             Writes = writes;
+            Differs = differs;
         }
 
         /// <summary>能力対応表の行キー。合否はこの単位でも数える。</summary>
@@ -157,5 +166,11 @@ namespace PmxEditorMcp.SignatureDump
         /// 確かめる。ファイルを書かない検査は null。
         /// </summary>
         public string Writes { get; }
+
+        /// <summary>
+        /// 呼ぶ前に読んだものを覚えておいた名前。読めたものがその値と違うことを確かめる。
+        /// 読み比べない検査は null。
+        /// </summary>
+        public string Differs { get; }
     }
 }

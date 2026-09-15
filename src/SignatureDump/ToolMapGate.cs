@@ -47,7 +47,7 @@ namespace PmxEditorMcp.SignatureDump
                 RequireFields(row, kinds[row.SignatureKey]);
                 RequireUpdateKind(row, evidence);
                 RequireSetup(row, evidence);
-                RequireDrawnOrExplained(row);
+                RequireObservedOrExplained(row);
                 RequireSdkArguments(row, evidence);
             }
 
@@ -169,15 +169,15 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 出たハンドルを呼び出しの記録だけで確かめる行に、引けない理由を求める。引けるのに引いて
-        /// いないのか、引けないから記録で済ませているのかは、行を読むだけでは分かれない。理由の
-        /// 言い回しをここが指定するので、書き手が書いたかどうかは機械で見える——書いた理由が本当
-        /// かどうかは見えないので、そこはレビューが受け持つ。
+        /// 効果を呼び出しの記録だけで確かめる行に、確かめられない理由を求める。確かめられるのに
+        /// 確かめていないのか、確かめられないから記録で済ませているのかは、行を読むだけでは
+        /// 分かれない。理由の言い回しをここが指定するので、書き手が書いたかどうかは機械で見える
+        /// ——書いた理由が本当かどうかは見えないので、そこはレビューが受け持つ。
         /// </summary>
-        private static void RequireDrawnOrExplained(ToolMapRow row)
+        private static void RequireObservedOrExplained(ToolMapRow row)
         {
             if (row.Postcondition == null
-                || !row.Postcondition.Any(j => j.EffectType == EffectType.HandleCreated
+                || !row.Postcondition.Any(j => Observed(j.EffectType)
                     && j.Kind == EffectCheckKind.CallLogOnly)
                 || row.Basis.IndexOf(LoggedOnlyReason, StringComparison.Ordinal) >= 0)
             {
@@ -185,8 +185,20 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             throw new InvalidOperationException(
-                "出たハンドルを引けない理由を述べていない: " + row.SignatureKey
+                "効果を確かめられない理由を述べていない: " + row.SignatureKey
                     + "(根拠へ「" + LoggedOnlyReason + "」を含む一文を書く)");
+        }
+
+        /// <summary>
+        /// 出たハンドルと、見える状態の変化のどちらかか。この2つだけを挙げるのは、実機へ投げる
+        /// 検査が呼んだ後に見に行く手立てを持つのがこの2つだからである——ハンドルは観測ツールで
+        /// 引き、見える状態の変化は一覧を読み比べる。ほかの効果まで広げるなら、その効果を見に行く
+        /// 段を組み立てられるようにしてからここへ足す。
+        /// </summary>
+        private static bool Observed(EffectType effectType)
+        {
+            return effectType == EffectType.HandleCreated
+                || effectType == EffectType.ObservableChange;
         }
 
         /// <summary>

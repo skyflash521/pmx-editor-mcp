@@ -78,6 +78,11 @@ namespace PmxEditorMcp.SignatureDump
                 written.AddText("writes", one.Writes);
             }
 
+            if (one.Differs != null)
+            {
+                written.AddText("differs", one.Differs);
+            }
+
             return written.Text;
         }
 
@@ -99,6 +104,9 @@ namespace PmxEditorMcp.SignatureDump
 
                 case E2eExpectation.Reads:
                     return "reads";
+
+                case E2eExpectation.Changed:
+                    return "changed";
 
                 case E2eExpectation.Called:
                     return "called";

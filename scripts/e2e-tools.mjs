@@ -129,7 +129,7 @@ function handshake(result) {
  * 1件の検査の結末。合っていれば null、違っていればその理由を返す。
  * 包みの形は共通契約が定めるので、ここでは成功・失敗と理由の綴りだけを見る。
  */
-function judge(one, response, capture) {
+function judge(one, response, capture, remembered) {
     if (one.expect === "dispatched") {
         return dispatched(response);
     }
@@ -179,6 +179,12 @@ function judge(one, response, capture) {
         return envelope.ok === true
             ? reads(one.expected, envelope.value)
             : "読み返せるはずが断られました: " + describe(envelope);
+    }
+
+    if (one.expect === "changed") {
+        return envelope.ok === true
+            ? changed(one.differs, envelope.value, remembered)
+            : "読み比べるはずが断られました: " + describe(envelope);
     }
 
     if (envelope.ok !== false) {
@@ -270,6 +276,22 @@ function viewImage(one, response, capture) {
 
     return matches
         ? "別のビューの画像が写したビューの姿と合いました(明るさの差 " + compared.measured + ")。"
+        : null;
+}
+
+/**
+ * 呼ぶ前に読んだものと違うか。覚えていない名前を指す検査は落とす——比べる相手が無いまま通ると、
+ * 呼び出しが何も動かさなかった回も合格になる。
+ */
+function changed(name, value, remembered) {
+    if (!remembered.has(name)) {
+        return "呼ぶ前に読んだものを覚えていません: " + name;
+    }
+
+    const before = JSON.stringify(remembered.get(name));
+
+    return before === JSON.stringify(value)
+        ? "呼び出しの後に読めるものが、呼ぶ前と同じです: " + before.slice(0, 200)
         : null;
 }
 
@@ -746,7 +768,7 @@ function run(pipeName, cases, processId) {
                     continue;
                 }
 
-                let reason = judge(one, response, capture);
+                let reason = judge(one, response, capture, remembered);
                 if (reason === null && wrote !== null && !fs.existsSync(wrote)) {
                     reason = "書いたはずのファイルがありません: " + wrote;
                 }

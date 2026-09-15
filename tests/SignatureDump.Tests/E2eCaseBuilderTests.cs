@@ -293,6 +293,186 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AReadbackPostconditionReadsTheSameListBeforeAndAfterTheCall()
+        {
+            IList<E2eCase> cases = Comparing(
+                Readback("model_list_things"),
+                Tool("model_wipe_things", new SchemaItem[0]),
+                Whole("model_list_things"));
+
+            E2eCase call = Assert.Single(
+                cases, c => c.Tool == "model_wipe_things" && c.Expectation == E2eExpectation.Called);
+            E2eCase before = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            E2eCase after = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Changed);
+
+            Assert.NotNull(before.Produces);
+            Assert.Equal(before.Produces, after.Differs);
+            Assert.Equal(before.Arguments, after.Arguments);
+            Assert.Equal(true, before.Arguments[E2eCaseBuilder.AllName]);
+            Assert.True(cases.IndexOf(before) < cases.IndexOf(call));
+            Assert.True(cases.IndexOf(call) < cases.IndexOf(after));
+        }
+
+        [Fact]
+        public void TheReadbackStartsFromTheStateThatThePostconditionAsksFor()
+        {
+            IList<E2eCase> cases = Comparing(
+                Readback(
+                    "model_list_things",
+                    SetupOperation.InitPmx(),
+                    SetupOperation.AddElement("thing", null),
+                    SetupOperation.CallTool(
+                        "session_undo",
+                        new Dictionary<string, object>(StringComparer.Ordinal),
+                        null)),
+                Tool("model_wipe_things", new SchemaItem[0]),
+                Whole("model_list_things"));
+
+            E2eCase before = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            string[] leading = cases
+                .Take(cases.IndexOf(before))
+                .Where(c => c.RowKey == RowKey)
+                .Select(c => c.Tool)
+                .ToArray();
+
+            Assert.Equal(
+                new[]
+                {
+                    "session_initialize_pmx", "model_thing", "model_add_things", "session_undo",
+                },
+                leading);
+            E2eCase made = Assert.Single(cases, c => c.Tool == "model_thing");
+            E2eCase added = Assert.Single(cases, c => c.Tool == "model_add_things");
+            Assert.Equal(made.Produces, added.Borrowed["handles/0"]);
+        }
+
+        [Fact]
+        public void ARowThatIsRefusedGetsNoReadback()
+        {
+            IList<E2eCase> cases = Comparing(
+                Readback("model_list_things"),
+                Tool("model_wipe_things", new SchemaItem[0]),
+                Whole("model_list_things"),
+                refused: E2eCaseBuilder.InvalidArgument);
+
+            Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Changed);
+            Assert.DoesNotContain(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+        }
+
+        [Fact]
+        public void AnObserverThatCannotReadTheWholeListIsRefused()
+        {
+            Assert.Throws<InvalidOperationException>(() => Comparing(
+                Readback("model_list_things"),
+                Tool("model_wipe_things", new SchemaItem[0]),
+                Observing("model_list_things", "handles", listed: true)));
+        }
+
+        [Fact]
+        public void ARowCalledOnlyAsAnotherRowsSetupKeepsItsShrunkRefusal()
+        {
+            ToolSchema wipe = Tool("model_bend_bones", new SchemaItem[0]);
+            ToolSchema aim = Tool("model_aim_bones", Handles());
+            ToolSchema touch = Tool("model_touch_bones", Handles());
+            ToolSchema listing = Whole("model_list_things");
+            IList<E2eCase> cases = E2eCaseBuilder.Build(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(
+                        RowKey,
+                        ToolMapEditKind.DirectChange,
+                        null,
+                        "曲げる。",
+                        new[]
+                        {
+                            Readback(
+                                listing.Tool,
+                                SetupOperation.CallTool(
+                                    touch.Tool,
+                                    new Dictionary<string, object>(StringComparer.Ordinal),
+                                    null)),
+                        },
+                        null,
+                        null),
+                    new ToolMapRow(
+                        "Sdk.Type.Aim()", ToolMapEditKind.DirectChange, null, "狙う。", null, null,
+                        null),
+                    new ToolMapRow(
+                        "Sdk.Type.Touch()", ToolMapEditKind.DirectChange, null, "触る。", null,
+                        null, null),
+                }),
+                new ToolSchemaTable(new[] { wipe, aim, touch, listing }),
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { RowKey, wipe.Tool },
+                    { "Sdk.Type.Aim()", aim.Tool },
+                    { "Sdk.Type.Touch()", touch.Tool },
+                },
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes());
+
+            Assert.Contains(
+                cases,
+                c => c.Tool == touch.Tool && c.RowKey == RowKey
+                    && c.Expectation == E2eExpectation.Success);
+            Assert.Contains(cases, c => c.Tool == aim.Tool && c.Code == "TOOL_INVALID_HANDLE");
+            Assert.Contains(cases, c => c.Tool == touch.Tool && c.Code == "TOOL_INVALID_HANDLE");
+        }
+
+        [Fact]
+        public void AToolWithNoRowOfItsOwnKeepsNoShrunkRefusalOnceItIsReached()
+        {
+            ToolSchema wipe = Tool("model_bend_bones", new SchemaItem[0]);
+            ToolSchema aim = Tool("model_aim_bones", Handles());
+            ToolSchema loose = Tool("model_touch_bones", Handles());
+            ToolSchema listing = Whole("model_list_things");
+            IList<E2eCase> cases = E2eCaseBuilder.Build(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(
+                        RowKey,
+                        ToolMapEditKind.DirectChange,
+                        null,
+                        "曲げる。",
+                        new[]
+                        {
+                            Readback(
+                                listing.Tool,
+                                SetupOperation.CallTool(
+                                    loose.Tool,
+                                    new Dictionary<string, object>(StringComparer.Ordinal),
+                                    null)),
+                        },
+                        null,
+                        null),
+                    new ToolMapRow(
+                        "Sdk.Type.Aim()", ToolMapEditKind.Read, null, "狙う。", null, null, null),
+                }),
+                new ToolSchemaTable(new[] { wipe, aim, loose, listing }),
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { RowKey, wipe.Tool },
+                    { "Sdk.Type.Aim()", aim.Tool },
+                },
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes());
+
+            Assert.Contains(cases, c => c.Tool == aim.Tool && c.Code == "TOOL_INVALID_HANDLE");
+            Assert.DoesNotContain(
+                cases, c => c.Tool == loose.Tool && c.Code == "TOOL_INVALID_HANDLE");
+        }
+
+        [Fact]
         public void TheObservationCarriesTheRowThatAskedForIt()
         {
             IList<E2eCase> cases = Observed(
@@ -1003,6 +1183,107 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 },
                 Output(),
                 null);
+        }
+
+        /// <summary>
+        /// 何を相手にするかを選ばせ、何件返すかも決めて読めるツール。実機の一覧はどれもこの形で、
+        /// 全体・位置・範囲のどれかを必ず取る。
+        /// </summary>
+        private static ToolSchema Whole(string name)
+        {
+            SchemaItem all = new SchemaItem(
+                "boolean", null, null, E2eCaseBuilder.AllName, ItemOrigin.HostInput, null, null,
+                false, null, null, null, false, null);
+            SchemaItem indices = new SchemaItem(
+                null,
+                null,
+                new SchemaItem(
+                    "number", null, null, null, ItemOrigin.HostInput, null, null, false,
+                    null, null, null, false, null),
+                "indices",
+                ItemOrigin.HostInput,
+                null, null, false, null, null, null, false, null);
+            SchemaItem limit = new SchemaItem(
+                "number", null, null, E2eCaseBuilder.LimitName, ItemOrigin.HostInput, null, null,
+                false, null, null, null, false, null);
+
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[] { all, indices, limit },
+                        new[] { new SchemaChoice(new[] { E2eCaseBuilder.AllName, "indices" }, true) }),
+                },
+                Output(),
+                null);
+        }
+
+        /// <summary>呼ぶ前と後で同じ一覧を読み比べる事後条件。</summary>
+        private static Postcondition Readback(string observer, params SetupOperation[] setup)
+        {
+            return new Postcondition(
+                EffectType.ObservableChange,
+                string.Empty,
+                EffectCheckKind.Readback,
+                observer,
+                null,
+                null,
+                EffectComparison.AnyChanged,
+                null,
+                false,
+                setup);
+        }
+
+        /// <summary>読み比べる行と、その一覧を読むツールの2つで検査を組み立てる。</summary>
+        private static IList<E2eCase> Comparing(
+            Postcondition postcondition,
+            ToolSchema target,
+            ToolSchema observer,
+            string refused = null)
+        {
+            return E2eCaseBuilder.Build(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(
+                        RowKey,
+                        ToolMapEditKind.DirectChange,
+                        null,
+                        "書き換える。",
+                        new[] { postcondition },
+                        null,
+                        null),
+                }),
+                new ToolSchemaTable(new[] { target, observer }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, target.Tool } },
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes(),
+                null,
+                refused == null
+                    ? null
+                    : new SampleValueTable(
+                        new SampleValueRow[0],
+                        new[]
+                        {
+                            new SampleCallRow(
+                                RowKey,
+                                new Dictionary<string, object>(StringComparer.Ordinal),
+                                "断られることを見る。",
+                                refused,
+                                "断る文面"),
+                        }),
+                adders: new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { "thing", "model_add_things" },
+                },
+                factories: new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { "model_add_things", "model_thing" },
+                });
         }
 
         /// <summary>ハンドルが出たことを、その名前のツールの引数で観測する事後条件。</summary>

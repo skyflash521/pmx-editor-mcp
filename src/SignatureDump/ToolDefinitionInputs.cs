@@ -94,6 +94,29 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 要素型の名前から、その要素を並びへ加えるツールの名前へ。事後条件の用意の操作が要素型で
+        /// 指すので、その名前から呼ぶ先を引く。
+        /// </summary>
+        public IDictionary<string, string> ElementAdders(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            return OwnedRoles(inventory).Types
+                .Where(t => t.Group != CapabilityOwner.None
+                    && !string.IsNullOrEmpty(t.ElementNoun)
+                    && !string.IsNullOrEmpty(t.ElementNounPlural))
+                .GroupBy(t => t.ElementNoun, StringComparer.Ordinal)
+                .Where(g => g.Count() == 1)
+                .ToDictionary(
+                    g => g.Key,
+                    g => ToolNameRule.OfRole(g.First(), ToolVerb.Add),
+                    StringComparer.Ordinal);
+        }
+
+        /// <summary>
         /// 要素を並べるリストへ加えるツールの名前から、その要素を1つ作るツールの名前へ。作る
         /// ツールが1つに決まらない型は持たない——どれを使うかがここでは決められない。
         /// </summary>
