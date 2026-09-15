@@ -67,41 +67,56 @@ namespace PmxEditorMcp.SignatureDump
             // 覆いに数えるのは、呼び先まで届いたことが結末から分かる検査だけである。呼び先が在る
             // ことしか見ていない検査と、入口で断られることを見る検査は、行の振る舞いを一度も
             // 確かめないまま通るので数えない。
-            HashSet<string> examined = new HashSet<string>(
-                cases.Where(c => Reaching(c.Expectation)).Select(c => c.Tool),
+            HashSet<string> arrivedTools = new HashSet<string>(
+                cases.Where(c => Reached(c.Expectation)).Select(c => c.Tool),
                 StringComparer.Ordinal);
 
             // 同じ名前のツールを複数の行が持つことがあり、そのときツールの名前だけでは、検査が
             // どの行を通ったのかを言えない。自分の名前のツールを持つ行は、その行を名指しした
             // 検査で数える。
-            HashSet<string> named = new HashSet<string>(
-                cases
-                    .Where(c => Reaching(c.Expectation) && !string.IsNullOrEmpty(c.RowKey))
-                    .Select(c => c.RowKey),
-                StringComparer.Ordinal);
             HashSet<string> arrived = new HashSet<string>(
                 cases
                     .Where(c => Reached(c.Expectation) && !string.IsNullOrEmpty(c.RowKey))
                     .Select(c => c.RowKey),
                 StringComparer.Ordinal);
-            HashSet<string> reachedTools = new HashSet<string>(
-                cases.Where(c => Reached(c.Expectation)).Select(c => c.Tool),
+
+            // 効果を宣言する行は、その宣言を確かめた検査でだけ覆われる。呼び先まで届いただけの
+            // 検査は、宣言した効果が起きたかどうかを一度も見ていない。
+            HashSet<string> verified = new HashSet<string>(
+                cases
+                    .Where(c => c.Checks != null && !string.IsNullOrEmpty(c.RowKey))
+                    .Select(c => c.RowKey),
                 StringComparer.Ordinal);
             HashSet<string> assigned = new HashSet<string>(
                 assignments.Assignments.Select(a => a.SignatureKey), StringComparer.Ordinal);
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
             IDictionary<string, ISet<string>> byOwner = ToolsByOwner(toolsByRow, signatures);
-            foreach (ToolMapRow row in map.Rows.Where(r => !assigned.Contains(r.SignatureKey)))
+            // 覆うツールを持つ行が届かせられないなら、そのツールへ埋め込まれた行にも届く道が無い。
+            // 覆うツールがどれもそうである行は、理由を述べた行と同じく判定から外す——理由を写せば
+            // 写した先は写した時点で固まり、元の行が届くようになっても戻らない。
+            HashSet<string> beyond = new HashSet<string>(
+                toolsByRow
+                    .Where(t => map.Rows.Any(r => Excused(r)
+                        && string.Equals(r.SignatureKey, t.Key, StringComparison.Ordinal)))
+                    .Select(t => t.Value),
+                StringComparer.Ordinal);
+            ToolMapRow[] judged = map.Rows
+                .Where(r => !assigned.Contains(r.SignatureKey) && !Excused(r))
+                .Where(r => toolsByRow.ContainsKey(r.SignatureKey)
+                    || !Beyond(
+                        r, signatures, toolsByRow, composedTools, byType, byOwner, traversed,
+                        beyond))
+                .ToArray();
+            foreach (ToolMapRow row in judged)
             {
-                RequireReachedOrExplained(row, toolsByRow, arrived, reachedTools);
+                RequireReachedOrExplained(row, toolsByRow, arrived, arrivedTools);
             }
 
-            string[] uncovered = map.Rows
-                .Where(r => !assigned.Contains(r.SignatureKey))
+            string[] uncovered = judged
                 .Where(r => !Covered(
                     r, signatures, toolsByRow, composedTools, byType, byOwner, traversed,
-                    examined, named))
+                    arrivedTools, arrived, verified))
                 .Select(r => r.SignatureKey)
                 .OrderBy(k => k, StringComparer.Ordinal)
                 .ToArray();
@@ -117,6 +132,33 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 届かせられない理由を述べた行か。理由を述べた行は、共通契約が受け持つ行と同じく覆いの
+        /// 判定から外す——届かせる手立ての無い行へ検査を求めても、増えるのは通らない要求だけである。
+        /// </summary>
+        private static bool Excused(ToolMapRow row)
+        {
+            return row.Basis.IndexOf(
+                E2eCaseBuilder.UnreachableReason, StringComparison.Ordinal) >= 0;
+        }
+
+        /// <summary>その行を覆えるツールが1つ以上あり、そのどれもが届かせられないか。</summary>
+        private static bool Beyond(
+            ToolMapRow row,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, string> toolsByRow,
+            IDictionary<string, ComposedTool> composedTools,
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, ISet<string>> byOwner,
+            ISet<string> traversed,
+            ISet<string> beyond)
+        {
+            string[] covering = Covering(
+                row, signatures, toolsByRow, composedTools, byType, byOwner, traversed).ToArray();
+
+            return covering.Length != 0 && covering.All(beyond.Contains);
+        }
+
+        /// <summary>
         /// 自分の名前のツールを持つ行は、呼び先まで届く検査を持つか、届かせられない理由を述べる。
         /// 理由を書かせるのは、届かせていない行が届かせられない行に紛れないようにするためである
         /// ——紛れると、値を足せば届く行が足されないまま残る。多重定義が同じ名前を共有する行だけは
@@ -129,9 +171,7 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> reachedTools)
         {
             string dispatched;
-            if (!toolsByRow.TryGetValue(row.SignatureKey, out dispatched)
-                || row.Basis.IndexOf(
-                    E2eCaseBuilder.UnreachableReason, StringComparison.Ordinal) >= 0)
+            if (!toolsByRow.TryGetValue(row.SignatureKey, out dispatched))
             {
                 return;
             }
@@ -151,17 +191,10 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その結末が、行の振る舞いを確かめたことを示すか。どんな応答でも通ってしまう結末だけが
-        /// 偽である——呼び先が在ることしか見ない検査は、引数の不足で断られた応答も通すので、
-        /// 何も確かめないまま覆った扱いになる。決まった断り方を求める検査は、その行のツールが
-        /// 何をどう断るかを確かめているので覆いに数える。
+        /// その結末が、呼び先まで届いたことを示すか。呼び先が在ることしか見ない検査は、引数の
+        /// 不足で断られた応答も通すので届いていない。入口で断られることを見る検査も、断り方を
+        /// 確かめてはいるが、その行の振る舞いには一度も入っていないので届いていない。
         /// </summary>
-        private static bool Reaching(E2eExpectation expectation)
-        {
-            return expectation != E2eExpectation.Dispatched;
-        }
-
-        /// <summary>その結末が、呼び先まで届いたことを示すか。入口で断られる検査は届いていない。</summary>
         private static bool Reached(E2eExpectation expectation)
         {
             return expectation != E2eExpectation.Dispatched
@@ -205,23 +238,39 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, ISet<string>> byOwner,
             ISet<string> traversed,
-            ISet<string> examined,
-            ISet<string> named)
+            ISet<string> arrivedTools,
+            ISet<string> arrived,
+            ISet<string> checkedRows)
         {
             string dispatched;
             if (toolsByRow.TryGetValue(row.SignatureKey, out dispatched))
             {
+                // 効果を宣言する行は、その宣言を確かめた検査だけで数える。
+                ISet<string> covering = Declared(row) ? checkedRows : arrived;
+
                 // 自分の名前のツールを持つ行は、その行を名指しした検査で数える。多重定義が同じ
-                // 名前を共有する行だけは名指しできないので、その名前の検査で数える——どちらの
-                // 呼び分けを通ったかは名前から言えないが、ツールは実際に呼ばれている。
-                return toolsByRow.Count(t => string.Equals(
-                        t.Value, dispatched, StringComparison.Ordinal)) == 1
-                    ? named.Contains(row.SignatureKey)
-                    : examined.Contains(dispatched);
+                // 名前を共有する行だけは名指しできないので、その名前を持つどの行かが数えられて
+                // いればよい——どちらの呼び分けを通ったかは名前から言えないが、同じツールを
+                // 通っている。
+                string[] sharing = toolsByRow
+                    .Where(t => string.Equals(t.Value, dispatched, StringComparison.Ordinal))
+                    .Select(t => t.Key)
+                    .ToArray();
+
+                return sharing.Length == 1
+                    ? covering.Contains(row.SignatureKey)
+                    : sharing.Any(covering.Contains);
             }
 
             return Covering(row, signatures, toolsByRow, composedTools, byType, byOwner, traversed)
-                .Any(examined.Contains);
+                .Any(arrivedTools.Contains);
+        }
+
+        /// <summary>その行が、呼び出しの記録だけでは済まない効果を宣言しているか。</summary>
+        private static bool Declared(ToolMapRow row)
+        {
+            return row.Postcondition != null
+                && row.Postcondition.Any(p => p.Kind != EffectCheckKind.CallLogOnly);
         }
 
         /// <summary>行を覆うツールの名前。どれも検査を持たなければ覆われていない。</summary>

@@ -91,7 +91,8 @@ namespace PmxEditorMcp.SignatureDump
             E2eExpectedMember expected = null,
             string says = null,
             string writes = null,
-            string differs = null)
+            string differs = null,
+            string checks = null)
         {
             RowKey = rowKey;
             EditKind = editKind;
@@ -111,6 +112,7 @@ namespace PmxEditorMcp.SignatureDump
             Says = says;
             Writes = writes;
             Differs = differs;
+            Checks = checks;
         }
 
         /// <summary>能力対応表の行キー。合否はこの単位でも数える。</summary>
@@ -172,5 +174,12 @@ namespace PmxEditorMcp.SignatureDump
         /// 読み比べない検査は null。
         /// </summary>
         public string Differs { get; }
+
+        /// <summary>
+        /// この検査が確かめる事後条件の識別子。確かめない検査は null。行の覆いを数える検査が
+        /// これを読む——どの検査がどの宣言を確かめたのかは、結末や引数の形からは見分けられない。
+        /// 実機へ投げる綴りには出さない。実行器はどの宣言のために呼ぶのかを知らずに済む。
+        /// </summary>
+        public string Checks { get; }
     }
 }

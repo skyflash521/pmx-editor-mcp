@@ -124,6 +124,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ARowThatDeclaresAnEffectIsNotCoveredByACallThatDoesNotCheckIt()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Judge(Declaring(Wipe), Called("model_wipe_bone", Wipe)));
+
+            Assert.Contains(Wipe, error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ARowThatDeclaresAnEffectIsCoveredByTheCaseThatChecksIt()
+        {
+            Judge(
+                Declaring(Wipe),
+                Called("model_wipe_bone", Wipe),
+                Checking("model_list_bones", Wipe));
+        }
+
+        [Fact]
+        public void ARowThatIsOnlyRefusedIsNotCovered()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Judge(Row(Wipe), Refused("model_wipe_bone", Wipe)));
+
+            Assert.Contains(Wipe, error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ARowThatSaysItCannotBeReachedIsLeftOutOfTheJudgement()
+        {
+            Judge(Unreachable(Wipe), Dispatched("model_wipe_bone"));
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             ToolMap map = Row(Wipe);
@@ -201,6 +234,115 @@ namespace PmxEditorMcp.SignatureDump.Tests
                             ? signature.Key
                             : string.Empty),
                 });
+        }
+
+        /// <summary>行1件の表を、渡した検査だけで照合する。</summary>
+        private static void Judge(ToolMap map, params E2eCase[] cases)
+        {
+            SignatureRecord signature =
+                Signature(Wipe, Bone, "Wipe", "System.Void", MemberKind.Method);
+            RowCoverageGate.Require(
+                map,
+                Signatures(signature),
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { signature.Key, "model_wipe_bone" },
+                },
+                new Dictionary<string, ComposedTool>(StringComparer.Ordinal),
+                CommonAssignmentJsonReader.Read(@"{ ""assignments"": [] }"),
+                Roles(),
+                new HashSet<string>(StringComparer.Ordinal),
+                cases);
+        }
+
+        /// <summary>出たハンドルを引くと述べる行1件の表。</summary>
+        private static ToolMap Declaring(string key)
+        {
+            return new ToolMap(new[]
+            {
+                new ToolMapRow(
+                    key,
+                    ToolMapEditKind.DirectChange,
+                    null,
+                    "ハンドルを出す。",
+                    new[]
+                    {
+                        new Postcondition(
+                            EffectType.HandleCreated,
+                            string.Empty,
+                            EffectCheckKind.Handle,
+                            "model_list_bones",
+                            new Dictionary<string, string>(StringComparer.Ordinal)
+                            {
+                                { "handles", ReferenceSpace.Result },
+                            },
+                            null,
+                            EffectComparison.Exists,
+                            null,
+                            false,
+                            null),
+                    },
+                    null,
+                    null),
+            });
+        }
+
+        /// <summary>届かせられない理由を述べる行1件の表。</summary>
+        private static ToolMap Unreachable(string key)
+        {
+            return new ToolMap(new[]
+            {
+                new ToolMapRow(
+                    key,
+                    ToolMapEditKind.Read,
+                    null,
+                    "受け手を作る手立てが無いので" + E2eCaseBuilder.UnreachableReason + "。",
+                    null,
+                    null,
+                    null),
+            });
+        }
+
+        /// <summary>呼び先まで届いたことを見る検査。</summary>
+        private static E2eCase Called(string tool, string rowKey)
+        {
+            return Case(tool, rowKey);
+        }
+
+        /// <summary>入口で断られることを見る検査。</summary>
+        private static E2eCase Refused(string tool, string rowKey)
+        {
+            return new E2eCase(
+                rowKey,
+                string.Empty,
+                string.Empty,
+                tool,
+                "断ること",
+                new Dictionary<string, object>(StringComparer.Ordinal),
+                E2eExpectation.Refusal,
+                E2eCaseBuilder.InvalidHandle);
+        }
+
+        /// <summary>宣言した効果を確かめる検査。</summary>
+        private static E2eCase Checking(string tool, string rowKey)
+        {
+            return new E2eCase(
+                rowKey,
+                string.Empty,
+                string.Empty,
+                tool,
+                "出したハンドルを引けること",
+                new Dictionary<string, object>(StringComparer.Ordinal),
+                E2eExpectation.Success,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "handleCreated/");
         }
 
         private static IDictionary<string, SignatureRecord> Signatures(SignatureRecord signature)

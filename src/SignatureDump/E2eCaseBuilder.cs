@@ -255,7 +255,8 @@ namespace PmxEditorMcp.SignatureDump
                     Handles(schema, sdkTypes, handled),
                     Maker(row, makers, schemas),
                     adders,
-                    factories));
+                    factories,
+                    reading));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -524,7 +525,8 @@ namespace PmxEditorMcp.SignatureDump
             IEnumerable<SchemaItem> handed,
             string maker,
             IDictionary<string, string> adders,
-            IDictionary<string, string> factories)
+            IDictionary<string, string> factories,
+            ISet<string> reading)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -543,6 +545,15 @@ namespace PmxEditorMcp.SignatureDump
                 new Dictionary<string, object>(StringComparer.Ordinal);
             bool calls = row != null && (!confirmed || written)
                 && TryCalling(row, schema, sdkShapes, sampled, given, out calling);
+
+            // 行を持たないツールも、引数を要さないなら呼ぶ。呼べるのに呼ばないままだと、この
+            // ツールが覆う行は、呼び先が在ることしか確かめられないまま通る。項目を選ばずに読む
+            // 検査を別に持つツールだけは呼ばない——同じ引数で同じツールを二度呼ぶことになる。
+            if (row == null && Unchosen(schema) != null && !reading.Contains(schema.Tool))
+            {
+                calls = true;
+            }
+
             if (calls && confirmed)
             {
                 calling = Confirmed(calling);
@@ -644,7 +655,7 @@ namespace PmxEditorMcp.SignatureDump
                     tool,
                     denies
                         ? "成り立たない値を渡す呼び出しを、その理由で断ること"
-                        : row.EditKind == ToolMapEditKind.Read
+                        : row != null && row.EditKind == ToolMapEditKind.Read
                             ? "呼び出して値を返せること"
                             : "呼び出して成功すること",
                     calling,
@@ -655,7 +666,9 @@ namespace PmxEditorMcp.SignatureDump
                     borrowing,
                     null,
                     denies ? refused[rowKey].Says : null,
-                    denies ? null : wrote);
+                    denies ? null : wrote,
+                    null,
+                    denies ? null : Written(row));
 
                 foreach (Postcondition judgement in draws ? drawn : new Postcondition[0])
                 {
@@ -801,6 +814,16 @@ namespace PmxEditorMcp.SignatureDump
             given[ConfirmName] = true;
 
             return given;
+        }
+
+        /// <summary>その行が書き先を確かめる判定の識別子。確かめない行では null。</summary>
+        private static string Written(ToolMapRow row)
+        {
+            Postcondition writing = row == null || row.Postcondition == null
+                ? null
+                : row.Postcondition.FirstOrDefault(p => p.Kind == EffectCheckKind.File);
+
+            return writing == null ? null : writing.EffectId;
         }
 
         /// <summary>
@@ -1091,7 +1114,8 @@ namespace PmxEditorMcp.SignatureDump
                 null,
                 null,
                 null,
-                Remembered(rowKey, judgement));
+                Remembered(rowKey, judgement),
+                judgement.EffectId);
         }
 
         /// <summary>
@@ -1181,7 +1205,12 @@ namespace PmxEditorMcp.SignatureDump
                 null,
                 null,
                 null,
-                borrowed);
+                borrowed,
+                null,
+                null,
+                null,
+                null,
+                judgement.EffectId);
         }
 
         /// <summary>

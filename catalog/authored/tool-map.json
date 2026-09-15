@@ -6751,7 +6751,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.VisibleIK()",
       "editKind": "directChange",
-      "basis": "表示とIKのキーを並べて持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。"
+      "basis": "表示とIKのキーを並べて持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要るが、その型を作る手立てが正本の中に無いので呼び先まで届かせられない。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.BoneIndex()",
@@ -7105,7 +7105,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdFrameKey.FrameIndex()",
       "editKind": "directChange",
-      "basis": "何コマめのキーかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "basis": "何コマめのキーかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要るが、その型を作る手立てが正本の中に無いので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vmd_frame_keys",
         "motion_update_vmd_frame_keys"
@@ -7114,7 +7114,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdIKEnable.Enable()",
       "editKind": "directChange",
-      "basis": "そのIKを効かせるかどうかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "basis": "そのIKを効かせるかどうかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vmd_ik_enables",
         "motion_update_vmd_ik_enables"
@@ -7123,7 +7123,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdIKEnable.IKBoneIndex()",
       "editKind": "directChange",
-      "basis": "どのIKボーンのことかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "basis": "どのIKボーンのことかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vmd_ik_enables",
         "motion_update_vmd_ik_enables"
@@ -7261,7 +7261,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdVisibleIKKey.Visible()",
       "editKind": "directChange",
-      "basis": "そのコマでモデルを表示するかどうかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
+      "basis": "そのコマでモデルを表示するかどうかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要るが、その型を作る手立てが正本の中に無いので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vmd_visible_ik_keys",
         "motion_update_vmd_visible_ik_keys"
@@ -7807,7 +7807,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBoneResult.R()",
       "editKind": "read",
-      "basis": "そのコマのボーンの回転量を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのボーンの回転量を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_bone_results"
       ]
@@ -7815,7 +7815,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBoneResult.Rotation()",
       "editKind": "read",
-      "basis": "そのコマのボーンの回転量を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのボーンの回転量を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_bone_results"
       ]
@@ -7823,7 +7823,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBoneResult.S()",
       "editKind": "read",
-      "basis": "そのコマのボーンのスケールを返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのボーンのスケールを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_bone_results"
       ]
@@ -7831,7 +7831,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBoneResult.Scale()",
       "editKind": "read",
-      "basis": "そのコマのボーンのスケールを返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのボーンのスケールを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_bone_results"
       ]
@@ -7839,7 +7839,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBoneResult.T()",
       "editKind": "read",
-      "basis": "そのコマのボーンの移動量を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのボーンの移動量を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_bone_results"
       ]
@@ -7847,7 +7847,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeBoneResult.Translation()",
       "editKind": "read",
-      "basis": "そのコマのボーンの移動量を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのボーンの移動量を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_bone_results"
       ]
@@ -8025,7 +8025,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Enable()",
       "editKind": "read",
-      "basis": "登録したイベントがあって働くかどうかを返すだけで、エディタの状態を動かさない。",
+      "basis": "登録したイベントがあって働くかどうかを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_cameras"
       ]
@@ -8320,7 +8320,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.InitialPosition()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物であるカメラ位置へ直に作用して、その初めの位置を決める。",
+      "basis": "長寿命の持ち物であるカメラ位置へ直に作用して、その初めの位置を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_camera_positions",
         "motion_update_vme_camera_positions"
@@ -8428,7 +8428,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraResult.FOV()",
       "editKind": "read",
-      "basis": "そのコマのパース角度を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのパース角度を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_camera_results"
       ]
@@ -8436,7 +8436,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraResult.Pos()",
       "editKind": "read",
-      "basis": "そのコマのカメラの位置を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのカメラの位置を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_camera_results"
       ]
@@ -8444,7 +8444,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraResult.Position()",
       "editKind": "read",
-      "basis": "そのコマのカメラの位置を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのカメラの位置を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_camera_results"
       ]
@@ -8452,7 +8452,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraResult.Target()",
       "editKind": "read",
-      "basis": "そのコマのカメラの注視点を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのカメラの注視点を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_camera_results"
       ]
@@ -8460,7 +8460,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraResult.Tgt()",
       "editKind": "read",
-      "basis": "そのコマのカメラの注視点を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのカメラの注視点を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_camera_results"
       ]
@@ -8468,7 +8468,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraResult.Up()",
       "editKind": "read",
-      "basis": "そのコマのカメラの上方向を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのカメラの上方向を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_camera_results"
       ]
@@ -8544,7 +8544,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeDirection.D()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である方向へ直に作用して、いまの方向を決め、決めた分は回転量として効く。",
+      "basis": "長寿命の持ち物である方向へ直に作用して、いまの方向を決め、決めた分は回転量として効く。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_directions",
         "motion_update_vme_directions"
@@ -8553,7 +8553,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeDirection.Direction()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である方向へ直に作用して、いまの方向を決め、決めた分は回転量として効く。",
+      "basis": "長寿命の持ち物である方向へ直に作用して、いまの方向を決め、決めた分は回転量として効く。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_directions",
         "motion_update_vme_directions"
@@ -8700,7 +8700,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeEventState.Frame()",
       "editKind": "read",
-      "basis": "いま何コマめかを返すだけで、エディタの状態を動かさない。",
+      "basis": "いま何コマめかを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要るが、その型を作る手立てが正本の中に無いので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_event_states"
       ]
@@ -8708,7 +8708,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeEventState.StartFrame()",
       "editKind": "read",
-      "basis": "始まったコマを返すだけで、エディタの状態を動かさない。",
+      "basis": "始まったコマを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要るが、その型を作る手立てが正本の中に無いので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_event_states"
       ]
@@ -9110,7 +9110,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.C()",
       "editKind": "read",
-      "basis": "そのコマの照明の色を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマの照明の色を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_light_results"
       ]
@@ -9131,7 +9131,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.Color()",
       "editKind": "read",
-      "basis": "そのコマの照明の色を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマの照明の色を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_light_results"
       ]
@@ -9139,7 +9139,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.D()",
       "editKind": "read",
-      "basis": "そのコマの照明の方向を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマの照明の方向を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_light_results"
       ]
@@ -9147,7 +9147,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightResult.Direction()",
       "editKind": "read",
-      "basis": "そのコマの照明の方向を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマの照明の方向を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_light_results"
       ]
@@ -9236,7 +9236,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeMorphResult.V()",
       "editKind": "read",
-      "basis": "そのコマのモーフの効き具合を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのモーフの効き具合を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_morph_results"
       ]
@@ -9244,7 +9244,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeMorphResult.Value()",
       "editKind": "read",
-      "basis": "そのコマのモーフの効き具合を返すだけで、エディタの状態を動かさない。",
+      "basis": "そのコマのモーフの効き具合を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_morph_results"
       ]
@@ -9291,7 +9291,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeObject.Morph()",
       "editKind": "directChange",
-      "basis": "動かすモーフを並べて持つ。VMEの登録先は長寿命の持ち物なので、それへ直に作用する。"
+      "basis": "動かすモーフを並べて持つ。VMEの登録先は長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.AddPoint(SlimDX.Vector3)",
@@ -9427,7 +9427,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.PathType()",
       "editKind": "directChange",
-      "basis": "点のつなぎ方を持つ。空間パスは長寿命の持ち物なので、それへ直に作用する。",
+      "basis": "点のつなぎ方を持つ。空間パスは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指して断る。点を足してから読む段をこの検査は組み立てないので、呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_paths",
         "motion_update_vme_paths"
@@ -9436,7 +9436,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.RangeMax()",
       "editKind": "read",
-      "basis": "道のりの終わりを返すだけで、エディタの状態を動かさない。",
+      "basis": "道のりの終わりを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指して断る。点を足してから読む段をこの検査は組み立てないので、呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_paths"
       ]
@@ -9444,7 +9444,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.RangeMin()",
       "editKind": "read",
-      "basis": "道のりの始まりを返すだけで、エディタの状態を動かさない。",
+      "basis": "道のりの始まりを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指して断る。点を足してから読む段をこの検査は組み立てないので、呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_paths"
       ]
@@ -9491,7 +9491,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePosition.IP()",
       "editKind": "read",
-      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。",
+      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_positions"
       ]
@@ -9499,7 +9499,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePosition.InitialPosition()",
       "editKind": "read",
-      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。",
+      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_positions"
       ]
@@ -9507,7 +9507,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePosition.P()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である位置へ直に作用して、いまの位置を決め、決めた分は移動量として効く。",
+      "basis": "長寿命の持ち物である位置へ直に作用して、いまの位置を決め、決めた分は移動量として効く。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_positions",
         "motion_update_vme_positions"
@@ -9516,7 +9516,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePosition.Position()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である位置へ直に作用して、いまの位置を決め、決めた分は移動量として効く。",
+      "basis": "長寿命の持ち物である位置へ直に作用して、いまの位置を決め、決めた分は移動量として効く。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_positions",
         "motion_update_vme_positions"
@@ -9713,7 +9713,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.A()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の加速度を決める。",
+      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の加速度を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_quaternion_values",
         "motion_update_vme_quaternion_values"
@@ -9722,7 +9722,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.Acceleration()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の加速度を決める。",
+      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の加速度を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_quaternion_values",
         "motion_update_vme_quaternion_values"
@@ -9731,7 +9731,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.V()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の速度を決める。",
+      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の速度を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_quaternion_values",
         "motion_update_vme_quaternion_values"
@@ -9740,7 +9740,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.Velocity()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の速度を決める。",
+      "basis": "長寿命の持ち物である回転量へ直に作用して、いまの回転量の速度を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_quaternion_values",
         "motion_update_vme_quaternion_values"
@@ -10394,7 +10394,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeScale.GS()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である大きさへ直に作用して、全体にかかる大きさを決める。",
+      "basis": "長寿命の持ち物である大きさへ直に作用して、全体にかかる大きさを決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_scales",
         "motion_update_vme_scales"
@@ -10403,7 +10403,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeScale.GlobalScale()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である大きさへ直に作用して、全体にかかる大きさを決める。",
+      "basis": "長寿命の持ち物である大きさへ直に作用して、全体にかかる大きさを決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_scales",
         "motion_update_vme_scales"
@@ -10493,7 +10493,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.A()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の加速度を決める。",
+      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の加速度を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_single_values",
         "motion_update_vme_single_values"
@@ -10502,7 +10502,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.Acceleration()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の加速度を決める。",
+      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の加速度を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_single_values",
         "motion_update_vme_single_values"
@@ -10511,7 +10511,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.V()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の速度を決める。",
+      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の速度を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_single_values",
         "motion_update_vme_single_values"
@@ -10520,7 +10520,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.Velocity()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の速度を決める。",
+      "basis": "長寿命の持ち物である単値へ直に作用して、いまの単値の速度を決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_single_values",
         "motion_update_vme_single_values"
@@ -10974,7 +10974,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.A()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の加速度を行列で決める。",
+      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の加速度を行列で決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_vector_values",
         "motion_update_vme_vector_values"
@@ -10983,7 +10983,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.Acceleration()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の加速度を行列で決める。",
+      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の加速度を行列で決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_vector_values",
         "motion_update_vme_vector_values"
@@ -10992,7 +10992,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.V()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の速度を行列で決める。",
+      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の速度を行列で決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_vector_values",
         "motion_update_vme_vector_values"
@@ -11001,7 +11001,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.Velocity()",
       "editKind": "directChange",
-      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の速度を行列で決める。",
+      "basis": "長寿命の持ち物であるベクトル量へ直に作用して、いまのベクトル量の速度を行列で決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_vector_values",
         "motion_update_vme_vector_values"
@@ -13099,7 +13099,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.BackColor()",
       "editKind": "viewSession",
-      "basis": "文字を書く画像の背景色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "文字を書く画像の背景色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "view_list_text_controls",
         "view_update_text_controls"
@@ -13165,7 +13165,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Font()",
       "editKind": "viewSession",
-      "basis": "文字の書体を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "文字の書体を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "view_list_text_controls",
         "view_update_text_controls"
@@ -13174,7 +13174,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.ForeColor()",
       "editKind": "viewSession",
-      "basis": "文字の色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。",
+      "basis": "文字の色を持つだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "view_list_text_controls",
         "view_update_text_controls"
@@ -13183,7 +13183,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.Image()",
       "editKind": "read",
-      "basis": "文字を書く画像を返すだけで、エディタの状態を動かさない。",
+      "basis": "文字を書く画像を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "view_list_text_controls"
       ]
@@ -13191,7 +13191,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.PXUIModelHelper+TextControl.MaterialIndex()",
       "editKind": "read",
-      "basis": "貼り付け先の材質の位置を返すだけで、エディタの状態を動かさない。",
+      "basis": "貼り付け先の材質の位置を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "view_list_text_controls"
       ]

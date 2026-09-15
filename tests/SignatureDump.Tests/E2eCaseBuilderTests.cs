@@ -131,15 +131,46 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolWithNoRowOfItsOwnIsNotCalledWhenItAlreadyReadsWithoutChoosing()
+        {
+            IList<E2eCase> cases = Build(
+                Tool("model_get_name", new SchemaItem[0]),
+                readers: new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { "model_set_name", "model_get_name" },
+                });
+
+            Assert.Contains(
+                cases,
+                c => c.Tool == "model_get_name" && c.Expectation == E2eExpectation.Success);
+            Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Called);
+        }
+
+        [Fact]
         public void EveryToolIsCheckedForHavingSomethingToCallBehindIt()
         {
             E2eCase one = Assert.Single(
-                Build(Tool("model_get_name", new SchemaItem[0])),
+                Build(Tool("model_wipe_bones", Handles())),
                 c => c.Expectation == E2eExpectation.Dispatched);
 
-            Assert.Equal("model_get_name", one.Tool);
+            Assert.Equal("model_wipe_bones", one.Tool);
             Assert.Empty(one.Arguments);
             Assert.Null(one.Code);
+        }
+
+        [Fact]
+        public void AToolWithNoRowOfItsOwnIsCalledWhenItNeedsNoArguments()
+        {
+            E2eCase one = Assert.Single(
+                Build(Tool("model_get_name", new SchemaItem[0])),
+                c => c.Expectation == E2eExpectation.Called);
+
+            Assert.Equal("model_get_name", one.Tool);
+            Assert.Equal(string.Empty, one.RowKey);
+            Assert.Empty(one.Arguments);
+            Assert.DoesNotContain(
+                Build(Tool("model_get_name", new SchemaItem[0])),
+                c => c.Expectation == E2eExpectation.Dispatched);
         }
 
         [Fact]
@@ -1063,13 +1094,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>断りを見る検査だけ。呼び先が在ることの検査はどのツールにも付くので外す。</summary>
         private static IList<E2eCase> Refused(IEnumerable<E2eCase> cases)
         {
-            return cases.Where(c => c.Expectation != E2eExpectation.Dispatched).ToList();
+            return cases.Where(c => c.Code != null).ToList();
         }
 
         private static IList<E2eCase> Build(
             ToolSchema schema,
             string rowKey = null,
-            bool dangerous = false)
+            bool dangerous = false,
+            IDictionary<string, string> readers = null)
         {
             Dictionary<string, string> named = new Dictionary<string, string>(StringComparer.Ordinal);
             if (rowKey != null)
@@ -1091,8 +1123,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 null,
                 null,
-                null,
-                null);
+                readers);
         }
 
         /// <summary>SDKに由来する項目の綴り。題材では引く先を持たない。</summary>
