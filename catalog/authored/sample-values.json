@@ -863,6 +863,31 @@
       "basis": "持っているモーションを書き出す操作なので、書き先に一時の置き場を渡す。"
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.SetPoint(SlimDX.Vector3[])",
+      "arguments": {
+        "args": {
+          "pos": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            2,
+            1,
+            0
+          ]
+        ]
+        }
+      },
+      "basis": "経路にする点を3つ渡す。補間は3つ目の点まで読むので、それより短い並びでは組み立てられない。"
+    },
+    {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBodyIndices(System.Int32[])",
       "arguments": {
         "indices": [

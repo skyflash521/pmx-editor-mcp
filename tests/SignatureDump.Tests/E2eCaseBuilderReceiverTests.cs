@@ -26,6 +26,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Aim = "pmxHandle";
 
+        private const string Filler = "model_wipe_bones";
+
         private const string Parent = "model_add_materials";
 
         private const string Above = "model_material";
@@ -92,6 +94,65 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.NotNull(last.Produces);
             Assert.NotNull(called.Borrowed);
             Assert.Equal(Lent(last.Produces), called.Borrowed.Values.Single());
+        }
+
+        /// <summary>
+        /// 段取りは、その行の呼び出しと同じ相手を整える。相手はハンドルで借りて渡すので、指した
+        /// 位置は空きになり、借りる先は呼び出しと同じ段になる。
+        /// </summary>
+        [Fact]
+        public void TheSetupTakesTheSameOneTheCallDoes()
+        {
+            IList<E2eCase> cases = Built(Tidying(Listed()), new[] { First, Second });
+            E2eCase preparing = cases.Single(
+                c => string.Equals(c.Tool, Filler, StringComparison.Ordinal));
+            E2eCase called = cases.Single(
+                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal)
+                    && c.Expectation == E2eExpectation.Called);
+
+            Assert.Null(((object[])preparing.Arguments["handles"])[0]);
+            Assert.Equal(
+                called.Borrowed.Values.Single(), preparing.Borrowed["handles/0"]);
+            Assert.True(
+                cases.IndexOf(preparing) < cases.IndexOf(called),
+                "段取りが呼び出しより後に来ている。");
+        }
+
+        /// <summary>
+        /// 相手を指す値は、値の組の中に書いても同じに読む。組の中を素通りさせると、その綴りが
+        /// そのままツールの引数として渡る。
+        /// </summary>
+        [Fact]
+        public void TheSetupTakesTheSameOneFromInsideAGroupToo()
+        {
+            IList<E2eCase> cases = Built(Tidying(Grouped()), new[] { First, Second });
+            E2eCase preparing = cases.Single(
+                c => string.Equals(c.Tool, Filler, StringComparison.Ordinal));
+            E2eCase called = cases.Single(
+                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal)
+                    && c.Expectation == E2eExpectation.Called);
+
+            Assert.Null(
+                ((IDictionary<string, object>)preparing.Arguments["args"])["other"]);
+            Assert.Equal(
+                called.Borrowed.Values.Single(), preparing.Borrowed["args/other"]);
+        }
+
+        /// <summary>
+        /// 相手を借りない行が相手を指しても、指す先が無い。黙って空きのまま渡すと、呼び先は
+        /// ハンドルでない値を受け取る。
+        /// </summary>
+        [Fact]
+        public void PointingAtTheOneTheCallTakesStopsWhenTheRowTakesNone()
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => E2eCaseBuilder.Build(
+                    Tidying(Listed()),
+                    new ToolSchemaTable(new[] { Free(Tool) }),
+                    new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } },
+                    new Dictionary<string, string>(StringComparer.Ordinal),
+                    new HashSet<string>(StringComparer.Ordinal),
+                    new Dictionary<SchemaItem, string>()));
         }
 
         /// <summary>
@@ -398,12 +459,48 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return Rows("呼ぶと確認を求められる。");
         }
 
-        private static ToolMap Rows(string basis)
+        private static ToolMap Rows(string basis, IList<SetupOperation> setup = null)
         {
             return new ToolMap(new[]
             {
-                new ToolMapRow(RowKey, ToolMapEditKind.Read, null, basis, null, null, null),
+                new ToolMapRow(
+                    RowKey, ToolMapEditKind.Read, null, basis, null, null, null, setup),
             });
+        }
+
+        /// <summary>
+        /// 呼び出しの相手を指して整える段取りを持つ、行1件の表。<paramref name="args"/> は段取りが
+        /// 渡す値の組。
+        /// </summary>
+        private static ToolMap Tidying(IDictionary<string, object> args)
+        {
+            return Rows(
+                "持っているものを返すだけである。",
+                new[] { SetupOperation.CallTool(Filler, args, null) });
+        }
+
+        /// <summary>相手をハンドルの並びで指す段取り。</summary>
+        private static IDictionary<string, object> Listed()
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { "handles", new object[] { ReferenceSpace.Receiver } },
+            };
+        }
+
+        /// <summary>相手を値の組の中で指す段取り。</summary>
+        private static IDictionary<string, object> Grouped()
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                {
+                    "args",
+                    new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { "other", ReferenceSpace.Receiver },
+                    }
+                },
+            };
         }
 
         /// <summary>中身を空へ戻す、確認を要する行1件の表。</summary>

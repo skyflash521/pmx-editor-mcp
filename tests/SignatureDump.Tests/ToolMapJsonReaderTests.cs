@@ -81,6 +81,32 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Rejects(Common(@", ""setup"": []"));
         }
 
+        /// <summary>
+        /// 参照の綴りは入れ子の中でも参照として見る。素通りさせると、綴りを誤ったものがそのまま
+        /// 呼び先へ渡る。
+        /// </summary>
+        [Theory]
+        [InlineData(@"{ ""pos"": [ ""receiver:0"" ] }")]
+        [InlineData(@"{ ""pos"": { ""x"": ""setupOut:"" } }")]
+        public void RefusesAReferenceInsideTheValuesTheSetupPasses(string args)
+        {
+            Rejects(Common(
+                @", ""setup"": [{ ""tag"": ""callTool"", ""tool"": ""view_update_model"",
+                                  ""args"": " + args + " }]"));
+        }
+
+        [Fact]
+        public void ReadsAReferenceToTheOneTheCallTakes()
+        {
+            ToolMapRow row = Single(Common(
+                @", ""setup"": [{ ""tag"": ""callTool"", ""tool"": ""view_update_model"",
+                                  ""args"": { ""handles"": [ ""receiver:"" ] } }]"));
+
+            Assert.Equal(
+                ReferenceSpace.Receiver,
+                ((object[])Assert.Single(row.Setup).Args["handles"])[0]);
+        }
+
         [Fact]
         public void ReadsADirectDispatchRow()
         {

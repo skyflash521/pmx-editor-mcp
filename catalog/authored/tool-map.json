@@ -9984,6 +9984,36 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.AddPoint(SlimDX.Vector3)",
       "editKind": "directChange",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "motion_set_point_vme_path",
+          "args": {
+            "handles": [
+              "receiver:"
+            ],
+            "args": {
+              "pos": [
+                  [
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0,
+                    0
+                  ],
+                  [
+                    2,
+                    1,
+                    0
+                  ]
+                ]
+            }
+          }
+        }
+      ],
       "basis": "通る点を末尾へ足す。空間パスは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
@@ -10094,6 +10124,36 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Double,System.Double,System.Double)",
       "editKind": "read",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "motion_set_point_vme_path",
+          "args": {
+            "handles": [
+              "receiver:"
+            ],
+            "args": {
+              "pos": [
+                  [
+                    0,
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0,
+                    0
+                  ],
+                  [
+                    2,
+                    1,
+                    0
+                  ]
+                ]
+            }
+          }
+        }
+      ],
       "basis": "道のりの範囲を一定の間隔で区切って位置を並べて返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {

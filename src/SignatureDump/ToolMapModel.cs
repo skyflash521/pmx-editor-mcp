@@ -142,6 +142,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>用意の操作が出した値。</summary>
         public const string SetupOut = "setupOut:";
+
+        /// <summary>
+        /// その行の呼び出しが相手にするもの。呼ぶ前の段取りが同じ相手を整えるのに使う。指すのは
+        /// 実体そのものなので、接頭辞の後ろには何も続かない。
+        /// </summary>
+        public const string Receiver = "receiver:";
     }
 
     /// <summary>用意の操作のタグ。</summary>

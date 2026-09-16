@@ -167,6 +167,7 @@ namespace PmxEditorMcp.SignatureDump
                 { ReferenceSpace.SdkArg, rest => SdkArgumentName.IsMatch(rest) },
                 { ReferenceSpace.Result, rest => ValuePath.IsMatch(rest) },
                 { ReferenceSpace.SetupOut, rest => MemberName.IsMatch(rest) },
+                { ReferenceSpace.Receiver, rest => rest.Length == 0 },
             };
 
         /// <summary>
@@ -450,6 +451,59 @@ namespace PmxEditorMcp.SignatureDump
             return value;
         }
 
+        /// <summary>
+        /// 呼ぶツールへ渡す値1つ。参照の綴りは入れ子の中でも参照として見る——組や配列の中へ
+        /// 書いた参照を素通りさせると、綴りを誤ったものが検査に掛からないまま呼び先へ渡る。
+        /// </summary>
+        private static void RequireGiven(object value)
+        {
+            object[] items = value as object[];
+            if (items != null)
+            {
+                foreach (object item in items)
+                {
+                    RequireGiven(item);
+                }
+
+                return;
+            }
+
+            Dictionary<string, object> members = value as Dictionary<string, object>;
+            if (members != null)
+            {
+                foreach (KeyValuePair<string, object> pair in members)
+                {
+                    if (!MemberName.IsMatch(pair.Key))
+                    {
+                        throw new FormatException("呼ぶツールの引数の名前でない: " + pair.Key);
+                    }
+
+                    RequireGiven(pair.Value);
+                }
+
+                return;
+            }
+
+            string text = value as string;
+            if (text == null)
+            {
+                return;
+            }
+
+            if (ReferenceSpaces.Keys.Any(p => text.StartsWith(p, StringComparison.Ordinal)))
+            {
+                RequireReference(text, ArgsName);
+
+                return;
+            }
+
+            if (text.StartsWith("sample", StringComparison.Ordinal)
+                && !SampleReference.IsMatch(text))
+            {
+                throw new FormatException("サンプル値への参照の形でない: " + text);
+            }
+        }
+
         /// <summary>期待のリテラルは値だけで、演算も合成も持たない。入れ子の中も同じとする。</summary>
         private static void RequireLiteral(object value)
         {
@@ -587,20 +641,7 @@ namespace PmxEditorMcp.SignatureDump
                     throw new FormatException("呼ぶツールの引数の名前でない: " + pair.Key);
                 }
 
-                string text = pair.Value as string;
-                if (text != null && ReferenceSpaces.Keys.Any(p => text.StartsWith(p, StringComparison.Ordinal)))
-                {
-                    RequireReference(text, ArgsName);
-                }
-                else if (text != null && text.StartsWith("sample", StringComparison.Ordinal)
-                    && !SampleReference.IsMatch(text))
-                {
-                    throw new FormatException("サンプル値への参照の形でない: " + text);
-                }
-                else
-                {
-                    RequireLiteral(pair.Value);
-                }
+                RequireGiven(pair.Value);
 
                 args.Add(pair.Key, pair.Value);
             }

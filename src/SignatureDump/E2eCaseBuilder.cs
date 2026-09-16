@@ -1138,6 +1138,9 @@ namespace PmxEditorMcp.SignatureDump
 
             // 行の段取りは、呼ぶ前の姿を覚えるより先に流す。間に挟むと、段取りが動かしたぶんが
             // 呼び出しの効果として数えられ、確かめているのが行の効果でなく段取りの効果になる。
+            string received = borrowing != null && maker != null
+                ? Borrowed(Step(making, maker.Count - 1), Of(schemas, maker[maker.Count - 1]))
+                : null;
             foreach (E2eCase one in Prepared(
                 calls && row != null ? row.Setup : null,
                 schemas,
@@ -1145,7 +1148,8 @@ namespace PmxEditorMcp.SignatureDump
                 editKind,
                 path,
                 adders,
-                factories))
+                factories,
+                received))
             {
                 yield return one;
             }
@@ -1154,7 +1158,8 @@ namespace PmxEditorMcp.SignatureDump
             {
                 foreach (E2eCase one in
                     Prepared(
-                        judgement.Setup, schemas, rowKey, editKind, path, adders, factories))
+                        judgement.Setup, schemas, rowKey, editKind, path, adders, factories,
+                        received))
                 {
                     yield return one;
                 }
@@ -1665,7 +1670,8 @@ namespace PmxEditorMcp.SignatureDump
             string editKind,
             string path,
             IDictionary<string, string> adders,
-            IDictionary<string, string> factories)
+            IDictionary<string, string> factories,
+            string received)
         {
             foreach (SetupOperation operation in setup ?? (IList<SetupOperation>)new SetupOperation[0])
             {
@@ -1680,22 +1686,121 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
-                bool initializes = operation.Tag == SetupTag.InitPmx;
+                if (operation.Tag == SetupTag.InitPmx)
+                {
+                    yield return new E2eCase(
+                        rowKey,
+                        editKind,
+                        path,
+                        InitializeToolName,
+                        "段取りがモデルを空へ揃えられること",
+                        Confirmed(new Dictionary<string, object>(StringComparer.Ordinal)),
+                        E2eExpectation.Success,
+                        null);
+
+                    continue;
+                }
+
+                IDictionary<string, string> taken;
+                IDictionary<string, object> args =
+                    Receiving(operation.Args, received, rowKey, out taken);
                 yield return new E2eCase(
                     rowKey,
                     editKind,
                     path,
-                    initializes ? InitializeToolName : operation.ToolName,
-                    initializes
-                        ? "段取りがモデルを空へ揃えられること"
-                        : "段取りの呼び出しが通ること",
-                    initializes
-                        ? Confirmed(new Dictionary<string, object>(StringComparer.Ordinal))
-                        : operation.Args
-                            ?? new Dictionary<string, object>(StringComparer.Ordinal),
+                    operation.ToolName,
+                    "段取りの呼び出しが通ること",
+                    args,
                     E2eExpectation.Success,
-                    null);
+                    null,
+                    null,
+                    null,
+                    taken);
             }
+        }
+
+        /// <summary>
+        /// 段取りが呼ぶときの引数。その行の呼び出しが相手にするものを指す値は、借りる空きへ替えて
+        /// 借りる先を覚える——段取りは呼び出しと同じ相手を整えるので、相手は借りて渡す。
+        /// </summary>
+        private static IDictionary<string, object> Receiving(
+            IDictionary<string, object> args,
+            string received,
+            string rowKey,
+            out IDictionary<string, string> borrowed)
+        {
+            IDictionary<string, object> given =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            Dictionary<string, string> taken =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, object> one in args
+                ?? (IDictionary<string, object>)new Dictionary<string, object>(
+                    StringComparer.Ordinal))
+            {
+                given[one.Key] = Received(one.Value, one.Key, received, rowKey, taken);
+            }
+
+            borrowed = taken.Count == 0 ? null : taken;
+
+            return given;
+        }
+
+        /// <summary>
+        /// 段取りが渡す値1つ。相手を指す値なら借りる空きにして道を覚え、ほかはそのまま返す。
+        /// </summary>
+        private static object Received(
+            object value,
+            string path,
+            string received,
+            string rowKey,
+            IDictionary<string, string> taken)
+        {
+            object[] items = value as object[];
+            if (items != null)
+            {
+                object[] each = new object[items.Length];
+                for (int at = 0; at < items.Length; at++)
+                {
+                    each[at] = Received(
+                        items[at],
+                        path + PathStep + at.ToString(CultureInfo.InvariantCulture),
+                        received,
+                        rowKey,
+                        taken);
+                }
+
+                return each;
+            }
+
+            IDictionary<string, object> members = value as IDictionary<string, object>;
+            if (members != null)
+            {
+                IDictionary<string, object> each =
+                    new Dictionary<string, object>(StringComparer.Ordinal);
+                foreach (KeyValuePair<string, object> one in members)
+                {
+                    each[one.Key] = Received(
+                        one.Value, path + PathStep + one.Key, received, rowKey, taken);
+                }
+
+                return each;
+            }
+
+            if (!string.Equals(
+                value as string, ReferenceSpace.Receiver, StringComparison.Ordinal))
+            {
+                return value;
+            }
+
+            if (received == null)
+            {
+                throw new InvalidOperationException(
+                    "段取りが呼び出しの相手を指しているが、その行は相手を借りない: " + rowKey);
+            }
+
+            taken[path] = received;
+
+            return null;
         }
 
         /// <summary>
