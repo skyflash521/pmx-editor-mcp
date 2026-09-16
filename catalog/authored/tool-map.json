@@ -8039,6 +8039,20 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.GroupBone()",
       "editKind": "read",
+      "setup": [
+        {
+          "tag": "initPmx"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_init_from_pmx_vme",
+          "args": {
+            "handles": [
+              "receiver:"
+            ]
+          }
+        }
+      ],
       "basis": "いま持っているボーンのまとまりを返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
@@ -8056,6 +8070,24 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.GroupMorph()",
       "editKind": "read",
+      "setup": [
+        {
+          "tag": "initPmx"
+        },
+        {
+          "tag": "addElement",
+          "elementType": "morph"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_init_from_pmx_vme",
+          "args": {
+            "handles": [
+              "receiver:"
+            ]
+          }
+        }
+      ],
       "basis": "いま持っているモーフのまとまりを返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {

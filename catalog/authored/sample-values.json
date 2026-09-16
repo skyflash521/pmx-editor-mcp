@@ -863,6 +863,24 @@
       "basis": "持っているモーションを書き出す操作なので、書き先に一時の置き場を渡す。"
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetBone(System.Int32)",
+      "arguments": {
+        "args": {
+          "boneIndex": 0
+        }
+      },
+      "basis": "先頭の要素を引く。群はPMXから写した並びをそのまま持つので、確かに在ると言えるのは先頭だけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.GetMorph(System.Int32)",
+      "arguments": {
+        "args": {
+          "boneIndex": 0
+        }
+      },
+      "basis": "先頭の要素を引く。群はPMXから写した並びをそのまま持つので、確かに在ると言えるのは先頭だけである。"
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.SetPoint(SlimDX.Vector3[])",
       "arguments": {
         "args": {
