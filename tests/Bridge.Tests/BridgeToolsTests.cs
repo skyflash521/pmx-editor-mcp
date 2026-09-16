@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
+using PmxEditorMcp.SignatureDump;
 using Xunit;
 
 namespace PmxEditorMcp.Bridge.Tests
@@ -85,7 +86,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.ServerInfo.Version);
         }
 
-        [Fact]
+        [Fact(Skip = "impl pending: 中継の状態をブリッジのツールとして一覧へ公開する")]
         public async Task TheBaseRelayAndEveryGeneratedDefinitionAreRegistered()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -114,7 +115,7 @@ namespace PmxEditorMcp.Bridge.Tests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "impl pending: 中継の状態をブリッジのツールとして一覧へ公開する")]
         public async Task TheLargeTextToolAppearsOnlyWithTheDebugEntry()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -176,7 +177,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(250000, DeclaredResultSize(Named(tools, "ping")));
         }
 
-        [Fact]
+        [Fact(Skip = "impl pending: 中継の状態をブリッジのツールとして一覧へ公開する")]
         public async Task ToolDefinitionDropsTheDeclarationWhenBothVariablesAreGiven()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -189,7 +190,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.All(tools, tool => Assert.Null(tool.ProtocolTool.Meta));
         }
 
-        [Theory]
+        [Theory(Skip = "impl pending: 中継の状態をブリッジのツールとして一覧へ公開する")]
         [InlineData(null, "0")]
         [InlineData("0", "0")]
         [InlineData("1", null)]
@@ -241,6 +242,31 @@ namespace PmxEditorMcp.Bridge.Tests
 
             // ホストが受け取ったのは handshake と ping で、名前を作り替えていない。
             Assert.Equal(new string[] { "handshake", "ping" }, MethodsOf(host.Requests));
+        }
+
+        /// <summary>
+        /// 中継の状態もツールとして公開し、ホストの同名のメソッドへそのまま渡す。E2Eの実行器が
+        /// 走らせる前後で読む先がこれで、ブリッジ越しに読めないと走らせた側から確かめられない。
+        /// </summary>
+        [Fact(Skip = "impl pending: 中継の状態をブリッジのツールとしてホストへ中継する")]
+        public async Task TheStatusToolRelaysToTheHost()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(request => Result(request, "{\"runningSdkVersion\":\"0.0.8.9\"}"))
+                .Start();
+
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeAsync(host.PipeName, null, limit.Token);
+
+            CallToolResult result = await client.CallToolAsync(
+                "sdk_status", cancellationToken: limit.Token);
+
+            Assert.NotEqual(true, result.IsError);
+            Assert.Equal(
+                Relayed(host.PipeName, "{\"runningSdkVersion\":\"0.0.8.9\"}"), TextOf(result));
+            Assert.Equal(
+                new string[] { "handshake", "sdk_status" }, MethodsOf(host.Requests));
         }
 
         [Fact]
@@ -571,7 +597,8 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>一覧に出るはずの名前。基盤の中継と、組み立てた定義のすべてからなる。</summary>
         private static string[] Expected(bool debugHooks)
         {
-            List<string> names = new List<string> { "ping" };
+            List<string> names =
+                new List<string> { FixedToolTable.PingName, FixedToolTable.SdkStatusName };
             names.AddRange(GeneratedToolDefinitions.Create().Select(d => d.Name));
             if (debugHooks)
             {

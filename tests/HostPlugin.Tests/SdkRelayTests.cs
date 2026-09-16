@@ -214,6 +214,38 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { LostKey }, Assert.IsType<object[]>(body["disabledRows"]));
         }
 
+        /// <summary>
+        /// 中継の状態が、このホストが答えるツールの名前も並べる。ブリッジが公開する名前と
+        /// 突き合わせる先がこれで、名前の食い違いは呼んでみるまで分からない。
+        /// </summary>
+        [Fact(Skip = "impl pending: 中継の状態へホストが答えるツールの名前を載せる")]
+        public void TheStatusEntryNamesTheToolsThisHostAnswers()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("model_list_vertices", context => null);
+            methods.Add("model_add_vertices", context => null);
+
+            IDictionary<string, object> body = ResultOf(
+                Exchange(
+                    Connection(Table(), "0.0.8.9", methods),
+                    Handshake(),
+                    Request(2, "sdk_status"))[1]);
+
+            Assert.Equal(
+                new object[] { "model_add_vertices", "model_list_vertices" },
+                Assert.IsType<object[]>(body["toolNames"]));
+        }
+
+        [Fact(Skip = "impl pending: 登録された処理の名前を綴りの順に並べる")]
+        public void TheMethodTableNamesWhatItCarriesInSpellingOrder()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("model_list_vertices", context => null);
+            methods.Add("model_add_vertices", context => null);
+
+            Assert.Equal(new[] { "model_add_vertices", "model_list_vertices" }, methods.Names);
+        }
+
         [Fact]
         public void TheHandshakeNamesTheDigestOfTheTableTheRelayWasBuiltFrom()
         {
@@ -245,11 +277,12 @@ namespace PmxEditorMcp.Tests
             return new SdkRelayTable(GeneratedVersion, Digest, calls, new[] { UnresolvedKey });
         }
 
-        private JsonRpcConnection Connection(SdkRelayTable relays, string sdkVersion)
+        private JsonRpcConnection Connection(
+            SdkRelayTable relays, string sdkVersion, McpMethodTable methods = null)
         {
             return new JsonRpcConnection(
                 _log,
-                new McpMethodTable(),
+                methods ?? new McpMethodTable(),
                 HostVersion,
                 BudgetChars,
                 JsonRpcConnection.DefaultRequestTimeout,

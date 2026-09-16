@@ -103,6 +103,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     OperationDirection.Write)).Unresolved);
         }
 
+        /// <summary>
+        /// イベントのメンバーは呼ぶ相手ではなく、起きたことが溜め場へ入る先である。中継を作れない
+        /// のは当たり前なので、作れなかった行として数えない。
+        /// </summary>
+        [Fact(Skip = "impl pending: イベントのメンバーを未解決の行に数えない")]
+        public void AnEventMemberIsNeitherBuiltNorLeftUnresolved()
+        {
+            RelaySource source = Build(new SignatureRecord(
+                "Sdk.Listener.MouseClick()",
+                "Sdk.Listener",
+                MemberKind.Event,
+                "MouseClick",
+                false,
+                0,
+                new ParameterRecord[0],
+                "System.EventHandler",
+                false,
+                false,
+                OperationDirection.Read));
+
+            Assert.Empty(source.Unresolved);
+            Assert.Empty(source.Resolved);
+        }
+
         [Fact]
         public void AMethodWithOutputArgumentsTakesThemIntoLocalsAndReturnsThem()
         {

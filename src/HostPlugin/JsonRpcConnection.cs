@@ -110,6 +110,12 @@ namespace PmxEditorMcp
             _methods.Add(name, method);
         }
 
+        /// <summary>登録されている処理の名前。綴りの順に並ぶ。</summary>
+        public IList<string> Names
+        {
+            get { throw new NotImplementedException(); }
+        }
+
         /// <summary>名前に対応する処理を引く。</summary>
         public bool TryGet(string name, out McpMethod method)
         {

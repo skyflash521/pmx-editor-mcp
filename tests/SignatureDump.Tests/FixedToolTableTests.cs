@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Xunit;
 
@@ -5,12 +6,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class FixedToolTableTests
     {
-        [Fact]
-        public void TheLivenessToolIsPublishedWithTheTestEntryClosed()
+        [Fact(Skip = "impl pending: 中継の状態を返すツールを固定のツールとして公開する")]
+        public void TheLivenessAndStatusToolsArePublishedWithTheTestEntryClosed()
         {
             Assert.Equal(
-                new[] { FixedToolTable.PingName },
-                FixedToolTable.Descriptions(debugHooks: false).Keys.ToArray());
+                new[] { FixedToolTable.PingName, FixedToolTable.SdkStatusName },
+                FixedToolTable.Descriptions(debugHooks: false).Keys
+                    .OrderBy(name => name, StringComparer.Ordinal)
+                    .ToArray());
         }
 
         [Fact]

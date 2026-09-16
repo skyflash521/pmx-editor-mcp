@@ -12,6 +12,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ホストが応答することを確かめるツールの名前。</summary>
         public const string PingName = "ping";
 
+        /// <summary>稼働しているSDKと中継の状態を返すツールの名前。</summary>
+        public const string SdkStatusName = "sdk_status";
+
         /// <summary>指定した文字数のテキストを返す、検査からだけ使うツールの名前。</summary>
         public const string LargeTextName = "debug_large_text";
 
