@@ -5,8 +5,9 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 所有するリストの要素の型が持つ、追加と削除のツールの名前を決める。これらのツールは行を
-    /// 持たず、そのリストの行が能力対応表へ載ることで現れるので、名前の決め方をここ1つに置く。
+    /// 所有するリストの要素の型が持つ、追加と削除と、在る要素をハンドルで指すツールの名前を
+    /// 決める。これらのツールは行を持たず、そのリストの行が能力対応表へ載ることで現れるので、
+    /// 名前の決め方をここ1つに置く。
     /// </summary>
     public static class ElementToolRule
     {
@@ -20,6 +21,34 @@ namespace PmxEditorMcp.SignatureDump
 
             return new[] { ToolVerb.Add, ToolVerb.Remove }
                 .Select(v => ToolNameRule.OfRole(element, v));
+        }
+
+        /// <summary>
+        /// その要素の型を、親のハンドルと位置で指すツールの名前。並びに在る要素をハンドルの台帳へ
+        /// 預けて番号を返す。
+        /// </summary>
+        public static string Holding(TypeRoleRecord element)
+        {
+            if (element == null)
+            {
+                throw new ArgumentNullException(nameof(element));
+            }
+
+            return ToolNameRule.OfRole(element, ToolVerb.Hold);
+        }
+
+        /// <summary>
+        /// 能力対応表の行が持ち込む、要素をハンドルで指すツールの名前。要素を1つ作るツールを持つ型
+        /// は持ち込まない——作ってから並びへ入れれば、そのハンドルで指せる。
+        /// <paramref name="made"/> はどれかの行が1つ作ると述べる型の名前である。
+        /// </summary>
+        public static ISet<string> HoldingNames(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            TypeRoleTable roles,
+            ISet<string> made)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

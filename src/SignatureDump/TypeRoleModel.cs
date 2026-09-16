@@ -73,6 +73,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>所有するリストから要素を出す。</summary>
         Remove,
+
+        /// <summary>所有するリストに在る要素を、ハンドルで指せるようにする。</summary>
+        Hold,
     }
 
     /// <summary>型役割表の型ごとの項目1件。</summary>

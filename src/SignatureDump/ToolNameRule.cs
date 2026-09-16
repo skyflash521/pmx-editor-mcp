@@ -57,6 +57,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             bool singular = verb == ToolVerb.Get
+                || verb == ToolVerb.Hold
                 || (verb == ToolVerb.Update && record.Role == TypeRole.Connector);
 
             return Compose(

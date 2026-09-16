@@ -5,7 +5,9 @@ using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
 {
-    /// <summary>所有するリストの要素が持つ、追加と削除のツールの名前。</summary>
+    /// <summary>
+    /// 所有するリストの要素が持つ、追加と削除と、在る要素をハンドルで指すツールの名前。
+    /// </summary>
     public sealed class ElementToolRuleTests
     {
         private const string Owner = "PEPlugin.Pmx.IPXPmx";
@@ -42,6 +44,71 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AListWithoutARowBringsNoName()
         {
             Assert.Empty(ElementToolRule.Names(Map(), Signatures(), Roles(true)));
+        }
+
+        [Fact]
+        public void TheElementTypeTakesHoldingByOneName()
+        {
+            Assert.Equal(
+                "model_hold_vertex",
+                ElementToolRule.Holding(Role(Element, "vertex", "vertices")));
+        }
+
+        [Fact(Skip = "impl pending: 作るツールを持たない要素の型だけが、ハンドルで指す名前を持ち込む")]
+        public void AnElementTypeNothingMakesBringsTheHoldingName()
+        {
+            Assert.Equal(
+                new[] { "model_hold_vertex" },
+                ElementToolRule.HoldingNames(
+                        Map(ListKey),
+                        Signatures(),
+                        Roles(true),
+                        new HashSet<string>(StringComparer.Ordinal))
+                    .ToArray());
+        }
+
+        [Fact(Skip = "impl pending: 作るツールを持つ要素の型は、ハンドルで指す名前を持ち込まない")]
+        public void AnElementTypeSomethingMakesBringsNoHoldingName()
+        {
+            Assert.Empty(ElementToolRule.HoldingNames(
+                Map(ListKey),
+                Signatures(),
+                Roles(true),
+                new HashSet<string>(new[] { Element }, StringComparer.Ordinal)));
+        }
+
+        [Fact(Skip = "impl pending: 他所が所有するリストは、ハンドルで指す名前を持ち込まない")]
+        public void AListThatOnlyPointsAtElementsBringsNoHoldingName()
+        {
+            Assert.Empty(ElementToolRule.HoldingNames(
+                Map(ListKey),
+                Signatures(),
+                Roles(false),
+                new HashSet<string>(StringComparer.Ordinal)));
+        }
+
+        [Fact]
+        public void TheElementOfHoldingIsRequired()
+        {
+            Assert.Throws<ArgumentNullException>(() => ElementToolRule.Holding(null));
+        }
+
+        [Fact(Skip = "impl pending: 引数の欠けを呼び出しの時点で断る")]
+        public void EveryArgumentOfHoldingNamesIsRequired()
+        {
+            ToolMap map = Map(ListKey);
+            IDictionary<string, SignatureRecord> signatures = Signatures();
+            TypeRoleTable roles = Roles(true);
+            ISet<string> made = new HashSet<string>(StringComparer.Ordinal);
+
+            Assert.Throws<ArgumentNullException>(
+                () => ElementToolRule.HoldingNames(null, signatures, roles, made));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementToolRule.HoldingNames(map, null, roles, made));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementToolRule.HoldingNames(map, signatures, null, made));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementToolRule.HoldingNames(map, signatures, roles, null));
         }
 
         [Fact]
