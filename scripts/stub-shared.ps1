@@ -17,7 +17,7 @@ $StubProgressStateName = "pmx-editor-mcp-acceptance-stub-progress.json"
 # 頼まれた操作を書き留める置き場の名前。実行器が操作の段をこなしたかを、ここで外から確かめる。
 $StubOperationLogName = "pmx-editor-mcp-acceptance-stub-operations.txt"
 
-# 起こしたことにするエディタを、ブリッジと参照クライアントの題材が持ち越す置き場の名前。
+# 起こしたことにするエディタを、参照クライアントの題材が持ち越す置き場の名前。
 $LiveStubEditorsName = "pmx-editor-mcp-live-stub-editors.txt"
 
 # 何回目の起動かを、同じ題材が持ち越す置き場の名前。

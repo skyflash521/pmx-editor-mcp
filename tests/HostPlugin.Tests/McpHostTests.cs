@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Xunit;
@@ -12,7 +13,6 @@ namespace PmxEditorMcp.Tests
     {
         private static readonly TimeSpan WaitLimit = TimeSpan.FromSeconds(10);
         private const int ConnectTimeoutMs = 3000;
-        private const int AbsentTimeoutMs = 300;
 
         private readonly string _directory;
         private readonly string _pipeName;
@@ -116,6 +116,17 @@ namespace PmxEditorMcp.Tests
             }
         }
 
+        /// <summary>
+        /// その名前の待受が在るか。接続を試みずに名前の一覧で見るので、無いことを確かめるのに
+        /// 待ち時間が要らない。
+        /// </summary>
+        private static bool IsListening(string pipeName)
+        {
+            return Directory.GetFiles(@"\\.\pipe\")
+                .Any(one => string.Equals(
+                    Path.GetFileName(one), pipeName, StringComparison.Ordinal));
+        }
+
         private static bool CanConnect(string pipeName, int timeoutMs)
         {
             try
@@ -157,7 +168,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(started);
             Assert.False(string.IsNullOrEmpty(reason));
             Assert.Equal(HostStatus.NotStartedInvalidBudget, host.Status);
-            Assert.False(CanConnect(_pipeName, AbsentTimeoutMs));
+            Assert.False(IsListening(_pipeName));
             Assert.Contains(host.Budget.InvalidReason, File.ReadAllText(host.LogFilePath, Encoding.UTF8));
 
             // 環境変数を読み直しても同じ結果になるため、この状態からの開始は受け付けない。
@@ -377,7 +388,7 @@ namespace PmxEditorMcp.Tests
                 host.Stop();
 
                 Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
-                Assert.False(CanConnect(_pipeName, AbsentTimeoutMs));
+                Assert.False(IsListening(_pipeName));
                 Assert.DoesNotContain("待受で例外が起きた", File.ReadAllText(host.LogFilePath, Encoding.UTF8));
             }
         }
@@ -393,7 +404,7 @@ namespace PmxEditorMcp.Tests
                 Assert.True(host.TryStart(out reason));
                 host.Stop();
                 Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
-                Assert.False(CanConnect(_pipeName, AbsentTimeoutMs));
+                Assert.False(IsListening(_pipeName));
             }
         }
 
