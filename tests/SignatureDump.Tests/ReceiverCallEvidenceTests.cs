@@ -44,6 +44,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string CamerasOfVme = Vme + ".Cameras()";
 
+        private const string ClearOfVme = Vme + ".Clear()";
+
         private const string CreateVmeTool = "motion_create_vme";
 
         private const string OpenVmeTool = "motion_open_vme";
@@ -63,6 +65,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string IplTool = "motion_ipl_vmd_frame_key";
 
         private const string ListCamerasTool = "motion_list_vme_cameras";
+
+        private const string ClearVmeTool = "motion_clear_vme";
 
         [Fact]
         public void ATypeMadeWithoutAHandleIsReachedInOneStep()
@@ -138,6 +142,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.False(ByTool().ContainsKey(CreateVmeTool));
         }
 
+        /// <summary>
+        /// 対象を指して呼べば確認の要らないツールは、受け手を渡さずに呼べても列を持つ。指さずに
+        /// 呼ぶと、いま開いているものを相手にしてしまう。
+        /// </summary>
+        [Fact(Skip = "impl pending: 対象を指せば確認の要らないツールへ、受け手を渡さずに呼べても列を与える")]
+        public void AToolThatMustAimAtAFreshReceiverIsGivenAPathEvenWhenCallableWithoutAHandle()
+        {
+            Assert.False(ByTool().ContainsKey(ClearVmeTool));
+
+            IDictionary<string, IList<string>> aimed = ReceiverCallEvidence.ByTool(
+                Inventory(),
+                Map(),
+                Roles(),
+                Named(),
+                Schemas(),
+                new HashSet<string>(new[] { ClearVmeTool }, StringComparer.Ordinal));
+
+            Assert.Equal(new[] { CreateVmeTool }, aimed[ClearVmeTool]);
+        }
+
         [Fact]
         public void EveryArgumentIsRequired()
         {
@@ -155,16 +179,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => ReceiverCallEvidence.ByType(inventory, map, null, schemas));
             Assert.Throws<ArgumentNullException>(
                 () => ReceiverCallEvidence.ByType(inventory, map, named, null));
+            ISet<string> none = new HashSet<string>(StringComparer.Ordinal);
             Assert.Throws<ArgumentNullException>(
-                () => ReceiverCallEvidence.ByTool(null, map, roles, named, schemas));
+                () => ReceiverCallEvidence.ByTool(null, map, roles, named, schemas, none));
             Assert.Throws<ArgumentNullException>(
-                () => ReceiverCallEvidence.ByTool(inventory, null, roles, named, schemas));
+                () => ReceiverCallEvidence.ByTool(inventory, null, roles, named, schemas, none));
             Assert.Throws<ArgumentNullException>(
-                () => ReceiverCallEvidence.ByTool(inventory, map, null, named, schemas));
+                () => ReceiverCallEvidence.ByTool(inventory, map, null, named, schemas, none));
             Assert.Throws<ArgumentNullException>(
-                () => ReceiverCallEvidence.ByTool(inventory, map, roles, null, schemas));
+                () => ReceiverCallEvidence.ByTool(inventory, map, roles, null, schemas, none));
             Assert.Throws<ArgumentNullException>(
-                () => ReceiverCallEvidence.ByTool(inventory, map, roles, named, null));
+                () => ReceiverCallEvidence.ByTool(inventory, map, roles, named, null, none));
+            Assert.Throws<ArgumentNullException>(
+                () => ReceiverCallEvidence.ByTool(inventory, map, roles, named, schemas, null));
         }
 
         private static IDictionary<string, IList<string>> ByType()
@@ -174,7 +201,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static IDictionary<string, IList<string>> ByTool()
         {
-            return ReceiverCallEvidence.ByTool(Inventory(), Map(), Roles(), Named(), Schemas());
+            return ReceiverCallEvidence.ByTool(
+                Inventory(),
+                Map(),
+                Roles(),
+                Named(),
+                Schemas(),
+                new HashSet<string>(StringComparer.Ordinal));
         }
 
         private static InventoryRecord Inventory()
@@ -205,6 +238,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Made(Builder, "CreateVmdBoneKey", BoneKey),
                     Made(Stranded, "Self", Stranded),
                     Made(FrameKey, "Ipl", FrameKey),
+                    Made(Vme, "Clear", "System.Void"),
                     Listed(Vme, "Cameras", Camera),
                 }.ToList());
         }
@@ -223,6 +257,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Issuing(CreateBoneKey),
                 Issuing(SelfOfStranded),
                 Plain(IplOfFrameKey),
+                Plain(ClearOfVme),
             });
         }
 
@@ -270,6 +305,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 { CreateBoneKey, CreateBoneKeyTool },
                 { SelfOfStranded, StrandedTool },
                 { IplOfFrameKey, IplTool },
+                { ClearOfVme, ClearVmeTool },
             };
         }
 
@@ -287,6 +323,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Held(StrandedTool),
                 Held(IplTool),
                 Held(ListCamerasTool),
+                Free(ClearVmeTool),
             });
         }
 

@@ -69,7 +69,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// 受け手をハンドルで要るツールの名前から、そのハンドルを得るまでに順に呼ぶツールの列へ。
         /// 自分の行を持たない集約のツールも、並べる要素を所有する型のハンドルを要るので同じ列で
-        /// 引ける。受け手を要さないツールと、受け手へ至る列の無いツールは持たない。
+        /// 引ける。受け手を要さないツールと、受け手へ至る列の無いツールは持たない——ただし
+        /// <paramref name="aimed"/> が挙げるツールは、受け手を渡さずに呼べても列を持つ。対象を
+        /// 指さずに呼ぶと、いま開いているものを相手にしてしまう。
         /// <paramref name="roles"/> は担当群を解いた型役割表である——行を持たない集約のツールの
         /// 名前は担当群から決まるので、解く前の表では決まらない。
         /// </summary>
@@ -78,11 +80,17 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             TypeRoleTable roles,
             IDictionary<string, string> toolsByRow,
-            ToolSchemaTable schemas)
+            ToolSchemaTable schemas,
+            ISet<string> aimed)
         {
             if (roles == null)
             {
                 throw new ArgumentNullException(nameof(roles));
+            }
+
+            if (aimed == null)
+            {
+                throw new ArgumentNullException(nameof(aimed));
             }
 
             IDictionary<string, IList<string>> byType =

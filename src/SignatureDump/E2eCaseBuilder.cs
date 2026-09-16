@@ -178,7 +178,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> picking = null,
             IDictionary<string, IList<string>> makers = null,
             IDictionary<string, string> adders = null,
-            IDictionary<string, string> removers = null)
+            IDictionary<string, string> removers = null,
+            ISet<string> aimed = null)
         {
             if (map == null)
             {

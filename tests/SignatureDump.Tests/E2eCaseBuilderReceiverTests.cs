@@ -24,6 +24,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Factory = "model_bone";
 
+        private const string Aim = "pmxHandle";
+
         [Fact]
         public void ARowWhoseBasisSaysItCannotBeReachedIsStillCalled()
         {
@@ -71,7 +73,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.NotNull(first.Produces);
             Assert.NotNull(second.Borrowed);
-            Assert.Equal(first.Produces, second.Borrowed.Values.Single());
+            Assert.Equal(Lent(first.Produces), second.Borrowed.Values.Single());
         }
 
         [Fact]
@@ -85,7 +87,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.NotNull(last.Produces);
             Assert.NotNull(called.Borrowed);
-            Assert.Equal(last.Produces, called.Borrowed.Values.Single());
+            Assert.Equal(Lent(last.Produces), called.Borrowed.Values.Single());
         }
 
         /// <summary>
@@ -119,7 +121,90 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     && c.Expectation == E2eExpectation.Called);
 
             Assert.NotNull(removing.Borrowed);
-            Assert.Equal(Adder, removing.Borrowed.Values.Single());
+            Assert.Equal(Lent(Adder), removing.Borrowed.Values.Single());
+        }
+
+        /// <summary>
+        /// 対象を指して呼べば確認が要らなくなるツールは、新しく作った相手を指して呼ぶ。いま
+        /// 開いているものを相手にすると、検査が実機の状態を壊す。
+        /// </summary>
+        [Fact(Skip = "impl pending: 対象を指せば確認が要らないツールを、新しく作った相手へ向けて呼ぶ")]
+        public void AToolThatNeedsNoConfirmationWhenAimedIsAimedAtAFreshReceiver()
+        {
+            IList<E2eCase> cases = Aiming();
+            E2eCase called = cases.Single(
+                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal)
+                    && c.Expectation == E2eExpectation.Called);
+            E2eCase made = Step(cases, Second);
+
+            Assert.NotNull(made.Produces);
+            Assert.True(called.Arguments.ContainsKey(Aim));
+            Assert.False(called.Arguments.ContainsKey(E2eCaseBuilder.ConfirmName));
+            Assert.NotNull(called.Borrowed);
+            Assert.Equal(Aim, called.Borrowed.Keys.Single());
+            Assert.Equal(Lent(made.Produces), called.Borrowed.Values.Single());
+        }
+
+        [Fact]
+        public void TheConfirmationRefusalStaysForAToolThatIsAimed()
+        {
+            Assert.Contains(
+                Aiming(),
+                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal)
+                    && c.Expectation == E2eExpectation.Refusal
+                    && string.Equals(
+                        c.Code, E2eCaseBuilder.ConfirmRequired, StringComparison.Ordinal));
+        }
+
+        /// <summary>新しく作った相手を指して呼ぶ、確認を要する行の検査。</summary>
+        private static IList<E2eCase> Aiming()
+        {
+            return E2eCaseBuilder.Build(
+                Wiping(),
+                new ToolSchemaTable(new[] { Aimed(Tool), Free(Second) }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } },
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                new HashSet<string>(new[] { RowKey }, StringComparer.Ordinal),
+                new Dictionary<SchemaItem, string>(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new Dictionary<string, IList<string>>(StringComparer.Ordinal)
+                {
+                    { Tool, new[] { Second } },
+                },
+                null,
+                null,
+                new HashSet<string>(new[] { Tool }, StringComparer.Ordinal));
+        }
+
+        /// <summary>受け手を1つのハンドルで指すツール。</summary>
+        private static ToolSchema Aimed(string tool)
+        {
+            return new ToolSchema(
+                tool,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[]
+                        {
+                            new SchemaItem(
+                                "number", null, null, Aim, ItemOrigin.HostInput, false,
+                                null, false, null, null, null, false, null),
+                        },
+                        new SchemaChoice[0]),
+                },
+                Output(),
+                null);
         }
 
         /// <summary>その段が相手を1つ作る検査。</summary>
@@ -174,6 +259,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
             });
         }
 
+        /// <summary>中身を空へ戻す、確認を要する行1件の表。</summary>
+        private static ToolMap Wiping()
+        {
+            return new ToolMap(new[]
+            {
+                new ToolMapRow(
+                    RowKey,
+                    ToolMapEditKind.DuplicateEdit,
+                    null,
+                    "中身を空へ戻す。確認を要する危険な操作である。",
+                    null,
+                    null,
+                    null),
+            });
+        }
+
         /// <summary>受け手をハンドルで指すツール。</summary>
         private static ToolSchema Held(string tool)
         {
@@ -197,7 +298,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null);
         }
 
-        /// <summary>受け手を渡さずに呼べるツール。</summary>
+        /// <summary>
+        /// 受け手を渡さずに呼べるツール。出たハンドルは、実機と同じく応答の並びの中へ入る。
+        /// </summary>
         private static ToolSchema Free(string tool)
         {
             return new ToolSchema(
@@ -207,8 +310,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     new SchemaBranch(
                         "only", null, null, new SchemaItem[0], new SchemaChoice[0]),
                 },
-                Output(),
+                new SchemaItem(
+                    null, null, Output(), null, ItemOrigin.HostOutput, null, null, false, null,
+                    null, null, false, null),
                 null);
+        }
+
+        /// <summary>その名前が出したハンドル1つを指す道。</summary>
+        private static string Lent(string name)
+        {
+            return name + "/0";
         }
 
         private static SchemaItem Output()

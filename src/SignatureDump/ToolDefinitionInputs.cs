@@ -195,7 +195,12 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return ReceiverCallEvidence.ByTool(
-                inventory, Map, OwnedRoles(inventory), ToolsByRow(inventory), Schemas);
+                inventory,
+                Map,
+                OwnedRoles(inventory),
+                ToolsByRow(inventory),
+                Schemas,
+                ConditionalDangerousTools(inventory));
         }
 
         /// <summary>その行が、その型の実体を引数無しで1つ作るか。</summary>
