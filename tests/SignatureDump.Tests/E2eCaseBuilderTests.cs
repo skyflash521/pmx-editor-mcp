@@ -231,13 +231,72 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(0, read.Expected.Value);
         }
 
+        /// <summary>
+        /// 位置で指して書く検査は、指す先の並びにも書かれる側の並びにも要素が要る。どちらも
+        /// 同じ並びを指すときは、用意の段を二度出さない。
+        /// </summary>
+        [Fact]
+        public void ThePositionedCasesComeAfterTheSetupThatFillsTheList()
+        {
+            ToolSchema writing = Positioning("model_update_bones");
+            IList<E2eCase> cases = Positions(writing, Listed("model_list_bones"), null);
+            int at = cases.IndexOf(cases.First(
+                c => c.Purpose.Contains("並びの先頭を書けること")));
+
+            Assert.Equal(
+                new[] { MakeBone, AddBones },
+                cases
+                    .Take(at)
+                    .Where(c => c.Purpose.Contains("位置で指す検査の前に"))
+                    .Select(c => c.Tool)
+                    .ToArray());
+        }
+
+        /// <summary>
+        /// 書き換える要素の並びを用意できないなら、先頭を指して書く検査は組み立てない。全件を
+        /// 指しても1件も触らずに済み、位置が範囲内かどうかを確かめたことにならない。
+        /// </summary>
+        [Fact]
+        public void NoPositionIsWrittenWhenTheListItWritesIntoCannotBeFilled()
+        {
+            IList<E2eCase> cases = Positions(
+                Positioning("model_update_bones"),
+                Listed("model_list_bones"),
+                null,
+                writtenAdder: null);
+
+            Assert.DoesNotContain(cases, c => c.Purpose.Contains("並びの先頭を書けること"));
+            Assert.DoesNotContain(cases, c => c.Purpose.Contains("位置で指す検査の前に"));
+        }
+
+        /// <summary>
+        /// 位置が指す先の並びと、書き換える要素の並びが別なら、用意の段は両方ぶん出る。
+        /// </summary>
+        [Fact]
+        public void TheSetupFillsBothTheListPointedAtAndTheListWrittenInto()
+        {
+            IList<E2eCase> cases = Positions(
+                Positioning("model_update_bones"),
+                Listed("model_list_bones"),
+                null,
+                writtenAdder: AddMaterials);
+
+            Assert.Equal(
+                new[] { MakeBone, AddBones, MakeMaterial, AddMaterials },
+                cases
+                    .Where(c => c.Purpose.Contains("位置で指す検査の前に"))
+                    .Select(c => c.Tool)
+                    .ToArray());
+        }
+
         [Fact]
         public void APositionedMemberIsAlsoCheckedWithAPositionNoListCarries()
         {
             ToolSchema writing = Positioning("model_update_bones");
             E2eCase one = Assert.Single(
                 Positions(writing, Listed("model_list_bones"), null),
-                c => c.Expectation == E2eExpectation.Refusal);
+                c => c.Expectation == E2eExpectation.Refusal
+                    && string.Equals(c.Tool, writing.Tool, StringComparison.Ordinal));
 
             Assert.Equal("TOOL_INDEX_OUT_OF_RANGE", one.Code);
             Assert.Equal(
@@ -1764,19 +1823,41 @@ namespace PmxEditorMcp.SignatureDump.Tests
             };
         }
 
-        /// <summary>位置で指す項目を持つツールと、それを読み返すツールの組で検査を組み立てる。</summary>
+        private const string AddBones = "model_add_bones";
+
+        private const string MakeBone = "model_bone";
+
+        private const string AddMaterials = "model_add_materials";
+
+        private const string MakeMaterial = "model_material";
+
+        /// <summary>
+        /// 位置で指す項目を持つ書き換えのツール1つぶんの検査。<paramref name="writtenAdder"/> は
+        /// 書き換える要素の並びへ加えるツール、<paramref name="pointedAdder"/> は位置が指す先の
+        /// 並びへ加えるツールで、null は加える手立てが無いことを表す。
+        /// </summary>
         private static IList<E2eCase> Positions(
             ToolSchema writing,
             ToolSchema reading,
             string reader,
-            IDictionary<string, ISet<string>> unkept = null)
+            IDictionary<string, ISet<string>> unkept = null,
+            string writtenAdder = AddBones,
+            string pointedAdder = AddBones)
         {
             SchemaItem member = writing.Branches[0].Inputs
                 .Single(i => i.Name == "value").Members.Single();
 
             return E2eCaseBuilder.Build(
                 Map(RowKey),
-                new ToolSchemaTable(new[] { writing, reading }),
+                new ToolSchemaTable(new[]
+                {
+                    writing,
+                    reading,
+                    Tool(AddBones, Handles()),
+                    Tool(MakeBone, new SchemaItem[0]),
+                    Tool(AddMaterials, Handles()),
+                    Tool(MakeMaterial, new SchemaItem[0]),
+                }),
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, writing.Tool } },
                 Paths(),
                 new HashSet<string>(StringComparer.Ordinal),
@@ -1785,14 +1866,33 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 null,
                 new HashSet<string>(new[] { "Sdk.Bone" }, StringComparer.Ordinal),
-                null,
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { AddBones, MakeBone },
+                    { AddMaterials, MakeMaterial },
+                },
                 reader == null
                     ? null
                     : new Dictionary<string, string>(StringComparer.Ordinal)
                     {
                         { writing.Tool, reader },
                     },
-                unkept);
+                unkept,
+                addersByTool: Adding(writing.Tool, writtenAdder),
+                addersByType: Adding("Sdk.Bone", pointedAdder));
+        }
+
+        /// <summary>その名前の並びへ加えるツールの対応表。加える手立てが無ければ空の表。</summary>
+        private static IDictionary<string, string> Adding(string name, string adder)
+        {
+            IDictionary<string, string> adders =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            if (adder != null)
+            {
+                adders[name] = adder;
+            }
+
+            return adders;
         }
 
         /// <summary>全件を指して値の組を書き換えるツール。値の組は位置で指す項目を1つ持つ。</summary>

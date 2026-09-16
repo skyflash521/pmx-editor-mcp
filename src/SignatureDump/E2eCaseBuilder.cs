@@ -198,7 +198,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> removers = null,
             ISet<string> aimed = null,
             IDictionary<string, IList<string>> typeMakers = null,
-            IDictionary<string, string> parents = null)
+            IDictionary<string, string> parents = null,
+            IDictionary<string, string> addersByTool = null,
+            IDictionary<string, string> addersByType = null)
         {
             if (map == null)
             {
@@ -315,7 +317,7 @@ namespace PmxEditorMcp.SignatureDump
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
                     row, schema, schemas, connectionPaths, sdkTypes, positioned, dangerous,
-                    readers, unkept));
+                    readers, unkept, factories, parents, addersByTool, addersByType));
             }
 
             cases.AddRange(trailing);
@@ -1452,6 +1454,24 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// その名前が指す並びを用意するまでに、順に呼ぶ加える側のツールの列。加える側を引けない
+        /// 名前と、用意しきれない並びでは null。
+        /// </summary>
+        private static IList<string> Filled(
+            string name,
+            IDictionary<string, string> adders,
+            IDictionary<string, string> parents,
+            IDictionary<string, string> factories,
+            ToolSchemaTable schemas)
+        {
+            string adding;
+
+            return adders != null && factories != null && adders.TryGetValue(name, out adding)
+                ? Filling(adding, parents, factories, schemas)
+                : null;
+        }
+
+        /// <summary>
         /// その要素を並びへ加えるまでに、順に呼ぶ加える側のツールの列。親の並びに1つも無い要素は
         /// 加えられないので、根に近い親から並べる。用意しきれない並びでは null を返す——どこかの
         /// 段に作る手立てか加える手立てが無いとき、列の先頭がまだ親を要するとき(親を辿れずに
@@ -2429,13 +2449,20 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> positioned,
             ISet<string> dangerous,
             IDictionary<string, string> readers,
-            IDictionary<string, ISet<string>> unkept)
+            IDictionary<string, ISet<string>> unkept,
+            IDictionary<string, string> factories,
+            IDictionary<string, string> parents,
+            IDictionary<string, string> addersByTool,
+            IDictionary<string, string> addersByType)
         {
             string rowKey = row == null ? string.Empty : row.SignatureKey;
             if (sdkTypes == null || positioned == null || dangerous.Contains(rowKey))
             {
                 yield break;
             }
+
+            // 同じ並びを二度用意しない。用意の段はどの検査より先に置くので、出した相手を覚える。
+            ISet<string> prepared = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (SchemaBranch branch in schema.Branches)
             {
@@ -2492,20 +2519,56 @@ namespace PmxEditorMcp.SignatureDump
                         Pointing(arguments, member.Name, null),
                         E2eExpectation.Success,
                         null);
-                    yield return new E2eCase(
-                        rowKey,
-                        editKind,
-                        path,
-                        schema.Tool,
-                        "位置で指す項目へ並びの先頭を書けること",
-                        Pointing(arguments, member.Name, FirstPosition),
-                        E2eExpectation.Success,
-                        null);
+                    // 先頭を指して書くには、指す先の並びと書かれる側の並びの両方に1つでも
+                    // 要る。書かれる側が空だと、全件を指しても1件も触らずに済んでしまい、位置が
+                    // 範囲内かどうかを確かめたことにならない。読み返すのにも書かれる側が要る。
+                    // 用意できない並びでは、その並びを要する検査を組み立てない——通らない検査を
+                    // 出すと、落ちた理由が別の系統として数えられる。
+                    IList<string> pointed = Filled(
+                        typeName, addersByType, parents, factories, schemas);
+                    IList<string> written = Filled(
+                        schema.Tool, addersByTool, parents, factories, schemas);
+                    bool writes = pointed != null && written != null;
+                    E2eCase read = written == null || !Kept(unkept, schema.Tool, member.Name)
+                        ? null
+                        : ReadBackCase(
+                            rowKey, editKind, path, schema.Tool, schemas, readers, member.Name);
+                    foreach (string filler in (writes ? pointed : new string[0])
+                        .Concat(writes || read != null ? written : new string[0]))
+                    {
+                        if (!prepared.Add(filler))
+                        {
+                            continue;
+                        }
 
-                    E2eCase read = Kept(unkept, schema.Tool, member.Name)
-                        ? ReadBackCase(
-                            rowKey, editKind, path, schema.Tool, schemas, readers, member.Name)
-                        : null;
+                        foreach (E2eCase one in Filling(
+                            rowKey,
+                            editKind,
+                            path,
+                            schemas,
+                            factories[filler],
+                            filler,
+                            Scoping(schema.Tool, filler),
+                            "位置で指す検査の前に並びへ加える要素を1つ作れること",
+                            "作った要素を位置で指す検査の前に並びへ加えられること"))
+                        {
+                            yield return one;
+                        }
+                    }
+
+                    if (writes)
+                    {
+                        yield return new E2eCase(
+                            rowKey,
+                            editKind,
+                            path,
+                            schema.Tool,
+                            "位置で指す項目へ並びの先頭を書けること",
+                            Pointing(arguments, member.Name, FirstPosition),
+                            E2eExpectation.Success,
+                            null);
+                    }
+
                     if (read != null)
                     {
                         yield return read;

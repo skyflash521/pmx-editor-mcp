@@ -117,6 +117,67 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// その要素を相手にするツールの名前から、その要素をリストへ加えるツールの名前へ。位置で
+        /// 指して書く検査は、書かれる側の並びに1つも無いと、全件を指しても1件も触らずに済み、
+        /// 読み返すものも持たない。どちらも確かめられないので、呼ぶ前に1つ加える。
+        /// </summary>
+        public IDictionary<string, string> ElementAddersByTool(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            IDictionary<string, string> adders = ElementAdders(inventory);
+            Dictionary<string, string> byTool =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (TypeRoleRecord role in OwnedRoles(inventory).Types.Where(
+                t => t.Group != CapabilityOwner.None && !string.IsNullOrEmpty(t.ElementNoun)))
+            {
+                string adding;
+                if (!adders.TryGetValue(role.ElementNoun, out adding))
+                {
+                    continue;
+                }
+
+                foreach (ToolVerb verb in
+                    new[] { ToolVerb.List, ToolVerb.Update, ToolVerb.Remove, ToolVerb.Hold })
+                {
+                    byTool[ToolNameRule.OfRole(role, verb)] = adding;
+                }
+            }
+
+            return byTool;
+        }
+
+        /// <summary>
+        /// 型の名前から、その型の要素をリストへ加えるツールの名前へ。位置で指す項目が指す先の
+        /// 並びを用意するのに使う。
+        /// </summary>
+        public IDictionary<string, string> ElementAddersByType(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            IDictionary<string, string> adders = ElementAdders(inventory);
+            Dictionary<string, string> byType =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (TypeRoleRecord role in OwnedRoles(inventory).Types.Where(
+                t => t.Group != CapabilityOwner.None && !string.IsNullOrEmpty(t.ElementNoun)))
+            {
+                string adding;
+                if (adders.TryGetValue(role.ElementNoun, out adding))
+                {
+                    byType[role.TypeName] = adding;
+                }
+            }
+
+            return byType;
+        }
+
+        /// <summary>
         /// 要素をリストへ加えるツールの名前から、その要素の親をリストへ加えるツールの名前へ。
         /// 親のリストに1つも無い要素は加えられないので、用意する側は親から順に辿る。PMXが直に
         /// 持つ並びの要素は親を持たないので、この対応表にも載らない。
