@@ -2047,9 +2047,12 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            value = Held(context, new[] { argument.Held }, id);
-            if (value != null)
+            object found;
+            if (id >= int.MinValue && id <= int.MaxValue
+                && context.Handles.TryGet((int)id, out found) && argument.Holds(found))
             {
+                value = found;
+
                 return true;
             }
 
@@ -3317,7 +3320,7 @@ namespace PmxEditorMcp
             ToolReceiver receiver,
             PmxTarget target,
             Pointed pointed,
-            IList<Type> accepted,
+            Func<object, bool> accepted,
             out IList<Spot> column,
             out Refusal refused)
         {
@@ -3608,44 +3611,33 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// そのツールが受け付ける型。実行時の型で分かれるツールでは、読む側はどの具象の型でもよく、
-        /// 書く側は選んだ型に限る。分かれないツールと要素のメソッドは、その宣言型に限る。
+        /// 預かっている実体を、そのツールが受け付けるか。実行時の型で分かれるツールでは、読む側は
+        /// どの具象の型でもよく(<paramref name="anyItem"/>)、書く側は選んだ型に限る
+        /// (<paramref name="itemType"/>)。分かれないツールと要素のメソッドは、その宣言型に限る。
+        /// 判じるのは生成時に作った判定で、台帳が覚えている型の名前は見ない——名前で照らすと、
+        /// その型を実装する実体を、基底の型しか知らない道へ渡せない。
         /// </summary>
-        private static IList<Type> Accepted(ToolAccess access, string itemType, bool anyItem)
+        private static Func<object, bool> Accepted(
+            ToolAccess access, string itemType, bool anyItem)
         {
             if (access.Kind != ToolAccessKind.Element)
             {
-                return new Type[0];
+                return item => false;
             }
 
             if (anyItem && access.Items.Count != 0)
             {
-                return access.Items.Select(i => i.Element).ToList();
+                IList<Func<object, bool>> items =
+                    access.Items.Select(i => i.IsItem).ToList();
+
+                return item => items.Any(i => i(item));
             }
 
             return itemType == null
-                ? new[] { access.Element }
-                : new[]
-                {
-                    access.Items
-                        .First(i => string.Equals(i.ItemType, itemType, StringComparison.Ordinal))
-                        .Element,
-                };
-        }
-
-        /// <summary>そのハンドルが指す、受け付ける型のどれかの実体。指していなければ null。</summary>
-        private static object Held(McpMethodContext context, IList<Type> accepted, long id)
-        {
-            foreach (Type type in accepted)
-            {
-                object held = Held(context, type, id);
-                if (held != null)
-                {
-                    return held;
-                }
-            }
-
-            return null;
+                ? access.IsElement
+                : access.Items
+                    .First(i => string.Equals(i.ItemType, itemType, StringComparison.Ordinal))
+                    .IsItem;
         }
 
         /// <summary>親の列の中から、要求が指した親の位置。親を辿らない道では先頭の1件。</summary>

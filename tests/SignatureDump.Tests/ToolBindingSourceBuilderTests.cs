@@ -149,7 +149,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "new ToolArgument(\"one\", typeof(global::" + Held + "), false, null, false,"
-                    + " typeof(global::" + Held + "))",
+                    + " typeof(global::" + Held + "), null, null,"
+                    + " item => item is global::" + Held + ")",
                 source.Text);
         }
 

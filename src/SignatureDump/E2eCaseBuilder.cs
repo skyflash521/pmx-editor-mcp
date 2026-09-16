@@ -84,6 +84,9 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private const string Scoped = "#";
 
+        /// <summary>借りる値を差し込む先を、引数の中の道で指すときの区切り。</summary>
+        private const string PathStep = "/";
+
         /// <summary>
         /// 呼ぶ前と後で読むときに受け取る件数。一覧は総数も返すので、1件だけ読めば総数の変化は
         /// 見える——全件を読むと、要素の多いモデルでは読むだけで時間の上限に届く。
@@ -193,7 +196,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> makers = null,
             IDictionary<string, string> adders = null,
             IDictionary<string, string> removers = null,
-            ISet<string> aimed = null)
+            ISet<string> aimed = null,
+            IDictionary<string, IList<string>> typeMakers = null)
         {
             if (map == null)
             {
@@ -224,6 +228,8 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new ArgumentNullException(nameof(sdkShapes));
             }
+
+            IDictionary<SchemaItem, string> handleTargets = HandleTargets(sdkTypes, handled);
 
             // 母集団はスキーマ正本が持つツールである。行から導く名前を持たない共通契約のツールも
             // 検査の相手なので、行の側を母集団にすると落ちる。
@@ -288,6 +294,7 @@ namespace PmxEditorMcp.SignatureDump
                     dangerous,
                     sdkShapes,
                     Sampled(sdkTypes, samples),
+                    handleTargets,
                     given,
                     refused,
                     Handles(schema, sdkTypes, handled),
@@ -300,7 +307,8 @@ namespace PmxEditorMcp.SignatureDump
                     readers,
                     unkept,
                     sdkTypes,
-                    positioned));
+                    positioned,
+                    typeMakers));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -561,6 +569,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, object> arguments,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
+            IDictionary<SchemaItem, string> handleTargets,
             IDictionary<string, ISet<string>> unkept,
             string tool,
             IDictionary<SchemaItem, string> sdkTypes,
@@ -583,7 +592,8 @@ namespace PmxEditorMcp.SignatureDump
                 m => Kept(unkept, tool, m.Name) && !Deferred(m, sdkTypes, positioned)))
             {
                 object value;
-                if (TryMinimal(member, sdkShapes, sampled, out value))
+                if (TryMinimal(
+                        member, sdkShapes, sampled, handleTargets, null, member.Name, out value))
                 {
                     filled[member.Name] = value;
                 }
@@ -697,7 +707,8 @@ namespace PmxEditorMcp.SignatureDump
         private static IDictionary<string, object> Pointed(
             ToolSchema schema,
             IDictionary<SchemaItem, string> sdkShapes,
-            IDictionary<SchemaItem, object> sampled)
+            IDictionary<SchemaItem, object> sampled,
+            IDictionary<SchemaItem, string> handleTargets)
         {
             foreach (SchemaBranch branch in schema.Branches)
             {
@@ -723,7 +734,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 if (pointed && arguments.Count != 0
-                    && TryFill(branch, sdkShapes, sampled, arguments)
+                    && TryFill(branch, sdkShapes, sampled, handleTargets, null, arguments)
                     && Satisfied(branch, arguments))
                 {
                     return arguments;
@@ -882,6 +893,7 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> dangerous,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
+            IDictionary<SchemaItem, string> handleTargets,
             IDictionary<string, IDictionary<string, object>> given,
             IDictionary<string, SampleCallRow> refused,
             IEnumerable<SchemaItem> handed,
@@ -894,7 +906,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> readers,
             IDictionary<string, ISet<string>> unkept,
             IDictionary<SchemaItem, string> sdkTypes,
-            ISet<string> positioned)
+            ISet<string> positioned,
+            IDictionary<string, IList<string>> typeMakers)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -911,7 +924,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, object> calling =
                 new Dictionary<string, object>(StringComparer.Ordinal);
             bool calls = row != null && (!confirmed || written)
-                && TryCalling(row, schema, sdkShapes, sampled, given, out calling)
+                && TryCalling(row, schema, sdkShapes, sampled, handleTargets, given, out calling)
                 && Satisfied(schema, calling);
 
             // 行を持たないツールも、引数を要さないなら呼ぶ。呼べるのに呼ばないままだと、この
@@ -929,13 +942,17 @@ namespace PmxEditorMcp.SignatureDump
 
             string making = string.IsNullOrEmpty(rowKey) ? tool : rowKey;
             IDictionary<string, string> borrowing = null;
+
+            // 引数にハンドルで相手を取る呼び出しは、その相手も作ってから渡す。道ごとに作る列を
+            // 分けて覚える——同じ型を2か所で取る呼び出しもあるが、渡すのは別の実体でよい。
+            IDictionary<string, IList<string>> handing = null;
             if (!calls && maker != null && aimed != null && aimed.Contains(tool) && Aims(schema))
             {
                 calling = new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { AimName, null },
                 };
-                if (TryFill(schema, sdkShapes, sampled, calling) && Satisfied(schema, calling))
+                if (TryFill(schema, sdkShapes, sampled, handleTargets, null, calling) && Satisfied(schema, calling))
                 {
                     calls = true;
                     borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -953,8 +970,15 @@ namespace PmxEditorMcp.SignatureDump
             if (!calls && (!confirmed || written) && maker != null && Holds(schema))
             {
                 calling = Chosen(schema, maker[maker.Count - 1]);
-                if (TryFill(schema, sdkShapes, sampled, calling)
+                IDictionary<string, string> wanted =
+                    new Dictionary<string, string>(StringComparer.Ordinal);
+                if (TryFill(schema, sdkShapes, sampled, handleTargets, wanted, calling)
                     && Satisfied(schema, calling = Written(calling, rowKey, given, confirmed)))
+                {
+                    handing = Handing(wanted, typeMakers);
+                }
+
+                if (handing != null)
                 {
                     calls = true;
                     borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -966,6 +990,12 @@ namespace PmxEditorMcp.SignatureDump
                                 Of(schemas, maker[maker.Count - 1]))
                         },
                     };
+                    foreach (KeyValuePair<string, IList<string>> one in handing)
+                    {
+                        borrowing[one.Key] = Borrowed(
+                            Step(Handed(making, one.Key), one.Value.Count - 1),
+                            Of(schemas, one.Value[one.Value.Count - 1]));
+                    }
                 }
             }
             string adder;
@@ -979,7 +1009,7 @@ namespace PmxEditorMcp.SignatureDump
                 if (Holds(schema))
                 {
                     calling = Lent();
-                    if (TryFill(schema, sdkShapes, sampled, calling) && Satisfied(schema, calling))
+                    if (TryFill(schema, sdkShapes, sampled, handleTargets, null, calling) && Satisfied(schema, calling))
                     {
                         calls = true;
                         borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -990,7 +1020,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
                 else
                 {
-                    IDictionary<string, object> pointing = Pointed(schema, sdkShapes, sampled);
+                    IDictionary<string, object> pointing = Pointed(schema, sdkShapes, sampled, handleTargets);
                     if (pointing != null)
                     {
                         calls = true;
@@ -1001,7 +1031,8 @@ namespace PmxEditorMcp.SignatureDump
 
             IDictionary<string, object> values = calls && row == null && borrowing != null
                 ? Filled(
-                    schema, calling, sdkShapes, sampled, unkept, tool, sdkTypes, positioned)
+                    schema, calling, sdkShapes, sampled, handleTargets, unkept, tool, sdkTypes,
+                    positioned)
                 : null;
 
             SampleCallRow denied;
@@ -1058,6 +1089,36 @@ namespace PmxEditorMcp.SignatureDump
                                 Borrowed(Step(making, at - 1), Of(schemas, maker[at - 1]))
                             },
                         });
+            }
+
+            foreach (KeyValuePair<string, IList<string>> one in handing
+                ?? new Dictionary<string, IList<string>>(StringComparer.Ordinal))
+            {
+                string stepped = Handed(making, one.Key);
+                for (int at = 0; at < one.Value.Count; at++)
+                {
+                    yield return new E2eCase(
+                        rowKey,
+                        editKind,
+                        path,
+                        one.Value[at],
+                        "引数に渡す相手を1つ作れること",
+                        at == 0 ? new Dictionary<string, object>(StringComparer.Ordinal) : Lent(),
+                        E2eExpectation.Success,
+                        null,
+                        null,
+                        Step(stepped, at),
+                        at == 0
+                            ? null
+                            : new Dictionary<string, string>(StringComparer.Ordinal)
+                            {
+                                {
+                                    Leaf(HandlesName),
+                                    Borrowed(
+                                        Step(stepped, at - 1), Of(schemas, one.Value[at - 1]))
+                                },
+                            });
+                }
             }
 
             foreach (Postcondition judgement in reads ? compared : new Postcondition[0])
@@ -1155,7 +1216,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 IDictionary<string, object> arguments =
                     Single(handles.Name, new object[] { UnknownHandle }, confirmed);
-                if (!TryFill(schema, sdkShapes, sampled, arguments))
+                if (!TryFill(schema, sdkShapes, sampled, handleTargets, null, arguments))
                 {
                     continue;
                 }
@@ -1177,7 +1238,7 @@ namespace PmxEditorMcp.SignatureDump
                     Single(one.Name, UnknownHandle, confirmed);
                 SchemaBranch holding = schema.Branches.First(
                     b => b.Inputs.Any(i => ReferenceEquals(i, one)));
-                if (!TryFill(holding, sdkShapes, sampled, arguments))
+                if (!TryFill(holding, sdkShapes, sampled, handleTargets, null, arguments))
                 {
                     continue;
                 }
@@ -1325,6 +1386,41 @@ namespace PmxEditorMcp.SignatureDump
             return makers != null && makers.TryGetValue(tool, out path) && path.Count != 0
                 ? path
                 : null;
+        }
+
+        /// <summary>
+        /// 引数へ渡す相手を、道ごとにどう作るか。作る列を引けない型が1つでもあれば null——
+        /// 渡すものが揃わない呼び出しは組み立てない。取る相手が無ければ空の対応表になる。
+        /// </summary>
+        private static IDictionary<string, IList<string>> Handing(
+            IDictionary<string, string> wanted,
+            IDictionary<string, IList<string>> typeMakers)
+        {
+            Dictionary<string, IList<string>> handing =
+                new Dictionary<string, IList<string>>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, string> one in wanted)
+            {
+                IList<string> made;
+                if (typeMakers == null || !typeMakers.TryGetValue(one.Value, out made)
+                    || made.Count == 0)
+                {
+                    return null;
+                }
+
+                handing[one.Key] = made;
+            }
+
+            return handing;
+        }
+
+        /// <summary>
+        /// 引数へ渡す相手を作る段が出したハンドルを覚えておく名前。道ごとに分ける。道の区切りは
+        /// 名前に残さない——借りる側は斜線で覚えた値の中を辿るので、名前に斜線があると、名前の
+        /// 途中までを名前と読んでしまう。
+        /// </summary>
+        private static string Handed(string making, string path)
+        {
+            return making + Scoped + path.Replace(PathStep, Scoped);
         }
 
         /// <summary>受け手を作る段が出したハンドルを覚えておく名前。段ごとに分ける。</summary>
@@ -1749,12 +1845,13 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
+            IDictionary<SchemaItem, string> handleTargets,
             IDictionary<string, IDictionary<string, object>> given,
             out IDictionary<string, object> arguments)
         {
             if (row.EditKind == ToolMapEditKind.Read)
             {
-                return TryReading(schema, sdkShapes, sampled, out arguments);
+                return TryReading(schema, sdkShapes, sampled, handleTargets, out arguments);
             }
 
             if (given != null && given.TryGetValue(row.SignatureKey, out arguments))
@@ -1818,6 +1915,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
+            IDictionary<SchemaItem, string> handleTargets,
             out IDictionary<string, object> arguments)
         {
             arguments = new Dictionary<string, object>(StringComparer.Ordinal);
@@ -1831,7 +1929,7 @@ namespace PmxEditorMcp.SignatureDump
                 return false;
             }
 
-            return TryFill(schema, sdkShapes, sampled, arguments);
+            return TryFill(schema, sdkShapes, sampled, handleTargets, null, arguments);
         }
 
         /// <summary>その呼び分けが、対象を指す組を必ず要るか。</summary>
@@ -1852,11 +1950,13 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
+            IDictionary<SchemaItem, string> handleTargets,
+            IDictionary<string, string> borrows,
             IDictionary<string, object> arguments)
         {
             foreach (SchemaBranch branch in schema.Branches)
             {
-                if (!TryFill(branch, sdkShapes, sampled, arguments))
+                if (!TryFill(branch, sdkShapes, sampled, handleTargets, borrows, arguments))
                 {
                     return false;
                 }
@@ -1870,6 +1970,8 @@ namespace PmxEditorMcp.SignatureDump
             SchemaBranch branch,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
+            IDictionary<SchemaItem, string> handleTargets,
+            IDictionary<string, string> borrows,
             IDictionary<string, object> arguments)
         {
             {
@@ -1884,7 +1986,8 @@ namespace PmxEditorMcp.SignatureDump
                     SchemaItem item = branch.Inputs.FirstOrDefault(
                         i => string.Equals(i.Name, choice.Names[0], StringComparison.Ordinal));
                     object value;
-                    if (item == null || !TryMinimal(item, sdkShapes, sampled, out value))
+                    if (item == null || !TryMinimal(
+                        item, sdkShapes, sampled, handleTargets, borrows, item.Name, out value))
                     {
                         return false;
                     }
@@ -1903,7 +2006,8 @@ namespace PmxEditorMcp.SignatureDump
                         branch.SelectorName, item.Name, StringComparison.Ordinal)
                             ? branch.SelectorValue
                             : null;
-                    if (value == null && !TryMinimal(item, sdkShapes, sampled, out value))
+                    if (value == null && !TryMinimal(
+                        item, sdkShapes, sampled, handleTargets, borrows, item.Name, out value))
                     {
                         return false;
                     }
@@ -1918,14 +2022,36 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// その項目の最小の値。組は必ず要る項目だけを埋めた組、配列は要素1つの並び、綴りは
         /// その綴りが受け取る最も短い値とする。綴りから値を決められなければ偽。
+        /// ハンドルで指す相手を取る項目は、最小の値では埋めない——番号を書けば綴りには合うが、
+        /// 台帳が預かる相手を指さないので、呼び先まで届かないまま届いたことにしてしまう。この
+        /// 項目の扱いは <paramref name="borrows"/> で分かれる。null なら偽——借りる先を持たない
+        /// 呼び出しでは、渡すものが決まらない。渡してあれば、その項目の道をSDKの型名へ結んで
+        /// <paramref name="borrows"/> へ置き、<paramref name="value"/> を null のまま真を返す。
+        /// 値は、その道へ借りる側が入れる。
         /// </summary>
         private static bool TryMinimal(
             SchemaItem item,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
+            IDictionary<SchemaItem, string> handleTargets,
+            IDictionary<string, string> borrows,
+            string path,
             out object value)
         {
             value = null;
+            string wanted;
+            if (handleTargets.TryGetValue(item, out wanted))
+            {
+                if (borrows == null)
+                {
+                    return false;
+                }
+
+                borrows[path] = wanted;
+
+                return true;
+            }
+
             if (item.Members != null)
             {
                 Dictionary<string, object> members =
@@ -1933,7 +2059,9 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (SchemaItem member in item.Members.Where(m => m.Required == true))
                 {
                     object one;
-                    if (!TryMinimal(member, sdkShapes, sampled, out one))
+                    if (!TryMinimal(
+                        member, sdkShapes, sampled, handleTargets, borrows,
+                        path + PathStep + member.Name, out one))
                     {
                         return false;
                     }
@@ -1949,7 +2077,10 @@ namespace PmxEditorMcp.SignatureDump
             if (item.Element != null)
             {
                 object one;
-                if (!TryMinimal(item.Element, sdkShapes, sampled, out one))
+                if (!TryMinimal(
+                    item.Element, sdkShapes, sampled, handleTargets, borrows,
+                    path + PathStep + FirstPosition.ToString(CultureInfo.InvariantCulture),
+                    out one))
                 {
                     return false;
                 }
@@ -2109,6 +2240,30 @@ namespace PmxEditorMcp.SignatureDump
                 .GroupBy(i => i.Name, StringComparer.Ordinal)
                 .Select(g => g.First())
                 .ToArray();
+        }
+
+        /// <summary>
+        /// ハンドルで指す相手を値に取る項目。番号で書くが、どの番号を書いても台帳が預かる相手を
+        /// 指さないので、借りずに埋めることはできない。
+        /// </summary>
+        private static IDictionary<SchemaItem, string> HandleTargets(
+            IDictionary<SchemaItem, string> sdkTypes, ISet<string> handled)
+        {
+            Dictionary<SchemaItem, string> items = new Dictionary<SchemaItem, string>();
+            if (sdkTypes == null || handled == null)
+            {
+                return items;
+            }
+
+            foreach (KeyValuePair<SchemaItem, string> typed in sdkTypes)
+            {
+                if (handled.Contains(typed.Value))
+                {
+                    items[typed.Key] = typed.Value;
+                }
+            }
+
+            return items;
         }
 
         private static bool Handled(

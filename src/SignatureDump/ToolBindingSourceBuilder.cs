@@ -738,7 +738,8 @@ namespace PmxEditorMcp.SignatureDump
             AccessPath listed;
             if (byType.TryGetValue(typeName, out role) && role.Role == TypeRole.HandleTarget)
             {
-                return written + ", false, null, false, " + TypeOf(typeName) + ")";
+                return written + ", false, null, false, " + TypeOf(typeName)
+                    + ", null, null, item => item is " + Code(typeName) + ")";
             }
 
             if (byType.TryGetValue(typeName, out role) && role.Role == TypeRole.Connector)

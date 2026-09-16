@@ -772,6 +772,25 @@ namespace PmxEditorMcp.Tests
             Assert.Contains("source", Message(envelope), StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// 台帳が覚えている型の名前で照らすと、その型を継ぐ実体を基底の型の引数へ渡せない。
+        /// 渡せるかどうかを決めるのは実体の側である。
+        /// </summary>
+        [Fact]
+        public void AnArgumentTakenAsAHandleAcceptsAThingThatExtendsWhatTheCallTakes()
+        {
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("source", 1L);
+            HandleLedger ledger = Ledger();
+            ledger.Issue(typeof(Twin).FullName, new Twin { Made = new Target() }, () => { });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+        }
+
         [Fact]
         public void ReleasingAHandleAlsoLetsTheSdkGoOfTheIssuedThing()
         {
@@ -1456,7 +1475,8 @@ namespace PmxEditorMcp.Tests
                         new[]
                         {
                             new ToolArgument(
-                                "source", typeof(Target), false, null, false, typeof(Target)),
+                                "source", typeof(Target), false, null, false, typeof(Target),
+                                null, null, item => item is Target),
                         },
                         new ToolArgument[0],
                         typeof(Target),
@@ -1479,7 +1499,8 @@ namespace PmxEditorMcp.Tests
                         new[]
                         {
                             new ToolArgument(
-                                "source", typeof(Target), false, null, false, typeof(Target)),
+                                "source", typeof(Target), false, null, false, typeof(Target),
+                                null, null, item => item is Target),
                         },
                         new ToolArgument[0],
                         typeof(Target),

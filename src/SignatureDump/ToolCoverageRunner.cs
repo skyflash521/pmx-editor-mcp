@@ -105,7 +105,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.ReceiverPaths(inventory),
                     inputs.ElementAdders(inventory),
                     inputs.ElementRemovers(inventory),
-                    inputs.ConditionalDangerousTools(inventory));
+                    inputs.ConditionalDangerousTools(inventory),
+                    inputs.TypePaths(inventory));
                 ToolCoverageGate.Require(
                     inputs.Schemas,
                     inputs.Map,

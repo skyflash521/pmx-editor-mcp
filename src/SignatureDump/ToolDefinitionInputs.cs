@@ -183,6 +183,21 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 型の名前から、その型の実体を1つ得るまでに順に呼ぶツールの列へ。引数でハンドルを取る
+        /// 呼び出しは、渡す相手をこの列で作る。
+        /// </summary>
+        public IDictionary<string, IList<string>> TypePaths(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            return ReceiverCallEvidence.ByType(
+                inventory, Map, ToolsByRow(inventory), Schemas);
+        }
+
+        /// <summary>
         /// 受け手をハンドルで要るツールの名前から、その受け手を得るまでに順に呼ぶツールの列へ。
         /// 受け手へ至る列を持たないツールは持たない。受け手の型は行の宣言型から取る——スキーマの
         /// 側の型は呼び出しの引数だけを写すので、受け手は載らない。

@@ -695,6 +695,27 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(_model.Groups[0].Leaves);
         }
 
+        /// <summary>
+        /// 受け取れるかどうかは、預かっている実体で決まる。台帳が覚えている型の名前で照らすと、
+        /// 基底の型を名乗って預けた実体を、具象の型を並べる道へ渡せない。
+        /// </summary>
+        [Fact]
+        public void AHandleIsTakenByWhatItPointsToRatherThanTheNameItWasKeptUnder()
+        {
+            _model.Groups.Add(new Group());
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(
+                typeof(Leaf).FullName, new Item { Label = "一" }, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_leaves",
+                Arguments(ToolDispatch.AssignmentsName, new object[] { Assignment(0, handle) }),
+                handles);
+
+            Assert.Equal(1, Value(envelope)[SetResponse.AddedName]);
+            Assert.Equal("一", ((Item)_model.Groups[0].Leaves[0]).Label);
+        }
+
         [Fact]
         public void AddingUnderAParentThatIsNotThereIsRefused()
         {
@@ -2638,11 +2659,13 @@ namespace PmxEditorMcp.Tests
                     Making(
                         MakeHeldKey,
                         new ToolArgument(
-                            "source", typeof(Item), false, null, false, typeof(Item))),
+                            "source", typeof(Item), false, null, false, typeof(Item), null, null,
+                            item => item is Item)),
                     Making(
                         MakeFromManyKey,
                         new ToolArgument(
-                            "sources", typeof(Item[]), false, null, false, typeof(Item))),
+                            "sources", typeof(Item[]), false, null, false, typeof(Item), null, null,
+                            item => item is Item)),
                     Making(
                         MakeNotedKey,
                         new ToolArgument(

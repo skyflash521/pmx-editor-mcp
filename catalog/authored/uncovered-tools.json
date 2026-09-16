@@ -57,6 +57,14 @@
       "reason": "noEffectCheck"
     },
     {
+      "tool": "motion_add_bone_vme_group_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_add_bones_vme_group_bone",
+      "reason": "noCase"
+    },
+    {
       "tool": "motion_add_vmd_camera_keys",
       "reason": "noCase"
     },
@@ -246,6 +254,18 @@
     },
     {
       "tool": "motion_r_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_register_direction_event_vme_path",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_bone_vme",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_bone_vme_group_bone",
       "reason": "noCase"
     },
     {

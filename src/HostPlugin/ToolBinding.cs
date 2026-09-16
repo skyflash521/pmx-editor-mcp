@@ -182,7 +182,8 @@ namespace PmxEditorMcp
             bool connector = false,
             Type held = null,
             string resident = null,
-            ToolValueShape built = null)
+            ToolValueShape built = null,
+            Func<object, bool> holds = null)
         {
             if (name == null)
             {
@@ -194,6 +195,11 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(type));
             }
 
+            if (held != null && holds == null)
+            {
+                throw new ArgumentNullException(nameof(holds));
+            }
+
             Name = name;
             Type = type;
             Injected = injected;
@@ -202,6 +208,7 @@ namespace PmxEditorMcp
             Held = held;
             Resident = resident;
             Built = built;
+            Holds = holds;
         }
 
         /// <summary>要求の引数の名前。</summary>
@@ -228,6 +235,13 @@ namespace PmxEditorMcp
         /// では、並びの要素1つが指す実体の型になる。
         /// </summary>
         public Type Held { get; }
+
+        /// <summary>
+        /// 預かっている実体を、その引数へ渡せるか。ハンドルで受け取る引数だけが持ち、ほかは null。
+        /// 生成時に作る判定で、台帳が覚えている型の名前は見ない——名前で照らすと、その型を実装する
+        /// 実体を基底の型の引数へ渡せない。
+        /// </summary>
+        public Func<object, bool> Holds { get; }
 
         /// <summary>
         /// その引数へ入れる常駐の受け手を引く鍵。接続の道から得る受け手を取る引数だけが持ち、
