@@ -3,7 +3,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendPMDFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだPMDをいま開いているモデルへ足すので、直接変更型に当たる。この行の呼び出しは、読み込めない位置を渡して、エディタが人へ出す表示を呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "basis": "読み込んだPMDをいま開いているモデルへ足すので、直接変更型に当たる。段取りが書き出したPMDを読ませる。呼び先は読み込みの成否を戻り値で分けないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -21,7 +21,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendXFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだXファイルをいま開いているモデルへ足すので、直接変更型に当たる。Xのファイルを書き出す手立てがSDKに無く、読み込む中身をこの検査では用意できないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "basis": "読み込んだXファイルをいま開いているモデルへ足すので、直接変更型に当たる。実行器が書いた形状を読ませる。呼び先は読み込みの成否を戻り値で分けないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -240,7 +240,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.ImportXFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだXファイルをいま開いているモデルへ取り込むので、直接変更型に当たる。Xのファイルを書き出す手立てがSDKに無く、読み込む中身をこの検査では用意できないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "basis": "読み込んだXファイルをいま開いているモデルへ取り込むので、直接変更型に当たる。実行器が書いた形状を読ませる。呼び先は取り込んだ結果をモデルごと置き換えるので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -353,7 +353,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMDFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだPMDでいま開いているモデルを置き換えるので、直接変更型に当たる。この行の呼び出しは、読み込めない位置を渡して、エディタが人へ出す表示を呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "basis": "読み込んだPMDでいま開いているモデルを置き換えるので、直接変更型に当たる。段取りが書き出したPMDを読ませる。置き換えたあとのモデルは読み込む元と同じ中身なので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -371,7 +371,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMXFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだPMXでいま開いているモデルを置き換えるので、直接変更型に当たる。この行の呼び出しは、在りもしない位置を渡して、その位置が無いことを呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "basis": "読み込んだPMXでいま開いているモデルを置き換えるので、直接変更型に当たる。段取りが書き出したPMXを読ませる。置き換えたあとのモデルは読み込む元と同じ中身なので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -3259,7 +3259,7 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.FromFile(System.String)",
       "editKind": "duplicateEdit",
-      "basis": "いまのPMXを複製して読み込んだ内容で置き換え、まとめて反映するので、複製編集型に当たる。この行の呼び出しは、在りもしない位置を渡して、その位置が無いことを呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "basis": "いまのPMXを複製して読み込んだ内容で置き換え、まとめて反映するので、複製編集型に当たる。段取りが書き出したPMXを読ませる。読み込んだ中身は書き出した元と同じなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "updateSpec": {
         "refresh": []
       },
@@ -6414,7 +6414,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.FromFile(System.String)",
       "editKind": "directChange",
-      "basis": "ファイルから読み込んで中身を置き換える。モーションのデータは長寿命の持ち物なので、それへ直に作用する。実機で呼ぶと、正本が渡せる中身では読み込みが終わらず、ホストが待つ上限の時間を超える。",
+      "basis": "ファイルから読み込んで中身を置き換える。モーションのデータは長寿命の持ち物なので、それへ直に作用する。実行器が書いたモーションを読ませる。",
       "postcondition": [
         {
           "effectType": "stateWritten",

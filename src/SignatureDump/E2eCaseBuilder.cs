@@ -41,6 +41,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>受け手を1つのハンドルで指す入力の名前。</summary>
         private const string AimName = "pmxHandle";
 
+        /// <summary>書き先を受け取る入力の名前。</summary>
+        private const string PathName = "path";
+
         /// <summary>相手を位置の並びで指す入力の名前。</summary>
         private const string IndicesName = "indices";
 
@@ -261,7 +264,8 @@ namespace PmxEditorMcp.SignatureDump
                 : samples.Calls
                     .Where(c => c.Refused != null)
                     .ToDictionary(c => c.SignatureKey, c => c, StringComparer.Ordinal);
-            List<E2eCase> cases = new List<E2eCase>(SetupCases(schemas, factories));
+            List<E2eCase> cases = new List<E2eCase>(PreparingCases(schemas));
+            cases.AddRange(SetupCases(schemas, factories));
 
             // 直に呼ぶと状態が動く行は、その動きが後の検査の見るものを変える——取り消しは段取りが
             // 作った要素を消し、再生の開始はビューを動かし続ける。順に並べる中では避けられないので、
@@ -362,6 +366,42 @@ namespace PmxEditorMcp.SignatureDump
             return one.Expectation != E2eExpectation.Refusal
                 ? -1
                 : Array.IndexOf(SharedRefusals, one.Purpose);
+        }
+
+        /// <summary>
+        /// どの検査よりも先に流す段取り。読み込む中身が要るツールのために、いま開いているものを
+        /// 一時の置き場へ書き出す。読み込めるものを作れるのはエディタだけなので、検査の中で作る。
+        /// </summary>
+        private static IEnumerable<E2eCase> PreparingCases(ToolSchemaTable schemas)
+        {
+            string[][] saving =
+            {
+                new[] { SavingPmdToolName, SavedPmdPath },
+                new[] { SavingPmxToolName, SavedPmxPath },
+                new[] { SavingViewSettingToolName, SavedViewSettingPath },
+            };
+            foreach (string[] one in saving.Where(o => Of(schemas, o[0]) != null))
+            {
+                yield return new E2eCase(
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    one[0],
+                    "読み込む元を書き出せること",
+                    new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { PathName, one[1] },
+                        { ConfirmName, true },
+                    },
+                    E2eExpectation.Success,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    PathName);
+            }
         }
 
         /// <summary>
@@ -1231,9 +1271,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 事後条件を実機で確かめる行か。確かめる行を最後へ回さないのは、直に呼ぶと状態が動く行の
-        /// 中に、呼び先を使えなくするものがあるからである——在りもしないファイルの読み込みは、
-        /// 断られたあとエディタを受け手の無い状態にする。そのあとで確かめても、見ているのは宣言した
-        /// 効果ではなくその失敗になる。
+        /// 中に、呼び先を使えなくするものがあるからである。そのあとで確かめても、見ているのは
+        /// 宣言した効果ではなくその失敗になる。
         /// </summary>
         private static bool Verified(ToolMapRow row)
         {

@@ -423,39 +423,37 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendPMDFile(System.String)",
       "arguments": {
-        "path": "在りもしない位置.pmd"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.pmd"
       },
-      "basis": "渡せる値は1組しかないので、読み込みの失敗をエディタが人へ尋ねる表示を、呼び出し元へ知らせるところまでを見る側へ充てる。そのために在りもしない位置を渡す。"
+      "basis": "段取りが書き出したPMDを足す。読み込めるPMDを作れるのはエディタだけなので、検査の中で書き出したものを読ませる。"
     },
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendXFile(System.String)",
       "arguments": {
-        "path": "在りもしない位置.x"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.x"
       },
-      "basis": "読み込める形状のファイルを検査の側で用意できないので、在りもしない位置を渡す。エディタは読み込みの失敗を人へ尋ねるので、その表示を知らせることまでを確かめる。"
+      "basis": "実行器が書いた形状を足す。呼び先は読み込みの成否を戻り値で分けないので、呼び出しが届くところまでを見る。"
     },
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.ImportXFile(System.String)",
       "arguments": {
-        "path": "在りもしない位置.x"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.x"
       },
-      "basis": "読み込める形状のファイルを検査の側で用意できないので、在りもしない位置を渡す。エディタは読み込みの失敗を人へ尋ねるので、その表示を知らせることまでを確かめる。"
+      "basis": "実行器が書いた形状を取り込む。頂点3つと面1つと材質1つだけの中身で、読み込みが成り立つことを見る。"
     },
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMDFile(System.String)",
       "arguments": {
-        "path": "在りもしない位置.pmd"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.pmd"
       },
-      "basis": "渡せる値は1組しかないので、読み込みの失敗をエディタが人へ尋ねる表示を、呼び出し元へ知らせるところまでを見る側へ充てる。そのために在りもしない位置を渡す。"
+      "basis": "段取りが書き出したPMDで置き換える。読み込めるPMDを作れるのはエディタだけなので、検査の中で書き出したものを読ませる。"
     },
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMXFile(System.String)",
       "arguments": {
-        "path": "在りもしない位置.pmx"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.pmx"
       },
-      "basis": "渡せる値は1組しかないので、その位置が無いことを呼び出し元へ知らせることを見る側へ充てる。そのために在りもしない位置を渡す。",
-      "refused": "TOOL_OPERATION_FAILED",
-      "says": "見つかりませんでした"
+      "basis": "段取りが書き出したPMXで置き換える。読み込めるPMXを作れるのはエディタだけなので、検査の中で書き出したものを読ませる。"
     },
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.SaveMaterialName(System.String)",
@@ -538,11 +536,9 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.FromFile(System.String)",
       "arguments": {
-        "path": "在りもしない位置.pmx"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.pmx"
       },
-      "basis": "渡せる値は1組しかないので、その位置が無いことを呼び出し元へ知らせることを見る側へ充てる。そのために在りもしない位置を渡す。",
-      "refused": "TOOL_OPERATION_FAILED",
-      "says": "見つかりませんでした"
+      "basis": "段取りが書き出したPMXを読み込む。読み込めるPMXを作れるのはエディタだけなので、検査の中で書き出したものを読ませる。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.ToFile(System.String)",
@@ -785,20 +781,16 @@
     {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpd(System.String)",
       "arguments": {
-        "path": "在りもしない位置.vpd"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.vpd"
       },
-      "basis": "読み込めるポーズのファイルを書き出す手立てがSDKに無く、検査の側で用意できないので、在りもしない位置を渡して、その位置が無いことを知らせる側で確かめる。",
-      "refused": "TOOL_OPERATION_FAILED",
-      "says": "見つかりませんでした"
+      "basis": "実行器が書いたポーズを読み込む。持つ骨を0件にしてあるので、開いているモデルの骨の名前に依らない。"
     },
     {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpdFromText(System.String)",
       "arguments": {
-        "s": "Vocaloid Pose Data file"
+        "s": "Vocaloid Pose Data file\r\n\r\ne2e.osm;\r\n0;\r\n"
       },
-      "basis": "読めるポーズの本文を検査の側で用意できないので、ポーズを1つも持たない見出しだけを渡して、読み解けないことを知らせる側で確かめる。",
-      "refused": "TOOL_OPERATION_FAILED",
-      "says": "オブジェクト参照がオブジェクト インスタンスに設定されていません"
+      "basis": "ポーズの本文をそのまま渡す。持つ骨を0件にしてあるので、開いているモデルの骨の名前に依らない。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEVertexEditConnector.SetVertexMemory(System.Int32,System.Int32[])",
@@ -822,9 +814,9 @@
     {
       "signatureKey": "PEPlugin.View.IPEViewSettingConnector.LoadViewSetting(System.String)",
       "arguments": {
-        "path": "在りもしない位置.ini"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.xml"
       },
-      "basis": "渡せる値は1組しかないので、位置が無くても設定を変えずに返すことを見る側へ充てる。そのために在りもしない位置を渡す。"
+      "basis": "段取りが書き出した表示の設定を読み込む。読み込める中身はエディタが書き出したものに限られる。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEViewSettingConnector.SaveViewSetting(System.String)",
@@ -850,6 +842,15 @@
         ]
       },
       "basis": "先頭の1件を見えるようにする。空の並びでは、見え方が1件も変わらない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.FromFile(System.String)",
+      "arguments": {
+        "args": {
+          "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.vmd"
+        }
+      },
+      "basis": "実行器が書いたモーションを読み込む。表示とIKのキーを1つだけ持つ中身で、読み込みが成り立つことを見る。"
     },
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.ToFile(System.String,System.Boolean)",

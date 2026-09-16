@@ -211,7 +211,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// 読み込む中身が要るツールのために、先に書き出しておく段取り。読み込めるモデルを作れるのは
         /// エディタだけなので、検査の中で書き出して、それを読ませる。
         /// </summary>
-        [Fact(Skip = "impl pending: 読み込む元のモデルを書き出す段取りを、ほかのどの検査よりも先に流す")]
+        [Fact]
         public void ThePreparationComesBeforeEveryOtherCase()
         {
             IList<E2eCase> cases = Preparing();
@@ -227,7 +227,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Second, cases[3].Tool);
         }
 
-        [Fact(Skip = "impl pending: 書き出しの段取りが、書き先と確認を渡して成功を確かめる")]
+        [Fact]
         public void ThePreparationPassesThePlaceAndTheConfirmation()
         {
             IList<E2eCase> cases = Preparing();

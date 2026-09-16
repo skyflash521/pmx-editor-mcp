@@ -24,6 +24,68 @@ const RESPONSE_TIMEOUT_MS = 130000;
 const PIPE_PREFIX = "pmx-editor-mcp-";
 
 /**
+ * 読み込む中身が要るツールへ渡す形状。頂点3つと面1つと材質1つだけを持つ、文字で書いた
+ * DirectXの形である。材質を宣言しないと、読み取る側が材質の並びを持たないまま添字で引く。
+ * 書き出す手立てがエディタに無いので、読める最小のものをここで組む。
+ */
+const MESH = [
+    "xof 0303txt 0032",
+    "",
+    "Mesh {",
+    " 3;",
+    " 0.000000;0.000000;0.000000;,",
+    " 1.000000;0.000000;0.000000;,",
+    " 0.000000;1.000000;0.000000;;",
+    " 1;",
+    " 3;0,1,2;;",
+    "",
+    " MeshMaterialList {",
+    "  1;",
+    "  1;",
+    "  0;",
+    "  Material {",
+    "   1.000000;1.000000;1.000000;1.000000;;",
+    "   0.000000;",
+    "   0.000000;0.000000;0.000000;;",
+    "   0.000000;0.000000;0.000000;;",
+    "  }",
+    " }",
+    "}",
+    "",
+].join("\r\n");
+
+/**
+ * 読み込む中身が要るツールへ渡すモーション。表示とIKのキーを1つだけ持つ。綴りと並びはVMDの形が
+ * 定めるもので、書き出す手立てがエディタのSDKに無いのでここで組む。
+ */
+function motion() {
+    const head = Buffer.alloc(30);
+    head.write("Vocaloid Motion Data 0002", 0, "latin1");
+    const named = Buffer.alloc(20);
+    named.write("e2e", 0, "latin1");
+    const counts = Buffer.alloc(24);
+    counts.writeUInt32LE(1, 20);
+    const key = Buffer.alloc(9);
+    key.writeUInt32LE(0, 0);
+    key.writeUInt8(1, 4);
+    key.writeUInt32LE(0, 5);
+
+    return Buffer.concat([head, named, counts, key]);
+}
+
+/**
+ * 読み込む中身が要るツールへ渡すポーズ。持つ骨を0件にしてあるので、開いているモデルの骨の名前に
+ * 依らない。書き出す手立てがエディタのSDKに無いのでここで組む。
+ */
+const POSE = [
+    "Vocaloid Pose Data file",
+    "",
+    "e2e.osm;",
+    "0;",
+    "",
+].join("\r\n");
+
+/**
  * 検査が書く先の置き場。走るたびに作り直して終わりに消すので、前の実行が残したものが在ることに
  * ならない。正本はこの名前で書き先を綴り、値はここで決まる——走らせる機械ごとに位置が変わる。
  */
@@ -991,6 +1053,9 @@ if (cases.length === 0) {
 
 fs.rmSync(TEMPORARY_PLACE, { recursive: true, force: true });
 fs.mkdirSync(TEMPORARY_PLACE, { recursive: true });
+fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.x"), MESH, "utf8");
+fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.vmd"), motion());
+fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.vpd"), POSE, "utf8");
 
 const finished = await run(PIPE_PREFIX + processId, cases, processId);
 
