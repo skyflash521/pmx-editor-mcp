@@ -30,6 +30,54 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// どれかの行が作ると述べる型の名前。作る行の戻り値から並びと配列の印を外して集め、枝の型を
+        /// 作れる抽象の型も併せて持つ——作れる枝を並びへ入れれば、その抽象の型としても指せる。
+        /// <paramref name="concrete"/> は抽象の型からその枝の型を引く表である。
+        /// </summary>
+        public static ISet<string> Made(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete)
+        {
+            if (map == null)
+            {
+                throw new ArgumentNullException(nameof(map));
+            }
+
+            if (signatures == null)
+            {
+                throw new ArgumentNullException(nameof(signatures));
+            }
+
+            if (concrete == null)
+            {
+                throw new ArgumentNullException(nameof(concrete));
+            }
+
+            HashSet<string> made = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows)
+            {
+                SignatureRecord signature;
+                if (!signatures.TryGetValue(row.SignatureKey, out signature)
+                    || !Issues(row, signature))
+                {
+                    continue;
+                }
+
+                made.Add(
+                    TypeDefinitionName.OfElement(ValueTypeName.Contained(signature.ValueType)));
+            }
+
+            foreach (KeyValuePair<string, IList<string>> branched in concrete
+                .Where(c => c.Value.Any(made.Contains)))
+            {
+                made.Add(branched.Key);
+            }
+
+            return made;
+        }
+
+        /// <summary>
         /// 提供対象のうち、ハンドル操作型の実体を返しうるシグネチャと、その発行の種別。公開
         /// コンストラクタは <see cref="HandleIssuanceKind.Constructor"/>、コネクタ型のメソッドは
         /// <see cref="HandleIssuanceKind.Factory"/>、ハンドル操作型のインスタンスメソッドは

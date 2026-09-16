@@ -244,9 +244,7 @@ namespace PmxEditorMcp
                     element.Key,
                     dispatch.Guarded(
                         bound.Receiver.Edit,
-                        context => bound.Removes
-                            ? dispatch.Remove(context, bound)
-                            : dispatch.Add(context, bound)));
+                        context => Acting(dispatch, bound)(context)));
             }
         }
 
@@ -2902,6 +2900,108 @@ namespace PmxEditorMcp
             Release(context, assignments.SelectMany(a => a.Handles).ToList());
 
             return ToolEnvelope.Success(SetResponse.Added(indices.ToArray()));
+        }
+
+        /// <summary>その要素のツールが行うこと。</summary>
+        private static Func<McpMethodContext, object> Acting(
+            ToolDispatch dispatch, ToolElements tool)
+        {
+            switch (tool.Kind)
+            {
+                case ToolElementKind.Remove:
+                    return context => dispatch.Remove(context, tool);
+                case ToolElementKind.Hold:
+                    return context => dispatch.Hold(context, tool);
+                default:
+                    return context => dispatch.Add(context, tool);
+            }
+        }
+
+        /// <summary>
+        /// 所有するリストに在る、指した位置の要素を台帳へ預けてハンドルを返す。並びを変えないので
+        /// 反映もしない。預けたハンドルは親のハンドルに連なるので、親を手放せば一緒に失効する。
+        /// 親をハンドルで指していない呼び出しは断る——位置で辿った相手は複製で、その中の要素を
+        /// 預けると、書き換えても元のモデルへ届かない。
+        /// </summary>
+        private object Hold(McpMethodContext context, ToolElements tool)
+        {
+            string code;
+            string message;
+            long? handle;
+            Pointed pointed;
+            List<string> known = new List<string>(Pointing(tool.Access, false, tool.Receiver));
+            if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
+                || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
+                || !TryPointed(
+                    context, tool.Access, false, handle, out pointed, out code, out message,
+                    tool.Receiver))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            if (!pointed.ParentByHandle)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.InvalidArgument,
+                    TargetNames.Parent.Handles
+                        + " で指さなければならない——位置で辿った相手は複製なので、"
+                        + "その中の要素を預けると、書き換えても元のモデルへ届かない。");
+            }
+
+            IList<Spot> found = null;
+            Refusal refused = null;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                SdkList list;
+                IList<Spot> column;
+                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, handle, pointed.Held, out target, out refused)
+                    || !TryList(tool.Access.RowKey, out list, out refused)
+                    || !TryColumn(
+                        context,
+                        tool.Access,
+                        tool.Receiver,
+                        target,
+                        pointed,
+                        Accepted(tool.Access, null, false),
+                        out column,
+                        out refused)
+                    || !TryOfItemType(column, tool.Access, null, out refused))
+                {
+                    return;
+                }
+
+                found = column;
+            }, out failure, out unavailable))
+            {
+                return Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return Failed(failure, EditStage.BeforeCommit);
+            }
+
+            if (refused != null)
+            {
+                return refused.Envelope;
+            }
+
+            List<object> handed = new List<object>(found.Count);
+            foreach (Spot spot in found)
+            {
+                handed.Add((long)context.Handles.Issue(
+                    tool.Access.Element.FullName,
+                    spot.Item,
+                    () => { },
+                    spot.ParentHandle.HasValue
+                        ? new[] { (int)spot.ParentHandle.Value }
+                        : null));
+            }
+
+            return ToolEnvelope.Success(SetResponse.PerTarget(handed, handed.Count));
         }
 
         /// <summary>所有するリストから、指した位置の要素を取り除く。</summary>

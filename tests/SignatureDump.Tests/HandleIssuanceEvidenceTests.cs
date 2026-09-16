@@ -121,6 +121,119 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => HandleIssuanceEvidence.Candidates(inventory, Roles(), null));
         }
 
+        [Fact]
+        public void ARowThatCreatesBringsTheTypeItReturns()
+        {
+            SignatureRecord signature = Method(Connector, "Make", Handle);
+
+            Assert.Equal(new[] { Handle }, Made(signature).OrderBy(n => n, StringComparer.Ordinal).ToArray());
+        }
+
+        [Fact]
+        public void ARowThatCreatesManyBringsTheTypeInside()
+        {
+            SignatureRecord signature = Method(
+                Connector, "MakeAll", "System.Collections.Generic.IList<" + Handle + ">");
+
+            Assert.Equal(new[] { Handle }, Made(signature).ToArray());
+        }
+
+        [Fact]
+        public void ARowThatCreatesNothingBringsNoType()
+        {
+            Assert.Empty(HandleIssuanceEvidence.Made(
+                Map(Reading(Method(Connector, "Make", Handle))),
+                Signatures(Method(Connector, "Make", Handle)),
+                Branches()));
+        }
+
+        /// <summary>
+        /// 枝の型を作れるなら、その枝を並びへ入れれば抽象の型としても指せる。作れるものの数え方が
+        /// 枝だけを見ていると、抽象の型が作れないものとして数えられてしまう。
+        /// </summary>
+        [Fact]
+        public void AnAbstractTypeWhoseBranchIsMadeIsMadeToo()
+        {
+            SignatureRecord signature = Method(Connector, "Make", Handle);
+            IDictionary<string, IList<string>> branches = Branches();
+            branches.Add("N.IBase", new List<string> { Handle });
+
+            Assert.Equal(
+                new[] { "N.IBase", Handle },
+                HandleIssuanceEvidence.Made(
+                        Map(Creating(signature)), Signatures(signature), branches)
+                    .OrderBy(n => n, StringComparer.Ordinal)
+                    .ToArray());
+        }
+
+        [Fact]
+        public void EveryArgumentOfMadeIsRequired()
+        {
+            SignatureRecord signature = Method(Connector, "Make", Handle);
+            ToolMap map = Map(Creating(signature));
+            IDictionary<string, SignatureRecord> signatures = Signatures(signature);
+
+            Assert.Throws<ArgumentNullException>(
+                () => HandleIssuanceEvidence.Made(null, signatures, Branches()));
+            Assert.Throws<ArgumentNullException>(
+                () => HandleIssuanceEvidence.Made(map, null, Branches()));
+            Assert.Throws<ArgumentNullException>(
+                () => HandleIssuanceEvidence.Made(map, signatures, null));
+        }
+
+        private static ISet<string> Made(SignatureRecord signature)
+        {
+            return HandleIssuanceEvidence.Made(
+                Map(Creating(signature)), Signatures(signature), Branches());
+        }
+
+        private static IDictionary<string, IList<string>> Branches()
+        {
+            return new Dictionary<string, IList<string>>(StringComparer.Ordinal);
+        }
+
+        private static ToolMap Map(params ToolMapRow[] rows)
+        {
+            return new ToolMap(rows.ToList());
+        }
+
+        private static ToolMapRow Creating(SignatureRecord signature)
+        {
+            return new ToolMapRow(
+                signature.Key,
+                ToolMapEditKind.Read,
+                null,
+                "題材の根拠。",
+                new List<Postcondition>
+                {
+                    new Postcondition(
+                        EffectType.HandleCreated,
+                        string.Empty,
+                        EffectCheckKind.Handle,
+                        "session_release_handle",
+                        null,
+                        null,
+                        EffectComparison.AnyChanged,
+                        null,
+                        false,
+                        null),
+                },
+                null,
+                null);
+        }
+
+        private static ToolMapRow Reading(SignatureRecord signature)
+        {
+            return new ToolMapRow(
+                signature.Key, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null);
+        }
+
+        private static IDictionary<string, SignatureRecord> Signatures(
+            params SignatureRecord[] signatures)
+        {
+            return signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+        }
+
         private static HandleIssuanceKind Only(
             IDictionary<string, HandleIssuanceKind> candidates, SignatureRecord signature)
         {

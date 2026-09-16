@@ -103,7 +103,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             foreach (KeyValuePair<string, TypeRoleRecord> element in ElementTools(
-                map, signatures, roles).OrderBy(e => e.Key, StringComparer.Ordinal))
+                map, signatures, roles, inventory).OrderBy(e => e.Key, StringComparer.Ordinal))
             {
                 materials.Add(Material(
                     element.Key,
@@ -213,13 +213,14 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 所有するリストの要素が持つ、追加と削除のツールごとの要素の型の役割。これらのツールも
-        /// 行を持たず、そのリストの行が表へ載ることで現れる。
+        /// 所有するリストの要素が持つ、追加と削除と、在る要素をハンドルで指すツールごとの要素の型の
+        /// 役割。これらのツールも行を持たず、そのリストの行が表へ載ることで現れる。
         /// </summary>
         private static IDictionary<string, TypeRoleRecord> ElementTools(
             ToolMap map,
             IDictionary<string, SignatureRecord> signatures,
-            TypeRoleTable roles)
+            TypeRoleTable roles,
+            InventoryRecord inventory)
         {
             Dictionary<string, TypeRoleRecord> tools =
                 new Dictionary<string, TypeRoleRecord>(StringComparer.Ordinal);
@@ -230,6 +231,21 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     tools[tool] = element;
                 }
+            }
+
+            IDictionary<string, TypeRole> roleOf = roles.Types.ToDictionary(
+                t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
+            foreach (TypeRoleRecord element in ElementToolRule.Holdings(
+                map,
+                signatures,
+                roles,
+                HandleIssuanceEvidence.Made(
+                    map,
+                    signatures,
+                    ElementCollectionEvidence.ConcreteTypes(inventory, roleOf)),
+                ElementPathEvidence.Issued(inventory, roles)).Values)
+            {
+                tools[ElementToolRule.Holding(element)] = element;
             }
 
             return tools;

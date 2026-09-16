@@ -1106,6 +1106,91 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void HoldingHandsBackAHandleForThePointedElement()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            Item first = new Item { Label = "一" };
+            held.Leaves.Add(first);
+            held.Leaves.Add(new Item { Label = "二" });
+            int handle = handles.Issue(typeof(Group).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_hold_leaf",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.Indices, new object[] { 0 }),
+                handles);
+
+            Assert.Same(first, Held(handles, Assert.Single(Handed(envelope))));
+            Assert.Equal(2, held.Leaves.Count);
+            Assert.Equal(0, _commits);
+        }
+
+        [Fact]
+        public void HoldingHandsBackOneHandlePerElementInTheOrderThePointingGives()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            Item first = new Item { Label = "一" };
+            Item second = new Item { Label = "二" };
+            held.Leaves.Add(first);
+            held.Leaves.Add(second);
+            int handle = handles.Issue(typeof(Group).FullName, held, () => { });
+
+            IList<object> handed = Handed(Call(
+                "model_hold_leaf",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.All, true),
+                handles));
+
+            Assert.Equal(
+                new object[] { first, second },
+                handed.Select(id => Held(handles, id)).ToArray());
+        }
+
+        [Fact]
+        public void TheHandleFromHoldingFallsWithTheParentItCameFrom()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            held.Leaves.Add(new Item { Label = "一" });
+            int handle = handles.Issue(typeof(Group).FullName, held, () => { });
+
+            int element = (int)(long)Assert.Single(Handed(Call(
+                "model_hold_leaf",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.Indices, new object[] { 0 }),
+                handles)));
+
+            HandleReleaseResult released;
+            Assert.True(handles.TryRelease(handle, out released));
+            Assert.False(handles.IsValid(element));
+        }
+
+        /// <summary>
+        /// 位置で辿った相手はその複製なので、その中の要素を預けると、書き換えても元のモデルへ
+        /// 届かないハンドルを渡すことになる。
+        /// </summary>
+        [Fact]
+        public void HoldingAnElementUnderAParentPointedByPositionIsRefused()
+        {
+            Group group = new Group();
+            group.Leaves.Add(new Item { Label = "一" });
+            _model.Groups.Add(group);
+
+            IDictionary<string, object> envelope = Call(
+                "model_hold_leaf",
+                Arguments(
+                    TargetNames.Parent.All, true,
+                    TargetNames.Element.Indices, new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
         public void PointingTheParentByHandleAndSwitchingThePmxIsRefused()
         {
             HandleLedger handles = Ledger();
@@ -1916,6 +2001,23 @@ namespace PmxEditorMcp.Tests
             return (IDictionary<string, object>)envelope["value"];
         }
 
+        /// <summary>その番号で台帳が預かっている相手。</summary>
+        private static object Held(HandleLedger handles, object id)
+        {
+            object target;
+            Assert.True(handles.TryGet((int)(long)id, out target), "台帳がその番号を持たない。");
+
+            return target;
+        }
+
+        /// <summary>台帳へ預けて返したハンドルの並び。</summary>
+        private static IList<object> Handed(IDictionary<string, object> envelope)
+        {
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+
+            return (IList<object>)envelope["value"];
+        }
+
         private static IList<IDictionary<string, object>> Items(IDictionary<string, object> value)
         {
             return ((object[])value[ToolDispatch.ItemsName])
@@ -2701,12 +2803,13 @@ namespace PmxEditorMcp.Tests
         {
             return new Dictionary<string, ToolElements>(StringComparer.Ordinal)
             {
-                { "model_add_items", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Direct()) },
-                { "model_add_groups", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Grouped()) },
-                { "model_add_leaves", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Nested()) },
-                { "model_remove_leaves", new ToolElements(true, Rooted(EditKind.DuplicateEdit), Nested()) },
-                { "model_add_veins", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Veined()) },
-                { "model_add_sprigs", new ToolElements(false, Rooted(EditKind.DuplicateEdit), Sprigged()) },
+                { "model_add_items", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Direct()) },
+                { "model_add_groups", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Grouped()) },
+                { "model_add_leaves", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Nested()) },
+                { "model_remove_leaves", new ToolElements(ToolElementKind.Remove, Rooted(EditKind.DuplicateEdit), Nested()) },
+                { "model_hold_leaf", new ToolElements(ToolElementKind.Hold, Rooted(EditKind.Read), Nested()) },
+                { "model_add_veins", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Veined()) },
+                { "model_add_sprigs", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Sprigged()) },
             };
         }
 

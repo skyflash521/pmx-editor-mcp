@@ -54,37 +54,43 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ElementToolRule.Holding(Role(Element, "vertex", "vertices")));
         }
 
-        [Fact(Skip = "impl pending: 作るツールを持たない要素の型だけが、ハンドルで指す名前を持ち込む")]
+        [Fact]
         public void AnElementTypeNothingMakesBringsTheHoldingName()
         {
             Assert.Equal(
                 new[] { "model_hold_vertex" },
                 ElementToolRule.HoldingNames(
-                        Map(ListKey),
-                        Signatures(),
-                        Roles(true),
-                        new HashSet<string>(StringComparer.Ordinal))
+                        Map(ListKey), Signatures(), Roles(true), Nothing(), Issued())
                     .ToArray());
         }
 
-        [Fact(Skip = "impl pending: 作るツールを持つ要素の型は、ハンドルで指す名前を持ち込まない")]
+        [Fact]
         public void AnElementTypeSomethingMakesBringsNoHoldingName()
         {
             Assert.Empty(ElementToolRule.HoldingNames(
                 Map(ListKey),
                 Signatures(),
                 Roles(true),
-                new HashSet<string>(new[] { Element }, StringComparer.Ordinal)));
+                new HashSet<string>(new[] { Element }, StringComparer.Ordinal),
+                Issued()));
         }
 
-        [Fact(Skip = "impl pending: 他所が所有するリストは、ハンドルで指す名前を持ち込まない")]
+        /// <summary>
+        /// 親をハンドルで指せない道では、位置で辿った相手が複製になる。その中の要素を預けても
+        /// 書き換えが元のモデルへ届かないので、名前を立てても呼べないツールになる。
+        /// </summary>
+        [Fact]
+        public void AListWhoseOwnerTakesNoHandleBringsNoHoldingName()
+        {
+            Assert.Empty(ElementToolRule.HoldingNames(
+                Map(ListKey), Signatures(), Roles(true), Nothing(), Nothing()));
+        }
+
+        [Fact]
         public void AListThatOnlyPointsAtElementsBringsNoHoldingName()
         {
             Assert.Empty(ElementToolRule.HoldingNames(
-                Map(ListKey),
-                Signatures(),
-                Roles(false),
-                new HashSet<string>(StringComparer.Ordinal)));
+                Map(ListKey), Signatures(), Roles(false), Nothing(), Issued()));
         }
 
         [Fact]
@@ -93,22 +99,54 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentNullException>(() => ElementToolRule.Holding(null));
         }
 
-        [Fact(Skip = "impl pending: 引数の欠けを呼び出しの時点で断る")]
+        [Fact]
         public void EveryArgumentOfHoldingNamesIsRequired()
         {
             ToolMap map = Map(ListKey);
             IDictionary<string, SignatureRecord> signatures = Signatures();
             TypeRoleTable roles = Roles(true);
-            ISet<string> made = new HashSet<string>(StringComparer.Ordinal);
 
             Assert.Throws<ArgumentNullException>(
-                () => ElementToolRule.HoldingNames(null, signatures, roles, made));
+                () => ElementToolRule.HoldingNames(null, signatures, roles, Nothing(), Issued()));
             Assert.Throws<ArgumentNullException>(
-                () => ElementToolRule.HoldingNames(map, null, roles, made));
+                () => ElementToolRule.HoldingNames(map, null, roles, Nothing(), Issued()));
             Assert.Throws<ArgumentNullException>(
-                () => ElementToolRule.HoldingNames(map, signatures, null, made));
+                () => ElementToolRule.HoldingNames(map, signatures, null, Nothing(), Issued()));
             Assert.Throws<ArgumentNullException>(
-                () => ElementToolRule.HoldingNames(map, signatures, roles, null));
+                () => ElementToolRule.HoldingNames(map, signatures, roles, null, Issued()));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementToolRule.HoldingNames(map, signatures, roles, Nothing(), null));
+        }
+
+        [Fact]
+        public void TheRowKeyLeadsToTheElementTypeThatTakesHolding()
+        {
+            KeyValuePair<string, TypeRoleRecord> found = Assert.Single(
+                ElementToolRule.Holdings(
+                    Map(ListKey), Signatures(), Roles(true), Nothing(), Issued()));
+
+            Assert.Equal(ListKey, found.Key);
+            Assert.Equal(Element, found.Value.TypeName);
+        }
+
+        [Fact]
+        public void ARowWhoseElementIsMadeLeadsToNoHolding()
+        {
+            Assert.Empty(ElementToolRule.Holdings(
+                Map(ListKey),
+                Signatures(),
+                Roles(true),
+                new HashSet<string>(new[] { Element }, StringComparer.Ordinal),
+                Issued()));
+        }
+
+        [Fact]
+        public void TheMadeAndTheIssuedOfHoldingsAreRequired()
+        {
+            Assert.Throws<ArgumentNullException>(() => ElementToolRule.Holdings(
+                Map(ListKey), Signatures(), Roles(true), null, Issued()));
+            Assert.Throws<ArgumentNullException>(() => ElementToolRule.Holdings(
+                Map(ListKey), Signatures(), Roles(true), Nothing(), null));
         }
 
         [Fact]
@@ -119,6 +157,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(ListKey, found.Key);
             Assert.Equal(Element, found.Value.TypeName);
+        }
+
+        /// <summary>何も持たない名前の集まり。</summary>
+        private static ISet<string> Nothing()
+        {
+            return new HashSet<string>(StringComparer.Ordinal);
+        }
+
+        /// <summary>ハンドルが出る型。このリストを持つ型が入っている。</summary>
+        private static ISet<string> Issued()
+        {
+            return new HashSet<string>(new[] { Owner }, StringComparer.Ordinal);
         }
 
         private static TypeRoleRecord Role(string typeName, string noun, string plural)

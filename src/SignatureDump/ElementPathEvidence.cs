@@ -188,10 +188,37 @@ namespace PmxEditorMcp.SignatureDump
 
             IDictionary<string, TypeRole> roleOf = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t.Role, StringComparer.Ordinal);
-            IDictionary<string, IList<string>> concrete =
-                ElementCollectionEvidence.ConcreteTypes(inventory, roleOf);
-            IDictionary<string, SignatureRecord> signatures = inventory.Signatures.ToDictionary(
-                s => s.Key, s => s, StringComparer.Ordinal);
+
+            return Issued(
+                inventory.Signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
+                ElementCollectionEvidence.ConcreteTypes(inventory, roleOf),
+                roles);
+        }
+
+        /// <summary>
+        /// ハンドルを発行されうる型。列挙をそのまま持たない側のための形で、
+        /// <paramref name="concrete"/> は抽象の型からその枝の型を引く表である。
+        /// </summary>
+        public static ISet<string> Issued(
+            IDictionary<string, SignatureRecord> signatures,
+            IDictionary<string, IList<string>> concrete,
+            TypeRoleTable roles)
+        {
+            if (signatures == null)
+            {
+                throw new ArgumentNullException(nameof(signatures));
+            }
+
+            if (concrete == null)
+            {
+                throw new ArgumentNullException(nameof(concrete));
+            }
+
+            if (roles == null)
+            {
+                throw new ArgumentNullException(nameof(roles));
+            }
+
             HashSet<string> issued = new HashSet<string>(StringComparer.Ordinal);
             foreach (ElementCollectionRecord collection in roles.Collections.Where(c => c.Owns))
             {

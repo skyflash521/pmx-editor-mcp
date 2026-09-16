@@ -553,10 +553,23 @@ namespace PmxEditorMcp
         public IList<ToolField> Fields { get; }
     }
 
-    /// <summary>所有するリストへ加える・から取り除くツール1件。</summary>
+    /// <summary>所有するリストの要素を相手にするツールが行うこと。</summary>
+    public enum ToolElementKind
+    {
+        /// <summary>リストの末尾へ加える。</summary>
+        Add,
+
+        /// <summary>リストから取り除く。</summary>
+        Remove,
+
+        /// <summary>リストに在る要素を台帳へ預けて、そのハンドルを返す。</summary>
+        Hold,
+    }
+
+    /// <summary>所有するリストの要素を相手にするツール1件。</summary>
     public sealed class ToolElements
     {
-        public ToolElements(bool removes, ToolReceiver receiver, ToolAccess access)
+        public ToolElements(ToolElementKind kind, ToolReceiver receiver, ToolAccess access)
         {
             if (receiver == null)
             {
@@ -573,13 +586,13 @@ namespace PmxEditorMcp
                 throw new ArgumentException("要素を相手にする道でなければならない。", nameof(access));
             }
 
-            Removes = removes;
+            Kind = kind;
             Receiver = receiver;
             Access = access;
         }
 
-        /// <summary>取り除く側か。偽なら加える側。</summary>
-        public bool Removes { get; }
+        /// <summary>そのツールが要素に対して行うこと。</summary>
+        public ToolElementKind Kind { get; }
 
         /// <summary>そのリストを持つ受け手の得方。</summary>
         public ToolReceiver Receiver { get; }

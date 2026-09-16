@@ -38,17 +38,62 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 能力対応表の行が持ち込む、要素をハンドルで指すツールの名前。要素を1つ作るツールを持つ型
-        /// は持ち込まない——作ってから並びへ入れれば、そのハンドルで指せる。
-        /// <paramref name="made"/> はどれかの行が1つ作ると述べる型の名前である。
+        /// 能力対応表の行が持ち込む、要素をハンドルで指すツールの名前。
+        /// <see cref="Holdings"/> が選んだ行の分だけ立つ。
         /// </summary>
         public static ISet<string> HoldingNames(
             ToolMap map,
             IDictionary<string, SignatureRecord> signatures,
             TypeRoleTable roles,
-            ISet<string> made)
+            ISet<string> made,
+            ISet<string> issued)
         {
-            throw new NotImplementedException();
+            return new HashSet<string>(
+                Holdings(map, signatures, roles, made, issued).Values.Select(Holding),
+                StringComparer.Ordinal);
+        }
+
+        /// <summary>
+        /// 行キーから、その要素をハンドルで指すツールが相手にする要素の型の役割を引く表。名前を
+        /// 持ち込むリストの行だけを持ち、持ち込むのは次の2つを満たす行である。1つは、その要素の型を
+        /// 1つ作るツールが無いこと——作れる型は、作って得たハンドルからその型の振る舞いへ届くので、
+        /// 在る要素を指す道が別に要らない。もう1つは、そのリストを持つ型へハンドルが出ること——親を
+        /// ハンドルで指せない道では、位置で辿った相手が複製になり、その中の要素を預けても書き換えが
+        /// 元のモデルへ届かない。
+        /// <paramref name="made"/> はどれかの行が作ると述べる型の名前、
+        /// <paramref name="issued"/> はハンドルが出る型の名前である。
+        /// </summary>
+        public static IDictionary<string, TypeRoleRecord> Holdings(
+            ToolMap map,
+            IDictionary<string, SignatureRecord> signatures,
+            TypeRoleTable roles,
+            ISet<string> made,
+            ISet<string> issued)
+        {
+            if (made == null)
+            {
+                throw new ArgumentNullException(nameof(made));
+            }
+
+            if (issued == null)
+            {
+                throw new ArgumentNullException(nameof(issued));
+            }
+
+            Dictionary<string, TypeRoleRecord> holdings =
+                new Dictionary<string, TypeRoleRecord>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, TypeRoleRecord> owned in Elements(map, signatures, roles))
+            {
+                if (made.Contains(owned.Value.TypeName)
+                    || ElementPathEvidence.Owner(signatures, issued, owned.Key) == null)
+                {
+                    continue;
+                }
+
+                holdings.Add(owned.Key, owned.Value);
+            }
+
+            return holdings;
         }
 
         /// <summary>

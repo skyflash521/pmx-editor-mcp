@@ -337,14 +337,40 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(
                 new[] { "model_add_vertices", "model_remove_vertices" }, source.Elements.ToArray());
             Assert.Contains(
-                "elements.Add(\"model_add_vertices\", new ToolElements(false,"
+                "elements.Add(\"model_add_vertices\", new ToolElements(ToolElementKind.Add,"
                     + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.DuplicateEdit),"
                     + " new ToolAccess(ToolAccessKind.Element, \"" + ListKey
                     + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
                     + "), item => item is global::" + Vertex + ", \"vertex\", null, null)));",
                 source.Text);
             Assert.Contains(
-                "elements.Add(\"model_remove_vertices\", new ToolElements(true,", source.Text);
+                "elements.Add(\"model_remove_vertices\", new ToolElements(ToolElementKind.Remove,", source.Text);
+        }
+
+        /// <summary>
+        /// 指すだけのツールが立つのは、親をハンドルで指せる道だけである。PMXが直に持つリストは
+        /// 位置でしか辿れず、辿った相手は複製なので、その中の要素を預けても書き換えが元のモデルへ
+        /// 届かない。
+        /// </summary>
+        [Fact]
+        public void AListUnderAHandledOwnerAlsoBringsTheHoldingToolOfItsElement()
+        {
+            ToolBindingSource source = Build(Collection(), Weights());
+
+            Assert.Equal(
+                new[]
+                {
+                    "model_add_vertices",
+                    "model_add_weights",
+                    "model_hold_weight",
+                    "model_remove_vertices",
+                    "model_remove_weights",
+                },
+                source.Elements.ToArray());
+            Assert.Contains(
+                "elements.Add(\"model_hold_weight\", new ToolElements(ToolElementKind.Hold,"
+                    + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.Read),",
+                source.Text);
         }
 
         [Fact]

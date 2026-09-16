@@ -627,11 +627,11 @@ namespace PmxEditorMcp.Tests
             {
                 {
                     "model_add_vertices",
-                    new ToolElements(false, Rooted(EditKind.DuplicateEdit), Listed())
+                    new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Listed())
                 },
                 {
                     "model_remove_vertices",
-                    new ToolElements(true, Rooted(EditKind.DuplicateEdit), Listed())
+                    new ToolElements(ToolElementKind.Remove, Rooted(EditKind.DuplicateEdit), Listed())
                 },
             };
         }

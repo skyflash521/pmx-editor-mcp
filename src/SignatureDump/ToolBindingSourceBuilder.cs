@@ -130,6 +130,12 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> concrete =
                 ElementCollectionEvidence.ConcreteTypes(inventory, roleOf);
             ISet<string> built = Built(inventory, bridged, concrete);
+            IDictionary<string, TypeRoleRecord> holdings = ElementToolRule.Holdings(
+                map,
+                signatures,
+                roles,
+                HandleIssuanceEvidence.Made(map, signatures, concrete),
+                issued);
             IDictionary<string, IList<string>> ownerPaths = roles.Collections
                 .Where(c => c.Owns && c.OwnerPath.Count != 0)
                 .ToDictionary(
@@ -214,6 +220,16 @@ namespace PmxEditorMcp.SignatureDump
                             Elements(
                                 row, signature, element, named, listed, signatures, concrete,
                                 byType, built));
+                    }
+
+                    TypeRoleRecord holdable;
+                    if (holdings.TryGetValue(row.SignatureKey, out holdable))
+                    {
+                        elements.Add(
+                            ElementToolRule.Holding(holdable),
+                            Elements(
+                                row, signature, holdable, ElementToolRule.Holding(holdable),
+                                listed, signatures, concrete, byType, built));
                     }
 
                     Listing(lists, listed, signatures, byType);
@@ -819,17 +835,33 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType,
             ISet<string> built)
         {
-            bool removes = string.Equals(
-                tool, ToolNameRule.OfRole(element, ToolVerb.Remove), StringComparison.Ordinal);
+            string kind = Kind(element, tool);
 
-            return "new ToolElements(" + (removes ? "true" : "false") + ", "
+            bool holds = string.Equals(kind, "Hold", StringComparison.Ordinal);
+
+            return "new ToolElements(ToolElementKind." + kind + ", "
                 + Receiver(
                     row,
                     signature,
                     path,
-                    ToolMapEditKind.DuplicateEdit,
-                    !removes && built.Contains(TypeDefinitionName.OfElement(element.TypeName)))
+                    holds ? ToolMapEditKind.Read : ToolMapEditKind.DuplicateEdit,
+                    string.Equals(kind, "Add", StringComparison.Ordinal)
+                        && built.Contains(TypeDefinitionName.OfElement(element.TypeName)))
                 + ", " + Access(path, signatures, concrete, byType) + ")";
+        }
+
+        /// <summary>そのツールの名前が、要素に対して行うことのどれか。</summary>
+        private static string Kind(TypeRoleRecord element, string tool)
+        {
+            if (string.Equals(
+                tool, ToolNameRule.OfRole(element, ToolVerb.Remove), StringComparison.Ordinal))
+            {
+                return "Remove";
+            }
+
+            return string.Equals(tool, ElementToolRule.Holding(element), StringComparison.Ordinal)
+                ? "Hold"
+                : "Add";
         }
 
         /// <summary>

@@ -89,6 +89,12 @@ namespace PmxEditorMcp.SignatureDump
             HashSet<string> derived = new HashSet<string>(
                 Aggregations(map, signatures, byType, concrete), StringComparer.Ordinal);
             derived.UnionWith(ElementToolRule.Names(map, signatures, roles));
+            derived.UnionWith(ElementToolRule.HoldingNames(
+                map,
+                signatures,
+                roles,
+                HandleIssuanceEvidence.Made(map, signatures, concrete),
+                ElementPathEvidence.Issued(signatures, concrete, roles)));
 
             RequireNoComposedName(toolNames, composedTools);
             RequireSameTools(schemas, map, toolNames, composedTools, derived);
