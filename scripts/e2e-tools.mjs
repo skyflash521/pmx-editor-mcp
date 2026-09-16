@@ -294,6 +294,30 @@ function changed(name, value, remembered) {
 }
 
 /**
+ * 2つの値が同じものか。並びと組は中身をたどって比べる——応答は綴りを解いて作り直した値なので、
+ * 同じ中身でも別の実体になる。
+ */
+function same(one, other) {
+    if (Array.isArray(one) || Array.isArray(other)) {
+        return Array.isArray(one) && Array.isArray(other)
+            && one.length === other.length
+            && one.every((value, at) => same(value, other[at]));
+    }
+
+    if (one !== null && other !== null
+        && typeof one === "object" && typeof other === "object") {
+        const names = Object.keys(one);
+
+        return names.length === Object.keys(other).length
+            && names.every((name) =>
+                Object.prototype.hasOwnProperty.call(other, name)
+                && same(one[name], other[name]));
+    }
+
+    return one === other;
+}
+
+/**
  * 読み返した項目が、書いた値のまま読めているか。並べて返す形は全件を、1つを返す形はそれ自身を
  * 見る。合っていれば null。1件も返らない並びは落とす——1件も見ないまま通ると、書き込みを
  * 確かめない検査になる。
@@ -313,7 +337,7 @@ function reads(expected, value) {
         if (!Object.prototype.hasOwnProperty.call(item, expected.member)) {
             return "読み返した" + at + "件目に " + expected.member + " がありません。";
         }
-        if (item[expected.member] !== expected.value) {
+        if (!same(item[expected.member], expected.value)) {
             return "読み返した" + at + "件目の " + expected.member + " が "
                 + JSON.stringify(expected.value) + " ではありません: "
                 + JSON.stringify(item[expected.member]);

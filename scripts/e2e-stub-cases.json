@@ -99,6 +99,25 @@
       }
     },
     {
+      "rowKey": "Stub.Type.Position()",
+      "editKind": "directChange",
+      "connectionPath": "Host.Stub",
+      "tool": "stub_position",
+      "purpose": "書いた向きを読み返せること",
+      "arguments": {
+        "all": true
+      },
+      "expect": "reads",
+      "expected": {
+        "member": "direction",
+        "value": [
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    {
       "rowKey": "Stub.Type.Change()",
       "editKind": "directChange",
       "connectionPath": "Host.Stub",

@@ -24,11 +24,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Target = "target";
 
+        /// <summary>要素の位置で指す項目。</summary>
+        private const string Parent = "parent";
+
+        private const string ParentType = "PEPlugin.Pmx.IPXBone";
+
+        private const string ReadBack = "書いた項目を読み返せること";
+
         private const string AngleType = "System.Single";
 
         private const string LoopCountType = "System.Int32";
 
-        [Fact(Skip = "impl pending: 項目を書き換えるツールへ、持ち続ける項目の値をどれも渡す")]
+        private const string TargetType = "System.Int32";
+
+        [Fact]
         public void AnUpdateToolIsGivenAValueForEveryMemberTheModelKeeps()
         {
             IDictionary<string, object> written = Value(Built());
@@ -37,7 +46,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.True(written.ContainsKey(LoopCount));
         }
 
-        [Fact(Skip = "impl pending: 書き換えるツールへ渡す値を、綴りから決まる最小の値でなく正本の値にする")]
+        [Fact]
         public void TheValuesTheUpdateWritesComeFromTheSampleTable()
         {
             IDictionary<string, object> written = Value(Built());
@@ -52,7 +61,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.False(Value(Built()).ContainsKey(Target));
         }
 
-        [Fact(Skip = "impl pending: 書き換えたツールの検査へ、書いた値を読み返す判定を足す")]
+        /// <summary>
+        /// 要素の位置で指す項目は、ハンドルで指した相手へ書いても預かりに回る。書いた直後には
+        /// 読み返せないので、書く相手にしない。
+        /// </summary>
+        [Fact]
+        public void AnUpdateToolIsGivenNoValueForAMemberThatPointsWithAPosition()
+        {
+            IList<E2eCase> cases = Built();
+
+            Assert.False(Value(cases).ContainsKey(Parent));
+            Assert.DoesNotContain(
+                ReadBacks(cases),
+                c => string.Equals(c.Expected.Member, Parent, StringComparison.Ordinal));
+        }
+
+        [Fact]
         public void WhatTheUpdateWroteIsReadBack()
         {
             IList<E2eCase> cases = Built();
@@ -70,7 +94,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        [Fact(Skip = "impl pending: 読み返しは書いたその要素を相手にする")]
+        [Fact]
         public void TheReadBackAimsAtTheElementTheUpdateWrote()
         {
             IList<E2eCase> cases = Built();
@@ -88,12 +112,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
-        /// <summary>書いた値を読み返す検査。</summary>
+        /// <summary>
+        /// 書いた項目を読み返す検査。位置で指す項目を書く検査が別に出す読み返しとは、確かめる
+        /// ことが違うので分ける。
+        /// </summary>
         private static E2eCase[] ReadBacks(IList<E2eCase> cases)
         {
             return cases
                 .Where(c => string.Equals(c.Tool, Reading, StringComparison.Ordinal)
-                    && c.Expectation == E2eExpectation.Reads)
+                    && c.Expectation == E2eExpectation.Reads
+                    && string.Equals(c.Purpose, ReadBack, StringComparison.Ordinal))
                 .ToArray();
         }
 
@@ -126,7 +154,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 sdkTypes,
                 Samples(),
                 null,
-                null,
+                new HashSet<string>(new[] { ParentType }, StringComparer.Ordinal),
                 null,
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
@@ -152,7 +180,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return SampleValueJsonReader.Read(
                 "{\"types\":["
-                    + "{\"typeName\":\"PEPlugin.Pmx.IPXBone\",\"default\":1,\"second\":2},"
+                    + "{\"typeName\":\"PEPlugin.Pmx.IPXBone\",\"default\":9,\"second\":10},"
                     + "{\"typeName\":\"System.Int32\",\"default\":3,\"second\":4},"
                     + "{\"typeName\":\"System.Single\",\"default\":7,\"second\":8}"
                     + "],\"rows\":[]}");
@@ -302,11 +330,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             SchemaItem angle = Member(Angle);
             SchemaItem loopCount = Member(LoopCount);
             SchemaItem target = Member(Target);
+            SchemaItem parent = Member(Parent);
             sdkTypes[angle] = AngleType;
             sdkTypes[loopCount] = LoopCountType;
-            sdkTypes[target] = "PEPlugin.Pmx.IPXBone";
+            sdkTypes[target] = TargetType;
+            sdkTypes[parent] = ParentType;
             SchemaItem group = new SchemaItem(
-                null, new[] { angle, loopCount, target }, null, "value", ItemOrigin.HostInput,
+                null, new[] { angle, loopCount, target, parent }, null, "value",
+                ItemOrigin.HostInput,
                 null, null, false, null, null, null, false, null);
 
             return new[]
@@ -323,7 +354,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             SchemaItem element = new SchemaItem(
                 null,
-                new[] { Member(Angle), Member(LoopCount), Member(Target) },
+                new[] { Member(Angle), Member(LoopCount), Member(Target), Member(Parent) },
                 null,
                 null,
                 ItemOrigin.HostOutput,

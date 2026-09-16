@@ -284,7 +284,11 @@ namespace PmxEditorMcp.SignatureDump
                     factories,
                     reading,
                     removers,
-                    aimed));
+                    aimed,
+                    readers,
+                    unkept,
+                    sdkTypes,
+                    positioned));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -504,6 +508,121 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return receiving;
+        }
+
+        /// <summary>
+        /// 書き換えるツールへ渡す項目の組を、書いた直後に読み返せる項目ぶんだけ埋めたもの。埋めた
+        /// 組はそのまま引数へ入る。値の組を受け取らないツールと、埋められる項目を1つも持たない
+        /// ツールでは null——書いていないものは読み返せない。
+        /// </summary>
+        private static IDictionary<string, object> Filled(
+            ToolSchema schema,
+            IDictionary<string, object> arguments,
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, object> sampled,
+            IDictionary<string, ISet<string>> unkept,
+            string tool,
+            IDictionary<SchemaItem, string> sdkTypes,
+            ISet<string> positioned)
+        {
+            SchemaItem group = schema.Branches
+                .Where(b => Satisfied(b, arguments))
+                .SelectMany(b => b.Inputs)
+                .FirstOrDefault(i => !i.Injected
+                    && i.Members != null
+                    && string.Equals(i.Name, ValueName, StringComparison.Ordinal));
+            if (group == null)
+            {
+                return null;
+            }
+
+            Dictionary<string, object> filled =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (SchemaItem member in group.Members.Where(
+                m => Kept(unkept, tool, m.Name) && !Deferred(m, sdkTypes, positioned)))
+            {
+                object value;
+                if (TryMinimal(member, sdkShapes, sampled, out value))
+                {
+                    filled[member.Name] = value;
+                }
+            }
+
+            if (filled.Count == 0)
+            {
+                return null;
+            }
+
+            arguments[group.Name] = filled;
+
+            return filled;
+        }
+
+        /// <summary>
+        /// 書いた項目を読み返して確かめる検査。相手は書いたその要素で、呼び出しと同じハンドルを
+        /// 借りる——並び全体を読むと、書いていない要素の値まで見てしまう。読み返す相手を持たない
+        /// ツールでは null。
+        /// </summary>
+        private static E2eCase ReadingBack(
+            string rowKey,
+            string editKind,
+            string path,
+            ToolSchemaTable schemas,
+            IDictionary<string, string> readers,
+            string tool,
+            IDictionary<string, string> borrowing,
+            KeyValuePair<string, object> written)
+        {
+            string reader;
+            if (readers == null || !readers.TryGetValue(tool, out reader))
+            {
+                return null;
+            }
+
+            ToolSchema found = Of(schemas, reader);
+            if (found == null || !Holds(found))
+            {
+                return null;
+            }
+
+            IDictionary<string, object> arguments = Lent();
+            if (Named(found))
+            {
+                arguments[FieldsName] = new object[] { written.Key };
+            }
+
+            return Satisfied(found, arguments)
+                ? new E2eCase(
+                    rowKey,
+                    editKind,
+                    path,
+                    reader,
+                    "書いた項目を読み返せること",
+                    arguments,
+                    E2eExpectation.Reads,
+                    null,
+                    null,
+                    null,
+                    borrowing,
+                    new E2eExpectedMember(written.Key, written.Value))
+                : null;
+        }
+
+        /// <summary>
+        /// その項目が、ハンドルで指した相手へ書いても預かりに回るか。要素の位置で指す項目は、
+        /// 相手がまだどのPMXにも入っていない間は解けないので、書いた直後には読み返せない。
+        /// </summary>
+        private static bool Deferred(
+            SchemaItem member,
+            IDictionary<SchemaItem, string> sdkTypes,
+            ISet<string> positioned)
+        {
+            string typeName;
+
+            return sdkTypes != null
+                && positioned != null
+                && sdkTypes.TryGetValue(member, out typeName)
+                && positioned.Contains(typeName);
         }
 
         /// <summary>受け手を1つのハンドルで指せるツールか。</summary>
@@ -730,7 +849,11 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> factories,
             ISet<string> reading,
             IDictionary<string, string> removers,
-            ISet<string> aimed)
+            ISet<string> aimed,
+            IDictionary<string, string> readers,
+            IDictionary<string, ISet<string>> unkept,
+            IDictionary<SchemaItem, string> sdkTypes,
+            ISet<string> positioned)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -835,6 +958,11 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
+            IDictionary<string, object> values = calls && row == null && borrowing != null
+                ? Filled(
+                    schema, calling, sdkShapes, sampled, unkept, tool, sdkTypes, positioned)
+                : null;
+
             SampleCallRow denied;
             bool denies = row != null && refused.TryGetValue(rowKey, out denied);
 
@@ -926,6 +1054,17 @@ namespace PmxEditorMcp.SignatureDump
                     denies ? null : wrote,
                     null,
                     denies ? null : Written(row));
+
+                foreach (KeyValuePair<string, object> one in values
+                    ?? new Dictionary<string, object>(StringComparer.Ordinal))
+                {
+                    E2eCase back = ReadingBack(
+                        rowKey, editKind, path, schemas, readers, tool, borrowing, one);
+                    if (back != null)
+                    {
+                        yield return back;
+                    }
+                }
 
                 foreach (Postcondition judgement in draws ? drawn : new Postcondition[0])
                 {
