@@ -238,15 +238,34 @@ namespace PmxEditorMcp.SignatureDump
             // 検査の相手なので、行の側を母集団にすると落ちる。
             Dictionary<string, ToolMapRow> byTool = new Dictionary<string, ToolMapRow>(
                 StringComparer.Ordinal);
+            Dictionary<string, IList<SetupOperation>> stepSetups =
+                new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal);
             Dictionary<string, ToolMapRow> rows = map.Rows.ToDictionary(
                 r => r.SignatureKey, r => r, StringComparer.Ordinal);
             foreach (KeyValuePair<string, string> named in toolsByRow)
             {
                 ToolMapRow row;
-                if (rows.TryGetValue(named.Key, out row))
+                if (!rows.TryGetValue(named.Key, out row))
                 {
-                    byTool[named.Value] = row;
+                    continue;
                 }
+
+                byTool[named.Value] = row;
+                if (row.Setup == null)
+                {
+                    continue;
+                }
+
+                // 同じツールへ写る行が2つ以上、呼ぶ前の段取りを持つと、道の段として呼ぶときに
+                // どちらが流れるかが決まらない。決まらないまま片方だけを直すと、直したほうが
+                // 黙って効かないままになる。
+                if (stepSetups.ContainsKey(named.Value))
+                {
+                    throw new InvalidOperationException(
+                        "同じツールへ写る行が2つ以上、呼ぶ前の段取りを持つ: " + named.Value);
+                }
+
+                stepSetups[named.Value] = row.Setup;
             }
 
             ISet<string> reading = new HashSet<string>(
@@ -312,7 +331,8 @@ namespace PmxEditorMcp.SignatureDump
                     sdkTypes,
                     positioned,
                     typeMakers,
-                    parents));
+                    parents,
+                    stepSetups));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -893,7 +913,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<SchemaItem, string> sdkTypes,
             ISet<string> positioned,
             IDictionary<string, IList<string>> typeMakers,
-            IDictionary<string, string> parents)
+            IDictionary<string, string> parents,
+            IDictionary<string, IList<SetupOperation>> stepSetups)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -1067,6 +1088,26 @@ namespace PmxEditorMcp.SignatureDump
                 : rowKey;
             for (int at = 0; borrowing != null && maker != null && at < maker.Count; at++)
             {
+                // 道の段として呼ぶ行も、その行が宣言した段取りを先に流す。段が作ったものをその
+                // まま次の段へ渡すと、中身を持たないまま先へ進み、道の終わりで断られる。
+                IList<SetupOperation> step;
+                foreach (E2eCase one in Prepared(
+                    stepSetups != null && stepSetups.TryGetValue(maker[at], out step)
+                        ? step
+                        : null,
+                    schemas,
+                    rowKey,
+                    editKind,
+                    path,
+                    adders,
+                    factories,
+                    at == 0
+                        ? null
+                        : Borrowed(Step(making, at - 1), Of(schemas, maker[at - 1]))))
+                {
+                    yield return one;
+                }
+
                 yield return new E2eCase(
                     rowKey,
                     editKind,
@@ -1141,8 +1182,11 @@ namespace PmxEditorMcp.SignatureDump
             string received = borrowing != null && maker != null
                 ? Borrowed(Step(making, maker.Count - 1), Of(schemas, maker[maker.Count - 1]))
                 : null;
+            IList<SetupOperation> tidying;
             foreach (E2eCase one in Prepared(
-                calls && row != null ? row.Setup : null,
+                calls && stepSetups != null && stepSetups.TryGetValue(tool, out tidying)
+                    ? tidying
+                    : null,
                 schemas,
                 rowKey,
                 editKind,

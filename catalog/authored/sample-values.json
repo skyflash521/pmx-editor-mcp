@@ -888,6 +888,46 @@
       "basis": "経路にする点を3つ渡す。補間は3つ目の点まで読むので、それより短い並びでは組み立てられない。"
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Bone(System.Int32,System.Int32)",
+      "arguments": {
+        "args": {
+          "boneIndex": 0,
+          "frame": 0
+        }
+      },
+      "basis": "先頭のコマの先頭のボーンを引く。実行の範囲はイベントを持たないVMEでは先頭のコマだけで、ボーンはPMXから写した並びの先頭である。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetBoneResult(System.Int32,System.Int32)",
+      "arguments": {
+        "args": {
+          "boneIndex": 0,
+          "frame": 0
+        }
+      },
+      "basis": "先頭のコマの先頭のボーンを引く。実行の範囲はイベントを持たないVMEでは先頭のコマだけで、ボーンはPMXから写した並びの先頭である。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetMorphResult(System.Int32,System.Int32)",
+      "arguments": {
+        "args": {
+          "frame": 0,
+          "morphIndex": 0
+        }
+      },
+      "basis": "先頭のコマの先頭のモーフを引く。実行の範囲はイベントを持たないVMEでは先頭のコマだけで、モーフはPMXから写した並びの先頭である。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeResult.Morph(System.Int32,System.Int32)",
+      "arguments": {
+        "args": {
+          "frame": 0,
+          "morphIndex": 0
+        }
+      },
+      "basis": "先頭のコマの先頭のモーフを引く。実行の範囲はイベントを持たないVMEでは先頭のコマだけで、モーフはPMXから写した並びの先頭である。"
+    },
+    {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBodyIndices(System.Int32[])",
       "arguments": {
         "indices": [

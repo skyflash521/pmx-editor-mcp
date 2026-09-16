@@ -8159,6 +8159,24 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.Run()",
       "editKind": "directChange",
+      "setup": [
+        {
+          "tag": "initPmx"
+        },
+        {
+          "tag": "addElement",
+          "elementType": "morph"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_init_from_pmx_vme",
+          "args": {
+            "handles": [
+              "receiver:"
+            ]
+          }
+        }
+      ],
       "basis": "登録したイベントを走らせて、その結果を持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {

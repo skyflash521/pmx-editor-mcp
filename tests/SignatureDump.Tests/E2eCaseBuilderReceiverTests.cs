@@ -119,6 +119,120 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
+        /// 道の段として呼ぶ行も、その行が宣言した段取りを先に流す。段が作ったものをそのまま次の
+        /// 段へ渡すと、中身を持たないまま先へ進む。
+        /// </summary>
+        [Fact]
+        public void TheSetupOfARowOnThePathRunsBeforeThatStep()
+        {
+            const string StepRowKey = "PEPlugin.Pmx.IPXPmx.Bone()";
+            IList<E2eCase> cases = Built(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(RowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                    new ToolMapRow(
+                        StepRowKey,
+                        ToolMapEditKind.Read,
+                        null,
+                        "作った相手を整える。",
+                        null,
+                        null,
+                        null,
+                        new[] { SetupOperation.CallTool(Filler, Listed(), null) }),
+                }),
+                new[] { First, Second },
+                StepRowKey);
+            E2eCase preparing = cases.Single(
+                c => string.Equals(c.Tool, Filler, StringComparison.Ordinal)
+                    && string.Equals(c.RowKey, RowKey, StringComparison.Ordinal));
+            E2eCase step = cases.Single(
+                c => string.Equals(c.Tool, Second, StringComparison.Ordinal)
+                    && string.Equals(c.Purpose, Making, StringComparison.Ordinal)
+                    && string.Equals(c.RowKey, RowKey, StringComparison.Ordinal));
+
+            Assert.True(
+                cases.IndexOf(preparing) < cases.IndexOf(step),
+                "段取りが段より後に来ている。");
+            Assert.Equal(
+                step.Borrowed.Values.Single(), preparing.Borrowed["handles/0"]);
+        }
+
+        /// <summary>
+        /// 段取りはツールごとに1つなので、そのツールへ写る別の行を相手に事例を組むときも同じ
+        /// 段取りが流れる。行ごとに持たせると、どの行を代表に選んだかで効き方が変わる。
+        /// </summary>
+        [Fact]
+        public void TheSetupOfTheToolRunsEvenForAnotherRowOfIt()
+        {
+            const string CarryingRowKey = "PEPlugin.Pmx.IPXPmx.Bone()";
+            const string OtherRowKey = "PEPlugin.Pmx.IPXPmx.Bone(System.Int32)";
+            IList<E2eCase> cases = Built(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(RowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                    new ToolMapRow(
+                        CarryingRowKey,
+                        ToolMapEditKind.Read,
+                        null,
+                        "作った相手を整える。",
+                        null,
+                        null,
+                        null,
+                        new[] { SetupOperation.CallTool(Filler, Listed(), null) }),
+                    new ToolMapRow(
+                        OtherRowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                }),
+                new[] { First, Second },
+                CarryingRowKey,
+                OtherRowKey);
+
+            Assert.Contains(
+                cases,
+                c => string.Equals(c.Tool, Filler, StringComparison.Ordinal)
+                    && string.Equals(c.RowKey, OtherRowKey, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// 同じツールへ写る行が2つ以上、呼ぶ前の段取りを持つと、道の段として呼ぶときにどちらが
+        /// 流れるかが決まらない。決まらないまま片方だけを直すと、直したほうが黙って効かない。
+        /// </summary>
+        [Fact]
+        public void TwoRowsOfTheSameToolCannotBothCarrySetup()
+        {
+            IList<SetupOperation> setup =
+                new[] { SetupOperation.CallTool(Filler, Listed(), null) };
+
+            Assert.Throws<InvalidOperationException>(
+                () => Built(
+                    new ToolMap(new[]
+                    {
+                        new ToolMapRow(
+                            RowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                        new ToolMapRow(
+                            "PEPlugin.Pmx.IPXPmx.Bone()",
+                            ToolMapEditKind.Read,
+                            null,
+                            "作った相手を整える。",
+                            null,
+                            null,
+                            null,
+                            setup),
+                        new ToolMapRow(
+                            "PEPlugin.Pmx.IPXPmx.Bone(System.Int32)",
+                            ToolMapEditKind.Read,
+                            null,
+                            "作った相手を整える。",
+                            null,
+                            null,
+                            null,
+                            setup),
+                    }),
+                    new[] { First, Second },
+                    "PEPlugin.Pmx.IPXPmx.Bone()",
+                    "PEPlugin.Pmx.IPXPmx.Bone(System.Int32)"));
+        }
+
+        /// <summary>
         /// 相手を指す値は、値の組の中に書いても同じに読む。組の中を素通りさせると、その綴りが
         /// そのままツールの引数として渡る。
         /// </summary>
@@ -423,12 +537,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     && string.Equals(c.Tool, tool, StringComparison.Ordinal));
         }
 
-        private static IList<E2eCase> Built(ToolMap map, IList<string> path)
+        private static IList<E2eCase> Built(
+            ToolMap map,
+            IList<string> path,
+            string stepRowKey = null,
+            string otherRowKey = null)
         {
+            IDictionary<string, string> named =
+                new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } };
+            if (stepRowKey != null)
+            {
+                named[stepRowKey] = Second;
+            }
+
+            if (otherRowKey != null)
+            {
+                named[otherRowKey] = Second;
+            }
+
+            IDictionary<string, IList<string>> makers =
+                new Dictionary<string, IList<string>>(StringComparer.Ordinal) { { Tool, path } };
+            if (stepRowKey != null)
+            {
+                makers[Second] = new[] { First };
+            }
+
             return E2eCaseBuilder.Build(
                 map,
-                new ToolSchemaTable(new[] { Held(Tool), Free(First), Free(Second) }),
-                new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } },
+                new ToolSchemaTable(new[]
+                {
+                    Held(Tool), Free(First), stepRowKey == null ? Free(Second) : Held(Second),
+                }),
+                named,
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 new HashSet<string>(StringComparer.Ordinal),
                 new Dictionary<SchemaItem, string>(),
@@ -441,7 +581,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 null,
                 null,
-                new Dictionary<string, IList<string>>(StringComparer.Ordinal) { { Tool, path } });
+                makers);
         }
 
         private static ToolMap Map()
