@@ -596,6 +596,12 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.SetSelectedMaterialIndices(System.Int32[])",
       "editKind": "viewSession",
+      "setup": [
+        {
+          "tag": "addElement",
+          "elementType": "material"
+        }
+      ],
       "basis": "選ぶ材質を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
@@ -5219,6 +5225,17 @@
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Material(System.Int32)",
       "editKind": "viewSession",
+      "setup": [
+        {
+          "tag": "addElement",
+          "elementType": "material"
+        },
+        {
+          "tag": "callTool",
+          "tool": "view_update_model",
+          "args": {}
+        }
+      ],
       "basis": "画面が持つモデルの材質ひとつの見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
@@ -8056,6 +8073,11 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.InitFromPmx(PEPlugin.Pmx.IPXPmx)",
       "editKind": "directChange",
+      "setup": [
+        {
+          "tag": "initPmx"
+        }
+      ],
       "basis": "モデルに合わせて中身を作り直す。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
