@@ -117,6 +117,29 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 要素をリストから外すツールの名前から、その要素をリストへ加えるツールの名前へ。外す
+        /// 相手は段取りが加えた要素である——新しく作った要素はまだ並びに無いので外せない。
+        /// </summary>
+        public IDictionary<string, string> ElementRemovers(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            return OwnedRoles(inventory).Types
+                .Where(t => t.Group != CapabilityOwner.None
+                    && !string.IsNullOrEmpty(t.ElementNoun)
+                    && !string.IsNullOrEmpty(t.ElementNounPlural))
+                .GroupBy(t => ToolNameRule.OfRole(t, ToolVerb.Remove), StringComparer.Ordinal)
+                .Where(g => g.Count() == 1)
+                .ToDictionary(
+                    g => g.Key,
+                    g => ToolNameRule.OfRole(g.First(), ToolVerb.Add),
+                    StringComparer.Ordinal);
+        }
+
+        /// <summary>
         /// 要素を並べるリストへ加えるツールの名前から、その要素を1つ作るツールの名前へ。作る
         /// ツールが1つに決まらない型は持たない——どれを使うかがここでは決められない。
         /// </summary>
@@ -131,6 +154,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> tools = ToolsByRow(inventory);
             IDictionary<string, SignatureRecord> signatures = inventory.Signatures
                 .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+            IDictionary<string, IList<string>> reached =
+                ReceiverCallEvidence.ByType(inventory, Map, tools, Schemas);
             Dictionary<string, string> factories =
                 new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (TypeRoleRecord role in owned.Types
@@ -143,9 +168,14 @@ namespace PmxEditorMcp.SignatureDump
                     .Select(t => t.Value)
                     .Distinct(StringComparer.Ordinal)
                     .ToArray();
+                IList<string> path;
                 if (making.Length == 1)
                 {
                     factories[ToolNameRule.OfRole(role, ToolVerb.Add)] = making[0];
+                }
+                else if (reached.TryGetValue(role.TypeName, out path) && path.Count == 1)
+                {
+                    factories[ToolNameRule.OfRole(role, ToolVerb.Add)] = path[0];
                 }
             }
 
@@ -164,41 +194,8 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(inventory));
             }
 
-            IDictionary<string, string> tools = ToolsByRow(inventory);
-            IDictionary<string, SignatureRecord> signatures = inventory.Signatures
-                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
-            ISet<string> handled = HandledTypes();
-            Dictionary<string, string> makers =
-                new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (string typeName in handled)
-            {
-                string[] making = tools
-                    .Where(t => Makes(signatures, t.Key, typeName))
-                    .Select(t => t.Value)
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray();
-                if (making.Length == 1)
-                {
-                    makers[typeName] = making[0];
-                }
-            }
-
-            Dictionary<string, IList<string>> byTool =
-                new Dictionary<string, IList<string>>(StringComparer.Ordinal);
-            foreach (KeyValuePair<string, string> named in tools)
-            {
-                SignatureRecord signature;
-                string maker;
-                if (signatures.TryGetValue(named.Key, out signature)
-                    && makers.TryGetValue(
-                        TypeDefinitionName.Of(signature.DeclaringType), out maker)
-                    && !string.Equals(maker, named.Value, StringComparison.Ordinal))
-                {
-                    byTool[named.Value] = new[] { maker };
-                }
-            }
-
-            return byTool;
+            return ReceiverCallEvidence.ByTool(
+                inventory, Map, OwnedRoles(inventory), ToolsByRow(inventory), Schemas);
         }
 
         /// <summary>その行が、その型の実体を引数無しで1つ作るか。</summary>

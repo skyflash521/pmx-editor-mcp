@@ -1133,65 +1133,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new Dictionary<SchemaItem, string>();
         }
 
-        /// <summary>
-        /// 呼ぶと確認の表示が出ると根拠が述べる行は呼ばない。表示は呼んだ側では閉じられず、
-        /// 止まった応答を合格にすると、確かめているのは宣言した振る舞いでなく表示が出たことに
-        /// なる。
-        /// </summary>
-        [Fact]
-        public void ARowThatSaysCallingItShowsAPromptIsNotCalled()
-        {
-            ToolSchema schema = Tool("model_get_name", new SchemaItem[0]);
-
-            Assert.DoesNotContain(
-                E2eCaseBuilder.Build(
-                    Prompting(RowKey),
-                    new ToolSchemaTable(new[] { schema }),
-                    new Dictionary<string, string>(StringComparer.Ordinal)
-                    {
-                        { RowKey, schema.Tool },
-                    },
-                    Paths(),
-                    new HashSet<string>(StringComparer.Ordinal),
-                    Shapes()),
-                c => c.Expectation == E2eExpectation.Called);
-        }
-
-        /// <summary>
-        /// 呼ぶと確認の表示が出ると根拠が述べる行は、受け手を作る手立てが在っても呼ばない。
-        /// 借りて渡す経路は作るツールが見つかると呼び出しを組み立て直すので、そちらも止める。
-        /// </summary>
-        [Fact]
-        public void ARowThatShowsAPromptIsNotCalledEvenWhenItsTargetCanBeMade()
-        {
-            ToolSchema maker = Tool("model_make_bone", new SchemaItem[0]);
-            ToolSchema taker = Tool("model_bend_bones", Handles());
-
-            Assert.DoesNotContain(
-                Making(
-                    maker,
-                    taker,
-                    "Sdk.Bone",
-                    "呼ぶと" + E2eCaseBuilder.PromptShownReason + "。"),
-                c => c.Tool == taker.Tool && c.Expectation == E2eExpectation.Called);
-        }
-
-        /// <summary>呼ぶと確認の表示が出ると根拠が述べる行を1つだけ持つ能力対応表。</summary>
-        private static ToolMap Prompting(string rowKey)
-        {
-            return new ToolMap(new[]
-            {
-                new ToolMapRow(
-                    rowKey,
-                    ToolMapEditKind.Read,
-                    null,
-                    "呼ぶと" + E2eCaseBuilder.PromptShownReason + "。",
-                    null,
-                    null,
-                    null),
-            });
-        }
-
         private static ToolMap Map(string rowKey)
         {
             return new ToolMap(new[]

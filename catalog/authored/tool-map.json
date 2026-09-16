@@ -3,7 +3,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendPMDFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだPMDをいま開いているモデルへ足すので、直接変更型に当たる。この行の呼び出しは、読み込めない位置を渡して、エディタが人へ出す表示を呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。実機で呼ぶと、正本が渡せる中身では読み込めず確認の表示が出るので、呼び出しの検査は組み立てない。",
+      "basis": "読み込んだPMDをいま開いているモデルへ足すので、直接変更型に当たる。この行の呼び出しは、読み込めない位置を渡して、エディタが人へ出す表示を呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -21,7 +21,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendXFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだXファイルをいま開いているモデルへ足すので、直接変更型に当たる。Xのファイルを書き出す手立てがSDKに無く、読み込む中身をこの検査では用意できないので、変わったことは読み比べでなく呼び出しの記録で確かめる。実機で呼ぶと、正本が渡せる中身では読み込めず確認の表示が出るので、呼び出しの検査は組み立てない。",
+      "basis": "読み込んだXファイルをいま開いているモデルへ足すので、直接変更型に当たる。Xのファイルを書き出す手立てがSDKに無く、読み込む中身をこの検査では用意できないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -240,7 +240,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.ImportXFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだXファイルをいま開いているモデルへ取り込むので、直接変更型に当たる。Xのファイルを書き出す手立てがSDKに無く、読み込む中身をこの検査では用意できないので、変わったことは読み比べでなく呼び出しの記録で確かめる。実機で呼ぶと、正本が渡せる中身では読み込めず確認の表示が出るので、呼び出しの検査は組み立てない。",
+      "basis": "読み込んだXファイルをいま開いているモデルへ取り込むので、直接変更型に当たる。Xのファイルを書き出す手立てがSDKに無く、読み込む中身をこの検査では用意できないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -353,7 +353,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.OpenPMDFile(System.String)",
       "editKind": "directChange",
-      "basis": "読み込んだPMDでいま開いているモデルを置き換えるので、直接変更型に当たる。この行の呼び出しは、読み込めない位置を渡して、エディタが人へ出す表示を呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。実機で呼ぶと、正本が渡せる中身では読み込めず確認の表示が出るので、呼び出しの検査は組み立てない。",
+      "basis": "読み込んだPMDでいま開いているモデルを置き換えるので、直接変更型に当たる。この行の呼び出しは、読み込めない位置を渡して、エディタが人へ出す表示を呼び出し元へ知らせることを確かめる側へ充ててある。読み込みが成功しないので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -1883,7 +1883,7 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXBone.GetLocalAxis(out PEPlugin.SDX.V3,out PEPlugin.SDX.V3,out PEPlugin.SDX.V3)",
       "editKind": "read",
-      "basis": "ローカル軸のX・Y・Zを取り出すだけで、エディタの状態を動かさない。呼び出しに必ず要る引数を、この検査では決められないので呼び先まで届かせられない。",
+      "basis": "ローカル軸のX・Y・Zを取り出すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -2090,7 +2090,7 @@
       "updateSpec": {
         "refresh": []
       },
-      "basis": "いまのPMXを複製してボーンのローカル軸を定め、まとめて反映するので、複製編集型に当たる。呼び出しに必ず要る引数を、この検査では決められないので呼び先まで届かせられない。",
+      "basis": "いまのPMXを複製してボーンのローカル軸を定め、まとめて反映するので、複製編集型に当たる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -2116,7 +2116,7 @@
       "updateSpec": {
         "refresh": []
       },
-      "basis": "いまのPMXを複製してPMDのボーン種別に合う設定へまとめて変え、まとめて反映するので、複製編集型に当たる。呼び出しに必ず要る引数を、この検査では決められないので呼び先まで届かせられない。",
+      "basis": "いまのPMXを複製してPMDのボーン種別に合う設定へまとめて変え、まとめて反映するので、複製編集型に当たる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -2836,7 +2836,7 @@
       "updateSpec": {
         "refresh": []
       },
-      "basis": "いまのPMXを複製して材質モーフオフセットの全成分を同じ値で埋め、まとめて反映するので、複製編集型に当たる。呼び出しに必ず要る引数を、この検査では決められないので呼び先まで届かせられない。",
+      "basis": "いまのPMXを複製して材質モーフオフセットの全成分を同じ値で埋め、まとめて反映するので、複製編集型に当たる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -6414,7 +6414,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.FromFile(System.String)",
       "editKind": "directChange",
-      "basis": "ファイルから読み込んで中身を置き換える。モーションのデータは長寿命の持ち物なので、それへ直に作用する。実機で呼ぶと、正本が渡せる中身では読み込みが終わらず、ホストが待つ上限の時間を超える。読み込める中身をこの検査では用意できないので、呼び先まで届かせられない。",
+      "basis": "ファイルから読み込んで中身を置き換える。モーションのデータは長寿命の持ち物なので、それへ直に作用する。実機で呼ぶと、正本が渡せる中身では読み込みが終わらず、ホストが待つ上限の時間を超える。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -6860,7 +6860,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.Clear()",
       "editKind": "directChange",
-      "basis": "持っている変形状態をすべて消す。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "持っている変形状態をすべて消す。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -6873,7 +6873,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.FromPoseArray(PEPlugin.Vmd.PEVmdBonePose[])",
       "editKind": "directChange",
-      "basis": "渡された変形状態の並びで中身を置き換える。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "渡された変形状態の並びで中身を置き換える。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -6886,7 +6886,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.FromVmd(PEPlugin.Vmd.IPEVmd,System.Int32)",
       "editKind": "directChange",
-      "basis": "モーションのデータのボーン1本ぶんを読み取って中身を作り直す。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "モーションのデータのボーン1本ぶんを読み取って中身を作り直す。ボーンの変形状態は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -6899,7 +6899,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.GetPose(System.Int32)",
       "editKind": "read",
-      "basis": "そのコマの変形状態を返すだけで、エディタの状態を動かさない。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "そのコマの変形状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -6920,7 +6920,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.ToBoneKeyArray(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "ボーンのキーを作って持ち物にするので、直接変更型に当たる。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "ボーンのキーを作って持ち物にするので、直接変更型に当たる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -6937,7 +6937,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.ToPoseArray()",
       "editKind": "read",
-      "basis": "持っている変形状態を並べて返すだけで、エディタの状態を動かさない。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "持っている変形状態を並べて返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -7455,7 +7455,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.InitFromPmx(PEPlugin.Pmx.IPXPmx)",
       "editKind": "directChange",
-      "basis": "モデルに合わせて中身を作り直す。VMEのデータは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "モデルに合わせて中身を作り直す。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -7510,7 +7510,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.RemoveBone(PEPlugin.Vme.IPEVmeBone)",
       "editKind": "directChange",
-      "basis": "動かすボーンを取り除く。VMEのデータは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "動かすボーンを取り除く。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -7523,7 +7523,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.RemoveMorph(PEPlugin.Vme.IPEVmeSingleValueElement)",
       "editKind": "directChange",
-      "basis": "動かすモーフを取り除く。VMEのデータは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "動かすモーフを取り除く。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -7570,7 +7570,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.SetVmd(PEPlugin.Vmd.IPEVmd)",
       "editKind": "directChange",
-      "basis": "結果を書き出す先のモーションのデータを決める。VMEのデータは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "結果を書き出す先のモーションのデータを決める。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -7583,7 +7583,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVme.SetVmeResult(PEPlugin.Vme.IPEVmeResult)",
       "editKind": "directChange",
-      "basis": "前に走らせた結果を引き継ぐ。VMEのデータは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "前に走らせた結果を引き継ぐ。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8033,7 +8033,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.FOV()",
       "editKind": "read",
-      "basis": "パース角度を動かす単値の要素を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "パース角度を動かす単値の要素を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8050,7 +8050,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.GetCameraPos()",
       "editKind": "read",
-      "basis": "いまのカメラの位置を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまのカメラの位置を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -8092,7 +8092,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.GetCameraTgt()",
       "editKind": "read",
-      "basis": "いまのカメラの注視点を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまのカメラの注視点を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -8134,7 +8134,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.GetCameraUp()",
       "editKind": "read",
-      "basis": "いまのカメラの上方向を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまのカメラの上方向を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -8176,7 +8176,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.GetViewMatrix()",
       "editKind": "read",
-      "basis": "いまの視点の行列を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの視点の行列を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -8218,7 +8218,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Pos()",
       "editKind": "read",
-      "basis": "カメラの位置を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "カメラの位置を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8235,7 +8235,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Position()",
       "editKind": "read",
-      "basis": "カメラの位置を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "カメラの位置を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8252,7 +8252,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Target()",
       "editKind": "read",
-      "basis": "カメラの注視点を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "カメラの注視点を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8269,7 +8269,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Tgt()",
       "editKind": "read",
-      "basis": "カメラの注視点を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "カメラの注視点を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8286,7 +8286,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCamera.Up()",
       "editKind": "read",
-      "basis": "原点を中心に向きで指すカメラの上方向を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "原点を中心に向きで指すカメラの上方向を返すだけで、エディタの状態を動かさない。カメラは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8303,7 +8303,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.CS()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとしていまのカメラ位置の状態を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとしていまのカメラ位置の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8329,7 +8329,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.P()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして位置のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして位置のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8342,7 +8342,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.Position()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして位置のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして位置のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8355,7 +8355,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.T()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして移動量のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして移動量のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8368,7 +8368,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.ToCS(PEPlugin.Vme.IPEVmeEventState)",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして渡したイベントの状態でのカメラ位置の状態を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして渡したイベントの状態でのカメラ位置の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8385,7 +8385,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.ToCameraState(PEPlugin.Vme.IPEVmeEventState)",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして渡したイベントの状態でのカメラ位置の状態を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして渡したイベントの状態でのカメラ位置の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8402,7 +8402,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.Translate()",
       "editKind": "read",
-      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして移動量のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして移動量のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8476,7 +8476,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraState.P()",
       "editKind": "read",
-      "basis": "いまの位置を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの位置を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8493,7 +8493,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraState.Position()",
       "editKind": "read",
-      "basis": "いまの位置を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの位置を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8510,7 +8510,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraState.T()",
       "editKind": "read",
-      "basis": "いまの移動量を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの移動量を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8527,7 +8527,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraState.Translation()",
       "editKind": "read",
-      "basis": "いまの移動量を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの移動量を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8665,7 +8665,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeElement.Extern()",
       "editKind": "read",
-      "basis": "要素が属する登録先を返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "要素が属する登録先を返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8687,7 +8687,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeEventState.Extern()",
       "editKind": "read",
-      "basis": "その状態が属する登録先を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "その状態が属する登録先を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8716,7 +8716,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.ClearEvents()",
       "editKind": "directChange",
-      "basis": "登録したイベントをすべて取り除く。イベントの並びは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "登録したイベントをすべて取り除く。イベントの並びは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8753,7 +8753,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.RemoveEvent(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの番号のイベントを取り除く。イベントの並びは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "そのコマの番号のイベントを取り除く。イベントの並びは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8766,7 +8766,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeFrameEvent.RunEvent(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの番号のイベントを走らせて、登録先の状態を進める。イベントの並びは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "そのコマの番号のイベントを走らせて、登録先の状態を進める。イベントの並びは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8779,7 +8779,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroup.AddElement(PEPlugin.Vme.IPEVmeEventElement)",
       "editKind": "directChange",
-      "basis": "まとまりへ要素を1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "まとまりへ要素を1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8792,7 +8792,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroup.AddElements(PEPlugin.Vme.IPEVmeEventElement[])",
       "editKind": "directChange",
-      "basis": "まとまりへ要素をまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "まとまりへ要素をまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8818,7 +8818,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GetElement(System.Int32)",
       "editKind": "read",
-      "basis": "その位置の要素を返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "その位置の要素を返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8856,7 +8856,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroup.RemoveElement(PEPlugin.Vme.IPEVmeEventElement)",
       "editKind": "directChange",
-      "basis": "まとまりから要素を1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "まとまりから要素を1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8869,7 +8869,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.AddBone(PEPlugin.Vme.IPEVmeBone)",
       "editKind": "directChange",
-      "basis": "まとまりへボーンを1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "まとまりへボーンを1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8882,7 +8882,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.AddBones(PEPlugin.Vme.IPEVmeBone[])",
       "editKind": "directChange",
-      "basis": "まとまりへボーンをまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "まとまりへボーンをまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8895,7 +8895,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetBone(System.Int32)",
       "editKind": "read",
-      "basis": "その位置のボーンを返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "その位置のボーンを返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8912,7 +8912,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetGroupBones()",
       "editKind": "read",
-      "basis": "まとまりが持つボーンを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "まとまりが持つボーンを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8925,7 +8925,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.RemoveBone(PEPlugin.Vme.IPEVmeBone)",
       "editKind": "directChange",
-      "basis": "まとまりからボーンを1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "まとまりからボーンを1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8938,7 +8938,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.AddMorph(PEPlugin.Vme.IPEVmeSingleValueElement)",
       "editKind": "directChange",
-      "basis": "まとまりへモーフを1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "まとまりへモーフを1つ足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8951,7 +8951,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.AddMorphs(PEPlugin.Vme.IPEVmeSingleValueElement[])",
       "editKind": "directChange",
-      "basis": "まとまりへモーフをまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "まとまりへモーフをまとめて足す。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -8964,7 +8964,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.GetGroupMorphs()",
       "editKind": "read",
-      "basis": "まとまりが持つモーフを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "まとまりが持つモーフを並べて返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。並びでハンドルを返すので、1つのハンドルとしては引けない。出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8977,7 +8977,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.GetMorph(System.Int32)",
       "editKind": "read",
-      "basis": "その位置のモーフを返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "その位置のモーフを返すだけで、エディタの状態を動かさない。まとまりは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -8994,7 +8994,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupMorph.RemoveMorph(PEPlugin.Vme.IPEVmeSingleValueElement)",
       "editKind": "directChange",
-      "basis": "まとまりからモーフを1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "まとまりからモーフを1つ取り除く。まとまりは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9007,7 +9007,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.C()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして色のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして色のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9020,7 +9020,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.Color()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして色のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして色のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9033,7 +9033,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.D()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして方向のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして方向のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9046,7 +9046,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.Direction()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして方向のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして方向のイベント設定を返すだけで、エディタの状態を動かさない。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9059,7 +9059,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.LS()",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとしていまの照明の状態を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとしていまの照明の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9076,7 +9076,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.ToLS(PEPlugin.Vme.IPEVmeEventState)",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして渡したイベントの状態での照明の状態を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして渡したイベントの状態での照明の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9093,7 +9093,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.ToLightState(PEPlugin.Vme.IPEVmeEventState)",
       "editKind": "read",
-      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして渡したイベントの状態での照明の状態を返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして渡したイベントの状態での照明の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9155,7 +9155,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightState.C()",
       "editKind": "read",
-      "basis": "いまの色を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの色を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9172,7 +9172,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightState.Color()",
       "editKind": "read",
-      "basis": "いまの色を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの色を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9189,7 +9189,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightState.D()",
       "editKind": "read",
-      "basis": "いまの向きを返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの向きを返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9206,7 +9206,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightState.Direction()",
       "editKind": "read",
-      "basis": "いまの向きを返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの向きを返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9257,7 +9257,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeObject.Camera()",
       "editKind": "read",
-      "basis": "動かすカメラを返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "動かすカメラを返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9274,7 +9274,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeObject.Light()",
       "editKind": "read",
-      "basis": "動かす照明を返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "動かす照明を返すだけで、エディタの状態を動かさない。VMEのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -9296,7 +9296,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.AddPoint(SlimDX.Vector3)",
       "editKind": "directChange",
-      "basis": "通る点を末尾へ足す。空間パスは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "通る点を末尾へ足す。空間パスは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9406,7 +9406,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Double,System.Double,System.Double)",
       "editKind": "read",
-      "basis": "道のりの範囲を一定の間隔で区切って位置を並べて返すだけで、エディタの状態を動かさない。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "道のりの範囲を一定の間隔で区切って位置を並べて返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -9452,7 +9452,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.RegisterDirectionEvent(PEPlugin.Vme.IPEVmeDirectionEventOperator,System.Int32,SlimDX.Vector3[],System.Int32)",
       "editKind": "directChange",
-      "basis": "渡された方向演算へ、コマごとの向きをイベントとして登録する。方向演算は長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "渡された方向演算へ、コマごとの向きをイベントとして登録する。方向演算は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9465,7 +9465,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.RegisterPositionEvent(PEPlugin.Vme.IPEVmePositionEventOperator,System.Int32,SlimDX.Vector3[],System.Int32)",
       "editKind": "directChange",
-      "basis": "渡された位置演算へ、コマごとの位置をイベントとして登録する。位置演算は長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "渡された位置演算へ、コマごとの位置をイベントとして登録する。位置演算は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9478,7 +9478,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.SetPoint(SlimDX.Vector3[])",
       "editKind": "directChange",
-      "basis": "通る点を並びごと置き換える。空間パスは長寿命の持ち物なので、それへ直に作用する。受け手は作れるが、渡す相手をこの検査では用意できないので呼び先まで届かせられない。",
+      "basis": "通る点を並びごと置き換える。空間パスは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9525,7 +9525,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.Move(System.Int32,System.Int32,SlimDX.Vector3,SlimDX.Vector3,System.Int32)",
       "editKind": "directChange",
-      "basis": "コマの範囲を渡した2つの位置の間で動かすイベントを、始めのコマへ置く位置と速度として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "コマの範囲を渡した2つの位置の間で動かすイベントを、始めのコマへ置く位置と速度として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9538,7 +9538,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.MoveFree(System.Int32,SlimDX.Vector3[],System.Int32)",
       "editKind": "directChange",
-      "basis": "渡した位置の並びを、始めのコマから1コマずつ辿るイベントとして積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "渡した位置の並びを、始めのコマから1コマずつ辿るイベントとして積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9551,7 +9551,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.MoveRange(System.Int32,System.Int32,SlimDX.Vector3,SlimDX.Vector3,System.Int32)",
       "editKind": "directChange",
-      "basis": "コマの範囲を渡した2つの位置の間で動かすイベントを、範囲のコマすべてへ置く位置として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "コマの範囲を渡した2つの位置の間で動かすイベントを、範囲のコマすべてへ置く位置として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9564,7 +9564,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.MoveTo(System.Int32,System.Int32,SlimDX.Vector3,System.Int32)",
       "editKind": "directChange",
-      "basis": "始めのコマの位置から渡した位置まで動かすイベントを、始めのコマへ置く目標までの速度と、終わりのコマへ置く速度の初期化と目標の位置として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "始めのコマの位置から渡した位置まで動かすイベントを、始めのコマへ置く目標までの速度と、終わりのコマへ置く速度の初期化と目標の位置として積む。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9590,7 +9590,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionEventOperator.Set(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
-      "basis": "コマの範囲にわたる位置を、渡した位置で置くか、足すか、掛ける形でイベントに積む。積んだ分は移動量として効く。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "コマの範囲にわたる位置を、渡した位置で置くか、足すか、掛ける形でイベントに積む。積んだ分は移動量として効く。位置のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9603,7 +9603,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.Clear()",
       "editKind": "directChange",
-      "basis": "持っている位置を初期化する。位置は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "持っている位置を初期化する。位置は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -9616,7 +9616,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.Get()",
       "editKind": "read",
-      "basis": "いまの位置を返すだけで、エディタの状態を動かさない。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "いまの位置を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -9658,7 +9658,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.GetIP()",
       "editKind": "read",
-      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "初めの位置を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -9700,7 +9700,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePositionOperator.Set(SlimDX.Vector3,PEPlugin.Vme.OpType)",
       "editKind": "directChange",
-      "basis": "いまの位置を、渡した位置で置くか、足すか、掛ける。置いた分は移動量として持つ。位置は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "いまの位置を、渡した位置で置くか、足すか、掛ける。置いた分は移動量として持つ。位置は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10083,7 +10083,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.Bone(System.Int32,System.Int32)",
       "editKind": "read",
-      "basis": "そのコマのボーンの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマのボーンの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10108,7 +10108,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.Camera(System.Int32)",
       "editKind": "read",
-      "basis": "そのコマのカメラの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマのカメラの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10165,7 +10165,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetBoneNames()",
       "editKind": "read",
-      "basis": "ボーンの名前を並べて返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "ボーンの名前を並べて返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -10195,7 +10195,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetBoneResult(System.Int32,System.Int32)",
       "editKind": "read",
-      "basis": "そのコマのボーンの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマのボーンの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10212,7 +10212,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetCameraResult(System.Int32)",
       "editKind": "read",
-      "basis": "そのコマのカメラの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマのカメラの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10229,7 +10229,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetLightResult(System.Int32)",
       "editKind": "read",
-      "basis": "そのコマの照明の結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの照明の結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10246,7 +10246,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetMorphNames()",
       "editKind": "read",
-      "basis": "モーフの名前を並べて返すだけで、エディタの状態を動かさない。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "モーフの名前を並べて返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -10276,7 +10276,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.GetMorphResult(System.Int32,System.Int32)",
       "editKind": "read",
-      "basis": "そのコマのモーフの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマのモーフの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10293,7 +10293,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.Light(System.Int32)",
       "editKind": "read",
-      "basis": "そのコマの照明の結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの照明の結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10310,7 +10310,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.Morph(System.Int32,System.Int32)",
       "editKind": "read",
-      "basis": "そのコマのモーフの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマのモーフの結果を返すだけで、エディタの状態を動かさない。走らせた結果は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10343,7 +10343,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToCameraVmd(System.Boolean,System.Boolean)",
       "editKind": "directChange",
-      "basis": "カメラの結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "カメラの結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10360,7 +10360,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToLightVmd(System.Boolean)",
       "editKind": "directChange",
-      "basis": "照明の結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "照明の結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10377,7 +10377,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeResult.ToMotionVmd(System.Boolean)",
       "editKind": "directChange",
-      "basis": "ボーンとモーフの結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "ボーンとモーフの結果からモーションのデータを作って持ち物にするので、直接変更型に当たる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10529,7 +10529,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToVS(PEPlugin.Vme.IPEVmeEventState)",
       "editKind": "read",
-      "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10546,7 +10546,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToValueState(PEPlugin.Vme.IPEVmeEventState)",
       "editKind": "read",
-      "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10563,7 +10563,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.V()",
       "editKind": "read",
-      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10576,7 +10576,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.VS()",
       "editKind": "read",
-      "basis": "いまの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10593,7 +10593,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.Value()",
       "editKind": "read",
-      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "単値を動かす演算を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。出たハンドルを引ける一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10619,7 +10619,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.Set(System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの値を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの値を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10645,7 +10645,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetA(System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの加速度を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの加速度を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10671,7 +10671,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetV(System.Int32,System.Single,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの速度を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの速度を、渡した値で置くか、足すか、掛ける形でイベントに積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10684,7 +10684,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetZero(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの値を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの値を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10697,7 +10697,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetZeroA(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの加速度を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの加速度を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10710,7 +10710,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueEventOperator.SetZeroV(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの速度を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの速度を初期化するイベントを積む。単値のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10723,7 +10723,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.Clear()",
       "editKind": "directChange",
-      "basis": "持っている量をすべて初期化する。単値は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "持っている量をすべて初期化する。単値は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10736,7 +10736,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.ClearA()",
       "editKind": "directChange",
-      "basis": "加速度を初期化する。単値は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "加速度を初期化する。単値は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10749,7 +10749,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.ClearV()",
       "editKind": "directChange",
-      "basis": "速度を初期化する。単値は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "速度を初期化する。単値は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10762,7 +10762,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.Get()",
       "editKind": "read",
-      "basis": "いまの量を返すだけで、エディタの状態を動かさない。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "いまの量を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -10804,7 +10804,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.GetA()",
       "editKind": "read",
-      "basis": "いまの加速度を返すだけで、エディタの状態を動かさない。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "いまの加速度を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -10846,7 +10846,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.GetV()",
       "editKind": "read",
-      "basis": "いまの速度を返すだけで、エディタの状態を動かさない。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "いまの速度を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -10888,7 +10888,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.Set(System.Single,PEPlugin.Vme.OpType)",
       "editKind": "directChange",
-      "basis": "いまの量を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "いまの量を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10901,7 +10901,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.SetA(System.Single,PEPlugin.Vme.OpType)",
       "editKind": "directChange",
-      "basis": "加速度を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "加速度を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10914,7 +10914,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.SetV(System.Single,PEPlugin.Vme.OpType)",
       "editKind": "directChange",
-      "basis": "速度を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "速度を、渡した値で置くか、足すか、掛ける。単値は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10927,7 +10927,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueOperator.Update()",
       "editKind": "directChange",
-      "basis": "速度と加速度から、いまの量を進める。単値は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "速度と加速度から、いまの量を進める。単値は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -10940,7 +10940,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueState.V()",
       "editKind": "read",
-      "basis": "いまの単値を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの単値を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -10957,7 +10957,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueState.Value()",
       "editKind": "read",
-      "basis": "いまの単値を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "いまの単値を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -11023,7 +11023,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.Set(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
-      "basis": "コマの範囲にわたるベクトル量を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "コマの範囲にわたるベクトル量を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11075,7 +11075,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetA(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
-      "basis": "コマの範囲にわたる加速度を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "コマの範囲にわたる加速度を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11127,7 +11127,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetV(System.Int32,System.Int32,SlimDX.Vector3,PEPlugin.Vme.OpType,System.Int32)",
       "editKind": "directChange",
-      "basis": "コマの範囲にわたる速度を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "コマの範囲にわたる速度を、渡したベクトルで置くか、足すか、掛ける形でイベントに積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11140,7 +11140,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetZero(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマのベクトル量を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマのベクトル量を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11153,7 +11153,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetZeroA(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの加速度を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの加速度を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11166,7 +11166,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueEventOperator.SetZeroV(System.Int32,System.Int32)",
       "editKind": "directChange",
-      "basis": "そのコマの速度を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要り、その型を作る手立ても受け手をハンドルで要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
+      "basis": "そのコマの速度を初期化するイベントを積む。ベクトル量のイベント設定は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11179,7 +11179,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.Clear()",
       "editKind": "directChange",
-      "basis": "持っている量をすべて初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "持っている量をすべて初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11192,7 +11192,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.ClearA()",
       "editKind": "directChange",
-      "basis": "加速度を単位行列で初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "加速度を単位行列で初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11205,7 +11205,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.ClearV()",
       "editKind": "directChange",
-      "basis": "速度を単位行列で初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "速度を単位行列で初期化する。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11218,7 +11218,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.Get()",
       "editKind": "read",
-      "basis": "いまの量を返すだけで、エディタの状態を動かさない。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "いまの量を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -11260,7 +11260,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.GetA()",
       "editKind": "read",
-      "basis": "加速度の行列を返すだけで、エディタの状態を動かさない。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "加速度の行列を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -11302,7 +11302,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.GetV()",
       "editKind": "read",
-      "basis": "速度の行列を返すだけで、エディタの状態を動かさない。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "速度の行列を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -11344,7 +11344,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.Set(SlimDX.Vector3,PEPlugin.Vme.OpType)",
       "editKind": "directChange",
-      "basis": "いまの量を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "いまの量を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11370,7 +11370,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.SetA(SlimDX.Vector3,PEPlugin.Vme.OpType)",
       "editKind": "directChange",
-      "basis": "加速度を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "加速度を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11396,7 +11396,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.SetV(SlimDX.Vector3,PEPlugin.Vme.OpType)",
       "editKind": "directChange",
-      "basis": "速度を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "速度を、渡したベクトルで置くか、足すか、掛ける。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11409,7 +11409,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeVectorValueOperator.Update()",
       "editKind": "directChange",
-      "basis": "速度と加速度から、いまの量を進める。ベクトル量は長寿命の持ち物なので、それへ直に作用する。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "速度と加速度から、いまの量を進める。ベクトル量は長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -11446,7 +11446,7 @@
     {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.CreateViewEventListener()",
       "editKind": "viewSession",
-      "basis": "画面で起きたことを受け取る口を作るだけで、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。受け手をハンドルで要るのに、その型を1つ作って渡せるツールが正本の中に無いので呼び先まで届かせられない。",
+      "basis": "画面で起きたことを受け取る口を作るだけで、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",

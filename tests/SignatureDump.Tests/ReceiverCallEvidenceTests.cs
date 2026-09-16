@@ -64,32 +64,32 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string ListCamerasTool = "motion_list_vme_cameras";
 
-        [Fact(Skip = "impl pending: 受け手を渡さずに呼べるツールが出す型を1段の列で引けるようにする")]
+        [Fact]
         public void ATypeMadeWithoutAHandleIsReachedInOneStep()
         {
             Assert.Equal(new[] { CreateVmeTool }, ByType()[Vme]);
         }
 
-        [Fact(Skip = "impl pending: 別のハンドルの先にある型を、そこへ至る列を繋いで引けるようにする")]
+        [Fact]
         public void ATypeBehindAnotherHandleIsReachedThroughIt()
         {
             Assert.Equal(new[] { CreateVmeTool, CameraTool }, ByType()[Camera]);
         }
 
-        [Fact(Skip = "impl pending: 列の長さに上限を置かない")]
+        [Fact]
         public void ThePathHasNoLimitOnHowManyStepsItTakes()
         {
             Assert.Equal(
                 new[] { CreateVmeTool, CameraTool, PositionTool }, ByType()[Position]);
         }
 
-        [Fact(Skip = "impl pending: 同じ型へ届く列が2つ以上あるとき段数の少ないものを採る")]
+        [Fact]
         public void TheShorterOfTwoPathsToTheSameTypeWins()
         {
             Assert.Equal(new[] { CreateLightTool }, ByType()[Light]);
         }
 
-        [Fact(Skip = "impl pending: 段数が並ぶ列はツールの名前の綴りの順で先のものを採る")]
+        [Fact]
         public void PathsOfTheSameLengthAreSettledBySpelling()
         {
             Assert.True(
@@ -98,43 +98,47 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new[] { CreateVmeTool }, ByType()[Vme]);
         }
 
-        [Fact(Skip = "impl pending: 根から辿り着けない型を持たない")]
+        [Fact]
         public void ATypeThatNoPathReachesIsAbsent()
         {
             Assert.False(ByType().ContainsKey(Stranded));
         }
 
-        [Fact(Skip = "impl pending: 派生型へ至る列を基底型の名前からも引けるようにする")]
+        [Fact]
         public void APathToADerivedTypeAnswersForItsBaseType()
         {
             Assert.Equal(new[] { CreateBoneKeyTool }, ByType()[FrameKey]);
         }
 
-        [Fact(Skip = "impl pending: 受け手をハンドルで要るツールへ、その受け手へ至る列を与える")]
+        [Fact]
         public void AToolThatNeedsAHandleIsGivenThePathToItsReceiver()
         {
             Assert.Equal(new[] { CreateVmeTool }, ByTool()[CameraTool]);
         }
 
-        [Fact(Skip = "impl pending: 受け手の型ちょうどを作る生成器が無くても派生型の列を与える")]
+        [Fact]
         public void AToolWhoseReceiverIsOnlyMadeAsADerivedTypeIsStillGivenAPath()
         {
             Assert.Equal(new[] { CreateBoneKeyTool }, ByTool()[IplTool]);
         }
 
-        [Fact(Skip = "impl pending: 自分の行を持たない集約のツールへ、並べる要素を所有する型への列を与える")]
-        public void AToolWithoutItsOwnRowIsGivenThePathToTheOwnerOfWhatItLists()
+        /// <summary>
+        /// 項目を集めるツールがハンドルで受け取るのは、並べる要素そのものである。所有する側の
+        /// ハンドルを渡すと、呼び先が要素の型を検めて断る。
+        /// </summary>
+        [Fact]
+        public void AToolWithoutItsOwnRowIsGivenThePathToWhatItLists()
         {
-            Assert.Equal(new[] { CreateVmeTool }, ByTool()[ListCamerasTool]);
+            Assert.Equal(new[] { CreateVmeTool, CameraTool }, ByTool()[ListCamerasTool]);
         }
 
-        [Fact(Skip = "impl pending: 受け手を渡さずに呼べるツールを列の対象にしない")]
+        [Fact]
         public void AToolCallableWithoutAHandleIsAbsent()
         {
             Assert.False(ByTool().ContainsKey(CreateVmeTool));
         }
 
-        [Fact(Skip = "impl pending: 引数の欠けを呼び出しの時点で断る")]
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             InventoryRecord inventory = Inventory();

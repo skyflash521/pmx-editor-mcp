@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
@@ -34,18 +35,26 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ハンドルの並びを受け取る入力の名前。</summary>
         public const string HandlesName = "handles";
 
+        /// <summary>ツールの名前の中で、担当群と残りを分ける文字。</summary>
+        private const char Separator = '_';
+
+        /// <summary>相手を位置の並びで指す入力の名前。</summary>
+        private const string IndicesName = "indices";
+
+        /// <summary>親を位置の並びで指す入力の名前。</summary>
+        private const string ParentIndicesName = "parentIndices";
+
         /// <summary>
         /// 呼び先まで届かせられないと述べる言い回し。届かせる手立てが無い行は、そう書いて初めて
-        /// 覆いの判定から外れる。書いてある行へは受け手も作らない——作って呼べば、確かめているのは
-        /// 宣言した振る舞いでなくその失敗になる。
+        /// 行単位の覆いの判定から外れる。事例の組み立てはこの文言を読まない——文言の真偽を
+        /// 確かめる検査が無いので、呼ぶかどうかを文言では決めない。
         /// </summary>
         public const string UnreachableReason = "呼び先まで届かせられない";
 
         /// <summary>
-        /// 呼ぶと確認の表示が出て止まると述べる言い回し。表示はエディタが出すもので、呼んだ側は
-        /// 閉じるまで応答を受け取れない。そう書いてある行は呼ばず、覆いの判定からも外れる
-        /// ——表示で止まった応答を合格にすると、確かめているのは宣言した振る舞いでなく表示が
-        /// 出たことになる。
+        /// 呼ぶと確認の表示が出て止まると述べる言い回し。そう書いてある行は行単位の覆いの判定から
+        /// 外れる。事例の組み立てはこの文言を読まない——文言の真偽を確かめる検査が無いので、呼ぶ
+        /// かどうかを文言では決めない。
         /// </summary>
         public const string PromptShownReason = "確認の表示が出る";
 
@@ -168,7 +177,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> handled = null,
             ISet<string> picking = null,
             IDictionary<string, IList<string>> makers = null,
-            IDictionary<string, string> adders = null)
+            IDictionary<string, string> adders = null,
+            IDictionary<string, string> removers = null)
         {
             if (map == null)
             {
@@ -241,7 +251,11 @@ namespace PmxEditorMcp.SignatureDump
                 ToolMapRow row;
                 byTool.TryGetValue(schema.Tool, out row);
                 List<E2eCase> held = cases;
-                if (row != null && picking != null && picking.Contains(row.SignatureKey))
+                if (row == null && removers != null && removers.ContainsKey(schema.Tool))
+                {
+                    held = trailing;
+                }
+                else if (row != null && picking != null && picking.Contains(row.SignatureKey))
                 {
                     held = picked;
                 }
@@ -261,10 +275,11 @@ namespace PmxEditorMcp.SignatureDump
                     given,
                     refused,
                     Handles(schema, sdkTypes, handled),
-                    Maker(schema.Tool, row, makers, schemas),
+                    Maker(schema.Tool, makers),
                     adders,
                     factories,
-                    reading));
+                    reading,
+                    removers));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -438,8 +453,155 @@ namespace PmxEditorMcp.SignatureDump
             };
         }
 
+        /// <summary>受け手をハンドルの並びで受け取るツールか。渡し口が無ければ借りて渡せない。</summary>
+        private static bool Holds(ToolSchema schema)
+        {
+            return schema.Branches.SelectMany(b => b.Inputs).Any(
+                i => !i.Injected
+                    && string.Equals(i.Name, HandlesName, StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// 段取りがその要素を並びへ加えるか。加えないなら、外す相手が並びに居ないので借りる名前も
+        /// 出ない。
+        /// </summary>
+        private static bool Prepares(ToolSchema adding)
+        {
+            return adding != null && (Handed(adding) || Assigned(adding));
+        }
+
+        /// <summary>
+        /// 並びの先頭を位置で指す引数。位置で指せないツールでは null——どの要素を相手にするかが
+        /// ここでは決まらない。
+        /// </summary>
+        private static IDictionary<string, object> Pointed(
+            ToolSchema schema,
+            IDictionary<SchemaItem, string> sdkShapes,
+            IDictionary<SchemaItem, object> sampled)
+        {
+            foreach (SchemaBranch branch in schema.Branches)
+            {
+                IDictionary<string, object> arguments =
+                    new Dictionary<string, object>(StringComparer.Ordinal);
+                foreach (SchemaItem input in branch.Inputs.Where(
+                    i => !i.Injected && Points(i.Name)))
+                {
+                    arguments[input.Name] = new object[] { FirstPosition };
+                }
+
+                bool pointed = true;
+                foreach (SchemaChoice choice in branch.Choices.Where(c => c.Required))
+                {
+                    string name = choice.Names.FirstOrDefault(Points);
+                    if (name == null)
+                    {
+                        pointed = false;
+                        break;
+                    }
+
+                    arguments[name] = new object[] { FirstPosition };
+                }
+
+                if (pointed && arguments.Count != 0
+                    && TryFill(branch, sdkShapes, sampled, arguments)
+                    && Satisfied(branch, arguments))
+                {
+                    return arguments;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// ハンドルの並びだけを渡す引数に、借りる相手の種別を選ぶ値を足したもの。種別で呼び分ける
+        /// ツールへ別の種別として渡すと、呼び先が断る。作ったものの種別は、作ったツールの名前の
+        /// 担当群から後ろがそのまま表す。
+        /// </summary>
+        private static IDictionary<string, object> Chosen(ToolSchema schema, string made)
+        {
+            IDictionary<string, object> arguments = Lent();
+            int at = made.IndexOf(Separator);
+            string kind = at < 0 ? made : made.Substring(at + 1);
+            SchemaBranch chosen = schema.Branches.FirstOrDefault(
+                b => b.SelectorName != null
+                    && string.Equals(b.SelectorValue as string, kind, StringComparison.Ordinal));
+            if (chosen != null)
+            {
+                arguments[chosen.SelectorName] = chosen.SelectorValue;
+            }
+
+            return arguments;
+        }
+
+        /// <summary>
+        /// 組み立てた引数が、そのツールのどれかの呼び分けの要る項目をすべて埋めているか。借りる
+        /// 空きは値をまだ持たないので、値の形ではなく項目の名前で見る。
+        /// </summary>
+        private static bool Satisfied(ToolSchema schema, IDictionary<string, object> arguments)
+        {
+            return schema.Branches.Any(b => Satisfied(b, arguments));
+        }
+
+        /// <summary>その呼び分けの要る項目が、組み立てた引数にすべて在るか。</summary>
+        private static bool Satisfied(
+            SchemaBranch branch, IDictionary<string, object> arguments)
+        {
+            ISet<string> named = new HashSet<string>(
+                branch.Inputs.Where(i => !i.Injected).Select(i => i.Name),
+                StringComparer.Ordinal);
+
+            return arguments.Keys.All(
+                    k => named.Contains(k)
+                        || string.Equals(k, ConfirmName, StringComparison.Ordinal))
+                && branch.Inputs.All(
+                    i => i.Injected || i.Required != true || arguments.ContainsKey(i.Name))
+                && branch.Choices.All(
+                    c => !c.Required || c.Names.Any(arguments.ContainsKey));
+        }
+
+        /// <summary>
+        /// その呼び分けの必須の組を、相手を選ぶ値で埋める。全体を相手にできるならそれを、でき
+        /// なければ並びの先頭を位置で指す。どちらもできない組が在れば偽——相手が決まらない。
+        /// </summary>
+        private static bool Chose(SchemaBranch branch, IDictionary<string, object> arguments)
+        {
+            foreach (SchemaChoice choice in branch.Choices.Where(c => c.Required))
+            {
+                if (choice.Names.Any(arguments.ContainsKey))
+                {
+                    continue;
+                }
+
+                string whole = choice.Names.FirstOrDefault(
+                    n => string.Equals(n, WholeName, StringComparison.Ordinal));
+                if (whole != null)
+                {
+                    arguments[whole] = true;
+                    continue;
+                }
+
+                string pointed = choice.Names.FirstOrDefault(Points);
+                if (pointed == null)
+                {
+                    return false;
+                }
+
+                arguments[pointed] = new object[] { FirstPosition };
+            }
+
+            return true;
+        }
+
+        /// <summary>その名前が、相手を位置の並びで指す入力か。</summary>
+        private static bool Points(string name)
+        {
+            return string.Equals(name, IndicesName, StringComparison.Ordinal)
+                || string.Equals(name, ParentIndicesName, StringComparison.Ordinal);
+        }
+
         /// <summary>作った要素をハンドルで渡すだけで呼べるツールか。</summary>
-        private static bool Handed(ToolSchema schema)
+        internal static bool Handed(ToolSchema schema)
         {
             return schema.Branches.Any(b => b.Inputs.All(
                 i => i.Injected
@@ -506,7 +668,8 @@ namespace PmxEditorMcp.SignatureDump
             IList<string> maker,
             IDictionary<string, string> adders,
             IDictionary<string, string> factories,
-            ISet<string> reading)
+            ISet<string> reading,
+            IDictionary<string, string> removers)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -522,7 +685,7 @@ namespace PmxEditorMcp.SignatureDump
             bool written = row != null && given != null && given.ContainsKey(rowKey);
             IDictionary<string, object> calling =
                 new Dictionary<string, object>(StringComparer.Ordinal);
-            bool calls = row != null && !Prompts(row) && (!confirmed || written)
+            bool calls = row != null && (!confirmed || written)
                 && TryCalling(row, schema, sdkShapes, sampled, given, out calling);
 
             // 行を持たないツールも、引数を要さないなら呼ぶ。呼べるのに呼ばないままだと、この
@@ -538,24 +701,56 @@ namespace PmxEditorMcp.SignatureDump
                 calling = Confirmed(calling);
             }
 
-            // 受け手をハンドルで要る行は、それだけを理由に呼ばれないままだった。その型を作る
-            // ツールが在るなら、1つ作ってから借りて渡せば呼び先まで届く。
+            string making = string.IsNullOrEmpty(rowKey) ? tool : rowKey;
             IDictionary<string, string> borrowing = null;
-            if (!calls && row != null && !confirmed && maker != null)
+            if (!calls && !confirmed && maker != null && Holds(schema))
             {
-                calling = Lent();
-                if (TryFill(schema, sdkShapes, sampled, calling))
+                calling = Chosen(schema, maker[maker.Count - 1]);
+                if (TryFill(schema, sdkShapes, sampled, calling) && Satisfied(schema, calling))
                 {
                     calls = true;
                     borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
                     {
                         {
                             Leaf(HandlesName),
-                            Borrowed(rowKey, Of(schemas, maker[maker.Count - 1]))
+                            Borrowed(
+                                Step(making, maker.Count - 1),
+                                Of(schemas, maker[maker.Count - 1]))
                         },
                     };
                 }
             }
+            string adder;
+            string factory;
+            if (!calls && row == null && removers != null
+                && removers.TryGetValue(tool, out adder)
+                && factories != null && factories.TryGetValue(adder, out factory)
+                && Of(schemas, factory) != null
+                && Prepares(Of(schemas, adder)))
+            {
+                if (Holds(schema))
+                {
+                    calling = Lent();
+                    if (TryFill(schema, sdkShapes, sampled, calling) && Satisfied(schema, calling))
+                    {
+                        calls = true;
+                        borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
+                        {
+                            { Leaf(HandlesName), Borrowed(adder, Of(schemas, factory)) },
+                        };
+                    }
+                }
+                else
+                {
+                    IDictionary<string, object> pointing = Pointed(schema, sdkShapes, sampled);
+                    if (pointing != null)
+                    {
+                        calls = true;
+                        calling = pointing;
+                    }
+                }
+            }
+
             SampleCallRow denied;
             bool denies = row != null && refused.TryGetValue(rowKey, out denied);
 
@@ -588,19 +783,28 @@ namespace PmxEditorMcp.SignatureDump
             string held = schema.Output != null && schema.Output.Element != null
                 ? Leaf(rowKey)
                 : rowKey;
-            if (borrowing != null)
+            for (int at = 0; borrowing != null && maker != null && at < maker.Count; at++)
             {
                 yield return new E2eCase(
                     rowKey,
                     editKind,
                     path,
-                    maker[maker.Count - 1],
+                    maker[at],
                     "呼び出しの相手を1つ作れること",
-                    new Dictionary<string, object>(StringComparer.Ordinal),
+                    at == 0 ? new Dictionary<string, object>(StringComparer.Ordinal) : Lent(),
                     E2eExpectation.Success,
                     null,
                     null,
-                    rowKey);
+                    Step(making, at),
+                    at == 0
+                        ? null
+                        : new Dictionary<string, string>(StringComparer.Ordinal)
+                        {
+                            {
+                                Leaf(HandlesName),
+                                Borrowed(Step(making, at - 1), Of(schemas, maker[at - 1]))
+                            },
+                        });
             }
 
             foreach (Postcondition judgement in reads ? compared : new Postcondition[0])
@@ -727,15 +931,34 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (SchemaItem limit in LimitInputs(schema))
             {
+                IDictionary<string, object> counting = calls
+                    ? new Dictionary<string, object>(calling, StringComparer.Ordinal)
+                    : Single(limit.Name, 0, confirmed);
+                counting[limit.Name] = 0;
+                if (!calls)
+                {
+                    Chose(
+                        schema.Branches.First(b => b.Inputs.Any(i => ReferenceEquals(i, limit))),
+                        counting);
+                }
+
+                if (!Satisfied(schema, counting))
+                {
+                    continue;
+                }
+
                 yield return new E2eCase(
                     rowKey,
                     editKind,
                     path,
                     tool,
                     CountRefusal,
-                    Single(limit.Name, 0, confirmed),
+                    counting,
                     E2eExpectation.Refusal,
-                    InvalidArgument);
+                    InvalidArgument,
+                    null,
+                    null,
+                    calls ? borrowing : null);
             }
         }
 
@@ -829,29 +1052,22 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// そのツールの受け手を得るまでに順に呼ぶツールの列。列を持たないツールでは null——渡す
-        /// 相手が決まらないツールは呼べないままで、呼び先まで届く検査を1つも持たない。列の各段は
-        /// 対象を選ばずに呼べるものに限る——選ぶ相手がまた要るなら、渡すものがここでは決まらない。
+        /// 相手が決まらないツールは呼べないままで、呼び先まで届く検査を1つも持たない。
         /// </summary>
         private static IList<string> Maker(
-            string tool,
-            ToolMapRow row,
-            IDictionary<string, IList<string>> makers,
-            ToolSchemaTable schemas)
+            string tool, IDictionary<string, IList<string>> makers)
         {
             IList<string> path;
-            if (row == null || makers == null || !makers.TryGetValue(tool, out path)
-                || path.Count == 0)
-            {
-                return null;
-            }
 
-            if (row.Basis.IndexOf(UnreachableReason, StringComparison.Ordinal) >= 0
-                || Prompts(row))
-            {
-                return null;
-            }
+            return makers != null && makers.TryGetValue(tool, out path) && path.Count != 0
+                ? path
+                : null;
+        }
 
-            return path.All(t => Unchosen(Of(schemas, t)) != null) ? path : null;
+        /// <summary>受け手を作る段が出したハンドルを覚えておく名前。段ごとに分ける。</summary>
+        private static string Step(string name, int at)
+        {
+            return name + Scoped + at.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>出たハンドルを観測すると宣言した判定。宣言しない行では空。</summary>

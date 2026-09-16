@@ -18,7 +18,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Making = "呼び出しの相手を1つ作れること";
 
-        [Fact(Skip = "impl pending: 呼び先まで届かせられないと根拠が述べる行でも受け手の列があれば呼ぶ")]
+        private const string Adder = "model_add_bones";
+
+        private const string Remover = "model_remove_bones";
+
+        private const string Factory = "model_bone";
+
+        [Fact]
         public void ARowWhoseBasisSaysItCannotBeReachedIsStillCalled()
         {
             IList<E2eCase> cases = Built(Unreachable(), new[] { Second });
@@ -29,7 +35,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     && c.Expectation == E2eExpectation.Called);
         }
 
-        [Fact(Skip = "impl pending: 二段掛かる受け手は段ごとに1件ずつ相手を作る検査を並べる")]
+        /// <summary>
+        /// 根拠の文言は事例の組み立てに関与しない。文言の真偽を確かめる検査が無いので、呼ぶか
+        /// どうかを文言では決めない。
+        /// </summary>
+        [Fact]
+        public void ARowWhoseBasisSaysCallingItShowsAPromptIsStillCalled()
+        {
+            IList<E2eCase> cases = Built(Prompting(), new[] { Second });
+
+            Assert.Contains(
+                cases,
+                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal)
+                    && c.Expectation == E2eExpectation.Called);
+        }
+
+        [Fact]
         public void AReceiverThatTakesTwoStepsGetsACaseForEachStep()
         {
             IList<E2eCase> cases = Built(Map(), new[] { First, Second });
@@ -41,7 +62,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(new[] { First, Second }, making);
         }
 
-        [Fact(Skip = "impl pending: 二段目は一段目が出したハンドルを借りて呼ぶ")]
+        [Fact]
         public void EachStepBorrowsTheHandleTheStepBeforeItMade()
         {
             IList<E2eCase> cases = Built(Map(), new[] { First, Second });
@@ -53,7 +74,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(first.Produces, second.Borrowed.Values.Single());
         }
 
-        [Fact(Skip = "impl pending: 最後の呼び出しは列の終わりが出したハンドルを借りる")]
+        [Fact]
         public void TheCallBorrowsTheHandleTheLastStepMade()
         {
             IList<E2eCase> cases = Built(Map(), new[] { First, Second });
@@ -65,6 +86,40 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.NotNull(last.Produces);
             Assert.NotNull(called.Borrowed);
             Assert.Equal(last.Produces, called.Borrowed.Values.Single());
+        }
+
+        /// <summary>
+        /// 行を持たない要素を外すツールは、段取りが並びへ加えた要素を相手にする。ここで新しく
+        /// 作った要素はまだ並びに無いので、外す相手にできない。
+        /// </summary>
+        [Fact]
+        public void AnElementRemoverBorrowsTheHandleTheSetupAdded()
+        {
+            IList<E2eCase> cases = E2eCaseBuilder.Build(
+                new ToolMap(new ToolMapRow[0]),
+                new ToolSchemaTable(new[] { Held(Remover), Held(Adder), Free(Factory) }),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal),
+                new Dictionary<SchemaItem, string>(),
+                null,
+                null,
+                null,
+                null,
+                new Dictionary<string, string>(StringComparer.Ordinal) { { Adder, Factory } },
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new Dictionary<string, string>(StringComparer.Ordinal) { { Remover, Adder } });
+            E2eCase removing = cases.Single(
+                c => string.Equals(c.Tool, Remover, StringComparison.Ordinal)
+                    && c.Expectation == E2eExpectation.Called);
+
+            Assert.NotNull(removing.Borrowed);
+            Assert.Equal(Adder, removing.Borrowed.Values.Single());
         }
 
         /// <summary>その段が相手を1つ作る検査。</summary>
@@ -104,6 +159,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static ToolMap Unreachable()
         {
             return Rows("受け手を作る手立てが無いので" + E2eCaseBuilder.UnreachableReason + "。");
+        }
+
+        private static ToolMap Prompting()
+        {
+            return Rows("呼ぶと" + E2eCaseBuilder.PromptShownReason + "。");
         }
 
         private static ToolMap Rows(string basis)
