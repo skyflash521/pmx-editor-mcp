@@ -207,6 +207,83 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null);
         }
 
+        /// <summary>
+        /// 読み込む中身が要るツールのために、先に書き出しておく段取り。読み込めるモデルを作れるのは
+        /// エディタだけなので、検査の中で書き出して、それを読ませる。
+        /// </summary>
+        [Fact(Skip = "impl pending: 読み込む元のモデルを書き出す段取りを、ほかのどの検査よりも先に流す")]
+        public void ThePreparationComesBeforeEveryOtherCase()
+        {
+            IList<E2eCase> cases = Preparing();
+
+            Assert.Equal(
+                new[]
+                {
+                    E2eCaseBuilder.SavingPmdToolName,
+                    E2eCaseBuilder.SavingPmxToolName,
+                    E2eCaseBuilder.SavingViewSettingToolName,
+                },
+                cases.Take(3).Select(c => c.Tool).ToArray());
+            Assert.Equal(Second, cases[3].Tool);
+        }
+
+        [Fact(Skip = "impl pending: 書き出しの段取りが、書き先と確認を渡して成功を確かめる")]
+        public void ThePreparationPassesThePlaceAndTheConfirmation()
+        {
+            IList<E2eCase> cases = Preparing();
+
+            Assert.Equal(E2eCaseBuilder.SavedPmdPath, cases[0].Arguments["path"]);
+            Assert.Equal(E2eCaseBuilder.SavedPmxPath, cases[1].Arguments["path"]);
+            Assert.Equal(E2eCaseBuilder.SavedViewSettingPath, cases[2].Arguments["path"]);
+            foreach (E2eCase one in cases.Take(3))
+            {
+                Assert.Equal(true, one.Arguments[E2eCaseBuilder.ConfirmName]);
+                Assert.Equal(E2eExpectation.Success, one.Expectation);
+                Assert.Equal("path", one.Writes);
+            }
+        }
+
+        /// <summary>書き出すツールと、そのあとに続くツールで組み立てた検査。</summary>
+        private static IList<E2eCase> Preparing()
+        {
+            return E2eCaseBuilder.Build(
+                new ToolMap(new ToolMapRow[0]),
+                new ToolSchemaTable(new[]
+                {
+                    Saving(E2eCaseBuilder.SavingPmdToolName),
+                    Saving(E2eCaseBuilder.SavingPmxToolName),
+                    Saving(E2eCaseBuilder.SavingViewSettingToolName),
+                    Free(Second),
+                }),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal),
+                new Dictionary<SchemaItem, string>());
+        }
+
+        /// <summary>いま開いているモデルを書き出すツール。</summary>
+        private static ToolSchema Saving(string tool)
+        {
+            return new ToolSchema(
+                tool,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[]
+                        {
+                            new SchemaItem(
+                                "text", null, null, "path", ItemOrigin.HostInput, true, null,
+                                false, null, null, null, false, null),
+                        },
+                        new SchemaChoice[0]),
+                },
+                Output(),
+                null);
+        }
+
         /// <summary>その段が相手を1つ作る検査。</summary>
         private static E2eCase Step(IList<E2eCase> cases, string tool)
         {

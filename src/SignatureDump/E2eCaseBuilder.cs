@@ -68,6 +68,28 @@ namespace PmxEditorMcp.SignatureDump
         private const string InitializeToolName = "session_initialize_pmx";
 
         /// <summary>
+        /// いま開いているモデルをPMDで書き出すツールの名前。共通契約が名前を定める。読み込める
+        /// モデルを作れるのはエディタだけなので、読み込む中身が要るツールはこれが書いたものを読む。
+        /// </summary>
+        public const string SavingPmdToolName = "session_save_pmd_file";
+
+        /// <summary>いま開いているモデルをPMXで書き出すツールの名前。共通契約が名前を定める。</summary>
+        public const string SavingPmxToolName = "session_save_pmx_file";
+
+        /// <summary>段取りが書き出すPMDの位置。実行器が持つ一時の置き場を名前で指す。</summary>
+        public const string SavedPmdPath = "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.pmd";
+
+        /// <summary>段取りが書き出すPMXの位置。実行器が持つ一時の置き場を名前で指す。</summary>
+        public const string SavedPmxPath = "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.pmx";
+
+        /// <summary>いまの表示の設定を書き出すツールの名前。共通契約が名前を定める。</summary>
+        public const string SavingViewSettingToolName = "view_save_view_setting";
+
+        /// <summary>段取りが書き出す表示の設定の位置。実行器が持つ一時の置き場を名前で指す。</summary>
+        public const string SavedViewSettingPath =
+            "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.xml";
+
+        /// <summary>
         /// 覚えておく名前を行ごとに分ける区切り。読み比べる段は行ごとに同じツールを2度呼ぶので、
         /// 名前を分けないと別の行の覚えた値を借りる。
         /// </summary>
