@@ -1,0 +1,580 @@
+{
+  "tools": [
+    {
+      "tool": "model_bone_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_bone_node_item",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_clone_ik",
+      "reason": "noCase"
+    },
+    {
+      "tool": "model_group_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_ik_link",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_impulse_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_morph_node_item",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_update_headers",
+      "reason": "noCase"
+    },
+    {
+      "tool": "model_update_pmx_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "model_update_pmxes",
+      "reason": "noCase"
+    },
+    {
+      "tool": "model_update_vertex_edit_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "model_update_weight_edit_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "model_uv_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_vertex_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_add_vmd_camera_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_add_vmd_light_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_add_vmd_morph_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_add_vmd_self_shadow_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_add_vmd_visible_ik_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_add_vme_bones",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_add_vme_single_value_elements",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_bs_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clear_a_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clear_v_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clear_vme_bone_result",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clear_vme_camera_result",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clear_vme_direction_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clear_vme_light_result",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clear_vme_morph_result",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clear_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clone_vmd_ik_enable",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clone_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clone_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clone_vme_direction",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clone_vme_quaternion_value",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clone_vme_scale",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_compare_to_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_create_group_bone_vme",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_create_group_morph_vme",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_create_vmd",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_d_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_d_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_direction_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_direction_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_get_a_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_get_gs_vme_scaling_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_get_v_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_get_vme_direction_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_get_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_ik_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_list_vmd_ik_enables",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_list_vmd_visible_ik_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_list_vme_directions",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_list_vme_quaternion_values",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_list_vme_scales",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_p_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_p_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_position_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_position_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_r_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_r_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_vmd_camera_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_vmd_light_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_vmd_morph_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_vmd_self_shadow_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_vmd_visible_ik_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_vme_bones",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_remove_vme_single_value_elements",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_rotate_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_rotation_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_run_vme",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_s_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_s_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_scale_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_scale_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_a_vme_quaternion_value_event_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_a_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_gs_vme_scaling_event_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_gs_vme_scaling_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_ik_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_v_vme_quaternion_value_event_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_v_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_vme_direction_event_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_vme_direction_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_vme_quaternion_value_event_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_zero_a_vme_quaternion_value_event_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_zero_v_vme_quaternion_value_event_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_set_zero_vme_quaternion_value_event_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_t_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_t_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_to_bone_state_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_to_bs_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_translate_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_translation_vme_bone_state",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_transform_view_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_vmd_ik_enables",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_vmd_visible_ik_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_vme_bones",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_vme_directions",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_vme_quaternion_value_operator",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_vme_quaternion_values",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_vme_scales",
+      "reason": "noCase"
+    },
+    {
+      "tool": "session_close",
+      "reason": "noCase"
+    },
+    {
+      "tool": "session_initialize_pmd",
+      "reason": "noCase"
+    },
+    {
+      "tool": "session_initialize_pmx",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "session_update_form_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_clear_text_control",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_create_text_control",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_draw_text_text_control",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_get_transformed_bone_matrix_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_get_transformed_bone_position_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_get_transformed_vertex_normal_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_get_transformed_vertex_position_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_get_world_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_list_text_controls",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_reset_bone_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_reset_morph_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_billboard_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_bitmap_texture_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_bone_rotate_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_bone_scale_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_bone_translate_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_bone_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_morph_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_mouse_drag_move",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_mouse_over_color",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_vme_event",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_world_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_ui_model_text_control",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_base_window_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_bitmap_texture_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_material_color_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_material_edge_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_material_flags_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_parts_select_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_pmd_view_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_sizable_window_connector",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_text_controls",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_text_image_text_control",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_transform_ui_model",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_view_control",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_update_view_setting_connector",
+      "reason": "noCase"
+    }
+  ]
+}

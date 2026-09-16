@@ -79,9 +79,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>受入シナリオが、登録される定義と要求仕様書に合うことを照合する。</summary>
         public const string AcceptanceCasesCommand = "acceptance-cases";
 
-        /// <summary>能力対応表の行が実機の検査に覆われることを照合する。</summary>
-        public const string RowCoverageCommand = "row-coverage";
-
         /// <summary>スキーマ正本のツールが実機の検査に覆われることを照合する。</summary>
         public const string ToolCoverageCommand = "tool-coverage";
 
@@ -231,11 +228,6 @@ namespace PmxEditorMcp.SignatureDump
                 return AcceptanceScenarioRunner.Run(rest, output, error);
             }
 
-            if (string.Equals(args[0], RowCoverageCommand, StringComparison.Ordinal))
-            {
-                return RowCoverageRunner.Run(rest, output, error);
-            }
-
             if (string.Equals(args[0], ToolCoverageCommand, StringComparison.Ordinal))
             {
                 return ToolCoverageRunner.Run(rest, output, error);
@@ -353,18 +345,12 @@ namespace PmxEditorMcp.SignatureDump
                     + " <型役割表の正本のパス> <日本語名の正本のパス> <共通契約割当の正本のパス>"
                     + " <能力対応表の正本のパス> <用途の作業の正本のパス>");
             error.WriteLine(
-                RowCoverageCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
-                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
-                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
-                    + " <スキーマ正本のパス> <サンプル値の正本のパス>");
-            error.WriteLine(
                 ToolCoverageCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
                     + " <型役割表の正本のパス> <日本語名の正本のパス>"
                     + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
                     + " <スキーマ正本のパス> <サンプル値の正本のパス>"
-                    + " <受入シナリオの正本のパス>");
+                    + " <受入シナリオの正本のパス> <覆えないツールの正本のパス>");
             error.WriteLine(
                 ReflectionFreeCommand + " <PMXエディタ導入ディレクトリ> <検査するアセンブリのパス>");
             error.WriteLine(

@@ -210,6 +210,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Require();
         }
 
+        /// <summary>
+        /// 実機の検査が届かないことを根拠へ書いた行は断る。書いても真偽を確かめる相手が無く、
+        /// 届かないことは覆えないツールの正本が受け持つ。
+        /// </summary>
+        [Theory]
+        [InlineData("呼び先まで届かせられない")]
+        [InlineData("確認の表示が出る")]
+        public void RejectsARowWhoseBasisSaysTheLiveCheckCannotReachIt(string banned)
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(mapJson: @"{ ""rows"": [
+  { ""signatureKey"": """ + Key + @""",
+    ""editKind"": ""read"",
+    ""basis"": ""現在のPMXの複製を返すだけだが、" + banned + @"。"" }
+] }"));
+
+            Assert.Contains("根拠へ書けない文言がある", error.Message, StringComparison.Ordinal);
+            Assert.Contains(banned, error.Message, StringComparison.Ordinal);
+        }
+
         [Fact]
         public void RejectsARowThatLacksWhatTheDerivedKindRequires()
         {

@@ -31,15 +31,15 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 10)
+            if (args.Length != 11)
             {
                 error.WriteLine(
-                    "引数は10個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                    "引数は11個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
                         + " <共通契約の正本のパス>"
                         + " <型役割表の正本のパス> <日本語名の正本のパス>"
                         + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
                         + " <スキーマ正本のパス> <サンプル値の正本のパス>"
-                        + " <受入シナリオの正本のパス>");
+                        + " <受入シナリオの正本のパス> <覆えないツールの正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -54,12 +54,15 @@ namespace PmxEditorMcp.SignatureDump
             ToolDefinitionInputs inputs;
             SampleValueTable samples;
             JsonNode scenarios;
+            UncoveredToolTable uncoveredTools;
             try
             {
                 samples = SampleValueJsonReader.Read(
                     File.ReadAllText(args[8], new UTF8Encoding(false)));
                 inputs = ToolDefinitionInputs.Read(editorDirectory, args);
                 scenarios = AcceptanceScenarioGate.Read(Read(args[9], "受入シナリオの正本"));
+                uncoveredTools = UncoveredToolJsonReader.Read(
+                    Read(args[10], "覆えないツールの正本"));
             }
             catch (Exception exception)
             {
@@ -108,7 +111,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.Map,
                     inputs.ToolsByRow(inventory),
                     cases,
-                    succeeding);
+                    succeeding,
+                    uncoveredTools);
             }
             catch (InvalidOperationException exception)
             {

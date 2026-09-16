@@ -29,6 +29,7 @@ $sampleValues = "$authored/sample-values.json"
 $discoveryTasks = "$authored/discovery-tasks.json"
 $contract = "$authored/common-contract.json"
 $acceptance = "$authored/acceptance-scenarios.json"
+$uncoveredTools = "$authored/uncovered-tools.json"
 
 # 受入の実行器の照合が使う題材。実物の定義で走らせると、突き合わせに要らない段まで通すことに
 # なる。突き合わせが見るのは期待の形と、操作・置き場・起こし直しの各段が頼む行いの種類で、
@@ -869,12 +870,12 @@ $checks['スキーマ対応の照合'] = @{
             $toolMap $toolSchemas
     }
 }
-$checks['行の検査の網羅'] = @{
+$checks['ツールの検査の網羅'] = @{
     Budget = 5
     Needs = $buildOutput
     Body = {
-        & $dump row-coverage $editorDir $ledger $contract $roles $names `
-            $assignments $toolMap $toolSchemas $sampleValues
+        & $dump tool-coverage $editorDir $ledger $contract $roles $names `
+            $assignments $toolMap $toolSchemas $sampleValues $acceptance $uncoveredTools
     }
 }
 $checks['規則適合検査'] = @{
@@ -1015,7 +1016,7 @@ $checkGroups = [ordered]@{
     '定義' = @($derivation, '台帳とSDKの照合', '日本語名の照合', '型役割の照合',
         '共通契約割当の照合', '値の表現の照合', '危険操作の照合', '能力対応表の照合',
         '提供対象の網羅', 'スキーマ定義の照合', 'ツールの説明文の照合', 'サンプル値の照合',
-        '発見可能性の照合', 'スキーマ対応の照合', '行の検査の網羅', '規則適合検査',
+        '発見可能性の照合', 'スキーマ対応の照合', 'ツールの検査の網羅', '規則適合検査',
         '受入シナリオの照合', 'テスト', '文書のリンク')
     'コード' = @('整形', '実行時リフレクション', 'テスト')
     # 実行器そのものと、その代わりを立てる題材だけを入力にする検査。実行器の照合は、突き合わせる

@@ -320,12 +320,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static ToolMap Unreachable()
         {
-            return Rows("受け手を作る手立てが無いので" + E2eCaseBuilder.UnreachableReason + "。");
+            return Rows("受け手を作る手立てが無い。");
         }
 
         private static ToolMap Prompting()
         {
-            return Rows("呼ぶと" + E2eCaseBuilder.PromptShownReason + "。");
+            return Rows("呼ぶと確認を求められる。");
         }
 
         private static ToolMap Rows(string basis)

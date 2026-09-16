@@ -48,6 +48,7 @@ namespace PmxEditorMcp.SignatureDump
                 RequireUpdateKind(row, evidence);
                 RequireSetup(row, evidence);
                 RequireObservedOrExplained(row);
+                RequireNoBannedReason(row);
                 RequireSdkArguments(row, evidence);
             }
 
@@ -164,6 +165,32 @@ namespace PmxEditorMcp.SignatureDump
                             "サンプル値を引く型が公開API列挙に無い: " + row.SignatureKey
                                 + "(" + type + ")");
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 根拠へ書いてはならない文言。実機の検査が届かないことを述べる綴りで、書いても真偽を
+        /// 確かめる相手が無い。届かないことは、ツールの名前と導ける理由だけを載せる覆えないツールの
+        /// 正本が受け持つ。
+        /// </summary>
+        private static readonly string[] Banned =
+        {
+            "呼び先まで届かせられない",
+            "確認の表示が出る",
+        };
+
+        /// <summary>根拠が、確かめる相手を持たない文言を持たないことを求める。</summary>
+        private static void RequireNoBannedReason(ToolMapRow row)
+        {
+            foreach (string banned in Banned)
+            {
+                if (row.Basis.IndexOf(banned, StringComparison.Ordinal) >= 0)
+                {
+                    throw new InvalidOperationException(
+                        "根拠へ書けない文言がある: " + row.SignatureKey
+                            + "(「" + banned + "」。実機の検査が届かないことは覆えないツールの"
+                            + "正本が受け持つ)");
                 }
             }
         }

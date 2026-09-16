@@ -50,20 +50,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>親を位置の並びで指す入力の名前。</summary>
         private const string ParentIndicesName = "parentIndices";
 
-        /// <summary>
-        /// 呼び先まで届かせられないと述べる言い回し。届かせる手立てが無い行は、そう書いて初めて
-        /// 行単位の覆いの判定から外れる。事例の組み立てはこの文言を読まない——文言の真偽を
-        /// 確かめる検査が無いので、呼ぶかどうかを文言では決めない。
-        /// </summary>
-        public const string UnreachableReason = "呼び先まで届かせられない";
-
-        /// <summary>
-        /// 呼ぶと確認の表示が出て止まると述べる言い回し。そう書いてある行は行単位の覆いの判定から
-        /// 外れる。事例の組み立てはこの文言を読まない——文言の真偽を確かめる検査が無いので、呼ぶ
-        /// かどうかを文言では決めない。
-        /// </summary>
-        public const string PromptShownReason = "確認の表示が出る";
-
         /// <summary>ハンドルを台帳から外すツールの名前。共通契約が名前を定める。</summary>
         private const string ReleaseToolName = "session_release_handle";
 
@@ -349,13 +335,6 @@ namespace PmxEditorMcp.SignatureDump
             return cases
                 .Where((one, at) => Shared(one) < 0 || kept.Contains(at))
                 .ToList();
-        }
-
-        /// <summary>呼ぶと確認の表示が出ると根拠が述べている行か。</summary>
-        internal static bool Prompts(ToolMapRow row)
-        {
-            return row != null
-                && row.Basis.IndexOf(PromptShownReason, StringComparison.Ordinal) >= 0;
         }
 
         /// <summary>

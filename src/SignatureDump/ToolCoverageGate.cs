@@ -6,7 +6,9 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// スキーマ正本が載せるツールのすべてが、実機へ投げる検査のうち呼び先まで届くもののどれかに
-    /// 覆われることを確かめる。覆いに数える検査は、生成器が組むE2E事例と、受入シナリオのうち
+    /// 覆われることを確かめる。覆われないものは、覆えないツールの正本へ理由ごと載っていなければ
+    /// ならない——載っていないものも、載っているのに覆われるようになったものも、正本が実際と
+    /// 食い違っているので落とす。覆いに数える検査は、生成器が組むE2E事例と、受入シナリオのうち
     /// 成功を期待するツールの段の2つである。呼ぶ行が呼び出しの記録以外の効果を宣言するツールは、
     /// 宣言するどの行についても、その効果を確かめる判定を持つ事例があるときだけ覆われたと数える
     /// ——同じ名前を共有する行は多重定義の呼び分けで、どれを通ったかは名前からは言えない。
@@ -19,7 +21,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             IDictionary<string, string> toolsByRow,
             IList<E2eCase> cases,
-            ISet<string> succeeding)
+            ISet<string> succeeding,
+            UncoveredToolTable uncoveredTools)
         {
             if (schemas == null)
             {
@@ -46,6 +49,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(succeeding));
             }
 
+            if (uncoveredTools == null)
+            {
+                throw new ArgumentNullException(nameof(uncoveredTools));
+            }
+
             HashSet<string> arrived = new HashSet<string>(
                 cases.Where(c => Reached(c.Expectation)).Select(c => c.Tool),
                 StringComparer.Ordinal);
@@ -56,36 +64,52 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
             IDictionary<string, ISet<string>> declaring = DeclaringRows(map, toolsByRow);
 
-            string[] uncovered = schemas.Tools
-                .Select(t => t.Tool)
-                .Where(t => !Covered(t, arrived, succeeding, examined, declaring))
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(t => t, StringComparer.Ordinal)
-                .ToArray();
-            if (uncovered.Length == 0)
+            Dictionary<string, UncoveredReason> found =
+                new Dictionary<string, UncoveredReason>(StringComparer.Ordinal);
+            foreach (string tool in schemas.Tools.Select(t => t.Tool)
+                .Distinct(StringComparer.Ordinal))
+            {
+                if (!arrived.Contains(tool) && !succeeding.Contains(tool))
+                {
+                    found.Add(tool, UncoveredReason.NoCase);
+                }
+                else if (!Examined(tool, examined, declaring))
+                {
+                    found.Add(tool, UncoveredReason.NoEffectCheck);
+                }
+            }
+
+            Dictionary<string, UncoveredReason> listed = uncoveredTools.Tools.ToDictionary(
+                t => t.Tool, t => t.Reason, StringComparer.Ordinal);
+            Require(
+                "実機の検査に覆われないのに、覆えないツールの正本に無いものがある",
+                found.Keys.Where(t => !listed.ContainsKey(t)));
+            Require(
+                "覆えないツールの正本に載っているのに、実機の検査に覆われているものがある",
+                listed.Keys.Where(t => !found.ContainsKey(t)));
+            Require(
+                "覆えない理由が正本と違うものがある",
+                found.Where(f => listed.ContainsKey(f.Key) && listed[f.Key] != f.Value)
+                    .Select(f => f.Key + "(正本: " + listed[f.Key] + " / 導いた: " + f.Value + ")"));
+        }
+
+        private static void Require(string what, IEnumerable<string> tools)
+        {
+            string[] found = tools.OrderBy(t => t, StringComparer.Ordinal).ToArray();
+            if (found.Length == 0)
             {
                 return;
             }
 
             throw new InvalidOperationException(
-                "実機の検査に覆われないツールがある(" + uncovered.Length + "件): "
-                    + string.Join("・", uncovered.Take(20))
-                    + (uncovered.Length > 20 ? "・ほか" : string.Empty));
+                what + "(" + found.Length + "件): " + string.Join("・", found.Take(20))
+                    + (found.Length > 20 ? "・ほか" : string.Empty));
         }
 
-        /// <summary>そのツールが、呼び先まで届く検査と、宣言した効果の判定を持つか。</summary>
-        private static bool Covered(
-            string tool,
-            ISet<string> arrived,
-            ISet<string> succeeding,
-            ISet<string> examined,
-            IDictionary<string, ISet<string>> declaring)
+        /// <summary>そのツールが呼ぶ行のすべてに、宣言した効果を確かめる事例が在るか。</summary>
+        private static bool Examined(
+            string tool, ISet<string> examined, IDictionary<string, ISet<string>> declaring)
         {
-            if (!arrived.Contains(tool) && !succeeding.Contains(tool))
-            {
-                return false;
-            }
-
             ISet<string> declared;
 
             return !declaring.TryGetValue(tool, out declared) || declared.All(examined.Contains);
