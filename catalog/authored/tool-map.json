@@ -1684,6 +1684,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXBody.Clone()",
+      "editKind": "read",
+      "basis": "PMX剛体インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXBody.Friction()",
       "editKind": "duplicateEdit",
       "updateSpec": {
@@ -1842,6 +1855,19 @@
       "embeddedIn": [
         "model_list_bones",
         "model_update_bones"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.Clone()",
+      "editKind": "read",
+      "basis": "PMXボーンインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -2179,6 +2205,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXBoneMorphOffset.Clone()",
+      "editKind": "read",
+      "basis": "PMXボーンモーフオフセットインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXBoneMorphOffset.Rotation()",
       "editKind": "duplicateEdit",
       "updateSpec": {
@@ -2212,6 +2251,32 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXBoneNodeItem.Clone()",
+      "editKind": "read",
+      "basis": "PMX表示枠ボーン要素の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXFace.Clone()",
+      "editKind": "read",
+      "basis": "PMX面インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXFace.Vertex1()",
       "editKind": "read",
       "basis": "面の1つめの頂点を返すだけで、エディタの状態を動かさない。",
@@ -2239,6 +2304,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXGroupMorphOffset.Clone()",
+      "editKind": "read",
+      "basis": "PMXグループ／フリップモーフオフセットインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXGroupMorphOffset.Morph()",
       "editKind": "read",
       "basis": "まとめて動かすモーフを返すだけで、エディタの状態を動かさない。",
@@ -2257,6 +2335,19 @@
       "embeddedIn": [
         "model_list_morph_offsets",
         "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXHeader.Clone()",
+      "editKind": "read",
+      "basis": "PMXヘッダインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -2308,6 +2399,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXIK.Clone()",
+      "editKind": "read",
+      "basis": "PMX IKインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。IKはボーンが持つ1つの子で、そのボーンにIKを持たせる段取りを生成器が組めないので呼び先まで届かせられない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXIK.Links()",
       "editKind": "read",
       "basis": "IKリンクのリストを返すだけで、エディタの状態を動かさない。"
@@ -2340,6 +2444,19 @@
       "embeddedIn": [
         "model_list_ik_links",
         "model_update_ik_links"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXIKLink.Clone()",
+      "editKind": "read",
+      "basis": "PMX IKLinkインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -2385,6 +2502,19 @@
       "embeddedIn": [
         "model_list_morph_offsets",
         "model_update_morph_offsets"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXImpulseMorphOffset.Clone()",
+      "editKind": "read",
+      "basis": "PMXインパルスモーフオフセットインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -2439,6 +2569,19 @@
       "embeddedIn": [
         "model_list_joints",
         "model_update_joints"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXJoint.Clone()",
+      "editKind": "read",
+      "basis": "PMXJointインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -2595,6 +2738,19 @@
       "embeddedIn": [
         "model_list_materials",
         "model_update_materials"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterial.Clone()",
+      "editKind": "read",
+      "basis": "PMX材質インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -2857,6 +3013,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Clone()",
+      "editKind": "read",
+      "basis": "PMX材質モーフオフセットインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXMaterialMorphOffset.Diffuse()",
       "editKind": "duplicateEdit",
       "updateSpec": {
@@ -2974,6 +3143,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXModelInfo.Clone()",
+      "editKind": "read",
+      "basis": "モデル情報インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXModelInfo.Comment()",
       "editKind": "duplicateEdit",
       "updateSpec": {
@@ -3019,6 +3201,19 @@
       "embeddedIn": [
         "model_list_model_infos",
         "model_update_model_infos"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorph.Clone()",
+      "editKind": "read",
+      "basis": "PMXモーフインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -3131,12 +3326,51 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXMorphNodeItem.Clone()",
+      "editKind": "read",
+      "basis": "PMX表示枠モーフ要素の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXMorphNodeItem.Morph()",
       "editKind": "read",
       "basis": "表示枠が並べるモーフを返すだけで、エディタの状態を動かさない。",
       "embeddedIn": [
         "model_list_node_items",
         "model_update_node_items"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXMorphOffset.Clone()",
+      "editKind": "read",
+      "basis": "PMXモーフオフセット基底インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNode.Clone()",
+      "editKind": "read",
+      "basis": "PMX表示枠インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -3174,6 +3408,19 @@
       "basis": "ボーンを指す表示枠の要素を返すだけで、エディタの状態を動かさない。",
       "embeddedIn": [
         "model_list_node_items"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXNodeItem.Clone()",
+      "editKind": "read",
+      "basis": "PMX表示枠基底要素の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -3233,6 +3480,19 @@
             }
           ],
           "observerTool": "model_list_vertices"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXPmx.Clone()",
+      "editKind": "read",
+      "basis": "プラグイン用PMXインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
         }
       ]
     },
@@ -3656,6 +3916,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBody.Clone()",
+      "editKind": "read",
+      "basis": "PMX SoftBodyインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBody.ClusterCount()",
       "editKind": "duplicateEdit",
       "updateSpec": {
@@ -4062,6 +4335,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXSoftBodyAnchor.Clone()",
+      "editKind": "read",
+      "basis": "PMX SoftBody剛体アンカーインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXSoftBodyAnchor.Near()",
       "editKind": "duplicateEdit",
       "updateSpec": {
@@ -4080,6 +4366,19 @@
       "embeddedIn": [
         "model_list_soft_body_anchors",
         "model_update_soft_body_anchors"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXUVMorphOffset.Clone()",
+      "editKind": "read",
+      "basis": "PMXUVモーフオフセットインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -4137,6 +4436,19 @@
       "embeddedIn": [
         "model_list_vertices",
         "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertex.Clone()",
+      "editKind": "read",
+      "basis": "PMX頂点インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -4341,6 +4653,19 @@
       "embeddedIn": [
         "model_list_vertices",
         "model_update_vertices"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Pmx.IPXVertexMorphOffset.Clone()",
+      "editKind": "read",
+      "basis": "PMX頂点モーフオフセットインターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -6403,6 +6728,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.Clone()",
+      "editKind": "read",
+      "basis": "プラグイン用VMDの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.FilePath()",
       "editKind": "directChange",
       "basis": "読み書きしたファイルの位置を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
@@ -6763,6 +7101,37 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.Clone()",
+      "editKind": "read",
+      "basis": "VMDボーンキーの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.CompareTo(PEPlugin.Vmd.IPEVmdFrameKey)",
+      "editKind": "read",
+      "basis": "VMDボーンキーと相手のフレーム番号の差を返すだけで、エディタの状態を動かさない。差は返る値そのものなので、読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmdBoneKey.IplR()",
       "editKind": "read",
       "basis": "回転の補間を返すだけで、エディタの状態を動かさない。モーションのデータは長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
@@ -6965,6 +7334,37 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.Clone()",
+      "editKind": "read",
+      "basis": "VMDカメラキーの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.CompareTo(PEPlugin.Vmd.IPEVmdFrameKey)",
+      "editKind": "read",
+      "basis": "VMDカメラキーと相手のフレーム番号の差を返すだけで、エディタの状態を動かさない。差は返る値そのものなので、読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmdCameraKey.Distance()",
       "editKind": "directChange",
       "basis": "注視点までの距離を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
@@ -7103,12 +7503,56 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdFrameKey.Clone()",
+      "editKind": "read",
+      "basis": "VMDキー管理基底インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdFrameKey.CompareTo(PEPlugin.Vmd.IPEVmdFrameKey)",
+      "editKind": "read",
+      "basis": "VMDキー管理基底インターフェイスと相手のフレーム番号の差を返すだけで、エディタの状態を動かさない。差は返る値そのものなので、読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmdFrameKey.FrameIndex()",
       "editKind": "directChange",
       "basis": "何コマめのキーかを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要るが、その型を作る手立てが正本の中に無いので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vmd_frame_keys",
         "motion_update_vmd_frame_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIKEnable.Clone()",
+      "editKind": "read",
+      "basis": "VMD IK有効状態の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。この型の受け手を組み立てる段取りを生成器が持たないので呼び先まで届かせられない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -7127,6 +7571,19 @@
       "embeddedIn": [
         "motion_list_vmd_ik_enables",
         "motion_update_vmd_ik_enables"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdIPL.Clone()",
+      "editKind": "read",
+      "basis": "VMD補間値の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -7179,6 +7636,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdLightKey.Clone()",
+      "editKind": "read",
+      "basis": "VMD照明キーの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmdLightKey.Color()",
       "editKind": "directChange",
       "basis": "照明の色を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
@@ -7188,12 +7658,61 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdLightKey.CompareTo(PEPlugin.Vmd.IPEVmdFrameKey)",
+      "editKind": "read",
+      "basis": "VMD照明キーと相手のフレーム番号の差を返すだけで、エディタの状態を動かさない。差は返る値そのものなので、読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmdLightKey.Direction()",
       "editKind": "directChange",
       "basis": "照明の向きを持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
       "embeddedIn": [
         "motion_list_vmd_light_keys",
         "motion_update_vmd_light_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdMorphKey.Clone()",
+      "editKind": "read",
+      "basis": "VMDモーフの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdMorphKey.CompareTo(PEPlugin.Vmd.IPEVmdFrameKey)",
+      "editKind": "read",
+      "basis": "VMDモーフと相手のフレーム番号の差を返すだけで、エディタの状態を動かさない。差は返る値そのものなので、読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
       ]
     },
     {
@@ -7215,6 +7734,37 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdSelfShadowKey.Clone()",
+      "editKind": "read",
+      "basis": "VMDセルフ影キーの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdSelfShadowKey.CompareTo(PEPlugin.Vmd.IPEVmdFrameKey)",
+      "editKind": "read",
+      "basis": "VMDセルフ影キーと相手のフレーム番号の差を返すだけで、エディタの状態を動かさない。差は返る値そのものなので、読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmdSelfShadowKey.Distance()",
       "editKind": "directChange",
       "basis": "影を落とす距離を持つ。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
@@ -7230,6 +7780,37 @@
       "embeddedIn": [
         "motion_list_vmd_self_shadow_keys",
         "motion_update_vmd_self_shadow_keys"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdVisibleIKKey.Clone()",
+      "editKind": "read",
+      "basis": "VMD表示／IKキーの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。この型の受け手を組み立てる段取りを生成器が持たないので呼び先まで届かせられない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdVisibleIKKey.CompareTo(PEPlugin.Vmd.IPEVmdFrameKey)",
+      "editKind": "read",
+      "basis": "VMD表示／IKキーと相手のフレーム番号の差を返すだけで、エディタの状態を動かさない。差は返る値そのものなので、読み比べでなく呼び出しの記録で確かめる。この型の受け手を組み立てる段取りを生成器が持たないので呼び先まで届かせられない。",
+      "postcondition": [
+        {
+          "effectType": "valueRead",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists",
+          "setup": [
+            {
+              "tag": "initPmx"
+            }
+          ]
+        }
       ]
     },
     {
@@ -7850,6 +8431,19 @@
       "basis": "そのコマのボーンの移動量を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
       "embeddedIn": [
         "motion_list_vme_bone_results"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeBoneState.Clone()",
+      "editKind": "read",
+      "basis": "ボーンの状態変数の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。この型の受け手を組み立てる段取りを生成器が持たないので呼び先まで届かせられない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -8474,6 +9068,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeCameraState.Clone()",
+      "editKind": "read",
+      "basis": "カメラ位置の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraState.P()",
       "editKind": "read",
       "basis": "いまの位置を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
@@ -8538,6 +9145,19 @@
           "observerArgs": {
             "handles": "result:"
           }
+        }
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeDirection.Clone()",
+      "editKind": "read",
+      "basis": "方向の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。この型の受け手を組み立てる段取りを生成器が持たないので呼び先まで届かせられない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
         }
       ]
     },
@@ -8682,6 +9302,19 @@
       "embeddedIn": [
         "motion_list_vme_elements",
         "motion_update_vme_elements"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeEventState.Clone()",
+      "editKind": "read",
+      "basis": "イベント処理の状態インターフェイスの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -9170,6 +9803,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeLightState.Clone()",
+      "editKind": "read",
+      "basis": "照明の状態変数の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeLightState.Color()",
       "editKind": "read",
       "basis": "いまの色を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
@@ -9489,6 +10135,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmePosition.Clone()",
+      "editKind": "read",
+      "basis": "位置の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmePosition.IP()",
       "editKind": "read",
       "basis": "初めの位置を返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
@@ -9726,6 +10385,19 @@
       "embeddedIn": [
         "motion_list_vme_quaternion_values",
         "motion_update_vme_quaternion_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeQuaternionValue.Clone()",
+      "editKind": "read",
+      "basis": "回転量の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。この型の受け手を組み立てる段取りを生成器が持たないので呼び先まで届かせられない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -10392,6 +11064,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeScale.Clone()",
+      "editKind": "read",
+      "basis": "スケールの複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。この型の受け手を組み立てる段取りを生成器が持たないので呼び先まで届かせられない。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeScale.GS()",
       "editKind": "directChange",
       "basis": "長寿命の持ち物である大きさへ直に作用して、全体にかかる大きさを決める。この行を覆えるツールは受け手をハンドルで要り、その型を作る手立ても受け手や値を要るのに、この検査は受け手を一段しか作らないので呼び先まで届かせられない。",
@@ -10506,6 +11191,19 @@
       "embeddedIn": [
         "motion_list_vme_single_values",
         "motion_update_vme_single_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValue.Clone()",
+      "editKind": "read",
+      "basis": "単一値の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -10938,6 +11636,19 @@
       ]
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueState.Clone()",
+      "editKind": "read",
+      "basis": "単一値の状態変数の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
+      ]
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueState.V()",
       "editKind": "read",
       "basis": "いまの単値を返すだけで、エディタの状態を動かさない。状態は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
@@ -10987,6 +11698,19 @@
       "embeddedIn": [
         "motion_list_vme_vector_values",
         "motion_update_vme_vector_values"
+      ]
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmeVectorValue.Clone()",
+      "editKind": "read",
+      "basis": "ベクトル量の複製を作って返すだけで、エディタの状態を動かさない。複製は返る値そのものなので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
+      "postcondition": [
+        {
+          "effectType": "handleCreated",
+          "effectKey": "",
+          "kind": "callLogOnly",
+          "comparison": "exists"
+        }
       ]
     },
     {
@@ -11588,6 +12312,126 @@
       "eventType": "view_undo"
     },
     {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouse.Button()",
+      "editKind": "read",
+      "basis": "押したボタンの種類を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_click",
+        "ui_model_mouse_double_click",
+        "ui_model_mouse_down",
+        "ui_model_mouse_enter",
+        "ui_model_mouse_leave",
+        "ui_model_mouse_over",
+        "ui_model_mouse_up"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouse.Clicks()",
+      "editKind": "read",
+      "basis": "押した回数を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_click",
+        "ui_model_mouse_double_click",
+        "ui_model_mouse_down",
+        "ui_model_mouse_enter",
+        "ui_model_mouse_leave",
+        "ui_model_mouse_over",
+        "ui_model_mouse_up"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouse.Delta()",
+      "editKind": "read",
+      "basis": "ホイールを回した量を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_click",
+        "ui_model_mouse_double_click",
+        "ui_model_mouse_down",
+        "ui_model_mouse_enter",
+        "ui_model_mouse_leave",
+        "ui_model_mouse_over",
+        "ui_model_mouse_up"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouse.Location()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置を横と縦の組で持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_click",
+        "ui_model_mouse_double_click",
+        "ui_model_mouse_down",
+        "ui_model_mouse_enter",
+        "ui_model_mouse_leave",
+        "ui_model_mouse_over",
+        "ui_model_mouse_up"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouse.X()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置の横の座標を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_click",
+        "ui_model_mouse_double_click",
+        "ui_model_mouse_down",
+        "ui_model_mouse_enter",
+        "ui_model_mouse_leave",
+        "ui_model_mouse_over",
+        "ui_model_mouse_up"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouse.Y()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置の縦の座標を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_click",
+        "ui_model_mouse_double_click",
+        "ui_model_mouse_down",
+        "ui_model_mouse_enter",
+        "ui_model_mouse_leave",
+        "ui_model_mouse_over",
+        "ui_model_mouse_up"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.Button()",
+      "editKind": "read",
+      "basis": "押したボタンの種類を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.Clicks()",
+      "editKind": "read",
+      "basis": "押した回数を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.Delta()",
+      "editKind": "read",
+      "basis": "ホイールを回した量を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.Location()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置を横と縦の組で持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.StX()",
       "editKind": "read",
       "basis": "引き始めた位置の横を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
@@ -11615,6 +12459,76 @@
       ]
     },
     {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.X()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置の横の座標を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+UIModelMouseDrag.Y()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置の縦の座標を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "ui_model_mouse_drag",
+        "ui_model_mouse_drag_end"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewMouse.Button()",
+      "editKind": "read",
+      "basis": "押したボタンの種類を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_mouse_click",
+        "view_mouse_double_click",
+        "view_mouse_down",
+        "view_mouse_move",
+        "view_mouse_up",
+        "view_mouse_wheel"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewMouse.Clicks()",
+      "editKind": "read",
+      "basis": "押した回数を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_mouse_click",
+        "view_mouse_double_click",
+        "view_mouse_down",
+        "view_mouse_move",
+        "view_mouse_up",
+        "view_mouse_wheel"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewMouse.Delta()",
+      "editKind": "read",
+      "basis": "ホイールを回した量を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_mouse_click",
+        "view_mouse_double_click",
+        "view_mouse_down",
+        "view_mouse_move",
+        "view_mouse_up",
+        "view_mouse_wheel"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewMouse.Location()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置を横と縦の組で持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_mouse_click",
+        "view_mouse_double_click",
+        "view_mouse_down",
+        "view_mouse_move",
+        "view_mouse_up",
+        "view_mouse_wheel"
+      ]
+    },
+    {
       "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewMouse.VPoint()",
       "editKind": "read",
       "basis": "画面のどこを指したかを、視点に依らない座標で持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
@@ -11634,6 +12548,32 @@
         "ui_model_mouse_leave",
         "ui_model_mouse_over",
         "ui_model_mouse_up"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewMouse.X()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置の横の座標を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_mouse_click",
+        "view_mouse_double_click",
+        "view_mouse_down",
+        "view_mouse_move",
+        "view_mouse_up",
+        "view_mouse_wheel"
+      ]
+    },
+    {
+      "signatureKey": "PXCPlugin.Event.PXEventArgs+ViewMouse.Y()",
+      "editKind": "read",
+      "basis": "画面の中で指した位置の縦の座標を持つ。起きたことを知らせる値なので、エディタの状態を動かさない。",
+      "embeddedIn": [
+        "view_mouse_click",
+        "view_mouse_double_click",
+        "view_mouse_down",
+        "view_mouse_move",
+        "view_mouse_up",
+        "view_mouse_wheel"
       ]
     },
     {

@@ -15,10 +15,10 @@ namespace PmxEditorMcp.Tests
             GeneratedTools.Payloads();
 
         private static readonly string[] Mouse =
-            { "button", "clicks", "x", "y", "delta", "vPoint" };
+            { "button", "clicks", "x", "y", "delta", "vPoint", "location" };
 
         private static readonly string[] Drag =
-            { "button", "clicks", "x", "y", "delta", "vPoint", "stX", "stY", "vDrag" };
+            { "button", "clicks", "x", "y", "delta", "vPoint", "location", "stX", "stY", "vDrag" };
 
         [Fact]
         public void EveryBranchOfThePollingToolHasAWayToReadItsValue()
@@ -155,6 +155,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(delta, read["delta"]);
             Assert.Equal(
                 new object[] { pointX, pointY, pointZ }, (IEnumerable<object>)read["vPoint"]);
+            Assert.Equal(new object[] { x, y }, (IEnumerable<object>)read["location"]);
         }
     }
 }

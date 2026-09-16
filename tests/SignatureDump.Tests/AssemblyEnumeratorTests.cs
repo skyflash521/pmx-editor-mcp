@@ -26,7 +26,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Proc = N + "SampleProc";
         private const string Value = N + "SampleValue";
         private const string Flags = N + "SampleFlags";
+        private const string Comparable = N + "ISampleComparable";
         private const string Inherited = N + "ISampleInherited";
+        private const string Narrow = N + "ISampleNarrow";
+        private const string Wide = N + "ISampleWide";
         private const string ForeignDerived = N + "SampleForeignDerived";
         private const string InheritedGeneric = N + "ISampleInheritedGeneric<T>";
         private const string InheritedData = N + "SampleInheritedData";
@@ -48,6 +51,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Generic + "|Class|top|concrete|generic||",
             Flags + "|Enum|top|concrete|closed||None;Left;Right|combinable",
             Kind + "|Enum|top|concrete|closed||Second;First|single",
+            N + "ISampleComparable|Interface|top|abstract|closed|System.IComparable<" + Narrow
+                + ">;System.IComparable<" + Wide + ">|",
+            N + "ISampleNarrow|Interface|top|abstract|closed|" + Wide + "|",
+            N + "ISampleWide|Interface|top|abstract|closed||",
             N + "ISampleInherited|Interface|top|abstract|closed|System.Collections.IEnumerable;"
                 + "System.ICloneable;System.IComparable<System.Int32>|",
             N + "ISampleInheritedGeneric<T>|Interface|top|abstract|generic|System.ICloneable|",
@@ -130,6 +137,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Nested + ".Nested()|" + Nested + "|Nested|Property|instance|0|System.Int32|rw|Read|",
             Proc + ".Invoke(System.Int32)|" + Proc
                 + "|Invoke|Method|instance|0|System.Int32|--|Write|x:System.Int32:In:required",
+            Comparable + ".CompareTo(" + Wide + ")|" + Comparable
+                + "|CompareTo|Method|instance|0|System.Int32|--|Write|other:" + Wide + ":In:required",
+            Comparable + ".OwnRank()|" + Comparable + "|OwnRank|Property|instance|0|System.Int32|r-|Read|",
+            Narrow + ".NarrowValue()|" + Narrow + "|NarrowValue|Property|instance|0|System.Int32|r-|Read|",
+            Wide + ".WideValue()|" + Wide + "|WideValue|Property|instance|0|System.Int32|r-|Read|",
             Inherited + ".Clone()|" + Inherited + "|Clone|Method|instance|0|System.Object|--|Write|",
             Inherited + ".CompareTo(System.Int32)|" + Inherited
                 + "|CompareTo|Method|instance|0|System.Int32|--|Write|"
@@ -438,7 +450,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain(inventory.Types, t => t.Name == N + "HiddenOuter+VisibleNested");
         }
 
-        [Fact(Skip = "impl pending: 対象アセンブリの外で宣言された公開メンバーを、それを継承する型の行として母集合へ入れる")]
+        [Fact]
         public void EnumeratesSampleSignaturesExactlyWithAllFields()
         {
             InventoryRecord inventory = Enumerate();

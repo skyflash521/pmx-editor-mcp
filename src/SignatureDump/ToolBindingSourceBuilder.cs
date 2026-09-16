@@ -540,9 +540,10 @@ namespace PmxEditorMcp.SignatureDump
             string[] release = issuing
                 ? Releases(signature, signatures, assignments)
                 : new string[0];
-            string made = ValueTypeName.Contained(signature.ValueType);
+            string contained = ValueTypeName.Contained(signature.ValueType);
+            string made = issuing ? HandleIssuanceEvidence.Issued(signature) : contained;
             bool many = (issuing || projected != null)
-                && !string.Equals(made, signature.ValueType, StringComparison.Ordinal);
+                && !string.Equals(contained, signature.ValueType, StringComparison.Ordinal);
             string releases = release.Length == 0 ? null : release[0];
             string releasesIssued = release.Length == 0 ? null : release[1];
             string returnsMany = many ? "true" : responds ? "false" : null;

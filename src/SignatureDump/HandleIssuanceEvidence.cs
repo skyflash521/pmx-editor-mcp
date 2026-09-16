@@ -11,6 +11,9 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class HandleIssuanceEvidence
     {
+        /// <summary>どの型の値も入る戻り値の綴り。この綴りは預ける型を決めない。</summary>
+        private const string ObjectTypeName = "System.Object";
+
         /// <summary>その行が生成物を台帳へ預けるか。効果にハンドルの発行が並ぶ行が当たる。</summary>
         public static bool Issues(ToolMapRow row, SignatureRecord signature)
         {
@@ -30,9 +33,31 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// その行が台帳へ預ける生成物の型。戻り値の綴りが <see cref="object"/> の行だけは受け手の型で
+        /// 預ける——複製を返す呼び出しは受け取った相手と同じ型のものを返すので、綴りのまま預けると、
+        /// どのツールの受け手もその番号を引けない。
+        /// </summary>
+        public static string Issued(SignatureRecord signature)
+        {
+            if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
+            string made = ValueTypeName.Contained(signature.ValueType);
+
+            return string.Equals(made, ObjectTypeName, StringComparison.Ordinal)
+                ? TypeDefinitionName.Of(signature.DeclaringType)
+                : made;
+        }
+
+        /// <summary>
         /// どれかの行が作ると述べる型の名前。作る行の戻り値から並びと配列の印を外して集め、枝の型を
         /// 作れる抽象の型も併せて持つ——作れる枝を並びへ入れれば、その抽象の型としても指せる。
         /// <paramref name="concrete"/> は抽象の型からその枝の型を引く表である。
+        /// 戻り値の綴りが <see cref="object"/> の行はどの型も持ち込まない。その行が預けるのは
+        /// 受け手から決まる型(<see cref="Issued"/>)だが、それは元の要素の複製であって元の要素では
+        /// ないので、在る要素を指す道の代わりにはならない。
         /// </summary>
         public static ISet<string> Made(
             ToolMap map,
@@ -64,8 +89,13 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
-                made.Add(
-                    TypeDefinitionName.OfElement(ValueTypeName.Contained(signature.ValueType)));
+                string value = TypeDefinitionName.OfElement(
+                    ValueTypeName.Contained(signature.ValueType));
+
+                if (!string.Equals(value, ObjectTypeName, StringComparison.Ordinal))
+                {
+                    made.Add(value);
+                }
             }
 
             foreach (KeyValuePair<string, IList<string>> branched in concrete

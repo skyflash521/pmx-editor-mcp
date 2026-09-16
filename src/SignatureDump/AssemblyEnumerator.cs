@@ -10,8 +10,13 @@ namespace PmxEditorMcp.SignatureDump
     /// 真の型とし、入れ子の公開型を落とさない。外側が公開でない入れ子の型は、入れ子の側が公開でも
     /// 母集合に入らない。
     ///
-    /// 行にするのは、各型が自分で宣言する公開メンバーのうち、メソッド・プロパティ・フィールド・
-    /// イベント・コンストラクタの5種類だけである。プロパティとイベントの取得・設定・追加・削除の
+    /// 行にするのは、各型が自分で宣言する公開メンバーと、その型が継承する公開メンバーのうち、
+    /// メソッド・プロパティ・フィールド・イベント・コンストラクタの5種類だけである。継承した
+    /// メンバーを行にするのは、宣言元が対象アセンブリの外の型であるものに限る——SDKの中の基底型
+    /// まで含めると、基底が宣言する同じAPIに派生型のぶんだけ行が立つ。
+    /// <see cref="object"/>・<see cref="ValueType"/>・<see cref="Enum"/>・<see cref="Delegate"/>・
+    /// <see cref="MulticastDelegate"/> が宣言するものは、実行環境がすべての型へ配るので行にしない。
+    /// 静的なメンバーと、型引数の決まっていない型が継承するメンバーも行にしない。プロパティとイベントの取得・設定・追加・削除の
     /// アクセサーはメソッドの形で現れるが、そのプロパティ・イベントの行が表すので別の行にしない。
     /// 入れ子の型もメンバーの形で現れるが、型として記録するので行にしない。演算子のように、
     /// 言語が特別な名前を与えるメソッドでも、アクセサーでなければ行にする。
@@ -30,6 +35,19 @@ namespace PmxEditorMcp.SignatureDump
 
         private const BindingFlags DeclaredPublic =
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+
+        private const BindingFlags InheritedPublic =
+            BindingFlags.Public | BindingFlags.Instance;
+
+        /// <summary>実行環境がすべての型へ配るメンバーの宣言元。</summary>
+        private static readonly Type[] Universal =
+        {
+            typeof(object),
+            typeof(ValueType),
+            typeof(Enum),
+            typeof(Delegate),
+            typeof(MulticastDelegate),
+        };
 
         public static InventoryRecord Enumerate(Assembly assembly)
         {
@@ -149,7 +167,7 @@ namespace PmxEditorMcp.SignatureDump
                 yield break;
             }
 
-            foreach (PropertyInfo property in type.GetProperties(DeclaredPublic))
+            foreach (PropertyInfo property in DeclaredProperties(type))
             {
                 foreach (Type used in Used(property.GetIndexParameters()))
                 {
@@ -159,12 +177,12 @@ namespace PmxEditorMcp.SignatureDump
                 yield return Element(property.PropertyType);
             }
 
-            foreach (FieldInfo field in type.GetFields(DeclaredPublic))
+            foreach (FieldInfo field in DeclaredFields(type))
             {
                 yield return Element(field.FieldType);
             }
 
-            foreach (EventInfo declaredEvent in type.GetEvents(DeclaredPublic))
+            foreach (EventInfo declaredEvent in DeclaredEvents(type))
             {
                 yield return Element(declaredEvent.EventHandlerType);
             }
@@ -188,7 +206,128 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             HashSet<MethodInfo> accessors = CollectAccessors(type);
-            return type.GetMethods(DeclaredPublic).Where(m => !accessors.Contains(m));
+
+            return General(
+                type,
+                Members(type, t => t.GetMethods(DeclaredPublic), t => t.GetMethods(InheritedPublic))
+                    .Where(m => !accessors.Contains(m))
+                    .ToList());
+        }
+
+        /// <summary>
+        /// 同じ名前と同じ引数の数で多重定義されたもののうち、ほかを受け取れる一般の側だけを残す。
+        /// 継承で1つの型へ集まる多重定義には、基底の型を取る版と派生の型を取る版が並ぶことがあり、
+        /// 派生の版で呼べることは基底の版でも呼べる。両方を残すと、同じ呼び出しに2つのツールが
+        /// 立ち、引数の名前が同じなので呼び分けを入力で判別できなくなる。自分で宣言するものは
+        /// その型の契約そのものなので落とさない。
+        /// </summary>
+        private static IEnumerable<MethodInfo> General(Type type, IList<MethodInfo> methods)
+        {
+            foreach (MethodInfo method in methods)
+            {
+                if (method.DeclaringType == type || !methods.Any(other => Covers(other, method)))
+                {
+                    yield return method;
+                }
+            }
+        }
+
+        /// <summary>その多重定義が、もう一方の引数をそのまま受け取れるか。同じものは覆わない。</summary>
+        private static bool Covers(MethodInfo one, MethodInfo other)
+        {
+            ParameterInfo[] mine = one.GetParameters();
+            ParameterInfo[] theirs = other.GetParameters();
+            if (one == other
+                || !string.Equals(one.Name, other.Name, StringComparison.Ordinal)
+                || mine.Length != theirs.Length
+                || mine.Length == 0)
+            {
+                return false;
+            }
+
+            bool wider = false;
+            for (int at = 0; at < mine.Length; at++)
+            {
+                if (!mine[at].ParameterType.IsAssignableFrom(theirs[at].ParameterType))
+                {
+                    return false;
+                }
+
+                wider = wider || mine[at].ParameterType != theirs[at].ParameterType;
+            }
+
+            return wider;
+        }
+
+        private static IEnumerable<PropertyInfo> DeclaredProperties(Type type)
+        {
+            return Members(
+                type, t => t.GetProperties(DeclaredPublic), t => t.GetProperties(InheritedPublic));
+        }
+
+        private static IEnumerable<FieldInfo> DeclaredFields(Type type)
+        {
+            return Members(type, t => t.GetFields(DeclaredPublic), t => t.GetFields(InheritedPublic));
+        }
+
+        private static IEnumerable<EventInfo> DeclaredEvents(Type type)
+        {
+            return Members(type, t => t.GetEvents(DeclaredPublic), t => t.GetEvents(InheritedPublic));
+        }
+
+        /// <summary>
+        /// その型の行にするメンバー。自分で宣言するものを先に、継承するもののうち持ち込む条件を
+        /// 満たすものを後に並べる。<paramref name="declared"/> は型が自分で宣言するものを、
+        /// <paramref name="reachable"/> は継承したものまで含めて引く。インタフェースは基底の
+        /// メンバーをこの引き方では返さないので、実装している側を1つずつ辿る。
+        /// </summary>
+        private static IEnumerable<TMember> Members<TMember>(
+            Type type,
+            Func<Type, TMember[]> declared,
+            Func<Type, TMember[]> reachable)
+            where TMember : MemberInfo
+        {
+            TMember[] own = declared(type);
+            foreach (TMember member in own)
+            {
+                yield return member;
+            }
+
+            if (type.IsGenericTypeDefinition)
+            {
+                yield break;
+            }
+
+            HashSet<TMember> held = new HashSet<TMember>(own);
+            IEnumerable<TMember> beyond = type.IsInterface
+                ? type.GetInterfaces().SelectMany(declared)
+                : reachable(type);
+            foreach (TMember member in beyond)
+            {
+                if (!held.Add(member) || !Inherits(type, member))
+                {
+                    continue;
+                }
+
+                yield return member;
+            }
+        }
+
+        /// <summary>その継承したメンバーを行にするか。宣言元と、静的かどうかで決まる。</summary>
+        private static bool Inherits(Type type, MemberInfo member)
+        {
+            Type declaring = member.DeclaringType;
+            if (declaring == null
+                || declaring.Assembly == type.Assembly
+                || Universal.Contains(declaring))
+            {
+                return false;
+            }
+
+            FieldInfo field = member as FieldInfo;
+            MethodInfo method = member as MethodInfo;
+
+            return !(field != null && field.IsStatic) && !(method != null && method.IsStatic);
         }
 
         private static IEnumerable<Type> Used(ParameterInfo[] parameters)
@@ -295,17 +434,17 @@ namespace PmxEditorMcp.SignatureDump
                 yield break;
             }
 
-            foreach (PropertyInfo property in type.GetProperties(DeclaredPublic))
+            foreach (PropertyInfo property in DeclaredProperties(type))
             {
                 yield return FromProperty(type, property);
             }
 
-            foreach (FieldInfo field in type.GetFields(DeclaredPublic))
+            foreach (FieldInfo field in DeclaredFields(type))
             {
                 yield return FromField(type, field);
             }
 
-            foreach (EventInfo declaredEvent in type.GetEvents(DeclaredPublic))
+            foreach (EventInfo declaredEvent in DeclaredEvents(type))
             {
                 yield return FromEvent(type, declaredEvent);
             }
@@ -323,7 +462,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             HashSet<MethodInfo> accessors = new HashSet<MethodInfo>();
 
-            foreach (PropertyInfo property in type.GetProperties(DeclaredPublic))
+            foreach (PropertyInfo property in DeclaredProperties(type))
             {
                 foreach (MethodInfo accessor in property.GetAccessors(true))
                 {
@@ -331,7 +470,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
-            foreach (EventInfo declaredEvent in type.GetEvents(DeclaredPublic))
+            foreach (EventInfo declaredEvent in DeclaredEvents(type))
             {
                 Add(accessors, declaredEvent.GetAddMethod(true));
                 Add(accessors, declaredEvent.GetRemoveMethod(true));

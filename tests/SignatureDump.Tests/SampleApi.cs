@@ -221,6 +221,24 @@ namespace PmxEditorMcp.SignatureDump.Tests.Sample
         public int Own { get; set; }
     }
 
+    public interface ISampleWide
+    {
+        int WideValue { get; }
+    }
+
+    public interface ISampleNarrow : ISampleWide
+    {
+        int NarrowValue { get; }
+    }
+
+    // 同じ名前と同じ引数の数の多重定義を、継承で1つの型へ集める型。狭いほうを取る版で呼べることは
+    // 広いほうを取る版でも呼べるので、広いほうだけが残る。両方を残す実装は、同じ呼び出しに2つの
+    // 行を出す。
+    public interface ISampleComparable : IComparable<ISampleWide>, IComparable<ISampleNarrow>
+    {
+        int OwnRank { get; }
+    }
+
     // 型引数の決まっていない型。期待する行の一覧に Clone が無いことで、持ち込まないことを見る。
     public interface ISampleInheritedGeneric<T> : ICloneable
     {
