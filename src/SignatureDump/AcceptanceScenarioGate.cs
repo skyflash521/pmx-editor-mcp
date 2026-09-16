@@ -36,6 +36,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>引数の形を確かめるとき、覚えた値の代わりに差し込む数。</summary>
         private const int SubstitutedNumber = 1;
 
+        /// <summary>ツールを呼ぶ段の種別。</summary>
+        private const string ToolStepKind = "tool";
+
         /// <summary>エディタとホストを操作する段の種別。</summary>
         private const string ControlStep = "control";
 
@@ -202,6 +205,34 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
         }
 
+        /// <summary>
+        /// その定義が成功を期待するツールの名前。実機へ投げる検査の覆いを数える側が、生成器の
+        /// 組む事例と並べてこれを読む。
+        /// </summary>
+        public static ISet<string> SucceedingTools(JsonNode scenarios)
+        {
+            if (scenarios == null)
+            {
+                throw new ArgumentNullException(nameof(scenarios));
+            }
+
+            return new HashSet<string>(
+                Steps(scenarios)
+                    .Where(step => (string)step["kind"] == ToolStepKind && Succeeds(step))
+                    .Select(step => (string)step["tool"]),
+                StringComparer.Ordinal);
+        }
+
+        /// <summary>その段が、呼び出しの成功を期待しているか。</summary>
+        private static bool Succeeds(JsonNode step)
+        {
+            JsonNode expect = step["expect"];
+
+            return expect != null
+                && expect["ok"] != null
+                && expect["ok"].GetValue<bool>();
+        }
+
         /// <summary>その定義が並べる段。</summary>
         private static IEnumerable<JsonNode> Steps(JsonNode defined)
         {
@@ -291,7 +322,7 @@ namespace PmxEditorMcp.SignatureDump
                 JsonNode step = steps[at];
                 string where = "シナリオ" + id + " の段 " + (at + 1);
                 string kind = step["kind"].GetValue<string>();
-                if (kind == "tool")
+                if (kind == ToolStepKind)
                 {
                     ToolStep(step, where, schemas, recorded);
                 }

@@ -24,13 +24,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string HandleCreated = "HandleCreated/";
 
-        [Fact(Skip = "impl pending: 呼び先まで届く事例があるツールを覆われたと数える")]
+        [Fact]
         public void AToolIsCoveredByACaseThatReachesIt()
         {
             Require(Schemas(WipeTool), Map(Plain(Wipe)), Named(Wipe, WipeTool), Reached(WipeTool));
         }
 
-        [Fact(Skip = "impl pending: 事例が1件も無いツールを覆われていないと数える")]
+        [Fact]
         public void AToolWithoutAnyCaseIsNotCovered()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -43,7 +43,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(WipeTool, error.Message, StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 入口で断られる事例を呼び先まで届いた事例に数えない")]
+        [Fact]
         public void AToolThatIsOnlyRefusedIsNotCovered()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -53,7 +53,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(WipeTool, error.Message, StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 効果を宣言する行のツールを届いただけの事例で覆われたと数えない")]
+        [Fact]
         public void AToolWhoseRowDeclaresAnEffectIsNotCoveredByACallThatDoesNotCheckIt()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -66,7 +66,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(WipeTool, error.Message, StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 効果を宣言する行のツールをその効果を確かめる事例で覆われたと数える")]
+        [Fact]
         public void AToolWhoseRowDeclaresAnEffectIsCoveredByTheCaseThatChecksIt()
         {
             Require(
@@ -76,7 +76,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Reached(WipeTool).Concat(Checking(ListTool, Wipe)).ToArray());
         }
 
-        [Fact(Skip = "impl pending: 受入シナリオで成功を期待するツールを届いた事例に数える")]
+        [Fact]
         public void AToolReachedOnlyByAnAcceptanceScenarioIsCovered()
         {
             Require(
@@ -91,7 +91,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// 受入シナリオの段は呼び出しが成功したことしか見ないので、宣言した効果が起きたかどうかを
         /// 一度も確かめていない。効果を宣言する行のツールは、この段だけでは覆われない。
         /// </summary>
-        [Fact(Skip = "impl pending: 効果を宣言する行のツールを受入シナリオの成功の段だけで覆われたと数えない")]
+        [Fact]
         public void AToolWhoseRowDeclaresAnEffectIsNotCoveredByAnAcceptanceScenarioAlone()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -105,7 +105,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(WipeTool, error.Message, StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 呼ぶ行を持たないツールも母集合に入れて数える")]
+        [Fact]
         public void AToolWithoutAnyRowIsJudgedToo()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -123,7 +123,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// ツールの名前からは言えない。効果を宣言する呼び分けが1つでも確かめられていなければ、
         /// その宣言は一度も見られていない。
         /// </summary>
-        [Fact(Skip = "impl pending: 効果を宣言する行が複数あるツールを一部の効果の判定だけで覆われたと数えない")]
+        [Fact]
         public void AToolIsNotCoveredWhenOnlyOneOfItsDeclaringRowsIsChecked()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -136,7 +136,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(WipeTool, error.Message, StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 効果を宣言する行が複数あるツールをすべての効果の判定で覆われたと数える")]
+        [Fact]
         public void AToolIsCoveredWhenEveryOneOfItsDeclaringRowsIsChecked()
         {
             Require(
@@ -153,7 +153,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// 効果を宣言しない行は確かめる宣言を持たないので、同じツールの宣言する行の判定が要る
         /// かどうかに関わらない。
         /// </summary>
-        [Fact(Skip = "impl pending: 効果を宣言しない行を効果の判定が要る行に数えない")]
+        [Fact]
         public void ARowThatDeclaresNoEffectDoesNotAskForACheck()
         {
             Require(
@@ -167,7 +167,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// 根拠が届かせられないと述べていても、そのツールは判定に入る。文言の真偽を確かめる検査が
         /// 無いので、述べたことを覆いの代わりにはできない。
         /// </summary>
-        [Fact(Skip = "impl pending: 呼び先まで届かせられないと根拠が述べる行のツールも判定に入れる")]
+        [Fact]
         public void AToolIsJudgedEvenWhenItsRowSaysItCannotBeReached()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -180,7 +180,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(WipeTool, error.Message, StringComparison.Ordinal);
         }
 
-        [Fact(Skip = "impl pending: 引数の欠けを呼び出しの時点で断る")]
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             ToolSchemaTable schemas = Schemas(WipeTool);

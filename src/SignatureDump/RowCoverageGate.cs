@@ -64,23 +64,16 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(cases));
             }
 
-            // 覆いに数えるのは、呼び先まで届いたことが結末から分かる検査だけである。入口で断られる
-            // ことを見る検査は、行の振る舞いを一度も確かめないまま通るので数えない。
             HashSet<string> arrivedTools = new HashSet<string>(
                 cases.Where(c => Reached(c.Expectation)).Select(c => c.Tool),
                 StringComparer.Ordinal);
 
-            // 同じ名前のツールを複数の行が持つことがあり、そのときツールの名前だけでは、検査が
-            // どの行を通ったのかを言えない。自分の名前のツールを持つ行は、その行を名指しした
-            // 検査で数える。
             HashSet<string> arrived = new HashSet<string>(
                 cases
                     .Where(c => Reached(c.Expectation) && !string.IsNullOrEmpty(c.RowKey))
                     .Select(c => c.RowKey),
                 StringComparer.Ordinal);
 
-            // 効果を宣言する行は、その宣言を確かめた検査でだけ覆われる。呼び先まで届いただけの
-            // 検査は、宣言した効果が起きたかどうかを一度も見ていない。
             HashSet<string> verified = new HashSet<string>(
                 cases
                     .Where(c => c.Checks != null && !string.IsNullOrEmpty(c.RowKey))
@@ -91,9 +84,6 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
             IDictionary<string, ISet<string>> byOwner = ToolsByOwner(toolsByRow, signatures);
-            // 覆うツールを持つ行が届かせられないなら、そのツールへ埋め込まれた行にも届く道が無い。
-            // 覆うツールがどれもそうである行は、理由を述べた行と同じく判定から外す——理由を写せば
-            // 写した先は写した時点で固まり、元の行が届くようになっても戻らない。
             HashSet<string> beyond = new HashSet<string>(
                 toolsByRow
                     .Where(t => map.Rows.Any(r => Excused(r)
