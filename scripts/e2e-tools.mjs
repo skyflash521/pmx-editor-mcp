@@ -24,6 +24,14 @@ const RESPONSE_TIMEOUT_MS = 130000;
 const PIPE_PREFIX = "pmx-editor-mcp-";
 
 /**
+ * 検査が書く先の置き場。走るたびに作り直して終わりに消すので、前の実行が残したものが在ることに
+ * ならない。正本はこの名前で書き先を綴り、値はここで決まる——走らせる機械ごとに位置が変わる。
+ */
+const TEMPORARY_PLACE = path.join(os.tmpdir(), "pmx-editor-mcp-e2e");
+
+process.env.PMX_EDITOR_MCP_E2E_TEMP = TEMPORARY_PLACE;
+
+/**
  * 答えの返らない検査が何件出たら、塞がりが解けていないと見なして実行を打ち切るか。表示を
  * 片付けても返らなかった1件は、応答待ちとその待ち直しで実行の時間の上限をほぼ使い切る。
  * 2件目を待っても、その実行が上限に収まる見込みはもう無い——待つ時間が伸びるだけである。
@@ -957,4 +965,10 @@ if (cases.length === 0) {
     process.exit(EXIT_SUCCESS);
 }
 
-process.exit(await run(PIPE_PREFIX + processId, cases, processId));
+fs.rmSync(TEMPORARY_PLACE, { recursive: true, force: true });
+fs.mkdirSync(TEMPORARY_PLACE, { recursive: true });
+
+const finished = await run(PIPE_PREFIX + processId, cases, processId);
+
+fs.rmSync(TEMPORARY_PLACE, { recursive: true, force: true });
+process.exit(finished);

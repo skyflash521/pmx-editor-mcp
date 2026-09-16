@@ -460,21 +460,21 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.SaveMaterialName(System.String)",
       "arguments": {
-        "path": "%TEMP%\\pmx-editor-mcp-e2e\\材質名.txt"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\材質名.txt"
       },
       "basis": "確認を要する行なので、渡す値を書かなければ呼ばれない。書き先には一時の置き場を渡す。"
     },
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.SavePMDFile(System.String)",
       "arguments": {
-        "path": "%TEMP%\\pmx-editor-mcp-e2e\\保存.pmd"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\保存.pmd"
       },
       "basis": "開いているモデルを書き出すだけなので、一時の置き場へ書かせて、書けたことを確かめる。"
     },
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.SavePMXFile(System.String)",
       "arguments": {
-        "path": "%TEMP%\\pmx-editor-mcp-e2e\\保存.pmx"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\保存.pmx"
       },
       "basis": "開いているモデルを書き出すだけなので、一時の置き場へ書かせて、書けたことを確かめる。"
     },
@@ -547,7 +547,7 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.ToFile(System.String)",
       "arguments": {
-        "path": "%TEMP%\\pmx-editor-mcp-e2e\\書き出し.pmx"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\書き出し.pmx"
       },
       "basis": "持っているモデルを書き出すだけなので、一時の置き場へ書かせて、書けたことを確かめる。"
     },
@@ -829,7 +829,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEViewSettingConnector.SaveViewSetting(System.String)",
       "arguments": {
-        "path": "%TEMP%\\pmx-editor-mcp-e2e\\表示設定.xml"
+        "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\表示設定.xml"
       },
       "basis": "いまの表示の設定を書き出すだけなので、一時の置き場へ書かせて、書けたことを確かめる。"
     },
@@ -850,6 +850,16 @@
         ]
       },
       "basis": "先頭の1件を見えるようにする。空の並びでは、見え方が1件も変わらない。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.ToFile(System.String,System.Boolean)",
+      "arguments": {
+        "args": {
+          "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\書き出し.vmd",
+          "trimKeys": false
+        }
+      },
+      "basis": "持っているモーションを書き出す操作なので、書き先に一時の置き場を渡す。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBodyIndices(System.Int32[])",

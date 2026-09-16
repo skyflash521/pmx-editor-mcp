@@ -38,6 +38,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ツールの名前の中で、担当群と残りを分ける文字。</summary>
         private const char Separator = '_';
 
+        /// <summary>受け手を1つのハンドルで指す入力の名前。</summary>
+        private const string AimName = "pmxHandle";
+
         /// <summary>相手を位置の並びで指す入力の名前。</summary>
         private const string IndicesName = "indices";
 
@@ -280,7 +283,8 @@ namespace PmxEditorMcp.SignatureDump
                     adders,
                     factories,
                     reading,
-                    removers));
+                    removers,
+                    aimed));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -452,6 +456,61 @@ namespace PmxEditorMcp.SignatureDump
                     }
                 },
             };
+        }
+
+        /// <summary>
+        /// 借りて渡す引数へ、正本が書いた値と確認を上書きで足したもの。正本が値を書いている
+        /// 危険な行は、その値を渡して初めて呼べる——型ごとのサンプルで埋めた値では、書いた側が
+        /// 選んだ渡し先にならない。
+        /// </summary>
+        private static IDictionary<string, object> Written(
+            IDictionary<string, object> arguments,
+            string rowKey,
+            IDictionary<string, IDictionary<string, object>> given,
+            bool confirmed)
+        {
+            IDictionary<string, object> named;
+            if (given != null && given.TryGetValue(rowKey, out named))
+            {
+                foreach (KeyValuePair<string, object> one in named)
+                {
+                    arguments[one.Key] = one.Value;
+                }
+            }
+
+            return confirmed ? Confirmed(arguments) : arguments;
+        }
+
+        /// <summary>
+        /// 正本が書いた値へ、受け手のハンドルを補ったもの。受け手は呼ぶときに借りて渡すので、
+        /// 正本には書けない——書けない値の不在で、書いた値の収まりを否まない。
+        /// </summary>
+        private static IDictionary<string, object> Receiving(
+            SchemaBranch branch, IDictionary<string, object> arguments)
+        {
+            IDictionary<string, object> receiving =
+                new Dictionary<string, object>(arguments, StringComparer.Ordinal);
+            foreach (SchemaItem input in branch.Inputs.Where(
+                i => !i.Injected && i.Required == true && !arguments.ContainsKey(i.Name)))
+            {
+                if (string.Equals(input.Name, HandlesName, StringComparison.Ordinal))
+                {
+                    receiving[input.Name] = new object[] { FirstPosition };
+                }
+                else if (string.Equals(input.Name, AimName, StringComparison.Ordinal))
+                {
+                    receiving[input.Name] = FirstPosition;
+                }
+            }
+
+            return receiving;
+        }
+
+        /// <summary>受け手を1つのハンドルで指せるツールか。</summary>
+        private static bool Aims(ToolSchema schema)
+        {
+            return schema.Branches.SelectMany(b => b.Inputs).Any(
+                i => !i.Injected && string.Equals(i.Name, AimName, StringComparison.Ordinal));
         }
 
         /// <summary>受け手をハンドルの並びで受け取るツールか。渡し口が無ければ借りて渡せない。</summary>
@@ -670,7 +729,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> adders,
             IDictionary<string, string> factories,
             ISet<string> reading,
-            IDictionary<string, string> removers)
+            IDictionary<string, string> removers,
+            ISet<string> aimed)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -687,7 +747,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, object> calling =
                 new Dictionary<string, object>(StringComparer.Ordinal);
             bool calls = row != null && (!confirmed || written)
-                && TryCalling(row, schema, sdkShapes, sampled, given, out calling);
+                && TryCalling(row, schema, sdkShapes, sampled, given, out calling)
+                && Satisfied(schema, calling);
 
             // 行を持たないツールも、引数を要さないなら呼ぶ。呼べるのに呼ばないままだと、この
             // ツールが覆う行は呼び先まで届く検査を1つも持たず、網羅の判定で落ちる。項目を選ばず
@@ -704,10 +765,32 @@ namespace PmxEditorMcp.SignatureDump
 
             string making = string.IsNullOrEmpty(rowKey) ? tool : rowKey;
             IDictionary<string, string> borrowing = null;
-            if (!calls && !confirmed && maker != null && Holds(schema))
+            if (!calls && maker != null && aimed != null && aimed.Contains(tool) && Aims(schema))
+            {
+                calling = new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { AimName, null },
+                };
+                if (TryFill(schema, sdkShapes, sampled, calling) && Satisfied(schema, calling))
+                {
+                    calls = true;
+                    borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        {
+                            AimName,
+                            Borrowed(
+                                Step(making, maker.Count - 1),
+                                Of(schemas, maker[maker.Count - 1]))
+                        },
+                    };
+                }
+            }
+
+            if (!calls && (!confirmed || written) && maker != null && Holds(schema))
             {
                 calling = Chosen(schema, maker[maker.Count - 1]);
-                if (TryFill(schema, sdkShapes, sampled, calling) && Satisfied(schema, calling))
+                if (TryFill(schema, sdkShapes, sampled, calling)
+                    && Satisfied(schema, calling = Written(calling, rowKey, given, confirmed)))
                 {
                     calls = true;
                     borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -1533,7 +1616,7 @@ namespace PmxEditorMcp.SignatureDump
                         "渡す値を書いた行が、自分の名前のツールを持っていない: " + call.SignatureKey);
                 }
 
-                if (!byName[tool].Branches.Any(b => Fits(b, call.Arguments)))
+                if (!byName[tool].Branches.Any(b => Fits(b, Receiving(b, call.Arguments))))
                 {
                     throw new InvalidOperationException(
                         "渡す値が、どの呼び分けにも収まらない: " + tool + "("

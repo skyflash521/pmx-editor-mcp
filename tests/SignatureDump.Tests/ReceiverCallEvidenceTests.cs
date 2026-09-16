@@ -146,7 +146,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// 対象を指して呼べば確認の要らないツールは、受け手を渡さずに呼べても列を持つ。指さずに
         /// 呼ぶと、いま開いているものを相手にしてしまう。
         /// </summary>
-        [Fact(Skip = "impl pending: 対象を指せば確認の要らないツールへ、受け手を渡さずに呼べても列を与える")]
+        [Fact]
         public void AToolThatMustAimAtAFreshReceiverIsGivenAPathEvenWhenCallableWithoutAHandle()
         {
             Assert.False(ByTool().ContainsKey(ClearVmeTool));

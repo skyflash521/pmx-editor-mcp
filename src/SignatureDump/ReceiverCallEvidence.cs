@@ -103,7 +103,8 @@ namespace PmxEditorMcp.SignatureDump
             {
                 string receiver;
                 IList<string> path;
-                if (E2eCaseBuilder.Unchosen(schema) != null
+                if ((E2eCaseBuilder.Unchosen(schema) != null
+                        && !aimed.Contains(schema.Tool, StringComparer.Ordinal))
                     || !receivers.TryGetValue(schema.Tool, out receiver)
                     || !byType.TryGetValue(receiver, out path)
                     || path.Contains(schema.Tool, StringComparer.Ordinal))

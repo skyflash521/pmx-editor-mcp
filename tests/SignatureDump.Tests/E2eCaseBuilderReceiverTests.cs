@@ -128,7 +128,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// 対象を指して呼べば確認が要らなくなるツールは、新しく作った相手を指して呼ぶ。いま
         /// 開いているものを相手にすると、検査が実機の状態を壊す。
         /// </summary>
-        [Fact(Skip = "impl pending: 対象を指せば確認が要らないツールを、新しく作った相手へ向けて呼ぶ")]
+        [Fact]
         public void AToolThatNeedsNoConfirmationWhenAimedIsAimedAtAFreshReceiver()
         {
             IList<E2eCase> cases = Aiming();

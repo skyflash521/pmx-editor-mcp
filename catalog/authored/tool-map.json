@@ -3213,7 +3213,7 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Clear()",
       "editKind": "duplicateEdit",
-      "basis": "いまのPMXを複製して中身を空にし、まとめて反映するので、複製編集型に当たる。確認を要する危険な操作で、渡す値を正本に書いていないので呼び先まで届かせられない。",
+      "basis": "いまのPMXを複製して中身を空にし、まとめて反映するので、複製編集型に当たる。",
       "updateSpec": {
         "refresh": []
       },
@@ -6660,7 +6660,7 @@
     {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.ToFile(System.String,System.Boolean)",
       "editKind": "directChange",
-      "basis": "ファイルへ書き出す。モーションのデータは長寿命の持ち物なので、それへ直に作用する。確認を要する危険な操作で、渡す値を正本に書いていないので呼び先まで届かせられない。",
+      "basis": "ファイルへ書き出す。モーションのデータは長寿命の持ち物なので、それへ直に作用する。",
       "postcondition": [
         {
           "effectType": "stateWritten",
