@@ -6,7 +6,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class FixedToolTableTests
     {
-        [Fact(Skip = "impl pending: 中継の状態を返すツールを固定のツールとして公開する")]
+        [Fact]
         public void TheLivenessAndStatusToolsArePublishedWithTheTestEntryClosed()
         {
             Assert.Equal(

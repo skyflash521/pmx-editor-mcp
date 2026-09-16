@@ -107,7 +107,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// イベントのメンバーは呼ぶ相手ではなく、起きたことが溜め場へ入る先である。中継を作れない
         /// のは当たり前なので、作れなかった行として数えない。
         /// </summary>
-        [Fact(Skip = "impl pending: イベントのメンバーを未解決の行に数えない")]
+        [Fact]
         public void AnEventMemberIsNeitherBuiltNorLeftUnresolved()
         {
             RelaySource source = Build(new SignatureRecord(
@@ -125,6 +125,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Empty(source.Unresolved);
             Assert.Empty(source.Resolved);
+            Assert.Equal(new[] { "Sdk.Listener.MouseClick()" }, source.Notified);
         }
 
         [Fact]

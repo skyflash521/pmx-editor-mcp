@@ -86,7 +86,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.ServerInfo.Version);
         }
 
-        [Fact(Skip = "impl pending: 中継の状態をブリッジのツールとして一覧へ公開する")]
+        [Fact]
         public async Task TheBaseRelayAndEveryGeneratedDefinitionAreRegistered()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -115,7 +115,7 @@ namespace PmxEditorMcp.Bridge.Tests
             }
         }
 
-        [Fact(Skip = "impl pending: 中継の状態をブリッジのツールとして一覧へ公開する")]
+        [Fact]
         public async Task TheLargeTextToolAppearsOnlyWithTheDebugEntry()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -177,7 +177,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(250000, DeclaredResultSize(Named(tools, "ping")));
         }
 
-        [Fact(Skip = "impl pending: 中継の状態をブリッジのツールとして一覧へ公開する")]
+        [Fact]
         public async Task ToolDefinitionDropsTheDeclarationWhenBothVariablesAreGiven()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -190,7 +190,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.All(tools, tool => Assert.Null(tool.ProtocolTool.Meta));
         }
 
-        [Theory(Skip = "impl pending: 中継の状態をブリッジのツールとして一覧へ公開する")]
+        [Theory]
         [InlineData(null, "0")]
         [InlineData("0", "0")]
         [InlineData("1", null)]
@@ -248,7 +248,7 @@ namespace PmxEditorMcp.Bridge.Tests
         /// 中継の状態もツールとして公開し、ホストの同名のメソッドへそのまま渡す。E2Eの実行器が
         /// 走らせる前後で読む先がこれで、ブリッジ越しに読めないと走らせた側から確かめられない。
         /// </summary>
-        [Fact(Skip = "impl pending: 中継の状態をブリッジのツールとしてホストへ中継する")]
+        [Fact]
         public async Task TheStatusToolRelaysToTheHost()
         {
             using FakeHost host = new FakeHost()

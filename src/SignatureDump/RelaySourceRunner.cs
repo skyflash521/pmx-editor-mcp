@@ -133,10 +133,12 @@ namespace PmxEditorMcp.SignatureDump
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "中継を組み立てた: 行 {0} 件・解決 {1} 件・未解決 {2} 件・受け手 {3} 型・SDK {4}",
-                source.Resolved.Count + source.Unresolved.Count,
+                "中継を組み立てた: 行 {0} 件・解決 {1} 件・未解決 {2} 件・知らせ {3} 件"
+                    + "・受け手 {4} 型・SDK {5}",
+                source.Resolved.Count + source.Unresolved.Count + source.Notified.Count,
                 source.Resolved.Count,
                 source.Unresolved.Count,
+                source.Notified.Count,
                 receivers.Count,
                 inventory.AssemblyVersion));
 

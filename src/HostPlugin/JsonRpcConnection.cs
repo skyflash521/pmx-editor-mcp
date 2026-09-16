@@ -113,7 +113,13 @@ namespace PmxEditorMcp
         /// <summary>登録されている処理の名前。綴りの順に並ぶ。</summary>
         public IList<string> Names
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                List<string> names = new List<string>(_methods.Keys);
+                names.Sort(StringComparer.Ordinal);
+
+                return names;
+            }
         }
 
         /// <summary>名前に対応する処理を引く。</summary>
@@ -714,7 +720,8 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 稼働しているSDKの版・生成に使ったSDKの版・中継を作れなかった行・呼び出しの失敗で
-        /// 無効にした行を返す。
+        /// 無効にした行・このホストがツールとして答える名前を返す。名前に基盤メソッドは入らない
+        /// ——それは表に載らず、この接続自身が受け持つ。
         /// </summary>
         private IDictionary<string, object> BuildSdkStatusResult()
         {
@@ -724,6 +731,7 @@ namespace PmxEditorMcp
                 { "generatedSdkVersion", _relays.GeneratedSdkVersion },
                 { "unresolvedRows", _relays.Unresolved },
                 { "disabledRows", _relays.Disabled },
+                { "toolNames", _methods.Names },
             };
         }
 

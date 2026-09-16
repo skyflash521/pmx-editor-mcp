@@ -9,11 +9,16 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>中継コードを組み立てた結果。</summary>
     public sealed class RelaySource
     {
-        public RelaySource(string text, IList<string> resolved, IList<string> unresolved)
+        public RelaySource(
+            string text,
+            IList<string> resolved,
+            IList<string> unresolved,
+            IList<string> notified)
         {
             Text = text;
             Resolved = resolved;
             Unresolved = unresolved;
+            Notified = notified;
         }
 
         /// <summary>ホストへ組み込むC#の本文。</summary>
@@ -24,12 +29,16 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>中継を作れなかった行キー。</summary>
         public IList<string> Unresolved { get; }
+
+        /// <summary>中継を作らず、作れなかった行にも数えない行キー。イベントのメンバーが当たる。</summary>
+        public IList<string> Notified { get; }
     }
 
     /// <summary>
     /// 能力対応表の行キーから、SDKのメンバーを直接呼ぶC#を組み立てる。呼び出し先は生成した本文の
     /// 中で名前のまま書かれ、コンパイラが解決する——配布物では名前で引く経路を持たない。
-    /// 解決できない行は中継を作らず、その行だけを無効として並べる。待受は止めない。
+    /// 解決できない行は中継を作らず、その行だけを無効として並べる。待受は止めない。イベントの
+    /// メンバーは呼ぶ相手ではなく起きたことが溜め場へ入る先なので、中継も作らず無効にも数えない。
     /// </summary>
     public static class RelaySourceBuilder
     {
@@ -85,16 +94,21 @@ namespace PmxEditorMcp.SignatureDump
 
             List<string> resolved = new List<string>();
             List<string> unresolved = new List<string>();
+            List<string> notified = new List<string>();
             StringBuilder calls = new StringBuilder();
 
             foreach (string rowKey in rowKeys.Distinct(StringComparer.Ordinal)
                 .OrderBy(k => k, StringComparer.Ordinal))
             {
                 SignatureRecord signature;
-                string expression = byKey.TryGetValue(rowKey, out signature)
-                    ? TryExpression(signature)
-                    : null;
+                bool known = byKey.TryGetValue(rowKey, out signature);
+                if (known && signature.MemberKind == MemberKind.Event)
+                {
+                    notified.Add(rowKey);
+                    continue;
+                }
 
+                string expression = known ? TryExpression(signature) : null;
                 if (expression == null)
                 {
                     unresolved.Add(rowKey);
@@ -114,13 +128,14 @@ namespace PmxEditorMcp.SignatureDump
                 Compose(
                     calls.ToString(), unresolved, sdkVersion, combinableEnums, toolMapDigest, receivers),
                 resolved,
-                unresolved);
+                unresolved,
+                notified);
         }
 
         /// <summary>
         /// そのシグネチャを直接呼ぶ式。中継を作れない形では null。作れないのは、値を返しながら
         /// 出力の引数も持つもの・参照渡し(入出力の両方)の引数を持つもの・総称型の引数を取るもの・
-        /// 引数を取るプロパティ・イベント・コンストラクタで、いずれもこの生成では呼び出しの形か
+        /// 引数を取るプロパティ・コンストラクタで、いずれもこの生成では呼び出しの形か
         /// 返すものが1つに定まらない。
         /// </summary>
         private static string TryExpression(SignatureRecord signature)

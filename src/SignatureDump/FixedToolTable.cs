@@ -25,6 +25,13 @@ namespace PmxEditorMcp.SignatureDump
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { PingName, "ホストが応答することを確かめる。" },
+                    {
+                        SdkStatusName,
+                        "ホストが稼働しているSDKの版・中継を作った時点のSDKの版・中継を作れなかった"
+                            + "行・呼び出しの失敗で無効にした行・ホストがツールとして答える名前を"
+                            + "返す。その名前に " + PingName + " と " + SdkStatusName
+                            + " は入らない——どちらもホストの接続自身が受け持つ。"
+                    },
                 };
             if (debugHooks)
             {

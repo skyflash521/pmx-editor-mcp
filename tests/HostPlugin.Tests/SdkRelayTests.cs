@@ -218,7 +218,7 @@ namespace PmxEditorMcp.Tests
         /// 中継の状態が、このホストが答えるツールの名前も並べる。ブリッジが公開する名前と
         /// 突き合わせる先がこれで、名前の食い違いは呼んでみるまで分からない。
         /// </summary>
-        [Fact(Skip = "impl pending: 中継の状態へホストが答えるツールの名前を載せる")]
+        [Fact]
         public void TheStatusEntryNamesTheToolsThisHostAnswers()
         {
             McpMethodTable methods = new McpMethodTable();
@@ -236,7 +236,7 @@ namespace PmxEditorMcp.Tests
                 Assert.IsType<object[]>(body["toolNames"]));
         }
 
-        [Fact(Skip = "impl pending: 登録された処理の名前を綴りの順に並べる")]
+        [Fact]
         public void TheMethodTableNamesWhatItCarriesInSpellingOrder()
         {
             McpMethodTable methods = new McpMethodTable();
