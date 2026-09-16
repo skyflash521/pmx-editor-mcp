@@ -347,7 +347,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 null,
                 null,
-                "handleCreated/");
+                "HandleCreated/");
         }
 
         private static IDictionary<string, SignatureRecord> Signatures(SignatureRecord signature)
