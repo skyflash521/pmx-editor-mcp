@@ -1152,6 +1152,67 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => E2eCaseBuilder.Build(Map(RowKey), schemas, named, Paths(), dangerous, null));
         }
 
+        /// <summary>
+        /// 行が持つ呼ぶ前の段取りは、呼ぶ前の姿を覚えるより先に流す。間に挟むと、段取りが
+        /// 動かしたぶんが呼び出しの効果として数えられる。
+        /// </summary>
+        [Fact]
+        public void TheSetupTheRowCarriesRunsBeforeTheStateIsRemembered()
+        {
+            IList<E2eCase> cases = Comparing(
+                Readback("model_list_things"),
+                Tool("model_wipe_things", new SchemaItem[0]),
+                Whole("model_list_things"),
+                setup: new[]
+                {
+                    SetupOperation.CallTool(
+                        "view_update_model",
+                        new Dictionary<string, object>(StringComparer.Ordinal),
+                        null),
+                });
+            E2eCase remembered = Assert.Single(
+                cases, c => c.Purpose == "呼ぶ前の姿を読めること");
+
+            Assert.Contains(
+                cases.Take(cases.IndexOf(remembered)),
+                c => c.Tool == "view_update_model");
+        }
+
+        /// <summary>
+        /// 行が持つ呼ぶ前の段取りは、その行の呼び出しより先に流す。整える前に呼べば、整えた
+        /// ことにならない。
+        /// </summary>
+        [Fact]
+        public void TheSetupTheRowCarriesRunsBeforeItsCall()
+        {
+            ToolSchema schema = Tool("model_get_name", new SchemaItem[0]);
+            IList<E2eCase> cases = E2eCaseBuilder.Build(
+                Map(
+                    RowKey,
+                    new[]
+                    {
+                        SetupOperation.CallTool(
+                            "view_update_model",
+                            new Dictionary<string, object>(StringComparer.Ordinal),
+                            null),
+                    }),
+                new ToolSchemaTable(new[] { schema }),
+                new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, schema.Tool } },
+                Paths(),
+                new HashSet<string>(StringComparer.Ordinal),
+                Shapes());
+            E2eCase called = Assert.Single(
+                cases, c => c.Expectation == E2eExpectation.Called);
+
+            Assert.Equal(
+                new[] { "view_update_model" },
+                cases
+                    .Take(cases.IndexOf(called))
+                    .Where(c => c.RowKey == RowKey)
+                    .Select(c => c.Tool)
+                    .ToArray());
+        }
+
         /// <summary>断りを見る検査だけ。呼び先が在ることの検査はどのツールにも付くので外す。</summary>
         private static IList<E2eCase> Refused(IEnumerable<E2eCase> cases)
         {
@@ -1193,11 +1254,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new Dictionary<SchemaItem, string>();
         }
 
-        private static ToolMap Map(string rowKey)
+        private static ToolMap Map(string rowKey, IList<SetupOperation> setup = null)
         {
             return new ToolMap(new[]
             {
-                new ToolMapRow(rowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                new ToolMapRow(
+                    rowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null, setup),
             });
         }
 
@@ -1330,12 +1392,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 setup);
         }
 
-        /// <summary>読み比べる行と、その一覧を読むツールの2つで検査を組み立てる。</summary>
+        /// <summary>
+        /// 読み比べる行と、その一覧を読むツールの2つで検査を組み立てる。
+        /// <paramref name="setup"/> はその行が呼ぶ前に整える手順。
+        /// </summary>
         private static IList<E2eCase> Comparing(
             Postcondition postcondition,
             ToolSchema target,
             ToolSchema observer,
-            string refused = null)
+            string refused = null,
+            IList<SetupOperation> setup = null)
         {
             return E2eCaseBuilder.Build(
                 new ToolMap(new[]
@@ -1347,7 +1413,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "書き換える。",
                         new[] { postcondition },
                         null,
-                        null),
+                        null,
+                        setup),
                 }),
                 new ToolSchemaTable(
                     new[] { target, observer, Tool("model_add_things", Handles()) }),

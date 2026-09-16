@@ -1136,10 +1136,25 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
+            // 行の段取りは、呼ぶ前の姿を覚えるより先に流す。間に挟むと、段取りが動かしたぶんが
+            // 呼び出しの効果として数えられ、確かめているのが行の効果でなく段取りの効果になる。
+            foreach (E2eCase one in Prepared(
+                calls && row != null ? row.Setup : null,
+                schemas,
+                rowKey,
+                editKind,
+                path,
+                adders,
+                factories))
+            {
+                yield return one;
+            }
+
             foreach (Postcondition judgement in reads ? compared : new Postcondition[0])
             {
                 foreach (E2eCase one in
-                    Prepared(judgement, schemas, rowKey, editKind, path, adders, factories))
+                    Prepared(
+                        judgement.Setup, schemas, rowKey, editKind, path, adders, factories))
                 {
                     yield return one;
                 }
@@ -1639,11 +1654,12 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 読み比べの始まりを決まった姿へ揃える段。揃えずに読み比べると、呼ぶ前から同じ姿だった回に
-        /// 変わらないことが起き、確かめているのが行の効果でなくその回の巡り合わせになる。
+        /// 呼ぶ前に整える段。行が持つ段取りと、判定が持つ読み比べの始まりの両方がここを通る。
+        /// 読み比べの始まりを揃えずに読み比べると、呼ぶ前から同じ姿だった回に変わらないことが
+        /// 起き、確かめているのが行の効果でなくその回の巡り合わせになる。
         /// </summary>
         private static IEnumerable<E2eCase> Prepared(
-            Postcondition judgement,
+            IList<SetupOperation> setup,
             ToolSchemaTable schemas,
             string rowKey,
             string editKind,
@@ -1651,8 +1667,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> adders,
             IDictionary<string, string> factories)
         {
-            foreach (SetupOperation operation in
-                judgement.Setup ?? (IList<SetupOperation>)new SetupOperation[0])
+            foreach (SetupOperation operation in setup ?? (IList<SetupOperation>)new SetupOperation[0])
             {
                 if (operation.Tag == SetupTag.AddElement)
                 {
@@ -1672,8 +1687,8 @@ namespace PmxEditorMcp.SignatureDump
                     path,
                     initializes ? InitializeToolName : operation.ToolName,
                     initializes
-                        ? "読み比べの始まりを空のモデルへ揃えられること"
-                        : "読み比べの始まりを作る呼び出しが通ること",
+                        ? "段取りがモデルを空へ揃えられること"
+                        : "段取りの呼び出しが通ること",
                     initializes
                         ? Confirmed(new Dictionary<string, object>(StringComparer.Ordinal))
                         : operation.Args
@@ -1683,7 +1698,9 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>要素を1つ作って並びへ加える段。作る手立ての無い要素型を指す判定は組み立てない。</summary>
+        /// <summary>
+        /// 要素を1つ作って並びへ加える段。作る手立ての無い要素型を指す用意の操作は組み立てない。
+        /// </summary>
         private static IEnumerable<E2eCase> Adding(
             SetupOperation operation,
             ToolSchemaTable schemas,
@@ -1715,8 +1732,8 @@ namespace PmxEditorMcp.SignatureDump
                 making,
                 adding,
                 Scoping(rowKey, adding),
-                "読み比べの始まりへ加える要素を1つ作れること",
-                "作った要素を読み比べの始まりへ加えられること"))
+                "段取りが要素を1つ作れること",
+                "段取りが作った要素を並びへ加えられること"))
             {
                 yield return one;
             }

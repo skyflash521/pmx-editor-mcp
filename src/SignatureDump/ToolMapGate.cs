@@ -130,18 +130,20 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
+        /// <summary>その行が持つ用意の操作。呼ぶ前の段取りと、判定ごとの段取りの両方を並べる。</summary>
+        internal static IEnumerable<SetupOperation> Setups(ToolMapRow row)
+        {
+            return (row.Setup ?? (IList<SetupOperation>)new SetupOperation[0])
+                .Concat((row.Postcondition ?? (IList<Postcondition>)new Postcondition[0])
+                    .SelectMany(j => j.Setup ?? (IList<SetupOperation>)new SetupOperation[0]));
+        }
+
         /// <summary>
         /// 用意の操作が指す要素型と型は別の正本が持つ語なので、そこに実在することまで求める。
         /// </summary>
         private static void RequireSetup(ToolMapRow row, ToolMapEvidence evidence)
         {
-            if (row.Postcondition == null)
-            {
-                return;
-            }
-
-            foreach (SetupOperation operation in row.Postcondition
-                .Where(j => j.Setup != null).SelectMany(j => j.Setup))
+            foreach (SetupOperation operation in Setups(row))
             {
                 if (operation.ElementType != null
                     && !evidence.ElementNouns.Contains(operation.ElementType))

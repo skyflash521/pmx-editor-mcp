@@ -211,7 +211,7 @@ namespace PmxEditorMcp.SignatureDump
                 new[] { SignatureKeyName, EditKindName, BasisName },
                 new[]
                 {
-                    UpdateSpecName, PostconditionName, EventTypeName, EmbeddedInName,
+                    UpdateSpecName, PostconditionName, EventTypeName, EmbeddedInName, SetupName,
                 });
 
             ToolMapEditKind editKind = Lookup(EditKinds, members[EditKindName], EditKindName);
@@ -226,7 +226,8 @@ namespace PmxEditorMcp.SignatureDump
                     ? ReadPostcondition(members[PostconditionName])
                     : null,
                 members.ContainsKey(EventTypeName) ? Text(members[EventTypeName], EventTypeName) : null,
-                members.ContainsKey(EmbeddedInName) ? ReadEmbeddedIn(members[EmbeddedInName]) : null);
+                members.ContainsKey(EmbeddedInName) ? ReadEmbeddedIn(members[EmbeddedInName]) : null,
+                members.ContainsKey(SetupName) ? ReadSetup(members[SetupName]) : null);
         }
 
         private static void RequirePresence(

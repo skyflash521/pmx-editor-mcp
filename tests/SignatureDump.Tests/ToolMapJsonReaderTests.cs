@@ -53,6 +53,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Null(row.Postcondition);
         }
 
+        /// <summary>
+        /// 呼ぶ前に整える手順は行が持つ。整えずに呼ぶと呼び先まで届かない行が、何を整えるかを
+        /// 述べる置き場である。
+        /// </summary>
+        [Fact]
+        public void ReadsTheSetupThatComesBeforeTheCall()
+        {
+            ToolMapRow row = Single(Common(
+                @", ""setup"": [{ ""tag"": ""callTool"", ""tool"": ""view_update_model"",
+                                  ""args"": {} }]"));
+
+            SetupOperation operation = Assert.Single(row.Setup);
+            Assert.Equal(SetupTag.CallTool, operation.Tag);
+            Assert.Equal("view_update_model", operation.ToolName);
+        }
+
+        [Fact]
+        public void ARowWithoutSetupCarriesNone()
+        {
+            Assert.Null(Single(Common(string.Empty)).Setup);
+        }
+
+        [Fact]
+        public void RefusesAnEmptySetupBeforeTheCall()
+        {
+            Rejects(Common(@", ""setup"": []"));
+        }
+
         [Fact]
         public void ReadsADirectDispatchRow()
         {

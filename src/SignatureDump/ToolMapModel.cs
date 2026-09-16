@@ -337,7 +337,8 @@ namespace PmxEditorMcp.SignatureDump
             string basis,
             IList<Postcondition> postcondition,
             string eventType,
-            IList<string> embeddedIn)
+            IList<string> embeddedIn,
+            IList<SetupOperation> setup = null)
         {
             PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
             PropertyRecord.RequireText(basis, nameof(basis));
@@ -351,6 +352,7 @@ namespace PmxEditorMcp.SignatureDump
                 : new ReadOnlyCollection<Postcondition>(postcondition);
             EventType = eventType;
             EmbeddedIn = embeddedIn == null ? null : new ReadOnlyCollection<string>(embeddedIn);
+            Setup = setup == null ? null : new ReadOnlyCollection<SetupOperation>(setup);
         }
 
         public string SignatureKey { get; }
@@ -371,6 +373,12 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>スキーマ埋め込み行だけが持つ埋め込み先の名前。1件以上。</summary>
         public IList<string> EmbeddedIn { get; }
+
+        /// <summary>
+        /// 呼ぶ前に整える手順。整えないと呼び先まで届かない行だけが持ち、ほかは null。エディタが
+        /// 自分で確認の表示を出す行と、相手が空のままでは何も返さない行がこれに当たる。
+        /// </summary>
+        public IList<SetupOperation> Setup { get; }
     }
 
     /// <summary>能力対応表。</summary>

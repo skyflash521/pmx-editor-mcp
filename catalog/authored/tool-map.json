@@ -6079,6 +6079,26 @@
     {
       "signatureKey": "PEPlugin.View.IPEVertexGuideConnector.GetSelectedCurrentVertex()",
       "editKind": "viewSession",
+      "setup": [
+        {
+          "tag": "addElement",
+          "elementType": "vertex"
+        },
+        {
+          "tag": "callTool",
+          "tool": "view_update_model",
+          "args": {}
+        },
+        {
+          "tag": "callTool",
+          "tool": "view_set_selected_vertex_indices_pmd_view_connector",
+          "args": {
+            "indices": [
+              0
+            ]
+          }
+        }
+      ],
       "basis": "いま選ばれている対象を目印の一覧へ取り込むだけで、モデルのデータにもファイルにも波及しない。",
       "postcondition": [
         {

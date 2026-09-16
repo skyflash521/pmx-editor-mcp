@@ -128,8 +128,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             foreach (SetupOperation operation in map.Rows
                 .OrderBy(r => r.SignatureKey, StringComparer.Ordinal)
-                .SelectMany(r => r.Postcondition ?? new Postcondition[0])
-                .SelectMany(p => p.Setup ?? new SetupOperation[0])
+                .SelectMany(ToolMapGate.Setups)
                 .Where(o => o.Tag == SetupTag.CallTool))
             {
                 if (!byTool.ContainsKey(operation.ToolName))
