@@ -197,7 +197,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> adders = null,
             IDictionary<string, string> removers = null,
             ISet<string> aimed = null,
-            IDictionary<string, IList<string>> typeMakers = null)
+            IDictionary<string, IList<string>> typeMakers = null,
+            IDictionary<string, string> parents = null)
         {
             if (map == null)
             {
@@ -308,7 +309,8 @@ namespace PmxEditorMcp.SignatureDump
                     unkept,
                     sdkTypes,
                     positioned,
-                    typeMakers));
+                    typeMakers,
+                    parents));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -416,40 +418,21 @@ namespace PmxEditorMcp.SignatureDump
                 .Where(f => Handed(byTool[f.Key]))
                 .Concat(adding.Where(f => !Handed(byTool[f.Key]) && Assigned(byTool[f.Key]))))
             {
-                bool handed = Handed(byTool[pair.Key]);
-                yield return new E2eCase(
+                foreach (E2eCase one in Filling(
                     string.Empty,
                     string.Empty,
                     string.Empty,
+                    schemas,
                     pair.Value,
-                    "並びへ加える要素を1つ作れること",
-                    new Dictionary<string, object>(StringComparer.Ordinal),
-                    E2eExpectation.Success,
-                    null,
-                    null,
-                    pair.Key);
-                yield return new E2eCase(
-                    string.Empty,
-                    string.Empty,
-                    string.Empty,
                     pair.Key,
-                    handed
+                    pair.Key,
+                    "並びへ加える要素を1つ作れること",
+                    Handed(byTool[pair.Key])
                         ? "作った要素を並びへ加えられること"
-                        : "作った要素を親の並びの先頭へ加えられること",
-                    handed ? Lent() : IntoFirstParent(),
-                    E2eExpectation.Success,
-                    null,
-                    null,
-                    null,
-                    new Dictionary<string, string>(StringComparer.Ordinal)
-                    {
-                        {
-                            handed
-                                ? Leaf(HandlesName)
-                                : Leaf(AssignmentsName + "/0/" + HandlesName),
-                            Borrowed(pair.Key, byTool[pair.Value])
-                        },
-                    });
+                        : "作った要素を親の並びの先頭へ加えられること"))
+                {
+                    yield return one;
+                }
             }
         }
 
@@ -907,7 +890,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ISet<string>> unkept,
             IDictionary<SchemaItem, string> sdkTypes,
             ISet<string> positioned,
-            IDictionary<string, IList<string>> typeMakers)
+            IDictionary<string, IList<string>> typeMakers,
+            IDictionary<string, string> parents)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -993,19 +977,26 @@ namespace PmxEditorMcp.SignatureDump
                     foreach (KeyValuePair<string, IList<string>> one in handing)
                     {
                         borrowing[one.Key] = Borrowed(
-                            Step(Handed(making, one.Key), one.Value.Count - 1),
+                            Step(Scoping(making, one.Key), one.Value.Count - 1),
                             Of(schemas, one.Value[one.Value.Count - 1]));
                     }
                 }
             }
             string adder;
             string factory;
+
+            // 並びから取り除くツールは、取り除く相手を自分で用意してから呼ぶ。並びの中身は、
+            // 先に置いた要素がそのまま残るとは限らない——途中の検査がモデルを空へ戻すので、
+            // 直前に1つ加えておかなければ、位置で指した先が無いまま呼ぶことになる。
+            IList<string> filling = null;
             if (!calls && row == null && removers != null
                 && removers.TryGetValue(tool, out adder)
                 && factories != null && factories.TryGetValue(adder, out factory)
                 && Of(schemas, factory) != null
-                && Prepares(Of(schemas, adder)))
+                && Prepares(Of(schemas, adder))
+                && Filling(adder, parents, factories, schemas) != null)
             {
+                string made = Scoping(tool, adder);
                 if (Holds(schema))
                 {
                     calling = Lent();
@@ -1014,7 +1005,7 @@ namespace PmxEditorMcp.SignatureDump
                         calls = true;
                         borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
                         {
-                            { Leaf(HandlesName), Borrowed(adder, Of(schemas, factory)) },
+                            { Leaf(HandlesName), Borrowed(made, Of(schemas, factory)) },
                         };
                     }
                 }
@@ -1026,6 +1017,11 @@ namespace PmxEditorMcp.SignatureDump
                         calls = true;
                         calling = pointing;
                     }
+                }
+
+                if (calls)
+                {
+                    filling = Filling(adder, parents, factories, schemas);
                 }
             }
 
@@ -1091,10 +1087,27 @@ namespace PmxEditorMcp.SignatureDump
                         });
             }
 
+            foreach (string filler in filling ?? new string[0])
+            {
+                foreach (E2eCase one in Filling(
+                    rowKey,
+                    editKind,
+                    path,
+                    schemas,
+                    factories[filler],
+                    filler,
+                    Scoping(tool, filler),
+                    "呼び出しの前に並びへ加える要素を1つ作れること",
+                    "作った要素を呼び出しの前に並びへ加えられること"))
+                {
+                    yield return one;
+                }
+            }
+
             foreach (KeyValuePair<string, IList<string>> one in handing
                 ?? new Dictionary<string, IList<string>>(StringComparer.Ordinal))
             {
-                string stepped = Handed(making, one.Key);
+                string stepped = Scoping(making, one.Key);
                 for (int at = 0; at < one.Value.Count; at++)
                 {
                     yield return new E2eCase(
@@ -1389,6 +1402,89 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 要素を1つ作って並びへ加える2段。加える形は加える側のツールで分かれる——作った要素を
+        /// ハンドルで渡すだけで済むものと、親を位置で指す組で渡すものがある。差し込む先の道は
+        /// その形ごとに違うので、道を選ぶところをここ1か所に持つ。
+        /// </summary>
+        private static IEnumerable<E2eCase> Filling(
+            string rowKey,
+            string editKind,
+            string path,
+            ToolSchemaTable schemas,
+            string making,
+            string adding,
+            string held,
+            string madePurpose,
+            string addedPurpose)
+        {
+            bool listed = Handed(Of(schemas, adding));
+            yield return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                making,
+                madePurpose,
+                new Dictionary<string, object>(StringComparer.Ordinal),
+                E2eExpectation.Success,
+                null,
+                null,
+                held);
+            yield return new E2eCase(
+                rowKey,
+                editKind,
+                path,
+                adding,
+                addedPurpose,
+                listed ? Lent() : IntoFirstParent(),
+                E2eExpectation.Success,
+                null,
+                null,
+                null,
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    {
+                        listed
+                            ? Leaf(HandlesName)
+                            : Leaf(AssignmentsName + "/0/" + HandlesName),
+                        Borrowed(held, Of(schemas, making))
+                    },
+                });
+        }
+
+        /// <summary>
+        /// その要素を並びへ加えるまでに、順に呼ぶ加える側のツールの列。親の並びに1つも無い要素は
+        /// 加えられないので、根に近い親から並べる。用意しきれない並びでは null を返す——どこかの
+        /// 段に作る手立てか加える手立てが無いとき、列の先頭がまだ親を要するとき(親を辿れずに
+        /// 終わったか、親を辿る先が巡って打ち切られたとき)である。通らない用意の段を組み立てると、
+        /// 落ちた理由が別の系統として数えられ、原因の切り分けが後ろへ回る。
+        /// </summary>
+        private static IList<string> Filling(
+            string adder,
+            IDictionary<string, string> parents,
+            IDictionary<string, string> factories,
+            ToolSchemaTable schemas)
+        {
+            List<string> filling = new List<string>();
+            HashSet<string> walked = new HashSet<string>(StringComparer.Ordinal);
+            string at = adder;
+            while (at != null && walked.Add(at))
+            {
+                string making;
+                if (!factories.TryGetValue(at, out making) || Of(schemas, making) == null
+                    || Of(schemas, at) == null || !Prepares(Of(schemas, at)))
+                {
+                    return null;
+                }
+
+                filling.Insert(0, at);
+                string above;
+                at = parents != null && parents.TryGetValue(at, out above) ? above : null;
+            }
+
+            return Handed(Of(schemas, filling[0])) ? filling : null;
+        }
+
+        /// <summary>
         /// 引数へ渡す相手を、道ごとにどう作るか。作る列を引けない型が1つでもあれば null——
         /// 渡すものが揃わない呼び出しは組み立てない。取る相手が無ければ空の対応表になる。
         /// </summary>
@@ -1414,13 +1510,14 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 引数へ渡す相手を作る段が出したハンドルを覚えておく名前。道ごとに分ける。道の区切りは
-        /// 名前に残さない——借りる側は斜線で覚えた値の中を辿るので、名前に斜線があると、名前の
-        /// 途中までを名前と読んでしまう。
+        /// 呼び出しより先に出す段が、出したハンドルを覚えておく名前。<paramref name="part"/> は
+        /// その段が何のためのものかを分ける綴りで、引数の道でも、先に呼ぶツールの名前でもよい。
+        /// 道の区切りは名前に残さない——借りる側は斜線で覚えた値の中を辿るので、名前に斜線が
+        /// あると、名前の途中までを名前と読んでしまう。
         /// </summary>
-        private static string Handed(string making, string path)
+        private static string Scoping(string making, string part)
         {
-            return making + Scoped + path.Replace(PathStep, Scoped);
+            return making + Scoped + part.Replace(PathStep, Scoped);
         }
 
         /// <summary>受け手を作る段が出したハンドルを覚えておく名前。段ごとに分ける。</summary>
@@ -1582,40 +1679,27 @@ namespace PmxEditorMcp.SignatureDump
                 || operation.ElementType == null
                 || !adders.TryGetValue(operation.ElementType, out adding)
                 || factories == null
-                || !factories.TryGetValue(adding, out making))
+                || !factories.TryGetValue(adding, out making)
+                || Of(schemas, adding) == null)
             {
                 throw new InvalidOperationException(
                     "並びへ加える手立ての無い要素型を用意の操作が指している: "
                         + operation.ElementType + "(" + rowKey + ")");
             }
 
-            string held = rowKey + Scoped + adding;
-            yield return new E2eCase(
+            foreach (E2eCase one in Filling(
                 rowKey,
                 editKind,
                 path,
+                schemas,
                 making,
-                "読み比べの始まりへ加える要素を1つ作れること",
-                new Dictionary<string, object>(StringComparer.Ordinal),
-                E2eExpectation.Success,
-                null,
-                null,
-                held);
-            yield return new E2eCase(
-                rowKey,
-                editKind,
-                path,
                 adding,
-                "作った要素を読み比べの始まりへ加えられること",
-                Lent(),
-                E2eExpectation.Success,
-                null,
-                null,
-                null,
-                new Dictionary<string, string>(StringComparer.Ordinal)
-                {
-                    { Leaf(HandlesName), Borrowed(held, Of(schemas, making)) },
-                });
+                Scoping(rowKey, adding),
+                "読み比べの始まりへ加える要素を1つ作れること",
+                "作った要素を読み比べの始まりへ加えられること"))
+            {
+                yield return one;
+            }
         }
 
         /// <summary>呼ぶ前の姿を読んで覚える検査。</summary>

@@ -26,6 +26,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Aim = "pmxHandle";
 
+        private const string Parent = "model_add_materials";
+
+        private const string Above = "model_material";
+
         [Fact]
         public void ARowWhoseBasisSaysItCannotBeReachedIsStillCalled()
         {
@@ -97,9 +101,74 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AnElementRemoverBorrowsTheHandleTheSetupAdded()
         {
-            IList<E2eCase> cases = E2eCaseBuilder.Build(
+            IList<E2eCase> cases = Removing(null, Held(Adder));
+            E2eCase removing = cases.Single(
+                c => string.Equals(c.Tool, Remover, StringComparison.Ordinal)
+                    && c.Expectation == E2eExpectation.Called);
+
+            E2eCase adding = cases.Take(cases.IndexOf(removing)).Last(
+                c => string.Equals(c.Tool, Adder, StringComparison.Ordinal));
+            E2eCase made = cases.Take(cases.IndexOf(adding)).Last(
+                c => string.Equals(c.Tool, Factory, StringComparison.Ordinal));
+
+            Assert.NotNull(removing.Borrowed);
+            Assert.Equal(Lent(made.Produces), adding.Borrowed.Values.Single());
+            Assert.Equal(Lent(made.Produces), removing.Borrowed.Values.Single());
+        }
+
+        /// <summary>
+        /// 親の並びに1つも無い要素は並びへ加えられない。外す相手を用意する段は、根に近い親から
+        /// 順に加える。
+        /// </summary>
+        [Fact]
+        public void TheSetupAddsTheParentBeforeTheElementItHolds()
+        {
+            IList<E2eCase> cases = Removing(
+                new Dictionary<string, string>(StringComparer.Ordinal) { { Adder, Parent } },
+                Held(Adder));
+            E2eCase removing = cases.Single(
+                c => string.Equals(c.Tool, Remover, StringComparison.Ordinal)
+                    && c.Expectation == E2eExpectation.Called);
+
+            Assert.Equal(
+                new[] { Above, Parent, Factory, Adder },
+                cases
+                    .Take(cases.IndexOf(removing))
+                    .Where(c => c.Purpose.Contains("呼び出しの前に並びへ"))
+                    .Select(c => c.Tool)
+                    .ToArray());
+        }
+
+        /// <summary>
+        /// 親の位置を指す組で加えるツールでは、借りたハンドルを差し込む先が組の中の道になる。
+        /// ハンドルの並びへ差し込むと、その道が引数に無いので値が届かない。
+        /// </summary>
+        [Fact]
+        public void TheSetupPutsTheHandleIntoTheAssignmentWhenTheAdderTakesParents()
+        {
+            IList<E2eCase> cases = Removing(
+                new Dictionary<string, string>(StringComparer.Ordinal) { { Adder, Parent } },
+                Placed(Adder));
+            E2eCase adding = cases.Last(
+                c => string.Equals(c.Tool, Adder, StringComparison.Ordinal)
+                    && c.Borrowed != null);
+
+            Assert.Equal("assignments/0/handles/0", adding.Borrowed.Keys.Single());
+        }
+
+        /// <summary>
+        /// 要素を外すツール1つぶんの検査。<paramref name="parents"/> は親の対応表、
+        /// <paramref name="adder"/> は並びへ加えるツールの受け取る形。
+        /// </summary>
+        private static IList<E2eCase> Removing(
+            IDictionary<string, string> parents, ToolSchema adder)
+        {
+            return E2eCaseBuilder.Build(
                 new ToolMap(new ToolMapRow[0]),
-                new ToolSchemaTable(new[] { Held(Remover), Held(Adder), Free(Factory) }),
+                new ToolSchemaTable(new[]
+                {
+                    Held(Remover), adder, Free(Factory), Held(Parent), Free(Above),
+                }),
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 new HashSet<string>(StringComparer.Ordinal),
@@ -108,20 +177,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 null,
                 null,
-                new Dictionary<string, string>(StringComparer.Ordinal) { { Adder, Factory } },
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { Adder, Factory },
+                    { Parent, Above },
+                },
                 null,
                 null,
                 null,
                 null,
                 null,
                 null,
-                new Dictionary<string, string>(StringComparer.Ordinal) { { Remover, Adder } });
-            E2eCase removing = cases.Single(
-                c => string.Equals(c.Tool, Remover, StringComparison.Ordinal)
-                    && c.Expectation == E2eExpectation.Called);
-
-            Assert.NotNull(removing.Borrowed);
-            Assert.Equal(Lent(Adder), removing.Borrowed.Values.Single());
+                new Dictionary<string, string>(StringComparer.Ordinal) { { Remover, Adder } },
+                null,
+                null,
+                parents);
         }
 
         /// <summary>
@@ -373,6 +443,60 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 },
                 Output(),
                 null);
+        }
+
+        /// <summary>作った要素を、親の位置と要素のハンドルの組で受け取るツール。</summary>
+        private static ToolSchema Placed(string tool)
+        {
+            return new ToolSchema(
+                tool,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[]
+                        {
+                            new SchemaItem(
+                                null,
+                                null,
+                                new SchemaItem(
+                                    null,
+                                    new[] { Taken("handles"), Taken("parentIndex") },
+                                    null,
+                                    null,
+                                    ItemOrigin.HostInput,
+                                    null,
+                                    null,
+                                    false,
+                                    null,
+                                    null,
+                                    null,
+                                    false,
+                                    null),
+                                "assignments",
+                                ItemOrigin.HostInput,
+                                true,
+                                null,
+                                false,
+                                null,
+                                null,
+                                null,
+                                false,
+                                null),
+                        },
+                        new SchemaChoice[0]),
+                },
+                Output(),
+                null);
+        }
+
+        private static SchemaItem Taken(string name)
+        {
+            return new SchemaItem(
+                "number", null, null, name, ItemOrigin.HostInput, true, null, false, null, null,
+                null, false, null);
         }
 
         /// <summary>

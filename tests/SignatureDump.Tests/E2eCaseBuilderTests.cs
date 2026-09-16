@@ -376,7 +376,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 },
                 leading);
             E2eCase made = Assert.Single(cases, c => c.Tool == "model_thing");
-            E2eCase added = Assert.Single(cases, c => c.Tool == "model_add_things");
+            E2eCase added = Assert.Single(
+                cases, c => c.Tool == "model_add_things" && c.Borrowed != null);
             Assert.Equal(made.Produces, added.Borrowed["handles/0"]);
         }
 
@@ -1289,7 +1290,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         null,
                         null),
                 }),
-                new ToolSchemaTable(new[] { target, observer }),
+                new ToolSchemaTable(
+                    new[] { target, observer, Tool("model_add_things", Handles()) }),
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, target.Tool } },
                 Paths(),
                 new HashSet<string>(StringComparer.Ordinal),
@@ -1357,7 +1359,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         null,
                         null),
                 }),
-                new ToolSchemaTable(new[] { target, observer }),
+                new ToolSchemaTable(
+                    new[] { target, observer, Tool("model_add_things", Handles()) }),
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, target.Tool } },
                 Paths(),
                 dangerous

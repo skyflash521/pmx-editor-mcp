@@ -117,6 +117,49 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 要素をリストへ加えるツールの名前から、その要素の親をリストへ加えるツールの名前へ。
+        /// 親のリストに1つも無い要素は加えられないので、用意する側は親から順に辿る。PMXが直に
+        /// 持つ並びの要素は親を持たないので、この対応表にも載らない。
+        /// </summary>
+        public IDictionary<string, string> ElementParents(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            TypeRoleTable owned = OwnedRoles(inventory);
+            IDictionary<string, AccessPath> paths = ElementPathEvidence.Resolve(inventory, owned);
+            IDictionary<string, string> adders = ElementAdders(inventory);
+            IDictionary<string, TypeRoleRecord> byType = owned.Types
+                .GroupBy(t => t.TypeName, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+            Dictionary<string, string> parents =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (TypeRoleRecord role in owned.Types.Where(
+                t => t.Group != CapabilityOwner.None && !string.IsNullOrEmpty(t.ElementNoun)))
+            {
+                AccessPath path;
+                TypeRoleRecord owner;
+                string adding;
+                string above;
+                if (!adders.TryGetValue(role.ElementNoun, out adding)
+                    || !paths.TryGetValue(role.TypeName, out path)
+                    || path.OwnerType == null
+                    || !byType.TryGetValue(path.OwnerType, out owner)
+                    || string.IsNullOrEmpty(owner.ElementNoun)
+                    || !adders.TryGetValue(owner.ElementNoun, out above))
+                {
+                    continue;
+                }
+
+                parents[adding] = above;
+            }
+
+            return parents;
+        }
+
+        /// <summary>
         /// 要素をリストから外すツールの名前から、その要素をリストへ加えるツールの名前へ。外す
         /// 相手は段取りが加えた要素である——新しく作った要素はまだ並びに無いので外せない。
         /// </summary>

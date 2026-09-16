@@ -29,6 +29,10 @@
       "reason": "noEffectCheck"
     },
     {
+      "tool": "model_remove_ik_links",
+      "reason": "noCase"
+    },
+    {
       "tool": "model_update_headers",
       "reason": "noCase"
     },
