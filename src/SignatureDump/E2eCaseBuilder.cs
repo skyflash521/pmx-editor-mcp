@@ -561,7 +561,7 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> positioned)
         {
             SchemaItem group = schema.Branches
-                .Where(b => Satisfied(b, arguments))
+                .Where(b => !Skipped(b, arguments) && Satisfied(b, arguments))
                 .SelectMany(b => b.Inputs)
                 .FirstOrDefault(i => !i.Injected
                     && i.Members != null
@@ -2075,7 +2075,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> borrows,
             IDictionary<string, object> arguments)
         {
-            foreach (SchemaBranch branch in schema.Branches)
+            foreach (SchemaBranch branch in schema.Branches.Where(b => !Skipped(b, arguments)))
             {
                 if (!TryFill(branch, sdkShapes, sampled, handleTargets, borrows, arguments))
                 {
@@ -2084,6 +2084,20 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// その呼び分けを飛ばすか。引数が既に別の呼び分けを選んでいれば飛ばす——選ばれていない
+        /// 呼び分けの項目を埋めると、選んだ呼び分けが受け取らない項目を渡すことになり、呼び先
+        /// まで届かない。
+        /// </summary>
+        private static bool Skipped(SchemaBranch branch, IDictionary<string, object> arguments)
+        {
+            object chosen;
+
+            return branch.SelectorName != null
+                && arguments.TryGetValue(branch.SelectorName, out chosen)
+                && !Equals(chosen, branch.SelectorValue);
         }
 
         /// <summary>その呼び分け1つで、必ず要る組を最小の値で埋める。</summary>
