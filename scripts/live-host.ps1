@@ -368,11 +368,14 @@ $cases['エディタの終了'] = {
 }
 
 $failed = @()
+$fell = @()
+$walked = @()
 
 # 確認クライアントが書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
 $spoken = [Console]::OutputEncoding
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 try {
+    $at = 0
     foreach ($name in $cases.Keys) {
         try {
             & $cases[$name]
@@ -381,13 +384,25 @@ try {
             Write-Host "NG   $name"
             Write-Host ('     ' + [string]$_)
             $failed += $name
+            $fell += $at
         }
+
+        $walked += $at
+        $at++
     }
 } finally {
     [Console]::OutputEncoding = $spoken
     # 最後の件まで届かずに落ちた実行では、共有したエディタが開いたまま残る。ここで閉じないと、
     # 次の実行の配置が動いているエディタを閉じるところでつまずく。
     Close-SharedEditor
+}
+
+if ($env:PMX_EDITOR_MCP_FELL_PATH) {
+    Set-Content -Path $env:PMX_EDITOR_MCP_FELL_PATH -Value ($fell -join ',') -Encoding UTF8
+}
+
+if ($env:PMX_EDITOR_MCP_RAN_PATH) {
+    Set-Content -Path $env:PMX_EDITOR_MCP_RAN_PATH -Value ($walked -join ',') -Encoding UTF8
 }
 
 Write-Host ''

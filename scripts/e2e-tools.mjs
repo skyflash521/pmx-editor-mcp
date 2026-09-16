@@ -582,6 +582,9 @@ function run(pipeName, cases, processId) {
     // いるので、検査ごとにここへ溜めて結末へ渡す。
     let noted = [];
 
+    let startedAt = Date.now();
+    const elapsed = () => (Date.now() - startedAt) / 1000;
+
     return new Promise((resolve) => {
         const settle = (code, message) => {
             if (settled) {
@@ -606,6 +609,7 @@ function run(pipeName, cases, processId) {
         const next = () => {
             index += 1;
             noted = [];
+            startedAt = Date.now();
             if (index >= cases.length) {
                 finish();
                 return;
@@ -622,6 +626,7 @@ function run(pipeName, cases, processId) {
                     case: one,
                     reason: "借りる値をまだ覚えていません: " + JSON.stringify(one.borrowed),
                     stopped: noted,
+                    seconds: elapsed(),
                 });
                 next();
 
@@ -629,11 +634,24 @@ function run(pipeName, cases, processId) {
             }
 
             wrote = written(one, given);
+            startedAt = Date.now();
             send(requestId(index), one.tool, given);
         };
 
         const finish = () => {
             const failed = results.filter((r) => r.reason !== null);
+
+            const told = process.env.PMX_EDITOR_MCP_FELL_PATH;
+            if (told) {
+                fs.writeFileSync(
+                    told, failed.map((r) => cases.indexOf(r.case)).join(","), "utf8");
+            }
+
+            const ranTold = process.env.PMX_EDITOR_MCP_RAN_PATH;
+            if (ranTold) {
+                fs.writeFileSync(
+                    ranTold, results.map((r) => cases.indexOf(r.case)).join(","), "utf8");
+            }
             for (const result of failed) {
                 console.log(
                     "不合格: " + result.case.tool + " — " + result.case.purpose + " — " + result.reason);
@@ -653,6 +671,14 @@ function run(pipeName, cases, processId) {
                         console.log("    " + note);
                     }
                 }
+            }
+
+            console.log("");
+            console.log("1件ごとの所要(長い順):");
+            for (const result of [...results].sort((a, b) => (b.seconds ?? 0) - (a.seconds ?? 0))) {
+                console.log(
+                    "  " + (result.seconds ?? 0).toFixed(2) + "秒  " + result.case.tool +
+                    " — " + result.case.purpose);
             }
 
             console.log("");
@@ -820,7 +846,7 @@ function run(pipeName, cases, processId) {
                     remembered.set(one.produces, response.result.value);
                 }
 
-                results.push({ case: one, reason, stopped: noted });
+                results.push({ case: one, reason, stopped: noted, seconds: elapsed() });
                 next();
             }
         });

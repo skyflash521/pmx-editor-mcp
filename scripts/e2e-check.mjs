@@ -3,6 +3,7 @@
 // 接続先の名前の付け方と、要求・応答の符号化と区切りはホスト側の実装が定める。
 // 接続先のエディタと送る要求の並びは起動引数で決まる。
 
+import fs from "node:fs";
 import net from "node:net";
 import process from "node:process";
 
@@ -39,29 +40,40 @@ const DEFAULT_EXPECTATIONS = {
     ping: expectPongResult,
 };
 
+/** 落ちた項目の番号。 */
+const fell = new Set();
+
+/** 落ちた項目の番号を控えて、その言い分をそのまま返す。 */
+function noted(at, says) {
+    fell.add(at);
+
+    return says;
+}
+
 /** ハンドシェイクの成功応答が契約どおりかを見る。合っていれば null を返す。 */
 function expectHandshakeResult(taken) {
     if (!taken.hasResult) {
-        return "成功応答であるべきところがエラー応答です。";
+        return noted(0, "成功応答であるべきところがエラー応答です。");
     }
     const result = taken.result;
     if (result === null || typeof result !== "object" || Array.isArray(result)) {
-        return "result がJSONのオブジェクトではありません。";
+        return noted(1, "result がJSONのオブジェクトではありません。");
     }
     if (result.protocol !== HANDSHAKE_PROTOCOL) {
-        return "result の protocol が " + HANDSHAKE_PROTOCOL + " ではありません。";
+        return noted(2, "result の protocol が " + HANDSHAKE_PROTOCOL + " ではありません。");
     }
     if (typeof result.hostVersion !== "string" || result.hostVersion.length === 0) {
-        return "result の hostVersion が空でない文字列ではありません。";
+        return noted(3, "result の hostVersion が空でない文字列ではありません。");
     }
     if (result.budgetChars !== EXPECTED_BUDGET_CHARS) {
-        return (
+        return noted(
+            4,
             "result の budgetChars が " + EXPECTED_BUDGET_CHARS + " ではありません" +
             "(予算の環境変数を設定したままエディタを起動していないか確かめてください)。"
         );
     }
     if (typeof result.session !== "string" || !/^[0-9a-f]{32}$/.test(result.session)) {
-        return "result の session が16進32文字の文字列ではありません。";
+        return noted(5, "result の session が16進32文字の文字列ではありません。");
     }
     return null;
 }
@@ -69,10 +81,10 @@ function expectHandshakeResult(taken) {
 /** ping の成功応答が契約どおりかを見る。合っていれば null を返す。 */
 function expectPongResult(taken) {
     if (!taken.hasResult) {
-        return "成功応答であるべきところがエラー応答です。";
+        return noted(6, "成功応答であるべきところがエラー応答です。");
     }
     if (taken.result !== "pong") {
-        return "result が pong ではありません。";
+        return noted(7, "result が pong ではありません。");
     }
     return null;
 }
@@ -212,9 +224,10 @@ function takeResponse(buffer) {
     }
 
     if (newlineIndex > MAX_RESPONSE_BYTES) {
-        throw new Error(
+        throw new Error(noted(
+            8,
             "応答の本文が " + newlineIndex + " バイトで、上限の " + MAX_RESPONSE_BYTES + " バイトを超えています。",
-        );
+        ));
     }
 
     const body = buffer.subarray(0, newlineIndex);
@@ -224,34 +237,34 @@ function takeResponse(buffer) {
     try {
         line = decoder.decode(body);
     } catch (error) {
-        throw new Error("応答をUTF-8として解釈できません: " + describeBytes(body) + " (" + error.message + ")");
+        throw new Error(noted(9, "応答をUTF-8として解釈できません: " + describeBytes(body) + " (" + error.message + ")"));
     }
 
     // BOMは目に見えないので、構文不正としてでなく、BOMだと分かる形で拒む。
     if (line.charCodeAt(0) === 0xfeff) {
-        throw new Error("応答の先頭にBOMが付いています: " + describeLine(line.slice(1)));
+        throw new Error(noted(10, "応答の先頭にBOMが付いています: " + describeLine(line.slice(1))));
     }
 
     // 出力の区切りはLFだけで、CRLFを受理するのは入力側だけである。
     if (line.charCodeAt(line.length - 1) === 13) {
-        throw new Error("応答の行末にCRが付いています: " + describeLine(line));
+        throw new Error(noted(11, "応答の行末にCRが付いています: " + describeLine(line)));
     }
 
     let response;
     try {
         response = JSON.parse(line);
     } catch (error) {
-        throw new Error("応答をJSONとして解釈できません: " + describeLine(line) + " (" + error.message + ")");
+        throw new Error(noted(12, "応答をJSONとして解釈できません: " + describeLine(line) + " (" + error.message + ")"));
     }
 
     if (response === null || typeof response !== "object" || Array.isArray(response)) {
-        throw new Error("応答がJSONのオブジェクトではありません: " + describeLine(line));
+        throw new Error(noted(13, "応答がJSONのオブジェクトではありません: " + describeLine(line)));
     }
     if (response.jsonrpc !== JSONRPC_VERSION) {
-        throw new Error("応答の jsonrpc が " + JSONRPC_VERSION + " ではありません: " + describeLine(line));
+        throw new Error(noted(14, "応答の jsonrpc が " + JSONRPC_VERSION + " ではありません: " + describeLine(line)));
     }
     if (!Object.prototype.hasOwnProperty.call(response, "id")) {
-        throw new Error("応答が id を持ちません: " + describeLine(line));
+        throw new Error(noted(15, "応答が id を持ちません: " + describeLine(line)));
     }
 
     // ホストが id を落とすのは、要求の識別子を判別できなかったときと、識別子まで載せると
@@ -259,29 +272,29 @@ function takeResponse(buffer) {
     // 直列に1件ずつ送るので、id を持つ応答はいま待っている要求のものでなければならない。
     const unidentified = response.id === null;
     if (!unidentified && response.id !== sentRequestId) {
-        throw new Error("応答の識別子が要求の識別子 " + sentRequestId + " と一致しません: " + describeLine(line));
+        throw new Error(noted(16, "応答の識別子が要求の識別子 " + sentRequestId + " と一致しません: " + describeLine(line)));
     }
 
     const hasResult = Object.prototype.hasOwnProperty.call(response, "result");
     const hasError = Object.prototype.hasOwnProperty.call(response, "error");
     if (hasResult === hasError) {
-        throw new Error("応答は result と error のどちらか一方だけを持たなければなりません: " + describeLine(line));
+        throw new Error(noted(17, "応答は result と error のどちらか一方だけを持たなければなりません: " + describeLine(line)));
     }
     if (unidentified && hasResult) {
-        throw new Error("識別子を持たない応答が成功応答になっています: " + describeLine(line));
+        throw new Error(noted(18, "識別子を持たない応答が成功応答になっています: " + describeLine(line)));
     }
 
     let errorCode = null;
     if (hasError) {
         const error = response.error;
         if (error === null || typeof error !== "object" || Array.isArray(error)) {
-            throw new Error("エラー応答の error がJSONのオブジェクトではありません: " + describeLine(line));
+            throw new Error(noted(19, "エラー応答の error がJSONのオブジェクトではありません: " + describeLine(line)));
         }
         if (typeof error.code !== "number") {
-            throw new Error("エラー応答が数値の code を持ちません: " + describeLine(line));
+            throw new Error(noted(20, "エラー応答が数値の code を持ちません: " + describeLine(line)));
         }
         if (typeof error.message !== "string") {
-            throw new Error("エラー応答が文字列の message を持ちません: " + describeLine(line));
+            throw new Error(noted(21, "エラー応答が文字列の message を持ちません: " + describeLine(line)));
         }
         errorCode = error.code;
     }
@@ -351,6 +364,12 @@ function run(pipeName, requests, hold) {
         if (message !== null) {
             console.error(message);
         }
+
+        const toldPath = process.env.PMX_EDITOR_MCP_FELL_PATH;
+        if (toldPath) {
+            fs.writeFileSync(toldPath, [...fell].join(","), "utf8");
+        }
+
         process.exitCode = code;
     }
 

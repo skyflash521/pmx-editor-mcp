@@ -90,19 +90,23 @@ function Invoke-CheckClient {
     if ($Broken) { $given += @('--broken', $Broken) }
 
     $told = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-stub-" + $pipe + ".log")
+    $fell = [System.IO.Path]::GetTempFileName()
     $stub = Start-Process -FilePath 'node' -PassThru -WindowStyle Hidden `
         -RedirectStandardError $told -ArgumentList $given
     try {
         Wait-StubPipe -Name ("pmx-editor-mcp-" + $pipe) -Stub $stub -Said $told
+        $env:PMX_EDITOR_MCP_FELL_PATH = $fell
         $said = node scripts/e2e-check.mjs $pipe 2>&1
         $code = $LASTEXITCODE
         $global:LASTEXITCODE = 0
+        $numbers = @(Get-FellNumbers -Path $fell)
     } finally {
+        Remove-Item Env:PMX_EDITOR_MCP_FELL_PATH -ErrorAction Ignore
         Stop-Process -Id $stub.Id -Force -ErrorAction SilentlyContinue
-        Remove-Item $told -Force -ErrorAction SilentlyContinue
+        Remove-Item $told, $fell -Force -ErrorAction SilentlyContinue
     }
 
-    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
+    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n"); Fell = $numbers }
 }
 
 function Test-CheckClient {
@@ -115,28 +119,28 @@ function Test-CheckClient {
     # 前半は応答の中身を見る層、後半はその手前で行そのものを見る層。どちらも見落とせば、契約に
     # 合わない応答を通してしまう。
     $forms = [ordered]@{
-        'handshake.error'       = '成功応答であるべきところがエラー応答です。'
-        'handshake.result'      = 'result がJSONのオブジェクトではありません。'
-        'handshake.protocol'    = 'result の protocol が'
-        'handshake.hostVersion' = 'result の hostVersion が'
-        'handshake.budgetChars' = 'result の budgetChars が'
-        'handshake.session'     = 'result の session が'
-        'ping.error'            = '成功応答であるべきところがエラー応答です。'
-        'ping.value'            = 'result が pong ではありません。'
-        'wire.oversize'         = '上限の'
-        'wire.utf8'             = 'UTF-8として解釈できません'
-        'wire.bom'              = '先頭にBOMが付いています'
-        'wire.cr'               = '行末にCRが付いています'
-        'wire.json'             = 'JSONとして解釈できません'
-        'wire.object'           = '応答がJSONのオブジェクトではありません'
-        'wire.jsonrpc'          = '応答の jsonrpc が'
-        'wire.id.missing'       = '応答が id を持ちません'
-        'wire.id.other'         = '応答の識別子が要求の識別子'
-        'wire.unidentified'     = '識別子を持たない応答が成功応答'
-        'wire.both'             = 'result と error のどちらか一方だけ'
-        'wire.error.shape'      = 'エラー応答の error がJSONのオブジェクトではありません'
-        'wire.error.code'       = 'エラー応答が数値の code を持ちません'
-        'wire.error.message'    = 'エラー応答が文字列の message を持ちません'
+        'handshake.error' = 0
+        'handshake.result' = 1
+        'handshake.protocol' = 2
+        'handshake.hostVersion' = 3
+        'handshake.budgetChars' = 4
+        'handshake.session' = 5
+        'ping.error' = 6
+        'ping.value' = 7
+        'wire.oversize' = 8
+        'wire.utf8' = 9
+        'wire.bom' = 10
+        'wire.cr' = 11
+        'wire.json' = 12
+        'wire.object' = 13
+        'wire.jsonrpc' = 14
+        'wire.id.missing' = 15
+        'wire.id.other' = 16
+        'wire.both' = 17
+        'wire.unidentified' = 18
+        'wire.error.shape' = 19
+        'wire.error.code' = 20
+        'wire.error.message' = 21
     }
 
     $ran = Invoke-CheckClient -Broken ''
@@ -148,8 +152,8 @@ function Test-CheckClient {
             throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
         }
 
-        if ($ran.Said -notmatch [regex]::Escape($form.Value)) {
-            throw "$($form.Key) を違えたのに、その項目を咎めていない: $($ran.Said)"
+        if ($ran.Fell -notcontains $form.Value) {
+            throw "$($form.Key) を違えたのに $($form.Value) 番の項目を咎めていない: $($ran.Said)"
         }
     }
 }
@@ -164,18 +168,26 @@ function Invoke-LiveHostRunner {
 
     $spoken = [System.Environment]::GetEnvironmentVariable($LiveHostStubBrokenName)
     [System.Environment]::SetEnvironmentVariable($LiveHostStubBrokenName, $Broken)
+    $fell = [System.IO.Path]::GetTempFileName()
+    $ran = [System.IO.Path]::GetTempFileName()
     try {
+        $env:PMX_EDITOR_MCP_FELL_PATH = $fell
+        $env:PMX_EDITOR_MCP_RAN_PATH = $ran
         $said = pwsh -NoProfile -File scripts/live-host.ps1 `
             -Control scripts/live-host-stub-control.ps1 `
             -Client scripts/live-host-stub-client.mjs `
             -Deploy scripts/live-host-stub-deploy.ps1 2>&1
         $code = $LASTEXITCODE
         $global:LASTEXITCODE = 0
+        $numbers = @(Get-FellNumbers -Path $fell)
+        $walked = @(Get-FellNumbers -Path $ran)
     } finally {
+        Remove-Item Env:PMX_EDITOR_MCP_FELL_PATH, Env:PMX_EDITOR_MCP_RAN_PATH -ErrorAction Ignore
+        Remove-Item $fell, $ran -Force -ErrorAction SilentlyContinue
         [System.Environment]::SetEnvironmentVariable($LiveHostStubBrokenName, $spoken)
     }
 
-    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
+    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n"); Fell = $numbers; Ran = $walked }
 }
 
 function Test-LiveHostRunner {
@@ -186,15 +198,21 @@ function Test-LiveHostRunner {
         落ちる——その観測を突き合わせない実行器はここで落ちる。
     #>
     $forms = [ordered]@{
-        'client.code'  = '版の食い違い'
-        'client.says'  = 'エディタの終了'
-        'acl'          = 'パイプの権限'
-        'log.started'  = '起動の記録'
-        'log.renewal'  = 'コネクタの取り直し'
+        'client.code' = 1
+        'client.says' = 4
+        'acl' = 2
+        'log.started' = 0
+        'log.renewal' = 3
     }
 
     $ran = Invoke-LiveHostRunner -Broken ''
     if ($ran.Code -ne 0) { throw "期待どおりの観測で走らせて合格しない: $($ran.Said)" }
+
+    $uncovered = @(Compare-Object -ReferenceObject @($forms.Values) `
+        -DifferenceObject @($ran.Ran)).Count
+    if ($uncovered -ne 0) {
+        throw "違える形が覆う件と、走った件が揃っていない: $($ran.Said)"
+    }
 
     foreach ($form in $forms.GetEnumerator()) {
         $ran = Invoke-LiveHostRunner -Broken $form.Key
@@ -202,8 +220,8 @@ function Test-LiveHostRunner {
             throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
         }
 
-        if ($ran.Said -notmatch ('不合格: .*' + [regex]::Escape($form.Value))) {
-            throw "$($form.Key) を違えたのに $($form.Value) が落ちていない: $($ran.Said)"
+        if ($ran.Fell -notcontains $form.Value) {
+            throw "$($form.Key) を違えたのに $($form.Value) 番の件が落ちていない: $($ran.Said)"
         }
     }
 }
@@ -219,14 +237,25 @@ function Invoke-LiveClientRunner {
     $client = 'node scripts/live-client-stub.mjs'
     if ($Broken) { $client += ' --broken ' + $Broken }
 
-    $said = node scripts/live-client.mjs `
-        --control scripts/live-stub-control.ps1 `
-        --setup scripts/live-client-stub-setup.ps1 `
-        --client $client 2>&1
-    $code = $LASTEXITCODE
-    $global:LASTEXITCODE = 0
+    $fell = [System.IO.Path]::GetTempFileName()
+    $ran = [System.IO.Path]::GetTempFileName()
+    try {
+        $env:PMX_EDITOR_MCP_FELL_PATH = $fell
+        $env:PMX_EDITOR_MCP_RAN_PATH = $ran
+        $said = node scripts/live-client.mjs `
+            --control scripts/live-stub-control.ps1 `
+            --setup scripts/live-client-stub-setup.ps1 `
+            --client $client 2>&1
+        $code = $LASTEXITCODE
+        $global:LASTEXITCODE = 0
+        $numbers = @(Get-FellNumbers -Path $fell)
+        $walked = @(Get-FellNumbers -Path $ran)
+    } finally {
+        Remove-Item Env:PMX_EDITOR_MCP_FELL_PATH, Env:PMX_EDITOR_MCP_RAN_PATH -ErrorAction Ignore
+        Remove-Item $fell, $ran -Force -ErrorAction SilentlyContinue
+    }
 
-    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
+    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n"); Fell = $numbers; Ran = $walked }
 }
 
 function Test-LiveClientRunner {
@@ -237,16 +266,21 @@ function Test-LiveClientRunner {
         当の咎めで落ちる。
     #>
     $forms = [ordered]@{
-        'call'          = '引数が渡りませんでした'
-        'arguments'     = '引数が渡りませんでした'
-        'result'        = '呼び出しの返りが取れませんでした'
-        'refused'       = '呼び出しが通りませんでした'
-        'image.missing' = '画像が画像として届きませんでした'
-        'image.extra'   = '画像を返さないツールが画像を返しました'
+        'call' = 0
+        'arguments' = 0
+        'result' = 1
+        'refused' = 2
+        'image.missing' = 3
+        'image.extra' = 4
     }
 
     $ran = Invoke-LiveClientRunner -Broken ''
     if ($ran.Code -ne 0) { throw "期待どおりの記録で走らせて合格しない: $($ran.Said)" }
+
+    $counted = [int](node -e "import('./scripts/live-client-cases.mjs').then(m => console.log(m.CASES.length))")
+    if ($ran.Ran.Count -ne $counted) {
+        throw "定義の $counted 件のうち $($ran.Ran.Count) 件しか歩いていない: $($ran.Said)"
+    }
 
     foreach ($form in $forms.GetEnumerator()) {
         $ran = Invoke-LiveClientRunner -Broken $form.Key
@@ -254,8 +288,8 @@ function Test-LiveClientRunner {
             throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
         }
 
-        if ($ran.Said -notmatch [regex]::Escape($form.Value)) {
-            throw "$($form.Key) を違えたのに、その項目を咎めていない: $($ran.Said)"
+        if ($ran.Fell -notcontains $form.Value) {
+            throw "$($form.Key) を違えたのに $($form.Value) 番の観点が落ちていない: $($ran.Said)"
         }
     }
 }
@@ -264,24 +298,12 @@ function Test-CheckSummary {
     <#
         .SYNOPSIS
         検査の集計が、落ちた検査を落ちたものとして数え、走らせていない検査を残ったものとして
-        数えることを確かめる。ここが壊れると、どの検査が落ちても全件が緑で終わる——足した4件の
-        照合も含め、何も言わなくなる。
+        数えることを確かめる。確かめる事柄と求める値は題材が持ち、ここは終了コードを見る。
     #>
     $said = pwsh -NoProfile -File scripts/checks-stub-run.ps1 2>&1
     $code = $LASTEXITCODE
     $global:LASTEXITCODE = 0
     if ($code -ne 0) { throw "集計を確かめる実行が落ちた: $(@($said) -join "`n")" }
-
-    # 投げて落ちた検査・非0で終わった検査・通った検査の、名前と終了コードの組・落ちた件がある
-    # ときの1・無いときの0・走らせていない件があるときの1・持ち分を超えたときの1・出来上がりが
-    # 揃ったときと揃わないときの門・止められた列の割り出し・一覧と群の食い違いを向きごとに
-    # 咎めるか。並びは checks-stub-run.ps1 が決める。
-    $wanted = '結果: 落ちる題材:1|非0で終わる題材:3|通る題材:0|1|0|1|1|True|False|' +
-        '走った題材:0/止められた題材:124/始まらない題材:True|' +
-        'とがめる|とがめる|とがめる|とがめる'
-    if ((@($said) -join "`n") -notmatch [regex]::Escape($wanted)) {
-        throw "集計の結末が「$wanted」ではない: $(@($said) -join "`n")"
-    }
 }
 
 function Get-AcceptanceExpectationForms {
@@ -425,21 +447,28 @@ function Invoke-E2eRunner {
     if ($Broken) { $given += @('--broken', $Broken) }
 
     $told = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-stub-" + $Pipe + ".log")
+    $fell = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-fell-" + $Pipe + ".txt")
+    $ran = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-ran-" + $Pipe + ".txt")
     $stub = Start-Process -FilePath 'node' -PassThru -WindowStyle Hidden `
         -RedirectStandardError $told -ArgumentList $given
     try {
         Wait-StubPipe -Name ("pmx-editor-mcp-" + $Pipe) -Stub $stub -Said $told
+        $env:PMX_EDITOR_MCP_FELL_PATH = $fell
+        $env:PMX_EDITOR_MCP_RAN_PATH = $ran
         $said = node scripts/e2e-tools.mjs $Pipe $Cases `
             --control scripts/e2e-stub-control.ps1 `
             --compare scripts/e2e-stub-compare.ps1
         $code = $LASTEXITCODE
         $global:LASTEXITCODE = 0
+        $numbers = @(Get-FellNumbers -Path $fell)
+        $walked = @(Get-FellNumbers -Path $ran)
     } finally {
+        Remove-Item Env:PMX_EDITOR_MCP_FELL_PATH, Env:PMX_EDITOR_MCP_RAN_PATH -ErrorAction Ignore
         Stop-Process -Id $stub.Id -Force -ErrorAction SilentlyContinue
-        Remove-Item $told -Force -ErrorAction SilentlyContinue
+        Remove-Item $told, $fell, $ran -Force -ErrorAction SilentlyContinue
     }
 
-    [pscustomobject]@{ Code = $code; Said = ($said -join "`n") }
+    [pscustomobject]@{ Code = $code; Said = ($said -join "`n"); Fell = $numbers; Ran = $walked }
 }
 
 function Get-E2eExpectationForms {
@@ -494,8 +523,8 @@ function Test-E2eRunner {
     }
 
     $counted = @($defined.cases).Count
-    if ($ran.Said -notmatch ("検査: " + $counted + " 件・合格 " + $counted)) {
-        throw "定義に並ぶ $counted 件をすべて合格で終えていない: $($ran.Said)"
+    if ($ran.Ran.Count -ne $counted) {
+        throw "定義の $counted 件のうち $($ran.Ran.Count) 件しか走らせていない: $($ran.Said)"
     }
 
     foreach ($form in (Get-E2eExpectationForms -Defined $defined).GetEnumerator()) {
@@ -510,11 +539,8 @@ function Test-E2eRunner {
             throw "$($form.Key) の期待を違えても不合格にならない: $($ran.Said)"
         }
 
-        # 違えた当の検査が落ちたことまで見る。ほかの検査が落ちて終了コードが1になったのでは、
-        # その形を突き合わせている証拠にならない。
-        $tool = $defined.cases[$form.Value].tool
-        if ($ran.Said -notmatch ("不合格: " + [regex]::Escape($tool) + " ")) {
-            throw "$($form.Key) の期待を違えたのに $tool が落ちていない: $($ran.Said)"
+        if ($ran.Fell -notcontains $form.Value) {
+            throw "$($form.Key) の期待を違えたのに $($form.Value) 番の検査が落ちていない: $($ran.Said)"
         }
     }
 }
@@ -880,21 +906,11 @@ $checks['E2Eの実行器の照合'] = @{
     }
 }
 
-$checks['配分の照合'] = @{
-    Budget = 3
-    Needs = $noArtifact
-    Body = {
-        # 常設の持ち分と、実機の合計を足す。実機は直列なので合計をそのまま足せる。
-        $standing = Get-StandingBudget
-        $total = $standing + $LiveBudgetSeconds
-        if ($total -ne $TotalBudgetSeconds) {
-            throw ("配分の合計が $TotalBudgetSeconds 秒ではない: 常設 $standing・" +
-                "実機 $LiveBudgetSeconds・合計 $total")
-        }
-    }
-}
 $checks['検査の集計の照合'] = @{
-    Budget = 5
+    # 並列で走らせた実測は 6.3・10.5秒で、同じ条件の2回が1.67倍ぶれた。上限はその最大の
+    # 3倍(31.5秒)を秒の位で切り上げた32秒とする。正常な実行を刻むための値ではなく、
+    # 止まった実行を諦めるための値である。
+    Budget = 32
     Needs = $noArtifact
     Body = {
         $spoken = [Console]::OutputEncoding
@@ -987,7 +1003,7 @@ $checkGroups = [ordered]@{
     # ためである。
     'スクリプト' = @('スクリプト構文', 'スクリプト構文(PowerShell)', '検査の集計の照合',
         'E2Eの実行器の照合', '確認クライアントの照合', '実機動作確認の実行器の照合',
-        '参照クライアントの実行器の照合', '受入の実行器の照合', '文書のリンク', '配分の照合')
+        '参照クライアントの実行器の照合', '受入の実行器の照合', '文書のリンク')
     'ブリッジ配布' = @('ブリッジの単独起動', '配布パッケージの生成')
     # 上の群のどれにも入らない検査をここへ並べる。全件を走らせるときにしか出番が無いという
     # 申告で、`@($checks.Keys)` のような一括の指定にはしない——一括にすると、新しい検査を上の群へ
@@ -1048,7 +1064,7 @@ function Select-CheckGroups {
 function Get-StandingBudget {
     <#
         .SYNOPSIS
-        常設の検査の持ち分の秒数。段階1の配分の和と、段階2の最も長い列の和を足した値である。
+        常設の検査の上限の秒数。段階1の上限の和と、段階2の最も長い列の和を足した値である。
         段階2は列どうしが並列に走るので、最も長い列がそのまま壁時計になる。
     #>
     $first = (@($checks.Keys | Where-Object { (Get-CheckStage -Name $_) -eq 1 } |
@@ -1097,7 +1113,7 @@ function Invoke-Lane {
         1つの列の検査を順に走らせ、結果を返す。段階2の列ごとに、別の場所から1回ずつ呼ばれる。
         受ける名前を Queued と呼ぶのは、検査の本体がこの関数のスコープで走るからである——
         本体が読む変数と同じ名前を引数に付けると、その変数が引数に隠れて本体が別の値を読む。
-        配分を超えた列を止めるのは呼ぶ側で、こちらは止められるまで順に走らせる。
+        上限を超えた列を止めるのは呼ぶ側で、こちらは止められるまで順に走らせる。
     #>
     param([string[]]$Queued)
 
@@ -1124,7 +1140,7 @@ function Invoke-Lane {
 function Wait-LanesWithinBudget {
     <#
         .SYNOPSIS
-        列が終わるのを待ち、自分の配分の和を超えた列を止める。止めないと、1本の検査が長引いた
+        列が終わるのを待ち、自分の上限の和を超えた列を止める。止めないと、1本の検査が長引いた
         ぶんだけ実行の全体が伸びる。
     #>
     param($Jobs, $LimitOf)

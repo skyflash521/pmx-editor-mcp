@@ -218,6 +218,10 @@ if (read.parsed["--client"] !== null) {
 let editor = null;
 let room = null;
 let code = EXIT_SUCCESS;
+
+const fell = new Set();
+
+const walked = new Set();
 try {
     // 起こす相手はこの環境を継ぐ。エディタの中のホストも、参照クライアントが起こすブリッジも
     // 同じ値を読むので、ここで置けば両方がそろう。
@@ -281,6 +285,7 @@ try {
     } else {
         const calls = readCalls(said.stdout);
         for (const probe of CASES) {
+            walked.add(CASES.indexOf(probe));
             const naming1 = named(probe.tool);
             const call = calls.find(
                 (c) => c.name === naming1 && carries(c.input, probe.arguments));
@@ -289,6 +294,7 @@ try {
                     .filter((c) => c.name === naming1)
                     .map((c) => JSON.stringify(c.input))
                     .join(" / ");
+                fell.add(0);
                 console.error(
                     "引数が渡りませんでした: " + probe.tool
                         + "\n  要る引数: " + JSON.stringify(probe.arguments)
@@ -300,6 +306,7 @@ try {
             const said1 = call.said === undefined ? "" : call.said;
             const lines = said1.split(/\r?\n/).map((l) => l.trim()).filter((l) => l !== "");
             if (lines.length === 0) {
+                fell.add(1);
                 console.error(
                     "呼び出しの返りが取れませんでした: " + probe.tool
                         + "\n  乗った引数: " + JSON.stringify(call.input));
@@ -311,6 +318,7 @@ try {
             const refused = lines.some(
                 (l) => l.startsWith(TOOL_ERROR_PREFIX) || l.startsWith(BRIDGE_ERROR_PREFIX));
             if (refused) {
+                fell.add(2);
                 console.error("呼び出しが通りませんでした: " + probe.tool + "\n  " + said1);
                 code = EXIT_FAILED;
                 continue;
@@ -318,6 +326,7 @@ try {
 
             const drawn = call.images === undefined ? 0 : call.images;
             if (probe.image && drawn !== 1) {
+                fell.add(3);
                 console.error(
                     "画像が画像として届きませんでした: " + probe.tool
                         + "\n  届いた画像の数: " + drawn
@@ -327,6 +336,7 @@ try {
             }
 
             if (!probe.image && drawn !== 0) {
+                fell.add(4);
                 console.error(
                     "画像を返さないツールが画像を返しました: " + probe.tool
                         + "\n  届いた画像の数: " + drawn);
@@ -350,6 +360,16 @@ try {
     if (!discard(room)) {
         code = EXIT_FAILED;
     }
+}
+
+const toldPath = process.env.PMX_EDITOR_MCP_FELL_PATH;
+if (toldPath) {
+    fs.writeFileSync(toldPath, [...fell].join(","), "utf8");
+}
+
+const ranTold = process.env.PMX_EDITOR_MCP_RAN_PATH;
+if (ranTold) {
+    fs.writeFileSync(ranTold, [...walked].join(","), "utf8");
 }
 
 process.exit(code);

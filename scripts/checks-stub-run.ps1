@@ -1,7 +1,6 @@
-# 検査の集計を確かめるための一続きの実行。落ちる本体・通る本体・非0で終わる本体を渡し、返る
-# 名前と、結末ごとの終了コードと、一覧と群の食い違いを向きごとに咎めるかを1行で書き出す。
-# 集計そのものを確かめるので、集計の外から直に呼ぶ——集計を通して呼ぶと、壊れた集計が自分の
-# 落ちたことまで飲み込む。
+# 検査の集計を確かめる一続きの実行。求める値と出た値をここで突き合わせ、合否を終了コードで
+# 返す。集計そのものを確かめるので、集計の外から直に呼ぶ——集計を通して呼ぶと、壊れた集計が
+# 自分の落ちたことまで飲み込む。
 [CmdletBinding()]
 param()
 
@@ -26,76 +25,87 @@ $clean = Write-CheckSummary -Failed @() -Skipped @() -Scope '題材' -Ran 1 -Lis
 $withSkip = Write-CheckSummary -Failed @() -Skipped @('走らせない題材') -Scope '題材' -Ran 0 `
     -Listed 1 -Limit 9
 
-# 持ち分を0にして数え始めると、どの実行も超えた側になる。持ち分を超えた実行が合格で終わらない
+# 上限を0にして数え始めると、どの実行も超えた側になる。上限を超えた実行が合格で終わらない
 # ことは、これでしか確かめられない——止める仕掛けは、最後に始めた1件が伸びた実行を捕まえない。
 Start-CheckBudget
 $overLimit = Write-CheckSummary -Failed @() -Skipped @() -Scope '題材' -Ran 1 -Listed 1 -Limit 0
-
-function Test-Complaint {
-    <#
-        .SYNOPSIS
-        渡した本体が、求める向きを名指しして投げるかどうかを綴りで返す。投げたことだけを見ると、
-        引数の束縛で投げた回まで同じ綴りになり、狙った照合が一度も通らないまま揃ってしまう。
-    #>
-    param([string]$Wanted, [scriptblock]$Body)
-
-    try {
-        & $Body
-    } catch {
-        if ([string]$_ -match [regex]::Escape($Wanted)) { return 'とがめる' }
-
-        return 'ちがう理由'
-    }
-
-    'とがめない'
-}
 
 # 出来上がりを作る検査が落ちたとき、それを要る検査は始まらない。門が働かなければ、入力の
 # 無い状態で走って別の理由で落ちる。
 $readyWhenMade = Test-CheckReady -Needs '作った出来上がり' -Produced @('なし', '作った出来上がり')
 $readyWhenNot = Test-CheckReady -Needs '作った出来上がり' -Produced @('なし')
 
-# 列が配分の和を超えて止められたとき、結果の出ていない検査の先頭が止められたものになり、
+# 列が上限の和を超えて止められたとき、結果の出ていない検査の先頭が止められたものになり、
 # 後ろは走らせていないものとして数えられる。止める仕組みはこの割り出しに掛かっている。
-$stopped = @(Split-LaneResults -Done @(Invoke-Check -Name '走った題材' -Body { }) `
-    -Queued @('走った題材', '止められた題材', '始まらない題材') -Limit 9)
-$laneSplit = ($stopped[0].Name + ':' + $stopped[0].Code) + '/' +
-    ($stopped[1].Name + ':' + $stopped[1].Code) + '/' +
-    ($stopped[2].Name + ':' + $stopped[2].Skipped)
+$queued = @('走った題材', '止められた題材', '始まらない題材')
+$stopped = @(Split-LaneResults -Done @(Invoke-Check -Name $queued[0] -Body { }) `
+    -Queued $queued -Limit 9)
+
+$rest = @($queued[1], $queued[2])
+$empty = @(Split-LaneResults -Done @() -Queued $rest -Limit 9)
+
+$capped = Invoke-CappedCheck -Name '長引く題材' -Command 'Start-Sleep -Seconds 9' -Budget 1
+$uncapped = Invoke-CappedCheck -Name '短い題材' -Command 'exit 3' -Budget 9
+$unbudgeted = Invoke-CappedCheck -Name '上限の無い題材' -Command 'exit 5' -Budget 0
+
+$touching = Test-PathsTouch -Paths @('docs/conventions/verification.md', 'scripts/題材.mjs') `
+    -Patterns @('src/*.cs', 'scripts/題材*')
+$untouching = Test-PathsTouch -Paths @('docs/conventions/verification.md') `
+    -Patterns @('src/*.cs', 'scripts/題材*')
 
 # 手順書の一覧と群の割り当ては、食い違いの向きが2つある。実物の並びを起点に片側だけを崩して
-# 渡す——両側を同時に崩すと、片方の照合を落としてももう片方が投げ続けて気づけない。
+# 渡す——両側を同時に崩すと、片方の割り出しを落としてももう片方が食い違いを返し続ける。
 $doc = Join-Path $PSScriptRoot '../docs/conventions/verification.md'
 $section = '## 常設の検査'
 $names = @(Get-ListedChecks -Path $doc -Section $section)
 $fewer = @($names[0..($names.Count - 2)])
-$dropped = $names[-1]
+$added = @('足した題材')
+$grouped = [ordered]@{ '題材の群' = $names }
 
-# 手順書に無い名前を実行器が持つとき。
-$listedMissing = Test-Complaint -Wanted '手順書に無い: 手順書に無い題材' -Body {
-    Assert-ListedChecks -Path $doc -Section $section -Names (@($names) + '手順書に無い題材')
+$unlisted = Get-ListedCheckGap -Path $doc -Section $section -Names (@($names) + $added)
+$unowned = Get-ListedCheckGap -Path $doc -Section $section -Names $fewer
+$ungrouped = Get-GroupedCheckGap -Grouped $grouped -Names (@($names) + $added)
+$unknown = Get-GroupedCheckGap -Grouped $grouped -Names $fewer
+
+$wrong = @()
+foreach ($item in @(
+    @{ About = '投げて落ちた検査'; Wanted = 1; Got = $failed.Code }
+    @{ About = '非0で終わった検査'; Wanted = 3; Got = $nonzero.Code }
+    @{ About = '通った検査'; Wanted = 0; Got = $passed.Code }
+    @{ About = '落ちた検査がある実行'; Wanted = 1; Got = $withFailure }
+    @{ About = 'すべて通った実行'; Wanted = 0; Got = $clean }
+    @{ About = '走らせていない検査がある実行'; Wanted = 1; Got = $withSkip }
+    @{ About = '上限を超えた実行'; Wanted = 1; Got = $overLimit }
+    @{ About = '出来上がりが揃った検査の門'; Wanted = $true; Got = $readyWhenMade }
+    @{ About = '出来上がりが揃わない検査の門'; Wanted = $false; Got = $readyWhenNot }
+    @{ About = '止められた列が返す件数'; Wanted = 3; Got = $stopped.Count }
+    @{ About = '止められた列の1件目'; Wanted = 0; Got = $stopped[0].Code }
+    @{ About = '止められた列の2件目'; Wanted = 124; Got = $stopped[1].Code }
+    @{ About = '止められた列の3件目'; Wanted = $true; Got = $stopped[2].Skipped }
+    @{ About = '何も返さない列が返す件数'; Wanted = 2; Got = $empty.Count }
+    @{ About = '何も返さない列の1件目'; Wanted = 124; Got = $empty[0].Code }
+    @{ About = '何も返さない列の2件目'; Wanted = $true; Got = $empty[1].Skipped }
+    @{ About = '上限を超えた検査'; Wanted = 124; Got = $capped.Code }
+    @{ About = '上限の中で終わった検査'; Wanted = 3; Got = $uncapped.Code }
+    @{ About = '上限を持たない検査'; Wanted = 5; Got = $unbudgeted.Code }
+    @{ About = '入力に当たる道'; Wanted = $true; Got = $touching }
+    @{ About = '入力に当たらない道'; Wanted = $false; Got = $untouching }
+    @{ About = '手順書に無い名前'; Wanted = 1; Got = $unlisted.Unlisted.Count }
+    @{ About = '手順書に無い名前だけを挙げること'; Wanted = 0; Got = $unlisted.Unowned.Count }
+    @{ About = 'この実行器に無い名前'; Wanted = 1; Got = $unowned.Unowned.Count }
+    @{ About = 'この実行器に無い名前だけを挙げること'; Wanted = 0; Got = $unowned.Unlisted.Count }
+    @{ About = 'どの群にも無い検査'; Wanted = 1; Got = $ungrouped.Ungrouped.Count }
+    @{ About = 'どの群にも無い検査だけを挙げること'; Wanted = 0; Got = $ungrouped.Unknown.Count }
+    @{ About = '検査として在らない名前'; Wanted = 1; Got = $unknown.Unknown.Count }
+    @{ About = '検査として在らない名前だけを挙げること'; Wanted = 0
+        Got = $unknown.Ungrouped.Count }
+)) {
+    if ([string]$item.Got -ceq [string]$item.Wanted) { continue }
+
+    $wrong += ($item.About + ': ' + $item.Wanted + ' ではなく ' + $item.Got)
 }
 
-# 手順書に並ぶだけで実行器が持たない名前があるとき。
-$listedExtra = Test-Complaint -Wanted ("この実行器に無い: " + $dropped) -Body {
-    Assert-ListedChecks -Path $doc -Section $section -Names $fewer
-}
+if ($wrong.Count -eq 0) { exit 0 }
 
-# どの群にも入っていない検査があるとき。
-$groupedMissing = Test-Complaint -Wanted 'どの群にも無い: 群に無い題材' -Body {
-    Assert-GroupedChecks -Grouped ([ordered]@{ '題材の群' = $names }) `
-        -Names (@($names) + '群に無い題材')
-}
-
-# 群の側に、検査として在らない名前があるとき。
-$groupedUnknown = Test-Complaint -Wanted ("検査に無い: " + $dropped) -Body {
-    Assert-GroupedChecks -Grouped ([ordered]@{ '題材の群' = $names }) -Names $fewer
-}
-
-# 走らせた結果は、名前と終了コードの組で綴る。書き出しは別の入口が持つので、ここで見るのは
-# 返った値だけである。
-$ran = ($failed.Name + ':' + $failed.Code) + '|' +
-    ($nonzero.Name + ':' + $nonzero.Code) + '|' + ($passed.Name + ':' + $passed.Code)
-
-"結果: $ran|$withFailure|$clean|$withSkip|$overLimit|$readyWhenMade|$readyWhenNot|$laneSplit|" +
-    "$listedMissing|$listedExtra|$groupedMissing|$groupedUnknown"
+Write-Host ('集計の結末が違う: ' + ($wrong -join ' / '))
+exit 1

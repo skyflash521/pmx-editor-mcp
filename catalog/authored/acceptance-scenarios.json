@@ -3371,6 +3371,15 @@
           "arguments": {},
           "expect": {
             "ok": false,
+            "code": "BRIDGE_CONNECTION_LOST"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": false,
             "code": "BRIDGE_NO_HOST"
           }
         }

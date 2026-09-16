@@ -2,18 +2,6 @@
 # 常設の検査の実行器と実機に触る検査の実行器が共に使う——表の読み方が分かれると、
 # どちらかの実行器だけが手順書とずれる。
 
-<#
-    常設の検査と実機に触る検査を合算した上限の秒数。検査ごとの配分の合計がこの値であることは、
-    配分の照合が見る。
-#>
-$TotalBudgetSeconds = 360
-
-<#
-    実機に触る検査の全体へ与える秒数。検査ごとの配分は実機を測ってから置くので、いまはこの
-    合計だけを持つ。合算の上限から常設の配分を引いた残りである。
-#>
-$LiveBudgetSeconds = 233
-
 $script:CheckBudgetWatch = $null
 
 <#
@@ -75,6 +63,38 @@ function Get-ListedChecks {
         Where-Object { $_ -ne '検査' }
 }
 
+function Get-ListedCheckGap {
+    <#
+        .SYNOPSIS
+        実行器が持つ検査と手順書の表の食い違い。手順書に無い名前(Unlisted)と、この実行器に
+        無い名前(Unowned)を返す。
+    #>
+    param([string]$Path, [string]$Section, [string[]]$Names)
+
+    $listed = @(Get-ListedChecks -Path $Path -Section $Section)
+
+    [pscustomobject]@{
+        Unlisted = @($Names | Where-Object { $listed -notcontains $_ })
+        Unowned = @($listed | Where-Object { $Names -notcontains $_ })
+    }
+}
+
+function Get-GroupedCheckGap {
+    <#
+        .SYNOPSIS
+        検査と群の割り当ての食い違い。どの群にも無い検査(Ungrouped)と、検査として在らない
+        名前(Unknown)を返す。2つの入力を読む検査は両方の群に入れてよい。
+    #>
+    param($Grouped, [string[]]$Names)
+
+    $listed = @($Grouped.Values | ForEach-Object { $_ })
+
+    [pscustomobject]@{
+        Ungrouped = @($Names | Where-Object { $listed -notcontains $_ })
+        Unknown = @($listed | Where-Object { $Names -notcontains $_ })
+    }
+}
+
 function Assert-ListedChecks {
     <#
         .SYNOPSIS
@@ -83,44 +103,69 @@ function Assert-ListedChecks {
     #>
     param([string]$Path, [string]$Section, [string[]]$Names)
 
-    $listed = @(Get-ListedChecks -Path $Path -Section $Section)
-    $missing = @($Names | Where-Object { $listed -notcontains $_ })
-    $extra = @($listed | Where-Object { $Names -notcontains $_ })
-    if ($missing.Count -eq 0 -and $extra.Count -eq 0) { return }
+    $gap = Get-ListedCheckGap -Path $Path -Section $Section -Names $Names
+    if ($gap.Unlisted.Count -eq 0 -and $gap.Unowned.Count -eq 0) { return }
 
     throw ("$Path の $Section の一覧とこの実行器の検査がずれている。手順書に無い: " +
-        (($missing -join '・'), '(無し)')[$missing.Count -eq 0] +
+        (($gap.Unlisted -join '・'), '(無し)')[$gap.Unlisted.Count -eq 0] +
         ' / この実行器に無い: ' +
-        (($extra -join '・'), '(無し)')[$extra.Count -eq 0])
+        (($gap.Unowned -join '・'), '(無し)')[$gap.Unowned.Count -eq 0])
 }
 
 function Assert-GroupedChecks {
     <#
         .SYNOPSIS
         どの検査も少なくとも1つの群に属し、群の側に知らない名前が無いことを確かめる。入れ忘れた
-        検査は誰も走らせないまま合格が出る。2つの入力を読む検査は両方の群に入れてよい。
+        検査は誰も走らせないまま合格が出る。
     #>
     param($Grouped, [string[]]$Names)
 
-    $listed = @($Grouped.Values | ForEach-Object { $_ })
-    $missing = @($Names | Where-Object { $listed -notcontains $_ })
-    $unknown = @($listed | Where-Object { $Names -notcontains $_ })
-    if ($missing.Count -eq 0 -and $unknown.Count -eq 0) { return }
+    $gap = Get-GroupedCheckGap -Grouped $Grouped -Names $Names
+    if ($gap.Ungrouped.Count -eq 0 -and $gap.Unknown.Count -eq 0) { return }
 
     throw ('群の割り当てがずれている。どの群にも無い: ' +
-        (($missing -join '・'), '(無し)')[$missing.Count -eq 0] +
-        ' / 検査に無い: ' + (($unknown -join '・'), '(無し)')[$unknown.Count -eq 0])
+        (($gap.Ungrouped -join '・'), '(無し)')[$gap.Ungrouped.Count -eq 0] +
+        ' / 検査に無い: ' + (($gap.Unknown -join '・'), '(無し)')[$gap.Unknown.Count -eq 0])
 }
 
 function Test-CheckReady {
     <#
         .SYNOPSIS
         その検査が要る出来上がりが揃っているか。揃っていない検査は始めない——作る側が落ちた後に
-        走らせても、入力の無い状態で配分ぶんの時間を使ってから落ちるだけである。
+        走らせても、入力の無い状態で上限ぶんの時間を使ってから落ちるだけである。
     #>
     param([string]$Needs, [string[]]$Produced)
 
     $Produced -contains $Needs
+}
+
+function Test-PathsTouch {
+    <#
+        .SYNOPSIS
+        変えたものの道のどれかが、渡した形のどれかに当たるか。
+    #>
+    param([string[]]$Paths, [string[]]$Patterns)
+
+    foreach ($path in $Paths) {
+        foreach ($pattern in $Patterns) {
+            if ($path -like $pattern) { return $true }
+        }
+    }
+
+    $false
+}
+
+function Get-FellNumbers {
+    <#
+        .SYNOPSIS
+        実行器が書き残した、落ちた項目の番号。何も書かれていなければ空。
+    #>
+    param([string]$Path)
+
+    $raw = Get-Content $Path -Raw -ErrorAction Ignore
+    if (-not $raw) { return @() }
+
+    @($raw.Split(',') | Where-Object { $_.Trim() } | ForEach-Object { [int]$_.Trim() })
 }
 
 function Invoke-Check {
@@ -152,6 +197,47 @@ function Invoke-Check {
     }
 }
 
+function Invoke-CappedCheck {
+    <#
+        .SYNOPSIS
+        検査を1件、別のプロセスで走らせて結果を返す。上限を超えた回は子孫ごと終わらせて
+        終了コード124で返し、上限が0の回は止めない。
+    #>
+    param([string]$Name, [string]$Command, [int]$Budget)
+
+    $said = [System.IO.Path]::GetTempFileName()
+    $cried = [System.IO.Path]::GetTempFileName()
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    $capped = $false
+    try {
+        $running = Start-Process pwsh -PassThru -NoNewWindow `
+            -ArgumentList @('-NoProfile', '-NonInteractive', '-Command', $Command) `
+            -RedirectStandardOutput $said -RedirectStandardError $cried
+        $capped = $Budget -gt 0 -and -not $running.WaitForExit($Budget * 1000)
+        if ($capped) {
+            & taskkill /T /F /PID $running.Id 2>&1 | Out-Null
+        }
+
+        $running.WaitForExit()
+        $code = if ($capped) { 124 } else { $running.ExitCode }
+        $log = @(@(Get-Content $said -ErrorAction Ignore) +
+            @(Get-Content $cried -ErrorAction Ignore) | Where-Object { $_ })
+        if ($capped) {
+            $log += "この検査が上限($Budget 秒)を超えたので、子孫ごと終わらせた。"
+        }
+    } finally {
+        Remove-Item $said, $cried -ErrorAction Ignore
+    }
+
+    [pscustomobject]@{
+        Name = $Name
+        Code = $code
+        Seconds = $watch.Elapsed.TotalSeconds
+        Log = @($log | ForEach-Object { [string]$_ })
+        Skipped = $false
+    }
+}
+
 function New-SkippedCheck {
     <#
         .SYNOPSIS
@@ -171,7 +257,7 @@ function New-SkippedCheck {
 function New-StoppedCheck {
     <#
         .SYNOPSIS
-        列が配分の和を超えて止められたときの、結果を返していない検査の結果。列の外からは
+        列が上限の和を超えて止められたときの、結果を返していない検査の結果。列の外からは
         どの検査が長引いたかを言えないので、止まった時点で結果の出ていない先頭をこれにする。
         所要は分からないので0とし、止めた理由だけを書き出す。
     #>
@@ -181,7 +267,7 @@ function New-StoppedCheck {
         Name = $Name
         Code = 124
         Seconds = 0.0
-        Log = @("この検査が属する列が、配分の和($Limit 秒)を超えたので止められた。")
+        Log = @("この検査が属する列が、上限の和($Limit 秒)を超えたので止められた。")
         Skipped = $false
     }
 }
@@ -195,8 +281,11 @@ function Split-LaneResults {
     #>
     param($Done, [string[]]$Queued, [int]$Limit)
 
-    @($Done)
-    $rest = @($Queued | Where-Object { @($Done).Name -notcontains $_ })
+    $done = @($Done | Where-Object { $_ })
+
+    $done
+    $names = @($done | ForEach-Object { $_.Name })
+    $rest = @($Queued | Where-Object { $names -notcontains $_ })
     if ($rest.Count -eq 0) { return }
 
     New-StoppedCheck -Name $rest[0] -Limit $Limit
@@ -234,15 +323,15 @@ function Write-CheckSummary {
     param([string[]]$Failed, [string[]]$Skipped, [string]$Scope, [int]$Ran, [int]$Listed,
         [int]$Limit)
 
-    # 持ち分を超えた実行は合格にしない。検査ごと・列ごとに止める仕掛けは、始める前と列の途中
+    # 上限を超えた実行は合格にしない。検査ごと・列ごとに止める仕掛けは、始める前と列の途中
     # でしか働かないので、最後に始めた1件が伸びた実行と、止める仕掛けを通らない検査が伸びた
     # 実行は、ここでしか捕まえられない。
     $elapsed = Get-CheckBudgetElapsed
-    $took = '{0:0.0}秒 / 持ち分 {1}秒' -f $elapsed, $Limit
+    $took = '{0:0.0}秒 / 上限 {1}秒' -f $elapsed, $Limit
     $over = $elapsed -gt $Limit
 
     Write-Host ''
-    if ($over) { Write-Host ("持ち分を超えた: $took") }
+    if ($over) { Write-Host ("上限を超えた: $took") }
     if ($Skipped.Count -gt 0) { Write-Host ('走らせていない: ' + ($Skipped -join '・')) }
     if ($Failed.Count -gt 0) { Write-Host ('不合格: ' + ($Failed -join '・')) }
     if ($Failed.Count -gt 0 -or $Skipped.Count -gt 0 -or $over) { return 1 }
