@@ -87,9 +87,31 @@ export class McpClient {
         });
     }
 
-    /** ツールを1件呼び、返った本文と画像と誤りの印を返す。 */
-    async callTool(name, args) {
-        const response = await this._request("tools/call", { name, arguments: args });
+    /** サーバーが公開するツールの名前。 */
+    async listTools() {
+        const response = await this._request("tools/list", {});
+        if (response.error !== undefined) {
+            throw new Error(
+                "MCPサーバーがツールの一覧を断りました(" + response.error.code + "): "
+                    + response.error.message);
+        }
+
+        const result = response.result;
+        if (result === null || typeof result !== "object" || !Array.isArray(result.tools)) {
+            throw new Error("tools/list の結果が tools の並びを持ちません。");
+        }
+
+        return result.tools.map((tool) => String(tool.name));
+    }
+
+    /**
+     * ツールを1件呼び、返った本文と画像と誤りの印を返す。extend を渡すと、待ちの上限に達した
+     * ときにそれを呼び、真が返ればもう1回ぶん待ち直す。投げ直しではないので、頼んだ操作が二度
+     * 実行されることはない。
+     */
+    async callTool(name, args, extend = null) {
+        const response = await this._request(
+            "tools/call", { name, arguments: args }, extend);
         if (response.error !== undefined) {
             throw new Error(
                 "MCPサーバーが要求を断りました(" + response.error.code + "): "
@@ -122,7 +144,7 @@ export class McpClient {
         return { isError: result.isError === true, text: texts.join("\n"), images };
     }
 
-    _request(method, params) {
+    _request(method, params, extend = null) {
         const id = this._nextId;
         this._nextId += 1;
 
@@ -132,12 +154,24 @@ export class McpClient {
                 return;
             }
 
-            const timer = setTimeout(() => {
+            const waiting = { resolve, reject, timer: null };
+            const fire = () => {
+                if (extend !== null && extend()) {
+                    waiting.timer = setTimeout(fire, RESPONSE_TIMEOUT_MS);
+                    waiting.timer.unref();
+
+                    return;
+                }
+
                 this._pending.delete(id);
-                reject(new Error(method + " の応答が時間内に返りませんでした。"));
-            }, RESPONSE_TIMEOUT_MS);
-            timer.unref();
-            this._pending.set(id, { resolve, reject, timer });
+                const failure = new Error(method + " の応答が時間内に返りませんでした。");
+                failure.timedOut = true;
+                reject(failure);
+            };
+
+            waiting.timer = setTimeout(fire, RESPONSE_TIMEOUT_MS);
+            waiting.timer.unref();
+            this._pending.set(id, waiting);
             this._child.stdin.write(
                 JSON.stringify({ jsonrpc: JSONRPC_VERSION, id, method, params }) + "\n");
         });

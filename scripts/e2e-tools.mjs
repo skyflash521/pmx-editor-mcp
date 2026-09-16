@@ -1,27 +1,34 @@
 // 自動E2E検査の実行器。
-// 生成器が書き出した検査を、起動中の実機エディタの待受へ1件ずつ投げ、結果を
-// 行キー・編集の流れ・接続の経路ごとに数えて出す。
+// 生成器が書き出した検査を、MCPサーバーとして起こしたブリッジへ1件ずつ投げ、結果を
+// 行キー・編集の流れ・接続の経路ごとに数えて出す。ホストの待受へ直に繋がないのは、クライアントが
+// 通る経路をそのまま通すためである——ブリッジが公開していないツールは、直に繋ぐと通ってしまう。
 // 検査の中身はこの実行器が決めず、生成器が書いたものだけを読む。
 
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import url from "node:url";
+import { McpClient } from "./mcp-client.mjs";
 
-/** 要求と応答の jsonrpc に固定で置く値。 */
-const JSONRPC_VERSION = "2.0";
+/** ブリッジが本文の先頭へ置く、接続先の名乗りの書き出し。中継した応答だけがこれを持つ。 */
+const TARGET_PREFIX = "接続先: ";
 
-/** ハンドシェイクで一致していなければならないプロトコル番号。 */
-const HANDSHAKE_PROTOCOL = 1;
+/** 接続先が前の呼び出しから変わったときの名乗りの書き出し。 */
+const TARGET_CHANGED_PREFIX = "接続先が変わった: ";
 
-/** 1件の応答を待つ上限。ホスト側の処理上限へ往復の余裕を足した値。 */
-const RESPONSE_TIMEOUT_MS = 130000;
+/** ブリッジが本文の末尾へ足す警告の行の頭。 */
+const WARNING_PREFIX = "警告: ";
 
-/** 待受のパイプ名の付け方。ホスト側の実装が定める。 */
-const PIPE_PREFIX = "pmx-editor-mcp-";
+/** 中継の状態を返すツールの名前。ホストが受け持ち、ブリッジが固定のツールとして公開する。 */
+const STATUS_TOOL = "sdk_status";
+
+/** ホストが受け持ち、ブリッジが固定のツールとして公開する名前。突き合わせでは両側から引く。 */
+const FIXED_TOOLS = ["ping", STATUS_TOOL];
+
+/** 検査からだけ使う入口が開いているときだけ在るツールの名前の頭。突き合わせでは両側から引く。 */
+const DEBUG_PREFIX = "debug_";
 
 /**
  * 読み込む中身が要るツールへ渡す形状。頂点3つと面1つと材質1つだけを持つ、文字で書いた
@@ -127,9 +134,6 @@ const MATCHING_IMAGE_LIMIT = 0.1;
 /** ビューの写しと画像を見比べるスクリプト。 */
 let COMPARE_SCRIPT = beside("compare-view-image.ps1");
 
-/** ホストが発行するセッションの識別子の形。128ビットを16進で表した文字列である。 */
-const SESSION_PATTERN = /^[0-9a-f]{32}$/;
-
 const EXIT_SUCCESS = 0;
 const EXIT_FAILED = 1;
 const EXIT_INVALID_ARGUMENTS = 2;
@@ -138,70 +142,202 @@ const EXIT_INPUT_UNAVAILABLE = 3;
 /** 指した行に当たる検査を引けず、絞った実行ではその行を確かめられないことを表す。 */
 const EXIT_ROWS_UNCOVERED = 4;
 
-function toPipePath(name) {
-    return "\\\\.\\pipe\\" + name;
-}
-
-/** 行の区切りで1件ずつ取り出す。区切りはホスト側の実装が定める。 */
-function takeLine(buffer) {
-    const at = buffer.indexOf("\n");
-    if (at < 0) {
-        return null;
+/**
+ * 導入の前置を行い、MCPサーバーとして起こす相手を受け取る。前置が何をするかはこの実行器の
+ * 知るところではなく、最後の行へ置いた組だけを読む。
+ */
+function prepare(setup, setupArgs) {
+    const done = invokeControl(["-File", setup, "-Action", "prepare", ...setupArgs]);
+    if (done.written === null) {
+        return { server: null, unavailable: done.unavailable };
     }
 
-    return { text: buffer.slice(0, at).trim(), rest: buffer.slice(at + 1) };
+    const lines = done.written.split("\n").map((line) => line.trim())
+        .filter((line) => line !== "");
+    if (lines.length === 0) {
+        return { server: null, unavailable: setup + " が起こす相手を書きませんでした。" };
+    }
+
+    let server;
+    try {
+        server = JSON.parse(lines[lines.length - 1]);
+    } catch (error) {
+        return {
+            server: null,
+            unavailable: setup + " が書いた相手を読み解けません: " + error.message,
+        };
+    }
+
+    return server === null || typeof server !== "object" || typeof server.command !== "string"
+            || !Array.isArray(server.arguments)
+        ? {
+            server: null,
+            unavailable: setup + " が書いた相手が command と arguments の組ではありません。",
+        }
+        : { server, unavailable: null };
 }
 
 /**
- * 応答が契約の形をしているか。合っていれば null。要求の識別子と合っているところまで見る
- * ——到着の順だけで割り当てると、別の要求への応答を取り違える。
+ * ブリッジが返したツールの結果から、ホストの包みを組み直す。結末の判定はどれも包みの形を見るので、
+ * 戻すのはここ1か所にする。接続先の名乗りも包みの警告も、本文の中での位置ではなく行の書き出しで
+ * 見分ける。
  */
-function contract(response, requestId) {
-    if (response === null || typeof response !== "object" || Array.isArray(response)) {
-        return "応答がJSONのオブジェクトではありません。";
-    }
-    if (response.jsonrpc !== JSONRPC_VERSION) {
-        return "応答の jsonrpc が " + JSONRPC_VERSION + " ではありません。";
-    }
-    if (response.id !== requestId) {
-        return "応答の id が要求の " + requestId + " ではありません: " + JSON.stringify(response.id);
+function envelopeOf(said) {
+    // 名乗りは書き出しで見分ける。1行目と決め打つと、ブリッジ自身が返す誤り——ホストへ繋げない・
+    // 応答が返らないなど、名乗る接続先を持たない誤り——の本文を丸ごと捨てて、落ちた理由が残らない。
+    let text = said.text;
+    if (text.startsWith(TARGET_PREFIX) || text.startsWith(TARGET_CHANGED_PREFIX)) {
+        const at = text.indexOf("\n");
+        text = at < 0 ? "" : text.slice(at + 1);
     }
 
-    const hasResult = Object.prototype.hasOwnProperty.call(response, "result");
-    const hasError = Object.prototype.hasOwnProperty.call(response, "error");
-    if (hasResult === hasError) {
-        return "応答が result と error のどちらか一方だけを持っていません。";
-    }
-    if (hasError) {
-        const error = response.error;
-        if (error === null || typeof error !== "object" || Array.isArray(error) ||
-            typeof error.code !== "number" || typeof error.message !== "string") {
-            return "error が code と message の組ではありません。";
-        }
+    // 警告も書き出しで見分ける。末尾から剥がすと、値の行を持たない画像のツールで警告を値と
+    // 読み違える。
+    const lines = text.split("\n");
+    const warnings = lines.filter((line) => line.startsWith(WARNING_PREFIX))
+        .map((line) => line.slice(WARNING_PREFIX.length));
+    const body = lines.filter((line) => !line.startsWith(WARNING_PREFIX)).join("\n");
+    if (said.isError) {
+        const at = body.indexOf(": ");
+
+        return {
+            ok: false,
+            error: {
+                code: at < 0 ? body : body.slice(0, at),
+                message: at < 0 ? "" : body.slice(at + 2),
+            },
+            warnings,
+        };
     }
 
-    return null;
+    // 画像を返すツールの値は本文でなく画像の塊で届く。文字の本文から読むと、文字列で返して
+    // しまっていても気づけない。
+    if (said.images.length !== 0) {
+        return { ok: true, value: said.images[0].data, warnings };
+    }
+
+    try {
+        return { ok: true, value: JSON.parse(body === "" ? "null" : body), warnings };
+    } catch (error) {
+        return {
+            ok: false,
+            error: { code: "TOOL_BROKEN_RESPONSE", message: "値を読み解けません: " + body },
+            warnings,
+        };
+    }
 }
 
-/** ハンドシェイクの成功応答が契約どおりか。合っていれば null。 */
-function handshake(result) {
-    if (result === null || typeof result !== "object" || Array.isArray(result)) {
-        return "handshake の result がJSONのオブジェクトではありません。";
+/**
+ * ツールを1件呼び、包みの形へ戻して返す。答えが時間内に返らなければ <code>response</code> が
+ * null、契約から外れた応答なら <code>broken</code> にその事情が入る。
+ */
+async function ask(client, tool, given, extend = null) {
+    try {
+        return {
+            response: { result: envelopeOf(await client.callTool(tool, given, extend)) },
+            broken: null,
+        };
+    } catch (error) {
+        return { response: null, broken: error.timedOut === true ? null : error.message };
     }
-    if (result.protocol !== HANDSHAKE_PROTOCOL) {
-        return "ホストのプロトコル番号が " + HANDSHAKE_PROTOCOL + " ではありません。";
-    }
-    if (typeof result.hostVersion !== "string" || result.hostVersion.length === 0) {
-        return "handshake の hostVersion が空でない文字列ではありません。";
-    }
-    if (!Number.isInteger(result.budgetChars)) {
-        return "handshake の budgetChars が整数ではありません。";
-    }
-    if (typeof result.session !== "string" || !SESSION_PATTERN.test(result.session)) {
-        return "handshake の session が16進32文字の文字列ではありません。";
+}
+
+/** 中継の状態。読み解けなければその事情を返す。 */
+async function askStatus(client) {
+    const said = await ask(client, STATUS_TOOL, {});
+    if (said.response === null) {
+        return {
+            status: null,
+            unavailable: said.broken === null
+                ? STATUS_TOOL + " の応答が時間内に返りませんでした。"
+                : said.broken,
+        };
     }
 
-    return null;
+    const envelope = said.response.result;
+    if (envelope.ok !== true || envelope.value === null || typeof envelope.value !== "object") {
+        return { status: null, unavailable: STATUS_TOOL + " が状態を返しませんでした。" };
+    }
+
+    return { status: envelope.value, unavailable: null };
+}
+
+/** 突き合わせに使う名前。固定のツールと、検査からだけ使う入口のツールを引いたものである。 */
+function measured(names) {
+    return [...names]
+        .filter((name) => !FIXED_TOOLS.includes(name) && !name.startsWith(DEBUG_PREFIX))
+        .sort();
+}
+
+/** 左に在って右に無い名前。 */
+function lacking(left, right) {
+    const held = new Set(right);
+
+    return left.filter((name) => !held.has(name));
+}
+
+/**
+ * 走らせる前に、スキーマ正本・ブリッジが公開するツール・ホストが答える名前の3つが同じ集合である
+ * ことを確かめる。合っていれば null。ずれていれば、そのずれは呼んでみるまで分からない——呼ばない
+ * ツールのずれは、どの検査も落とさないまま残る。
+ */
+async function agreed(client, schemasPath) {
+    let authored;
+    try {
+        const read = JSON.parse(fs.readFileSync(schemasPath, "utf8"));
+        authored = measured(read.tools.map((tool) => tool.tool));
+    } catch (error) {
+        return "スキーマ正本を読めません(" + schemasPath + "): " + error.message;
+    }
+
+    let published;
+    try {
+        published = measured(await client.listTools());
+    } catch (error) {
+        return "ブリッジのツールを数えられません: " + error.message;
+    }
+
+    const said = await askStatus(client);
+    if (said.status === null) {
+        return "ホストが答える名前を数えられません: " + said.unavailable;
+    }
+
+    const answered = measured(said.status.toolNames ?? []);
+    const differences = [
+        ["スキーマ正本に在ってブリッジが公開しない", lacking(authored, published)],
+        ["ブリッジが公開してスキーマ正本に無い", lacking(published, authored)],
+        ["スキーマ正本に在ってホストが答えない", lacking(authored, answered)],
+        ["ホストが答えてスキーマ正本に無い", lacking(answered, authored)],
+    ].filter((pair) => pair[1].length !== 0);
+    if (differences.length === 0) {
+        console.log(
+            "名前の集合が合っています: スキーマ正本 " + authored.length + " 件・ブリッジ "
+                + published.length + " 件・ホスト " + answered.length + " 件");
+
+        return null;
+    }
+
+    return differences
+        .map((pair) => pair[0] + "名前が " + pair[1].length + " 件: " + pair[1].join("・"))
+        .join("\n");
+}
+
+/** 走らせた後に、中継を作れなかった行も無効にした行も残っていないことを確かめる。 */
+async function settled(client) {
+    const said = await askStatus(client);
+    if (said.status === null) {
+        return "走らせた後の状態を読めません: " + said.unavailable;
+    }
+
+    const left = [
+        ["中継を作れなかった行", said.status.unresolvedRows ?? []],
+        ["呼び出しの失敗で無効にした行", said.status.disabledRows ?? []],
+    ].filter((pair) => pair[1].length !== 0);
+
+    return left.length === 0
+        ? null
+        : left.map((pair) => pair[0] + "が " + pair[1].length + " 件: " + pair[1].join("・"))
+            .join("\n");
 }
 
 /**
@@ -213,14 +349,7 @@ function judge(one, response, capture, remembered) {
         return viewImage(one, response, capture);
     }
 
-    if (response.error !== undefined) {
-        return "ホストが要求を断りました(" + response.error.code + "): " + response.error.message;
-    }
-
     const envelope = response.result;
-    if (envelope === null || typeof envelope !== "object" || Array.isArray(envelope)) {
-        return "result が包みのオブジェクトではありません。";
-    }
 
     if (one.expect === "success") {
         return envelope.ok === true ? null : "成功するはずが断られました: " + describe(envelope);
@@ -447,7 +576,7 @@ function report(results, key, title) {
 }
 
 /**
- * 操作役のスクリプトを起こし、書き出したものと、落ちたときの事情を返す。
+ * PowerShellのスクリプトを起こし、書き出したものと、落ちたときの事情を返す。
  * PowerShellの出力の文字コードは端末の設定で変わるので、読めない並びは読めないまま置いて、
  * 数と綴りだけを確かに読めるようにする。
  */
@@ -654,173 +783,76 @@ function borrowing(one, remembered) {
     return given;
 }
 
-/** その検査へ与える要求の識別子。ハンドシェイクが1で、検査は2から順に並ぶ。 */
-function requestId(index) {
-    return index + 2;
-}
-
-function run(pipeName, cases, processId) {
-    const socket = net.connect(toPipePath(pipeName));
-    let buffer = "";
-    let index = -1;
-    let retried = -1;
-    let waited = -1;
-    let stalled = 0;
-    let settled = false;
+/**
+ * 検査を1件ずつブリッジへ投げ、結末を数えて終了コードを返す。ホストが契約から外れた応答を返した
+ * ときだけは、数える前に打ち切る——どの検査の結末も信じられない。
+ */
+async function run(client, cases, processId) {
     const results = [];
     const remembered = new Map();
     let capture = null;
-    let wrote = null;
+    let stalled = 0;
+    let broke = null;
 
-    // いま投げている検査のために片付けた表示の素性。片付けた場所と結末を記録する場所が離れて
-    // いるので、検査ごとにここへ溜めて結末へ渡す。
-    let noted = [];
+    for (const one of cases) {
+        const startedAt = Date.now();
+        const noted = [];
+        const elapsed = () => (Date.now() - startedAt) / 1000;
 
-    let startedAt = Date.now();
-    const elapsed = () => (Date.now() - startedAt) / 1000;
+        if (one.expect === "viewImage" && capture === null) {
+            capture = captureView(processId);
+        }
 
-    return new Promise((resolve) => {
-        const settle = (code, message) => {
-            if (settled) {
-                return;
-            }
-            settled = true;
-            if (message !== null) {
-                console.error(message);
-            }
-            socket.destroy();
-            resolve(code);
-        };
+        const given = expanded(borrowing(one, remembered));
+        if (given === null) {
+            results.push({
+                case: one,
+                reason: "借りる値をまだ覚えていません: " + JSON.stringify(one.borrowed),
+                stopped: noted,
+                seconds: elapsed(),
+            });
 
-        const send = (id, method, params) => {
-            const request = { jsonrpc: JSONRPC_VERSION, id, method };
-            if (params !== undefined) {
-                request.params = params;
-            }
-            socket.write(JSON.stringify(request) + "\n");
-        };
+            continue;
+        }
 
-        const next = () => {
-            index += 1;
-            noted = [];
-            startedAt = Date.now();
-            if (index >= cases.length) {
-                finish();
-                return;
-            }
+        const wrote = written(one, given);
 
-            const one = cases[index];
-            if (one.expect === "viewImage" && capture === null) {
-                capture = captureView(processId);
-            }
-
-            const given = expanded(borrowing(one, remembered));
-            if (given === null) {
-                results.push({
-                    case: one,
-                    reason: "借りる値をまだ覚えていません: " + JSON.stringify(one.borrowed),
-                    stopped: noted,
-                    seconds: elapsed(),
-                });
-                next();
-
-                return;
-            }
-
-            wrote = written(one, given);
-            startedAt = Date.now();
-            send(requestId(index), one.tool, given);
-        };
-
-        const finish = () => {
-            const failed = results.filter((r) => r.reason !== null);
-
-            const told = process.env.PMX_EDITOR_MCP_FELL_PATH;
-            if (told) {
-                fs.writeFileSync(
-                    told, failed.map((r) => cases.indexOf(r.case)).join(","), "utf8");
-            }
-
-            const ranTold = process.env.PMX_EDITOR_MCP_RAN_PATH;
-            if (ranTold) {
-                fs.writeFileSync(
-                    ranTold, results.map((r) => cases.indexOf(r.case)).join(","), "utf8");
-            }
-            for (const result of failed) {
-                console.log(
-                    "不合格: " + result.case.tool + " — " + result.case.purpose + " — " + result.reason);
-            }
-
-            // 表示で止まった検査も、呼び先までは届いているので合格に数える。合格の中で何件が
-            // 表示で止まったのかを内訳として添える——合格から引くと、行キーごとの内訳が数える
-            // 合格と食い違う。
-            const stopped = results.filter(
-                (r) => r.reason === null && Array.isArray(r.stopped) && r.stopped.length !== 0);
-            if (stopped.length !== 0) {
-                console.log("");
-                console.log("表示で止まった検査: " + stopped.length + " 件");
-                for (const result of stopped) {
-                    console.log("  " + result.case.tool + " — " + result.case.purpose);
-                    for (const note of result.stopped) {
-                        console.log("    " + note);
-                    }
-                }
-            }
-
-            console.log("");
-            console.log("1件ごとの所要(長い順):");
-            for (const result of [...results].sort((a, b) => (b.seconds ?? 0) - (a.seconds ?? 0))) {
-                console.log(
-                    "  " + (result.seconds ?? 0).toFixed(2) + "秒  " + result.case.tool +
-                    " — " + result.case.purpose);
-            }
-
-            console.log("");
-            console.log(
-                "検査: " + results.length + " 件・合格 " + (results.length - failed.length) +
-                "(うち表示で止まった " + stopped.length + ")・不合格 " + failed.length);
-            report(results, "rowKey", "行キー");
-            report(results, "editKind", "編集の流れ");
-            report(results, "connectionPath", "接続の経路");
-
-            settle(failed.length === 0 ? EXIT_SUCCESS : EXIT_FAILED, null);
-        };
-
-        socket.on("error", (error) => settle(EXIT_INPUT_UNAVAILABLE, "接続に失敗しました: " + error.message));
         // 応答が返らないのは、答えられない表示がUIスレッドを塞いでいるときである。表示を片付け
         // れば、塞がっていた呼び出しが終わって応答が返るので、投げ直さずにもう1回ぶん待つ——
         // 実行されたかどうかが分からない要求を投げ直すと、一度だけ頼んだ操作が二度実行されうる。
-        // それでも返らなければ、その検査を不合格にして先へ進む。1件のために残りを見ないまま
-        // 終えると、落ちた理由がどこにあるのかも分からなくなる。
-        socket.on("timeout", () => {
-            if (settled) {
-                return;
+        let asked = false;
+        let cleared = null;
+        const extend = () => {
+            if (asked) {
+                return false;
             }
 
-            const one = cases[index];
-            if (one === undefined) {
-                settle(EXIT_INPUT_UNAVAILABLE, "応答が時間内に返りませんでした。");
-
-                return;
-            }
-
-            const cleared = clearPrompts(processId);
+            asked = true;
+            cleared = clearPrompts(processId);
             noted.push(...(cleared.answered ?? []));
-            if (waited !== index && cleared.answered !== null && cleared.answered.length > 0) {
-                waited = index;
-                socket.setTimeout(RESPONSE_TIMEOUT_MS);
 
-                return;
-            }
+            return cleared.answered !== null && cleared.answered.length > 0;
+        };
 
+        let said = await ask(client, one.tool, given, extend);
+        if (said.broken !== null) {
+            broke = said.broken;
+            break;
+        }
+
+        if (said.response === null) {
+            const waited = cleared !== null && cleared.answered !== null
+                && cleared.answered.length > 0;
             results.push({
                 case: one,
-                reason: waited === index
+                reason: waited
                     ? "応答が時間内に返りませんでした。出ている表示を片付けても進みませんでした。"
-                    : "応答が時間内に返りませんでした。" + (cleared.unavailable === null
-                        ? "出ている表示は見つかりませんでした。"
-                        : cleared.unavailable),
+                    : "応答が時間内に返りませんでした。"
+                        + (cleared === null || cleared.unavailable === null
+                            ? "出ている表示は見つかりませんでした。"
+                            : cleared.unavailable),
                 stopped: noted,
+                seconds: elapsed(),
             });
 
             stalled += 1;
@@ -828,123 +860,128 @@ function run(pipeName, cases, processId) {
                 console.error(
                     "応答の返らない検査が " + stalled + " 件続いたので、"
                         + one.tool + " で打ち切りました。");
-                finish();
-
-                return;
+                break;
             }
 
-            next();
-        });
-        socket.on("close", () => settle(EXIT_INPUT_UNAVAILABLE, "ホストが接続を切りました。"));
+            continue;
+        }
 
-        socket.on("connect", () => {
-            socket.setTimeout(RESPONSE_TIMEOUT_MS);
-            console.log("接続しました: " + pipeName);
-            send(requestId(-1), "handshake", { protocol: HANDSHAKE_PROTOCOL });
-        });
+        // 答えが届いたので、続けて答えの返らなかった数は数え直す。判定まで進まない断りも、
+        // ホストが答えたことに変わりはない。
+        stalled = 0;
+        let response = said.response;
+        if (notStarted(response)) {
+            const before = clearPrompts(processId);
+            noted.push(...(before.answered ?? []));
+            if (before.answered !== null && before.answered.length > 0) {
+                said = await ask(client, one.tool, expanded(borrowing(one, remembered)));
+                if (said.broken !== null) {
+                    broke = said.broken;
+                    break;
+                }
 
-        socket.on("data", (chunk) => {
-            if (settled) {
-                return;
+                if (said.response !== null) {
+                    response = said.response;
+                }
             }
+        }
 
-            buffer += chunk.toString("utf8");
-            for (;;) {
-                const taken = takeLine(buffer);
-                if (taken === null) {
-                    return;
-                }
-                buffer = taken.rest;
-                if (taken.text.length === 0) {
-                    continue;
-                }
+        // 片付かない表示を残したまま先へ進むと、後の検査が巻き添えで落ちる。
+        if (prompted(response)) {
+            const after = clearPrompts(processId);
+            noted.push(...(after.answered ?? []));
+            if (after.answered === null) {
+                results.push({
+                    case: one,
+                    reason: "出ている表示を片付けられませんでした: " + after.unavailable,
+                    stopped: noted,
+                    seconds: elapsed(),
+                });
 
-                let response;
-                try {
-                    response = JSON.parse(taken.text);
-                } catch (error) {
-                    settle(EXIT_INPUT_UNAVAILABLE, "応答を読み解けませんでした: " + error.message);
-                    return;
-                }
-
-                // 先へ進んだあとに遅れて返った応答は、もう待っている相手が居ない。読み飛ばす
-                // ——番号で取り違えないためにここで落とす。
-                if (typeof response.id === "number" && response.id < requestId(index)) {
-                    continue;
-                }
-
-                // 答えが届いたので、続けて答えの返らなかった数は数え直す。判定まで進まない
-                // 断りも、ホストが答えたことに変わりはない。
-                stalled = 0;
-
-                const broken = contract(response, requestId(index));
-                if (broken !== null) {
-                    settle(EXIT_INPUT_UNAVAILABLE, broken);
-                    return;
-                }
-
-                if (index < 0) {
-                    if (response.error !== undefined) {
-                        settle(
-                            EXIT_INPUT_UNAVAILABLE,
-                            "ホストが handshake を断りました: " + response.error.message);
-                        return;
-                    }
-
-                    const mismatch = handshake(response.result);
-                    if (mismatch !== null) {
-                        settle(EXIT_INPUT_UNAVAILABLE, mismatch);
-                        return;
-                    }
-
-                    next();
-                    continue;
-                }
-
-                const one = cases[index];
-                const before = notStarted(response) && retried !== index
-                    ? clearPrompts(processId)
-                    : null;
-                if (before !== null) {
-                    noted.push(...(before.answered ?? []));
-                }
-
-                if (before !== null && before.answered !== null && before.answered.length > 0) {
-                    retried = index;
-                    send(requestId(index), one.tool, expanded(borrowing(one, remembered)));
-                    continue;
-                }
-
-                // 片付かない表示を残したまま先へ進むと、後の検査が巻き添えで落ちる。
-                if (prompted(response)) {
-                    const cleared = clearPrompts(processId);
-                    noted.push(...(cleared.answered ?? []));
-                    if (cleared.answered === null) {
-                        results.push({
-                            case: one,
-                            reason: "出ている表示を片付けられませんでした: " + cleared.unavailable,
-                            stopped: noted,
-                        });
-                        next();
-
-                        continue;
-                    }
-                }
-
-                let reason = judge(one, response, capture, remembered);
-                if (reason === null && wrote !== null && !fs.existsSync(wrote)) {
-                    reason = "書いたはずのファイルがありません: " + wrote;
-                }
-
-                if (reason === null && one.produces !== undefined && produced(response)) {
-                    remembered.set(one.produces, response.result.value);
-                }
-
-                results.push({ case: one, reason, stopped: noted, seconds: elapsed() });
-                next();
+                continue;
             }
-        });
-    });
+        }
+
+        let reason = judge(one, response, capture, remembered);
+        if (reason === null && wrote !== null && !fs.existsSync(wrote)) {
+            reason = "書いたはずのファイルがありません: " + wrote;
+        }
+
+        if (reason === null && one.produces !== undefined && produced(response)) {
+            remembered.set(one.produces, response.result.value);
+        }
+
+        results.push({ case: one, reason, stopped: noted, seconds: elapsed() });
+    }
+
+    if (broke !== null) {
+        console.error(broke);
+
+        return EXIT_INPUT_UNAVAILABLE;
+    }
+
+    return finish(results, cases, await settled(client));
+}
+
+/** 結末を数えて出し、終了コードを返す。 */
+function finish(results, cases, left) {
+    const failed = results.filter((r) => r.reason !== null);
+
+    const told = process.env.PMX_EDITOR_MCP_FELL_PATH;
+    if (told) {
+        fs.writeFileSync(told, failed.map((r) => cases.indexOf(r.case)).join(","), "utf8");
+    }
+
+    const ranTold = process.env.PMX_EDITOR_MCP_RAN_PATH;
+    if (ranTold) {
+        fs.writeFileSync(ranTold, results.map((r) => cases.indexOf(r.case)).join(","), "utf8");
+    }
+    for (const result of failed) {
+        console.log(
+            "不合格: " + result.case.tool + " — " + result.case.purpose + " — " + result.reason);
+    }
+
+    // 表示で止まった検査も、呼び先までは届いているので合格に数える。合格の中で何件が
+    // 表示で止まったのかを内訳として添える——合格から引くと、行キーごとの内訳が数える
+    // 合格と食い違う。
+    const stopped = results.filter(
+        (r) => r.reason === null && Array.isArray(r.stopped) && r.stopped.length !== 0);
+    if (stopped.length !== 0) {
+        console.log("");
+        console.log("表示で止まった検査: " + stopped.length + " 件");
+        for (const result of stopped) {
+            console.log("  " + result.case.tool + " — " + result.case.purpose);
+            for (const note of result.stopped) {
+                console.log("    " + note);
+            }
+        }
+    }
+
+    console.log("");
+    console.log("1件ごとの所要(長い順):");
+    for (const result of [...results].sort((a, b) => (b.seconds ?? 0) - (a.seconds ?? 0))) {
+        console.log(
+            "  " + (result.seconds ?? 0).toFixed(2) + "秒  " + result.case.tool +
+            " — " + result.case.purpose);
+    }
+
+    console.log("");
+    console.log(
+        "検査: " + results.length + " 件・合格 " + (results.length - failed.length) +
+        "(うち表示で止まった " + stopped.length + ")・不合格 " + failed.length);
+    report(results, "rowKey", "行キー");
+    report(results, "editKind", "編集の流れ");
+    report(results, "connectionPath", "接続の経路");
+
+    if (left !== null) {
+        console.log("");
+        console.log("走らせた後の中継の状態に残りがあります:");
+        console.log(left);
+
+        return EXIT_FAILED;
+    }
+
+    return failed.length === 0 ? EXIT_SUCCESS : EXIT_FAILED;
 }
 
 function readCases(path) {
@@ -985,9 +1022,17 @@ function only(cases, rows) {
 }
 
 const given = process.argv.slice(2);
-const named = { "--control": null, "--compare": null, "--rows": null };
+const named = { "--control": null, "--compare": null, "--rows": null, "--setup": null,
+    "--schemas": null };
+const setupArgs = [];
 const loose = [];
 for (let at = 0; at < given.length; at++) {
+    if (given[at] === "--setup-arg") {
+        setupArgs.push(given[at + 1]);
+        at += 1;
+        continue;
+    }
+
     if (!Object.prototype.hasOwnProperty.call(named, given[at])) {
         loose.push(given[at]);
         continue;
@@ -999,11 +1044,13 @@ for (let at = 0; at < given.length; at++) {
 
 const [processId, casesPath] = loose;
 if (processId === undefined || casesPath === undefined
-    || Object.values(named).some((value) => value === undefined)) {
+    || Object.values(named).some((value) => value === undefined)
+    || setupArgs.some((value) => value === undefined)) {
     console.error(
         "使い方: node e2e-tools.mjs <エディタのプロセスID> <検査のパス>"
             + " [--control <操作役のパス>] [--compare <見比べるスクリプトのパス>]"
-            + " [--rows <走らせる行のキーを並べたパス>]");
+            + " [--rows <走らせる行のキーを並べたパス>] [--setup <前置のパス>]"
+            + " [--setup-arg <前置へ渡す引数>] [--schemas <スキーマ正本のパス>]");
     process.exit(EXIT_INVALID_ARGUMENTS);
 }
 
@@ -1057,7 +1104,32 @@ fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.x"), MESH, "utf8");
 fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.vmd"), motion());
 fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.vpd"), POSE, "utf8");
 
-const finished = await run(PIPE_PREFIX + processId, cases, processId);
+const prepared = prepare(named["--setup"] ?? beside("e2e-setup-dev.ps1"), setupArgs);
+if (prepared.server === null) {
+    console.error(prepared.unavailable);
+    fs.rmSync(TEMPORARY_PLACE, { recursive: true, force: true });
+    process.exit(EXIT_INPUT_UNAVAILABLE);
+}
+
+const client = new McpClient(prepared.server);
+let finished;
+try {
+    await client.start();
+    const mismatch = await agreed(
+        client, named["--schemas"] ?? beside("../catalog/authored/tool-schemas.json"));
+    if (mismatch === null) {
+        finished = await run(client, cases, processId);
+    } else {
+        console.error("公開している名前の集合が合っていません:");
+        console.error(mismatch);
+        finished = EXIT_FAILED;
+    }
+} catch (error) {
+    console.error("ブリッジと話せません: " + error.message);
+    finished = EXIT_INPUT_UNAVAILABLE;
+} finally {
+    await client.stop();
+}
 
 fs.rmSync(TEMPORARY_PLACE, { recursive: true, force: true });
 process.exit(finished);

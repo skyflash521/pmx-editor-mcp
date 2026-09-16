@@ -439,33 +439,38 @@ function Invoke-E2eRunner {
         応答を作る相手と操作役の代わりを立てて自動E2E検査の実行器を走らせ、終了コードと
         書き出したものを返す。Broken を与えると、At が指す検査でその形の期待だけを違えさせる。
     #>
-    param([string]$Cases, [string]$Broken, [int]$At, [string]$Pipe)
+    param([string]$Cases, [string]$Broken, [int]$At)
 
-    # 違える形を渡さない実行では、その引数ごと外す。空の文字列は引数として渡らないので、
-    # 名前だけが残って待受の代わりが値の無い引数で落ちる。
-    $given = @('scripts/e2e-stub-host.mjs', '--cases', $Cases, '--pipe', $Pipe, '--at', "$At")
-    if ($Broken) { $given += @('--broken', $Broken) }
+    # 代わりの相手は実行器が前置を通して起こす。名前の突き合わせが見るスキーマ正本も、その相手が
+    # 公開する名前と同じ元から作る——どちらも検査の定義が名乗るツールの名前である。
+    $tag = [guid]::NewGuid().ToString('N')
+    $defined = Get-Content $Cases -Raw -Encoding UTF8 | ConvertFrom-Json
+    $named = @($defined.cases | ForEach-Object { $_.tool } | Sort-Object -Unique)
+    $schemas = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-schemas-$tag.json")
+    [pscustomobject]@{
+        tools = @($named | ForEach-Object { [pscustomobject]@{ tool = $_ } })
+    } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $schemas -Encoding UTF8
 
-    $told = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-stub-" + $Pipe + ".log")
-    $fell = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-fell-" + $Pipe + ".txt")
-    $ran = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-ran-" + $Pipe + ".txt")
-    $stub = Start-Process -FilePath 'node' -PassThru -WindowStyle Hidden `
-        -RedirectStandardError $told -ArgumentList $given
+    $fell = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-fell-$tag.txt")
+    $ran = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-ran-$tag.txt")
     try {
-        Wait-StubPipe -Name ("pmx-editor-mcp-" + $Pipe) -Stub $stub -Said $told
         $env:PMX_EDITOR_MCP_FELL_PATH = $fell
         $env:PMX_EDITOR_MCP_RAN_PATH = $ran
-        $said = node scripts/e2e-tools.mjs $Pipe $Cases `
+        $said = node scripts/e2e-tools.mjs 0 $Cases `
             --control scripts/e2e-stub-control.ps1 `
-            --compare scripts/e2e-stub-compare.ps1
+            --compare scripts/e2e-stub-compare.ps1 `
+            --schemas $schemas `
+            --setup scripts/e2e-setup-stub.ps1 `
+            --setup-arg -Cases --setup-arg $Cases `
+            --setup-arg -Broken --setup-arg $Broken `
+            --setup-arg -At --setup-arg $At
         $code = $LASTEXITCODE
         $global:LASTEXITCODE = 0
         $numbers = @(Get-FellNumbers -Path $fell)
         $walked = @(Get-FellNumbers -Path $ran)
     } finally {
         Remove-Item Env:PMX_EDITOR_MCP_FELL_PATH, Env:PMX_EDITOR_MCP_RAN_PATH -ErrorAction Ignore
-        Stop-Process -Id $stub.Id -Force -ErrorAction SilentlyContinue
-        Remove-Item $told, $fell, $ran -Force -ErrorAction SilentlyContinue
+        Remove-Item $schemas, $fell, $ran -Force -ErrorAction SilentlyContinue
     }
 
     [pscustomobject]@{ Code = $code; Said = ($said -join "`n"); Fell = $numbers; Ran = $walked }
@@ -513,11 +518,7 @@ function Test-E2eRunner {
 
     $defined = Get-Content $Cases -Raw -Encoding UTF8 | ConvertFrom-Json
 
-    # 待受の名前は、実機のホストが使う名前と紛れない形にする。ホストはエディタのプロセスIDを
-    # 繋ぐので、数だけの接尾辞では、その番号のエディタが起きている実行で相手を取り違える。
-    $pipe = 'stub-' + [guid]::NewGuid().ToString('N')
-
-    $ran = Invoke-E2eRunner -Cases $Cases -Broken '' -At -1 -Pipe $pipe
+    $ran = Invoke-E2eRunner -Cases $Cases -Broken '' -At -1
     if ($ran.Code -ne 0) {
         throw "期待どおりの応答で通して走らせて合格しない: $($ran.Said)"
     }
@@ -528,13 +529,12 @@ function Test-E2eRunner {
     }
 
     foreach ($form in (Get-E2eExpectationForms -Defined $defined).GetEnumerator()) {
-        $pipe = 'stub-' + [guid]::NewGuid().ToString('N')
         $broken = switch ($form.Key) {
             'viewImage.other' { 'viewImage' }
             'called.prompt' { 'prompt' }
             default { $form.Key }
         }
-        $ran = Invoke-E2eRunner -Cases $Cases -Broken $broken -At $form.Value -Pipe $pipe
+        $ran = Invoke-E2eRunner -Cases $Cases -Broken $broken -At $form.Value
         if ($ran.Code -ne 1) {
             throw "$($form.Key) の期待を違えても不合格にならない: $($ran.Said)"
         }
@@ -542,6 +542,27 @@ function Test-E2eRunner {
         if ($ran.Fell -notcontains $form.Value) {
             throw "$($form.Key) の期待を違えたのに $($form.Value) 番の検査が落ちていない: $($ran.Said)"
         }
+    }
+
+    # 検査1件ごとの結末ではなく、走らせる前と後に見る事柄。名前の集合がずれていても、中継を
+    # 作れなかった行や無効にした行が残っていても、呼んだ検査はすべて通りうる——通したまま終える
+    # 実行器はここで落ちる。
+    foreach ($form in @('names', 'unresolved', 'disabled')) {
+        $ran = Invoke-E2eRunner -Cases $Cases -Broken $form -At -1
+        if ($ran.Code -ne 1) {
+            throw "$form を違えても不合格にならない: $($ran.Said)"
+        }
+    }
+
+    # ブリッジ自身が返す誤りは接続先を名乗らない。名乗りを1行目と決め打つ実行器は、この誤りの
+    # 中身を丸ごと落として、落ちた理由の残らない不合格を並べる。
+    $ran = Invoke-E2eRunner -Cases $Cases -Broken 'notice' -At 0
+    if ($ran.Code -ne 1) {
+        throw "ブリッジ自身の誤りを返しても不合格にならない: $($ran.Said)"
+    }
+
+    if ($ran.Said -notmatch 'BRIDGE_TIMEOUT') {
+        throw "ブリッジ自身の誤りの中身が結末に残っていない: $($ran.Said)"
     }
 }
 
