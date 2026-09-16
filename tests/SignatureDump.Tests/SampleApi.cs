@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace PmxEditorMcp.SignatureDump.Tests.Sample
 {
@@ -185,6 +187,44 @@ namespace PmxEditorMcp.SignatureDump.Tests.Sample
 
             public TInner Inner { get; set; }
         }
+    }
+
+    // 対象アセンブリの外で宣言されたメンバーを継承する型。継承した公開メンバーを母集合へ入れない
+    // 列挙では、この型の Clone と CompareTo と GetEnumerator がどこにも現れない。GetEnumerator が
+    // 返す型は、この継承だけが指す——参照している型を宣言メンバーからしか集めない実装は、分類の
+    // 無い型を指す行を出す。
+    public interface ISampleInherited : ICloneable, IComparable<int>, IEnumerable
+    {
+        int OwnValue { get; }
+    }
+
+    // 継承した公開メンバーを持つが、実行環境がすべての型へ配るメンバーも継承する型。配られる
+    // メンバーまで母集合へ入れると、台帳にも対象外一覧にも無いものが入る。自分で宣言する Clone は
+    // 継承した Clone と同じ行キーになるので、重複を落とさない実装はここで2行を出す。
+    public sealed class SampleInheritedData : ICloneable
+    {
+        public int Held { get; set; }
+
+        public object Clone()
+        {
+            return this;
+        }
+    }
+
+    // 対象アセンブリの外に基底クラスを持つ型。クラスが外から継承する公開メンバーはこの形でしか
+    // 現れない。基底は静的なフィールドとコンストラクタも持つので、インスタンスのメンバーだけに
+    // 絞らない実装と、継承の段へコンストラクタを出す実装はここで余分な行を出す。継承したプロパティ
+    // のアクセサーを外す材料を宣言メンバーからしか集めない実装は、get_Cancel と set_Cancel を
+    // メソッドの行として出す。
+    public sealed class SampleForeignDerived : CancelEventArgs
+    {
+        public int Own { get; set; }
+    }
+
+    // 型引数の決まっていない型。期待する行の一覧に Clone が無いことで、持ち込まないことを見る。
+    public interface ISampleInheritedGeneric<T> : ICloneable
+    {
+        T Carried { get; }
     }
 
     internal interface IHiddenApi
