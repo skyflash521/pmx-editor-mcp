@@ -99,7 +99,7 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.UnkeptMembers,
                     inputs.HandledTypes(),
                     inputs.PickingRows(inventory),
-                    inputs.HandleFactories(inventory),
+                    inputs.ReceiverPaths(inventory),
                     inputs.ElementAdders(inventory));
                 ToolCoverageGate.Require(
                     inputs.Schemas,

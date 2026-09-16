@@ -167,7 +167,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ISet<string>> unkept = null,
             ISet<string> handled = null,
             ISet<string> picking = null,
-            IDictionary<string, string> makers = null,
+            IDictionary<string, IList<string>> makers = null,
             IDictionary<string, string> adders = null)
         {
             if (map == null)
@@ -261,7 +261,7 @@ namespace PmxEditorMcp.SignatureDump
                     given,
                     refused,
                     Handles(schema, sdkTypes, handled),
-                    Maker(row, makers, schemas),
+                    Maker(schema.Tool, row, makers, schemas),
                     adders,
                     factories,
                     reading));
@@ -503,7 +503,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IDictionary<string, object>> given,
             IDictionary<string, SampleCallRow> refused,
             IEnumerable<SchemaItem> handed,
-            string maker,
+            IList<string> maker,
             IDictionary<string, string> adders,
             IDictionary<string, string> factories,
             ISet<string> reading)
@@ -549,7 +549,10 @@ namespace PmxEditorMcp.SignatureDump
                     calls = true;
                     borrowing = new Dictionary<string, string>(StringComparer.Ordinal)
                     {
-                        { Leaf(HandlesName), Borrowed(rowKey, Of(schemas, maker)) },
+                        {
+                            Leaf(HandlesName),
+                            Borrowed(rowKey, Of(schemas, maker[maker.Count - 1]))
+                        },
                     };
                 }
             }
@@ -591,7 +594,7 @@ namespace PmxEditorMcp.SignatureDump
                     rowKey,
                     editKind,
                     path,
-                    maker,
+                    maker[maker.Count - 1],
                     "呼び出しの相手を1つ作れること",
                     new Dictionary<string, object>(StringComparer.Ordinal),
                     E2eExpectation.Success,
@@ -825,16 +828,19 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その行の受け手を1つ作るツール。作るツールを持たない行では null——渡す相手が決まらない
-        /// 行は呼べないままで、呼び先まで届く検査を1つも持たない。作る側も対象を選ばずに呼べる
-        /// ものに限る
-        /// ——その作る側がまた受け手を要るなら、渡すものがここでは決まらない。
+        /// そのツールの受け手を得るまでに順に呼ぶツールの列。列を持たないツールでは null——渡す
+        /// 相手が決まらないツールは呼べないままで、呼び先まで届く検査を1つも持たない。列の各段は
+        /// 対象を選ばずに呼べるものに限る——選ぶ相手がまた要るなら、渡すものがここでは決まらない。
         /// </summary>
-        private static string Maker(
-            ToolMapRow row, IDictionary<string, string> makers, ToolSchemaTable schemas)
+        private static IList<string> Maker(
+            string tool,
+            ToolMapRow row,
+            IDictionary<string, IList<string>> makers,
+            ToolSchemaTable schemas)
         {
-            string maker;
-            if (row == null || makers == null || !makers.TryGetValue(row.SignatureKey, out maker))
+            IList<string> path;
+            if (row == null || makers == null || !makers.TryGetValue(tool, out path)
+                || path.Count == 0)
             {
                 return null;
             }
@@ -845,10 +851,7 @@ namespace PmxEditorMcp.SignatureDump
                 return null;
             }
 
-            ToolSchema making = schemas.Tools.FirstOrDefault(
-                t => string.Equals(t.Tool, maker, StringComparison.Ordinal));
-
-            return making != null && Unchosen(making) != null ? maker : null;
+            return path.All(t => Unchosen(Of(schemas, t)) != null) ? path : null;
         }
 
         /// <summary>出たハンドルを観測すると宣言した判定。宣言しない行では空。</summary>
@@ -1572,8 +1575,13 @@ namespace PmxEditorMcp.SignatureDump
         /// 対象を選ばずに呼べる呼び分け。要る組をどれも持たないものがこれに当たる——ハンドルで
         /// 対象を指す呼び分けは、何を渡すかがここでは決まらない。
         /// </summary>
-        private static SchemaBranch Unchosen(ToolSchema schema)
+        internal static SchemaBranch Unchosen(ToolSchema schema)
         {
+            if (schema == null)
+            {
+                return null;
+            }
+
             return schema.Branches.FirstOrDefault(
                 b => !b.Inputs.Any(i => i.Required == true && !i.Injected)
                     && !b.Choices.Any(c => c.Required));

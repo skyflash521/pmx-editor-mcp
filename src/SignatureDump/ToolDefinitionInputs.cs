@@ -153,11 +153,11 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 受け手をハンドルで要る行の行キーから、その受け手を1つ作るツールの名前へ。作るツールが
-        /// 1つに決まらない型は持たない——どれを使うかがここでは決められない。受け手の型は行の
-        /// 宣言型から取る。スキーマの側の型は呼び出しの引数だけを写すので、受け手は載らない。
+        /// 受け手をハンドルで要るツールの名前から、その受け手を得るまでに順に呼ぶツールの列へ。
+        /// 受け手へ至る列を持たないツールは持たない。受け手の型は行の宣言型から取る——スキーマの
+        /// 側の型は呼び出しの引数だけを写すので、受け手は載らない。
         /// </summary>
-        public IDictionary<string, string> HandleFactories(InventoryRecord inventory)
+        public IDictionary<string, IList<string>> ReceiverPaths(InventoryRecord inventory)
         {
             if (inventory == null)
             {
@@ -183,8 +183,8 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
-            Dictionary<string, string> byRow =
-                new Dictionary<string, string>(StringComparer.Ordinal);
+            Dictionary<string, IList<string>> byTool =
+                new Dictionary<string, IList<string>>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, string> named in tools)
             {
                 SignatureRecord signature;
@@ -194,11 +194,11 @@ namespace PmxEditorMcp.SignatureDump
                         TypeDefinitionName.Of(signature.DeclaringType), out maker)
                     && !string.Equals(maker, named.Value, StringComparison.Ordinal))
                 {
-                    byRow[named.Key] = maker;
+                    byTool[named.Value] = new[] { maker };
                 }
             }
 
-            return byRow;
+            return byTool;
         }
 
         /// <summary>その行が、その型の実体を引数無しで1つ作るか。</summary>

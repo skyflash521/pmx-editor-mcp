@@ -1605,9 +1605,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 maker == null
                     ? null
-                    : new Dictionary<string, string>(StringComparer.Ordinal)
+                    : new Dictionary<string, IList<string>>(StringComparer.Ordinal)
                     {
-                        { RowKey, maker.Tool },
+                        { taker.Tool, new[] { maker.Tool } },
                     });
         }
 
