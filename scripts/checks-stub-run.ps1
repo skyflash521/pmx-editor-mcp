@@ -16,7 +16,7 @@ $PSNativeCommandUseErrorActionPreference = $false
 # 投げて落ちる本体と、非0で終わる外部コマンドの本体は、集計の別の道を通る。常設の検査の多くは
 # 後者なので、前者だけでは大半の検査の落ちが拾われることを確かめられない。
 $failed = Invoke-Check -Name '落ちる題材' -Body { throw '作った失敗である。' }
-$nonzero = Invoke-Check -Name '非0で終わる題材' -Body { pwsh -NoProfile -Command 'exit 3' }
+$nonzero = Invoke-Check -Name '非0で終わる題材' -Body { cmd /c exit 3 }
 $passed = Invoke-Check -Name '通る題材' -Body { }
 
 $withFailure = Write-CheckSummary -Failed @('落ちる題材') -Skipped @() -Scope '題材' -Ran 1 `
@@ -27,7 +27,7 @@ $withSkip = Write-CheckSummary -Failed @() -Skipped @('走らせない題材') -
 
 # 上限を0にして数え始めると、どの実行も超えた側になる。上限を超えた実行が合格で終わらない
 # ことは、これでしか確かめられない——止める仕掛けは、最後に始めた1件が伸びた実行を捕まえない。
-Start-CheckBudget
+Start-CheckClock
 $overLimit = Write-CheckSummary -Failed @() -Skipped @() -Scope '題材' -Ran 1 -Listed 1 -Limit 0
 
 # 出来上がりを作る検査が落ちたとき、それを要る検査は始まらない。門が働かなければ、入力の
@@ -44,9 +44,36 @@ $stopped = @(Split-LaneResults -Done @(Invoke-Check -Name $queued[0] -Body { }) 
 $rest = @($queued[1], $queued[2])
 $empty = @(Split-LaneResults -Done @() -Queued $rest -Limit 9)
 
-$capped = Invoke-CappedCheck -Name '長引く題材' -Command 'Start-Sleep -Seconds 9' -Budget 1
-$uncapped = Invoke-CappedCheck -Name '短い題材' -Command 'exit 3' -Budget 9
-$unbudgeted = Invoke-CappedCheck -Name '上限の無い題材' -Command 'exit 5' -Budget 0
+# 上限の効き方は3とおりで、どれも別の子プロセスを起こす。互いに依らないので同時に走らせる
+# ——順に待つと、検査を並列で走らせている間は子の立ち上がりだけでこの題材が伸びる。
+$asked = @(
+    @{ Name = '長引く題材'; Command = 'Start-Sleep -Seconds 9'; LimitSeconds = 0.1 }
+    @{ Name = '短い題材'; Command = 'exit 3'; LimitSeconds = 9 }
+    @{ Name = '上限の無い題材'; Command = 'exit 5'; LimitSeconds = 0 }
+)
+$ran = @($asked | ForEach-Object {
+    $one = $_
+    Start-ThreadJob -ArgumentList $PSScriptRoot, $one -ScriptBlock {
+        param($Root, $One)
+
+        . (Join-Path $Root 'checks.ps1')
+        Invoke-CappedCheck -Name $One.Name -Command $One.Command `
+            -LimitSeconds $One.LimitSeconds
+    }
+} | Receive-Job -Wait -AutoRemoveJob)
+
+$capped = $ran | Where-Object { $_.Name -eq '長引く題材' }
+$uncapped = $ran | Where-Object { $_.Name -eq '短い題材' }
+$unlimited = $ran | Where-Object { $_.Name -eq '上限の無い題材' }
+
+# 上限は合格の条件である。列ごとに止める仕掛けをすり抜けて走り切った回も、
+# 上限に達していれば通さない。
+$over = Deny-OverLimitCheck -LimitSeconds 1 -Result ([pscustomobject]@{
+    Name = '上限を超えて走り切った題材'; Code = 0; Seconds = 1.5; Log = @(); Skipped = $false })
+$within = Deny-OverLimitCheck -LimitSeconds 1 -Result ([pscustomobject]@{
+    Name = '上限の中で走り切った題材'; Code = 0; Seconds = 0.5; Log = @(); Skipped = $false })
+$leftOver = Deny-OverLimitCheck -LimitSeconds 1 -Result ([pscustomobject]@{
+    Name = '走らせていない題材'; Code = 0; Seconds = 9.0; Log = @(); Skipped = $true })
 
 $touching = Test-PathsTouch -Paths @('docs/conventions/verification.md', 'scripts/題材.mjs') `
     -Patterns @('src/*.cs', 'scripts/題材*')
@@ -87,7 +114,10 @@ foreach ($item in @(
     @{ About = '何も返さない列の2件目'; Wanted = $true; Got = $empty[1].Skipped }
     @{ About = '上限を超えた検査'; Wanted = 124; Got = $capped.Code }
     @{ About = '上限の中で終わった検査'; Wanted = 3; Got = $uncapped.Code }
-    @{ About = '上限を持たない検査'; Wanted = 5; Got = $unbudgeted.Code }
+    @{ About = '上限を持たない検査'; Wanted = 5; Got = $unlimited.Code }
+    @{ About = '上限に達して走り切った検査'; Wanted = 124; Got = $over.Code }
+    @{ About = '上限の中で走り切った検査'; Wanted = 0; Got = $within.Code }
+    @{ About = '走らせていない検査'; Wanted = 0; Got = $leftOver.Code }
     @{ About = '入力に当たる道'; Wanted = $true; Got = $touching }
     @{ About = '入力に当たらない道'; Wanted = $false; Got = $untouching }
     @{ About = '手順書に無い名前'; Wanted = 1; Got = $unlisted.Unlisted.Count }

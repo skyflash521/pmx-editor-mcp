@@ -26,10 +26,9 @@ $liveSetupCheck = '配置とブリッジのビルド'
 # 前置も検査の1つとして並べる。外に置くと、その所要が上限の外で使われるうえ、落ちても実行が
 # 止まらず、ホストの無い状態で残りが上限ぶんの時間を使ってから落ちる。
 $checks = [ordered]@{}
-# 上限はどれも実機を通した実測の1.2倍を秒の位で切り上げた値である。
 $checks['配置とブリッジのビルド'] = @{
-    # 実測 14.0秒(ブリッジとホストのソースを変えて組み立てが走る回)
-    Budget = 17
+    # ブリッジとホストのソースを変えて組み立てが走る回を含む。
+    LimitSeconds = 17
     Needs = $noArtifact
     # 配置とブリッジの組み立ては、この実行で1回だけ行う。検査ごとの前置が同じことを繰り返すと、
     # 時間が増えるうえに、配置が動いているエディタを閉じるので後の検査の足を引っ張る。
@@ -37,26 +36,22 @@ $checks['配置とブリッジのビルド'] = @{
         'dotnet build src/Bridge/PmxEditorMcp.Bridge.csproj | Out-Null; exit $LASTEXITCODE'
 }
 $checks['実機動作確認'] = @{
-    # 実測 7.7秒
-    Budget = 10
+    LimitSeconds = 10
     Needs = $liveSetup
     Command = 'pwsh -NoProfile -File scripts/live-host.ps1; exit $LASTEXITCODE'
 }
 $checks['自動E2E検査'] = @{
-    # 実測 26.6秒
-    Budget = 32
+    LimitSeconds = 32
     Needs = $liveSetup
     Command = 'pwsh -NoProfile -File scripts/live-tools.ps1; exit $LASTEXITCODE'
 }
 $checks['参照クライアントの実機動作確認'] = @{
-    # 実測 25.0秒
-    Budget = 30
+    LimitSeconds = 30
     Needs = $liveSetup
     Command = 'node scripts/live-client.mjs; exit $LASTEXITCODE'
 }
 $checks['受入シナリオ'] = @{
-    # 実測 62.4秒
-    Budget = 75
+    LimitSeconds = 75
     Needs = $liveSetup
     Command = 'node scripts/acceptance.mjs --cases catalog/authored/acceptance-scenarios.json' +
         ' --setup scripts/acceptance-setup-dev.ps1; exit $LASTEXITCODE'
@@ -93,7 +88,7 @@ function Close-LeftEditors {
     }
 }
 
-Start-CheckBudget
+Start-CheckClock
 
 $env:PMX_EDITOR_MCP_PREPARED = '1'
 
@@ -117,7 +112,11 @@ try {
         $ran++
 
         $result = Invoke-CappedCheck -Name $name -Command $checks[$name].Command `
-            -Budget $checks[$name].Budget
+            -LimitSeconds $checks[$name].LimitSeconds
+        # 子を止めるのは待ちの分だけなので、起こしとログの読みを含めた所要は上限を
+        # 越えうる。常設の実行器と同じ規則で合否を出す。
+        $result = Deny-OverLimitCheck -Result $result `
+            -LimitSeconds $checks[$name].LimitSeconds
         Write-CheckResult -Result $result
         if ($result.Code -ne 0) {
             Close-LeftEditors
@@ -135,4 +134,4 @@ try {
 
 exit (Write-CheckSummary -Failed $failed -Skipped $skipped -Scope '実機に触る検査' `
     -Ran $ran -Listed $checks.Count `
-    -Limit (@($queued | ForEach-Object { $checks[$_].Budget }) | Measure-Object -Sum).Sum)
+    -Limit (@($queued | ForEach-Object { $checks[$_].LimitSeconds }) | Measure-Object -Sum).Sum)

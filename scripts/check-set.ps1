@@ -400,10 +400,8 @@ function Assert-NoEditorLeft {
     }
 }
 
-# 待受の代わりがパイプを開くまでの上限の秒数。この開発環境での実測(5回)は 0.16・0.18・0.19・
-# 0.20・0.23秒で、上限はその最大の40倍(9.2秒)を秒の位で切り上げた10秒とする。正常な動作を
-# 刻むための値ではなく、開きも落ちもしない相手を諦めるための値である。落ちた相手はその場で
-# 分かるので、この上限は待たずに抜ける。
+# 待受の代わりがパイプを開くまでの上限の秒数。この上限に達した待ちは失敗とする。
+# 落ちた相手はその場で分かるので、この上限は待たずに抜ける。
 $StubPipeLimitSeconds = 10
 
 function Wait-StubPipe {
@@ -722,13 +720,13 @@ $exclusionLane = '除外一覧'
 
 $checks = [ordered]@{}
 $checks[$build] = @{
-    Budget = 7
+    LimitSeconds = 7
     Needs = $noArtifact
     Stage = 1
     Body = { dotnet build PmxEditorMcp.sln -warnaserror }
 }
 $checks['スクリプト構文'] = @{
-    Budget = 5
+    LimitSeconds = 5
     Needs = $noArtifact
     Body = {
         $bad = @()
@@ -741,7 +739,7 @@ $checks['スクリプト構文'] = @{
     }
 }
 $checks['スクリプト構文(PowerShell)'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $noArtifact
     Body = {
         $bad = @()
@@ -755,7 +753,7 @@ $checks['スクリプト構文(PowerShell)'] = @{
     }
 }
 $checks['文書のリンク'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $noArtifact
     Body = {
         lychee --offline --no-progress --include-fragments `
@@ -763,7 +761,7 @@ $checks['文書のリンク'] = @{
     }
 }
 $checks[$derivation] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $buildOutput
     Lane = $exclusionLane
     Body = {
@@ -773,76 +771,76 @@ $checks[$derivation] = @{
     }
 }
 $checks['実行時リフレクション'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $buildOutput
     Body = { & $dump reflection-free $editorDir $hostDll }
 }
 $checks['整形'] = @{
-    Budget = 53
+    LimitSeconds = 53
     Needs = $buildOutput
     Lane = $msbuildLane
     Body = { dotnet format PmxEditorMcp.sln --verify-no-changes }
 }
 $checks['テスト'] = @{
-    Budget = 62
+    LimitSeconds = 62
     Needs = $buildOutput
     Body = { dotnet test PmxEditorMcp.sln --no-build }
 }
 $checks['台帳とSDKの照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump ledger-coverage $editorDir $ledger $excluded $outOfScope }
 }
 $checks['日本語名の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump property-names $editorDir $ledger $excluded $names }
 }
 $checks['型役割の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump type-roles $editorDir $ledger $excluded $roles }
 }
 $checks['共通契約割当の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump common-assignments $editorDir $ledger $excluded $roles $assignments }
 }
 $checks['値の表現の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump value-shapes $editorDir $ledger $excluded $contract }
 }
 $checks['危険操作の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump dangerous-operations $editorDir $ledger $excluded }
 }
 $checks['能力対応表の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump tool-map $editorDir $ledger $excluded $roles $assignments $toolMap }
 }
 $checks['提供対象の網羅'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $exclusionList
     Lane = $exclusionLane
     Body = { & $dump map-coverage $editorDir $ledger $excluded $roles $toolMap }
 }
 $checks['スキーマ定義の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $buildOutput
     Body = { & $dump tool-schemas $contract $toolMap $toolSchemas }
 }
 $checks['ツールの説明文の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $buildOutput
     Body = {
         & $dump tool-descriptions $editorDir $ledger $contract $roles $names `
@@ -850,12 +848,12 @@ $checks['ツールの説明文の照合'] = @{
     }
 }
 $checks['サンプル値の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $buildOutput
     Body = { & $dump sample-values $editorDir $contract $sampleValues }
 }
 $checks['発見可能性の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $buildOutput
     Body = {
         & $dump discovery $editorDir $ledger $contract $roles $names `
@@ -863,7 +861,7 @@ $checks['発見可能性の照合'] = @{
     }
 }
 $checks['スキーマ対応の照合'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $buildOutput
     Body = {
         & $dump schema-correspondence $editorDir $ledger $roles $assignments `
@@ -871,7 +869,7 @@ $checks['スキーマ対応の照合'] = @{
     }
 }
 $checks['ツールの検査の網羅'] = @{
-    Budget = 5
+    LimitSeconds = 5
     Needs = $buildOutput
     Body = {
         & $dump tool-coverage $editorDir $ledger $contract $roles $names `
@@ -879,7 +877,7 @@ $checks['ツールの検査の網羅'] = @{
     }
 }
 $checks['規則適合検査'] = @{
-    Budget = 3
+    LimitSeconds = 3
     Needs = $buildOutput
     Body = {
         & $dump tool-mapping $editorDir $ledger $contract $roles $assignments `
@@ -887,7 +885,7 @@ $checks['規則適合検査'] = @{
     }
 }
 $checks['受入シナリオの照合'] = @{
-    Budget = 5
+    LimitSeconds = 5
     Needs = $buildOutput
     Body = {
         & $dump acceptance-cases $editorDir $ledger $contract $roles $names `
@@ -895,13 +893,13 @@ $checks['受入シナリオの照合'] = @{
     }
 }
 $checks['ブリッジの単独起動'] = @{
-    Budget = 17
+    LimitSeconds = 17
     Needs = $noArtifact
     Lane = $msbuildLane
     Body = { pwsh -NoProfile -File scripts/bridge-standalone.ps1 }
 }
 $checks['配布パッケージの生成'] = @{
-    Budget = 21
+    LimitSeconds = 21
     Needs = $noArtifact
     Lane = $msbuildLane
     Body = {
@@ -914,7 +912,7 @@ $checks['配布パッケージの生成'] = @{
     }
 }
 $checks['E2Eの実行器の照合'] = @{
-    Budget = 63
+    LimitSeconds = 63
     Needs = $noArtifact
     Body = {
         # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
@@ -929,10 +927,7 @@ $checks['E2Eの実行器の照合'] = @{
 }
 
 $checks['検査の集計の照合'] = @{
-    # 並列で走らせた実測は 6.3・10.5秒で、同じ条件の2回が1.67倍ぶれた。上限はその最大の
-    # 3倍(31.5秒)を秒の位で切り上げた32秒とする。正常な実行を刻むための値ではなく、
-    # 止まった実行を諦めるための値である。
-    Budget = 32
+    LimitSeconds = 5
     Needs = $noArtifact
     Body = {
         $spoken = [Console]::OutputEncoding
@@ -946,7 +941,7 @@ $checks['検査の集計の照合'] = @{
 }
 
 $checks['確認クライアントの照合'] = @{
-    Budget = 32
+    LimitSeconds = 32
     Needs = $noArtifact
     Body = {
         # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
@@ -961,7 +956,7 @@ $checks['確認クライアントの照合'] = @{
 }
 
 $checks['実機動作確認の実行器の照合'] = @{
-    Budget = 37
+    LimitSeconds = 37
     Needs = $noArtifact
     Body = {
         $spoken = [Console]::OutputEncoding
@@ -975,7 +970,7 @@ $checks['実機動作確認の実行器の照合'] = @{
 }
 
 $checks['参照クライアントの実行器の照合'] = @{
-    Budget = 46
+    LimitSeconds = 46
     Needs = $noArtifact
     Body = {
         $spoken = [Console]::OutputEncoding
@@ -989,7 +984,7 @@ $checks['参照クライアントの実行器の照合'] = @{
 }
 
 $checks['受入の実行器の照合'] = @{
-    Budget = 120
+    LimitSeconds = 120
     Needs = $noArtifact
     Body = {
         # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
@@ -1083,21 +1078,21 @@ function Select-CheckGroups {
     @($chosen.Keys)
 }
 
-function Get-StandingBudget {
+function Get-StandingLimit {
     <#
         .SYNOPSIS
         常設の検査の上限の秒数。段階1の上限の和と、段階2の最も長い列の和を足した値である。
         段階2は列どうしが並列に走るので、最も長い列がそのまま壁時計になる。
     #>
     $first = (@($checks.Keys | Where-Object { (Get-CheckStage -Name $_) -eq 1 } |
-        ForEach-Object { $checks[$_].Budget }) | Measure-Object -Sum).Sum
+        ForEach-Object { $checks[$_].LimitSeconds }) | Measure-Object -Sum).Sum
     $lanes = @{}
     foreach ($name in $checks.Keys) {
         if ((Get-CheckStage -Name $name) -ne 2) { continue }
 
         $lane = Get-CheckLane -Name $name
         if (-not $lanes.Contains($lane)) { $lanes[$lane] = 0 }
-        $lanes[$lane] += $checks[$name].Budget
+        $lanes[$lane] += $checks[$name].LimitSeconds
     }
 
     $first + (@($lanes.Values) | Measure-Object -Maximum).Maximum
@@ -1159,7 +1154,7 @@ function Invoke-Lane {
     }
 }
 
-function Wait-LanesWithinBudget {
+function Wait-LanesWithinLimit {
     <#
         .SYNOPSIS
         列が終わるのを待ち、自分の上限の和を超えた列を止める。止めないと、1本の検査が長引いた
@@ -1217,7 +1212,7 @@ function Invoke-Checks {
 
     $results = @()
 
-    Start-CheckBudget
+    Start-CheckClock
 
     try {
         # 段階1。段階2が要る出来上がりを作るので、先に直列で通す。
@@ -1252,6 +1247,7 @@ function Invoke-Checks {
                 $laneNames = @($lane.Value)
                 $job = Start-Job -ScriptBlock {
                     Set-Location $using:root
+                    $env:PMX_EDITOR_MCP_IN_LANE = '1'
                     . (Join-Path $using:root 'scripts/check-set.ps1')
                     Invoke-Lane -Queued $using:laneNames
                 }
@@ -1259,10 +1255,10 @@ function Invoke-Checks {
                 $jobs += $job
                 $queuedOf[$job.Id] = $laneNames
                 $limitOf[$job.Id] = (@($laneNames |
-                    ForEach-Object { $checks[$_].Budget }) | Measure-Object -Sum).Sum
+                    ForEach-Object { $checks[$_].LimitSeconds }) | Measure-Object -Sum).Sum
             }
 
-            Wait-LanesWithinBudget -Jobs $jobs -LimitOf $limitOf
+            Wait-LanesWithinLimit -Jobs $jobs -LimitOf $limitOf
             $results += @(Read-LaneResults -Jobs $jobs -QueuedOf $queuedOf -LimitOf $limitOf)
             Remove-Job -Job $jobs -Force
         } else {
@@ -1277,7 +1273,8 @@ function Invoke-Checks {
     # 書くのは検査の定義の順にまとめて行う。走り終えた順に出すと、並列に走った列の行が混ざる。
     $ordered = @()
     foreach ($name in $checks.Keys) {
-        $ordered += @($results | Where-Object { $_.Name -eq $name })
+        $ordered += @($results | Where-Object { $_.Name -eq $name } |
+            ForEach-Object { Deny-OverLimitCheck -Result $_ -LimitSeconds $checks[$name].LimitSeconds })
     }
 
     foreach ($result in $ordered) { Write-CheckResult -Result $result }
@@ -1288,8 +1285,12 @@ function Invoke-Checks {
     $ran = @($ordered | Where-Object { -not $_.Skipped }).Count
 
     Write-CheckSummary -Failed $failed -Skipped $skipped -Scope ($Groups -join '・') `
-        -Ran $ran -Listed $checks.Count -Limit (Get-StandingBudget)
+        -Ran $ran -Listed $checks.Count -Limit (Get-StandingLimit)
 }
 
-Assert-ListedChecks -Path $procedure -Section '## 常設の検査' -Names @($checks.Keys)
-Assert-GroupedChecks -Grouped $checkGroups -Names @($checks.Keys)
+# 列のジョブはこの1本を読み直す。一覧の照合は実行ごとに1回で足り、列ごとに繰り返すと
+# 立ち上がりが混み合って、走っている検査の所要まで伸びる。
+if ($env:PMX_EDITOR_MCP_IN_LANE -ne '1') {
+    Assert-ListedChecks -Path $procedure -Section '## 常設の検査' -Names @($checks.Keys)
+    Assert-GroupedChecks -Grouped $checkGroups -Names @($checks.Keys)
+}

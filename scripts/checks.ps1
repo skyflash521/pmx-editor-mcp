@@ -2,7 +2,7 @@
 # 常設の検査の実行器と実機に触る検査の実行器が共に使う——表の読み方が分かれると、
 # どちらかの実行器だけが手順書とずれる。
 
-$script:CheckBudgetWatch = $null
+$script:CheckClockWatch = $null
 
 <#
     出来上がりを要さない検査の印。どちらの実行器も、この印の検査は何も待たずに走らせる。
@@ -24,22 +24,22 @@ $exclusionList = '除外一覧'
 #>
 $liveSetup = '実機の前置'
 
-function Start-CheckBudget {
+function Start-CheckClock {
     <#
         .SYNOPSIS
         実行の時間を数え始める。実行器は1件目の検査より先にこれを呼ぶ。
     #>
-    $script:CheckBudgetWatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $script:CheckClockWatch = [System.Diagnostics.Stopwatch]::StartNew()
 }
 
-function Get-CheckBudgetElapsed {
+function Get-CheckElapsed {
     <#
         .SYNOPSIS
         数え始めてからの秒数。数え始めていなければ0。
     #>
-    if ($null -eq $script:CheckBudgetWatch) { return 0.0 }
+    if ($null -eq $script:CheckClockWatch) { return 0.0 }
 
-    $script:CheckBudgetWatch.Elapsed.TotalSeconds
+    $script:CheckClockWatch.Elapsed.TotalSeconds
 }
 
 function Get-ListedChecks {
@@ -203,7 +203,7 @@ function Invoke-CappedCheck {
         検査を1件、別のプロセスで走らせて結果を返す。上限を超えた回は子孫ごと終わらせて
         終了コード124で返し、上限が0の回は止めない。
     #>
-    param([string]$Name, [string]$Command, [int]$Budget)
+    param([string]$Name, [string]$Command, [double]$LimitSeconds)
 
     $said = [System.IO.Path]::GetTempFileName()
     $cried = [System.IO.Path]::GetTempFileName()
@@ -213,7 +213,7 @@ function Invoke-CappedCheck {
         $running = Start-Process pwsh -PassThru -NoNewWindow `
             -ArgumentList @('-NoProfile', '-NonInteractive', '-Command', $Command) `
             -RedirectStandardOutput $said -RedirectStandardError $cried
-        $capped = $Budget -gt 0 -and -not $running.WaitForExit($Budget * 1000)
+        $capped = $LimitSeconds -gt 0 -and -not $running.WaitForExit([int]($LimitSeconds * 1000))
         if ($capped) {
             & taskkill /T /F /PID $running.Id 2>&1 | Out-Null
         }
@@ -223,7 +223,7 @@ function Invoke-CappedCheck {
         $log = @(@(Get-Content $said -ErrorAction Ignore) +
             @(Get-Content $cried -ErrorAction Ignore) | Where-Object { $_ })
         if ($capped) {
-            $log += "この検査が上限($Budget 秒)を超えたので、子孫ごと終わらせた。"
+            $log += "この検査が上限($LimitSeconds 秒)を超えたので、子孫ごと終わらせた。"
         }
     } finally {
         Remove-Item $said, $cried -ErrorAction Ignore
@@ -234,6 +234,28 @@ function Invoke-CappedCheck {
         Code = $code
         Seconds = $watch.Elapsed.TotalSeconds
         Log = @($log | ForEach-Object { [string]$_ })
+        Skipped = $false
+    }
+}
+
+function Deny-OverLimitCheck {
+    <#
+        .SYNOPSIS
+        上限に達した検査を不合格にする。上限は合格の条件なので、走り切っても
+        超えた回は通さない——列ごとに止める仕掛けだけでは、列の始まりが遅れた回に
+        超えた検査が通ってしまう。
+    #>
+    param($Result, [double]$LimitSeconds)
+
+    if ($Result.Skipped -or $LimitSeconds -le 0 -or $Result.Seconds -le $LimitSeconds) { return $Result }
+
+    $code = if ($Result.Code -ne 0) { $Result.Code } else { 124 }
+
+    [pscustomobject]@{
+        Name = $Result.Name
+        Code = $code
+        Seconds = $Result.Seconds
+        Log = @(@($Result.Log) + "この検査が上限($LimitSeconds 秒)に達した。")
         Skipped = $false
     }
 }
@@ -326,7 +348,7 @@ function Write-CheckSummary {
     # 上限を超えた実行は合格にしない。検査ごと・列ごとに止める仕掛けは、始める前と列の途中
     # でしか働かないので、最後に始めた1件が伸びた実行と、止める仕掛けを通らない検査が伸びた
     # 実行は、ここでしか捕まえられない。
-    $elapsed = Get-CheckBudgetElapsed
+    $elapsed = Get-CheckElapsed
     $took = '{0:0.0}秒 / 上限 {1}秒' -f $elapsed, $Limit
     $over = $elapsed -gt $Limit
 
