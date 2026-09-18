@@ -1,6 +1,39 @@
 {
   "toolSetups": [
     {
+      "tool": "motion_get_element_vme_group",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "motion_create_vme",
+          "args": {},
+          "out": "vme"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_light_vme_object",
+          "args": {
+            "handles": [
+              "setupOut:vme"
+            ]
+          },
+          "out": "element"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_add_element_vme_group",
+          "args": {
+            "handles": [
+              "receiver:"
+            ],
+            "args": {
+              "el": "setupOut:element"
+            }
+          }
+        }
+      ]
+    },
+    {
       "tool": "motion_list_vme_paths",
       "setup": [
         {

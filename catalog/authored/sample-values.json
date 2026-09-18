@@ -863,6 +863,15 @@
       "basis": "持っているモーションを書き出す操作なので、書き先に一時の置き場を渡す。"
     },
     {
+      "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GetElement(System.Int32)",
+      "arguments": {
+        "args": {
+          "index": 0
+        }
+      },
+      "basis": "段取りが加える要素は1つなので、既定の1では並びの外を指す。"
+    },
+    {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroupBone.GetBone(System.Int32)",
       "arguments": {
         "args": {
