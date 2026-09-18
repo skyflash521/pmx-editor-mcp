@@ -49,6 +49,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string SetupName = "setup";
 
+        private const string ArgumentTypesName = "argumentTypes";
+
         private const string TagName = "tag";
 
         private const string ElementTypeName = "elementType";
@@ -213,6 +215,7 @@ namespace PmxEditorMcp.SignatureDump
                 new[]
                 {
                     UpdateSpecName, PostconditionName, EventTypeName, EmbeddedInName, SetupName,
+                    ArgumentTypesName,
                 });
 
             ToolMapEditKind editKind = Lookup(EditKinds, members[EditKindName], EditKindName);
@@ -228,7 +231,10 @@ namespace PmxEditorMcp.SignatureDump
                     : null,
                 members.ContainsKey(EventTypeName) ? Text(members[EventTypeName], EventTypeName) : null,
                 members.ContainsKey(EmbeddedInName) ? ReadEmbeddedIn(members[EmbeddedInName]) : null,
-                members.ContainsKey(SetupName) ? ReadSetup(members[SetupName]) : null);
+                members.ContainsKey(SetupName) ? ReadSetup(members[SetupName]) : null,
+                members.ContainsKey(ArgumentTypesName)
+                    ? ReadArgumentTypes(members[ArgumentTypesName])
+                    : null);
         }
 
         private static void RequirePresence(
@@ -585,6 +591,29 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return operations;
+        }
+
+        /// <summary>引数の名前から、そこへ渡す相手の型へ。</summary>
+        private static IDictionary<string, string> ReadArgumentTypes(object value)
+        {
+            IDictionary<string, object> members = value as IDictionary<string, object>;
+            if (members == null || members.Count == 0)
+            {
+                throw new FormatException(
+                    members == null
+                        ? ArgumentTypesName + " が組でない。"
+                        : ArgumentTypesName + " は1件以上でなければならない。");
+            }
+
+            Dictionary<string, string> types =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, object> one in members)
+            {
+                types[Name(one.Key, ArgumentTypesName)] =
+                    Text(one.Value, ArgumentTypesName + "." + one.Key);
+            }
+
+            return types;
         }
 
         private static SetupOperation ReadSetupOperation(object item)

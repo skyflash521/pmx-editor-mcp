@@ -9141,6 +9141,9 @@
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.ToCS(PEPlugin.Vme.IPEVmeEventState)",
+      "argumentTypes": {
+        "state": "PEPlugin.Vme.IPEVmeCameraState"
+      },
       "editKind": "read",
       "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして渡したイベントの状態でのカメラ位置の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
@@ -9158,6 +9161,9 @@
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeCameraPosition.ToCameraState(PEPlugin.Vme.IPEVmeEventState)",
+      "argumentTypes": {
+        "state": "PEPlugin.Vme.IPEVmeCameraState"
+      },
       "editKind": "read",
       "basis": "長寿命の持ち物であるカメラ位置の中のものを指すハンドルとして渡したイベントの状態でのカメラ位置の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
@@ -9888,6 +9894,9 @@
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.ToLS(PEPlugin.Vme.IPEVmeEventState)",
+      "argumentTypes": {
+        "state": "PEPlugin.Vme.IPEVmeLightState"
+      },
       "editKind": "read",
       "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして渡したイベントの状態での照明の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
@@ -9905,6 +9914,9 @@
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeLight.ToLightState(PEPlugin.Vme.IPEVmeEventState)",
+      "argumentTypes": {
+        "state": "PEPlugin.Vme.IPEVmeLightState"
+      },
       "editKind": "read",
       "basis": "長寿命の持ち物である照明の中のものを指すハンドルとして渡したイベントの状態での照明の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
@@ -11466,6 +11478,9 @@
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToVS(PEPlugin.Vme.IPEVmeEventState)",
+      "argumentTypes": {
+        "state": "PEPlugin.Vme.IPEVmeSingleValueState"
+      },
       "editKind": "read",
       "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [
@@ -11483,6 +11498,9 @@
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeSingleValueElement.ToValueState(PEPlugin.Vme.IPEVmeEventState)",
+      "argumentTypes": {
+        "state": "PEPlugin.Vme.IPEVmeSingleValueState"
+      },
       "editKind": "read",
       "basis": "その状態のもとでの単値の状態を返すだけで、エディタの状態を動かさない。要素は長寿命の持ち物なので、その中のものを指すハンドルを渡す。",
       "postcondition": [

@@ -992,7 +992,7 @@ namespace PmxEditorMcp.SignatureDump
                 if (TryFill(schema, sdkShapes, sampled, handleTargets, wanted, calling)
                     && Satisfied(schema, calling = Written(calling, rowKey, given, confirmed)))
                 {
-                    handing = Handing(wanted, typeMakers);
+                    handing = Handing(Narrowed(wanted, row), typeMakers);
                 }
 
                 if (handing != null)
@@ -1802,6 +1802,49 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return Handed(Of(schemas, filling[0])) ? filling : null;
+        }
+
+        /// <summary>
+        /// 引数へ渡す相手の型を、行が挙げた型へ置き換える。挙げた名前の引数がこの呼び出しに
+        /// 無ければ落とす。
+        /// </summary>
+        private static IDictionary<string, string> Narrowed(
+            IDictionary<string, string> wanted, ToolMapRow row)
+        {
+            if (row == null || row.ArgumentTypes == null)
+            {
+                return wanted;
+            }
+
+            Dictionary<string, string> narrowed =
+                new Dictionary<string, string>(wanted, StringComparer.Ordinal);
+            foreach (KeyValuePair<string, string> one in row.ArgumentTypes)
+            {
+                IList<string> paths = wanted.Keys
+                    .Where(p => string.Equals(Named(p), one.Key, StringComparison.Ordinal))
+                    .ToList();
+                if (paths.Count == 0)
+                {
+                    throw new InvalidOperationException(
+                        "行が挙げた引数が、その呼び出しに無い: "
+                            + row.SignatureKey + " の " + one.Key);
+                }
+
+                foreach (string path in paths)
+                {
+                    narrowed[path] = one.Value;
+                }
+            }
+
+            return narrowed;
+        }
+
+        /// <summary>道の末の名前。</summary>
+        private static string Named(string path)
+        {
+            int at = path.LastIndexOf(PathStep, StringComparison.Ordinal);
+
+            return at < 0 ? path : path.Substring(at + PathStep.Length);
         }
 
         /// <summary>

@@ -69,6 +69,29 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("view_update_model", operation.ToolName);
         }
 
+        /// <summary>引数へ渡す相手の型は、宣言より狭い型を要る行だけが挙げる。</summary>
+        [Fact]
+        public void ANarrowedArgumentTypeIsReadFromTheRow()
+        {
+            ToolMapRow row = Single(Common(
+                @", ""argumentTypes"": { ""state"": ""PEPlugin.Vme.IPEVmeCameraState"" }"));
+
+            Assert.Equal(
+                "PEPlugin.Vme.IPEVmeCameraState", row.ArgumentTypes["state"]);
+        }
+
+        [Fact]
+        public void ARowWithoutNarrowedArgumentTypesCarriesNone()
+        {
+            Assert.Null(Single(Common(string.Empty)).ArgumentTypes);
+        }
+
+        [Fact]
+        public void RefusesAnEmptyArgumentTypeTable()
+        {
+            Rejects(Common(@", ""argumentTypes"": {}"));
+        }
+
         [Fact]
         public void ARowWithoutSetupCarriesNone()
         {

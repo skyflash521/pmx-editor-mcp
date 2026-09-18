@@ -344,7 +344,8 @@ namespace PmxEditorMcp.SignatureDump
             IList<Postcondition> postcondition,
             string eventType,
             IList<string> embeddedIn,
-            IList<SetupOperation> setup = null)
+            IList<SetupOperation> setup = null,
+            IDictionary<string, string> argumentTypes = null)
         {
             PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
             PropertyRecord.RequireText(basis, nameof(basis));
@@ -359,9 +360,18 @@ namespace PmxEditorMcp.SignatureDump
             EventType = eventType;
             EmbeddedIn = embeddedIn == null ? null : new ReadOnlyCollection<string>(embeddedIn);
             Setup = setup == null ? null : new ReadOnlyCollection<SetupOperation>(setup);
+            ArgumentTypes = argumentTypes == null
+                ? null
+                : new ReadOnlyDictionary<string, string>(
+                    new Dictionary<string, string>(argumentTypes, StringComparer.Ordinal));
         }
 
         public string SignatureKey { get; }
+
+        /// <summary>
+        /// 引数の名前から、そこへ渡す相手の型へ。宣言の型より狭い型を要る引数だけが持つ。
+        /// </summary>
+        public IDictionary<string, string> ArgumentTypes { get; }
 
         public ToolMapEditKind EditKind { get; }
 

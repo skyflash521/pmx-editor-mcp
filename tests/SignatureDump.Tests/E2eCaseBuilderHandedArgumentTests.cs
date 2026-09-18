@@ -92,6 +92,49 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     && string.Equals(c.Tool, Tool, StringComparison.Ordinal));
         }
 
+        private const string Narrow = "PEPlugin.Vmd.IPEVmdCameraKey";
+
+        private const string Narrower = "motion_create_vmd_bas_camera_key";
+
+        /// <summary>行が挙げた型の作り手で、引数へ渡す相手を作る。</summary>
+        [Fact]
+        public void TheArgumentTakesTheOneTheRowNarrowsItTo()
+        {
+            IList<E2eCase> cases = Built(
+                new Dictionary<string, IList<string>>(StringComparer.Ordinal)
+                {
+                    { OtherType, new[] { Other } },
+                    { Narrow, new[] { Narrower } },
+                },
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { "other", Narrow },
+                });
+
+            Assert.Equal(
+                new[] { Narrower },
+                cases
+                    .Where(c => string.Equals(c.Purpose, Handing, StringComparison.Ordinal))
+                    .Select(c => c.Tool)
+                    .ToArray());
+        }
+
+        /// <summary>この呼び出しに無い引数を挙げた行は組み立てない。</summary>
+        [Fact]
+        public void ARowThatNarrowsAnArgumentTheCallDoesNotTakeIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Built(
+                    Makers(),
+                    new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { "missing", Narrow },
+                    }));
+
+            Assert.Contains(
+                "その呼び出しに無い", error.Message, StringComparison.Ordinal);
+        }
+
         private static IDictionary<string, IList<string>> Makers()
         {
             return new Dictionary<string, IList<string>>(StringComparer.Ordinal)
@@ -100,7 +143,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             };
         }
 
-        private static IList<E2eCase> Built(IDictionary<string, IList<string>> typeMakers)
+        private static IList<E2eCase> Built(
+            IDictionary<string, IList<string>> typeMakers,
+            IDictionary<string, string> argumentTypes = null)
         {
             SchemaItem other = Item(null, "other", true);
 
@@ -109,7 +154,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     new ToolMapRow(
                         RowKey, ToolMapEditKind.Read, null, "相手と比べて並び順を返す。",
-                        null, null, null),
+                        null, null, null, null, argumentTypes),
                 }),
                 new ToolSchemaTable(new[] { Taking(other), Free(Receiver), Free(Other) }),
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } },
