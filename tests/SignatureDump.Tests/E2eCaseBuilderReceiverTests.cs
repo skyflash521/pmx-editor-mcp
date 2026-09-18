@@ -157,6 +157,77 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 step.Borrowed.Values.Single(), preparing.Borrowed["handles/0"]);
         }
 
+        /// <summary>行から名前を引けないツールでも、名前で置いた段取りが先に流れる。</summary>
+        [Fact]
+        public void ASetupPlacedByToolNameRunsBeforeThatTool()
+        {
+            IList<E2eCase> cases = Built(
+                new ToolMap(
+                    new[]
+                    {
+                        new ToolMapRow(
+                            RowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                    },
+                    new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal)
+                    {
+                        { Tool, new[] { SetupOperation.CallTool(Filler, Listed(), null) } },
+                    }),
+                new[] { First, Second });
+            E2eCase preparing = cases.First(
+                c => string.Equals(c.Tool, Filler, StringComparison.Ordinal));
+            E2eCase called = cases.First(
+                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal));
+
+            Assert.True(
+                cases.IndexOf(preparing) < cases.IndexOf(called),
+                "名前で置いた段取りが、呼び出しより後に来ている。");
+        }
+
+        /// <summary>スキーマ正本に無いツールへ段取りを置いたら組み立てない。</summary>
+        [Fact]
+        public void ASetupPlacedOnAToolTheCanonDoesNotCarryIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Built(
+                    new ToolMap(
+                        new[]
+                        {
+                            new ToolMapRow(
+                                RowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                        },
+                        new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal)
+                        {
+                            { "model_wipe_nothing", new[] { SetupOperation.InitPmx() } },
+                        }),
+                    new[] { First, Second }));
+
+            Assert.Contains(
+                "スキーマ正本に無い", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>同じツールへ行の段取りと名前で置いた段取りが重なったら組み立てない。</summary>
+        [Fact]
+        public void ASetupPlacedByToolNameThatOverlapsARowSetupIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Built(
+                    new ToolMap(
+                        new[]
+                        {
+                            new ToolMapRow(
+                                RowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null,
+                                new[] { SetupOperation.CallTool(Filler, Listed(), null) }),
+                        },
+                        new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal)
+                        {
+                            { Tool, new[] { SetupOperation.InitPmx() } },
+                        }),
+                    new[] { First, Second }));
+
+            Assert.Contains(
+                "行の段取りと重なっている", error.Message, StringComparison.Ordinal);
+        }
+
         /// <summary>段取りが出した値は、後の段取りの引数へ借りて渡す。</summary>
         [Fact]
         public void WhatOneSetupStepMadeIsLentToTheNext()

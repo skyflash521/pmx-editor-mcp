@@ -1,4 +1,27 @@
 {
+  "toolSetups": [
+    {
+      "tool": "motion_list_vme_paths",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "motion_set_point_vme_path",
+          "args": {
+            "handles": [
+              "receiver:"
+            ],
+            "args": {
+              "pos": [
+                [0, 0, 0],
+                [1, 0, 0],
+                [2, 1, 0]
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
   "rows": [
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.AppendPMDFile(System.String)",

@@ -400,7 +400,9 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>能力対応表。</summary>
     public sealed class ToolMap
     {
-        public ToolMap(IList<ToolMapRow> rows)
+        public ToolMap(
+            IList<ToolMapRow> rows,
+            IDictionary<string, IList<SetupOperation>> toolSetups = null)
         {
             if (rows == null)
             {
@@ -408,8 +410,17 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             Rows = new ReadOnlyCollection<ToolMapRow>(rows);
+            ToolSetups = new ReadOnlyDictionary<string, IList<SetupOperation>>(
+                toolSetups ?? new Dictionary<string, IList<SetupOperation>>(
+                    StringComparer.Ordinal));
         }
 
         public IList<ToolMapRow> Rows { get; }
+
+        /// <summary>
+        /// ツールの名前から、そのツールを呼ぶ前の段取りへ。行から名前を引けないツールは
+        /// 行の段取りを持てないので、ここが持つ。
+        /// </summary>
+        public IDictionary<string, IList<SetupOperation>> ToolSetups { get; }
     }
 }

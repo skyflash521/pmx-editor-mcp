@@ -133,18 +133,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     && c.Expectation == E2eExpectation.Called);
         }
 
+        /// <summary>名前で置いた段取りは、読み返しの事例より前に流れる。</summary>
+        [Fact]
+        public void ASetupPlacedByToolNameRunsBeforeTheReadBack()
+        {
+            IList<E2eCase> cases = Built(
+                new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal)
+                {
+                    { Reading, new[] { SetupOperation.InitPmx() } },
+                });
+            E2eCase preparing = cases.First(
+                c => string.Equals(c.Purpose, "段取りがモデルを空へ揃えられること",
+                    StringComparison.Ordinal));
+            E2eCase back = cases.First(
+                c => string.Equals(c.Purpose, ReadBack, StringComparison.Ordinal));
+
+            Assert.True(
+                cases.IndexOf(preparing) < cases.IndexOf(back),
+                "名前で置いた段取りが、読み返しより後に来ている。");
+        }
+
         /// <summary>その検査が書き換えるツールへ渡した値の組。</summary>
         private static IDictionary<string, object> Value(IList<E2eCase> cases)
         {
             return (IDictionary<string, object>)Updated(cases).Arguments["value"];
         }
 
-        private static IList<E2eCase> Built()
+        private static IList<E2eCase> Built(
+            IDictionary<string, IList<SetupOperation>> toolSetups = null)
         {
             Dictionary<SchemaItem, string> sdkTypes = new Dictionary<SchemaItem, string>();
 
             return E2eCaseBuilder.Build(
-                new ToolMap(new ToolMapRow[0]),
+                new ToolMap(new ToolMapRow[0], toolSetups),
                 new ToolSchemaTable(
                     new[] { Updating(sdkTypes), Listing(), Free(FirstStep), Held(SecondStep) }),
                 new Dictionary<string, string>(StringComparer.Ordinal),

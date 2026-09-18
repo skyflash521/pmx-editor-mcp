@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -40,6 +41,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static void Rejects(string row)
         {
             Assert.Throws<FormatException>(() => ToolMapJsonReader.Read(Map(row)));
+        }
+
+        /// <summary>行から名前を引けないツールへも、呼ぶ前の段取りを置ける。</summary>
+        [Fact]
+        public void ReadsASetupPlacedByToolName()
+        {
+            ToolMap map = ToolMapJsonReader.Read(
+                "{ \"rows\": [" + Common(string.Empty) + "], \"toolSetups\": ["
+                    + @"{ ""tool"": ""model_list_things"", ""setup"": ["
+                    + @"{ ""tag"": ""initPmx"" }] }] }");
+            IList<SetupOperation> setup = map.ToolSetups["model_list_things"];
+
+            Assert.Equal(SetupTag.InitPmx, Assert.Single(setup).Tag);
+        }
+
+        [Fact]
+        public void AMapWithoutSetupsPlacedByToolNameCarriesNone()
+        {
+            Assert.Empty(ToolMapJsonReader.Read(Map(Common(string.Empty))).ToolSetups);
+        }
+
+        [Fact]
+        public void RefusesSetupsPlacedByToolNameOutOfOrder()
+        {
+            Assert.Throws<FormatException>(() => ToolMapJsonReader.Read(
+                "{ \"rows\": [" + Common(string.Empty) + "], \"toolSetups\": ["
+                    + @"{ ""tool"": ""model_list_things"", ""setup"": [{ ""tag"": ""initPmx"" }] },"
+                    + @"{ ""tool"": ""model_list_bones"", ""setup"": [{ ""tag"": ""initPmx"" }] }] }"));
         }
 
         [Fact]

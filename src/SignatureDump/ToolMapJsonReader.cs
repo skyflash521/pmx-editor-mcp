@@ -11,6 +11,8 @@ namespace PmxEditorMcp.SignatureDump
     {
         private const string RowsName = "rows";
 
+        private const string ToolSetupsName = "toolSetups";
+
         private const string SignatureKeyName = "signatureKey";
 
         private const string EditKindName = "editKind";
@@ -196,7 +198,9 @@ namespace PmxEditorMcp.SignatureDump
 
             List<ToolMapRow> rows = new List<ToolMapRow>();
             string previous = null;
-            foreach (object item in Array(Members(parsed, RowsName)[RowsName], RowsName))
+            Dictionary<string, object> root = Members(
+                parsed, new[] { RowsName }, new[] { ToolSetupsName });
+            foreach (object item in Array(root[RowsName], RowsName))
             {
                 ToolMapRow row = ReadRow(item);
                 RequireAscending(previous, row.SignatureKey);
@@ -204,7 +208,32 @@ namespace PmxEditorMcp.SignatureDump
                 rows.Add(row);
             }
 
-            return new ToolMap(rows);
+            return new ToolMap(rows, ReadToolSetups(root));
+        }
+
+        /// <summary>ツールの名前から、そのツールを呼ぶ前の段取りへ。無ければ空。</summary>
+        private static IDictionary<string, IList<SetupOperation>> ReadToolSetups(
+            IDictionary<string, object> root)
+        {
+            Dictionary<string, IList<SetupOperation>> setups =
+                new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal);
+            if (root == null || !root.ContainsKey(ToolSetupsName))
+            {
+                return setups;
+            }
+
+            string previous = null;
+            foreach (object item in Array(root[ToolSetupsName], ToolSetupsName))
+            {
+                Dictionary<string, object> members = Members(
+                    item, new[] { ToolName, SetupName }, new string[0]);
+                string tool = Name(members[ToolName], ToolName);
+                RequireAscending(previous, tool);
+                previous = tool;
+                setups[tool] = ReadSetup(members[SetupName]);
+            }
+
+            return setups;
         }
 
         private static ToolMapRow ReadRow(object item)

@@ -271,6 +271,23 @@ namespace PmxEditorMcp.SignatureDump
                 stepSetups[named.Value] = row.Setup;
             }
 
+            foreach (KeyValuePair<string, IList<SetupOperation>> named in map.ToolSetups)
+            {
+                if (stepSetups.ContainsKey(named.Key))
+                {
+                    throw new InvalidOperationException(
+                        "ツールの名前で置いた段取りが、行の段取りと重なっている: " + named.Key);
+                }
+
+                if (Of(schemas, named.Key) == null)
+                {
+                    throw new InvalidOperationException(
+                        "段取りを置いたツールが、スキーマ正本に無い: " + named.Key);
+                }
+
+                stepSetups[named.Key] = named.Value;
+            }
+
             ISet<string> reading = new HashSet<string>(
                 readers == null ? new string[0] : readers.Values.ToArray(),
                 StringComparer.Ordinal);
@@ -1258,6 +1275,24 @@ namespace PmxEditorMcp.SignatureDump
                         rowKey, editKind, path, schemas, readers, tool, borrowing, one);
                     if (back != null)
                     {
+                        IList<SetupOperation> ready;
+                        foreach (E2eCase step in Prepared(
+                            stepSetups != null
+                                && stepSetups.TryGetValue(back.Tool, out ready)
+                                ? ready
+                                : null,
+                            schemas,
+                            rowKey,
+                            editKind,
+                            path,
+                            adders,
+                            factories,
+                            received,
+                            wiring))
+                        {
+                            yield return step;
+                        }
+
                         yield return back;
                     }
                 }
