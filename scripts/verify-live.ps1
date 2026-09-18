@@ -21,19 +21,22 @@ $procedure = 'docs/conventions/verification.md'
 $section = '## 実機に触る検査'
 
 # 出来上がりを作る検査の名前。どの検査がその出来上がりを要るかは、検査ごとの Needs が述べる。
-$liveSetupCheck = '配置とブリッジのビルド'
+$liveSetupCheck = '配置と組み立て'
 
 # 前置も検査の1つとして並べる。外に置くと、その所要が上限の外で使われるうえ、落ちても実行が
 # 止まらず、ホストの無い状態で残りが上限ぶんの時間を使ってから落ちる。
 $checks = [ordered]@{}
-$checks['配置とブリッジのビルド'] = @{
-    # ブリッジとホストのソースを変えて組み立てが走る回を含む。
+$checks['配置と組み立て'] = @{
+    # ブリッジとホストと生成器のソースを変えて組み立てが走る回を含む。
     LimitSeconds = 17
     Needs = $noArtifact
-    # 配置とブリッジの組み立ては、この実行で1回だけ行う。検査ごとの前置が同じことを繰り返すと、
-    # 時間が増えるうえに、配置が動いているエディタを閉じるので後の検査の足を引っ張る。
+    # 配置と組み立ては、この実行で1回だけ行う。検査ごとの前置が同じことを繰り返すと、時間が
+    # 増えるうえに、配置が動いているエディタを閉じるので後の検査の足を引っ張る。
     Command = '& scripts/deploy-host.ps1 | Out-Null; ' +
-        'dotnet build src/Bridge/PmxEditorMcp.Bridge.csproj | Out-Null; exit $LASTEXITCODE'
+        'dotnet build src/Bridge/PmxEditorMcp.Bridge.csproj | Out-Null; ' +
+        'if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; ' +
+        'dotnet build src/SignatureDump/PmxEditorMcp.SignatureDump.csproj | Out-Null; ' +
+        'exit $LASTEXITCODE'
 }
 $checks['実機動作確認'] = @{
     LimitSeconds = 10

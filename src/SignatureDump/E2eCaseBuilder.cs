@@ -899,8 +899,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// ビューの画像を返すツールの検査。写し取れるのは窓を持つビューだけなので、その1枚を相手に
-        /// 全系統を見比べ、そのビューを返す行だけが合うことを確かめる。
+        /// ビューの画像を返すツールの検査。行が名乗るビューを写し取り、返った画像がその姿と合うことを
+        /// 確かめる。
         /// </summary>
         private static IEnumerable<E2eCase> ImageCases(
             ToolMapRow row,

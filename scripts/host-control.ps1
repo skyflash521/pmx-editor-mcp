@@ -21,8 +21,9 @@ param(
     # 行う操作。
     #   pipes  待ち受けているホストのパイプ名を一覧する
     #   editors 動いているPMXエディタのプロセスIDを一覧する(ホストの稼働状態を問わない)
-    #   launch PMXエディタを起動し、そのホストの待受が現れるまで待ってプロセスIDを返す。
-#          待受が現れないときは、起こしたエディタをこちらで閉じてから失敗する
+    #   launch PMXエディタを起動し、そのホストの待受が現れるまで待ち、-View を指していれば
+    #          そのビューを開いてからプロセスIDを返す。待受が現れないときは、起こしたエディタを
+    #          こちらで閉じてから失敗する
     #   close  指定したエディタを通常の手順で終了し、終了と待受の消失を待つ
     #   status プラグインメニューの稼働状態を表示させ、本文を読んで閉じる
     #   stop   稼働中のホストを停止し、待受の消失と状態区分が停止済みになるまで待つ
@@ -31,24 +32,27 @@ param(
     #   undo   指定したエディタの編集を1回分だけ元に戻す
     #   answer 指定したエディタが出している応答待ちの表示へ応答して閉じ、閉じたものの素性を
     #          1行ずつ返す
+    #   open    指定したビューの窓が現れていなければ、その表示を切り替えるキーを1度送り、
+    #           窓が現れるまで待つ
     #   show    指定したビューの窓を手前へ出す
     #   click   指定したビューの描画面の中央を左クリックする
     #   capture 指定したビューの描画面に中身を描かせ、PNGへ書き出して大きさを返す
     [Parameter(Mandatory = $true)]
     [ValidateSet(
         "pipes", "editors", "launch", "close", "status", "stop", "start", "acl", "undo", "answer",
-        "show", "click", "capture")]
+        "open", "show", "click", "capture")]
     [string]$Action,
 
     # 操作の対象にするエディタのプロセスID。pipes と launch では使わない。
     [int]$ProcessId,
 
-    # 画面への操作の相手にするビューの名前。show・click・capture で使う。
-    [ValidateSet("pmx", "transform")]
-    [string]$View,
+    # 画面への操作の相手にするビューの名前。launch・open・show・click・capture で使う。
+    # launch と open と capture は並べて渡された分をまとめて相手にし、show と click は1つに限る。
+    [ValidateSet("pmx", "transform", "sub")]
+    [string[]]$View,
 
-    # 写し取った画像の書き出し先。capture で使う。
-    [string]$Path,
+    # 写し取った画像の書き出し先。capture で使う。-View と同じ数を同じ並びで渡す。
+    [string[]]$Path,
 
     # 待ちの上限の秒数。0以下だと、状態を変えておきながら一度も観測しないまま失敗しうるので
     # 受け付けない。上限は、終了待ちへミリ秒で渡せる範囲に収める。
@@ -85,6 +89,7 @@ public static class HostControlWindow {
   [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr window, int how);
   [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
   [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint kind);
+  [DllImport("user32.dll")] private static extern IntPtr GetParent(IntPtr window);
   [DllImport("user32.dll", SetLastError = true)]
   private static extern IntPtr SendMessageTimeout(
       IntPtr window, uint message, IntPtr first, IntPtr second, uint how, uint limitMs,
@@ -96,17 +101,28 @@ public static class HostControlWindow {
   [StructLayout(LayoutKind.Sequential)] public struct Rect { public int Left, Top, Right, Bottom; }
   [StructLayout(LayoutKind.Sequential)] public struct Spot { public int X, Y; }
 
-  /// <summary>ビューの中身が描かれる面。窓の中で一番広い子がそれに当たる。</summary>
+  /// <summary>
+  /// ビューの中身が描かれる面。窓の中で一番広い、見えている子を持たない子がそれに当たる。
+  /// 中身を載せる入れ物は、面より広くても面そのものではない。
+  /// </summary>
   public static IntPtr Surface(IntPtr window) {
-    IntPtr widest = IntPtr.Zero;
-    long area = 0;
+    var seen = new System.Collections.Generic.List<IntPtr>();
     EnumChildWindows(window, (child, state) => {
-      Rect box;
-      if (!IsWindowVisible(child) || !GetClientRect(child, out box)) { return true; }
-      long size = (long)(box.Right - box.Left) * (box.Bottom - box.Top);
-      if (size > area) { area = size; widest = child; }
+      if (IsWindowVisible(child)) { seen.Add(child); }
       return true;
     }, IntPtr.Zero);
+
+    var holders = new System.Collections.Generic.HashSet<IntPtr>();
+    foreach (IntPtr child in seen) { holders.Add(GetParent(child)); }
+
+    IntPtr widest = IntPtr.Zero;
+    long area = 0;
+    foreach (IntPtr child in seen) {
+      Rect box;
+      if (holders.Contains(child) || !GetClientRect(child, out box)) { continue; }
+      long size = (long)(box.Right - box.Left) * (box.Bottom - box.Top);
+      if (size > area) { area = size; widest = child; }
+    }
     return widest;
   }
 
@@ -382,9 +398,23 @@ $PollIntervalMs = 500
 # 閉じるためのウィンドウメッセージ(WM_CLOSE)。
 $WindowMessageClose = 0x0010
 
-# ビューの名前から、そのビューを載せている窓の題の始まりへ。サブビューはPMXビューの中に
-# 描かれて自分の窓を持たないので、画面への操作の相手にならない。
-$ViewTitles = @{ pmx = "PmxView"; transform = "VMDView" }
+# キーの押しと離しを知らせるウィンドウメッセージ(WM_KEYDOWN・WM_KEYUP)。
+$WindowMessageKeyDown = 0x0100
+$WindowMessageKeyUp = 0x0101
+
+# ビューの名前から、そのビューを載せている窓の題の始まりへ。
+$ViewTitles = @{ pmx = "PmxView"; transform = "TransformView"; sub = "SubView" }
+
+# ビューの名前から、そのビューの表示と非表示を切り替えるキーへ。Host はそのキーを受け取る窓の
+# ビューの名前で、Key はそのキーの仮想キーコードである。ここに無いビューは開く操作を持たない
+# ——PMXビューはエディタが自分で出す。
+#
+# キーはPMXビューの表示メニューが項目ごとに持つショートカットキーで、変形ビューは F9、
+# サブビューは F8 である。
+$ViewOpeners = @{
+    transform = @{ Host = "pmx"; Key = 0x78 }
+    sub       = @{ Host = "pmx"; Key = 0x77 }
+}
 
 # 窓の中に現れる知らせは、応答待ちの表示を探す道では見つからず素性も読めない。閉じたものを
 # 数えるために、この名前で1件ずつ並べる。
@@ -1299,9 +1329,15 @@ function Invoke-HostOperation {
 function Assert-View {
     <#
         .SYNOPSIS
-        画面への操作の相手にするビューが指定されていることを確かめる。
+        画面への操作の相手にするビューが指定されていることを確かめる。1つの窓しか相手にできない
+        操作では、2つ以上を渡されたら失敗させる。
     #>
+    param([switch]$Single)
+
     if (-not $View) { throw "この操作には -View が要る: $Action" }
+    if ($Single -and @($View).Count -ne 1) {
+        throw "この操作は1つのビューだけを相手にする: $Action"
+    }
 }
 
 function Get-ViewSurface {
@@ -1318,6 +1354,16 @@ function Get-ViewSurface {
     $surface
 }
 
+function Find-ViewWindows {
+    <#
+        .SYNOPSIS
+        そのビューを載せている窓を、見つかっただけ返す。開かれていないビューでは空になる。
+    #>
+    param([int]$OwnerProcessId, [string]$Name)
+
+    @([HostControlWindow]::FindByTitle($OwnerProcessId, $ViewTitles[$Name]))
+}
+
 function Get-ViewWindow {
     <#
         .SYNOPSIS
@@ -1326,12 +1372,69 @@ function Get-ViewWindow {
     #>
     param([int]$OwnerProcessId, [string]$Name)
 
-    $title = $ViewTitles[$Name]
-    $found = @([HostControlWindow]::FindByTitle($OwnerProcessId, $title))
-    if ($found.Count -eq 0) { throw "そのビューの窓が無い: $Name(題が $title で始まる窓)" }
+    $found = @(Find-ViewWindows -OwnerProcessId $OwnerProcessId -Name $Name)
+    if ($found.Count -eq 0) {
+        throw "そのビューの窓が無い: $Name(題が $($ViewTitles[$Name]) で始まる窓)"
+    }
     if ($found.Count -gt 1) { throw "そのビューの窓が $($found.Count) 個ある: $Name" }
 
     $found[0]
+}
+
+function Wait-ViewWindow {
+    <#
+        .SYNOPSIS
+        そのビューの窓が現れるまで待つ。現れなければ失敗する。探す前に、押した分をエディタが
+        捌き終えるのを待つ——ビューが自分を組み立てている間は窓がまだ無く、先に探すと、間隔を
+        1つ空けてからでないと見つからない。
+    #>
+    param([int]$OwnerProcessId, [string]$Name, $Deadline)
+
+    $process = Get-EditorProcess -OwnerProcessId $OwnerProcessId
+    $remaining = [int]($Deadline - (Get-Date)).TotalMilliseconds
+    if ($remaining -le 0 -or -not $process.WaitForInputIdle($remaining)) {
+        throw "エディタが入力待ちへ戻らなかった: プロセスID $OwnerProcessId"
+    }
+
+    while ($true) {
+        if (@(Find-ViewWindows -OwnerProcessId $OwnerProcessId -Name $Name).Count -ne 0) { return }
+        if ((Get-Date) -ge $Deadline) {
+            throw "ビューの窓が $TimeoutSeconds 秒以内に現れなかった: $Name"
+        }
+
+        Wait-Interval -Deadline $Deadline
+    }
+}
+
+function Open-View {
+    <#
+        .SYNOPSIS
+        そのビューの表示を切り替えるキーを1度送り、窓が現れるまで待つ。既に現れていれば送らない
+        ——このキーは押すたびに表示と非表示が入れ替わる。
+    #>
+    param([int]$OwnerProcessId, [string]$Name, $Deadline)
+
+    $deadline = Get-Deadline -Deadline $Deadline
+    if (@(Find-ViewWindows -OwnerProcessId $OwnerProcessId -Name $Name).Count -ne 0) { return }
+
+    $opener = $ViewOpeners[$Name]
+    if (-not $opener) { throw "そのビューを開くキーが無い: $Name" }
+
+    # キーを受け取る窓が組み上がるのを待つ。待受が現れた時点では、エディタはまだ窓を出していない
+    # ことがある。
+    Wait-ViewWindow -OwnerProcessId $OwnerProcessId -Name $opener.Host -Deadline $deadline
+
+    # キーは積んで送る。メニューのショートカットキーは窓の手続きではなくメッセージの列を引き取る
+    # ところで捌かれるので、窓へ直に届けるとショートカットキーとして扱われない。
+    $window = Get-ViewWindow -OwnerProcessId $OwnerProcessId -Name $opener.Host
+    foreach ($message in @($WindowMessageKeyDown, $WindowMessageKeyUp)) {
+        if ([HostControlWindow]::PostMessage(
+                $window, $message, [IntPtr]$opener.Key, [IntPtr]::Zero) -eq [IntPtr]::Zero) {
+            throw "ビューを開くキーを送れない: $Name"
+        }
+    }
+
+    Wait-ViewWindow -OwnerProcessId $OwnerProcessId -Name $Name -Deadline $deadline
 }
 
 function Wait-ViewInFront {
@@ -1340,13 +1443,13 @@ function Wait-ViewInFront {
         その窓が手前に出るまで待つ。出なければ失敗する——頼んだだけでは手前に出たことにならず、
         出ていない窓を人が見ることはできない。
     #>
-    param([IntPtr]$Window)
+    param([IntPtr]$Window, [string]$Name)
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ($true) {
         if ([HostControlWindow]::IsInFront($Window)) { return }
         if ((Get-Date) -ge $deadline) {
-            throw "ビューの窓が $TimeoutSeconds 秒以内に手前へ出なかった: $View"
+            throw "ビューの窓が $TimeoutSeconds 秒以内に手前へ出なかった: $Name"
         }
 
         [HostControlWindow]::Raise($Window)
@@ -1415,6 +1518,10 @@ switch ($Action) {
         $started = Start-Process -FilePath $editorPath -PassThru
         try {
             Wait-HostPipe -OwnerProcessId $started.Id -Until Present
+
+            foreach ($name in @($View)) {
+                Open-View -OwnerProcessId $started.Id -Name $name -Deadline $null
+            }
         }
         catch {
             try {
@@ -1497,32 +1604,48 @@ switch ($Action) {
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         Invoke-UndoOnce -OwnerProcessId $ProcessId -Deadline $null
     }
-    "show" {
+    "open" {
         Assert-ProcessId
         Assert-View
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
-        Wait-ViewInFront -Window (Get-ViewWindow -OwnerProcessId $ProcessId -Name $View)
+        foreach ($name in @($View)) {
+            Open-View -OwnerProcessId $ProcessId -Name $name -Deadline $null
+        }
+    }
+    "show" {
+        Assert-ProcessId
+        Assert-View -Single
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        Wait-ViewInFront -Name $View[0] `
+            -Window (Get-ViewWindow -OwnerProcessId $ProcessId -Name $View[0])
     }
     "click" {
         Assert-ProcessId
-        Assert-View
+        Assert-View -Single
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
-        $surface = Get-ViewSurface -OwnerProcessId $ProcessId -Name $View
+        $surface = Get-ViewSurface -OwnerProcessId $ProcessId -Name $View[0]
         if (-not [HostControlWindow]::ClickCenter($surface, $TimeoutSeconds * 1000)) {
-            throw "描画面の中央を $TimeoutSeconds 秒以内に押せなかった: $View"
+            throw "描画面の中央を $TimeoutSeconds 秒以内に押せなかった: $($View[0])"
         }
     }
     "capture" {
         Assert-ProcessId
         Assert-View
-        if (-not $Path) { throw "この操作には -Path が要る: $Action" }
-        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
-        $surface = Get-ViewSurface -OwnerProcessId $ProcessId -Name $View
-        if (-not [HostControlWindow]::HasCaughtUp($surface, $TimeoutSeconds * 1000)) {
-            throw "ビューの描画面が $TimeoutSeconds 秒以内に描き終えなかった: $View"
+        $names = @($View)
+        $places = @($Path)
+        if ($places.Count -ne $names.Count) {
+            throw "この操作には -View と同じ数の -Path が要る: $Action"
         }
 
-        Write-Output (Save-ViewImage -Surface $surface -Destination $Path)
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        for ($at = 0; $at -lt $names.Count; $at++) {
+            $surface = Get-ViewSurface -OwnerProcessId $ProcessId -Name $names[$at]
+            if (-not [HostControlWindow]::HasCaughtUp($surface, $TimeoutSeconds * 1000)) {
+                throw "ビューの描画面が $TimeoutSeconds 秒以内に描き終えなかった: $($names[$at])"
+            }
+
+            Write-Output (Save-ViewImage -Surface $surface -Destination $places[$at])
+        }
     }
     "answer" {
         Assert-ProcessId

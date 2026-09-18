@@ -21,7 +21,10 @@ const TARGET_NOTICE = "接続先: 代わりの待受";
 /** ブリッジが本文の末尾へ足す警告の行の頭。 */
 const WARNING_PREFIX = "警告: ";
 
-/** ビューを写した中身の代わり。見比べる相手の代わりが、この値だけを写しと同じと答える。 */
+/**
+ * ビューを写した中身の書き出し。これに行が名乗るビューの名を続けたものが、そのビューの写しと
+ * 同じ中身になる。操作役の代わりが同じ綴りで写しを書く。
+ */
 const SAME_VIEW = "うつしたすがた";
 
 /** 写したビューと合わない画像の代わり。 */
@@ -53,9 +56,6 @@ const WARNING = "確かめのための警告。";
 
 /** 確認の表示が出て止まったことを知らせる断りの綴り。ホストの包みが定める。 */
 const PROMPT_SHOWN = "TOOL_PROMPT_SHOWN";
-
-/** 写しを取れるビューの名前。実行器はこのビューの画像だけを、写しと合うことを求める。 */
-const CAPTURED_VIEW = "pmx";
 
 /** ホストが受け持ち、ブリッジが固定のツールとして公開する名前。 */
 const FIXED_TOOLS = ["ping", "sdk_status"];
@@ -160,11 +160,9 @@ function answer(one, broken, params, remembered, round) {
     }
 
     if (one.expect === IMAGE_EXPECT) {
-        // 写したビューの行は合う画像で、ほかのビューの行は合わない画像で通る。違えるときは
-        // その向きを入れ替える。
-        const same = (one.view === CAPTURED_VIEW) !== wrong;
-
-        return { ok: true, value: same ? SAME_VIEW : OTHER_VIEW };
+        // どの行も、自分のビューの写しと合う画像で通る。写しにはビューの名が混ざるので、行と
+        // 写しの取り合わせが入れ替われば合わない。違えるときは合わない画像を返す。
+        return { ok: true, value: wrong ? OTHER_VIEW : SAME_VIEW + " " + one.view };
     }
 
     const missing = borrowed(one, params, remembered);

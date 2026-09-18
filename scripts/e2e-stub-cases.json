@@ -167,7 +167,7 @@
       "editKind": "read",
       "connectionPath": "Host.Stub",
       "tool": "stub_other_view",
-      "purpose": "別のビューの画像が、写し取ったビューの姿と合わないこと",
+      "purpose": "別のビューの行も、そのビューの写し取った姿と合う画像を返せること",
       "arguments": {},
       "expect": "viewImage",
       "view": "transform"

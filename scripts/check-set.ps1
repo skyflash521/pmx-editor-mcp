@@ -479,9 +479,8 @@ function Get-E2eExpectationForms {
     <#
         .SYNOPSIS
         結末の形ごとに、それが初めて現れる検査の番を返す。形の名前は定義から拾うので、形を足しても
-        拾い直しは要らない。ビューの画像だけは、写したビューと合うことを見る形と、ほかのビューが
-        合わないことを見る形を別の形と見る。書き込んだ置き場を確かめる段は結末の名前を持たないので、
-        その名前を足す。
+        拾い直しは要らない。ビューの画像は、名乗るビューごとに別の形と見る。
+        書き込んだ置き場を確かめる段は結末の名前を持たないので、その名前を足す。
     #>
     param($Defined)
 
@@ -490,7 +489,7 @@ function Get-E2eExpectationForms {
     foreach ($one in $Defined.cases) {
         $at++
         $form = $one.expect
-        if ($form -eq 'viewImage' -and $one.view -ne 'pmx') { $form = 'viewImage.other' }
+        if ($form -eq 'viewImage') { $form = 'viewImage.' + $one.view }
         if (-not $forms.Contains($form)) { $forms[$form] = $at }
 
         # 呼び先まで届く段は、断られたときだけでなく確認の表示で止まったときも落ちる。止まった
@@ -528,11 +527,9 @@ function Test-E2eRunner {
     }
 
     foreach ($form in (Get-E2eExpectationForms -Defined $defined).GetEnumerator()) {
-        $broken = switch ($form.Key) {
-            'viewImage.other' { 'viewImage' }
-            'called.prompt' { 'prompt' }
-            default { $form.Key }
-        }
+        $broken = $form.Key
+        if ($broken -like 'viewImage.*') { $broken = 'viewImage' }
+        if ($broken -eq 'called.prompt') { $broken = 'prompt' }
         $ran = Invoke-E2eRunner -Cases $Cases -Broken $broken -At $form.Value
         if ($ran.Code -ne 1) {
             throw "$($form.Key) の期待を違えても不合格にならない: $($ran.Said)"

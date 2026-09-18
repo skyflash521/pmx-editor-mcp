@@ -66,10 +66,35 @@ function Get-ChangedRows {
 }
 
 $editor = 0
+$rising = $null
 $rows = $null
 try {
-    dotnet build $generator | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "生成器のビルドに失敗した(終了コード $LASTEXITCODE)。" }
+    # 実行器が先に配置を済ませていれば繰り返さない。単独で走らせたときは印が無いので自分で行う。
+    # 配置は動いているエディタを閉じるので、起こすより先に済ませる。
+    if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') { & scripts/deploy-host.ps1 | Out-Null }
+
+    # 実行器が先に組み立てを済ませていれば繰り返さない。単独で走らせたときは印が無いので自分で行う。
+    if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') {
+        dotnet build $generator | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "生成器のビルドに失敗した(終了コード $LASTEXITCODE)。" }
+    }
+
+    if ($Since) { $rows = Get-ChangedRows -Ref $Since }
+
+    if ($rows -and -not (Get-Content $rows)) {
+        Write-Host "指した版から中身の変わった行が無い。"
+        return
+    }
+
+    # 変形ビューとサブビューを開いたエディタを、検査を組み立てている間に起こしておく。VPDを入れる
+    # ツールは変形ビューが開かれていないとPMXを受け取れず、返った画像を写しと突き合わせる検査は、
+    # そのビューの窓が無いと写しを撮れない。
+    $rising = Start-ThreadJob -ArgumentList (Get-Location).Path, $control -ScriptBlock {
+        param([string]$Root, [string]$Control)
+
+        Set-Location $Root
+        [int](& $Control -Action launch -View transform, sub)
+    }
 
     & $dump e2e-cases (Get-EditorDirectory) `
         catalog/observed/capability-ledger.json `
@@ -83,17 +108,8 @@ try {
         $cases
     if ($LASTEXITCODE -ne 0) { throw "検査を組み立てられない(終了コード $LASTEXITCODE)。" }
 
-    # 実行器が先に配置を済ませていれば繰り返さない。単独で走らせたときは印が無いので自分で行う。
-    if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') { & scripts/deploy-host.ps1 | Out-Null }
-
-    if ($Since) { $rows = Get-ChangedRows -Ref $Since }
-
-    if ($rows -and -not (Get-Content $rows)) {
-        Write-Host "指した版から中身の変わった行が無い。"
-        return
-    }
-
-    $editor = [int](& $control -Action launch)
+    $editor = [int](Receive-Job -Job $rising -Wait -AutoRemoveJob)
+    $rising = $null
 
     if ($rows) {
         node scripts/e2e-tools.mjs $editor $cases --rows $rows
@@ -105,6 +121,16 @@ try {
     if ($ran -eq $unfiltered) { throw "絞った実行では確かめられない行がある。" }
     if ($ran -ne 0) { throw "不合格の検査がある(終了コード $ran)。" }
 } finally {
+    # 起こし終わる前に抜けた回も、起こした分は閉じる。ここで引き取れなかったことは知らせるだけに
+    # して、抜ける元になった失敗を置き換えない。
+    if ($rising) {
+        try { $editor = [int](Receive-Job -Job $rising -Wait -AutoRemoveJob) }
+        catch {
+            Write-Warning "起こしたエディタを引き取れなかった: $($_.Exception.Message)" `
+                -WarningAction Continue
+        }
+    }
+
     if ($editor -ne 0 -and (Get-Process -Id $editor -ErrorAction Ignore)) {
         & $control -Action close -ProcessId $editor | Out-Null
     }

@@ -125,9 +125,6 @@ const NOT_STARTED = "TOOL_NOT_STARTED";
 /** 人の応答を待つ表示が出ていて進められないことを表す断りの綴り。共通契約が定める。 */
 const PROMPT_SHOWN = "TOOL_PROMPT_SHOWN";
 
-/** 写しを取れるビューの名前。ほかのビューは自分の窓を持たない。 */
-const CAPTURED_VIEW = "pmx";
-
 /** 同じビューを写した2枚と見なす明るさの差の上限。 */
 const MATCHING_IMAGE_LIMIT = 0.1;
 
@@ -344,11 +341,7 @@ async function settled(client) {
  * 1件の検査の結末。合っていれば null、違っていればその理由を返す。
  * 包みの形は共通契約が定めるので、ここでは成功・失敗と理由の綴りだけを見る。
  */
-function judge(one, response, capture, remembered) {
-    if (one.expect === "viewImage") {
-        return viewImage(one, response, capture);
-    }
-
+function judge(one, response, remembered) {
     const envelope = response.result;
 
     if (one.expect === "success") {
@@ -403,44 +396,65 @@ function judge(one, response, capture, remembered) {
     return null;
 }
 
-/** ビューの写しを1枚だけ取る。取れなければその事情を返す。 */
-function captureView(processId) {
-    const destination = path.join(os.tmpdir(), "pmx-editor-mcp-view.png");
-    const done = invokeControl([
-        "-File", CONTROL_SCRIPT, "-Action", "capture",
-        "-ProcessId", String(processId), "-View", CAPTURED_VIEW, "-Path", destination,
+/**
+ * 指したビューの写しを1回の呼び出しでまとめて取り、ビューの名前から写しへの表を返す。取れな
+ * かったときは、どのビューも同じ事情を持つ——操作役は1つでも撮れなければ落ちる。
+ */
+function captureViews(processId, views) {
+    const places = views.map(
+        (view) => path.join(os.tmpdir(), "pmx-editor-mcp-view-" + view + ".png"));
+    const done = invokeListed(CONTROL_SCRIPT, [
+        ["Action", "capture"], ["ProcessId", String(processId)],
+        ["View", views], ["Path", places],
     ]);
 
-    return done.written === null
-        ? { path: null, unavailable: done.unavailable }
-        : { path: destination, unavailable: null };
+    const taken = new Map();
+    for (let at = 0; at < views.length; at++) {
+        taken.set(views[at], done.written === null
+            ? { path: null, unavailable: done.unavailable }
+            : { path: places[at], unavailable: null });
+    }
+
+    return taken;
 }
 
-/** 写しと画像の明るさの差。比べられなければその事情を返す。 */
-function difference(reference, image) {
-    const candidate = path.join(os.tmpdir(), "pmx-editor-mcp-view.b64");
-    fs.writeFileSync(candidate, image, "utf8");
-    const done = invokeControl([
-        "-File", COMPARE_SCRIPT, "-Reference", reference, "-Candidate", candidate,
+/**
+ * 写しと画像の明るさの差を、組の並びの順に返す。比べられなければその事情を返す。
+ */
+function differences(pairs) {
+    const done = invokeListed(COMPARE_SCRIPT, [
+        ["Reference", pairs.map((pair) => pair.reference)],
+        ["Candidate", pairs.map((pair) => pair.candidate)],
     ]);
     if (done.written === null) {
         return { measured: null, unavailable: done.unavailable };
     }
 
-    const measured = Number.parseFloat(done.written);
+    const lines = done.written.split("\n").map((line) => line.trim())
+        .filter((line) => line !== "");
+    if (lines.length !== pairs.length) {
+        return {
+            measured: null,
+            unavailable: "明るさの差が " + pairs.length + " 個ではなく " + lines.length + " 個です。",
+        };
+    }
 
-    return Number.isFinite(measured)
+    const measured = lines.map((line) => Number.parseFloat(line));
+
+    return measured.every((one) => Number.isFinite(one))
         ? { measured, unavailable: null }
         : { measured: null, unavailable: "明るさの差を数として読めません: " + done.written };
 }
 
 /**
- * 返した画像が、写し取ったビューの姿と合うか。写せるビューを返す行は合い、ほかのビューを返す行は
- * 合わないことを確かめる。
+ * 返った画像を、その行が名乗るビューの写しと見比べる組として控える。画像が返っていなければ
+ * その場で理由を返す。見比べるのは走り切ってからで、控えた組をまとめて1回で測る。
  */
-function viewImage(one, response, capture) {
-    if (capture.path === null) {
-        return "ビューを写し取れませんでした: " + capture.unavailable;
+function heldImage(one, response, capture, held) {
+    if (capture === null || capture.path === null) {
+        return one.view
+            + " のビューを写し取れませんでした: "
+            + (capture === null ? "写しを撮っていません。" : capture.unavailable);
     }
 
     const envelope = response.result;
@@ -451,21 +465,32 @@ function viewImage(one, response, capture) {
         return "画像が文字列で返りませんでした。";
     }
 
-    const compared = difference(capture.path, envelope.value);
-    if (compared.measured === null) {
-        return "画像を写しと見比べられませんでした: " + compared.unavailable;
-    }
+    const candidate = path.join(os.tmpdir(), "pmx-editor-mcp-view-" + held.length + ".b64");
+    fs.writeFileSync(candidate, envelope.value, "utf8");
+    held.push({ view: one.view, reference: capture.path, candidate, outcome: null });
 
-    const matches = compared.measured <= MATCHING_IMAGE_LIMIT;
-    if (one.view === CAPTURED_VIEW) {
-        return matches
-            ? null
-            : "写したビューの姿と合いません(明るさの差 " + compared.measured + ")。";
-    }
+    return null;
+}
 
-    return matches
-        ? "別のビューの画像が写したビューの姿と合いました(明るさの差 " + compared.measured + ")。"
-        : null;
+/**
+ * 控えた組をまとめて見比べ、合わなかった行へ理由を書き入れる。測れなかったときは、控えた行を
+ * すべて落とす——測れていない行を合格のまま残すと、見比べていない実行が通ってしまう。
+ */
+function settleImages(held) {
+    if (held.length === 0) { return; }
+
+    const compared = differences(held);
+    for (let at = 0; at < held.length; at++) {
+        if (compared.measured === null) {
+            held[at].outcome.reason = "画像を写しと見比べられませんでした: " + compared.unavailable;
+            continue;
+        }
+
+        if (compared.measured[at] > MATCHING_IMAGE_LIMIT) {
+            held[at].outcome.reason = held[at].view
+                + " のビューの姿と合いません(明るさの差 " + compared.measured[at] + ")。";
+        }
+    }
 }
 
 /**
@@ -594,6 +619,21 @@ function invokeControl(args) {
     }
 
     return { written: (done.stdout ?? "").trim(), unavailable: null };
+}
+
+/**
+ * 並びを渡す相手を、PowerShellの式として起こす。-File で起こすと引数はどれも文字列1つとして
+ * 渡るので、読点で並べても1つの値になってしまう。値は引用符で括り、引用符そのものは重ねて逃がす。
+ */
+function invokeListed(script, named) {
+    const quoted = (one) => "'" + String(one).replace(/'/g, "''") + "'";
+    const parts = [];
+    for (const [name, value] of named) {
+        parts.push("-" + name);
+        parts.push(Array.isArray(value) ? value.map(quoted).join(",") : quoted(value));
+    }
+
+    return invokeControl(["-Command", "& " + quoted(script) + " " + parts.join(" ")]);
 }
 
 /**
@@ -790,17 +830,22 @@ function borrowing(one, remembered) {
 async function run(client, cases, processId) {
     const results = [];
     const remembered = new Map();
-    let capture = null;
+    const held = [];
+    let captures = null;
     let stalled = 0;
     let broke = null;
+
+    // 写しを撮るビューは、走らせる前に出揃っている。
+    const shooting = [...new Set(
+        cases.filter((one) => one.expect === "viewImage").map((one) => one.view))];
 
     for (const one of cases) {
         const startedAt = Date.now();
         const noted = [];
         const elapsed = () => (Date.now() - startedAt) / 1000;
 
-        if (one.expect === "viewImage" && capture === null) {
-            capture = captureView(processId);
+        if (one.expect === "viewImage" && captures === null) {
+            captures = captureViews(processId, shooting);
         }
 
         const given = expanded(borrowing(one, remembered));
@@ -902,7 +947,10 @@ async function run(client, cases, processId) {
             }
         }
 
-        let reason = judge(one, response, capture, remembered);
+        const holding = held.length;
+        let reason = one.expect === "viewImage"
+            ? heldImage(one, response, captures?.get(one.view) ?? null, held)
+            : judge(one, response, remembered);
         if (reason === null && wrote !== null && !fs.existsSync(wrote)) {
             reason = "書いたはずのファイルがありません: " + wrote;
         }
@@ -911,7 +959,11 @@ async function run(client, cases, processId) {
             remembered.set(one.produces, response.result.value);
         }
 
-        results.push({ case: one, reason, stopped: noted, seconds: elapsed() });
+        const outcome = { case: one, reason, stopped: noted, seconds: elapsed() };
+        results.push(outcome);
+
+        // 控えた組は、走り切ってから測った理由をこの結末へ書き入れる。
+        if (held.length > holding) { held[held.length - 1].outcome = outcome; }
     }
 
     if (broke !== null) {
@@ -919,6 +971,8 @@ async function run(client, cases, processId) {
 
         return EXIT_INPUT_UNAVAILABLE;
     }
+
+    settleImages(held);
 
     return finish(results, cases, await settled(client));
 }

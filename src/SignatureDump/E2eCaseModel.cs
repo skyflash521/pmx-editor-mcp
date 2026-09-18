@@ -14,8 +14,8 @@ namespace PmxEditorMcp.SignatureDump
         Refusal,
 
         /// <summary>
-        /// 返す画像が、写し取ったビューの姿と合うこと。合う相手は <see cref="E2eCase.View"/> が持ち、
-        /// 別のビューを返す行はその写しと合わないことを確かめる。
+        /// 返す画像が、写し取ったビューの姿と合うこと。どのビューを写して合わせるかは
+        /// <see cref="E2eCase.View"/> が持つ。
         /// </summary>
         ViewImage,
 

@@ -11,17 +11,18 @@ param(
     # 名前を使うので、数に限らない。
     [string]$ProcessId,
 
-    # 写し取るビューの名前。capture で使う。
-    [string]$View,
+    # 写し取るビューの名前。capture で使う。実物と同じく、並べて渡された分をまとめて相手にする。
+    [string[]]$View,
 
-    # 写し取った画像の書き出し先。capture で使う。
-    [string]$Path
+    # 写し取った画像の書き出し先。capture で使う。-View と同じ数を同じ並びで渡す。
+    [string[]]$Path
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# 待受の代わりが「写したすがた」と同じと答える中身。見比べる相手の代わりがこの文字列を見る。
+# 写しの中身の書き出し。これにビューの名を続けたものを写しとして書く。待受の代わりは、行が
+# 名乗るビューを続けた同じ文字列を返す。見比べる相手の代わりは、この2つが同じかだけを見る。
 $SameView = 'うつしたすがた'
 
 switch ($Action) {
@@ -29,9 +30,15 @@ switch ($Action) {
         # 応答待ちの表示は出ないので、閉じたものは無い。
     }
     'capture' {
-        if (-not $Path) { throw "この操作には -Path が要る: $Action" }
+        $names = @($View)
+        $places = @($Path)
+        if ($places.Count -ne $names.Count) {
+            throw "この操作には -View と同じ数の -Path が要る: $Action"
+        }
 
-        Set-Content -Path $Path -Value $SameView -Encoding UTF8
-        Write-Output '1x1'
+        for ($at = 0; $at -lt $names.Count; $at++) {
+            Set-Content -Path $places[$at] -Value "$SameView $($names[$at])" -Encoding UTF8
+            Write-Output '1x1'
+        }
     }
 }
