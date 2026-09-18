@@ -260,6 +260,116 @@ function Deny-OverLimitCheck {
     }
 }
 
+function Watch-Lanes {
+    <#
+        .SYNOPSIS
+        列が返すものを読みながら待ち、いま走っている検査がその検査の上限へ達した時点でその列を
+        止める。知らせを受ける前と、結果と次の知らせの間は列の和で縛る。待つ相手が尽きたら、
+        集めた結果と、止めた相手・その上限・列の和で止めたかどうかを返す。同時に走らせる本数
+        は AtOnce で絞り、待っている列は空きが出た順に起こす。
+    #>
+    param($Jobs, $LimitsOf, $TotalOf, $Pending, $Start, [int]$AtOnce = 0)
+
+    $waiting = [System.Collections.ArrayList]@(@($Pending) | Where-Object { $null -ne $_ })
+    $watching = [System.Collections.ArrayList]@($Jobs)
+
+    $done = @{}
+    $running = @{}
+    $watch = @{}
+    $whole = @{}
+    $stopped = @{}
+    foreach ($job in $watching) {
+        $done[$job.Id] = @()
+        $running[$job.Id] = $null
+        $watch[$job.Id] = [System.Diagnostics.Stopwatch]::StartNew()
+        $whole[$job.Id] = $null
+        $stopped[$job.Id] = $null
+    }
+
+    $ended = @('Completed', 'Failed', 'Stopped')
+    while ($waiting.Count -gt 0 -or
+        @($watching | Where-Object { $ended -notcontains $_.State }).Count -gt 0) {
+        while ($waiting.Count -gt 0 -and ($AtOnce -le 0 -or
+            @($watching | Where-Object { $ended -notcontains $_.State }).Count -lt $AtOnce)) {
+            $lane = $waiting[0]
+            $waiting.RemoveAt(0)
+            $job = & $Start $lane
+            $done[$job.Id] = @()
+            $running[$job.Id] = $null
+            $watch[$job.Id] = [System.Diagnostics.Stopwatch]::StartNew()
+            $whole[$job.Id] = $null
+            $stopped[$job.Id] = $null
+            [void]$watching.Add($job)
+        }
+
+        Start-Sleep -Milliseconds 200
+        foreach ($job in @($watching)) {
+            foreach ($said in @(Receive-Job -Job $job)) {
+                if ($said.PSObject.Properties.Name -contains 'Starting') {
+                    # 始まりの知らせ。
+                    $running[$job.Id] = [string]$said.Starting
+                    $watch[$job.Id].Restart()
+                    if ($null -ne $whole[$job.Id]) { $whole[$job.Id].Reset() }
+                    continue
+                }
+
+                $done[$job.Id] += $said
+                $running[$job.Id] = $null
+                $watch[$job.Id].Restart()
+                if ($null -ne $whole[$job.Id]) { $whole[$job.Id].Restart() }
+            }
+
+            if ($ended -contains $job.State) { continue }
+
+            if ($null -eq $whole[$job.Id] -and $job.State -eq 'Running') {
+                $whole[$job.Id] = [System.Diagnostics.Stopwatch]::StartNew()
+            }
+
+            $total = $TotalOf[$job.Id]
+            if ($null -eq $running[$job.Id] -and $null -ne $whole[$job.Id] `
+                -and $total -gt 0 -and $whole[$job.Id].Elapsed.TotalSeconds -gt $total) {
+                $stopped[$job.Id] = [pscustomobject]@{
+                    Name = $running[$job.Id]
+                    LimitSeconds = $total
+                    Whole = $true
+                }
+                Stop-Job -Job $job
+                continue
+            }
+
+            if ($null -eq $running[$job.Id]) { continue }
+
+            $limit = $LimitsOf[$job.Id][$running[$job.Id]]
+            if ($limit -le 0 -or $watch[$job.Id].Elapsed.TotalSeconds -le $limit) { continue }
+
+            $stopped[$job.Id] = [pscustomobject]@{
+                Name = $running[$job.Id]
+                LimitSeconds = $limit
+                Whole = $false
+            }
+            Stop-Job -Job $job
+        }
+    }
+
+    # 始まりの知らせは結果ではないので落とす。
+    foreach ($job in $watching) {
+        $done[$job.Id] += @(Receive-Job -Job $job |
+            Where-Object { $_.PSObject.Properties.Name -notcontains 'Starting' })
+    }
+
+    [pscustomobject]@{ Done = $done; Stopped = $stopped; Jobs = @($watching) }
+}
+
+function New-CheckStart {
+    <#
+        .SYNOPSIS
+        これからこの検査を始める、という知らせ。
+    #>
+    param([string]$Name)
+
+    [pscustomobject]@{ Starting = $Name }
+}
+
 function New-SkippedCheck {
     <#
         .SYNOPSIS
@@ -279,17 +389,26 @@ function New-SkippedCheck {
 function New-StoppedCheck {
     <#
         .SYNOPSIS
-        列が上限の和を超えて止められたときの、結果を返していない検査の結果。列の外からは
-        どの検査が長引いたかを言えないので、止まった時点で結果の出ていない先頭をこれにする。
-        所要は分からないので0とし、止めた理由だけを書き出す。
+        結果を返さないまま列が終わった検査の結果。止めた相手が分かっているときはその理由を、
+        分からないまま結果が欠けたときはそのことを書き出す。所要は分からないので0とする。
     #>
-    param([string]$Name, [int]$Limit)
+    param([string]$Name, $Stopped)
+
+    $said = "この検査の結果が返らないまま列が終わった。"
+    if ($null -ne $Stopped) {
+        $said = if ($Stopped.Whole) {
+            "この検査が属する列が、上限の和($($Stopped.LimitSeconds) 秒)に達したので、" +
+                "その場で止めた。"
+        } else {
+            "この検査が上限($($Stopped.LimitSeconds) 秒)に達したので、その場で止めた。"
+        }
+    }
 
     [pscustomobject]@{
         Name = $Name
         Code = 124
         Seconds = 0.0
-        Log = @("この検査が属する列が、上限の和($Limit 秒)を超えたので止められた。")
+        Log = @($said)
         Skipped = $false
     }
 }
@@ -301,7 +420,7 @@ function Split-LaneResults {
         列では結果の出ていない検査が残るので、その先頭を止められたものとし、後ろは走らせて
         いないものとして数える。
     #>
-    param($Done, [string[]]$Queued, [int]$Limit)
+    param($Done, [string[]]$Queued, $Stopped)
 
     $done = @($Done | Where-Object { $_ })
 
@@ -310,7 +429,7 @@ function Split-LaneResults {
     $rest = @($Queued | Where-Object { $names -notcontains $_ })
     if ($rest.Count -eq 0) { return }
 
-    New-StoppedCheck -Name $rest[0] -Limit $Limit
+    New-StoppedCheck -Name $rest[0] -Stopped $Stopped
     foreach ($name in @($rest | Select-Object -Skip 1)) { New-SkippedCheck -Name $name }
 }
 

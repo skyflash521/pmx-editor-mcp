@@ -1081,8 +1081,7 @@ function Select-CheckGroups {
 function Get-StandingLimit {
     <#
         .SYNOPSIS
-        常設の検査の上限の秒数。段階1の上限の和と、段階2の最も長い列の和を足した値である。
-        段階2は列どうしが並列に走るので、最も長い列がそのまま壁時計になる。
+        常設の検査の実行全体の上限の秒数。段階1の上限の和に、段階2で最も長い列の和を足す。
     #>
     $first = (@($checks.Keys | Where-Object { (Get-CheckStage -Name $_) -eq 1 } |
         ForEach-Object { $checks[$_].LimitSeconds }) | Measure-Object -Sum).Sum
@@ -1127,10 +1126,11 @@ function Get-CheckLane {
 function Invoke-Lane {
     <#
         .SYNOPSIS
-        1つの列の検査を順に走らせ、結果を返す。段階2の列ごとに、別の場所から1回ずつ呼ばれる。
+        1つの列の検査を順に走らせ、結果を返す。列ごとに、別の場所から1回ずつ呼ばれる。
         受ける名前を Queued と呼ぶのは、検査の本体がこの関数のスコープで走るからである——
         本体が読む変数と同じ名前を引数に付けると、その変数が引数に隠れて本体が別の値を読む。
-        上限を超えた列を止めるのは呼ぶ側で、こちらは止められるまで順に走らせる。
+        止めるのは呼ぶ側で、こちらは止められるまで順に走らせる。何を始めるかを先に知らせる
+        のは、呼ぶ側がいま走っている検査を当てられるようにするためである。
     #>
     param([string[]]$Queued)
 
@@ -1143,6 +1143,7 @@ function Invoke-Lane {
                 continue
             }
 
+            New-CheckStart -Name $name
             $result = Invoke-Check -Name $name -Body $checks[$name].Body
             $result
             if ($result.Code -eq 0 -and $name -eq $derivation) { $produced += $exclusionList }
@@ -1154,37 +1155,61 @@ function Invoke-Lane {
     }
 }
 
-function Wait-LanesWithinLimit {
+function Invoke-WatchedLanes {
     <#
         .SYNOPSIS
-        列が終わるのを待ち、自分の上限の和を超えた列を止める。止めないと、1本の検査が長引いた
-        ぶんだけ実行の全体が伸びる。
+        指す列を起こして見張りへ掛け、結果を返す。段階1も段階2もこの道を通る。
     #>
-    param($Jobs, $LimitOf)
+    param($Lanes)
 
-    $watch = [System.Diagnostics.Stopwatch]::StartNew()
-    while (@($Jobs | Where-Object { $_.State -eq 'Running' }).Count -gt 0) {
-        Start-Sleep -Milliseconds 200
-        foreach ($job in $Jobs) {
-            if ($job.State -ne 'Running') { continue }
-            if ($watch.Elapsed.TotalSeconds -le $LimitOf[$job.Id]) { continue }
+    $root = (Get-Location).Path
+    $queuedOf = @{}
+    $limitsOf = @{}
+    $totalOf = @{}
+    $start = {
+        param($Lane)
 
-            Stop-Job -Job $job
+        # 名前の並びは using で渡す。引数の並びとして渡すと、並びがほどけて2件目から先が
+        # 別の引数になる。
+        $laneNames = @($Lane)
+        $job = Start-Job -ScriptBlock {
+            Set-Location $using:root
+            $env:PMX_EDITOR_MCP_IN_LANE = '1'
+            . (Join-Path $using:root 'scripts/check-set.ps1')
+            Invoke-Lane -Queued $using:laneNames
         }
+
+        $queuedOf[$job.Id] = $laneNames
+        $limits = @{}
+        foreach ($one in $laneNames) { $limits[$one] = $checks[$one].LimitSeconds }
+        $limitsOf[$job.Id] = $limits
+        $totalOf[$job.Id] = Get-StandingLimit
+
+        $job
     }
+
+    $ordered = @($Lanes | Sort-Object -Descending -Property @{ Expression = {
+        (@($_ | ForEach-Object { $checks[$_].LimitSeconds }) | Measure-Object -Sum).Sum } })
+    $watched = Watch-Lanes -Jobs @() -LimitsOf $limitsOf -TotalOf $totalOf `
+        -Pending $ordered -Start $start `
+        -AtOnce ([Math]::Max(1, [Environment]::ProcessorCount / 4))
+    $said = @(Read-LaneResults -Jobs $watched.Jobs -QueuedOf $queuedOf -Watched $watched)
+    Remove-Job -Job $watched.Jobs -Force
+
+    $said
 }
 
 function Read-LaneResults {
     <#
         .SYNOPSIS
-        列が返した結果を読む。並びの割り出しは、ジョブを起こさずに確かめられるよう別の入口が
-        持つ。
+        見張りが集めた結果を、報告する並びへ均す。並びの割り出しは、ジョブを起こさずに
+        確かめられるよう別の入口が持つ。
     #>
-    param($Jobs, $QueuedOf, $LimitOf)
+    param($Jobs, $QueuedOf, $Watched)
 
     foreach ($job in $Jobs) {
-        Split-LaneResults -Done @(Receive-Job -Job $job) -Queued $QueuedOf[$job.Id] `
-            -Limit $LimitOf[$job.Id]
+        Split-LaneResults -Done @($Watched.Done[$job.Id]) -Queued $QueuedOf[$job.Id] `
+            -Stopped $Watched.Stopped[$job.Id]
     }
 }
 
@@ -1215,12 +1240,12 @@ function Invoke-Checks {
     Start-CheckClock
 
     try {
-        # 段階1。段階2が要る出来上がりを作るので、先に直列で通す。
+        # 段階1。1件ずつ、列として起こす。
         foreach ($name in $checks.Keys) {
             if ($wanted -notcontains $name) { continue }
             if ((Get-CheckStage -Name $name) -ne 1) { continue }
 
-            $results += Invoke-Check -Name $name -Body $checks[$name].Body
+            $results += @(Invoke-WatchedLanes -Lanes @(, @($name)))
         }
 
         # 段階2の列。同じ列の中は直列で、列どうしは並列に走る。
@@ -1237,30 +1262,7 @@ function Invoke-Checks {
         # 段階1が落ちたら段階2は始めない。出来上がりが揃わないまま走らせても結末は変わらない。
         $ready = @($results | Where-Object { $_.Code -ne 0 }).Count -eq 0
         if ($ready) {
-            $root = (Get-Location).Path
-            $jobs = @()
-            $queuedOf = @{}
-            $limitOf = @{}
-            foreach ($lane in $lanes.GetEnumerator()) {
-                # 名前の並びは using で渡す。引数の並びとして渡すと、並びがほどけて2件目から先が
-                # 別の引数になる。
-                $laneNames = @($lane.Value)
-                $job = Start-Job -ScriptBlock {
-                    Set-Location $using:root
-                    $env:PMX_EDITOR_MCP_IN_LANE = '1'
-                    . (Join-Path $using:root 'scripts/check-set.ps1')
-                    Invoke-Lane -Queued $using:laneNames
-                }
-
-                $jobs += $job
-                $queuedOf[$job.Id] = $laneNames
-                $limitOf[$job.Id] = (@($laneNames |
-                    ForEach-Object { $checks[$_].LimitSeconds }) | Measure-Object -Sum).Sum
-            }
-
-            Wait-LanesWithinLimit -Jobs $jobs -LimitOf $limitOf
-            $results += @(Read-LaneResults -Jobs $jobs -QueuedOf $queuedOf -LimitOf $limitOf)
-            Remove-Job -Job $jobs -Force
+            $results += @(Invoke-WatchedLanes -Lanes @($lanes.Values))
         } else {
             foreach ($lane in $lanes.GetEnumerator()) {
                 foreach ($name in $lane.Value) { $results += New-SkippedCheck -Name $name }

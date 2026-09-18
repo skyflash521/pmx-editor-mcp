@@ -13,8 +13,34 @@ $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot 'checks.ps1')
 
-# 投げて落ちる本体と、非0で終わる外部コマンドの本体は、集計の別の道を通る。常設の検査の多くは
-# 後者なので、前者だけでは大半の検査の落ちが拾われることを確かめられない。
+# 上限へ達した検査を打ち切る道と、知らせを出さない列を列の和で止める道。
+$lane = Start-ThreadJob -ScriptBlock {
+    [pscustomobject]@{ Starting = '長引く検査' }
+    Start-Sleep -Seconds 9
+    [pscustomobject]@{
+        Name = '長引く検査'; Code = 0; Seconds = 9.0; Log = @(); Skipped = $false }
+}
+$silent = Start-ThreadJob -ScriptBlock { Start-Sleep -Seconds 9 }
+$laneWatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+# 上限の効き方3とおり。どれも別の子プロセスを起こすので、同時に走らせる。
+$asked = @(
+    @{ Name = '長引く題材'; Command = 'Start-Sleep -Seconds 9'; LimitSeconds = 0.1 }
+    @{ Name = '短い題材'; Command = 'exit 3'; LimitSeconds = 9 }
+    @{ Name = '上限の無い題材'; Command = 'exit 5'; LimitSeconds = 0 }
+)
+$cappedJobs = @($asked | ForEach-Object {
+    $one = $_
+    Start-ThreadJob -ArgumentList $PSScriptRoot, $one -ScriptBlock {
+        param($Root, $One)
+
+        . (Join-Path $Root 'checks.ps1')
+        Invoke-CappedCheck -Name $One.Name -Command $One.Command `
+            -LimitSeconds $One.LimitSeconds
+    }
+})
+
+# 投げて落ちる本体と、非0で終わる外部コマンドの本体は、集計の別の道を通る。
 $failed = Invoke-Check -Name '落ちる題材' -Body { throw '作った失敗である。' }
 $nonzero = Invoke-Check -Name '非0で終わる題材' -Body { cmd /c exit 3 }
 $passed = Invoke-Check -Name '通る題材' -Body { }
@@ -35,39 +61,29 @@ $overLimit = Write-CheckSummary -Failed @() -Skipped @() -Scope '題材' -Ran 1 
 $readyWhenMade = Test-CheckReady -Needs '作った出来上がり' -Produced @('なし', '作った出来上がり')
 $readyWhenNot = Test-CheckReady -Needs '作った出来上がり' -Produced @('なし')
 
-# 列が上限の和を超えて止められたとき、結果の出ていない検査の先頭が止められたものになり、
-# 後ろは走らせていないものとして数えられる。止める仕組みはこの割り出しに掛かっている。
+# 結果の出ていない検査の先頭が止められたものになり、後ろは走らせていないものとして数えられる。
 $queued = @('走った題材', '止められた題材', '始まらない題材')
 $stopped = @(Split-LaneResults -Done @(Invoke-Check -Name $queued[0] -Body { }) `
-    -Queued $queued -Limit 9)
+    -Queued $queued -Stopped $null)
 
 $rest = @($queued[1], $queued[2])
-$empty = @(Split-LaneResults -Done @() -Queued $rest -Limit 9)
+$empty = @(Split-LaneResults -Done @() -Queued $rest -Stopped $null)
 
-# 上限の効き方は3とおりで、どれも別の子プロセスを起こす。互いに依らないので同時に走らせる
-# ——順に待つと、検査を並列で走らせている間は子の立ち上がりだけでこの題材が伸びる。
-$asked = @(
-    @{ Name = '長引く題材'; Command = 'Start-Sleep -Seconds 9'; LimitSeconds = 0.1 }
-    @{ Name = '短い題材'; Command = 'exit 3'; LimitSeconds = 9 }
-    @{ Name = '上限の無い題材'; Command = 'exit 5'; LimitSeconds = 0 }
-)
-$ran = @($asked | ForEach-Object {
-    $one = $_
-    Start-ThreadJob -ArgumentList $PSScriptRoot, $one -ScriptBlock {
-        param($Root, $One)
+$watched = Watch-Lanes -Jobs @($lane, $silent) `
+    -LimitsOf @{ $lane.Id = @{ '長引く検査' = 0.1 }; $silent.Id = @{} } `
+    -TotalOf @{ $lane.Id = 9; $silent.Id = 0.1 }
+$cutSeconds = $laneWatch.Elapsed.TotalSeconds
+$cutName = $watched.Stopped[$lane.Id].Name
+$cutDone = @($watched.Done[$lane.Id]).Count
+$silentWhole = $watched.Stopped[$silent.Id].Whole
+Remove-Job -Job $lane, $silent -Force
 
-        . (Join-Path $Root 'checks.ps1')
-        Invoke-CappedCheck -Name $One.Name -Command $One.Command `
-            -LimitSeconds $One.LimitSeconds
-    }
-} | Receive-Job -Wait -AutoRemoveJob)
-
+$ran = @($cappedJobs | Receive-Job -Wait -AutoRemoveJob)
 $capped = $ran | Where-Object { $_.Name -eq '長引く題材' }
 $uncapped = $ran | Where-Object { $_.Name -eq '短い題材' }
 $unlimited = $ran | Where-Object { $_.Name -eq '上限の無い題材' }
 
-# 上限は合格の条件である。列ごとに止める仕掛けをすり抜けて走り切った回も、
-# 上限に達していれば通さない。
+# 見張りをすり抜けて走り切った回も、上限に達していれば通さない。
 $over = Deny-OverLimitCheck -LimitSeconds 1 -Result ([pscustomobject]@{
     Name = '上限を超えて走り切った題材'; Code = 0; Seconds = 1.5; Log = @(); Skipped = $false })
 $within = Deny-OverLimitCheck -LimitSeconds 1 -Result ([pscustomobject]@{
@@ -115,6 +131,10 @@ foreach ($item in @(
     @{ About = '上限を超えた検査'; Wanted = 124; Got = $capped.Code }
     @{ About = '上限の中で終わった検査'; Wanted = 3; Got = $uncapped.Code }
     @{ About = '上限を持たない検査'; Wanted = 5; Got = $unlimited.Code }
+    @{ About = '上限へ達した列を止めること'; Wanted = '長引く検査'; Got = $cutName }
+    @{ About = '知らせの無い列を列の和で止めること'; Wanted = $true; Got = $silentWhole }
+    @{ About = '止めた検査の結果を数えないこと'; Wanted = 0; Got = $cutDone }
+    @{ About = '走り切るのを待たずに止めること'; Wanted = $true; Got = ($cutSeconds -lt 5) }
     @{ About = '上限に達して走り切った検査'; Wanted = 124; Got = $over.Code }
     @{ About = '上限の中で走り切った検査'; Wanted = 0; Got = $within.Code }
     @{ About = '走らせていない検査'; Wanted = 0; Got = $leftOver.Code }
