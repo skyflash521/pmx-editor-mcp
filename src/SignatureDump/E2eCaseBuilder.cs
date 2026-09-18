@@ -202,7 +202,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> addersByTool = null,
             IDictionary<string, string> addersByType = null,
             IDictionary<string, string> updaters = null,
-            IDictionary<string, ISet<string>> targeted = null)
+            IDictionary<string, ISet<string>> targeted = null,
+            IDictionary<string, ParentValues> parentValues = null)
         {
             if (map == null)
             {
@@ -282,7 +283,8 @@ namespace PmxEditorMcp.SignatureDump
                     .ToDictionary(c => c.SignatureKey, c => c, StringComparer.Ordinal);
             ElementWiring wiring = new ElementWiring(
                 factories, parents, addersByType, updaters,
-                Aiming(schemas, sdkTypes, positioned, updaters, targeted));
+                Aiming(schemas, sdkTypes, positioned, updaters, targeted),
+                parentValues);
             List<E2eCase> cases = new List<E2eCase>(PreparingCases(schemas));
             cases.AddRange(SetupCases(schemas, factories, wiring));
 
@@ -1491,13 +1493,15 @@ namespace PmxEditorMcp.SignatureDump
                 IDictionary<string, string> parents,
                 IDictionary<string, string> addersByType,
                 IDictionary<string, string> updaters,
-                IDictionary<string, IDictionary<string, string>> aiming)
+                IDictionary<string, IDictionary<string, string>> aiming,
+                IDictionary<string, ParentValues> parentValues)
             {
                 Factories = factories;
                 Parents = parents;
                 AddersByType = addersByType;
                 Updaters = updaters;
                 Aiming = aiming;
+                ParentValues = parentValues;
             }
 
             /// <summary>並びへ加えるツールの名前から、その要素を作るツールの名前へ。</summary>
@@ -1517,6 +1521,9 @@ namespace PmxEditorMcp.SignatureDump
             /// 項目を持たない要素は持たない。
             /// </summary>
             public IDictionary<string, IDictionary<string, string>> Aiming { get; }
+
+            /// <summary>並びへ加えるツールの名前から、加える前に親へ揃える値へ。</summary>
+            public IDictionary<string, ParentValues> ParentValues { get; }
         }
 
         /// <summary>
@@ -1568,6 +1575,30 @@ namespace PmxEditorMcp.SignatureDump
                         yield return one;
                     }
                 }
+            }
+
+            ParentValues values = Aligned(wiring, adding);
+            if (values != null)
+            {
+                yield return new E2eCase(
+                    rowKey,
+                    editKind,
+                    path,
+                    values.ParentTool,
+                    "加える先の親を揃えられること",
+                    new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { IndicesName, new object[] { FirstPosition } },
+                        {
+                            ValueName,
+                            new Dictionary<string, object>(StringComparer.Ordinal)
+                            {
+                                { values.Member, values.Value },
+                            }
+                        },
+                    },
+                    E2eExpectation.Success,
+                    null);
             }
 
             bool listed = Handed(Of(schemas, adding));
@@ -1668,6 +1699,17 @@ namespace PmxEditorMcp.SignatureDump
             return wiring != null && wiring.Updaters != null
                 && wiring.Updaters.TryGetValue(adding, out writing)
                 ? writing
+                : null;
+        }
+
+        /// <summary>加える前に親へ揃える値。揃える必要が無ければ null。</summary>
+        private static ParentValues Aligned(ElementWiring wiring, string adding)
+        {
+            ParentValues values;
+
+            return wiring != null && wiring.ParentValues != null
+                && wiring.ParentValues.TryGetValue(adding, out values)
+                ? values
                 : null;
         }
 

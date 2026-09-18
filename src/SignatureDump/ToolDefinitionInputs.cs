@@ -24,6 +24,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly IDictionary<string, ISet<string>> _targetedMembers;
 
+        private readonly IDictionary<string, ParentValues> _parentValues;
+
         private readonly IDictionary<string, string> _methodNotes;
 
         private readonly IDictionary<string, string> _propertyNotes;
@@ -39,6 +41,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> viewImages,
             IDictionary<string, ISet<string>> unkeptMembers,
             IDictionary<string, ISet<string>> targetedMembers,
+            IDictionary<string, ParentValues> parentValues,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes,
             IDictionary<string, string> shapesByType,
@@ -59,6 +62,7 @@ namespace PmxEditorMcp.SignatureDump
             _viewImages = viewImages;
             _unkeptMembers = unkeptMembers;
             _targetedMembers = targetedMembers;
+            _parentValues = parentValues;
             _methodNotes = methodNotes;
             _propertyNotes = propertyNotes;
             _shapesByType = shapesByType;
@@ -448,6 +452,14 @@ namespace PmxEditorMcp.SignatureDump
             get { return _targetedMembers; }
         }
 
+        /// <summary>
+        /// 要素を親の並びへ加えるツールの名前から、加える前に親へ揃える値へ。
+        /// </summary>
+        public IDictionary<string, ParentValues> ParentValues
+        {
+            get { return _parentValues; }
+        }
+
         public IDictionary<string, int> Lengths { get; }
 
         public int BudgetChars { get; }
@@ -486,6 +498,7 @@ namespace PmxEditorMcp.SignatureDump
                 contract.ViewImages,
                 contract.UnkeptMembers,
                 contract.TargetedMembers,
+                contract.ParentValues,
                 DocumentNoteReader.ReadMethods(document),
                 DocumentNoteReader.Read(document),
                 ShapesByType(contract),

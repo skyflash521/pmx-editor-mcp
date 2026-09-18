@@ -117,6 +117,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ((IDictionary<string, object>)writing.Arguments["value"]).Keys.ToArray());
         }
 
+        /// <summary>親へ揃える値を挙げた並びでは、加える前に親を揃える段を出す。</summary>
+        [Fact]
+        public void TheParentIsAlignedBeforeTheElementIsAdded()
+        {
+            IList<E2eCase> cases = Built(
+                parentValues: new Dictionary<string, ParentValues>(StringComparer.Ordinal)
+                {
+                    { Adder, new ParentValues(OffsetWriter, "kind", "Bone") },
+                });
+            E2eCase aligned = cases.Single(
+                c => string.Equals(c.Tool, OffsetWriter, StringComparison.Ordinal));
+            E2eCase added = cases.Single(
+                c => string.Equals(c.Tool, Adder, StringComparison.Ordinal));
+
+            Assert.Equal(
+                "Bone", ((IDictionary<string, object>)aligned.Arguments["value"])["kind"]);
+            Assert.True(
+                cases.IndexOf(aligned) < cases.IndexOf(added),
+                "親を揃える段が、加える段より後に来ている。");
+        }
+
         /// <summary>指す先の並びが空だと位置で指せないので、指す先の要素を先に1つ作って加える。</summary>
         [Fact]
         public void ThePointedAtListIsFilledBeforeTheOneThatPointsAtIt()
@@ -162,7 +183,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, ISet<string>> targeted = null,
             IEnumerable<ToolSchema> more = null,
             IDictionary<string, string> factories = null,
-            IDictionary<string, string> addersByType = null)
+            IDictionary<string, string> addersByType = null,
+            IDictionary<string, ParentValues> parentValues = null)
         {
             SchemaItem member = Item("number", Member);
             SchemaItem another = Item("number", Another);
@@ -183,7 +205,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 addersByType,
                 new Dictionary<string, string>(StringComparer.Ordinal) { { Adder, Writer } },
                 targeted ?? Targeted(Writer, Member),
-                Writer);
+                Writer,
+                parentValues);
         }
 
         /// <summary>種別で呼び分ける書き換えを持つ、モーフのオフセットの並び。</summary>
@@ -215,7 +238,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, string> addersByType,
             IDictionary<string, string> updaters,
             IDictionary<string, ISet<string>> targeted,
-            string writer)
+            string writer,
+            IDictionary<string, ParentValues> parentValues = null)
         {
             return E2eCaseBuilder.Build(
                 new ToolMap(new ToolMapRow[0]),
@@ -242,7 +266,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null,
                 addersByType,
                 updaters,
-                targeted)
+                targeted,
+                parentValues)
                 .Where(c => !string.Equals(c.Tool, writer, StringComparison.Ordinal)
                     || c.Borrowed != null)
                 .ToList();

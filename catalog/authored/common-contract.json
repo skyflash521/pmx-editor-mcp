@@ -370,6 +370,15 @@
       "basis": "書き戻しの正規化は、指す骨が今のPMXに無い表示枠の項目を項目ごと外す。モーフを指す項目を外す枝は、骨を指す項目であることを条件に持つので通らない。"
     }
   ],
+  "parentValues": [
+    {
+      "tool": "model_add_morph_offsets",
+      "parentTool": "model_update_morphs",
+      "member": "kind",
+      "value": "Bone",
+      "basis": "ボーンのオフセットは、種別がボーンのモーフへしか加えられない。既定の種別のモーフへ加えると呼び先が落ちる。"
+    }
+  ],
   "budgets": {
     "responseDefaultChars": 100000,
     "warningRoomChars": 2000,

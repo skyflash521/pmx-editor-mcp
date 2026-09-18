@@ -30,6 +30,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private readonly SortedDictionary<string, string> _targeted =
             new SortedDictionary<string, string>(StringComparer.Ordinal);
 
+        private readonly SortedDictionary<string, string> _parents =
+            new SortedDictionary<string, string>(StringComparer.Ordinal);
+
         private int _responseDefaultChars = 100000;
 
         private int _warningRoomChars = 2000;
@@ -95,6 +98,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return this;
         }
 
+        /// <summary>要素を親の並びへ加える前に、親へ揃える値を1つ足す。</summary>
+        public CommonContractJsonBuilder AddParentValue(
+            string tool, string parentTool, string member, string value, string basis)
+        {
+            _parents[tool] = string.Format(
+                CultureInfo.InvariantCulture,
+                "{{\"tool\":{0},\"parentTool\":{1},\"member\":{2},\"value\":{3},\"basis\":{4}}}",
+                Quoted(tool),
+                Quoted(parentTool),
+                Quoted(member),
+                Quoted(value),
+                Quoted(basis));
+
+            return this;
+        }
+
         /// <summary>要素を並びへ加える前に指す先を埋める項目を1つ足す。</summary>
         public CommonContractJsonBuilder AddTargetedMember(
             string tool, string member, string basis)
@@ -154,6 +173,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Append(string.Join(",", _unkept.Values))
                 .Append("],\"targetedMembers\":[")
                 .Append(string.Join(",", _targeted.Values))
+                .Append("],\"parentValues\":[")
+                .Append(string.Join(",", _parents.Values))
                 .Append("],\"budgets\":{")
                 .AppendFormat(
                     CultureInfo.InvariantCulture,

@@ -111,7 +111,8 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.ElementAddersByTool(inventory),
                     inputs.ElementAddersByType(inventory),
                     inputs.ElementUpdatersByAdder(inventory),
-                    inputs.TargetedMembers);
+                    inputs.TargetedMembers,
+                    inputs.ParentValues);
                 ToolCoverageGate.Require(
                     inputs.Schemas,
                     inputs.Map,

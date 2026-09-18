@@ -78,6 +78,30 @@ namespace PmxEditorMcp.SignatureDump
         public int StructureTokenLimit { get; }
     }
 
+    /// <summary>要素を親の並びへ加える前に、親へ揃える値。</summary>
+    public sealed class ParentValues
+    {
+        public ParentValues(string parentTool, string member, string value)
+        {
+            PropertyRecord.RequireText(parentTool, nameof(parentTool));
+            PropertyRecord.RequireText(member, nameof(member));
+            PropertyRecord.RequireText(value, nameof(value));
+
+            ParentTool = parentTool;
+            Member = member;
+            Value = value;
+        }
+
+        /// <summary>親を書き換えるツールの名前。</summary>
+        public string ParentTool { get; }
+
+        /// <summary>親へ揃える項目の名前。</summary>
+        public string Member { get; }
+
+        /// <summary>その項目へ入れる値。</summary>
+        public string Value { get; }
+    }
+
     /// <summary>ツールの入出力に共通して掛かる決めごとの正本。</summary>
     public sealed class CommonContractTable
     {
@@ -89,6 +113,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> viewImages,
             IDictionary<string, ISet<string>> unkeptMembers,
             IDictionary<string, ISet<string>> targetedMembers,
+            IDictionary<string, ParentValues> parentValues,
             SizeBudgets budgets)
         {
             Spellings = new ReadOnlyCollection<ValueSpellingRow>(spellings);
@@ -99,6 +124,7 @@ namespace PmxEditorMcp.SignatureDump
             UnkeptMembers = new ReadOnlyDictionary<string, ISet<string>>(unkeptMembers);
             TargetedMembers =
                 new ReadOnlyDictionary<string, ISet<string>>(targetedMembers);
+            ParentValues = new ReadOnlyDictionary<string, ParentValues>(parentValues);
             Budgets = budgets;
         }
 
@@ -129,6 +155,12 @@ namespace PmxEditorMcp.SignatureDump
         /// 決まらないのでここが決める。
         /// </summary>
         public IDictionary<string, ISet<string>> TargetedMembers { get; }
+
+        /// <summary>
+        /// 要素を親の並びへ加えるツールの名前から、加える前に親へ揃える値へ。親の側が
+        /// 揃っていないと加えられない要素だけが持つ。
+        /// </summary>
+        public IDictionary<string, ParentValues> ParentValues { get; }
 
         public SizeBudgets Budgets { get; }
 
@@ -163,6 +195,14 @@ namespace PmxEditorMcp.SignatureDump
         private const string UnkeptMembersName = "unkeptMembers";
 
         private const string TargetedMembersName = "targetedMembers";
+
+        private const string ParentValuesName = "parentValues";
+
+        private const string ParentToolName = "parentTool";
+
+        private const string MemberName = "member";
+
+        private const string ValueName = "value";
 
         private const string MembersName = "members";
 
@@ -236,6 +276,15 @@ namespace PmxEditorMcp.SignatureDump
                     JsonForm.Member(BasisName, JsonForm.Text())),
                 ToolName,
                 allowEmpty: true)),
+            JsonForm.Member(ParentValuesName, JsonForm.Array(
+                JsonForm.Object(
+                    JsonForm.Member(ToolName, JsonForm.Text()),
+                    JsonForm.Member(ParentToolName, JsonForm.Text()),
+                    JsonForm.Member(MemberName, JsonForm.Text()),
+                    JsonForm.Member(ValueName, JsonForm.Text()),
+                    JsonForm.Member(BasisName, JsonForm.Text())),
+                ToolName,
+                allowEmpty: true)),
             JsonForm.Member(BudgetsName, JsonForm.Object(
                 JsonForm.Member(ResponseDefaultCharsName, JsonForm.Count()),
                 JsonForm.Member(WarningRoomCharsName, JsonForm.Count()),
@@ -279,6 +328,13 @@ namespace PmxEditorMcp.SignatureDump
                     r => (string)r[ToolName],
                     r => (ISet<string>)new HashSet<string>(
                         ((IList<object>)r[MembersName]).Cast<string>(), StringComparer.Ordinal),
+                    StringComparer.Ordinal),
+                Rows(root, ParentValuesName).ToDictionary(
+                    r => (string)r[ToolName],
+                    r => new ParentValues(
+                        (string)r[ParentToolName],
+                        (string)r[MemberName],
+                        (string)r[ValueName]),
                     StringComparer.Ordinal),
                 new SizeBudgets(
                     (int)budgets[ResponseDefaultCharsName],

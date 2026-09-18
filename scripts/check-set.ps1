@@ -770,6 +770,30 @@ $checks[$derivation] = @{
         if ($LASTEXITCODE -eq 0) { & $dump excluded-signatures $editorDir $baseline $excluded }
     }
 }
+$checks['要約の持ち主'] = @{
+    LimitSeconds = 3
+    Needs = $noArtifact
+    Body = {
+        $orphans = @()
+        foreach ($file in Get-ChildItem -Path src, tests -Recurse -Filter *.cs -File |
+            Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }) {
+            $lines = @(Get-Content -LiteralPath $file.FullName -Encoding utf8)
+            for ($at = 0; $at -lt $lines.Count - 1; $at++) {
+                $here = $lines[$at].Trim()
+                $ends = $here -eq '/// </summary>' -or
+                    ($here -like '/// <summary>*' -and $here -like '*</summary>')
+                if (-not $ends) { continue }
+                if ($lines[$at + 1].Trim() -notlike '/// <summary>*') { continue }
+
+                $orphans += ('{0}:{1}' -f $file.FullName, ($at + 2))
+            }
+        }
+
+        if ($orphans.Count -ne 0) {
+            throw ('要約が持ち主から離れている: ' + ($orphans -join '・'))
+        }
+    }
+}
 $checks['実行時リフレクション'] = @{
     LimitSeconds = 3
     Needs = $buildOutput
@@ -1013,7 +1037,7 @@ $checkGroups = [ordered]@{
         '提供対象の網羅', 'スキーマ定義の照合', 'ツールの説明文の照合', 'サンプル値の照合',
         '発見可能性の照合', 'スキーマ対応の照合', 'ツールの検査の網羅', '規則適合検査',
         '受入シナリオの照合', 'テスト', '文書のリンク')
-    'コード' = @('整形', '実行時リフレクション', 'テスト')
+    'コード' = @('整形', '実行時リフレクション', '要約の持ち主', 'テスト')
     # 実行器そのものと、その代わりを立てる題材だけを入力にする検査。実行器の照合は、突き合わせる
     # 相手をすべて自分で立てるので、製品のコードや正本が変わっても答えが変わらない。文書のリンクを
     # 入れるのは、追跡下の文書がここの実行器を名指しで指しており、名前を変えれば指し先が消える
