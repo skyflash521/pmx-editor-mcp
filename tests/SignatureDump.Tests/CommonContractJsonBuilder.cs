@@ -27,6 +27,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private readonly SortedDictionary<string, string> _unkept =
             new SortedDictionary<string, string>(StringComparer.Ordinal);
 
+        private readonly SortedDictionary<string, string> _targeted =
+            new SortedDictionary<string, string>(StringComparer.Ordinal);
+
         private int _responseDefaultChars = 100000;
 
         private int _warningRoomChars = 2000;
@@ -92,6 +95,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return this;
         }
 
+        /// <summary>要素を並びへ加える前に指す先を埋める項目を1つ足す。</summary>
+        public CommonContractJsonBuilder AddTargetedMember(
+            string tool, string member, string basis)
+        {
+            _targeted[tool] = string.Format(
+                CultureInfo.InvariantCulture,
+                "{{\"tool\":{0},\"members\":[{1}],\"basis\":{2}}}",
+                Quoted(tool),
+                Quoted(member),
+                Quoted(basis));
+
+            return this;
+        }
+
         public CommonContractJsonBuilder WithBudgets(
             int responseDefaultChars, int warningRoomChars, int requestBytes, int structureTokenLimit)
         {
@@ -135,6 +152,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Append(string.Join(",", _views.Values))
                 .Append("],\"unkeptMembers\":[")
                 .Append(string.Join(",", _unkept.Values))
+                .Append("],\"targetedMembers\":[")
+                .Append(string.Join(",", _targeted.Values))
                 .Append("],\"budgets\":{")
                 .AppendFormat(
                     CultureInfo.InvariantCulture,

@@ -28,7 +28,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, string> viewImages,
             IDictionary<string, string> shapesByType,
-            IDictionary<string, ISet<string>> unkeptMembers)
+            IDictionary<string, ISet<string>> unkeptMembers,
+            IDictionary<string, ISet<string>> targetedMembers)
         {
             if (map == null)
             {
@@ -80,8 +81,14 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(unkeptMembers));
             }
 
+            if (targetedMembers == null)
+            {
+                throw new ArgumentNullException(nameof(targetedMembers));
+            }
+
             RequireViewImages(map, signatures, toolNames, viewImages, shapesByType);
-            RequireUnkeptMembers(schemas, unkeptMembers);
+            RequireNamedMembers(schemas, unkeptMembers, "持ち続けない項目");
+            RequireNamedMembers(schemas, targetedMembers, "指す先を埋める項目");
 
             IDictionary<string, TypeRoleRecord> byType = roles.Types.ToDictionary(
                 t => TypeDefinitionName.OfElement(t.TypeName), t => t, StringComparer.Ordinal);
@@ -119,24 +126,26 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 書いてもモデルが持ち続けない項目として名指しされたものが、そのツールが書き換える項目に
-        /// 実在することを確かめる。名指しが実在しなくなると、読み返して確かめる検査だけが黙って
-        /// 減る。
+        /// 名指しされた項目が、そのツールが書き換える項目に実在することを確かめる。名指しが
+        /// 実在しなくなると、その名指しに掛かっている検査だけが黙って減る——持ち続けない項目
+        /// では読み返して確かめる検査が、指す先を埋める項目では加える前に埋める段が消える。
         /// </summary>
-        private static void RequireUnkeptMembers(
-            ToolSchemaTable schemas, IDictionary<string, ISet<string>> unkeptMembers)
+        private static void RequireNamedMembers(
+            ToolSchemaTable schemas,
+            IDictionary<string, ISet<string>> named,
+            string about)
         {
             IDictionary<string, ToolSchema> byTool = schemas.Tools.ToDictionary(
                 t => t.Tool, t => t, StringComparer.Ordinal);
-            foreach (KeyValuePair<string, ISet<string>> named in unkeptMembers
+            foreach (KeyValuePair<string, ISet<string>> one in named
                 .OrderBy(u => u.Key, StringComparer.Ordinal))
             {
                 ToolSchema schema;
-                if (!byTool.TryGetValue(named.Key, out schema))
+                if (!byTool.TryGetValue(one.Key, out schema))
                 {
                     throw new InvalidOperationException(
-                        "持ち続けない項目の名指しが、スキーマ正本に無いツールを指している: "
-                            + named.Key);
+                        about + "の名指しが、スキーマ正本に無いツールを指している: "
+                            + one.Key);
                 }
 
                 ISet<string> written = new HashSet<string>(
@@ -147,15 +156,15 @@ namespace PmxEditorMcp.SignatureDump
                         .SelectMany(i => i.Members)
                         .Select(m => m.Name),
                     StringComparer.Ordinal);
-                string missing = named.Value
+                string missing = one.Value
                     .Where(m => !written.Contains(m))
                     .OrderBy(m => m, StringComparer.Ordinal)
                     .FirstOrDefault();
                 if (missing != null)
                 {
                     throw new InvalidOperationException(
-                        "持ち続けない項目の名指しが、そのツールが書き換えない項目を指している: "
-                            + named.Key + "." + missing);
+                        about + "の名指しが、そのツールが書き換えない項目を指している: "
+                            + one.Key + "." + missing);
                 }
             }
         }

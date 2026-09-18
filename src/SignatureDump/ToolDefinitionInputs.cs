@@ -22,6 +22,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly IDictionary<string, ISet<string>> _unkeptMembers;
 
+        private readonly IDictionary<string, ISet<string>> _targetedMembers;
+
         private readonly IDictionary<string, string> _methodNotes;
 
         private readonly IDictionary<string, string> _propertyNotes;
@@ -36,6 +38,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ComposedTool> composedTools,
             IDictionary<string, string> viewImages,
             IDictionary<string, ISet<string>> unkeptMembers,
+            IDictionary<string, ISet<string>> targetedMembers,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes,
             IDictionary<string, string> shapesByType,
@@ -55,6 +58,7 @@ namespace PmxEditorMcp.SignatureDump
             _composedTools = composedTools;
             _viewImages = viewImages;
             _unkeptMembers = unkeptMembers;
+            _targetedMembers = targetedMembers;
             _methodNotes = methodNotes;
             _propertyNotes = propertyNotes;
             _shapesByType = shapesByType;
@@ -148,6 +152,34 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return byTool;
+        }
+
+        /// <summary>
+        /// 要素をリストへ加えるツールの名前から、その要素を書き換えるツールの名前へ。作った要素
+        /// は、位置で指す項目を埋めてから並びへ加える——埋めずに加えると、指す先を持たない要素
+        /// として書き戻しで捨てられる。
+        /// </summary>
+        public IDictionary<string, string> ElementUpdatersByAdder(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            IDictionary<string, string> adders = ElementAdders(inventory);
+            Dictionary<string, string> byAdder =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (TypeRoleRecord role in OwnedRoles(inventory).Types.Where(
+                t => t.Group != CapabilityOwner.None && !string.IsNullOrEmpty(t.ElementNoun)))
+            {
+                string adding;
+                if (adders.TryGetValue(role.ElementNoun, out adding))
+                {
+                    byAdder[adding] = ToolNameRule.OfRole(role, ToolVerb.Update);
+                }
+            }
+
+            return byAdder;
         }
 
         /// <summary>
@@ -408,6 +440,14 @@ namespace PmxEditorMcp.SignatureDump
             get { return _unkeptMembers; }
         }
 
+        /// <summary>
+        /// 値を書き換えるツールの名前から、要素を並びへ加える前に指す先を埋める項目の名前へ。
+        /// </summary>
+        public IDictionary<string, ISet<string>> TargetedMembers
+        {
+            get { return _targetedMembers; }
+        }
+
         public IDictionary<string, int> Lengths { get; }
 
         public int BudgetChars { get; }
@@ -445,6 +485,7 @@ namespace PmxEditorMcp.SignatureDump
                 contract.ComposedTools,
                 contract.ViewImages,
                 contract.UnkeptMembers,
+                contract.TargetedMembers,
                 DocumentNoteReader.ReadMethods(document),
                 DocumentNoteReader.Read(document),
                 ShapesByType(contract),

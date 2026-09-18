@@ -200,7 +200,9 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> typeMakers = null,
             IDictionary<string, string> parents = null,
             IDictionary<string, string> addersByTool = null,
-            IDictionary<string, string> addersByType = null)
+            IDictionary<string, string> addersByType = null,
+            IDictionary<string, string> updaters = null,
+            IDictionary<string, ISet<string>> targeted = null)
         {
             if (map == null)
             {
@@ -278,8 +280,11 @@ namespace PmxEditorMcp.SignatureDump
                 : samples.Calls
                     .Where(c => c.Refused != null)
                     .ToDictionary(c => c.SignatureKey, c => c, StringComparer.Ordinal);
+            ElementWiring wiring = new ElementWiring(
+                factories, parents, addersByType, updaters,
+                Aiming(schemas, sdkTypes, positioned, updaters, targeted));
             List<E2eCase> cases = new List<E2eCase>(PreparingCases(schemas));
-            cases.AddRange(SetupCases(schemas, factories));
+            cases.AddRange(SetupCases(schemas, factories, wiring));
 
             // 直に呼ぶと状態が動く行は、その動きが後の検査の見るものを変える——取り消しは段取りが
             // 作った要素を消し、再生の開始はビューを動かし続ける。順に並べる中では避けられないので、
@@ -332,12 +337,13 @@ namespace PmxEditorMcp.SignatureDump
                     positioned,
                     typeMakers,
                     parents,
-                    stepSetups));
+                    stepSetups,
+                    wiring));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
                     row, schema, schemas, connectionPaths, sdkTypes, positioned, dangerous,
-                    readers, unkept, factories, parents, addersByTool, addersByType));
+                    readers, unkept, factories, parents, addersByTool, addersByType, wiring));
             }
 
             cases.AddRange(trailing);
@@ -421,7 +427,9 @@ namespace PmxEditorMcp.SignatureDump
         /// 空のままでは、その中の並びへ入れる先を指せない。
         /// </summary>
         private static IEnumerable<E2eCase> SetupCases(
-            ToolSchemaTable schemas, IDictionary<string, string> factories)
+            ToolSchemaTable schemas,
+            IDictionary<string, string> factories,
+            ElementWiring wiring)
         {
             if (factories == null)
             {
@@ -451,7 +459,8 @@ namespace PmxEditorMcp.SignatureDump
                     "並びへ加える要素を1つ作れること",
                     Handed(byTool[pair.Key])
                         ? "作った要素を並びへ加えられること"
-                        : "作った要素を親の並びの先頭へ加えられること"))
+                        : "作った要素を親の並びの先頭へ加えられること",
+                    wiring))
                 {
                     yield return one;
                 }
@@ -914,7 +923,8 @@ namespace PmxEditorMcp.SignatureDump
             ISet<string> positioned,
             IDictionary<string, IList<string>> typeMakers,
             IDictionary<string, string> parents,
-            IDictionary<string, IList<SetupOperation>> stepSetups)
+            IDictionary<string, IList<SetupOperation>> stepSetups,
+            ElementWiring wiring)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -1103,7 +1113,8 @@ namespace PmxEditorMcp.SignatureDump
                     factories,
                     at == 0
                         ? null
-                        : Borrowed(Step(making, at - 1), Of(schemas, maker[at - 1]))))
+                        : Borrowed(Step(making, at - 1), Of(schemas, maker[at - 1])),
+                    wiring))
                 {
                     yield return one;
                 }
@@ -1141,7 +1152,8 @@ namespace PmxEditorMcp.SignatureDump
                     filler,
                     Scoping(tool, filler),
                     "呼び出しの前に並びへ加える要素を1つ作れること",
-                    "作った要素を呼び出しの前に並びへ加えられること"))
+                    "作った要素を呼び出しの前に並びへ加えられること",
+                    wiring))
                 {
                     yield return one;
                 }
@@ -1193,7 +1205,8 @@ namespace PmxEditorMcp.SignatureDump
                 path,
                 adders,
                 factories,
-                received))
+                received,
+                wiring))
             {
                 yield return one;
             }
@@ -1203,7 +1216,7 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (E2eCase one in
                     Prepared(
                         judgement.Setup, schemas, rowKey, editKind, path, adders, factories,
-                        received))
+                        received, wiring))
                 {
                     yield return one;
                 }
@@ -1468,6 +1481,45 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 作った要素を並びへ加えるまでに要るものの引き当て。位置で指す項目を持つ要素は、指す先を
+        /// 埋めてから加える——埋めずに加えると、指す先を持たない要素として書き戻しで捨てられる。
+        /// </summary>
+        private sealed class ElementWiring
+        {
+            public ElementWiring(
+                IDictionary<string, string> factories,
+                IDictionary<string, string> parents,
+                IDictionary<string, string> addersByType,
+                IDictionary<string, string> updaters,
+                IDictionary<string, IDictionary<string, string>> aiming)
+            {
+                Factories = factories;
+                Parents = parents;
+                AddersByType = addersByType;
+                Updaters = updaters;
+                Aiming = aiming;
+            }
+
+            /// <summary>並びへ加えるツールの名前から、その要素を作るツールの名前へ。</summary>
+            public IDictionary<string, string> Factories { get; }
+
+            /// <summary>並びへ加えるツールの名前から、その親を加えるツールの名前へ。</summary>
+            public IDictionary<string, string> Parents { get; }
+
+            /// <summary>型の名前から、その型の要素を並びへ加えるツールの名前へ。</summary>
+            public IDictionary<string, string> AddersByType { get; }
+
+            /// <summary>並びへ加えるツールの名前から、その要素を書き換えるツールの名前へ。</summary>
+            public IDictionary<string, string> Updaters { get; }
+
+            /// <summary>
+            /// 並びへ加えるツールの名前から、位置で指す項目の名前とその項目が指す型へ。位置で指す
+            /// 項目を持たない要素は持たない。
+            /// </summary>
+            public IDictionary<string, IDictionary<string, string>> Aiming { get; }
+        }
+
+        /// <summary>
         /// 要素を1つ作って並びへ加える2段。加える形は加える側のツールで分かれる——作った要素を
         /// ハンドルで渡すだけで済むものと、親を位置で指す組で渡すものがある。差し込む先の道は
         /// その形ごとに違うので、道を選ぶところをここ1か所に持つ。
@@ -1481,8 +1533,43 @@ namespace PmxEditorMcp.SignatureDump
             string adding,
             string held,
             string madePurpose,
-            string addedPurpose)
+            string addedPurpose,
+            ElementWiring wiring)
         {
+            string writing = Writing(wiring, adding);
+            IDictionary<string, object> writes = writing == null
+                ? null
+                : Chosen(Of(schemas, writing), making);
+            IDictionary<string, string> aiming = Aimed(wiring, adding, Of(schemas, writing), writes);
+
+            // 指す先の並びが空だと、位置で指す項目を埋められない。指す先を先に用意する——その
+            // 並びの要素は位置で指す項目を持たないものとして扱い、ここから先は辿らない。
+            foreach (string adder in aiming.Values
+                .Select(t => Added(wiring, t))
+                .Where(a => a != null)
+                .Distinct(StringComparer.Ordinal))
+            {
+                foreach (string filler in
+                    Filling(adder, wiring.Parents, wiring.Factories, schemas)
+                        ?? new string[0])
+                {
+                    foreach (E2eCase one in Filling(
+                        rowKey,
+                        editKind,
+                        path,
+                        schemas,
+                        wiring.Factories[filler],
+                        filler,
+                        Scoping(held, filler),
+                        "指す先にする要素を1つ作れること",
+                        "指す先にする要素を並びへ加えられること",
+                        null))
+                    {
+                        yield return one;
+                    }
+                }
+            }
+
             bool listed = Handed(Of(schemas, adding));
             yield return new E2eCase(
                 rowKey,
@@ -1495,6 +1582,25 @@ namespace PmxEditorMcp.SignatureDump
                 null,
                 null,
                 held);
+            if (aiming.Count != 0)
+            {
+                yield return new E2eCase(
+                    rowKey,
+                    editKind,
+                    path,
+                    writing,
+                    "作った要素の位置で指す項目を並びの先頭へ向けられること",
+                    Pointing(writes, aiming.Keys),
+                    E2eExpectation.Success,
+                    null,
+                    null,
+                    null,
+                    new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { Leaf(HandlesName), Borrowed(held, Of(schemas, making)) },
+                    });
+            }
+
             yield return new E2eCase(
                 rowKey,
                 editKind,
@@ -1515,6 +1621,136 @@ namespace PmxEditorMcp.SignatureDump
                         Borrowed(held, Of(schemas, making))
                     },
                 });
+        }
+
+        /// <summary>
+        /// その要素を並びへ加える前に埋める、位置で指す項目の名前とその項目が指す型。選んだ
+        /// 呼び分けが受け取る項目だけを採る——種別で呼び分ける書き換えでは、呼び分けごとに
+        /// 受け取る項目が違う。埋めるものが無ければ空。
+        /// </summary>
+        private static IDictionary<string, string> Aimed(
+            ElementWiring wiring,
+            string adding,
+            ToolSchema writing,
+            IDictionary<string, object> writes)
+        {
+            IDictionary<string, string> aiming;
+            Dictionary<string, string> taken =
+                new Dictionary<string, string>(StringComparer.Ordinal);
+            if (wiring == null || writing == null || !wiring.Aiming.TryGetValue(adding, out aiming))
+            {
+                return taken;
+            }
+
+            foreach (SchemaItem member in writing.Branches
+                .Where(b => !Skipped(b, writes))
+                .SelectMany(b => b.Inputs)
+                .Where(i => !i.Injected
+                    && i.Members != null
+                    && string.Equals(i.Name, ValueName, StringComparison.Ordinal))
+                .SelectMany(i => i.Members))
+            {
+                string typeName;
+                if (aiming.TryGetValue(member.Name, out typeName))
+                {
+                    taken[member.Name] = typeName;
+                }
+            }
+
+            return taken;
+        }
+
+        /// <summary>その要素を書き換えるツール。書き換える手立てが無ければ null。</summary>
+        private static string Writing(ElementWiring wiring, string adding)
+        {
+            string writing;
+
+            return wiring != null && wiring.Updaters != null
+                && wiring.Updaters.TryGetValue(adding, out writing)
+                ? writing
+                : null;
+        }
+
+        /// <summary>その型の要素を並びへ加えるツール。加える手立てが無ければ null。</summary>
+        private static string Added(ElementWiring wiring, string typeName)
+        {
+            string adding;
+
+            return wiring.AddersByType != null
+                && wiring.AddersByType.TryGetValue(typeName, out adding)
+                ? adding
+                : null;
+        }
+
+        /// <summary>
+        /// 並びへ加えるツールごとの、位置で指す項目の名前とその項目が指す型。共通契約が挙げた
+        /// 項目だけを採る——指す先を持たないまま加えると書き戻しで捨てられる要素はそこが決める。
+        /// 捨てられない要素にまで指す先を用意すると、確かめるものが増えないまま実機の検査が
+        /// 伸びる。
+        /// </summary>
+        private static IDictionary<string, IDictionary<string, string>> Aiming(
+            ToolSchemaTable schemas,
+            IDictionary<SchemaItem, string> sdkTypes,
+            ISet<string> positioned,
+            IDictionary<string, string> updaters,
+            IDictionary<string, ISet<string>> targeted)
+        {
+            Dictionary<string, IDictionary<string, string>> aiming =
+                new Dictionary<string, IDictionary<string, string>>(StringComparer.Ordinal);
+            HashSet<string> reached = new HashSet<string>(StringComparer.Ordinal);
+            if (updaters == null || sdkTypes == null || positioned == null || targeted == null)
+            {
+                return aiming;
+            }
+
+            foreach (KeyValuePair<string, string> one in updaters)
+            {
+                ToolSchema writing = Of(schemas, one.Value);
+                ISet<string> wanted;
+                if (writing == null || !targeted.TryGetValue(one.Value, out wanted))
+                {
+                    continue;
+                }
+
+                Dictionary<string, string> members =
+                    new Dictionary<string, string>(StringComparer.Ordinal);
+                foreach (SchemaItem member in writing.Branches
+                    .SelectMany(b => b.Inputs)
+                    .Where(i => !i.Injected
+                        && i.Members != null
+                        && string.Equals(i.Name, ValueName, StringComparison.Ordinal))
+                    .SelectMany(i => i.Members))
+                {
+                    string typeName;
+                    if (wanted.Contains(member.Name)
+                        && sdkTypes.TryGetValue(member, out typeName)
+                        && positioned.Contains(typeName))
+                    {
+                        members[member.Name] = typeName;
+                    }
+                }
+
+                if (members.Count != 0)
+                {
+                    aiming[one.Key] = members;
+                    reached.Add(one.Value);
+                }
+            }
+
+            // 名指しが埋める段を生まなくなったら落とす。名前が実在するだけでは、加える側との
+            // 結び目が切れた回も、その項目が位置で数えられなくなった回も素通りし、指す先を
+            // 持たない要素が書き戻しで捨てられる検査が、また合格として数えられる。
+            string missed = targeted.Keys
+                .Where(t => !reached.Contains(t))
+                .OrderBy(t => t, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (missed != null)
+            {
+                throw new InvalidOperationException(
+                    "指す先を埋める項目の名指しが、埋める段を1つも生んでいない: " + missed);
+            }
+
+            return aiming;
         }
 
         /// <summary>
@@ -1715,14 +1951,17 @@ namespace PmxEditorMcp.SignatureDump
             string path,
             IDictionary<string, string> adders,
             IDictionary<string, string> factories,
-            string received)
+            string received,
+            ElementWiring wiring)
         {
             foreach (SetupOperation operation in setup ?? (IList<SetupOperation>)new SetupOperation[0])
             {
                 if (operation.Tag == SetupTag.AddElement)
                 {
                     foreach (E2eCase one in
-                        Adding(operation, schemas, rowKey, editKind, path, adders, factories))
+                        Adding(
+                            operation, schemas, rowKey, editKind, path, adders, factories,
+                            wiring))
                     {
                         yield return one;
                     }
@@ -1857,7 +2096,8 @@ namespace PmxEditorMcp.SignatureDump
             string editKind,
             string path,
             IDictionary<string, string> adders,
-            IDictionary<string, string> factories)
+            IDictionary<string, string> factories,
+            ElementWiring wiring)
         {
             string adding;
             string making;
@@ -1882,7 +2122,8 @@ namespace PmxEditorMcp.SignatureDump
                 adding,
                 Scoping(rowKey, adding),
                 "段取りが要素を1つ作れること",
-                "段取りが作った要素を並びへ加えられること"))
+                "段取りが作った要素を並びへ加えられること",
+                wiring))
             {
                 yield return one;
             }
@@ -2633,7 +2874,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> factories,
             IDictionary<string, string> parents,
             IDictionary<string, string> addersByTool,
-            IDictionary<string, string> addersByType)
+            IDictionary<string, string> addersByType,
+            ElementWiring wiring)
         {
             string rowKey = row == null ? string.Empty : row.SignatureKey;
             if (sdkTypes == null || positioned == null || dangerous.Contains(rowKey))
@@ -2730,7 +2972,8 @@ namespace PmxEditorMcp.SignatureDump
                             filler,
                             Scoping(schema.Tool, filler),
                             "位置で指す検査の前に並びへ加える要素を1つ作れること",
-                            "作った要素を位置で指す検査の前に並びへ加えられること"))
+                            "作った要素を位置で指す検査の前に並びへ加えられること",
+                            wiring))
                         {
                             yield return one;
                         }
@@ -2769,6 +3012,26 @@ namespace PmxEditorMcp.SignatureDump
             return unkept == null
                 || !unkept.TryGetValue(tool, out members)
                 || !members.Contains(member);
+        }
+
+        /// <summary>
+        /// 対象を指す組はそのままに、位置で指す項目をどれも並びの先頭へ向ける引数。
+        /// </summary>
+        private static IDictionary<string, object> Pointing(
+            IDictionary<string, object> pointing, IEnumerable<string> members)
+        {
+            IDictionary<string, object> arguments =
+                new Dictionary<string, object>(pointing, StringComparer.Ordinal);
+            IDictionary<string, object> value =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (string member in members)
+            {
+                value[member] = FirstPosition;
+            }
+
+            arguments[ValueName] = value;
+
+            return arguments;
         }
 
         /// <summary>対象を指す組はそのままに、位置で指す項目へその値を渡す引数。</summary>

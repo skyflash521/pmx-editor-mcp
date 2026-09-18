@@ -336,6 +336,40 @@
       "basis": "IKの内容が書き戻るのはIKの印が立っている骨だけである。印の無い骨では、まとめて反映するときにIKの組が捨てられ、既定の組が読み返るので、書いた値を読み返せない。"
     }
   ],
+  "targetedMembers": [
+    {
+      "tool": "model_update_faces",
+      "members": [
+        "vertex1",
+        "vertex2",
+        "vertex3"
+      ],
+      "basis": "書き戻しは面の頂点が今のPMXに在るときだけ番号を並べ、材質の面数をその数から取り直す。指す先の無い面は番号が1つも並ばず、加えたはずの面が消える。"
+    },
+    {
+      "tool": "model_update_ik_links",
+      "members": [
+        "bone"
+      ],
+      "basis": "書き戻しの正規化は、指す骨が今のPMXに無いIKリンクをリンクごと外す。"
+    },
+    {
+      "tool": "model_update_morph_offsets",
+      "members": [
+        "vertex",
+        "bone",
+        "morph"
+      ],
+      "basis": "書き戻しの正規化は、指す頂点・骨・モーフが今のPMXに無いオフセットをオフセットごと外し、オフセットが空になったモーフ本体まで外す。材質と衝撃のオフセットは外さないので挙げない。"
+    },
+    {
+      "tool": "model_update_node_items",
+      "members": [
+        "bone"
+      ],
+      "basis": "書き戻しの正規化は、指す骨が今のPMXに無い表示枠の項目を項目ごと外す。モーフを指す項目を外す枝は、骨を指す項目であることを条件に持つので通らない。"
+    }
+  ],
   "budgets": {
     "responseDefaultChars": 100000,
     "warningRoomChars": 2000,

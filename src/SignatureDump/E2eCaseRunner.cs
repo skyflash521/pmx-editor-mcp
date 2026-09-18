@@ -102,7 +102,9 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.TypePaths(inventory),
                     inputs.ElementParents(inventory),
                     inputs.ElementAddersByTool(inventory),
-                    inputs.ElementAddersByType(inventory));
+                    inputs.ElementAddersByType(inventory),
+                    inputs.ElementUpdatersByAdder(inventory),
+                    inputs.TargetedMembers);
             }
             catch (InvalidOperationException exception)
             {
