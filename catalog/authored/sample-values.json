@@ -544,6 +544,15 @@
       "basis": "既定のサンプルは x と z が同じ向きで、NormalizeLocal が軸を1つも決められない。"
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.SetPMDBoneKind(PEPlugin.Pmd.BoneKind)",
+      "arguments": {
+        "args": {
+          "kind": "RotateMove"
+        }
+      },
+      "basis": "既定のサンプルの Rotate は、作ったばかりのボーンが持つ印と同じ組へ揃える。"
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.FromFile(System.String)",
       "arguments": {
         "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.pmx"
