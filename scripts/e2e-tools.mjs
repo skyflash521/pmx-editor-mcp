@@ -354,8 +354,8 @@ function judge(one, response, remembered) {
         }
 
         return envelope.error !== undefined && envelope.error.code === PROMPT_SHOWN
-            ? "確認の表示で止まりました。この行の根拠へ「確認の表示が出る」を含む一文を"
-                + "書いてください: " + describe(envelope)
+            ? "確認の表示で止まりました。表示が求めるものを段取りで先に満たしてください: "
+                + describe(envelope)
             : "呼び先まで届くはずが断られました: " + describe(envelope);
     }
 
