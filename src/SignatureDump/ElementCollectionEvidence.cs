@@ -119,6 +119,64 @@ namespace PmxEditorMcp.SignatureDump
             return new ReadOnlyDictionary<string, IList<string>>(leaves);
         }
 
+        /// <summary>並びを返す行から、その並びに混ざる実体を1つだけ返す行。</summary>
+        public static IDictionary<string, IList<string>> Aside(
+            IDictionary<string, SignatureRecord> signatures, ISet<string> relayed)
+        {
+            if (signatures == null)
+            {
+                throw new ArgumentNullException(nameof(signatures));
+            }
+
+            if (relayed == null)
+            {
+                throw new ArgumentNullException(nameof(relayed));
+            }
+
+            IList<SignatureRecord> sole = signatures.Values
+                .Where(s => Sole(s) && relayed.Contains(s.Key))
+                .OrderBy(s => s.Key, StringComparer.Ordinal)
+                .ToList();
+            Dictionary<string, IList<string>> aside =
+                new Dictionary<string, IList<string>>(StringComparer.Ordinal);
+            foreach (SignatureRecord signature in signatures.Values
+                .OrderBy(s => s.Key, StringComparer.Ordinal))
+            {
+                string element = ElementTypeName(signature);
+                if (element == null)
+                {
+                    continue;
+                }
+
+                IList<string> rows = sole
+                    .Where(s => string.Equals(
+                            TypeDefinitionName.Of(s.DeclaringType),
+                            TypeDefinitionName.Of(signature.DeclaringType),
+                            StringComparison.Ordinal)
+                        && string.Equals(
+                            TypeDefinitionName.Of(s.ValueType), element, StringComparison.Ordinal))
+                    .Select(s => s.Key)
+                    .ToList();
+                if (rows.Count != 0)
+                {
+                    aside.Add(signature.Key, new ReadOnlyCollection<string>(rows));
+                }
+            }
+
+            return new ReadOnlyDictionary<string, IList<string>>(aside);
+        }
+
+        /// <summary>その行が、並びでない値を1つだけ返す引数の無い取得メンバーか。</summary>
+        private static bool Sole(SignatureRecord signature)
+        {
+            string element;
+
+            return signature.MemberKind == MemberKind.Property
+                && signature.CanRead
+                && signature.Parameters.Count == 0
+                && !ValueTypeName.TryElement(signature.ValueType, out element);
+        }
+
         /// <summary>その型を直に、または間に型を挟んで継承する型。</summary>
         private static ISet<string> Descendants(
             IDictionary<string, ISet<string>> children, string baseType)

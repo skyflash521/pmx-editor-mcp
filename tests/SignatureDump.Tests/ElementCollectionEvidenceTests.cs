@@ -71,6 +71,103 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ASoleMemberOfTheSameElementTypeIsAsideFromTheList()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+            SignatureRecord sole = Property(Owner, "Head", Element);
+
+            Assert.Equal(new[] { sole.Key }, Aside(list, sole)[list.Key]);
+        }
+
+        [Fact]
+        public void EverySoleMemberOfThatTypeIsAside()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+            SignatureRecord head = Property(Owner, "Head", Element);
+            SignatureRecord tail = Property(Owner, "Tail", Element);
+
+            Assert.Equal(
+                new[] { head.Key, tail.Key },
+                Aside(list, tail, head)[list.Key].OrderBy(k => k, StringComparer.Ordinal));
+        }
+
+        [Fact]
+        public void AListWithNoSoleMemberOfItsElementTypeHasNothingAside()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+
+            Assert.Empty(Aside(list, Property(Owner, "Name", "System.String")));
+        }
+
+        [Fact]
+        public void ASoleMemberOnAnotherTypeIsNotAside()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+
+            Assert.Empty(Aside(list, Property("N.IOther", "Head", Element)));
+        }
+
+        [Fact]
+        public void AnotherListOfTheSameElementTypeIsNotAside()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+
+            Assert.Empty(Aside(list, Property(Owner, "Spares", ElementList)));
+        }
+
+        [Fact]
+        public void AnArrayOfTheSameElementTypeIsNotAside()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+
+            Assert.Empty(Aside(list, Property(Owner, "Spares", Element + "[]")));
+        }
+
+        [Fact]
+        public void AMethodThatReturnsTheElementTypeIsNotAside()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+
+            Assert.Empty(Aside(
+                list, Signature(Owner, MemberKind.Method, "Head", Element, true)));
+        }
+
+        [Fact]
+        public void ASoleMemberWithoutARelayIsNotAside()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+            SignatureRecord sole = Property(Owner, "Head", Element);
+
+            Assert.Empty(ElementCollectionEvidence.Aside(
+                new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
+                {
+                    { list.Key, list },
+                    { sole.Key, sole },
+                },
+                new HashSet<string>(new[] { list.Key }, StringComparer.Ordinal)));
+        }
+
+        [Fact]
+        public void BothArgumentsOfTheAsideRowsAreRequired()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => ElementCollectionEvidence.Aside(
+                    null, new HashSet<string>(StringComparer.Ordinal)));
+            Assert.Throws<ArgumentNullException>(
+                () => ElementCollectionEvidence.Aside(
+                    new Dictionary<string, SignatureRecord>(StringComparer.Ordinal), null));
+        }
+
+        /// <summary>その並びから外す行。渡した行はどれも中継を持つものとして扱う。</summary>
+        private static IDictionary<string, IList<string>> Aside(
+            params SignatureRecord[] signatures)
+        {
+            return ElementCollectionEvidence.Aside(
+                signatures.ToDictionary(s => s.Key, s => s, StringComparer.Ordinal),
+                new HashSet<string>(signatures.Select(s => s.Key), StringComparer.Ordinal));
+        }
+
+        [Fact]
         public void TheConcreteTypesOfABaseAreItsLeaves()
         {
             IDictionary<string, IList<string>> kinds = ElementCollectionEvidence.ConcreteTypes(

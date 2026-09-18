@@ -35,6 +35,10 @@ namespace PmxEditorMcp.Tests
 
         private const string GroupsKey = "Sdk.Pmx.Groups()";
 
+        private const string GroupTagKey = "Sdk.Group.Tag()";
+
+        private const string HeadKey = "Sdk.Pmx.Head()";
+
         private const string LeavesKey = "Sdk.Group.Leaves()";
 
         private const string NoteKey = "Sdk.Pmx.Note()";
@@ -750,6 +754,103 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(1, Value(envelope)[SetResponse.RemovedName]);
             Assert.Equal(new[] { "二" }, group.Leaves.Cast<Item>().Select(i => i.Label).ToArray());
+        }
+
+        [Fact]
+        public void TheParentColumnLeavesOutWhatTheAsideRowReturns()
+        {
+            Group head = new Group();
+            head.Leaves.Add(new Item { Label = "枠" });
+            Group group = new Group();
+            group.Leaves.Add(new Item { Label = "一" });
+            _model.Head = head;
+            _model.Groups.Add(head);
+            _model.Groups.Add(group);
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_headed_leaves",
+                Arguments(TargetNames.Parent.All, true, TargetNames.Element.All, true));
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.Equal(new[] { "一" }, items.Select(i => i["label"]).ToArray());
+            Assert.Equal(
+                new[] { 0 },
+                items.Select(i => (int)i[ToolDispatch.ParentIndexName]).ToArray());
+        }
+
+        [Fact]
+        public void ThePositionOfTheParentCountsFromTheFirstOneThatIsNotAside()
+        {
+            Group head = new Group();
+            Group group = new Group();
+            _model.Head = head;
+            _model.Groups.Add(head);
+            _model.Groups.Add(group);
+            HandleLedger handles = Ledger();
+            int held = handles.Issue(typeof(Item).FullName, new Item { Label = "一" }, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_headed_leaves",
+                Arguments(ToolDispatch.AssignmentsName, new object[] { Assignment(0, held) }),
+                handles);
+
+            Assert.Equal(1, Value(envelope)[SetResponse.AddedName]);
+            Assert.Empty(head.Leaves);
+            Assert.Equal("一", ((Item)group.Leaves[0]).Label);
+        }
+
+        [Fact]
+        public void APositionPastTheParentsThatAreNotAsideIsRefused()
+        {
+            Group head = new Group();
+            _model.Head = head;
+            _model.Groups.Add(head);
+            HandleLedger handles = Ledger();
+            int held = handles.Issue(typeof(Item).FullName, new Item { Label = "一" }, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_headed_leaves",
+                Arguments(ToolDispatch.AssignmentsName, new object[] { Assignment(0, held) }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, Code(envelope));
+            Assert.Empty(head.Leaves);
+        }
+
+        [Fact]
+        public void TheAddedPositionDoesNotCountWhatTheAsideRowReturns()
+        {
+            Group head = new Group();
+            _model.Head = head;
+            _model.Groups.Add(head);
+            HandleLedger handles = Ledger();
+            int held = handles.Issue(typeof(Group).FullName, new Group(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_headed_groups",
+                Arguments(TargetNames.Element.Handles, new object[] { held }),
+                handles);
+
+            IDictionary<string, object> value = Value(envelope);
+            Assert.Equal(1, value[SetResponse.AddedName]);
+            Assert.Equal(new[] { 0 }, (int[])value[SetResponse.IndicesName]);
+            Assert.Equal(2, _model.Groups.Count);
+        }
+
+        [Fact]
+        public void TheElementsThemselvesAreStillPointedAtByTheirRawPositions()
+        {
+            Group head = new Group { Tag = "頭" };
+            _model.Head = head;
+            _model.Groups.Add(head);
+            _model.Groups.Add(new Group { Tag = "一" });
+            _model.Groups.Add(new Group { Tag = "二" });
+
+            IList<IDictionary<string, object>> items = Items(Value(Call(
+                "model_list_headed_groups",
+                Arguments(TargetNames.Element.Indices, new object[] { 1 }))));
+
+            Assert.Equal(new object[] { "一" }, items.Select(i => i["tag"]).ToArray());
         }
 
         [Fact]
@@ -2236,6 +2337,7 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) => new ItemInfo { Label = ((Item)target).Label }
                     },
                     { InfoLabelKey, (target, arguments) => ((ItemInfo)target).Label },
+                    { GroupTagKey, (target, arguments) => ((Group)target).Tag },
                     { MakeKey, (target, arguments) => Made(MakeKey) },
                     { MakeLabelledKey, (target, arguments) => Made(MakeLabelledKey) },
                     { MakeMarkedKey, (target, arguments) => Made(MakeMarkedKey) },
@@ -2309,6 +2411,10 @@ namespace PmxEditorMcp.Tests
                     {
                         MarkKey,
                         (target, arguments) => ((Group)target).Mark
+                    },
+                    {
+                        HeadKey,
+                        (target, arguments) => ((Model)target).Head
                     },
                     {
                         WidthKey,
@@ -2492,6 +2598,37 @@ namespace PmxEditorMcp.Tests
                 item => item is Item,
                 "item",
                 null,
+                typeof(Group));
+        }
+
+        /// <summary>PMXが1つだけ持つ親が混ざる、親のリストへ至る道。</summary>
+        private static ToolAccess Headed()
+        {
+            return new ToolAccess(
+                ToolAccessKind.Element,
+                GroupsKey,
+                null,
+                true,
+                typeof(Group),
+                item => item is Group,
+                "group",
+                null,
+                null,
+                new[] { HeadKey });
+        }
+
+        /// <summary>1つだけ持つ親が混ざるリストを挟んだ先の、要素のリストへ至る道。</summary>
+        private static ToolAccess HeadNested()
+        {
+            return new ToolAccess(
+                ToolAccessKind.Element,
+                LeavesKey,
+                new[] { new ToolHop(GroupsKey, true, new[] { HeadKey }) },
+                true,
+                typeof(Item),
+                item => item is Item,
+                "item",
+                Kinds(),
                 typeof(Group));
         }
 
@@ -2809,6 +2946,15 @@ namespace PmxEditorMcp.Tests
                         }))
                 },
                 {
+                    "model_list_headed_groups",
+                    new ToolFields(
+                        false,
+                        true,
+                        Rooted(EditKind.Read),
+                        Headed(),
+                        Set(new[] { new ToolField("tag", GroupTagKey, typeof(string)) }))
+                },
+                {
                     "model_list_leaves",
                     new ToolFields(false, true, Rooted(EditKind.Read), Nested(), Set(labels))
                 },
@@ -2854,6 +3000,10 @@ namespace PmxEditorMcp.Tests
                         Set(new[] { new ToolField("width", WidthKey, typeof(int)) }))
                 },
                 {
+                    "model_list_headed_leaves",
+                    new ToolFields(false, true, Rooted(EditKind.Read), HeadNested(), Set(labels))
+                },
+                {
                     "model_list_veins",
                     new ToolFields(false, true, Rooted(EditKind.Read), Veined(), Set(labels))
                 },
@@ -2883,6 +3033,8 @@ namespace PmxEditorMcp.Tests
                 { "model_hold_leaf", new ToolElements(ToolElementKind.Hold, Rooted(EditKind.Read), Nested()) },
                 { "model_add_veins", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Veined()) },
                 { "model_add_sprigs", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Sprigged()) },
+                { "model_add_headed_groups", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Headed()) },
+                { "model_add_headed_leaves", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), HeadNested()) },
             };
         }
 
@@ -2893,6 +3045,9 @@ namespace PmxEditorMcp.Tests
 
             public List<Group> Groups { get; } = new List<Group>();
 
+            /// <summary>その並びに混ざる、モデルが1つだけ持つ親。持たないモデルでは null。</summary>
+            public Group Head { get; set; }
+
             public Note Note { get; } = new Note();
         }
 
@@ -2900,6 +3055,8 @@ namespace PmxEditorMcp.Tests
         private sealed class Group
         {
             public List<Leaf> Leaves { get; } = new List<Leaf>();
+
+            public string Tag { get; set; }
 
             /// <summary>その親が1つだけ持つ子。持たない親では null。</summary>
             public Mark Mark { get; set; }

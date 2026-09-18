@@ -69,6 +69,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string WeightKey = Vertex + ".Weight()";
 
+        private const string HeadKey = Pmx + ".Head()";
+
         [Fact]
         public void ACallCarriesTheRowTheReceiverAndTheArgumentTypes()
         {
@@ -469,6 +471,63 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
                     + "), item => item is global::" + Vertex + ", \"vertex\", null, null))",
                 source.Text);
+        }
+
+        [Fact]
+        public void AListWithASoleMemberOfItsElementTypeCarriesThatRowAsAside()
+        {
+            ToolBindingSource source = Build(Collection(), Head());
+
+            Assert.Contains(
+                "new ToolAccess(ToolAccessKind.Element, \"" + ListKey
+                    + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
+                    + "), item => item is global::" + Vertex
+                    + ", \"vertex\", null, null, new string[] { \"" + HeadKey + "\" })",
+                source.Text);
+        }
+
+        [Fact]
+        public void AParentHopOverThatListCarriesTheSameAsideRow()
+        {
+            ToolBindingSource source = Build(Collection(), Weights(), Head());
+
+            Assert.Contains(
+                "new ToolHop(\"" + ListKey + "\", true, new string[] { \"" + HeadKey + "\" })",
+                source.Text);
+        }
+
+        [Fact]
+        public void AListWithNoSoleMemberOfItsElementTypeCarriesNoAsideRow()
+        {
+            ToolBindingSource source = Build(Collection(), Weights());
+
+            Assert.Contains(
+                "new ToolHop(\"" + ListKey + "\", true)",
+                source.Text);
+            Assert.DoesNotContain("new string[] { \"" + HeadKey + "\" }", source.Text);
+        }
+
+        /// <summary>そのリストと同じ要素の型を1つだけ返す、同じ型のメンバーの題材。</summary>
+        private static Binding Head()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                HeadKey,
+                Pmx,
+                MemberKind.Property,
+                "Head",
+                false,
+                0,
+                new ParameterRecord[0],
+                Vertex,
+                true,
+                false,
+                OperationDirection.Read);
+
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    HeadKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
         }
 
         /// <summary>継いだ型を1つ持つ題材の型の並び。</summary>

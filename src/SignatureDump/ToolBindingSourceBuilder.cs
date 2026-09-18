@@ -123,6 +123,10 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> owned = ElementToolRule.Elements(
                 map, signatures, roles);
             IDictionary<string, AccessPath> paths = ElementPathEvidence.Resolve(inventory, roles);
+            IDictionary<string, IList<string>> aside = ElementCollectionEvidence.Aside(
+                signatures,
+                new HashSet<string>(
+                    map.Rows.Select(r => r.SignatureKey), StringComparer.Ordinal));
             ISet<string> issued = ElementPathEvidence.Issued(inventory, roles);
             ISet<string> bridged = Bridged(inventory);
             IDictionary<string, TypeRole> roleOf = roles.Types.ToDictionary(
@@ -192,6 +196,7 @@ namespace PmxEditorMcp.SignatureDump
                             concrete,
                             byType,
                             paths,
+                            aside,
                             bridged,
                             projections.TryGetValue(tool, out carried) ? carried : null,
                             assignments,
@@ -219,7 +224,7 @@ namespace PmxEditorMcp.SignatureDump
                             named,
                             Elements(
                                 row, signature, element, named, listed, signatures, concrete,
-                                byType, built));
+                                byType, aside, built));
                     }
 
                     TypeRoleRecord holdable;
@@ -229,7 +234,7 @@ namespace PmxEditorMcp.SignatureDump
                             ElementToolRule.Holding(holdable),
                             Elements(
                                 row, signature, holdable, ElementToolRule.Holding(holdable),
-                                listed, signatures, concrete, byType, built));
+                                listed, signatures, concrete, byType, aside, built));
                     }
 
                     Listing(lists, listed, signatures, byType);
@@ -248,7 +253,7 @@ namespace PmxEditorMcp.SignatureDump
                             target.Tool,
                             Aggregation(
                                 row, byType[target.OwnerType], target.Updates, owning,
-                                signatures, concrete, byType));
+                                signatures, concrete, byType, aside));
                         Listing(lists, owning, signatures, byType);
                     }
 
@@ -263,7 +268,7 @@ namespace PmxEditorMcp.SignatureDump
                     members.Add(Field(
                         signature,
                         null,
-                        Positioning(signature, signatures, concrete, byType, paths)));
+                        Positioning(signature, signatures, concrete, byType, paths, aside)));
                 }
             }
 
@@ -516,6 +521,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, AccessPath> paths,
+            IDictionary<string, IList<string>> aside,
             ISet<string> bridged,
             string projected,
             CommonAssignmentTable assignments,
@@ -529,7 +535,7 @@ namespace PmxEditorMcp.SignatureDump
                 : "DangerKind.None";
             string[] arguments = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.Out)
-                .Select(p => Argument(p, signatures, concrete, byType, paths, map, tool))
+                .Select(p => Argument(p, signatures, concrete, byType, paths, aside, map, tool))
                 .ToArray();
             string[] outputs = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.In)
@@ -573,7 +579,7 @@ namespace PmxEditorMcp.SignatureDump
                     null,
                     Bridges(signature, path, bridged),
                     Held(signature.DeclaringType, byType)) + ", "
-                + Access(path, signatures, concrete, byType) + ", "
+                + Access(path, signatures, concrete, byType, aside) + ", "
                 + danger + ", new ToolArgument[] { " + string.Join(", ", arguments) + " }, "
                 + "new ToolArgument[] { " + string.Join(", ", outputs) + " }, "
                 + (string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
@@ -718,6 +724,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, AccessPath> paths,
+            IDictionary<string, IList<string>> aside,
             ToolMap map = null,
             string tool = null)
         {
@@ -760,7 +767,7 @@ namespace PmxEditorMcp.SignatureDump
                 return written + ")";
             }
 
-            return written + ", false, " + Access(listed, signatures, concrete, byType) + ")";
+            return written + ", false, " + Access(listed, signatures, concrete, byType, aside) + ")";
         }
 
         /// <summary>その型の受け手をハンドルから得るか。ハンドル操作型だけが当たる。</summary>
@@ -791,7 +798,8 @@ namespace PmxEditorMcp.SignatureDump
             AccessPath path,
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, IList<string>> concrete,
-            IDictionary<string, TypeRoleRecord> byType)
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> aside)
         {
             bool held = owner.Role == TypeRole.HandleTarget;
 
@@ -804,7 +812,7 @@ namespace PmxEditorMcp.SignatureDump
                     Writing(row, owner, path, writes, held),
                     false,
                     held)
-                + ", " + Access(path, signatures, concrete, byType) + ", new ToolFieldSet[]";
+                + ", " + Access(path, signatures, concrete, byType, aside) + ", new ToolFieldSet[]";
         }
 
         /// <summary>
@@ -835,6 +843,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> aside,
             ISet<string> built)
         {
             string kind = Kind(element, tool);
@@ -849,7 +858,7 @@ namespace PmxEditorMcp.SignatureDump
                     holds ? ToolMapEditKind.Read : ToolMapEditKind.DuplicateEdit,
                     string.Equals(kind, "Add", StringComparison.Ordinal)
                         && built.Contains(TypeDefinitionName.OfElement(element.TypeName)))
-                + ", " + Access(path, signatures, concrete, byType) + ")";
+                + ", " + Access(path, signatures, concrete, byType, aside) + ")";
         }
 
         /// <summary>そのツールの名前が、要素に対して行うことのどれか。</summary>
@@ -913,7 +922,8 @@ namespace PmxEditorMcp.SignatureDump
             AccessPath path,
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, IList<string>> concrete,
-            IDictionary<string, TypeRoleRecord> byType)
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> aside)
         {
             if (path == null || path.Kind == AccessPathKind.Whole)
             {
@@ -922,7 +932,8 @@ namespace PmxEditorMcp.SignatureDump
 
             string[] hops = path.Parents
                 .Select(p => "new ToolHop(" + Literal(p) + ", "
-                    + (ElementPathEvidence.Listed(signatures, p) ? "true" : "false") + ")")
+                    + (ElementPathEvidence.Listed(signatures, p) ? "true" : "false")
+                    + Aside(aside, p) + ")")
                 .ToArray();
             string walked = "new ToolHop[] { " + string.Join(", ", hops) + " }, "
                 + (path.Listed ? "true" : "false");
@@ -942,7 +953,23 @@ namespace PmxEditorMcp.SignatureDump
                 + ", " + walked + ", "
                 + TypeOf(path.ElementType) + ", item => item is " + Code(path.ElementType) + ", "
                 + noun + ", " + Items(path, signatures, concrete, byType) + ", "
-                + (path.OwnerType == null ? "null" : TypeOf(path.OwnerType)) + ")";
+                + (path.OwnerType == null ? "null" : TypeOf(path.OwnerType))
+                + Aside(aside, path.RowKey) + ")";
+        }
+
+        /// <summary>
+        /// その並びから外す実体を返す行をC#の式にする。外す行の無い並びでは、直前の引数までで
+        /// 終える空文字になる。
+        /// </summary>
+        private static string Aside(IDictionary<string, IList<string>> aside, string rowKey)
+        {
+            IList<string> rows;
+            if (rowKey == null || !aside.TryGetValue(rowKey, out rows))
+            {
+                return string.Empty;
+            }
+
+            return ", new string[] { " + string.Join(", ", rows.Select(Literal).ToArray()) + " }";
         }
 
         /// <summary>
@@ -1025,7 +1052,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, TypeRoleRecord> byType,
-            IDictionary<string, AccessPath> paths)
+            IDictionary<string, AccessPath> paths,
+            IDictionary<string, IList<string>> aside)
         {
             string value = TypeDefinitionName.OfElement(
                 ValueTypeName.Contained(signature.ValueType));
@@ -1038,7 +1066,7 @@ namespace PmxEditorMcp.SignatureDump
                 return null;
             }
 
-            return Access(listed, signatures, concrete, byType);
+            return Access(listed, signatures, concrete, byType, aside);
         }
 
         /// <summary>
