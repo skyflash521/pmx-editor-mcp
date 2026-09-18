@@ -34,6 +34,28 @@
       ]
     },
     {
+      "tool": "motion_get_pose_vmd_bone_pose_state",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "motion_from_pose_array_vmd_bone_pose_state",
+          "args": {
+            "handles": [
+              "receiver:"
+            ],
+            "args": {
+              "arr": [
+                {
+                  "t": [0, 0, 0],
+                  "r": [0, 0, 0, 1]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "tool": "motion_list_vme_paths",
       "setup": [
         {
@@ -48,6 +70,28 @@
                 [0, 0, 0],
                 [1, 0, 0],
                 [2, 1, 0]
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "tool": "motion_to_bone_key_array_vmd_bone_pose_state",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "motion_from_pose_array_vmd_bone_pose_state",
+          "args": {
+            "handles": [
+              "receiver:"
+            ],
+            "args": {
+              "arr": [
+                {
+                  "t": [0, 0, 0],
+                  "r": [0, 0, 0, 1]
+                }
               ]
             }
           }

@@ -500,13 +500,22 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 覚えた応答から、ハンドル1つを指す道。応答を並びで返すツールは、出たハンドルもその並びの
-        /// 中へ入れるので、借りるのはその先頭である。
+        /// 中へ入れるので、借りるのはその先頭である。並びを重ねて返すツールでは、重ねた数だけ下りる。
         /// </summary>
         private static string Borrowed(string name, ToolSchema making)
         {
-            return making != null && making.Output != null && making.Output.Element != null
-                ? Leaf(name)
-                : name;
+            if (making == null || making.Output == null)
+            {
+                return name;
+            }
+
+            string path = name;
+            for (SchemaItem at = making.Output.Element; at != null; at = at.Element)
+            {
+                path = Leaf(path);
+            }
+
+            return path;
         }
 
         /// <summary>その名前のツールの入出力の形。持たない名前では null。</summary>
@@ -1110,11 +1119,7 @@ namespace PmxEditorMcp.SignatureDump
             // 行の効果でなく断りになるので、その行の読み比べは組み立てない。
             bool reads = calls && !denies && compared.Length != 0;
 
-            // 応答を並びで返すツールは、出たハンドルもその並びの中へ入れる。この検査が一度に
-            // 相手取るのは1つなので、借りるのはその先頭である。
-            string held = schema.Output != null && schema.Output.Element != null
-                ? Leaf(rowKey)
-                : rowKey;
+            string held = Borrowed(rowKey, schema);
             for (int at = 0; borrowing != null && maker != null && at < maker.Count; at++)
             {
                 // 道の段として呼ぶ行も、その行が宣言した段取りを先に流す。段が作ったものをその

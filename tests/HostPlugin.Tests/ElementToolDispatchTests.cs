@@ -43,6 +43,8 @@ namespace PmxEditorMcp.Tests
 
         private const string MateKey = "Sdk.Item.Mate()";
 
+        private const string MatesKey = "Sdk.Item.Mates()";
+
         private const string TextKey = "Sdk.Note.Text()";
 
         private const string ClearKey = "Sdk.Item.Clear(System.Single)";
@@ -833,6 +835,38 @@ namespace PmxEditorMcp.Tests
                 "model_list_mates", Arguments(TargetNames.Element.All, true))));
 
             Assert.Equal(new object[] { 1, null, null }, items.Select(i => i["mate"]).ToArray());
+        }
+
+        [Fact]
+        public void AnEmptyListOfPointedItemsIsReadWithoutTheListToCountIn()
+        {
+            HandleLedger handles = Ledger();
+            int handle = handles.Issue(
+                typeof(Item).FullName, new Item { Label = "独" }, () => { });
+
+            IList<IDictionary<string, object>> items = Items(Value(Call(
+                "model_list_many_mates",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles)));
+
+            Assert.Empty((System.Collections.IEnumerable)items.Single()["mates"]);
+        }
+
+        [Fact]
+        public void AListThatPointsAtSomethingStillNeedsTheListToCountIn()
+        {
+            HandleLedger handles = Ledger();
+            Item item = new Item { Label = "独" };
+            item.Mates.Add(new Item { Label = "相" });
+            int handle = handles.Issue(typeof(Item).FullName, item, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_many_mates",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles);
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Contains("位置はPMXの中のリストで数える", Message(envelope));
         }
 
         [Fact]
@@ -2252,6 +2286,9 @@ namespace PmxEditorMcp.Tests
                             : Mated((Item)target, (Item)arguments[0])
                     },
                     {
+                        MatesKey, (target, arguments) => ((Item)target).Mates
+                    },
+                    {
                         TextKey,
                         (target, arguments) => arguments.Length == 0
                             ? (object)((Note)target).Text
@@ -2747,6 +2784,19 @@ namespace PmxEditorMcp.Tests
                         }))
                 },
                 {
+                    "model_list_many_mates",
+                    new ToolFields(
+                        false,
+                        true,
+                        Rooted(EditKind.Read),
+                        Direct(),
+                        Set(new[]
+                        {
+                            new ToolField(
+                                "mates", MatesKey, typeof(Item), null, Direct(), true),
+                        }))
+                },
+                {
                     "model_update_mates",
                     new ToolFields(
                         true,
@@ -2890,6 +2940,9 @@ namespace PmxEditorMcp.Tests
 
             /// <summary>同じ並びの中の相手を指す項目。位置で写す。</summary>
             public Item Mate { get; set; }
+
+            /// <summary>同じ並びの中の相手を並びで指す項目。位置の並びで写す。</summary>
+            public IList<Item> Mates { get; } = new List<Item>();
 
             /// <summary>値の等しさで比べる型の題材。同じ名札を持つ実体どうしは等しい。</summary>
             public override bool Equals(object other)

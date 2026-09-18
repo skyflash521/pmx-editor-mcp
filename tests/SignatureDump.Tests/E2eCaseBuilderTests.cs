@@ -380,6 +380,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolThatAnswersInNestedListsLendsTheFirstOfTheInnermost()
+        {
+            IList<E2eCase> cases = Observed(
+                Handle("model_list_things", "handles"),
+                Nesting("model_make_things"),
+                Observing("model_list_things", "handles", listed: true));
+
+            E2eCase drawn = Assert.Single(
+                cases,
+                c => c.Tool == "model_list_things" && c.Expectation == E2eExpectation.Success);
+            E2eCase released = Assert.Single(
+                cases,
+                c => c.Tool == "session_release_handle"
+                    && c.Expectation == E2eExpectation.Success);
+
+            Assert.Equal(RowKey + "/0/0", drawn.Borrowed["handles/0"]);
+            Assert.Equal(RowKey + "/0/0", released.Borrowed["handles/0"]);
+        }
+
+        [Fact]
         public void AReadbackPostconditionReadsTheSameListBeforeAndAfterTheCall()
         {
             IList<E2eCase> cases = Comparing(
@@ -1292,6 +1312,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new SchemaItem(
                     null, null, Output(), null, ItemOrigin.HostOutput, null, null, false,
                     null, null, null, false, null),
+                null);
+        }
+
+        /// <summary>応答を並びの並びで返すツール。出たハンドルは内側の並びの先頭に入る。</summary>
+        private static ToolSchema Nesting(string name)
+        {
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch("only", null, null, new SchemaItem[0], new SchemaChoice[0]),
+                },
+                new SchemaItem(
+                    null,
+                    null,
+                    new SchemaItem(
+                        null, null, Output(), null, ItemOrigin.HostOutput, null, null, false,
+                        null, null, null, false, null),
+                    null,
+                    ItemOrigin.HostOutput,
+                    null, null, false, null, null, null, false, null),
                 null);
         }
 

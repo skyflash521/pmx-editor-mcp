@@ -1757,14 +1757,27 @@ namespace PmxEditorMcp
                 return true;
             }
 
+            System.Collections.IEnumerable given =
+                field.Listed ? (System.Collections.IEnumerable)value : null;
+            List<object> pointing = new List<object>();
+            foreach (object one in given ?? new[] { value })
+            {
+                pointing.Add(one);
+            }
+
+            if (given != null && pointing.Count == 0)
+            {
+                json = new object[0];
+
+                return true;
+            }
+
             IList<object> listed;
             if (!TryListed(field.Referenced, target, out listed, out refused))
             {
                 return false;
             }
 
-            System.Collections.IEnumerable given =
-                field.Listed ? (System.Collections.IEnumerable)value : null;
             if (given == null)
             {
                 json = Position(listed, value);
@@ -1773,7 +1786,7 @@ namespace PmxEditorMcp
             }
 
             List<object> positions = new List<object>();
-            foreach (object one in given)
+            foreach (object one in pointing)
             {
                 positions.Add(Position(listed, one));
             }
