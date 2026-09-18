@@ -3566,7 +3566,7 @@
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.Clear()",
       "editKind": "duplicateEdit",
-      "basis": "いまのPMXを複製して中身を空にし、まとめて反映するので、複製編集型に当たる。",
+      "basis": "いまのPMXを複製して中身を空にし、まとめて反映するので、複製編集型に当たる。この行が相手にするのは検査が作ったPMXだが、呼ぶ前と後で読み比べる判定は観測ツールへ渡すものを述べられず、一覧の全体を読む。作ったPMXを指して読む道が無いので、変わったことは読み比べでなく呼び出しの記録で確かめる。",
       "updateSpec": {
         "refresh": []
       },
@@ -3574,18 +3574,13 @@
         {
           "effectType": "observableChange",
           "effectKey": "",
-          "kind": "readback",
+          "kind": "callLogOnly",
           "comparison": "anyChanged",
           "setup": [
             {
               "tag": "initPmx"
-            },
-            {
-              "tag": "addElement",
-              "elementType": "vertex"
             }
-          ],
-          "observerTool": "model_list_vertices"
+          ]
         }
       ]
     },
