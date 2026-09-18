@@ -476,6 +476,55 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ARowThatWritesThroughAHandleIsReadThroughTheSameHandle()
+        {
+            IList<E2eCase> cases = Comparing(
+                Readback("model_get_things"),
+                Tool("model_touch_things", Handles()),
+                Reachable("model_get_things"),
+                makers: new Dictionary<string, IList<string>>(StringComparer.Ordinal)
+                {
+                    { "model_touch_things", new[] { "model_thing" } },
+                });
+
+            E2eCase[] reads = cases
+                .Where(c => c.Tool == "model_get_things" && c.RowKey == RowKey)
+                .ToArray();
+
+            Assert.Equal(2, reads.Length);
+            foreach (E2eCase read in reads)
+            {
+                Assert.Equal(new[] { "handles" }, read.Arguments.Keys.ToArray());
+                Assert.Equal(RowKey + "#0/0", read.Borrowed["handles/0"]);
+            }
+        }
+
+        [Fact]
+        public void AnObserverThatTakesNoLimitIsReadWithoutOne()
+        {
+            IList<E2eCase> cases = Comparing(
+                Readback("model_get_things"),
+                Tool("model_wipe_things", new SchemaItem[0]),
+                Unlimited("model_get_things"));
+
+            E2eCase read = cases.First(c => c.Tool == "model_get_things");
+
+            Assert.Equal(
+                new[] { E2eCaseBuilder.AllName },
+                read.Arguments.Keys.ToArray());
+            Assert.Equal(true, read.Arguments[E2eCaseBuilder.AllName]);
+        }
+
+        [Fact]
+        public void AnObserverThatDoesNotReadIsRefused()
+        {
+            Assert.Throws<InvalidOperationException>(() => Comparing(
+                Readback("model_remove_things"),
+                Tool("model_wipe_things", new SchemaItem[0]),
+                Whole("model_remove_things")));
+        }
+
+        [Fact]
         public void AnObserverThatCannotReadTheWholeListIsRefused()
         {
             Assert.Throws<InvalidOperationException>(() => Comparing(
@@ -1380,6 +1429,57 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 null);
         }
 
+        /// <summary>並びの全体でも、相手をハンドルで指してでも読めるツール。</summary>
+        private static ToolSchema Reachable(string name)
+        {
+            ToolSchema whole = Whole(name);
+
+            return new ToolSchema(
+                name,
+                whole.Branches.Concat(new[]
+                {
+                    new SchemaBranch(
+                        "held", null, null, Handles(), new SchemaChoice[0]),
+                }).ToArray(),
+                whole.Output,
+                null);
+        }
+
+        /// <summary>並びの全体を指せるが、読む件数の上限は取らないツール。</summary>
+        private static ToolSchema Unlimited(string name)
+        {
+            SchemaItem all = new SchemaItem(
+                "boolean", null, null, E2eCaseBuilder.AllName, ItemOrigin.HostInput, null,
+                null, false, null, null, null, false, null);
+            SchemaItem indices = new SchemaItem(
+                null,
+                null,
+                new SchemaItem(
+                    "number", null, null, null, ItemOrigin.HostInput, null, null, false,
+                    null, null, null, false, null),
+                "indices",
+                ItemOrigin.HostInput,
+                null, null, false, null, null, null, false, null);
+
+            return new ToolSchema(
+                name,
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[] { all, indices },
+                        new[]
+                        {
+                            new SchemaChoice(
+                                new[] { E2eCaseBuilder.AllName, "indices" }, true),
+                        }),
+                },
+                Output(),
+                null);
+        }
+
         /// <summary>
         /// 何を相手にするかを選ばせ、何件返すかも決めて読めるツール。実機の一覧はどれもこの形で、
         /// 全体・位置・範囲のどれかを必ず取る。
@@ -1442,7 +1542,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolSchema target,
             ToolSchema observer,
             string refused = null,
-            IList<SetupOperation> setup = null)
+            IList<SetupOperation> setup = null,
+            IDictionary<string, IList<string>> makers = null)
         {
             return E2eCaseBuilder.Build(
                 new ToolMap(new[]
@@ -1458,7 +1559,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         setup),
                 }),
                 new ToolSchemaTable(
-                    new[] { target, observer, Tool("model_add_things", Handles()) }),
+                    new[] { target, observer, Tool("model_add_things", Handles()) }
+                        .Concat(makers == null
+                            ? new ToolSchema[0]
+                            : new[] { Listing("model_thing") })
+                        .ToArray()),
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, target.Tool } },
                 Paths(),
                 new HashSet<string>(StringComparer.Ordinal),
@@ -1484,7 +1589,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 factories: new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { "model_add_things", "model_thing" },
-                });
+                },
+                makers: makers);
         }
 
         /// <summary>ハンドルが出たことを、その名前のツールの引数で観測する事後条件。</summary>

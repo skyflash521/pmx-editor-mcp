@@ -534,6 +534,16 @@
       "basis": "受け渡し用の名前へ文字列を1つ置く。"
     },
     {
+      "signatureKey": "PEPlugin.Pmx.IPXBone.SetLocalAxis(PEPlugin.SDX.V3,PEPlugin.SDX.V3)",
+      "arguments": {
+        "args": {
+          "x": [0, 1, 0],
+          "z": [0, 0, 1]
+        }
+      },
+      "basis": "既定のサンプルは x と z が同じ向きで、NormalizeLocal が軸を1つも決められない。"
+    },
+    {
       "signatureKey": "PEPlugin.Pmx.IPXPmx.FromFile(System.String)",
       "arguments": {
         "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.pmx"

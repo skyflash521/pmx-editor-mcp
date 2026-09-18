@@ -1246,7 +1246,12 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 yield return Recording(
-                    judgement, Reader(judgement, schemas, rowKey), rowKey, editKind, path);
+                    judgement,
+                    Reader(judgement, schemas, rowKey),
+                    rowKey,
+                    editKind,
+                    path,
+                    calling.ContainsKey(HandlesName) ? received : null);
             }
 
             if (calls)
@@ -1310,7 +1315,12 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (Postcondition judgement in reads ? compared : new Postcondition[0])
                 {
                     yield return Changing(
-                        judgement, Reader(judgement, schemas, rowKey), rowKey, editKind, path);
+                        judgement,
+                        Reader(judgement, schemas, rowKey),
+                        rowKey,
+                        editKind,
+                        path,
+                        calling.ContainsKey(HandlesName) ? received : null);
                 }
 
                 if (draws)
@@ -2003,7 +2013,14 @@ namespace PmxEditorMcp.SignatureDump
                     "読み比べる相手を宣言していない判定は組み立てられない: " + rowKey);
             }
 
-            if (Reading(observer) == null)
+            if (!Reads(observer.Tool))
+            {
+                throw new InvalidOperationException(
+                    "読む働きを持たないツールとは読み比べられない: "
+                        + judgement.ObserverTool + "(" + rowKey + ")");
+            }
+
+            if (Reading(observer, null) == null)
             {
                 throw new InvalidOperationException(
                     "並びの全体を読めないツールとは読み比べられない: "
@@ -2019,12 +2036,31 @@ namespace PmxEditorMcp.SignatureDump
             return rowKey + Scoped + judgement.ObserverTool;
         }
 
-        /// <summary>
-        /// 呼ぶ前と後で読むときに渡す引数。並びの全体をどう指すかは呼び分けごとに違うので、指せる
-        /// 呼び分けを探してその指し方で埋める。どの呼び分けでも指せなければ null。
-        /// </summary>
-        private static IDictionary<string, object> Reading(ToolSchema observer)
+        /// <summary>その名前のツールが、読む働きを持つか。</summary>
+        private static bool Reads(string tool)
         {
+            string[] words = tool.Split('_');
+
+            return words.Length > 1
+                && new[] { ToolVerb.Get, ToolVerb.List }.Any(
+                    v => string.Equals(
+                        words[1], v.ToString().ToLowerInvariant(), StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// 呼ぶ前と後で読むときに渡す引数。相手をハンドルで受け取る観測へ受け手を渡したときは、
+        /// そのハンドルの空きだけを持つ組を返す。渡さないときは並びの全体を指す組で、全体をどう
+        /// 指すかは呼び分けごとに違うので、指せる呼び分けを探してその指し方で埋める。どの呼び分け
+        /// でも指せなければ null。
+        /// </summary>
+        private static IDictionary<string, object> Reading(
+            ToolSchema observer, string receiver)
+        {
+            if (receiver != null && Holds(observer))
+            {
+                return Lent();
+            }
+
             foreach (SchemaBranch branch in observer.Branches)
             {
                 IDictionary<string, object> arguments = Whole(branch);
@@ -2044,10 +2080,12 @@ namespace PmxEditorMcp.SignatureDump
         private static IDictionary<string, object> Whole(SchemaBranch branch)
         {
             IDictionary<string, object> arguments =
-                new Dictionary<string, object>(StringComparer.Ordinal)
-                {
-                    { LimitName, ReadbackLimit },
-                };
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            if (branch.Inputs.Any(
+                i => string.Equals(i.Name, LimitName, StringComparison.Ordinal)))
+            {
+                arguments[LimitName] = ReadbackLimit;
+            }
             foreach (SchemaChoice choice in branch.Choices.Where(c => c.Required))
             {
                 string whole = choice.Names.FirstOrDefault(
@@ -2060,7 +2098,7 @@ namespace PmxEditorMcp.SignatureDump
                 arguments[whole] = true;
             }
 
-            return arguments;
+            return arguments.Count == 0 ? null : arguments;
         }
 
         /// <summary>
@@ -2306,7 +2344,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema observer,
             string rowKey,
             string editKind,
-            string path)
+            string path,
+            string receiver)
         {
             return new E2eCase(
                 rowKey,
@@ -2314,11 +2353,24 @@ namespace PmxEditorMcp.SignatureDump
                 path,
                 judgement.ObserverTool,
                 "呼ぶ前の姿を読めること",
-                Reading(observer),
+                Reading(observer, receiver),
                 E2eExpectation.Success,
                 null,
                 null,
-                Remembered(rowKey, judgement));
+                Remembered(rowKey, judgement),
+                Handed(observer, receiver));
+        }
+
+        /// <summary>相手をハンドルで読むときに借りる道。並びで読むときは null。</summary>
+        private static IDictionary<string, string> Handed(
+            ToolSchema observer, string receiver)
+        {
+            return receiver == null || !Holds(observer)
+                ? null
+                : new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { Leaf(HandlesName), receiver },
+                };
         }
 
         /// <summary>呼んだ後の姿が、呼ぶ前の姿と違うことを確かめる検査。</summary>
@@ -2327,7 +2379,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema observer,
             string rowKey,
             string editKind,
-            string path)
+            string path,
+            string receiver)
         {
             return new E2eCase(
                 rowKey,
@@ -2335,12 +2388,12 @@ namespace PmxEditorMcp.SignatureDump
                 path,
                 judgement.ObserverTool,
                 "呼び出しの後に読めるものが、呼ぶ前と違うこと",
-                Reading(observer),
+                Reading(observer, receiver),
                 E2eExpectation.Changed,
                 null,
                 null,
                 null,
-                null,
+                Handed(observer, receiver),
                 null,
                 null,
                 null,

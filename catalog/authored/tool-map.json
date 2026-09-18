@@ -2238,7 +2238,7 @@
               "elementType": "bone"
             }
           ],
-          "observerTool": "model_list_bones"
+          "observerTool": "model_get_local_axis_bone"
         }
       ]
     },
