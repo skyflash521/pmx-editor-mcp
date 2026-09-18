@@ -1954,6 +1954,8 @@ namespace PmxEditorMcp.SignatureDump
             string received,
             ElementWiring wiring)
         {
+            IDictionary<string, string> produced =
+                new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (SetupOperation operation in setup ?? (IList<SetupOperation>)new SetupOperation[0])
             {
                 if (operation.Tag == SetupTag.AddElement)
@@ -1986,7 +1988,16 @@ namespace PmxEditorMcp.SignatureDump
 
                 IDictionary<string, string> taken;
                 IDictionary<string, object> args =
-                    Receiving(operation.Args, received, rowKey, out taken);
+                    Receiving(operation.Args, received, rowKey, produced, out taken);
+                string made = operation.Out == null
+                    ? null
+                    : Scoping(rowKey, operation.Out);
+                if (made != null)
+                {
+                    produced[operation.Out] =
+                        Borrowed(made, Of(schemas, operation.ToolName));
+                }
+
                 yield return new E2eCase(
                     rowKey,
                     editKind,
@@ -1997,7 +2008,7 @@ namespace PmxEditorMcp.SignatureDump
                     E2eExpectation.Success,
                     null,
                     null,
-                    null,
+                    made,
                     taken);
             }
         }
@@ -2010,6 +2021,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, object> args,
             string received,
             string rowKey,
+            IDictionary<string, string> produced,
             out IDictionary<string, string> borrowed)
         {
             IDictionary<string, object> given =
@@ -2020,7 +2032,8 @@ namespace PmxEditorMcp.SignatureDump
                 ?? (IDictionary<string, object>)new Dictionary<string, object>(
                     StringComparer.Ordinal))
             {
-                given[one.Key] = Received(one.Value, one.Key, received, rowKey, taken);
+                given[one.Key] = Received(
+                    one.Value, one.Key, received, rowKey, taken, produced);
             }
 
             borrowed = taken.Count == 0 ? null : taken;
@@ -2036,7 +2049,8 @@ namespace PmxEditorMcp.SignatureDump
             string path,
             string received,
             string rowKey,
-            IDictionary<string, string> taken)
+            IDictionary<string, string> taken,
+            IDictionary<string, string> produced)
         {
             object[] items = value as object[];
             if (items != null)
@@ -2049,7 +2063,8 @@ namespace PmxEditorMcp.SignatureDump
                         path + PathStep + at.ToString(CultureInfo.InvariantCulture),
                         received,
                         rowKey,
-                        taken);
+                        taken,
+                        produced);
                 }
 
                 return each;
@@ -2063,15 +2078,46 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (KeyValuePair<string, object> one in members)
                 {
                     each[one.Key] = Received(
-                        one.Value, path + PathStep + one.Key, received, rowKey, taken);
+                        one.Value, path + PathStep + one.Key, received, rowKey, taken,
+                        produced);
                 }
 
                 return each;
             }
 
+            string text = value as string;
+            if (text != null
+                && text.StartsWith(ReferenceSpace.SetupOut, StringComparison.Ordinal))
+            {
+                string name = text.Substring(ReferenceSpace.SetupOut.Length);
+                string key;
+                if (produced == null || !produced.TryGetValue(name, out key))
+                {
+                    throw new InvalidOperationException(
+                        "段取りが、まだ出していない値を指している: " + rowKey + " の " + name);
+                }
+
+                taken[path] = key;
+
+                return null;
+            }
+
             if (!string.Equals(
                 value as string, ReferenceSpace.Receiver, StringComparison.Ordinal))
             {
+                string other = new[]
+                {
+                    ReferenceSpace.Arg,
+                    ReferenceSpace.SdkArg,
+                    ReferenceSpace.Result,
+                }.FirstOrDefault(
+                    s => text != null && text.StartsWith(s, StringComparison.Ordinal));
+                if (other != null)
+                {
+                    throw new InvalidOperationException(
+                        "段取りが、置き換える先の無い参照を渡している: " + rowKey + " の " + text);
+                }
+
                 return value;
             }
 

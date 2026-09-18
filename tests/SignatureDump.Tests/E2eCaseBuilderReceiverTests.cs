@@ -157,6 +157,70 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 step.Borrowed.Values.Single(), preparing.Borrowed["handles/0"]);
         }
 
+        /// <summary>段取りが出した値は、後の段取りの引数へ借りて渡す。</summary>
+        [Fact]
+        public void WhatOneSetupStepMadeIsLentToTheNext()
+        {
+            const string StepRowKey = "PEPlugin.Pmx.IPXPmx.Bone()";
+            IList<E2eCase> cases = Built(
+                new ToolMap(new[]
+                {
+                    new ToolMapRow(RowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                    new ToolMapRow(
+                        StepRowKey,
+                        ToolMapEditKind.Read,
+                        null,
+                        "作った相手を整える。",
+                        null,
+                        null,
+                        null,
+                        new[]
+                        {
+                            SetupOperation.CallTool(Filler, Listed(), "made"),
+                            SetupOperation.CallTool(Filler, Lent(), null),
+                        }),
+                }),
+                new[] { First, Second },
+                StepRowKey,
+                more: new[] { Free(Filler) });
+            IList<E2eCase> steps = cases.Where(
+                c => string.Equals(c.Tool, Filler, StringComparison.Ordinal)
+                    && string.Equals(c.RowKey, RowKey, StringComparison.Ordinal)).ToList();
+
+            Assert.Equal(2, steps.Count);
+            Assert.NotNull(steps[0].Produces);
+            // 出す側は応答を並びで返すので、借りるのはその先頭である。
+            Assert.Equal(steps[0].Produces + "/0", steps[1].Borrowed["handles/0"]);
+        }
+
+        /// <summary>出していない値を指す段取りは組み立てない。</summary>
+        [Fact]
+        public void ASetupStepThatPointsAtNothingMadeIsRefused()
+        {
+            const string StepRowKey = "PEPlugin.Pmx.IPXPmx.Bone()";
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Built(
+                    new ToolMap(new[]
+                    {
+                        new ToolMapRow(
+                            RowKey, ToolMapEditKind.Read, null, "読むだけ。", null, null, null),
+                        new ToolMapRow(
+                            StepRowKey,
+                            ToolMapEditKind.Read,
+                            null,
+                            "作った相手を整える。",
+                            null,
+                            null,
+                            null,
+                            new[] { SetupOperation.CallTool(Filler, Lent(), null) }),
+                    }),
+                    new[] { First, Second },
+                    StepRowKey));
+
+            Assert.Contains(
+                "まだ出していない値を指している", error.Message, StringComparison.Ordinal);
+        }
+
         /// <summary>
         /// 段取りはツールごとに1つなので、そのツールへ写る別の行を相手に事例を組むときも同じ
         /// 段取りが流れる。行ごとに持たせると、どの行を代表に選んだかで効き方が変わる。
@@ -541,7 +605,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolMap map,
             IList<string> path,
             string stepRowKey = null,
-            string otherRowKey = null)
+            string otherRowKey = null,
+            IEnumerable<ToolSchema> more = null)
         {
             IDictionary<string, string> named =
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } };
@@ -566,8 +631,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 map,
                 new ToolSchemaTable(new[]
                 {
-                    Held(Tool), Free(First), stepRowKey == null ? Free(Second) : Held(Second),
-                }),
+                    Held(Tool), Free(First),
+                    stepRowKey == null ? Free(Second) : Held(Second),
+                }.Concat(more ?? new ToolSchema[0]).ToArray()),
                 named,
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 new HashSet<string>(StringComparer.Ordinal),
@@ -617,6 +683,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return Rows(
                 "持っているものを返すだけである。",
                 new[] { SetupOperation.CallTool(Filler, args, null) });
+        }
+
+        /// <summary>段取りが出した値を借りて渡す引数。</summary>
+        private static IDictionary<string, object> Lent()
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { "handles", new object[] { ReferenceSpace.SetupOut + "made" } },
+            };
         }
 
         /// <summary>相手をハンドルの並びで指す段取り。</summary>

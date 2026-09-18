@@ -8207,6 +8207,94 @@
               "receiver:"
             ]
           }
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_camera_vme_object",
+          "args": {
+            "handles": [
+              "receiver:"
+            ]
+          },
+          "out": "camera"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_pos_vme_camera",
+          "args": {
+            "handles": [
+              "setupOut:camera"
+            ]
+          },
+          "out": "cameraPos"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_p_vme_camera_position",
+          "args": {
+            "handles": [
+              "setupOut:cameraPos"
+            ]
+          },
+          "out": "cameraEvent"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_set_vme_position_event_operator",
+          "args": {
+            "handles": [
+              "setupOut:cameraEvent"
+            ],
+            "args": {
+              "frame": 2,
+              "pos": [
+                0,
+                0,
+                -10
+              ],
+              "op": "Set",
+              "id": 1
+            }
+          }
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_light_vme_object",
+          "args": {
+            "handles": [
+              "receiver:"
+            ]
+          },
+          "out": "light"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_c_vme_light",
+          "args": {
+            "handles": [
+              "setupOut:light"
+            ]
+          },
+          "out": "lightEvent"
+        },
+        {
+          "tag": "callTool",
+          "tool": "motion_set_vme_vector_value_event_operator",
+          "args": {
+            "handles": [
+              "setupOut:lightEvent"
+            ],
+            "args": {
+              "frame": 2,
+              "val": [
+                1,
+                1,
+                1
+              ],
+              "op": "Set",
+              "id": 1
+            }
+          }
         }
       ],
       "basis": "登録したイベントを走らせて、その結果を持ち物にする。VMEのデータは長寿命の持ち物なので、それへ直に作用する。",
