@@ -202,84 +202,92 @@ async function main(argv) {
 
     process.chdir(root);
 
-    const work = mkdtempSync(join(tmpdir(), 'pmx-editor-mcp-verify-'));
-    process.env.PMX_EDITOR_MCP_WORK = work;
+    return await verify(argv[at + 1], all);
+}
 
+function discardQuietly(place) {
     try {
-        return await verify(argv[at + 1], all, work);
-    } finally {
-        rmSync(work, { recursive: true, force: true });
+        rmSync(place, { recursive: true, force: true });
+    } catch (failure) {
+        console.error(`置き場を消せなかった(${place}): ${failure.message}`);
     }
 }
 
 /** 一覧を読み、検査を選び、2回に分けて走らせて、実行を終わらせる終了コードを返す。 */
-async function verify(set, all, work) {
-    const manifest = manifestOf(set);
-    Object.assign(process.env, manifest.environment || {});
-    const names = manifest.checks.map((check) => check.name);
+async function verify(set, all) {
+    const began = process.hrtime.bigint();
+    const work = mkdtempSync(join(tmpdir(), 'pmx-editor-mcp-verify-'));
+    process.env.PMX_EDITOR_MCP_WORK = work;
+    try {
+        const manifest = manifestOf(set);
+        Object.assign(process.env, manifest.environment || {});
+        const paths = all ? [] : changedPaths();
+        const { wanted, scope, nothingChanged } = selectChecks(manifest, all, paths);
+        if (nothingChanged) {
+            console.log('変えたものが無いので、走らせる検査も無い。');
 
-    const paths = all ? [] : changedPaths();
-    const { wanted, scope, nothingChanged } = selectChecks(manifest, all, paths);
-    if (nothingChanged) {
-        console.log('変えたものが無いので、走らせる検査も無い。');
+            return 0;
+        }
+
+        const runs = [wanted.filter((check) => check.stage === 1),
+            wanted.filter((check) => check.stage !== 1)];
+        const limit = derivedLimitOf(runs.map((checks) => splitIntoForms(checks, work, atOnce)));
+
+        const stopper = new AbortController();
+        let overran = false;
+        const spent = Number(process.hrtime.bigint() - began) / 1e9;
+        const timer = setTimeout(() => {
+            overran = true;
+            killDescendants(process.pid);
+            stopper.abort();
+        }, Math.max(0, limit - spent) * 1000);
+
+        const failed = [];
+        const skipped = [];
+        let ran = 0;
+        try {
+            let produced = [NO_ARTIFACT];
+            for (const checks of runs) {
+                if (checks.length === 0) continue;
+
+                if (failed.length > 0 || skipped.length > 0 || overran) {
+                    skipped.push(...checks.map((check) => check.name));
+                    continue;
+                }
+
+                const said = await runOnce(work, checks, produced, stopper.signal,
+                    manifest.afterFailure);
+                ran += splitIntoForms(checks, work, atOnce).length - said.skipped.length;
+                failed.push(...said.failed);
+                skipped.push(...said.skipped);
+                produced = [...produced,
+                    ...checks.map((check) => check.produces).filter((made) => made)];
+            }
+        } finally {
+            clearTimeout(timer);
+        }
+
+        discardQuietly(work);
+
+        const elapsed = Number(process.hrtime.bigint() - began) / 1e9;
+        const took = `${elapsed.toFixed(1)}秒 / 上限 ${limit}秒`;
+        const over = overran || elapsed > limit;
+
+        console.log('');
+        if (over) console.log(`上限を超えた: ${took}`);
+        if (skipped.length > 0) console.log('走らせていない: ' + skipped.join('・'));
+        if (failed.length > 0) console.log('不合格: ' + failed.join('・'));
+
+        const verdict = verdictOf({ failed, skipped, over });
+        if (verdict !== 0) return verdict;
+
+        console.log(`${scope} の ${ran} 件をすべて合格(${took}`
+            + `・全部で ${splitIntoForms(manifest.checks, work, atOnce).length} 件)`);
 
         return 0;
-    }
-
-    const runs = [wanted.filter((check) => check.stage === 1),
-        wanted.filter((check) => check.stage !== 1)];
-    const limit = derivedLimitOf(runs.map((checks) => splitIntoForms(checks, work, atOnce)));
-
-    const began = process.hrtime.bigint();
-    const stopper = new AbortController();
-    let overran = false;
-    const timer = setTimeout(() => {
-        overran = true;
-        killDescendants(process.pid);
-        stopper.abort();
-    }, limit * 1000);
-
-    const failed = [];
-    const skipped = [];
-    let ran = 0;
-    try {
-        let produced = [NO_ARTIFACT];
-        for (const checks of runs) {
-            if (checks.length === 0) continue;
-
-            if (failed.length > 0 || skipped.length > 0 || overran) {
-                skipped.push(...checks.map((check) => check.name));
-                continue;
-            }
-
-            const said = await runOnce(work, checks, produced, stopper.signal,
-                manifest.afterFailure);
-            ran += splitIntoForms(checks, work, atOnce).length - said.skipped.length;
-            failed.push(...said.failed);
-            skipped.push(...said.skipped);
-            produced = [...produced,
-                ...checks.map((check) => check.produces).filter((made) => made)];
-        }
     } finally {
-        clearTimeout(timer);
+        discardQuietly(work);
     }
-
-    const elapsed = Number(process.hrtime.bigint() - began) / 1e9;
-    const took = `${elapsed.toFixed(1)}秒 / 上限 ${limit}秒`;
-    const over = overran || elapsed > limit;
-
-    console.log('');
-    if (over) console.log(`上限を超えた: ${took}`);
-    if (skipped.length > 0) console.log('走らせていない: ' + skipped.join('・'));
-    if (failed.length > 0) console.log('不合格: ' + failed.join('・'));
-
-    const verdict = verdictOf({ failed, skipped, over });
-    if (verdict !== 0) return verdict;
-
-    console.log(`${scope} の ${ran} 件をすべて合格(${took}`
-        + `・全部で ${splitIntoForms(manifest.checks, work, atOnce).length} 件)`);
-
-    return 0;
 }
 
 process.exitCode = await main(process.argv.slice(2));
