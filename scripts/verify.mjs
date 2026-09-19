@@ -1,6 +1,3 @@
-// 検査を枠組み(node:test)で走らせる入口。常設の検査と実機に触る検査の両方がここを通る。
-// 出来上がりを作る検査を1回目に、残りを2回目に走らせる。
-
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { cpus, tmpdir } from 'node:os';
@@ -10,14 +7,13 @@ import { run } from 'node:test';
 import { spec } from 'node:test/reporters';
 
 import {
-    NO_ARTIFACT, assertGroupedChecks, bundlesOf, derivedLimitOf, killDescendants,
+    NO_ARTIFACT, bundlesOf, derivedLimitOf, killDescendants,
     manifestOf, pathsTouch, selectGroups, splitIntoForms, verdictOf, weightOf,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const helpers = pathToFileURL(join(root, 'scripts', 'checks.mjs')).href;
 
-// 同時に走らせる束の数。
 const atOnce = Math.max(1, Math.floor(cpus().length / 4));
 
 /** 変えたものの道。追跡下の変更と、追跡外のファイルの両方を見る。 */
@@ -36,7 +32,6 @@ function changedPaths() {
 function writeBundleFiles(work, bundles, produced, afterFailure) {
     const files = [];
     let at = 0;
-    // 長く掛かる束から並べる。枠組みは渡した順に、空きが出た数だけ起こす。
     const ordered = [...bundles.values()].sort(
         (left, right) => weightOf(right) - weightOf(left));
     for (const checks of ordered) {
@@ -164,7 +159,6 @@ function selectChecks(manifest, all, paths) {
 
         const chosen = new Set(groups.flatMap((group) => manifest.groups[group]));
 
-        // 作る側が別の作る側を要ることがあるので、増えなくなるまで繰り返す。
         for (let added = true; added;) {
             added = false;
             for (const maker of manifest.makers) {
@@ -208,7 +202,6 @@ async function main(argv) {
 
     process.chdir(root);
 
-    // 束をまたいで持ち越す出来上がりの置き場。一覧が検査へ埋め込むので、読むより先に決める。
     const work = mkdtempSync(join(tmpdir(), 'pmx-editor-mcp-verify-'));
     process.env.PMX_EDITOR_MCP_WORK = work;
 
@@ -224,7 +217,6 @@ async function verify(set, all, work) {
     const manifest = manifestOf(set);
     Object.assign(process.env, manifest.environment || {});
     const names = manifest.checks.map((check) => check.name);
-    if (manifest.groups) assertGroupedChecks(manifest.groups, names);
 
     const paths = all ? [] : changedPaths();
     const { wanted, scope, nothingChanged } = selectChecks(manifest, all, paths);
@@ -240,12 +232,9 @@ async function verify(set, all, work) {
 
     const began = process.hrtime.bigint();
     const stopper = new AbortController();
-    // 導いた値に達した実行は、その時点で止める。
     let overran = false;
     const timer = setTimeout(() => {
         overran = true;
-        // 枠組みが検査のファイルのプロセスを終わらせると、その先で走っている検査の本体は親を
-        // 失って辿れなくなる。止める前に木を辿る。
         killDescendants(process.pid);
         stopper.abort();
     }, limit * 1000);

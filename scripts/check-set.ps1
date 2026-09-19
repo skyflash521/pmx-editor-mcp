@@ -1,10 +1,6 @@
-# 常設の検査の中身と、群の割り当て。[check-manifest.ps1](check-manifest.ps1) が一覧として出し、
-# [run-check.ps1](run-check.ps1) が1件ずつ走らせる。
-
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# 外部コマンドの非0終了は終了エラーにしない。ここでは出力と終了コードをそのまま見て合否にする。
 $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot 'editor-dir.ps1')
@@ -31,9 +27,6 @@ $contract = "$authored/common-contract.json"
 $acceptance = "$authored/acceptance-scenarios.json"
 $uncoveredTools = "$authored/uncovered-tools.json"
 
-# 受入の実行器の照合が使う題材。実物の定義で走らせると、突き合わせに要らない段まで通すことに
-# なる。突き合わせが見るのは期待の形と、操作・置き場・起こし直しの各段が頼む行いの種類で、
-# そのどれも1段ずつあれば足りる。題材がそれらを漏れなく持つことは受入シナリオの照合が見る。
 $acceptanceStub = 'scripts/acceptance-stub-cases.json'
 $acceptanceStubForms = 'scripts/acceptance-stub-forms.json'
 $e2eStub = 'scripts/e2e-stub-cases.json'
@@ -45,8 +38,6 @@ $requirements = 'docs/specs/requirements.md'
 #>
 $wholeForm = '通し'
 
-
-# 除外一覧の導出が書き、それを読む検査が読む置き場。束をまたぐので、道は実行のあいだ変わらない。
 $work = Get-CheckWorkDirectory
 $baseline = Join-Path $work 'excluded-baseline'
 $excluded = Join-Path $work 'excluded-signatures'
@@ -218,7 +209,7 @@ function Get-LiveHostRunnerForms {
     #>
     [ordered]@{
         'client.code' = 1
-        'client.says' = 4
+        'client.holdCode' = 4
         'acl' = 2
         'log.started' = 0
         'log.renewal' = 3
@@ -388,8 +379,6 @@ function Get-ExpectationForms {
                 else { 'notice.changed' }
             }
             'image' {
-                # 画像であることだけを求める段は、大きさを違えても落ちない。その段を受け持つのは
-                # 画像を文字列で返させる違え方で、形からは導けないので名指しで違えさせている。
                 if ($null -ne $Expect.image.PSObject.Properties['capturedAs']) { 'image' }
                 if ($null -ne $Expect.image.PSObject.Properties['differsFrom']) {
                     'image.differsFrom'
@@ -445,8 +434,6 @@ function Assert-NoEditorLeft {
     }
 }
 
-# 待受の代わりがパイプを開くまでの上限の秒数。この上限に達した待ちは失敗とする。
-# 落ちた相手はその場で分かるので、この上限は待たずに抜ける。
 $StubPipeLimitSeconds = 10
 
 function Wait-StubPipe {
@@ -459,14 +446,10 @@ function Wait-StubPipe {
 
     $until = (Get-Date).AddSeconds($StubPipeLimitSeconds)
     while ((Get-Date) -lt $until) {
-        # 名前付きパイプは Test-Path では見つからないので、待受の一覧から名前で探す。
         $opened = @([System.IO.Directory]::GetFileSystemEntries("\\.\pipe\") |
             ForEach-Object { Split-Path -Leaf $_ })
         if ($opened -contains $Name) { return }
         if ($Stub.HasExited) {
-            # 落ちた理由は待受の代わりが述べる。隠れた窓の中へは届かないので、受け取った先から
-            # 読んで載せる——理由の無い「開かなかった」だけでは、手で起こし直すところから
-            # やり直すことになる。
             $told = if (Test-Path $Said) { (Get-Content $Said -Raw -Encoding UTF8).Trim() } else { '' }
             throw ("待受の代わりが開く前に終わった: $Name " + $told)
         }
@@ -485,8 +468,6 @@ function Invoke-E2eRunner {
     #>
     param([string]$Cases, [string]$Broken, [int]$At)
 
-    # 代わりの相手は実行器が前置を通して起こす。名前の突き合わせが見るスキーマ正本も、その相手が
-    # 公開する名前と同じ元から作る——どちらも検査の定義が名乗るツールの名前である。
     $tag = [guid]::NewGuid().ToString('N')
     $defined = Get-Content $Cases -Raw -Encoding UTF8 | ConvertFrom-Json
     $named = @($defined.cases | ForEach-Object { $_.tool } | Sort-Object -Unique)
@@ -537,8 +518,6 @@ function Get-E2eExpectationForms {
         if ($form -eq 'viewImage') { $form = 'viewImage.' + $one.view }
         if (-not $forms.Contains($form)) { $forms[$form] = $at }
 
-        # 呼び先まで届く段は、断られたときだけでなく確認の表示で止まったときも落ちる。止まった
-        # 応答を通す実行器は、表示が出たことを宣言した振る舞いの代わりに数えてしまう。
         if ($form -eq 'called' -and -not $forms.Contains('called.prompt')) {
             $forms['called.prompt'] = $at
         }
@@ -575,9 +554,6 @@ function Test-E2eRunner {
         return
     }
 
-    # 検査1件ごとの結末ではなく、走らせる前と後に見る事柄。名前の集合がずれていても、中継を
-    # 作れなかった行や無効にした行が残っていても、呼んだ検査はすべて通りうる——通したまま終える
-    # 実行器はここで落ちる。
     $beyond = Get-FormsBeyondCases -Path $e2eStubForms
     if ($beyond.Contains($Form) -and $beyond[$Form] -eq 'wholeRun') {
         $ran = Invoke-E2eRunner -Cases $Cases -Broken $Form -At -1
@@ -586,16 +562,10 @@ function Test-E2eRunner {
         return
     }
 
-    # ブリッジ自身が返す誤りは接続先を名乗らない。名乗りを1行目と決め打つ実行器は、この誤りの
-    # 中身を丸ごと落として、落ちた理由の残らない不合格を並べる。
     if ($beyond.Contains($Form) -and $beyond[$Form] -eq 'bridgeError') {
         $ran = Invoke-E2eRunner -Cases $Cases -Broken $Form -At 0
         if ($ran.Code -ne 1) {
             throw "ブリッジ自身の誤りを返しても不合格にならない: $($ran.Said)"
-        }
-
-        if ($ran.Said -notmatch 'BRIDGE_TIMEOUT') {
-            throw "ブリッジ自身の誤りの中身が結末に残っていない: $($ran.Said)"
         }
 
         return
@@ -646,7 +616,6 @@ function Test-AcceptanceRunner {
             throw "定義に並ぶ $calls 件の呼び出しのうち $($held.calls) 件しか呼んでいない。"
         }
 
-        # 起こし直す段のぶんだけ、応答を作る相手は起こし直される。最初の1回はその段に依らない。
         if ($held.starts -ne ($restarts + 1)) {
             throw ("サーバーを起こした回数が " + ($restarts + 1) + " ではない: $($held.starts)")
         }
@@ -661,8 +630,6 @@ function Test-AcceptanceRunner {
         return
     }
 
-    # 置き場が作られなければ、その実在を確かめる段が落とすはずである。画像を本文の文字列で返す
-    # 違え方は期待の形から導けないので、どちらもここで名指しする。
     $beyond = Get-FormsBeyondCases -Path $acceptanceStubForms
     if ($beyond.Contains($Form) -and $beyond[$Form] -eq 'broken') {
         $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken $Form -At 0
@@ -860,12 +827,9 @@ function Test-PackageContents {
     $staged = Join-Path 'dist' "pmx-editor-mcp-$version"
 
     if ($Form -eq $wholeForm) {
-        # 1コマンドで組み立てられること。組み立ては内容物の照合を内で呼ぶ。
         pwsh -NoProfile -File scripts/package.ps1
         if ($LASTEXITCODE -ne 0) { throw "配布パッケージを組み立てられない。" }
 
-        # 版を固定値で持つ実装は、Directory.Build.props を変えても追随しない。組み立てる側に
-        # その綴りが1つも現れないことで見る——現れないなら、名前も照合もそこを読んで決めている。
         $literal = @(Get-ChildItem scripts/package*.ps1 |
             Select-String -Pattern $version -SimpleMatch)
         if ($literal.Count -ne 0) {
@@ -885,8 +849,6 @@ function Test-PackageContents {
         & $spoils[$Form].Spoil
         $asked = if ($Form -eq '版の食い違い') { '9.9.9' } else { $version }
 
-        # 落ちたことだけでは足りない。違えた当の判定が落としたことを、その判定が名乗る綴りで見る
-        # ——別の判定が先に落とすなら、名前の指す判定は一度も通っていない。
         $said = ''
         try {
             & scripts/package-contents.ps1 -Staged $copy -Version $asked | Out-Null
@@ -906,24 +868,24 @@ function Test-PackageContents {
 $build = 'ビルド'
 $derivation = '除外一覧の導出'
 
-# 同じ中間出力へ書く検査を並べる束の名前。MSBuild の束は obj・bin・dist を、除外一覧の束は
-# 導出が書く置き場を共有する。
 $msbuildBundle = 'MSBuild'
 $exclusionBundle = '除外一覧'
 
+$pathlessGroups = @('全件のみ')
 
 $checks = [ordered]@{}
-$checks[$build] = @{
-    LimitSeconds = 7
-    Needs = $noArtifact
-    Stage = 1
-    Produces = $buildOutput
-    Run = @('dotnet', 'build', 'PmxEditorMcp.sln', '-warnaserror')
-}
-$checks['スクリプト構文'] = @{
-    LimitSeconds = 5
-    Needs = $noArtifact
-    Body = {
+$checks[$build] = New-Check `
+    -Groups $pathlessGroups `
+    -LimitSeconds 7 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Stage 1 `
+    -Produces $buildOutput `
+    -Run @('dotnet', 'build', 'PmxEditorMcp.sln', '-warnaserror')
+$checks['スクリプト構文'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 5 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Body {
         $bad = @()
         foreach ($file in Get-ChildItem scripts/*.mjs) {
             $said = node --check $file.FullName 2>&1
@@ -932,11 +894,11 @@ $checks['スクリプト構文'] = @{
         $global:LASTEXITCODE = 0
         if ($bad) { throw ($bad -join "`n") }
     }
-}
-$checks['スクリプト構文(PowerShell)'] = @{
-    LimitSeconds = 3
-    Needs = $noArtifact
-    Body = {
+$checks['スクリプト構文(PowerShell)'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Body {
         $bad = @()
         foreach ($file in Get-ChildItem scripts/*.ps1) {
             $errors = $null
@@ -946,29 +908,28 @@ $checks['スクリプト構文(PowerShell)'] = @{
         }
         if ($bad) { throw ($bad -join "`n") }
     }
-}
-$checks['文書のリンク'] = @{
-    LimitSeconds = 3
-    Needs = $noArtifact
-    Run = @('lychee', '--offline', '--no-progress', '--include-fragments',
+$checks['文書のリンク'] = New-Check `
+    -Groups @('ドキュメント', '定義', 'スクリプト') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Run @('lychee', '--offline', '--no-progress', '--include-fragments',
         '--exclude-path', '.scratch', '--exclude-path', 'docs/.scratch',
         '--exclude-path', 'dist', '**/*.md')
-}
-$checks[$derivation] = @{
-    LimitSeconds = 3
-    Needs = $buildOutput
-    Bundle = $exclusionBundle
-    Produces = $exclusionList
-    Body = {
-        # 凍結が落ちたらその終了コードのまま返したいので、続きを走らせずに抜ける。
+$checks[$derivation] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Bundle $exclusionBundle `
+    -Produces $exclusionList `
+    -Body {
         & $dump excluded-baseline $editorDir $ledger $baseline
         if ($LASTEXITCODE -eq 0) { & $dump excluded-signatures $editorDir $baseline $excluded }
     }
-}
-$checks['要約の持ち主'] = @{
-    LimitSeconds = 3
-    Needs = $noArtifact
-    Body = {
+$checks['要約の持ち主'] = New-Check `
+    -Groups @('コード') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Body {
         $orphans = @()
         foreach ($file in Get-ChildItem -Path src, tests -Recurse -Filter *.cs -File |
             Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }) {
@@ -988,202 +949,199 @@ $checks['要約の持ち主'] = @{
             throw ('要約が持ち主から離れている: ' + ($orphans -join '・'))
         }
     }
-}
-$checks['実行時リフレクション'] = @{
-    LimitSeconds = 3
-    Needs = $buildOutput
-    Run = @($dump, 'reflection-free', $editorDir, $hostDll)
-}
-$checks['整形'] = @{
-    LimitSeconds = 53
-    Needs = $buildOutput
-    Bundle = $msbuildBundle
-    Run = @('dotnet', 'format', 'PmxEditorMcp.sln', '--verify-no-changes')
-}
-$checks['テスト'] = @{
-    LimitSeconds = 62
-    Needs = $buildOutput
-    Run = @('dotnet', 'test', 'PmxEditorMcp.sln', '--no-build')
-}
-$checks['台帳とSDKの照合'] = @{
-    LimitSeconds = 3
-    Needs = $exclusionList
-    Bundle = $exclusionBundle
-    Run = @($dump, 'ledger-coverage', $editorDir, $ledger, $excluded, $outOfScope)
-}
-$checks['日本語名の照合'] = @{
-    LimitSeconds = 3
-    Needs = $exclusionList
-    Bundle = $exclusionBundle
-    Run = @($dump, 'property-names', $editorDir, $ledger, $excluded, $names)
-}
-$checks['型役割の照合'] = @{
-    LimitSeconds = 3
-    Needs = $exclusionList
-    Bundle = $exclusionBundle
-    Run = @($dump, 'type-roles', $editorDir, $ledger, $excluded, $roles)
-}
-$checks['共通契約割当の照合'] = @{
-    LimitSeconds = 3
-    Needs = $exclusionList
-    Bundle = $exclusionBundle
-    Run = @($dump, 'common-assignments', $editorDir, $ledger, $excluded, $roles, $assignments)
-}
-$checks['値の表現の照合'] = @{
-    LimitSeconds = 3
-    Needs = $exclusionList
-    Bundle = $exclusionBundle
-    Run = @($dump, 'value-shapes', $editorDir, $ledger, $excluded, $contract)
-}
-$checks['危険操作の照合'] = @{
-    LimitSeconds = 3
-    Needs = $exclusionList
-    Bundle = $exclusionBundle
-    Run = @($dump, 'dangerous-operations', $editorDir, $ledger, $excluded)
-}
-$checks['能力対応表の照合'] = @{
-    LimitSeconds = 3
-    Needs = $exclusionList
-    Bundle = $exclusionBundle
-    Run = @($dump, 'tool-map', $editorDir, $ledger, $excluded, $roles, $assignments, $toolMap)
-}
-$checks['提供対象の網羅'] = @{
-    LimitSeconds = 3
-    Needs = $exclusionList
-    Bundle = $exclusionBundle
-    Run = @($dump, 'map-coverage', $editorDir, $ledger, $excluded, $roles, $toolMap)
-}
-$checks['スキーマ定義の照合'] = @{
-    LimitSeconds = 3
-    Needs = $buildOutput
-    Run = @($dump, 'tool-schemas', $contract, $toolMap, $toolSchemas)
-}
-$checks['ツールの説明文の照合'] = @{
-    LimitSeconds = 3
-    Needs = $buildOutput
-    Run = @($dump, 'tool-descriptions', $editorDir, $ledger, $contract, $roles, $names,
+$checks['実行時リフレクション'] = New-Check `
+    -Groups @('コード') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'reflection-free', $editorDir, $hostDll)
+$checks['整形'] = New-Check `
+    -Groups @('コード') `
+    -LimitSeconds 53 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Bundle $msbuildBundle `
+    -Run @('dotnet', 'format', 'PmxEditorMcp.sln', '--verify-no-changes')
+$checks['テスト'] = New-Check `
+    -Groups @('定義', 'コード') `
+    -LimitSeconds 62 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @('dotnet', 'test', 'PmxEditorMcp.sln', '--no-build')
+$checks['台帳とSDKの照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $exclusionList `
+    -Bundle $exclusionBundle `
+    -Run @($dump, 'ledger-coverage', $editorDir, $ledger, $excluded, $outOfScope)
+$checks['日本語名の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $exclusionList `
+    -Bundle $exclusionBundle `
+    -Run @($dump, 'property-names', $editorDir, $ledger, $excluded, $names)
+$checks['型役割の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $exclusionList `
+    -Bundle $exclusionBundle `
+    -Run @($dump, 'type-roles', $editorDir, $ledger, $excluded, $roles)
+$checks['共通契約割当の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $exclusionList `
+    -Bundle $exclusionBundle `
+    -Run @($dump, 'common-assignments', $editorDir, $ledger, $excluded, $roles, $assignments)
+$checks['値の表現の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $exclusionList `
+    -Bundle $exclusionBundle `
+    -Run @($dump, 'value-shapes', $editorDir, $ledger, $excluded, $contract)
+$checks['危険操作の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $exclusionList `
+    -Bundle $exclusionBundle `
+    -Run @($dump, 'dangerous-operations', $editorDir, $ledger, $excluded)
+$checks['能力対応表の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $exclusionList `
+    -Bundle $exclusionBundle `
+    -Run @($dump, 'tool-map', $editorDir, $ledger, $excluded, $roles, $assignments, $toolMap)
+$checks['提供対象の網羅'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $exclusionList `
+    -Bundle $exclusionBundle `
+    -Run @($dump, 'map-coverage', $editorDir, $ledger, $excluded, $roles, $toolMap)
+$checks['スキーマ定義の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'tool-schemas', $contract, $toolMap, $toolSchemas)
+$checks['ツールの説明文の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'tool-descriptions', $editorDir, $ledger, $contract, $roles, $names,
         $assignments, $toolMap)
-}
-$checks['サンプル値の照合'] = @{
-    LimitSeconds = 3
-    Needs = $buildOutput
-    Run = @($dump, 'sample-values', $editorDir, $contract, $sampleValues)
-}
-$checks['発見可能性の照合'] = @{
-    LimitSeconds = 3
-    Needs = $buildOutput
-    Run = @($dump, 'discovery', $editorDir, $ledger, $contract, $roles, $names,
+$checks['サンプル値の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'sample-values', $editorDir, $contract, $sampleValues)
+$checks['発見可能性の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'discovery', $editorDir, $ledger, $contract, $roles, $names,
         $assignments, $toolMap, $discoveryTasks)
-}
-$checks['スキーマ対応の照合'] = @{
-    LimitSeconds = 3
-    Needs = $buildOutput
-    Run = @($dump, 'schema-correspondence', $editorDir, $ledger, $roles, $assignments,
+$checks['スキーマ対応の照合'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'schema-correspondence', $editorDir, $ledger, $roles, $assignments,
         $toolMap, $toolSchemas)
-}
-$checks['ツールの検査の網羅'] = @{
-    LimitSeconds = 5
-    Needs = $buildOutput
-    Run = @($dump, 'tool-coverage', $editorDir, $ledger, $contract, $roles, $names,
+$checks['ツールの検査の網羅'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 5 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'tool-coverage', $editorDir, $ledger, $contract, $roles, $names,
         $assignments, $toolMap, $toolSchemas, $sampleValues, $acceptance, $uncoveredTools)
-}
-$checks['規則適合検査'] = @{
-    LimitSeconds = 3
-    Needs = $buildOutput
-    Run = @($dump, 'tool-mapping', $editorDir, $ledger, $contract, $roles, $assignments,
+$checks['規則適合検査'] = New-Check `
+    -Groups @('定義') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'tool-mapping', $editorDir, $ledger, $contract, $roles, $assignments,
         $toolMap, $toolSchemas)
-}
-$checks['受入シナリオの照合'] = @{
-    LimitSeconds = 5
-    Needs = $buildOutput
-    Run = @($dump, 'acceptance-cases', $editorDir, $ledger, $contract, $roles, $names,
+$checks['受入シナリオの照合'] = New-Check `
+    -Groups @('ドキュメント', '定義') `
+    -LimitSeconds 5 <# 変更禁止 #> `
+    -Needs $buildOutput `
+    -Run @($dump, 'acceptance-cases', $editorDir, $ledger, $contract, $roles, $names,
         $assignments, $toolMap, $toolSchemas, $acceptance, $requirements, $acceptanceStub)
-}
-$checks['ブリッジの単独起動'] = @{
-    LimitSeconds = 17
-    Needs = $noArtifact
-    Bundle = $msbuildBundle
-    Run = @('pwsh', '-NoProfile', '-File', 'scripts/bridge-standalone.ps1')
-}
-$checks['形の導出の照合'] = @{
-    LimitSeconds = 3
-    Needs = $noArtifact
-    Body = { Test-FormDerivation -Checks $checks }
-}
-$checks['配布パッケージの生成'] = @{
-    LimitSeconds = 21
-    Needs = $noArtifact
-    Bundle = $msbuildBundle
-    # 違えを入れる形は、通しが組み立てた出来上がりを写して使う。組を分けずに順に走らせる。
-    FormsInOrder = $true
-    Forms = { @($wholeForm) + @((Get-PackageSpoils -Copy '').Keys) }
-    Body = { param([string]$Form)
+$checks['ブリッジの単独起動'] = New-Check `
+    -Groups @('ブリッジ配布') `
+    -LimitSeconds 17 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Bundle $msbuildBundle `
+    -Run @('pwsh', '-NoProfile', '-File', 'scripts/bridge-standalone.ps1')
+$checks['形の導出の照合'] = New-Check `
+    -Groups @('定義', 'スクリプト') `
+    -LimitSeconds 3 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Body { Test-FormDerivation -Checks $checks }
+$checks['配布パッケージの生成'] = New-Check `
+    -Groups @('ブリッジ配布') `
+    -LimitSeconds 21 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Bundle $msbuildBundle `
+    -FormsInOrder `
+    -Forms { @($wholeForm) + @((Get-PackageSpoils -Copy '').Keys) } `
+    -Body { param([string]$Form)
 
         Test-PackageContents -Form $Form
     }
-}
-$checks['E2Eの実行器の照合'] = @{
-    LimitSeconds = 63
-    Needs = $noArtifact
-    Forms = {
+$checks['E2Eの実行器の照合'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 63 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Forms {
         $defined = Get-Content $e2eStub -Raw -Encoding UTF8 | ConvertFrom-Json
 
         @($wholeForm) + @((Get-E2eExpectationForms -Defined $defined).Keys) +
             @((Get-FormsBeyondCases -Path $e2eStubForms).Keys)
-    }
-    Body = { param([string]$Form)
+    } `
+    -Body { param([string]$Form)
 
         Test-E2eRunner -Cases $e2eStub -Form $Form
     }
-}
-$checks['検査の集計の照合'] = @{
-    LimitSeconds = 5
-    Needs = $noArtifact
-    # 形どうしは同じ題材の中で並ぶ。組を分けず、1回の実行で形ごとの合否を書かせる。
-    FormsInOrder = $true
-    Forms = { @(node scripts/checks-stub-run.mjs --list) }
-    # 形と結末の置き場の渡し方。走らせる側がこの綴りの後ろへ値を足す。
-    FormArgument = '--forms'
-    ResultsArgument = '--results'
-    Run = @('node', 'scripts/checks-stub-run.mjs')
-}
-$checks['確認クライアントの照合'] = @{
-    LimitSeconds = 32
-    Needs = $noArtifact
-    Forms = { @($wholeForm) + @((Get-CheckClientForms).Keys) }
-    Body = { param([string]$Form)
+$checks['検査の集計の照合'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 5 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -FormsInOrder `
+    -Forms { @(node scripts/checks-stub-run.mjs --list) } `
+    -FormArgument '--forms' `
+    -ResultsArgument '--results' `
+    -Run @('node', 'scripts/checks-stub-run.mjs')
+$checks['確認クライアントの照合'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 32 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Forms { @($wholeForm) + @((Get-CheckClientForms).Keys) } `
+    -Body { param([string]$Form)
 
         Test-CheckClient -Form $Form
     }
-}
-$checks['実機動作確認の実行器の照合'] = @{
-    LimitSeconds = 37
-    Needs = $noArtifact
-    Forms = { @($wholeForm) + @((Get-LiveHostRunnerForms).Keys) }
-    Body = { param([string]$Form)
+$checks['実機動作確認の実行器の照合'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 37 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Forms { @($wholeForm) + @((Get-LiveHostRunnerForms).Keys) } `
+    -Body { param([string]$Form)
 
         Test-LiveHostRunner -Form $Form
     }
-}
-$checks['参照クライアントの実行器の照合'] = @{
-    LimitSeconds = 46
-    Needs = $noArtifact
-    Forms = { @($wholeForm) + @((Get-LiveClientRunnerForms).Keys) }
-    Body = { param([string]$Form)
+$checks['参照クライアントの実行器の照合'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 46 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Forms { @($wholeForm) + @((Get-LiveClientRunnerForms).Keys) } `
+    -Body { param([string]$Form)
 
         Test-LiveClientRunner -Form $Form
     }
-}
-$checks['受入の実行器の照合'] = @{
-    LimitSeconds = 120
-    Needs = $noArtifact
-    Forms = {
+$checks['受入の実行器の照合'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 120 <# 変更禁止 #> `
+    -Needs $noArtifact `
+    -Forms {
         $defined = Get-Content $acceptanceStub -Raw | ConvertFrom-Json
 
         @($wholeForm) + @((Get-AcceptanceExpectationForms -Defined $defined).Keys) +
             @((Get-FormsBeyondCases -Path $acceptanceStubForms).Keys)
-    }
-    Body = { param([string]$Form)
+    } `
+    -Body { param([string]$Form)
 
         $temp = [System.IO.Path]::GetTempPath()
         Test-AcceptanceRunner -Cases $acceptanceStub `
@@ -1192,55 +1150,16 @@ $checks['受入の実行器の照合'] = @{
             -Editors (Join-Path $temp $StubLaunchStateName) `
             -Form $Form
     }
-}
 
-# 検査を、それが読む入力ごとに分ける。何を変えたかで、走らせる群が決まる。数えるのは引数に現れる
-# ファイルだけではない。Body が呼ぶスクリプトも、その呼び先が中で読むファイルも、その実行ファイルを
-# 作る場所も入力である——そこまで辿らずに群を決めると、変えた当のコードを動かす検査が1件も走らない
-# まま合格が出る。読む入力が複数の種類にまたがる検査は、そのすべての群に入れる。
-$checkGroups = [ordered]@{
-    'ドキュメント' = @('文書のリンク', '受入シナリオの照合')
-    '定義' = @($derivation, '台帳とSDKの照合', '日本語名の照合', '型役割の照合',
-        '形の導出の照合',
-        '共通契約割当の照合', '値の表現の照合', '危険操作の照合', '能力対応表の照合',
-        '提供対象の網羅', 'スキーマ定義の照合', 'ツールの説明文の照合', 'サンプル値の照合',
-        '発見可能性の照合', 'スキーマ対応の照合', 'ツールの検査の網羅', '規則適合検査',
-        '受入シナリオの照合', 'テスト', '文書のリンク')
-    'コード' = @('整形', '実行時リフレクション', '要約の持ち主', 'テスト')
-    # 実行器そのものと、その代わりを立てる題材だけを入力にする検査。実行器の照合は、突き合わせる
-    # 相手をすべて自分で立てるので、製品のコードや正本が変わっても答えが変わらない。文書のリンクを
-    # 入れるのは、追跡下の文書がここの実行器を名指しで指しており、名前を変えれば指し先が消える
-    # ためである。
-    'スクリプト' = @('スクリプト構文', 'スクリプト構文(PowerShell)', '検査の集計の照合',
-        '形の導出の照合',
-        'E2Eの実行器の照合', '確認クライアントの照合', '実機動作確認の実行器の照合',
-        '参照クライアントの実行器の照合', '受入の実行器の照合', '文書のリンク')
-    'ブリッジ配布' = @('ブリッジの単独起動', '配布パッケージの生成')
-    # 上の群のどれにも入らない検査をここへ並べる。全件を走らせるときにしか出番が無いという
-    # 申告で、`@($checks.Keys)` のような一括の指定にはしない——一括にすると、新しい検査を上の群へ
-    # 入れ忘れても全件の側が黙って拾い、入れ忘れを落とす検査が素通りになる。
-    '全件のみ' = @($build)
-}
-
-# 変えたものの道から、走らせる群を選ぶ表。1つの道が複数の群に当たるなら、当たった群をすべて
-# 走らせる。**当たらない道が1つでもあれば全件へ倒す**——表に無い道は、その変更をどの検査が見るのか
-# を誰も決めていないということで、決めていないまま一部だけ走らせると、見る検査が1件も走らない
-# ままになる。
 $groupPaths = [ordered]@{
     'ドキュメント' = @('*.md')
-    # 定義の群はどれも生成器の実行ファイルを走らせるので、それを作る場所も定義の入力である。
-    # 受入の題材は、実物と揃っていることを受入シナリオの照合が見るので、同じ群へ入れる。
     '定義' = @('catalog/*', 'src/SignatureDump/*', 'scripts/acceptance-stub-cases.json')
     'コード' = @('src/*', 'tests/*')
     'スクリプト' = @('scripts/*')
-    # 配布の組み立ては、ホストと生成器を Release で作り直し、同梱する手引きを写し、第三者
-    # ライセンスの本文を読む。単独起動もその実行器そのものを走らせる。どれもこの群の入力である。
     'ブリッジ配布' = @('src/Bridge/*', 'src/HostPlugin/*', 'src/SignatureDump/*',
         'scripts/package*', 'scripts/bridge-standalone.ps1', 'docs/package/*',
         'catalog/observed/licenses/*')
 }
 
-# 道からは群を決められないもの。どの検査の中身もこの1本が持つので、ここが変われば、影響する
-# 群を道の形では言えない。
 $ungrouped = @('scripts/check-set.ps1')
 

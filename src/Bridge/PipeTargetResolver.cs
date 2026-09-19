@@ -23,6 +23,9 @@ namespace PmxEditorMcp.Bridge
         /// <summary>待受が無いときの案内を分けるために数えるPMXエディタのプロセス名。</summary>
         public const string EditorProcessName = "PmxEditor_x64";
 
+        /// <summary>エディタの導入フォルダの中で、ホストが置かれる場所。</summary>
+        public const string HostRelativePath = @"_plugin\User\PmxEditorMcp.dll";
+
         /// <summary>ホストの待受パイプ名の接頭辞。この後ろにエディタのプロセスIDが続く。</summary>
         public const string PipeNamePrefix = "pmx-editor-mcp-";
 
@@ -186,13 +189,14 @@ namespace PmxEditorMcp.Bridge
             {
                 return new BridgeException(
                     BridgeErrorCodes.NoEditor,
-                    "PMXエディタが起動していない。PMXエディタ(" + EditorProcessName
-                        + ".exe)を起動してから呼び出す。");
+                    "接続先になるPMXエディタが見つからない。PMXエディタの導入フォルダへ "
+                        + HostRelativePath + " を置き、同じフォルダの "
+                        + EditorProcessName + ".exe を起動してから呼び出す。");
             }
 
-            // エディタは在るのに待ち受けていない。プラグインを配置していない・メニューから
-            // 停止した・設定が不正で開始しなかった、のどれなのかは外から区別できないので、
-            // 稼働状態を確かめられる場所だけを示す。
+            // ホストを置いたエディタは在るのに待ち受けていない。メニューから停止した・設定が
+            // 不正で開始しなかった、のどちらなのかは外から区別できないので、稼働状態を確かめ
+            // られる場所だけを示す。
             return new BridgeException(
                 BridgeErrorCodes.NoHost,
                 "PMXエディタは起動しているが、待ち受けているホストがない。エディタのプラグイン"
@@ -273,15 +277,48 @@ namespace PmxEditorMcp.Bridge
             return true;
         }
 
+        /// <summary>
+        /// その実行ファイルの導入フォルダにホストが置かれているか。同じ名前のエディタは別の導入
+        /// フォルダからも動き、ホストの置かれていない導入フォルダのエディタは待ち受けることが
+        /// ない。
+        /// </summary>
+        internal static bool HostsInstalledBeside(string editorExecutablePath)
+        {
+            if (string.IsNullOrEmpty(editorExecutablePath))
+            {
+                return false;
+            }
+
+            string directory;
+            try
+            {
+                directory = Path.GetDirectoryName(editorExecutablePath);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(directory))
+            {
+                return false;
+            }
+
+            return File.Exists(Path.Combine(directory, HostRelativePath));
+        }
+
         private static IReadOnlyList<int> FindEditorProcessIds(string processName)
         {
             Process[] editors = Process.GetProcessesByName(processName);
             try
             {
-                int[] processIds = new int[editors.Length];
-                for (int index = 0; index < editors.Length; index++)
+                List<int> processIds = new List<int>();
+                foreach (Process editor in editors)
                 {
-                    processIds[index] = editors[index].Id;
+                    if (HostsInstalledBeside(ExecutablePathOf(editor)))
+                    {
+                        processIds.Add(editor.Id);
+                    }
                 }
 
                 return processIds;
@@ -292,6 +329,21 @@ namespace PmxEditorMcp.Bridge
                 {
                     editor.Dispose();
                 }
+            }
+        }
+
+        /// <summary>
+        /// そのプロセスの実行ファイルの道。読めなければ空を返す。
+        /// </summary>
+        private static string ExecutablePathOf(Process editor)
+        {
+            try
+            {
+                return editor.MainModule == null ? string.Empty : editor.MainModule.FileName;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
             }
         }
     }

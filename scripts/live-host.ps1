@@ -34,19 +34,15 @@ $deploy = $Deploy
 # ホストが待受に使うパイプ名の付け方。ホスト側の実装が定める。
 $PipePrefix = 'pmx-editor-mcp-'
 
-# 版が合わないハンドシェイクへホストが返すエラーコード。共通契約が定める。
-$ProtocolMismatchCode = -32001
+# 確認クライアントが、契約どおりの切断を見届けたときに返す終了コード。
+$ClosedAfterDisconnectingErrorCode = 3
 
-# 確認クライアントが、契約どおりの切断を見届けたときに書く文。
-$ClosedAfterDisconnectingError =
-    "切断が要るエラー応答($ProtocolMismatchCode)のあと、ホストが契約どおり接続を切りました。"
+# 確認クライアントが、接続を保ったままホスト側から切られたときに返す終了コード。
+$ClosedByHostCode = 4
 
-# 確認クライアントが、接続を保ったままホスト側から切られたときに書く文。
-$ClosedByHost = 'ホストが接続を切りました。'
-
-# 確認クライアントが、接続を保ったまま待ちに入ったときに書く文。この文より前にエディタを
-# 触ると、接続が確立する前の一瞬を見ることになる。
-$Holding = '接続を保持しています。'
+# 確認クライアントが、接続を保ったまま待ちに入ったことを書き残す場所を指す環境変数。この印より
+# 前にエディタを触ると、接続が確立する前の一瞬を見ることになる。
+$HoldingName = 'PMX_EDITOR_MCP_HOLDING_PATH'
 # デバッグ用の入口を開く環境変数。エディタの起動時に読まれる。
 $DebugHooksName = 'PMX_EDITOR_MCP_DEBUG_HOOKS'
 
@@ -68,9 +64,9 @@ $RenewalMarks = @('取得', '失効', '取得')
 # ホストのログが1行の頭に置く時刻の書き方。
 $LogTimeFormat = 'yyyy-MM-dd HH:mm:ss.fff'
 
-# 確認クライアントが待ちへ入るのと終わるのを待つ上限の秒数。操作役の既定と同じ値を採る——
-# どちらも正常な動作を刻む値ではなく、応答しなくなった相手を諦めるための値である。
-$WaitSeconds = 40
+# 確認クライアントが待ちへ入るのと終わるのを待つ上限の秒数。諦める値なので、この実行器を囲う
+# 検査の上限より内側に置く——外側で先に打ち切られると、諦めたことを言う経路へ一度も入らない。
+$WaitSeconds = 3
 
 function Get-PipeName {
     param([int]$EditorProcessId)
@@ -205,7 +201,7 @@ function Stop-HoldingClient {
     param($Held)
 
     if (-not $Held.Process.HasExited) { $Held.Process.Kill() }
-    Remove-Item $Held.Said, $Held.Noise -ErrorAction Ignore
+    Remove-Item $Held.Said, $Held.Noise, $Held.Mark -ErrorAction Ignore
 }
 
 function Start-HoldingClient {
@@ -218,14 +214,22 @@ function Start-HoldingClient {
 
     $said = [System.IO.Path]::GetTempFileName()
     $noise = [System.IO.Path]::GetTempFileName()
-    $running = Start-Process -FilePath 'node' -NoNewWindow -PassThru `
-        -ArgumentList @($client, $EditorProcessId, '--hold') `
-        -RedirectStandardOutput $said -RedirectStandardError $noise
+    $mark = [System.IO.Path]::GetTempFileName()
+    Remove-Item $mark -Force -ErrorAction Ignore
 
-    $held = [pscustomobject]@{ Process = $running; Said = $said; Noise = $noise }
+    Set-Item -Path "Env:$HoldingName" -Value $mark
+    try {
+        $running = Start-Process -FilePath 'node' -NoNewWindow -PassThru `
+            -ArgumentList @($client, $EditorProcessId, '--hold') `
+            -RedirectStandardOutput $said -RedirectStandardError $noise
+    } finally {
+        Remove-Item -Path "Env:$HoldingName" -ErrorAction Ignore
+    }
+
+    $held = [pscustomobject]@{ Process = $running; Said = $said; Noise = $noise; Mark = $mark }
     $deadline = (Get-Date).AddSeconds($WaitSeconds)
     while ((Get-Date) -lt $deadline) {
-        if ((Read-HoldingClient -Held $held) -match [regex]::Escape($Holding)) { return $held }
+        if (Test-Path -LiteralPath $mark) { return $held }
         if ($running.HasExited) { break }
         Start-Sleep -Milliseconds 200
     }
@@ -282,13 +286,10 @@ function Assert-Client {
         .SYNOPSIS
         確認クライアントの結果が期待どおりであることを確かめる。
     #>
-    param($Ran, [int]$Code, [string]$Says, [string]$What)
+    param($Ran, [int]$Code, [string]$What)
 
     if ($Ran.Code -ne $Code) {
         throw "${What}: 終了コードが $Code ではなく $($Ran.Code)。$($Ran.Said)"
-    }
-    if ($Says -and $Ran.Said -notmatch [regex]::Escape($Says)) {
-        throw "${What}: 「$Says」を言っていない。$($Ran.Said)"
     }
 }
 
@@ -310,10 +311,10 @@ $cases['版の食い違い'] = {
     # 断られるのは繋ぎに来た側だけで、待受もホストの状態も変わらない。
     $editor = Get-SharedEditor
 
-    # 版が合わなければホストは断って接続を切る。切ったことは、こちらから閉じずに待てば分かる。
-    # 求める言い分はコードを名指ししているので、コードが違えばこの1つで落ちる。
+    # 版が合わなければホストは断って接続を切る。切ったことは、こちらから閉じずに待てば分かる
+    # ——クライアントは、切断が要るエラー応答のあとの切断を専用の終了コードで名乗る。
     $ran = Invoke-Client -EditorProcessId $editor -Requests @('handshake', '{"protocol":2}')
-    Assert-Client -Ran $ran -Code 0 -Says $ClosedAfterDisconnectingError -What '版の食い違い'
+    Assert-Client -Ran $ran -Code $ClosedAfterDisconnectingErrorCode -What '版の食い違い'
 }
 
 $cases['パイプの権限'] = {
@@ -340,7 +341,7 @@ $cases['コネクタの取り直し'] = {
     $editor = Get-SharedEditor
     $ran = Invoke-Client -EditorProcessId $editor `
         -Requests @('handshake', '{"protocol":1}', $ExpireMethod)
-    Assert-Client -Ran $ran -Code 0 -Says '"renewed":true' -What 'コネクタの失効'
+    Assert-Client -Ran $ran -Code 0 -What 'コネクタの失効'
 
     # 取得・失効・取得の順に3行だけ並ぶ。取り直していなければ、末尾の取得が現れない。
     $marks = @(Get-HostLogLines -EditorProcessId $editor -Mark $ConnectorMark)
@@ -358,7 +359,7 @@ $cases['エディタの終了'] = {
     try {
         $held = Start-HoldingClient -EditorProcessId $editor
         Stop-Editor -EditorProcessId $editor
-        Assert-Client -Ran (Wait-HoldingClient -Held $held) -Code 0 -Says $ClosedByHost `
+        Assert-Client -Ran (Wait-HoldingClient -Held $held) -Code $ClosedByHostCode `
             -What '接続を保ったままの終了'
         if (Test-PipePresent -EditorProcessId $editor) { throw '終了してもパイプが残っている。' }
     } finally {

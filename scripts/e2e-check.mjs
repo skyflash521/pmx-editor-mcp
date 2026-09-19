@@ -43,6 +43,12 @@ const DEFAULT_EXPECTATIONS = {
 /** 落ちた項目の番号。 */
 const fell = new Set();
 
+/** 接続を保つ待ちへ入ったことを、呼ぶ側が読む形で知らせる。 */
+function tellHolding() {
+    const toldPath = process.env.PMX_EDITOR_MCP_HOLDING_PATH;
+    if (toldPath) fs.writeFileSync(toldPath, String(process.pid), "utf8");
+}
+
 /** 落ちた項目の番号を控えて、その言い分をそのまま返す。 */
 function noted(at, says) {
     fell.add(at);
@@ -319,10 +325,12 @@ const CONNECT_TIMEOUT_MS = 15000;
 const RESPONSE_TIMEOUT_MS = 130000;
 
 /**
- * 終了コード。すべての要求に応答が返り、契約に反することが起きなければ成功とする。
- * エラー応答が含まれるかどうかは問わない(拒まれること自体を確かめる要求もあるため。
- * どの要求がどう拒まれたかは表示で分かる)。切断が要るエラーを誘う要求は、後続の要求が
- * 応答を得られず失敗になるので並びの末尾に置く。
+ * 終了コード。契約に反することが起きなかった終わり方を3つに分け、呼ぶ側がどの終わり方かを
+ * 文面に依らず見分けられるようにする——0 は要求への応答がすべて返って自分から終えたとき、
+ * 3 は切断が要るエラー応答のあとホストが契約どおり接続を切ったとき、4 は接続を保ったまま
+ * ホスト側から切られたときである。エラー応答が含まれるかどうかは問わない(拒まれること自体を
+ * 確かめる要求もあるため。どの要求がどう拒まれたかは表示で分かる)。切断が要るエラーを誘う要求は、
+ * 後続の要求が応答を得られず失敗になるので並びの末尾に置く。
  * 引数の誤り・接続や送受信の失敗・応答が揃う前の切断・受け取った応答が契約に反することは失敗とする。
  * 待って初めて分かること(待受が応じない、応答が返らない、切るはずの接続を切らない、
  * 閉じるはずの接続を閉じない)は時間切れとする。保持しているときも、この見分けは変わらない。
@@ -330,6 +338,8 @@ const RESPONSE_TIMEOUT_MS = 130000;
 const EXIT_OK = 0;
 const EXIT_ERROR = 1;
 const EXIT_TIMEOUT = 2;
+const EXIT_CLOSED_AFTER_DISCONNECTING_ERROR = 3;
+const EXIT_CLOSED_WHILE_HOLDING = 4;
 
 /** ホストが接続を切ったときに、こちら側の読み書きに現れるエラーコード。 */
 const DISCONNECTED_CODES = ["EPIPE", "ECONNRESET"];
@@ -381,6 +391,9 @@ function run(pipeName, requests, hold) {
         }
         if (hold) {
             console.log("ホストが接続を切りました。");
+            settle(EXIT_CLOSED_WHILE_HOLDING, null);
+
+            return;
         }
         settle(EXIT_OK, null);
     }
@@ -395,7 +408,7 @@ function run(pipeName, requests, hold) {
             console.log(
                 "切断が要るエラー応答(" + lastErrorCode + ")のあと、ホストが契約どおり接続を切りました。",
             );
-            settle(EXIT_OK, null);
+            settle(EXIT_CLOSED_AFTER_DISCONNECTING_ERROR, null);
             return;
         }
         settle(EXIT_ERROR, describeDisconnection());
@@ -525,6 +538,7 @@ function run(pipeName, requests, hold) {
             // 待ち続けるので、無通信の上限は外す。
             socket.setTimeout(0);
             console.log("接続を保持しています。ホストが切るか、Ctrl+C を押すまで待ちます。");
+            tellHolding();
             return;
         }
         socket.end();

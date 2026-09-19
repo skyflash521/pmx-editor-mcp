@@ -1,5 +1,3 @@
-// 枠組み(node:test)が持たない担保だけを置く。
-
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { closeSync, openSync, readFileSync, rmSync } from 'node:fs';
@@ -35,7 +33,6 @@ export function runCapped(signal, { file, args, limitSeconds }) {
         const cut = limitSeconds > 0 ? setTimeout(onAbort, limitSeconds * 1000) : null;
         signal.addEventListener('abort', onAbort, { once: true });
 
-        // 相手を起こせなかったときは、誤りと終わりの両方が知らされる。閉じるのは一度だけにする。
         let settled = false;
         const done = (code, failure) => {
             if (settled) return;
@@ -100,7 +97,6 @@ export function splitIntoForms(checks, work, atOnce) {
     return checks.flatMap((check) => {
         if (!check.forms || check.forms.length === 0) return [check];
 
-        // 順に走らせる検査は、前の形が作った出来上がりを後の形が使う。
         const alone = check.formsInOrder || check.bundle !== check.name;
         const groups = [];
         check.forms.forEach((form, at) => {
@@ -200,22 +196,3 @@ export function manifestOf(set) {
     return JSON.parse(ran.stdout);
 }
 
-/** 検査と群の割り当ての食い違い。どの群にも無い検査と、検査として在らない名前を返す。 */
-export function groupedCheckGap(grouped, names) {
-    const listed = Object.values(grouped).flat();
-
-    return {
-        ungrouped: names.filter((name) => !listed.includes(name)),
-        unknown: listed.filter((name) => !names.includes(name)),
-    };
-}
-
-/** どの検査も1つ以上の群に属し、群の側に知らない名前が無いことを確かめる。 */
-export function assertGroupedChecks(grouped, names) {
-    const gap = groupedCheckGap(grouped, names);
-    if (gap.ungrouped.length === 0 && gap.unknown.length === 0) return;
-
-    throw new Error('群の割り当てがずれている。どの群にも無い: '
-        + (gap.ungrouped.join('・') || '(無し)')
-        + ' / 検査に無い: ' + (gap.unknown.join('・') || '(無し)'));
-}

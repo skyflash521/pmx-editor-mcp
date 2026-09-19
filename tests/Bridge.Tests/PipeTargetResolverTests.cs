@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using Xunit;
 
@@ -107,6 +108,48 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public void EditorWithHostBesideItCounts()
+        {
+            string installed = Directory.CreateTempSubdirectory().FullName;
+            try
+            {
+                string placed = Path.Combine(installed, PipeTargetResolver.HostRelativePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(placed));
+                File.WriteAllText(placed, string.Empty);
+
+                Assert.True(PipeTargetResolver.HostsInstalledBeside(
+                    Path.Combine(installed, PipeTargetResolver.EditorProcessName + ".exe")));
+            }
+            finally
+            {
+                Directory.Delete(installed, true);
+            }
+        }
+
+        [Fact]
+        public void EditorWithoutHostBesideItDoesNotCount()
+        {
+            string installed = Directory.CreateTempSubdirectory().FullName;
+            try
+            {
+                Assert.False(PipeTargetResolver.HostsInstalledBeside(
+                    Path.Combine(installed, PipeTargetResolver.EditorProcessName + ".exe")));
+            }
+            finally
+            {
+                Directory.Delete(installed, true);
+            }
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        public void UnreadableEditorPathDoesNotCount(string editorExecutablePath)
+        {
+            Assert.False(PipeTargetResolver.HostsInstalledBeside(editorExecutablePath));
+        }
+
+        [Fact]
         public void NoEditorAndNoListenerYieldsStartupPromptError()
         {
             BridgeException error = Assert.Throws<BridgeException>(
@@ -114,7 +157,9 @@ namespace PmxEditorMcp.Bridge.Tests
 
             Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
             Assert.Equal(
-                "PMXエディタが起動していない。PMXエディタ(PmxEditor_x64.exe)を起動してから呼び出す。",
+                "接続先になるPMXエディタが見つからない。PMXエディタの導入フォルダへ "
+                    + @"_plugin\User\PmxEditorMcp.dll を置き、同じフォルダの "
+                    + "PmxEditor_x64.exe を起動してから呼び出す。",
                 error.Message);
         }
 

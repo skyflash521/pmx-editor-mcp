@@ -72,10 +72,7 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'editor-dir.ps1')
 $ErrorActionPreference = "Stop"
 
-Add-Type -AssemblyName UIAutomationClient
-Add-Type -AssemblyName UIAutomationTypes
-
-Add-Type @"
+$HostControlTypes = @"
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -321,6 +318,22 @@ public static class HostControlWindow {
     return wanted;
   }
 
+  /// <summary>その持ち主の見えているトップレベルの窓のうち、種類がその綴りでないもの。</summary>
+  public static IntPtr[] FindOtherClass(int owner, string className) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      var name = new StringBuilder(256);
+      GetClassName(window, name, name.Capacity);
+      if (name.ToString() != className) { found.Add(window); }
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
   public static IntPtr[] FindByClass(int owner, string className) {
     var found = new System.Collections.Generic.List<IntPtr>();
     EnumWindows((window, state) => {
@@ -360,6 +373,46 @@ public static class HostControlPath {
   }
 }
 "@
+
+$AutomationLoaded = $false
+
+function Import-Automation {
+    <#
+        .SYNOPSIS
+        UI Automation の組を読み込む。窓の木を辿る操作だけがこれを要する。
+    #>
+    if ($script:AutomationLoaded) { return }
+
+    Add-Type -AssemblyName UIAutomationClient
+    Add-Type -AssemblyName UIAutomationTypes
+    $script:AutomationLoaded = $true
+}
+
+function Import-HostControlTypes {
+    param([Parameter(Mandatory)][string]$Source)
+
+    $bytes = [System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($Source))
+    $named = (Get-FileHash -InputStream $bytes -Algorithm SHA256).Hash
+    $assembly = Join-Path $env:TEMP "pmx-editor-mcp-host-control-$named.dll"
+
+    if (-not (Test-Path $assembly)) {
+        # 組み立ての途中の物をその名前へ載せない。同じ物を組み立てている別のプロセスが、書き終える
+        # 前の中身を読みうる。
+        $building = "$assembly.$PID"
+        Add-Type -TypeDefinition $Source -OutputAssembly $building
+        try {
+            Move-Item -LiteralPath $building -Destination $assembly
+        }
+        catch {
+            # 先に置いた側の物を読む。読み込まれている物は開かれたままなので、置き換えは通らない。
+            Remove-Item -LiteralPath $building -Force -ErrorAction Ignore
+        }
+    }
+
+    Add-Type -Path $assembly
+}
+
+Import-HostControlTypes -Source $HostControlTypes
 
 # ホストが待受に使うパイプ名。接頭辞の後ろはエディタのプロセスIDで、ホストは十進で書くだけ
 # なので、先頭の0や数字以外は現れない。試験用の待受など紛らわしい名前を一覧へ混ぜないために、
@@ -466,9 +519,13 @@ function Get-HostPipeNames {
 }
 
 function Test-HostPipe {
+    <#
+        .SYNOPSIS
+        そのエディタの待受が在るか。名前を組み立てて1つだけ見る。
+    #>
     param([int]$OwnerProcessId)
 
-    @(Get-HostPipeNames) -ccontains "pmx-editor-mcp-$OwnerProcessId"
+    [System.IO.File]::Exists($PipeDirectory + "pmx-editor-mcp-$OwnerProcessId")
 }
 
 function Wait-HostPipe {
@@ -552,7 +609,6 @@ function Get-ProcessElements {
     #>
     param([int]$OwnerProcessId, $Match)
 
-    # デスクトップを起点にすると他のプロセスの木まで辿るので、対象のウィンドウを起点にする。
     $root = [System.Windows.Automation.AutomationElement]::RootElement
     $condition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $OwnerProcessId)
@@ -604,31 +660,21 @@ function Wait-Nudge {
 function Get-EditorWindows {
     <#
         .SYNOPSIS
-        対象のエディタがデスクトップ直下に持つ、終了要求の相手になるウィンドウのハンドルを返す。
+        対象のエディタが持つ、終了要求の相手になるウィンドウのハンドルを返す。
     #>
     param([int]$OwnerProcessId)
 
-    $root = [System.Windows.Automation.AutomationElement]::RootElement
-    $condition = New-Object System.Windows.Automation.PropertyCondition(
-        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $OwnerProcessId)
-    @($root.FindAll([System.Windows.Automation.TreeScope]::Children, $condition) |
-        Where-Object { $_.Current.ClassName -ne $ShadowClassName } |
-        ForEach-Object { $_.Current.NativeWindowHandle })
+    @([HostControlWindow]::FindOtherClass($OwnerProcessId, $ShadowClassName))
 }
 
 function Get-MenuShadows {
     <#
         .SYNOPSIS
-        対象のエディタがデスクトップ直下に持つ影のウィンドウのハンドルを返す。
+        対象のエディタが持つ影のウィンドウのハンドルを返す。
     #>
     param([int]$OwnerProcessId)
 
-    $root = [System.Windows.Automation.AutomationElement]::RootElement
-    $condition = New-Object System.Windows.Automation.PropertyCondition(
-        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $OwnerProcessId)
-    @($root.FindAll([System.Windows.Automation.TreeScope]::Children, $condition) |
-        Where-Object { $_.Current.ClassName -eq $ShadowClassName } |
-        ForEach-Object { $_.Current.NativeWindowHandle })
+    @([HostControlWindow]::FindByClass($OwnerProcessId, $ShadowClassName))
 }
 
 function Get-EditorDialogs {
@@ -741,6 +787,7 @@ function Get-EditorDialogNote {
     param([int]$Handle)
 
     try {
+        Import-Automation
         $dialog = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Handle)
         if ($null -eq $dialog) { return $UnreadableDialog }
 
@@ -1619,6 +1666,7 @@ switch ($Action) {
         Wait-HostPipe -OwnerProcessId $ProcessId -Until Absent
     }
     "undo" {
+        Import-Automation
         Assert-ProcessId
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         Invoke-UndoOnce -OwnerProcessId $ProcessId -Deadline $null
@@ -1684,6 +1732,7 @@ switch ($Action) {
         for ($at = 0; $at -lt $thrown; $at++) { Write-Output $ThrownNoticeName }
     }
     "status" {
+        Import-Automation
         Assert-ProcessId
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         $dialog = Show-StatusDialog -OwnerProcessId $ProcessId
@@ -1695,6 +1744,7 @@ switch ($Action) {
         }
     }
     "stop" {
+        Import-Automation
         Assert-ProcessId
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         Invoke-HostOperation -OwnerProcessId $ProcessId -Operation "stop"
@@ -1702,6 +1752,7 @@ switch ($Action) {
         Wait-StatusKind -OwnerProcessId $ProcessId -Expected "停止済み"
     }
     "start" {
+        Import-Automation
         Assert-ProcessId
         [void](Get-EditorProcess -OwnerProcessId $ProcessId)
         Invoke-HostOperation -OwnerProcessId $ProcessId -Operation "start"

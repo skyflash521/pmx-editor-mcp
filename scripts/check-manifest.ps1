@@ -1,14 +1,11 @@
-# 検査の一覧を、走らせる側([verify.mjs](verify.mjs))が読める形で出す。値は持たない。
 [CmdletBinding()]
 param(
-    # どちらの一覧を出すか。
     [Parameter(Mandatory)][ValidateSet('standing', 'live')][string]$Set
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# 読む側は UTF-8 として解く。
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 if ($Set -eq 'standing') {
@@ -21,33 +18,29 @@ if ($Set -eq 'standing') {
 
 $listed = @()
 foreach ($name in $checks.Keys) {
-    $one = $checks[$name]
+    $one = [Check]$checks[$name]
 
-    # 外部の1本を呼ぶだけの検査は、その1本を直に起こす。PowerShell の筋が要る検査だけ、1件を
-    # 走らせる側を通す。
-    $given = if ($one.Contains('Run')) {
+    $given = if ($one.Run) {
         $one.Run
     } else {
         @('pwsh', '-NoProfile', '-NonInteractive', '-File', 'scripts/run-check.ps1',
             '-Set', $Set, '-Name', $name)
     }
 
-    # 形を持つ検査は、形1つが検査1件になる。走らせる側が名前を組み立てて束へ分ける。
-    $forms = if ($one.Contains('Forms')) { @(& $one.Forms) } else { @() }
+    $forms = if ($one.Forms) { @(& $one.Forms) } else { @() }
 
     $listed += [ordered]@{
         name = $name
         forms = $forms
-        formsInOrder = [bool]$one.Contains('FormsInOrder')
-        formArgument = if ($one.Contains('FormArgument')) { $one.FormArgument } else { '-Form' }
-        resultsArgument = if ($one.Contains('ResultsArgument')) { $one.ResultsArgument } else { '-Results' }
+        formsInOrder = $one.FormsInOrder
+        formArgument = $one.FormArgument
+        resultsArgument = $one.ResultsArgument
         limitSeconds = $one.LimitSeconds
         needs = $one.Needs
-        # 束を指していない検査は、自分だけの束に入る。
-        bundle = if ($one.Contains('Bundle')) { $one.Bundle } else { $name }
-        # 出来上がりを作る検査だけが1で、ほかは2である。
-        stage = if ($one.Contains('Stage')) { $one.Stage } else { 2 }
-        produces = if ($one.Contains('Produces')) { $one.Produces } else { $null }
+        bundle = if ($one.Bundle) { $one.Bundle } else { $name }
+        stage = $one.Stage
+        produces = $one.Produces
+        groups = @($one.Groups)
         file = $given[0]
         args = @($given | Select-Object -Skip 1)
     }
@@ -60,8 +53,24 @@ $manifest = [ordered]@{
         ForEach-Object { [ordered]@{ name = $_.name; produces = $_.produces } })
 }
 
-if (Get-Variable -Name checkGroups -Scope Script -ErrorAction Ignore) {
-    $manifest.groups = $checkGroups
+if (Get-Variable -Name groupPaths -Scope Script -ErrorAction Ignore) {
+    $grouped = [ordered]@{}
+    foreach ($named in $groupPaths.Keys) { $grouped[$named] = @() }
+    if (Get-Variable -Name pathlessGroups -Scope Script -ErrorAction Ignore) {
+        foreach ($named in $pathlessGroups) { $grouped[$named] = @() }
+    }
+
+    foreach ($one in $listed) {
+        foreach ($named in $one.groups) {
+            if (-not $grouped.Contains($named)) {
+                throw "道の表に無い群を名乗る検査がある: $($one.name) の $named"
+            }
+
+            $grouped[$named] += $one.name
+        }
+    }
+
+    $manifest.groups = $grouped
     $manifest.groupPaths = $groupPaths
     $manifest.ungrouped = $ungrouped
 }

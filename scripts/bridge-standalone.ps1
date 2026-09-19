@@ -17,6 +17,9 @@ $PSNativeCommandUseErrorActionPreference = $false
 # PEのヘッダが名乗る機械の種別。x64のもの。
 $AmdMachine = 0x8664
 
+# .NETのホストが、要る共有ランタイムを見つけられずに終わるときの終了コード。
+$FrameworkMissingCode = -2147450749
+
 # 置き場を渡されなければ自分で作る。作ったものは自分で片付ける——発行物は1回ぶんで百メガ単位に
 # なるので、走らせるたびに残すと一時領域が埋まる。
 $ours = -not $Root
@@ -97,8 +100,9 @@ try {
     # いなければ、このあとの単独起動は何も確かめていないことになる。
     $broken = Invoke-WithoutSharedRuntime `
         -FilePath (Join-Path $dependent "PmxEditorMcp.Bridge.exe") -Arguments @()
-    if (($broken.Said + $broken.Noise) -notmatch "install .NET") {
-        throw "共有ランタイムを解決できない環境になっていない: $($broken.Said)$($broken.Noise)"
+    if ($broken.Code -ne $FrameworkMissingCode) {
+        throw ("共有ランタイムを解決できない環境になっていない(終了コード $($broken.Code)): " +
+            "$($broken.Said)$($broken.Noise)")
     }
 
     # 発行先の残りにも、実行機に入っている共有ランタイムにも依らないことを見るため、単独で写す。

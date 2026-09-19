@@ -28,6 +28,8 @@ const HOLD_WORD = "--hold";
 
 const EXIT_OK = 0;
 const EXIT_ERROR = 1;
+const EXIT_CLOSED_AFTER_DISCONNECTING_ERROR = 3;
+const EXIT_CLOSED_WHILE_HOLDING = 4;
 
 function pipeNameOf(editor) {
     return PIPE_PREFIX + editor;
@@ -67,22 +69,21 @@ async function waitClosed(editor) {
 async function hold(editor, broken) {
     console.log("接続しました: " + pipeNameOf(editor));
     console.log("接続を保持しています。");
+    const toldPath = process.env.PMX_EDITOR_MCP_HOLDING_PATH;
+    if (toldPath) fs.writeFileSync(toldPath, String(process.pid), "utf8");
     await waitClosed(editor);
-    console.log(broken === "client.says" ? "接続が終わりました。" : "ホストが接続を切りました。");
+    console.log("ホストが接続を切りました。");
 
-    return broken === "client.code" ? EXIT_ERROR : EXIT_OK;
+    return broken === "client.holdCode" ? EXIT_OK : EXIT_CLOSED_WHILE_HOLDING;
 }
 
 /** 版の合わないハンドシェイクへの答え。断って切ることまでを言う。 */
 function mismatched(broken) {
     console.log("handshake {\"protocol\":2} -> エラー " + PROTOCOL_MISMATCH);
-    console.log(
-        broken === "client.says"
-            ? "接続が終わりました。"
-            : "切断が要るエラー応答(" + PROTOCOL_MISMATCH
-                + ")のあと、ホストが契約どおり接続を切りました。");
+    console.log("切断が要るエラー応答(" + PROTOCOL_MISMATCH
+        + ")のあと、ホストが契約どおり接続を切りました。");
 
-    return broken === "client.code" ? EXIT_ERROR : EXIT_OK;
+    return broken === "client.code" ? EXIT_ERROR : EXIT_CLOSED_AFTER_DISCONNECTING_ERROR;
 }
 
 /** 常駐コネクタを失効させる呼び出しへの答え。ホストが書く記録もここで足す。 */
@@ -126,7 +127,7 @@ async function main() {
     }
 
     console.log(
-        broken === "client.says" ? "繋がりました。" : "接続しました: " + pipeNameOf(editor));
+        "接続しました: " + pipeNameOf(editor));
 
     return broken === "client.code" ? EXIT_ERROR : EXIT_OK;
 }

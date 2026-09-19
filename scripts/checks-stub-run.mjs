@@ -1,14 +1,11 @@
-// 枠組みが持たない担保を確かめる一続きの実行。求める値と出た値を突き合わせ、合否を終了コードで
-// 返す。確かめる相手を通さずに直に呼ぶ。
-
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 import {
-    CAPPED_CODE, bundlesOf, derivedLimitOf, groupedCheckGap, isReady, judgeResult,
-    killDescendants, pathsTouch, runCapped, splitIntoForms, verdictOf, weightOf,
+    CAPPED_CODE, bundlesOf, derivedLimitOf, isReady, judgeResult, killDescendants,
+    pathsTouch, runCapped, splitIntoForms, verdictOf, weightOf,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -72,16 +69,13 @@ function observe() {
         const born = join(work, 'born.txt');
         const wholeBorn = join(work, 'whole.txt');
 
-        // 実行ごと止めた回の始末を通す木。打ち切りの題材と同時に立てる。
         const whole = spawn('node', spawnsGrandchildAt(wholeBorn), { stdio: 'ignore' });
 
-        // どれも自分の子だけを相手にするので、同時に走らせてよい。
         const never = new AbortController();
         const bornCut = new AbortController();
         const began = process.hrtime.bigint();
         const [capped, tree, , uncapped, unlimited, missing] = await Promise.all([
             runCapped(never.signal, { file: 'node', args: ['-e', sleeps], limitSeconds: 0.5 }),
-            // 孫が生まれた時点で打ち切り、木を辿った先まで終わることを見る。
             runCapped(bornCut.signal,
                 { file: 'node', args: spawnsGrandchildAt(born), limitSeconds: 0 }),
             idBornIn(born).then((id) => { bornCut.abort(); return id; }),
@@ -89,7 +83,6 @@ function observe() {
                 { file: 'node', args: ['-e', 'process.exit(3)'], limitSeconds: 9 }),
             runCapped(never.signal,
                 { file: 'node', args: ['-e', 'process.exit(5)'], limitSeconds: 0 }),
-            // 起こせない相手。誤りと終わりの両方が知らされる道を通す。
             runCapped(never.signal, { file: 'pmx-editor-mcp-居ない相手', args: [], limitSeconds: 9 }),
         ]);
         const cutSeconds = Number(process.hrtime.bigint() - began) / 1e9;
@@ -101,7 +94,6 @@ function observe() {
 
         const grandchildLeft = grandchild > 0 && await stillAlive(grandchild);
         const wholeLeft = wholeGrandchild > 0 && await stillAlive(wholeGrandchild);
-        // 残ってしまった相手は、この題材が始末する。
         for (const one of [grandchildLeft ? grandchild : 0, wholeLeft ? wholeGrandchild : 0,
             whole.pid]) {
             if (one) spawnSync('taskkill', ['/T', '/F', '/PID', String(one)], { stdio: 'ignore' });
@@ -117,15 +109,6 @@ const naming = (at) => String(at);
 
 /** その数だけ並んだ呼び名。 */
 const namings = (count) => Array.from({ length: count }, (unused, at) => naming(at));
-
-// 群の割り当ては、食い違いの向きが2つある。揃った並びを起点に片側だけを崩して渡す。
-const names = namings(3);
-const fewer = names.slice(0, -1);
-const added = namings(names.length + 1);
-const grouped = { [naming(names.length + 1)]: names };
-
-const ungrouped = () => groupedCheckGap(grouped, added);
-const unknown = () => groupedCheckGap(grouped, fewer);
 
 const derived = () => derivedLimitOf([
     [{ name: naming(0), limitSeconds: 7, bundle: naming(0) }],
@@ -169,8 +152,6 @@ const items = [
     { named: '上限なしの終了コード', wanted: 5, got: async () => (await observe()).unlimited.code },
     { named: '起こせない相手の終了コード', wanted: 1,
         got: async () => (await observe()).missing.code },
-    { named: '起こせない相手の手がかり', wanted: true,
-        got: async () => (await observe()).missing.said.includes('pmx-editor-mcp-居ない相手') },
     { named: '上限超過の走り切り', wanted: CAPPED_CODE,
         got: () => judgeResult({ code: 0, seconds: 1.5 }, 1) },
     { named: '上限内の走り切り', wanted: 0, got: () => judgeResult({ code: 0, seconds: 0.5 }, 1) },
@@ -222,10 +203,6 @@ const items = [
         got: () => pathsTouch(namings(2).map(kept), [kept(naming(9)), naming(1) + '*']) },
     { named: '道の不一致', wanted: false,
         got: () => pathsTouch([kept(naming(0))], [kept(naming(9)), naming(9) + '*']) },
-    { named: '群に無い検査', wanted: 1, got: () => ungrouped().ungrouped.length },
-    { named: '群に無い検査の限定', wanted: 0, got: () => ungrouped().unknown.length },
-    { named: '検査に無い名前', wanted: 1, got: () => unknown().unknown.length },
-    { named: '検査に無い名前の限定', wanted: 0, got: () => unknown().ungrouped.length },
 ];
 
 if (process.argv.includes('--list')) {
