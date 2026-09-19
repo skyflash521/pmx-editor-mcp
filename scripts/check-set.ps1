@@ -35,6 +35,9 @@ $uncoveredTools = "$authored/uncovered-tools.json"
 # なる。突き合わせが見るのは期待の形と、操作・置き場・起こし直しの各段が頼む行いの種類で、
 # そのどれも1段ずつあれば足りる。題材がそれらを漏れなく持つことは受入シナリオの照合が見る。
 $acceptanceStub = 'scripts/acceptance-stub-cases.json'
+$acceptanceStubForms = 'scripts/acceptance-stub-forms.json'
+$e2eStub = 'scripts/e2e-stub-cases.json'
+$e2eStubForms = 'scripts/e2e-stub-forms.json'
 $requirements = 'docs/specs/requirements.md'
 
 <#
@@ -355,6 +358,20 @@ function Get-AcceptanceExpectationForms {
     $forms
 }
 
+function Get-FormsBeyondCases {
+    <#
+        .SYNOPSIS
+        生成の入力が名指しする、期待の形からは導けない形と、その扱い。
+    #>
+    param([string]$Path)
+
+    $named = [ordered]@{}
+    $held = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+    foreach ($form in $held.PSObject.Properties) { $named[$form.Name] = $form.Value }
+
+    $named
+}
+
 function Get-ExpectationForms {
     <#
         .SYNOPSIS
@@ -561,7 +578,8 @@ function Test-E2eRunner {
     # 検査1件ごとの結末ではなく、走らせる前と後に見る事柄。名前の集合がずれていても、中継を
     # 作れなかった行や無効にした行が残っていても、呼んだ検査はすべて通りうる——通したまま終える
     # 実行器はここで落ちる。
-    if (@('names', 'unresolved', 'disabled') -contains $Form) {
+    $beyond = Get-FormsBeyondCases -Path $e2eStubForms
+    if ($beyond.Contains($Form) -and $beyond[$Form] -eq 'wholeRun') {
         $ran = Invoke-E2eRunner -Cases $Cases -Broken $Form -At -1
         if ($ran.Code -ne 1) { throw "$Form を違えても不合格にならない: $($ran.Said)" }
 
@@ -570,8 +588,8 @@ function Test-E2eRunner {
 
     # ブリッジ自身が返す誤りは接続先を名乗らない。名乗りを1行目と決め打つ実行器は、この誤りの
     # 中身を丸ごと落として、落ちた理由の残らない不合格を並べる。
-    if ($Form -eq 'notice') {
-        $ran = Invoke-E2eRunner -Cases $Cases -Broken 'notice' -At 0
+    if ($beyond.Contains($Form) -and $beyond[$Form] -eq 'bridgeError') {
+        $ran = Invoke-E2eRunner -Cases $Cases -Broken $Form -At 0
         if ($ran.Code -ne 1) {
             throw "ブリッジ自身の誤りを返しても不合格にならない: $($ran.Said)"
         }
@@ -645,7 +663,8 @@ function Test-AcceptanceRunner {
 
     # 置き場が作られなければ、その実在を確かめる段が落とすはずである。画像を本文の文字列で返す
     # 違え方は期待の形から導けないので、どちらもここで名指しする。
-    if (@('file', 'imageAsText') -contains $Form) {
+    $beyond = Get-FormsBeyondCases -Path $acceptanceStubForms
+    if ($beyond.Contains($Form) -and $beyond[$Form] -eq 'broken') {
         $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken $Form -At 0
         if ($ran.Code -ne 1) { throw "$Form を違えても不合格にならない: $($ran.Said)" }
 
@@ -654,7 +673,7 @@ function Test-AcceptanceRunner {
         return
     }
 
-    if ($Form -eq '段の並び') {
+    if ($beyond.Contains($Form) -and $beyond[$Form] -eq 'definition') {
         $spoiled = [System.IO.Path]::GetTempFileName()
         try {
             $defined.scenarios[-1].steps = $null
@@ -686,25 +705,145 @@ function Test-AcceptanceRunner {
     Assert-NoEditorLeft -Editors $Editors -What "$Form の期待を違えた実行"
 }
 
+function Assert-DerivedForms {
+    <#
+        .SYNOPSIS
+        導出元から立つはずの形と、検査になった形が同じ集合であることを見る。片側だけに在る名前が
+        1つでもあれば落ちる——導出が規則を落としても、規則を足して述べ忘れても、ここで残る。
+    #>
+    param([string]$What, [string[]]$Named, [string[]]$Forms)
+
+    $apart = @(Compare-Object -ReferenceObject @($Named | Select-Object -Unique) `
+        -DifferenceObject @($Forms | Select-Object -Unique))
+    if ($apart.Count -ne 0) {
+        throw ("$What の立つはずの形と検査の形が食い違う: " +
+            (($apart | ForEach-Object { $_.SideIndicator + $_.InputObject }) -join ' / '))
+    }
+}
+
+function Get-StandingForms {
+    <#
+        .SYNOPSIS
+        題材の中身から、立つはずの形を並べる。形を導く側とは別にここへ述べる——導出から出せば
+        両側がいつも同じになり、突き合わせが何も言わなくなる。
+    #>
+    param($Defined, [string]$Beyond, [switch]$Acceptance)
+
+    $wholeForm
+    (Get-FormsBeyondCases -Path $Beyond).Keys
+
+    if (-not $Acceptance) {
+        foreach ($one in $Defined.cases) {
+            if ($one.expect -eq 'viewImage') { 'viewImage.' + $one.view } else { $one.expect }
+            if ($one.expect -eq 'called') { 'called.prompt' }
+            if ($one.PSObject.Properties.Name -contains 'writes') { 'file' }
+        }
+
+        return
+    }
+
+    foreach ($step in ($Defined.scenarios.steps | Where-Object { $_.kind -eq 'tool' })) {
+        foreach ($named in $step.expect.PSObject.Properties.Name) {
+            switch ($named) {
+                'values' {
+                    foreach ($held in @('equals', 'absent', 'present')) {
+                        if (@($step.expect.values |
+                            Where-Object { $null -ne $_.PSObject.Properties[$held] })) {
+                            if ($held -eq 'equals') { 'values' } else { 'values.' + $held }
+                        }
+                    }
+                }
+                'image' {
+                    if ($null -ne $step.expect.image.PSObject.Properties['capturedAs']) { 'image' }
+                    if ($null -ne $step.expect.image.PSObject.Properties['differsFrom']) {
+                        'image.differsFrom'
+                    }
+                }
+                'notice' {
+                    if ($step.expect.notice.PSObject.Properties.Name -contains 'editor') { 'notice' }
+                    else { 'notice.changed' }
+                }
+                default { $named }
+            }
+        }
+    }
+}
+
+function Test-FormDerivation {
+    <#
+        .SYNOPSIS
+        形を導いている3つの導出元それぞれについて、題材の中身から立つはずの形と、検査になった形が
+        同じ集合であることを見る。突き合わせる相手は検査の一覧そのもので、導出を組み直したもので
+        はない。
+    #>
+    param($Checks)
+
+    $defined = Get-Content $e2eStub -Raw -Encoding UTF8 | ConvertFrom-Json
+    Assert-DerivedForms -What 'E2Eのケース定義' -Forms @(& $Checks['E2Eの実行器の照合'].Forms) `
+        -Named @(Get-StandingForms -Defined $defined -Beyond $e2eStubForms)
+
+    $defined = Get-Content $acceptanceStub -Raw -Encoding UTF8 | ConvertFrom-Json
+    Assert-DerivedForms -What '受入のケース定義' -Forms @(& $Checks['受入の実行器の照合'].Forms) `
+        -Named @(Get-StandingForms -Defined $defined -Beyond $acceptanceStubForms -Acceptance)
+
+    $tables = Get-PackageTables
+    Assert-DerivedForms -What '配布パッケージの表' -Forms @(& $Checks['配布パッケージの生成'].Forms) `
+        -Named (@($wholeForm, '版の食い違い') +
+            @($tables.forbidden | ForEach-Object { '再配布できない物.' + $_ }) +
+            @($tables.copies | ForEach-Object { '写しの書き換え.' + $_ }) +
+            @($tables.contents | ForEach-Object { '内容物の欠落.' + $_ }))
+}
+
+$packageTables = $null
+
+function Get-PackageTables {
+    <#
+        .SYNOPSIS
+        内容物を確かめる側が突き合わせる表。違え方の形はここから導く。正本は確かめる側が持つ。
+        1つの実行で何度も引くので、最初の1回だけ相手を起こす。
+    #>
+    if ($null -eq $script:packageTables) {
+        $script:packageTables =
+            pwsh -NoProfile -File scripts/package-contents.ps1 -List | ConvertFrom-Json
+    }
+
+    $script:packageTables
+}
+
 function Get-PackageSpoils {
     <#
         .SYNOPSIS
-        内容物へ入れる違え方と、その入れ方。
+        内容物へ入れる違え方と、その入れ方。欠落は内容物1つにつき1つ作る。
     #>
     param([string]$Copy)
 
-    [ordered]@{
-        '再配布できない物' = {
-            Copy-Item (Join-Path $Copy 'LICENSE.txt') (Join-Path $Copy 'PEPlugin.dll')
-        }.GetNewClosure()
-        '写しの書き換え' = {
-            Add-Content -Path (Join-Path $Copy 'LICENSE.txt') -Value 'x'
-        }.GetNewClosure()
-        '内容物の欠落' = {
-            Remove-Item (Join-Path $Copy 'PmxEditorMcp.dll') -Force
-        }.GetNewClosure()
-        '版の食い違い' = { }
+    $tables = Get-PackageTables
+    $spoils = [ordered]@{
+        '版の食い違い' = @{ Spoil = { }; Code = 'PACKAGE_VERSION' }
     }
+
+    foreach ($named in $tables.forbidden) {
+        $spoils['再配布できない物.' + $named] = @{
+            Spoil = { Copy-Item (Join-Path $Copy 'LICENSE.txt') (Join-Path $Copy $named) }.GetNewClosure()
+            Code = 'PACKAGE_FORBIDDEN'
+        }
+    }
+
+    foreach ($named in $tables.copies) {
+        $spoils['写しの書き換え.' + $named] = @{
+            Spoil = { Add-Content -Path (Join-Path $Copy $named) -Value 'x' }.GetNewClosure()
+            Code = 'PACKAGE_COPY'
+        }
+    }
+
+    foreach ($named in $tables.contents) {
+        $spoils['内容物の欠落.' + $named] = @{
+            Spoil = { Remove-Item (Join-Path $Copy $named) -Force }.GetNewClosure()
+            Code = 'PACKAGE_CONTENTS'
+        }
+    }
+
+    $spoils
 }
 
 function Test-PackageContents {
@@ -716,8 +855,6 @@ function Test-PackageContents {
     #>
     param([string]$Form)
 
-    $expected = @('PmxEditorMcp.dll', 'PmxEditorMcp.Bridge.exe', 'INSTALL.md', 'LICENSE.txt',
-        'ThirdPartyNotices.txt')
     $version = (Get-Content Directory.Build.props -Raw -Encoding UTF8 |
         Select-String -Pattern '<Version>([^<]+)</Version>').Matches[0].Groups[1].Value
     $staged = Join-Path 'dist' "pmx-editor-mcp-$version"
@@ -745,18 +882,22 @@ function Test-PackageContents {
         $spoils = Get-PackageSpoils -Copy $copy
         if (-not $spoils.Contains($Form)) { throw "知らない形: $Form" }
 
-        & $spoils[$Form]
+        & $spoils[$Form].Spoil
         $asked = if ($Form -eq '版の食い違い') { '9.9.9' } else { $version }
 
-        $broke = $false
+        # 落ちたことだけでは足りない。違えた当の判定が落としたことを、その判定が名乗る綴りで見る
+        # ——別の判定が先に落とすなら、名前の指す判定は一度も通っていない。
+        $said = ''
         try {
-            & scripts/package-contents.ps1 -Staged $copy -Version $asked -Expected $expected |
-                Out-Null
+            & scripts/package-contents.ps1 -Staged $copy -Version $asked | Out-Null
         } catch {
-            $broke = $true
+            $said = [string]$_
         }
 
-        if (-not $broke) { throw "$Form を入れても落ちない。" }
+        if (-not $said) { throw "$Form を入れても落ちない。" }
+        if (-not $said.StartsWith($spoils[$Form].Code)) {
+            throw "$Form を入れて落ちたのは $($spoils[$Form].Code) ではない: $said"
+        }
     } finally {
         Remove-Item -Path $copy -Recurse -Force -ErrorAction Ignore
     }
@@ -964,6 +1105,11 @@ $checks['ブリッジの単独起動'] = @{
     Bundle = $msbuildBundle
     Run = @('pwsh', '-NoProfile', '-File', 'scripts/bridge-standalone.ps1')
 }
+$checks['形の導出の照合'] = @{
+    LimitSeconds = 3
+    Needs = $noArtifact
+    Body = { Test-FormDerivation -Checks $checks }
+}
 $checks['配布パッケージの生成'] = @{
     LimitSeconds = 21
     Needs = $noArtifact
@@ -980,14 +1126,14 @@ $checks['E2Eの実行器の照合'] = @{
     LimitSeconds = 63
     Needs = $noArtifact
     Forms = {
-        $defined = Get-Content 'scripts/e2e-stub-cases.json' -Raw -Encoding UTF8 | ConvertFrom-Json
+        $defined = Get-Content $e2eStub -Raw -Encoding UTF8 | ConvertFrom-Json
 
         @($wholeForm) + @((Get-E2eExpectationForms -Defined $defined).Keys) +
-            @('names', 'unresolved', 'disabled', 'notice')
+            @((Get-FormsBeyondCases -Path $e2eStubForms).Keys)
     }
     Body = { param([string]$Form)
 
-        Test-E2eRunner -Cases 'scripts/e2e-stub-cases.json' -Form $Form
+        Test-E2eRunner -Cases $e2eStub -Form $Form
     }
 }
 $checks['検査の集計の照合'] = @{
@@ -1035,7 +1181,7 @@ $checks['受入の実行器の照合'] = @{
         $defined = Get-Content $acceptanceStub -Raw | ConvertFrom-Json
 
         @($wholeForm) + @((Get-AcceptanceExpectationForms -Defined $defined).Keys) +
-            @('file', 'imageAsText', '段の並び')
+            @((Get-FormsBeyondCases -Path $acceptanceStubForms).Keys)
     }
     Body = { param([string]$Form)
 
@@ -1055,6 +1201,7 @@ $checks['受入の実行器の照合'] = @{
 $checkGroups = [ordered]@{
     'ドキュメント' = @('文書のリンク', '受入シナリオの照合')
     '定義' = @($derivation, '台帳とSDKの照合', '日本語名の照合', '型役割の照合',
+        '形の導出の照合',
         '共通契約割当の照合', '値の表現の照合', '危険操作の照合', '能力対応表の照合',
         '提供対象の網羅', 'スキーマ定義の照合', 'ツールの説明文の照合', 'サンプル値の照合',
         '発見可能性の照合', 'スキーマ対応の照合', 'ツールの検査の網羅', '規則適合検査',
@@ -1065,6 +1212,7 @@ $checkGroups = [ordered]@{
     # 入れるのは、追跡下の文書がここの実行器を名指しで指しており、名前を変えれば指し先が消える
     # ためである。
     'スクリプト' = @('スクリプト構文', 'スクリプト構文(PowerShell)', '検査の集計の照合',
+        '形の導出の照合',
         'E2Eの実行器の照合', '確認クライアントの照合', '実機動作確認の実行器の照合',
         '参照クライアントの実行器の照合', '受入の実行器の照合', '文書のリンク')
     'ブリッジ配布' = @('ブリッジの単独起動', '配布パッケージの生成')

@@ -90,9 +90,8 @@ try {
     Remove-Item -Path $work -Recurse -Force -ErrorAction Ignore
 }
 
-& (Join-Path $PSScriptRoot "package-contents.ps1") -Staged $staged -Version $version `
-    -Expected @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe", "INSTALL.md", "LICENSE.txt",
-        "ThirdPartyNotices.txt") | Out-Null
+& (Join-Path $PSScriptRoot "package-contents.ps1") -Staged $staged -Version $version |
+    Out-Null
 
 Compress-Archive -Path (Join-Path $staged "*") -DestinationPath $archive
 

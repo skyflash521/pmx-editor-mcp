@@ -6,20 +6,24 @@
 [CmdletBinding()]
 param(
     # 確かめる中身の置き場。
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Check')]
     [string]$Staged,
 
     # 実行ファイルが名乗るはずの版。
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Check')]
     [string]$Version,
 
-    # 在るはずのものの名前。
-    [Parameter(Mandatory = $true)]
-    [string[]]$Expected
+    # 確かめずに、突き合わせる表を書き出す。違え方の形はこれから導く。
+    [Parameter(Mandatory = $true, ParameterSetName = 'List')]
+    [switch]$List
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+# 在るはずのものの名前。
+$Expected = @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe", "INSTALL.md", "LICENSE.txt",
+    "ThirdPartyNotices.txt")
 
 # 再配布を禁じられている物。PMXエディタ配布物の利用規約が、パッケージ内データの再配布を禁じる。
 $Forbidden = @("PEPlugin.dll", "SlimDX.dll")
@@ -35,21 +39,35 @@ $Copies = [ordered]@{
 
 $repository = Split-Path -Parent $PSScriptRoot
 
-$found = @(Get-ChildItem -Path $Staged -Recurse -File | ForEach-Object { $_.Name } | Sort-Object)
-$wanted = @($Expected | Sort-Object)
-if (($found -join "/") -ne ($wanted -join "/")) {
-    throw "内容物が違う。求めるもの: $($wanted -join '・') / 在るもの: $($found -join '・')"
+if ($List) {
+    [pscustomobject]@{
+        contents = $Expected
+        copies = @($Copies.Keys)
+        forbidden = $Forbidden
+    } | ConvertTo-Json -Compress
+
+    return
 }
 
+$found = @(Get-ChildItem -Path $Staged -Recurse -File | ForEach-Object { $_.Name } | Sort-Object)
+
+# 混じってはならない物を先に見る。過不足を先に見ると、混じった物は数の違いで落ちて、この判定へ
+# 届かない。
 foreach ($name in $Forbidden) {
-    if ($found -contains $name) { throw "再配布できない物が混じっている: $name" }
+    if ($found -contains $name) { throw "PACKAGE_FORBIDDEN: 再配布できない物が混じっている: $name" }
+}
+
+$wanted = @($Expected | Sort-Object)
+if (($found -join "/") -ne ($wanted -join "/")) {
+    throw ("PACKAGE_CONTENTS: 内容物が違う。求めるもの: $($wanted -join '・')" +
+        " / 在るもの: $($found -join '・')")
 }
 
 foreach ($name in $Copies.Keys) {
     $origin = Join-Path $repository $Copies[$name]
     $copied = Join-Path $Staged $name
     if ((Get-FileHash $copied).Hash -ne (Get-FileHash $origin).Hash) {
-        throw "$name が $($Copies[$name]) と一致しない。"
+        throw "PACKAGE_COPY: $name が $($Copies[$name]) と一致しない。"
     }
 }
 
@@ -64,7 +82,7 @@ foreach ($name in $Versioned) {
     $same = $parsed -and $told.Major -eq $wanted.Major -and $told.Minor -eq $wanted.Minor `
         -and $told.Build -eq $wanted.Build
     if (-not $same) {
-        throw "$name が名乗る版が $Version と合わない: $said"
+        throw "PACKAGE_VERSION: $name が名乗る版が $Version と合わない: $said"
     }
 }
 
