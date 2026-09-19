@@ -34552,6 +34552,155 @@
       }
     },
     {
+      "tool": "session_find_ui",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "text",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 50,
+              "bounds": {
+                "minimum": 1,
+                "maximum": 500
+              }
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "editorVersion",
+            "origin": "hostOutput",
+            "shape": "text"
+          },
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "matches",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "form",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "title",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "path",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "members": [
+                      {
+                        "name": "type",
+                        "origin": "hostOutput",
+                        "shape": "text"
+                      },
+                      {
+                        "name": "name",
+                        "origin": "hostOutput",
+                        "shape": "text"
+                      },
+                      {
+                        "name": "text",
+                        "origin": "hostOutput",
+                        "shape": "text"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "message",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "route",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "members": [
+                      {
+                        "name": "form",
+                        "origin": "hostOutput",
+                        "shape": "text"
+                      },
+                      {
+                        "name": "via",
+                        "origin": "hostOutput",
+                        "element": {
+                          "origin": "hostOutput",
+                          "members": [
+                            {
+                              "name": "name",
+                              "origin": "hostOutput",
+                              "shape": "text"
+                            },
+                            {
+                              "name": "text",
+                              "origin": "hostOutput",
+                              "shape": "text"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "shortcut",
+                        "origin": "hostOutput",
+                        "shape": "text"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "unreachable",
+                  "origin": "hostOutput",
+                  "shape": "boolean"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "session_get_body_group_colors",
       "branches": [
         {
@@ -35090,6 +35239,142 @@
           },
           {
             "name": "pePluginCount"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "session_get_ui_structure",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "window",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            },
+            {
+              "name": "path",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": false
+            },
+            {
+              "name": "depth",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "editorVersion",
+            "origin": "hostOutput",
+            "shape": "text"
+          },
+          {
+            "name": "mainForm",
+            "origin": "hostOutput",
+            "shape": "text"
+          },
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "windows",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "form",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "assembly",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "title",
+                  "origin": "hostOutput",
+                  "shape": "text",
+                  "nullable": true
+                },
+                {
+                  "name": "openedBy",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "members": [
+                      {
+                        "name": "form",
+                        "origin": "hostOutput",
+                        "shape": "text"
+                      },
+                      {
+                        "name": "path",
+                        "origin": "hostOutput",
+                        "element": {
+                          "origin": "hostOutput",
+                          "shape": "text"
+                        }
+                      },
+                      {
+                        "name": "handler",
+                        "origin": "hostOutput",
+                        "shape": "text"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "node",
+                  "origin": "hostOutput",
+                  "shape": "json"
+                },
+                {
+                  "name": "messages",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "text"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
           }
         ]
       }

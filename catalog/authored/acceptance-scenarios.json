@@ -44,6 +44,101 @@
           "expect": {
             "ok": true
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_get_ui_structure",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "editorVersion",
+                "equals": "0273"
+              },
+              {
+                "path": "mainForm",
+                "equals": "PmxEditor.PmxForm"
+              },
+              {
+                "path": "total",
+                "equals": 53
+              },
+              {
+                "path": "windows.0.form",
+                "equals": "PmxEditor.CountProgressForm"
+              },
+              {
+                "path": "windows.0.node",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_get_ui_structure",
+          "arguments": {
+            "window": "PmxEditor.TagEditForm",
+            "depth": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "windows.0.title",
+                "equals": "タグ編集"
+              },
+              {
+                "path": "windows.0.node.name",
+                "equals": "TagEditForm"
+              },
+              {
+                "path": "windows.0.openedBy.0.form",
+                "equals": "PmxEditor.PmxForm"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_find_ui",
+          "arguments": {
+            "text": "タグ編集"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "matches.0.form",
+                "equals": "PmxEditor.PmxForm"
+              },
+              {
+                "path": "matches.0.path.2.name",
+                "equals": "MenuItem_TagEdit"
+              },
+              {
+                "path": "matches.1.form",
+                "equals": "PmxEditor.TagEditForm"
+              },
+              {
+                "path": "matches.1.route.0.via.2.name",
+                "equals": "MenuItem_TagEdit"
+              },
+              {
+                "path": "nextOffset",
+                "absent": true
+              }
+            ]
+          }
         }
       ]
     },
