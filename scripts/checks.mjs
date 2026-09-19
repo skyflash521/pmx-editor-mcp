@@ -4,7 +4,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { closeSync, openSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 /** 出来上がりを要さない検査の印。 */
 export const NO_ARTIFACT = 'なし';
@@ -187,31 +187,17 @@ export function selectGroups({ paths, groupPaths, ungrouped, allGroups }) {
     return chosen;
 }
 
-/** 検証手順書の、その節に並ぶ検査の名前。 */
-export function listedChecks(path, section) {
-    const lines = readFileSync(path, 'utf8').split(/\r?\n/);
-    const from = lines.indexOf(section);
-    if (from < 0) throw new Error(`${path} に ${section} の節が無い。`);
-
-    const names = [];
-    for (const line of lines.slice(from + 1)) {
-        if (line.startsWith('## ')) break;
-
-        const row = /^\| ([^|]+?) \| /.exec(line);
-        if (row && row[1] !== '検査') names.push(row[1]);
+/** 検査の一覧・束・群の割り当てを、それを持つ側に出させて読む。 */
+export function manifestOf(set) {
+    const root = resolve(import.meta.dirname, '..');
+    const ran = spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-File',
+        join('scripts', 'check-manifest.ps1'), '-Set', set],
+    { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    if (ran.status !== 0) {
+        throw new Error('検査の一覧を読めない: ' + (ran.stdout || '') + (ran.stderr || ''));
     }
 
-    return names;
-}
-
-/** 検査と手順書の表の食い違い。手順書に無い名前と、この一覧に無い名前を返す。 */
-export function listedCheckGap(path, section, names) {
-    const listed = listedChecks(path, section);
-
-    return {
-        unlisted: names.filter((name) => !listed.includes(name)),
-        unowned: listed.filter((name) => !names.includes(name)),
-    };
+    return JSON.parse(ran.stdout);
 }
 
 /** 検査と群の割り当ての食い違い。どの群にも無い検査と、検査として在らない名前を返す。 */
@@ -222,16 +208,6 @@ export function groupedCheckGap(grouped, names) {
         ungrouped: names.filter((name) => !listed.includes(name)),
         unknown: listed.filter((name) => !names.includes(name)),
     };
-}
-
-/** 検査と手順書の表が一致することを確かめる。 */
-export function assertListedChecks(path, section, names) {
-    const gap = listedCheckGap(path, section, names);
-    if (gap.unlisted.length === 0 && gap.unowned.length === 0) return;
-
-    throw new Error(`${path} の ${section} の一覧とこの実行器の検査がずれている。`
-        + '手順書に無い: ' + (gap.unlisted.join('・') || '(無し)')
-        + ' / この実行器に無い: ' + (gap.unowned.join('・') || '(無し)'));
 }
 
 /** どの検査も1つ以上の群に属し、群の側に知らない名前が無いことを確かめる。 */

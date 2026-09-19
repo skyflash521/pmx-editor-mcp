@@ -89,4 +89,4 @@ claude mcp add pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶�
 
 ## 検証
 
-変更を確定させる前に通す検査と合格条件は[検証手順](docs/conventions/verification.md)が定める。
+変更を確定させる前に通す検査の走らせ方は[検証手順](docs/conventions/verification.md)が定める。

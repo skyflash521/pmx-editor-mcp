@@ -11,15 +11,11 @@ $ErrorActionPreference = 'Stop'
 # 読む側は UTF-8 として解く。
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
-$procedure = 'docs/conventions/verification.md'
-
 if ($Set -eq 'standing') {
     . (Join-Path $PSScriptRoot 'check-set.ps1')
-    $section = '## 常設の検査'
     $scope = '常設の検査'
 } else {
     . (Join-Path $PSScriptRoot 'live-checks.ps1')
-    $section = '## 実機に触る検査'
     $scope = '実機に触る検査'
 }
 
@@ -58,8 +54,6 @@ foreach ($name in $checks.Keys) {
 }
 
 $manifest = [ordered]@{
-    procedure = $procedure
-    section = $section
     scope = $scope
     checks = $listed
     makers = @($listed | Where-Object { $_.produces } |

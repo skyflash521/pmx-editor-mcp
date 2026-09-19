@@ -8,8 +8,7 @@ import { join, resolve } from 'node:path';
 
 import {
     CAPPED_CODE, bundlesOf, derivedLimitOf, groupedCheckGap, isReady, judgeResult,
-    killDescendants, listedCheckGap, listedChecks, pathsTouch, runCapped, splitIntoForms,
-    verdictOf, weightOf,
+    killDescendants, pathsTouch, runCapped, splitIntoForms, verdictOf, weightOf,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -113,37 +112,43 @@ function observe() {
     })();
 }
 
-// 手順書の一覧と群の割り当ては、食い違いの向きが2つある。実物の並びを起点に片側だけを崩して渡す。
-const doc = 'docs/conventions/verification.md';
-const section = '## 常設の検査';
-const names = listedChecks(doc, section);
-const fewer = names.slice(0, -1);
-const added = [...names, '足した題材'];
-const grouped = { '題材の群': names };
+/** 題材の中だけで使う呼び名。区別が付けば足りるので、番号から作る。 */
+const naming = (at) => String(at);
 
-const unlisted = () => listedCheckGap(doc, section, added);
-const unowned = () => listedCheckGap(doc, section, fewer);
+/** その数だけ並んだ呼び名。 */
+const namings = (count) => Array.from({ length: count }, (unused, at) => naming(at));
+
+// 群の割り当ては、食い違いの向きが2つある。揃った並びを起点に片側だけを崩して渡す。
+const names = namings(3);
+const fewer = names.slice(0, -1);
+const added = namings(names.length + 1);
+const grouped = { [naming(names.length + 1)]: names };
+
 const ungrouped = () => groupedCheckGap(grouped, added);
 const unknown = () => groupedCheckGap(grouped, fewer);
 
 const derived = () => derivedLimitOf([
-    [{ name: '作る題材', limitSeconds: 7, bundle: '作る題材' }],
-    [{ name: '長い題材', limitSeconds: 11, bundle: '束' },
-        { name: '同じ束の題材', limitSeconds: 13, bundle: '束' },
-        { name: '別の束の題材', limitSeconds: 17, bundle: '別の束' }],
+    [{ name: naming(0), limitSeconds: 7, bundle: naming(0) }],
+    [{ name: naming(1), limitSeconds: 11, bundle: naming(9) },
+        { name: naming(2), limitSeconds: 13, bundle: naming(9) },
+        { name: naming(3), limitSeconds: 17, bundle: naming(8) }],
 ]);
 const bundles = () => bundlesOf([
-    { name: 'あ', bundle: '束' }, { name: 'い' }, { name: 'う', bundle: '束' }]);
+    { name: naming(0), bundle: naming(9) }, { name: naming(1) },
+    { name: naming(2), bundle: naming(9) }]);
 
 const splitting = (given) => splitIntoForms([{
-    name: '割る題材', bundle: given.bundle ?? '割る題材', formsInOrder: given.formsInOrder ?? false,
-    file: 'pwsh', args: ['-File', '題材'], limitSeconds: 12, forms: ['あ', 'い', 'う', 'え'],
+    name: naming(0), bundle: given.bundle ?? naming(0), formsInOrder: given.formsInOrder ?? false,
+    file: 'pwsh', args: [], limitSeconds: 12, forms: namings(4),
     formArgument: '-Form', resultsArgument: '-Results',
 }], '', 2);
 const split = () => splitting({});
 const inOrder = () => splitting({ formsInOrder: true });
-const bundled = () => splitting({ bundle: '別の束' });
+const bundled = () => splitting({ bundle: naming(9) });
 const groupsOf = (checks) => new Set(checks.map((check) => check.group)).size;
+
+/** 題材の中だけで使う道。綴りの形だけが要るので、呼び名から作る。 */
+const kept = (name) => name + '/' + name + '.mjs';
 
 /**
  * 突き合わせる事柄。**出た値は呼ばれるまで求めない**——名前を挙げるだけの呼ばれ方と、形を絞った
@@ -172,20 +177,19 @@ const items = [
     { named: '未実行の判定', wanted: 0,
         got: () => judgeResult({ skipped: true, code: 0, seconds: 9 }, 1) },
     { named: '不合格ありの結末', wanted: 1,
-        got: () => verdictOf({ failed: ['落ちる題材'], skipped: [], over: false }) },
+        got: () => verdictOf({ failed: namings(1), skipped: [], over: false }) },
     { named: '全合格の結末', wanted: 0,
         got: () => verdictOf({ failed: [], skipped: [], over: false }) },
     { named: '未実行ありの結末', wanted: 1,
-        got: () => verdictOf({ failed: [], skipped: ['走らせない題材'], over: false }) },
+        got: () => verdictOf({ failed: [], skipped: namings(1), over: false }) },
     { named: '上限超過の結末', wanted: 1,
         got: () => verdictOf({ failed: [], skipped: [], over: true }) },
-    { named: '門の通過', wanted: true,
-        got: () => isReady('作った出来上がり', ['なし', '作った出来上がり']) },
-    { named: '門の遮断', wanted: false, got: () => isReady('作った出来上がり', ['なし']) },
+    { named: '門の通過', wanted: true, got: () => isReady(naming(1), namings(2)) },
+    { named: '門の遮断', wanted: false, got: () => isReady(naming(1), namings(1)) },
     { named: '導いた値', wanted: 31, got: derived },
     { named: '束の数', wanted: 2, got: () => bundles().size },
-    { named: '同じ束の併合', wanted: 2, got: () => bundles().get('束').length },
-    { named: '単独の束', wanted: 1, got: () => bundles().get('い').length },
+    { named: '同じ束の併合', wanted: 2, got: () => bundles().get(naming(9)).length },
+    { named: '単独の束', wanted: 1, got: () => bundles().get(naming(1)).length },
     { named: '形へ割った件数', wanted: 4, got: () => split().length },
     { named: '形の組の数', wanted: 2, got: () => groupsOf(split()) },
     { named: '組ごとの束の分かれ', wanted: 2,
@@ -203,26 +207,21 @@ const items = [
     { named: '組を並べる見積り', wanted: 6,
         got: () => weightOf(split().filter((check) => check.group === split()[0].group)) },
     { named: '形を持たない検査の見積り', wanted: 5,
-        got: () => weightOf([{ name: '割らない題材', limitSeconds: 5 }]) },
-    { named: '組へ渡す形の並び', wanted: 'あ,う', got: () => split()[0].run.args.at(-1) },
+        got: () => weightOf([{ name: naming(0), limitSeconds: 5 }]) },
+    { named: '組へ渡す形の並び', wanted: '0,2', got: () => split()[0].run.args.at(-1) },
     { named: '順に走る形の組の数', wanted: 1, got: () => groupsOf(inOrder()) },
     { named: '順に走る形の組の上限', wanted: 12, got: () => inOrder()[0].run.limitSeconds },
     { named: '順に走る形ごとの上限', wanted: 3, got: () => inOrder()[0].limitSeconds },
     { named: '順に走る組を並べる見積り', wanted: 12, got: () => weightOf(inOrder()) },
     { named: '宣言した束の継承', wanted: true,
-        got: () => bundled().every((check) => check.bundle === '別の束') },
+        got: () => bundled().every((check) => check.bundle === naming(9)) },
     { named: '宣言した束の組の数', wanted: 1, got: () => groupsOf(bundled()) },
     { named: '形を持たない検査', wanted: 1,
-        got: () => splitIntoForms([{ name: '割らない題材', limitSeconds: 5 }], '', 2).length },
+        got: () => splitIntoForms([{ name: naming(0), limitSeconds: 5 }], '', 2).length },
     { named: '道の一致', wanted: true,
-        got: () => pathsTouch(['docs/conventions/verification.md', 'scripts/題材.mjs'],
-            ['src/*.cs', 'scripts/題材*']) },
+        got: () => pathsTouch(namings(2).map(kept), [kept(naming(9)), naming(1) + '*']) },
     { named: '道の不一致', wanted: false,
-        got: () => pathsTouch(['docs/conventions/verification.md'], ['src/*.cs', 'scripts/題材*']) },
-    { named: '手順書に無い名前', wanted: 1, got: () => unlisted().unlisted.length },
-    { named: '手順書に無い名前の限定', wanted: 0, got: () => unlisted().unowned.length },
-    { named: '実行器に無い名前', wanted: 1, got: () => unowned().unowned.length },
-    { named: '実行器に無い名前の限定', wanted: 0, got: () => unowned().unlisted.length },
+        got: () => pathsTouch([kept(naming(0))], [kept(naming(9)), naming(9) + '*']) },
     { named: '群に無い検査', wanted: 1, got: () => ungrouped().ungrouped.length },
     { named: '群に無い検査の限定', wanted: 0, got: () => ungrouped().unknown.length },
     { named: '検査に無い名前', wanted: 1, got: () => unknown().unknown.length },

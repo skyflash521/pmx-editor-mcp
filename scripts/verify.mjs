@@ -10,8 +10,8 @@ import { run } from 'node:test';
 import { spec } from 'node:test/reporters';
 
 import {
-    NO_ARTIFACT, assertGroupedChecks, assertListedChecks, bundlesOf, derivedLimitOf,
-    killDescendants, pathsTouch, selectGroups, splitIntoForms, verdictOf, weightOf,
+    NO_ARTIFACT, assertGroupedChecks, bundlesOf, derivedLimitOf, killDescendants,
+    manifestOf, pathsTouch, selectGroups, splitIntoForms, verdictOf, weightOf,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -30,18 +30,6 @@ function changedPaths() {
     }
 
     return said.filter((path) => path);
-}
-
-/** 検査の一覧・束・群の割り当てを、それを持つ側に出させて読む。 */
-function readManifest(set) {
-    const ran = spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-File',
-        join('scripts', 'check-manifest.ps1'), '-Set', set],
-    { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-    if (ran.status !== 0) {
-        throw new Error('検査の一覧を読めない: ' + (ran.stdout || '') + (ran.stderr || ''));
-    }
-
-    return JSON.parse(ran.stdout);
 }
 
 /** 束ごとの検査を1つのファイルへ書き出す。枠組みはファイルを単位に並列化する。 */
@@ -235,10 +223,9 @@ async function main(argv) {
 
 /** 一覧を読み、検査を選び、2回に分けて走らせて、実行を終わらせる終了コードを返す。 */
 async function verify(set, all, work) {
-    const manifest = readManifest(set);
+    const manifest = manifestOf(set);
     Object.assign(process.env, manifest.environment || {});
     const names = manifest.checks.map((check) => check.name);
-    assertListedChecks(manifest.procedure, manifest.section, names);
     if (manifest.groups) assertGroupedChecks(manifest.groups, names);
 
     const paths = all ? [] : changedPaths();
