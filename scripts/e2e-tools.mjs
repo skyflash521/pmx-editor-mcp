@@ -400,6 +400,46 @@ function judge(one, response, remembered) {
  * 指したビューの写しを1回の呼び出しでまとめて取り、ビューの名前から写しへの表を返す。取れな
  * かったときは、どのビューも同じ事情を持つ——操作役は1つでも撮れなければ落ちる。
  */
+const OPENED_VIEWS = ["transform", "sub"];
+
+const VIEW_SESSION = "viewSession";
+
+function needsViews(one) {
+    return one.expect === "viewImage" || one.editKind === VIEW_SESSION;
+}
+
+async function editorOf(given) {
+    const told = Number.parseInt(given, 10);
+    if (String(told) === given.trim()) return told;
+
+    for (let at = 0; at < 400; at++) {
+        let said = "";
+        try {
+            said = fs.readFileSync(given, "utf8").trim();
+        } catch {
+            said = "";
+        }
+
+        const found = Number.parseInt(said, 10);
+        if (found > 0) return found;
+
+        await new Promise((wake) => setTimeout(wake, 50));
+    }
+
+    throw new Error("エディタの番号が " + given + " へ書かれません。");
+}
+
+function openViews(processId, views) {
+    const opened = views.filter((view) => view !== "pmx");
+    if (opened.length === 0) return null;
+
+    const done = invokeListed(CONTROL_SCRIPT, [
+        ["Action", "open"], ["ProcessId", String(processId)], ["View", opened],
+    ]);
+
+    return done.written === null ? done.unavailable : null;
+}
+
 function captureViews(processId, views) {
     const places = views.map(
         (view) => path.join(os.tmpdir(), "pmx-editor-mcp-view-" + view + ".png"));
@@ -828,10 +868,13 @@ function borrowing(one, remembered) {
  * ときだけは、数える前に打ち切る——どの検査の結末も信じられない。
  */
 async function run(client, cases, processId) {
+    cases = [...cases.filter((one) => !needsViews(one)), ...cases.filter(needsViews)];
+
     const results = [];
     const remembered = new Map();
     const held = [];
     let captures = null;
+    let opened = false;
     let stalled = 0;
     let broke = null;
 
@@ -843,6 +886,13 @@ async function run(client, cases, processId) {
         const startedAt = Date.now();
         const noted = [];
         const elapsed = () => (Date.now() - startedAt) / 1000;
+
+        if (needsViews(one) && !opened) {
+            const unopened = openViews(processId, OPENED_VIEWS);
+            if (unopened !== null) throw new Error(unopened);
+
+            opened = true;
+        }
 
         if (one.expect === "viewImage" && captures === null) {
             captures = captureViews(processId, shooting);
@@ -1101,7 +1151,7 @@ if (processId === undefined || casesPath === undefined
     || Object.values(named).some((value) => value === undefined)
     || setupArgs.some((value) => value === undefined)) {
     console.error(
-        "使い方: node e2e-tools.mjs <エディタのプロセスID> <検査のパス>"
+        "使い方: node e2e-tools.mjs <エディタのプロセスIDかそれを書く置き場> <検査のパス>"
             + " [--control <操作役のパス>] [--compare <見比べるスクリプトのパス>]"
             + " [--rows <走らせる行のキーを並べたパス>] [--setup <前置のパス>]"
             + " [--setup-arg <前置へ渡す引数>] [--schemas <スキーマ正本のパス>]");
@@ -1114,6 +1164,10 @@ if (named["--control"] !== null) {
 
 if (named["--compare"] !== null) {
     COMPARE_SCRIPT = named["--compare"];
+}
+
+for (let at = 0; at < 400 && !fs.existsSync(casesPath); at++) {
+    await new Promise((wake) => setTimeout(wake, 50));
 }
 
 let cases;
@@ -1169,10 +1223,11 @@ const client = new McpClient(prepared.server);
 let finished;
 try {
     await client.start();
+    const editor = await editorOf(processId);
     const mismatch = await agreed(
         client, named["--schemas"] ?? beside("../catalog/authored/tool-schemas.json"));
     if (mismatch === null) {
-        finished = await run(client, cases, processId);
+        finished = await run(client, cases, editor);
     } else {
         console.error("公開している名前の集合が合っていません:");
         console.error(mismatch);

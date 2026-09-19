@@ -393,7 +393,11 @@ $OperationPrompts = @{
 }
 
 # 状態を見に行く間隔。
-$PollIntervalMs = 500
+$PollIntervalMs = 25
+
+# 応えない相手へ同じ働きかけを送り直す間隔。見に行く間隔より粗くする——送り直しは相手の受け取り待ちを
+# 取り消すので、細かく繰り返すと応えられないまま要求だけが積み上がる。
+$NudgeIntervalMs = 500
 
 # 閉じるためのウィンドウメッセージ(WM_CLOSE)。
 $WindowMessageClose = 0x0010
@@ -582,6 +586,19 @@ function Wait-Interval {
     if ($remaining -le 0) { return }
 
     Start-Sleep -Milliseconds ([Math]::Min($PollIntervalMs, $remaining))
+}
+
+function Wait-Nudge {
+    <#
+        .SYNOPSIS
+        次に同じ働きかけを送り直すまで、締切を越えない範囲で待つ。
+    #>
+    param($Deadline)
+
+    $remaining = [int]($Deadline - (Get-Date)).TotalMilliseconds
+    if ($remaining -le 0) { return }
+
+    Start-Sleep -Milliseconds ([Math]::Min($NudgeIntervalMs, $remaining))
 }
 
 function Get-EditorWindows {
@@ -1284,7 +1301,7 @@ function Wait-StatusKind {
         }
         if ($seen -eq $Expected) { return }
         if ((Get-Date) -ge $deadline) { break }
-        Wait-Interval -Deadline $deadline
+        Wait-Nudge -Deadline $deadline
     }
 
     throw "状態区分が $TimeoutSeconds 秒以内に「$Expected」にならなかった。最後に見たのは「$seen」。"
@@ -1453,7 +1470,7 @@ function Wait-ViewInFront {
         }
 
         [HostControlWindow]::Raise($Window)
-        Wait-Interval -Deadline $deadline
+        Wait-Nudge -Deadline $deadline
     }
 }
 
@@ -1543,6 +1560,7 @@ switch ($Action) {
         # エディタは編集とビューのウィンドウを別々に持ち、閉じ残すとプロセスが終わらない。
         $process = Get-EditorProcess -OwnerProcessId $ProcessId
         $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+        $nudge = [datetime]::MinValue
         while ($true) {
             $process.Refresh()
             # 数え直している間に終わっていることがある。終わっていれば要求はもう要らない。
@@ -1565,7 +1583,8 @@ switch ($Action) {
                 -Ids $IdsThatLetTheEditorClose
             $standing = @($cleared.Left)
             $repeating = @($cleared.Answered)
-            if ($repeating.Count -eq 0 -and $standing.Count -eq 0) {
+            if ($repeating.Count -eq 0 -and $standing.Count -eq 0 -and (Get-Date) -ge $nudge) {
+                $nudge = (Get-Date).AddMilliseconds($NudgeIntervalMs)
                 foreach ($handle in $windows) {
                     if ((Get-Date) -ge $deadline) { break }
 

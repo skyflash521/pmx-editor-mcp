@@ -4,7 +4,7 @@
 param(
     # 頼む操作。実行器が使うものだけを受け付ける。
     [Parameter(Mandatory = $true)]
-    [ValidateSet("answer", "capture")]
+    [ValidateSet("answer", "capture", "open")]
     [string]$Action,
 
     # 操作の相手を指す名前。代わりでは使わないが、実行器が必ず渡す。実機のプロセスIDと紛れない
@@ -26,6 +26,8 @@ $ErrorActionPreference = 'Stop'
 $SameView = 'うつしたすがた'
 
 switch ($Action) {
+    'open' {
+    }
     'answer' {
         # 応答待ちの表示は出ないので、閉じたものは無い。
     }

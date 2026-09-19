@@ -1,17 +1,11 @@
-# 自動E2E検査。ツール個別の確認はこれが担う。
-# 能力対応表とスキーマ定義から検査を機械生成し、実機のエディタの待受へ投げて、行キー・編集の
-# 流れ・接続の経路ごとに合否を出す。
-# 生成した検査は一時領域へ書く——入力から導ける値なので、追跡下に置かない。
 [CmdletBinding()]
 param(
-    # 突き合わせる能力対応表の版。指すと、その版から中身の変わった行の検査だけを走らせる。
     [string]$Since
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# 外部コマンドの非0終了は終了エラーにしない。終了コードを見て自分で失敗させる。
 $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot 'editor-dir.ps1')
@@ -27,14 +21,11 @@ $cases = Join-Path ([System.IO.Path]::GetTempPath()) (
 
 $map = 'catalog/authored/tool-map.json'
 
-# 指した行に当たる検査を引けなかったときに実行器が返す終了コード。実行器の実装が定める。
+$told = Join-Path ([System.IO.Path]::GetTempPath()) (
+    'pmx-editor-mcp-e2e-editor-' + [guid]::NewGuid().ToString('N') + '.txt')
 $unfiltered = 4
 
 function Get-ChangedRows {
-    <#
-        .SYNOPSIS
-        指した版といまの能力対応表を突き合わせ、中身の変わった行のキーを並べたファイルを返す。
-    #>
     param([string]$Ref)
 
     $named = Join-Path ([System.IO.Path]::GetTempPath()) (
@@ -42,7 +33,6 @@ function Get-ChangedRows {
     $before = $named + 'before.json'
     $rows = $named + 'rows.txt'
 
-    # 対応表は日本語を含む。端末の設定のまま読むと、取り出した版が別物になり全行が変わって見える。
     try {
         $spoken = [Console]::OutputEncoding
         [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
@@ -56,7 +46,6 @@ function Get-ChangedRows {
         $changed = & $dump changed-rows $before $map
         if ($LASTEXITCODE -ne 0) { throw "変わった行を選べない(終了コード $LASTEXITCODE)。" }
 
-        # 受け取ったものを書く。流し込みで書くと、1行も返らなかったときにファイルごと現れない。
         Set-Content -Path $rows -Value (@($changed) -join [Environment]::NewLine) -Encoding utf8
     } finally {
         Remove-Item $before -ErrorAction Ignore
@@ -67,13 +56,11 @@ function Get-ChangedRows {
 
 $editor = 0
 $rising = $null
+$building = $null
 $rows = $null
 try {
-    # 実行器が先に配置を済ませていれば繰り返さない。単独で走らせたときは印が無いので自分で行う。
-    # 配置は動いているエディタを閉じるので、起こすより先に済ませる。
     if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') { & scripts/deploy-host.ps1 | Out-Null }
 
-    # 実行器が先に組み立てを済ませていれば繰り返さない。単独で走らせたときは印が無いので自分で行う。
     if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') {
         dotnet build $generator | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "生成器のビルドに失敗した(終了コード $LASTEXITCODE)。" }
@@ -86,43 +73,57 @@ try {
         return
     }
 
-    # 変形ビューとサブビューを開いたエディタを、検査を組み立てている間に起こしておく。VPDを入れる
-    # ツールは変形ビューが開かれていないとPMXを受け取れず、返った画像を写しと突き合わせる検査は、
-    # そのビューの窓が無いと写しを撮れない。
-    $rising = Start-ThreadJob -ArgumentList (Get-Location).Path, $control -ScriptBlock {
-        param([string]$Root, [string]$Control)
+    $rising = Start-ThreadJob -ArgumentList (Get-Location).Path, $control, $told -ScriptBlock {
+        param([string]$Root, [string]$Control, [string]$Told)
 
         Set-Location $Root
-        [int](& $Control -Action launch -View transform, sub)
+        $started = [int](& $Control -Action launch)
+        Set-Content -LiteralPath $Told -Value $started -Encoding UTF8 -NoNewline
+
+        $started
     }
 
-    & $dump e2e-cases (Get-EditorDirectory) `
-        catalog/observed/capability-ledger.json `
-        catalog/authored/common-contract.json `
-        catalog/authored/type-roles.json `
-        catalog/authored/property-names.json `
-        catalog/authored/common-assignments.json `
-        $map `
-        catalog/authored/tool-schemas.json `
-        catalog/authored/sample-values.json `
-        $cases
-    if ($LASTEXITCODE -ne 0) { throw "検査を組み立てられない(終了コード $LASTEXITCODE)。" }
+    $building = Start-ThreadJob -ArgumentList (Get-Location).Path, $dump,
+        (Get-EditorDirectory), $map, $cases -ScriptBlock {
+        param([string]$Root, [string]$Dump, [string]$Editor, [string]$Map, [string]$Cases)
 
-    $editor = [int](Receive-Job -Job $rising -Wait -AutoRemoveJob)
-    $rising = $null
+        Set-Location $Root
+        $part = $Cases + '.part'
+        & $Dump e2e-cases $Editor `
+            catalog/observed/capability-ledger.json `
+            catalog/authored/common-contract.json `
+            catalog/authored/type-roles.json `
+            catalog/authored/property-names.json `
+            catalog/authored/common-assignments.json `
+            $Map `
+            catalog/authored/tool-schemas.json `
+            catalog/authored/sample-values.json `
+            $part | Out-Null
+        if ($LASTEXITCODE -ne 0) { return $LASTEXITCODE }
+
+        Move-Item -LiteralPath $part -Destination $Cases -Force
+
+        return 0
+    }
 
     if ($rows) {
-        node scripts/e2e-tools.mjs $editor $cases --rows $rows
+        node scripts/e2e-tools.mjs $told $cases --rows $rows
     } else {
-        node scripts/e2e-tools.mjs $editor $cases
+        node scripts/e2e-tools.mjs $told $cases
     }
     $ran = $LASTEXITCODE
+
     $global:LASTEXITCODE = 0
+
+    $built = [int](Receive-Job -Job $building -Wait -AutoRemoveJob)
+    $building = $null
+    if ($built -ne 0) { throw "検査を組み立てられない(終了コード $built)。" }
+
     if ($ran -eq $unfiltered) { throw "絞った実行では確かめられない行がある。" }
     if ($ran -ne 0) { throw "不合格の検査がある(終了コード $ran)。" }
 } finally {
-    # 起こし終わる前に抜けた回も、起こした分は閉じる。ここで引き取れなかったことは知らせるだけに
-    # して、抜ける元になった失敗を置き換えない。
+    if ($building) { Remove-Job -Job $building -Force -ErrorAction Ignore }
+
     if ($rising) {
         try { $editor = [int](Receive-Job -Job $rising -Wait -AutoRemoveJob) }
         catch {
@@ -134,6 +135,7 @@ try {
     if ($editor -ne 0 -and (Get-Process -Id $editor -ErrorAction Ignore)) {
         & $control -Action close -ProcessId $editor | Out-Null
     }
-    Remove-Item $cases -ErrorAction Ignore
+    Remove-Item $cases, ($cases + '.part') -ErrorAction Ignore
+    Remove-Item $told -ErrorAction Ignore
     if ($rows) { Remove-Item $rows -ErrorAction Ignore }
 }

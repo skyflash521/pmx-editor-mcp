@@ -35,7 +35,7 @@ $checks['配置と組み立て'] = @{
     }
 }
 $checks['自動E2E検査'] = @{
-    LimitSeconds = 32
+    LimitSeconds = 30
     Needs = $liveSetup
     Bundle = $liveBundle
     Run = @('pwsh', '-NoProfile', '-File', 'scripts/live-tools.ps1')
@@ -53,7 +53,7 @@ $checks['参照クライアントの実機動作確認'] = @{
     Run = @('node', 'scripts/live-client.mjs')
 }
 $checks['受入シナリオ'] = @{
-    LimitSeconds = 75
+    LimitSeconds = 62
     Needs = $liveSetup
     Bundle = $liveBundle
     Run = @('node', 'scripts/acceptance.mjs',
