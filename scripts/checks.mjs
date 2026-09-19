@@ -95,6 +95,47 @@ export function bundlesOf(checks) {
     return bundles;
 }
 
+/** 形を持つ検査を、形1つにつき1件へ割る。形は組へ分け、組ごとに1回だけ相手を起こす。 */
+export function splitIntoForms(checks, work, atOnce) {
+    return checks.flatMap((check) => {
+        if (!check.forms || check.forms.length === 0) return [check];
+
+        // 順に走らせる検査は、前の形が作った出来上がりを後の形が使う。
+        const alone = check.formsInOrder || check.bundle !== check.name;
+        const groups = [];
+        check.forms.forEach((form, at) => {
+            const which = alone ? 0 : at % atOnce;
+            if (!groups[which]) groups[which] = [];
+            groups[which].push(form);
+        });
+
+        return groups.filter((forms) => forms).flatMap((forms, at) => {
+            const bundle = check.bundle === check.name
+                ? `${check.name} — ${at}` : check.bundle;
+            const group = `${check.name} — ${at}`;
+            const results = work ? join(work, `forms-${randomUUID()}.tsv`) : '';
+            const run = {
+                file: check.file,
+                args: [...check.args, check.resultsArgument, results,
+                    check.formArgument, forms.join(',')],
+                limitSeconds: check.limitSeconds,
+            };
+
+            return forms.map((form) => ({
+                ...check,
+                limitSeconds: check.limitSeconds / forms.length,
+                share: check.limitSeconds / check.forms.length,
+                name: `${check.name} — ${form}`,
+                bundle,
+                group,
+                form,
+                results,
+                run,
+            }));
+        });
+    });
+}
+
 /** 実行の全体を照らす値。 */
 export function derivedLimitOf(runs) {
     let total = 0;
@@ -104,7 +145,12 @@ export function derivedLimitOf(runs) {
         total += sums.length === 0 ? 0 : Math.max(...sums);
     }
 
-    return total;
+    return Math.round(total * 1000) / 1000;
+}
+
+/** 束を並べる順を決める見積り。形へ割った検査は、その組が受け持つ形の数だけを見込む。 */
+export function weightOf(checks) {
+    return checks.reduce((sum, check) => sum + (check.share ?? check.limitSeconds), 0);
 }
 
 /** 変えたものの道のどれかが、渡した形のどれかに当たるか。 */

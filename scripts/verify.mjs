@@ -11,7 +11,7 @@ import { spec } from 'node:test/reporters';
 
 import {
     NO_ARTIFACT, assertGroupedChecks, assertListedChecks, bundlesOf, derivedLimitOf,
-    killDescendants, pathsTouch, selectGroups, verdictOf,
+    killDescendants, pathsTouch, selectGroups, splitIntoForms, verdictOf, weightOf,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -48,24 +48,63 @@ function readManifest(set) {
 function writeBundleFiles(work, bundles, produced, afterFailure) {
     const files = [];
     let at = 0;
-    // 上限の和が長い束から並べる。枠組みは渡した順に、空きが出た数だけ起こす。
-    const ordered = [...bundles.values()].sort((left, right) =>
-        right.reduce((sum, check) => sum + check.limitSeconds, 0)
-        - left.reduce((sum, check) => sum + check.limitSeconds, 0));
+    // 長く掛かる束から並べる。枠組みは渡した順に、空きが出た数だけ起こす。
+    const ordered = [...bundles.values()].sort(
+        (left, right) => weightOf(right) - weightOf(left));
     for (const checks of ordered) {
         const path = join(work, `bundle-${at++}.test.mjs`);
         writeFileSync(path, [
             "import test from 'node:test';",
+            "import { readFileSync } from 'node:fs';",
             `import { isReady, judgeResult, runCapped } from ${JSON.stringify(helpers)};`,
             '',
             `const checks = ${JSON.stringify(checks, null, 4)};`,
             `const produced = ${JSON.stringify(produced)};`,
             `const afterFailure = ${JSON.stringify(afterFailure || null)};`,
             '',
+            '// 組の相手は1回だけ起こす。同じ組の形はその結末を分け合う。',
+            'const started = new Map();',
+            '',
+            'function fellIn(results, form) {',
+            '    let said;',
+            '    try {',
+            '        said = readFileSync(results, \'utf8\');',
+            '    } catch {',
+            '        return { code: 1, said: \'形ごとの結末が1件も書かれていない。\' };',
+            '    }',
+            '',
+            '    for (const line of said.split(/\\r?\\n/)) {',
+            '        const [named, code, fell] = line.split(\'\\t\');',
+            '        if (named === form) return { code: Number(code), said: fell };',
+            '    }',
+            '',
+            '    return { code: 1, said: \'この形の結末が書かれていない。\' };',
+            '}',
+            '',
             'for (const check of checks) {',
             '    test(check.name, async (t) => {',
             '        if (!isReady(check.needs, produced)) {',
             "            t.skip('要る出来上がりが揃っていないので始めない。');",
+            '            return;',
+            '        }',
+            '',
+            '        if (check.group) {',
+            '            if (!started.has(check.group)) {',
+            '                started.set(check.group, runCapped(t.signal, check.run));',
+            '            }',
+            '',
+            '            const whole = await started.get(check.group);',
+            '            if (whole.capped) {',
+            '                throw new Error(`組ごと打ち切られた`',
+            '                    + `(上限 ${check.run.limitSeconds} 秒)\\n${whole.said}`);',
+            '            }',
+            '',
+            '            const fell = fellIn(check.results, check.form);',
+            '            if (fell.code !== 0) {',
+            '                throw new Error((fell.said || `終了コード ${fell.code}`)',
+            '                    + (whole.code === 0 ? \'\' : `\\n${whole.said}`));',
+            '            }',
+            '',
             '            return;',
             '        }',
             '',
@@ -95,7 +134,8 @@ function writeBundleFiles(work, bundles, produced, afterFailure) {
 
 /** 1回ぶんの実行。枠組みが束どうしを並列に走らせて報告を書き、こちらは結末を数える。 */
 async function runOnce(work, checks, produced, signal, afterFailure) {
-    const files = writeBundleFiles(work, bundlesOf(checks), produced, afterFailure);
+    const files = writeBundleFiles(work, bundlesOf(splitIntoForms(checks, work, atOnce)), produced,
+        afterFailure);
     const failed = [];
     const skipped = [];
 
@@ -211,7 +251,7 @@ async function verify(set, all, work) {
 
     const runs = [wanted.filter((check) => check.stage === 1),
         wanted.filter((check) => check.stage !== 1)];
-    const limit = derivedLimitOf(runs);
+    const limit = derivedLimitOf(runs.map((checks) => splitIntoForms(checks, work, atOnce)));
 
     const began = process.hrtime.bigint();
     const stopper = new AbortController();
@@ -240,7 +280,7 @@ async function verify(set, all, work) {
 
             const said = await runOnce(work, checks, produced, stopper.signal,
                 manifest.afterFailure);
-            ran += checks.length - said.skipped.length;
+            ran += splitIntoForms(checks, work, atOnce).length - said.skipped.length;
             failed.push(...said.failed);
             skipped.push(...said.skipped);
             produced = [...produced,
@@ -262,7 +302,8 @@ async function verify(set, all, work) {
     const verdict = verdictOf({ failed, skipped, over });
     if (verdict !== 0) return verdict;
 
-    console.log(`${scope} の ${ran} 件をすべて合格(${took}・全部で ${names.length} 件)`);
+    console.log(`${scope} の ${ran} 件をすべて合格(${took}`
+        + `・全部で ${splitIntoForms(manifest.checks, work, atOnce).length} 件)`);
 
     return 0;
 }

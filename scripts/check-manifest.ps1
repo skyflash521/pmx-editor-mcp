@@ -36,8 +36,15 @@ foreach ($name in $checks.Keys) {
             '-Set', $Set, '-Name', $name)
     }
 
+    # 形を持つ検査は、形1つが検査1件になる。走らせる側が名前を組み立てて束へ分ける。
+    $forms = if ($one.Contains('Forms')) { @(& $one.Forms) } else { @() }
+
     $listed += [ordered]@{
         name = $name
+        forms = $forms
+        formsInOrder = [bool]$one.Contains('FormsInOrder')
+        formArgument = if ($one.Contains('FormArgument')) { $one.FormArgument } else { '-Form' }
+        resultsArgument = if ($one.Contains('ResultsArgument')) { $one.ResultsArgument } else { '-Results' }
         limitSeconds = $one.LimitSeconds
         needs = $one.Needs
         # 束を指していない検査は、自分だけの束に入る。

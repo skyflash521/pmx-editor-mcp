@@ -37,6 +37,12 @@ $uncoveredTools = "$authored/uncovered-tools.json"
 $acceptanceStub = 'scripts/acceptance-stub-cases.json'
 $requirements = 'docs/specs/requirements.md'
 
+<#
+    形を1つも壊さない通しの実行を指す綴り。どの照合もこの綴りで通しを走らせる。
+#>
+$wholeForm = '通し'
+
+
 # 除外一覧の導出が書き、それを読む検査が読む置き場。束をまたぐので、道は実行のあいだ変わらない。
 $work = Get-CheckWorkDirectory
 $baseline = Join-Path $work 'excluded-baseline'
@@ -111,16 +117,13 @@ function Invoke-CheckClient {
     [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n"); Fell = $numbers }
 }
 
-function Test-CheckClient {
+function Get-CheckClientForms {
     <#
         .SYNOPSIS
-        確認クライアントが、返った応答を契約と突き合わせて合否を出すことを確かめる。契約どおりの
-        応答で通し、そのうえで応答の項目ごとに、その1つだけを違えた実行が不合格になる——その項目を
-        見ていないクライアントはここで落ちる。
+        確認クライアントが見る応答の項目と、それを違えたときに咎めるはずの項目の番号。
+        前半は応答の中身を見る層、後半はその手前で行そのものを見る層。
     #>
-    # 前半は応答の中身を見る層、後半はその手前で行そのものを見る層。どちらも見落とせば、契約に
-    # 合わない応答を通してしまう。
-    $forms = [ordered]@{
+    [ordered]@{
         'handshake.error' = 0
         'handshake.result' = 1
         'handshake.protocol' = 2
@@ -144,19 +147,32 @@ function Test-CheckClient {
         'wire.error.code' = 20
         'wire.error.message' = 21
     }
+}
 
-    $ran = Invoke-CheckClient -Broken ''
-    if ($ran.Code -ne 0) { throw "契約どおりの応答で走らせて合格しない: $($ran.Said)" }
+function Test-CheckClient {
+    <#
+        .SYNOPSIS
+        確認クライアントが、返った応答を契約と突き合わせて合否を出すことを確かめる。通しでは契約
+        どおりの応答で合格することを、形を指したときはその項目だけを違えた実行が当の項目を咎めて
+        落ちることを見る——その項目を見ていないクライアントはここで落ちる。
+    #>
+    param([string]$Form)
 
-    foreach ($form in $forms.GetEnumerator()) {
-        $ran = Invoke-CheckClient -Broken $form.Key
-        if ($ran.Code -eq 0) {
-            throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
-        }
+    if ($Form -eq $wholeForm) {
+        $ran = Invoke-CheckClient -Broken ''
+        if ($ran.Code -ne 0) { throw "契約どおりの応答で走らせて合格しない: $($ran.Said)" }
 
-        if ($ran.Fell -notcontains $form.Value) {
-            throw "$($form.Key) を違えたのに $($form.Value) 番の項目を咎めていない: $($ran.Said)"
-        }
+        return
+    }
+
+    $forms = Get-CheckClientForms
+    if (-not $forms.Contains($Form)) { throw "知らない形: $Form" }
+
+    $ran = Invoke-CheckClient -Broken $Form
+    if ($ran.Code -eq 0) { throw "$Form を違えても不合格にならない: $($ran.Said)" }
+
+    if ($ran.Fell -notcontains $forms[$Form]) {
+        throw "$Form を違えたのに $($forms[$Form]) 番の項目を咎めていない: $($ran.Said)"
     }
 }
 
@@ -192,39 +208,50 @@ function Invoke-LiveHostRunner {
     [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n"); Fell = $numbers; Ran = $walked }
 }
 
-function Test-LiveHostRunner {
+function Get-LiveHostRunnerForms {
     <#
         .SYNOPSIS
-        実機動作確認が、観測したものを期待と突き合わせて合否を出すことを確かめる。期待どおりの
-        観測で全件を合格で終え、そのうえで観測の種類ごとに、その1つだけを違えた実行で当の件が
-        落ちる——その観測を突き合わせない実行器はここで落ちる。
+        実機動作確認が突き合わせる観測の種類と、それを違えたときに落ちるはずの件の番号。
     #>
-    $forms = [ordered]@{
+    [ordered]@{
         'client.code' = 1
         'client.says' = 4
         'acl' = 2
         'log.started' = 0
         'log.renewal' = 3
     }
+}
 
-    $ran = Invoke-LiveHostRunner -Broken ''
-    if ($ran.Code -ne 0) { throw "期待どおりの観測で走らせて合格しない: $($ran.Said)" }
+function Test-LiveHostRunner {
+    <#
+        .SYNOPSIS
+        実機動作確認が、観測したものを期待と突き合わせて合否を出すことを確かめる。通しでは期待
+        どおりの観測で全件が合格し、違える形が覆う件と走った件が揃うことを、形を指したときは
+        その観測だけを違えた実行で当の件が落ちることを見る。
+    #>
+    param([string]$Form)
 
-    $uncovered = @(Compare-Object -ReferenceObject @($forms.Values) `
-        -DifferenceObject @($ran.Ran)).Count
-    if ($uncovered -ne 0) {
-        throw "違える形が覆う件と、走った件が揃っていない: $($ran.Said)"
+    $forms = Get-LiveHostRunnerForms
+    if ($Form -eq $wholeForm) {
+        $ran = Invoke-LiveHostRunner -Broken ''
+        if ($ran.Code -ne 0) { throw "期待どおりの観測で走らせて合格しない: $($ran.Said)" }
+
+        $uncovered = @(Compare-Object -ReferenceObject @($forms.Values) `
+            -DifferenceObject @($ran.Ran)).Count
+        if ($uncovered -ne 0) {
+            throw "違える形が覆う件と、走った件が揃っていない: $($ran.Said)"
+        }
+
+        return
     }
 
-    foreach ($form in $forms.GetEnumerator()) {
-        $ran = Invoke-LiveHostRunner -Broken $form.Key
-        if ($ran.Code -eq 0) {
-            throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
-        }
+    if (-not $forms.Contains($Form)) { throw "知らない形: $Form" }
 
-        if ($ran.Fell -notcontains $form.Value) {
-            throw "$($form.Key) を違えたのに $($form.Value) 番の件が落ちていない: $($ran.Said)"
-        }
+    $ran = Invoke-LiveHostRunner -Broken $Form
+    if ($ran.Code -eq 0) { throw "$Form を違えても不合格にならない: $($ran.Said)" }
+
+    if ($ran.Fell -notcontains $forms[$Form]) {
+        throw "$Form を違えたのに $($forms[$Form]) 番の件が落ちていない: $($ran.Said)"
     }
 }
 
@@ -260,14 +287,13 @@ function Invoke-LiveClientRunner {
     [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n"); Fell = $numbers; Ran = $walked }
 }
 
-function Test-LiveClientRunner {
+function Get-LiveClientRunnerForms {
     <#
         .SYNOPSIS
-        参照クライアントの実機動作確認が、呼び出しの記録を期待と突き合わせて合否を出すことを
-        確かめる。期待どおりの記録で通し、そのうえで記録の項目ごとに、その1つだけを違えた実行が
-        当の咎めで落ちる。
+        参照クライアントの実機動作確認が突き合わせる記録の項目と、それを違えたときに落ちるはずの
+        観点の番号。
     #>
-    $forms = [ordered]@{
+    [ordered]@{
         'call' = 0
         'arguments' = 0
         'result' = 1
@@ -275,24 +301,37 @@ function Test-LiveClientRunner {
         'image.missing' = 3
         'image.extra' = 4
     }
+}
 
-    $ran = Invoke-LiveClientRunner -Broken ''
-    if ($ran.Code -ne 0) { throw "期待どおりの記録で走らせて合格しない: $($ran.Said)" }
+function Test-LiveClientRunner {
+    <#
+        .SYNOPSIS
+        参照クライアントの実機動作確認が、呼び出しの記録を期待と突き合わせて合否を出すことを
+        確かめる。通しでは期待どおりの記録で合格し、定義の件数だけ歩くことを、形を指したときは
+        その項目だけを違えた実行が当の咎めで落ちることを見る。
+    #>
+    param([string]$Form)
 
-    $counted = [int](node -e "import('./scripts/live-client-cases.mjs').then(m => console.log(m.CASES.length))")
-    if ($ran.Ran.Count -ne $counted) {
-        throw "定義の $counted 件のうち $($ran.Ran.Count) 件しか歩いていない: $($ran.Said)"
+    if ($Form -eq $wholeForm) {
+        $ran = Invoke-LiveClientRunner -Broken ''
+        if ($ran.Code -ne 0) { throw "期待どおりの記録で走らせて合格しない: $($ran.Said)" }
+
+        $counted = [int](node -e "import('./scripts/live-client-cases.mjs').then(m => console.log(m.CASES.length))")
+        if ($ran.Ran.Count -ne $counted) {
+            throw "定義の $counted 件のうち $($ran.Ran.Count) 件しか歩いていない: $($ran.Said)"
+        }
+
+        return
     }
 
-    foreach ($form in $forms.GetEnumerator()) {
-        $ran = Invoke-LiveClientRunner -Broken $form.Key
-        if ($ran.Code -eq 0) {
-            throw "$($form.Key) を違えても不合格にならない: $($ran.Said)"
-        }
+    $forms = Get-LiveClientRunnerForms
+    if (-not $forms.Contains($Form)) { throw "知らない形: $Form" }
 
-        if ($ran.Fell -notcontains $form.Value) {
-            throw "$($form.Key) を違えたのに $($form.Value) 番の観点が落ちていない: $($ran.Said)"
-        }
+    $ran = Invoke-LiveClientRunner -Broken $Form
+    if ($ran.Code -eq 0) { throw "$Form を違えても不合格にならない: $($ran.Said)" }
+
+    if ($ran.Fell -notcontains $forms[$Form]) {
+        throw "$Form を違えたのに $($forms[$Form]) 番の観点が落ちていない: $($ran.Said)"
     }
 }
 
@@ -501,53 +540,61 @@ function Test-E2eRunner {
         どおりの応答を与えた通しの実行は全件を合格で終え、そのうえで、期待の形ごとにその形だけを
         違えた実行が不合格になる——その形を突き合わせない実行器はここで落ちる。
     #>
-    param([string]$Cases)
+    param([string]$Cases, [string]$Form)
 
     $defined = Get-Content $Cases -Raw -Encoding UTF8 | ConvertFrom-Json
 
-    $ran = Invoke-E2eRunner -Cases $Cases -Broken '' -At -1
-    if ($ran.Code -ne 0) {
-        throw "期待どおりの応答で通して走らせて合格しない: $($ran.Said)"
-    }
-
-    $counted = @($defined.cases).Count
-    if ($ran.Ran.Count -ne $counted) {
-        throw "定義の $counted 件のうち $($ran.Ran.Count) 件しか走らせていない: $($ran.Said)"
-    }
-
-    foreach ($form in (Get-E2eExpectationForms -Defined $defined).GetEnumerator()) {
-        $broken = $form.Key
-        if ($broken -like 'viewImage.*') { $broken = 'viewImage' }
-        if ($broken -eq 'called.prompt') { $broken = 'prompt' }
-        $ran = Invoke-E2eRunner -Cases $Cases -Broken $broken -At $form.Value
-        if ($ran.Code -ne 1) {
-            throw "$($form.Key) の期待を違えても不合格にならない: $($ran.Said)"
+    if ($Form -eq $wholeForm) {
+        $ran = Invoke-E2eRunner -Cases $Cases -Broken '' -At -1
+        if ($ran.Code -ne 0) {
+            throw "期待どおりの応答で通して走らせて合格しない: $($ran.Said)"
         }
 
-        if ($ran.Fell -notcontains $form.Value) {
-            throw "$($form.Key) の期待を違えたのに $($form.Value) 番の検査が落ちていない: $($ran.Said)"
+        $counted = @($defined.cases).Count
+        if ($ran.Ran.Count -ne $counted) {
+            throw "定義の $counted 件のうち $($ran.Ran.Count) 件しか走らせていない: $($ran.Said)"
         }
+
+        return
     }
 
     # 検査1件ごとの結末ではなく、走らせる前と後に見る事柄。名前の集合がずれていても、中継を
     # 作れなかった行や無効にした行が残っていても、呼んだ検査はすべて通りうる——通したまま終える
     # 実行器はここで落ちる。
-    foreach ($form in @('names', 'unresolved', 'disabled')) {
-        $ran = Invoke-E2eRunner -Cases $Cases -Broken $form -At -1
-        if ($ran.Code -ne 1) {
-            throw "$form を違えても不合格にならない: $($ran.Said)"
-        }
+    if (@('names', 'unresolved', 'disabled') -contains $Form) {
+        $ran = Invoke-E2eRunner -Cases $Cases -Broken $Form -At -1
+        if ($ran.Code -ne 1) { throw "$Form を違えても不合格にならない: $($ran.Said)" }
+
+        return
     }
 
     # ブリッジ自身が返す誤りは接続先を名乗らない。名乗りを1行目と決め打つ実行器は、この誤りの
     # 中身を丸ごと落として、落ちた理由の残らない不合格を並べる。
-    $ran = Invoke-E2eRunner -Cases $Cases -Broken 'notice' -At 0
-    if ($ran.Code -ne 1) {
-        throw "ブリッジ自身の誤りを返しても不合格にならない: $($ran.Said)"
+    if ($Form -eq 'notice') {
+        $ran = Invoke-E2eRunner -Cases $Cases -Broken 'notice' -At 0
+        if ($ran.Code -ne 1) {
+            throw "ブリッジ自身の誤りを返しても不合格にならない: $($ran.Said)"
+        }
+
+        if ($ran.Said -notmatch 'BRIDGE_TIMEOUT') {
+            throw "ブリッジ自身の誤りの中身が結末に残っていない: $($ran.Said)"
+        }
+
+        return
     }
 
-    if ($ran.Said -notmatch 'BRIDGE_TIMEOUT') {
-        throw "ブリッジ自身の誤りの中身が結末に残っていない: $($ran.Said)"
+    $forms = Get-E2eExpectationForms -Defined $defined
+    if (-not $forms.Contains($Form)) { throw "知らない形: $Form" }
+
+    $at = $forms[$Form]
+    $broken = $Form
+    if ($broken -like 'viewImage.*') { $broken = 'viewImage' }
+    if ($broken -eq 'called.prompt') { $broken = 'prompt' }
+    $ran = Invoke-E2eRunner -Cases $Cases -Broken $broken -At $at
+    if ($ran.Code -ne 1) { throw "$Form の期待を違えても不合格にならない: $($ran.Said)" }
+
+    if ($ran.Fell -notcontains $at) {
+        throw "$Form の期待を違えたのに $at 番の検査が落ちていない: $($ran.Said)"
     }
 }
 
@@ -561,126 +608,124 @@ function Test-AcceptanceRunner {
         実行器の自己申告ではない。そのうえで、期待の形ごとにその形だけを違えた実行が不合格に
         なることを見る——その形を突き合わせない実行器はここで落ちる。
     #>
-    param([string]$Cases, [string]$Progress, [string]$Operations, [string]$Editors)
+    param([string]$Cases, [string]$Progress, [string]$Operations, [string]$Editors,
+        [string]$Form)
 
     $defined = Get-Content $Cases -Raw | ConvertFrom-Json
-    $calls = @($defined.scenarios.steps | Where-Object { $_.kind -eq 'tool' }).Count
-    $restarts = @($defined.scenarios.steps | Where-Object { $_.kind -eq 'server' }).Count
-    $asked = @(Get-AcceptanceOperations -Defined $defined)
 
-    $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken '' -At 0
-    if ($ran.Code -ne 0) {
-        throw "期待どおりの応答で通して走らせて合格しない: $($ran.Said)"
-    }
+    if ($Form -eq $wholeForm) {
+        $calls = @($defined.scenarios.steps | Where-Object { $_.kind -eq 'tool' }).Count
+        $restarts = @($defined.scenarios.steps | Where-Object { $_.kind -eq 'server' }).Count
+        $asked = @(Get-AcceptanceOperations -Defined $defined)
 
-    $held = Get-Content $Progress -Raw | ConvertFrom-Json
-    if ($held.calls -ne $calls) {
-        throw "定義に並ぶ $calls 件の呼び出しのうち $($held.calls) 件しか呼んでいない。"
-    }
-
-    # 起こし直す段のぶんだけ、応答を作る相手は起こし直される。最初の1回はその段に依らない。
-    if ($held.starts -ne ($restarts + 1)) {
-        throw ("サーバーを起こした回数が " + ($restarts + 1) + " ではない: $($held.starts)")
-    }
-
-    $done = @(Get-Content $Operations -Encoding UTF8)
-    if (($done -join '/') -ne ($asked -join '/')) {
-        throw "頼んだ操作が定義と違う。定義: $($asked -join '/') / 実際: $($done -join '/')"
-    }
-
-    Assert-NoEditorLeft -Editors $Editors -What '期待どおりの応答で通した実行'
-
-    foreach ($form in (Get-AcceptanceExpectationForms -Defined $defined).GetEnumerator()) {
-        $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken $form.Key -At $form.Value
-        if ($ran.Code -ne 1) {
-            throw ("$($form.Key) の期待を $($form.Value) 件目の呼び出しで違えても不合格に" +
-                "ならない: $($ran.Said)")
+        $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken '' -At 0
+        if ($ran.Code -ne 0) {
+            throw "期待どおりの応答で通して走らせて合格しない: $($ran.Said)"
         }
 
-        Assert-NoEditorLeft -Editors $Editors -What "$($form.Key) の期待を違えた実行"
-    }
-
-    # 置き場が作られなければ、その実在を確かめる段が落とすはずである。
-    $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken 'file' -At 0
-    if ($ran.Code -ne 1) {
-        throw "書き込んだはずの置き場が無くても不合格にならない: $($ran.Said)"
-    }
-
-    Assert-NoEditorLeft -Editors $Editors -What '置き場を作らせなかった実行'
-
-    # 画像を画像でなく本文の文字列で返させる。期待の形から導けない違え方なので、ここで名指しする
-    # ——本文から読んでいる実行器は、文字列で返っても通してしまう。
-    $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken 'imageAsText' -At 0
-    if ($ran.Code -ne 1) {
-        throw "画像が文字列で返っても不合格にならない: $($ran.Said)"
-    }
-
-    Assert-NoEditorLeft -Editors $Editors -What '画像を文字列で返させた実行'
-
-    $spoiled = [System.IO.Path]::GetTempFileName()
-    try {
-        $defined = Get-Content $Cases -Raw -Encoding UTF8 | ConvertFrom-Json
-        $defined.scenarios[-1].steps = $null
-        $defined | ConvertTo-Json -Depth 100 |
-            Set-Content -Path $spoiled -Encoding UTF8 -NoNewline
-
-        $ran = Invoke-AcceptanceRunner -Cases $spoiled -Broken '' -At 0
-        if ($ran.Code -ne 3) {
-            throw "段の並びが壊れていても実行不能で終わらない: $($ran.Code) $($ran.Said)"
+        $held = Get-Content $Progress -Raw | ConvertFrom-Json
+        if ($held.calls -ne $calls) {
+            throw "定義に並ぶ $calls 件の呼び出しのうち $($held.calls) 件しか呼んでいない。"
         }
 
-        Assert-NoEditorLeft -Editors $Editors -What '段の並びが壊れた定義での実行'
-    } finally {
-        Remove-Item $spoiled -ErrorAction SilentlyContinue
+        # 起こし直す段のぶんだけ、応答を作る相手は起こし直される。最初の1回はその段に依らない。
+        if ($held.starts -ne ($restarts + 1)) {
+            throw ("サーバーを起こした回数が " + ($restarts + 1) + " ではない: $($held.starts)")
+        }
+
+        $done = @(Get-Content $Operations -Encoding UTF8)
+        if (($done -join '/') -ne ($asked -join '/')) {
+            throw "頼んだ操作が定義と違う。定義: $($asked -join '/') / 実際: $($done -join '/')"
+        }
+
+        Assert-NoEditorLeft -Editors $Editors -What '期待どおりの応答で通した実行'
+
+        return
+    }
+
+    # 置き場が作られなければ、その実在を確かめる段が落とすはずである。画像を本文の文字列で返す
+    # 違え方は期待の形から導けないので、どちらもここで名指しする。
+    if (@('file', 'imageAsText') -contains $Form) {
+        $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken $Form -At 0
+        if ($ran.Code -ne 1) { throw "$Form を違えても不合格にならない: $($ran.Said)" }
+
+        Assert-NoEditorLeft -Editors $Editors -What "$Form を違えた実行"
+
+        return
+    }
+
+    if ($Form -eq '段の並び') {
+        $spoiled = [System.IO.Path]::GetTempFileName()
+        try {
+            $defined.scenarios[-1].steps = $null
+            $defined | ConvertTo-Json -Depth 100 |
+                Set-Content -Path $spoiled -Encoding UTF8 -NoNewline
+
+            $ran = Invoke-AcceptanceRunner -Cases $spoiled -Broken '' -At 0
+            if ($ran.Code -ne 3) {
+                throw "段の並びが壊れていても実行不能で終わらない: $($ran.Code) $($ran.Said)"
+            }
+
+            Assert-NoEditorLeft -Editors $Editors -What '段の並びが壊れた定義での実行'
+        } finally {
+            Remove-Item $spoiled -ErrorAction SilentlyContinue
+        }
+
+        return
+    }
+
+    $forms = Get-AcceptanceExpectationForms -Defined $defined
+    if (-not $forms.Contains($Form)) { throw "知らない形: $Form" }
+
+    $at = $forms[$Form]
+    $ran = Invoke-AcceptanceRunner -Cases $Cases -Broken $Form -At $at
+    if ($ran.Code -ne 1) {
+        throw "$Form の期待を $at 件目の呼び出しで違えても不合格にならない: $($ran.Said)"
+    }
+
+    Assert-NoEditorLeft -Editors $Editors -What "$Form の期待を違えた実行"
+}
+
+function Get-PackageSpoils {
+    <#
+        .SYNOPSIS
+        内容物へ入れる違え方と、その入れ方。
+    #>
+    param([string]$Copy)
+
+    [ordered]@{
+        '再配布できない物' = {
+            Copy-Item (Join-Path $Copy 'LICENSE.txt') (Join-Path $Copy 'PEPlugin.dll')
+        }.GetNewClosure()
+        '写しの書き換え' = {
+            Add-Content -Path (Join-Path $Copy 'LICENSE.txt') -Value 'x'
+        }.GetNewClosure()
+        '内容物の欠落' = {
+            Remove-Item (Join-Path $Copy 'PmxEditorMcp.dll') -Force
+        }.GetNewClosure()
+        '版の食い違い' = { }
     }
 }
 
 function Test-PackageContents {
     <#
         .SYNOPSIS
-        内容物を確かめる側が、中身を違えたときに落ちることを見る。組み立てたものが通ることだけを
-        見ても、確かめる側が何も見ていない場合と区別できない。写しへ違えを入れて確かめる——
-        組み立てた本体は配布物なので、こちらで傷つけない。
+        内容物を確かめる側が、中身を違えたときに落ちることを見る。通しでは組み立てたものが通り、
+        組み立てる側が版を綴りで持っていないことを見る。形を指したときは、その違えを写しへ入れた
+        実行が落ちることを見る——組み立てた本体は配布物なので、こちらで傷つけない。
     #>
+    param([string]$Form)
+
     $expected = @('PmxEditorMcp.dll', 'PmxEditorMcp.Bridge.exe', 'INSTALL.md', 'LICENSE.txt',
         'ThirdPartyNotices.txt')
     $version = (Get-Content Directory.Build.props -Raw -Encoding UTF8 |
         Select-String -Pattern '<Version>([^<]+)</Version>').Matches[0].Groups[1].Value
     $staged = Join-Path 'dist' "pmx-editor-mcp-$version"
-    $copy = Join-Path ([System.IO.Path]::GetTempPath()) ('contents-' + [guid]::NewGuid().ToString('N'))
-    Copy-Item -Path $staged -Destination $copy -Recurse
 
-    try {
-        foreach ($spoiled in @(
-                @{ Name = '再配布できない物'; Do = {
-                    Copy-Item (Join-Path $copy 'LICENSE.txt') (Join-Path $copy 'PEPlugin.dll') } },
-                @{ Name = '写しの書き換え'; Do = {
-                    Add-Content -Path (Join-Path $copy 'LICENSE.txt') -Value 'x' } },
-                @{ Name = '内容物の欠落'; Do = {
-                    Remove-Item (Join-Path $copy 'PmxEditorMcp.dll') -Force } })) {
-            & $spoiled.Do
-            $broke = $false
-            try {
-                & scripts/package-contents.ps1 -Staged $copy -Version $version `
-                    -Expected $expected | Out-Null
-            } catch {
-                $broke = $true
-            }
-
-            if (-not $broke) { throw "$($spoiled.Name)を入れても落ちない。" }
-            Remove-Item -Path $copy -Recurse -Force
-            Copy-Item -Path $staged -Destination $copy -Recurse
-        }
-
-        $broke = $false
-        try {
-            & scripts/package-contents.ps1 -Staged $copy -Version '9.9.9' `
-                -Expected $expected | Out-Null
-        } catch {
-            $broke = $true
-        }
-
-        if (-not $broke) { throw "版が合わなくても落ちない。" }
+    if ($Form -eq $wholeForm) {
+        # 1コマンドで組み立てられること。組み立ては内容物の照合を内で呼ぶ。
+        pwsh -NoProfile -File scripts/package.ps1
+        if ($LASTEXITCODE -ne 0) { throw "配布パッケージを組み立てられない。" }
 
         # 版を固定値で持つ実装は、Directory.Build.props を変えても追随しない。組み立てる側に
         # その綴りが1つも現れないことで見る——現れないなら、名前も照合もそこを読んで決めている。
@@ -690,6 +735,28 @@ function Test-PackageContents {
             throw ("組み立てる側が版を綴りで持っている: " +
                 (($literal | ForEach-Object { $_.Path + ':' + $_.LineNumber }) -join '・'))
         }
+
+        return
+    }
+
+    $copy = Join-Path ([System.IO.Path]::GetTempPath()) ('contents-' + [guid]::NewGuid().ToString('N'))
+    Copy-Item -Path $staged -Destination $copy -Recurse
+    try {
+        $spoils = Get-PackageSpoils -Copy $copy
+        if (-not $spoils.Contains($Form)) { throw "知らない形: $Form" }
+
+        & $spoils[$Form]
+        $asked = if ($Form -eq '版の食い違い') { '9.9.9' } else { $version }
+
+        $broke = $false
+        try {
+            & scripts/package-contents.ps1 -Staged $copy -Version $asked -Expected $expected |
+                Out-Null
+        } catch {
+            $broke = $true
+        }
+
+        if (-not $broke) { throw "$Form を入れても落ちない。" }
     } finally {
         Remove-Item -Path $copy -Recurse -Force -ErrorAction Ignore
     }
@@ -901,49 +968,83 @@ $checks['配布パッケージの生成'] = @{
     LimitSeconds = 21
     Needs = $noArtifact
     Bundle = $msbuildBundle
-    Body = {
-        # 1コマンドで組み立てられること。中身を違えたときに落ちることは、確かめる側を
-        # 直に呼んで見る——落ちない検査は、通っても何も言っていない。
-        pwsh -NoProfile -File scripts/package.ps1
-        if ($LASTEXITCODE -ne 0) { throw "配布パッケージを組み立てられない。" }
+    # 違えを入れる形は、通しが組み立てた出来上がりを写して使う。組を分けずに順に走らせる。
+    FormsInOrder = $true
+    Forms = { @($wholeForm) + @((Get-PackageSpoils -Copy '').Keys) }
+    Body = { param([string]$Form)
 
-        Test-PackageContents
+        Test-PackageContents -Form $Form
     }
 }
 $checks['E2Eの実行器の照合'] = @{
     LimitSeconds = 63
     Needs = $noArtifact
-    Body = { Test-E2eRunner -Cases 'scripts/e2e-stub-cases.json' }
+    Forms = {
+        $defined = Get-Content 'scripts/e2e-stub-cases.json' -Raw -Encoding UTF8 | ConvertFrom-Json
+
+        @($wholeForm) + @((Get-E2eExpectationForms -Defined $defined).Keys) +
+            @('names', 'unresolved', 'disabled', 'notice')
+    }
+    Body = { param([string]$Form)
+
+        Test-E2eRunner -Cases 'scripts/e2e-stub-cases.json' -Form $Form
+    }
 }
 $checks['検査の集計の照合'] = @{
     LimitSeconds = 5
     Needs = $noArtifact
+    # 形どうしは同じ題材の中で並ぶ。組を分けず、1回の実行で形ごとの合否を書かせる。
+    FormsInOrder = $true
+    Forms = { @(node scripts/checks-stub-run.mjs --list) }
+    # 形と結末の置き場の渡し方。走らせる側がこの綴りの後ろへ値を足す。
+    FormArgument = '--forms'
+    ResultsArgument = '--results'
     Run = @('node', 'scripts/checks-stub-run.mjs')
 }
 $checks['確認クライアントの照合'] = @{
     LimitSeconds = 32
     Needs = $noArtifact
-    Body = { Test-CheckClient }
+    Forms = { @($wholeForm) + @((Get-CheckClientForms).Keys) }
+    Body = { param([string]$Form)
+
+        Test-CheckClient -Form $Form
+    }
 }
 $checks['実機動作確認の実行器の照合'] = @{
     LimitSeconds = 37
     Needs = $noArtifact
-    Body = { Test-LiveHostRunner }
+    Forms = { @($wholeForm) + @((Get-LiveHostRunnerForms).Keys) }
+    Body = { param([string]$Form)
+
+        Test-LiveHostRunner -Form $Form
+    }
 }
 $checks['参照クライアントの実行器の照合'] = @{
     LimitSeconds = 46
     Needs = $noArtifact
-    Body = { Test-LiveClientRunner }
+    Forms = { @($wholeForm) + @((Get-LiveClientRunnerForms).Keys) }
+    Body = { param([string]$Form)
+
+        Test-LiveClientRunner -Form $Form
+    }
 }
 $checks['受入の実行器の照合'] = @{
     LimitSeconds = 120
     Needs = $noArtifact
-    Body = {
+    Forms = {
+        $defined = Get-Content $acceptanceStub -Raw | ConvertFrom-Json
+
+        @($wholeForm) + @((Get-AcceptanceExpectationForms -Defined $defined).Keys) +
+            @('file', 'imageAsText', '段の並び')
+    }
+    Body = { param([string]$Form)
+
         $temp = [System.IO.Path]::GetTempPath()
         Test-AcceptanceRunner -Cases $acceptanceStub `
             -Progress (Join-Path $temp $StubProgressStateName) `
             -Operations (Join-Path $temp $StubOperationLogName) `
-            -Editors (Join-Path $temp $StubLaunchStateName)
+            -Editors (Join-Path $temp $StubLaunchStateName) `
+            -Form $Form
     }
 }
 
