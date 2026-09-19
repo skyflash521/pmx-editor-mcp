@@ -770,8 +770,7 @@ function Get-PackageTables {
         1つの実行で何度も引くので、最初の1回だけ相手を起こす。
     #>
     if ($null -eq $script:packageTables) {
-        $script:packageTables =
-            pwsh -NoProfile -File scripts/package-contents.ps1 -List | ConvertFrom-Json
+        $script:packageTables = & 'scripts/package-contents.ps1' -List | ConvertFrom-Json
     }
 
     $script:packageTables
@@ -933,7 +932,7 @@ $checks['要約の持ち主'] = New-Check `
         $orphans = @()
         foreach ($file in Get-ChildItem -Path src, tests -Recurse -Filter *.cs -File |
             Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }) {
-            $lines = @(Get-Content -LiteralPath $file.FullName -Encoding utf8)
+            $lines = [System.IO.File]::ReadAllLines($file.FullName)
             for ($at = 0; $at -lt $lines.Count - 1; $at++) {
                 $here = $lines[$at].Trim()
                 $ends = $here -eq '/// </summary>' -or
