@@ -12,6 +12,20 @@ namespace PmxEditorMcp.Bridge
         /// <summary>MCPクライアントへ名乗るサーバー名。</summary>
         public const string ServerName = "pmx-editor-mcp";
 
+        /// <summary>初期化のときにクライアントへ渡す、このサーバーの使い方。</summary>
+        public const string ServerInstructions =
+            "PMXエディタを相手にするサーバー。ツールの名前は5つの系統に分かれ、" +
+            "どれを引くかは何を知りたいかで決まる。" +
+            "model_ はモデルの中身をどう読み書きするか——頂点と面・材質・骨と表情・物理——を" +
+            "受け持つ。" +
+            "motion_ はモーションをどう組み立てるか——VMDのキー・骨と表情の動き・カメラと照明——を" +
+            "受け持つ。" +
+            "view_ は3Dビューをどう見せて何を選ぶか——カメラ・可視・選択中の要素——を受け持つ。" +
+            "session_ はエディタと何をやり取りするか——ファイル・プラグイン・元に戻す——を" +
+            "受け持つ。" +
+            "editor_ はPMXエディタ上でどう操作すればよいか——窓とメニューの辿り方・" +
+            "ショートカット・確認の文言——を受け持つ。";
+
         /// <summary>
         /// stdioトランスポートのMCPサーバーを構成して動かす。標準出力はプロトコルの通り道なので、
         /// ログと診断は標準エラー出力だけへ出す。
@@ -24,10 +38,14 @@ namespace PmxEditorMcp.Bridge
             builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
 
             builder.Services
-                .AddMcpServer(options => options.ServerInfo = new Implementation
+                .AddMcpServer(options =>
                 {
-                    Name = ServerName,
-                    Version = typeof(BridgeServer).Assembly.GetName().Version.ToString(),
+                    options.ServerInfo = new Implementation
+                    {
+                        Name = ServerName,
+                        Version = typeof(BridgeServer).Assembly.GetName().Version.ToString(),
+                    };
+                    options.ServerInstructions = ServerInstructions;
                 })
                 .WithStdioServerTransport()
                 .WithTools(BridgeTools.Create(

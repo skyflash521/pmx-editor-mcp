@@ -20,7 +20,7 @@ namespace PmxEditorMcp
     public static class UiTree
     {
         /// <summary>このツールの名前。</summary>
-        public const string ToolName = "session_get_ui_structure";
+        public const string ToolName = "editor_get_screen_structure";
 
         /// <summary>窓を選ぶ入力の名前。省くと一覧を返す。</summary>
         public const string WindowName = "window";

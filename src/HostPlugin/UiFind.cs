@@ -17,7 +17,7 @@ namespace PmxEditorMcp
     public static class UiFind
     {
         /// <summary>このツールの名前。</summary>
-        public const string ToolName = "session_find_ui";
+        public const string ToolName = "editor_find_operation";
 
         /// <summary>探す文言を受け取る入力の名前。</summary>
         public const string TextName = "text";

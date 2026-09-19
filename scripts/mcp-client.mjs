@@ -21,6 +21,12 @@ export class McpClient {
         this._pending = new Map();
         this._nextId = 1;
         this._ended = null;
+        this._instructions = "";
+    }
+
+    /** サーバーが初期化のときに名乗った使い方。名乗らなければ空。 */
+    get serverInstructions() {
+        return this._instructions;
     }
 
     /** サーバーを起こし、初期化まで済ませる。 */
@@ -52,11 +58,16 @@ export class McpClient {
             }
         });
 
-        await this._request("initialize", {
+        const opened = await this._request("initialize", {
             protocolVersion: MCP_PROTOCOL_VERSION,
             capabilities: {},
             clientInfo: { name: "acceptance", version: "1" },
         });
+        const told = opened.result;
+        this._instructions =
+            told !== null && typeof told === "object" && typeof told.instructions === "string"
+                ? told.instructions
+                : "";
         this._notify("notifications/initialized", {});
     }
 

@@ -47,7 +47,7 @@
         },
         {
           "kind": "tool",
-          "tool": "session_get_ui_structure",
+          "tool": "editor_get_screen_structure",
           "arguments": {},
           "expect": {
             "ok": true,
@@ -77,7 +77,7 @@
         },
         {
           "kind": "tool",
-          "tool": "session_get_ui_structure",
+          "tool": "editor_get_screen_structure",
           "arguments": {
             "window": "PmxEditor.TagEditForm",
             "depth": 1
@@ -106,7 +106,7 @@
         },
         {
           "kind": "tool",
-          "tool": "session_find_ui",
+          "tool": "editor_find_operation",
           "arguments": {
             "text": "タグ編集"
           },
