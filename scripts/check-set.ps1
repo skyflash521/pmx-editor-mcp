@@ -1,5 +1,5 @@
-# 常設の検査の中身と、群を選んで走らせる仕組み。読み込む側は群を指定して Invoke-Checks を呼ぶ。
-# 検査ごとの実行器がこれを共有する——中身がここ1か所なので、群を分けても検査の定義は割れない。
+# 常設の検査の中身と、群の割り当て。[check-manifest.ps1](check-manifest.ps1) が一覧として出し、
+# [run-check.ps1](run-check.ps1) が1件ずつ走らせる。
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -36,10 +36,11 @@ $uncoveredTools = "$authored/uncovered-tools.json"
 # そのどれも1段ずつあれば足りる。題材がそれらを漏れなく持つことは受入シナリオの照合が見る。
 $acceptanceStub = 'scripts/acceptance-stub-cases.json'
 $requirements = 'docs/specs/requirements.md'
-$procedure = 'docs/conventions/verification.md'
 
-$baseline = [System.IO.Path]::GetTempFileName()
-$excluded = [System.IO.Path]::GetTempFileName()
+# 除外一覧の導出が書き、それを読む検査が読む置き場。束をまたぐので、道は実行のあいだ変わらない。
+$work = Get-CheckWorkDirectory
+$baseline = Join-Path $work 'excluded-baseline'
+$excluded = Join-Path $work 'excluded-signatures'
 
 function Invoke-AcceptanceRunner {
     <#
@@ -293,18 +294,6 @@ function Test-LiveClientRunner {
             throw "$($form.Key) を違えたのに $($form.Value) 番の観点が落ちていない: $($ran.Said)"
         }
     }
-}
-
-function Test-CheckSummary {
-    <#
-        .SYNOPSIS
-        検査の集計が、落ちた検査を落ちたものとして数え、走らせていない検査を残ったものとして
-        数えることを確かめる。確かめる事柄と求める値は題材が持ち、ここは終了コードを見る。
-    #>
-    $said = pwsh -NoProfile -File scripts/checks-stub-run.ps1 2>&1
-    $code = $LASTEXITCODE
-    $global:LASTEXITCODE = 0
-    if ($code -ne 0) { throw "集計を確かめる実行が落ちた: $(@($said) -join "`n")" }
 }
 
 function Get-AcceptanceExpectationForms {
@@ -709,10 +698,10 @@ function Test-PackageContents {
 $build = 'ビルド'
 $derivation = '除外一覧の導出'
 
-# 同じ中間出力へ書く検査を並べる列の名前。MSBuild の列は obj・bin・dist を、除外一覧の列は
-# 導出が書く一時ファイルを共有するので、それぞれの中は直列に走らせる。
-$msbuildLane = 'MSBuild'
-$exclusionLane = '除外一覧'
+# 同じ中間出力へ書く検査を並べる束の名前。MSBuild の束は obj・bin・dist を、除外一覧の束は
+# 導出が書く置き場を共有する。
+$msbuildBundle = 'MSBuild'
+$exclusionBundle = '除外一覧'
 
 
 $checks = [ordered]@{}
@@ -720,7 +709,8 @@ $checks[$build] = @{
     LimitSeconds = 7
     Needs = $noArtifact
     Stage = 1
-    Body = { dotnet build PmxEditorMcp.sln -warnaserror }
+    Produces = $buildOutput
+    Run = @('dotnet', 'build', 'PmxEditorMcp.sln', '-warnaserror')
 }
 $checks['スクリプト構文'] = @{
     LimitSeconds = 5
@@ -752,15 +742,15 @@ $checks['スクリプト構文(PowerShell)'] = @{
 $checks['文書のリンク'] = @{
     LimitSeconds = 3
     Needs = $noArtifact
-    Body = {
-        lychee --offline --no-progress --include-fragments `
-            --exclude-path .scratch --exclude-path docs/.scratch --exclude-path dist '**/*.md'
-    }
+    Run = @('lychee', '--offline', '--no-progress', '--include-fragments',
+        '--exclude-path', '.scratch', '--exclude-path', 'docs/.scratch',
+        '--exclude-path', 'dist', '**/*.md')
 }
 $checks[$derivation] = @{
     LimitSeconds = 3
     Needs = $buildOutput
-    Lane = $exclusionLane
+    Bundle = $exclusionBundle
+    Produces = $exclusionList
     Body = {
         # 凍結が落ちたらその終了コードのまま返したいので、続きを走らせずに抜ける。
         & $dump excluded-baseline $editorDir $ledger $baseline
@@ -794,135 +784,123 @@ $checks['要約の持ち主'] = @{
 $checks['実行時リフレクション'] = @{
     LimitSeconds = 3
     Needs = $buildOutput
-    Body = { & $dump reflection-free $editorDir $hostDll }
+    Run = @($dump, 'reflection-free', $editorDir, $hostDll)
 }
 $checks['整形'] = @{
     LimitSeconds = 53
     Needs = $buildOutput
-    Lane = $msbuildLane
-    Body = { dotnet format PmxEditorMcp.sln --verify-no-changes }
+    Bundle = $msbuildBundle
+    Run = @('dotnet', 'format', 'PmxEditorMcp.sln', '--verify-no-changes')
 }
 $checks['テスト'] = @{
     LimitSeconds = 62
     Needs = $buildOutput
-    Body = { dotnet test PmxEditorMcp.sln --no-build }
+    Run = @('dotnet', 'test', 'PmxEditorMcp.sln', '--no-build')
 }
 $checks['台帳とSDKの照合'] = @{
     LimitSeconds = 3
     Needs = $exclusionList
-    Lane = $exclusionLane
-    Body = { & $dump ledger-coverage $editorDir $ledger $excluded $outOfScope }
+    Bundle = $exclusionBundle
+    Run = @($dump, 'ledger-coverage', $editorDir, $ledger, $excluded, $outOfScope)
 }
 $checks['日本語名の照合'] = @{
     LimitSeconds = 3
     Needs = $exclusionList
-    Lane = $exclusionLane
-    Body = { & $dump property-names $editorDir $ledger $excluded $names }
+    Bundle = $exclusionBundle
+    Run = @($dump, 'property-names', $editorDir, $ledger, $excluded, $names)
 }
 $checks['型役割の照合'] = @{
     LimitSeconds = 3
     Needs = $exclusionList
-    Lane = $exclusionLane
-    Body = { & $dump type-roles $editorDir $ledger $excluded $roles }
+    Bundle = $exclusionBundle
+    Run = @($dump, 'type-roles', $editorDir, $ledger, $excluded, $roles)
 }
 $checks['共通契約割当の照合'] = @{
     LimitSeconds = 3
     Needs = $exclusionList
-    Lane = $exclusionLane
-    Body = { & $dump common-assignments $editorDir $ledger $excluded $roles $assignments }
+    Bundle = $exclusionBundle
+    Run = @($dump, 'common-assignments', $editorDir, $ledger, $excluded, $roles, $assignments)
 }
 $checks['値の表現の照合'] = @{
     LimitSeconds = 3
     Needs = $exclusionList
-    Lane = $exclusionLane
-    Body = { & $dump value-shapes $editorDir $ledger $excluded $contract }
+    Bundle = $exclusionBundle
+    Run = @($dump, 'value-shapes', $editorDir, $ledger, $excluded, $contract)
 }
 $checks['危険操作の照合'] = @{
     LimitSeconds = 3
     Needs = $exclusionList
-    Lane = $exclusionLane
-    Body = { & $dump dangerous-operations $editorDir $ledger $excluded }
+    Bundle = $exclusionBundle
+    Run = @($dump, 'dangerous-operations', $editorDir, $ledger, $excluded)
 }
 $checks['能力対応表の照合'] = @{
     LimitSeconds = 3
     Needs = $exclusionList
-    Lane = $exclusionLane
-    Body = { & $dump tool-map $editorDir $ledger $excluded $roles $assignments $toolMap }
+    Bundle = $exclusionBundle
+    Run = @($dump, 'tool-map', $editorDir, $ledger, $excluded, $roles, $assignments, $toolMap)
 }
 $checks['提供対象の網羅'] = @{
     LimitSeconds = 3
     Needs = $exclusionList
-    Lane = $exclusionLane
-    Body = { & $dump map-coverage $editorDir $ledger $excluded $roles $toolMap }
+    Bundle = $exclusionBundle
+    Run = @($dump, 'map-coverage', $editorDir, $ledger, $excluded, $roles, $toolMap)
 }
 $checks['スキーマ定義の照合'] = @{
     LimitSeconds = 3
     Needs = $buildOutput
-    Body = { & $dump tool-schemas $contract $toolMap $toolSchemas }
+    Run = @($dump, 'tool-schemas', $contract, $toolMap, $toolSchemas)
 }
 $checks['ツールの説明文の照合'] = @{
     LimitSeconds = 3
     Needs = $buildOutput
-    Body = {
-        & $dump tool-descriptions $editorDir $ledger $contract $roles $names `
-            $assignments $toolMap
-    }
+    Run = @($dump, 'tool-descriptions', $editorDir, $ledger, $contract, $roles, $names,
+        $assignments, $toolMap)
 }
 $checks['サンプル値の照合'] = @{
     LimitSeconds = 3
     Needs = $buildOutput
-    Body = { & $dump sample-values $editorDir $contract $sampleValues }
+    Run = @($dump, 'sample-values', $editorDir, $contract, $sampleValues)
 }
 $checks['発見可能性の照合'] = @{
     LimitSeconds = 3
     Needs = $buildOutput
-    Body = {
-        & $dump discovery $editorDir $ledger $contract $roles $names `
-            $assignments $toolMap $discoveryTasks
-    }
+    Run = @($dump, 'discovery', $editorDir, $ledger, $contract, $roles, $names,
+        $assignments, $toolMap, $discoveryTasks)
 }
 $checks['スキーマ対応の照合'] = @{
     LimitSeconds = 3
     Needs = $buildOutput
-    Body = {
-        & $dump schema-correspondence $editorDir $ledger $roles $assignments `
-            $toolMap $toolSchemas
-    }
+    Run = @($dump, 'schema-correspondence', $editorDir, $ledger, $roles, $assignments,
+        $toolMap, $toolSchemas)
 }
 $checks['ツールの検査の網羅'] = @{
     LimitSeconds = 5
     Needs = $buildOutput
-    Body = {
-        & $dump tool-coverage $editorDir $ledger $contract $roles $names `
-            $assignments $toolMap $toolSchemas $sampleValues $acceptance $uncoveredTools
-    }
+    Run = @($dump, 'tool-coverage', $editorDir, $ledger, $contract, $roles, $names,
+        $assignments, $toolMap, $toolSchemas, $sampleValues, $acceptance, $uncoveredTools)
 }
 $checks['規則適合検査'] = @{
     LimitSeconds = 3
     Needs = $buildOutput
-    Body = {
-        & $dump tool-mapping $editorDir $ledger $contract $roles $assignments `
-            $toolMap $toolSchemas
-    }
+    Run = @($dump, 'tool-mapping', $editorDir, $ledger, $contract, $roles, $assignments,
+        $toolMap, $toolSchemas)
 }
 $checks['受入シナリオの照合'] = @{
     LimitSeconds = 5
     Needs = $buildOutput
-    Body = {
-        & $dump acceptance-cases $editorDir $ledger $contract $roles $names `
-            $assignments $toolMap $toolSchemas $acceptance $requirements $acceptanceStub
-    }
+    Run = @($dump, 'acceptance-cases', $editorDir, $ledger, $contract, $roles, $names,
+        $assignments, $toolMap, $toolSchemas, $acceptance, $requirements, $acceptanceStub)
 }
 $checks['ブリッジの単独起動'] = @{
     LimitSeconds = 17
     Needs = $noArtifact
-    Lane = $msbuildLane
-    Body = { pwsh -NoProfile -File scripts/bridge-standalone.ps1 }
+    Bundle = $msbuildBundle
+    Run = @('pwsh', '-NoProfile', '-File', 'scripts/bridge-standalone.ps1')
 }
 $checks['配布パッケージの生成'] = @{
     LimitSeconds = 21
     Needs = $noArtifact
-    Lane = $msbuildLane
+    Bundle = $msbuildBundle
     Body = {
         # 1コマンドで組み立てられること。中身を違えたときに落ちることは、確かめる側を
         # 直に呼んで見る——落ちない検査は、通っても何も言っていない。
@@ -935,91 +913,37 @@ $checks['配布パッケージの生成'] = @{
 $checks['E2Eの実行器の照合'] = @{
     LimitSeconds = 63
     Needs = $noArtifact
-    Body = {
-        # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
-        $spoken = [Console]::OutputEncoding
-        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-        try {
-            Test-E2eRunner -Cases 'scripts/e2e-stub-cases.json'
-        } finally {
-            [Console]::OutputEncoding = $spoken
-        }
-    }
+    Body = { Test-E2eRunner -Cases 'scripts/e2e-stub-cases.json' }
 }
-
 $checks['検査の集計の照合'] = @{
     LimitSeconds = 5
     Needs = $noArtifact
-    Body = {
-        $spoken = [Console]::OutputEncoding
-        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-        try {
-            Test-CheckSummary
-        } finally {
-            [Console]::OutputEncoding = $spoken
-        }
-    }
+    Run = @('node', 'scripts/checks-stub-run.mjs')
 }
-
 $checks['確認クライアントの照合'] = @{
     LimitSeconds = 32
     Needs = $noArtifact
-    Body = {
-        # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
-        $spoken = [Console]::OutputEncoding
-        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-        try {
-            Test-CheckClient
-        } finally {
-            [Console]::OutputEncoding = $spoken
-        }
-    }
+    Body = { Test-CheckClient }
 }
-
 $checks['実機動作確認の実行器の照合'] = @{
     LimitSeconds = 37
     Needs = $noArtifact
-    Body = {
-        $spoken = [Console]::OutputEncoding
-        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-        try {
-            Test-LiveHostRunner
-        } finally {
-            [Console]::OutputEncoding = $spoken
-        }
-    }
+    Body = { Test-LiveHostRunner }
 }
-
 $checks['参照クライアントの実行器の照合'] = @{
     LimitSeconds = 46
     Needs = $noArtifact
-    Body = {
-        $spoken = [Console]::OutputEncoding
-        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-        try {
-            Test-LiveClientRunner
-        } finally {
-            [Console]::OutputEncoding = $spoken
-        }
-    }
+    Body = { Test-LiveClientRunner }
 }
-
 $checks['受入の実行器の照合'] = @{
     LimitSeconds = 120
     Needs = $noArtifact
     Body = {
-        # 実行器が書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
-        $spoken = [Console]::OutputEncoding
-        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-        try {
-            $temp = [System.IO.Path]::GetTempPath()
-            Test-AcceptanceRunner -Cases $acceptanceStub `
-                -Progress (Join-Path $temp $StubProgressStateName) `
-                -Operations (Join-Path $temp $StubOperationLogName) `
-                -Editors (Join-Path $temp $StubLaunchStateName)
-        } finally {
-            [Console]::OutputEncoding = $spoken
-        }
+        $temp = [System.IO.Path]::GetTempPath()
+        Test-AcceptanceRunner -Cases $acceptanceStub `
+            -Progress (Join-Path $temp $StubProgressStateName) `
+            -Operations (Join-Path $temp $StubOperationLogName) `
+            -Editors (Join-Path $temp $StubLaunchStateName)
     }
 }
 
@@ -1071,249 +995,3 @@ $groupPaths = [ordered]@{
 # 群を道の形では言えない。
 $ungrouped = @('scripts/check-set.ps1')
 
-function Select-CheckGroups {
-    <#
-        .SYNOPSIS
-        変えたものの道から、走らせる群の名前を返す。表に当たらない道があれば全件の群を返す。
-        変えたものが1つも無ければ、走らせる群も無い。
-    #>
-    param([string[]]$Paths)
-
-    $chosen = [ordered]@{}
-    foreach ($path in $Paths) {
-        if ($ungrouped -contains $path) { return @($checkGroups.Keys) }
-
-        $hit = $false
-        foreach ($group in $groupPaths.GetEnumerator()) {
-            foreach ($pattern in $group.Value) {
-                if ($path -like $pattern) {
-                    $chosen[$group.Key] = $true
-                    $hit = $true
-                }
-            }
-        }
-
-        if (-not $hit) { return @($checkGroups.Keys) }
-    }
-
-    @($chosen.Keys)
-}
-
-function Get-StandingLimit {
-    <#
-        .SYNOPSIS
-        常設の検査の実行全体の上限の秒数。段階1の上限の和に、段階2で最も長い列の和を足す。
-    #>
-    $first = (@($checks.Keys | Where-Object { (Get-CheckStage -Name $_) -eq 1 } |
-        ForEach-Object { $checks[$_].LimitSeconds }) | Measure-Object -Sum).Sum
-    $lanes = @{}
-    foreach ($name in $checks.Keys) {
-        if ((Get-CheckStage -Name $name) -ne 2) { continue }
-
-        $lane = Get-CheckLane -Name $name
-        if (-not $lanes.Contains($lane)) { $lanes[$lane] = 0 }
-        $lanes[$lane] += $checks[$name].LimitSeconds
-    }
-
-    $first + (@($lanes.Values) | Measure-Object -Maximum).Maximum
-}
-
-function Get-CheckStage {
-    <#
-        .SYNOPSIS
-        その検査を走らせる段階。出来上がりを作る検査だけが1で、ほかは2である。段階1は直列で
-        通し、段階2は列ごとに並列で走らせる。
-    #>
-    param([string]$Name)
-
-    if ($checks[$Name].Contains('Stage')) { return $checks[$Name].Stage }
-
-    2
-}
-
-function Get-CheckLane {
-    <#
-        .SYNOPSIS
-        その検査が並ぶ列。同じ列の検査は直列に走る——同じ中間出力へ書くものを同時に走らせると、
-        互いの出来上がりを壊す。列を指していない検査は、自分だけの列に並ぶ。
-    #>
-    param([string]$Name)
-
-    if ($checks[$Name].Contains('Lane')) { return $checks[$Name].Lane }
-
-    $Name
-}
-
-function Invoke-Lane {
-    <#
-        .SYNOPSIS
-        1つの列の検査を順に走らせ、結果を返す。列ごとに、別の場所から1回ずつ呼ばれる。
-        受ける名前を Queued と呼ぶのは、検査の本体がこの関数のスコープで走るからである——
-        本体が読む変数と同じ名前を引数に付けると、その変数が引数に隠れて本体が別の値を読む。
-        止めるのは呼ぶ側で、こちらは止められるまで順に走らせる。何を始めるかを先に知らせる
-        のは、呼ぶ側がいま走っている検査を当てられるようにするためである。
-    #>
-    param([string[]]$Queued)
-
-    try {
-        # 段階1が作った出来上がりは揃っている。列の中で作るのは除外一覧だけである。
-        $produced = @($noArtifact, $buildOutput)
-        foreach ($name in $Queued) {
-            if (-not (Test-CheckReady -Needs $checks[$name].Needs -Produced $produced)) {
-                New-SkippedCheck -Name $name
-                continue
-            }
-
-            New-CheckStart -Name $name
-            $result = Invoke-Check -Name $name -Body $checks[$name].Body
-            $result
-            if ($result.Code -eq 0 -and $name -eq $derivation) { $produced += $exclusionList }
-        }
-    } finally {
-        # この列がこの1本を読み込んだときに作った一時ファイルを片付ける。親が消せるのは親が
-        # 作ったものだけなので、列ごとの分は列が自分で消す。
-        Remove-Item $baseline, $excluded -ErrorAction SilentlyContinue
-    }
-}
-
-function Invoke-WatchedLanes {
-    <#
-        .SYNOPSIS
-        指す列を起こして見張りへ掛け、結果を返す。段階1も段階2もこの道を通る。
-    #>
-    param($Lanes)
-
-    $root = (Get-Location).Path
-    $queuedOf = @{}
-    $limitsOf = @{}
-    $totalOf = @{}
-    $start = {
-        param($Lane)
-
-        # 名前の並びは using で渡す。引数の並びとして渡すと、並びがほどけて2件目から先が
-        # 別の引数になる。
-        $laneNames = @($Lane)
-        $job = Start-Job -ScriptBlock {
-            Set-Location $using:root
-            $env:PMX_EDITOR_MCP_IN_LANE = '1'
-            . (Join-Path $using:root 'scripts/check-set.ps1')
-            Invoke-Lane -Queued $using:laneNames
-        }
-
-        $queuedOf[$job.Id] = $laneNames
-        $limits = @{}
-        foreach ($one in $laneNames) { $limits[$one] = $checks[$one].LimitSeconds }
-        $limitsOf[$job.Id] = $limits
-        $totalOf[$job.Id] = Get-StandingLimit
-
-        $job
-    }
-
-    $ordered = @($Lanes | Sort-Object -Descending -Property @{ Expression = {
-        (@($_ | ForEach-Object { $checks[$_].LimitSeconds }) | Measure-Object -Sum).Sum } })
-    $watched = Watch-Lanes -Jobs @() -LimitsOf $limitsOf -TotalOf $totalOf `
-        -Pending $ordered -Start $start `
-        -AtOnce ([Math]::Max(1, [Environment]::ProcessorCount / 4))
-    $said = @(Read-LaneResults -Jobs $watched.Jobs -QueuedOf $queuedOf -Watched $watched)
-    Remove-Job -Job $watched.Jobs -Force
-
-    $said
-}
-
-function Read-LaneResults {
-    <#
-        .SYNOPSIS
-        見張りが集めた結果を、報告する並びへ均す。並びの割り出しは、ジョブを起こさずに
-        確かめられるよう別の入口が持つ。
-    #>
-    param($Jobs, $QueuedOf, $Watched)
-
-    foreach ($job in $Jobs) {
-        Split-LaneResults -Done @($Watched.Done[$job.Id]) -Queued $QueuedOf[$job.Id] `
-            -Stopped $Watched.Stopped[$job.Id]
-    }
-}
-
-function Invoke-Checks {
-    <#
-        .SYNOPSIS
-        指す群の検査を走らせ、終わらせる終了コードを返す。出来上がりが要る検査を選んだときは、
-        それを作る検査も一緒に走らせる——選んだ群だけでは入力が揃わず、走らせられないままになる。
-        段階1を直列で通してから、段階2を列ごとに並列で走らせる。
-    #>
-    param([string[]]$Groups)
-
-    $unknown = @($Groups | Where-Object { -not $checkGroups.Contains($_) })
-    if ($unknown) { throw ('知らない群: ' + ($unknown -join '・')) }
-
-    $wanted = @()
-    foreach ($group in $Groups) { $wanted += $checkGroups[$group] }
-
-    if (@($wanted | Where-Object { $checks[$_].Needs -eq $exclusionList })) {
-        $wanted += $derivation
-    }
-    if (@($wanted | Where-Object { $checks[$_].Needs -ne $noArtifact })) {
-        $wanted += $build
-    }
-
-    $results = @()
-
-    Start-CheckClock
-
-    try {
-        # 段階1。1件ずつ、列として起こす。
-        foreach ($name in $checks.Keys) {
-            if ($wanted -notcontains $name) { continue }
-            if ((Get-CheckStage -Name $name) -ne 1) { continue }
-
-            $results += @(Invoke-WatchedLanes -Lanes @(, @($name)))
-        }
-
-        # 段階2の列。同じ列の中は直列で、列どうしは並列に走る。
-        $lanes = [ordered]@{}
-        foreach ($name in $checks.Keys) {
-            if ($wanted -notcontains $name) { continue }
-            if ((Get-CheckStage -Name $name) -ne 2) { continue }
-
-            $lane = Get-CheckLane -Name $name
-            if (-not $lanes.Contains($lane)) { $lanes[$lane] = @() }
-            $lanes[$lane] += $name
-        }
-
-        # 段階1が落ちたら段階2は始めない。出来上がりが揃わないまま走らせても結末は変わらない。
-        $ready = @($results | Where-Object { $_.Code -ne 0 }).Count -eq 0
-        if ($ready) {
-            $results += @(Invoke-WatchedLanes -Lanes @($lanes.Values))
-        } else {
-            foreach ($lane in $lanes.GetEnumerator()) {
-                foreach ($name in $lane.Value) { $results += New-SkippedCheck -Name $name }
-            }
-        }
-    } finally {
-        Remove-Item $baseline, $excluded -ErrorAction SilentlyContinue
-    }
-
-    # 書くのは検査の定義の順にまとめて行う。走り終えた順に出すと、並列に走った列の行が混ざる。
-    $ordered = @()
-    foreach ($name in $checks.Keys) {
-        $ordered += @($results | Where-Object { $_.Name -eq $name } |
-            ForEach-Object { Deny-OverLimitCheck -Result $_ -LimitSeconds $checks[$name].LimitSeconds })
-    }
-
-    foreach ($result in $ordered) { Write-CheckResult -Result $result }
-
-    $failed = @($ordered | Where-Object { -not $_.Skipped -and $_.Code -ne 0 } |
-        ForEach-Object { $_.Name })
-    $skipped = @($ordered | Where-Object { $_.Skipped } | ForEach-Object { $_.Name })
-    $ran = @($ordered | Where-Object { -not $_.Skipped }).Count
-
-    Write-CheckSummary -Failed $failed -Skipped $skipped -Scope ($Groups -join '・') `
-        -Ran $ran -Listed $checks.Count -Limit (Get-StandingLimit)
-}
-
-# 列のジョブはこの1本を読み直す。一覧の照合は実行ごとに1回で足り、列ごとに繰り返すと
-# 立ち上がりが混み合って、走っている検査の所要まで伸びる。
-if ($env:PMX_EDITOR_MCP_IN_LANE -ne '1') {
-    Assert-ListedChecks -Path $procedure -Section '## 常設の検査' -Names @($checks.Keys)
-    Assert-GroupedChecks -Grouped $checkGroups -Names @($checks.Keys)
-}
