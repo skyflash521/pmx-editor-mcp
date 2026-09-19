@@ -682,19 +682,45 @@ namespace PmxEditorMcp.Tests
             Assert.False(handles.TryGet(first, typeof(Item).FullName, out released));
         }
 
+        /// <summary>
+        /// 同じ親を2つ以上の組へ書ける。組1つに許す数を超える子は、同じ親の組を並べて渡す。
+        /// </summary>
         [Fact]
-        public void WritingTheSameParentIntoTwoGroupsIsRefused()
+        public void TheSameParentCanBeWrittenIntoTwoGroups()
         {
             _model.Groups.Add(new Group());
             HandleLedger handles = Ledger();
-            int first = handles.Issue(typeof(Item).FullName, new Item(), () => { });
-            int second = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+            int first = handles.Issue(typeof(Item).FullName, new Item { Label = "一" }, () => { });
+            int second = handles.Issue(typeof(Item).FullName, new Item { Label = "二" }, () => { });
 
             IDictionary<string, object> envelope = Call(
                 "model_add_leaves",
                 Arguments(
                     ToolDispatch.AssignmentsName,
                     new object[] { Assignment(0, first), Assignment(0, second) }),
+                handles);
+
+            IDictionary<string, object> value = Value(envelope);
+            Assert.Equal(2, value[SetResponse.AddedName]);
+            Assert.Equal(new[] { 0, 1 }, (int[])value[SetResponse.IndicesName]);
+            Assert.Equal("一", ((Item)_model.Groups[0].Leaves[0]).Label);
+            Assert.Equal("二", ((Item)_model.Groups[0].Leaves[1]).Label);
+            Assert.Equal(1, _commits);
+        }
+
+        /// <summary>同じハンドルは、組を分けても二度は渡せない。</summary>
+        [Fact]
+        public void WritingTheSameHandleIntoTwoGroupsIsRefused()
+        {
+            _model.Groups.Add(new Group());
+            HandleLedger handles = Ledger();
+            int only = handles.Issue(typeof(Item).FullName, new Item(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_leaves",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { Assignment(0, only), Assignment(0, only) }),
                 handles);
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -81,7 +82,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TheOuterSequenceIsDerivedBeforeTheInnerOne()
+        public void TheNestedSequencesShareTheBudgetEvenly()
         {
             SchemaItem cells = Sequence("cells", Number(), null);
             SchemaItem rows = Sequence("rows", Group(null, cells), null);
@@ -90,8 +91,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<SchemaItem, int> limits = ElementLimitRule.Request(
                 Branch(new[] { rows }), Lengths, Budget, envelope + 20000);
 
-            Assert.Equal(5000, limits[rows]);
-            Assert.Equal(2, limits[cells]);
+            // 段ごとの上限は積が10000へ収まる乗根で、外側だけがさらに自身の上限で抑えられる。
+            Assert.Equal(100, limits[rows]);
+            Assert.Equal(100, limits[cells]);
+        }
+
+        [Fact]
+        public void TheOuterSequenceKeepsTheSmallerOfItsOwnLimitAndItsShare()
+        {
+            SchemaItem cells = Sequence("cells", Number(), null);
+            SchemaItem[] members = new[] { cells }
+                .Concat(Enumerable.Range(0, 120).Select(i => Value("m" + i, "number")))
+                .ToArray();
+            SchemaItem rows = Sequence("rows", Group(null, members), null);
+            const int envelope = 5;
+
+            IDictionary<SchemaItem, int> limits = ElementLimitRule.Request(
+                Branch(new[] { rows }), Lengths, Budget, envelope + 20000);
+
+            // 121個の項目を持つ組は構造トークンを122使うので、外側は乗根より先にそちらで止まる。
+            Assert.Equal(10000 / 122, limits[rows]);
+            Assert.Equal(100, limits[cells]);
         }
 
         [Fact]

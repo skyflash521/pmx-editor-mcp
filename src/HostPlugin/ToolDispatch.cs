@@ -3982,7 +3982,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 親ごとの組の並び。同じ親を2つ以上の組へ書けず、ハンドルも組をまたいで重ねられない。
+        /// 親ごとの組の並び。ハンドルは組をまたいで重ねられない。同じ親は2つ以上の組へ書けて、
+        /// その順に末尾へ加わる。
         /// </summary>
         private static bool TryAssignments(
             McpMethodContext context,
@@ -4008,13 +4009,12 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            HashSet<long> parents = new HashSet<long>();
             HashSet<long> used = new HashSet<long>();
             List<Assignment> built = new List<Assignment>();
             foreach (object item in items)
             {
                 Assignment one;
-                if (!TryAssignment(context, tool, item, parents, used, out one, out code, out message))
+                if (!TryAssignment(context, tool, item, used, out one, out code, out message))
                 {
                     return false;
                 }
@@ -4043,7 +4043,6 @@ namespace PmxEditorMcp
             McpMethodContext context,
             ToolElements tool,
             object given,
-            ISet<long> parents,
             ISet<long> used,
             out Assignment assignment,
             out string code,
@@ -4077,18 +4076,8 @@ namespace PmxEditorMcp
 
             int position;
             object owner;
-            long pointing;
-            if (!TryParent(
-                context, tool, members, out position, out owner, out pointing, out code, out message))
+            if (!TryParent(context, tool, members, out position, out owner, out code, out message))
             {
-                return false;
-            }
-
-            if (!parents.Add(pointing))
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = "同じ親を2つ以上の組へ書いている: " + pointing;
-
                 return false;
             }
 
@@ -4153,13 +4142,11 @@ namespace PmxEditorMcp
             IDictionary<string, object> members,
             out int position,
             out object owner,
-            out long pointing,
             out string code,
             out string message)
         {
             position = -1;
             owner = null;
-            pointing = 0;
             code = null;
             message = null;
             object given;
@@ -4189,8 +4176,6 @@ namespace PmxEditorMcp
                     return false;
                 }
 
-                pointing = position;
-
                 return true;
             }
 
@@ -4211,8 +4196,6 @@ namespace PmxEditorMcp
 
                 return false;
             }
-
-            pointing = id;
 
             return true;
         }

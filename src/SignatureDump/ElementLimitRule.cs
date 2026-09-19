@@ -20,9 +20,11 @@ namespace PmxEditorMcp.SignatureDump
         private const int EnvelopeTokens = 4;
 
         /// <summary>
-        /// 分岐の要求の並びごとの上限。配る組の内側の並びは、要求の大きさが対象の件数で変わらない
-        /// ので上限を持たず、返す表に現れない。構造トークンの残りが並びに足りないか、要素が想定
-        /// 文字数を持たなければ <see cref="InvalidOperationException"/>。
+        /// 分岐の要求の並びごとの上限。並びが入れ子になるときは、外側と内側の上限の積が予算へ
+        /// 収まればよいので、その段数の乗根を段ごとの上限とする。一次資料が要素数を定めた並びを
+        /// またぐときは、その要素数を積へ掛けてから分ける。配る組の内側の並びは、要求の大きさが
+        /// 対象の件数で変わらないので上限を持たず、返す表に現れない。構造トークンの残りが並びに
+        /// 足りないか、要素が想定文字数を持たなければ <see cref="InvalidOperationException"/>。
         /// </summary>
         public static IDictionary<SchemaItem, int> Request(
             SchemaBranch branch, AssumedLength lengths, int budgetBytes, int tokenLimit)
@@ -56,7 +58,6 @@ namespace PmxEditorMcp.SignatureDump
             foreach (IList<SchemaItem> path in paths)
             {
                 SchemaItem array = path[path.Count - 1];
-                long occurrences = Occurrences(path, limits);
                 int chars = lengths.Of(array.Element);
                 if (chars < 1)
                 {
@@ -64,9 +65,20 @@ namespace PmxEditorMcp.SignatureDump
                         "1件の想定文字数が0の並びがある: " + (array.Name ?? "名前無し"));
                 }
 
-                limits.Add(array, (int)Math.Min(
-                    AtLeastOne(budgetBytes / (occurrences * chars * BytesPerChar)),
-                    AtLeastOne(share / (occurrences * (Tokens(array.Element) + 1)))));
+                long counted = Counted(path);
+                IList<SchemaItem> shared = path.Where(i => !i.MaxItems.HasValue).ToList();
+                long each = AtLeastOne(Root(
+                    Math.Min(
+                        budgetBytes / (counted * chars * BytesPerChar),
+                        share / (counted * (Tokens(array.Element) + 1))),
+                    shared.Count));
+                foreach (SchemaItem sequence in shared)
+                {
+                    int found;
+                    limits[sequence] = limits.TryGetValue(sequence, out found)
+                        ? (int)Math.Min(found, each)
+                        : (int)each;
+                }
             }
 
             return limits;
@@ -139,17 +151,63 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>その並びが1回の要求に現れる回数。囲む並びの最大件数の積になる。</summary>
-        private static long Occurrences(
-            IList<SchemaItem> path, IDictionary<SchemaItem, int> limits)
+        /// <summary>
+        /// その並びを囲む並びのうち、一次資料が要素数を定めたものの積。予算を段へ分ける前に、
+        /// この回数だけ取り分ける。
+        /// </summary>
+        private static long Counted(IList<SchemaItem> path)
         {
-            long occurrences = 1;
+            long counted = 1;
             foreach (SchemaItem enclosing in path.Take(path.Count - 1))
             {
-                occurrences *= enclosing.MaxItems ?? limits[enclosing];
+                if (enclosing.MaxItems.HasValue)
+                {
+                    counted *= enclosing.MaxItems.Value;
+                }
             }
 
-            return occurrences;
+            return counted;
+        }
+
+        /// <summary><paramref name="count"/> 乗して <paramref name="capacity"/> を超えない最大の数。</summary>
+        private static long Root(long capacity, int count)
+        {
+            if (count < 2)
+            {
+                return capacity;
+            }
+
+            long root = AtLeastOne((long)Math.Pow(Math.Max(capacity, 0), 1.0 / count));
+            while (Power(root + 1, count, capacity) <= capacity)
+            {
+                root++;
+            }
+
+            while (root > 1 && Power(root, count, capacity) > capacity)
+            {
+                root--;
+            }
+
+            return root;
+        }
+
+        /// <summary>
+        /// <paramref name="value"/> の <paramref name="count"/> 乗。
+        /// <paramref name="ceiling"/> を超えた時点で打ち切る。
+        /// </summary>
+        private static long Power(long value, int count, long ceiling)
+        {
+            long power = 1;
+            for (int i = 0; i < count; i++)
+            {
+                power *= value;
+                if (power > ceiling)
+                {
+                    return power;
+                }
+            }
+
+            return power;
         }
 
         /// <summary>
