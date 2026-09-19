@@ -44,6 +44,8 @@
     <!-- 中間の置き場は本文の評価の時点では決まっていないので、その元から組み立てる。 -->
     <RelaySourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedSdkRelay.g.cs</RelaySourcePath>
     <ToolBindingSourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedTools.g.cs</ToolBindingSourcePath>
+    <UiStructureSourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedUiStructure.g.cs</UiStructureSourcePath>
+    <UiStructurePath>$(MSBuildThisFileDirectory)..\..\catalog\observed\ui-structure.json</UiStructurePath>
     <ToolMapPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\tool-map.json</ToolMapPath>
     <LedgerPath>$(MSBuildThisFileDirectory)..\..\catalog\observed\capability-ledger.json</LedgerPath>
     <TypeRolesPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\type-roles.json</TypeRolesPath>
@@ -81,6 +83,16 @@
     <Exec Command="&quot;$(RelayGeneratorPath)&quot; tool-bindings &quot;$(PmxEditorDir)&quot; &quot;$(LedgerPath)&quot; &quot;$(TypeRolesPath)&quot; &quot;$(CommonAssignmentsPath)&quot; &quot;$(ToolMapPath)&quot; &quot;$(ToolSchemasPath)&quot; &quot;$(CommonContractPath)&quot; &quot;$(ToolBindingSourcePath)&quot;" />
     <ItemGroup>
       <Compile Include="$(ToolBindingSourcePath)" Exclude="@(Compile)" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 画面の構造の台帳も、ビルドのたびに本文へ直して組み込む。埋め込み資源にはしない。 -->
+  <Target Name="GenerateUiStructureSource"
+          BeforeTargets="BeforeCompile"
+          DependsOnTargets="BuildRelayGenerator">
+    <Exec Command="&quot;$(RelayGeneratorPath)&quot; ui-structure-source &quot;$(UiStructurePath)&quot; &quot;$(UiStructureSourcePath)&quot;" />
+    <ItemGroup>
+      <Compile Include="$(UiStructureSourcePath)" Exclude="@(Compile)" />
     </ItemGroup>
   </Target>
 

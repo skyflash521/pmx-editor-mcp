@@ -88,6 +88,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>同梱する第三者ライセンス表示を、出荷台帳と転記元から組み立てて書き出す。</summary>
         public const string ThirdPartyCommand = "thirdparty";
 
+        /// <summary>画面の構造の台帳を、組み込むC#として書き出す。</summary>
+        public const string UiStructureSourceCommand = "ui-structure-source";
+
         public static int Run(string[] args, TextWriter output, TextWriter error)
         {
             if (args == null)
@@ -243,6 +246,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ThirdPartyNoticeRunner.Run(rest, output, error);
             }
 
+            if (string.Equals(args[0], UiStructureSourceCommand, StringComparison.Ordinal))
+            {
+                return UiStructureSourceRunner.Run(rest, output, error);
+            }
+
             error.WriteLine("知らない下位コマンド: " + args[0]);
             WriteUsage(error);
             return ExitCodes.InvalidArguments;
@@ -356,6 +364,8 @@ namespace PmxEditorMcp.SignatureDump
             error.WriteLine(
                 ThirdPartyCommand
                     + " <書き出し先パス> <標準の本文の置き場> <出荷台帳のパス>...");
+            error.WriteLine(
+                UiStructureSourceCommand + " <画面の構造の台帳のパス> <書き出し先パス>");
         }
     }
 }

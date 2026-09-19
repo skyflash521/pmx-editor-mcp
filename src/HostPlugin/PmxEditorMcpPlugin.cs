@@ -195,6 +195,8 @@ namespace PmxEditorMcp
                         GeneratedTools.Attachments(), GeneratedTools.Payloads()));
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
+                UiFind.AddTo(methods);
+                UiTree.AddTo(methods);
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);
                 DebugLargeText.AddTo(methods, debugHooks);
