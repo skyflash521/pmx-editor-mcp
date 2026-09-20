@@ -79,6 +79,11 @@ namespace PmxEditorMcp.Tests
         public IDictionary<string, object> Call(
             string tool, IDictionary<string, object> arguments)
         {
+            return Call(Method(tool), arguments);
+        }
+
+        public McpMethod Method(string tool)
+        {
             if (_tools == null)
             {
                 _tools = new McpMethodTable();
@@ -91,7 +96,13 @@ namespace PmxEditorMcp.Tests
                 throw new InvalidOperationException("登録されていないツール: " + tool);
             }
 
-            return Call(method, arguments);
+            return method;
+        }
+
+        public IDictionary<string, object> Call(
+            string tool, IDictionary<string, object> arguments, int budgetChars)
+        {
+            return (IDictionary<string, object>)Method(tool)(Context(arguments, budgetChars));
         }
 
         /// <summary>呼び出しを1つ、UIスレッドの委譲を通して呼ぶ。</summary>
@@ -104,10 +115,15 @@ namespace PmxEditorMcp.Tests
         /// <summary>その項目の組を持つ呼び出しの場。</summary>
         public McpMethodContext Context(IDictionary<string, object> arguments)
         {
+            return Context(arguments, 100000);
+        }
+
+        public McpMethodContext Context(IDictionary<string, object> arguments, int budgetChars)
+        {
             return new McpMethodContext(
                 arguments,
                 new InlineInvoker(),
-                100000,
+                budgetChars,
                 Handles,
                 new EventQueue(new EventSequenceIssuer()));
         }
