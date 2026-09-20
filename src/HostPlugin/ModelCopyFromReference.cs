@@ -26,6 +26,8 @@ namespace PmxEditorMcp
         /// <summary>Jointの位置を、繋ぐ剛体が指すボーンの位置にする。</summary>
         public const string JointPositionFromBone = "jointPositionFromBone";
 
+        public const string JointPositionFromSameNameBone = "jointPositionFromSameNameBone";
+
         /// <summary>変えた要素の数を返す項目の名前。</summary>
         public const string ChangedName = "changed";
 
@@ -40,6 +42,7 @@ namespace PmxEditorMcp
                     JointNameFromBodyA,
                     JointNameFromBodyB,
                     JointPositionFromBone,
+                    JointPositionFromSameNameBone,
                 };
             }
         }
@@ -94,7 +97,7 @@ namespace PmxEditorMcp
 
             int changed = bodies
                 ? chosen.Select(at => model.Body[at]).Count(Named)
-                : chosen.Select(at => model.Joint[at]).Count(joint => Taken(joint, operation));
+                : chosen.Select(at => model.Joint[at]).Count(joint => Taken(model, joint, operation));
 
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
@@ -116,9 +119,22 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>Jointへ、繋ぐ剛体から名前か位置を写す。変えたなら真を返す。</summary>
-        private static bool Taken(IPXJoint joint, string operation)
+        private static bool Taken(IPXPmx model, IPXJoint joint, string operation)
         {
+            if (string.Equals(operation, JointPositionFromSameNameBone, StringComparison.Ordinal))
+            {
+                IPXBone named = model.Bone.FirstOrDefault(
+                    bone => string.Equals(bone.Name, joint.Name, StringComparison.Ordinal));
+                if (named == null || Vectors.Same(joint.Position, named.Position))
+                {
+                    return false;
+                }
+
+                joint.Position = Vectors.Copied(named.Position);
+
+                return true;
+            }
+
             IPXBody held = string.Equals(operation, JointNameFromBodyB, StringComparison.Ordinal)
                 ? joint.BodyB
                 : joint.BodyA;

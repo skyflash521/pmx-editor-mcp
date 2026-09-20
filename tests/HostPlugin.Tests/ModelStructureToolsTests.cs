@@ -189,6 +189,70 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void OnlyThePickedBoneThatIsOnNoNodeIsAdded()
+        {
+            IPXBone listed = Bone("載っている");
+            IPXBone wanted = Bone("足したい");
+            Bone("足したくない");
+            FakeNode node = Node("枠", new FakeBoneNodeItem(listed));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
+                Operation(ModelEditNodes.RegisterPickedBones),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditNodes.TargetIndicesName, new object[] { 0, 1 })));
+
+            Assert.Equal(2, node.Items.Count);
+            Assert.Same(wanted, ((IPXBoneNodeItem)node.Items[1]).Bone);
+            Assert.Equal(1, value[ModelEditNodes.AddedName]);
+        }
+
+        [Fact]
+        public void OnlyThePickedMorphThatIsOnNoNodeIsAdded()
+        {
+            IPXMorph wanted = Morph("足したい", MorphKind.Vertex);
+            Morph("足したくない", MorphKind.Vertex);
+            FakeNode node = Node("枠");
+
+            Nodes(
+                Operation(ModelEditNodes.RegisterPickedMorphs),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditNodes.TargetIndicesName, new object[] { 0 }));
+
+            Assert.Same(wanted, ((IPXMorphNodeItem)Assert.Single(node.Items)).Morph);
+        }
+
+        [Fact]
+        public void APickedBoneNamedTwiceIsAddedOnlyOnce()
+        {
+            IPXBone wanted = Bone("足したい");
+            FakeNode node = Node("枠");
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
+                Operation(ModelEditNodes.RegisterPickedBones),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditNodes.TargetIndicesName, new object[] { 0, 0 })));
+
+            Assert.Same(wanted, ((IPXBoneNodeItem)Assert.Single(node.Items)).Bone);
+            Assert.Equal(1, value[ModelEditNodes.AddedName]);
+        }
+
+        [Fact]
+        public void RegisteringPickedElementsWithoutSayingWhichOnesIsRefused()
+        {
+            Bone("ボーン");
+            Node("枠");
+
+            IDictionary<string, object> envelope = Nodes(
+                Operation(ModelEditNodes.RegisterPickedBones),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void TheExpressionNodeIsPutBackIntoTheOrderTheMorphsAreIn()
         {
             IPXMorph first = Morph("一", MorphKind.Vertex);
@@ -261,6 +325,36 @@ namespace PmxEditorMcp.Tests
 
             Near(1.0, joint.Position.X);
             Near(3.0, joint.Position.Z);
+        }
+
+        [Fact]
+        public void AJointMovesToTheBoneThatCarriesTheSameName()
+        {
+            FakeBone bone = (FakeBone)Bone("Joint");
+            bone.Position = new V3(4f, 5f, 6f);
+            FakeJoint joint = Joint("Joint", Body("一", null), Body("二", null));
+
+            Copy(
+                Operation(ModelCopyFromReference.JointPositionFromSameNameBone),
+                ComposedEditFixture.Given("all", true));
+
+            Near(4.0, joint.Position.X);
+            Near(6.0, joint.Position.Z);
+        }
+
+        [Fact]
+        public void AJointWithNoBoneOfTheSameNameStaysWhereItIs()
+        {
+            Bone("腕");
+            FakeJoint joint = Joint("Joint", Body("一", null), Body("二", null));
+            joint.Position = new V3(1f, 1f, 1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Copy(
+                Operation(ModelCopyFromReference.JointPositionFromSameNameBone),
+                ComposedEditFixture.Given("all", true)));
+
+            Near(1.0, joint.Position.X);
+            Assert.Equal(0, value[ModelCopyFromReference.ChangedName]);
         }
 
         [Fact]

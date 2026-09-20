@@ -426,6 +426,58 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TakingFacesOutWithTheirVerticesCopiesTheOnesTheOtherFacesShare()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Material("材質", Face(vertices, 0, 1, 2), Face(vertices, 0, 2, 3));
+
+            EditMaterials(
+                Operation(ModelEditMaterials.ExtractFacesWithVertices),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(
+                    ModelEditMaterials.FaceIndicesName, new object[] { 1 }));
+
+            IPXFace moved = Assert.Single(_fixture.Model.Material[1].Faces);
+            Assert.Equal(6, _fixture.Model.Vertex.Count);
+            Assert.NotSame(vertices[0], moved.Vertex1);
+            Assert.NotSame(vertices[2], moved.Vertex2);
+            Assert.Same(vertices[3], moved.Vertex3);
+        }
+
+        [Fact]
+        public void TheFacesMadeOnlyOfThePickedVerticesGoIntoAMaterialOfTheirOwn()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            FakeMaterial material = Material(
+                "材質", Face(vertices, 0, 1, 2), Face(vertices, 0, 2, 3));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(EditMaterials(
+                Operation(ModelEditMaterials.ExtractVertices),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditMaterials.VertexIndicesName, new object[] { 0, 2, 3 })));
+
+            Assert.Equal(2, _fixture.Model.Material.Count);
+            Assert.Single(material.Faces);
+            Assert.Same(vertices[1], material.Faces[0].Vertex2);
+            Assert.Single(_fixture.Model.Material[1].Faces);
+            Assert.Equal(new object[] { 1 }, (object[])value[ModelEditMaterials.AddedName]);
+        }
+
+        [Fact]
+        public void TakingFacesOutByVerticesWithoutSayingWhichVerticesIsRefused()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Material("材質", Face(vertices, 0, 1, 2));
+
+            IDictionary<string, object> envelope = EditMaterials(
+                Operation(ModelEditMaterials.ExtractVertices),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void DuplicatingOnlyTheFacesLeavesTheVerticesShared()
         {
             IList<IPXVertex> vertices = Vertices(3);

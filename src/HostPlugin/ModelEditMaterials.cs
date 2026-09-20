@@ -28,6 +28,12 @@ namespace PmxEditorMcp
         /// <summary>指した面を新しい材質へ移す。</summary>
         public const string ExtractFaces = "extractFaces";
 
+        public const string ExtractFacesWithVertices = "extractFacesWithVertices";
+
+        public const string ExtractVertices = "extractVertices";
+
+        public const string VertexIndicesName = "vertexIndices";
+
         /// <summary>材質の持ち物を複製して新しい材質にする。</summary>
         public const string DuplicateParts = "duplicateParts";
 
@@ -79,9 +85,21 @@ namespace PmxEditorMcp
             {
                 return new[]
                 {
-                    Merge, MergeAll, MergeSame, ExtractFaces, DuplicateParts, ClampColor,
+                    Merge,
+                    MergeAll,
+                    MergeSame,
+                    ExtractFaces,
+                    ExtractFacesWithVertices,
+                    ExtractVertices,
+                    DuplicateParts,
+                    ClampColor,
                 };
             }
+        }
+
+        private static IList<string> Extracting
+        {
+            get { return new[] { ExtractFaces, ExtractFacesWithVertices }; }
         }
 
         /// <summary>受け取れる持ち物。スキーマが並べる順。</summary>
@@ -114,6 +132,7 @@ namespace PmxEditorMcp
                 FaceIndicesName,
                 FaceRangeName,
                 FaceAllName,
+                VertexIndicesName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -140,6 +159,7 @@ namespace PmxEditorMcp
 
             float tolerance;
             string parts;
+            IList<int> corners;
             if (!ComposedInput.TryFloat(
                     context,
                     ColorToleranceName,
@@ -159,7 +179,16 @@ namespace PmxEditorMcp
                     out parts,
                     out code,
                     out message)
-                || !TryFacesGiven(context, operation, out code, out message))
+                || !TryFacesGiven(context, operation, out code, out message)
+                || !ComposedInput.TryIndices(
+                    context,
+                    VertexIndicesName,
+                    operation,
+                    new[] { ExtractVertices },
+                    model.Vertex.Count,
+                    out corners,
+                    out code,
+                    out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -167,6 +196,12 @@ namespace PmxEditorMcp
             IList<IPXMaterial> picked = chosen.Select(at => model.Material[at]).ToList();
             switch (operation)
             {
+                case ExtractVertices:
+                    return Split(context, model, picked, corners);
+
+                case ExtractFacesWithVertices:
+                    return Extracted(context, model, picked, true);
+
                 case Merge:
                     return Merged(model, new[] { picked });
 
@@ -177,7 +212,7 @@ namespace PmxEditorMcp
                     return Merged(model, Alike(picked, tolerance));
 
                 case ExtractFaces:
-                    return Extracted(context, model, picked);
+                    return Extracted(context, model, picked, false);
 
                 case DuplicateParts:
                     return Duplicated(model, picked, parts);
@@ -272,8 +307,55 @@ namespace PmxEditorMcp
                 && Math.Abs(left.Z - right.Z) <= tolerance;
         }
 
+        private static ComposedEditResult Split(
+            McpMethodContext context,
+            IPXPmx model,
+            IList<IPXMaterial> picked,
+            IList<int> corners)
+        {
+            if (!context.Params.ContainsKey(VertexIndicesName))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    VertexIndicesName + " に、移す面を作っている頂点の位置を渡す。");
+            }
+
+            HashSet<IPXVertex> chosen = new HashSet<IPXVertex>(
+                corners.Select(at => model.Vertex[at]), ReferenceComparer<IPXVertex>.Instance);
+            IPXMaterial made = null;
+            int changed = 0;
+            foreach (IPXMaterial material in picked)
+            {
+                IList<IPXFace> taken = material.Faces
+                    .Where(face => ViewSelection.Corners(face).All(chosen.Contains))
+                    .ToList();
+                if (taken.Count == 0)
+                {
+                    continue;
+                }
+
+                made = made ?? Emptied(material);
+                foreach (IPXFace face in taken)
+                {
+                    material.Faces.Remove(face);
+                    made.Faces.Add(face);
+                }
+
+                changed++;
+            }
+
+            if (made == null)
+            {
+                return Answer(0, 0, new int[0]);
+            }
+
+            model.Material.Add(made);
+
+            return Answer(changed, 0, new[] { model.Material.Count - 1 });
+        }
+
         private static ComposedEditResult Extracted(
-            McpMethodContext context, IPXPmx model, IList<IPXMaterial> picked)
+            McpMethodContext context, IPXPmx model, IList<IPXMaterial> picked, bool apart)
         {
             List<int> added = new List<int>();
             foreach (IPXMaterial material in picked)
@@ -293,6 +375,11 @@ namespace PmxEditorMcp
                 }
 
                 IList<IPXFace> taken = faces.Select(at => material.Faces[at]).ToList();
+                if (apart)
+                {
+                    Apart(model, taken);
+                }
+
                 foreach (IPXFace face in taken)
                 {
                     material.Faces.Remove(face);
@@ -457,6 +544,47 @@ namespace PmxEditorMcp
                 });
         }
 
+        private static void Apart(IPXPmx model, IList<IPXFace> taken)
+        {
+            HashSet<IPXFace> going = new HashSet<IPXFace>(taken, ReferenceComparer<IPXFace>.Instance);
+            HashSet<IPXVertex> shared = new HashSet<IPXVertex>(
+                model.Material
+                    .SelectMany(material => material.Faces)
+                    .Where(face => !going.Contains(face))
+                    .SelectMany(ViewSelection.Corners),
+                ReferenceComparer<IPXVertex>.Instance);
+            Dictionary<IPXVertex, IPXVertex> apart =
+                new Dictionary<IPXVertex, IPXVertex>(ReferenceComparer<IPXVertex>.Instance);
+            foreach (IPXFace face in taken)
+            {
+                face.Vertex1 = Copied(model, apart, shared, face.Vertex1);
+                face.Vertex2 = Copied(model, apart, shared, face.Vertex2);
+                face.Vertex3 = Copied(model, apart, shared, face.Vertex3);
+            }
+        }
+
+        private static IPXVertex Copied(
+            IPXPmx model,
+            IDictionary<IPXVertex, IPXVertex> apart,
+            ICollection<IPXVertex> shared,
+            IPXVertex vertex)
+        {
+            if (vertex == null || !shared.Contains(vertex))
+            {
+                return vertex;
+            }
+
+            IPXVertex made;
+            if (!apart.TryGetValue(vertex, out made))
+            {
+                made = (IPXVertex)vertex.Clone();
+                model.Vertex.Add(made);
+                apart[vertex] = made;
+            }
+
+            return made;
+        }
+
         private static bool TryFacesGiven(
             McpMethodContext context, string operation, out string code, out string message)
         {
@@ -465,7 +593,7 @@ namespace PmxEditorMcp
             bool pointed = context.Params.ContainsKey(FaceIndicesName)
                 || context.Params.ContainsKey(FaceRangeName)
                 || context.Params.ContainsKey(FaceAllName);
-            if (string.Equals(operation, ExtractFaces, StringComparison.Ordinal) || !pointed)
+            if (Extracting.Contains(operation, StringComparer.Ordinal) || !pointed)
             {
                 code = null;
 
@@ -473,7 +601,7 @@ namespace PmxEditorMcp
             }
 
             message = FaceIndicesName + "・" + FaceRangeName + "・" + FaceAllName
-                + " を渡せるのは " + ExtractFaces + " のときだけである。";
+                + " を渡せるのは " + string.Join("・", Extracting.ToArray()) + " のときだけである。";
 
             return false;
         }

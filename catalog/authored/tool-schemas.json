@@ -5063,6 +5063,18 @@
               "name": "faceAll",
               "origin": "hostInput",
               "shape": "boolean"
+            },
+            {
+              "name": "vertexIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              },
+              "required": false
             }
           ],
           "choices": [
@@ -5291,6 +5303,18 @@
               "name": "all",
               "origin": "hostInput",
               "shape": "boolean"
+            },
+            {
+              "name": "targetIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              },
+              "required": false
             }
           ],
           "choices": [

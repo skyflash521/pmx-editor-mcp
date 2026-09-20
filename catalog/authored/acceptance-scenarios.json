@@ -3978,6 +3978,44 @@
               }
             ]
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_materials",
+          "arguments": {
+            "operation": "extractFacesWithVertices",
+            "indices": [
+              0
+            ],
+            "faceAll": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_materials",
+          "arguments": {
+            "operation": "extractVertices",
+            "indices": [
+              1
+            ],
+            "vertexIndices": [
+              0,
+              1,
+              2
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added.0",
+                "equals": 2
+              }
+            ]
+          }
         }
       ]
     },
@@ -4254,6 +4292,49 @@
           "tool": "model_edit_nodes",
           "arguments": {
             "operation": "registerUnlistedBones",
+            "all": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_nodes",
+          "arguments": {
+            "operation": "registerPickedBones",
+            "indices": [
+              0
+            ],
+            "targetIndices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_nodes",
+          "arguments": {
+            "operation": "registerPickedMorphs",
+            "indices": [
+              0
+            ],
+            "targetIndices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_copy_from_reference",
+          "arguments": {
+            "operation": "jointPositionFromSameNameBone",
             "all": true
           },
           "expect": {

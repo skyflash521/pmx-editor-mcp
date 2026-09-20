@@ -20,6 +20,12 @@ namespace PmxEditorMcp
         /// <summary>どの枠にも載っていないモーフを、指した枠の末尾へ足す。</summary>
         public const string RegisterUnlistedMorphs = "registerUnlistedMorphs";
 
+        public const string RegisterPickedBones = "registerPickedBones";
+
+        public const string RegisterPickedMorphs = "registerPickedMorphs";
+
+        public const string TargetIndicesName = "targetIndices";
+
         /// <summary>表情の枠の中身を、モーフの並びの順にそろえる。</summary>
         public const string NormalizeExpressionNode = "normalizeExpressionNode";
 
@@ -38,6 +44,8 @@ namespace PmxEditorMcp
                 {
                     RegisterUnlistedBones,
                     RegisterUnlistedMorphs,
+                    RegisterPickedBones,
+                    RegisterPickedMorphs,
                     NormalizeExpressionNode,
                 };
             }
@@ -67,6 +75,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetIndicesName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -80,6 +89,7 @@ namespace PmxEditorMcp
             string code;
             string message;
             IList<int> chosen;
+            IList<int> targets;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
                 || !TargetInput.TryPositions(
@@ -88,9 +98,26 @@ namespace PmxEditorMcp
                     model.Node.Count,
                     out chosen,
                     out code,
+                    out message)
+                || !ComposedInput.TryIndices(
+                    context,
+                    TargetIndicesName,
+                    operation,
+                    Picking,
+                    Reach(model, operation),
+                    out targets,
+                    out code,
                     out message))
             {
                 return ComposedEditResult.Refuse(code, message);
+            }
+
+            if (Picking.Contains(operation, StringComparer.Ordinal)
+                && !context.Params.ContainsKey(TargetIndicesName))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    TargetIndicesName + " に、枠へ足す要素の位置を渡す。");
             }
 
             IList<IPXNode> picked = chosen.Select(at => model.Node[at]).ToList();
@@ -106,7 +133,8 @@ namespace PmxEditorMcp
                     model,
                     picked[0],
                     (IPXPmxBuilder)builder(),
-                    string.Equals(operation, RegisterUnlistedBones, StringComparison.Ordinal));
+                    Bones.Contains(operation, StringComparer.Ordinal),
+                    Picking.Contains(operation, StringComparer.Ordinal) ? targets : null);
                 changed = added == 0 ? 0 : 1;
             }
 
@@ -118,9 +146,34 @@ namespace PmxEditorMcp
                 });
         }
 
-        /// <summary>どの枠にも載っていない要素を、その枠の末尾へ足す。足した数を返す。</summary>
+        private static IList<string> Picking
+        {
+            get { return new[] { RegisterPickedBones, RegisterPickedMorphs }; }
+        }
+
+        private static IList<string> Bones
+        {
+            get { return new[] { RegisterUnlistedBones, RegisterPickedBones }; }
+        }
+
+        private static int Reach(IPXPmx model, string operation)
+        {
+            if (!Picking.Contains(operation, StringComparer.Ordinal))
+            {
+                return 0;
+            }
+
+            return Bones.Contains(operation, StringComparer.Ordinal)
+                ? model.Bone.Count
+                : model.Morph.Count;
+        }
+
+        /// <summary>
+        /// どの枠にも載っていない要素を、その枠の末尾へ足す。<paramref name="targets"/> を渡すと、
+        /// その位置の要素だけを相手にする。足した数を返す。
+        /// </summary>
         private static int Registered(
-            IPXPmx model, IPXNode node, IPXPmxBuilder builder, bool bones)
+            IPXPmx model, IPXNode node, IPXPmxBuilder builder, bool bones, IList<int> targets)
         {
             HashSet<object> listed = new HashSet<object>(ReferenceComparer<object>.Instance);
             foreach (IPXNode held in ReferenceCleanup.Nodes(model))
@@ -135,12 +188,15 @@ namespace PmxEditorMcp
                 }
             }
 
+            IList<object> reach = bones
+                ? model.Bone.Cast<object>().ToList()
+                : model.Morph.Cast<object>().ToList();
             int added = 0;
-            foreach (object target in bones
-                ? model.Bone.Cast<object>()
-                : model.Morph.Cast<object>())
+            foreach (object target in targets == null
+                ? reach
+                : targets.Select(at => reach[at]).ToList())
             {
-                if (listed.Contains(target))
+                if (!listed.Add(target))
                 {
                     continue;
                 }
