@@ -39651,6 +39651,12 @@
               "origin": "hostInput",
               "shape": "text",
               "required": false
+            },
+            {
+              "name": "modelPath",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ]
         }

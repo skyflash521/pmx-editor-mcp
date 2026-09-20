@@ -393,12 +393,68 @@ namespace PmxEditorMcp.Tests
                 ViewLoadVmdView.ToolName,
                 ComposedScreenFixture.Arguments(
                     ComposedScreenFixture.Given(
-                        ViewLoadVmdView.PartsName, ViewLoadVmdView.ModelAndMotion),
+                        ViewLoadVmdView.PartsName, ViewLoadVmdView.WholeMotion),
                     ComposedScreenFixture.Given(
                         ViewLoadVmdView.MotionPathName, @"C:\motions\walk.vmd")));
 
-            Assert.NotNull(_fixture.View.Motion);
+            Assert.Equal(@"C:\motions\walk.vmd", ((FakeVmd)_fixture.View.Motion).Path);
             Assert.Equal(1, _fixture.View.Plays);
+        }
+
+        [Theory]
+        [InlineData(ViewLoadVmdView.ModelMotion, true, false, false)]
+        [InlineData(ViewLoadVmdView.CameraMotion, false, true, false)]
+        [InlineData(ViewLoadVmdView.LightMotion, false, false, true)]
+        public void LoadingOneKindOfMotionDropsTheKeysOfTheOtherKinds(
+            string parts, bool model, bool camera, bool light)
+        {
+            Vertices(1);
+            _fixture.Builder.Motion.Fill();
+
+            _fixture.Call(
+                ViewLoadVmdView.ToolName,
+                ComposedScreenFixture.Arguments(
+                    ComposedScreenFixture.Given(ViewLoadVmdView.PartsName, parts),
+                    ComposedScreenFixture.Given(
+                        ViewLoadVmdView.MotionPathName, @"C:\motions\walk.vmd")));
+
+            FakeVmd held = (FakeVmd)_fixture.View.Motion;
+            Assert.Equal(model, held.Bone.Count > 0);
+            Assert.Equal(camera, held.Camera.Count > 0);
+            Assert.Equal(light, held.Light.Count > 0);
+        }
+
+        [Fact]
+        public void LoadingTheModelFromAFileTakesThatOneInsteadOfTheOneBeingEdited()
+        {
+            Vertices(1);
+
+            _fixture.Call(
+                ViewLoadVmdView.ToolName,
+                ComposedScreenFixture.Arguments(
+                    ComposedScreenFixture.Given(
+                        ViewLoadVmdView.PartsName, ViewLoadVmdView.ModelOnly),
+                    ComposedScreenFixture.Given(
+                        ViewLoadVmdView.ModelPathName, @"C:\models\other.pmx")));
+
+            Assert.Equal(@"C:\models\other.pmx", _fixture.View.Loaded.FilePath);
+        }
+
+        [Fact]
+        public void LoadingAnOlderModelFileTakesTheRouteThatReadsIt()
+        {
+            Vertices(1);
+
+            _fixture.Call(
+                ViewLoadVmdView.ToolName,
+                ComposedScreenFixture.Arguments(
+                    ComposedScreenFixture.Given(
+                        ViewLoadVmdView.PartsName, ViewLoadVmdView.ModelOnly),
+                    ComposedScreenFixture.Given(
+                        ViewLoadVmdView.ModelPathName, @"C:\models\other.pmd")));
+
+            Assert.Equal(@"C:\models\other.pmd", _fixture.Builder.OlderPath);
+            Assert.Null(_fixture.View.Loaded);
         }
 
         [Fact]
@@ -409,7 +465,7 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> envelope = _fixture.Call(
                 ViewLoadVmdView.ToolName,
                 ComposedScreenFixture.Arguments(ComposedScreenFixture.Given(
-                    ViewLoadVmdView.PartsName, ViewLoadVmdView.ModelAndMotion)));
+                    ViewLoadVmdView.PartsName, ViewLoadVmdView.WholeMotion)));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
         }

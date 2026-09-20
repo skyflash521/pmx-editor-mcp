@@ -417,7 +417,7 @@
     {
       "tool": "view_load_vmd_view",
       "branching": false,
-      "duty": "VMDViewへ、いま編集しているモデルを読み込む。parts は modelOnly・modelAndMotion のいずれかで、modelAndMotion は motionPath が指すVMDも読み込んで再生を始める。VMDViewが立ち上がっていなければ、ここで立ち上がる。"
+      "duty": "VMDViewへモデルとモーションを読み込む。読み込むモデルは、modelPath を渡せばそのファイルのモデル、省けばいま編集しているモデルである。道の末尾が .pmd のファイルはPMDとして読み、それ以外はPMXとして読む。parts は modelOnly・wholeMotion・modelMotion・cameraMotion・lightMotion のいずれかで、modelOnly はモデルだけを読み込み、残りは motionPath が指すVMDも読み込んで再生を始める。wholeMotion はVMDの中身をすべて使い、modelMotion はボーン・モーフ・IK表示のキーだけ、cameraMotion はカメラのキーだけ、lightMotion は照明とセルフシャドウのキーだけを残して、残りを落とす。VMDViewが立ち上がっていなければ、ここで立ち上がる。booted にVMDViewが立ち上がっているかを返す。"
     },
     {
       "tool": "view_poll_events",

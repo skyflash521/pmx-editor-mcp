@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PEPlugin;
 using PEPlugin.Pmx;
 using PEPlugin.View;
 using PEPlugin.Vmd;
@@ -37,8 +38,9 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>ツールを表へ足す。<paramref name="motion"/> は空のVMDを1つ作って返す。</summary>
-        public static void AddTo(McpMethodTable methods, ComposedScreen screen, Func<object> motion)
+        /// <summary>ツールを表へ足す。<paramref name="builder"/> はVMDを作る相手を返す。</summary>
+        public static void AddTo(
+            McpMethodTable methods, ComposedScreen screen, Func<object> builder)
         {
             if (methods == null)
             {
@@ -50,9 +52,9 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(screen));
             }
 
-            if (motion == null)
+            if (builder == null)
             {
-                throw new ArgumentNullException(nameof(motion));
+                throw new ArgumentNullException(nameof(builder));
             }
 
             List<string> known = new List<string> { PartsName };
@@ -61,11 +63,11 @@ namespace PmxEditorMcp
                 screen.Method(
                     known,
                     ScreenNeeds.View | ScreenNeeds.Pmx,
-                    (context, parts) => Run(context, parts, motion)));
+                    (context, parts) => Run(context, parts, builder)));
         }
 
         private static ComposedEditResult Run(
-            McpMethodContext context, ScreenParts parts, Func<object> motion)
+            McpMethodContext context, ScreenParts parts, Func<object> builder)
         {
             string wanted;
             string code;
@@ -79,7 +81,7 @@ namespace PmxEditorMcp
             view.StopVmdView();
             if (string.Equals(wanted, ModelAndMotion, StringComparison.Ordinal))
             {
-                view.BootupVmdView((IPXPmx)parts.Pmx, (IPEVmd)motion());
+                view.BootupVmdView((IPXPmx)parts.Pmx, ((IPEBuilder)builder()).CreateVmd());
             }
 
             return ComposedEditResult.Complete(

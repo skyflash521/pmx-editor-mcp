@@ -29,6 +29,9 @@ namespace PmxEditorMcp.Tests
             get { return _edit.Model; }
         }
 
+        /// <summary>VMDやPMXを作る相手の題材。</summary>
+        public FakeHostBuilder Builder { get; } = new FakeHostBuilder();
+
         /// <summary>3Dビューの題材。</summary>
         public FakePmxView View { get; } = new FakePmxView();
 
@@ -74,7 +77,7 @@ namespace PmxEditorMcp.Tests
                     _tools,
                     new ComposedScreen(
                         _edit.Session(), () => View, () => Form, () => Parts),
-                    () => new FakeVmd());
+                    () => Builder);
             }
 
             McpMethod method;

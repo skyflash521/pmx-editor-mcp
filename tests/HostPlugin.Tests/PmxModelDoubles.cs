@@ -1115,7 +1115,7 @@ namespace PmxEditorMcp.Tests
 
         public void FromFile(string path)
         {
-            throw new NotSupportedException();
+            FilePath = path;
         }
 
         public void ToFile(string path)

@@ -212,7 +212,7 @@ namespace PmxEditorMcp
                         () => Receiver(receivers, ViewType),
                         () => Receiver(receivers, FormType),
                         () => Receiver(receivers, PartsType)),
-                    () => ((IPEBuilder)Receiver(receivers, BuilderType)).CreateVmd());
+                    () => Receiver(receivers, BuilderType));
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);

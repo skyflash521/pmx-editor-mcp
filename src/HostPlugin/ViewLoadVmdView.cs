@@ -1,45 +1,45 @@
 using System;
 using System.Collections.Generic;
+using PEPlugin;
 using PEPlugin.Pmx;
 using PEPlugin.View;
 using PEPlugin.Vmd;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// VMDViewへモデルとモーションを読み込むツール。
-    /// </summary>
     public static class ViewLoadVmdView
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_load_vmd_view";
 
-        /// <summary>読み込む持ち物を受け取る入力の名前。</summary>
         public const string PartsName = "parts";
 
-        /// <summary>モデルだけを読み込む。</summary>
         public const string ModelOnly = "modelOnly";
 
-        /// <summary>モデルとモーションを読み込み、再生を始める。</summary>
-        public const string ModelAndMotion = "modelAndMotion";
+        public const string WholeMotion = "wholeMotion";
 
-        /// <summary>受け取れる持ち物。スキーマが並べる順。</summary>
+        public const string ModelMotion = "modelMotion";
+
+        public const string CameraMotion = "cameraMotion";
+
+        public const string LightMotion = "lightMotion";
+
         public static IList<string> Parts
         {
             get
             {
-                return new[] { ModelOnly, ModelAndMotion };
+                return new[] { ModelOnly, WholeMotion, ModelMotion, CameraMotion, LightMotion };
             }
         }
 
-        /// <summary>読み込むモーションのファイルの道を受け取る入力の名前。</summary>
         public const string MotionPathName = "motionPath";
 
-        /// <summary>VMDViewが立ち上がっているかを返す項目の名前。</summary>
+        public const string ModelPathName = "modelPath";
+
         public const string BootedName = "booted";
 
-        /// <summary>ツールを表へ足す。<paramref name="motion"/> は空のVMDを1つ作って返す。</summary>
-        public static void AddTo(McpMethodTable methods, ComposedScreen screen, Func<object> motion)
+        /// <summary>ツールを表へ足す。<paramref name="builder"/> はVMDやPMXを作る相手を返す。</summary>
+        public static void AddTo(
+            McpMethodTable methods, ComposedScreen screen, Func<object> builder)
         {
             if (methods == null)
             {
@@ -51,25 +51,26 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(screen));
             }
 
-            if (motion == null)
+            if (builder == null)
             {
-                throw new ArgumentNullException(nameof(motion));
+                throw new ArgumentNullException(nameof(builder));
             }
 
-            List<string> known = new List<string> { PartsName, MotionPathName };
+            List<string> known = new List<string> { PartsName, MotionPathName, ModelPathName };
             methods.Add(
                 ToolName,
                 screen.Method(
                     known,
                     ScreenNeeds.View | ScreenNeeds.Pmx,
-                    (context, parts) => Run(context, parts, motion)));
+                    (context, parts) => Run(context, parts, builder)));
         }
 
         private static ComposedEditResult Run(
-            McpMethodContext context, ScreenParts parts, Func<object> motion)
+            McpMethodContext context, ScreenParts parts, Func<object> builder)
         {
             string wanted;
-            string path;
+            string motionPath;
+            string modelPath;
             string code;
             string message;
             if (!ComposedInput.TryChoice(context, PartsName, Parts, out wanted, out code, out message)
@@ -77,25 +78,35 @@ namespace PmxEditorMcp
                     context,
                     MotionPathName,
                     wanted,
-                    new[] { ModelAndMotion },
-                    out path,
+                    Motions,
+                    out motionPath,
                     out code,
-                    out message))
+                    out message)
+                || !TryModelPath(context, out modelPath, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
 
-            bool playing = string.Equals(wanted, ModelAndMotion, StringComparison.Ordinal);
+            IPEBuilder made = (IPEBuilder)builder();
             IPEVmd held = null;
-            if (playing)
+            if (motionPath != null)
             {
-                held = (IPEVmd)motion();
-                held.FromFile(path);
+                held = made.CreateVmd();
+                held.FromFile(motionPath);
+                Kept(held, wanted);
             }
 
             IPXPmxViewConnector view = (IPXPmxViewConnector)parts.View;
-            view.BootupVmdView((IPXPmx)parts.Pmx, held);
-            if (playing)
+            if (Older(modelPath))
+            {
+                view.BootupVmdView(made.CreatePmd(modelPath), held);
+            }
+            else
+            {
+                view.BootupVmdView(Model(made, parts, modelPath), held);
+            }
+
+            if (held != null)
             {
                 view.PlayVmdView();
             }
@@ -105,6 +116,89 @@ namespace PmxEditorMcp
                 {
                     { BootedName, view.IsVmdViewBootup },
                 });
+        }
+
+        /// <summary>その道がPMDのファイルを指しているか。</summary>
+        private static bool Older(string path)
+        {
+            return path != null
+                && path.EndsWith(OlderTail, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>読み込むPMX。道を渡されていなければ、いま編集しているモデル。</summary>
+        private static IPXPmx Model(IPEBuilder builder, ScreenParts parts, string path)
+        {
+            if (path == null)
+            {
+                return (IPXPmx)parts.Pmx;
+            }
+
+            IPXPmx made = builder.Pmx.Pmx();
+            made.FromFile(path);
+
+            return made;
+        }
+
+        private const string OlderTail = ".pmd";
+
+        private static IList<string> Motions
+        {
+            get { return new[] { WholeMotion, ModelMotion, CameraMotion, LightMotion }; }
+        }
+
+        /// <summary>指した持ち物のキーだけを残す。</summary>
+        private static void Kept(IPEVmd motion, string wanted)
+        {
+            if (string.Equals(wanted, WholeMotion, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            bool model = string.Equals(wanted, ModelMotion, StringComparison.Ordinal);
+            bool camera = string.Equals(wanted, CameraMotion, StringComparison.Ordinal);
+            if (!model)
+            {
+                motion.Bone.Clear();
+                motion.Morph.Clear();
+                motion.VisibleIK.Clear();
+            }
+
+            if (!camera)
+            {
+                motion.Camera.Clear();
+            }
+
+            if (model || camera)
+            {
+                motion.Light.Clear();
+                motion.SelfShadow.Clear();
+            }
+        }
+
+        /// <summary>渡されていなければ空を渡し、いま編集しているモデルを読み込む相手にする。</summary>
+        private static bool TryModelPath(
+            McpMethodContext context, out string path, out string code, out string message)
+        {
+            path = null;
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(ModelPathName, out given))
+            {
+                return true;
+            }
+
+            path = given as string;
+            if (!string.IsNullOrEmpty(path))
+            {
+                return true;
+            }
+
+            path = null;
+            code = ToolEnvelope.InvalidArgument;
+            message = ModelPathName + " は空でない文字である。";
+
+            return false;
         }
     }
 }

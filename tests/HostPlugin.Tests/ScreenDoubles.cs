@@ -27,6 +27,9 @@ namespace PmxEditorMcp.Tests
         /// <summary>VMDViewへ読み込んだモデル。</summary>
         public PEPlugin.Pmx.IPXPmx Loaded { get; private set; }
 
+        /// <summary>VMDViewへ読み込んだPMDのモデル。</summary>
+        public PEPlugin.Pmd.IPEPmd Older { get; private set; }
+
         /// <summary>VMDViewへ読み込んだモーション。</summary>
         public PEPlugin.Vmd.IPEVmd Motion { get; private set; }
 
@@ -133,7 +136,9 @@ namespace PmxEditorMcp.Tests
 
         public void BootupVmdView(PEPlugin.Pmd.IPEPmd pmd, PEPlugin.Vmd.IPEVmd vmd)
         {
-            throw new NotSupportedException();
+            Older = pmd;
+            Motion = vmd;
+            Booted = true;
         }
 
         public bool Focus()
@@ -917,6 +922,17 @@ namespace PmxEditorMcp.Tests
         /// <summary>読み込んだモーションのファイルの道。読んでいなければ空。</summary>
         public string Path { get; private set; }
 
+        /// <summary>種類ごとにキーを1つずつ持たせる。</summary>
+        public void Fill()
+        {
+            Bone.Add(null);
+            Morph.Add(null);
+            VisibleIK.Add(null);
+            Camera.Add(null);
+            Light.Add(null);
+            SelfShadow.Add(null);
+        }
+
         public void FromFile(string path)
         {
             Path = path;
@@ -1032,21 +1048,11 @@ namespace PmxEditorMcp.Tests
             throw new NotSupportedException();
         }
 
-        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdBoneKey> Bone
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdBoneKey> Bone { get; } =
+            new System.Collections.Generic.List<PEPlugin.Vmd.IPEVmdBoneKey>();
 
-        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdCameraKey> Camera
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdCameraKey> Camera { get; } =
+            new System.Collections.Generic.List<PEPlugin.Vmd.IPEVmdCameraKey>();
 
         public string FilePath
         {
@@ -1061,13 +1067,8 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdLightKey> Light
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdLightKey> Light { get; } =
+            new System.Collections.Generic.List<PEPlugin.Vmd.IPEVmdLightKey>();
 
         public string ModelName
         {
@@ -1082,29 +1083,14 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdMorphKey> Morph
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdMorphKey> Morph { get; } =
+            new System.Collections.Generic.List<PEPlugin.Vmd.IPEVmdMorphKey>();
 
-        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdSelfShadowKey> SelfShadow
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdSelfShadowKey> SelfShadow { get; } =
+            new System.Collections.Generic.List<PEPlugin.Vmd.IPEVmdSelfShadowKey>();
 
-        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdVisibleIKKey> VisibleIK
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdVisibleIKKey> VisibleIK { get; } =
+            new System.Collections.Generic.List<PEPlugin.Vmd.IPEVmdVisibleIKKey>();
 
     }
 
@@ -1296,6 +1282,268 @@ namespace PmxEditorMcp.Tests
             }
 
             set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+    }
+
+    public sealed class FakeHostBuilder : PEPlugin.IPEBuilder
+    {
+        public FakeBuilder PmxBuilder { get; } = new FakeBuilder();
+
+        /// <summary>PMDとして読んだファイルの道。読んでいなければ空。</summary>
+        public string OlderPath { get; private set; }
+
+        /// <summary>作って渡したVMD。</summary>
+        public FakeVmd Motion { get; } = new FakeVmd();
+
+        public PEPlugin.Vmd.IPEVmd CreateVmd()
+        {
+            return Motion;
+        }
+
+        public PEPlugin.IPXPmxBuilder Pmx
+        {
+            get { return PmxBuilder; }
+        }
+
+        public PEPlugin.Pmd.IPEBody CreateBody()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEBone CreateBone()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEExpression CreateExpression()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEExpressionOffset CreateExpressionOffset()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEFrameBone CreateFrameBone()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEHeader CreateHeader()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEIK CreateIK()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEJoint CreateJoint()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEMaterial CreateMaterial()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEPmd CreatePmd()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEPmd CreatePmd(string path)
+        {
+            OlderPath = path;
+
+            return null;
+        }
+
+        public PEPlugin.Pmd.IPEVector2 CreateVector2()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEVector2 CreateVector2(float x, float y)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEVector3 CreateVector3()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEVector3 CreateVector3(float x, float y, float z)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEVector4 CreateVector4()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEVector4 CreateVector4(float x, float y, float z, float w)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEVertex CreateVertex()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmd CreateVmd(PEPlugin.Pmd.IPEPmd pmd)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmd CreateVmd(PEPlugin.Pmd.IPEPmd pmd, string vmdPath)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmd CreateVmd(string[] boneNames, string[] morphNames)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdCameraKey CreateVmdBasCameraKey()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdBoneKey CreateVmdBoneKey()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdBonePoseState CreateVmdBonePoseState()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdBonePoseState CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd vmd, int boneIndex)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdBonePoseState[] CreateVmdBonePoseState(PEPlugin.Vmd.IPEVmd vmd, int[] boneIndices)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdIPL CreateVmdIPL()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdLightKey CreateVmdLightKey()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdMorphKey CreateVmdMorphKey()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vmd.IPEVmdSelfShadowKey CreateVmdSelfShadowKey()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vme.IPEVme CreateVme()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vme.IPEVme CreateVme(PEPlugin.Pmd.IPEPmd pmd)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vme.IPEVmeGroup CreateVmeGroup()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Vme.IPEVmePath CreateVmePath()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXBody CreateXBody()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXBone CreateXBone()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXExpression CreateXExpression()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXExpressionOffset CreateXExpressionOffset()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXFace CreateXFace()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXFrameBone CreateXFrameBone()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXIK CreateXIK()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXJoint CreateXJoint()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXMaterial CreateXMaterial()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXPmd CreateXPmd()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXPmd CreateXPmd(PEPlugin.Pmd.IPEPmd pmd)
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.Pmd.IPEXVertex CreateXVertex()
+        {
+            throw new NotSupportedException();
+        }
+
+        public PEPlugin.IPEShortBuilder SC
+        {
+            get
             {
                 throw new NotSupportedException();
             }
