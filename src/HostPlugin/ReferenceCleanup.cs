@@ -191,47 +191,7 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(moved));
             }
 
-            IPXPmx model = (IPXPmx)pmx;
-            foreach (IPXMaterial material in model.Material)
-            {
-                foreach (IPXFace face in material.Faces)
-                {
-                    face.Vertex1 = Moved(moved, face.Vertex1);
-                    face.Vertex2 = Moved(moved, face.Vertex2);
-                    face.Vertex3 = Moved(moved, face.Vertex3);
-                }
-            }
-
-            foreach (IPXMorph morph in model.Morph)
-            {
-                foreach (IPXMorphOffset offset in morph.Offsets)
-                {
-                    IPXVertexMorphOffset shifted = offset as IPXVertexMorphOffset;
-                    if (shifted != null)
-                    {
-                        shifted.Vertex = Moved(moved, shifted.Vertex);
-                    }
-
-                    IPXUVMorphOffset slid = offset as IPXUVMorphOffset;
-                    if (slid != null)
-                    {
-                        slid.Vertex = Moved(moved, slid.Vertex);
-                    }
-                }
-            }
-
-            foreach (IPXSoftBody soft in model.SoftBody)
-            {
-                for (int at = 0; at < soft.Pins.Count; at++)
-                {
-                    soft.Pins[at] = Moved(moved, soft.Pins[at]);
-                }
-
-                foreach (IPXSoftBodyAnchor anchor in soft.Anchors)
-                {
-                    anchor.Vertex = Moved(moved, anchor.Vertex);
-                }
-            }
+            Retarget(pmx, ElementKinds.Vertex, held => Moved(moved, (IPXVertex)held));
         }
 
         /// <summary>
@@ -249,23 +209,7 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(moved));
             }
 
-            IPXPmx model = (IPXPmx)pmx;
-            foreach (IPXMorph morph in model.Morph)
-            {
-                foreach (IPXMorphOffset offset in morph.Offsets)
-                {
-                    IPXMaterialMorphOffset painted = offset as IPXMaterialMorphOffset;
-                    if (painted != null)
-                    {
-                        painted.Material = Moved(moved, painted.Material);
-                    }
-                }
-            }
-
-            foreach (IPXSoftBody soft in model.SoftBody)
-            {
-                soft.Material = Moved(moved, soft.Material);
-            }
+            Retarget(pmx, ElementKinds.Material, held => Moved(moved, (IPXMaterial)held));
         }
 
         /// <summary>
@@ -283,30 +227,7 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(moved));
             }
 
-            IPXPmx model = (IPXPmx)pmx;
-            foreach (IPXMorph morph in model.Morph)
-            {
-                foreach (IPXMorphOffset offset in morph.Offsets)
-                {
-                    IPXGroupMorphOffset grouped = offset as IPXGroupMorphOffset;
-                    if (grouped != null)
-                    {
-                        grouped.Morph = Moved(moved, grouped.Morph);
-                    }
-                }
-            }
-
-            foreach (IPXNode node in Nodes(model))
-            {
-                foreach (IPXNodeItem item in node.Items)
-                {
-                    IPXMorphNodeItem held = item as IPXMorphNodeItem;
-                    if (held != null)
-                    {
-                        held.Morph = Moved(moved, held.Morph);
-                    }
-                }
-            }
+            Retarget(pmx, ElementKinds.Morph, held => Moved(moved, (IPXMorph)held));
         }
 
         /// <summary>
@@ -324,54 +245,15 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(moved));
             }
 
-            IPXPmx model = (IPXPmx)pmx;
-            foreach (IPXVertex vertex in model.Vertex)
-            {
-                vertex.Bone1 = Moved(moved, vertex.Bone1);
-                vertex.Bone2 = Moved(moved, vertex.Bone2);
-                vertex.Bone3 = Moved(moved, vertex.Bone3);
-                vertex.Bone4 = Moved(moved, vertex.Bone4);
-            }
+            Retarget(pmx, ElementKinds.Bone, held => Moved(moved, (IPXBone)held));
+        }
 
-            foreach (IPXBone bone in model.Bone)
+        /// <summary>その種類を指したままの口を、辺の表をたどって別の相手へ付け替える。</summary>
+        private static void Retarget(object pmx, string kind, Func<object, object> moved)
+        {
+            foreach (ReferenceEdge edge in ReferenceEdges.Into(kind))
             {
-                bone.Parent = Moved(moved, bone.Parent);
-                bone.ToBone = Moved(moved, bone.ToBone);
-                bone.AppendParent = Moved(moved, bone.AppendParent);
-                bone.IK.Target = Moved(moved, bone.IK.Target);
-                foreach (IPXIKLink link in bone.IK.Links)
-                {
-                    link.Bone = Moved(moved, link.Bone);
-                }
-            }
-
-            foreach (IPXMorph morph in model.Morph)
-            {
-                foreach (IPXMorphOffset offset in morph.Offsets)
-                {
-                    IPXBoneMorphOffset posed = offset as IPXBoneMorphOffset;
-                    if (posed != null)
-                    {
-                        posed.Bone = Moved(moved, posed.Bone);
-                    }
-                }
-            }
-
-            foreach (IPXNode node in Nodes(model))
-            {
-                foreach (IPXNodeItem item in node.Items)
-                {
-                    IPXBoneNodeItem held = item as IPXBoneNodeItem;
-                    if (held != null)
-                    {
-                        held.Bone = Moved(moved, held.Bone);
-                    }
-                }
-            }
-
-            foreach (IPXBody body in model.Body)
-            {
-                body.Bone = Moved(moved, body.Bone);
+                edge.Retarget(pmx, moved);
             }
         }
 
