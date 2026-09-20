@@ -596,13 +596,14 @@ namespace PmxEditorMcp
             return repaired;
         }
 
-        private static bool PointsAtLive(
+        /// <summary>そのオフセットが、いま並びに居る相手を指しているか。</summary>
+        public static bool PointsAtLive(
             IPXMorphOffset offset,
-            HashSet<object> vertices,
-            HashSet<object> materials,
-            HashSet<object> bones,
-            HashSet<object> morphs,
-            HashSet<object> bodies)
+            ISet<object> vertices,
+            ISet<object> materials,
+            ISet<object> bones,
+            ISet<object> morphs,
+            ISet<object> bodies)
         {
             IPXVertexMorphOffset moved = offset as IPXVertexMorphOffset;
             if (moved != null)
@@ -856,12 +857,19 @@ namespace PmxEditorMcp
             }
         }
 
-        private static bool Alive(object item, HashSet<object> live)
+        /// <summary>その参照が、いま並びに居る相手を指しているか。</summary>
+        public static bool Alive(object item, ISet<object> live)
         {
+            if (live == null)
+            {
+                throw new ArgumentNullException(nameof(live));
+            }
+
             return item != null && live.Contains(item);
         }
 
-        private static HashSet<object> Held(IEnumerable<object> items)
+        /// <summary>並びに居る相手を、同一性で引ける形にまとめる。</summary>
+        public static HashSet<object> Held(IEnumerable<object> items)
         {
             HashSet<object> held = new HashSet<object>(ReferenceComparer<object>.Instance);
             foreach (object item in items)

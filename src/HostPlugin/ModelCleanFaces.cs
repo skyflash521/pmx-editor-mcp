@@ -134,7 +134,8 @@ namespace PmxEditorMcp
             return !seen.Add(Key(face, places));
         }
 
-        private static string Key(IPXFace face, IDictionary<IPXVertex, int> places)
+        /// <summary>面の3つの頂点を、並べ替えても同じになる綴りにしたもの。</summary>
+        public static string Key(IPXFace face, IDictionary<IPXVertex, int> places)
         {
             return string.Join(
                 "-",
@@ -152,7 +153,8 @@ namespace PmxEditorMcp
             return vertex != null && places.TryGetValue(vertex, out place) ? place : -1;
         }
 
-        private static IDictionary<IPXVertex, int> Places(IPXPmx model)
+        /// <summary>頂点を、同一性で並びの位置を引ける形にまとめる。</summary>
+        public static IDictionary<IPXVertex, int> Places(IPXPmx model)
         {
             Dictionary<IPXVertex, int> places =
                 new Dictionary<IPXVertex, int>(ReferenceComparer<IPXVertex>.Instance);

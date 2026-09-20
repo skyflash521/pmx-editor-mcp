@@ -105,6 +105,91 @@ namespace PmxEditorMcp
             return _barrier.Guard(EditKind.DuplicateEdit, context => Run(context, names, body));
         }
 
+        /// <summary>
+        /// <paramref name="body"/> を、相手にするPMXを読むだけの呼び出しにする。現在のPMXは
+        /// 複製を渡して反映せずに捨て、ハンドルが指すPMXは台帳の実体をそのまま渡すので、
+        /// <paramref name="body"/> はどちらを渡されても変えてはならない。確定は行わないので、
+        /// Undoへは何も積まない。
+        /// </summary>
+        public McpMethod Read(
+            IList<string> known, Func<McpMethodContext, object, ComposedEditResult> body)
+        {
+            if (known == null)
+            {
+                throw new ArgumentNullException(nameof(known));
+            }
+
+            if (body == null)
+            {
+                throw new ArgumentNullException(nameof(body));
+            }
+
+            List<string> names = new List<string>(known) { PmxSession.HandleName };
+
+            return _barrier.Guard(EditKind.Read, context => Look(context, names, body));
+        }
+
+        private object Look(
+            McpMethodContext context,
+            IList<string> names,
+            Func<McpMethodContext, object, ComposedEditResult> body)
+        {
+            string code;
+            string message;
+            long? handle;
+            if (!TargetInput.TryOnlyKnown(context.Params, names, out code, out message)
+                || !TryHandle(context, out handle, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            ComposedEditResult answered = null;
+            string refusedCode = null;
+            string refusedMessage = null;
+            Exception caught = null;
+            UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
+            {
+                try
+                {
+                    PmxTarget target;
+                    if (!_session.TryTake(
+                        handle, context.Handles, out target, out refusedCode, out refusedMessage))
+                    {
+                        return;
+                    }
+
+                    ComposedEditResult made = body(context, target.Pmx);
+                    if (!made.IsDone)
+                    {
+                        refusedCode = made.Code;
+                        refusedMessage = made.Message;
+
+                        return;
+                    }
+
+                    answered = made;
+                }
+                catch (Exception exception)
+                {
+                    caught = exception;
+                }
+            });
+
+            if (!invocation.DidRun)
+            {
+                return ToolFailure.Unavailable(invocation);
+            }
+
+            if (caught != null)
+            {
+                return ToolFailure.Failed(caught, EditStage.BeforeCommit);
+            }
+
+            return answered == null
+                ? ToolEnvelope.Failure(refusedCode, refusedMessage)
+                : ToolEnvelope.Success(answered.Value);
+        }
+
         private object Run(
             McpMethodContext context,
             IList<string> names,

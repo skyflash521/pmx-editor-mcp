@@ -92,6 +92,12 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
+        /// <summary>その頂点の4つの枠が、そろえ直した並びと同じか。</summary>
+        public static bool IsSound(IPXVertex vertex)
+        {
+            return Same(vertex, Filled(Settled(Read(vertex))));
+        }
+
         /// <summary>その頂点の4つの枠が、渡された並びと同じボーンと重みを同じ順に持つか。</summary>
         public static bool Same(IPXVertex vertex, IList<KeyValuePair<IPXBone, float>> shares)
         {
@@ -164,6 +170,16 @@ namespace PmxEditorMcp
             }
 
             return total;
+        }
+
+        /// <summary>並びを4つの枠ぶんに伸ばし、余った枠を空にする。</summary>
+        private static IList<KeyValuePair<IPXBone, float>> Filled(
+            IList<KeyValuePair<IPXBone, float>> shares)
+        {
+            return Enumerable.Range(0, Slots)
+                .Select(at => new KeyValuePair<IPXBone, float>(
+                    BoneAt(shares, at), ShareAt(shares, at)))
+                .ToList();
         }
 
         private static IPXBone BoneAt(IList<KeyValuePair<IPXBone, float>> shares, int at)

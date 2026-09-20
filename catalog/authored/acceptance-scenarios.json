@@ -4067,6 +4067,20 @@
           "expect": {
             "ok": true
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_validate_pmx",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "found",
+                "equals": 0
+              }
+            ]
+          }
         }
       ]
     },

@@ -395,6 +395,11 @@
       "duty": "指した頂点の変形方式を変え、SDEFの値を整える。頂点は indices・range・all のどれか1つで指す。operation は convert・normalizeSdefC・repairInvalidSdef のいずれか。convert は deform に bdef1・bdef2・bdef4・sdef・qdef のいずれかを渡し、重みが正の枠を重い順にその方式が使う数まで残して、残した重みの合計が1になるようそろえる。normalizeSdefC はSDEFのC値を2つのボーンの位置と重みから決め直し、repairInvalidSdef は2つのボーンを保てないSDEFの頂点からSDEFの指定を落とす。convert のあとは、並びに居ないボーンを指すウェイトが残っている祖先のボーンへ移る。changed に変えた頂点の数を返す。"
     },
     {
+      "tool": "model_validate_pmx",
+      "branching": false,
+      "duty": "PMXの不整合を数えて返す。モデルは変えない。返す項目は、3つの頂点が揃っていない面の数 unsoundFaces、並びに居ない頂点を指す面の数 danglingFaces、並びに居ないボーンを指す頂点の数 danglingWeights、並びに居ないボーンを指すボーンの口の数 danglingBones、指す先が並びに居ないモーフのオフセットの数 danglingMorphOffsets、指す先が並びに居ない表示枠の項目の数 danglingNodeItems、指す先が並びに居ない剛体・Joint・SoftBodyの口の数 danglingPhysics、ウェイトのそろっていない頂点の数 unnormalizedWeights、同じ材質の中で3つの頂点が同じ面の数 duplicateFaces、およびそれらを足した found である。1つの要素が複数の分類に入ることがあるので、found は分類ごとの数を足したものであって、不整合のある要素の数ではない。ウェイトがそろっているとは、ボーンの入った枠が前から重い順に詰まり、同じボーンが2つ以上の枠に入らず、その重みがどれも正で合計が1になり、ボーンの入っていない枠の重みが0であることをいう。ボーンが1本も入っていない頂点は、4つの枠の重みがすべて0ならそろっている。数えるのはいまの編集ツールで直せる不整合だけで、どこにあるかは返さない。"
+    },
+    {
       "tool": "session_release_handle",
       "branching": false,
       "duty": "台帳が発行したハンドルを解放する"

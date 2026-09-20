@@ -19915,6 +19915,77 @@
       }
     },
     {
+      "tool": "model_validate_pmx",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "unsoundFaces",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "danglingFaces",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "danglingWeights",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "danglingBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "danglingMorphOffsets",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "danglingNodeItems",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "danglingPhysics",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "unnormalizedWeights",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "duplicateFaces",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "found",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_vertex",
       "branches": [
         {
