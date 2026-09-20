@@ -36,6 +36,15 @@ namespace PmxEditorMcp
         /// <summary>いまの材質の値を写した材質モーフを1つ足す。</summary>
         public const string MaterialFromCurrent = "materialFromCurrent";
 
+        /// <summary>指したモーフへ、その種類が指す相手を指すオフセットを足す。</summary>
+        public const string AddOffsets = "addOffsets";
+
+        /// <summary>指した頂点を動かす頂点モーフを1つ足す。</summary>
+        public const string VertexMorphFromVertices = "vertexMorphFromVertices";
+
+        /// <summary>足すオフセットが指す相手の位置を受け取る入力の名前。</summary>
+        public const string TargetIndicesName = "targetIndices";
+
         /// <summary>足したモーフの名前を受け取る入力の名前。</summary>
         public const string NameName = "name";
 
@@ -47,6 +56,12 @@ namespace PmxEditorMcp
 
         /// <summary>消えたモーフの数を返す項目の名前。</summary>
         public const string RemovedName = "removed";
+
+        /// <summary>モーフを指さない操作。</summary>
+        private static IList<string> Whole
+        {
+            get { return new[] { MaterialFromCurrent, VertexMorphFromVertices }; }
+        }
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
@@ -62,6 +77,8 @@ namespace PmxEditorMcp
                     FlipInto,
                     SplitVertices,
                     MaterialFromCurrent,
+                    AddOffsets,
+                    VertexMorphFromVertices,
                 };
             }
         }
@@ -91,6 +108,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
                 NameName,
+                TargetIndicesName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -112,12 +130,22 @@ namespace PmxEditorMcp
             }
 
             string name;
+            IList<int> targets;
             if (!ComposedInput.TryText(
                     context,
                     NameName,
                     operation,
-                    new[] { GroupInto, FlipInto, MaterialFromCurrent },
+                    new[] { GroupInto, FlipInto, MaterialFromCurrent, VertexMorphFromVertices },
                     out name,
+                    out code,
+                    out message)
+                || !ComposedInput.TryIndices(
+                    context,
+                    TargetIndicesName,
+                    operation,
+                    new[] { AddOffsets, VertexMorphFromVertices },
+                    Reach(model, operation, chosen),
+                    out targets,
                     out code,
                     out message))
             {
@@ -146,10 +174,191 @@ namespace PmxEditorMcp
                 case SplitVertices:
                     return Split(model, builder, picked);
 
+                case AddOffsets:
+                    return Filled(model, builder, picked, targets);
+
+                case VertexMorphFromVertices:
+                    return FromVertices(model, builder, name, targets);
+
                 default:
                     return FromMaterials(model, builder, name);
             }
         }
+
+        /// <summary>
+        /// 指す相手を並べる先の数。オフセットを足す操作では、指したモーフのうち先頭の種類が指す並びの
+        /// 数、頂点からモーフを作る操作では頂点の数である。ほかの操作では0でよい。
+        /// </summary>
+        private static int Reach(IPXPmx model, string operation, IList<int> chosen)
+        {
+            if (string.Equals(operation, VertexMorphFromVertices, StringComparison.Ordinal))
+            {
+                return model.Vertex.Count;
+            }
+
+            if (!string.Equals(operation, AddOffsets, StringComparison.Ordinal) || chosen.Count == 0)
+            {
+                return 0;
+            }
+
+            return Aimed(model, model.Morph[chosen[0]].Kind).Count;
+        }
+
+        /// <summary>その種類のモーフのオフセットが指す相手の並び。指す相手を持たない種類では空。</summary>
+        private static IList<object> Aimed(IPXPmx model, MorphKind kind)
+        {
+            switch (kind)
+            {
+                case MorphKind.Vertex:
+                case MorphKind.UV:
+                case MorphKind.UVA1:
+                case MorphKind.UVA2:
+                case MorphKind.UVA3:
+                case MorphKind.UVA4:
+                    return model.Vertex.Cast<object>().ToList();
+
+                case MorphKind.Bone:
+                    return model.Bone.Cast<object>().ToList();
+
+                case MorphKind.Material:
+                    return model.Material.Cast<object>().ToList();
+
+                case MorphKind.Group:
+                case MorphKind.Flip:
+                    return model.Morph.Cast<object>().ToList();
+
+                case MorphKind.Impulse:
+                    return model.Body.Cast<object>().ToList();
+
+                default:
+                    return new object[0];
+            }
+        }
+
+        /// <summary>
+        /// 指したモーフへ、指した相手を指すオフセットを1つずつ足す。値はどれも動かさない値にする。
+        /// 指したモーフの種類がそろっていなければ断る。
+        /// </summary>
+        private static ComposedEditResult Filled(
+            IPXPmx model, Func<object> builder, IList<IPXMorph> picked, IList<int> targets)
+        {
+            if (picked.Count == 0)
+            {
+                return Answer(new int[0], 0, 0);
+            }
+
+            MorphKind kind = picked[0].Kind;
+            if (picked.Any(morph => morph.Kind != kind))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    "指したモーフの種類がそろっていないので、足すオフセットの形が決まらない。");
+            }
+
+            IList<object> aimed = Aimed(model, kind);
+            if (aimed.Count == 0)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.NotApplicable,
+                    kind + " のモーフのオフセットは、指す相手を持たない。");
+            }
+
+            int changed = 0;
+            foreach (IPXMorph morph in picked)
+            {
+                foreach (int at in targets)
+                {
+                    morph.Offsets.Add(Offset((IPXPmxBuilder)builder(), kind, aimed[at]));
+                }
+
+                changed += targets.Count > 0 ? 1 : 0;
+            }
+
+            return Answer(new int[0], changed, 0);
+        }
+
+        /// <summary>指した頂点を指す頂点モーフを1つ足す。値はどれも動かさない値にする。</summary>
+        private static ComposedEditResult FromVertices(
+            IPXPmx model, Func<object> builder, string name, IList<int> targets)
+        {
+            IPXPmxBuilder made = (IPXPmxBuilder)builder();
+            IPXMorph morph = made.Morph();
+            morph.Name = name;
+            morph.NameE = string.Empty;
+            morph.Kind = MorphKind.Vertex;
+            foreach (int at in targets)
+            {
+                morph.Offsets.Add(Offset(made, MorphKind.Vertex, model.Vertex[at]));
+            }
+
+            model.Morph.Add(morph);
+
+            return Answer(new[] { model.Morph.Count - 1 }, 0, 0);
+        }
+
+        /// <summary>その相手を指す、値が動かないオフセット。</summary>
+        private static IPXMorphOffset Offset(IPXPmxBuilder builder, MorphKind kind, object aimed)
+        {
+            switch (kind)
+            {
+                case MorphKind.Bone:
+                    IPXBoneMorphOffset posed = builder.BoneMorphOffset();
+                    posed.Bone = (IPXBone)aimed;
+                    posed.Translation = new V3(0f, 0f, 0f);
+                    posed.Rotation = new Q(0f, 0f, 0f, 1f);
+
+                    return posed;
+
+                case MorphKind.Material:
+                    IPXMaterialMorphOffset painted = builder.MaterialMorphOffset();
+                    painted.Material = (IPXMaterial)aimed;
+                    // PMXの材質モーフは、操作形式が0なら値を掛け、1なら足す。
+                    painted.Op = Adding;
+                    painted.Diffuse = new V4(0f, 0f, 0f, 0f);
+                    painted.Specular = new V3(0f, 0f, 0f);
+                    painted.Power = 0f;
+                    painted.Ambient = new V3(0f, 0f, 0f);
+                    painted.EdgeColor = new V4(0f, 0f, 0f, 0f);
+                    painted.EdgeSize = 0f;
+                    painted.Tex = new V4(0f, 0f, 0f, 0f);
+                    painted.Sphere = new V4(0f, 0f, 0f, 0f);
+                    painted.Toon = new V4(0f, 0f, 0f, 0f);
+
+                    return painted;
+
+                case MorphKind.Group:
+                case MorphKind.Flip:
+                    IPXGroupMorphOffset called = builder.GroupMorphOffset();
+                    called.Morph = (IPXMorph)aimed;
+                    called.Ratio = 0f;
+
+                    return called;
+
+                case MorphKind.Impulse:
+                    IPXImpulseMorphOffset pushed = builder.ImpulseMorphOffset();
+                    pushed.Body = (IPXBody)aimed;
+                    pushed.Velocity = new V3(0f, 0f, 0f);
+                    pushed.Torque = new V3(0f, 0f, 0f);
+
+                    return pushed;
+
+                case MorphKind.Vertex:
+                    IPXVertexMorphOffset moved = builder.VertexMorphOffset();
+                    moved.Vertex = (IPXVertex)aimed;
+                    moved.Offset = new V3(0f, 0f, 0f);
+
+                    return moved;
+
+                default:
+                    IPXUVMorphOffset slid = builder.UVMorphOffset();
+                    slid.Vertex = (IPXVertex)aimed;
+                    slid.Offset = new V4(0f, 0f, 0f, 0f);
+
+                    return slid;
+            }
+        }
+
+        private const int Adding = 1;
 
         private static ComposedEditResult Merged(
             IPXPmx model, IList<IPXMorph> picked, Func<IPXMorph, string> key, bool adding)
@@ -373,7 +582,7 @@ namespace PmxEditorMcp
             out string code,
             out string message)
         {
-            if (!string.Equals(operation, MaterialFromCurrent, StringComparison.Ordinal))
+            if (!Whole.Contains(operation, StringComparer.Ordinal))
             {
                 return TargetInput.TryPositions(
                     context.Params,
@@ -389,8 +598,7 @@ namespace PmxEditorMcp
             return TargetInput.TryNoTarget(
                 context.Params,
                 TargetNames.Element,
-                Operations.Where(
-                    held => !string.Equals(held, MaterialFromCurrent, StringComparison.Ordinal))
+                Operations.Where(held => !Whole.Contains(held, StringComparer.Ordinal))
                     .ToList(),
                 out code,
                 out message);

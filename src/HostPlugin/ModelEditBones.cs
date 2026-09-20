@@ -28,6 +28,14 @@ namespace PmxEditorMcp
         /// <summary>表示先の隔たりを、いちばん近い子のボーン指定へ移す。</summary>
         public const string OffsetToTip = "offsetToTip";
 
+        /// <summary>表示先の隔たりの先へ「～先」ボーンを足し、表示先をそのボーンへ移す。</summary>
+        public const string AddTipBones = "addTipBones";
+
+        /// <summary>
+        /// 指した「～先」ボーンを消し、そのボーンを表示先にしていたボーンの表示先を隔たりへ移す。
+        /// </summary>
+        public const string DissolveTipBones = "dissolveTipBones";
+
         /// <summary>親より先に子が来ないよう並びを組み直す。</summary>
         public const string RelevelHierarchy = "relevelHierarchy";
 
@@ -48,6 +56,11 @@ namespace PmxEditorMcp
 
         /// <summary>指した頂点の重心へボーンを1つ足す。</summary>
         public const string AddAtVertices = "addAtVertices";
+
+        /// <summary>
+        /// 指した頂点の重心へボーンを1つ足し、その頂点のウェイトを足したボーンへ全部振る。
+        /// </summary>
+        public const string AddAtVerticesWithWeight = "addAtVerticesWithWeight";
 
         /// <summary>指したボーンをIKの先とするIKボーンを足す。</summary>
         public const string MakeIk = "makeIk";
@@ -87,6 +100,12 @@ namespace PmxEditorMcp
 
         private const string RightSide = "右";
 
+        /// <summary>ボーンではなく頂点を指す操作。</summary>
+        private static IList<string> Vertices
+        {
+            get { return new[] { AddAtVertices, AddAtVerticesWithWeight }; }
+        }
+
         /// <summary>指した要素ではなく並び全体を相手にする操作。</summary>
         private static IList<string> Whole
         {
@@ -104,6 +123,8 @@ namespace PmxEditorMcp
                     HideTipBones,
                     TipToOffset,
                     OffsetToTip,
+                    AddTipBones,
+                    DissolveTipBones,
                     RelevelHierarchy,
                     AddRootParent,
                     AddMultiStageParent,
@@ -111,6 +132,7 @@ namespace PmxEditorMcp
                     AddMiddle,
                     AddAppendParent,
                     AddAtVertices,
+                    AddAtVerticesWithWeight,
                     MakeIk,
                     MirrorPosition,
                     FixAxisToTip,
@@ -166,7 +188,7 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
-            bool vertices = string.Equals(operation, AddAtVertices, StringComparison.Ordinal);
+            bool vertices = Vertices.Contains(operation, StringComparer.Ordinal);
             string axis;
             int links;
             if (!TryChosen(context, model, operation, vertices, out chosen, out code, out message)
@@ -195,7 +217,10 @@ namespace PmxEditorMcp
             if (vertices)
             {
                 return AtVertices(
-                    model, (IPXPmxBuilder)builder(), chosen.Select(at => model.Vertex[at]).ToList());
+                    model,
+                    (IPXPmxBuilder)builder(),
+                    chosen.Select(at => model.Vertex[at]).ToList(),
+                    string.Equals(operation, AddAtVerticesWithWeight, StringComparison.Ordinal));
             }
 
             IList<IPXBone> picked = chosen.Select(at => model.Bone[at]).ToList();
@@ -218,6 +243,12 @@ namespace PmxEditorMcp
 
                 case MakeIk:
                     return Reaching(model, (IPXPmxBuilder)builder(), picked, links);
+
+                case AddTipBones:
+                    return Tipped(model, (IPXPmxBuilder)builder(), picked);
+
+                case DissolveTipBones:
+                    return Dissolved(model, picked);
 
                 default:
                     return Answer(new int[0], picked.Count(bone => Set(model, bone, operation, axis)), 0);
@@ -471,7 +502,7 @@ namespace PmxEditorMcp
         }
 
         private static ComposedEditResult AtVertices(
-            IPXPmx model, IPXPmxBuilder builder, IList<IPXVertex> picked)
+            IPXPmx model, IPXPmxBuilder builder, IList<IPXVertex> picked, bool weighted)
         {
             if (picked.Count == 0)
             {
@@ -486,8 +517,71 @@ namespace PmxEditorMcp
             made.Controllable = true;
             made.IsRotation = true;
             model.Bone.Add(made);
+            if (!weighted)
+            {
+                return Answer(new[] { model.Bone.Count - 1 }, 0, 0);
+            }
 
-            return Answer(new[] { model.Bone.Count - 1 }, 0, 0);
+            foreach (IPXVertex vertex in picked)
+            {
+                VertexWeights.Write(
+                    vertex, new[] { new KeyValuePair<IPXBone, float>(made, 1f) });
+            }
+
+            return Answer(new[] { model.Bone.Count - 1 }, picked.Count, 0);
+        }
+
+        /// <summary>
+        /// 指したボーンの表示先の隔たりの先へ「～先」ボーンを足し、表示先をそのボーンへ移す。既に
+        /// 表示先のボーンを持つボーンは変えない。
+        /// </summary>
+        private static ComposedEditResult Tipped(
+            IPXPmx model, IPXPmxBuilder builder, IList<IPXBone> picked)
+        {
+            List<int> added = new List<int>();
+            foreach (IPXBone bone in picked.Where(held => held.ToBone == null))
+            {
+                IPXBone made = builder.Bone();
+                made.Name = bone.Name + TipTail;
+                made.NameE = string.Empty;
+                made.Position = Vectors.Add(bone.Position, bone.ToOffset);
+                made.Parent = bone;
+                bone.ToBone = made;
+                bone.ToOffset = new V3(0f, 0f, 0f);
+                model.Bone.Add(made);
+                added.Add(model.Bone.Count - 1);
+            }
+
+            return Answer(added, added.Count, 0);
+        }
+
+        /// <summary>
+        /// 指した「～先」ボーンを並びから外し、そのボーンを表示先にしていたボーンの表示先を、消した
+        /// ボーンまでの隔たりへ移す。「～先」の名を持たないボーンは変えない。
+        /// </summary>
+        private static ComposedEditResult Dissolved(IPXPmx model, IList<IPXBone> picked)
+        {
+            IList<IPXBone> going = picked
+                .Where(held => held.Name != null && held.Name.EndsWith(TipTail, StringComparison.Ordinal))
+                .ToList();
+            HashSet<IPXBone> gone = new HashSet<IPXBone>(going, ReferenceComparer<IPXBone>.Instance);
+            foreach (IPXBone above in model.Bone.Where(held => held.ToBone != null && gone.Contains(held.ToBone)))
+            {
+                above.ToOffset = Vectors.Apart(above.ToBone.Position, above.Position, 1f);
+                above.ToBone = null;
+            }
+
+            foreach (IPXBone dropped in going)
+            {
+                model.Bone.Remove(dropped);
+            }
+
+            ReferenceCleanup.Repoint(
+                model,
+                gone.ToDictionary(
+                    held => held, held => Above(held, gone), ReferenceComparer<IPXBone>.Instance));
+
+            return Answer(new int[0], going.Count, going.Count);
         }
 
         private static bool Hidden(IPXPmx model, IPXBone bone)
@@ -540,6 +634,19 @@ namespace PmxEditorMcp
             bone.ToOffset = new V3(0f, 0f, 0f);
 
             return true;
+        }
+
+        /// <summary>そのボーンの祖先のうち、消えない先頭の1つ。無ければ空を返す。</summary>
+        private static IPXBone Above(IPXBone bone, ICollection<IPXBone> gone)
+        {
+            HashSet<IPXBone> met = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            IPXBone found = bone.Parent;
+            while (found != null && gone.Contains(found) && met.Add(found))
+            {
+                found = found.Parent;
+            }
+
+            return found != null && gone.Contains(found) ? null : found;
         }
 
         private static bool Mirrored(IPXPmx model, IPXBone bone, string axis)
@@ -697,6 +804,8 @@ namespace PmxEditorMcp
         private const string VerticesName = "頂点";
 
         private const string ParentTail = "親";
+
+        private const string TipTail = "先";
 
         private const string ChildTail = "子";
 

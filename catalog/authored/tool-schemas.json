@@ -5178,6 +5178,18 @@
               "origin": "hostInput",
               "shape": "text",
               "required": false
+            },
+            {
+              "name": "targetIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              },
+              "required": false
             }
           ],
           "choices": [

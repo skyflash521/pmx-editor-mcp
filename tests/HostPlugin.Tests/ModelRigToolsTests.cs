@@ -448,6 +448,90 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
+        [Fact]
+        public void AddingTheTipPutsABoneWhereTheOffsetPointsAndAimsAtIt()
+        {
+            FakeBone bone = new FakeBone("腕") { ToOffset = new V3(0f, 2f, 0f) };
+            _fixture.Model.Bone.Add(bone);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Bone(
+                Operation(ModelEditBones.AddTipBones),
+                ComposedEditFixture.Given("indices", new object[] { 0 })));
+
+            IPXBone made = _fixture.Model.Bone[1];
+            Assert.Equal("腕先", made.Name);
+            Assert.Equal(2f, made.Position.Y);
+            Assert.Same(made, bone.ToBone);
+            Assert.Equal(new object[] { 1 }, (object[])value[ModelEditBones.AddedName]);
+        }
+
+        [Fact]
+        public void DissolvingTheTipTakesItOutAndLeavesTheOffsetBehind()
+        {
+            FakeBone bone = new FakeBone("腕");
+            FakeBone tip = new FakeBone("腕先") { Position = new V3(0f, 3f, 0f), Parent = bone };
+            bone.ToBone = tip;
+            _fixture.Model.Bone.Add(bone);
+            _fixture.Model.Bone.Add(tip);
+
+            Bone(
+                Operation(ModelEditBones.DissolveTipBones),
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
+
+            Assert.Single(_fixture.Model.Bone);
+            Assert.Null(bone.ToBone);
+            Assert.Equal(3f, bone.ToOffset.Y);
+        }
+
+        [Fact]
+        public void DissolvingAChainOfTipsMovesWhatPointedAtThemToABoneThatStays()
+        {
+            FakeBone arm = new FakeBone("腕");
+            FakeBone first = new FakeBone("腕先") { Parent = arm };
+            FakeBone second = new FakeBone("腕先先") { Parent = first };
+            FakeVertex vertex = new FakeVertex(0f, 0f, 0f) { Bone1 = second, Weight1 = 1f };
+            _fixture.Model.Bone.Add(arm);
+            _fixture.Model.Bone.Add(first);
+            _fixture.Model.Bone.Add(second);
+            _fixture.Model.Vertex.Add(vertex);
+
+            Bone(
+                Operation(ModelEditBones.DissolveTipBones),
+                ComposedEditFixture.Given("indices", new object[] { 1, 2 }));
+
+            Assert.Single(_fixture.Model.Bone);
+            Assert.Same(arm, vertex.Bone1);
+        }
+
+        [Fact]
+        public void DissolvingLeavesABoneThatIsNotNamedAsATipAlone()
+        {
+            FakeBone bone = new FakeBone("腕");
+            _fixture.Model.Bone.Add(bone);
+
+            Bone(
+                Operation(ModelEditBones.DissolveTipBones),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            Assert.Single(_fixture.Model.Bone);
+        }
+
+        [Fact]
+        public void TheBoneAtTheVerticesTakesTheirWeightWhenItIsAskedFor()
+        {
+            FakeVertex vertex = new FakeVertex(0f, 4f, 0f);
+            _fixture.Model.Bone.Add(new FakeBone("元"));
+            _fixture.Model.Vertex.Add(vertex);
+
+            Bone(
+                Operation(ModelEditBones.AddAtVerticesWithWeight),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            Assert.Equal(2, _fixture.Model.Bone.Count);
+            Assert.Same(_fixture.Model.Bone[1], vertex.Bone1);
+            Assert.Equal(1f, vertex.Weight1);
+        }
+
         private IDictionary<string, object> Bone(params KeyValuePair<string, object>[] given)
         {
             return _fixture.Call(ModelEditBones.ToolName, ComposedEditFixture.Arguments(given));

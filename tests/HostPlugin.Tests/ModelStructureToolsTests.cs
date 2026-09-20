@@ -275,6 +275,82 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
+        [Fact]
+        public void AddingOffsetsPutsOneOffsetPerTargetIntoEveryMorphThatWasPicked()
+        {
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            _fixture.Model.Vertex.Add(new FakeVertex(1f, 0f, 0f));
+            _fixture.Model.Morph.Add(new FakeMorph("笑い", MorphKind.Vertex));
+
+            Morphs(
+                Operation(ModelEditMorphs.AddOffsets),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(
+                    ModelEditMorphs.TargetIndicesName, new object[] { 0, 1 }));
+
+            IPXMorph morph = _fixture.Model.Morph[0];
+            Assert.Equal(2, morph.Offsets.Count);
+            Assert.Same(
+                _fixture.Model.Vertex[1],
+                ((IPXVertexMorphOffset)morph.Offsets[1]).Vertex);
+        }
+
+        [Fact]
+        public void AnAddedMaterialOffsetLeavesTheMaterialWhereItIs()
+        {
+            _fixture.Model.Material.Add(new FakeMaterial("材質"));
+            _fixture.Model.Morph.Add(new FakeMorph("色", MorphKind.Material));
+
+            Morphs(
+                Operation(ModelEditMorphs.AddOffsets),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(
+                    ModelEditMorphs.TargetIndicesName, new object[] { 0 }));
+
+            IPXMaterialMorphOffset made =
+                (IPXMaterialMorphOffset)Assert.Single(_fixture.Model.Morph[0].Offsets);
+            Assert.Equal(1, made.Op);
+            Assert.Equal(0f, made.Diffuse.X);
+            Assert.Equal(0f, made.EdgeSize);
+        }
+
+        [Fact]
+        public void AddingOffsetsToMorphsOfDifferentKindsIsRefused()
+        {
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            _fixture.Model.Morph.Add(new FakeMorph("笑い", MorphKind.Vertex));
+            _fixture.Model.Morph.Add(new FakeMorph("曲げ", MorphKind.Bone));
+
+            IDictionary<string, object> envelope = Morphs(
+                Operation(ModelEditMorphs.AddOffsets),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditMorphs.TargetIndicesName, new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void AVertexMorphIsMadeFromTheVerticesThatWerePointedAt()
+        {
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            _fixture.Model.Vertex.Add(new FakeVertex(1f, 0f, 0f));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Morphs(
+                Operation(ModelEditMorphs.VertexMorphFromVertices),
+                ComposedEditFixture.Given(ModelEditMorphs.NameName, "分けた分"),
+                ComposedEditFixture.Given(
+                    ModelEditMorphs.TargetIndicesName, new object[] { 1 })));
+
+            IPXMorph made = Assert.Single(_fixture.Model.Morph);
+            Assert.Equal("分けた分", made.Name);
+            Assert.Equal(MorphKind.Vertex, made.Kind);
+            Assert.Same(
+                _fixture.Model.Vertex[1],
+                ((IPXVertexMorphOffset)Assert.Single(made.Offsets)).Vertex);
+            Assert.Equal(new object[] { 0 }, (object[])value[ModelEditMorphs.AddedName]);
+        }
+
         private IDictionary<string, object> Morphs(params KeyValuePair<string, object>[] given)
         {
             return _fixture.Call(ModelEditMorphs.ToolName, ComposedEditFixture.Arguments(given));

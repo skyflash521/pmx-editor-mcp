@@ -4226,6 +4226,31 @@
         },
         {
           "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "addTipBones",
+            "indices": [
+              1
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "vertexMorphFromVertices",
+            "name": "分けた分",
+            "targetIndices": []
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_nodes",
           "arguments": {
             "operation": "registerUnlistedBones",
