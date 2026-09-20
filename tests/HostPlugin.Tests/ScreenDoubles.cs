@@ -186,9 +186,17 @@ namespace PmxEditorMcp.Tests
             throw new NotSupportedException();
         }
 
+        public PEPlugin.Pmd.IPEVector3 CameraTargetSet { get; private set; }
+
+        public PEPlugin.Pmd.IPEVector3 CameraPositionSet { get; private set; }
+
+        public PEPlugin.Pmd.IPEVector3 CameraUpSet { get; private set; }
+
         public void SetCameraView(PEPlugin.Pmd.IPEVector3 target, PEPlugin.Pmd.IPEVector3 position, PEPlugin.Pmd.IPEVector3 upVector)
         {
-            throw new NotSupportedException();
+            CameraTargetSet = target;
+            CameraPositionSet = position;
+            CameraUpSet = upVector;
         }
 
         public void SetJointVisibles(bool[] v)
@@ -1092,6 +1100,70 @@ namespace PmxEditorMcp.Tests
         public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdVisibleIKKey> VisibleIK { get; } =
             new System.Collections.Generic.List<PEPlugin.Vmd.IPEVmdVisibleIKKey>();
 
+    }
+
+    public sealed class FakeSubView : PEPlugin.View.IPESubViewConnector
+    {
+        public int Redrawn { get; private set; }
+
+        public void UpdateView()
+        {
+            Redrawn++;
+        }
+
+        public System.Drawing.Bitmap GetClientImage()
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool Focus()
+        {
+            throw new NotSupportedException();
+        }
+
+        public System.Drawing.Point Location
+        {
+            get { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(); }
+        }
+
+        public bool Visible
+        {
+            get { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(); }
+        }
+
+        public System.Drawing.Size Size
+        {
+            get { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(); }
+        }
+
+        public System.Windows.Forms.FormWindowState WindowState
+        {
+            get { throw new NotSupportedException(); }
+            set { throw new NotSupportedException(); }
+        }
+
+        public bool[] GetBodyVisibles()
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool[] GetJointVisibles()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetBodyVisibles(bool[] visibles)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetJointVisibles(bool[] visibles)
+        {
+            throw new NotSupportedException();
+        }
     }
 
     public sealed class FakePartsSelect : PEPlugin.View.IPEPartsSelectConnector

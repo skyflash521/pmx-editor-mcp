@@ -375,6 +375,11 @@
       "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation は new か clone のいずれかで、new のときは count に作る数(1以上の整数。省くと1)を渡し、clone のときは indices・range・all のどれか1つで写す元を指す。親が並びを持つ5つは、ほかの要素を指して初めて意味を持つ種類なので new では作れず、clone だけを受け取る。morph を new で作るときは、variant に vertex・uv・uvA1・uvA2・uvA3・uvA4・bone・material・group・flip・impulse のいずれかを渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。indices に入った位置を返す。"
     },
     {
+      "tool": "model_mirror_elements",
+      "branching": false,
+      "duty": "X軸で左右を反転した写しを足すか、モデル全体を左右へ反転する。operation は copyTargets・mirrorModel のいずれか。copyTargets は targets で指した要素の写しを足す。targets は写す要素を種類ごとに指した組の並びで、組ごとに kind が vertex・face・bone・body・joint のいずれかを取り、その中の要素を indices・range・all のどれか1つで指す。同じ種類を二度並べることはできない。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。面は、その3つの頂点すべてを同じ呼び出しで写したものだけを写し、写していない頂点を使う面は飛ばす。写しは位置のxを打ち消し、名前の左右を入れ替え、左右を持たない名前には M- を頭へ足す。写した頂点を指す頂点モーフとUVモーフのオフセットも、写しを指すものを足す。写しどうしの指し先は写しへ繋ぎ替え、写していないボーンや剛体を指す先は、指していた相手と同じ名前で左右だけが違う相手があればそちらへ繋ぐ。mirrorModel は targets を受け取らず、頂点・面・ボーン・モーフ・剛体・Jointをまとめて反転し、ボーン・剛体・Jointの名前の左右を入れ替える。左右を持たない名前はそのままにする。added に足した要素の数、changed に反転した要素の数を返す。"
+    },
+    {
       "tool": "model_place_elements",
       "branching": false,
       "duty": "種類をまたいで指した要素の位置を、渡した点へそろえる。targets は、そろえる要素を種類ごとに指した組の並びで、組ごとに kind が vertex・bone・body・joint のいずれかを取り、その中の要素を indices・range・all のどれか1つで指す。同じ種類を二度並べることはできない。operation は alignTo のみ。position にそろえる先の点を3つの数で渡し、axes に xyz・x・y・z のいずれかを渡して、そろえる軸を選ぶ。xyz は3つの軸すべてをそろえ、残りはその軸だけをそろえて他の2つは動かさない。changed に動いた要素の数を返す。"
@@ -427,12 +432,12 @@
     {
       "tool": "view_reload_model",
       "branching": false,
-      "duty": "テクスチャを読み直してモデルの描画を作り直し、画面を描き直す。引数は受け取らない。"
+      "duty": "テクスチャを読み直してモデルの描画を作り直し、画面を描き直す。別窓のビューが開いていればその描画も作り直す。引数は受け取らない。"
     },
     {
       "tool": "view_select_elements",
       "branching": false,
-      "duty": "画面の選択を、種類ごとにまとめて選び直す。kind は vertex・face・bone・body・joint のいずれかで、その種類の選択だけを置き換える。operation は all・invert・expand・reduce・childChain・halfModel のいずれか。expand と reduce は面で隣り合う頂点で広げ狭めるので vertex にだけ、childChain は選んだボーンの子孫を足すので bone にだけ当てられる。halfModel は axis で片側を指し、x・y・z はその軸の値が0以上の側、negativeX・negativeY・negativeZ は0以下の側で、面は3つの頂点がすべて片側にあるものを選ぶ。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。"
+      "duty": "画面の選択を、種類ごとにまとめて選び直す。kind は vertex・face・bone・body・joint のいずれかで、その種類の選択だけを置き換える。all と invert のときは kind の代わりに kinds へ同じ名前を並べて渡せ、並べた種類の選択をまとめて置き換える。kind と kinds は、どちらか1つだけを渡す。operation は all・invert・expand・reduce・childChain・halfModel のいずれか。expand と reduce は面で隣り合う頂点で広げ狭めるので vertex にだけ、childChain は選んだボーンの子孫を足すので bone にだけ当てられる。halfModel は axis で片側を指し、x・y・z はその軸の値が0以上の側、negativeX・negativeY・negativeZ は0以下の側で、面は3つの頂点がすべて片側にあるものを選ぶ。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。"
     },
     {
       "tool": "view_select_related",
@@ -442,7 +447,7 @@
     {
       "tool": "view_set_camera_rotate_center",
       "branching": false,
-      "duty": "視点の回転の中心を、画面で選んでいる要素の重心にする。operation は vertices・bones・face のいずれかで、face は選んだ面が使う頂点の重心を取る。その種類を1つも選んでいなければ断る。centre に決めた中心のxyzを返す。"
+      "duty": "視点の回転の中心を、画面で選んでいる要素の重心にする。operation は vertices・bones・face・faceFront のいずれかで、face と faceFront は選んだ面が使う頂点の重心を取り、2つ以上の面が同じくする頂点はその面の数だけ数える。faceFront は中心を決めたうえで、選んだ面の法線をならした向きの側からその中心を見るところへ視点を移し、上を+Yへ向ける。その種類を1つも選んでいなければ断る。centre に決めた中心のxyzを返す。"
     }
   ],
   "viewImages": [

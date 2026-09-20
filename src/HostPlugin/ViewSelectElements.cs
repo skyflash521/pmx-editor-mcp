@@ -44,6 +44,8 @@ namespace PmxEditorMcp
         /// <summary>選ぶ要素の種類を受け取る入力の名前。</summary>
         public const string KindName = "kind";
 
+        public const string KindsName = "kinds";
+
         /// <summary>軸を受け取る入力の名前。</summary>
         public const string AxisName = "axis";
 
@@ -96,6 +98,7 @@ namespace PmxEditorMcp
             {
                 ComposedOperation.OperationName,
                 KindName,
+                KindsName,
                 AxisName,
             };
             methods.Add(
@@ -106,13 +109,13 @@ namespace PmxEditorMcp
         {
             IPXPmx model = (IPXPmx)parts.Pmx;
             string operation;
-            string kind;
             string axis;
             string code;
             string message;
+            IList<string> kinds;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
-                || !ViewSelection.TryKind(context, KindName, out kind, out code, out message)
+                || !TryKinds(context, operation, out kinds, out code, out message)
                 || !ComposedInput.TryChoice(
                     context,
                     AxisName,
@@ -126,6 +129,33 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            int selected = 0;
+            foreach (string kind in kinds)
+            {
+                ComposedEditResult refused =
+                    Chosen(model, parts, operation, kind, axis, ref selected);
+                if (refused != null)
+                {
+                    return refused;
+                }
+            }
+
+            return ComposedEditResult.Complete(
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { SelectedName, selected },
+                });
+        }
+
+        /// <summary>選び直せたなら null を、断るなら断りを返す。</summary>
+        private static ComposedEditResult Chosen(
+            IPXPmx model,
+            ScreenParts parts,
+            string operation,
+            string kind,
+            string axis,
+            ref int selected)
+        {
             int count = ViewSelection.Count(model, kind);
             IList<int> held = ViewSelection.Taken(parts.View, kind, count);
             IList<int> made;
@@ -168,12 +198,89 @@ namespace PmxEditorMcp
             }
 
             ViewSelection.Put(parts.View, kind, made);
+            selected += made.Count;
 
-            return ComposedEditResult.Complete(
-                new Dictionary<string, object>(StringComparer.Ordinal)
+            return null;
+        }
+
+        /// <summary>
+        /// 選び直す種類を読む。<paramref name="operation"/> が全選択か反転のときだけ kinds で
+        /// まとめて渡せる。
+        /// </summary>
+        private static bool TryKinds(
+            McpMethodContext context,
+            string operation,
+            out IList<string> kinds,
+            out string code,
+            out string message)
+        {
+            kinds = null;
+            if (!context.Params.ContainsKey(KindsName))
+            {
+                string kind;
+                if (!ViewSelection.TryKind(context, KindName, out kind, out code, out message))
                 {
-                    { SelectedName, made.Count },
-                });
+                    return false;
+                }
+
+                kinds = new[] { kind };
+
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            if (!string.Equals(operation, All, StringComparison.Ordinal)
+                && !string.Equals(operation, Invert, StringComparison.Ordinal))
+            {
+                message = KindsName + " を渡せるのは " + All + "・" + Invert + " のときだけである。";
+
+                return false;
+            }
+
+            if (context.Params.ContainsKey(KindName))
+            {
+                message = KindName + " と " + KindsName + " は、どちらか1つだけを渡す。";
+
+                return false;
+            }
+
+            object given;
+            context.Params.TryGetValue(KindsName, out given);
+            object[] items = given as object[];
+            if (items == null || items.Length == 0)
+            {
+                message = KindsName + " は、選ぶ要素の種類を1つ以上並べたものでなければならない。";
+
+                return false;
+            }
+
+            List<string> made = new List<string>();
+            foreach (object item in items)
+            {
+                string kind = item as string;
+                if (kind == null || !ViewSelection.Kinds.Contains(kind, StringComparer.Ordinal))
+                {
+                    message = KindsName + " は次のどれかを並べる: "
+                        + string.Join("・", ViewSelection.Kinds.ToArray());
+
+                    return false;
+                }
+
+                if (made.Contains(kind, StringComparer.Ordinal))
+                {
+                    message = KindsName + " へ同じ種類を二度並べている: " + kind;
+
+                    return false;
+                }
+
+                made.Add(kind);
+            }
+
+            code = null;
+            kinds = made;
+
+            return true;
         }
 
         private static ComposedEditResult Only(string operation, string kind)

@@ -50,6 +50,82 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SelectingEverythingTakesEveryKindThatWasNamedInOneCall()
+        {
+            Vertices(2);
+            Bones("根");
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(
+                    ViewSelectElements.KindsName,
+                    new object[] { ElementKinds.Vertex, ElementKinds.Bone })));
+
+            Assert.Equal(new[] { 0, 1 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(new[] { 0 }, _fixture.View.Selected[ElementKinds.Bone]);
+            Assert.Equal(3, value[ViewSelectElements.SelectedName]);
+        }
+
+        [Fact]
+        public void InvertingSeveralKindsSwapsEachOfThemOnItsOwn()
+        {
+            Vertices(2);
+            Bones("根", "子");
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0 };
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 1 };
+
+            Select(
+                Operation(ViewSelectElements.Invert),
+                ComposedScreenFixture.Given(
+                    ViewSelectElements.KindsName,
+                    new object[] { ElementKinds.Vertex, ElementKinds.Bone }));
+
+            Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(new[] { 0 }, _fixture.View.Selected[ElementKinds.Bone]);
+        }
+
+        [Fact]
+        public void NamingSeveralKindsForAnOperationThatTakesOneIsRefused()
+        {
+            Vertices(2);
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.Expand),
+                ComposedScreenFixture.Given(
+                    ViewSelectElements.KindsName, new object[] { ElementKinds.Vertex }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void NamingBothOneKindAndSeveralIsRefused()
+        {
+            Vertices(2);
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
+                ComposedScreenFixture.Given(
+                    ViewSelectElements.KindsName, new object[] { ElementKinds.Vertex }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void NamingTheSameKindTwiceIsRefused()
+        {
+            Vertices(2);
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(
+                    ViewSelectElements.KindsName,
+                    new object[] { ElementKinds.Vertex, ElementKinds.Vertex }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+        }
+
+        [Fact]
         public void ExpandingAddsTheVerticesThatShareAFaceWithTheSelection()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -330,7 +406,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheRotateCentreCountsAVertexThatTwoFacesShareOnce()
+        public void TheRotateCentreCountsAVertexThatTwoFacesShareOncePerFace()
         {
             IList<IPXVertex> vertices = Vertices(4);
             for (int at = 0; at < 3; at++)
@@ -338,13 +414,49 @@ namespace PmxEditorMcp.Tests
                 ((FakeVertex)vertices[at]).Position = new V3(0f, 0f, 0f);
             }
 
-            ((FakeVertex)vertices[3]).Position = new V3(8f, 0f, 0f);
+            ((FakeVertex)vertices[3]).Position = new V3(9f, 0f, 0f);
             Faces(Face(vertices, 0, 1, 2), Face(vertices, 0, 1, 3));
             _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1 };
 
             Centre(Operation(ViewSetCameraRotateCenter.Face));
 
-            Near(2.0, _fixture.View.CameraRotateCenter.X);
+            Near(1.5, _fixture.View.CameraRotateCenter.X);
+        }
+
+        [Fact]
+        public void FacingTheSelectedFacePutsTheViewpointOnTheSideItsNormalPointsAt()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            ((FakeVertex)vertices[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeVertex)vertices[1]).Position = new V3(3f, 0f, 0f);
+            ((FakeVertex)vertices[2]).Position = new V3(0f, 3f, 0f);
+            Faces(Face(vertices, 0, 1, 2));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+
+            Centre(Operation(ViewSetCameraRotateCenter.FaceFront));
+
+            Near(1.0, _fixture.View.CameraRotateCenter.X);
+            Near(1.0, _fixture.View.CameraTargetSet.X);
+            Near(1.0, _fixture.View.CameraPositionSet.X);
+            Near(10.0, _fixture.View.CameraPositionSet.Z);
+            Near(1.0, _fixture.View.CameraUpSet.Y);
+        }
+
+        [Fact]
+        public void FacingSeveralFacesLooksAtTheMiddleOfTheCornersOfEachOfThem()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            ((FakeVertex)vertices[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeVertex)vertices[1]).Position = new V3(3f, 0f, 0f);
+            ((FakeVertex)vertices[2]).Position = new V3(0f, 3f, 0f);
+            ((FakeVertex)vertices[3]).Position = new V3(9f, 3f, 0f);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 3, 2));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1 };
+
+            Centre(Operation(ViewSetCameraRotateCenter.FaceFront));
+
+            Near(2.5, _fixture.View.CameraRotateCenter.X);
+            Near(2.5, _fixture.View.CameraTargetSet.X);
         }
 
         [Fact]
@@ -367,6 +479,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(1, _fixture.View.Redraws);
             Assert.Equal(1, _fixture.View.Repaints);
+            Assert.Equal(1, _fixture.SubView.Redrawn);
         }
 
         [Fact]

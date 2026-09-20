@@ -23,6 +23,8 @@ namespace PmxEditorMcp
 
         private const string PartsType = "PEPlugin.View.IPEPartsSelectConnector";
 
+        private const string SubViewType = "PEPlugin.View.IPESubViewConnector";
+
         private readonly object _operationGate = new object();
 
         private Form _uiAnchor;
@@ -212,7 +214,8 @@ namespace PmxEditorMcp
                         () => Receiver(receivers, ViewType),
                         () => Receiver(receivers, FormType),
                         () => Receiver(receivers, PartsType)),
-                    () => Receiver(receivers, BuilderType));
+                    () => Receiver(receivers, BuilderType),
+                    () => Receiver(receivers, SubViewType));
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
