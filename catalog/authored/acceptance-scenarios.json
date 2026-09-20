@@ -4081,6 +4081,53 @@
               }
             ]
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_referrers",
+          "arguments": {
+            "kind": "vertex",
+            "indices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "referrers.0.kind",
+                "equals": "face"
+              },
+              {
+                "path": "referrers.1.kind",
+                "equals": "material"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_referrers",
+          "arguments": {
+            "kind": "vertex",
+            "indices": [
+              0
+            ],
+            "detail": "countPerTarget"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "targets.0.index",
+                "equals": 0
+              }
+            ]
+          }
         }
       ]
     },

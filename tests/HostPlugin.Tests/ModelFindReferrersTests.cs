@@ -333,6 +333,34 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheIndicesAreCutDownUntilTheValueFitsInTheRoomLeftForThem()
+        {
+            IList<IPXBone> bones = Bones(1);
+            for (int at = 0; at < 4000; at++)
+            {
+                Weighted(bones[0]);
+            }
+
+            const int Budget = 10000;
+            IDictionary<string, object> envelope = _fixture.Call(
+                "model_find_referrers",
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given("kind", ElementKinds.Bone),
+                    ComposedEditFixture.Given("indices", new object[] { 0 }),
+                    ComposedEditFixture.Given("detail", "indices"),
+                    ComposedEditFixture.Given("referrerKind", ElementKinds.Vertex)),
+                Budget);
+            IDictionary<string, object> found = ComposedEditFixture.Value(envelope);
+
+            Assert.Equal(4000, found["total"]);
+            Assert.NotEmpty(Places(found));
+            Assert.Equal(Places(found).Length, found["nextOffset"]);
+            Assert.InRange(Size(found), 1, ResponseSize.ValueChars(Budget));
+            Assert.True(Size(WithOneMorePlace(found)) > ResponseSize.ValueChars(Budget));
+            Assert.NotEmpty((IEnumerable<object>)envelope[ToolEnvelope.WarningsName]);
+        }
+
+        [Fact]
         public void EveryElementComesBackWhenTheRoomHoldsThemAndNoCountWasAsked()
         {
             Bones(400);
@@ -411,7 +439,7 @@ namespace PmxEditorMcp.Tests
 
         private static IList<IDictionary<string, object>> Items(IDictionary<string, object> held)
         {
-            return ((IEnumerable<object>)held["items"])
+            return ((IEnumerable<object>)held["targets"])
                 .Cast<IDictionary<string, object>>()
                 .ToList();
         }
@@ -430,13 +458,25 @@ namespace PmxEditorMcp.Tests
                 .Length;
         }
 
+        private static IDictionary<string, object> WithOneMorePlace(
+            IDictionary<string, object> held)
+        {
+            int[] places = Places(held);
+
+            return new Dictionary<string, object>(held, StringComparer.Ordinal)
+            {
+                ["referrerIndices"] = places.Concat(new[] { places.Last() }).Cast<object>()
+                    .ToArray(),
+            };
+        }
+
         private static IDictionary<string, object> WithOneMore(IDictionary<string, object> held)
         {
             IList<IDictionary<string, object>> items = Items(held);
 
             return new Dictionary<string, object>(held, StringComparer.Ordinal)
             {
-                ["items"] = items.Concat(new[] { items.Last() }).ToArray(),
+                ["targets"] = items.Concat(new[] { items.Last() }).ToArray(),
             };
         }
 

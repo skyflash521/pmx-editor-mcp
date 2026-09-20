@@ -6,12 +6,14 @@ namespace PmxEditorMcp
     /// <summary>組み立てたツールの中身が返す結末。値を返すか、断る内容を返すかのどちらか。</summary>
     public sealed class ComposedEditResult
     {
-        private ComposedEditResult(bool done, object value, string code, string message)
+        private ComposedEditResult(
+            bool done, object value, string code, string message, IList<string> warnings)
         {
             IsDone = done;
             Value = value;
             Code = code;
             Message = message;
+            Warnings = warnings;
         }
 
         /// <summary>済んだか。偽なら断っている。</summary>
@@ -26,10 +28,19 @@ namespace PmxEditorMcp
         /// <summary>断ったときの説明。</summary>
         public string Message { get; }
 
+        /// <summary>済んだときに包みへ添える警告。添えないときは null。</summary>
+        public IList<string> Warnings { get; }
+
         /// <summary>済んだ結末を作る。</summary>
         public static ComposedEditResult Complete(object value)
         {
-            return new ComposedEditResult(true, value, null, null);
+            return Complete(value, null);
+        }
+
+        public static ComposedEditResult Complete(object value, IList<string> warnings)
+        {
+            return new ComposedEditResult(
+                true, value, null, null, warnings != null && warnings.Count > 0 ? warnings : null);
         }
 
         /// <summary>断る結末を作る。</summary>
@@ -45,7 +56,7 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(message));
             }
 
-            return new ComposedEditResult(false, null, code, message);
+            return new ComposedEditResult(false, null, code, message, null);
         }
     }
 
@@ -187,7 +198,7 @@ namespace PmxEditorMcp
 
             return answered == null
                 ? ToolEnvelope.Failure(refusedCode, refusedMessage)
-                : ToolEnvelope.Success(answered.Value);
+                : ToolEnvelope.Success(answered.Value, answered.Warnings);
         }
 
         private object Run(
@@ -260,7 +271,7 @@ namespace PmxEditorMcp
 
             return answered == null
                 ? ToolEnvelope.Failure(refusedCode, refusedMessage)
-                : ToolEnvelope.Success(answered.Value);
+                : ToolEnvelope.Success(answered.Value, answered.Warnings);
         }
 
         private static bool TryHandle(

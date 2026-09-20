@@ -5808,6 +5808,196 @@
       }
     },
     {
+      "tool": "model_find_referrers",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "kind",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "detail",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false,
+              "default": "count"
+            },
+            {
+              "name": "referrerKind",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            },
+            {
+              "name": "minWeight",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 1
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "referrers",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "kind",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
+          },
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "targets",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "index",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "referrers",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "members": [
+                      {
+                        "name": "kind",
+                        "origin": "hostOutput",
+                        "shape": "text"
+                      },
+                      {
+                        "name": "count",
+                        "origin": "hostOutput",
+                        "shape": "number"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "referrerIndices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_from_file_pmx",
       "branches": [
         {
