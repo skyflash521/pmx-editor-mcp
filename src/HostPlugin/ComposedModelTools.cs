@@ -40,6 +40,7 @@ namespace PmxEditorMcp
             ModelEditMorphs.AddTo(methods, edit, builder);
             ModelEditNodes.AddTo(methods, edit, builder);
             ModelCopyFromReference.AddTo(methods, edit);
+            ModelPlaceElements.AddTo(methods, edit);
             ModelInsertElements.AddTo(methods, edit, builder);
             ModelDeleteElements.AddTo(methods, edit);
         }

@@ -375,6 +375,11 @@
       "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation は new か clone のいずれかで、new のときは count に作る数(1以上の整数。省くと1)を渡し、clone のときは indices・range・all のどれか1つで写す元を指す。親が並びを持つ5つは、ほかの要素を指して初めて意味を持つ種類なので new では作れず、clone だけを受け取る。morph を new で作るときは、variant に vertex・uv・uvA1・uvA2・uvA3・uvA4・bone・material・group・flip・impulse のいずれかを渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。indices に入った位置を返す。"
     },
     {
+      "tool": "model_place_elements",
+      "branching": false,
+      "duty": "種類をまたいで指した要素の位置を、渡した点へそろえる。targets は、そろえる要素を種類ごとに指した組の並びで、組ごとに kind が vertex・bone・body・joint のいずれかを取り、その中の要素を indices・range・all のどれか1つで指す。同じ種類を二度並べることはできない。operation は alignTo のみ。position にそろえる先の点を3つの数で渡し、axes に xyz・x・y・z のいずれかを渡して、そろえる軸を選ぶ。xyz は3つの軸すべてをそろえ、残りはその軸だけをそろえて他の2つは動かさない。changed に動いた要素の数を返す。"
+    },
+    {
       "tool": "model_reorder_elements",
       "branching": false,
       "duty": "指した要素を並びの中で動かす。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all のどれか1つで指す。move は up・down・top・bottom・to のいずれかで、to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。indices に動いた後の位置を返す。"

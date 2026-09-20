@@ -10155,6 +10155,118 @@
       }
     },
     {
+      "tool": "model_place_elements",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "suppressUndo",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "operation",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "axes",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "position",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "targets",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "kind",
+                    "origin": "hostInput",
+                    "shape": "text",
+                    "required": true
+                  },
+                  {
+                    "name": "indices",
+                    "origin": "hostInput",
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number",
+                      "bounds": {
+                        "minimum": 0
+                      }
+                    },
+                    "required": false
+                  },
+                  {
+                    "name": "range",
+                    "origin": "hostInput",
+                    "members": [
+                      {
+                        "name": "start",
+                        "origin": "hostInput",
+                        "shape": "number",
+                        "required": true,
+                        "bounds": {
+                          "minimum": 0
+                        }
+                      },
+                      {
+                        "name": "count",
+                        "origin": "hostInput",
+                        "shape": "number",
+                        "required": true,
+                        "bounds": {
+                          "minimum": 1
+                        }
+                      }
+                    ],
+                    "required": false
+                  },
+                  {
+                    "name": "all",
+                    "origin": "hostInput",
+                    "shape": "boolean",
+                    "required": false
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "changed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_pmx",
       "branches": [
         {
