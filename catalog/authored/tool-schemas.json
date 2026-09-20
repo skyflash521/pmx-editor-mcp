@@ -38450,6 +38450,32 @@
       }
     },
     {
+      "tool": "view_filter_display",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "operation",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "shown",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_focus",
       "branches": [
         {

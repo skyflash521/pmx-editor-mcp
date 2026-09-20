@@ -39,6 +39,8 @@ namespace PmxEditorMcp.Tests
         /// <summary>VMDViewが立ち上がっているか。</summary>
         public bool Booted { get; set; }
 
+        public int[] Narrowed { get; private set; } = new int[0];
+
         public int[] GetSelectedVertexIndices()
         {
             return Selected[ElementKinds.Vertex];
@@ -191,7 +193,7 @@ namespace PmxEditorMcp.Tests
 
         public void SetVertexIndices(int[] indices)
         {
-            throw new NotSupportedException();
+            Narrowed = indices;
         }
 
         public void SetVmeEvent(PEPlugin.Vme.IPEVme vme, int begin, int end)
@@ -1099,6 +1101,201 @@ namespace PmxEditorMcp.Tests
         public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdVisibleIKKey> VisibleIK
         {
             get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+    }
+
+    public sealed class FakePartsSelect : PEPlugin.View.IPEPartsSelectConnector
+    {
+        public int[] Checked { get; set; } = new int[0];
+
+        public int[] GetCheckedMaterialIndices()
+        {
+            return Checked;
+        }
+
+        public void SetCheckedMaterialIndices(int[] indices)
+        {
+            Checked = indices;
+        }
+
+        public bool Focus()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int[] GetCheckedBoneIndices()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int[] GetCheckedExpressionIndices()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetCheckedBoneIndices(int[] indices)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetCheckedExpressionIndices(int[] indices)
+        {
+            throw new NotSupportedException();
+        }
+
+        public int BoneItemsCount
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool BoneSelected
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public int ExpressionItemsCount
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Point Location
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public int MaterialItemsCount
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public int RangeBegin
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public int RangeEnd
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public PEPlugin.View.PartsSelectObject SelectObject
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public int SelectedBoneIndex
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public int SelectedExpressionIndex
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public int SelectedMaterialIndex
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool SelectedPartsVisible
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
             {
                 throw new NotSupportedException();
             }

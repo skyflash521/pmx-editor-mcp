@@ -21,6 +21,8 @@ namespace PmxEditorMcp
 
         private const string FormType = "PEPlugin.Form.IPEFormConnector";
 
+        private const string PartsType = "PEPlugin.View.IPEPartsSelectConnector";
+
         private readonly object _operationGate = new object();
 
         private Form _uiAnchor;
@@ -208,7 +210,8 @@ namespace PmxEditorMcp
                     new ComposedScreen(
                         current,
                         () => Receiver(receivers, ViewType),
-                        () => Receiver(receivers, FormType)),
+                        () => Receiver(receivers, FormType),
+                        () => Receiver(receivers, PartsType)),
                     () => ((IPEBuilder)Receiver(receivers, BuilderType)).CreateVmd());
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);

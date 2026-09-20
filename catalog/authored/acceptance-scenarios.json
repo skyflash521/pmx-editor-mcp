@@ -4368,6 +4368,32 @@
         },
         {
           "kind": "tool",
+          "tool": "view_filter_display",
+          "arguments": {
+            "operation": "verticesByEdgeScale"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "shown",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_filter_display",
+          "arguments": {
+            "operation": "materialsFromFaces"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "view_reload_model",
           "arguments": {},
           "expect": {

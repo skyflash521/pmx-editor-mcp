@@ -232,6 +232,61 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void OnlyTheMaterialsThatUseTheSelectedVerticesStayShown()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 3 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Filter(
+                Operation(ViewFilterDisplay.MaterialsFromVertices)));
+
+            Assert.Equal(new[] { 1 }, _fixture.Parts.Checked);
+            Assert.Equal(1, value[ViewFilterDisplay.ShownName]);
+        }
+
+        [Fact]
+        public void OnlyTheMaterialsThatHoldTheSelectedFacesStayShown()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+
+            Filter(Operation(ViewFilterDisplay.MaterialsFromFaces));
+
+            Assert.Equal(new[] { 0 }, _fixture.Parts.Checked);
+        }
+
+        [Fact]
+        public void TheMaterialsThatHoldTheSelectedFacesAreTakenOutOfWhatIsShown()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.Parts.Checked = new[] { 0, 1 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+
+            Filter(Operation(ViewFilterDisplay.ExcludeMaterialsFromFaces));
+
+            Assert.Equal(new[] { 1 }, _fixture.Parts.Checked);
+        }
+
+        [Fact]
+        public void OnlyTheVerticesWhoseEdgeScaleIsNotOneStayShown()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            ((FakeVertex)vertices[1]).EdgeScale = 0.5f;
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Filter(
+                Operation(ViewFilterDisplay.VerticesByEdgeScale)));
+
+            Assert.Equal(new[] { 1 }, _fixture.View.Narrowed);
+            Assert.Equal(1, value[ViewFilterDisplay.ShownName]);
+        }
+
+        [Fact]
         public void TheRotateCentreGoesToTheMiddleOfTheSelectedVertices()
         {
             Vertex(0f, 0f, 0f);
@@ -485,6 +540,12 @@ namespace PmxEditorMcp.Tests
         {
             return _fixture.Call(
                 ViewSelectRelated.ToolName, ComposedScreenFixture.Arguments(given));
+        }
+
+        private IDictionary<string, object> Filter(params KeyValuePair<string, object>[] given)
+        {
+            return _fixture.Call(
+                ViewFilterDisplay.ToolName, ComposedScreenFixture.Arguments(given));
         }
 
         private IDictionary<string, object> Centre(params KeyValuePair<string, object>[] given)

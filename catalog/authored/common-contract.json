@@ -410,6 +410,11 @@
       "duty": "VMDViewの再生を止める。parts は motionOnly・modelAndMotion のいずれかで、motionOnly は再生を止めるだけ、modelAndMotion は読み込んだモーションを捨てて、いま編集しているモデルを読み直す。どちらの持ち物でも、VMDViewの窓は開いたままになる。"
     },
     {
+      "tool": "view_filter_display",
+      "branching": false,
+      "duty": "画面の絞込みの表示を、画面の選択から決める。operation は materialsFromVertices・materialsFromFaces・excludeMaterialsFromFaces・verticesByEdgeScale のいずれか。materialsFromVertices は画面で選んでいる頂点を使う材質だけを表示に残し、materialsFromFaces は画面で選んでいる面を持つ材質だけを残す。excludeMaterialsFromFaces は、いま表示している材質からその面を持つ材質を外す。verticesByEdgeScale はエッジの倍率が1でない頂点だけを絞込みの表示に出す。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。shown に表示へ残した数を返す。"
+    },
+    {
       "tool": "view_load_vmd_view",
       "branching": false,
       "duty": "VMDViewへ、いま編集しているモデルを読み込む。parts は modelOnly・modelAndMotion のいずれかで、modelAndMotion は motionPath が指すVMDも読み込んで再生を始める。VMDViewが立ち上がっていなければ、ここで立ち上がる。"

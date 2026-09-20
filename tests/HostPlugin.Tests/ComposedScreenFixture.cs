@@ -35,6 +35,8 @@ namespace PmxEditorMcp.Tests
         /// <summary>リストを持つ画面の題材。</summary>
         public FakeFormConnector Form { get; } = new FakeFormConnector();
 
+        public FakePartsSelect Parts { get; } = new FakePartsSelect();
+
         /// <summary>
         /// 後片付けで、モデルの中身が呼び出しの前と同じままかを確かめる。画面へ触るツールはモデルを
         /// 変えないので、この題材を使うテストはすべてこの不変条件を通る。
@@ -70,7 +72,8 @@ namespace PmxEditorMcp.Tests
                 _tools = new McpMethodTable();
                 ComposedScreenTools.AddTo(
                     _tools,
-                    new ComposedScreen(_edit.Session(), () => View, () => Form),
+                    new ComposedScreen(
+                        _edit.Session(), () => View, () => Form, () => Parts),
                     () => new FakeVmd());
             }
 
