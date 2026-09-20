@@ -268,6 +268,126 @@ namespace PmxEditorMcp
             }
         }
 
+        /// <summary>
+        /// モーフを指したままの口を、別のモーフへ付け替える。表に無いモーフを指す口はそのままにする。
+        /// </summary>
+        public static void Repoint(object pmx, IDictionary<IPXMorph, IPXMorph> moved)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (moved == null)
+            {
+                throw new ArgumentNullException(nameof(moved));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+            foreach (IPXMorph morph in model.Morph)
+            {
+                foreach (IPXMorphOffset offset in morph.Offsets)
+                {
+                    IPXGroupMorphOffset grouped = offset as IPXGroupMorphOffset;
+                    if (grouped != null)
+                    {
+                        grouped.Morph = Moved(moved, grouped.Morph);
+                    }
+                }
+            }
+
+            foreach (IPXNode node in Nodes(model))
+            {
+                foreach (IPXNodeItem item in node.Items)
+                {
+                    IPXMorphNodeItem held = item as IPXMorphNodeItem;
+                    if (held != null)
+                    {
+                        held.Morph = Moved(moved, held.Morph);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// ボーンを指したままの口を、別のボーンへ付け替える。表に無いボーンを指す口はそのままにする。
+        /// </summary>
+        public static void Repoint(object pmx, IDictionary<IPXBone, IPXBone> moved)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (moved == null)
+            {
+                throw new ArgumentNullException(nameof(moved));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+            foreach (IPXVertex vertex in model.Vertex)
+            {
+                vertex.Bone1 = Moved(moved, vertex.Bone1);
+                vertex.Bone2 = Moved(moved, vertex.Bone2);
+                vertex.Bone3 = Moved(moved, vertex.Bone3);
+                vertex.Bone4 = Moved(moved, vertex.Bone4);
+            }
+
+            foreach (IPXBone bone in model.Bone)
+            {
+                bone.Parent = Moved(moved, bone.Parent);
+                bone.ToBone = Moved(moved, bone.ToBone);
+                bone.AppendParent = Moved(moved, bone.AppendParent);
+                bone.IK.Target = Moved(moved, bone.IK.Target);
+                foreach (IPXIKLink link in bone.IK.Links)
+                {
+                    link.Bone = Moved(moved, link.Bone);
+                }
+            }
+
+            foreach (IPXMorph morph in model.Morph)
+            {
+                foreach (IPXMorphOffset offset in morph.Offsets)
+                {
+                    IPXBoneMorphOffset posed = offset as IPXBoneMorphOffset;
+                    if (posed != null)
+                    {
+                        posed.Bone = Moved(moved, posed.Bone);
+                    }
+                }
+            }
+
+            foreach (IPXNode node in Nodes(model))
+            {
+                foreach (IPXNodeItem item in node.Items)
+                {
+                    IPXBoneNodeItem held = item as IPXBoneNodeItem;
+                    if (held != null)
+                    {
+                        held.Bone = Moved(moved, held.Bone);
+                    }
+                }
+            }
+
+            foreach (IPXBody body in model.Body)
+            {
+                body.Bone = Moved(moved, body.Bone);
+            }
+        }
+
+        /// <summary>モデルが持つ枠のすべて。根の枠と表情の枠も数に入る。</summary>
+        public static IEnumerable<IPXNode> Nodes(object pmx)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+
+            return new[] { model.RootNode, model.ExpressionNode }.Concat(model.Node);
+        }
+
         private static T Moved<T>(IDictionary<T, T> moved, T held)
             where T : class
         {

@@ -310,9 +310,24 @@
       "duty": "指した材質から、不正な面と重なった面を落とす。材質は indices・range・all のどれか1つで指す。operation は invalid・duplicate・duplicateInMaterial のいずれかで、invalid は3つの頂点が揃っていない面を、duplicate はモデル全体で同じ3頂点を指す面を、duplicateInMaterial は材質ごとに同じ3頂点を指す面を、最初の1つだけ残して落とす。removed に落とした面の数を返す。"
     },
     {
+      "tool": "model_copy_from_reference",
+      "branching": false,
+      "duty": "剛体とJointへ、指している相手の名前や位置を写す。対象は indices・range・all のどれか1つで指し、bodyNameFromBone は剛体を、それ以外はJointを指す。operation は bodyNameFromBone・jointNameFromBodyA・jointNameFromBodyB・jointPositionFromBone のいずれか。写す元を指していない要素は変えない。changed に変えた要素の数を返す。"
+    },
+    {
+      "tool": "model_create_physics",
+      "branching": false,
+      "duty": "指したボーンや頂点から、剛体とJointを作る。対象は indices・range・all のどれか1つで指し、joint は剛体を、bodyAtVertices は頂点を、それ以外はボーンを指す。operation は bodyFollowBone・bodyPhysics・joint・bodyAndJoint・bodyAtVertices のいずれか。joint 以外は shape に sphere・box・capsule のいずれかを渡す。bodyFollowBone はボーンに追従する剛体を、bodyPhysics は物理で動く剛体を、ボーンごとに足す。joint は指した剛体を並びの順に、隣り合う組へJointで繋ぐ。bodyAndJoint は物理で動く剛体と、親のボーンを指す剛体へ繋ぐJointを足す。bodyAtVertices は指した頂点を包む大きさの剛体を1つ足す。その大きさは形ごとに読み分けられ、球は半径、箱は各軸の半幅、カプセルは半径と中心線の長さになる。その大きさが単精度で持てる範囲を超えるときは、剛体を足さずに断る。addedBodies と addedJoints に足した位置を返す。"
+    },
+    {
       "tool": "model_delete_elements",
       "branching": false,
       "duty": "指した要素を並びから消す。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。消す対象は indices・range・all のどれか1つで指す。related は keep・repair・cascade のいずれかで、省くと repair になる。repair は指す先を失った口を直し、ウェイトは残るボーンへ移し、直せない口は落とす。cascade はそれに加えて、消した要素だけが使っていた要素も消す。keep は何も触らない。removed に消した件数、following に種類ごとのつられて消えた件数、repaired に直した口の数を返す。"
+    },
+    {
+      "tool": "model_edit_bones",
+      "branching": false,
+      "duty": "指したボーンの整理と生成と軸の設定を行う。ボーンは indices・range・all のどれか1つで指し、addAtVertices だけは同じ指し方で頂点を指す。relevelHierarchy と addRootParent は並び全体を相手にするので、この3つのどれも渡さない。operation は mergeSameName・hideTipBones・tipToOffset・offsetToTip・relevelHierarchy・addRootParent・addMultiStageParent・addMultiStageChild・addMiddle・addAppendParent・addAtVertices・makeIk・mirrorPosition・fixAxisToTip・setLocalAxis・resetLocalAxis・setPmdBoneKind のいずれか。mergeSameName は同じ名前のボーンを先頭の1つへまとめ、指していた口をその1つへ付け替える。relevelHierarchy は親より先に子が来ないよう並びを組み直す。ボーンを足す操作は、上へ足すものは指したボーンの直前へ、下へ足すものは直後へ入れる。mirrorPosition は axis に x・y・z のいずれかを渡し、名前の左右が逆のボーンの位置の鏡像へそろえる。makeIk は linkCount に親を辿るリンクの数を、1以上の整数で渡す。setLocalAxis は表示先への向きをX、それと親からの向きに垂直な向きをZとする。added に足したボーンの位置、changed に変えたボーンの数、removed に消えたボーンの数を返す。"
     },
     {
       "tool": "model_edit_faces",
@@ -323,6 +338,16 @@
       "tool": "model_edit_materials",
       "branching": false,
       "duty": "指した材質の結合・単一化・分割・取り出し・複製・色の丸めを行う。材質は indices・range・all のどれか1つで指す。operation は merge・mergeAll・mergeSame・extractFaces・duplicateParts・clampColor のいずれか。merge は指した材質を先頭へまとめ、mergeAll は並びのすべてを1つへまとめる。mergeSame は colorTolerance に色の許容幅を渡し、その中で設定が同じ材質どうしをまとめる。extractFaces は faceIndices・faceRange・faceAll のどれか1つで材質の中の面を指し、その面を新しい材質へ移す。duplicateParts は parts に facesOnly・withVertices・withMorphs のいずれかを渡し、その持ち物を複製した材質を足す。clampColor は色の各成分を0以上1以下へ丸める。changed・removed・added を返す。"
+    },
+    {
+      "tool": "model_edit_morphs",
+      "branching": false,
+      "duty": "指したモーフの結合・まとめ・分離と、いまの材質の値からの作成を行う。モーフは indices・range・all のどれか1つで指す。ただし materialFromCurrent は並びの材質すべてを相手にするので、この3つのどれも渡さない。operation は mergeSameName・mergeSameKind・mergeSameKindAdd・groupInto・flipInto・splitVertices・materialFromCurrent のいずれか。まとめる操作は先頭の1つへオフセットを移し、指していた口をその1つへ付け替える。mergeSameName は名前と種類の両方が同じモーフだけをまとめる。mergeSameKindAdd は、同じ相手を指すオフセットの値を足し合わせる。足し合わせるのは頂点とUVとグループのオフセットで、足し合わせが一意に決まらない種類のオフセットは、同じ相手を指すものが既にあってもそのまま並べる。groupInto と flipInto と materialFromCurrent は name に足すモーフの名前を渡す。splitVertices は頂点モーフを、面で繋がった頂点のまとまりごとのモーフへ分け、元のモーフを並びから外す。元を指していた口は、分けたモーフの数だけ並べ直す。added に足したモーフの位置、changed にまとめた数、removed に消えたモーフの数を返す。"
+    },
+    {
+      "tool": "model_edit_nodes",
+      "branching": false,
+      "duty": "表示枠への一括登録と、表情の枠の正規化を行う。枠は indices・range・all のどれか1つで指す。operation は registerUnlistedBones・registerUnlistedMorphs・normalizeExpressionNode のいずれか。登録する操作は、どの枠にも載っていないボーンかモーフを、指した枠のうち先頭の末尾へ足す。normalizeExpressionNode は、指した枠の中身をモーフの並びの順にそろえる。added に足した中身の数、changed に変えた枠の数を返す。"
     },
     {
       "tool": "model_edit_normals",

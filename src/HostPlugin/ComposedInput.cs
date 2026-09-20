@@ -70,6 +70,47 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
+        /// 要る操作のときだけ受け取る、下限を持つ整数を読む。要る操作で欠けていれば偽、要らない
+        /// 操作で渡されていれば偽を返し、断る内容を渡す。要らない操作では0を渡す。
+        /// </summary>
+        public static bool TryCount(
+            McpMethodContext context,
+            string name,
+            string operation,
+            IList<string> wanted,
+            int least,
+            out int number,
+            out string code,
+            out string message)
+        {
+            number = 0;
+            object given;
+            bool asked;
+            if (!TryWanted(context, name, operation, wanted, out given, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (!asked)
+            {
+                return true;
+            }
+
+            if (!ValueInput.TryIndex(given, out number) || number < least)
+            {
+                number = 0;
+
+                return Refuse(
+                    name + " は " + Listed(wanted) + " のときに渡す、"
+                        + Spelled(least) + " 以上の整数である。",
+                    out code,
+                    out message);
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// 要る操作のときだけ受け取る、決まった値のどれかを読む。要る操作で欠けていれば偽、
         /// 要らない操作で渡されていれば偽を返し、断る内容を渡す。要らない操作では空を渡す。
         /// </summary>
@@ -106,6 +147,46 @@ namespace PmxEditorMcp
 
             return Refuse(
                 name + " は次のどれかでなければならない: " + Listed(choices),
+                out code,
+                out message);
+        }
+
+        /// <summary>
+        /// 要る操作のときだけ受け取る、空でない文字を読む。要る操作で欠けていれば偽、要らない操作で
+        /// 渡されていれば偽を返し、断る内容を渡す。要らない操作では空を渡す。
+        /// </summary>
+        public static bool TryText(
+            McpMethodContext context,
+            string name,
+            string operation,
+            IList<string> wanted,
+            out string value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            object given;
+            bool asked;
+            if (!TryWanted(context, name, operation, wanted, out given, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (!asked)
+            {
+                return true;
+            }
+
+            value = given as string;
+            if (!string.IsNullOrEmpty(value))
+            {
+                return true;
+            }
+
+            value = null;
+
+            return Refuse(
+                name + " は " + Listed(wanted) + " のときに渡す、空でない文字である。",
                 out code,
                 out message);
         }
@@ -156,6 +237,11 @@ namespace PmxEditorMcp
         private static string Listed(IList<string> names)
         {
             return string.Join("・", names.ToArray());
+        }
+
+        private static string Spelled(int number)
+        {
+            return number.ToString(CultureInfo.InvariantCulture);
         }
 
         private static string Spelled(float number)

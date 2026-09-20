@@ -107,6 +107,70 @@ namespace PmxEditorMcp
             return Shortened(x, y, z, new V3(0f, 0f, 0f));
         }
 
+        /// <summary>
+        /// 2つの点の中ほど。足し合わせを倍精度で行うので、単精度で持てるどの2点でも潰れない。
+        /// </summary>
+        public static V3 Between(V3 first, V3 second)
+        {
+            return new V3(
+                (float)(((double)first.X + second.X) / 2d),
+                (float)(((double)first.Y + second.Y) / 2d),
+                (float)(((double)first.Z + second.Z) / 2d));
+        }
+
+        /// <summary>
+        /// いくつかの点の重心。足し合わせを倍精度で行うので、単精度で持てるどの点を何個足しても
+        /// 潰れない。1つも無ければ原点を返す。
+        /// </summary>
+        public static V3 Middle(IEnumerable<V3> given)
+        {
+            if (given == null)
+            {
+                throw new ArgumentNullException(nameof(given));
+            }
+
+            double x = 0d;
+            double y = 0d;
+            double z = 0d;
+            int count = 0;
+            foreach (V3 held in given)
+            {
+                x += held.X;
+                y += held.Y;
+                z += held.Z;
+                count++;
+            }
+
+            return count == 0
+                ? new V3(0f, 0f, 0f)
+                : new V3((float)(x / count), (float)(y / count), (float)(z / count));
+        }
+
+        /// <summary>
+        /// ある点から別の点への隔たりを、倍率を掛けて返す。引き算も掛け算も倍精度で行うので、
+        /// 単精度で持てるどの2点でも、結果が単精度に収まるかぎり潰れない。
+        /// </summary>
+        public static V3 Apart(V3 to, V3 from, float by)
+        {
+            return new V3(
+                (float)(((double)to.X - from.X) * by),
+                (float)(((double)to.Y - from.Y) * by),
+                (float)(((double)to.Z - from.Z) * by));
+        }
+
+        /// <summary>
+        /// ある点から別の点への向きを、長さを1にそろえて返す。引き算も正規化も倍精度で行うので、
+        /// 単精度で持てるどの2点でも潰れない。2点が同じ点なら長さを持たない向きを返す。
+        /// </summary>
+        public static V3 Toward(V3 to, V3 from)
+        {
+            return Shortened(
+                (double)to.X - from.X,
+                (double)to.Y - from.Y,
+                (double)to.Z - from.Z,
+                new V3(0f, 0f, 0f));
+        }
+
         /// <summary>同じ成分を持つ、別の向き。</summary>
         public static V3 Copied(V3 given)
         {

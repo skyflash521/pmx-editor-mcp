@@ -15,6 +15,42 @@ namespace PmxEditorMcp
         public const string CountName = "count";
 
         /// <summary>
+        /// 選択の指定が1つも渡されていないことを確かめる。渡されていれば偽を返し、断る内容を渡す。
+        /// <paramref name="wanted"/> は、その指定を渡せる操作の名前である。
+        /// </summary>
+        public static bool TryNoTarget(
+            IDictionary<string, object> given,
+            TargetNames names,
+            IList<string> wanted,
+            out string code,
+            out string message)
+        {
+            if (given == null)
+            {
+                throw new ArgumentNullException(nameof(given));
+            }
+
+            if (names == null)
+            {
+                throw new ArgumentNullException(nameof(names));
+            }
+
+            code = null;
+            message = null;
+            string[] held = { names.Indices, names.Range, names.All };
+            foreach (string name in held.Where(given.ContainsKey))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = name + " を渡せるのは "
+                    + string.Join("・", wanted.ToArray()) + " のときだけである。";
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// 1つの集合の指定を読む。<paramref name="handles"/> が偽なら、ハンドルの配列は読まない。
         /// 値の形が違えば偽で、断る内容を渡す。
         /// </summary>

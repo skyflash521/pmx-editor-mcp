@@ -23,7 +23,7 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact(Skip = "impl pending: 同じ名前のモーフを先頭の1つへまとめる")]
+        [Fact]
         public void MorphsThatShareANameAreMergedIntoTheFirstOne()
         {
             IPXVertex vertex = Vertex(0f, 0f, 0f);
@@ -40,7 +40,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.Commits);
         }
 
-        [Fact(Skip = "impl pending: 同じ種類のモーフを先頭の1つへまとめる")]
+        [Fact]
         public void MorphsOfTheSameKindAreMergedIntoTheFirstOne()
         {
             IPXVertex vertex = Vertex(0f, 0f, 0f);
@@ -56,7 +56,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, first.Offsets.Count);
         }
 
-        [Fact(Skip = "impl pending: 同じ種類のモーフを、同じ相手へのオフセットを足しながらまとめる")]
+        [Fact]
         public void MergingByKindWithAddingPutsTheOffsetsForOneVertexTogether()
         {
             IPXVertex vertex = Vertex(0f, 0f, 0f);
@@ -71,7 +71,7 @@ namespace PmxEditorMcp.Tests
             Near(3.0, held.Offset.X);
         }
 
-        [Fact(Skip = "impl pending: 指したモーフを呼ぶグループモーフを足す")]
+        [Fact]
         public void AGroupMorphIsAddedThatCallsTheOnesThatWerePicked()
         {
             FakeMorph held = Morph("笑い", MorphKind.Vertex);
@@ -87,7 +87,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single((object[])value[ModelEditMorphs.AddedName]);
         }
 
-        [Fact(Skip = "impl pending: 指したモーフを切り替えるフリップモーフを足す")]
+        [Fact]
         public void AFlipMorphIsAddedThatSwitchesBetweenTheOnesThatWerePicked()
         {
             Morph("一", MorphKind.Vertex);
@@ -102,7 +102,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, made.Offsets.Count);
         }
 
-        [Fact(Skip = "impl pending: 頂点モーフを、動く頂点のまとまりごとに分ける")]
+        [Fact]
         public void AVertexMorphIsSplitIntoOneMorphPerGroupOfVerticesThatMove()
         {
             IPXVertex near = Vertex(0f, 0f, 0f);
@@ -120,7 +120,7 @@ namespace PmxEditorMcp.Tests
                 morph => Assert.Single(morph.Offsets));
         }
 
-        [Fact(Skip = "impl pending: いまの材質の値を写した材質モーフを足す")]
+        [Fact]
         public void AMaterialMorphIsAddedThatHoldsWhatTheMaterialsNowShow()
         {
             FakeMaterial material = new FakeMaterial("材質");
@@ -128,14 +128,13 @@ namespace PmxEditorMcp.Tests
 
             Morphs(
                 Operation(ModelEditMorphs.MaterialFromCurrent),
-                ComposedEditFixture.Given("all", true),
                 ComposedEditFixture.Given(ModelEditMorphs.NameName, "いまの色"));
 
             IPXMorph made = _fixture.Model.Morph.Single(morph => morph.Kind == MorphKind.Material);
             Assert.Same(material, ((IPXMaterialMorphOffset)Assert.Single(made.Offsets)).Material);
         }
 
-        [Fact(Skip = "impl pending: 名前を渡さないグループモーフの生成を断る")]
+        [Fact]
         public void MakingAGroupWithoutANameIsRefused()
         {
             Morph("笑い", MorphKind.Vertex);
@@ -147,7 +146,20 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = "impl pending: どの枠にも載っていないボーンを枠の末尾へ足す")]
+        [Fact]
+        public void PickingMorphsForTheOneThatReadsTheMaterialsIsRefused()
+        {
+            Morph("笑い", MorphKind.Vertex);
+
+            IDictionary<string, object> envelope = Morphs(
+                Operation(ModelEditMorphs.MaterialFromCurrent),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditMorphs.NameName, "いまの色"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void ABoneOnNoNodeAtAllIsAddedToThePickedNode()
         {
             IPXBone listed = Bone("載っている");
@@ -163,7 +175,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditNodes.AddedName]);
         }
 
-        [Fact(Skip = "impl pending: どの枠にも載っていないモーフを枠の末尾へ足す")]
+        [Fact]
         public void AMorphOnNoNodeAtAllIsAddedToThePickedNode()
         {
             IPXMorph missing = Morph("笑い", MorphKind.Vertex);
@@ -176,7 +188,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(missing, ((IPXMorphNodeItem)Assert.Single(node.Items)).Morph);
         }
 
-        [Fact(Skip = "impl pending: 表情の枠の中身をモーフの並びの順にそろえる")]
+        [Fact]
         public void TheExpressionNodeIsPutBackIntoTheOrderTheMorphsAreIn()
         {
             IPXMorph first = Morph("一", MorphKind.Vertex);
@@ -193,7 +205,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditNodes.ChangedName]);
         }
 
-        [Fact(Skip = "impl pending: 剛体の名前を、その剛体が指すボーンの名前にする")]
+        [Fact]
         public void ABodyTakesTheNameOfTheBoneItHolds()
         {
             IPXBone bone = Bone("腕");
@@ -207,7 +219,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelCopyFromReference.ChangedName]);
         }
 
-        [Fact(Skip = "impl pending: Jointの名前を、繋ぐ1つめの剛体の名前にする")]
+        [Fact]
         public void AJointTakesTheNameOfTheFirstBodyItTies()
         {
             FakeBody first = Body("一", null);
@@ -221,7 +233,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("一", joint.Name);
         }
 
-        [Fact(Skip = "impl pending: Jointの名前を、繋ぐ2つめの剛体の名前にする")]
+        [Fact]
         public void AJointTakesTheNameOfTheSecondBodyItTies()
         {
             FakeBody first = Body("一", null);
@@ -235,7 +247,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("二", joint.Name);
         }
 
-        [Fact(Skip = "impl pending: Jointの位置を、繋ぐ剛体が指すボーンの位置にする")]
+        [Fact]
         public void AJointMovesToTheBoneThatTheBodyItTiesHolds()
         {
             FakeBone bone = (FakeBone)Bone("腕");
@@ -251,7 +263,7 @@ namespace PmxEditorMcp.Tests
             Near(3.0, joint.Position.Z);
         }
 
-        [Fact(Skip = "impl pending: 知らない操作を写し取りのツールが断る")]
+        [Fact]
         public void AnOperationTheCopyingToolDoesNotKnowIsRefused()
         {
             Body("剛体", null);

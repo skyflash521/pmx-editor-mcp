@@ -24,7 +24,7 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact(Skip = "impl pending: 同じ名前のボーンを先頭の1つへまとめる")]
+        [Fact]
         public void BonesThatShareANameAreMergedIntoTheFirstOne()
         {
             IList<IPXBone> bones = Bones("腕", "腕", "手");
@@ -41,7 +41,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.Commits);
         }
 
-        [Fact(Skip = "impl pending: 子を持たないボーンを操作できない表示にする")]
+        [Fact]
         public void ABoneWithNoChildIsPutOutOfReach()
         {
             IList<IPXBone> bones = Bones("親", "子");
@@ -58,7 +58,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(bones[1].Controllable);
         }
 
-        [Fact(Skip = "impl pending: 表示先のボーン指定を、そのボーンまでの隔たりへ移す")]
+        [Fact]
         public void TheTipBoneBecomesTheGapToThatBone()
         {
             IList<IPXBone> bones = Bones("元", "先");
@@ -74,7 +74,7 @@ namespace PmxEditorMcp.Tests
             Near(2.0, bones[0].ToOffset.Y);
         }
 
-        [Fact(Skip = "impl pending: 表示先の隔たりを、いちばん近い子のボーン指定へ移す")]
+        [Fact]
         public void TheGapBecomesTheChildItPointsAt()
         {
             IList<IPXBone> bones = Bones("元", "先");
@@ -90,36 +90,34 @@ namespace PmxEditorMcp.Tests
             Assert.Same(bones[1], bones[0].ToBone);
         }
 
-        [Fact(Skip = "impl pending: 親より先に子が来ない並びへ組み直す")]
+        [Fact]
         public void AChildThatComesBeforeItsParentIsMovedAfterIt()
         {
             IList<IPXBone> bones = Bones("子", "親");
             bones[0].Parent = bones[1];
 
-            IDictionary<string, object> value = ComposedEditFixture.Value(Bone(
-                Operation(ModelEditBones.RelevelHierarchy),
-                ComposedEditFixture.Given("all", true)));
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Bone(Operation(ModelEditBones.RelevelHierarchy)));
 
             Assert.Same(bones[1], _fixture.Model.Bone[0]);
             Assert.Same(bones[0], _fixture.Model.Bone[1]);
             Assert.Equal(1, value[ModelEditBones.ChangedName]);
         }
 
-        [Fact(Skip = "impl pending: 親を持たないボーンの上に親を足す")]
+        [Fact]
         public void ABoneWithNoParentGetsOneAboveIt()
         {
             IList<IPXBone> bones = Bones("根");
 
-            IDictionary<string, object> value = ComposedEditFixture.Value(Bone(
-                Operation(ModelEditBones.AddRootParent),
-                ComposedEditFixture.Given("all", true)));
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Bone(Operation(ModelEditBones.AddRootParent)));
 
             Assert.Equal(2, _fixture.Model.Bone.Count);
             Assert.NotNull(bones[0].Parent);
             Assert.Single((object[])value[ModelEditBones.AddedName]);
         }
 
-        [Fact(Skip = "impl pending: 指したボーンの上に、同じ位置の親を足す")]
+        [Fact]
         public void AStageParentIsAddedAtTheSameSpotAndTakesOverTheOldParent()
         {
             IList<IPXBone> bones = Bones("親", "腕");
@@ -136,7 +134,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, made.Position.X);
         }
 
-        [Fact(Skip = "impl pending: 指したボーンの下に、同じ位置の子を足す")]
+        [Fact]
         public void AStageChildIsAddedAtTheSameSpotBelowThePickedBone()
         {
             IList<IPXBone> bones = Bones("腕");
@@ -151,7 +149,7 @@ namespace PmxEditorMcp.Tests
             Near(3.0, made.Position.Z);
         }
 
-        [Fact(Skip = "impl pending: 指したボーンと親の中間へボーンを足す")]
+        [Fact]
         public void ABoneIsAddedHalfwayBetweenThePickedOneAndItsParent()
         {
             IList<IPXBone> bones = Bones("親", "子");
@@ -168,7 +166,7 @@ namespace PmxEditorMcp.Tests
             Near(2.0, made.Position.Y);
         }
 
-        [Fact(Skip = "impl pending: 指したボーンを付与の元にする親を足す")]
+        [Fact]
         public void TheAddedParentTakesItsTurnFromTheBoneItWasAddedFor()
         {
             IList<IPXBone> bones = Bones("腕");
@@ -182,7 +180,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(made.IsAppendRotation);
         }
 
-        [Fact(Skip = "impl pending: 指した頂点の重心へボーンを足す")]
+        [Fact]
         public void ABoneIsAddedAtTheMiddleOfThePickedVertices()
         {
             Vertex(0f, 0f, 0f);
@@ -198,7 +196,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, made.Position.Y);
         }
 
-        [Fact(Skip = "impl pending: 指したボーンをIKの先とするIKボーンを足す")]
+        [Fact]
         public void AnIkBoneIsAddedThatReachesForThePickedBone()
         {
             IList<IPXBone> bones = Bones("根", "膝", "足首");
@@ -215,7 +213,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, made.IK.Links.Count);
         }
 
-        [Fact(Skip = "impl pending: 名前の左右が逆のボーンの位置を鏡像へそろえる")]
+        [Fact]
         public void ABoneNamedForTheOtherSideIsMovedToTheMirroredSpot()
         {
             IList<IPXBone> bones = Bones("左腕", "右腕");
@@ -231,7 +229,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, bones[1].Position.Y);
         }
 
-        [Fact(Skip = "impl pending: 軸の制限の向きを表示先への向きにする")]
+        [Fact]
         public void TheFixedAxisIsPointedAtTheTip()
         {
             IList<IPXBone> bones = Bones("腕");
@@ -245,7 +243,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, bones[0].FixAxis.Y);
         }
 
-        [Fact(Skip = "impl pending: ローカル軸を表示先と親からの向きで決める")]
+        [Fact]
         public void TheLocalAxisIsBuiltFromTheTipAndTheParent()
         {
             IList<IPXBone> bones = Bones("親", "腕");
@@ -266,7 +264,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, across.X);
         }
 
-        [Fact(Skip = "impl pending: ローカル軸の指定を外す")]
+        [Fact]
         public void TheLocalAxisIsTakenBackOff()
         {
             IList<IPXBone> bones = Bones("腕");
@@ -279,7 +277,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(bones[0].IsLocalFrame);
         }
 
-        [Fact(Skip = "impl pending: PMDのボーン種別をいまの設定から決め直す")]
+        [Fact]
         public void ThePmdKindIsSetFromWhatTheBoneCanDo()
         {
             IList<IPXBone> bones = Bones("腕");
@@ -294,7 +292,19 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditBones.ChangedName]);
         }
 
-        [Fact(Skip = "impl pending: 知らない操作をボーンのツールが断る")]
+        [Fact]
+        public void PickingBonesForAnOperationThatTakesTheWholeListIsRefused()
+        {
+            Bones("腕");
+
+            IDictionary<string, object> envelope = Bone(
+                Operation(ModelEditBones.RelevelHierarchy),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void AnOperationTheBoneToolDoesNotKnowIsRefused()
         {
             Bones("腕");
@@ -306,7 +316,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = "impl pending: ボーンに追従する剛体をボーンごとに足す")]
+        [Fact]
         public void ABodyThatFollowsItsBoneIsAddedForEachPickedBone()
         {
             IList<IPXBone> bones = Bones("腕", "手");
@@ -324,7 +334,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, ((object[])value[ModelCreatePhysics.AddedBodiesName]).Length);
         }
 
-        [Fact(Skip = "impl pending: 物理で動く剛体をボーンごとに足す")]
+        [Fact]
         public void ABodyThatThePhysicsMovesIsAddedForEachPickedBone()
         {
             Bones("腕");
@@ -339,7 +349,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(BodyBoxKind.Box, made.BoxKind);
         }
 
-        [Fact(Skip = "impl pending: 指した剛体どうしを繋ぐJointを足す")]
+        [Fact]
         public void AJointIsAddedBetweenThePickedBodies()
         {
             IList<IPXBody> bodies = Bodies("一", "二");
@@ -356,7 +366,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single((object[])value[ModelCreatePhysics.AddedJointsName]);
         }
 
-        [Fact(Skip = "impl pending: 物理で動く剛体と、親の剛体へ繋ぐJointを足す")]
+        [Fact]
         public void ABodyAndTheJointToItsParentAreAddedTogether()
         {
             IList<IPXBone> bones = Bones("親", "子");
@@ -375,7 +385,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(held, made.BodyA);
         }
 
-        [Fact(Skip = "impl pending: 指した頂点を包む大きさの剛体を足す")]
+        [Fact]
         public void OneBodyIsAddedAroundAllThePickedVertices()
         {
             Vertex(-1f, 0f, 0f);
@@ -392,7 +402,41 @@ namespace PmxEditorMcp.Tests
             Near(1.0, made.BoxSize.X);
         }
 
-        [Fact(Skip = "impl pending: 当たりの形を渡さない剛体の生成を断る")]
+        [Fact]
+        public void WrappingVerticesThatStillFitAroundTheLineIsNotRefused()
+        {
+            float far = float.MaxValue * 0.8f;
+            Vertex(0f, -far, 0f);
+            Vertex(0f, far, 0f);
+            Vertex(-far, 0f, 0f);
+            Vertex(far, 0f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Physics(
+                Operation(ModelCreatePhysics.BodyAtVertices),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelCreatePhysics.ShapeName, ModelCreatePhysics.Capsule)));
+
+            Assert.Single(_fixture.Model.Body);
+            Assert.Single((object[])value[ModelCreatePhysics.AddedBodiesName]);
+        }
+
+        [Fact]
+        public void WrappingVerticesTooFarApartToHoldAsASizeIsRefused()
+        {
+            Vertex(-float.MaxValue, -float.MaxValue, 0f);
+            Vertex(float.MaxValue, float.MaxValue, 0f);
+
+            IDictionary<string, object> envelope = Physics(
+                Operation(ModelCreatePhysics.BodyAtVertices),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelCreatePhysics.ShapeName, ModelCreatePhysics.Capsule));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void MakingABodyWithoutSayingTheShapeIsRefused()
         {
             Bones("腕");
