@@ -4126,6 +4126,38 @@
         },
         {
           "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "morph",
+            "operation": "new",
+            "count": 1,
+            "variant": "bone"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morphs",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "kind"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.kind",
+                "equals": "Bone"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_morphs",
           "arguments": {
             "operation": "materialFromCurrent",

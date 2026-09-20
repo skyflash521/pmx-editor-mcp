@@ -305,6 +305,78 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
         }
 
+        [Theory]
+        [InlineData(ModelInsertElements.VertexMorph, MorphKind.Vertex)]
+        [InlineData(ModelInsertElements.UvMorph, MorphKind.UV)]
+        [InlineData(ModelInsertElements.BoneMorph, MorphKind.Bone)]
+        [InlineData(ModelInsertElements.MaterialMorph, MorphKind.Material)]
+        [InlineData(ModelInsertElements.GroupMorph, MorphKind.Group)]
+        [InlineData(ModelInsertElements.FlipMorph, MorphKind.Flip)]
+        [InlineData(ModelInsertElements.ImpulseMorph, MorphKind.Impulse)]
+        public void AMorphIsMadeWithTheKindThatWasAskedFor(string variant, MorphKind kind)
+        {
+            Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Morph),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.New),
+                ComposedEditFixture.Given(ModelInsertElements.VariantName, variant));
+
+            Assert.Equal(kind, Assert.Single(_fixture.Model.Morph).Kind);
+        }
+
+        [Fact]
+        public void AMorphMadeWithoutSayingTheKindKeepsTheOneItWasBuiltWith()
+        {
+            Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Morph),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.New));
+
+            Assert.Single(_fixture.Model.Morph);
+        }
+
+        [Fact]
+        public void TheMorphKindIsNotTakenForAnotherKindOfElement()
+        {
+            IDictionary<string, object> envelope = Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.New),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.VariantName, ModelInsertElements.VertexMorph));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void TheMorphKindIsNotTakenWhenTheMorphIsCopied()
+        {
+            _fixture.Model.Morph.Add(new FakeMorph("笑い", MorphKind.Vertex));
+
+            IDictionary<string, object> envelope = Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Morph),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.Clone),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.VariantName, ModelInsertElements.VertexMorph));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void AMorphKindTheToolDoesNotKnowIsRefused()
+        {
+            IDictionary<string, object> envelope = Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Morph),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.New),
+                ComposedEditFixture.Given(ModelInsertElements.VariantName, "いない種類"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Empty(_fixture.Model.Morph);
+        }
+
         [Fact]
         public void MakingAKindThatMustPointAtSomethingElseIsRefused()
         {

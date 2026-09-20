@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
 {
@@ -30,6 +31,53 @@ namespace PmxEditorMcp
 
         /// <summary>入った位置を返す項目の名前。</summary>
         public const string IndicesName = "indices";
+
+        /// <summary>作るモーフの種類を受け取る入力の名前。</summary>
+        public const string VariantName = "variant";
+
+        public const string VertexMorph = "vertex";
+
+        public const string UvMorph = "uv";
+
+        public const string UvA1Morph = "uvA1";
+
+        public const string UvA2Morph = "uvA2";
+
+        public const string UvA3Morph = "uvA3";
+
+        public const string UvA4Morph = "uvA4";
+
+        public const string BoneMorph = "bone";
+
+        public const string MaterialMorph = "material";
+
+        public const string GroupMorph = "group";
+
+        public const string FlipMorph = "flip";
+
+        public const string ImpulseMorph = "impulse";
+
+        /// <summary>受け取れるモーフの種類。</summary>
+        public static IList<string> Variants
+        {
+            get
+            {
+                return new[]
+                {
+                    VertexMorph,
+                    UvMorph,
+                    UvA1Morph,
+                    UvA2Morph,
+                    UvA3Morph,
+                    UvA4Morph,
+                    BoneMorph,
+                    MaterialMorph,
+                    GroupMorph,
+                    FlipMorph,
+                    ImpulseMorph,
+                };
+            }
+        }
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
@@ -63,6 +111,7 @@ namespace PmxEditorMcp
                 OperationName,
                 AtName,
                 CountName,
+                VariantName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -85,8 +134,10 @@ namespace PmxEditorMcp
             bool copying = string.Equals(operation, Clone, StringComparison.Ordinal);
             int count;
             int? at;
+            string variant;
             if (!TryCount(context, copying, out count, out code, out message)
-                || !TryAt(context, out at, out code, out message))
+                || !TryAt(context, out at, out code, out message)
+                || !TryVariant(context, kind, copying, out variant, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -110,7 +161,17 @@ namespace PmxEditorMcp
             foreach (object owner in owners)
             {
                 IList<object> made;
-                if (!TryMade(context, kind, owner, builder, copying, count, out made, out code, out message))
+                if (!TryMade(
+                    context,
+                    kind,
+                    owner,
+                    builder,
+                    copying,
+                    count,
+                    variant,
+                    out made,
+                    out code,
+                    out message))
                 {
                     return ComposedEditResult.Refuse(code, message);
                 }
@@ -146,6 +207,7 @@ namespace PmxEditorMcp
             Func<object> builder,
             bool copying,
             int count,
+            string variant,
             out IList<object> made,
             out string code,
             out string message)
@@ -165,6 +227,11 @@ namespace PmxEditorMcp
                         message = kind.Name + " の新しい要素をこの相手のもとでは作れない。";
 
                         return false;
+                    }
+
+                    if (variant != null)
+                    {
+                        ((IPXMorph)item).Kind = Kind(variant);
                     }
 
                     built.Add(item);
@@ -247,6 +314,91 @@ namespace PmxEditorMcp
             code = null;
 
             return true;
+        }
+
+        /// <summary>
+        /// モーフを新しく作るとき以外に渡されていれば偽で、断る内容を渡す。渡されていなければ空を
+        /// 渡し、作る相手が決める種類のままにする。
+        /// </summary>
+        private static bool TryVariant(
+            McpMethodContext context,
+            ElementKind kind,
+            bool copying,
+            out string variant,
+            out string code,
+            out string message)
+        {
+            variant = null;
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(VariantName, out given))
+            {
+                code = null;
+
+                return true;
+            }
+
+            if (copying || !string.Equals(kind.Name, ElementKinds.Morph, StringComparison.Ordinal))
+            {
+                message = VariantName + " を渡せるのは、" + ElementKinds.Morph + " を "
+                    + New + " で作るときだけである。";
+
+                return false;
+            }
+
+            variant = given as string;
+            if (variant == null || !Variants.Contains(variant, StringComparer.Ordinal))
+            {
+                variant = null;
+                message = VariantName + " は次のどれかでなければならない: "
+                    + string.Join("・", Variants.ToArray());
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
+        }
+
+        private static MorphKind Kind(string variant)
+        {
+            switch (variant)
+            {
+                case VertexMorph:
+                    return MorphKind.Vertex;
+
+                case UvMorph:
+                    return MorphKind.UV;
+
+                case UvA1Morph:
+                    return MorphKind.UVA1;
+
+                case UvA2Morph:
+                    return MorphKind.UVA2;
+
+                case UvA3Morph:
+                    return MorphKind.UVA3;
+
+                case UvA4Morph:
+                    return MorphKind.UVA4;
+
+                case BoneMorph:
+                    return MorphKind.Bone;
+
+                case MaterialMorph:
+                    return MorphKind.Material;
+
+                case FlipMorph:
+                    return MorphKind.Flip;
+
+                case ImpulseMorph:
+                    return MorphKind.Impulse;
+
+                default:
+                    return MorphKind.Group;
+            }
         }
 
         private static bool TryAt(

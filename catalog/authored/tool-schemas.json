@@ -6355,6 +6355,12 @@
               "bounds": {
                 "minimum": 1
               }
+            },
+            {
+              "name": "variant",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
