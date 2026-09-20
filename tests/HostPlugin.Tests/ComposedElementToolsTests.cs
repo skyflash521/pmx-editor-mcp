@@ -12,7 +12,6 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public sealed class ComposedElementToolsTests : IDisposable
     {
-        private const string Pending = "impl pending: 要素の並べ替えと挿入と削除を1回の呼び出しで済ませる";
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -21,7 +20,7 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MovingUpSwapsWithTheOneAboveAndAnswersTheNewPosition()
         {
             Bones("一", "二", "三");
@@ -36,7 +35,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MovingUpTheTopOneLeavesTheOrderAlone()
         {
             Bones("一", "二");
@@ -49,7 +48,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { "一", "二" }, Names());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MovingDownTheBottomOneLeavesTheOrderAlone()
         {
             Bones("一", "二");
@@ -63,7 +62,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { "一", "二" }, Names());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MovingToTheTopKeepsThePickedOnesInTheOrderTheyStoodIn()
         {
             Bones("一", "二", "三", "四");
@@ -76,7 +75,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { "二", "四", "一", "三" }, Names());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MovingToTheBottomPutsThemLast()
         {
             Bones("一", "二", "三");
@@ -90,7 +89,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { "二", "三", "一" }, Names());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MovingToAPositionPutsThemThereInOrder()
         {
             Bones("一", "二", "三", "四");
@@ -104,7 +103,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { "三", "四", "一", "二" }, Names());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MovingToAPositionWithoutSayingWhereIsRefused()
         {
             Bones("一", "二");
@@ -118,7 +117,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void SayingWhereWithoutMovingToAPositionIsRefused()
         {
             Bones("一", "二");
@@ -132,7 +131,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void APositionOutsideTheListIsRefused()
         {
             Bones("一", "二");
@@ -146,7 +145,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AMoveTheToolDoesNotKnowIsRefused()
         {
             Bones("一", "二");
@@ -159,12 +158,14 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void FacesMoveInsideTheMaterialThatOwnsThem()
         {
+            FakeVertex vertex = new FakeVertex();
+            _fixture.Model.Vertex.Add(vertex);
             FakeMaterial material = new FakeMaterial("材質");
-            FakeFace first = new FakeFace();
-            FakeFace second = new FakeFace();
+            FakeFace first = new FakeFace(vertex, vertex, vertex);
+            FakeFace second = new FakeFace(vertex, vertex, vertex);
             material.Faces.Add(first);
             material.Faces.Add(second);
             _fixture.Model.Material.Add(material);
@@ -178,7 +179,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new IPXFace[] { second, first }, material.Faces.ToArray());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AKindThatPmxLinesUpDoesNotTakeAParentSet()
         {
             Bones("一");
@@ -192,7 +193,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AKindAnElementLinesUpNeedsTheParentSet()
         {
             _fixture.Model.Material.Add(new FakeMaterial("材質"));
@@ -205,7 +206,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void LeavingOutTheKindIsRefused()
         {
             IDictionary<string, object> envelope = Reorder(
@@ -215,7 +216,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void NewElementsGoInAtThePositionAndAnswerWhereTheyLanded()
         {
             Bones("一", "二");
@@ -232,7 +233,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void LeavingOutThePositionPutsThemAtTheEnd()
         {
             Bones("一");
@@ -245,7 +246,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, _fixture.Model.Bone.Count);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CloningPutsACopyOfThePickedOneInWithoutTouchingTheOriginal()
         {
             Bones("一", "二");
@@ -263,7 +264,7 @@ namespace PmxEditorMcp.Tests
             Assert.NotSame(original, _fixture.Model.Bone[2]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CloningWithoutPickingWhatToCopyIsRefused()
         {
             Bones("一");
@@ -276,7 +277,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MakingNewOnesWhilePickingWhatToCopyIsRefused()
         {
             Bones("一");
@@ -290,7 +291,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void APositionPastTheEndOfTheListIsRefused()
         {
             Bones("一");
@@ -304,7 +305,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MakingANodeItemNeedsTheVariantThatSaysWhichOneToMake()
         {
             _fixture.Model.Node.Add(new FakeNode("枠"));
@@ -319,7 +320,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(ElementKinds.VariantName, ComposedEditFixture.Message(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheVariantMakesTheNodeItemThatWasAskedFor()
         {
             FakeNode node = new FakeNode("枠");
@@ -335,7 +336,7 @@ namespace PmxEditorMcp.Tests
             Assert.IsAssignableFrom<IPXMorphNodeItem>(Assert.Single(node.Items));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void DeletingTakesTheOnesPickedAndRepairsWhatPointedAtThem()
         {
             FakeBone root = new FakeBone("親");
@@ -355,7 +356,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void KeepingTheRelatedOnesLeavesThePointersDangling()
         {
             FakeBone going = new FakeBone("消す");
@@ -371,7 +372,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(going, vertex.Bone1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CascadingTakesTheOnesOnlyTheRemovedElementUsedAndSaysHowMany()
         {
             FakeVertex alone = new FakeVertex();
@@ -386,17 +387,20 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ReferenceCleanup.RelatedName, ReferenceCleanup.Cascade)));
 
             Assert.Empty(_fixture.Model.Vertex);
-            IDictionary<string, object> following =
-                (IDictionary<string, object>)value[ModelDeleteElements.FollowingName];
-            Assert.Equal(1, following[ElementKinds.Vertex]);
+            IDictionary<string, object> dragged = ((object[])value[ModelDeleteElements.FollowingName])
+                .Cast<IDictionary<string, object>>()
+                .Single(entry => Equals(entry[ModelDeleteElements.KindName], ElementKinds.Vertex));
+            Assert.Equal(1, dragged[ModelDeleteElements.RemovedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void DeletingFacesTakesThemFromTheMaterialThatOwnsThem()
         {
+            FakeVertex vertex = new FakeVertex();
+            _fixture.Model.Vertex.Add(vertex);
             FakeMaterial material = new FakeMaterial("材質");
-            material.Faces.Add(new FakeFace());
-            material.Faces.Add(new FakeFace());
+            material.Faces.Add(new FakeFace(vertex, vertex, vertex));
+            material.Faces.Add(new FakeFace(vertex, vertex, vertex));
             _fixture.Model.Material.Add(material);
 
             Delete(
@@ -407,7 +411,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(material.Faces);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void DeletingEverythingTakesTheWholeList()
         {
             Bones("一", "二", "三");
@@ -419,7 +423,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(_fixture.Model.Bone);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void APositionOutsideTheListIsRefusedWithoutReflecting()
         {
             Bones("一");
@@ -433,7 +437,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheTableAndTheFrameAreRequired()
         {
             Assert.Throws<ArgumentNullException>(
@@ -444,7 +448,7 @@ namespace PmxEditorMcp.Tests
                 () => ComposedModelTools.AddTo(new McpMethodTable(), _fixture.Edit, null));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MovingSeveralOnesThatAreNotNextToEachOtherLiftsEachOfThem()
         {
             Bones("一", "二", "三", "四");
@@ -458,7 +462,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { 0, 2 }, (object[])value[ModelReorderElements.IndicesName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void LeavingOutWhichOperationToRunIsRefused()
         {
             Bones("一");
@@ -469,7 +473,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnOperationTheToolDoesNotKnowIsRefused()
         {
             Bones("一");
@@ -481,7 +485,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(0)]
         [InlineData(-1)]
         [InlineData(1.5)]
@@ -499,7 +503,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(_fixture.Model.Bone);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void APositionBeforeTheStartOfTheListIsRefused()
         {
             Bones("一");
@@ -513,7 +517,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AVariantForAKindThatDecidesItsOwnShapeIsRefused()
         {
             Bones("一");
@@ -527,7 +531,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void InsertingIntoSeveralParentsPutsOneIntoEachOfThem()
         {
             FakeMaterial first = new FakeMaterial("一");
@@ -546,7 +550,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { 0, 0 }, (object[])value[ModelInsertElements.IndicesName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void LeavingOutWhatToDeleteIsRefused()
         {
             Bones("一");
@@ -558,7 +562,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(_fixture.Model.Bone);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void DeletingAnswersHowManyPointersItPutBackInOrder()
         {
             FakeBone going = new FakeBone("消す");

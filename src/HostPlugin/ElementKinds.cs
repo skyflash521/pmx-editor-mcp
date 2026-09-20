@@ -482,6 +482,55 @@ namespace PmxEditorMcp
             return true;
         }
 
+        /// <summary>
+        /// その相手の並びの中で、指した要素の位置を解く。位置は昇順で重なりを持たない。解けなければ
+        /// 偽で、断る内容を渡す。
+        /// </summary>
+        public static bool TryPositions(
+            McpMethodContext context,
+            ElementKind kind,
+            object owner,
+            out IList<int> positions,
+            out string code,
+            out string message)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (kind == null)
+            {
+                throw new ArgumentNullException(nameof(kind));
+            }
+
+            positions = null;
+            TargetRequest request;
+            if (!TargetInput.TryTake(
+                context.Params, TargetNames.Element, false, out request, out code, out message))
+            {
+                return false;
+            }
+
+            ResolvedTargets resolved;
+            if (!TargetSelection.TryResolve(
+                request,
+                TargetForm.Indices | TargetForm.Range | TargetForm.All,
+                kind.Items(owner).Count,
+                id => false,
+                out resolved,
+                out code,
+                out message,
+                TargetNames.Element))
+            {
+                return false;
+            }
+
+            positions = resolved.Indices.OrderBy(at => at).ToList();
+
+            return true;
+        }
+
         private static bool Pointed(TargetRequest request)
         {
             return request.Indices != null

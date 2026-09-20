@@ -15,6 +15,8 @@ namespace PmxEditorMcp
     {
         private const string MenuText = "PMX Editor MCP";
 
+        private const string BuilderType = "PEPlugin.IPXPmxBuilder";
+
         private readonly object _operationGate = new object();
 
         private Form _uiAnchor;
@@ -193,6 +195,10 @@ namespace PmxEditorMcp
                     new PressedModifierKeys(),
                     new EventBindingTable(
                         GeneratedTools.Attachments(), GeneratedTools.Payloads()));
+                ComposedModelTools.AddTo(
+                    methods,
+                    new ComposedEdit(current, new UndoBarrier(recovery)),
+                    () => Builder(receivers));
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
@@ -217,6 +223,18 @@ namespace PmxEditorMcp
                     _log.Write("起動時に待受を開始しなかった: " + reason);
                 }
             }
+        }
+
+        /// <summary>新しい要素を作る相手。組み立てのツールが要素を1つ作るたびに引く。</summary>
+        private object Builder(IDictionary<string, SdkReceiver> receivers)
+        {
+            SdkReceiver receiver;
+            if (!receivers.TryGetValue(BuilderType, out receiver))
+            {
+                throw new InvalidOperationException("受け手を得る道が無い: " + BuilderType);
+            }
+
+            return receiver(_resident);
         }
 
         /// <summary>
