@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using PEPlugin.Pmx;
+using PEPlugin.SDX;
 
 namespace PmxEditorMcp
 {
@@ -14,7 +17,9 @@ namespace PmxEditorMcp
         /// <summary>指した材質を、先頭の材質へまとめる。</summary>
         public const string Merge = "merge";
 
-        /// <summary>モデルの全部の材質を1つへまとめる。</summary>
+        /// <summary>
+        /// モデルの全部の材質を1つへまとめる。指した材質では絞らず、並びのすべてを相手にする。
+        /// </summary>
         public const string MergeAll = "mergeAll";
 
         /// <summary>色の許容幅の中で設定が同じ材質どうしをまとめる。</summary>
@@ -62,19 +67,484 @@ namespace PmxEditorMcp
         /// <summary>足した材質の位置を返す項目の名前。</summary>
         public const string AddedName = "added";
 
+        private const string FaceHandlesName = "faceHandles";
+
+        private static readonly TargetNames FaceNames =
+            new TargetNames(FaceIndicesName, FaceRangeName, FaceAllName, FaceHandlesName);
+
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
             get
             {
-                return new[] { Merge, MergeAll, MergeSame, ExtractFaces, DuplicateParts, ClampColor };
+                return new[]
+                {
+                    Merge, MergeAll, MergeSame, ExtractFaces, DuplicateParts, ClampColor,
+                };
             }
+        }
+
+        /// <summary>受け取れる持ち物。スキーマが並べる順。</summary>
+        public static IList<string> Parts
+        {
+            get { return new[] { FacesOnly, WithVertices, WithMorphs }; }
         }
 
         /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
-            throw new NotImplementedException();
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (edit == null)
+            {
+                throw new ArgumentNullException(nameof(edit));
+            }
+
+            List<string> known = new List<string>
+            {
+                ComposedOperation.OperationName,
+                TargetNames.Element.Indices,
+                TargetNames.Element.Range,
+                TargetNames.Element.All,
+                ColorToleranceName,
+                PartsName,
+                FaceIndicesName,
+                FaceRangeName,
+                FaceAllName,
+            };
+            methods.Add(ToolName, edit.Method(known, Run));
+        }
+
+        private static ComposedEditResult Run(McpMethodContext context, object pmx)
+        {
+            IPXPmx model = (IPXPmx)pmx;
+            string operation;
+            string code;
+            string message;
+            IList<int> chosen;
+            if (!ComposedOperation.TryTake(
+                    context, Operations, out operation, out code, out message)
+                || !TargetInput.TryPositions(
+                    context.Params,
+                    TargetNames.Element,
+                    model.Material.Count,
+                    out chosen,
+                    out code,
+                    out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            float tolerance;
+            string parts;
+            if (!TryTolerance(context, operation, out tolerance, out code, out message)
+                || !TryParts(context, operation, out parts, out code, out message)
+                || !TryFacesGiven(context, operation, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            IList<IPXMaterial> picked = chosen.Select(at => model.Material[at]).ToList();
+            switch (operation)
+            {
+                case Merge:
+                    return Merged(model, new[] { picked });
+
+                case MergeAll:
+                    return Merged(model, new[] { model.Material.ToList() });
+
+                case MergeSame:
+                    return Merged(model, Alike(picked, tolerance));
+
+                case ExtractFaces:
+                    return Extracted(context, model, picked);
+
+                case DuplicateParts:
+                    return Duplicated(model, picked, parts);
+
+                default:
+                    return Clamped(picked);
+            }
+        }
+
+        private static ComposedEditResult Merged(
+            IPXPmx model, IEnumerable<IList<IPXMaterial>> groups)
+        {
+            Dictionary<IPXMaterial, IPXMaterial> moved =
+                new Dictionary<IPXMaterial, IPXMaterial>(ReferenceComparer<IPXMaterial>.Instance);
+            int changed = 0;
+            foreach (IList<IPXMaterial> group in groups.Where(g => g.Count > 1))
+            {
+                IPXMaterial kept = group[0];
+                foreach (IPXMaterial dropped in group.Skip(1))
+                {
+                    foreach (IPXFace face in dropped.Faces.ToList())
+                    {
+                        kept.Faces.Add(face);
+                    }
+
+                    model.Material.Remove(dropped);
+                    moved[dropped] = kept;
+                }
+
+                changed++;
+            }
+
+            ReferenceCleanup.Repoint(model, moved);
+
+            return Answer(changed, moved.Count, new int[0]);
+        }
+
+        private static IEnumerable<IList<IPXMaterial>> Alike(
+            IList<IPXMaterial> picked, float tolerance)
+        {
+            List<IList<IPXMaterial>> groups = new List<IList<IPXMaterial>>();
+            foreach (IPXMaterial material in picked)
+            {
+                IList<IPXMaterial> group = groups.FirstOrDefault(
+                    g => Same(g[0], material, tolerance));
+                if (group == null)
+                {
+                    groups.Add(new List<IPXMaterial> { material });
+                }
+                else
+                {
+                    group.Add(material);
+                }
+            }
+
+            return groups;
+        }
+
+        private static bool Same(IPXMaterial left, IPXMaterial right, float tolerance)
+        {
+            return string.Equals(left.Tex, right.Tex, StringComparison.Ordinal)
+                && string.Equals(left.Sphere, right.Sphere, StringComparison.Ordinal)
+                && string.Equals(left.Toon, right.Toon, StringComparison.Ordinal)
+                && left.SphereMode == right.SphereMode
+                && left.BothDraw == right.BothDraw
+                && left.Shadow == right.Shadow
+                && left.SelfShadow == right.SelfShadow
+                && left.SelfShadowMap == right.SelfShadowMap
+                && left.Edge == right.Edge
+                && left.VertexColor == right.VertexColor
+                && left.PrimitiveType == right.PrimitiveType
+                && Close(left.Diffuse, right.Diffuse, tolerance)
+                && Close(left.EdgeColor, right.EdgeColor, tolerance)
+                && Close(left.Specular, right.Specular, tolerance)
+                && Close(left.Ambient, right.Ambient, tolerance)
+                && Math.Abs(left.Power - right.Power) <= tolerance
+                && Math.Abs(left.EdgeSize - right.EdgeSize) <= tolerance;
+        }
+
+        private static bool Close(V4 left, V4 right, float tolerance)
+        {
+            return Math.Abs(left.X - right.X) <= tolerance
+                && Math.Abs(left.Y - right.Y) <= tolerance
+                && Math.Abs(left.Z - right.Z) <= tolerance
+                && Math.Abs(left.W - right.W) <= tolerance;
+        }
+
+        private static bool Close(V3 left, V3 right, float tolerance)
+        {
+            return Math.Abs(left.X - right.X) <= tolerance
+                && Math.Abs(left.Y - right.Y) <= tolerance
+                && Math.Abs(left.Z - right.Z) <= tolerance;
+        }
+
+        private static ComposedEditResult Extracted(
+            McpMethodContext context, IPXPmx model, IList<IPXMaterial> picked)
+        {
+            List<int> added = new List<int>();
+            foreach (IPXMaterial material in picked)
+            {
+                IList<int> faces;
+                string code;
+                string message;
+                if (!TargetInput.TryPositions(
+                    context.Params,
+                    FaceNames,
+                    material.Faces.Count,
+                    out faces,
+                    out code,
+                    out message))
+                {
+                    return ComposedEditResult.Refuse(code, message);
+                }
+
+                IList<IPXFace> taken = faces.Select(at => material.Faces[at]).ToList();
+                foreach (IPXFace face in taken)
+                {
+                    material.Faces.Remove(face);
+                }
+
+                IPXMaterial made = Emptied(material);
+                foreach (IPXFace face in taken)
+                {
+                    made.Faces.Add(face);
+                }
+
+                model.Material.Add(made);
+                added.Add(model.Material.Count - 1);
+            }
+
+            return Answer(picked.Count, 0, added);
+        }
+
+        private static ComposedEditResult Duplicated(
+            IPXPmx model, IList<IPXMaterial> picked, string parts)
+        {
+            List<int> added = new List<int>();
+            foreach (IPXMaterial material in picked)
+            {
+                IPXMaterial made = (IPXMaterial)material.Clone();
+                if (!string.Equals(parts, FacesOnly, StringComparison.Ordinal))
+                {
+                    Split(model, made, string.Equals(parts, WithMorphs, StringComparison.Ordinal));
+                }
+
+                model.Material.Add(made);
+                added.Add(model.Material.Count - 1);
+            }
+
+            return Answer(picked.Count, 0, added);
+        }
+
+        private static void Split(IPXPmx model, IPXMaterial made, bool morphs)
+        {
+            Dictionary<IPXVertex, IPXVertex> apart =
+                new Dictionary<IPXVertex, IPXVertex>(ReferenceComparer<IPXVertex>.Instance);
+            foreach (IPXFace face in made.Faces)
+            {
+                foreach (IPXVertex corner in
+                    new[] { face.Vertex1, face.Vertex2, face.Vertex3 })
+                {
+                    if (corner == null || apart.ContainsKey(corner))
+                    {
+                        continue;
+                    }
+
+                    IPXVertex copy = (IPXVertex)corner.Clone();
+                    model.Vertex.Add(copy);
+                    apart[corner] = copy;
+                }
+            }
+
+            foreach (IPXFace face in made.Faces)
+            {
+                face.Vertex1 = apart[face.Vertex1];
+                face.Vertex2 = apart[face.Vertex2];
+                face.Vertex3 = apart[face.Vertex3];
+            }
+
+            if (!morphs)
+            {
+                return;
+            }
+
+            foreach (IPXMorph morph in model.Morph.ToList())
+            {
+                if (!morph.Offsets.Any(o => Touches(o, apart)))
+                {
+                    continue;
+                }
+
+                IPXMorph copy = (IPXMorph)morph.Clone();
+                foreach (IPXMorphOffset offset in copy.Offsets)
+                {
+                    Follow(offset, apart);
+                }
+
+                model.Morph.Add(copy);
+            }
+        }
+
+        private static bool Touches(
+            IPXMorphOffset offset, IDictionary<IPXVertex, IPXVertex> apart)
+        {
+            IPXVertexMorphOffset shifted = offset as IPXVertexMorphOffset;
+            if (shifted != null)
+            {
+                return shifted.Vertex != null && apart.ContainsKey(shifted.Vertex);
+            }
+
+            IPXUVMorphOffset slid = offset as IPXUVMorphOffset;
+
+            return slid != null && slid.Vertex != null && apart.ContainsKey(slid.Vertex);
+        }
+
+        private static void Follow(
+            IPXMorphOffset offset, IDictionary<IPXVertex, IPXVertex> apart)
+        {
+            IPXVertexMorphOffset shifted = offset as IPXVertexMorphOffset;
+            if (shifted != null && shifted.Vertex != null && apart.ContainsKey(shifted.Vertex))
+            {
+                shifted.Vertex = apart[shifted.Vertex];
+            }
+
+            IPXUVMorphOffset slid = offset as IPXUVMorphOffset;
+            if (slid != null && slid.Vertex != null && apart.ContainsKey(slid.Vertex))
+            {
+                slid.Vertex = apart[slid.Vertex];
+            }
+        }
+
+        private static IPXMaterial Emptied(IPXMaterial material)
+        {
+            // 面を作る口はSDKの並びに無いので、元を写して面を空にする。
+            IPXMaterial made = (IPXMaterial)material.Clone();
+            made.Faces.Clear();
+
+            return made;
+        }
+
+        private static ComposedEditResult Clamped(IList<IPXMaterial> picked)
+        {
+            foreach (IPXMaterial material in picked)
+            {
+                material.Diffuse = Held(material.Diffuse);
+                material.EdgeColor = Held(material.EdgeColor);
+                material.Specular = Held(material.Specular);
+                material.Ambient = Held(material.Ambient);
+            }
+
+            return Answer(picked.Count, 0, new int[0]);
+        }
+
+        private static V4 Held(V4 given)
+        {
+            return new V4(Held(given.X), Held(given.Y), Held(given.Z), Held(given.W));
+        }
+
+        private static V3 Held(V3 given)
+        {
+            return new V3(Held(given.X), Held(given.Y), Held(given.Z));
+        }
+
+        private static float Held(float given)
+        {
+            return Math.Min(1f, Math.Max(0f, given));
+        }
+
+        private static ComposedEditResult Answer(int changed, int removed, IList<int> added)
+        {
+            return ComposedEditResult.Complete(
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { ChangedName, changed },
+                    { RemovedName, removed },
+                    { AddedName, added.Cast<object>().ToArray() },
+                });
+        }
+
+        private static bool TryTolerance(
+            McpMethodContext context,
+            string operation,
+            out float tolerance,
+            out string code,
+            out string message)
+        {
+            tolerance = 0f;
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            bool pointed = context.Params.TryGetValue(ColorToleranceName, out given);
+            if (!string.Equals(operation, MergeSame, StringComparison.Ordinal))
+            {
+                if (pointed)
+                {
+                    message = ColorToleranceName + " を渡せるのは " + MergeSame + " のときだけである。";
+
+                    return false;
+                }
+
+                code = null;
+
+                return true;
+            }
+
+            if (!pointed || !ValueInput.TrySingle(given, out tolerance))
+            {
+                message = ColorToleranceName + " は " + MergeSame + " のときに渡す、有限の数である。";
+
+                return false;
+            }
+
+            if (tolerance < 0f)
+            {
+                message = ColorToleranceName + " は0以上でなければならない。";
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
+        }
+
+        private static bool TryParts(
+            McpMethodContext context,
+            string operation,
+            out string parts,
+            out string code,
+            out string message)
+        {
+            parts = null;
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            bool pointed = context.Params.TryGetValue(PartsName, out given);
+            if (!string.Equals(operation, DuplicateParts, StringComparison.Ordinal))
+            {
+                if (pointed)
+                {
+                    message = PartsName + " を渡せるのは " + DuplicateParts + " のときだけである。";
+
+                    return false;
+                }
+
+                code = null;
+
+                return true;
+            }
+
+            parts = given as string;
+            if (parts == null || !Parts.Contains(parts, StringComparer.Ordinal))
+            {
+                parts = null;
+                message = PartsName + " は次のどれかでなければならない: "
+                    + string.Join("・", Parts.ToArray());
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
+        }
+
+        private static bool TryFacesGiven(
+            McpMethodContext context, string operation, out string code, out string message)
+        {
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            bool pointed = context.Params.ContainsKey(FaceIndicesName)
+                || context.Params.ContainsKey(FaceRangeName)
+                || context.Params.ContainsKey(FaceAllName);
+            if (string.Equals(operation, ExtractFaces, StringComparison.Ordinal) || !pointed)
+            {
+                code = null;
+
+                return true;
+            }
+
+            message = FaceIndicesName + "・" + FaceRangeName + "・" + FaceAllName
+                + " を渡せるのは " + ExtractFaces + " のときだけである。";
+
+            return false;
         }
     }
 }

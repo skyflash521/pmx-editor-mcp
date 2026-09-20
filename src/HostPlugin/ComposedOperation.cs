@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PmxEditorMcp
 {
@@ -20,7 +21,34 @@ namespace PmxEditorMcp
             out string code,
             out string message)
         {
-            throw new NotImplementedException();
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (operations == null)
+            {
+                throw new ArgumentNullException(nameof(operations));
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            context.Params.TryGetValue(OperationName, out given);
+            operation = given as string;
+            if (operation == null
+                || !operations.Contains(operation, StringComparer.Ordinal))
+            {
+                operation = null;
+                message = OperationName + " は次のどれかでなければならない: "
+                    + string.Join("・", operations.ToArray());
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
         }
     }
 }

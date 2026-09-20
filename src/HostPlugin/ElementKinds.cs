@@ -504,31 +504,13 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(kind));
             }
 
-            positions = null;
-            TargetRequest request;
-            if (!TargetInput.TryTake(
-                context.Params, TargetNames.Element, false, out request, out code, out message))
-            {
-                return false;
-            }
-
-            ResolvedTargets resolved;
-            if (!TargetSelection.TryResolve(
-                request,
-                TargetForm.Indices | TargetForm.Range | TargetForm.All,
+            return TargetInput.TryPositions(
+                context.Params,
+                TargetNames.Element,
                 kind.Items(owner).Count,
-                id => false,
-                out resolved,
+                out positions,
                 out code,
-                out message,
-                TargetNames.Element))
-            {
-                return false;
-            }
-
-            positions = resolved.Indices.OrderBy(at => at).ToList();
-
-            return true;
+                out message);
         }
 
         private static bool Pointed(TargetRequest request)

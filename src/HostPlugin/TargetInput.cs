@@ -92,6 +92,44 @@ namespace PmxEditorMcp
             return true;
         }
 
+        /// <summary>
+        /// その並びの中で、指した位置を解く。位置は昇順で重なりを持たない。解けなければ偽で、
+        /// 断る内容を渡す。
+        /// </summary>
+        public static bool TryPositions(
+            IDictionary<string, object> parameters,
+            TargetNames names,
+            int count,
+            out IList<int> positions,
+            out string code,
+            out string message)
+        {
+            positions = null;
+            TargetRequest request;
+            if (!TryTake(parameters, names, false, out request, out code, out message))
+            {
+                return false;
+            }
+
+            ResolvedTargets resolved;
+            if (!TargetSelection.TryResolve(
+                request,
+                TargetForm.Indices | TargetForm.Range | TargetForm.All,
+                count,
+                id => false,
+                out resolved,
+                out code,
+                out message,
+                names))
+            {
+                return false;
+            }
+
+            positions = resolved.Indices.OrderBy(at => at).ToList();
+
+            return true;
+        }
+
         private static bool TryIndices(
             IDictionary<string, object> parameters,
             TargetNames names,

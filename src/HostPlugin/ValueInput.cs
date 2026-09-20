@@ -439,11 +439,11 @@ namespace PmxEditorMcp
 
             if (target == typeof(float))
             {
-                float narrowed = (float)number;
+                float narrowed;
 
-                return float.IsInfinity(narrowed)
-                    ? Invalid("単精度で持てる範囲を超えている。", out code, out message)
-                    : Take(narrowed, out value);
+                return TrySingle(json, out narrowed)
+                    ? Take(narrowed, out value)
+                    : Invalid("単精度で持てる範囲を超えている。", out code, out message);
             }
 
             if (target == typeof(double))
@@ -609,8 +609,37 @@ namespace PmxEditorMcp
             return true;
         }
 
+        /// <summary>
+        /// JSONの値を単精度の数として読む。数値でないもの・有限でないもの・単精度で持てる範囲を
+        /// 出るものは偽を返す。
+        /// </summary>
+        public static bool TrySingle(object json, out float number)
+        {
+            number = 0f;
+            if (!IsNumber(json))
+            {
+                return false;
+            }
+
+            double written = Convert.ToDouble(json, CultureInfo.InvariantCulture);
+            if (double.IsNaN(written) || double.IsInfinity(written))
+            {
+                return false;
+            }
+
+            float narrowed = (float)written;
+            if (float.IsInfinity(narrowed))
+            {
+                return false;
+            }
+
+            number = narrowed;
+
+            return true;
+        }
+
         /// <summary>JSONの値が数値かどうか。文字列や真偽値を変換で数値へ化けさせないために先に見る。</summary>
-        internal static bool IsNumber(object json)
+        public static bool IsNumber(object json)
         {
             switch (Convert.GetTypeCode(json))
             {

@@ -305,9 +305,34 @@
       "duty": "窓の一覧と、窓の中の部品の木を返す。エディタが起きていなくても、窓が閉じていても同じ答えを返す。window を省くと全部の窓の一覧を返す。window は型の完全名か窓の題で指す。型の完全名が当たればその窓だけ、当たらなければ題が一致する窓すべて、それも無ければ名前か題に部分一致する窓すべてを返し、どれも当たらなければ空を返す。型の完全名か題が一致した窓には、どこから開くか openedBy と、部品の木 node と、その窓が出す確認や報告の文言 messages が付く。node は type と name と text と toolTip と shortcut と contextMenu と fragment と dynamic と opens と children を持つ。children は同じ形の節が並ぶ。fragment はその節へ差し込んだ断片のクラス、dynamic は件数が実行時に決まる枝で組み立てる method を持ち、opens はその部品が開く窓の型の完全名である。無い項目は省く。path は node の根から降りる name の並びで、渡すとその部品を根とする木を返す。depth は返す段数で、0以上100以下の整数である。0はその節だけ、省くと下まで全部を返す。木が応答の枠に収まらないときは段数を縮めずにエラーを返すので、path で降りるか window で1つに絞って取り直す。total は当たった窓の総数で、返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。offset は0以上2147483647以下の整数で既定は0である。"
     },
     {
+      "tool": "model_clean_faces",
+      "branching": false,
+      "duty": "指した材質から、不正な面と重なった面を落とす。材質は indices・range・all のどれか1つで指す。operation は invalid・duplicate・duplicateInMaterial のいずれかで、invalid は3つの頂点が揃っていない面を、duplicate はモデル全体で同じ3頂点を指す面を、duplicateInMaterial は材質ごとに同じ3頂点を指す面を、最初の1つだけ残して落とす。removed に落とした面の数を返す。"
+    },
+    {
       "tool": "model_delete_elements",
       "branching": false,
       "duty": "指した要素を並びから消す。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。消す対象は indices・range・all のどれか1つで指す。related は keep・repair・cascade のいずれかで、省くと repair になる。repair は指す先を失った口を直し、ウェイトは残るボーンへ移し、直せない口は落とす。cascade はそれに加えて、消した要素だけが使っていた要素も消す。keep は何も触らない。removed に消した件数、following に種類ごとのつられて消えた件数、repaired に直した口の数を返す。"
+    },
+    {
+      "tool": "model_edit_faces",
+      "branching": false,
+      "duty": "指した面の向き・対角線・押し出し・共有頂点の分離を行う。材質は parentIndices・parentRange・parentAll のどれか1つ、その中の面は indices・range・all のどれか1つで指す。operation は flip・swapDiagonal・extrude・separateSharedVertices のいずれか。flip は2つめと3つめの頂点を入れ替える。swapDiagonal は辺を共有する2つの面が作る四角の対角線を引き直す。extrude は distance に押し出す長さを渡し、指した面をひとまとまりとして押し出して境界の辺へ側面を張る。separateSharedVertices は指していない面と共有する頂点を複製して分ける。changed・addedVertices・addedFaces を返す。"
+    },
+    {
+      "tool": "model_edit_materials",
+      "branching": false,
+      "duty": "指した材質の結合・単一化・分割・取り出し・複製・色の丸めを行う。材質は indices・range・all のどれか1つで指す。operation は merge・mergeAll・mergeSame・extractFaces・duplicateParts・clampColor のいずれか。merge は指した材質を先頭へまとめ、mergeAll は並びのすべてを1つへまとめる。mergeSame は colorTolerance に色の許容幅を渡し、その中で設定が同じ材質どうしをまとめる。extractFaces は faceIndices・faceRange・faceAll のどれか1つで材質の中の面を指し、その面を新しい材質へ移す。duplicateParts は parts に facesOnly・withVertices・withMorphs のいずれかを渡し、その持ち物を複製した材質を足す。clampColor は色の各成分を0以上1以下へ丸める。changed・removed・added を返す。"
+    },
+    {
+      "tool": "model_edit_uv",
+      "branching": false,
+      "duty": "指した頂点のUVの反転・写し取り・視線方向からの貼り直しを行う。頂点は indices・range・all のどれか1つで指す。operation は flipU・flipV・flipUV・copy・projectFromView のいずれか。反転は1から引く。copy は source に写す元の頂点の位置を渡す。projectFromView は direction に見る向きを3つの数で渡し、その向きに垂直な面へ落とした位置をUVにする。長さの無い向きは受け取らない。changed に変えた頂点の数を返す。"
+    },
+    {
+      "tool": "model_edit_vertices",
+      "branching": false,
+      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all のどれか1つで指す。operation は weld・weldNear・align・mirrorCopy・mirrorModel のいずれか。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis に x・y・z のいずれかを渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces・added を返す。"
     },
     {
       "tool": "model_insert_elements",

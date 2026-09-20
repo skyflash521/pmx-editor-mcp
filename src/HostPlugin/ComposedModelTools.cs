@@ -27,6 +27,11 @@ namespace PmxEditorMcp
             }
 
             ModelReorderElements.AddTo(methods, edit);
+            ModelCleanFaces.AddTo(methods, edit);
+            ModelEditFaces.AddTo(methods, edit);
+            ModelEditMaterials.AddTo(methods, edit);
+            ModelEditVertices.AddTo(methods, edit);
+            ModelEditUv.AddTo(methods, edit);
             ModelInsertElements.AddTo(methods, edit, builder);
             ModelDeleteElements.AddTo(methods, edit);
         }

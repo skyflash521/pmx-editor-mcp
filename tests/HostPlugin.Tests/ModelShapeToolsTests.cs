@@ -12,7 +12,6 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public sealed class ModelShapeToolsTests : IDisposable
     {
-        private const string Pending = "impl pending: 面と材質と頂点の形を1回の呼び出しで変える";
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -21,7 +20,7 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AFaceThatDoesNotHaveThreeDistinctVerticesIsDropped()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -36,7 +35,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheSameThreeVerticesInTwoMaterialsCountAsOverlappingForTheWholeModel()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -52,7 +51,21 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelCleanFaces.RemovedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void TheOverlappingFaceThatSurvivesIsTheFirstOneInTheMaterial()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            IPXFace kept = Face(vertices, 0, 1, 2);
+            FakeMaterial material = Material("材質", kept, Face(vertices, 0, 1, 2));
+
+            Clean(
+                Operation(ModelCleanFaces.DuplicateInMaterial),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Same(kept, Assert.Single(material.Faces));
+        }
+
+        [Fact]
         public void PerMaterialOverlapLeavesTheSameThreeVerticesInAnotherMaterialAlone()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -68,7 +81,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelCleanFaces.RemovedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnOperationTheCleaningToolDoesNotKnowIsRefused()
         {
             Material("材質");
@@ -80,7 +93,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void FlippingAFaceSwapsItsSecondAndThirdVertices()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -98,7 +111,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditFaces.ChangedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void SwappingTheDiagonalRedrawsTheSquareAndKeepsBothFacesFacingTheSameWay()
         {
             IList<IPXVertex> vertices = Quad();
@@ -116,7 +129,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, value[ModelEditFaces.ChangedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ExtrudingAFaceRaisesItAndWallsInEveryEdgeItLeavesBehind()
         {
             IList<IPXVertex> vertices = Triangle();
@@ -141,7 +154,82 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1f, raised.Position.X);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void AFaceWhoseEdgesSquareToNothingInSinglePrecisionIsStillRaisedTheWholeWay()
+        {
+            List<IPXVertex> corners = new List<IPXVertex>
+            {
+                new FakeVertex(0f, 0f, 0f),
+                new FakeVertex(1e-25f, 0f, 0f),
+                new FakeVertex(0f, 1e-25f, 0f),
+            };
+            foreach (IPXVertex corner in corners)
+            {
+                _fixture.Model.Vertex.Add(corner);
+            }
+
+            Material("材質", new FakeFace(corners[0], corners[1], corners[2]));
+
+            EditFaces(
+                Operation(ModelEditFaces.Extrude),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditFaces.DistanceName, 2.0));
+
+            Assert.Equal(3, _fixture.Model.Vertex.Count(v => v.Position.Z == 2f));
+        }
+
+        [Fact]
+        public void AFaceWhoseEdgesAreFarApartInSizeIsStillRaisedTheWholeWay()
+        {
+            List<IPXVertex> corners = new List<IPXVertex>
+            {
+                new FakeVertex(0f, 0f, 0f),
+                new FakeVertex(float.MaxValue, 0f, 0f),
+                new FakeVertex(float.MaxValue, float.Epsilon, 0f),
+            };
+            foreach (IPXVertex corner in corners)
+            {
+                _fixture.Model.Vertex.Add(corner);
+            }
+
+            Material("材質", new FakeFace(corners[0], corners[1], corners[2]));
+
+            EditFaces(
+                Operation(ModelEditFaces.Extrude),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditFaces.DistanceName, 2.0));
+
+            Assert.Equal(3, _fixture.Model.Vertex.Count(v => v.Position.Z == 2f));
+        }
+
+        [Fact]
+        public void AFaceWhoseEdgeIsTooLongToHoldAsASingleIsStillRaisedTheWholeWay()
+        {
+            List<IPXVertex> corners = new List<IPXVertex>
+            {
+                new FakeVertex(-float.MaxValue, 0f, 0f),
+                new FakeVertex(float.MaxValue, 0f, 0f),
+                new FakeVertex(-float.MaxValue, 1f, 0f),
+            };
+            foreach (IPXVertex corner in corners)
+            {
+                _fixture.Model.Vertex.Add(corner);
+            }
+
+            Material("材質", new FakeFace(corners[0], corners[1], corners[2]));
+
+            EditFaces(
+                Operation(ModelEditFaces.Extrude),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditFaces.DistanceName, 2.0));
+
+            Assert.Equal(3, _fixture.Model.Vertex.Count(v => v.Position.Z == 2f));
+        }
+
+        [Fact]
         public void ExtrudingTwoFacesSideBySideRaisesTheSharedCornersOnceAndWallsOnlyTheOutline()
         {
             IList<IPXVertex> vertices = Quad();
@@ -161,7 +249,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2f, Raised(material, vertices[1]).Position.Z);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ExtrudingWithoutTheLengthIsRefused()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -175,7 +263,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheLengthIsRefusedWhenTheOperationDoesNotPushAnythingOut()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -190,7 +278,22 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void ALengthThatDoesNotFitInASinglePrecisionNumberIsRefused()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Material("材質", Face(vertices, 0, 1, 2));
+
+            IDictionary<string, object> envelope = EditFaces(
+                Operation(ModelEditFaces.Extrude),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditFaces.DistanceName, 1e39));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void SeparatingSharedVerticesGivesThePickedFaceItsOwnCopies()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -207,7 +310,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, value[ModelEditFaces.AddedVerticesName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MergingMaterialsMovesEveryFaceIntoTheFirstOnePicked()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -223,7 +326,27 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditMaterials.RemovedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void MergingMaterialsPointsTheMorphsAndSoftBodiesAtTheOneThatIsKept()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            FakeMaterial first = Material("一", Face(vertices, 0, 1, 2));
+            FakeMaterial second = Material("二", Face(vertices, 0, 1, 2));
+            FakeMorph morph = new FakeMorph("材質モーフ", MorphKind.Material);
+            morph.Offsets.Add(new FakeMaterialMorphOffset(second));
+            _fixture.Model.Morph.Add(morph);
+            FakeSoftBody soft = new FakeSoftBody { Material = second };
+            _fixture.Model.SoftBody.Add(soft);
+
+            EditMaterials(
+                Operation(ModelEditMaterials.Merge),
+                ComposedEditFixture.Given("indices", new object[] { 0, 1 }));
+
+            Assert.Same(first, ((IPXMaterialMorphOffset)morph.Offsets[0]).Material);
+            Assert.Same(first, soft.Material);
+        }
+
+        [Fact]
         public void MergingEveryMaterialLeavesOne()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -238,7 +361,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(3, Assert.Single(_fixture.Model.Material).Faces.Count);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MaterialsThatAgreeWithinTheColourWidthAreMergedTogether()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -258,7 +381,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(apart, _fixture.Model.Material[1]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MergingBySamenessWithoutTheColourWidthIsRefused()
         {
             Material("材質");
@@ -270,7 +393,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TakingFacesOutPutsThemIntoAMaterialOfTheirOwn()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -289,7 +412,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { 1 }, (object[])value[ModelEditMaterials.AddedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TakingFacesOutWithoutSayingWhichOnesIsRefused()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -302,7 +425,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void DuplicatingOnlyTheFacesLeavesTheVerticesShared()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -319,7 +442,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(material.Faces[0].Vertex1, _fixture.Model.Material[1].Faces[0].Vertex1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void DuplicatingWithTheVerticesGivesTheNewMaterialItsOwn()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -335,7 +458,7 @@ namespace PmxEditorMcp.Tests
             Assert.NotSame(material.Faces[0].Vertex1, _fixture.Model.Material[1].Faces[0].Vertex1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void DuplicatingWithTheMorphsCarriesTheOffsetsThatPointAtTheCopiedVertices()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -356,7 +479,7 @@ namespace PmxEditorMcp.Tests
                 ((IPXVertexMorphOffset)_fixture.Model.Morph[1].Offsets[0]).Vertex);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ClampingPullsEveryColourComponentIntoTheUnitRange()
         {
             FakeMaterial material = Material("材質");
@@ -375,7 +498,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditMaterials.ChangedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void WeldingPointsTheFacesThatSurviveAtTheOneVertexThatIsLeft()
         {
             IList<IPXVertex> vertices = Quad();
@@ -395,7 +518,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditVertices.RemovedFacesName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void JoiningNearVerticesDropsTheFacesThatLoseTheirThirdCorner()
         {
             FakeVertex first = new FakeVertex(0f, 0f, 0f);
@@ -415,7 +538,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditVertices.RemovedFacesName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void WeldingNearOnlyJoinsTheOnesInsideTheThreshold()
         {
             _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f));
@@ -431,7 +554,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditVertices.RemovedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void WeldingNearWithoutTheThresholdIsRefused()
         {
             Vertices(2);
@@ -443,7 +566,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AligningPutsThePickedVerticesOnTheAverageOfTheChosenAxis()
         {
             _fixture.Model.Vertex.Add(new FakeVertex(1f, 2f, 3f));
@@ -459,7 +582,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1f, _fixture.Model.Vertex[0].Position.X);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MirroringACopyAddsTheOppositeSideAndLeavesTheOriginal()
         {
             _fixture.Model.Vertex.Add(new FakeVertex(1f, 2f, 3f));
@@ -475,7 +598,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { 1 }, (object[])value[ModelEditVertices.AddedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void MirroringTheModelMovesTheVerticesThemselves()
         {
             _fixture.Model.Vertex.Add(new FakeVertex(1f, 2f, 3f));
@@ -489,7 +612,21 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(-1f, _fixture.Model.Vertex[0].Position.X);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void MirroringTheModelTurnsTheFaceItMovedWholeInsideOut()
+        {
+            IList<IPXVertex> vertices = Triangle();
+            FakeMaterial material = Material("材質", Face(vertices, 0, 1, 2));
+
+            EditVertices(
+                Operation(ModelEditVertices.MirrorModel),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditVertices.AxisName, ModelEditVertices.AxisX));
+
+            Assert.Equal(Corners(vertices, 0, 2, 1), Corners(material.Faces[0]));
+        }
+
+        [Fact]
         public void MirroringWithoutTheAxisIsRefused()
         {
             Vertices(1);
@@ -501,7 +638,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ModelEditUv.FlipU, 0.75f, 0.25f)]
         [InlineData(ModelEditUv.FlipV, 0.25f, 0.75f)]
         [InlineData(ModelEditUv.FlipUV, 0.75f, 0.75f)]
@@ -520,7 +657,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelEditUv.ChangedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CopyingTheUvTakesItFromTheVertexThatWasNamed()
         {
             FakeVertex source = new FakeVertex();
@@ -538,7 +675,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0.75f, target.UV.Y);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CopyingTheUvWithoutSayingWhereFromIsRefused()
         {
             Vertices(2);
@@ -550,7 +687,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ProjectingFromAViewLaysTheUvOnThePlaneFacingThatWay()
         {
             FakeVertex vertex = new FakeVertex(2f, 3f, 4f);
@@ -566,7 +703,23 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(3f, vertex.UV.Y);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void ProjectingFromAVeryShortDirectionStillLaysTheUvDown()
+        {
+            FakeVertex vertex = new FakeVertex(2f, 3f, 4f);
+            _fixture.Model.Vertex.Add(vertex);
+
+            EditUv(
+                Operation(ModelEditUv.ProjectFromView),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditUv.DirectionName, new object[] { 0, 0, 1e-7 }));
+
+            Assert.Equal(2f, vertex.UV.X);
+            Assert.Equal(3f, vertex.UV.Y);
+        }
+
+        [Fact]
         public void ProjectingFromStraightAboveFallsBackToTheOtherReferenceDirection()
         {
             FakeVertex vertex = new FakeVertex(2f, 3f, 4f);
@@ -582,7 +735,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(4f, vertex.UV.Y);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ProjectingFromADirectionWithNoLengthIsRefused()
         {
             Vertices(1);
@@ -596,7 +749,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ProjectingWithoutTheDirectionIsRefused()
         {
             Vertices(1);

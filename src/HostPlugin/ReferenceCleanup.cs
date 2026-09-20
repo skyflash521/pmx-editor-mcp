@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
@@ -133,6 +132,148 @@ namespace PmxEditorMcp
             Add(following, ElementKinds.Joint, model.Joint.Cast<object>(), Apart(joints, seed));
 
             return following;
+        }
+
+        /// <summary>3つの頂点が揃っているか。揃っていない面はPMXの面として意味を持たない。</summary>
+        public static bool IsSoundFace(IPXFace face)
+        {
+            if (face == null)
+            {
+                throw new ArgumentNullException(nameof(face));
+            }
+
+            return face.Vertex1 != null
+                && face.Vertex2 != null
+                && face.Vertex3 != null
+                && !ReferenceEquals(face.Vertex1, face.Vertex2)
+                && !ReferenceEquals(face.Vertex2, face.Vertex3)
+                && !ReferenceEquals(face.Vertex3, face.Vertex1);
+        }
+
+        /// <summary>3つの頂点が揃っていない面を落とす。落とした数を返す。</summary>
+        public static int DropUnsoundFaces(object pmx)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            int dropped = 0;
+            foreach (IPXMaterial material in ((IPXPmx)pmx).Material)
+            {
+                for (int at = material.Faces.Count - 1; at >= 0; at--)
+                {
+                    if (IsSoundFace(material.Faces[at]))
+                    {
+                        continue;
+                    }
+
+                    material.Faces.RemoveAt(at);
+                    dropped++;
+                }
+            }
+
+            return dropped;
+        }
+
+        /// <summary>
+        /// 頂点を指したままの口を、別の頂点へ付け替える。表に無い頂点を指す口はそのままにする。
+        /// </summary>
+        public static void Repoint(object pmx, IDictionary<IPXVertex, IPXVertex> moved)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (moved == null)
+            {
+                throw new ArgumentNullException(nameof(moved));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+            foreach (IPXMaterial material in model.Material)
+            {
+                foreach (IPXFace face in material.Faces)
+                {
+                    face.Vertex1 = Moved(moved, face.Vertex1);
+                    face.Vertex2 = Moved(moved, face.Vertex2);
+                    face.Vertex3 = Moved(moved, face.Vertex3);
+                }
+            }
+
+            foreach (IPXMorph morph in model.Morph)
+            {
+                foreach (IPXMorphOffset offset in morph.Offsets)
+                {
+                    IPXVertexMorphOffset shifted = offset as IPXVertexMorphOffset;
+                    if (shifted != null)
+                    {
+                        shifted.Vertex = Moved(moved, shifted.Vertex);
+                    }
+
+                    IPXUVMorphOffset slid = offset as IPXUVMorphOffset;
+                    if (slid != null)
+                    {
+                        slid.Vertex = Moved(moved, slid.Vertex);
+                    }
+                }
+            }
+
+            foreach (IPXSoftBody soft in model.SoftBody)
+            {
+                for (int at = 0; at < soft.Pins.Count; at++)
+                {
+                    soft.Pins[at] = Moved(moved, soft.Pins[at]);
+                }
+
+                foreach (IPXSoftBodyAnchor anchor in soft.Anchors)
+                {
+                    anchor.Vertex = Moved(moved, anchor.Vertex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 材質を指したままの口を、別の材質へ付け替える。表に無い材質を指す口はそのままにする。
+        /// </summary>
+        public static void Repoint(object pmx, IDictionary<IPXMaterial, IPXMaterial> moved)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (moved == null)
+            {
+                throw new ArgumentNullException(nameof(moved));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+            foreach (IPXMorph morph in model.Morph)
+            {
+                foreach (IPXMorphOffset offset in morph.Offsets)
+                {
+                    IPXMaterialMorphOffset painted = offset as IPXMaterialMorphOffset;
+                    if (painted != null)
+                    {
+                        painted.Material = Moved(moved, painted.Material);
+                    }
+                }
+            }
+
+            foreach (IPXSoftBody soft in model.SoftBody)
+            {
+                soft.Material = Moved(moved, soft.Material);
+            }
+        }
+
+        private static T Moved<T>(IDictionary<T, T> moved, T held)
+            where T : class
+        {
+            T found;
+
+            return held != null && moved.TryGetValue(held, out found) ? found : held;
         }
 
         /// <summary>
@@ -616,7 +757,7 @@ namespace PmxEditorMcp
 
         private static HashSet<object> Held(IEnumerable<object> items)
         {
-            HashSet<object> held = new HashSet<object>(ByReference.Instance);
+            HashSet<object> held = new HashSet<object>(ReferenceComparer<object>.Instance);
             foreach (object item in items)
             {
                 if (item != null)
@@ -626,25 +767,6 @@ namespace PmxEditorMcp
             }
 
             return held;
-        }
-
-        private sealed class ByReference : IEqualityComparer<object>
-        {
-            public static readonly ByReference Instance = new ByReference();
-
-            private ByReference()
-            {
-            }
-
-            public new bool Equals(object left, object right)
-            {
-                return ReferenceEquals(left, right);
-            }
-
-            public int GetHashCode(object item)
-            {
-                return RuntimeHelpers.GetHashCode(item);
-            }
         }
     }
 }
