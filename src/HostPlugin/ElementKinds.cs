@@ -17,20 +17,17 @@ namespace PmxEditorMcp
 
         private readonly Action<object, IList<object>> _replace;
 
-        private readonly Func<object, object, string, object> _create;
+        private readonly Func<object, object> _create;
 
         private readonly Func<object, object> _clone;
-
-        private readonly IList<string> _variants;
 
         internal ElementKind(
             string name,
             ElementKind owner,
             Func<object, IList<object>> items,
             Action<object, IList<object>> replace,
-            Func<object, object, string, object> create,
-            Func<object, object> clone,
-            IList<string> variants)
+            Func<object, object> create,
+            Func<object, object> clone)
         {
             Name = name;
             Owner = owner;
@@ -38,7 +35,6 @@ namespace PmxEditorMcp
             _replace = replace;
             _create = create;
             _clone = clone;
-            _variants = new ReadOnlyCollection<string>(variants ?? new string[0]);
         }
 
         /// <summary><c>kind</c> が取る値。</summary>
@@ -46,14 +42,6 @@ namespace PmxEditorMcp
 
         /// <summary>並びを持つ親の種類。PMXが直に並べる種類では null。</summary>
         public ElementKind Owner { get; }
-
-        /// <summary>
-        /// 種類だけでは作る形が決まらないときに、<c>variant</c> が取れる値。決まる種類では空。
-        /// </summary>
-        public IList<string> Variants
-        {
-            get { return _variants; }
-        }
 
         /// <summary>その相手が並べている要素。並びそのものではなく写しを返す。</summary>
         public IList<object> Items(object owner)
@@ -83,17 +71,17 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// この種類の要素を1つ作る。<paramref name="variant"/> は、種類だけでは形が決まらないときに
-        /// どれを作るかを指す値で、決まる種類では null を渡す。作れない種類では null を返す。
+        /// この種類の要素を1つ作る。ほかの要素を指して初めて意味を持つ種類は、指す先の無い要素が
+        /// モデルへ書き戻すときに落ちるので作れず、null を返す。
         /// </summary>
-        public object Create(object builder, object owner, string variant)
+        public object Create(object builder, object owner)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            return _create(builder, owner, variant);
+            return _create == null ? null : _create(builder);
         }
 
         /// <summary>その要素の複製。</summary>
@@ -116,9 +104,6 @@ namespace PmxEditorMcp
     {
         /// <summary>種類を受け取る入力の名前。</summary>
         public const string KindName = "kind";
-
-        /// <summary>種類だけでは作る形が決まらないときに、どれを作るかを受け取る入力の名前。</summary>
-        public const string VariantName = "variant";
 
         /// <summary>PMXが直に並べる頂点。</summary>
         public const string Vertex = "vertex";
@@ -158,12 +143,6 @@ namespace PmxEditorMcp
 
         /// <summary>SoftBodyが並べるアンカー。</summary>
         public const string SoftBodyAnchor = "softBodyAnchor";
-
-        /// <summary>表示枠要素のうち、ボーンを指すもの。</summary>
-        public const string BoneVariant = "bone";
-
-        /// <summary>表示枠要素のうち、モーフを指すもの。</summary>
-        public const string MorphVariant = "morph";
 
         private static readonly IList<ElementKind> Table = Build();
 
@@ -251,86 +230,19 @@ namespace PmxEditorMcp
             return new ReadOnlyCollection<ElementKind>(new List<ElementKind>
             {
                 Rooted(Vertex, pmx => ((IPXPmx)pmx).Vertex, builder => builder.Vertex()),
-                Owned(
-                    Face,
-                    material,
-                    owner => ((IPXMaterial)owner).Faces,
-                    (builder, owner, variant) => ((IPXPmxBuilder)builder).Face()),
+                Owned(Face, material, owner => ((IPXMaterial)owner).Faces),
                 material,
                 bone,
-                Owned(
-                    IkLink,
-                    bone,
-                    owner => ((IPXBone)owner).IK.Links,
-                    (builder, owner, variant) => ((IPXPmxBuilder)builder).IKLink()),
+                Owned(IkLink, bone, owner => ((IPXBone)owner).IK.Links),
                 morph,
-                Owned(
-                    MorphOffset,
-                    morph,
-                    owner => ((IPXMorph)owner).Offsets,
-                    OffsetForMorph),
+                Owned(MorphOffset, morph, owner => ((IPXMorph)owner).Offsets),
                 node,
-                Owned(
-                    NodeItem,
-                    node,
-                    owner => ((IPXNode)owner).Items,
-                    NodeItemForVariant,
-                    new[] { BoneVariant, MorphVariant }),
+                Owned(NodeItem, node, owner => ((IPXNode)owner).Items),
                 Rooted(Body, pmx => ((IPXPmx)pmx).Body, builder => builder.Body()),
                 Rooted(Joint, pmx => ((IPXPmx)pmx).Joint, builder => builder.Joint()),
                 softBody,
-                Owned(
-                    SoftBodyAnchor,
-                    softBody,
-                    owner => ((IPXSoftBody)owner).Anchors,
-                    (builder, owner, variant) => ((IPXPmxBuilder)builder).SoftBodyAnchor()),
+                Owned(SoftBodyAnchor, softBody, owner => ((IPXSoftBody)owner).Anchors),
             });
-        }
-
-        private static object OffsetForMorph(object builder, object owner, string variant)
-        {
-            IPXPmxBuilder made = (IPXPmxBuilder)builder;
-            switch (((IPXMorph)owner).Kind)
-            {
-                case MorphKind.Group:
-                case MorphKind.Flip:
-                    return made.GroupMorphOffset();
-
-                case MorphKind.Vertex:
-                    return made.VertexMorphOffset();
-
-                case MorphKind.Bone:
-                    return made.BoneMorphOffset();
-
-                case MorphKind.UV:
-                case MorphKind.UVA1:
-                case MorphKind.UVA2:
-                case MorphKind.UVA3:
-                case MorphKind.UVA4:
-                    return made.UVMorphOffset();
-
-                case MorphKind.Material:
-                    return made.MaterialMorphOffset();
-
-                case MorphKind.Impulse:
-                    return made.ImpulseMorphOffset();
-
-                default:
-                    return null;
-            }
-        }
-
-        private static object NodeItemForVariant(object builder, object owner, string variant)
-        {
-            IPXPmxBuilder made = (IPXPmxBuilder)builder;
-            if (string.Equals(variant, MorphVariant, StringComparison.Ordinal))
-            {
-                return made.MorphNodeItem();
-            }
-
-            return string.Equals(variant, BoneVariant, StringComparison.Ordinal)
-                ? made.BoneNodeItem()
-                : null;
         }
 
         private static ElementKind Rooted<T>(
@@ -341,19 +253,14 @@ namespace PmxEditorMcp
                 null,
                 Taken(list),
                 Put(list),
-                (builder, owner, variant) => create((IPXPmxBuilder)builder),
-                Copy,
-                null);
+                builder => create((IPXPmxBuilder)builder),
+                Copy);
         }
 
         private static ElementKind Owned<T>(
-            string name,
-            ElementKind owner,
-            Func<object, IList<T>> list,
-            Func<object, object, string, object> create,
-            IList<string> variants = null)
+            string name, ElementKind owner, Func<object, IList<T>> list)
         {
-            return new ElementKind(name, owner, Taken(list), Put(list), create, Copy, variants);
+            return new ElementKind(name, owner, Taken(list), Put(list), null, Copy);
         }
 
         private static Func<object, IList<object>> Taken<T>(Func<object, IList<T>> list)

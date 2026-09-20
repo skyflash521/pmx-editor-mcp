@@ -167,46 +167,23 @@ namespace PmxEditorMcp.Tests
         {
             FakePmx pmx = new FakePmx();
 
-            object made = Resolved(ElementKinds.Bone).Create(new FakeBuilder(), pmx, null);
+            object made = Resolved(ElementKinds.Bone).Create(new FakeBuilder(), pmx);
 
             Assert.IsAssignableFrom<IPXBone>(made);
         }
 
         [Theory]
-        [InlineData(MorphKind.Group, typeof(IPXGroupMorphOffset))]
-        [InlineData(MorphKind.Flip, typeof(IPXGroupMorphOffset))]
-        [InlineData(MorphKind.Vertex, typeof(IPXVertexMorphOffset))]
-        [InlineData(MorphKind.Bone, typeof(IPXBoneMorphOffset))]
-        [InlineData(MorphKind.UV, typeof(IPXUVMorphOffset))]
-        [InlineData(MorphKind.UVA1, typeof(IPXUVMorphOffset))]
-        [InlineData(MorphKind.UVA2, typeof(IPXUVMorphOffset))]
-        [InlineData(MorphKind.UVA3, typeof(IPXUVMorphOffset))]
-        [InlineData(MorphKind.UVA4, typeof(IPXUVMorphOffset))]
-        [InlineData(MorphKind.Material, typeof(IPXMaterialMorphOffset))]
-        [InlineData(MorphKind.Impulse, typeof(IPXImpulseMorphOffset))]
-        public void AMorphOffsetTakesTheShapeTheMorphThatOwnsItCallsFor(MorphKind kind, Type shape)
+        [InlineData(ElementKinds.Face)]
+        [InlineData(ElementKinds.IkLink)]
+        [InlineData(ElementKinds.MorphOffset)]
+        [InlineData(ElementKinds.NodeItem)]
+        [InlineData(ElementKinds.SoftBodyAnchor)]
+        public void TheKindsThatMustPointAtSomethingElseCannotBeMade(string name)
         {
-            FakeMorph morph = new FakeMorph("モーフ", kind);
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(name);
 
-            Assert.IsAssignableFrom(
-                shape, Resolved(ElementKinds.MorphOffset).Create(new FakeBuilder(), morph, null));
-        }
-
-        [Fact]
-        public void CreatingANodeItemNeedsTheVariantBecauseTheKindDoesNotDecideIt()
-        {
-            FakeNode node = new FakeNode();
-
-            Assert.Contains(ElementKinds.BoneVariant, Resolved(ElementKinds.NodeItem).Variants);
-            Assert.IsAssignableFrom<IPXMorphNodeItem>(
-                Resolved(ElementKinds.NodeItem)
-                    .Create(new FakeBuilder(), node, ElementKinds.MorphVariant));
-        }
-
-        [Fact]
-        public void TheKindsThatDecideTheirOwnShapeOfferNoVariant()
-        {
-            Assert.Empty(Resolved(ElementKinds.Bone).Variants);
+            Assert.Null(kind.Create(new FakeBuilder(), ElementKinds.Owners(pmx, kind)[0]));
         }
 
         [Fact]
@@ -251,26 +228,35 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(ElementKinds.Vertex, typeof(IPXVertex))]
-        [InlineData(ElementKinds.Face, typeof(IPXFace))]
         [InlineData(ElementKinds.Material, typeof(IPXMaterial))]
         [InlineData(ElementKinds.Bone, typeof(IPXBone))]
-        [InlineData(ElementKinds.IkLink, typeof(IPXIKLink))]
         [InlineData(ElementKinds.Morph, typeof(IPXMorph))]
-        [InlineData(ElementKinds.MorphOffset, typeof(IPXVertexMorphOffset))]
         [InlineData(ElementKinds.Node, typeof(IPXNode))]
-        [InlineData(ElementKinds.NodeItem, typeof(IPXBoneNodeItem))]
         [InlineData(ElementKinds.Body, typeof(IPXBody))]
         [InlineData(ElementKinds.Joint, typeof(IPXJoint))]
         [InlineData(ElementKinds.SoftBody, typeof(IPXSoftBody))]
-        [InlineData(ElementKinds.SoftBodyAnchor, typeof(IPXSoftBodyAnchor))]
-        public void EveryKindMakesAndClonesTheShapeItsListHolds(string name, Type shape)
+        public void ThePmxOwnedKindsMakeAndCloneTheShapeTheirListHolds(string name, Type shape)
         {
             FakePmx pmx = Filled();
             ElementKind kind = Resolved(name);
             object owner = ElementKinds.Owners(pmx, kind)[0];
-            string variant = kind.Variants.Count == 0 ? null : kind.Variants[0];
 
-            Assert.IsAssignableFrom(shape, kind.Create(new FakeBuilder(), owner, variant));
+            Assert.IsAssignableFrom(shape, kind.Create(new FakeBuilder(), owner));
+            Assert.IsAssignableFrom(shape, kind.CloneOf(kind.Items(owner)[0]));
+        }
+
+        [Theory]
+        [InlineData(ElementKinds.Face, typeof(IPXFace))]
+        [InlineData(ElementKinds.IkLink, typeof(IPXIKLink))]
+        [InlineData(ElementKinds.MorphOffset, typeof(IPXVertexMorphOffset))]
+        [InlineData(ElementKinds.NodeItem, typeof(IPXBoneNodeItem))]
+        [InlineData(ElementKinds.SoftBodyAnchor, typeof(IPXSoftBodyAnchor))]
+        public void TheKindsThatAParentHoldsCloneTheShapeTheirListHolds(string name, Type shape)
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(name);
+            object owner = ElementKinds.Owners(pmx, kind)[0];
+
             Assert.IsAssignableFrom(shape, kind.CloneOf(kind.Items(owner)[0]));
         }
 

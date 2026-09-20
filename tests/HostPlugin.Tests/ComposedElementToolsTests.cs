@@ -306,7 +306,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void MakingANodeItemNeedsTheVariantThatSaysWhichOneToMake()
+        public void MakingAKindThatMustPointAtSomethingElseIsRefused()
         {
             _fixture.Model.Node.Add(new FakeNode("枠"));
 
@@ -317,23 +317,26 @@ namespace PmxEditorMcp.Tests
                     ModelInsertElements.OperationName, ModelInsertElements.New));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
-            Assert.Contains(ElementKinds.VariantName, ComposedEditFixture.Message(envelope));
+            Assert.Contains(
+                ModelInsertElements.Clone, ComposedEditFixture.Message(envelope));
         }
 
         [Fact]
-        public void TheVariantMakesTheNodeItemThatWasAskedFor()
+        public void CopyingMakesTheKindThatMustPointAtSomethingElse()
         {
             FakeNode node = new FakeNode("枠");
+            node.Items.Add(new FakeMorphNodeItem(new FakeMorph("笑い", MorphKind.Vertex)));
             _fixture.Model.Node.Add(node);
 
             Insert(
                 ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.NodeItem),
                 ComposedEditFixture.Given("parentIndices", new object[] { 0 }),
                 ComposedEditFixture.Given(
-                    ModelInsertElements.OperationName, ModelInsertElements.New),
-                ComposedEditFixture.Given(ElementKinds.VariantName, ElementKinds.MorphVariant));
+                    ModelInsertElements.OperationName, ModelInsertElements.Clone),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
 
-            Assert.IsAssignableFrom<IPXMorphNodeItem>(Assert.Single(node.Items));
+            Assert.Equal(2, node.Items.Count);
+            Assert.IsAssignableFrom<IPXMorphNodeItem>(node.Items[1]);
         }
 
         [Fact]
@@ -518,24 +521,12 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AVariantForAKindThatDecidesItsOwnShapeIsRefused()
-        {
-            Bones("一");
-
-            IDictionary<string, object> envelope = Insert(
-                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
-                ComposedEditFixture.Given(
-                    ModelInsertElements.OperationName, ModelInsertElements.New),
-                ComposedEditFixture.Given(ElementKinds.VariantName, ElementKinds.BoneVariant));
-
-            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
-        }
-
-        [Fact]
         public void InsertingIntoSeveralParentsPutsOneIntoEachOfThem()
         {
             FakeMaterial first = new FakeMaterial("一");
             FakeMaterial second = new FakeMaterial("二");
+            first.Faces.Add(Triangle());
+            second.Faces.Add(Triangle());
             _fixture.Model.Material.Add(first);
             _fixture.Model.Material.Add(second);
 
@@ -543,11 +534,28 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
                 ComposedEditFixture.Given("parentAll", true),
                 ComposedEditFixture.Given(
-                    ModelInsertElements.OperationName, ModelInsertElements.New)));
+                    ModelInsertElements.OperationName, ModelInsertElements.Clone),
+                ComposedEditFixture.Given("indices", new object[] { 0 })));
 
-            Assert.Single(first.Faces);
-            Assert.Single(second.Faces);
-            Assert.Equal(new object[] { 0, 0 }, (object[])value[ModelInsertElements.IndicesName]);
+            Assert.Equal(2, first.Faces.Count);
+            Assert.Equal(2, second.Faces.Count);
+            Assert.Equal(new object[] { 1, 1 }, (object[])value[ModelInsertElements.IndicesName]);
+        }
+
+        private IPXFace Triangle()
+        {
+            FakeVertex[] corners =
+            {
+                new FakeVertex(0f, 0f, 0f),
+                new FakeVertex(1f, 0f, 0f),
+                new FakeVertex(0f, 1f, 0f),
+            };
+            foreach (FakeVertex corner in corners)
+            {
+                _fixture.Model.Vertex.Add(corner);
+            }
+
+            return new FakeFace(corners[0], corners[1], corners[2]);
         }
 
         [Fact]

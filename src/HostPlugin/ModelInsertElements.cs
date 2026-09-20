@@ -63,7 +63,6 @@ namespace PmxEditorMcp
                 OperationName,
                 AtName,
                 CountName,
-                ElementKinds.VariantName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -85,13 +84,19 @@ namespace PmxEditorMcp
 
             bool copying = string.Equals(operation, Clone, StringComparison.Ordinal);
             int count;
-            string variant;
             int? at;
             if (!TryCount(context, copying, out count, out code, out message)
-                || !TryVariant(context, kind, copying, out variant, out code, out message)
                 || !TryAt(context, out at, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
+            }
+
+            if (!copying && kind.Owner != null)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    kind.Name + " はほかの要素を指して初めて意味を持つ種類なので、"
+                        + New + " では作れない。" + Clone + " で写して入れる。");
             }
 
             if (!copying && context.Params.Keys.Any(Points))
@@ -105,7 +110,7 @@ namespace PmxEditorMcp
             foreach (object owner in owners)
             {
                 IList<object> made;
-                if (!TryMade(context, kind, owner, builder, copying, count, variant, out made, out code, out message))
+                if (!TryMade(context, kind, owner, builder, copying, count, out made, out code, out message))
                 {
                     return ComposedEditResult.Refuse(code, message);
                 }
@@ -141,7 +146,6 @@ namespace PmxEditorMcp
             Func<object> builder,
             bool copying,
             int count,
-            string variant,
             out IList<object> made,
             out string code,
             out string message)
@@ -154,7 +158,7 @@ namespace PmxEditorMcp
                 List<object> built = new List<object>();
                 for (int step = 0; step < count; step++)
                 {
-                    object item = kind.Create(builder(), owner, variant);
+                    object item = kind.Create(builder(), owner);
                     if (item == null)
                     {
                         code = ToolEnvelope.NotApplicable;
@@ -236,62 +240,6 @@ namespace PmxEditorMcp
             if (!ValueInput.TryIndex(given, out count) || count < 1)
             {
                 message = CountName + " は1以上の整数でなければならない。";
-
-                return false;
-            }
-
-            code = null;
-
-            return true;
-        }
-
-        private static bool TryVariant(
-            McpMethodContext context,
-            ElementKind kind,
-            bool copying,
-            out string variant,
-            out string code,
-            out string message)
-        {
-            variant = null;
-            code = ToolEnvelope.InvalidArgument;
-            message = null;
-            object given;
-            bool pointed = context.Params.TryGetValue(ElementKinds.VariantName, out given);
-            if (kind.Variants.Count == 0)
-            {
-                if (pointed)
-                {
-                    message = ElementKinds.VariantName + " は " + kind.Name + " では渡せない。";
-
-                    return false;
-                }
-
-                code = null;
-
-                return true;
-            }
-
-            if (copying)
-            {
-                if (pointed)
-                {
-                    message = ElementKinds.VariantName + " を渡せるのは " + OperationName + " が "
-                        + New + " のときだけである。";
-
-                    return false;
-                }
-
-                code = null;
-
-                return true;
-            }
-
-            variant = given as string;
-            if (variant == null || !kind.Variants.Contains(variant, StringComparer.Ordinal))
-            {
-                message = ElementKinds.VariantName + " は次のどれかでなければならない: "
-                    + string.Join("・", kind.Variants.ToArray());
 
                 return false;
             }

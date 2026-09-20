@@ -3477,6 +3477,13 @@
             "ok": false,
             "code": "BRIDGE_NO_HOST"
           }
+        },
+        {
+          "kind": "control",
+          "action": "start",
+          "editor": {
+            "$from": "editorC"
+          }
         }
       ]
     },
@@ -3700,14 +3707,54 @@
         },
         {
           "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  -10,
+                  -10,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  10,
+                  -10,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  10,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_insert_elements",
           "arguments": {
-            "kind": "face",
-            "parentIndices": [
-              0
-            ],
+            "kind": "material",
             "operation": "new",
-            "count": 2
+            "count": 1
           },
           "expect": {
             "ok": true,
@@ -3715,9 +3762,131 @@
               {
                 "path": "indices.0",
                 "equals": 0
-              },
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "faceA",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
               {
-                "path": "indices.1",
+                "$from": "faceA"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "faceA"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "faceB",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "faceB"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "faceB"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
                 "equals": 1
               }
             ]
@@ -3797,7 +3966,7 @@
           "kind": "tool",
           "tool": "model_clean_faces",
           "arguments": {
-            "operation": "invalid",
+            "operation": "duplicateInMaterial",
             "all": true
           },
           "expect": {
@@ -3805,7 +3974,7 @@
             "values": [
               {
                 "path": "removed",
-                "equals": 2
+                "equals": 1
               }
             ]
           }
@@ -3913,7 +4082,11 @@
             "values": [
               {
                 "path": "indices.0",
-                "equals": 0
+                "equals": 1
+              },
+              {
+                "path": "indices.1",
+                "equals": 2
               }
             ]
           }
@@ -4028,7 +4201,7 @@
             "values": [
               {
                 "path": "selected",
-                "equals": 2
+                "equals": 3
               }
             ]
           }

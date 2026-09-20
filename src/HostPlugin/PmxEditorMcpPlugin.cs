@@ -15,9 +15,7 @@ namespace PmxEditorMcp
     {
         private const string MenuText = "PMX Editor MCP";
 
-        private const string BuilderType = "PEPlugin.IPXPmxBuilder";
-
-        private const string MotionBuilderType = "PEPlugin.IPEBuilder";
+        private const string BuilderType = "PEPlugin.IPEBuilder";
 
         private const string ViewType = "PEPlugin.View.IPXPmxViewConnector";
 
@@ -204,14 +202,14 @@ namespace PmxEditorMcp
                 ComposedModelTools.AddTo(
                     methods,
                     new ComposedEdit(current, new UndoBarrier(recovery)),
-                    () => Receiver(receivers, BuilderType));
+                    () => ((IPEBuilder)Receiver(receivers, BuilderType)).Pmx);
                 ComposedScreenTools.AddTo(
                     methods,
                     new ComposedScreen(
                         current,
                         () => Receiver(receivers, ViewType),
                         () => Receiver(receivers, FormType)),
-                    () => ((IPEBuilder)Receiver(receivers, MotionBuilderType)).CreateVmd());
+                    () => ((IPEBuilder)Receiver(receivers, BuilderType)).CreateVmd());
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
@@ -240,6 +238,8 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// その型の受け手。組み立てのツールが、要素を作る相手や画面の口を引くたびに呼ぶ。
+        /// 要素を作る相手はエディタ側のビルダから引く——Cプラグインの橋渡しが作る要素は、
+        /// 現在のPMXの流れが反映のときに読む型ではない。
         /// </summary>
         private object Receiver(IDictionary<string, SdkReceiver> receivers, string type)
         {
