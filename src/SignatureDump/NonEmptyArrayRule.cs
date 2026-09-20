@@ -21,6 +21,11 @@ namespace PmxEditorMcp.SignatureDump
             "targets",
         });
 
+        public static bool NonEmptyName(string name)
+        {
+            return name != null && Names.Contains(name, StringComparer.Ordinal);
+        }
+
         /// <summary>その項目が空にできない並びか。並びでない項目は空にできるかを問われない。</summary>
         public static bool NonEmpty(SchemaItem item)
         {
@@ -29,9 +34,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(item));
             }
 
-            return item.Element != null
-                && item.Name != null
-                && Names.Contains(item.Name, StringComparer.Ordinal);
+            return item.Element != null && !item.EmptyAllowed && NonEmptyName(item.Name);
         }
     }
 }

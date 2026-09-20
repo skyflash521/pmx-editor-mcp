@@ -223,6 +223,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("index", Assert.Single(input.Element.Members).Name);
         }
 
+        [Fact]
+        public void ReadsThatAnArrayWhoseNameForbidsAnEmptyOneTakesItAnyway()
+        {
+            SchemaItem input = OnlyInput(Table(Branch(
+                @"[{ ""name"": ""indices"", ""origin"": ""hostInput"", ""required"": true,
+                     ""emptyAllowed"": true,
+                     ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
+
+            Assert.True(input.EmptyAllowed);
+            Assert.False(NonEmptyArrayRule.NonEmpty(input));
+        }
+
+        [Fact]
+        public void RejectsTakingAnEmptyOneWhereTheNameNeverForbidsIt()
+        {
+            Rejects("emptyAllowed を書けるのは", Table(Branch(
+                @"[{ ""name"": ""values"", ""origin"": ""hostInput"", ""required"": true,
+                     ""emptyAllowed"": true,
+                     ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
+        }
+
         [Theory]
         [InlineData(@"""shape"": ""number"", ""members"": []")]
         [InlineData(@"""shape"": ""number"", ""element"": { ""origin"": ""hostInput"",

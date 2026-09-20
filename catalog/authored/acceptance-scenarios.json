@@ -4576,6 +4576,46 @@
               }
             ]
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_selected_face_indices_pmd_view_connector",
+          "arguments": {
+            "indices": []
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_vertex_indices_pmd_view_connector",
+          "arguments": {
+            "indices": []
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_checked_material_indices",
+          "arguments": {
+            "indices": []
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_set_selected_material_indices",
+          "arguments": {
+            "indices": []
+          },
+          "expect": {
+            "ok": true
+          }
         }
       ]
     }
