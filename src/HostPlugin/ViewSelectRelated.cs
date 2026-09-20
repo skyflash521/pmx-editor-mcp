@@ -40,12 +40,14 @@ namespace PmxEditorMcp
         /// <summary>エッジの倍率が1でない頂点を選ぶ。</summary>
         public const string EdgeScaleChangedVertices = "edgeScaleChangedVertices";
 
+        public const string BonesToWeightedVertices = "bonesToWeightedVertices";
+
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
             get
             {
-                return new[] { VerticesToFaces, FacesToVertices, ExpandAdjacentFaces, MaterialToFaces, VerticesToMaterials, FacesToMaterials, ExcludeFacesMaterials, UnusedVertices, EdgeScaleChangedVertices };
+                return new[] { VerticesToFaces, FacesToVertices, ExpandAdjacentFaces, MaterialToFaces, VerticesToMaterials, FacesToMaterials, ExcludeFacesMaterials, UnusedVertices, EdgeScaleChangedVertices, BonesToWeightedVertices };
             }
         }
 
@@ -146,6 +148,12 @@ namespace PmxEditorMcp
                 case EdgeScaleChangedVertices:
                     kind = ElementKinds.Vertex;
                     made = Edged(model);
+
+                    break;
+
+                case BonesToWeightedVertices:
+                    kind = ElementKinds.Vertex;
+                    made = Weighed(model, Held(parts, model, ElementKinds.Bone));
 
                     break;
 
@@ -279,6 +287,17 @@ namespace PmxEditorMcp
 
             return Enumerable.Range(0, model.Vertex.Count)
                 .Where(at => !used.Contains(model.Vertex[at]))
+                .ToList();
+        }
+
+        private static IList<int> Weighed(IPXPmx model, IList<int> bones)
+        {
+            HashSet<IPXBone> chosen = new HashSet<IPXBone>(
+                bones.Select(at => model.Bone[at]), ReferenceComparer<IPXBone>.Instance);
+
+            return Enumerable.Range(0, model.Vertex.Count)
+                .Where(at => VertexWeights.All(model.Vertex[at])
+                    .Any(share => share.Value > 0f && chosen.Contains(share.Key)))
                 .ToList();
         }
 

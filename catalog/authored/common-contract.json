@@ -452,7 +452,7 @@
     {
       "tool": "view_select_related",
       "branching": false,
-      "duty": "画面の選択を、関連する要素で選び直す。operation は verticesToFaces・facesToVertices・expandAdjacentFaces・materialToFaces・verticesToMaterials・facesToMaterials・excludeFacesMaterials・unusedVertices・edgeScaleChangedVertices のいずれか。expandAdjacentFaces はいまの選択へ、頂点を2つ以上同じくする面を足す。materialToFaces は materialIndices で材質を指し、その材質の面を選ぶ。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。"
+      "duty": "画面の選択を、関連する要素で選び直す。operation は verticesToFaces・facesToVertices・expandAdjacentFaces・materialToFaces・verticesToMaterials・facesToMaterials・excludeFacesMaterials・unusedVertices・edgeScaleChangedVertices・bonesToWeightedVertices のいずれか。expandAdjacentFaces はいまの選択へ、頂点を2つ以上同じくする面を足す。materialToFaces は materialIndices で材質を指し、その材質の面を選ぶ。bonesToWeightedVertices はいま選んでいるボーンに重みの乗っている頂点を選ぶ。重みが0の枠は乗っていないものとして扱う。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。"
     },
     {
       "tool": "view_set_camera_rotate_center",
