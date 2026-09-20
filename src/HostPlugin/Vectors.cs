@@ -2,6 +2,7 @@
 // 倍精度で求めてから単精度へ戻す。
 
 using System;
+using System.Collections.Generic;
 using PEPlugin.SDX;
 
 namespace PmxEditorMcp
@@ -59,6 +60,63 @@ namespace PmxEditorMcp
                 (leftZ * rightX) - (leftX * rightZ),
                 (leftX * rightY) - (leftY * rightX),
                 new V3(0f, 0f, 0f));
+        }
+
+        /// <summary>
+        /// 点と線分の隔たり。線分が長さを持たないときは、その一点との隔たりを返す。
+        /// </summary>
+        public static float DistanceToSegment(V3 point, V3 from, V3 to)
+        {
+            double alongX = (double)to.X - from.X;
+            double alongY = (double)to.Y - from.Y;
+            double alongZ = (double)to.Z - from.Z;
+            double awayX = (double)point.X - from.X;
+            double awayY = (double)point.Y - from.Y;
+            double awayZ = (double)point.Z - from.Z;
+            double square = (alongX * alongX) + (alongY * alongY) + (alongZ * alongZ);
+            double at = square == 0d
+                ? 0d
+                : ((awayX * alongX) + (awayY * alongY) + (awayZ * alongZ)) / square;
+            at = at < 0d ? 0d : (at > 1d ? 1d : at);
+
+            return (float)Spread(
+                awayX - (alongX * at), awayY - (alongY * at), awayZ - (alongZ * at));
+        }
+
+        /// <summary>
+        /// いくつかの向きの和を、長さを1にそろえて返す。和が長さを持たないときは長さを持たない向きを
+        /// 返す。足し合わせも倍精度で行うので、単精度で持てるどの向きを何本足しても潰れない。
+        /// </summary>
+        public static V3 NormalizedSum(IEnumerable<V3> given)
+        {
+            if (given == null)
+            {
+                throw new ArgumentNullException(nameof(given));
+            }
+
+            double x = 0d;
+            double y = 0d;
+            double z = 0d;
+            foreach (V3 held in given)
+            {
+                x += held.X;
+                y += held.Y;
+                z += held.Z;
+            }
+
+            return Shortened(x, y, z, new V3(0f, 0f, 0f));
+        }
+
+        /// <summary>同じ成分を持つ、別の向き。</summary>
+        public static V3 Copied(V3 given)
+        {
+            return new V3(given.X, given.Y, given.Z);
+        }
+
+        /// <summary>同じ3つの成分を持つ向きか。</summary>
+        public static bool Same(V3 left, V3 right)
+        {
+            return left.X == right.X && left.Y == right.Y && left.Z == right.Z;
         }
 
         public static bool HasLength(V3 given)

@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using PEPlugin.Pmx;
+using PEPlugin.SDX;
 
 namespace PmxEditorMcp
 {
@@ -44,7 +47,165 @@ namespace PmxEditorMcp
         /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
-            throw new NotImplementedException();
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (edit == null)
+            {
+                throw new ArgumentNullException(nameof(edit));
+            }
+
+            List<string> known = new List<string>
+            {
+                ComposedOperation.OperationName,
+                TargetNames.Element.Indices,
+                TargetNames.Element.Range,
+                TargetNames.Element.All,
+                ThresholdName,
+            };
+            methods.Add(ToolName, edit.Method(known, Run));
+        }
+
+        private static ComposedEditResult Run(McpMethodContext context, object pmx)
+        {
+            IPXPmx model = (IPXPmx)pmx;
+            string operation;
+            string code;
+            string message;
+            IList<int> chosen;
+            if (!ComposedOperation.TryTake(
+                    context, Operations, out operation, out code, out message)
+                || !TargetInput.TryPositions(
+                    context.Params,
+                    TargetNames.Element,
+                    model.Vertex.Count,
+                    out chosen,
+                    out code,
+                    out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            float threshold;
+            if (!ComposedInput.TryFloat(
+                    context,
+                    ThresholdName,
+                    operation,
+                    new[] { AverageNear },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out threshold,
+                    out code,
+                    out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            IList<IPXVertex> picked = chosen.Select(at => model.Vertex[at]).ToList();
+            IList<V3> before = picked.Select(vertex => Vectors.Copied(vertex.Normal)).ToList();
+            switch (operation)
+            {
+                case Average:
+                    Aim(picked, Shared(picked));
+                    break;
+
+                case AverageNear:
+                    foreach (IList<IPXVertex> group in VertexClusters.Near(picked, threshold))
+                    {
+                        Aim(group, Shared(group));
+                    }
+
+                    break;
+
+                case FromFaces:
+                    FromTheFaces(model, picked);
+                    break;
+
+                case Normalize:
+                    foreach (IPXVertex vertex in picked)
+                    {
+                        vertex.Normal = Vectors.Normalized(vertex.Normal);
+                    }
+
+                    break;
+
+                default:
+                    foreach (IPXVertex vertex in picked)
+                    {
+                        vertex.Normal = Vectors.Scale(vertex.Normal, -1f);
+                    }
+
+                    break;
+            }
+
+            int changed = 0;
+            for (int at = 0; at < picked.Count; at++)
+            {
+                changed += Vectors.Same(before[at], picked[at].Normal) ? 0 : 1;
+            }
+
+            return ComposedEditResult.Complete(
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { ChangedName, changed },
+                });
+        }
+
+        private static V3 Shared(IEnumerable<IPXVertex> picked)
+        {
+            return Vectors.NormalizedSum(picked.Select(vertex => vertex.Normal));
+        }
+
+        private static void Aim(IEnumerable<IPXVertex> picked, V3 direction)
+        {
+            foreach (IPXVertex vertex in picked)
+            {
+                vertex.Normal = new V3(direction.X, direction.Y, direction.Z);
+            }
+        }
+
+        private static void FromTheFaces(IPXPmx model, IList<IPXVertex> picked)
+        {
+            Dictionary<IPXVertex, IList<V3>> facing =
+                new Dictionary<IPXVertex, IList<V3>>(ReferenceComparer<IPXVertex>.Instance);
+            foreach (IPXVertex vertex in picked)
+            {
+                facing[vertex] = new List<V3>();
+            }
+
+            foreach (IPXMaterial material in model.Material)
+            {
+                foreach (IPXFace face in material.Faces)
+                {
+                    if (!ReferenceCleanup.IsSoundFace(face))
+                    {
+                        continue;
+                    }
+
+                    V3 made = Vectors.PerpendicularTo(
+                        face.Vertex1.Position, face.Vertex2.Position, face.Vertex3.Position);
+                    foreach (IPXVertex corner in
+                        new[] { face.Vertex1, face.Vertex2, face.Vertex3 })
+                    {
+                        IList<V3> held;
+                        if (facing.TryGetValue(corner, out held))
+                        {
+                            held.Add(made);
+                        }
+                    }
+                }
+            }
+
+            foreach (IPXVertex vertex in picked)
+            {
+                V3 made = Vectors.NormalizedSum(facing[vertex]);
+                if (Vectors.HasLength(made))
+                {
+                    vertex.Normal = made;
+                }
+            }
         }
     }
 }

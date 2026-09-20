@@ -12,8 +12,6 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public sealed class ModelVertexAttributeToolsTests : IDisposable
     {
-        private const string Pending = "impl pending: 頂点の法線とウェイトと変形方式を1回の呼び出しで変える";
-
         /// <summary>小数の突き合わせで見る桁。</summary>
         private const int Digits = 4;
 
@@ -24,7 +22,7 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AveragingTheNormalsPutsEveryPickedOneOnTheSharedDirection()
         {
             FakeVertex first = Vertex(0f, 0f, 0f);
@@ -43,7 +41,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AveragingNearOnlyJoinsTheOnesInsideTheThreshold()
         {
             FakeVertex first = Vertex(0f, 0f, 0f);
@@ -63,7 +61,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, apart.Normal.Z);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AveragingNearWithoutTheThresholdIsRefused()
         {
             Vertex(0f, 0f, 0f);
@@ -75,7 +73,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TakingTheNormalFromTheFacesUsesTheDirectionTheyFace()
         {
             FakeVertex first = Vertex(0f, 0f, 0f);
@@ -94,7 +92,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, first.Normal.Z);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void NormalisingPutsTheNormalBackOnTheUnitLength()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
@@ -107,7 +105,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, vertex.Normal.Z);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void FlippingTurnsTheNormalTheOtherWay()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
@@ -120,7 +118,36 @@ namespace PmxEditorMcp.Tests
             Near(-1.0, vertex.Normal.Z);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void NormalisingANormalThatIsAlreadyTheRightLengthIsNotCounted()
+        {
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Normal = new V3(0f, 0f, 1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Normals(
+                Operation(ModelEditNormals.Normalize),
+                ComposedEditFixture.Given("all", true)));
+
+            Assert.Equal(0, value[ModelEditNormals.ChangedName]);
+        }
+
+        [Fact]
+        public void AveragingNormalsTooLargeToAddInSinglePrecisionStillPointsTheRightWay()
+        {
+            FakeVertex first = Vertex(0f, 0f, 0f);
+            first.Normal = new V3(float.MaxValue, 0f, 0f);
+            FakeVertex second = Vertex(1f, 0f, 0f);
+            second.Normal = new V3(float.MaxValue, 0f, 0f);
+
+            Normals(
+                Operation(ModelEditNormals.Average),
+                ComposedEditFixture.Given("all", true));
+
+            Near(1.0, first.Normal.X);
+            Near(1.0, second.Normal.X);
+        }
+
+        [Fact]
         public void AveragingTheWeightsPutsEveryPickedVertexOnTheSharedShare()
         {
             IList<IPXBone> bones = Bones("一", "二");
@@ -139,7 +166,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, value[ModelEditWeights.ChangedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void SmoothingMovesTheWeightTowardsTheNeighboursByTheStrength()
         {
             IList<IPXBone> bones = Bones("一", "二");
@@ -161,7 +188,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, Share(second, bones[1]));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void SmoothingWithoutTheStrengthIsRefused()
         {
             Bones("一");
@@ -174,7 +201,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AStrengthOutsideTheUnitRangeIsRefused()
         {
             Bones("一");
@@ -188,7 +215,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TakingTheWeightFromTheNearestBonePutsItAllOnThatBone()
         {
             IList<IPXBone> bones = Bones("近い", "遠い");
@@ -204,7 +231,7 @@ namespace PmxEditorMcp.Tests
             Near(0.0, Share(vertex, bones[1]));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TakingTheWeightFromTheNearestBoneLineUsesTheStretchToTheTip()
         {
             IList<IPXBone> bones = Bones("線", "点");
@@ -220,7 +247,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, Share(vertex, bones[0]));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TakingTheWeightFromTheMirrorSwapsTheSideInTheBoneName()
         {
             IList<IPXBone> bones = Bones("左腕", "右腕");
@@ -236,7 +263,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, Share(right, bones[1]));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void NormalisingTheWeightsMakesThemAddUpToOne()
         {
             IList<IPXBone> bones = Bones("一", "二");
@@ -254,7 +281,83 @@ namespace PmxEditorMcp.Tests
             Near(0.5, vertex.Weight2);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void NormalisingAVertexWithNoWeightAtAllPutsItAllOnItsFirstBone()
+        {
+            IList<IPXBone> bones = Bones("一", "二");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Bone1 = bones[0];
+            vertex.Weight1 = 0f;
+            vertex.Bone2 = bones[1];
+            vertex.Weight2 = 0f;
+
+            Weights(
+                Operation(ModelEditWeights.Normalize),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Same(bones[0], vertex.Bone1);
+            Near(1.0, vertex.Weight1);
+            Assert.Null(vertex.Bone2);
+        }
+
+        [Fact]
+        public void AveragingLeavesNoWeightOnABoneThatIsNotInTheList()
+        {
+            IList<IPXBone> bones = Bones("親");
+            FakeBone gone = new FakeBone("消えた") { Parent = bones[0] };
+            FakeVertex first = Vertex(0f, 0f, 0f);
+            Weigh(first, gone, 1f);
+            FakeVertex second = Vertex(1f, 0f, 0f);
+            Weigh(second, bones[0], 1f);
+
+            Weights(
+                Operation(ModelEditWeights.Average),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Same(bones[0], first.Bone1);
+            Assert.Null(first.Bone2);
+            Near(1.0, Share(first, bones[0]));
+            Near(1.0, Share(second, bones[0]));
+        }
+
+        [Fact]
+        public void NormalisingClearsAWeightLeftInASlotWithNoBone()
+        {
+            IList<IPXBone> bones = Bones("一");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Bone1 = bones[0];
+            vertex.Weight1 = 1f;
+            vertex.Weight2 = 0.5f;
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+                Operation(ModelEditWeights.Normalize),
+                ComposedEditFixture.Given("all", true)));
+
+            Near(0.0, vertex.Weight2);
+            Assert.Equal(1, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
+        public void AveragingWeightsTooLargeToAddInSinglePrecisionStillSharesThemOut()
+        {
+            IList<IPXBone> bones = Bones("一", "二");
+            FakeVertex first = Vertex(0f, 0f, 0f);
+            first.Bone1 = bones[0];
+            first.Weight1 = float.MaxValue;
+            first.Bone2 = bones[0];
+            first.Weight2 = float.MaxValue;
+            FakeVertex second = Vertex(1f, 0f, 0f);
+            Weigh(second, bones[1], 1f);
+
+            Weights(
+                Operation(ModelEditWeights.Average),
+                ComposedEditFixture.Given("all", true));
+
+            Near(1.0, Share(first, bones[0]));
+            Near(1.0, Share(second, bones[0]));
+        }
+
+        [Fact]
         public void RepairingMovesAWeightOffABoneThatIsNotInTheList()
         {
             IList<IPXBone> bones = Bones("親");
@@ -270,7 +373,30 @@ namespace PmxEditorMcp.Tests
             Near(1.0, vertex.Weight1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void WeightsTooLargeToAddLandOnTheAncestorAsOneWholeShare()
+        {
+            IList<IPXBone> bones = Bones("親");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Bone1 = new FakeBone("一") { Parent = bones[0] };
+            vertex.Weight1 = float.MaxValue;
+            vertex.Bone2 = new FakeBone("二") { Parent = bones[0] };
+            vertex.Weight2 = float.MaxValue;
+            vertex.Bone3 = new FakeBone("三") { Parent = bones[0] };
+            vertex.Weight3 = float.MaxValue;
+            vertex.Bone4 = new FakeBone("四") { Parent = bones[0] };
+            vertex.Weight4 = float.MaxValue;
+
+            Weights(
+                Operation(ModelEditWeights.RepairMissingBone),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Same(bones[0], vertex.Bone1);
+            Near(1.0, vertex.Weight1);
+            Assert.Null(vertex.Bone2);
+        }
+
+        [Fact]
         public void ConvertingToOneBoneKeepsTheHeaviestAndDropsTheRest()
         {
             IList<IPXBone> bones = Bones("重い", "軽い");
@@ -292,7 +418,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelSetDeformType.ChangedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ConvertingToSdefKeepsTwoBonesAndTurnsTheStyleOn()
         {
             IList<IPXBone> bones = Bones("一", "二");
@@ -315,7 +441,39 @@ namespace PmxEditorMcp.Tests
             Near(1.0, vertex.SDEF_C.X);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void ConvertingToSdefUsesTheBonesThatOutliveTheOnesItDropped()
+        {
+            IList<IPXBone> bones = Bones("親一", "親二");
+            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)bones[1]).Position = new V3(4f, 0f, 0f);
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Bone1 = new FakeBone("消えた一")
+            {
+                Parent = bones[0],
+                Position = new V3(100f, 0f, 0f),
+            };
+            vertex.Weight1 = 0.5f;
+            vertex.Bone2 = new FakeBone("消えた二")
+            {
+                Parent = bones[1],
+                Position = new V3(200f, 0f, 0f),
+            };
+            vertex.Weight2 = 0.5f;
+
+            Deform(
+                Operation(ModelSetDeformType.Convert),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelSetDeformType.DeformName, ModelSetDeformType.Sdef));
+
+            Assert.Same(bones[0], vertex.Bone1);
+            Assert.Same(bones[1], vertex.Bone2);
+            Assert.True(vertex.SDEF);
+            Near(2.0, vertex.SDEF_C.X);
+        }
+
+        [Fact]
         public void ConvertingToTwoBonesKeepsTheTwoHeaviestAndShareThemOut()
         {
             IList<IPXBone> bones = Bones("一", "二", "三");
@@ -336,7 +494,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(vertex.QDEF);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ConvertingToFourBonesKeepsEveryOneItAlreadyHad()
         {
             IList<IPXBone> bones = Bones("一", "二", "三");
@@ -356,7 +514,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(vertex.QDEF);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ConvertingToTheDualQuaternionStyleTurnsThatStyleOnAndTheOtherOff()
         {
             IList<IPXBone> bones = Bones("一", "二", "三");
@@ -374,7 +532,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(bones[2], vertex.Bone3);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ConvertingToSdefWithOnlyOneBoneLeavesThatStyleOff()
         {
             IList<IPXBone> bones = Bones("一");
@@ -392,7 +550,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, vertex.Weight1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ConvertingAVertexWhoseWeightsAddUpToNothingPutsItAllOnItsFirstBone()
         {
             IList<IPXBone> bones = Bones("一", "二");
@@ -413,7 +571,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(vertex.Bone2);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ConvertingWithoutTheStyleIsRefused()
         {
             Bones("一");
@@ -426,7 +584,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void NormalisingTheSdefCentreTakesTheMiddleOfTheTwoBones()
         {
             IList<IPXBone> bones = Bones("一", "二");
@@ -448,7 +606,7 @@ namespace PmxEditorMcp.Tests
             Near(0.0, vertex.SDEF_C.Y);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnSdefVertexThatCannotHoldTwoBonesGoesBackToTwoBoneBlending()
         {
             IList<IPXBone> bones = Bones("一");
@@ -467,7 +625,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelSetDeformType.ChangedName]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnSdefVertexThatKeepsTwoBonesIsLeftAlone()
         {
             IList<IPXBone> bones = Bones("一", "二");

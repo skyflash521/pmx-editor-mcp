@@ -140,8 +140,25 @@ namespace PmxEditorMcp
 
             float tolerance;
             string parts;
-            if (!TryTolerance(context, operation, out tolerance, out code, out message)
-                || !TryParts(context, operation, out parts, out code, out message)
+            if (!ComposedInput.TryFloat(
+                    context,
+                    ColorToleranceName,
+                    operation,
+                    new[] { MergeSame },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out tolerance,
+                    out code,
+                    out message)
+                || !ComposedInput.TryChoice(
+                    context,
+                    PartsName,
+                    operation,
+                    new[] { DuplicateParts },
+                    Parts,
+                    out parts,
+                    out code,
+                    out message)
                 || !TryFacesGiven(context, operation, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
@@ -438,92 +455,6 @@ namespace PmxEditorMcp
                     { RemovedName, removed },
                     { AddedName, added.Cast<object>().ToArray() },
                 });
-        }
-
-        private static bool TryTolerance(
-            McpMethodContext context,
-            string operation,
-            out float tolerance,
-            out string code,
-            out string message)
-        {
-            tolerance = 0f;
-            code = ToolEnvelope.InvalidArgument;
-            message = null;
-            object given;
-            bool pointed = context.Params.TryGetValue(ColorToleranceName, out given);
-            if (!string.Equals(operation, MergeSame, StringComparison.Ordinal))
-            {
-                if (pointed)
-                {
-                    message = ColorToleranceName + " を渡せるのは " + MergeSame + " のときだけである。";
-
-                    return false;
-                }
-
-                code = null;
-
-                return true;
-            }
-
-            if (!pointed || !ValueInput.TrySingle(given, out tolerance))
-            {
-                message = ColorToleranceName + " は " + MergeSame + " のときに渡す、有限の数である。";
-
-                return false;
-            }
-
-            if (tolerance < 0f)
-            {
-                message = ColorToleranceName + " は0以上でなければならない。";
-
-                return false;
-            }
-
-            code = null;
-
-            return true;
-        }
-
-        private static bool TryParts(
-            McpMethodContext context,
-            string operation,
-            out string parts,
-            out string code,
-            out string message)
-        {
-            parts = null;
-            code = ToolEnvelope.InvalidArgument;
-            message = null;
-            object given;
-            bool pointed = context.Params.TryGetValue(PartsName, out given);
-            if (!string.Equals(operation, DuplicateParts, StringComparison.Ordinal))
-            {
-                if (pointed)
-                {
-                    message = PartsName + " を渡せるのは " + DuplicateParts + " のときだけである。";
-
-                    return false;
-                }
-
-                code = null;
-
-                return true;
-            }
-
-            parts = given as string;
-            if (parts == null || !Parts.Contains(parts, StringComparer.Ordinal))
-            {
-                parts = null;
-                message = PartsName + " は次のどれかでなければならない: "
-                    + string.Join("・", Parts.ToArray());
-
-                return false;
-            }
-
-            code = null;
-
-            return true;
         }
 
         private static bool TryFacesGiven(

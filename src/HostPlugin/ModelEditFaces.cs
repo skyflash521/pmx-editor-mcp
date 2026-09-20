@@ -98,7 +98,16 @@ namespace PmxEditorMcp
             }
 
             float distance;
-            if (!TryDistance(context, operation, out distance, out code, out message))
+            if (!ComposedInput.TryFloat(
+                    context,
+                    DistanceName,
+                    operation,
+                    new[] { Extrude },
+                    ComposedInput.NoFloor,
+                    ComposedInput.NoCeiling,
+                    out distance,
+                    out code,
+                    out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -366,44 +375,6 @@ namespace PmxEditorMcp
                     { AddedVerticesName, vertices },
                     { AddedFacesName, faces },
                 });
-        }
-
-        private static bool TryDistance(
-            McpMethodContext context,
-            string operation,
-            out float distance,
-            out string code,
-            out string message)
-        {
-            distance = 0f;
-            code = ToolEnvelope.InvalidArgument;
-            message = null;
-            object given;
-            bool pointed = context.Params.TryGetValue(DistanceName, out given);
-            if (!string.Equals(operation, Extrude, StringComparison.Ordinal))
-            {
-                if (pointed)
-                {
-                    message = DistanceName + " を渡せるのは " + Extrude + " のときだけである。";
-
-                    return false;
-                }
-
-                code = null;
-
-                return true;
-            }
-
-            if (!pointed || !ValueInput.TrySingle(given, out distance))
-            {
-                message = DistanceName + " は " + Extrude + " のときに渡す、有限の数である。";
-
-                return false;
-            }
-
-            code = null;
-
-            return true;
         }
 
         private static IPXFace Wall(

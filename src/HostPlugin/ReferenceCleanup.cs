@@ -326,42 +326,50 @@ namespace PmxEditorMcp
             return repaired;
         }
 
+        /// <summary>
+        /// 並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。同じボーンが重なったら
+        /// 重みを足してまとめる。直した頂点の数を返す。
+        /// </summary>
+        public static int RepairWeights(object pmx, IEnumerable<IPXVertex> vertices)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (vertices == null)
+            {
+                throw new ArgumentNullException(nameof(vertices));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+
+            return Repaired(model, Held(model.Bone.Cast<object>()), vertices);
+        }
+
         private static int SweepWeights(IPXPmx model, HashSet<object> bones)
+        {
+            return Repaired(model, bones, model.Vertex);
+        }
+
+        private static int Repaired(
+            IPXPmx model, HashSet<object> bones, IEnumerable<IPXVertex> vertices)
         {
             int repaired = 0;
             IPXBone fallback = model.Bone.Count == 0 ? null : model.Bone[0];
-            foreach (IPXVertex vertex in model.Vertex)
+            foreach (IPXVertex vertex in vertices)
             {
-                IPXBone[] held = { vertex.Bone1, vertex.Bone2, vertex.Bone3, vertex.Bone4 };
-                float[] weights = { vertex.Weight1, vertex.Weight2, vertex.Weight3, vertex.Weight4 };
-                if (!held.Any(bone => bone != null && !bones.Contains(bone)))
+                IList<KeyValuePair<IPXBone, float>> held = VertexWeights.Read(vertex);
+                if (!held.Any(share => !bones.Contains(share.Key)))
                 {
                     continue;
                 }
 
-                List<IPXBone> kept = new List<IPXBone>();
-                List<float> shares = new List<float>();
-                for (int at = 0; at < held.Length; at++)
-                {
-                    IPXBone bone = LandingBone(held[at], bones, fallback);
-                    if (bone == null)
-                    {
-                        continue;
-                    }
-
-                    int found = kept.FindIndex(b => ReferenceEquals(b, bone));
-                    if (found < 0)
-                    {
-                        kept.Add(bone);
-                        shares.Add(weights[at]);
-                    }
-                    else
-                    {
-                        shares[found] += weights[at];
-                    }
-                }
-
-                Write(vertex, kept, shares);
+                IList<KeyValuePair<IPXBone, float>> kept = VertexWeights.Settled(held
+                    .Select(share => new KeyValuePair<IPXBone, float>(
+                        LandingBone(share.Key, bones, fallback), share.Value))
+                    .Where(share => share.Key != null));
+                VertexWeights.Write(vertex, kept);
                 if (kept.Count < SdefBones)
                 {
                     vertex.SDEF = false;
@@ -394,28 +402,6 @@ namespace PmxEditorMcp
             }
 
             return fallback;
-        }
-
-        private static void Write(IPXVertex vertex, IList<IPXBone> bones, IList<float> weights)
-        {
-            vertex.Bone1 = At(bones, 0);
-            vertex.Bone2 = At(bones, 1);
-            vertex.Bone3 = At(bones, 2);
-            vertex.Bone4 = At(bones, 3);
-            vertex.Weight1 = Share(weights, 0);
-            vertex.Weight2 = Share(weights, 1);
-            vertex.Weight3 = Share(weights, 2);
-            vertex.Weight4 = Share(weights, 3);
-        }
-
-        private static IPXBone At(IList<IPXBone> bones, int at)
-        {
-            return at < bones.Count ? bones[at] : null;
-        }
-
-        private static float Share(IList<float> weights, int at)
-        {
-            return at < weights.Count ? weights[at] : 0f;
         }
 
         private static int SweepBones(IPXPmx model, HashSet<object> bones)

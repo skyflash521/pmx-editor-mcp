@@ -116,8 +116,25 @@ namespace PmxEditorMcp
 
             float threshold;
             string axis;
-            if (!TryThreshold(context, operation, out threshold, out code, out message)
-                || !TryAxis(context, operation, out axis, out code, out message))
+            if (!ComposedInput.TryFloat(
+                    context,
+                    ThresholdName,
+                    operation,
+                    new[] { WeldNear },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out threshold,
+                    out code,
+                    out message)
+                || !ComposedInput.TryChoice(
+                    context,
+                    AxisName,
+                    operation,
+                    new[] { Align, MirrorCopy, MirrorModel },
+                    Axes,
+                    out axis,
+                    out code,
+                    out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -129,7 +146,7 @@ namespace PmxEditorMcp
                     return Joined(model, new[] { picked });
 
                 case WeldNear:
-                    return Joined(model, Clustered(picked, threshold));
+                    return Joined(model, VertexClusters.Near(picked, threshold));
 
                 case Align:
                     return Aligned(picked, axis);
@@ -164,38 +181,6 @@ namespace PmxEditorMcp
             int faces = ReferenceCleanup.DropUnsoundFaces(model);
 
             return Answer(moved.Count, moved.Count, faces, new int[0]);
-        }
-
-        private static IEnumerable<IList<IPXVertex>> Clustered(
-            IList<IPXVertex> picked, float threshold)
-        {
-            List<IList<IPXVertex>> groups = new List<IList<IPXVertex>>();
-            HashSet<IPXVertex> taken =
-                new HashSet<IPXVertex>(ReferenceComparer<IPXVertex>.Instance);
-            foreach (IPXVertex vertex in picked)
-            {
-                if (!taken.Add(vertex))
-                {
-                    continue;
-                }
-
-                List<IPXVertex> group = new List<IPXVertex> { vertex };
-                foreach (IPXVertex other in picked)
-                {
-                    if (taken.Contains(other)
-                        || Vectors.Distance(vertex.Position, other.Position) > threshold)
-                    {
-                        continue;
-                    }
-
-                    taken.Add(other);
-                    group.Add(other);
-                }
-
-                groups.Add(group);
-            }
-
-            return groups;
         }
 
         private static ComposedEditResult Aligned(IList<IPXVertex> picked, string axis)
@@ -309,94 +294,5 @@ namespace PmxEditorMcp
                 });
         }
 
-        private static bool TryThreshold(
-            McpMethodContext context,
-            string operation,
-            out float threshold,
-            out string code,
-            out string message)
-        {
-            threshold = 0f;
-            code = ToolEnvelope.InvalidArgument;
-            message = null;
-            object given;
-            bool pointed = context.Params.TryGetValue(ThresholdName, out given);
-            if (!string.Equals(operation, WeldNear, StringComparison.Ordinal))
-            {
-                if (pointed)
-                {
-                    message = ThresholdName + " を渡せるのは " + WeldNear + " のときだけである。";
-
-                    return false;
-                }
-
-                code = null;
-
-                return true;
-            }
-
-            if (!pointed || !ValueInput.TrySingle(given, out threshold))
-            {
-                message = ThresholdName + " は " + WeldNear + " のときに渡す、有限の数である。";
-
-                return false;
-            }
-
-            if (threshold < 0f)
-            {
-                message = ThresholdName + " は0以上でなければならない。";
-
-                return false;
-            }
-
-            code = null;
-
-            return true;
-        }
-
-        private static bool TryAxis(
-            McpMethodContext context,
-            string operation,
-            out string axis,
-            out string code,
-            out string message)
-        {
-            axis = null;
-            code = ToolEnvelope.InvalidArgument;
-            message = null;
-            object given;
-            bool pointed = context.Params.TryGetValue(AxisName, out given);
-            bool wanted = string.Equals(operation, Align, StringComparison.Ordinal)
-                || string.Equals(operation, MirrorCopy, StringComparison.Ordinal)
-                || string.Equals(operation, MirrorModel, StringComparison.Ordinal);
-            if (!wanted)
-            {
-                if (pointed)
-                {
-                    message = AxisName + " を渡せるのは " + Align + "・" + MirrorCopy + "・"
-                        + MirrorModel + " のときだけである。";
-
-                    return false;
-                }
-
-                code = null;
-
-                return true;
-            }
-
-            axis = given as string;
-            if (axis == null || !Axes.Contains(axis, StringComparer.Ordinal))
-            {
-                axis = null;
-                message = AxisName + " は次のどれかでなければならない: "
-                    + string.Join("・", Axes.ToArray());
-
-                return false;
-            }
-
-            code = null;
-
-            return true;
-        }
     }
 }

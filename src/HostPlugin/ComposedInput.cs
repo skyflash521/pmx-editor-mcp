@@ -1,0 +1,166 @@
+// 操作ごとに要る入力を読む。どの操作で要るかはツールが名前で渡す。
+
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+
+namespace PmxEditorMcp
+{
+    public static class ComposedInput
+    {
+        /// <summary>上限を置かないときに渡す値。</summary>
+        public const float NoCeiling = float.MaxValue;
+
+        /// <summary>下限を置かないときに渡す値。</summary>
+        public const float NoFloor = float.MinValue;
+
+        /// <summary>
+        /// 要る操作のときだけ受け取る、有限の数を読む。要る操作で欠けていれば偽、要らない操作で
+        /// 渡されていれば偽を返し、断る内容を渡す。要らない操作では0を渡す。
+        /// </summary>
+        public static bool TryFloat(
+            McpMethodContext context,
+            string name,
+            string operation,
+            IList<string> wanted,
+            float least,
+            float most,
+            out float number,
+            out string code,
+            out string message)
+        {
+            number = 0f;
+            object given;
+            bool asked;
+            if (!TryWanted(context, name, operation, wanted, out given, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (!asked)
+            {
+                return true;
+            }
+
+            if (!ValueInput.TrySingle(given, out number))
+            {
+                number = 0f;
+
+                return Refuse(
+                    name + " は " + Listed(wanted) + " のときに渡す、有限の数である。",
+                    out code,
+                    out message);
+            }
+
+            if (number >= least && number <= most)
+            {
+                return true;
+            }
+
+            number = 0f;
+
+            return Refuse(
+                most == NoCeiling
+                    ? name + " は " + Spelled(least) + " 以上でなければならない。"
+                    : name + " は " + Spelled(least) + " 以上 " + Spelled(most)
+                        + " 以下でなければならない。",
+                out code,
+                out message);
+        }
+
+        /// <summary>
+        /// 要る操作のときだけ受け取る、決まった値のどれかを読む。要る操作で欠けていれば偽、
+        /// 要らない操作で渡されていれば偽を返し、断る内容を渡す。要らない操作では空を渡す。
+        /// </summary>
+        public static bool TryChoice(
+            McpMethodContext context,
+            string name,
+            string operation,
+            IList<string> wanted,
+            IList<string> choices,
+            out string value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            object given;
+            bool asked;
+            if (!TryWanted(context, name, operation, wanted, out given, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (!asked)
+            {
+                return true;
+            }
+
+            value = given as string;
+            if (value != null && choices.Contains(value, StringComparer.Ordinal))
+            {
+                return true;
+            }
+
+            value = null;
+
+            return Refuse(
+                name + " は次のどれかでなければならない: " + Listed(choices),
+                out code,
+                out message);
+        }
+
+        /// <summary>
+        /// その操作で要る入力を取り出す。要らない操作で渡されていれば偽を返す。読む値があるときだけ
+        /// asked を立て、要らない操作で渡されていないときは空を渡して真を返す。
+        /// </summary>
+        private static bool TryWanted(
+            McpMethodContext context,
+            string name,
+            string operation,
+            IList<string> wanted,
+            out object given,
+            out bool asked,
+            out string code,
+            out string message)
+        {
+            given = null;
+            asked = false;
+            code = null;
+            message = null;
+            object held;
+            bool pointed = context.Params.TryGetValue(name, out held);
+            if (!wanted.Contains(operation, StringComparer.Ordinal))
+            {
+                return !pointed
+                    || Refuse(
+                        name + " を渡せるのは " + Listed(wanted) + " のときだけである。",
+                        out code,
+                        out message);
+            }
+
+            given = held;
+            asked = true;
+
+            return true;
+        }
+
+        private static bool Refuse(string said, out string code, out string message)
+        {
+            code = ToolEnvelope.InvalidArgument;
+            message = said;
+
+            return false;
+        }
+
+        private static string Listed(IList<string> names)
+        {
+            return string.Join("・", names.ToArray());
+        }
+
+        private static string Spelled(float number)
+        {
+            return number.ToString(CultureInfo.InvariantCulture);
+        }
+    }
+}

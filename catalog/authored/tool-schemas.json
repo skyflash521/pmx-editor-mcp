@@ -4801,6 +4801,103 @@
       }
     },
     {
+      "tool": "model_edit_normals",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "suppressUndo",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "operation",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "threshold",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "changed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_edit_uv",
       "branches": [
         {
@@ -5023,6 +5120,110 @@
               "origin": "hostOutput",
               "shape": "number"
             }
+          }
+        ]
+      }
+    },
+    {
+      "tool": "model_edit_weights",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "suppressUndo",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "operation",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "strength",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            {
+              "name": "axis",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "changed",
+            "origin": "hostOutput",
+            "shape": "number"
           }
         ]
       }
@@ -10969,6 +11170,100 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "model_set_deform_type",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "suppressUndo",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "operation",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "deform",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "range"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "changed",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {

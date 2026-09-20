@@ -325,6 +325,11 @@
       "duty": "指した材質の結合・単一化・分割・取り出し・複製・色の丸めを行う。材質は indices・range・all のどれか1つで指す。operation は merge・mergeAll・mergeSame・extractFaces・duplicateParts・clampColor のいずれか。merge は指した材質を先頭へまとめ、mergeAll は並びのすべてを1つへまとめる。mergeSame は colorTolerance に色の許容幅を渡し、その中で設定が同じ材質どうしをまとめる。extractFaces は faceIndices・faceRange・faceAll のどれか1つで材質の中の面を指し、その面を新しい材質へ移す。duplicateParts は parts に facesOnly・withVertices・withMorphs のいずれかを渡し、その持ち物を複製した材質を足す。clampColor は色の各成分を0以上1以下へ丸める。changed・removed・added を返す。"
     },
     {
+      "tool": "model_edit_normals",
+      "branching": false,
+      "duty": "指した頂点の法線を整える。頂点は indices・range・all のどれか1つで指す。operation は average・averageNear・fromFaces・normalize・flip のいずれか。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にする。changed に変えた頂点の数を返す。"
+    },
+    {
       "tool": "model_edit_uv",
       "branching": false,
       "duty": "指した頂点のUVの反転・写し取り・視線方向からの貼り直しを行う。頂点は indices・range・all のどれか1つで指す。operation は flipU・flipV・flipUV・copy・projectFromView のいずれか。反転は1から引く。copy は source に写す元の頂点の位置を渡す。projectFromView は direction に見る向きを3つの数で渡し、その向きに垂直な面へ落とした位置をUVにする。長さの無い向きは受け取らない。changed に変えた頂点の数を返す。"
@@ -335,6 +340,11 @@
       "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all のどれか1つで指す。operation は weld・weldNear・align・mirrorCopy・mirrorModel のいずれか。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis に x・y・z のいずれかを渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces・added を返す。"
     },
     {
+      "tool": "model_edit_weights",
+      "branching": false,
+      "duty": "指した頂点のウェイトを整える。頂点は indices・range・all のどれか1つで指す。operation は average・smooth・fromNearestBonePosition・fromNearestBoneAxis・fromMirror・normalize・repairMissingBone のいずれか。average は指した頂点のウェイトの平均へそろえる。smooth は strength に0以上1以下の強さを渡し、同じ面に載っている頂点のウェイトの平均へその強さのぶんだけ寄せる。fromNearestBonePosition はいちばん近いボーンへ、fromNearestBoneAxis は根元から表示先までの線分がいちばん近いボーンへ、ウェイトを全部振る。fromMirror は axis に x・y・z のいずれかを渡し、その軸の鏡像の位置にある頂点から、名前の左右を入れ替えたボーンのウェイトを写す。normalize はウェイトの合計を1にそろえ、repairMissingBone は並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。どの操作でも、重みが正の枠が1つも残らない頂点は先頭のボーンへ重み1を振り、並びに居ないボーンを指すウェイトは残っている祖先のボーンへ移す。changed に変えた頂点の数を返す。"
+    },
+    {
       "tool": "model_insert_elements",
       "branching": false,
       "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation は new か clone のいずれかで、new のときは count に作る数(1以上の整数。省くと1)を渡し、clone のときは indices・range・all のどれか1つで写す元を指す。nodeItem を new で作るときは variant に bone か morph を渡す。at は入れる位置で、省くと末尾へ足す。indices に入った位置を返す。"
@@ -343,6 +353,11 @@
       "tool": "model_reorder_elements",
       "branching": false,
       "duty": "指した要素を並びの中で動かす。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all のどれか1つで指す。move は up・down・top・bottom・to のいずれかで、to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。indices に動いた後の位置を返す。"
+    },
+    {
+      "tool": "model_set_deform_type",
+      "branching": false,
+      "duty": "指した頂点の変形方式を変え、SDEFの値を整える。頂点は indices・range・all のどれか1つで指す。operation は convert・normalizeSdefC・repairInvalidSdef のいずれか。convert は deform に bdef1・bdef2・bdef4・sdef・qdef のいずれかを渡し、重みが正の枠を重い順にその方式が使う数まで残して、残した重みの合計が1になるようそろえる。normalizeSdefC はSDEFのC値を2つのボーンの位置と重みから決め直し、repairInvalidSdef は2つのボーンを保てないSDEFの頂点からSDEFの指定を落とす。convert のあとは、並びに居ないボーンを指すウェイトが残っている祖先のボーンへ移る。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "session_release_handle",
