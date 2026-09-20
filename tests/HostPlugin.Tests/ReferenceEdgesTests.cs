@@ -302,6 +302,85 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void EveryEdgeOfTheTableTakesAwayThePortThatPointsAtWhatLeft()
+        {
+            Strayed();
+            Assert.All(ReferenceEdges.All, edge => Assert.True(
+                Outside(edge).Count > 0, edge.ReferrerKind + "->" + edge.TargetKind));
+
+            foreach (ReferenceEdge edge in ReferenceEdges.All)
+            {
+                edge.Mend(
+                    _model,
+                    ReferenceCleanup.Held(ReferenceEdges.Listed(_model, edge.TargetKind)));
+            }
+
+            Assert.All(ReferenceEdges.All, edge => Assert.True(
+                Outside(edge).Count == 0, edge.ReferrerKind + "->" + edge.TargetKind));
+        }
+
+        private IList<object> Outside(ReferenceEdge edge)
+        {
+            IList<object> listed = ReferenceEdges.Listed(_model, edge.TargetKind);
+            List<object> met = new List<object>();
+            edge.Walk(_model, (referrer, target, weight) =>
+            {
+                if (!listed.Contains(target, ReferenceComparer<object>.Instance))
+                {
+                    met.Add(target);
+                }
+            });
+
+            return met;
+        }
+
+        private void Strayed()
+        {
+            IPXVertex vertex = new FakeVertex(9f, 9f, 9f);
+            IPXBone bone = new FakeBone("居ないボーン");
+            FakeMaterial material = new FakeMaterial("居ない材質");
+            FakeMorph morph = new FakeMorph("居ないモーフ", MorphKind.Vertex);
+            FakeBody body = new FakeBody("居ない剛体");
+
+            Material(new FakeFace(vertex, vertex, vertex));
+            Morph(MorphKind.Vertex, new FakeVertexMorphOffset(vertex));
+            Morph(MorphKind.UV, new FakeUVMorphOffset(vertex));
+            Morph(MorphKind.Material, new FakeMaterialMorphOffset(material));
+            Morph(MorphKind.Bone, new FakeBoneMorphOffset(bone));
+            Morph(MorphKind.Group, new FakeGroupMorphOffset(morph));
+            Morph(MorphKind.Impulse, new FakeImpulseMorphOffset(body));
+            Node(new FakeBoneNodeItem(bone), new FakeMorphNodeItem(morph));
+            IPXVertex listed = Weighted(bone, 1f);
+            IPXBone rigged = Bones(1)[0];
+            Rigged(rigged, bone);
+            rigged.IsIK = true;
+            FakeBody held = Body();
+            held.Bone = bone;
+            FakeJoint joint = Joint();
+            joint.BodyA = body;
+            joint.BodyB = body;
+            FakeSoftBody soft = SoftBody();
+            soft.Material = material;
+            soft.Pins.Add(vertex);
+            soft.Anchors.Add(new FakeSoftBodyAnchor(held, vertex));
+            soft.Anchors.Add(new FakeSoftBodyAnchor(body, listed));
+        }
+
+        [Fact]
+        public void AnIkTargetThatLeftIsEmptiedEvenWhenTheBoneIsNotAnIk()
+        {
+            IPXBone bone = Bones(1)[0];
+            bone.IK.Target = new FakeBone("居ないボーン");
+
+            int repaired = Edge(ElementKinds.Bone, ElementKinds.Bone)
+                .Mend(_model, ReferenceCleanup.Held(_model.Bone.Cast<object>()));
+
+            Assert.False(bone.IsIK);
+            Assert.Null(bone.IK.Target);
+            Assert.Equal(1, repaired);
+        }
+
+        [Fact]
         public void AnEdgeThatReachesThroughAnotherElementCannotBeRetargeted()
         {
             Assert.False(Edge(ElementKinds.Material, ElementKinds.Vertex).CanRetarget);

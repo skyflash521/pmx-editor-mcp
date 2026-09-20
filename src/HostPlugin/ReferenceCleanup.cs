@@ -289,38 +289,39 @@ namespace PmxEditorMcp
             }
 
             IPXPmx model = (IPXPmx)pmx;
-            HashSet<object> vertices = Held(model.Vertex.Cast<object>());
-            HashSet<object> materials = Held(model.Material.Cast<object>());
-            HashSet<object> bones = Held(model.Bone.Cast<object>());
-            HashSet<object> morphs = Held(model.Morph.Cast<object>());
-            HashSet<object> bodies = Held(model.Body.Cast<object>());
+            Dictionary<string, ISet<object>> live =
+                new Dictionary<string, ISet<object>>(StringComparer.Ordinal)
+                {
+                    { ElementKinds.Vertex, Held(model.Vertex.Cast<object>()) },
+                    { ElementKinds.Material, Held(model.Material.Cast<object>()) },
+                    { ElementKinds.Bone, Held(model.Bone.Cast<object>()) },
+                    { ElementKinds.Morph, Held(model.Morph.Cast<object>()) },
+                    { ElementKinds.Body, Held(model.Body.Cast<object>()) },
+                };
 
-            int repaired = SweepFaces(model, vertices);
-            repaired += SweepWeights(model, bones);
-            repaired += SweepBones(model, bones);
-            repaired += SweepMorphs(model, vertices, materials, bones, morphs, bodies);
-            repaired += SweepNodes(model, bones, morphs);
-            repaired += SweepPhysics(model, vertices, materials, bones, bodies);
+            int repaired = 0;
+            foreach (ReferenceEdge edge in ReferenceEdges.All)
+            {
+                repaired += edge.Mend(model, live[edge.TargetKind]);
+            }
 
-            return repaired;
+            return repaired + SweepStrayNodeItems(model);
         }
 
-        private static int SweepFaces(IPXPmx model, HashSet<object> vertices)
+        private static int SweepStrayNodeItems(IPXPmx model)
         {
             int repaired = 0;
-            foreach (IPXMaterial material in model.Material)
+            foreach (IPXNode node in EveryNode(model))
             {
-                for (int at = material.Faces.Count - 1; at >= 0; at--)
+                for (int at = node.Items.Count - 1; at >= 0; at--)
                 {
-                    IPXFace face = material.Faces[at];
-                    if (Alive(face.Vertex1, vertices)
-                        && Alive(face.Vertex2, vertices)
-                        && Alive(face.Vertex3, vertices))
+                    IPXNodeItem item = node.Items[at];
+                    if (item.IsBone || item.IsMorph)
                     {
                         continue;
                     }
 
-                    material.Faces.RemoveAt(at);
+                    node.Items.RemoveAt(at);
                     repaired++;
                 }
             }
@@ -346,17 +347,32 @@ namespace PmxEditorMcp
 
             IPXPmx model = (IPXPmx)pmx;
 
-            return Repaired(model, Held(model.Bone.Cast<object>()), vertices);
+            return RepairWeights(model, Held(model.Bone.Cast<object>()), vertices);
         }
 
-        private static int SweepWeights(IPXPmx model, HashSet<object> bones)
+        /// <summary>
+        /// <paramref name="bones"/> に居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。
+        /// 同じボーンが重なったら重みを足してまとめる。直した頂点の数を返す。
+        /// </summary>
+        public static int RepairWeights(
+            object pmx, ISet<object> bones, IEnumerable<IPXVertex> vertices)
         {
-            return Repaired(model, bones, model.Vertex);
-        }
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
 
-        private static int Repaired(
-            IPXPmx model, HashSet<object> bones, IEnumerable<IPXVertex> vertices)
-        {
+            if (bones == null)
+            {
+                throw new ArgumentNullException(nameof(bones));
+            }
+
+            if (vertices == null)
+            {
+                throw new ArgumentNullException(nameof(vertices));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
             int repaired = 0;
             IPXBone fallback = model.Bone.Count == 0 ? null : model.Bone[0];
             foreach (IPXVertex vertex in vertices)
@@ -388,7 +404,11 @@ namespace PmxEditorMcp
             return repaired;
         }
 
-        private static IPXBone LandingBone(IPXBone bone, HashSet<object> bones, IPXBone fallback)
+        /// <summary>
+        /// そのボーンが <paramref name="bones"/> に居ればそのまま、居なければ残っている最も近い祖先を
+        /// 返す。祖先も残っていなければ <paramref name="fallback"/> を返す。
+        /// </summary>
+        public static IPXBone LandingBone(IPXBone bone, ISet<object> bones, IPXBone fallback)
         {
             if (bone == null || bones.Contains(bone))
             {
@@ -404,78 +424,6 @@ namespace PmxEditorMcp
             }
 
             return fallback;
-        }
-
-        private static int SweepBones(IPXPmx model, HashSet<object> bones)
-        {
-            int repaired = 0;
-            foreach (IPXBone bone in model.Bone)
-            {
-                if (bone.Parent != null && !bones.Contains(bone.Parent))
-                {
-                    bone.Parent = LandingBone(bone.Parent, bones, null);
-                    repaired++;
-                }
-
-                if (bone.ToBone != null && !bones.Contains(bone.ToBone))
-                {
-                    bone.ToBone = null;
-                    repaired++;
-                }
-
-                if (bone.AppendParent != null && !bones.Contains(bone.AppendParent))
-                {
-                    bone.AppendParent = null;
-                    bone.IsAppendRotation = false;
-                    bone.IsAppendTranslation = false;
-                    repaired++;
-                }
-
-                if (bone.IsIK && !Alive(bone.IK.Target, bones))
-                {
-                    bone.IsIK = false;
-                    repaired++;
-                }
-
-                for (int at = bone.IK.Links.Count - 1; at >= 0; at--)
-                {
-                    if (Alive(bone.IK.Links[at].Bone, bones))
-                    {
-                        continue;
-                    }
-
-                    bone.IK.Links.RemoveAt(at);
-                    repaired++;
-                }
-            }
-
-            return repaired;
-        }
-
-        private static int SweepMorphs(
-            IPXPmx model,
-            HashSet<object> vertices,
-            HashSet<object> materials,
-            HashSet<object> bones,
-            HashSet<object> morphs,
-            HashSet<object> bodies)
-        {
-            int repaired = 0;
-            foreach (IPXMorph morph in model.Morph)
-            {
-                for (int at = morph.Offsets.Count - 1; at >= 0; at--)
-                {
-                    if (PointsAtLive(morph.Offsets[at], vertices, materials, bones, morphs, bodies))
-                    {
-                        continue;
-                    }
-
-                    morph.Offsets.RemoveAt(at);
-                    repaired++;
-                }
-            }
-
-            return repaired;
         }
 
         /// <summary>そのオフセットが、いま並びに居る相手を指しているか。</summary>
@@ -524,31 +472,6 @@ namespace PmxEditorMcp
                 || materials.Contains(painted.Material);
         }
 
-        private static int SweepNodes(
-            IPXPmx model, HashSet<object> bones, HashSet<object> morphs)
-        {
-            int repaired = 0;
-            foreach (IPXNode node in EveryNode(model))
-            {
-                for (int at = node.Items.Count - 1; at >= 0; at--)
-                {
-                    IPXNodeItem item = node.Items[at];
-                    bool held = item.IsBone
-                        ? Alive(item.BoneItem.Bone, bones)
-                        : item.IsMorph && Alive(item.MorphItem.Morph, morphs);
-                    if (held)
-                    {
-                        continue;
-                    }
-
-                    node.Items.RemoveAt(at);
-                    repaired++;
-                }
-            }
-
-            return repaired;
-        }
-
         private static IEnumerable<IPXNode> EveryNode(IPXPmx model)
         {
             if (model.RootNode != null)
@@ -565,75 +488,6 @@ namespace PmxEditorMcp
             {
                 yield return node;
             }
-        }
-
-        private static int SweepPhysics(
-            IPXPmx model,
-            HashSet<object> vertices,
-            HashSet<object> materials,
-            HashSet<object> bones,
-            HashSet<object> bodies)
-        {
-            int repaired = 0;
-            foreach (IPXBody body in model.Body)
-            {
-                if (body.Bone == null || bones.Contains(body.Bone))
-                {
-                    continue;
-                }
-
-                body.Bone = null;
-                repaired++;
-            }
-
-            foreach (IPXJoint joint in model.Joint)
-            {
-                if (joint.BodyA != null && !bodies.Contains(joint.BodyA))
-                {
-                    joint.BodyA = null;
-                    repaired++;
-                }
-
-                if (joint.BodyB != null && !bodies.Contains(joint.BodyB))
-                {
-                    joint.BodyB = null;
-                    repaired++;
-                }
-            }
-
-            foreach (IPXSoftBody soft in model.SoftBody)
-            {
-                if (soft.Material != null && !materials.Contains(soft.Material))
-                {
-                    soft.Material = null;
-                    repaired++;
-                }
-
-                for (int at = soft.Pins.Count - 1; at >= 0; at--)
-                {
-                    if (Alive(soft.Pins[at], vertices))
-                    {
-                        continue;
-                    }
-
-                    soft.Pins.RemoveAt(at);
-                    repaired++;
-                }
-
-                for (int at = soft.Anchors.Count - 1; at >= 0; at--)
-                {
-                    IPXSoftBodyAnchor anchor = soft.Anchors[at];
-                    if (Alive(anchor.Body, bodies) && Alive(anchor.Vertex, vertices))
-                    {
-                        continue;
-                    }
-
-                    soft.Anchors.RemoveAt(at);
-                    repaired++;
-                }
-            }
-
-            return repaired;
         }
 
         private static HashSet<object> Seeded(

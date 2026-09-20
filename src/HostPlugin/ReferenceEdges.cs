@@ -22,18 +22,22 @@ namespace PmxEditorMcp
 
         private readonly Action<IPXPmx, Func<object, object>> _retarget;
 
+        private readonly Func<IPXPmx, ISet<object>, int> _mend;
+
         internal ReferenceEdge(
             string referrerKind,
             string targetKind,
             bool weighted,
             Action<IPXPmx, ReferenceVisit> walk,
-            Action<IPXPmx, Func<object, object>> retarget)
+            Action<IPXPmx, Func<object, object>> retarget,
+            Func<IPXPmx, ISet<object>, int> mend)
         {
             ReferrerKind = referrerKind;
             TargetKind = targetKind;
             IsWeighted = weighted;
             _walk = walk;
             _retarget = retarget;
+            _mend = mend;
         }
 
         /// <summary>指す側の種類の名前。</summary>
@@ -87,6 +91,27 @@ namespace PmxEditorMcp
             {
                 _retarget((IPXPmx)pmx, moved);
             }
+        }
+
+        /// <summary>
+        /// この辺の口のうち、<paramref name="live"/> に居ない相手を指しているものを片付ける。片付け方は
+        /// 辺ごとに違い、口を空にするもの・口を持つ要素ごと落とすもの・別の相手へ移すものがある。
+        /// 片付けた数を返す。1件と数える単位も辺ごとに違い、落とした面・落としたオフセット・落とした
+        /// 表示枠の項目・空にした口・直した頂点が、それぞれ1件である。
+        /// </summary>
+        public int Mend(object pmx, ISet<object> live)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (live == null)
+            {
+                throw new ArgumentNullException(nameof(live));
+            }
+
+            return _mend == null ? 0 : _mend((IPXPmx)pmx, live);
         }
     }
 
@@ -336,53 +361,117 @@ namespace PmxEditorMcp
             return new ReadOnlyCollection<ReferenceEdge>(new List<ReferenceEdge>
             {
                 new ReferenceEdge(
-                    ElementKinds.Face, ElementKinds.Vertex, false, WalkFaceVertex, MoveFaceVertex),
+                    ElementKinds.Face,
+                    ElementKinds.Vertex,
+                    false,
+                    WalkFaceVertex,
+                    MoveFaceVertex,
+                    MendFaceVertex),
                 new ReferenceEdge(
-                    ElementKinds.Material, ElementKinds.Vertex, false, WalkMaterialVertex, null),
+                    ElementKinds.Material,
+                    ElementKinds.Vertex,
+                    false,
+                    WalkMaterialVertex,
+                    null,
+                    null),
                 new ReferenceEdge(
-                    ElementKinds.Morph, ElementKinds.Vertex, false, WalkMorphVertex, MoveMorphVertex),
+                    ElementKinds.Morph,
+                    ElementKinds.Vertex,
+                    false,
+                    WalkMorphVertex,
+                    MoveMorphVertex,
+                    MendMorphVertex),
                 new ReferenceEdge(
                     ElementKinds.SoftBody,
                     ElementKinds.Vertex,
                     false,
                     WalkSoftBodyVertex,
-                    MoveSoftBodyVertex),
+                    MoveSoftBodyVertex,
+                    MendSoftBodyVertex),
                 new ReferenceEdge(
                     ElementKinds.Morph,
                     ElementKinds.Material,
                     false,
                     WalkMorphMaterial,
-                    MoveMorphMaterial),
+                    MoveMorphMaterial,
+                    MendMorphMaterial),
                 new ReferenceEdge(
                     ElementKinds.SoftBody,
                     ElementKinds.Material,
                     false,
                     WalkSoftBodyMaterial,
-                    MoveSoftBodyMaterial),
+                    MoveSoftBodyMaterial,
+                    MendSoftBodyMaterial),
                 new ReferenceEdge(
-                    ElementKinds.Vertex, ElementKinds.Bone, true, WalkVertexBone, MoveVertexBone),
+                    ElementKinds.Vertex,
+                    ElementKinds.Bone,
+                    true,
+                    WalkVertexBone,
+                    MoveVertexBone,
+                    MendVertexBone),
                 new ReferenceEdge(
-                    ElementKinds.Bone, ElementKinds.Bone, false, WalkBoneBone, MoveBoneBone),
+                    ElementKinds.Bone,
+                    ElementKinds.Bone,
+                    false,
+                    WalkBoneBone,
+                    MoveBoneBone,
+                    MendBoneBone),
                 new ReferenceEdge(
-                    ElementKinds.Morph, ElementKinds.Bone, false, WalkMorphBone, MoveMorphBone),
+                    ElementKinds.Morph,
+                    ElementKinds.Bone,
+                    false,
+                    WalkMorphBone,
+                    MoveMorphBone,
+                    MendMorphBone),
                 new ReferenceEdge(
-                    ElementKinds.Node, ElementKinds.Bone, false, WalkNodeBone, MoveNodeBone),
+                    ElementKinds.Node,
+                    ElementKinds.Bone,
+                    false,
+                    WalkNodeBone,
+                    MoveNodeBone,
+                    MendNodeBone),
                 new ReferenceEdge(
-                    ElementKinds.Body, ElementKinds.Bone, false, WalkBodyBone, MoveBodyBone),
+                    ElementKinds.Body,
+                    ElementKinds.Bone,
+                    false,
+                    WalkBodyBone,
+                    MoveBodyBone,
+                    MendBodyBone),
                 new ReferenceEdge(
-                    ElementKinds.Morph, ElementKinds.Morph, false, WalkMorphMorph, MoveMorphMorph),
+                    ElementKinds.Morph,
+                    ElementKinds.Morph,
+                    false,
+                    WalkMorphMorph,
+                    MoveMorphMorph,
+                    MendMorphMorph),
                 new ReferenceEdge(
-                    ElementKinds.Node, ElementKinds.Morph, false, WalkNodeMorph, MoveNodeMorph),
+                    ElementKinds.Node,
+                    ElementKinds.Morph,
+                    false,
+                    WalkNodeMorph,
+                    MoveNodeMorph,
+                    MendNodeMorph),
                 new ReferenceEdge(
-                    ElementKinds.Joint, ElementKinds.Body, false, WalkJointBody, MoveJointBody),
+                    ElementKinds.Joint,
+                    ElementKinds.Body,
+                    false,
+                    WalkJointBody,
+                    MoveJointBody,
+                    MendJointBody),
                 new ReferenceEdge(
-                    ElementKinds.Morph, ElementKinds.Body, false, WalkMorphBody, MoveMorphBody),
+                    ElementKinds.Morph,
+                    ElementKinds.Body,
+                    false,
+                    WalkMorphBody,
+                    MoveMorphBody,
+                    MendMorphBody),
                 new ReferenceEdge(
                     ElementKinds.SoftBody,
                     ElementKinds.Body,
                     false,
                     WalkSoftBodyBody,
-                    MoveSoftBodyBody),
+                    MoveSoftBodyBody,
+                    MendSoftBodyBody),
             });
         }
 
@@ -837,6 +926,307 @@ namespace PmxEditorMcp
         private static object Landing(Func<object, object> moved, object held)
         {
             return held == null ? null : moved(held);
+        }
+
+        private static int MendFaceVertex(IPXPmx model, ISet<object> live)
+        {
+            int repaired = 0;
+            foreach (IPXMaterial material in model.Material)
+            {
+                for (int at = material.Faces.Count - 1; at >= 0; at--)
+                {
+                    IPXFace face = material.Faces[at];
+                    if (ReferenceCleanup.Alive(face.Vertex1, live)
+                        && ReferenceCleanup.Alive(face.Vertex2, live)
+                        && ReferenceCleanup.Alive(face.Vertex3, live))
+                    {
+                        continue;
+                    }
+
+                    material.Faces.RemoveAt(at);
+                    repaired++;
+                }
+            }
+
+            return repaired;
+        }
+
+        private static int MendMorphVertex(IPXPmx model, ISet<object> live)
+        {
+            return Dropped(model, offset =>
+            {
+                IPXVertexMorphOffset moved = offset as IPXVertexMorphOffset;
+                if (moved != null)
+                {
+                    return !ReferenceCleanup.Alive(moved.Vertex, live);
+                }
+
+                IPXUVMorphOffset slid = offset as IPXUVMorphOffset;
+
+                return slid != null && !ReferenceCleanup.Alive(slid.Vertex, live);
+            });
+        }
+
+        private static int MendSoftBodyVertex(IPXPmx model, ISet<object> live)
+        {
+            int repaired = 0;
+            foreach (IPXSoftBody soft in model.SoftBody)
+            {
+                for (int at = soft.Pins.Count - 1; at >= 0; at--)
+                {
+                    if (ReferenceCleanup.Alive(soft.Pins[at], live))
+                    {
+                        continue;
+                    }
+
+                    soft.Pins.RemoveAt(at);
+                    repaired++;
+                }
+
+                repaired += Anchored(soft, anchor => !ReferenceCleanup.Alive(anchor.Vertex, live));
+            }
+
+            return repaired;
+        }
+
+        private static int MendMorphMaterial(IPXPmx model, ISet<object> live)
+        {
+            return Dropped(model, offset =>
+            {
+                IPXMaterialMorphOffset painted = offset as IPXMaterialMorphOffset;
+
+                return painted != null
+                    && painted.Material != null
+                    && !ReferenceCleanup.Alive(painted.Material, live);
+            });
+        }
+
+        private static int MendSoftBodyMaterial(IPXPmx model, ISet<object> live)
+        {
+            int repaired = 0;
+            foreach (IPXSoftBody soft in model.SoftBody)
+            {
+                if (soft.Material == null || ReferenceCleanup.Alive(soft.Material, live))
+                {
+                    continue;
+                }
+
+                soft.Material = null;
+                repaired++;
+            }
+
+            return repaired;
+        }
+
+        private static int MendVertexBone(IPXPmx model, ISet<object> live)
+        {
+            return ReferenceCleanup.RepairWeights(model, live, model.Vertex);
+        }
+
+        private static int MendBoneBone(IPXPmx model, ISet<object> live)
+        {
+            int repaired = 0;
+            foreach (IPXBone bone in model.Bone)
+            {
+                if (bone.Parent != null && !ReferenceCleanup.Alive(bone.Parent, live))
+                {
+                    bone.Parent = ReferenceCleanup.LandingBone(bone.Parent, live, null);
+                    repaired++;
+                }
+
+                if (bone.ToBone != null && !ReferenceCleanup.Alive(bone.ToBone, live))
+                {
+                    bone.ToBone = null;
+                    repaired++;
+                }
+
+                if (bone.AppendParent != null && !ReferenceCleanup.Alive(bone.AppendParent, live))
+                {
+                    bone.AppendParent = null;
+                    bone.IsAppendRotation = false;
+                    bone.IsAppendTranslation = false;
+                    repaired++;
+                }
+
+                if (bone.IK == null)
+                {
+                    continue;
+                }
+
+                if (bone.IsIK && !ReferenceCleanup.Alive(bone.IK.Target, live))
+                {
+                    bone.IsIK = false;
+                    bone.IK.Target = null;
+                    repaired++;
+                }
+                else if (bone.IK.Target != null
+                    && !ReferenceCleanup.Alive(bone.IK.Target, live))
+                {
+                    bone.IK.Target = null;
+                    repaired++;
+                }
+
+                for (int at = bone.IK.Links.Count - 1; at >= 0; at--)
+                {
+                    if (ReferenceCleanup.Alive(bone.IK.Links[at].Bone, live))
+                    {
+                        continue;
+                    }
+
+                    bone.IK.Links.RemoveAt(at);
+                    repaired++;
+                }
+            }
+
+            return repaired;
+        }
+
+        private static int MendMorphBone(IPXPmx model, ISet<object> live)
+        {
+            return Dropped(model, offset =>
+            {
+                IPXBoneMorphOffset posed = offset as IPXBoneMorphOffset;
+
+                return posed != null && !ReferenceCleanup.Alive(posed.Bone, live);
+            });
+        }
+
+        private static int MendNodeBone(IPXPmx model, ISet<object> live)
+        {
+            return Unlisted(model, item => item.IsBone
+                && !ReferenceCleanup.Alive(item.BoneItem.Bone, live));
+        }
+
+        private static int MendBodyBone(IPXPmx model, ISet<object> live)
+        {
+            int repaired = 0;
+            foreach (IPXBody body in model.Body)
+            {
+                if (body.Bone == null || ReferenceCleanup.Alive(body.Bone, live))
+                {
+                    continue;
+                }
+
+                body.Bone = null;
+                repaired++;
+            }
+
+            return repaired;
+        }
+
+        private static int MendMorphMorph(IPXPmx model, ISet<object> live)
+        {
+            return Dropped(model, offset =>
+            {
+                IPXGroupMorphOffset grouped = offset as IPXGroupMorphOffset;
+
+                return grouped != null && !ReferenceCleanup.Alive(grouped.Morph, live);
+            });
+        }
+
+        private static int MendNodeMorph(IPXPmx model, ISet<object> live)
+        {
+            return Unlisted(model, item => item.IsMorph
+                && !ReferenceCleanup.Alive(item.MorphItem.Morph, live));
+        }
+
+        private static int MendJointBody(IPXPmx model, ISet<object> live)
+        {
+            int repaired = 0;
+            foreach (IPXJoint joint in model.Joint)
+            {
+                if (joint.BodyA != null && !ReferenceCleanup.Alive(joint.BodyA, live))
+                {
+                    joint.BodyA = null;
+                    repaired++;
+                }
+
+                if (joint.BodyB != null && !ReferenceCleanup.Alive(joint.BodyB, live))
+                {
+                    joint.BodyB = null;
+                    repaired++;
+                }
+            }
+
+            return repaired;
+        }
+
+        private static int MendMorphBody(IPXPmx model, ISet<object> live)
+        {
+            return Dropped(model, offset =>
+            {
+                IPXImpulseMorphOffset pushed = offset as IPXImpulseMorphOffset;
+
+                return pushed != null && !ReferenceCleanup.Alive(pushed.Body, live);
+            });
+        }
+
+        private static int MendSoftBodyBody(IPXPmx model, ISet<object> live)
+        {
+            int repaired = 0;
+            foreach (IPXSoftBody soft in model.SoftBody)
+            {
+                repaired += Anchored(soft, anchor => !ReferenceCleanup.Alive(anchor.Body, live));
+            }
+
+            return repaired;
+        }
+
+        private static int Dropped(IPXPmx model, Func<IPXMorphOffset, bool> drop)
+        {
+            int repaired = 0;
+            foreach (IPXMorph morph in model.Morph)
+            {
+                for (int at = morph.Offsets.Count - 1; at >= 0; at--)
+                {
+                    if (!drop(morph.Offsets[at]))
+                    {
+                        continue;
+                    }
+
+                    morph.Offsets.RemoveAt(at);
+                    repaired++;
+                }
+            }
+
+            return repaired;
+        }
+
+        private static int Unlisted(IPXPmx model, Func<IPXNodeItem, bool> drop)
+        {
+            int repaired = 0;
+            foreach (IPXNode node in ReferenceCleanup.Nodes(model))
+            {
+                for (int at = node.Items.Count - 1; at >= 0; at--)
+                {
+                    if (!drop(node.Items[at]))
+                    {
+                        continue;
+                    }
+
+                    node.Items.RemoveAt(at);
+                    repaired++;
+                }
+            }
+
+            return repaired;
+        }
+
+        private static int Anchored(IPXSoftBody soft, Func<IPXSoftBodyAnchor, bool> drop)
+        {
+            int repaired = 0;
+            for (int at = soft.Anchors.Count - 1; at >= 0; at--)
+            {
+                if (!drop(soft.Anchors[at]))
+                {
+                    continue;
+                }
+
+                soft.Anchors.RemoveAt(at);
+                repaired++;
+            }
+
+            return repaired;
         }
     }
 }
