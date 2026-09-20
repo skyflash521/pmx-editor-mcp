@@ -9,7 +9,6 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public sealed class ComposedEditTests : IDisposable
     {
-        private const string Pending = "impl pending: 組み立てのツールを複製編集の経路へ乗せる";
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -18,7 +17,7 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheBodyGetsTheCloneOfTheCurrentPmxAndTheChangeIsReflectedOnce()
         {
             object seen = null;
@@ -39,7 +38,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void PointingThePmxByHandleSkipsTheCloneAndTheReflection()
         {
             FakePmx held = new FakePmx();
@@ -61,7 +60,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AHandleTheLedgerDoesNotKnowIsRefusedWithoutReflecting()
         {
             IDictionary<string, object> envelope = _fixture.Call(
@@ -73,7 +72,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnArgumentTheToolDoesNotTakeIsRefusedBeforeTheCloneIsTaken()
         {
             IDictionary<string, object> envelope = _fixture.Call(
@@ -84,7 +83,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.Clones);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheNamesTheToolTakesGoThrough()
         {
             IDictionary<string, object> envelope = _fixture.Call(
@@ -94,7 +93,7 @@ namespace PmxEditorMcp.Tests
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ABodyThatRefusesLeavesTheModelUnreflected()
         {
             IDictionary<string, object> envelope = _fixture.Call(
@@ -106,7 +105,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ABodyThatThrowsAnswersThatTheStateIsUnchanged()
         {
             IDictionary<string, object> envelope = _fixture.Call(
@@ -118,7 +117,22 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.Commits);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void ABodyThatThrowsOnAHeldPmxAnswersThatTheResultIsUnknown()
+        {
+            FakePmx held = new FakePmx();
+            int handle = _fixture.Handles.Issue(typeof(FakePmx).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                Method((context, pmx) => throw new InvalidOperationException("途中で落ちた。")),
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given(PmxSession.HandleName, handle)));
+
+            Assert.Equal(ToolEnvelope.OperationFailed, ComposedEditFixture.Code(envelope));
+            Assert.Contains("結果不明", ComposedEditFixture.Message(envelope));
+        }
+
+        [Fact]
         public void AskingToSuppressTheUndoRecordReachesTheReflection()
         {
             _fixture.Call(

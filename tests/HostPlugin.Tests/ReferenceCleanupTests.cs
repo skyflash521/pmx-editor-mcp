@@ -11,9 +11,8 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public class ReferenceCleanupTests
     {
-        private const string Pending = "impl pending: 並びから消えた要素を指したままの口を片付ける";
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AFaceThatPointsAtAVertexNoLongerInTheListIsDropped()
         {
             FakePmx pmx = new FakePmx();
@@ -31,7 +30,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, repaired);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AWeightOnABoneNoLongerInTheListMovesToTheNearestAncestorThatStayed()
         {
             FakePmx pmx = new FakePmx();
@@ -50,7 +49,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1f, vertex.Weight1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void WeightsThatLandOnTheSameBoneAreAddedTogetherIntoOneSlot()
         {
             FakePmx pmx = new FakePmx();
@@ -73,7 +72,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0f, vertex.Weight2);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AWeightWithNoAncestorLeftFallsOnTheFirstBoneInTheList()
         {
             FakePmx pmx = new FakePmx();
@@ -90,7 +89,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1f, vertex.Weight1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AWeightWithNoBoneLeftAtAllIsEmptied()
         {
             FakePmx pmx = new FakePmx();
@@ -105,7 +104,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0f, vertex.Weight1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ABoneWhoseParentLeftTakesTheNearestAncestorThatStayed()
         {
             FakePmx pmx = new FakePmx();
@@ -120,7 +119,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(root, child.Parent);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ABoneWhoseTipBoneLeftKeepsItsOffsetAndLosesTheTip()
         {
             FakePmx pmx = new FakePmx();
@@ -132,7 +131,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(bone.ToBone);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ABoneWhoseAppendParentLeftStopsFollowingIt()
         {
             FakePmx pmx = new FakePmx();
@@ -151,7 +150,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(bone.IsAppendTranslation);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnIkWhoseTargetLeftStopsBeingAnIk()
         {
             FakePmx pmx = new FakePmx();
@@ -164,7 +163,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(bone.IsIK);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnIkLinkThatPointsAtABoneThatLeftIsDropped()
         {
             FakePmx pmx = new FakePmx();
@@ -182,7 +181,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(bone.IK.Links);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AMorphOffsetThatPointsAtSomethingThatLeftIsDroppedAndTheMorphStays()
         {
             FakePmx pmx = new FakePmx();
@@ -196,7 +195,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(pmx.Morph);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AMaterialMorphOffsetWhoseMaterialLeftIsDroppedRatherThanEmptied()
         {
             FakePmx pmx = new FakePmx();
@@ -209,7 +208,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(morph.Offsets);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ANodeItemThatPointsAtSomethingThatLeftIsDropped()
         {
             FakePmx pmx = new FakePmx();
@@ -226,7 +225,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(node.Items);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheRootAndExpressionNodesArePartOfTheSweepToo()
         {
             FakePmx pmx = new FakePmx();
@@ -239,7 +238,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(pmx.ExpressionNode.Items);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ABodyWhoseBoneLeftLosesTheBoneAndStays()
         {
             FakePmx pmx = new FakePmx();
@@ -252,7 +251,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(pmx.Body);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AJointWhoseBodyLeftLosesThatSideAndStays()
         {
             FakePmx pmx = new FakePmx();
@@ -272,7 +271,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(pmx.Joint);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnImpulseMorphOffsetWhoseBodyLeftIsDropped()
         {
             FakePmx pmx = new FakePmx();
@@ -285,7 +284,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(morph.Offsets);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ASoftBodyLosesPinsAndAnchorsThatPointAtWhatLeft()
         {
             FakePmx pmx = new FakePmx();
@@ -307,7 +306,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(soft.Material);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AModelWithNothingDanglingIsLeftAloneAndCountsZero()
         {
             FakePmx pmx = new FakePmx();
@@ -321,7 +320,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(material.Faces);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void RemovingAMaterialDragsTheVerticesOnlyItUsedAndTheMorphsThatWouldEmpty()
         {
             FakePmx pmx = new FakePmx();
@@ -346,7 +345,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(morph, Assert.Single(following[ElementKinds.Morph]));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void RemovingAVertexDragsTheMaterialsThatWouldLoseEveryFace()
         {
             FakePmx pmx = new FakePmx();
@@ -362,7 +361,45 @@ namespace PmxEditorMcp.Tests
             Assert.Same(material, Assert.Single(following[ElementKinds.Material]));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
+        public void RemovingAVertexDragsTheOtherVerticesThatOnlyTheLostMaterialUsed()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeVertex going = new FakeVertex();
+            FakeVertex beside = new FakeVertex(1f, 0f, 0f);
+            pmx.Vertex.Add(going);
+            pmx.Vertex.Add(beside);
+            FakeMaterial material = new FakeMaterial("消える材質");
+            material.Faces.Add(new FakeFace(going, beside, beside));
+            pmx.Material.Add(material);
+
+            IDictionary<string, IList<object>> following = ReferenceCleanup.Following(
+                pmx, Resolved(ElementKinds.Vertex), new object[] { going });
+
+            Assert.Same(material, Assert.Single(following[ElementKinds.Material]));
+            Assert.Same(beside, Assert.Single(following[ElementKinds.Vertex]));
+        }
+
+        [Fact]
+        public void RemovingAMorphDragsTheGroupMorphThatOnlyPointedAtIt()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeVertex vertex = new FakeVertex();
+            pmx.Vertex.Add(vertex);
+            FakeMorph going = new FakeMorph("消す", MorphKind.Vertex);
+            going.Offsets.Add(new FakeVertexMorphOffset(vertex));
+            pmx.Morph.Add(going);
+            FakeMorph grouped = new FakeMorph("まとめ", MorphKind.Group);
+            grouped.Offsets.Add(new FakeGroupMorphOffset(going));
+            pmx.Morph.Add(grouped);
+
+            IDictionary<string, IList<object>> following = ReferenceCleanup.Following(
+                pmx, Resolved(ElementKinds.Morph), new object[] { going });
+
+            Assert.Same(grouped, Assert.Single(following[ElementKinds.Morph]));
+        }
+
+        [Fact]
         public void RemovingABodyDragsTheJointsThatPointedAtIt()
         {
             FakePmx pmx = new FakePmx();
@@ -377,7 +414,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(joint, Assert.Single(following[ElementKinds.Joint]));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void RemovingABoneDragsNothingBecauseTheWeightsAndBodiesAreRepairedInPlace()
         {
             FakePmx pmx = new FakePmx();
@@ -390,7 +427,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(following.SelectMany(pair => pair.Value));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ReferenceCleanup.Keep, RelatedHandling.Keep)]
         [InlineData(ReferenceCleanup.Repair, RelatedHandling.Repair)]
         [InlineData(ReferenceCleanup.Cascade, RelatedHandling.Cascade)]
@@ -404,7 +441,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(given, ReferenceCleanup.Names);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void LeavingItOutMeansRepairing()
         {
             RelatedHandling handling;
@@ -414,7 +451,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(RelatedHandling.Repair, handling);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AValueTheSchemaDoesNotOfferIsRefusedWithTheOnesItDoes()
         {
             RelatedHandling handling;
@@ -424,7 +461,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(ReferenceCleanup.Repair, message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AUvMorphOffsetWhoseVertexLeftIsDropped()
         {
             FakePmx pmx = new FakePmx();
@@ -437,7 +474,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(morph.Offsets);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ABoneMorphOffsetWhoseBoneLeftIsDropped()
         {
             FakePmx pmx = new FakePmx();
@@ -450,7 +487,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(morph.Offsets);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(MorphKind.Group)]
         [InlineData(MorphKind.Flip)]
         public void AnOffsetThatPointsAtAMorphThatLeftIsDropped(MorphKind kind)
@@ -468,7 +505,7 @@ namespace PmxEditorMcp.Tests
             Assert.Single(morph.Offsets);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ASoftBodyAnchorWhoseVertexLeftIsDropped()
         {
             FakePmx pmx = new FakePmx();
@@ -483,7 +520,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(soft.Anchors);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnSdefVertexLeftWithOneBoneStopsBeingSdef()
         {
             FakePmx pmx = new FakePmx();
@@ -507,7 +544,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(vertex.SDEF);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnSdefVertexThatKeepsTwoBonesStaysSdef()
         {
             FakePmx pmx = new FakePmx();
@@ -532,7 +569,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(other, vertex.Bone2);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AQdefVertexLeftWithOneBoneStaysQdef()
         {
             FakePmx pmx = new FakePmx();
@@ -555,7 +592,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1f, vertex.Weight1);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AVertexWithNoBoneLeftAtAllLosesBothDeformFlags()
         {
             FakePmx pmx = new FakePmx();

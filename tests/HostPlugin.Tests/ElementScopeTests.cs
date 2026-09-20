@@ -10,7 +10,6 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public sealed class ElementScopeTests : IDisposable
     {
-        private const string Pending = "impl pending: 要素の種類と親の指定から並びを持つ相手を解く";
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -19,7 +18,7 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheNamesAreTheKindAndTheParentSet()
         {
             Assert.Equal(
@@ -33,13 +32,13 @@ namespace PmxEditorMcp.Tests
                 ElementScope.Names);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void LeavingOutTheKindIsRefused()
         {
             Assert.Equal(ToolEnvelope.InvalidArgument, Refused(Arguments()));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AKindTheTableDoesNotKnowIsRefused()
         {
             Assert.Equal(
@@ -47,7 +46,7 @@ namespace PmxEditorMcp.Tests
                 Refused(Arguments(Given(ElementKinds.KindName, "知らない種類"))));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AKindPmxLinesUpTakesPmxItselfAsTheOnlyOwner()
         {
             FakePmx pmx = Filled();
@@ -57,7 +56,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(pmx, Assert.Single(owners));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AKindPmxLinesUpDoesNotTakeAParentSet()
         {
             Assert.Equal(
@@ -67,7 +66,7 @@ namespace PmxEditorMcp.Tests
                     Given(TargetNames.Parent.All, true))));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ElementKinds.Face)]
         [InlineData(ElementKinds.IkLink)]
         [InlineData(ElementKinds.MorphOffset)]
@@ -79,7 +78,7 @@ namespace PmxEditorMcp.Tests
                 ToolEnvelope.InvalidArgument, Refused(Arguments(Kind(name))));
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ElementKinds.Face)]
         [InlineData(ElementKinds.IkLink)]
         [InlineData(ElementKinds.MorphOffset)]
@@ -94,11 +93,11 @@ namespace PmxEditorMcp.Tests
                 pmx, Arguments(Kind(name), Given(TargetNames.Parent.Indices, new object[] { 1 })));
 
             object owner = Assert.Single(owners);
-            Assert.Same(ElementKinds.Owners(pmx, kind.Owner)[1], owner);
+            Assert.Same(ElementKinds.Owners(pmx, kind)[1], owner);
             Assert.Single(kind.Items(owner));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheParentRangeTakesTheOwnersItCovers()
         {
             FakePmx pmx = Filled();
@@ -119,7 +118,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { pmx.Material[1], pmx.Material[2] }, owners);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheParentAllTakesEveryOwner()
         {
             FakePmx pmx = Filled();
@@ -130,7 +129,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(pmx.Material.Count, owners.Count);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TwoWaysOfPointingAtTheParentAtOnceAreRefused()
         {
             Assert.Equal(
@@ -141,7 +140,7 @@ namespace PmxEditorMcp.Tests
                     Given(TargetNames.Parent.All, true))));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AParentOutsideTheListIsRefused()
         {
             Assert.Equal(
@@ -151,7 +150,7 @@ namespace PmxEditorMcp.Tests
                     Given(TargetNames.Parent.Indices, new object[] { 3 }))));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void PointingAtTheParentByHandleIsNotOfferedHere()
         {
             Assert.Equal(

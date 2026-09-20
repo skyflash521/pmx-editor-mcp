@@ -29,20 +29,30 @@ namespace PmxEditorMcp
         /// <summary>済んだ結末を作る。</summary>
         public static ComposedEditResult Complete(object value)
         {
-            throw new NotImplementedException();
+            return new ComposedEditResult(true, value, null, null);
         }
 
         /// <summary>断る結末を作る。</summary>
         public static ComposedEditResult Refuse(string code, string message)
         {
-            throw new NotImplementedException();
+            if (code == null)
+            {
+                throw new ArgumentNullException(nameof(code));
+            }
+
+            if (message == null)
+            {
+                throw new ArgumentNullException(nameof(message));
+            }
+
+            return new ComposedEditResult(false, null, code, message);
         }
     }
 
     /// <summary>
     /// 1メンバーへ写らない組み立てのツールを、生成したツールと同じ複製編集の経路へ乗せる枠。
     /// どのPMXを相手にするかの解決・UIスレッドへの委譲・まとめての反映・失敗したときの状態の
-    /// 言い方を引き受けるので、ツールの側は複製を受け取って変えるところだけを書く。
+    /// 言い方はここが引き受ける。
     /// </summary>
     public sealed class ComposedEdit
     {
@@ -76,7 +86,122 @@ namespace PmxEditorMcp
         public McpMethod Method(
             IList<string> known, Func<McpMethodContext, object, ComposedEditResult> body)
         {
-            throw new NotImplementedException();
+            if (known == null)
+            {
+                throw new ArgumentNullException(nameof(known));
+            }
+
+            if (body == null)
+            {
+                throw new ArgumentNullException(nameof(body));
+            }
+
+            List<string> names = new List<string>(known)
+            {
+                UndoBarrier.SuppressName,
+                PmxSession.HandleName,
+            };
+
+            return _barrier.Guard(EditKind.DuplicateEdit, context => Run(context, names, body));
+        }
+
+        private object Run(
+            McpMethodContext context,
+            IList<string> names,
+            Func<McpMethodContext, object, ComposedEditResult> body)
+        {
+            string code;
+            string message;
+            long? handle;
+            bool suppress;
+            if (!TargetInput.TryOnlyKnown(context.Params, names, out code, out message)
+                || !TryHandle(context, out handle, out code, out message)
+                || !UndoBarrier.TrySuppress(context, out suppress, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            ComposedEditResult answered = null;
+            string refusedCode = null;
+            string refusedMessage = null;
+            EditStage stage = EditStage.BeforeCommit;
+            Exception caught = null;
+            UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
+            {
+                try
+                {
+                    PmxTarget target;
+                    if (!_session.TryTake(
+                        handle, context.Handles, out target, out refusedCode, out refusedMessage))
+                    {
+                        return;
+                    }
+
+                    stage = target.Current ? EditStage.BeforeCommit : EditStage.AtCommit;
+                    ComposedEditResult made = body(context, target.Pmx);
+                    if (!made.IsDone)
+                    {
+                        refusedCode = made.Code;
+                        refusedMessage = made.Message;
+
+                        return;
+                    }
+
+                    if (target.Current)
+                    {
+                        stage = EditStage.AtCommit;
+                    }
+
+                    if (_session.TryCommit(target, suppress, out refusedCode, out refusedMessage))
+                    {
+                        answered = made;
+                    }
+                }
+                catch (Exception exception)
+                {
+                    caught = exception;
+                }
+            });
+
+            if (!invocation.DidRun)
+            {
+                return ToolFailure.Unavailable(invocation);
+            }
+
+            if (caught != null)
+            {
+                return ToolFailure.Failed(caught, stage);
+            }
+
+            return answered == null
+                ? ToolEnvelope.Failure(refusedCode, refusedMessage)
+                : ToolEnvelope.Success(answered.Value);
+        }
+
+        private static bool TryHandle(
+            McpMethodContext context, out long? handle, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            handle = null;
+            object value;
+            if (!context.Params.TryGetValue(PmxSession.HandleName, out value))
+            {
+                return true;
+            }
+
+            long taken;
+            if (!ValueInput.TryInteger(value, out taken))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = PmxSession.HandleName + " は整数でなければならない。";
+
+                return false;
+            }
+
+            handle = taken;
+
+            return true;
         }
     }
 }

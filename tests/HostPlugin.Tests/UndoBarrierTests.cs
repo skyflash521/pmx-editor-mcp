@@ -12,7 +12,8 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public sealed class UndoBarrierTests : IDisposable
     {
-        private const string Pending = "impl pending: Undoの前置きを済ませてからツールを呼ぶ";
+
+        private const int UnlockAttemptsWhenReleasing = 2;
 
         private readonly string _root;
 
@@ -37,7 +38,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AToolThatIsNotAskedToSuppressIsCalledAndItsAnswerComesBackUntouched()
         {
             int[] calls = { 0 };
@@ -50,7 +51,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AskingToSuppressWithSomethingThatIsNotABooleanIsRefused()
         {
             int[] calls = { 0 };
@@ -63,7 +64,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, calls[0]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AskingToSuppressWhilePointingThePmxByHandleIsRefused()
         {
             int[] calls = { 0 };
@@ -79,7 +80,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, calls[0]);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(EditKind.Read)]
         [InlineData(EditKind.DirectChange)]
         [InlineData(EditKind.ViewSession)]
@@ -94,7 +95,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, calls[0]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ARecordLeftStoppedIsPutBackAndTheAnswerSaysSo()
         {
             StubLock target = new StubLock();
@@ -110,7 +111,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(undo.HasLeftover);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ARecordThatCannotBePutBackStopsAnEditBeforeItRuns()
         {
             StubLock target = new StubLock();
@@ -125,7 +126,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, calls[0]);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(EditKind.Read)]
         [InlineData(EditKind.ViewSession)]
         public void ARecordThatCannotBePutBackStillLetsAReadThroughWithAWarning(EditKind kind)
@@ -143,7 +144,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(UndoGate.LeftoverWarning, Warnings(envelope));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ARecordPutBackIsToldInTheErrorWhenTheToolItselfRefuses()
         {
             StubLock target = new StubLock();
@@ -161,7 +162,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheInnerCallIsRequired()
         {
             Assert.Throws<ArgumentNullException>(
@@ -169,11 +170,10 @@ namespace PmxEditorMcp.Tests
                     .Guard(EditKind.Read, null));
         }
 
-        /// <summary>止めたまま戻せていない記録を1つ残した枠。</summary>
         private UndoSuppression Left(StubLock target)
         {
             UndoSuppression undo = new UndoSuppression(_log);
-            target.UnlockFailures = 1;
+            target.UnlockFailures = UnlockAttemptsWhenReleasing;
             undo.Run(target, () => { });
             Assert.True(undo.HasLeftover, "残っていない。");
 

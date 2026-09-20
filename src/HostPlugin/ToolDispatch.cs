@@ -17,7 +17,7 @@ namespace PmxEditorMcp
         public const string ConfirmName = "confirm";
 
         /// <summary>Undoの記録を止めることを頼む共通引数の名前。</summary>
-        public const string SuppressName = "suppressUndo";
+        public const string SuppressName = UndoBarrier.SuppressName;
 
         /// <summary>返す項目を選ぶ共通引数の名前。</summary>
         public const string FieldsName = "fields";
@@ -32,10 +32,10 @@ namespace PmxEditorMcp
         public const string ValueName = "value";
 
         /// <summary>範囲の組が持つ始まりの名前。</summary>
-        public const string StartName = "start";
+        public const string StartName = TargetInput.StartName;
 
         /// <summary>範囲の組が持つ件数の名前。</summary>
-        public const string CountName = "count";
+        public const string CountName = TargetInput.CountName;
 
         /// <summary>一覧の応答が持つ総数の名前。</summary>
         public const string TotalName = "total";
@@ -91,7 +91,7 @@ namespace PmxEditorMcp
 
         private readonly PmxSession _bridged;
 
-        private readonly UndoRecovery _recovery;
+        private readonly UndoBarrier _barrier;
 
         private readonly IModifierKeys _modifiers;
 
@@ -122,7 +122,7 @@ namespace PmxEditorMcp
             _connection = connection;
             _pmx = pmx;
             _bridged = bridged;
-            _recovery = recovery;
+            _barrier = new UndoBarrier(recovery);
             _modifiers = modifiers;
         }
 
@@ -469,131 +469,9 @@ namespace PmxEditorMcp
             return kinds[0];
         }
 
-        /// <summary>
-        /// Undoの記録まわりの前置きを済ませてからツールを呼ぶ。止めることを頼めない分類が頼んで
-        /// いれば断る。止めたまま戻せていないものがあれば、まず戻しにいき、戻らなければ分類ごとの
-        /// 決まりで断るか警告を添える。
-        /// </summary>
         private McpMethod Guarded(EditKind kind, McpMethod inner)
         {
-            return context =>
-            {
-                bool suppress;
-                string code;
-                string message;
-                if (!TrySuppress(context, out suppress, out code, out message)
-                    || !UndoGate.TryAcceptSuppress(
-                        kind,
-                        context.Params.ContainsKey(PmxSession.HandleName),
-                        suppress,
-                        out code,
-                        out message))
-                {
-                    return ToolEnvelope.Failure(code, message);
-                }
-
-                List<string> notices = new List<string>();
-                string warning;
-                if (!_recovery.TryRecover(context.Ui)
-                    && !UndoGate.TryProceedWithLeftover(kind, out code, out message, out warning))
-                {
-                    return ToolEnvelope.Failure(code, message);
-                }
-
-                if (_recovery.TryTakeNotice())
-                {
-                    notices.Add(UndoGate.RecoveredWarning);
-                }
-
-                object answered = inner(context);
-                if (_recovery.HasLeftover)
-                {
-                    notices.Add(UndoGate.LeftoverWarning);
-                }
-
-                return notices.Count == 0 ? answered : Noted(answered, notices);
-            };
-        }
-
-        /// <summary>
-        /// 包みへ知らせを載せる。成功した呼び出しには警告として足し、失敗した呼び出しには誤りの
-        /// 説明へ足す——誤りだけを読む側にも、Undoの記録が止まったままであることが要るためである。
-        /// </summary>
-        private static object Noted(object answered, IList<string> notices)
-        {
-            IDictionary<string, object> envelope = answered as IDictionary<string, object>;
-            if (envelope == null)
-            {
-                return answered;
-            }
-
-            Dictionary<string, object> written =
-                new Dictionary<string, object>(StringComparer.Ordinal);
-            foreach (KeyValuePair<string, object> member in envelope)
-            {
-                written.Add(member.Key, member.Value);
-            }
-
-            object failed;
-            IDictionary<string, object> error =
-                written.TryGetValue(ToolEnvelope.ErrorName, out failed)
-                    ? failed as IDictionary<string, object>
-                    : null;
-            if (error != null)
-            {
-                Dictionary<string, object> explained =
-                    new Dictionary<string, object>(StringComparer.Ordinal);
-                foreach (KeyValuePair<string, object> member in error)
-                {
-                    explained.Add(member.Key, member.Value);
-                }
-
-                object said;
-                explained[ToolEnvelope.MessageName] =
-                    (explained.TryGetValue(ToolEnvelope.MessageName, out said) ? (string)said : null)
-                        + string.Concat(notices.Select(n => " " + n));
-                written[ToolEnvelope.ErrorName] = explained;
-
-                return written;
-            }
-
-            List<string> all = new List<string>();
-            object listed;
-            if (written.TryGetValue(ToolEnvelope.WarningsName, out listed) && listed is object[])
-            {
-                all.AddRange(((object[])listed).Select(w => (string)w));
-            }
-
-            all.AddRange(notices.Where(n => !all.Contains(n, StringComparer.Ordinal)));
-            written[ToolEnvelope.WarningsName] = all.Cast<object>().ToArray();
-
-            return written;
-        }
-
-        /// <summary>Undoの記録を止めることを頼んでいるか。真偽でなければ偽で、断る内容を渡す。</summary>
-        private static bool TrySuppress(
-            McpMethodContext context, out bool suppress, out string code, out string message)
-        {
-            code = null;
-            message = null;
-            suppress = false;
-            object value;
-            if (!context.Params.TryGetValue(SuppressName, out value))
-            {
-                return true;
-            }
-
-            if (!(value is bool))
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = SuppressName + " は真偽でなければならない。";
-
-                return false;
-            }
-
-            suppress = (bool)value;
-
-            return true;
+            return _barrier.Guard(kind, inner);
         }
 
         /// <summary>止めることを頼まれているか。値の検証は前置きで済んでいる。</summary>
@@ -757,7 +635,7 @@ namespace PmxEditorMcp
             {
                 long id;
 
-                return argument.Type.IsArray ? Handles(given) : TryInteger(given, out id);
+                return argument.Type.IsArray ? Handles(given) : ValueInput.TryInteger(given, out id);
             }
 
             if (argument.Built != null)
@@ -1201,7 +1079,7 @@ namespace PmxEditorMcp
             {
                 object json;
                 long id;
-                if (given.TryGetValue(argument.Name, out json) && TryInteger(json, out id))
+                if (given.TryGetValue(argument.Name, out json) && ValueInput.TryInteger(json, out id))
                 {
                     involved.Add((int)id);
                 }
@@ -1654,7 +1532,7 @@ namespace PmxEditorMcp
             }
 
             int index;
-            if (!field.Listed && TryIndex(given, out index))
+            if (!field.Listed && ValueInput.TryIndex(given, out index))
             {
                 position = index;
 
@@ -1983,7 +1861,7 @@ namespace PmxEditorMcp
             }
 
             int index;
-            if (TryIndex(given, out index))
+            if (ValueInput.TryIndex(given, out index))
             {
                 position = index;
 
@@ -2054,7 +1932,7 @@ namespace PmxEditorMcp
             code = null;
             message = null;
             long id;
-            if (!TryInteger(json, out id))
+            if (!ValueInput.TryInteger(json, out id))
             {
                 code = ToolEnvelope.InvalidArgument;
                 message = argument.Name + " はハンドルの番号でなければならない。";
@@ -2751,16 +2629,16 @@ namespace PmxEditorMcp
         {
             string code;
             string message;
-            IList<long> given;
+            TargetRequest given;
             ResolvedTargets resolved;
             if (!TryOnlyKnown(
                 context,
                 new List<string> { TargetNames.Element.Handles },
                 out code,
                 out message)
-                || !TryHandles(context, TargetNames.Element, out given, out code, out message)
+                || !TryTargets(context, TargetNames.Element, true, out given, out code, out message)
                 || !TargetSelection.TryResolve(
-                    new TargetRequest(null, null, null, null, given),
+                    given,
                     TargetForm.Handles,
                     0,
                     id => Held(context, Accepted(tool.Access, null, true), id) != null,
@@ -4099,7 +3977,7 @@ namespace PmxEditorMcp
             foreach (object one in listed)
             {
                 long id;
-                if (!TryInteger(one, out id))
+                if (!ValueInput.TryInteger(one, out id))
                 {
                     code = ToolEnvelope.InvalidArgument;
                     message = TargetNames.Element.Handles + " は整数の配列でなければならない。";
@@ -4151,11 +4029,11 @@ namespace PmxEditorMcp
             message = null;
             object given;
             bool byIndex = members.TryGetValue(ParentIndexName, out given)
-                && TryIndex(given, out position);
+                && ValueInput.TryIndex(given, out position);
             object held;
             long id = 0;
             bool byHandle = members.TryGetValue(ParentHandleName, out held)
-                && TryInteger(held, out id);
+                && ValueInput.TryInteger(held, out id);
             if (byIndex == byHandle)
             {
                 code = ToolEnvelope.InvalidArgument;
@@ -4461,22 +4339,7 @@ namespace PmxEditorMcp
             out string code,
             out string message)
         {
-            string unknown = context.Params.Keys
-                .Where(n => !known.Contains(n, StringComparer.Ordinal))
-                .OrderBy(n => n, StringComparer.Ordinal)
-                .FirstOrDefault();
-            if (unknown != null)
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = "知らない引数を渡している: " + unknown;
-
-                return false;
-            }
-
-            code = null;
-            message = null;
-
-            return true;
+            return TargetInput.TryOnlyKnown(context.Params, known, out code, out message);
         }
 
         /// <summary>
@@ -4538,7 +4401,7 @@ namespace PmxEditorMcp
             }
 
             long taken;
-            if (!TryInteger(value, out taken))
+            if (!ValueInput.TryInteger(value, out taken))
             {
                 code = ToolEnvelope.InvalidArgument;
                 message = PmxSession.HandleName + " は整数でなければならない。";
@@ -4571,7 +4434,7 @@ namespace PmxEditorMcp
             }
 
             long number;
-            if (!TryInteger(value, out number) || number < least || number > int.MaxValue)
+            if (!ValueInput.TryInteger(value, out number) || number < least || number > int.MaxValue)
             {
                 code = ToolEnvelope.InvalidArgument;
                 message = name + " は " + least.ToString(CultureInfo.InvariantCulture)
@@ -4612,53 +4475,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>対象を指すハンドルの並び。</summary>
-        private static bool TryHandles(
-            McpMethodContext context,
-            TargetNames names,
-            out IList<long> handles,
-            out string code,
-            out string message)
-        {
-            code = null;
-            message = null;
-            handles = null;
-            object value;
-            if (!context.Params.TryGetValue(names.Handles, out value))
-            {
-                return true;
-            }
-
-            object[] items = value as object[];
-            if (items == null)
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = names.Handles + " はハンドルの配列でなければならない。";
-
-                return false;
-            }
-
-            List<long> taken = new List<long>();
-            foreach (object item in items)
-            {
-                long number;
-                if (!TryInteger(item, out number))
-                {
-                    code = ToolEnvelope.InvalidArgument;
-                    message = names.Handles + " は整数の配列でなければならない。";
-
-                    return false;
-                }
-
-                taken.Add(number);
-            }
-
-            handles = taken;
-
-            return true;
-        }
-
-        /// <summary>1つの集合の指定。持っている指し方だけを載せる。</summary>
         private static bool TryTargets(
             McpMethodContext context,
             TargetNames names,
@@ -4667,178 +4483,10 @@ namespace PmxEditorMcp
             out string code,
             out string message)
         {
-            request = null;
-            IList<int> indices;
-            int? start;
-            int? count;
-            bool? all;
-            IList<long> held = null;
-            if (!TryIndices(context, names, out indices, out code, out message)
-                || !TryRange(context, names, out start, out count, out code, out message)
-                || !TryAll(context, names, out all, out code, out message)
-                || (handles && !TryHandles(context, names, out held, out code, out message)))
-            {
-                return false;
-            }
-
-            request = new TargetRequest(indices, start, count, all, held);
-
-            return true;
+            return TargetInput.TryTake(
+                context.Params, names, handles, out request, out code, out message);
         }
 
-        private static bool TryIndices(
-            McpMethodContext context,
-            TargetNames names,
-            out IList<int> indices,
-            out string code,
-            out string message)
-        {
-            code = null;
-            message = null;
-            indices = null;
-            object value;
-            if (!context.Params.TryGetValue(names.Indices, out value))
-            {
-                return true;
-            }
-
-            object[] items = value as object[];
-            if (items == null)
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = names.Indices + " は位置の配列でなければならない。";
-
-                return false;
-            }
-
-            List<int> taken = new List<int>();
-            foreach (object item in items)
-            {
-                int number;
-                if (!TryIndex(item, out number))
-                {
-                    code = ToolEnvelope.InvalidArgument;
-                    message = names.Indices + " は整数の配列でなければならない。";
-
-                    return false;
-                }
-
-                taken.Add(number);
-            }
-
-            indices = taken;
-
-            return true;
-        }
-
-        private static bool TryRange(
-            McpMethodContext context,
-            TargetNames names,
-            out int? start,
-            out int? count,
-            out string code,
-            out string message)
-        {
-            code = null;
-            message = null;
-            start = null;
-            count = null;
-            object value;
-            if (!context.Params.TryGetValue(names.Range, out value))
-            {
-                return true;
-            }
-
-            IDictionary<string, object> members = value as IDictionary<string, object>;
-            object given;
-            int taken;
-            if (members == null
-                || !members.TryGetValue(StartName, out given)
-                || !TryIndex(given, out taken))
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = names.Range + " は " + StartName + " と " + CountName
-                    + " の組でなければならない。";
-
-                return false;
-            }
-
-            start = taken;
-            if (!members.TryGetValue(CountName, out given) || !TryIndex(given, out taken))
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = names.Range + " は " + StartName + " と " + CountName
-                    + " の組でなければならない。";
-
-                return false;
-            }
-
-            count = taken;
-
-            return true;
-        }
-
-        private static bool TryAll(
-            McpMethodContext context,
-            TargetNames names,
-            out bool? all,
-            out string code,
-            out string message)
-        {
-            code = null;
-            message = null;
-            all = null;
-            object value;
-            if (!context.Params.TryGetValue(names.All, out value))
-            {
-                return true;
-            }
-
-            if (!(value is bool))
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = names.All + " は真偽でなければならない。";
-
-                return false;
-            }
-
-            all = (bool)value;
-
-            return true;
-        }
-
-        private static bool TryIndex(object value, out int number)
-        {
-            number = 0;
-            long taken;
-            if (!TryInteger(value, out taken) || taken < int.MinValue || taken > int.MaxValue)
-            {
-                return false;
-            }
-
-            number = (int)taken;
-
-            return true;
-        }
-
-        private static bool TryInteger(object value, out long number)
-        {
-            number = 0;
-            if (!ValueInput.IsNumber(value))
-            {
-                return false;
-            }
-
-            double written = Convert.ToDouble(value, CultureInfo.InvariantCulture);
-            if (written != Math.Floor(written) || written < long.MinValue || written > long.MaxValue)
-            {
-                return false;
-            }
-
-            number = (long)written;
-
-            return true;
-        }
 
         private static bool TryValue(
             McpMethodContext context,
@@ -5101,15 +4749,7 @@ namespace PmxEditorMcp
         /// </summary>
         private static IDictionary<string, object> Unavailable(UiInvocation invocation = null)
         {
-            if (invocation == null || invocation.Unavailable == null)
-            {
-                return ToolEnvelope.Failure(
-                    ToolEnvelope.NotApplicable, "いまは要求を受け付けていない。");
-            }
-
-            return ToolEnvelope.Failure(
-                invocation.DidStart ? ToolEnvelope.PromptShown : ToolEnvelope.NotStarted,
-                invocation.Unavailable);
+            return ToolFailure.Unavailable(invocation);
         }
 
         /// <summary>
@@ -5118,9 +4758,7 @@ namespace PmxEditorMcp
         /// </summary>
         private static IDictionary<string, object> Failed(Exception failure, EditStage stage)
         {
-            return ToolEnvelope.Failure(
-                ToolEnvelope.OperationFailed,
-                failure.Message + " " + EditOutcome.Describe(EditOutcome.Resolve(stage)));
+            return ToolFailure.Failed(failure, stage);
         }
 
         /// <summary>対象1件の居場所。</summary>

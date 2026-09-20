@@ -9,9 +9,8 @@ namespace PmxEditorMcp.Tests
     /// <summary>組み立てたツールが kind で受け取る要素の種類の表。</summary>
     public class ElementKindsTests
     {
-        private const string Pending = "impl pending: 要素の種類ごとに並びの在りかと要素の作り方を引く";
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ElementKinds.Vertex)]
         [InlineData(ElementKinds.Face)]
         [InlineData(ElementKinds.Material)]
@@ -31,13 +30,13 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(name, Resolved(name).Name);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheNamesAreTheOnesTheSchemaOffersAndNoOther()
         {
             Assert.Equal(13, ElementKinds.Names.Count);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ANameTheTableDoesNotKnowIsRefusedWithTheNamesItDoes()
         {
             ElementKind kind;
@@ -48,7 +47,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(ElementKinds.Vertex, message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AKindThatIsNotTextIsRefused()
         {
             ElementKind kind;
@@ -58,7 +57,7 @@ namespace PmxEditorMcp.Tests
             Assert.NotNull(message);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ElementKinds.Vertex)]
         [InlineData(ElementKinds.Material)]
         [InlineData(ElementKinds.Bone)]
@@ -72,7 +71,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(Resolved(name).Owner);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ElementKinds.Face, ElementKinds.Material)]
         [InlineData(ElementKinds.IkLink, ElementKinds.Bone)]
         [InlineData(ElementKinds.MorphOffset, ElementKinds.Morph)]
@@ -83,7 +82,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(owner, Resolved(name).Owner.Name);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheOwnerOfAKindPmxLinesUpIsPmxItself()
         {
             FakePmx pmx = new FakePmx();
@@ -93,7 +92,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(pmx, Assert.Single(owners));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheOwnersOfFacesAreTheMaterialsInTheirOrder()
         {
             FakePmx pmx = new FakePmx();
@@ -107,7 +106,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { first, second }, owners.ToArray());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheItemsOfAKindPmxLinesUpAreThatList()
         {
             FakePmx pmx = new FakePmx();
@@ -117,7 +116,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(bone, Assert.Single(Resolved(ElementKinds.Bone).Items(pmx)));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheItemsOfFacesComeFromTheMaterialThatOwnsThem()
         {
             FakeMaterial material = new FakeMaterial();
@@ -127,7 +126,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(face, Assert.Single(Resolved(ElementKinds.Face).Items(material)));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheItemsOfIkLinksComeFromTheIkOfTheBoneThatOwnsThem()
         {
             FakeBone bone = new FakeBone();
@@ -137,7 +136,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(link, Assert.Single(Resolved(ElementKinds.IkLink).Items(bone)));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ReplacingPutsTheItemsBackInTheOrderTheyWereGiven()
         {
             FakePmx pmx = new FakePmx();
@@ -151,7 +150,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new IPXBone[] { second, first }, pmx.Bone.ToArray());
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ReplacingLeavesTheSameObjectsInPlaceRatherThanCopies()
         {
             FakeMaterial material = new FakeMaterial();
@@ -163,7 +162,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(face, material.Faces[0]);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CreatingMakesAnElementOfThatKind()
         {
             FakePmx pmx = new FakePmx();
@@ -173,7 +172,7 @@ namespace PmxEditorMcp.Tests
             Assert.IsAssignableFrom<IPXBone>(made);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(MorphKind.Group, typeof(IPXGroupMorphOffset))]
         [InlineData(MorphKind.Flip, typeof(IPXGroupMorphOffset))]
         [InlineData(MorphKind.Vertex, typeof(IPXVertexMorphOffset))]
@@ -193,7 +192,7 @@ namespace PmxEditorMcp.Tests
                 shape, Resolved(ElementKinds.MorphOffset).Create(new FakeBuilder(), morph, null));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CreatingANodeItemNeedsTheVariantBecauseTheKindDoesNotDecideIt()
         {
             FakeNode node = new FakeNode();
@@ -204,13 +203,13 @@ namespace PmxEditorMcp.Tests
                     .Create(new FakeBuilder(), node, ElementKinds.MorphVariant));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheKindsThatDecideTheirOwnShapeOfferNoVariant()
         {
             Assert.Empty(Resolved(ElementKinds.Bone).Variants);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CloningMakesAnotherObjectThatCarriesTheSameValues()
         {
             FakeBone bone = new FakeBone("センター");
@@ -221,7 +220,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal("センター", ((IPXBone)made).Name);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ElementKinds.Vertex)]
         [InlineData(ElementKinds.Face)]
         [InlineData(ElementKinds.Material)]
@@ -250,7 +249,7 @@ namespace PmxEditorMcp.Tests
             Assert.Same(items[0], after[1]);
         }
 
-        [Theory(Skip = Pending)]
+        [Theory]
         [InlineData(ElementKinds.Vertex, typeof(IPXVertex))]
         [InlineData(ElementKinds.Face, typeof(IPXFace))]
         [InlineData(ElementKinds.Material, typeof(IPXMaterial))]
@@ -275,7 +274,7 @@ namespace PmxEditorMcp.Tests
             Assert.IsAssignableFrom(shape, kind.CloneOf(kind.Items(owner)[0]));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void CloningABoneCarriesItsIkAndKeepsPointingAtTheSameBones()
         {
             FakeBone target = new FakeBone("先");

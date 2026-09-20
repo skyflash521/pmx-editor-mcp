@@ -571,6 +571,44 @@ namespace PmxEditorMcp
             return true;
         }
 
+        /// <summary>
+        /// JSONの値を整数として読む。数値でないもの・小数部を持つもの・long の範囲を出るものは
+        /// 偽を返す。
+        /// </summary>
+        public static bool TryInteger(object json, out long number)
+        {
+            number = 0;
+            if (!IsNumber(json))
+            {
+                return false;
+            }
+
+            double written = Convert.ToDouble(json, CultureInfo.InvariantCulture);
+            if (written != Math.Floor(written) || written < long.MinValue || written > long.MaxValue)
+            {
+                return false;
+            }
+
+            number = (long)written;
+
+            return true;
+        }
+
+        /// <summary>JSONの値を並びの位置として読む。int の範囲を出るものは偽を返す。</summary>
+        public static bool TryIndex(object json, out int number)
+        {
+            number = 0;
+            long taken;
+            if (!TryInteger(json, out taken) || taken < int.MinValue || taken > int.MaxValue)
+            {
+                return false;
+            }
+
+            number = (int)taken;
+
+            return true;
+        }
+
         /// <summary>JSONの値が数値かどうか。文字列や真偽値を変換で数値へ化けさせないために先に見る。</summary>
         internal static bool IsNumber(object json)
         {

@@ -7,9 +7,8 @@ namespace PmxEditorMcp.Tests
     /// <summary>要求の項目から、要素の集合の指定を読み取るところ。</summary>
     public class TargetInputTests
     {
-        private const string Pending = "impl pending: 要求の項目から要素の集合の指定を読み取る";
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void IndicesComeThroughInTheOrderTheyWereGiven()
         {
             TargetRequest request = Taken(
@@ -20,7 +19,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(request.All);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void RangeComesThroughAsTheStartAndTheCount()
         {
             TargetRequest request = Taken(Arguments(
@@ -36,7 +35,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, request.RangeCount);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AllComesThroughAsTheBooleanThatWasGiven()
         {
             TargetRequest request = Taken(
@@ -45,7 +44,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(request.All);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheParentNamesReadTheParentSetAndLeaveTheElementSetAlone()
         {
             TargetRequest request = Taken(
@@ -57,7 +56,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1 }, request.Indices);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void HandlesAreNotReadWhenTheToolDoesNotTakeThem()
         {
             TargetRequest request = Taken(
@@ -66,7 +65,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(request.Handles);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void HandlesAreReadWhenTheToolTakesThem()
         {
             TargetRequest request = Taken(
@@ -77,7 +76,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new long[] { 7 }, request.Handles);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AnIndexThatIsNotAWholeNumberIsRefused()
         {
             Assert.Equal(
@@ -86,7 +85,7 @@ namespace PmxEditorMcp.Tests
                     new KeyValuePair<string, object>("indices", new object[] { 1.5 }))));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void IndicesThatAreNotAnArrayAreRefused()
         {
             Assert.Equal(
@@ -94,19 +93,18 @@ namespace PmxEditorMcp.Tests
                 Refused(Arguments(new KeyValuePair<string, object>("indices", 1))));
         }
 
-        [Fact(Skip = Pending)]
-        public void RangeWithOnlyOneOfTheTwoMembersIsStillReadAsGiven()
+        [Fact]
+        public void ARangeThatCarriesOnlyOneOfTheTwoMembersIsRefused()
         {
-            TargetRequest request = Taken(Arguments(
-                new KeyValuePair<string, object>(
-                    "range",
-                    new Dictionary<string, object>(StringComparer.Ordinal) { { "start", 1 } })));
-
-            Assert.Equal(1, request.RangeStart);
-            Assert.Null(request.RangeCount);
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                Refused(Arguments(
+                    new KeyValuePair<string, object>(
+                        "range",
+                        new Dictionary<string, object>(StringComparer.Ordinal) { { "start", 1 } }))));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void AllThatIsNotABooleanIsRefused()
         {
             Assert.Equal(
@@ -114,7 +112,7 @@ namespace PmxEditorMcp.Tests
                 Refused(Arguments(new KeyValuePair<string, object>("all", "yes"))));
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void OnlyTheNamesTheToolTakesGoThrough()
         {
             string code;
@@ -128,7 +126,7 @@ namespace PmxEditorMcp.Tests
             Assert.Null(code);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void ANameTheToolDoesNotTakeIsRefusedAndNamed()
         {
             string code;
@@ -143,7 +141,7 @@ namespace PmxEditorMcp.Tests
             Assert.Contains("知らない項目", message);
         }
 
-        [Fact(Skip = Pending)]
+        [Fact]
         public void TheParametersAreRequired()
         {
             string code;

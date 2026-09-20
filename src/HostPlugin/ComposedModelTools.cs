@@ -11,7 +11,24 @@ namespace PmxEditorMcp
         /// <summary>組み立てのモデル編集ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
         {
-            throw new NotImplementedException();
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (edit == null)
+            {
+                throw new ArgumentNullException(nameof(edit));
+            }
+
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            ModelReorderElements.AddTo(methods, edit);
+            ModelInsertElements.AddTo(methods, edit, builder);
+            ModelDeleteElements.AddTo(methods, edit);
         }
     }
 }
