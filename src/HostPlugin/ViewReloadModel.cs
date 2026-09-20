@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
@@ -14,7 +15,28 @@ namespace PmxEditorMcp
         /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
-            throw new NotImplementedException();
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (screen == null)
+            {
+                throw new ArgumentNullException(nameof(screen));
+            }
+
+            methods.Add(
+                ToolName, screen.Method(new List<string>(), ScreenNeeds.View, Run));
+        }
+
+        private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)
+        {
+            IPXPmxViewConnector view = (IPXPmxViewConnector)parts.View;
+            view.UpdateModel();
+            view.UpdateView();
+
+            return ComposedEditResult.Complete(
+                new Dictionary<string, object>(StringComparer.Ordinal));
         }
     }
 }

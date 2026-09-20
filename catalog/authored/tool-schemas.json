@@ -37638,6 +37638,35 @@
       }
     },
     {
+      "tool": "session_select_lists_from_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "kinds",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "session_set_selected_material_indices",
       "branches": [
         {
@@ -37761,6 +37790,25 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "session_update_all_lists",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -37941,6 +37989,32 @@
             "name": "invoked",
             "origin": "hostOutput",
             "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_clear_vmd_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "parts",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "booted",
+            "origin": "hostOutput",
+            "shape": "boolean"
           }
         ]
       }
@@ -39423,6 +39497,38 @@
       "output": {}
     },
     {
+      "tool": "view_load_vmd_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "parts",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "motionPath",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "booted",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_play_vmd_view",
       "branches": [
         {
@@ -40152,6 +40258,19 @@
       ]
     },
     {
+      "tool": "view_reload_model",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": []
+      }
+    },
+    {
       "tool": "view_reset_bone_ui_model",
       "branches": [
         {
@@ -40225,6 +40344,82 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_select_elements",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "operation",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "kind",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "axis",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_select_related",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "operation",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              },
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -40732,6 +40927,35 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "view_set_camera_rotate_center",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "operation",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "centre",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          }
+        ]
       }
     },
     {

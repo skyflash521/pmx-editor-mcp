@@ -390,9 +390,49 @@
       "duty": "台帳が発行したハンドルを解放する"
     },
     {
+      "tool": "session_select_lists_from_view",
+      "branching": false,
+      "duty": "画面の選択を、リストの選択へ写す。kinds は material・bone を1つ以上並べたもので、material は選んだ面を持つ材質を材質のリストで選び、bone は選んだボーンのうち先頭をボーンのリストで選ぶ。ボーンのリストは1つしか選べない。画面でその種類を1つも選んでいなければ、リストの選択も空にする。selected に写した要素の数を返す。"
+    },
+    {
+      "tool": "session_update_all_lists",
+      "branching": false,
+      "duty": "全部のリストの表示を今のデータで作り直す。引数は受け取らない。updated はいつも1で、全部の区分をまとめて1回で頼んだことを表す。"
+    },
+    {
+      "tool": "view_clear_vmd_view",
+      "branching": false,
+      "duty": "VMDViewの再生を止める。parts は motionOnly・modelAndMotion のいずれかで、motionOnly は再生を止めるだけ、modelAndMotion は読み込んだモーションを捨てて、いま編集しているモデルを読み直す。どちらの持ち物でも、VMDViewの窓は開いたままになる。"
+    },
+    {
+      "tool": "view_load_vmd_view",
+      "branching": false,
+      "duty": "VMDViewへ、いま編集しているモデルを読み込む。parts は modelOnly・modelAndMotion のいずれかで、modelAndMotion は motionPath が指すVMDも読み込んで再生を始める。VMDViewが立ち上がっていなければ、ここで立ち上がる。"
+    },
+    {
       "tool": "view_poll_events",
       "branching": true,
       "duty": "溜まったイベントを取り出す"
+    },
+    {
+      "tool": "view_reload_model",
+      "branching": false,
+      "duty": "テクスチャを読み直してモデルの描画を作り直し、画面を描き直す。引数は受け取らない。"
+    },
+    {
+      "tool": "view_select_elements",
+      "branching": false,
+      "duty": "画面の選択を、種類ごとにまとめて選び直す。kind は vertex・face・bone・body・joint のいずれかで、その種類の選択だけを置き換える。operation は all・invert・expand・reduce・childChain・halfModel のいずれか。expand と reduce は面で隣り合う頂点で広げ狭めるので vertex にだけ、childChain は選んだボーンの子孫を足すので bone にだけ当てられる。halfModel は axis で片側を指し、x・y・z はその軸の値が0以上の側、negativeX・negativeY・negativeZ は0以下の側で、面は3つの頂点がすべて片側にあるものを選ぶ。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。"
+    },
+    {
+      "tool": "view_select_related",
+      "branching": false,
+      "duty": "画面の選択を、関連する要素で選び直す。operation は verticesToFaces・facesToVertices・expandAdjacentFaces・materialToFaces・verticesToMaterials・facesToMaterials・excludeFacesMaterials・unusedVertices・edgeScaleChangedVertices のいずれか。expandAdjacentFaces はいまの選択へ、頂点を2つ以上同じくする面を足す。materialToFaces は materialIndices で材質を指し、その材質の面を選ぶ。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。"
+    },
+    {
+      "tool": "view_set_camera_rotate_center",
+      "branching": false,
+      "duty": "視点の回転の中心を、画面で選んでいる要素の重心にする。operation は vertices・bones・face のいずれかで、face は選んだ面が使う頂点の重心を取る。その種類を1つも選んでいなければ断る。centre に決めた中心のxyzを返す。"
     }
   ],
   "viewImages": [
@@ -412,17 +452,25 @@
   "unkeptMembers": [
     {
       "tool": "model_update_faces",
-      "members": ["vertex1", "vertex2", "vertex3"],
+      "members": [
+        "vertex1",
+        "vertex2",
+        "vertex3"
+      ],
       "basis": "面の3つの頂点は位置で指す。ハンドルで持つ面はまだどのPMXにも属していないので、書いた位置はその時点では解けない。値のまま預かり、材質へ入れる呼び出しが自分の相手にするPMXの中で解いて書き込むので、書いた直後には読み返せない。"
     },
     {
       "tool": "model_update_ik_links",
-      "members": ["bone"],
+      "members": [
+        "bone"
+      ],
       "basis": "IKの内容が書き戻るのはIKの印が立っている骨だけである。印の無い骨では、まとめて反映するときにIKの組ごと捨てられ、その中の並びへ加えた要素も残らないので、書いた値を読み返せない。"
     },
     {
       "tool": "model_update_iks",
-      "members": ["target"],
+      "members": [
+        "target"
+      ],
       "basis": "IKの内容が書き戻るのはIKの印が立っている骨だけである。印の無い骨では、まとめて反映するときにIKの組が捨てられ、既定の組が読み返るので、書いた値を読み返せない。"
     }
   ],

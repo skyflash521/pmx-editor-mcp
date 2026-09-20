@@ -69,7 +69,9 @@ namespace PmxEditorMcp.Tests
                 Watch();
                 _tools = new McpMethodTable();
                 ComposedScreenTools.AddTo(
-                    _tools, new ComposedScreen(_edit.Session(), () => View, () => Form));
+                    _tools,
+                    new ComposedScreen(_edit.Session(), () => View, () => Form),
+                    () => new FakeVmd());
             }
 
             McpMethod method;

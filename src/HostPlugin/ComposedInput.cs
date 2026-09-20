@@ -192,6 +192,139 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
+        /// 操作によらず必ず受け取る、決まった値のどれかを読む。欠けていても知らない値でも偽を返し、
+        /// 断る内容を渡す。
+        /// </summary>
+        public static bool TryChoice(
+            McpMethodContext context,
+            string name,
+            IList<string> choices,
+            out string value,
+            out string code,
+            out string message)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            object given;
+            context.Params.TryGetValue(name, out given);
+            value = given as string;
+            if (value != null && choices.Contains(value, StringComparer.Ordinal))
+            {
+                code = null;
+                message = null;
+
+                return true;
+            }
+
+            value = null;
+
+            return Refuse(
+                name + " は次のどれかでなければならない: " + Listed(choices),
+                out code,
+                out message);
+        }
+
+        /// <summary>
+        /// 操作によらず必ず受け取る、決まった値の並びを読む。空の並び・知らない値・並びでない値は
+        /// いずれも偽を返し、断る内容を渡す。同じ値が重なっていても1つとして数える。
+        /// </summary>
+        public static bool TryChoices(
+            McpMethodContext context,
+            string name,
+            IList<string> choices,
+            out IList<string> values,
+            out string code,
+            out string message)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            values = null;
+            object given;
+            context.Params.TryGetValue(name, out given);
+            object[] items = given as object[];
+            if (items == null || items.Length == 0
+                || items.Any(item => !choices.Contains(item as string, StringComparer.Ordinal)))
+            {
+                return Refuse(
+                    name + " は次のどれかを1つ以上並べたものでなければならない: " + Listed(choices),
+                    out code,
+                    out message);
+            }
+
+            code = null;
+            message = null;
+            values = items.Select(item => (string)item).Distinct(StringComparer.Ordinal).ToList();
+
+            return true;
+        }
+
+        /// <summary>
+        /// 要る操作のときだけ受け取る、位置の並びを読む。要る操作で欠けていれば偽、要らない操作で
+        /// 渡されていれば偽を返し、断る内容を渡す。<paramref name="ceiling"/> 以上の位置と負の位置も
+        /// 断る。要らない操作では空の並びを渡す。
+        /// </summary>
+        public static bool TryIndices(
+            McpMethodContext context,
+            string name,
+            string operation,
+            IList<string> wanted,
+            int ceiling,
+            out IList<int> indices,
+            out string code,
+            out string message)
+        {
+            indices = new int[0];
+            object given;
+            bool asked;
+            if (!TryWanted(context, name, operation, wanted, out given, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (!asked)
+            {
+                return true;
+            }
+
+            object[] items = given as object[];
+            List<int> taken = new List<int>();
+            if (items != null)
+            {
+                foreach (object item in items)
+                {
+                    int number;
+                    if (!ValueInput.TryIndex(item, out number) || number >= ceiling)
+                    {
+                        items = null;
+
+                        break;
+                    }
+
+                    taken.Add(number);
+                }
+            }
+
+            if (items == null)
+            {
+                return Refuse(
+                    name + " は " + Listed(wanted) + " のときに渡す、0以上 "
+                        + Spelled(ceiling) + " 未満の位置の並びである。",
+                    out code,
+                    out message);
+            }
+
+            indices = taken;
+
+            return true;
+        }
+
+        /// <summary>
         /// その操作で要る入力を取り出す。要らない操作で渡されていれば偽を返す。読む値があるときだけ
         /// asked を立て、要らない操作で渡されていないときは空を渡して真を返す。
         /// </summary>

@@ -23,7 +23,7 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact(Skip = "impl pending: その種類の要素を全部選ぶ")]
+        [Fact]
         public void SelectingEverythingPutsEveryIndexOfThatKindIntoTheSelection()
         {
             Vertices(3);
@@ -36,7 +36,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(3, value[ViewSelectElements.SelectedName]);
         }
 
-        [Fact(Skip = "impl pending: 選んでいるものと選んでいないものを入れ替える")]
+        [Fact]
         public void InvertingSwapsTheOnesThatWerePickedForTheOnesThatWereNot()
         {
             Vertices(3);
@@ -49,7 +49,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 0, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
-        [Fact(Skip = "impl pending: 選択に、面で隣り合う頂点を足す")]
+        [Fact]
         public void ExpandingAddsTheVerticesThatShareAFaceWithTheSelection()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -63,7 +63,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
-        [Fact(Skip = "impl pending: 選択から、選んでいない頂点と隣り合うものを外す")]
+        [Fact]
         public void ReducingDropsTheVerticesThatTouchOnesOutsideTheSelection()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -77,7 +77,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
-        [Fact(Skip = "impl pending: 選んだボーンの子孫を足す")]
+        [Fact]
         public void TheChildChainAddsEveryBoneBelowTheOnesThatWerePicked()
         {
             IList<IPXBone> bones = Bones("根", "子", "孫");
@@ -92,7 +92,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Bone]);
         }
 
-        [Fact(Skip = "impl pending: 指した軸の片側にある要素だけを選ぶ")]
+        [Fact]
         public void TakingHalfTheModelKeepsOnlyOneSideOfTheAxis()
         {
             Vertex(-1f, 0f, 0f);
@@ -108,7 +108,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
-        [Fact(Skip = "impl pending: 種類を渡さない選択を断る")]
+        [Fact]
         public void SelectingWithoutSayingTheKindIsRefused()
         {
             Vertices(1);
@@ -118,7 +118,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
         }
 
-        [Fact(Skip = "impl pending: 選んだ頂点だけで作られている面を選ぶ")]
+        [Fact]
         public void TheFacesMadeOnlyOfTheSelectedVerticesAreSelected()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -132,7 +132,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ViewSelectRelated.SelectedName]);
         }
 
-        [Fact(Skip = "impl pending: 選んだ面が使う頂点を選ぶ")]
+        [Fact]
         public void TheVerticesThatTheSelectedFacesUseAreSelected()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -144,7 +144,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1, 2, 3 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
-        [Fact(Skip = "impl pending: 選んだ面と辺を共有する面を足す")]
+        [Fact]
         public void TheFacesThatShareAnEdgeWithTheSelectedOnesAreAdded()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -156,7 +156,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 0, 1 }, _fixture.View.Selected[ElementKinds.Face]);
         }
 
-        [Fact(Skip = "impl pending: 指した材質の面を選ぶ")]
+        [Fact]
         public void TheFacesOfThePickedMaterialAreSelected()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -171,7 +171,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Face]);
         }
 
-        [Fact(Skip = "impl pending: 選んだ頂点を使う材質の面を選ぶ")]
+        [Fact]
         public void TheFacesOfEveryMaterialThatUsesTheSelectedVerticesAreSelected()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -184,7 +184,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Face]);
         }
 
-        [Fact(Skip = "impl pending: 選んだ面を持つ材質の面を全部選ぶ")]
+        [Fact]
         public void EveryFaceOfTheMaterialsThatHoldTheSelectedFacesIsSelected()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -196,7 +196,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 0, 1 }, _fixture.View.Selected[ElementKinds.Face]);
         }
 
-        [Fact(Skip = "impl pending: 選んだ面を持つ材質の面を選択から外す")]
+        [Fact]
         public void TheFacesOfTheMaterialsThatHoldTheSelectedFacesAreTakenOut()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -209,7 +209,7 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(_fixture.View.Selected[ElementKinds.Face]);
         }
 
-        [Fact(Skip = "impl pending: どの面にも使われていない頂点を選ぶ")]
+        [Fact]
         public void TheVerticesThatNoFaceUsesAreSelected()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -220,7 +220,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 3 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
-        [Fact(Skip = "impl pending: エッジの倍率が1でない頂点を選ぶ")]
+        [Fact]
         public void TheVerticesWhoseEdgeScaleIsNotOneAreSelected()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -231,7 +231,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
-        [Fact(Skip = "impl pending: 視点の回転の中心を、選んだ頂点の重心にする")]
+        [Fact]
         public void TheRotateCentreGoesToTheMiddleOfTheSelectedVertices()
         {
             Vertex(0f, 0f, 0f);
@@ -246,7 +246,7 @@ namespace PmxEditorMcp.Tests
             Near(1.0, _fixture.View.CameraRotateCenter.X);
         }
 
-        [Fact(Skip = "impl pending: 視点の回転の中心を、選んだボーンの重心にする")]
+        [Fact]
         public void TheRotateCentreGoesToTheMiddleOfTheSelectedBones()
         {
             IList<IPXBone> bones = Bones("一", "二");
@@ -259,7 +259,7 @@ namespace PmxEditorMcp.Tests
             Near(3.0, _fixture.View.CameraRotateCenter.Y);
         }
 
-        [Fact(Skip = "impl pending: 視点の回転の中心を、選んだ面の重心にする")]
+        [Fact]
         public void TheRotateCentreGoesToTheMiddleOfTheSelectedFace()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -274,7 +274,25 @@ namespace PmxEditorMcp.Tests
             Near(1.0, _fixture.View.CameraRotateCenter.Y);
         }
 
-        [Fact(Skip = "impl pending: 何も選んでいないときの回転の中心の指定を断る")]
+        [Fact]
+        public void TheRotateCentreCountsAVertexThatTwoFacesShareOnce()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            for (int at = 0; at < 3; at++)
+            {
+                ((FakeVertex)vertices[at]).Position = new V3(0f, 0f, 0f);
+            }
+
+            ((FakeVertex)vertices[3]).Position = new V3(8f, 0f, 0f);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 0, 1, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1 };
+
+            Centre(Operation(ViewSetCameraRotateCenter.Face));
+
+            Near(2.0, _fixture.View.CameraRotateCenter.X);
+        }
+
+        [Fact]
         public void TakingTheCentreWithNothingSelectedIsRefused()
         {
             Vertices(2);
@@ -285,7 +303,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(envelope));
         }
 
-        [Fact(Skip = "impl pending: テクスチャを読み直して描画を作り直す")]
+        [Fact]
         public void ReloadingBuildsTheDrawingAgain()
         {
             Vertices(1);
@@ -296,7 +314,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.View.Repaints);
         }
 
-        [Fact(Skip = "impl pending: VMDViewへモデルだけを読み込む")]
+        [Fact]
         public void LoadingTheModelOnlyLeavesTheMotionAlone()
         {
             Vertices(1);
@@ -311,7 +329,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.View.Plays);
         }
 
-        [Fact(Skip = "impl pending: VMDViewへモデルとモーションを読み込んで再生を始める")]
+        [Fact]
         public void LoadingTheMotionAsWellStartsPlayingIt()
         {
             Vertices(1);
@@ -328,7 +346,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _fixture.View.Plays);
         }
 
-        [Fact(Skip = "impl pending: モーションのファイルを渡さない読み込みを断る")]
+        [Fact]
         public void LoadingTheMotionWithoutTheFileIsRefused()
         {
             Vertices(1);
@@ -341,7 +359,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
         }
 
-        [Fact(Skip = "impl pending: VMDViewの再生だけを止める")]
+        [Fact]
         public void ClearingTheMotionOnlyStopsThePlayingAndKeepsTheModel()
         {
             _fixture.View.Booted = true;
@@ -355,9 +373,10 @@ namespace PmxEditorMcp.Tests
             Assert.True(_fixture.View.Booted);
         }
 
-        [Fact(Skip = "impl pending: VMDViewの再生を止め、読み込んだモデルも外す")]
-        public void ClearingTheModelAsWellTakesTheViewBackDown()
+        [Fact]
+        public void ClearingTheModelAsWellHandsTheViewAMotionWithNothingInIt()
         {
+            Vertices(1);
             _fixture.View.Booted = true;
 
             _fixture.Call(
@@ -365,10 +384,12 @@ namespace PmxEditorMcp.Tests
                 ComposedScreenFixture.Arguments(ComposedScreenFixture.Given(
                     ViewClearVmdView.PartsName, ViewClearVmdView.ModelAndMotion)));
 
-            Assert.False(_fixture.View.Booted);
+            Assert.Equal(1, _fixture.View.Stops);
+            Assert.NotNull(_fixture.View.Loaded);
+            Assert.Null(((FakeVmd)_fixture.View.Motion).Path);
         }
 
-        [Fact(Skip = "impl pending: 全部のリストの表示を1回で作り直す")]
+        [Fact]
         public void EveryListIsBuiltAgainInOneCall()
         {
             IDictionary<string, object> value = ComposedScreenFixture.Value(
@@ -380,7 +401,7 @@ namespace PmxEditorMcp.Tests
                 _fixture.Form.Updated.Count, value[SessionUpdateAllLists.UpdatedName]);
         }
 
-        [Fact(Skip = "impl pending: 選んだ面の材質を材質のリストの選択へ写す")]
+        [Fact]
         public void TheMaterialsBehindTheSelectedFacesAreCheckedInTheList()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -398,7 +419,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[SessionSelectListsFromView.SelectedName]);
         }
 
-        [Fact(Skip = "impl pending: 画面で選んだボーンのうち先頭をボーンのリストの選択へ写す")]
+        [Fact]
         public void TheFirstBoneSelectedInTheViewIsPickedInTheBoneList()
         {
             Bones("一", "二", "三");
@@ -414,7 +435,23 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[SessionSelectListsFromView.SelectedName]);
         }
 
-        [Fact(Skip = "impl pending: 知らない種類のリストへの写し取りを断る")]
+        [Fact]
+        public void PickingNoBoneInTheViewLeavesTheBoneListWithNothingPicked()
+        {
+            Bones("一", "二");
+            _fixture.Form.SelectedBoneIndex = 1;
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(_fixture.Call(
+                SessionSelectListsFromView.ToolName,
+                ComposedScreenFixture.Arguments(ComposedScreenFixture.Given(
+                    SessionSelectListsFromView.KindsName,
+                    new object[] { SessionSelectListsFromView.Bone }))));
+
+            Assert.Equal(SessionSelectListsFromView.NoBone, _fixture.Form.SelectedBoneIndex);
+            Assert.Equal(0, value[SessionSelectListsFromView.SelectedName]);
+        }
+
+        [Fact]
         public void AKindTheListToolDoesNotKnowIsRefused()
         {
             Vertices(1);

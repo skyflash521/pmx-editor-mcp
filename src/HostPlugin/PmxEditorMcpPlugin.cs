@@ -17,6 +17,12 @@ namespace PmxEditorMcp
 
         private const string BuilderType = "PEPlugin.IPXPmxBuilder";
 
+        private const string MotionBuilderType = "PEPlugin.IPEBuilder";
+
+        private const string ViewType = "PEPlugin.View.IPXPmxViewConnector";
+
+        private const string FormType = "PEPlugin.Form.IPEFormConnector";
+
         private readonly object _operationGate = new object();
 
         private Form _uiAnchor;
@@ -198,7 +204,14 @@ namespace PmxEditorMcp
                 ComposedModelTools.AddTo(
                     methods,
                     new ComposedEdit(current, new UndoBarrier(recovery)),
-                    () => Builder(receivers));
+                    () => Receiver(receivers, BuilderType));
+                ComposedScreenTools.AddTo(
+                    methods,
+                    new ComposedScreen(
+                        current,
+                        () => Receiver(receivers, ViewType),
+                        () => Receiver(receivers, FormType)),
+                    () => ((IPEBuilder)Receiver(receivers, MotionBuilderType)).CreateVmd());
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
@@ -225,13 +238,15 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>新しい要素を作る相手。組み立てのツールが要素を1つ作るたびに引く。</summary>
-        private object Builder(IDictionary<string, SdkReceiver> receivers)
+        /// <summary>
+        /// その型の受け手。組み立てのツールが、要素を作る相手や画面の口を引くたびに呼ぶ。
+        /// </summary>
+        private object Receiver(IDictionary<string, SdkReceiver> receivers, string type)
         {
             SdkReceiver receiver;
-            if (!receivers.TryGetValue(BuilderType, out receiver))
+            if (!receivers.TryGetValue(type, out receiver))
             {
-                throw new InvalidOperationException("受け手を得る道が無い: " + BuilderType);
+                throw new InvalidOperationException("受け手を得る道が無い: " + type);
             }
 
             return receiver(_resident);

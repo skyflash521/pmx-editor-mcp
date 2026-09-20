@@ -3986,6 +3986,145 @@
           }
         }
       ]
+    },
+    {
+      "id": 14,
+      "title": "1回で済む画面の選択とリストの作り直し",
+      "requirements": [
+        "要素の一括編集と取り消し"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "bone",
+            "operation": "new",
+            "count": 2
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_select_elements",
+          "arguments": {
+            "operation": "all",
+            "kind": "bone"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "selected",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_select_elements",
+          "arguments": {
+            "operation": "childChain",
+            "kind": "bone"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_camera_rotate_center",
+          "arguments": {
+            "operation": "bones"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_select_related",
+          "arguments": {
+            "operation": "unusedVertices"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_select_lists_from_view",
+          "arguments": {
+            "kinds": [
+              "bone"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "selected",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_update_all_lists",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_load_vmd_view",
+          "arguments": {
+            "parts": "modelOnly"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "booted",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_clear_vmd_view",
+          "arguments": {
+            "parts": "modelAndMotion"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_reload_model",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
     }
   ]
 }

@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using PEPlugin.Pmx;
+using PEPlugin.SDX;
+using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
@@ -35,7 +39,94 @@ namespace PmxEditorMcp
         /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
-            throw new NotImplementedException();
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (screen == null)
+            {
+                throw new ArgumentNullException(nameof(screen));
+            }
+
+            List<string> known = new List<string> { ComposedOperation.OperationName };
+            methods.Add(
+                ToolName, screen.Method(known, ScreenNeeds.View | ScreenNeeds.Pmx, Run));
+        }
+
+        private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)
+        {
+            IPXPmx model = (IPXPmx)parts.Pmx;
+            string operation;
+            string code;
+            string message;
+            if (!ComposedOperation.TryTake(
+                    context, Operations, out operation, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string kind = Kind(operation);
+            IList<V3> held = Spots(
+                model,
+                kind,
+                ViewSelection.Taken(parts.View, kind, ViewSelection.Count(model, kind)));
+            if (held.Count == 0)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.NotApplicable,
+                    "画面で " + kind + " を1つも選んでいないので、回転の中心を決められない。");
+            }
+
+            V3 middle = Vectors.Middle(held);
+            ((IPXPmxViewConnector)parts.View).CameraRotateCenter = middle;
+
+            return ComposedEditResult.Complete(
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { CentreName, new object[] { middle.X, middle.Y, middle.Z } },
+                });
+        }
+
+        /// <summary>
+        /// 重心を取る点。面を指した操作では、選んだ面が使う頂点の点で、2つ以上の面が同じくする頂点は
+        /// 1つとして数える。
+        /// </summary>
+        private static IList<V3> Spots(IPXPmx model, string kind, IList<int> held)
+        {
+            if (string.Equals(kind, ElementKinds.Vertex, StringComparison.Ordinal))
+            {
+                return held.Select(at => model.Vertex[at].Position).ToList();
+            }
+
+            if (string.Equals(kind, ElementKinds.Bone, StringComparison.Ordinal))
+            {
+                return held.Select(at => model.Bone[at].Position).ToList();
+            }
+
+            IList<IPXFace> faces = ViewSelection.Faces(model);
+
+            return held.SelectMany(at => ViewSelection.Corners(faces[at]))
+                .Where(vertex => vertex != null)
+                .Distinct(ReferenceComparer<IPXVertex>.Instance)
+                .Select(vertex => vertex.Position)
+                .ToList();
+        }
+
+        /// <summary>その操作が重心を取る要素の種類。</summary>
+        private static string Kind(string operation)
+        {
+            switch (operation)
+            {
+                case Vertices:
+                    return ElementKinds.Vertex;
+
+                case Bones:
+                    return ElementKinds.Bone;
+
+                default:
+                    return ElementKinds.Face;
+            }
         }
     }
 }

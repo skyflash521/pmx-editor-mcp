@@ -1,4 +1,4 @@
-// 画面とリストの口の題材。使う口だけが値を持ち、それ以外は支えない。
+// 画面とリストの口と、その口へ渡すモーションの題材。使う口だけが値を持ち、それ以外は支えない。
 
 using System;
 using System.Collections.Generic;
@@ -901,6 +901,202 @@ namespace PmxEditorMcp.Tests
         }
 
         public int VertexItemsCount
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+    }
+
+    public sealed class FakeVmd : PEPlugin.Vmd.IPEVmd
+    {
+        /// <summary>読み込んだモーションのファイルの道。読んでいなければ空。</summary>
+        public string Path { get; private set; }
+
+        public void FromFile(string path)
+        {
+            Path = path;
+        }
+
+        public void ClearKeys()
+        {
+            throw new NotSupportedException();
+        }
+
+        public object Clone()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int GetBoneIndex(string name)
+        {
+            throw new NotSupportedException();
+        }
+
+        public string GetBoneName(int index)
+        {
+            throw new NotSupportedException();
+        }
+
+        public string[] GetBoneNames()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int GetMorphIndex(string name)
+        {
+            throw new NotSupportedException();
+        }
+
+        public string GetMorphName(int index)
+        {
+            throw new NotSupportedException();
+        }
+
+        public string[] GetMorphNames()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Init(PEPlugin.Pmd.IPEPmd pmd)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Init(PEPlugin.Pmx.IPXPmx pmx)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void NormalizeKeys()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetBoneNames(string[] names)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetModelNameForCameraLight()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetMorphNames(string[] names)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetNamesFromPmd(PEPlugin.Pmd.IPEPmd pmd)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void ToFile(string path, bool trimKeys)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void TrimBoneKeys()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void TrimCameraKeys()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void TrimKeys()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void TrimLightKeys()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void TrimMorphKeys()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void TrimStartBlankKeys()
+        {
+            throw new NotSupportedException();
+        }
+
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdBoneKey> Bone
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdCameraKey> Camera
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public string FilePath
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdLightKey> Light
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public string ModelName
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdMorphKey> Morph
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdSelfShadowKey> SelfShadow
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Collections.Generic.IList<PEPlugin.Vmd.IPEVmdVisibleIKKey> VisibleIK
         {
             get
             {

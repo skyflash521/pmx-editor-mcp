@@ -7,8 +7,11 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ComposedScreenTools
     {
-        /// <summary>組み立ての画面ツールを表へ足す。</summary>
-        public static void AddTo(McpMethodTable methods, ComposedScreen screen)
+        /// <summary>
+        /// 組み立ての画面ツールを表へ足す。<paramref name="motion"/> は空のVMDを1つ作って返す。
+        /// </summary>
+        public static void AddTo(
+            McpMethodTable methods, ComposedScreen screen, Func<object> motion)
         {
             if (methods == null)
             {
@@ -20,7 +23,19 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(screen));
             }
 
-            throw new NotImplementedException();
+            if (motion == null)
+            {
+                throw new ArgumentNullException(nameof(motion));
+            }
+
+            ViewSelectElements.AddTo(methods, screen);
+            ViewSelectRelated.AddTo(methods, screen);
+            ViewSetCameraRotateCenter.AddTo(methods, screen);
+            ViewReloadModel.AddTo(methods, screen);
+            ViewLoadVmdView.AddTo(methods, screen, motion);
+            ViewClearVmdView.AddTo(methods, screen, motion);
+            SessionUpdateAllLists.AddTo(methods, screen);
+            SessionSelectListsFromView.AddTo(methods, screen);
         }
     }
 }
