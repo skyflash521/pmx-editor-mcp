@@ -539,6 +539,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Path.Combine(_root, "names.json"),
                     Path.Combine(_root, "assignments.json"),
                     Path.Combine(_root, "map.json"),
+                    Path.Combine(_root, "schemas.json"),
                 },
                 new StringWriter(),
                 new StringWriter());
@@ -716,7 +717,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 CommandRunner.ToolDescriptionsCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
                     + " <型役割表の正本のパス> <日本語名の正本のパス>"
-                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>",
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス>",
+                usage,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                CommandRunner.DiscoveryCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス> <共通契約割当の正本のパス>"
+                    + " <能力対応表の正本のパス> <用途の作業の正本のパス> <スキーマ正本のパス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(

@@ -82,7 +82,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { Owner + ".Tint", "色合い" },
-                });
+                },
+                NoSchemas());
 
             Assert.Equal("色合い", Assert.Single(materials).SourceNote);
         }
@@ -150,7 +151,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { Owner + ".Depth", "奥行き" },
-                });
+                },
+                NoSchemas());
 
             Assert.Equal(
                 new[] { "奥行き" },
@@ -223,7 +225,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Named(Key("Draw"), ListTool),
                     new Dictionary<string, string>(StringComparer.Ordinal),
                     MethodNotes(),
-                    new Dictionary<string, string>(StringComparer.Ordinal)));
+                    new Dictionary<string, string>(StringComparer.Ordinal),
+                    NoSchemas()));
 
             Assert.Contains("型役割表に無い型", error.Message, StringComparison.Ordinal);
         }
@@ -267,28 +270,40 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    null, Roles(), Names(), Inventory(), empty, empty, MethodNotes(), empty));
+                    null, Roles(), Names(), Inventory(), empty, empty, MethodNotes(), empty,
+                    NoSchemas()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    map, null, Names(), Inventory(), empty, empty, MethodNotes(), empty));
+                    map, null, Names(), Inventory(), empty, empty, MethodNotes(), empty,
+                    NoSchemas()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    map, Roles(), null, Inventory(), empty, empty, MethodNotes(), empty));
+                    map, Roles(), null, Inventory(), empty, empty, MethodNotes(), empty,
+                    NoSchemas()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    map, Roles(), Names(), null, empty, empty, MethodNotes(), empty));
+                    map, Roles(), Names(), null, empty, empty, MethodNotes(), empty,
+                    NoSchemas()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    map, Roles(), Names(), Inventory(), null, empty, MethodNotes(), empty));
+                    map, Roles(), Names(), Inventory(), null, empty, MethodNotes(), empty,
+                    NoSchemas()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    map, Roles(), Names(), Inventory(), empty, null, MethodNotes(), empty));
+                    map, Roles(), Names(), Inventory(), empty, null, MethodNotes(), empty,
+                    NoSchemas()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    map, Roles(), Names(), Inventory(), empty, empty, null, empty));
+                    map, Roles(), Names(), Inventory(), empty, empty, null, empty,
+                    NoSchemas()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolDescriptionEvidence.Collect(
-                    map, Roles(), Names(), Inventory(), empty, empty, MethodNotes(), null));
+                    map, Roles(), Names(), Inventory(), empty, empty, MethodNotes(), null,
+                    NoSchemas()));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolDescriptionEvidence.Collect(
+                    map, Roles(), Names(), Inventory(), empty, empty, MethodNotes(), empty,
+                    null));
         }
 
         [Fact]
@@ -347,7 +362,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Named(key, "model_draw_value"),
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 new Dictionary<string, string>(StringComparer.Ordinal),
-                new Dictionary<string, string>(StringComparer.Ordinal));
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                NoSchemas());
 
             Assert.Equal(Open, Assert.Single(materials).TypeName);
         }
@@ -376,7 +392,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Named(Key("Draw"), ListTool),
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 MethodNotes(),
-                new Dictionary<string, string>(StringComparer.Ordinal));
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                NoSchemas());
+        }
+
+        private static ToolSchemaTable NoSchemas()
+        {
+            return new ToolSchemaTable(new List<ToolSchema>());
         }
 
         private static IList<ToolDescriptionMaterial> Collect(Fixture fixture)
@@ -395,7 +417,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 fixture.ToolNames,
                 contractNotes,
                 MethodNotes(),
-                new Dictionary<string, string>(StringComparer.Ordinal));
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                NoSchemas());
         }
 
         private static Fixture Map(params Written[] rows)

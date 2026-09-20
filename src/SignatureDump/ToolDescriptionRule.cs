@@ -48,6 +48,7 @@ namespace PmxEditorMcp.SignatureDump
             string typeName,
             string contractNote,
             string sourceNote,
+            string usageNote,
             IList<IndexTerm> indexTerms)
         {
             Tool = Required(tool, nameof(tool));
@@ -58,6 +59,7 @@ namespace PmxEditorMcp.SignatureDump
             TypeName = Required(typeName, nameof(typeName));
             ContractNote = contractNote;
             SourceNote = sourceNote;
+            UsageNote = usageNote;
             IndexTerms = new ReadOnlyCollection<IndexTerm>(
                 indexTerms == null ? new List<IndexTerm>() : new List<IndexTerm>(indexTerms));
         }
@@ -84,6 +86,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>一次資料の記載。持たなければ null。</summary>
         public string SourceNote { get; }
+
+        /// <summary>そのツールの呼び方。持たなければ null。</summary>
+        public string UsageNote { get; }
 
         /// <summary>集約したツールが並べる索引語。集約していなければ空。</summary>
         public IList<IndexTerm> IndexTerms { get; }
@@ -125,10 +130,6 @@ namespace PmxEditorMcp.SignatureDump
         public IList<string> Dropped { get; }
     }
 
-    /// <summary>
-    /// ツールの説明文を組み立てる。説明文はクライアントの検索の入力なので、対象・動作・出所を
-    /// 先頭にこの順で置き、続けて契約注記・一次資料の記載・索引語を載せる。
-    /// </summary>
     public static class ToolDescriptionRule
     {
         /// <summary>説明文の上限。UTF-8のバイト数で数える。</summary>
@@ -143,6 +144,8 @@ namespace PmxEditorMcp.SignatureDump
         private const string ContractNoteLabel = "契約注記: ";
 
         private const string SourceNoteLabel = "一次資料: ";
+
+        private const string UsageLabel = "呼び方: ";
 
         private const string IndexLabel = "索引語: ";
 
@@ -175,6 +178,22 @@ namespace PmxEditorMcp.SignatureDump
             return Truncated(head, material.IndexTerms);
         }
 
+        /// <summary>
+        /// 受け持ちをそのまま説明文にするツールへ、呼び方を継ぎ足す。呼び方が無ければそのまま返す。
+        /// </summary>
+        public static string WithUsage(string duty, string usageNote)
+        {
+            if (duty == null)
+            {
+                throw new ArgumentNullException(nameof(duty));
+            }
+
+            StringBuilder built = new StringBuilder(duty);
+            Line(built, UsageLabel, usageNote);
+
+            return built.ToString();
+        }
+
         // 先頭の1行。対象・動作・出所をこの順に置く。
         private static string Head(ToolDescriptionMaterial material)
         {
@@ -184,6 +203,7 @@ namespace PmxEditorMcp.SignatureDump
                 .Append(SourceLabel).Append(material.TypeName);
             Line(built, ContractNoteLabel, material.ContractNote);
             Line(built, SourceNoteLabel, material.SourceNote);
+            Line(built, UsageLabel, material.UsageNote);
             return built.ToString();
         }
 

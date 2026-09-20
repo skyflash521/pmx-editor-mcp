@@ -217,6 +217,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "PEPlugin.Pmx.IPXVertex",
                 null,
                 null,
+                null,
                 null);
         }
     }

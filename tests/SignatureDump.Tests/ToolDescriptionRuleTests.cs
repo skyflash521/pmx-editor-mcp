@@ -106,14 +106,60 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheUsageNoteFollowsTheNotesInTheHead()
+        {
+            string[] lines = ToolDescriptionRule
+                .Compose(MaterialWithUsage("使うな。", "頂点リスト", "端まで読む。")).Text.Split('\n');
+
+            Assert.Equal(4, lines.Length);
+            Assert.StartsWith("呼び方: ", lines[3], StringComparison.Ordinal);
+            Assert.Contains("端まで読む。", lines[3], StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ADutyThatIsGivenAUsageNoteCarriesItOnItsOwnLine()
+        {
+            string[] lines = ToolDescriptionRule.WithUsage("受け持ち。", "端まで読む。").Split('\n');
+
+            Assert.Equal(2, lines.Length);
+            Assert.Equal("受け持ち。", lines[0]);
+            Assert.Equal("呼び方: 端まで読む。", lines[1]);
+        }
+
+        [Fact]
+        public void ADutyWithNoUsageNoteIsLeftAsItIs()
+        {
+            Assert.Equal("受け持ち。", ToolDescriptionRule.WithUsage("受け持ち。", null));
+            Assert.Equal("受け持ち。", ToolDescriptionRule.WithUsage("受け持ち。", "  "));
+        }
+
+        [Fact]
         public void TheArgumentsAreChecked()
         {
             Assert.Throws<ArgumentNullException>(() => ToolDescriptionRule.Compose(null));
+            Assert.Throws<ArgumentNullException>(() => ToolDescriptionRule.WithUsage(null, "呼び方"));
             Assert.Throws<ArgumentNullException>(() => new IndexTerm(null, "名"));
             Assert.Throws<ArgumentException>(() => new IndexTerm("項目", " "));
             Assert.Throws<ArgumentNullException>(
                 () => new ToolDescriptionMaterial(
-                    null, "model", "list", null, "vertex", "PEPlugin.Pmx.IPXVertex", null, null, null));
+                    null, "model", "list", null, "vertex", "PEPlugin.Pmx.IPXVertex", null, null,
+                    null, null));
+        }
+
+        private static ToolDescriptionMaterial MaterialWithUsage(
+            string contractNote, string sourceNote, string usageNote)
+        {
+            return new ToolDescriptionMaterial(
+                "model_list_vertices",
+                "model",
+                "list",
+                "vertices",
+                "vertex",
+                "PEPlugin.Pmx.IPXVertex",
+                contractNote,
+                sourceNote,
+                usageNote,
+                null);
         }
 
         private static ToolDescriptionMaterial Material(
@@ -128,6 +174,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "PEPlugin.Pmx.IPXVertex",
                 contractNote,
                 sourceNote,
+                null,
                 terms);
         }
 

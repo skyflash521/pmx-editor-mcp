@@ -1,0 +1,125 @@
+using System;
+using System.Collections.Generic;
+using Xunit;
+
+namespace PmxEditorMcp.SignatureDump.Tests
+{
+    public sealed class ToolUsageNoteRuleTests
+    {
+        [Fact]
+        public void AListingCarriesTheWayToReadToTheEnd()
+        {
+            string note = Note(true, "indices", "range", "all", "offset", "limit");
+
+            Assert.Contains("all", note, StringComparison.Ordinal);
+            Assert.Contains("nextOffset", note, StringComparison.Ordinal);
+            Assert.Contains("offset", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingUnderAParentAlsoCarriesTheParent()
+        {
+            string note = Note(
+                true, "parentIndices", "parentRange", "parentAll", "indices", "range", "all",
+                "offset", "limit");
+
+            Assert.Contains("parentAll", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingWithNoParentDoesNotCarryTheParent()
+        {
+            Assert.DoesNotContain(
+                "parentAll", Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesRangeCarriesThatRangeIsNotClamped()
+        {
+            string note = Note(false, "indices", "range", "all");
+
+            Assert.Contains("range", note, StringComparison.Ordinal);
+            Assert.DoesNotContain("nextOffset", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingThatTakesRangeCarriesBoth()
+        {
+            string note = Note(true, "indices", "range", "all", "offset", "limit");
+
+            Assert.Contains("nextOffset", note, StringComparison.Ordinal);
+            Assert.Contains("range", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesNeitherCarriesNoNote()
+        {
+            Assert.Null(Note(false, "pmxHandle"));
+        }
+
+        [Fact]
+        public void ATargetingToolThatTakesNoRangeAndListsNothingCarriesNoNote()
+        {
+            Assert.Null(Note(false, "handles"));
+        }
+
+        [Fact]
+        public void TheArgumentsAreChecked()
+        {
+            Assert.Throws<ArgumentNullException>(() => ToolUsageNoteRule.Compose(null));
+        }
+
+        private static string Note(bool listing, params string[] inputs)
+        {
+            return ToolUsageNoteRule.Compose(Schema(listing, inputs));
+        }
+
+        private static ToolSchema Schema(bool listing, string[] inputs)
+        {
+            List<SchemaItem> taken = new List<SchemaItem>();
+            foreach (string name in inputs)
+            {
+                taken.Add(Item(name, "number", null, null));
+            }
+
+            return new ToolSchema(
+                "model_list_vertices",
+                new[] { new SchemaBranch("only", null, null, taken, new SchemaChoice[0]) },
+                listing ? Listed() : Item(null, "boolean", null, null),
+                null);
+        }
+
+        private static SchemaItem Listed()
+        {
+            return Item(
+                null,
+                null,
+                new List<SchemaItem>
+                {
+                    Item("total", "number", null, null),
+                    Item("items", null, null, Item(null, "number", null, null)),
+                },
+                null);
+        }
+
+        private static SchemaItem Item(
+            string name, string shape, IList<SchemaItem> members, SchemaItem element)
+        {
+            return new SchemaItem(
+                shape,
+                members,
+                element,
+                name,
+                ItemOrigin.HostInput,
+                null,
+                null,
+                false,
+                null,
+                null,
+                null,
+                false,
+                null);
+        }
+    }
+}

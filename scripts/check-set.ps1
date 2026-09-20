@@ -1022,7 +1022,7 @@ $checks['ツールの説明文の照合'] = New-Check `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $buildOutput `
     -Run @($dump, 'tool-descriptions', $editorDir, $ledger, $contract, $roles, $names,
-        $assignments, $toolMap)
+        $assignments, $toolMap, $toolSchemas)
 $checks['サンプル値の照合'] = New-Check `
     -Groups @('定義') `
     -LimitSeconds 3 <# 変更禁止 #> `
@@ -1033,7 +1033,7 @@ $checks['発見可能性の照合'] = New-Check `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $buildOutput `
     -Run @($dump, 'discovery', $editorDir, $ledger, $contract, $roles, $names,
-        $assignments, $toolMap, $discoveryTasks)
+        $assignments, $toolMap, $discoveryTasks, $toolSchemas)
 $checks['スキーマ対応の照合'] = New-Check `
     -Groups @('定義') `
     -LimitSeconds 3 <# 変更禁止 #> `

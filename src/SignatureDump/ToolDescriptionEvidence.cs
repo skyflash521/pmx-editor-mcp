@@ -20,7 +20,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> toolNames,
             IDictionary<string, string> contractNotes,
             IDictionary<string, string> methodNotes,
-            IDictionary<string, string> propertyNotes)
+            IDictionary<string, string> propertyNotes,
+            ToolSchemaTable schemas)
         {
             if (map == null)
             {
@@ -62,6 +63,13 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(propertyNotes));
             }
 
+            if (schemas == null)
+            {
+                throw new ArgumentNullException(nameof(schemas));
+            }
+
+            IDictionary<string, ToolSchema> schemasByTool = schemas.Tools
+                .ToDictionary(t => t.Tool, StringComparer.Ordinal);
             IDictionary<string, SignatureRecord> signatures = inventory.Signatures
                 .ToDictionary(s => s.Key, StringComparer.Ordinal);
             IDictionary<string, TypeRoleRecord> byType = roles.Types
@@ -84,7 +92,8 @@ namespace PmxEditorMcp.SignatureDump
                     contractNotes,
                     methodNotes,
                     propertyNotes,
-                    null));
+                    null,
+                    schemasByTool));
             }
 
             foreach (Aggregated tool in Aggregations(map, byType, toolNames, inventory, roles))
@@ -99,7 +108,8 @@ namespace PmxEditorMcp.SignatureDump
                     contractNotes,
                     methodNotes,
                     propertyNotes,
-                    tool.Holder));
+                    tool.Holder,
+                    schemasByTool));
             }
 
             foreach (KeyValuePair<string, TypeRoleRecord> element in ElementTools(
@@ -115,7 +125,8 @@ namespace PmxEditorMcp.SignatureDump
                     contractNotes,
                     methodNotes,
                     propertyNotes,
-                    element.Value));
+                    element.Value,
+                    schemasByTool));
             }
 
             materials.Sort(
@@ -290,7 +301,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> contractNotes,
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes,
-            TypeRoleRecord named)
+            TypeRoleRecord named,
+            IDictionary<string, ToolSchema> schemasByTool)
         {
             SignatureRecord signature = named == null
                 ? OneType(tool, rows, signatures)
@@ -309,7 +321,18 @@ namespace PmxEditorMcp.SignatureDump
                 Joined(rows.Select(r => Contract(r.SignatureKey, contractNotes))),
                 Joined(rows.Select(r => Note(
                     Signature(r.SignatureKey, signatures), methodNotes, propertyNotes))),
+                Usage(tool, schemasByTool),
                 IndexTerms(tool, map, japanese, signatures));
+        }
+
+        /// <summary>そのツールの呼び方。スキーマ正本に無いツールでは null。</summary>
+        private static string Usage(string tool, IDictionary<string, ToolSchema> schemasByTool)
+        {
+            ToolSchema schema;
+
+            return schemasByTool.TryGetValue(tool, out schema)
+                ? ToolUsageNoteRule.Compose(schema)
+                : null;
         }
 
         /// <summary>そのシグネチャの契約注記。持たなければ null。</summary>

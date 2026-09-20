@@ -29,13 +29,13 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 8)
+            if (args.Length != 9)
             {
                 error.WriteLine(
-                    "引数は8つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                    "引数は9つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
                         + " <共通契約の正本のパス> <型役割表の正本のパス> <日本語名の正本のパス>"
                         + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
-                        + " <用途の作業の正本のパス>");
+                        + " <用途の作業の正本のパス> <スキーマ正本のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -53,6 +53,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<PropertyNameRecord> names;
             CommonAssignmentTable assignments;
             ToolMap map;
+            ToolSchemaTable schemas;
             IDictionary<string, ComposedTool> composedTools;
             IDictionary<string, string> methodNotes;
             IDictionary<string, string> propertyNotes;
@@ -66,6 +67,7 @@ namespace PmxEditorMcp.SignatureDump
                 names = PropertyNameJsonReader.ReadPropertyNames(Read(args[4], "日本語名の正本"));
                 assignments = CommonAssignmentJsonReader.Read(Read(args[5], "共通契約割当の正本"));
                 map = ToolMapJsonReader.Read(Read(args[6], "能力対応表の正本"));
+                schemas = ToolSchemaJsonReader.Read(Read(args[8], "スキーマ正本"));
                 string document = Read(
                     SdkAssemblyLocator.GetDocumentPath(editorDirectory), "ドキュメントXML");
                 methodNotes = DocumentNoteReader.ReadMethods(document);
@@ -108,14 +110,17 @@ namespace PmxEditorMcp.SignatureDump
                             LedgerPopulation.Resolve(ledger, inventory).Owners, ledger),
                         ToolMapEvidence.ContractNotes(ledger)),
                     methodNotes,
-                    propertyNotes))
+                    propertyNotes,
+                    schemas))
                 {
                     descriptions.Add(material.Tool, ToolDescriptionRule.Compose(material).Text);
                 }
 
                 foreach (KeyValuePair<string, ComposedTool> composed in composedTools)
                 {
-                    descriptions[composed.Key] = composed.Value.Duty;
+                    descriptions[composed.Key] = ToolDescriptionRule.WithUsage(
+                        composed.Value.Duty,
+                        ToolUsageNoteRule.Of(composed.Key, schemas));
                 }
 
                 foreach (KeyValuePair<string, string> own in

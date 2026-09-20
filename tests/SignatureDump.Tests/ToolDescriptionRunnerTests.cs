@@ -29,6 +29,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string EmptyMap = "{\"rows\":[]}\n";
 
+        private const string EmptySchemas = "{\"tools\":[]}\n";
+
         /// <summary>行を持たない共通契約割当の正本。</summary>
         private const string EmptyAssignments = "{\"assignments\":[]}\n";
 
@@ -55,7 +57,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 4, 5, 6, 8 })
+            foreach (int count in new[] { 0, 1, 2, 3, 4, 5, 6, 7, 9 })
             {
                 StringWriter error = new StringWriter();
 
@@ -82,6 +84,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Write("n.json", EmptyNames),
                     Write("a.json", EmptyAssignments),
                     Write("m.json", EmptyMap),
+                    Write("s.json", EmptySchemas),
                 },
                 new StringWriter(),
                 error);
@@ -93,7 +96,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AMissingInputFileIsInputUnavailable()
         {
-            foreach (int missing in new[] { 1, 2, 3, 4 })
+            foreach (int missing in new[] { 1, 2, 3, 4, 7 })
             {
                 string[] args = Arguments(EmptyMap);
                 args[missing] = Path.Combine(_root, "gone");
@@ -188,6 +191,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Write("names.json", EmptyNames),
                 Write("assignments.json", EmptyAssignments),
                 Write("map.json", map),
+                Write("schemas.json", EmptySchemas),
             };
         }
 

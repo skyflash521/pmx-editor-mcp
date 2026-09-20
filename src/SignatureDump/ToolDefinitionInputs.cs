@@ -691,7 +691,8 @@ namespace PmxEditorMcp.SignatureDump
                         LedgerPopulation.Resolve(_ledger, inventory).Owners, _ledger),
                     ToolMapEvidence.ContractNotes(_ledger)),
                 _methodNotes,
-                _propertyNotes);
+                _propertyNotes,
+                Schemas);
 
             Dictionary<string, string> descriptions =
                 new Dictionary<string, string>(StringComparer.Ordinal);
@@ -702,7 +703,9 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (KeyValuePair<string, ComposedTool> composed in _composedTools)
             {
-                descriptions[composed.Key] = composed.Value.Duty;
+                descriptions[composed.Key] = ToolDescriptionRule.WithUsage(
+                    composed.Value.Duty,
+                    ToolUsageNoteRule.Of(composed.Key, Schemas));
             }
 
             return descriptions;
