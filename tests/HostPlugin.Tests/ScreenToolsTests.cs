@@ -308,6 +308,71 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheVerticesWeighedToTheSelectedBonesAreSelected()
+        {
+            IList<IPXBone> bones = Bones("腕", "指");
+            IList<IPXVertex> vertices = Vertices(3);
+            Weigh(vertices[0], bones[0], 1f);
+            Weigh(vertices[1], bones[1], 1f);
+            vertices[2].Bone4 = bones[0];
+            vertices[2].Weight4 = 1f;
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 0 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Related(
+                Operation("bonesToWeightedVertices")));
+
+            Assert.Equal(new[] { 0, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(2, value[ViewSelectRelated.SelectedName]);
+            Assert.Equal(new[] { 0 }, _fixture.View.Selected[ElementKinds.Bone]);
+        }
+
+        [Fact]
+        public void AVertexWeighedToSeveralOfTheSelectedBonesIsSelectedOnce()
+        {
+            IList<IPXBone> bones = Bones("腕", "指");
+            IList<IPXVertex> vertices = Vertices(1);
+            Weigh(vertices[0], bones[0], 0.5f);
+            vertices[0].Bone2 = bones[1];
+            vertices[0].Weight2 = 0.5f;
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 0, 1 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Related(
+                Operation("bonesToWeightedVertices")));
+
+            Assert.Equal(new[] { 0 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(1, value[ViewSelectRelated.SelectedName]);
+        }
+
+        [Fact]
+        public void ASlotThatHoldsOneOfTheSelectedBonesWithoutWeightIsNotSelected()
+        {
+            IList<IPXBone> bones = Bones("腕");
+            IList<IPXVertex> vertices = Vertices(2);
+            Weigh(vertices[0], bones[0], 1f);
+            Weigh(vertices[1], bones[0], 0f);
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 0 };
+
+            Related(Operation("bonesToWeightedVertices"));
+
+            Assert.Equal(new[] { 0 }, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
+        [Fact]
+        public void NoBoneSelectedClearsTheVerticesThatWereSelected()
+        {
+            IList<IPXBone> bones = Bones("腕");
+            IList<IPXVertex> vertices = Vertices(1);
+            Weigh(vertices[0], bones[0], 1f);
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Related(
+                Operation("bonesToWeightedVertices")));
+
+            Assert.Empty(_fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(0, value[ViewSelectRelated.SelectedName]);
+        }
+
+        [Fact]
         public void OnlyTheMaterialsThatUseTheSelectedVerticesStayShown()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -758,6 +823,12 @@ namespace PmxEditorMcp.Tests
             }
 
             return made;
+        }
+
+        private static void Weigh(IPXVertex vertex, IPXBone bone, float weight)
+        {
+            vertex.Bone1 = bone;
+            vertex.Weight1 = weight;
         }
 
         private static IPXFace Face(IList<IPXVertex> vertices, int first, int second, int third)
