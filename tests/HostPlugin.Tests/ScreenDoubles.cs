@@ -1170,6 +1170,8 @@ namespace PmxEditorMcp.Tests
     {
         public int[] Checked { get; set; } = new int[0];
 
+        public int MaterialItemsCount { get; set; } = 1;
+
         public int[] GetCheckedMaterialIndices()
         {
             return Checked;
@@ -1242,14 +1244,6 @@ namespace PmxEditorMcp.Tests
             }
 
             set
-            {
-                throw new NotSupportedException();
-            }
-        }
-
-        public int MaterialItemsCount
-        {
-            get
             {
                 throw new NotSupportedException();
             }

@@ -23,6 +23,13 @@ namespace PmxEditorMcp.SignatureDump
         /// 更新しないので、こちらから出ないと言えるのは、取り消せる編集が残っていないときだけである。
         /// </summary>
         SavedEdits,
+
+        /// <summary>
+        /// PMXビューの絞込が持つ一覧を相手にする。この一覧は絞込の窓を一度表示するまで組まれず、
+        /// 組まれていない間、読み取りは並んでいる項目が無いまま空を返し、書き込みはどの項目へも
+        /// 届かない。項目の数は呼ぶ前に読める。
+        /// </summary>
+        ListedParts,
     }
 
     /// <summary>
@@ -42,6 +49,20 @@ namespace PmxEditorMcp.SignatureDump
         private const string ClosingMemberName = "Close";
 
         private const string UndoCountMemberName = "UndoCount";
+
+        private const string PartsTypeName = "PEPlugin.View.IPEPartsSelectConnector";
+
+        private static readonly ReadOnlyDictionary<string, string> CountsByMember =
+            new ReadOnlyDictionary<string, string>(
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { "GetCheckedMaterialIndices", "MaterialItemsCount" },
+                    { "SetCheckedMaterialIndices", "MaterialItemsCount" },
+                    { "GetCheckedBoneIndices", "BoneItemsCount" },
+                    { "SetCheckedBoneIndices", "BoneItemsCount" },
+                    { "GetCheckedExpressionIndices", "ExpressionItemsCount" },
+                    { "SetCheckedExpressionIndices", "ExpressionItemsCount" },
+                });
 
         private static readonly ReadOnlyCollection<string> PickedMembers =
             Array.AsReadOnly(new[]
@@ -79,7 +100,54 @@ namespace PmxEditorMcp.SignatureDump
                 return true;
             }
 
+            if (string.Equals(type, PartsTypeName, StringComparison.Ordinal)
+                && CountsByMember.ContainsKey(signature.MemberName))
+            {
+                kind = PreconditionKind.ListedParts;
+
+                return true;
+            }
+
             return false;
+        }
+
+        /// <summary>
+        /// そのシグネチャが相手にする絞込の一覧について、並んでいる項目の数を読むシグネチャの行キー。
+        /// 相手にする呼び出しと同じ受け手の上に在るので、受け手を解き直さずに読める。相手にする一覧を
+        /// 持たないシグネチャと、数を読むシグネチャが見つからないときは null。
+        /// </summary>
+        public static string Listed(
+            SignatureRecord signature, IEnumerable<SignatureRecord> signatures)
+        {
+            if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
+            if (signatures == null)
+            {
+                throw new ArgumentNullException(nameof(signatures));
+            }
+
+            string counting;
+            if (!string.Equals(
+                    TypeDefinitionName.Of(signature.DeclaringType),
+                    PartsTypeName,
+                    StringComparison.Ordinal)
+                || !CountsByMember.TryGetValue(signature.MemberName, out counting))
+            {
+                return null;
+            }
+
+            return signatures
+                .Where(s => string.Equals(
+                        TypeDefinitionName.Of(s.DeclaringType),
+                        PartsTypeName,
+                        StringComparison.Ordinal)
+                    && string.Equals(s.MemberName, counting, StringComparison.Ordinal))
+                .Select(s => s.Key)
+                .OrderBy(k => k, StringComparer.Ordinal)
+                .FirstOrDefault();
         }
 
         /// <summary>

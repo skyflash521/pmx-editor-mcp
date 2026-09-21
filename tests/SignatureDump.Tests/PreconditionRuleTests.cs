@@ -14,6 +14,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string FormType = "PEPlugin.Form.IPEFormConnector";
 
+        private const string PartsType = "PEPlugin.View.IPEPartsSelectConnector";
+
         [Fact]
         public void TakingWhatIsPickedNeedsSomethingPicked()
         {
@@ -90,6 +92,58 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     }));
         }
 
+        [Theory]
+        [InlineData("GetCheckedMaterialIndices")]
+        [InlineData("SetCheckedMaterialIndices")]
+        [InlineData("GetCheckedBoneIndices")]
+        [InlineData("SetCheckedBoneIndices")]
+        [InlineData("GetCheckedExpressionIndices")]
+        [InlineData("SetCheckedExpressionIndices")]
+        public void TouchingTheNarrowingListNeedsItemsOnIt(string memberName)
+        {
+            PreconditionKind kind;
+
+            Assert.True(
+                PreconditionRule.TryClassify(Signature(PartsType, memberName), out kind));
+            Assert.Equal(PreconditionKind.ListedParts, kind);
+        }
+
+        [Theory]
+        [InlineData("GetCheckedMaterialIndices", "MaterialItemsCount")]
+        [InlineData("SetCheckedMaterialIndices", "MaterialItemsCount")]
+        [InlineData("GetCheckedBoneIndices", "BoneItemsCount")]
+        [InlineData("SetCheckedBoneIndices", "BoneItemsCount")]
+        [InlineData("GetCheckedExpressionIndices", "ExpressionItemsCount")]
+        [InlineData("SetCheckedExpressionIndices", "ExpressionItemsCount")]
+        public void WhatIsOnTheNarrowingListIsReadFromItsOwnCount(
+            string memberName, string countName)
+        {
+            Assert.Equal(
+                PartsType + "." + countName + "()",
+                PreconditionRule.Listed(
+                    Signature(PartsType, memberName),
+                    new[]
+                    {
+                        Signature(PartsType, "MaterialItemsCount"),
+                        Signature(PartsType, "BoneItemsCount"),
+                        Signature(PartsType, "ExpressionItemsCount"),
+                        Signature(ViewType, countName),
+                    }));
+        }
+
+        [Fact]
+        public void AMemberThatTouchesNoNarrowingListHasNoCount()
+        {
+            Assert.Null(
+                PreconditionRule.Listed(
+                    Signature(PartsType, "RangeBegin"),
+                    new[] { Signature(PartsType, "MaterialItemsCount") }));
+            Assert.Null(
+                PreconditionRule.Listed(
+                    Signature(ViewType, "GetCheckedMaterialIndices"),
+                    new[] { Signature(PartsType, "MaterialItemsCount") }));
+        }
+
         [Fact]
         public void EveryArgumentIsRequired()
         {
@@ -99,6 +153,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => PreconditionRule.TryClassify(null, out kind));
             Assert.Throws<ArgumentNullException>(() => PreconditionRule.Picked(null));
             Assert.Throws<ArgumentNullException>(() => PreconditionRule.Counting(null));
+            Assert.Throws<ArgumentNullException>(
+                () => PreconditionRule.Listed(null, new SignatureRecord[0]));
+            Assert.Throws<ArgumentNullException>(
+                () => PreconditionRule.Listed(Signature(PartsType, "BoneItemsCount"), null));
         }
 
         private static SignatureRecord Signature(string declaringType, string memberName)

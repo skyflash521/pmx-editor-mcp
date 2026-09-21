@@ -420,6 +420,10 @@ namespace PmxEditorMcp
                     met = reading.Count == 0 && precondition.Counting.Count != 0;
                     break;
 
+                case PreconditionKind.ListedParts:
+                    met = reading.Count == 0 && precondition.Counting.Count != 0;
+                    break;
+
                 default:
                     met = false;
                     break;

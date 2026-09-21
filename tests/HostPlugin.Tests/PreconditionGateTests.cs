@@ -77,6 +77,36 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TouchingAListWithSomethingOnItPasses()
+        {
+            string message;
+
+            Assert.True(
+                PreconditionGate.TryAccept(PreconditionKind.ListedParts, 62, true, out message));
+            Assert.Null(message);
+        }
+
+        [Fact]
+        public void TouchingAListThatHasNotBeenBuiltStops()
+        {
+            string message;
+
+            Assert.False(
+                PreconditionGate.TryAccept(PreconditionKind.ListedParts, 0, false, out message));
+            Assert.Contains("絞込の窓を一度表示するまで組まれず", message);
+        }
+
+        [Fact]
+        public void TouchingAListWhoseItemsCannotBeCountedStops()
+        {
+            string message;
+
+            Assert.False(
+                PreconditionGate.TryAccept(PreconditionKind.ListedParts, null, false, out message));
+            Assert.Contains("読めなかった", message);
+        }
+
+        [Fact]
         public void AHeldModifierStopsEvenWithSomethingPicked()
         {
             string message;

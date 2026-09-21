@@ -1764,7 +1764,7 @@
       "target": "IPEPartsSelectConnector.MaterialItemsCount",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つ材質の一覧に並んでいる項目の数を返す。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間は、モデルが材質を持っていても0を返す"
     },
     {
       "id": "CAP-221",
@@ -1772,7 +1772,7 @@
       "target": "IPEPartsSelectConnector.BoneItemsCount",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つボーンの一覧に並んでいる項目の数を返す。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間は、モデルがボーンを持っていても0を返す"
     },
     {
       "id": "CAP-222",
@@ -1780,7 +1780,7 @@
       "target": "IPEPartsSelectConnector.ExpressionItemsCount",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つ表情の一覧に並んでいる項目の数を返す。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間は、モデルが表情を持っていても0を返す"
     },
     {
       "id": "CAP-223",
@@ -1812,7 +1812,7 @@
       "target": "IPEPartsSelectConnector.GetCheckedMaterialIndices",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つ材質の一覧のうち、印の付いている項目の位置を返す。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間は空を返す。組まれているかは MaterialItemsCount が返す数で分かる"
     },
     {
       "id": "CAP-227",
@@ -1820,7 +1820,7 @@
       "target": "IPEPartsSelectConnector.SetCheckedMaterialIndices",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つ材質の一覧で、すべての印を外してから、渡した位置の項目に印を付ける。一覧の範囲外の位置を渡すとそこで止まり、それより後ろの位置には印が付かない。印を付け直したあとは絞込の適用がやり直され、絞込の対象が材質であれば、印の付いた材質の頂点だけがビューに残る。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間はどの位置にも印が付かないまま、絞込の適用だけがやり直される"
     },
     {
       "id": "CAP-228",
@@ -1828,7 +1828,7 @@
       "target": "IPEPartsSelectConnector.GetCheckedBoneIndices",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つボーンの一覧のうち、印の付いている項目の位置を返す。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間は空を返す。組まれているかは BoneItemsCount が返す数で分かる"
     },
     {
       "id": "CAP-229",
@@ -1836,7 +1836,7 @@
       "target": "IPEPartsSelectConnector.SetCheckedBoneIndices",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つボーンの一覧で、すべての印を外してから、渡した位置の項目に印を付ける。一覧の範囲外の位置を渡すとそこで止まり、それより後ろの位置には印が付かない。印を付け直したあとは絞込の適用がやり直され、絞込の対象がボーンであれば、印の付いた項目から求めた頂点だけがビューに残る。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間はどの位置にも印が付かないまま、絞込の適用だけがやり直される"
     },
     {
       "id": "CAP-230",
@@ -1844,7 +1844,7 @@
       "target": "IPEPartsSelectConnector.GetCheckedExpressionIndices",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つ表情の一覧のうち、印の付いている項目の位置を返す。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間は空を返す。組まれているかは ExpressionItemsCount が返す数で分かる"
     },
     {
       "id": "CAP-231",
@@ -1852,7 +1852,7 @@
       "target": "IPEPartsSelectConnector.SetCheckedExpressionIndices",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: PMXビューの絞込が持つ表情の一覧で、すべての印を外してから、渡した位置の項目に印を付ける。一覧の範囲外の位置を渡すとそこで止まり、それより後ろの位置には印が付かない。印を付け直したあとは絞込の適用がやり直され、絞込の対象が表情であれば、印の付いた項目から求めた頂点だけがビューに残る。この一覧は絞込の窓を一度表示するまで組まれず、組まれていない間はどの位置にも印が付かないまま、絞込の適用だけがやり直される"
     },
     {
       "id": "CAP-232",

@@ -4607,7 +4607,8 @@
             "operation": "materialsFromFaces"
           },
           "expect": {
-            "ok": true
+            "ok": false,
+            "code": "TOOL_NOT_APPLICABLE"
           }
         },
         {
@@ -4665,7 +4666,8 @@
             "indices": []
           },
           "expect": {
-            "ok": true
+            "ok": false,
+            "code": "TOOL_NOT_APPLICABLE"
           }
         },
         {

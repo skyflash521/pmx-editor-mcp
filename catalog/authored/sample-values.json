@@ -771,13 +771,36 @@
       "basis": "段取りが入れた先頭の材質を指す。"
     },
     {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedBoneIndices()",
+      "arguments": {},
+      "basis": "PMXビューの絞込の窓を一度も表示していない状態で呼び、断る側で確かめる。この窓は検査の中で開かないので、一覧は組まれないままである。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedExpressionIndices()",
+      "arguments": {},
+      "basis": "PMXビューの絞込の窓を一度も表示していない状態で呼び、断る側で確かめる。この窓は検査の中で開かないので、一覧は組まれないままである。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedMaterialIndices()",
+      "arguments": {},
+      "basis": "PMXビューの絞込の窓を一度も表示していない状態で呼び、断る側で確かめる。この窓は検査の中で開かないので、一覧は組まれないままである。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
+    },
+    {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedBoneIndices(System.Int32[])",
       "arguments": {
         "indices": [
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PMXビューの絞込の窓を一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedExpressionIndices(System.Int32[])",
@@ -786,7 +809,9 @@
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PMXビューの絞込の窓を一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.SetCheckedMaterialIndices(System.Int32[])",
@@ -795,7 +820,9 @@
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PMXビューの絞込の窓を一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpd(System.String)",

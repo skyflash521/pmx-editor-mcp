@@ -75,6 +75,12 @@ namespace PmxEditorMcp
             }
 
             IPEPartsSelectConnector held = (IPEPartsSelectConnector)parts.Parts;
+            if (!PreconditionGate.TryAccept(
+                    PreconditionKind.ListedParts, held.MaterialItemsCount, false, out message))
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.NotApplicable, message);
+            }
+
             IList<int> made = Materials(model, parts, operation);
             if (string.Equals(operation, ExcludeMaterialsFromFaces, StringComparison.Ordinal))
             {

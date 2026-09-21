@@ -591,6 +591,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void NarrowingTheDisplayByMaterialWithoutTheMaterialListIsRefused()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.Parts.Checked = new[] { 0, 1 };
+            _fixture.Parts.MaterialItemsCount = 0;
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            IDictionary<string, object> envelope =
+                Filter(Operation(ViewFilterDisplay.MaterialsFromFaces));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(envelope));
+            Assert.Equal(new[] { 0, 1 }, _fixture.Parts.Checked);
+        }
+
+        [Fact]
         public void OnlyTheVerticesWhoseEdgeScaleIsNotOneStayShown()
         {
             IList<IPXVertex> vertices = Vertices(3);

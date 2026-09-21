@@ -1634,9 +1634,10 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 string[] tools = kind == PreconditionKind.PickedObjects ? picked : new string[0];
-                string[] rows = kind == PreconditionKind.SavedEdits && counting != null
-                    ? new[] { counting }
-                    : new string[0];
+                string listed = kind == PreconditionKind.ListedParts
+                    ? PreconditionRule.Listed(signature, signatures.Values)
+                    : kind == PreconditionKind.SavedEdits ? counting : null;
+                string[] rows = listed != null ? new[] { listed } : new string[0];
                 preconditions[tool] = "new ToolPrecondition(PreconditionKind." + kind
                     + ", new string[] { " + string.Join(", ", tools.Select(Literal))
                     + " }, new string[] { " + string.Join(", ", rows.Select(Literal)) + " })";

@@ -234,6 +234,9 @@ namespace PmxEditorMcp.Tests
         [InlineData(PreconditionKind.SavedEdits, false, false)]
         [InlineData(PreconditionKind.SavedEdits, true, false)]
         [InlineData(PreconditionKind.SavedEdits, true, true)]
+        [InlineData(PreconditionKind.ListedParts, false, false)]
+        [InlineData(PreconditionKind.ListedParts, true, false)]
+        [InlineData(PreconditionKind.ListedParts, true, true)]
         public void AToolWhoseMaterialDoesNotMatchItsKindStopsTheBuild(
             PreconditionKind kind, bool reading, bool counting)
         {
@@ -248,6 +251,7 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData(PreconditionKind.PickedObjects, true, false)]
         [InlineData(PreconditionKind.SavedEdits, false, true)]
+        [InlineData(PreconditionKind.ListedParts, false, true)]
         public void AToolWhoseMaterialMatchesItsKindIsBuilt(
             PreconditionKind kind, bool reading, bool counting)
         {
@@ -284,6 +288,32 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
             Assert.Contains("選ばれていない", Message(envelope));
+        }
+
+        [Fact]
+        public void AToolThatNeedsAListRunsWhenTheListHasItemsOnIt()
+        {
+            _target.Count = 9;
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Listing()(
+                    new McpMethodContext(Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.Equal(9, envelope[ToolEnvelope.ValueName]);
+        }
+
+        [Fact]
+        public void AToolThatNeedsAListIsRefusedWhenTheListHasNotBeenBuilt()
+        {
+            _target.Count = 0;
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Listing()(
+                    new McpMethodContext(Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Contains("絞込の窓を一度表示するまで組まれず", Message(envelope));
         }
 
         [Fact]
@@ -1106,6 +1136,14 @@ namespace PmxEditorMcp.Tests
             Assert.True(methods.TryGet("session_count", out method));
 
             return method;
+        }
+
+        /// <summary>絞込の一覧に項目が並んでいることが要るツールとして、題材の呼び出しを引く。</summary>
+        private McpMethod Listing()
+        {
+            return Registered(
+                new ToolPrecondition(
+                    PreconditionKind.ListedParts, new string[0], new[] { CountKey }));
         }
 
         /// <summary>選ばれているものが要るツールとして、題材の呼び出しを引く。</summary>

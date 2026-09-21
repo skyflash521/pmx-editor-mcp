@@ -25,6 +25,11 @@ namespace PmxEditorMcp
                 return TryClosable(counted, out message);
             }
 
+            if (kind == PreconditionKind.ListedParts)
+            {
+                return TryListed(counted, out message);
+            }
+
             if (kind != PreconditionKind.PickedObjects)
             {
                 return true;
@@ -59,6 +64,37 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
+        /// 絞込の一覧を相手にしてよいか。<paramref name="listed"/> はその一覧に並んでいる項目の数で、
+        /// 数えられなかったときは null とする。
+        /// </summary>
+        private static bool TryListed(int? listed, out string message)
+        {
+            message = null;
+            if (listed == null)
+            {
+                message = "絞込の一覧に並んでいる項目の数を読めなかったので、"
+                    + "呼んでよいかを確かめられない。"
+                    + "この数を読む呼び出しが、この版のSDKでは中継を持たないか組み立てられなかった。"
+                    + "sdk_status で稼働しているSDKの版と中継を作れなかった行を読む。";
+
+                return false;
+            }
+
+            if (listed <= 0)
+            {
+                message = "PMXビューの絞込の一覧に項目が1つも並んでいないので呼べない。"
+                    + "この一覧は絞込の窓を一度表示するまで組まれず、"
+                    + "組まれていない間は読み取りが空を返し、書き込みはどの項目へも届かない。"
+                    + "エディタで絞込の窓を開いてから呼ぶ。"
+                    + "開いても項目が並ばないなら、モデルにその種類の要素が無い。";
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// 閉じてよいか。閉じても表示が出ないとこちらから言えるのは、取り消せる編集が残っていない
         /// ときだけなので、残っている間は閉じない。出すかどうかを決めているのはエディタが持つ
         /// 保存済みの印との差で、その印は読めず、プラグインからの保存でも変わらない。
@@ -68,7 +104,9 @@ namespace PmxEditorMcp
             message = null;
             if (undoable == null)
             {
-                message = "取り消せる編集の数を読めなかったので、閉じてよいかを確かめられない。";
+                message = "取り消せる編集の数を読めなかったので、閉じてよいかを確かめられない。"
+                    + "この数を読む呼び出しが、この版のSDKでは中継を持たないか組み立てられなかった。"
+                    + "sdk_status で稼働しているSDKの版と中継を作れなかった行を読む。";
 
                 return false;
             }
