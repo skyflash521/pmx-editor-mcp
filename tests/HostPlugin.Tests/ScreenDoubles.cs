@@ -21,6 +21,9 @@ namespace PmxEditorMcp.Tests
         /// <summary>描画を作り直した回数。</summary>
         public int Redraws { get; private set; }
 
+        /// <summary>画面を映し直す頼みを落とすか。真なら描き直しの頼みが例外で終わる。</summary>
+        public bool RefusesToPaint { get; set; }
+
         /// <summary>画面を描き直した回数。</summary>
         public int Repaints { get; private set; }
 
@@ -108,6 +111,11 @@ namespace PmxEditorMcp.Tests
 
         public void UpdateView()
         {
+            if (RefusesToPaint)
+            {
+                throw new InvalidOperationException("画面を映し直せない。");
+            }
+
             Repaints++;
         }
 

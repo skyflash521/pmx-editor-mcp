@@ -33,6 +33,7 @@ namespace PmxEditorMcp
 
         private const string NameFieldName = "name";
 
+
         /// <summary>更新が受け取る値の組の名前。</summary>
         public const string ValueName = "value";
 
@@ -97,6 +98,8 @@ namespace PmxEditorMcp
 
         private readonly EventBindingTable _events;
 
+        private readonly ScreenRefresh _refresh;
+
         private readonly IDictionary<string, SdkReceiver> _receivers;
 
         private readonly IDictionary<string, SdkList> _lists;
@@ -129,8 +132,10 @@ namespace PmxEditorMcp
             PmxSession bridged,
             UndoRecovery recovery,
             IModifierKeys modifiers,
-            EventBindingTable events)
+            EventBindingTable events,
+            ScreenRefresh refresh)
         {
+            _refresh = refresh;
             _events = events;
             _relay = relay;
             _receivers = receivers;
@@ -157,7 +162,8 @@ namespace PmxEditorMcp
             IDictionary<string, ToolElements> elements,
             IDictionary<string, ToolPrecondition> preconditions,
             IModifierKeys modifiers,
-            EventBindingTable events)
+            EventBindingTable events,
+            ScreenRefresh refresh)
         {
             if (methods == null)
             {
@@ -229,8 +235,14 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(events));
             }
 
+            if (refresh == null)
+            {
+                throw new ArgumentNullException(nameof(refresh));
+            }
+
             ToolDispatch dispatch = new ToolDispatch(
-                relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events);
+                relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events,
+                refresh);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
                 IList<ToolCall> bound = call.Value;
@@ -238,7 +250,9 @@ namespace PmxEditorMcp
                 methods.Add(
                     call.Key,
                     dispatch.Guarded(
-                        Edit(bound), context => dispatch.Invoke(context, bound, precondition)));
+                        Edit(bound),
+                        ScreenRefresh.Needed(Edit(bound), bound.Select(c => c.RowKey)),
+                        context => dispatch.Invoke(context, bound, precondition)));
             }
 
             foreach (KeyValuePair<string, ToolFields> aggregation in aggregations)
@@ -249,6 +263,8 @@ namespace PmxEditorMcp
                     aggregation.Key,
                     dispatch.Guarded(
                         bound.Receiver.Edit,
+                        ScreenRefresh.Needed(
+                            bound.Receiver.Edit, bound.Fields.Select(f => f.RowKey)),
                         context => bound.Writes
                             ? dispatch.Write(context, bound)
                             : dispatch.Read(context, bound)));
@@ -262,6 +278,7 @@ namespace PmxEditorMcp
                     element.Key,
                     dispatch.Guarded(
                         bound.Receiver.Edit,
+                        ScreenRefresh.Needed(bound.Receiver.Edit, new string[0]),
                         context => Acting(dispatch, bound)(context)));
             }
         }
@@ -489,9 +506,44 @@ namespace PmxEditorMcp
             return kinds[0];
         }
 
-        private McpMethod Guarded(EditKind kind, McpMethod inner)
+        private McpMethod Guarded(EditKind kind, ScreenRefreshKind refresh, McpMethod inner)
         {
-            return _barrier.Guard(kind, inner);
+            return _barrier.Guard(kind, Shown(refresh, inner));
+        }
+
+        /// <summary>
+        /// 済んだ呼び出しのあとに、変えた中身をエディタの画面へ映す。断られた呼び出しは何も変えて
+        /// いないので映さない。複製編集の反映は自分で映すので、この包みが映すのは画面そのものを
+        /// 変える呼び出しだけだが、映せなかったことの知らせはどちらの経路のぶんもここで応答へ
+        /// 移す——応答だけが新しく、画面が古いままだと、次に何を見ているのかが分からなくなる。
+        /// </summary>
+        private McpMethod Shown(ScreenRefreshKind refresh, McpMethod inner)
+        {
+            return context =>
+            {
+                object answered = inner(context);
+                IDictionary<string, object> envelope = answered as IDictionary<string, object>;
+                if (envelope == null || !ToolEnvelope.Succeeded(envelope))
+                {
+                    return answered;
+                }
+
+                if (refresh != ScreenRefreshKind.None && !context.NotShown)
+                {
+                    bool shown = false;
+                    Exception failure;
+                    UiInvocation unavailable;
+                    context.NotShown = !Run(
+                            context, () => shown = _refresh.Apply(refresh), out failure,
+                            out unavailable)
+                        || failure != null
+                        || !shown;
+                }
+
+                return context.NotShown
+                    ? UndoBarrier.Noted(answered, new[] { ScreenRefresh.NotShownWarning })
+                    : answered;
+            };
         }
 
         /// <summary>止めることを頼まれているか。値の検証は前置きで済んでいる。</summary>
@@ -4358,9 +4410,19 @@ namespace PmxEditorMcp
             string code;
             string message;
 
-            return Session(receiver).TryCommit(target, Suppressed(context), out code, out message)
+            return Session(receiver).TryCommit(
+                    target, Suppressed(context), context, Refresh(receiver), out code, out message)
                 ? null
                 : new Refusal(ToolEnvelope.Failure(code, message));
+        }
+
+        /// <summary>
+        /// その受け手の反映が使う映す段。Cプラグイン連携の橋渡しから反映する経路はエディタが自分で
+        /// リストとモデルを作り直してから描き直すので、ホストからは何もしない段を渡す。
+        /// </summary>
+        private ScreenRefresh Refresh(ToolReceiver receiver)
+        {
+            return receiver.Bridged ? ScreenRefresh.Idle : _refresh;
         }
 
         /// <summary>その受け手の複製編集の流れ。橋渡しから得る受け手は、そちらの流れを使う。</summary>

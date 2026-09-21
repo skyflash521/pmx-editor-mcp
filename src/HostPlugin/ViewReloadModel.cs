@@ -39,6 +39,7 @@ namespace PmxEditorMcp
                 screen.Method(
                     new List<string>(),
                     ScreenNeeds.View,
+                    ScreenRefreshKind.None,
                     (context, parts) => Run(parts, subView)));
         }
 

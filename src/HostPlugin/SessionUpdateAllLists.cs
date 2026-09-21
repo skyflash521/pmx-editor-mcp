@@ -33,7 +33,9 @@ namespace PmxEditorMcp
             }
 
             methods.Add(
-                ToolName, screen.Method(new List<string>(), ScreenNeeds.Form, Run));
+                ToolName,
+                screen.Method(
+                    new List<string>(), ScreenNeeds.Form, ScreenRefreshKind.None, Run));
         }
 
         private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)

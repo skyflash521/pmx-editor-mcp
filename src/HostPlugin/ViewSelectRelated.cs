@@ -89,7 +89,9 @@ namespace PmxEditorMcp
                 MaxVName,
             };
             methods.Add(
-                ToolName, screen.Method(known, ScreenNeeds.View | ScreenNeeds.Pmx, Run));
+                ToolName,
+                screen.Method(
+                    known, ScreenNeeds.View | ScreenNeeds.Pmx, ScreenRefreshKind.Drawn, Run));
         }
 
         private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)

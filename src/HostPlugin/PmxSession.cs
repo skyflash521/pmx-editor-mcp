@@ -154,12 +154,19 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 変えた複製をまとめて反映する。現在のPMXを相手にしていない呼び出しでは何もしない。
-        /// <paramref name="suppressUndo"/> を頼まれたら、この反映をエディタのUndoへ積ませない。
-        /// 反映できなければ偽で、断る内容を渡す。
+        /// 変えた複製をまとめて反映し、反映した中身をエディタの画面へ映す。現在のPMXを相手に
+        /// していない呼び出しでは何もしない。<paramref name="suppressUndo"/> を頼まれたら、この
+        /// 反映をエディタのUndoへ積ませない。映せなかったときは
+        /// <paramref name="context"/> へその印を置く——映せないことは反映の失敗ではないので、
+        /// 断りへ変えない。反映できなければ偽で、断る内容を渡す。
         /// </summary>
         public bool TryCommit(
-            PmxTarget target, bool suppressUndo, out string code, out string message)
+            PmxTarget target,
+            bool suppressUndo,
+            McpMethodContext context,
+            ScreenRefresh refresh,
+            out string code,
+            out string message)
         {
             if (target == null)
             {
@@ -185,6 +192,11 @@ namespace PmxEditorMcp
 
             if (reflected)
             {
+                if (!refresh.Apply(ScreenRefreshKind.Rebuilt))
+                {
+                    context.NotShown = true;
+                }
+
                 return true;
             }
 

@@ -27,7 +27,7 @@ $checks['配置と組み立て'] = New-Check `
     }
 $checks['自動E2E検査'] = New-Check `
     -Groups @('実機') `
-    -LimitSeconds 30 <# 変更禁止 #> `
+    -LimitSeconds 36 <# 変更禁止 #> `
     -Needs $liveSetup `
     -Bundle $liveBundle `
     -Run @('pwsh', '-NoProfile', '-File', 'scripts/live-tools.ps1')

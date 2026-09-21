@@ -55,7 +55,9 @@ namespace PmxEditorMcp
 
             List<string> known = new List<string> { ComposedOperation.OperationName };
             methods.Add(
-                ToolName, screen.Method(known, ScreenNeeds.View | ScreenNeeds.Pmx, Run));
+                ToolName,
+                screen.Method(
+                    known, ScreenNeeds.View | ScreenNeeds.Pmx, ScreenRefreshKind.Drawn, Run));
         }
 
         private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)

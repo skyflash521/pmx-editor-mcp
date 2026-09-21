@@ -2496,7 +2496,8 @@ namespace PmxEditorMcp.Tests
                 Elements(),
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
                 new StillModifierKeys(),
-                EventBindingFixture.Empty());
+                EventBindingFixture.Empty(),
+                Refresh());
 
             _methods = methods;
 
@@ -2541,6 +2542,12 @@ namespace PmxEditorMcp.Tests
                     ResumeUndoKey),
                 typeof(Model),
                 _undo);
+        }
+
+        /// <summary>画面へ映す段。この題材は画面の口を持たない。</summary>
+        private static ScreenRefresh Refresh()
+        {
+            return new ScreenRefresh(() => null, () => null);
         }
 
         private HandleLedger Ledger()

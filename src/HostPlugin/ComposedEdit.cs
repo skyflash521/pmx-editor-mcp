@@ -71,8 +71,12 @@ namespace PmxEditorMcp
 
         private readonly UndoBarrier _barrier;
 
-        /// <summary>複製編集の流れと、Undoの前置きの包みを与えて生成する。</summary>
-        public ComposedEdit(PmxSession session, UndoBarrier barrier)
+        private readonly ScreenRefresh _refresh;
+
+        /// <summary>
+        /// 複製編集の流れと、Undoの前置きの包み、画面へ映す段を与えて生成する。
+        /// </summary>
+        public ComposedEdit(PmxSession session, UndoBarrier barrier, ScreenRefresh refresh)
         {
             if (session == null)
             {
@@ -84,8 +88,14 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(barrier));
             }
 
+            if (refresh == null)
+            {
+                throw new ArgumentNullException(nameof(refresh));
+            }
+
             _session = session;
             _barrier = barrier;
+            _refresh = refresh;
         }
 
         /// <summary>
@@ -248,7 +258,8 @@ namespace PmxEditorMcp
                         stage = EditStage.AtCommit;
                     }
 
-                    if (_session.TryCommit(target, suppress, out refusedCode, out refusedMessage))
+                    if (_session.TryCommit(
+                        target, suppress, context, _refresh, out refusedCode, out refusedMessage))
                     {
                         answered = made;
                     }
@@ -271,7 +282,8 @@ namespace PmxEditorMcp
 
             return answered == null
                 ? ToolEnvelope.Failure(refusedCode, refusedMessage)
-                : ToolEnvelope.Success(answered.Value, answered.Warnings);
+                : ToolEnvelope.Success(
+                    answered.Value, ScreenRefresh.Noted(answered.Warnings, !context.NotShown));
         }
 
         private static bool TryHandle(

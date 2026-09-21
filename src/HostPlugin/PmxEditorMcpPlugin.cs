@@ -181,6 +181,8 @@ namespace PmxEditorMcp
                 UndoSuppression undo = new UndoSuppression(_log);
                 SdkRelayTable relay = GeneratedSdkRelay.Create();
                 Dictionary<string, SdkReceiver> receivers = GeneratedSdkReceivers.Create();
+                ScreenRefresh refresh = new ScreenRefresh(
+                    () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType));
                 PmxSession current = new PmxSession(
                     relay, receivers, _resident, GeneratedSdkFlows.Current,
                     GeneratedSdkFlows.Pmx, undo);
@@ -202,10 +204,11 @@ namespace PmxEditorMcp
                     GeneratedTools.Preconditions(),
                     new PressedModifierKeys(),
                     new EventBindingTable(
-                        GeneratedTools.Attachments(), GeneratedTools.Payloads()));
+                        GeneratedTools.Attachments(), GeneratedTools.Payloads()),
+                    refresh);
                 ComposedModelTools.AddTo(
                     methods,
-                    new ComposedEdit(current, new UndoBarrier(recovery)),
+                    new ComposedEdit(current, new UndoBarrier(recovery), refresh),
                     () => ((IPEBuilder)Receiver(receivers, BuilderType)).Pmx);
                 ComposedScreenTools.AddTo(
                     methods,
@@ -213,7 +216,8 @@ namespace PmxEditorMcp
                         current,
                         () => Receiver(receivers, ViewType),
                         () => Receiver(receivers, FormType),
-                        () => Receiver(receivers, PartsType)),
+                        () => Receiver(receivers, PartsType),
+                        refresh),
                     () => Receiver(receivers, BuilderType),
                     () => Receiver(receivers, SubViewType));
                 HandleRelease.AddTo(methods);

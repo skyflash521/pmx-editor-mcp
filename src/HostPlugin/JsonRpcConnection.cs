@@ -71,6 +71,12 @@ namespace PmxEditorMcp
 
         /// <summary>このセッションが溜めている購読中のイベント。</summary>
         public EventQueue Events { get; }
+
+        /// <summary>
+        /// この呼び出しが変えた中身を、エディタの画面へ映せなかったか。映す段が置き、呼び出しを
+        /// 包む側が知らせへ移す——映す段はUIスレッドの中に居て、応答を組み立てる場所とは別である。
+        /// </summary>
+        public bool NotShown { get; set; }
     }
 
     /// <summary>ホストが公開する処理。戻り値がそのまま応答の result になる。</summary>

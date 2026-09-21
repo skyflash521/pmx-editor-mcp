@@ -32,11 +32,17 @@ namespace PmxEditorMcp.Tests
         /// <summary>VMDやPMXを作る相手の題材。</summary>
         public FakeHostBuilder Builder { get; } = new FakeHostBuilder();
 
-        /// <summary>3Dビューの題材。</summary>
-        public FakePmxView View { get; } = new FakePmxView();
+        /// <summary>3Dビューの題材。複製編集の題材と同じ口を使う。</summary>
+        public FakePmxView View
+        {
+            get { return _edit.View; }
+        }
 
-        /// <summary>リストを持つ画面の題材。</summary>
-        public FakeFormConnector Form { get; } = new FakeFormConnector();
+        /// <summary>リストを持つ画面の題材。複製編集の題材と同じ口を使う。</summary>
+        public FakeFormConnector Form
+        {
+            get { return _edit.Form; }
+        }
 
         public FakePartsSelect Parts { get; } = new FakePartsSelect();
 
@@ -78,7 +84,11 @@ namespace PmxEditorMcp.Tests
                 ComposedScreenTools.AddTo(
                     _tools,
                     new ComposedScreen(
-                        _edit.Session(), () => View, () => Form, () => Parts),
+                        _edit.Session(),
+                        () => View,
+                        () => Form,
+                        () => Parts,
+                        new ScreenRefresh(() => View, () => Form)),
                     () => Builder,
                     () => SubView);
             }

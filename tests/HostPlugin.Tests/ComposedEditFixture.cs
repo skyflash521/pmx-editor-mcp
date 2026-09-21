@@ -16,11 +16,11 @@ namespace PmxEditorMcp.Tests
 
         private const string Digest = "8f14e45fceea167a5a36dedd4bea2543";
 
-        private const string ConnectorType = "Sdk.PmxConnector";
+        private const string ConnectorType = "PEPlugin.Pmx.IPXPmxConnector";
 
-        private const string StateReadKey = "Sdk.PmxConnector.GetCurrentState()";
+        private const string StateReadKey = "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()";
 
-        private const string CommitKey = "Sdk.PmxConnector.Update(Sdk.Pmx)";
+        private const string CommitKey = "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx)";
 
         private readonly string _root;
 
@@ -37,11 +37,17 @@ namespace PmxEditorMcp.Tests
             Directory.CreateDirectory(_root);
             _log = new HostLog(Path.Combine(_root, "host.log"));
             Handles = new HandleLedger(_log, new HandleIdIssuer());
-            _edit = new ComposedEdit(Session(), Barrier());
+            _edit = new ComposedEdit(Session(), Barrier(), Refresh());
         }
 
         /// <summary>現在のPMXとして複製を返す題材。</summary>
         public FakePmx Model { get; } = new FakePmx();
+
+        /// <summary>3Dビューの題材。反映のあとに映し直したかをここで数える。</summary>
+        public FakePmxView View { get; } = new FakePmxView();
+
+        /// <summary>リストを持つ画面の題材。</summary>
+        public FakeFormConnector Form { get; } = new FakeFormConnector();
 
         /// <summary>新しい要素を作る相手の題材。</summary>
         public FakeBuilder Builder { get; } = new FakeBuilder();
@@ -126,6 +132,12 @@ namespace PmxEditorMcp.Tests
                 budgetChars,
                 Handles,
                 new EventQueue(new EventSequenceIssuer()));
+        }
+
+        /// <summary>画面へ映す段。題材の口を通して、映し直しの回数を数える。</summary>
+        public ScreenRefresh Refresh()
+        {
+            return new ScreenRefresh(() => View, () => Form);
         }
 
         /// <summary>Undoの前置きの包み。止め戻しする相手を持たない流れとする。</summary>

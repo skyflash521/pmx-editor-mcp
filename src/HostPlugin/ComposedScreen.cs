@@ -62,8 +62,14 @@ namespace PmxEditorMcp
 
         private readonly Func<object> _parts;
 
+        private readonly ScreenRefresh _refresh;
+
         public ComposedScreen(
-            PmxSession session, Func<object> view, Func<object> form, Func<object> parts)
+            PmxSession session,
+            Func<object> view,
+            Func<object> form,
+            Func<object> parts,
+            ScreenRefresh refresh)
         {
             if (session == null)
             {
@@ -85,6 +91,12 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(parts));
             }
 
+            if (refresh == null)
+            {
+                throw new ArgumentNullException(nameof(refresh));
+            }
+
+            _refresh = refresh;
             _session = session;
             _view = view;
             _form = form;
@@ -95,11 +107,13 @@ namespace PmxEditorMcp
         /// <paramref name="body"/> を、画面の口とPMXを受け取る呼び出しにする。
         /// <paramref name="known"/> はそのツールが受け取る項目の名前、<paramref name="needs"/> は
         /// そのツールが要る相手で、引けない相手が1つでもあればそのツールだけを断る。
-        /// <paramref name="body"/> はUIスレッドの上で呼ばれる。
+        /// <paramref name="refresh"/> は、済んだあとに画面へ映すのに要ることで、断った呼び出しでは
+        /// 行わない。<paramref name="body"/> はUIスレッドの上で呼ばれる。
         /// </summary>
         public McpMethod Method(
             IList<string> known,
             ScreenNeeds needs,
+            ScreenRefreshKind refresh,
             Func<McpMethodContext, ScreenParts, ComposedEditResult> body)
         {
             if (known == null)
@@ -112,14 +126,15 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(body));
             }
 
-            return context => Run(context, known, needs, body);
+            return context => Run(context, known, needs, body, refresh);
         }
 
         private object Run(
             McpMethodContext context,
             IList<string> names,
             ScreenNeeds needs,
-            Func<McpMethodContext, ScreenParts, ComposedEditResult> body)
+            Func<McpMethodContext, ScreenParts, ComposedEditResult> body,
+            ScreenRefreshKind refresh)
         {
             string code;
             string message;
@@ -131,6 +146,7 @@ namespace PmxEditorMcp
             ComposedEditResult answered = null;
             string refusedCode = null;
             string refusedMessage = null;
+            bool shown = true;
             Exception caught = null;
             UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
             {
@@ -188,6 +204,7 @@ namespace PmxEditorMcp
                     }
 
                     answered = made;
+                    shown = _refresh.Apply(refresh);
                 }
                 catch (Exception exception)
                 {
@@ -207,7 +224,7 @@ namespace PmxEditorMcp
 
             return answered == null
                 ? ToolEnvelope.Failure(refusedCode, refusedMessage)
-                : ToolEnvelope.Success(answered.Value);
+                : ToolEnvelope.Success(answered.Value, ScreenRefresh.Noted(answered.Warnings, shown));
         }
 
         private static bool Wanted(ScreenNeeds needs, ScreenNeeds one)

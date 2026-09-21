@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -39,6 +40,47 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ReflectingTheChangeRemakesTheListsAndTheModelAndThenPaints()
+        {
+            _fixture.Call(
+                Method((context, pmx) => ComposedEditResult.Complete(null)),
+                ComposedEditFixture.Arguments());
+
+            Assert.Equal(new[] { PEPlugin.Pmd.UpdateObject.All }, _fixture.Form.Updated);
+            Assert.Equal(1, _fixture.View.Redraws);
+            Assert.Equal(1, _fixture.View.Repaints);
+        }
+
+        [Fact]
+        public void AChangeThatCannotBeShownStillCountsAsDoneAndSaysSoInAWarning()
+        {
+            _fixture.View.RefusesToPaint = true;
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                Method((context, pmx) => ComposedEditResult.Complete(null)),
+                ComposedEditFixture.Arguments());
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(1, _fixture.Commits);
+            Assert.Contains(
+                ScreenRefresh.NotShownWarning,
+                ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>());
+        }
+
+        [Fact]
+        public void AChangeThatIsRefusedLeavesTheScreenAsItWas()
+        {
+            _fixture.Call(
+                Method((context, pmx) =>
+                    ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, "断る")),
+                ComposedEditFixture.Arguments());
+
+            Assert.Empty(_fixture.Form.Updated);
+            Assert.Equal(0, _fixture.View.Redraws);
+            Assert.Equal(0, _fixture.View.Repaints);
+        }
+
+        [Fact]
         public void PointingThePmxByHandleSkipsTheCloneAndTheReflection()
         {
             FakePmx held = new FakePmx();
@@ -58,6 +100,8 @@ namespace PmxEditorMcp.Tests
             Assert.Same(held, seen);
             Assert.Equal(0, _fixture.Clones);
             Assert.Equal(0, _fixture.Commits);
+            Assert.Empty(_fixture.Form.Updated);
+            Assert.Equal(0, _fixture.View.Repaints);
         }
 
         [Fact]
@@ -146,8 +190,8 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheFlowAndTheBarrierAreRequired()
         {
-            Assert.Throws<ArgumentNullException>(() => new ComposedEdit(null, _fixture.Barrier()));
-            Assert.Throws<ArgumentNullException>(() => new ComposedEdit(_fixture.Session(), null));
+            Assert.Throws<ArgumentNullException>(() => new ComposedEdit(null, _fixture.Barrier(), _fixture.Refresh()));
+            Assert.Throws<ArgumentNullException>(() => new ComposedEdit(_fixture.Session(), null, _fixture.Refresh()));
         }
 
         [Fact]

@@ -21,6 +21,9 @@ namespace PmxEditorMcp.Tests
 
         private const string SaveKey = "Sdk.Form.Save(System.String)";
 
+        private const string SelectionKey =
+            "PEPlugin.View.IPEPMDViewConnector.SetSelectedVertexIndices(System.Int32[])";
+
         private const string CountKey = "Sdk.Form.Count()";
 
         private const string PickedKey = "Sdk.Form.Picked()";
@@ -67,6 +70,10 @@ namespace PmxEditorMcp.Tests
 
         private readonly Target _target = new Target();
 
+        private readonly FakePmxView _view = new FakePmxView();
+
+        private readonly FakeFormConnector _form = new FakeFormConnector();
+
         private Info _info;
 
         private Info[] _infos;
@@ -88,6 +95,38 @@ namespace PmxEditorMcp.Tests
             catch (IOException)
             {
             }
+        }
+
+        [Fact]
+        public void WritingTheSelectionPaintsTheViewAgain()
+        {
+            IDictionary<string, object> envelope = Call(
+                "view_set_selected", Arguments("indices", new object[] { 1, 2 }));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(new[] { 1, 2 }, _target.Selected);
+            Assert.Equal(1, _view.Repaints);
+            Assert.Equal(0, _view.Redraws);
+            Assert.Empty(_form.Updated);
+        }
+
+        [Fact]
+        public void ASelectionThatIsRefusedLeavesTheViewAsItWas()
+        {
+            IDictionary<string, object> envelope = Call(
+                "view_set_selected", Arguments("indices", "数でない"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Equal(0, _view.Repaints);
+        }
+
+        [Fact]
+        public void ACallThatDoesNotShowOnTheScreenLeavesTheViewAsItWas()
+        {
+            Call("session_save", Arguments("path", "a.pmx", "confirm", true));
+
+            Assert.Equal(0, _view.Repaints);
+            Assert.Equal(0, _view.Redraws);
         }
 
         [Fact]
@@ -1082,7 +1121,8 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, ToolElements>(StringComparer.Ordinal),
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
                 new StillModifierKeys(),
-                events);
+                events,
+                Refresh());
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
@@ -1103,6 +1143,12 @@ namespace PmxEditorMcp.Tests
                 new PmxFlow(CountKey, CountKey, TargetType, new FlowSlot[0], new[] { FlowSlot.Pmx }),
                 typeof(object),
                 new UndoSuppression(_log));
+        }
+
+        /// <summary>画面へ映す段。題材の口を通して、映し直しの回数を数える。</summary>
+        private ScreenRefresh Refresh()
+        {
+            return new ScreenRefresh(() => _view, () => _form);
         }
 
         /// <summary>その前提条件を持つツールとして登録し、引いた呼び出しを返す。</summary>
@@ -1130,7 +1176,8 @@ namespace PmxEditorMcp.Tests
                     { "session_count", precondition },
                 },
                 new StillModifierKeys(),
-                EventBindingFixture.Empty());
+                EventBindingFixture.Empty(),
+                Refresh());
 
             McpMethod method;
             Assert.True(methods.TryGet("session_count", out method));
@@ -1177,7 +1224,8 @@ namespace PmxEditorMcp.Tests
                     },
                 },
                 modifiers,
-                EventBindingFixture.Empty());
+                EventBindingFixture.Empty(),
+                Refresh());
 
             McpMethod method;
             Assert.True(methods.TryGet("session_count", out method));
@@ -1229,6 +1277,14 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { CountKey, (target, arguments) => ((Target)target).Count },
+                    {
+                        SelectionKey,
+                        (target, arguments) =>
+                        {
+                            ((Target)target).Selected = (int[])arguments[0];
+                            return null;
+                        }
+                    },
                     {
                         ShareTextKey,
                         (target, arguments) =>
@@ -1442,6 +1498,18 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, IList<ToolCall>> built =
                 Singles(new Dictionary<string, ToolCall>(StringComparer.Ordinal)
             {
+                {
+                    "view_set_selected",
+                    new ToolCall(
+                        SelectionKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Connection, TargetType, EditKind.ViewSession),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[] { new ToolArgument("indices", typeof(int[])) },
+                        new ToolArgument[0],
+                        null)
+                },
                 {
                     "session_save",
                     new ToolCall(
@@ -1788,6 +1856,8 @@ namespace PmxEditorMcp.Tests
             public Target[] Twins { get; set; }
 
             public string Shared { get; set; }
+
+            public int[] Selected { get; set; } = new int[0];
         }
 
         /// <summary>題材を継いだ型。台帳はこちらの名前で覚える。</summary>

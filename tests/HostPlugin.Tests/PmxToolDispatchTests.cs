@@ -36,6 +36,10 @@ namespace PmxEditorMcp.Tests
 
         private readonly Model _model = new Model();
 
+        private readonly FakePmxView _view = new FakePmxView();
+
+        private readonly FakeFormConnector _form = new FakeFormConnector();
+
         private int _commits;
 
         private int _clones;
@@ -91,6 +95,31 @@ namespace PmxEditorMcp.Tests
                 "model_list_pmxes", Arguments(ToolDispatch.LimitName, 0));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void TheReflectedChangeIsShownOnTheScreen()
+        {
+            Call("model_update_pmxes", Arguments(ToolDispatch.ValueName, Value("filePath", "b.pmx")));
+
+            Assert.Equal(new[] { PEPlugin.Pmd.UpdateObject.All }, _form.Updated);
+            Assert.Equal(1, _view.Redraws);
+            Assert.Equal(1, _view.Repaints);
+        }
+
+        [Fact]
+        public void AReflectedChangeThatCannotBeShownStillCountsAsDoneAndSaysSoInAWarning()
+        {
+            _view.RefusesToPaint = true;
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_pmxes", Arguments(ToolDispatch.ValueName, Value("filePath", "b.pmx")));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal("b.pmx", _model.FilePath);
+            Assert.Contains(
+                ScreenRefresh.NotShownWarning,
+                ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>());
         }
 
         [Fact]
@@ -416,7 +445,8 @@ namespace PmxEditorMcp.Tests
                 Elements(),
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
                 new StillModifierKeys(),
-                EventBindingFixture.Empty());
+                EventBindingFixture.Empty(),
+                Refresh());
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
@@ -649,6 +679,12 @@ namespace PmxEditorMcp.Tests
         /// <summary>リストが並べる要素の題材。</summary>
         private sealed class Item
         {
+        }
+
+        /// <summary>画面へ映す段。題材の口を通して、映し直しの結末を数える。</summary>
+        private ScreenRefresh Refresh()
+        {
+            return new ScreenRefresh(() => _view, () => _form);
         }
     }
 }

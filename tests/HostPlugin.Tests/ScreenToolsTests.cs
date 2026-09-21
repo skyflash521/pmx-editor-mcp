@@ -37,6 +37,48 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ChoosingElementsPaintsTheViewAgain()
+        {
+            Vertices(3);
+
+            Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
+
+            Assert.Equal(1, _fixture.View.Repaints);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
+        public void AChoiceThatCannotBeShownStillCountsAsDoneAndSaysSoInAWarning()
+        {
+            Vertices(3);
+            _fixture.View.RefusesToPaint = true;
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Contains(
+                ScreenRefresh.NotShownWarning,
+                ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>());
+        }
+
+        [Fact]
+        public void AChoiceThatIsRefusedLeavesTheViewAsItWas()
+        {
+            Vertices(3);
+
+            Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, "いない種類"));
+
+            Assert.Equal(0, _fixture.View.Repaints);
+        }
+
+        [Fact]
         public void InvertingSwapsTheOnesThatWerePickedForTheOnesThatWereNot()
         {
             Vertices(3);

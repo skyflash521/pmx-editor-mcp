@@ -54,6 +54,7 @@ namespace PmxEditorMcp
                 screen.Method(
                     known,
                     ScreenNeeds.View | ScreenNeeds.Parts | ScreenNeeds.Pmx,
+                    ScreenRefreshKind.Drawn,
                     Run));
         }
 
