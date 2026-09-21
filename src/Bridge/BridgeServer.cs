@@ -36,6 +36,7 @@ namespace PmxEditorMcp.Bridge
 
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
+            builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
             builder.Services
                 .AddMcpServer(options =>
