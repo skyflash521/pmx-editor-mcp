@@ -112,7 +112,9 @@ namespace PmxEditorMcp
             }
 
             return string.Equals(detail, CountPerTarget, StringComparison.Ordinal)
-                ? PerTarget(context, pmx, kind, targets, minWeight, offset, limit)
+                ? PerTarget(
+                    context, pmx, kind, targets, kind.Items(owners[0]).Count, minWeight, offset,
+                    limit)
                 : Places(context, pmx, kind, targets, referrerKind, minWeight, offset, limit);
         }
 
@@ -121,6 +123,7 @@ namespace PmxEditorMcp
             object pmx,
             ElementKind kind,
             IList<int> targets,
+            int whole,
             float minWeight,
             int offset,
             int limit)
@@ -135,7 +138,7 @@ namespace PmxEditorMcp
                 })
                 .ToList();
 
-            return Cut(context, rows, TargetsName, targets.Count, offset);
+            return Cut(context, rows, TargetsName, whole, targets.Count, offset);
         }
 
         private static ComposedEditResult Places(
@@ -156,6 +159,7 @@ namespace PmxEditorMcp
                 Asked(found, offset, limit).Cast<object>().ToList(),
                 ReferrerIndicesName,
                 found.Count,
+                found.Count,
                 offset);
         }
 
@@ -165,7 +169,12 @@ namespace PmxEditorMcp
         }
 
         private static ComposedEditResult Cut(
-            McpMethodContext context, IList<object> taken, string name, int total, int offset)
+            McpMethodContext context,
+            IList<object> taken,
+            string name,
+            int total,
+            int pointed,
+            int offset)
         {
             Page<object> page;
             if (!Paging.TryTake(
@@ -173,7 +182,7 @@ namespace PmxEditorMcp
                 0,
                 Math.Max(1, taken.Count),
                 ResponseSize.ValueChars(context.BudgetChars),
-                held => Sizer.Serialize(Valued(name, total, offset, held)).Length,
+                held => Sizer.Serialize(Valued(name, total, pointed, offset, held)).Length,
                 out page))
             {
                 return ComposedEditResult.Refuse(
@@ -181,11 +190,11 @@ namespace PmxEditorMcp
             }
 
             return ComposedEditResult.Complete(
-                Valued(name, total, offset, page.Items), page.Warnings);
+                Valued(name, total, pointed, offset, page.Items), page.Warnings);
         }
 
         private static IDictionary<string, object> Valued(
-            string name, int total, int offset, IList<object> taken)
+            string name, int total, int pointed, int offset, IList<object> taken)
         {
             int next = offset + taken.Count;
             Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
@@ -193,7 +202,7 @@ namespace PmxEditorMcp
                 { TotalName, total },
                 { name, taken.ToArray() },
             };
-            if (next < total)
+            if (next < pointed)
             {
                 value.Add(NextOffsetName, next);
             }

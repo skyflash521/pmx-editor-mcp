@@ -183,6 +183,50 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheWholeCountComesBackEvenWhenOnlyAFewPositionsWerePointedAt()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+            _model.Items.Add(new Item { Label = "三" });
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_items",
+                Arguments(TargetNames.Element.Indices, new object[] { 2, 0 })));
+
+            Assert.Equal(3, value[ToolDispatch.TotalName]);
+            Assert.False(value.ContainsKey(ToolDispatch.NextOffsetName));
+        }
+
+        [Fact]
+        public void TheNextPositionRunsToTheEndOfWhatWasPointedAtNotOfTheWholeList()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+            _model.Items.Add(new Item { Label = "三" });
+            _model.Items.Add(new Item { Label = "四" });
+
+            IDictionary<string, object> first = Value(Call(
+                "model_list_items",
+                Arguments(
+                    TargetNames.Element.Indices, new object[] { 0, 1, 2 },
+                    ToolDispatch.LimitName, 2)));
+
+            Assert.Equal(4, first[ToolDispatch.TotalName]);
+            Assert.Equal(2, first[ToolDispatch.NextOffsetName]);
+
+            IDictionary<string, object> second = Value(Call(
+                "model_list_items",
+                Arguments(
+                    TargetNames.Element.Indices, new object[] { 0, 1, 2 },
+                    ToolDispatch.OffsetName, 2,
+                    ToolDispatch.LimitName, 2)));
+
+            Assert.Equal(4, second[ToolDispatch.TotalName]);
+            Assert.Equal(new[] { "三" }, Items(second).Select(i => i["label"]).ToArray());
+            Assert.False(second.ContainsKey(ToolDispatch.NextOffsetName));
+        }
+
+        [Fact]
         public void EachElementOfAListWithoutParentsCarriesWhereItIs()
         {
             _model.Items.Add(new Item { Label = "一" });

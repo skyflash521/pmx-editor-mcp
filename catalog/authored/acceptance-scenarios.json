@@ -4120,7 +4120,7 @@
             "values": [
               {
                 "path": "total",
-                "equals": 1
+                "equals": 6
               },
               {
                 "path": "targets.0.index",

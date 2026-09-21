@@ -124,6 +124,22 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheCountPerTargetSaysHowManyElementsOfThatKindThereAreInAll()
+        {
+            Bones(3);
+
+            IDictionary<string, object> found = Found(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(TargetNames.Element.Indices, new object[] { 0 }),
+                ComposedEditFixture.Given(
+                    "detail", "countPerTarget"));
+
+            Assert.Equal(3, found["total"]);
+            Assert.Single(Items(found));
+            Assert.False(found.ContainsKey("nextOffset"));
+        }
+
+        [Fact]
         public void TheRestOfTheElementsComeBackFromTheOffsetThatWasHandedOver()
         {
             Bones(3);
