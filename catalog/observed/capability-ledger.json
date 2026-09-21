@@ -1884,7 +1884,7 @@
       "target": "IPEVertexGuideConnector.SelectVertex",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": ""
+      "remarks": "契約注記: 頂点ガイドが控えている選択を画面へ戻す。控えを作るのは GetSelectedCurrentVertex() で、SetVertexIndices(System.Int32[]) が書くのは一覧の表示だけなので控えは変わらない。戻す先は頂点・面・ボーン・剛体・ジョイント・アンカー頂点の6つで、控えが空のまま呼ぶとこの6つの選択がすべて空になる。置き換えるのは呼んだ時点でShiftもCtrlも押されていないときで、Shiftが押されていればいまの選択と控えの和を、Ctrlならいまの選択から控えのぶんを除いたものを適用する"
     },
     {
       "id": "CAP-236",
