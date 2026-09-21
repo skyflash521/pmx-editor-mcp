@@ -13,6 +13,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Key = Vertex + ".Move(System.Single)";
 
+        private const string WriteKey = Vertex + ".SetChosen(System.Int32[])";
+
+        private const string ReadKey = Vertex + ".GetChosen()";
+
+        private const string WriteTool = "model_set_chosen_vertices";
+
+        private const string ReadTool = "model_get_chosen_vertices";
+
         /// <summary>ツールを持つ行を1つだけ持つ能力対応表。</summary>
         private static string MapJson(string signatureKey = Key)
         {
@@ -237,6 +245,104 @@ namespace PmxEditorMcp.SignatureDump.Tests
             };
         }
 
+        private static void RequirePaired(string schemas)
+        {
+            SchemaCorrespondenceGate.Require(
+                ToolMapJsonReader.Read(
+                    @"{ ""rows"": [" + Row(ReadKey) + "," + Row(WriteKey) + "] }"),
+                ToolSchemaJsonReader.Read(schemas),
+                Roles(TypeRole.Dto),
+                PairedSignatures(),
+                Names(WriteKey, WriteTool, ReadKey, ReadTool),
+                Paths(AccessPathKind.Element));
+        }
+
+        private static IDictionary<string, SignatureRecord> PairedSignatures()
+        {
+            return new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
+            {
+                {
+                    WriteKey,
+                    new SignatureRecord(
+                        WriteKey,
+                        Vertex,
+                        MemberKind.Method,
+                        "SetChosen",
+                        false,
+                        0,
+                        new[]
+                        {
+                            new ParameterRecord(
+                                "indices", "System.Int32[]", ParameterDirection.In, false),
+                        },
+                        "System.Void",
+                        false,
+                        false,
+                        OperationDirection.Write)
+                },
+                {
+                    ReadKey,
+                    new SignatureRecord(
+                        ReadKey,
+                        Vertex,
+                        MemberKind.Method,
+                        "GetChosen",
+                        false,
+                        0,
+                        new ParameterRecord[0],
+                        "System.Int32[]",
+                        false,
+                        false,
+                        OperationDirection.Read)
+                },
+            };
+        }
+
+        private static string PairedSelectorSchemaJson()
+        {
+            return @"{ ""tools"": [
+                { ""tool"": """ + ReadTool + @""",
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
+                  ""output"": { ""element"": {} } },
+                { ""tool"": """ + WriteTool + @""",
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                    { ""name"": ""indices"", ""origin"": ""hostInput"", ""required"": true,
+                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } },
+                    { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
+                      ""members"": [
+                        { ""name"": ""indices"", ""required"": true,
+                          ""element"": {}, ""emptyAllowed"": true }] }] }],
+                  ""output"": { ""origin"": ""hostOutput"", ""shape"": ""null_value"" } }] }";
+        }
+
+        private static string PairedNestedSchemaJson(string emptyAllowed)
+        {
+            return @"{ ""tools"": [
+                { ""tool"": """ + ReadTool + @""",
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
+                  ""output"": { ""element"": {} } },
+                { ""tool"": """ + WriteTool + @""",
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                    { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
+                      ""members"": [
+                        { ""name"": ""indices"", ""required"": true,
+                          ""element"": {}" + emptyAllowed + @" }] }] }],
+                  ""output"": { ""origin"": ""hostOutput"", ""shape"": ""null_value"" } }] }";
+        }
+
+        private static string PairedSchemaJson(string emptyAllowed)
+        {
+            return @"{ ""tools"": [
+                { ""tool"": """ + ReadTool + @""",
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
+                  ""output"": { ""element"": {} } },
+                { ""tool"": """ + WriteTool + @""",
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [
+                    { ""name"": ""indices"", ""required"": true,
+                      ""element"": {}" + emptyAllowed + @" }] }],
+                  ""output"": { ""origin"": ""hostOutput"", ""shape"": ""null_value"" } }] }";
+        }
+
         private static void Require(
             string schemas,
             string map = null,
@@ -279,6 +385,42 @@ namespace PmxEditorMcp.SignatureDump.Tests
                   { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
                     ""required"": true" + count + @" }] }],
                 ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }";
+        }
+
+        [Fact]
+        public void AcceptsAWriterThatTakesTheEmptyListItsReaderCanReturn()
+        {
+            RequirePaired(PairedSchemaJson(@", ""emptyAllowed"": true"));
+        }
+
+        [Fact]
+        public void RejectsAWriterThatWillNotTakeTheEmptyListItsReaderCanReturn()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => RequirePaired(PairedSchemaJson(string.Empty)));
+
+            Assert.Contains(WriteTool, thrown.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void LeavesTheReceiverSelectorThatCarriesTheSameNameAsTheWrittenList()
+        {
+            RequirePaired(PairedSelectorSchemaJson());
+        }
+
+        [Fact]
+        public void AcceptsAWriterThatTakesTheEmptyListInsideAContainer()
+        {
+            RequirePaired(PairedNestedSchemaJson(@", ""emptyAllowed"": true"));
+        }
+
+        [Fact]
+        public void RejectsAWriterThatWillNotTakeTheEmptyListInsideAContainer()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => RequirePaired(PairedNestedSchemaJson(string.Empty)));
+
+            Assert.Contains(WriteTool, thrown.Message, StringComparison.Ordinal);
         }
 
         [Fact]

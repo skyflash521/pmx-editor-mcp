@@ -4689,6 +4689,40 @@
         },
         {
           "kind": "tool",
+          "tool": "view_set_selected_vertex_indices_pmd_view_connector",
+          "arguments": {
+            "indices": []
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_selected_bone_indices_pmd_view_connector",
+          "arguments": {
+            "indices": []
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_selected_bone_indices_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "view_set_checked_material_indices",
           "arguments": {
             "indices": []

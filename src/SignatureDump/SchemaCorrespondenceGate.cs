@@ -25,6 +25,14 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>発行する数を受け取る入力の名前。</summary>
         private const string CountName = "count";
 
+        private const string IndicesName = "indices";
+
+        private const string IndicesParameters = "(System.Int32[])";
+
+        private const string WriterPrefix = ".Set";
+
+        private const string ReaderPrefix = ".Get";
+
         /// <summary>
         /// ホストが入れる引数の型。呼び出す側は持てないので、入力として受け取らない。接続の道から
         /// 得る受け手を取る引数も同じで、そちらは型役割から分かる。
@@ -117,6 +125,62 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             RequireSetupTools(map, byTool);
+            RequireWritersTakeEmpty(map, byTool, toolNames);
+        }
+
+        private static void RequireWritersTakeEmpty(
+            ToolMap map,
+            IDictionary<string, ToolSchema> byTool,
+            IDictionary<string, string> toolNames)
+        {
+            HashSet<string> keys = new HashSet<string>(
+                map.Rows.Select(r => r.SignatureKey), StringComparer.Ordinal);
+            foreach (string key in keys.OrderBy(k => k, StringComparer.Ordinal))
+            {
+                string reader = ReaderKey(key);
+                string tool;
+                ToolSchema schema;
+                if (reader == null
+                    || !keys.Contains(reader)
+                    || !toolNames.TryGetValue(key, out tool)
+                    || !byTool.TryGetValue(tool, out schema))
+                {
+                    continue;
+                }
+
+                bool refuses = schema.Branches
+                    .SelectMany(b => b.Inputs)
+                    .SelectMany(i => i.WithNested)
+                    .Any(i => string.Equals(i.Name, IndicesName, StringComparison.Ordinal)
+                        && i.Origin == null
+                        && i.Element != null
+                        && !i.EmptyAllowed);
+                if (refuses)
+                {
+                    throw new InvalidOperationException(
+                        "読んだ並びを書き戻せない: " + tool + "(" + IndicesName + " が空を受け取らない)");
+                }
+            }
+        }
+
+        /// <summary>組にならなければ null。</summary>
+        private static string ReaderKey(string key)
+        {
+            if (!key.EndsWith(IndicesParameters, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            int at = key.LastIndexOf(WriterPrefix, StringComparison.Ordinal);
+            if (at < 0)
+            {
+                return null;
+            }
+
+            int from = at + WriterPrefix.Length;
+            string member = key.Substring(from, key.Length - from - IndicesParameters.Length);
+
+            return key.Substring(0, at) + ReaderPrefix + member + "()";
         }
 
         /// <summary>
