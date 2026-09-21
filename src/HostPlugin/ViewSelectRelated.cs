@@ -42,17 +42,28 @@ namespace PmxEditorMcp
 
         public const string BonesToWeightedVertices = "bonesToWeightedVertices";
 
+        /// <summary>UVがその範囲に入る頂点を選ぶ。</summary>
+        public const string UvRegionVertices = "uvRegionVertices";
+
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
             get
             {
-                return new[] { VerticesToFaces, FacesToVertices, ExpandAdjacentFaces, MaterialToFaces, VerticesToMaterials, FacesToMaterials, ExcludeFacesMaterials, UnusedVertices, EdgeScaleChangedVertices, BonesToWeightedVertices };
+                return new[] { VerticesToFaces, FacesToVertices, ExpandAdjacentFaces, MaterialToFaces, VerticesToMaterials, FacesToMaterials, ExcludeFacesMaterials, UnusedVertices, EdgeScaleChangedVertices, BonesToWeightedVertices, UvRegionVertices };
             }
         }
 
         /// <summary>材質の位置を受け取る入力の名前。</summary>
         public const string MaterialIndicesName = "materialIndices";
+
+        public const string MinUName = "minU";
+
+        public const string MaxUName = "maxU";
+
+        public const string MinVName = "minV";
+
+        public const string MaxVName = "maxV";
 
         /// <summary>選んだ要素の数を返す項目の名前。</summary>
         public const string SelectedName = "selected";
@@ -79,6 +90,10 @@ namespace PmxEditorMcp
             {
                 ComposedOperation.OperationName,
                 MaterialIndicesName,
+                MinUName,
+                MaxUName,
+                MinVName,
+                MaxVName,
             };
             methods.Add(
                 ToolName, screen.Method(known, ScreenNeeds.View | ScreenNeeds.Pmx, Run));
@@ -91,6 +106,7 @@ namespace PmxEditorMcp
             string code;
             string message;
             IList<int> materials;
+            UvRegion region;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
                 || !ComposedInput.TryIndices(
@@ -101,7 +117,8 @@ namespace PmxEditorMcp
                     model.Material.Count,
                     out materials,
                     out code,
-                    out message))
+                    out message)
+                || !TryRegion(context, operation, out region, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -159,6 +176,12 @@ namespace PmxEditorMcp
 
                     break;
 
+                case UvRegionVertices:
+                    kind = ElementKinds.Vertex;
+                    made = Inside(model, region);
+
+                    break;
+
                 default:
                     IList<int> held = Held(parts, model, ElementKinds.Face);
                     IList<int> theirs = Owned(owners, held.Select(at => owners[at]).ToList());
@@ -177,6 +200,58 @@ namespace PmxEditorMcp
                     { KindName, kind },
                     { SelectedName, made.Count },
                 });
+        }
+
+        /// <summary>UVの範囲を読む。上限が下限より小さければ偽を返し、断る内容を渡す。</summary>
+        private static bool TryRegion(
+            McpMethodContext context,
+            string operation,
+            out UvRegion region,
+            out string code,
+            out string message)
+        {
+            region = null;
+            string[] wanted = new[] { UvRegionVertices };
+            float minU;
+            float maxU;
+            float minV;
+            float maxV;
+            if (!ComposedInput.TryFloat(
+                    context, MinUName, operation, wanted, ComposedInput.NoFloor,
+                    ComposedInput.NoCeiling, out minU, out code, out message)
+                || !ComposedInput.TryFloat(
+                    context, MaxUName, operation, wanted, ComposedInput.NoFloor,
+                    ComposedInput.NoCeiling, out maxU, out code, out message)
+                || !ComposedInput.TryFloat(
+                    context, MinVName, operation, wanted, ComposedInput.NoFloor,
+                    ComposedInput.NoCeiling, out minV, out code, out message)
+                || !ComposedInput.TryFloat(
+                    context, MaxVName, operation, wanted, ComposedInput.NoFloor,
+                    ComposedInput.NoCeiling, out maxV, out code, out message))
+            {
+                return false;
+            }
+
+            if (maxU < minU || maxV < minV)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = MaxUName + " は " + MinUName + " 以上、" + MaxVName + " は "
+                    + MinVName + " 以上でなければならない。";
+
+                return false;
+            }
+
+            region = new UvRegion(minU, maxU, minV, maxV);
+
+            return true;
+        }
+
+        /// <summary>UVがその範囲に入る頂点の位置。UVを持たない頂点は入らない。</summary>
+        private static IList<int> Inside(IPXPmx model, UvRegion region)
+        {
+            return Enumerable.Range(0, model.Vertex.Count)
+                .Where(at => region.Holds(model.Vertex[at].UV))
+                .ToList();
         }
 
         private static IList<int> Held(ScreenParts parts, IPXPmx model, string kind)

@@ -41273,6 +41273,30 @@
                 }
               },
               "required": false
+            },
+            {
+              "name": "minU",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "maxU",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "minV",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "maxV",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ]
         }

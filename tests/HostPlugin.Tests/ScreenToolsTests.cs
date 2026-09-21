@@ -350,6 +350,53 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheVerticesWhoseUvSitsInsideTheGivenRegionAreSelected()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            ((FakeVertex)vertices[0]).UV = new V2(0.1f, 0.5f);
+            ((FakeVertex)vertices[1]).UV = new V2(0.5f, 0.5f);
+            ((FakeVertex)vertices[2]).UV = new V2(0.5f, 0.9f);
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Related(
+                Operation(ViewSelectRelated.UvRegionVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinUName, 0.4),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxUName, 0.6),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinVName, 0.4),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxVName, 0.6)));
+
+            Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(ElementKinds.Vertex, value[ViewSelectRelated.KindName]);
+            Assert.Equal(1, value[ViewSelectRelated.SelectedName]);
+        }
+
+        [Fact]
+        public void AUvRegionWhoseEndComesBeforeItsStartIsRefused()
+        {
+            Vertices(1);
+
+            IDictionary<string, object> envelope = Related(
+                Operation(ViewSelectRelated.UvRegionVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinUName, 0.6),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxUName, 0.4),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinVName, 0.0),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxVName, 1.0));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void AUvRegionHandedToAnotherOperationIsRefused()
+        {
+            Vertices(1);
+
+            IDictionary<string, object> envelope = Related(
+                Operation(ViewSelectRelated.UnusedVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinUName, 0.4));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+        }
+
+        [Fact]
         public void TheVerticesWhoseEdgeScaleIsNotOneAreSelected()
         {
             IList<IPXVertex> vertices = Vertices(3);
