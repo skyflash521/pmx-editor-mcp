@@ -81,6 +81,8 @@ namespace PmxEditorMcp
         /// <summary>選んだ要素の数を返す項目の名前。</summary>
         public const string SelectedName = "selected";
 
+        public const string CountsName = "counts";
+
         /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
@@ -130,20 +132,30 @@ namespace PmxEditorMcp
             }
 
             int selected = 0;
+            IList<object> counts = new List<object>();
             foreach (string kind in kinds)
             {
+                int took = 0;
                 ComposedEditResult refused =
-                    Chosen(model, parts, operation, kind, axis, ref selected);
+                    Chosen(model, parts, operation, kind, axis, ref took);
                 if (refused != null)
                 {
                     return refused;
                 }
+
+                selected += took;
+                counts.Add(new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { KindName, kind },
+                    { SelectedName, took },
+                });
             }
 
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { SelectedName, selected },
+                    { CountsName, counts },
                 });
         }
 

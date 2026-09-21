@@ -57,6 +57,8 @@ namespace PmxEditorMcp
         /// <summary>選んだ要素の数を返す項目の名前。</summary>
         public const string SelectedName = "selected";
 
+        public const string KindName = "kind";
+
         /// <summary>辺を共有する2つの面が同じくする頂点の数。</summary>
         private const int SharedCorners = 2;
 
@@ -172,6 +174,7 @@ namespace PmxEditorMcp
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
+                    { KindName, kind },
                     { SelectedName, made.Count },
                 });
         }

@@ -34,6 +34,8 @@ namespace PmxEditorMcp
 
         public const string ShownName = "shown";
 
+        public const string KindName = "kind";
+
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
             if (methods == null)
@@ -85,7 +87,7 @@ namespace PmxEditorMcp
             int[] shown = made.Distinct().OrderBy(at => at).ToArray();
             held.SetCheckedMaterialIndices(shown);
 
-            return Answer(shown.Length);
+            return Answer(ElementKinds.Material, shown.Length);
         }
 
         private static IList<int> Materials(IPXPmx model, ScreenParts parts, string operation)
@@ -118,7 +120,7 @@ namespace PmxEditorMcp
                 .ToArray();
             ((IPXPmxViewConnector)parts.View).SetVertexIndices(shown);
 
-            return Answer(shown.Length);
+            return Answer(ElementKinds.Vertex, shown.Length);
         }
 
         private static IList<int> Held(IPXPmx model, ScreenParts parts, string kind)
@@ -126,11 +128,12 @@ namespace PmxEditorMcp
             return ViewSelection.Taken(parts.View, kind, ViewSelection.Count(model, kind));
         }
 
-        private static ComposedEditResult Answer(int shown)
+        private static ComposedEditResult Answer(string kind, int shown)
         {
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
+                    { KindName, kind },
                     { ShownName, shown },
                 });
         }

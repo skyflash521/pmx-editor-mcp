@@ -38433,6 +38433,25 @@
             "name": "selected",
             "origin": "hostOutput",
             "shape": "number"
+          },
+          {
+            "name": "counts",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "kind",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "selected",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
           }
         ]
       }
@@ -39127,6 +39146,11 @@
       "output": {
         "origin": "hostOutput",
         "members": [
+          {
+            "name": "kind",
+            "origin": "hostOutput",
+            "shape": "text"
+          },
           {
             "name": "shown",
             "origin": "hostOutput",
@@ -41203,6 +41227,25 @@
             "name": "selected",
             "origin": "hostOutput",
             "shape": "number"
+          },
+          {
+            "name": "counts",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "kind",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "selected",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
           }
         ]
       }
@@ -41237,6 +41280,11 @@
       "output": {
         "origin": "hostOutput",
         "members": [
+          {
+            "name": "kind",
+            "origin": "hostOutput",
+            "shape": "text"
+          },
           {
             "name": "selected",
             "origin": "hostOutput",

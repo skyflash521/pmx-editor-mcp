@@ -67,6 +67,27 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SelectingSeveralKindsSaysHowManyOfEachKindItTook()
+        {
+            Vertices(2);
+            Bones("根");
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(
+                    ViewSelectElements.KindsName,
+                    new object[] { ElementKinds.Vertex, ElementKinds.Bone })));
+
+            IList<object> counts = (IList<object>)value[ViewSelectElements.CountsName];
+
+            Assert.Equal(2, counts.Count);
+            Assert.Equal(ElementKinds.Vertex, Row(counts[0])[ViewSelectElements.KindName]);
+            Assert.Equal(2, Row(counts[0])[ViewSelectElements.SelectedName]);
+            Assert.Equal(ElementKinds.Bone, Row(counts[1])[ViewSelectElements.KindName]);
+            Assert.Equal(1, Row(counts[1])[ViewSelectElements.SelectedName]);
+        }
+
+        [Fact]
         public void InvertingSeveralKindsSwapsEachOfThemOnItsOwn()
         {
             Vertices(2);
@@ -460,6 +481,62 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void WhatTheRelatedSelectionCountedIsSaidWithTheKindOfElement()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(
+                Related(Operation(ViewSelectRelated.FacesToVertices)));
+
+            Assert.Equal(ElementKinds.Vertex, value[ViewSelectRelated.KindName]);
+            Assert.Equal(3, value[ViewSelectRelated.SelectedName]);
+        }
+
+        [Fact]
+        public void WhatReachingTheMaterialsOfTheSelectedFacesCountedIsTheirFaces()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(
+                Related(Operation(ViewSelectRelated.FacesToMaterials)));
+
+            Assert.Equal(ElementKinds.Face, value[ViewSelectRelated.KindName]);
+            Assert.Equal(2, value[ViewSelectRelated.SelectedName]);
+        }
+
+        [Fact]
+        public void WhatStaysShownIsSaidWithTheKindOfElement()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(
+                Filter(Operation(ViewFilterDisplay.MaterialsFromFaces)));
+
+            Assert.Equal(ElementKinds.Material, value[ViewFilterDisplay.KindName]);
+            Assert.Equal(1, value[ViewFilterDisplay.ShownName]);
+        }
+
+        [Fact]
+        public void WhatStaysShownByTheEdgeScaleIsCountedAsVertices()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            ((FakeVertex)vertices[1]).EdgeScale = 0.5f;
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Filter(
+                Operation(ViewFilterDisplay.VerticesByEdgeScale)));
+
+            Assert.Equal(ElementKinds.Vertex, value[ViewFilterDisplay.KindName]);
+            Assert.Equal(1, value[ViewFilterDisplay.ShownName]);
+        }
+
+        [Fact]
         public void TheRotateCentreGoesToTheMiddleOfTheSelectedVertices()
         {
             Vertex(0f, 0f, 0f);
@@ -757,6 +834,40 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void WritingSeveralListsSaysHowManyOfEachKindItWrote()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            Bones("一", "二");
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 1 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(_fixture.Call(
+                SessionSelectListsFromView.ToolName,
+                ComposedScreenFixture.Arguments(ComposedScreenFixture.Given(
+                    SessionSelectListsFromView.KindsName,
+                    new object[]
+                    {
+                        SessionSelectListsFromView.Material,
+                        SessionSelectListsFromView.Bone,
+                    }))));
+
+            IList<object> counts = (IList<object>)value[SessionSelectListsFromView.CountsName];
+
+            Assert.Equal(2, value[SessionSelectListsFromView.SelectedName]);
+            Assert.Equal(2, counts.Count);
+            Assert.Equal(
+                SessionSelectListsFromView.Material,
+                Row(counts[0])[SessionSelectListsFromView.KindName]);
+            Assert.Equal(1, Row(counts[0])[SessionSelectListsFromView.SelectedName]);
+            Assert.Equal(
+                SessionSelectListsFromView.Bone,
+                Row(counts[1])[SessionSelectListsFromView.KindName]);
+            Assert.Equal(1, Row(counts[1])[SessionSelectListsFromView.SelectedName]);
+        }
+
+        [Fact]
         public void PickingNoBoneInTheViewLeavesTheBoneListWithNothingPicked()
         {
             Bones("一", "二");
@@ -794,6 +905,11 @@ namespace PmxEditorMcp.Tests
             ((FakeBone)ground.Model.Bone[0]).Name = "二";
 
             Assert.Throws<InvalidOperationException>(() => ground.Dispose());
+        }
+
+        private static IDictionary<string, object> Row(object counted)
+        {
+            return (IDictionary<string, object>)counted;
         }
 
         private IDictionary<string, object> Select(params KeyValuePair<string, object>[] given)

@@ -35,6 +35,10 @@ namespace PmxEditorMcp
         /// <summary>写した要素の数を返す項目の名前。</summary>
         public const string SelectedName = "selected";
 
+        public const string CountsName = "counts";
+
+        public const string KindName = "kind";
+
         /// <summary>ボーンのリストで、どの行も選んでいないことを表す位置。</summary>
         public const int NoBone = -1;
 
@@ -72,25 +76,39 @@ namespace PmxEditorMcp
 
             IPEFormConnector form = (IPEFormConnector)parts.Form;
             int selected = 0;
+            IList<object> counts = new List<object>();
             if (kinds.Contains(Material, StringComparer.Ordinal))
             {
                 int[] materials = Behind(model, parts).ToArray();
                 form.SetSelectedMaterialIndices(materials);
                 selected += materials.Length;
+                counts.Add(Counted(Material, materials.Length));
             }
 
             if (kinds.Contains(Bone, StringComparer.Ordinal))
             {
                 IList<int> bones = Held(parts, model, ElementKinds.Bone);
                 form.SelectedBoneIndex = bones.Count == 0 ? NoBone : bones[0];
-                selected += bones.Count == 0 ? 0 : 1;
+                int took = bones.Count == 0 ? 0 : 1;
+                selected += took;
+                counts.Add(Counted(Bone, took));
             }
 
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { SelectedName, selected },
+                    { CountsName, counts },
                 });
+        }
+
+        private static object Counted(string kind, int selected)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { KindName, kind },
+                { SelectedName, selected },
+            };
         }
 
         /// <summary>画面で選んでいる面を持つ材質の位置。昇順で重なりを持たない。</summary>
