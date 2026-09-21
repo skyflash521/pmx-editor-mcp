@@ -340,6 +340,7 @@ namespace PmxEditorMcp.SignatureDump
             text.Append(calls);
             text.Append("\n");
             text.Append("            ScreenFacePlaces.Fit(calls);\n");
+            text.Append("            ViewImageRedraw.Fit(calls);\n");
             text.Append("\n");
             text.Append(
                 "            return new SdkRelayTable(SdkVersion, ToolMapDigest, calls, new string[]\n");
