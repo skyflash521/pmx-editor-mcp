@@ -20,6 +20,8 @@ namespace PmxEditorMcp.Bridge
 
         private readonly JsonElement _schema;
 
+        private readonly string _narrowing;
+
         internal RelayFunction(GeneratedToolDefinition definition, HostIpcClient client)
         {
             if (definition == null)
@@ -35,6 +37,7 @@ namespace PmxEditorMcp.Bridge
             _definition = definition;
             _client = client;
             _schema = JsonDocument.Parse(definition.InputSchema).RootElement.Clone();
+            _narrowing = NarrowingHint.Of(_schema);
         }
 
         public override string Name
@@ -61,6 +64,7 @@ namespace PmxEditorMcp.Bridge
                     _definition.Name,
                     Parameters(arguments),
                     _definition.ReturnsImage,
+                    _narrowing,
                     cancellationToken)
                 .ConfigureAwait(false);
         }

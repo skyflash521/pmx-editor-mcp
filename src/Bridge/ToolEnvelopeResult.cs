@@ -26,6 +26,8 @@ namespace PmxEditorMcp.Bridge
         /// <summary>予算を超えた本文の代わりに返す誤り。</summary>
         private const string TooLargeCode = "TOOL_RESPONSE_TOO_LARGE";
 
+        private const string NarrowingLabel = "絞り方: ";
+
         /// <summary>
         /// 画像の種別。ホストが送り出す画像はPNGに決まっている(ImageTransfer が定める)ので、
         /// 包みからは読まずここで名乗る。
@@ -35,7 +37,8 @@ namespace PmxEditorMcp.Bridge
         /// <summary>
         /// 包みをツール結果へ写す。成功なら値を、失敗なら「コード: メッセージ」を本文にし、警告が
         /// あれば同じ本文の末尾へ行として足す。本文が <paramref name="budgetChars"/> を超えるときは
-        /// 本文を返さず、大きすぎる旨の誤りにする。包みとして読めなければ
+        /// 本文を返さず、大きすぎる旨の誤りにし、<paramref name="narrowing"/> を持つならその手立ても
+        /// 添える。包みとして読めなければ
         /// <see cref="FormatException"/>——ホストの応答が契約から外れている。呼び出し側は、これを
         /// 受けたら接続を捨てて `BRIDGE_PROTOCOL_ERROR` にする。
         ///
@@ -44,7 +47,11 @@ namespace PmxEditorMcp.Bridge
         /// 長さになって予算を超える。画像の大きさを抑えるのは長辺の上限で、本文の予算ではない。
         /// </summary>
         public static CallToolResult From(
-            JsonNode result, string targetNotice, int budgetChars, bool returnsImage)
+            JsonNode result,
+            string targetNotice,
+            int budgetChars,
+            bool returnsImage,
+            string narrowing = null)
         {
             if (targetNotice == null)
             {
@@ -80,7 +87,10 @@ namespace PmxEditorMcp.Bridge
                 drawn = false;
                 image = null;
                 body = TooLargeCode + ": 応答が応答サイズ予算 " + budgetChars
-                    + " 文字に収まらない(" + body.Length + " 文字)。";
+                    + " 文字に収まらない(" + body.Length + " 文字)。"
+                    + (string.IsNullOrEmpty(narrowing)
+                        ? string.Empty
+                        : NarrowingLabel + narrowing + "。");
             }
 
             List<ContentBlock> content = new List<ContentBlock>

@@ -128,6 +128,7 @@ namespace PmxEditorMcp.Bridge
             string method,
             JsonObject parameters,
             bool returnsImage,
+            string narrowing,
             CancellationToken cancellationToken)
         {
             try
@@ -138,7 +139,11 @@ namespace PmxEditorMcp.Bridge
                 try
                 {
                     return ToolEnvelopeResult.From(
-                        response.Result, response.TargetNotice, client.BudgetChars, returnsImage);
+                        response.Result,
+                        response.TargetNotice,
+                        client.BudgetChars,
+                        returnsImage,
+                        narrowing);
                 }
                 catch (FormatException broken)
                 {

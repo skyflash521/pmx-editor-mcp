@@ -116,6 +116,22 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public void ABodyOverTheBudgetCarriesTheWayToNarrowTheAnswer()
+        {
+            string value = new string('a', BridgeBudget.MinimumChars + 1);
+
+            CallToolResult result = ToolEnvelopeResult.From(
+                JsonNode.Parse("{\"ok\":true,\"value\":\"" + value + "\"}"),
+                Notice,
+                BridgeBudget.MinimumChars,
+                false,
+                "fields で項目を絞る");
+
+            Assert.True(result.IsError);
+            Assert.Contains("fields", Text(result), StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void ABodyOverTheBudgetBecomesTheTooLargeError()
         {
             string value = new string('a', BridgeBudget.MinimumChars + 1);
