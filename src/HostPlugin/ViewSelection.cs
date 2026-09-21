@@ -12,6 +12,9 @@ namespace PmxEditorMcp
 {
     public static class ViewSelection
     {
+        // 画面のコネクタは面の選択を、面が並べる頂点の位置の並びの中の位置で受け渡す。面 n は 3n から3つ。
+        private const int CornersPerFace = 3;
+
         /// <summary>画面が選べる要素の種類。スキーマが並べる順。</summary>
         public static IList<string> Kinds
         {
@@ -70,9 +73,13 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(view));
             }
 
-            int[] held = Held((IPXPmxViewConnector)view, kind);
+            IEnumerable<int> held = Held((IPXPmxViewConnector)view, kind) ?? new int[0];
+            if (string.Equals(kind, ElementKinds.Face, StringComparison.Ordinal))
+            {
+                held = held.Where(at => at >= 0).Select(at => at / CornersPerFace).Distinct();
+            }
 
-            return (held ?? new int[0]).Where(at => at >= 0 && at < count).ToList();
+            return held.Where(at => at >= 0 && at < count).ToList();
         }
 
         /// <summary>
@@ -100,7 +107,7 @@ namespace PmxEditorMcp
                     return;
 
                 case ElementKinds.Face:
-                    held.SetSelectedFaceIndices(made);
+                    held.SetSelectedFaceIndices(Spread(made));
 
                     return;
 
@@ -218,6 +225,13 @@ namespace PmxEditorMcp
                 default:
                     return model.Joint.Select(joint => Alone(joint.Position)).ToList();
             }
+        }
+
+        private static int[] Spread(IEnumerable<int> faces)
+        {
+            return faces
+                .SelectMany(at => Enumerable.Range(at * CornersPerFace, CornersPerFace))
+                .ToArray();
         }
 
         private static IList<V3> Alone(V3 spot)

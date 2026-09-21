@@ -204,7 +204,7 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> value = ComposedScreenFixture.Value(Related(
                 Operation(ViewSelectRelated.VerticesToFaces)));
 
-            Assert.Equal(new[] { 0 }, _fixture.View.Selected[ElementKinds.Face]);
+            Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Face]);
             Assert.Equal(1, value[ViewSelectRelated.SelectedName]);
         }
 
@@ -213,7 +213,7 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXVertex> vertices = Vertices(4);
             Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 1 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
 
             Related(Operation(ViewSelectRelated.FacesToVertices));
 
@@ -225,11 +225,11 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXVertex> vertices = Vertices(4);
             Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
 
             Related(Operation(ViewSelectRelated.ExpandAdjacentFaces));
 
-            Assert.Equal(new[] { 0, 1 }, _fixture.View.Selected[ElementKinds.Face]);
+            Assert.Equal(new[] { 0, 1, 2, 3, 4, 5 }, _fixture.View.Selected[ElementKinds.Face]);
         }
 
         [Fact]
@@ -244,7 +244,39 @@ namespace PmxEditorMcp.Tests
                 ComposedScreenFixture.Given(
                     ViewSelectRelated.MaterialIndicesName, new object[] { 1 }));
 
-            Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Face]);
+            Assert.Equal(new[] { 3, 4, 5 }, _fixture.View.Selected[ElementKinds.Face]);
+        }
+
+        [Fact]
+        public void EachSelectedFaceReachesTheViewAsItsThreeCorners()
+        {
+            IList<IPXVertex> vertices = Vertices(5);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            Faces(Face(vertices, 2, 3, 4));
+
+            Related(
+                Operation(ViewSelectRelated.MaterialToFaces),
+                ComposedScreenFixture.Given(
+                    ViewSelectRelated.MaterialIndicesName, new object[] { 2 }));
+
+            Assert.Equal(new[] { 6, 7, 8 }, _fixture.View.Selected[ElementKinds.Face]);
+        }
+
+        [Fact]
+        public void TheThreeCornersTheViewHoldsForAFaceAreReadAsThatOneFace()
+        {
+            IList<IPXVertex> vertices = Vertices(5);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            Faces(Face(vertices, 2, 3, 4));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 6, 7, 8 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(
+                Related(Operation(ViewSelectRelated.FacesToVertices)));
+
+            Assert.Equal(new[] { 2, 3, 4 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(3, value[ViewSelectRelated.SelectedName]);
         }
 
         [Fact]
@@ -257,7 +289,7 @@ namespace PmxEditorMcp.Tests
 
             Related(Operation(ViewSelectRelated.VerticesToMaterials));
 
-            Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Face]);
+            Assert.Equal(new[] { 3, 4, 5 }, _fixture.View.Selected[ElementKinds.Face]);
         }
 
         [Fact]
@@ -265,11 +297,11 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXVertex> vertices = Vertices(4);
             Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
 
             Related(Operation(ViewSelectRelated.FacesToMaterials));
 
-            Assert.Equal(new[] { 0, 1 }, _fixture.View.Selected[ElementKinds.Face]);
+            Assert.Equal(new[] { 0, 1, 2, 3, 4, 5 }, _fixture.View.Selected[ElementKinds.Face]);
         }
 
         [Fact]
@@ -278,7 +310,7 @@ namespace PmxEditorMcp.Tests
             IList<IPXVertex> vertices = Vertices(4);
             Faces(Face(vertices, 0, 1, 2));
             Faces(Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2, 3, 4, 5 };
 
             Related(Operation(ViewSelectRelated.ExcludeFacesMaterials));
 
@@ -393,7 +425,7 @@ namespace PmxEditorMcp.Tests
             IList<IPXVertex> vertices = Vertices(4);
             Faces(Face(vertices, 0, 1, 2));
             Faces(Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
 
             Filter(Operation(ViewFilterDisplay.MaterialsFromFaces));
 
@@ -407,7 +439,7 @@ namespace PmxEditorMcp.Tests
             Faces(Face(vertices, 0, 1, 2));
             Faces(Face(vertices, 1, 2, 3));
             _fixture.Parts.Checked = new[] { 0, 1 };
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
 
             Filter(Operation(ViewFilterDisplay.ExcludeMaterialsFromFaces));
 
@@ -462,7 +494,7 @@ namespace PmxEditorMcp.Tests
             ((FakeVertex)vertices[1]).Position = new V3(3f, 0f, 0f);
             ((FakeVertex)vertices[2]).Position = new V3(0f, 3f, 0f);
             Faces(Face(vertices, 0, 1, 2));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
 
             Centre(Operation(ViewSetCameraRotateCenter.Face));
 
@@ -481,7 +513,7 @@ namespace PmxEditorMcp.Tests
 
             ((FakeVertex)vertices[3]).Position = new V3(9f, 0f, 0f);
             Faces(Face(vertices, 0, 1, 2), Face(vertices, 0, 1, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2, 3, 4, 5 };
 
             Centre(Operation(ViewSetCameraRotateCenter.Face));
 
@@ -496,7 +528,7 @@ namespace PmxEditorMcp.Tests
             ((FakeVertex)vertices[1]).Position = new V3(3f, 0f, 0f);
             ((FakeVertex)vertices[2]).Position = new V3(0f, 3f, 0f);
             Faces(Face(vertices, 0, 1, 2));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
 
             Centre(Operation(ViewSetCameraRotateCenter.FaceFront));
 
@@ -516,7 +548,7 @@ namespace PmxEditorMcp.Tests
             ((FakeVertex)vertices[2]).Position = new V3(0f, 3f, 0f);
             ((FakeVertex)vertices[3]).Position = new V3(9f, 3f, 0f);
             Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 3, 2));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2, 3, 4, 5 };
 
             Centre(Operation(ViewSetCameraRotateCenter.FaceFront));
 
@@ -696,7 +728,7 @@ namespace PmxEditorMcp.Tests
             IList<IPXVertex> vertices = Vertices(4);
             Faces(Face(vertices, 0, 1, 2));
             Faces(Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 1 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
 
             IDictionary<string, object> value = ComposedScreenFixture.Value(_fixture.Call(
                 SessionSelectListsFromView.ToolName,
