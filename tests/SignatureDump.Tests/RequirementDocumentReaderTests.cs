@@ -10,10 +10,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
 ## 作業の要求
 
-| 作業 | 成功の条件 |
-|---|---|
-| モデルの構造の把握 | 一定の呼び出し回数で読める |
-| 保存と読み込み | それぞれ1回の呼び出しで済む |
+### エディタの1回でできることは、1回の呼び出しでできる
+
+揃える。
+
+#### 開かれていないと成り立たない
+
+前提がある。
+
+### 呼び出しが変えたものは読み戻せる
+
+読み戻せる。
 
 ## 作業に依らない要件
 
@@ -27,10 +34,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
 ";
 
         [Fact]
-        public void TheTasksAreTheFirstCellsOfTheTableRows()
+        public void TheTasksAreTheHeadingsUnderTheSectionThatHoldsThem()
         {
             Assert.Equal(
-                new[] { "モデルの構造の把握", "保存と読み込み" },
+                new[]
+                {
+                    "エディタの1回でできることは、1回の呼び出しでできる",
+                    "呼び出しが変えたものは読み戻せる",
+                },
                 RequirementDocumentReader.Read(Document).Tasks);
         }
 
@@ -47,7 +58,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ADocumentWithoutTheTableOfTasksIsRejected()
+        public void ADocumentWithoutAnyTaskIsRejected()
         {
             FormatException error = Assert.Throws<FormatException>(
                 () => RequirementDocumentReader.Read("# 要求仕様書\n\n## 作業に依らない要件\n\n### 速い\n"));
@@ -60,7 +71,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             FormatException error = Assert.Throws<FormatException>(
                 () => RequirementDocumentReader.Read(
-                    "# 要求仕様書\n\n## 作業の要求\n\n| 作業 | 成功の条件 |\n|---|---|\n| 把握 | 読める |\n"));
+                    "# 要求仕様書\n\n## 作業の要求\n\n### 揃える\n\n揃える。\n"));
 
             Assert.Contains("作業に依らない要件", error.Message, StringComparison.Ordinal);
         }

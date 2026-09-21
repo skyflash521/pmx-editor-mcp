@@ -23,7 +23,7 @@ namespace PmxEditorMcp.SignatureDump
             Conditions = new ReadOnlyCollection<string>(conditions);
         }
 
-        /// <summary>作業の要求の表に並ぶ作業の名前。</summary>
+        /// <summary>作業の要求の節の題。</summary>
         public IList<string> Tasks { get; }
 
         /// <summary>作業に依らない要件の節の題。</summary>
@@ -40,7 +40,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string ConditionSection = "## 作業に依らない要件";
 
-        private const string ConditionHeading = "### ";
+        private const string Heading = "### ";
 
         /// <summary>節が見つからなければ <see cref="FormatException"/>。</summary>
         public static RequirementNames Read(string markdown)
@@ -63,27 +63,25 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
-                if (section == TaskSection && text.StartsWith("| ", StringComparison.Ordinal))
+                if (!text.StartsWith(Heading, StringComparison.Ordinal))
                 {
-                    string cell = FirstCell(text);
-                    if (cell != null && cell != "作業")
-                    {
-                        tasks.Add(cell);
-                    }
-
                     continue;
                 }
 
-                if (section == ConditionSection
-                    && text.StartsWith(ConditionHeading, StringComparison.Ordinal))
+                string name = text.Substring(Heading.Length).Trim();
+                if (section == TaskSection)
                 {
-                    conditions.Add(text.Substring(ConditionHeading.Length).Trim());
+                    tasks.Add(name);
+                }
+                else if (section == ConditionSection)
+                {
+                    conditions.Add(name);
                 }
             }
 
             if (tasks.Count == 0)
             {
-                throw new FormatException(TaskSection + " に作業の表が無い。");
+                throw new FormatException(TaskSection + " に要求の節が無い。");
             }
 
             if (conditions.Count == 0)
@@ -92,15 +90,6 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new RequirementNames(tasks, conditions);
-        }
-
-        /// <summary>表の行の1列目。区切りの行なら null。</summary>
-        private static string FirstCell(string line)
-        {
-            string[] cells = line.Trim('|').Split('|');
-            string cell = cells[0].Trim();
-
-            return cell.Length == 0 || cell.Trim('-', ':').Length == 0 ? null : cell;
         }
     }
 }

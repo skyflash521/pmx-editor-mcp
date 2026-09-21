@@ -8,7 +8,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
     /// <summary>受入シナリオの定義が、実行器の解せる形と、登録される定義と要求に合うことの照合。</summary>
     public sealed class AcceptanceScenarioGateTests
     {
-        private const string Task = "モデルの構造の把握";
+        private const string Task =
+            "公開APIでできてPMXエディタが1回の操作でできることは、ツールの1回の呼び出しでできる";
 
         private const string Condition = "標準のMCPで動く製品にし、特定のクライアントに縛られない";
 
