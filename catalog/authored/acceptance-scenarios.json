@@ -4789,6 +4789,148 @@
           }
         }
       ]
+    },
+    {
+      "id": 15,
+      "title": "動かした結果からの頂点モーフ",
+      "requirements": [
+        "公開APIでできてPMXエディタが1回の操作でできることは、ツールの1回の呼び出しでできる"
+      ],
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "record": {
+            "name": "basePmx",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_place_elements",
+          "arguments": {
+            "operation": "alignTo",
+            "axes": "y",
+            "position": [
+              0,
+              4,
+              0
+            ],
+            "targets": [
+              {
+                "kind": "vertex",
+                "all": true
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_morph_from_moved",
+          "arguments": {
+            "basePmxHandle": {
+              "$from": "basePmx"
+            },
+            "name": "伸ばした分"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "offsets",
+                "equals": 1
+              },
+              {
+                "path": "added",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position.1",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentAll": true,
+            "all": true,
+            "fields": [
+              "offset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.offset.1",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "basePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
     }
   ]
 }

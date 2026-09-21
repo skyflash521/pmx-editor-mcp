@@ -425,6 +425,176 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AVertexMorphCarriesHowFarTheVerticesMovedFromTheCopy()
+        {
+            FakePmx held = new FakePmx();
+            held.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            held.Vertex.Add(new FakeVertex(1f, 0f, 0f));
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            _fixture.Model.Vertex.Add(new FakeVertex(3f, 0f, 0f));
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle)));
+
+            IPXMorph made = Assert.Single(_fixture.Model.Morph);
+            Assert.Equal("伸ばした分", made.Name);
+            Assert.Equal(MorphKind.Vertex, made.Kind);
+            IPXVertexMorphOffset offset = (IPXVertexMorphOffset)Assert.Single(made.Offsets);
+            Assert.Same(_fixture.Model.Vertex[1], offset.Vertex);
+            Assert.Equal(2f, offset.Offset.X, 3);
+            Assert.Equal(0, value[ModelMorphFromMoved.AddedName]);
+            Assert.Equal(1, value[ModelMorphFromMoved.OffsetsName]);
+        }
+
+        [Fact]
+        public void TheVerticesGoBackToTheCopyOnceTheMorphCarriesTheMove()
+        {
+            FakePmx held = new FakePmx();
+            held.Vertex.Add(new FakeVertex(1f, 0f, 0f));
+            _fixture.Model.Vertex.Add(new FakeVertex(3f, 0f, 0f));
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
+
+            ComposedEditFixture.Value(FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle)));
+
+            Assert.Equal(1f, _fixture.Model.Vertex[0].Position.X, 3);
+        }
+
+        [Fact]
+        public void ACopyThatHoldsItsOwnBonesIsStillTakenWhenTheyStandInTheSamePlaces()
+        {
+            FakePmx copy = new FakePmx();
+            copy.Bone.Add(new FakeBone("ボーン"));
+            copy.Vertex.Add(new FakeVertex(0f, 0f, 0f) { Weight1 = 1f, Bone1 = copy.Bone[0] });
+            _fixture.Model.Bone.Add(new FakeBone("ボーン"));
+            _fixture.Model.Vertex.Add(
+                new FakeVertex(3f, 0f, 0f) { Weight1 = 1f, Bone1 = _fixture.Model.Bone[0] });
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle)));
+
+            Assert.Equal(1, value[ModelMorphFromMoved.OffsetsName]);
+            Assert.Equal(0f, _fixture.Model.Vertex[0].Position.X, 3);
+        }
+
+        [Theory]
+        [InlineData("normal")]
+        [InlineData("uva1")]
+        [InlineData("sdef")]
+        [InlineData("edgeScale")]
+        public void ACopyWhoseVerticesDifferInAnyOtherAttributeIsRefused(string attribute)
+        {
+            FakePmx copy = new FakePmx();
+            copy.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            FakeVertex moved = new FakeVertex(3f, 0f, 0f);
+            switch (attribute)
+            {
+                case "normal":
+                    moved.Normal = new V3(1f, 0f, 0f);
+                    break;
+
+                case "uva1":
+                    moved.UVA1 = new V4(1f, 0f, 0f, 0f);
+                    break;
+
+                case "sdef":
+                    moved.SDEF = true;
+                    break;
+
+                default:
+                    moved.EdgeScale = 2f;
+                    break;
+            }
+
+            _fixture.Model.Vertex.Add(moved);
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
+
+            IDictionary<string, object> envelope = FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Empty(_fixture.Model.Morph);
+        }
+
+        [Fact]
+        public void ACopyWhoseVertexPointsAtABoneOutsideTheListIsRefused()
+        {
+            FakePmx copy = new FakePmx();
+            copy.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            _fixture.Model.Vertex.Add(
+                new FakeVertex(3f, 0f, 0f) { Weight1 = 1f, Bone1 = new FakeBone("並びに居ない") });
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
+
+            IDictionary<string, object> envelope = FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Empty(_fixture.Model.Morph);
+        }
+
+        [Fact]
+        public void ACopyWhoseVerticesDifferInAnythingButTheirPlaceIsRefused()
+        {
+            FakePmx copy = new FakePmx();
+            copy.Bone.Add(new FakeBone("ボーン"));
+            copy.Vertex.Add(new FakeVertex(0f, 0f, 0f) { Weight1 = 1f, Bone1 = copy.Bone[0] });
+            _fixture.Model.Bone.Add(new FakeBone("ボーン"));
+            _fixture.Model.Vertex.Add(
+                new FakeVertex(3f, 0f, 0f) { Weight1 = 0.5f, Bone1 = _fixture.Model.Bone[0] });
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
+
+            IDictionary<string, object> envelope = FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Empty(_fixture.Model.Morph);
+            Assert.Equal(3f, _fixture.Model.Vertex[0].Position.X, 3);
+        }
+
+        [Fact]
+        public void ACopyThatHoldsADifferentCountOfAnythingElseIsRefused()
+        {
+            FakePmx held = new FakePmx();
+            held.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            held.Material.Add(new FakeMaterial("材質"));
+            _fixture.Model.Vertex.Add(new FakeVertex(1f, 0f, 0f));
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Empty(_fixture.Model.Morph);
+            Assert.Equal(1f, _fixture.Model.Vertex[0].Position.X, 3);
+        }
+
+        [Fact]
+        public void ACopyWithADifferentCountOfVerticesIsRefused()
+        {
+            FakePmx held = new FakePmx();
+            held.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            _fixture.Model.Vertex.Add(new FakeVertex(1f, 0f, 0f));
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Empty(_fixture.Model.Morph);
+        }
+
+        [Fact]
         public void AVertexMorphIsMadeFromTheVerticesThatWerePointedAt()
         {
             _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f));
@@ -443,6 +613,13 @@ namespace PmxEditorMcp.Tests
                 _fixture.Model.Vertex[1],
                 ((IPXVertexMorphOffset)Assert.Single(made.Offsets)).Vertex);
             Assert.Equal(new object[] { 0 }, (object[])value[ModelEditMorphs.AddedName]);
+        }
+
+        private IDictionary<string, object> FromMoved(
+            params KeyValuePair<string, object>[] given)
+        {
+            return _fixture.Call(
+                ModelMorphFromMoved.ToolName, ComposedEditFixture.Arguments(given));
         }
 
         private IDictionary<string, object> Morphs(params KeyValuePair<string, object>[] given)

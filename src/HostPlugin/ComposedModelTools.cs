@@ -38,6 +38,7 @@ namespace PmxEditorMcp
             ModelEditBones.AddTo(methods, edit, builder);
             ModelCreatePhysics.AddTo(methods, edit, builder);
             ModelEditMorphs.AddTo(methods, edit, builder);
+            ModelMorphFromMoved.AddTo(methods, edit, builder);
             ModelEditNodes.AddTo(methods, edit, builder);
             ModelCopyFromReference.AddTo(methods, edit);
             ModelPlaceElements.AddTo(methods, edit);

@@ -10549,6 +10549,55 @@
       }
     },
     {
+      "tool": "model_morph_from_moved",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "suppressUndo",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "basePmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true
+            },
+            {
+              "name": "name",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "added",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "offsets",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_morph_node_item",
       "branches": [
         {
