@@ -402,6 +402,19 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheFacesOfTheMaterialsThatDoNotHoldTheSelectedFacesAreSelected()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            Related(Operation(ViewSelectRelated.ExcludeFacesMaterials));
+
+            Assert.Equal(new[] { 3, 4, 5 }, _fixture.View.Selected[ElementKinds.Face]);
+        }
+
+        [Fact]
         public void TheFacesOfTheMaterialsThatHoldTheSelectedFacesAreTakenOut()
         {
             IList<IPXVertex> vertices = Vertices(4);

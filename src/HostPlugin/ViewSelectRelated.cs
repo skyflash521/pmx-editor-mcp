@@ -13,36 +13,26 @@ namespace PmxEditorMcp
         /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_select_related";
 
-        /// <summary>選んだ頂点だけで作られている面を選ぶ。</summary>
         public const string VerticesToFaces = "verticesToFaces";
 
-        /// <summary>選んだ面が使う頂点を選ぶ。</summary>
         public const string FacesToVertices = "facesToVertices";
 
-        /// <summary>選んだ面と辺を共有する面を足す。</summary>
         public const string ExpandAdjacentFaces = "expandAdjacentFaces";
 
-        /// <summary>指した材質の面を選ぶ。</summary>
         public const string MaterialToFaces = "materialToFaces";
 
-        /// <summary>選んだ頂点を使う材質の面を選ぶ。</summary>
         public const string VerticesToMaterials = "verticesToMaterials";
 
-        /// <summary>選んだ面を持つ材質の面を全部選ぶ。</summary>
         public const string FacesToMaterials = "facesToMaterials";
 
-        /// <summary>選んだ面を持つ材質の面を、選択から外す。</summary>
         public const string ExcludeFacesMaterials = "excludeFacesMaterials";
 
-        /// <summary>どの面にも使われていない頂点を選ぶ。</summary>
         public const string UnusedVertices = "unusedVertices";
 
-        /// <summary>エッジの倍率が1でない頂点を選ぶ。</summary>
         public const string EdgeScaleChangedVertices = "edgeScaleChangedVertices";
 
         public const string BonesToWeightedVertices = "bonesToWeightedVertices";
 
-        /// <summary>UVがその範囲に入る頂点を選ぶ。</summary>
         public const string UvRegionVertices = "uvRegionVertices";
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
@@ -192,7 +182,7 @@ namespace PmxEditorMcp
                     IList<int> theirs = Owned(owners, held.Select(at => owners[at]).ToList());
                     made = string.Equals(operation, FacesToMaterials, StringComparison.Ordinal)
                         ? theirs
-                        : held.Except(theirs).ToList();
+                        : Enumerable.Range(0, owners.Count).Except(theirs).ToList();
 
                     break;
             }
