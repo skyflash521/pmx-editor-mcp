@@ -445,6 +445,34 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ViewSelectRelated.SelectedName]);
         }
 
+        [Theory]
+        [InlineData(ViewSelectRelated.VerticesToFaces, ElementKinds.Face)]
+        [InlineData(ViewSelectRelated.FacesToVertices, ElementKinds.Vertex)]
+        [InlineData(ViewSelectRelated.ExpandAdjacentFaces, ElementKinds.Face)]
+        [InlineData(ViewSelectRelated.MaterialToFaces, ElementKinds.Face)]
+        [InlineData(ViewSelectRelated.VerticesToMaterials, ElementKinds.Face)]
+        [InlineData(ViewSelectRelated.FacesToMaterials, ElementKinds.Face)]
+        [InlineData(ViewSelectRelated.ExcludeFacesMaterials, ElementKinds.Face)]
+        [InlineData(ViewSelectRelated.UnusedVertices, ElementKinds.Vertex)]
+        [InlineData(ViewSelectRelated.EdgeScaleChangedVertices, ElementKinds.Vertex)]
+        [InlineData(ViewSelectRelated.BonesToWeightedVertices, ElementKinds.Vertex)]
+        [InlineData(ViewSelectRelated.UvRegionVertices, ElementKinds.Vertex)]
+        public void EachRelatedSelectionSaysWhichKindItSelectedAgain(
+            string operation, string kind)
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0, 1, 2 };
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0 };
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 0 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(
+                Related(Aimed(operation).ToArray()));
+
+            Assert.Equal(kind, value[ViewSelectRelated.KindName]);
+        }
+
         [Fact]
         public void AUvRegionWhoseEndComesBeforeItsStartIsRefused()
         {
@@ -1079,6 +1107,28 @@ namespace PmxEditorMcp.Tests
         private static KeyValuePair<string, object> Operation(string operation)
         {
             return ComposedScreenFixture.Given(ComposedOperation.OperationName, operation);
+        }
+
+        /// <summary>その操作を呼ぶための引数。その操作のときだけ渡すものを添える。</summary>
+        private static IList<KeyValuePair<string, object>> Aimed(string operation)
+        {
+            List<KeyValuePair<string, object>> given =
+                new List<KeyValuePair<string, object>> { Operation(operation) };
+            if (string.Equals(operation, ViewSelectRelated.MaterialToFaces, StringComparison.Ordinal))
+            {
+                given.Add(ComposedScreenFixture.Given(
+                    ViewSelectRelated.MaterialIndicesName, new object[] { 0 }));
+            }
+
+            if (string.Equals(operation, ViewSelectRelated.UvRegionVertices, StringComparison.Ordinal))
+            {
+                given.Add(ComposedScreenFixture.Given(ViewSelectRelated.MinUName, 0.0));
+                given.Add(ComposedScreenFixture.Given(ViewSelectRelated.MaxUName, 1.0));
+                given.Add(ComposedScreenFixture.Given(ViewSelectRelated.MinVName, 0.0));
+                given.Add(ComposedScreenFixture.Given(ViewSelectRelated.MaxVName, 1.0));
+            }
+
+            return given;
         }
 
         private IList<IPXVertex> Vertices(int count)
