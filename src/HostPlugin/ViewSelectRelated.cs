@@ -107,11 +107,12 @@ namespace PmxEditorMcp
                     context,
                     MaterialIndicesName,
                     operation,
-                    new[] { MaterialToFaces },
+                    new[] { MaterialToFaces, UvRegionVertices },
                     model.Material.Count,
                     out materials,
                     out code,
-                    out message)
+                    out message,
+                    new[] { UvRegionVertices })
                 || !TryRegion(context, operation, out region, out code, out message)
                 || !TryReleaseSource(context, out release, out code, out message))
             {
@@ -174,6 +175,12 @@ namespace PmxEditorMcp
                 case UvRegionVertices:
                     kind = ElementKinds.Vertex;
                     made = Inside(model, region);
+                    if (materials.Count != 0)
+                    {
+                        HashSet<int> mapped = new HashSet<int>(
+                            Used(model, faces, Owned(owners, materials)));
+                        made = made.Where(mapped.Contains).ToList();
+                    }
 
                     break;
 

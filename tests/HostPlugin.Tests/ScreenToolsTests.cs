@@ -487,6 +487,52 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void OnlyTheVerticesOfTheNamedMaterialsAreTakenOutOfTheUvRegion()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            foreach (IPXVertex vertex in vertices)
+            {
+                ((FakeVertex)vertex).UV = new V2(0.5f, 0.5f);
+            }
+
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+
+            Related(
+                Operation(ViewSelectRelated.UvRegionVertices),
+                ComposedScreenFixture.Given(
+                    ViewSelectRelated.MaterialIndicesName, new object[] { 1 }),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinUName, 0.0),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxUName, 1.0),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinVName, 0.0),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxVName, 1.0));
+
+            Assert.Equal(new[] { 1, 2, 3 }, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
+        [Fact]
+        public void TheWholeModelStaysTheUvRegionTargetWhenNoMaterialIsNamed()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            foreach (IPXVertex vertex in vertices)
+            {
+                ((FakeVertex)vertex).UV = new V2(0.5f, 0.5f);
+            }
+
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+
+            Related(
+                Operation(ViewSelectRelated.UvRegionVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinUName, 0.0),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxUName, 1.0),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinVName, 0.0),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxVName, 1.0));
+
+            Assert.Equal(new[] { 0, 1, 2, 3 }, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
+        [Fact]
         public void AUvRegionWhoseEndComesBeforeItsStartIsRefused()
         {
             Vertices(1);

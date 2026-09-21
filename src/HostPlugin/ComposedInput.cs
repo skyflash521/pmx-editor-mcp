@@ -267,7 +267,8 @@ namespace PmxEditorMcp
         /// <summary>
         /// 要る操作のときだけ受け取る、位置の並びを読む。要る操作で欠けていれば偽、要らない操作で
         /// 渡されていれば偽を返し、断る内容を渡す。<paramref name="ceiling"/> 以上の位置と負の位置も
-        /// 断る。要らない操作では空の並びを渡す。
+        /// 断る。要らない操作と、<paramref name="omittable"/> が挙げる操作で欠けているときは、空の
+        /// 並びを渡す。
         /// </summary>
         public static bool TryIndices(
             McpMethodContext context,
@@ -277,7 +278,8 @@ namespace PmxEditorMcp
             int ceiling,
             out IList<int> indices,
             out string code,
-            out string message)
+            out string message,
+            IList<string> omittable = null)
         {
             indices = new int[0];
             object given;
@@ -287,7 +289,10 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            if (!asked)
+            if (!asked
+                || (given == null
+                    && omittable != null
+                    && omittable.Contains(operation, StringComparer.Ordinal)))
             {
                 return true;
             }
