@@ -24,8 +24,11 @@ const WARNING_PREFIX = "警告: ";
 /** 中継の状態を返すツールの名前。ホストが受け持ち、ブリッジが固定のツールとして公開する。 */
 const STATUS_TOOL = "sdk_status";
 
-/** ホストが受け持ち、ブリッジが固定のツールとして公開する名前。突き合わせでは両側から引く。 */
-const FIXED_TOOLS = ["ping", STATUS_TOOL];
+/** 語からツールを引くツールの名前。ブリッジだけで答え、ホストへは渡らない。 */
+const FIND_TOOL = "find_tool";
+
+/** スキーマ正本を持たず、ブリッジが固定のツールとして公開する名前。突き合わせでは両側から引く。 */
+const FIXED_TOOLS = ["ping", STATUS_TOOL, FIND_TOOL];
 
 /** 検査からだけ使う入口が開いているときだけ在るツールの名前の頭。突き合わせでは両側から引く。 */
 const DEBUG_PREFIX = "debug_";

@@ -15,6 +15,12 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>稼働しているSDKと中継の状態を返すツールの名前。</summary>
         public const string SdkStatusName = "sdk_status";
 
+        /// <summary>語からツールを引くツールの名前。</summary>
+        public const string FindToolName = "find_tool";
+
+        /// <summary>そのツールへ渡す、探す語の引数の名前。</summary>
+        public const string FindToolTextParameter = "text";
+
         /// <summary>指定した文字数のテキストを返す、検査からだけ使うツールの名前。</summary>
         public const string LargeTextName = "debug_large_text";
 
@@ -31,6 +37,16 @@ namespace PmxEditorMcp.SignatureDump
                             + "行・呼び出しの失敗で無効にした行・ホストがツールとして答える名前を"
                             + "返す。その名前に " + PingName + " と " + SdkStatusName
                             + " は入らない——どちらもホストの接続自身が受け持つ。"
+                    },
+                    {
+                        FindToolName,
+                        "語を含むツールを全部返す。" + FindToolTextParameter
+                            + " を名前と説明文へ当て、当たったツールの名前を名前の昇順で並べる。"
+                            + "大文字小文字と全角半角と仮名の種類は区別しない。エディタが起動して"
+                            + "いなくても答える。やりたいことの言葉から、それを行うツールへ渡る"
+                            + "ときに使う。当たりが多いときは total に総数を返し、"
+                            + "limit と応答の枠で返しきれなかった残りがあるときは nextOffset を"
+                            + "返す。その値を offset へ渡すと続きが読める。"
                     },
                 };
             if (debugHooks)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp
@@ -127,32 +126,14 @@ namespace PmxEditorMcp
             List<IDictionary<string, object>> found = new List<IDictionary<string, object>>();
             foreach (IDictionary<string, object> window in Windows())
             {
-                if (Contains(Text(window, FormName), named) || Contains(Text(window, TitleName), named))
+                if (SignatureDump.TextMatch.Contains(Text(window, FormName), named)
+                    || SignatureDump.TextMatch.Contains(Text(window, TitleName), named))
                 {
                     found.Add(window);
                 }
             }
 
             return found;
-        }
-
-        /// <summary>大文字小文字と全角半角と仮名の種類を区別せずに含むか。</summary>
-        internal static bool Contains(string haystack, string needle)
-        {
-            if (haystack == null || needle == null)
-            {
-                return false;
-            }
-
-            if (needle.Length == 0)
-            {
-                return true;
-            }
-
-            return CultureInfo.InvariantCulture.CompareInfo.IndexOf(
-                haystack,
-                needle,
-                CompareOptions.IgnoreCase | CompareOptions.IgnoreWidth | CompareOptions.IgnoreKanaType) >= 0;
         }
 
         internal static string Text(IDictionary<string, object> held, string name)

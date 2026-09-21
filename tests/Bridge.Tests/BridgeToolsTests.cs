@@ -597,8 +597,12 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>一覧に出るはずの名前。基盤の中継と、組み立てた定義のすべてからなる。</summary>
         private static string[] Expected(bool debugHooks)
         {
-            List<string> names =
-                new List<string> { FixedToolTable.PingName, FixedToolTable.SdkStatusName };
+            List<string> names = new List<string>
+            {
+                FixedToolTable.PingName,
+                FixedToolTable.SdkStatusName,
+                FixedToolTable.FindToolName,
+            };
             names.AddRange(GeneratedToolDefinitions.Create().Select(d => d.Name));
             if (debugHooks)
             {

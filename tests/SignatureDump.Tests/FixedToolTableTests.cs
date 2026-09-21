@@ -7,10 +7,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class FixedToolTableTests
     {
         [Fact]
-        public void TheLivenessAndStatusToolsArePublishedWithTheTestEntryClosed()
+        public void TheToolsThatDoNotNeedTheEditorArePublishedWithTheTestEntryClosed()
         {
             Assert.Equal(
-                new[] { FixedToolTable.PingName, FixedToolTable.SdkStatusName },
+                new[]
+                {
+                    FixedToolTable.FindToolName,
+                    FixedToolTable.PingName,
+                    FixedToolTable.SdkStatusName,
+                },
                 FixedToolTable.Descriptions(debugHooks: false).Keys
                     .OrderBy(name => name, StringComparer.Ordinal)
                     .ToArray());

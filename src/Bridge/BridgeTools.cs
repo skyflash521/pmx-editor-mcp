@@ -38,14 +38,25 @@ namespace PmxEditorMcp.Bridge
             }
 
             List<McpServerTool> tools = new List<McpServerTool>();
-            foreach (KeyValuePair<string, string> own in FixedToolTable.Descriptions(debugHooks))
+            IReadOnlyList<GeneratedToolDefinition> generated = GeneratedToolDefinitions.Create();
+            IDictionary<string, string> own = FixedToolTable.Descriptions(debugHooks);
+            foreach (KeyValuePair<string, string> fixedTool in own)
             {
-                tools.Add(own.Key == FixedToolTable.LargeTextName
-                    ? LargeText(client, declared, own.Value)
-                    : Relay(client, declared, own.Key, own.Value));
+                if (fixedTool.Key == FixedToolTable.LargeTextName)
+                {
+                    tools.Add(LargeText(client, declared, fixedTool.Value));
+                }
+                else if (fixedTool.Key == FixedToolTable.FindToolName)
+                {
+                    tools.Add(FindTool(Entries(own, generated), fixedTool.Value, client, declared));
+                }
+                else
+                {
+                    tools.Add(Relay(client, declared, fixedTool.Key, fixedTool.Value));
+                }
             }
 
-            foreach (GeneratedToolDefinition definition in GeneratedToolDefinitions.Create())
+            foreach (GeneratedToolDefinition definition in generated)
             {
                 tools.Add(Generated(definition, client, declared));
             }
@@ -89,6 +100,49 @@ namespace PmxEditorMcp.Bridge
                 {
                     Name = definition.Name,
                     Description = definition.Description,
+                    Meta = declared
+                        ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
+                        : null,
+                });
+        }
+
+        /// <summary>語を当てる相手。ブリッジが自分で登録するツールも、組み立てた定義も入る。</summary>
+        private static IList<ToolSearch.Entry> Entries(
+            IDictionary<string, string> own, IReadOnlyList<GeneratedToolDefinition> generated)
+        {
+            List<ToolSearch.Entry> entries = new List<ToolSearch.Entry>();
+            foreach (KeyValuePair<string, string> fixedTool in own)
+            {
+                entries.Add(new ToolSearch.Entry(fixedTool.Key, fixedTool.Value));
+            }
+
+            foreach (GeneratedToolDefinition definition in generated)
+            {
+                entries.Add(new ToolSearch.Entry(definition.Name, definition.Description));
+            }
+
+            return entries;
+        }
+
+        /// <summary>
+        /// 語からツールを引くツールを作る。ホストへは渡らない——説明文はブリッジが持っている。
+        /// </summary>
+        private static McpServerTool FindTool(
+            IList<ToolSearch.Entry> entries,
+            string description,
+            HostIpcClient client,
+            bool declared)
+        {
+            return McpServerTool.Create(
+                (string text, int? limit, int? offset) => ToolEnvelopeResult.From(
+                    ToolSearch.Answer(text, limit, offset, entries, client.BudgetChars),
+                    string.Empty,
+                    client.BudgetChars,
+                    false),
+                new McpServerToolCreateOptions
+                {
+                    Name = FixedToolTable.FindToolName,
+                    Description = description,
                     Meta = declared
                         ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
                         : null,

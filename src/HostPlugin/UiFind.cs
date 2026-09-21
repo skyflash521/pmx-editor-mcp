@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Web.Script.Serialization;
+using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp
 {
@@ -145,7 +146,7 @@ namespace PmxEditorMcp
             {
                 string form = UiStructureCatalog.Text(window, UiStructureCatalog.FormName);
                 string title = UiStructureCatalog.Text(window, UiStructureCatalog.TitleName);
-                if (UiStructureCatalog.Contains(title, wanted))
+                if (TextMatch.Contains(title, wanted))
                 {
                     found.Add(Match(form, title, new List<IDictionary<string, object>>(), null));
                 }
@@ -160,7 +161,7 @@ namespace PmxEditorMcp
 
                 foreach (string said in UiStructureCatalog.Texts(window, UiStructureCatalog.MessagesName))
                 {
-                    if (UiStructureCatalog.Contains(said, wanted))
+                    if (TextMatch.Contains(said, wanted))
                     {
                         found.Add(Match(form, title, null, said));
                     }
@@ -182,9 +183,9 @@ namespace PmxEditorMcp
             {
                 List<IDictionary<string, object>> below =
                     new List<IDictionary<string, object>>(path) { Step(child) };
-                if (UiStructureCatalog.Contains(
+                if (TextMatch.Contains(
                         UiStructureCatalog.Text(child, UiStructureCatalog.TextName), wanted)
-                    || UiStructureCatalog.Contains(
+                    || TextMatch.Contains(
                         UiStructureCatalog.Text(child, UiStructureCatalog.ToolTipName), wanted))
                 {
                     found.Add(Match(form, title, below, null));

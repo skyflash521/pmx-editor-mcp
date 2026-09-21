@@ -38,6 +38,10 @@
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\SignatureDump\TextMatch.cs" Link="TextMatch.cs" />
+  </ItemGroup>
+
   <!-- 行キーからSDKへの中継は、ビルドのたびに作り直して組み込む。配布物へ入るのは出来た本文
        だけで、呼び出し先を名前で引く経路は持たない。 -->
   <PropertyGroup>
