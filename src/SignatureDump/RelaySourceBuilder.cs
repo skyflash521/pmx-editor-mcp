@@ -339,6 +339,8 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("                new Dictionary<string, SdkCall>(StringComparer.Ordinal);\n");
             text.Append(calls);
             text.Append("\n");
+            text.Append("            ScreenFacePlaces.Fit(calls);\n");
+            text.Append("\n");
             text.Append(
                 "            return new SdkRelayTable(SdkVersion, ToolMapDigest, calls, new string[]\n");
             text.Append("            {\n");

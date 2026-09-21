@@ -76,7 +76,7 @@ namespace PmxEditorMcp
             IEnumerable<int> held = Held((IPXPmxViewConnector)view, kind) ?? new int[0];
             if (string.Equals(kind, ElementKinds.Face, StringComparison.Ordinal))
             {
-                held = held.Where(at => at >= 0).Select(at => at / CornersPerFace).Distinct();
+                held = Gather(held);
             }
 
             return held.Where(at => at >= 0 && at < count).ToList();
@@ -126,6 +126,36 @@ namespace PmxEditorMcp
 
                     return;
             }
+        }
+
+        /// <summary>
+        /// 面の通し番号を受け取り、画面が数える位置を渡す。1つの面が3つの位置になり、並びは
+        /// 受け取った順のまま。
+        /// </summary>
+        public static int[] Spread(IEnumerable<int> faces)
+        {
+            if (faces == null)
+            {
+                throw new ArgumentNullException(nameof(faces));
+            }
+
+            return faces
+                .SelectMany(at => Enumerable.Range(at * CornersPerFace, CornersPerFace))
+                .ToArray();
+        }
+
+        /// <summary>
+        /// 画面が数える位置を受け取り、面の通し番号を渡す。同じ面を指す位置は1つにまとまり、
+        /// 並びは受け取った順のまま。負の位置は落とす。
+        /// </summary>
+        public static IEnumerable<int> Gather(IEnumerable<int> places)
+        {
+            if (places == null)
+            {
+                throw new ArgumentNullException(nameof(places));
+            }
+
+            return places.Where(at => at >= 0).Select(at => at / CornersPerFace).Distinct();
         }
 
         /// <summary>その種類の要素の数。</summary>
@@ -225,13 +255,6 @@ namespace PmxEditorMcp
                 default:
                     return model.Joint.Select(joint => Alone(joint.Position)).ToList();
             }
-        }
-
-        private static int[] Spread(IEnumerable<int> faces)
-        {
-            return faces
-                .SelectMany(at => Enumerable.Range(at * CornersPerFace, CornersPerFace))
-                .ToArray();
         }
 
         private static IList<V3> Alone(V3 spot)
