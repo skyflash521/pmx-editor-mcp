@@ -57,6 +57,8 @@ namespace PmxEditorMcp
         /// <summary>材質の位置を受け取る入力の名前。</summary>
         public const string MaterialIndicesName = "materialIndices";
 
+        public const string ReleaseSourceName = "releaseSource";
+
         public const string MinUName = "minU";
 
         public const string MaxUName = "maxU";
@@ -90,6 +92,7 @@ namespace PmxEditorMcp
             {
                 ComposedOperation.OperationName,
                 MaterialIndicesName,
+                ReleaseSourceName,
                 MinUName,
                 MaxUName,
                 MinVName,
@@ -107,6 +110,7 @@ namespace PmxEditorMcp
             string message;
             IList<int> materials;
             UvRegion region;
+            bool release;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
                 || !ComposedInput.TryIndices(
@@ -118,7 +122,8 @@ namespace PmxEditorMcp
                     out materials,
                     out code,
                     out message)
-                || !TryRegion(context, operation, out region, out code, out message))
+                || !TryRegion(context, operation, out region, out code, out message)
+                || !TryReleaseSource(context, out release, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -193,6 +198,11 @@ namespace PmxEditorMcp
             }
 
             ViewSelection.Put(parts.View, kind, made);
+            string source = Source(operation);
+            if (release && source != null && !string.Equals(source, kind, StringComparison.Ordinal))
+            {
+                ViewSelection.Put(parts.View, source, new int[0]);
+            }
 
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
@@ -200,6 +210,53 @@ namespace PmxEditorMcp
                     { KindName, kind },
                     { SelectedName, made.Count },
                 });
+        }
+
+        private static string Source(string operation)
+        {
+            switch (operation)
+            {
+                case VerticesToFaces:
+                case VerticesToMaterials:
+                    return ElementKinds.Vertex;
+
+                case FacesToVertices:
+                case ExpandAdjacentFaces:
+                case FacesToMaterials:
+                case ExcludeFacesMaterials:
+                    return ElementKinds.Face;
+
+                case BonesToWeightedVertices:
+                    return ElementKinds.Bone;
+
+                default:
+                    return null;
+            }
+        }
+
+        private static bool TryReleaseSource(
+            McpMethodContext context, out bool release, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            release = false;
+            object given;
+            if (!context.Params.TryGetValue(ReleaseSourceName, out given))
+            {
+                return true;
+            }
+
+            if (!(given is bool))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ReleaseSourceName + " は真偽でなければならない。";
+
+                return false;
+            }
+
+            release = (bool)given;
+
+            return true;
         }
 
         /// <summary>UVの範囲を読む。上限が下限より小さければ偽を返し、断る内容を渡す。</summary>

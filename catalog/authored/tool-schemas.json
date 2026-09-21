@@ -41275,6 +41275,12 @@
               "required": false
             },
             {
+              "name": "releaseSource",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
               "name": "minU",
               "origin": "hostInput",
               "shape": "number",

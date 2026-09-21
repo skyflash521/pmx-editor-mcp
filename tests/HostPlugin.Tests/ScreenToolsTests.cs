@@ -242,6 +242,82 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheSelectionThatTheRelatedStepReadFromStaysUnlessItIsLetGo()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
+
+            Related(Operation(ViewSelectRelated.FacesToVertices));
+
+            Assert.Equal(new[] { 1, 2, 3 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(new[] { 3, 4, 5 }, _fixture.View.Selected[ElementKinds.Face]);
+        }
+
+        [Fact]
+        public void TheSelectionThatTheRelatedStepReadFromIsLetGoWhenItIsAskedFor()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
+
+            Related(
+                Operation(ViewSelectRelated.FacesToVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.ReleaseSourceName, true));
+
+            Assert.Equal(new[] { 1, 2, 3 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Empty(_fixture.View.Selected[ElementKinds.Face]);
+        }
+
+        [Fact]
+        public void TheBonesThatTheWeightedVerticesWereReadFromAreLetGoWhenItIsAskedFor()
+        {
+            IList<IPXVertex> vertices = Vertices(2);
+            IList<IPXBone> bones = Bones("一");
+            Weigh(vertices[0], bones[0], 1f);
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 0 };
+
+            Related(
+                Operation(ViewSelectRelated.BonesToWeightedVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.ReleaseSourceName, true));
+
+            Assert.Equal(new[] { 0 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Empty(_fixture.View.Selected[ElementKinds.Bone]);
+        }
+
+        [Fact]
+        public void AStepThatReadsNoSelectionLetsNothingGo()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            ((FakeVertex)vertices[1]).UV = new V2(0.5f, 0.5f);
+            Faces(Face(vertices, 0, 1, 2));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            Related(
+                Operation(ViewSelectRelated.UvRegionVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.ReleaseSourceName, true),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinUName, 0.4),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxUName, 0.6),
+                ComposedScreenFixture.Given(ViewSelectRelated.MinVName, 0.4),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaxVName, 0.6));
+
+            Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Face]);
+        }
+
+        [Fact]
+        public void ASelectionToLetGoThatIsNotTrueOrFalseIsRefused()
+        {
+            Vertices(1);
+
+            IDictionary<string, object> envelope = Related(
+                Operation(ViewSelectRelated.UnusedVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.ReleaseSourceName, "はい"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+        }
+
+        [Fact]
         public void TheFacesThatShareAnEdgeWithTheSelectedOnesAreAdded()
         {
             IList<IPXVertex> vertices = Vertices(4);
