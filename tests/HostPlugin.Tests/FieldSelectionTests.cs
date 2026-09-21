@@ -60,13 +60,34 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AskingForWhatIsAlwaysReturnedIsRefused()
+        public void AskingForWhatIsAlwaysReturnedLeavesTheAnswerAsItWouldHaveBeen()
+        {
+            Assert.Equal(
+                new[] { "parentIndex", "indexInParent", "name" },
+                Resolve(new[] { "parentIndex", "name" }, Always));
+        }
+
+        [Fact]
+        public void AskingOnlyForWhatIsAlwaysReturnedTakesNothingElse()
+        {
+            Assert.Equal(
+                new[] { "parentIndex", "indexInParent" },
+                Resolve(new[] { "indexInParent" }, Always));
+        }
+
+        [Fact]
+        public void AskingForWhatIsAlwaysReturnedTwiceIsRefused()
         {
             IList<string> selected;
             string code;
             string message;
             Assert.False(FieldSelection.TryResolve(
-                new[] { "parentIndex" }, Readable, Always, out selected, out code, out message));
+                new[] { "parentIndex", "parentIndex" },
+                Readable,
+                Always,
+                out selected,
+                out code,
+                out message));
             Assert.Equal(ToolEnvelope.InvalidArgument, code);
             Assert.Contains("parentIndex", message);
             Assert.Null(selected);

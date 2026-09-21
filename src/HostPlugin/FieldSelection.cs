@@ -63,9 +63,10 @@ namespace PmxEditorMcp
                 }
             }
 
+            HashSet<string> constant = new HashSet<string>(always, StringComparer.Ordinal);
             foreach (string name in requested)
             {
-                if (!known.Contains(name))
+                if (!known.Contains(name) && !constant.Contains(name))
                 {
                     return Invalid("fields が選んだ " + name + " は読み取れる項目に無い。", out code, out message);
                 }
