@@ -17,6 +17,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string ItemsName = "items";
 
+        private const string CountName = "count";
+
         private const string ToTheEnd =
             "端まで読むなら " + AllName + " に真を渡し、nextOffset が返らなくなるまで"
                 + " offset へ渡し直す。";
@@ -25,6 +27,10 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string RangeIsNotClamped =
             RangeName + " は端で詰めず、リストの件数を超えると断る。";
+
+        private const string MakesNew =
+            "呼ぶたびに新しく作る。返るのは作ったもののハンドルの番号で、要らなくなったら"
+                + " session_release_handle へ渡す。";
 
         /// <summary>
         /// そのツールの呼び方を、スキーマ正本から引いて組み立てる。正本に無いツールでは null。
@@ -70,6 +76,11 @@ namespace PmxEditorMcp.SignatureDump
                 built.Append(RangeIsNotClamped);
             }
 
+            if (Issues(schema))
+            {
+                built.Append(MakesNew);
+            }
+
             return built.Length == 0 ? null : built.ToString();
         }
 
@@ -78,6 +89,16 @@ namespace PmxEditorMcp.SignatureDump
             return schema.Branches.Any(
                 b => b.Inputs.Any(
                     i => !i.Injected && string.Equals(i.Name, name, StringComparison.Ordinal)));
+        }
+
+        private static bool Issues(ToolSchema schema)
+        {
+            SchemaItem output = schema.Output;
+
+            return Takes(schema, CountName)
+                && output != null
+                && output.Element != null
+                && (output.Members == null || output.Members.Count == 0);
         }
 
         private static bool IsListing(ToolSchema schema)

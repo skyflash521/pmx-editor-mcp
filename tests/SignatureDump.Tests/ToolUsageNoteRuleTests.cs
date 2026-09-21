@@ -65,6 +65,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolThatHandsBackHandlesSaysThatItMakesSomethingNew()
+        {
+            string note = ToolUsageNoteRule.Compose(Issuing());
+
+            Assert.Contains("新しく作る", note, StringComparison.Ordinal);
+            Assert.Contains("session_release_handle", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingDoesNotSayThatItMakesSomethingNew()
+        {
+            Assert.DoesNotContain(
+                "session_release_handle",
+                Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheArgumentsAreChecked()
         {
             Assert.Throws<ArgumentNullException>(() => ToolUsageNoteRule.Compose(null));
@@ -87,6 +105,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "model_list_vertices",
                 new[] { new SchemaBranch("only", null, null, taken, new SchemaChoice[0]) },
                 listing ? Listed() : Item(null, "boolean", null, null),
+                null);
+        }
+
+        private static ToolSchema Issuing()
+        {
+            return new ToolSchema(
+                "model_material",
+                new[]
+                {
+                    new SchemaBranch(
+                        "plain",
+                        null,
+                        null,
+                        new List<SchemaItem> { Item("count", "number", null, null) },
+                        new SchemaChoice[0]),
+                },
+                Item(null, null, null, Item(null, "number", null, null)),
                 null);
         }
 
