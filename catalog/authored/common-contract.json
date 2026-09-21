@@ -458,6 +458,11 @@
       "tool": "view_set_camera_rotate_center",
       "branching": false,
       "duty": "視点の回転の中心を、画面で選んでいる要素の重心にする。operation は vertices・bones・face・faceFront のいずれかで、face と faceFront は選んだ面が使う頂点の重心を取り、2つ以上の面が同じくする頂点はその面の数だけ数える。faceFront は中心を決めたうえで、選んだ面の法線をならした向きの側からその中心を見るところへ視点を移し、上を+Yへ向ける。その種類を1つも選んでいなければ断る。centre に決めた中心のxyzを返す。"
+    },
+    {
+      "tool": "view_update_parts_select_window",
+      "branching": false,
+      "duty": "PMXビューの絞込の窓の表示を切り替える。visible に真を渡すと開き、偽を渡すと閉じる。この窓は一度表示するまで材質・ボーン・表情の一覧を組まず、組まれていない間、一覧の位置を読み書きするツールは断る。切り替えたあとの表示を visible に、3つの一覧に並んでいる項目の数を materialItemsCount・boneItemsCount・expressionItemsCount に返す。"
     }
   ],
   "viewImages": [

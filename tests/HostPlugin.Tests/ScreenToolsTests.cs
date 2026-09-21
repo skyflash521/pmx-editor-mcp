@@ -695,6 +695,51 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ShowingThePartsSelectWindowSaysHowManyItemsItsListsNowHold()
+        {
+            _fixture.Parts.Visible = false;
+            _fixture.Parts.MaterialItemsCount = 62;
+            _fixture.Parts.BoneItemsCount = 643;
+            _fixture.Parts.ExpressionItemsCount = 30;
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(_fixture.Call(
+                ViewPartsSelectWindow.ToolName,
+                ComposedScreenFixture.Arguments(
+                    ComposedScreenFixture.Given(ViewPartsSelectWindow.VisibleName, true))));
+
+            Assert.True(_fixture.Parts.Visible);
+            Assert.Equal(true, value[ViewPartsSelectWindow.VisibleName]);
+            Assert.Equal(62, value[ViewPartsSelectWindow.MaterialItemsName]);
+            Assert.Equal(643, value[ViewPartsSelectWindow.BoneItemsName]);
+            Assert.Equal(30, value[ViewPartsSelectWindow.ExpressionItemsName]);
+        }
+
+        [Fact]
+        public void HidingThePartsSelectWindowLeavesItsListsAsTheyAre()
+        {
+            _fixture.Parts.Visible = true;
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(_fixture.Call(
+                ViewPartsSelectWindow.ToolName,
+                ComposedScreenFixture.Arguments(
+                    ComposedScreenFixture.Given(ViewPartsSelectWindow.VisibleName, false))));
+
+            Assert.False(_fixture.Parts.Visible);
+            Assert.Equal(false, value[ViewPartsSelectWindow.VisibleName]);
+        }
+
+        [Fact]
+        public void APartsSelectWindowStateThatIsNotTrueOrFalseIsRefused()
+        {
+            IDictionary<string, object> envelope = _fixture.Call(
+                ViewPartsSelectWindow.ToolName,
+                ComposedScreenFixture.Arguments(
+                    ComposedScreenFixture.Given(ViewPartsSelectWindow.VisibleName, 1)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+        }
+
+        [Fact]
         public void OnlyTheVerticesWhoseEdgeScaleIsNotOneStayShown()
         {
             IList<IPXVertex> vertices = Vertices(3);

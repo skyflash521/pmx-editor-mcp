@@ -1172,6 +1172,12 @@ namespace PmxEditorMcp.Tests
 
         public int MaterialItemsCount { get; set; } = 1;
 
+        public int BoneItemsCount { get; set; } = 1;
+
+        public int ExpressionItemsCount { get; set; } = 1;
+
+        public bool Visible { get; set; }
+
         public int[] GetCheckedMaterialIndices()
         {
             return Checked;
@@ -1207,14 +1213,6 @@ namespace PmxEditorMcp.Tests
             throw new NotSupportedException();
         }
 
-        public int BoneItemsCount
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
-
         public bool BoneSelected
         {
             get
@@ -1223,14 +1221,6 @@ namespace PmxEditorMcp.Tests
             }
 
             set
-            {
-                throw new NotSupportedException();
-            }
-        }
-
-        public int ExpressionItemsCount
-        {
-            get
             {
                 throw new NotSupportedException();
             }
@@ -1328,19 +1318,6 @@ namespace PmxEditorMcp.Tests
         }
 
         public bool SelectedPartsVisible
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-
-            set
-            {
-                throw new NotSupportedException();
-            }
-        }
-
-        public bool Visible
         {
             get
             {

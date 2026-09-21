@@ -4741,6 +4741,52 @@
           "expect": {
             "ok": true
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_parts_select_window",
+          "arguments": {
+            "visible": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "visible",
+                "equals": true
+              },
+              {
+                "path": "boneItemsCount",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_checked_bone_indices",
+          "arguments": {
+            "indices": []
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_parts_select_window",
+          "arguments": {
+            "visible": false
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "visible",
+                "equals": false
+              }
+            ]
+          }
         }
       ]
     }

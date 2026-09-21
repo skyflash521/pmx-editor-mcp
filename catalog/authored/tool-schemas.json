@@ -43174,6 +43174,47 @@
       }
     },
     {
+      "tool": "view_update_parts_select_window",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "visible",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "visible",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          },
+          {
+            "name": "materialItemsCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "boneItemsCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "expressionItemsCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_update_pmd_view_connector",
       "branches": [
         {
