@@ -402,13 +402,27 @@ namespace PmxEditorMcp.Tests
 
             Insert(
                 ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.NodeItem),
-                ComposedEditFixture.Given("parentIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("parentIndices", new object[] { 2 }),
                 ComposedEditFixture.Given(
                     ModelInsertElements.OperationName, ModelInsertElements.Clone),
                 ComposedEditFixture.Given("indices", new object[] { 0 }));
 
             Assert.Equal(2, node.Items.Count);
             Assert.IsAssignableFrom<IPXMorphNodeItem>(node.Items[1]);
+        }
+
+        [Fact]
+        public void DeletingAFrameTheModelHoldsApartIsRefusedAndChangesNothing()
+        {
+            _fixture.Model.Node.Add(new FakeNode("枠"));
+
+            IDictionary<string, object> envelope = Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Node),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            Assert.NotNull(ComposedEditFixture.Code(envelope));
+            Assert.Single(_fixture.Model.Node);
+            Assert.Equal(0, _fixture.Commits);
         }
 
         [Fact]

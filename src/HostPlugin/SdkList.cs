@@ -75,5 +75,22 @@ namespace PmxEditorMcp
         {
             _removeAt(owner, index);
         }
+
+        /// <summary>
+        /// 先頭へ置いた実体の分を戻した、リストそのものの中での位置。先頭へ置いた実体の位置を
+        /// 渡すと <see cref="ArgumentOutOfRangeException"/>。
+        /// </summary>
+        public static int Behind(int index, int ahead)
+        {
+            if (index < ahead)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(index),
+                    index,
+                    "先頭の" + ahead + "件はモデルがリストとは別に持つ実体で、取り除けない。");
+            }
+
+            return index - ahead;
+        }
     }
 }

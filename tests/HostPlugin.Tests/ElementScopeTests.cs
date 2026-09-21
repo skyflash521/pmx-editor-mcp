@@ -221,6 +221,10 @@ namespace PmxEditorMcp.Tests
             pmx.Vertex.Add(vertex);
             FakeBody body = new FakeBody("剛体");
             pmx.Body.Add(body);
+            FakeBone rooted = new FakeBone("全ての親");
+            pmx.Bone.Add(rooted);
+            pmx.RootNode.Items.Add(new FakeBoneNodeItem(rooted));
+            pmx.ExpressionNode.Items.Add(new FakeMorphNodeItem(new FakeMorph("表情", PEPlugin.Pmx.MorphKind.Vertex)));
             for (int at = 0; at < 2; at++)
             {
                 FakeMaterial material = new FakeMaterial("材質" + at);

@@ -39,6 +39,8 @@ namespace PmxEditorMcp.Tests
 
         private const string HeadKey = "Sdk.Pmx.Head()";
 
+        private const string HeadedGroupsKey = "Sdk.Pmx.HeadedGroups()";
+
         private const string LeavesKey = "Sdk.Group.Leaves()";
 
         private const string NoteKey = "Sdk.Pmx.Note()";
@@ -1022,14 +1024,13 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheParentColumnLeavesOutWhatTheAsideRowReturns()
+        public void TheParentColumnStartsWithWhatTheSoleRowReturns()
         {
             Group head = new Group();
             head.Leaves.Add(new Item { Label = "枠" });
             Group group = new Group();
             group.Leaves.Add(new Item { Label = "一" });
             _model.Head = head;
-            _model.Groups.Add(head);
             _model.Groups.Add(group);
 
             IDictionary<string, object> envelope = Call(
@@ -1037,26 +1038,25 @@ namespace PmxEditorMcp.Tests
                 Arguments(TargetNames.Parent.All, true, TargetNames.Element.All, true));
 
             IList<IDictionary<string, object>> items = Items(Value(envelope));
-            Assert.Equal(new[] { "一" }, items.Select(i => i["label"]).ToArray());
+            Assert.Equal(new[] { "枠", "一" }, items.Select(i => i["label"]).ToArray());
             Assert.Equal(
-                new[] { 0 },
+                new[] { 0, 1 },
                 items.Select(i => (int)i[ToolDispatch.ParentIndexName]).ToArray());
         }
 
         [Fact]
-        public void ThePositionOfTheParentCountsFromTheFirstOneThatIsNotAside()
+        public void ThePositionOfTheParentCountsTheSoleOneFirst()
         {
             Group head = new Group();
             Group group = new Group();
             _model.Head = head;
-            _model.Groups.Add(head);
             _model.Groups.Add(group);
             HandleLedger handles = Ledger();
             int held = handles.Issue(typeof(Item).FullName, new Item { Label = "一" }, () => { });
 
             IDictionary<string, object> envelope = Call(
                 "model_add_headed_leaves",
-                Arguments(ToolDispatch.AssignmentsName, new object[] { Assignment(0, held) }),
+                Arguments(ToolDispatch.AssignmentsName, new object[] { Assignment(1, held) }),
                 handles);
 
             Assert.Equal(1, Value(envelope)[SetResponse.AddedName]);
@@ -1065,17 +1065,16 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void APositionPastTheParentsThatAreNotAsideIsRefused()
+        public void APositionPastTheParentsIsRefused()
         {
             Group head = new Group();
             _model.Head = head;
-            _model.Groups.Add(head);
             HandleLedger handles = Ledger();
             int held = handles.Issue(typeof(Item).FullName, new Item { Label = "一" }, () => { });
 
             IDictionary<string, object> envelope = Call(
                 "model_add_headed_leaves",
-                Arguments(ToolDispatch.AssignmentsName, new object[] { Assignment(0, held) }),
+                Arguments(ToolDispatch.AssignmentsName, new object[] { Assignment(1, held) }),
                 handles);
 
             Assert.Equal(ToolEnvelope.IndexOutOfRange, Code(envelope));
@@ -1083,11 +1082,10 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheAddedPositionDoesNotCountWhatTheAsideRowReturns()
+        public void TheAddedPositionCountsWhatTheSoleRowReturns()
         {
             Group head = new Group();
             _model.Head = head;
-            _model.Groups.Add(head);
             HandleLedger handles = Ledger();
             int held = handles.Issue(typeof(Group).FullName, new Group(), () => { });
 
@@ -1098,24 +1096,24 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> value = Value(envelope);
             Assert.Equal(1, value[SetResponse.AddedName]);
-            Assert.Equal(new[] { 0 }, (int[])value[SetResponse.IndicesName]);
-            Assert.Equal(2, _model.Groups.Count);
+            Assert.Equal(new[] { 1 }, (int[])value[SetResponse.IndicesName]);
+            Assert.Single(_model.Groups);
         }
 
         [Fact]
-        public void TheElementsThemselvesAreStillPointedAtByTheirRawPositions()
+        public void TheElementsArePointedAtWithTheSoleOneCountedFirst()
         {
             Group head = new Group { Tag = "頭" };
             _model.Head = head;
-            _model.Groups.Add(head);
             _model.Groups.Add(new Group { Tag = "一" });
             _model.Groups.Add(new Group { Tag = "二" });
 
             IList<IDictionary<string, object>> items = Items(Value(Call(
                 "model_list_headed_groups",
-                Arguments(TargetNames.Element.Indices, new object[] { 1 }))));
+                Arguments(TargetNames.Element.Indices, new object[] { 0, 1 }))));
 
-            Assert.Equal(new object[] { "一" }, items.Select(i => i["tag"]).ToArray());
+            Assert.Equal(
+                new object[] { "頭", "一" }, items.Select(i => i["tag"]).ToArray());
         }
 
         [Fact]
@@ -2689,6 +2687,10 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) => ((Model)target).Head
                     },
                     {
+                        HeadedGroupsKey,
+                        (target, arguments) => ((Model)target).Groups
+                    },
+                    {
                         WidthKey,
                         (target, arguments) => arguments.Length == 0
                             ? (object)((Mark)target).Width
@@ -2775,6 +2777,17 @@ namespace PmxEditorMcp.Tests
                         (owner, index) => ((Model)owner).Groups[index],
                         (owner, item) => ((Model)owner).Groups.Add((Group)item),
                         (owner, index) => ((Model)owner).Groups.RemoveAt(index))
+                },
+                {
+                    HeadedGroupsKey,
+                    new SdkList(
+                        owner => 1 + ((Model)owner).Groups.Count,
+                        (owner, index) => index == 0
+                            ? (object)((Model)owner).Head
+                            : ((Model)owner).Groups[index - 1],
+                        (owner, item) => ((Model)owner).Groups.Add((Group)item),
+                        (owner, index) =>
+                            ((Model)owner).Groups.RemoveAt(SdkList.Behind(index, 1)))
                 },
                 {
                     LeavesKey,
@@ -2878,15 +2891,14 @@ namespace PmxEditorMcp.Tests
         {
             return new ToolAccess(
                 ToolAccessKind.Element,
-                GroupsKey,
+                HeadedGroupsKey,
                 null,
                 true,
                 typeof(Group),
                 item => item is Group,
                 "group",
                 null,
-                null,
-                new[] { HeadKey });
+                null);
         }
 
         /// <summary>1つだけ持つ親が混ざるリストを挟んだ先の、要素のリストへ至る道。</summary>
@@ -2895,7 +2907,7 @@ namespace PmxEditorMcp.Tests
             return new ToolAccess(
                 ToolAccessKind.Element,
                 LeavesKey,
-                new[] { new ToolHop(GroupsKey, true, new[] { HeadKey }) },
+                new[] { new ToolHop(HeadedGroupsKey, true) },
                 true,
                 typeof(Item),
                 item => item is Item,

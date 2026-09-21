@@ -205,7 +205,6 @@ namespace PmxEditorMcp.Tests
         [InlineData(ElementKinds.IkLink)]
         [InlineData(ElementKinds.Morph)]
         [InlineData(ElementKinds.MorphOffset)]
-        [InlineData(ElementKinds.Node)]
         [InlineData(ElementKinds.NodeItem)]
         [InlineData(ElementKinds.Body)]
         [InlineData(ElementKinds.Joint)]
@@ -224,6 +223,59 @@ namespace PmxEditorMcp.Tests
             IList<object> after = kind.Items(owner);
             Assert.Same(items[1], after[0]);
             Assert.Same(items[0], after[1]);
+        }
+
+        [Fact]
+        public void TheFramesStartWithTheExpressionAndTheRootFrameTheModelHoldsApart()
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(ElementKinds.Node);
+
+            IList<object> items = kind.Items(pmx);
+
+            Assert.Equal(4, items.Count);
+            Assert.Same(pmx.ExpressionNode, items[0]);
+            Assert.Same(pmx.RootNode, items[1]);
+            Assert.Same(pmx.Node[0], items[2]);
+            Assert.Same(pmx.Node[1], items[3]);
+        }
+
+        [Fact]
+        public void PuttingTheFramesBackKeepsTheTwoTheModelHoldsApartOutOfItsOwnList()
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(ElementKinds.Node);
+            IList<object> items = kind.Items(pmx);
+
+            kind.Replace(pmx, new[] { items[0], items[1], items[3], items[2] });
+
+            Assert.Equal(2, pmx.Node.Count);
+            Assert.Same(items[3], pmx.Node[0]);
+            Assert.Same(items[2], pmx.Node[1]);
+        }
+
+        [Fact]
+        public void PuttingTheFramesBackWithoutTheTwoTheModelHoldsApartIsRefused()
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(ElementKinds.Node);
+            IList<object> items = kind.Items(pmx);
+
+            Assert.Throws<ArgumentException>(
+                () => kind.Replace(pmx, new[] { items[1], items[2], items[3] }));
+            Assert.Equal(2, pmx.Node.Count);
+        }
+
+        [Fact]
+        public void PuttingTheFramesBackWithTheTwoOutOfTheirPlaceIsRefused()
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(ElementKinds.Node);
+            IList<object> items = kind.Items(pmx);
+
+            Assert.Throws<ArgumentException>(
+                () => kind.Replace(pmx, new[] { items[1], items[0], items[2], items[3] }));
+            Assert.Equal(2, pmx.Node.Count);
         }
 
         [Theory]
@@ -249,7 +301,7 @@ namespace PmxEditorMcp.Tests
         [InlineData(ElementKinds.Face, typeof(IPXFace))]
         [InlineData(ElementKinds.IkLink, typeof(IPXIKLink))]
         [InlineData(ElementKinds.MorphOffset, typeof(IPXVertexMorphOffset))]
-        [InlineData(ElementKinds.NodeItem, typeof(IPXBoneNodeItem))]
+        [InlineData(ElementKinds.NodeItem, typeof(IPXMorphNodeItem))]
         [InlineData(ElementKinds.SoftBodyAnchor, typeof(IPXSoftBodyAnchor))]
         public void TheKindsThatAParentHoldsCloneTheShapeTheirListHolds(string name, Type shape)
         {
@@ -293,6 +345,12 @@ namespace PmxEditorMcp.Tests
             firstBone.IK.Links.Add(new FakeIkLink(secondBone));
             pmx.Bone.Add(firstBone);
             pmx.Bone.Add(secondBone);
+            pmx.RootNode.Items.Add(new FakeBoneNodeItem(firstBone));
+            pmx.RootNode.Items.Add(new FakeBoneNodeItem(secondBone));
+            pmx.ExpressionNode.Items.Add(
+                new FakeMorphNodeItem(new FakeMorph("表情一", MorphKind.Vertex)));
+            pmx.ExpressionNode.Items.Add(
+                new FakeMorphNodeItem(new FakeMorph("表情二", MorphKind.Vertex)));
             for (int at = 0; at < 2; at++)
             {
                 FakeMaterial material = new FakeMaterial("材質" + at);

@@ -438,7 +438,7 @@ namespace PmxEditorMcp.Tests
                 Expected(ElementKinds.Vertex, 0),
                 Expected(ElementKinds.Bone, 2),
                 Expected(ElementKinds.Morph, 2),
-                Expected(ElementKinds.Node, 0),
+                Expected(ElementKinds.Node, 2),
                 Expected(ElementKinds.Body, 0));
         }
 
@@ -451,7 +451,7 @@ namespace PmxEditorMcp.Tests
                 ElementKinds.Morph,
                 5,
                 Expected(ElementKinds.Morph, 3),
-                Expected(ElementKinds.Node, 0));
+                Expected(ElementKinds.Node, 2));
         }
 
         [Fact]
@@ -525,12 +525,13 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AFrameOutsideTheListedFramesIsNotCounted()
+        public void TheSystemFramesAreCountedAndComeFirstInTheOrderOfFrames()
         {
             IList<IPXBone> bones = Bones(1);
             _model.ExpressionNode.Items.Add(new FakeBoneNodeItem(bones[0]));
 
-            Assert.Empty(
+            Assert.Equal(
+                new[] { 0 },
                 ReferenceEdges.Union(_model, ElementKinds.Bone, new[] { 0 }, 0f)
                     .Of(ElementKinds.Node));
         }
@@ -610,7 +611,7 @@ namespace PmxEditorMcp.Tests
                 Expected(ElementKinds.Vertex, 0),
                 Expected(ElementKinds.Bone, 2),
                 Expected(ElementKinds.Morph, 2),
-                Expected(ElementKinds.Node, 0),
+                Expected(ElementKinds.Node, 2),
                 Expected(ElementKinds.Body, 0));
         }
 
@@ -629,7 +630,7 @@ namespace PmxEditorMcp.Tests
                 Held,
                 6,
                 Expected(ElementKinds.Morph, 3),
-                Expected(ElementKinds.Node, 0));
+                Expected(ElementKinds.Node, 2));
         }
 
         [Fact]

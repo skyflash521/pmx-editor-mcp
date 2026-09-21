@@ -203,7 +203,7 @@ namespace PmxEditorMcp.SignatureDump
                             map,
                             tool,
                             responding.Contains(tool)));
-                    Listing(lists, path, signatures, byType);
+                    Listing(lists, path, signatures, byType, aside);
                     continue;
                 }
 
@@ -237,7 +237,7 @@ namespace PmxEditorMcp.SignatureDump
                                 listed, signatures, concrete, byType, aside, built));
                     }
 
-                    Listing(lists, listed, signatures, byType);
+                    Listing(lists, listed, signatures, byType, aside);
                     continue;
                 }
 
@@ -254,7 +254,7 @@ namespace PmxEditorMcp.SignatureDump
                             Aggregation(
                                 row, byType[target.OwnerType], target.Updates, owning,
                                 signatures, concrete, byType, aside));
-                        Listing(lists, owning, signatures, byType);
+                        Listing(lists, owning, signatures, byType, aside);
                     }
 
                     List<string> members;
@@ -489,7 +489,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> lists,
             AccessPath path,
             IDictionary<string, SignatureRecord> signatures,
-            IDictionary<string, TypeRoleRecord> byType)
+            IDictionary<string, TypeRoleRecord> byType,
+            IDictionary<string, IList<string>> aside)
         {
             if (path == null || path.Kind != AccessPathKind.Element)
             {
@@ -507,7 +508,9 @@ namespace PmxEditorMcp.SignatureDump
                     continue;
                 }
 
-                lists.Add(rowKey, List(signature, element));
+                IList<string> sole;
+                aside.TryGetValue(rowKey, out sole);
+                lists.Add(rowKey, List(signature, element, sole, signatures));
             }
         }
 
@@ -932,8 +935,7 @@ namespace PmxEditorMcp.SignatureDump
 
             string[] hops = path.Parents
                 .Select(p => "new ToolHop(" + Literal(p) + ", "
-                    + (ElementPathEvidence.Listed(signatures, p) ? "true" : "false")
-                    + Aside(aside, p) + ")")
+                    + (ElementPathEvidence.Listed(signatures, p) ? "true" : "false") + ")")
                 .ToArray();
             string walked = "new ToolHop[] { " + string.Join(", ", hops) + " }, "
                 + (path.Listed ? "true" : "false");
@@ -953,23 +955,7 @@ namespace PmxEditorMcp.SignatureDump
                 + ", " + walked + ", "
                 + TypeOf(path.ElementType) + ", item => item is " + Code(path.ElementType) + ", "
                 + noun + ", " + Items(path, signatures, concrete, byType) + ", "
-                + (path.OwnerType == null ? "null" : TypeOf(path.OwnerType))
-                + Aside(aside, path.RowKey) + ")";
-        }
-
-        /// <summary>
-        /// その並びから外す実体を返す行をC#の式にする。外す行の無い並びでは、直前の引数までで
-        /// 終える空文字になる。
-        /// </summary>
-        private static string Aside(IDictionary<string, IList<string>> aside, string rowKey)
-        {
-            IList<string> rows;
-            if (rowKey == null || !aside.TryGetValue(rowKey, out rows))
-            {
-                return string.Empty;
-            }
-
-            return ", new string[] { " + string.Join(", ", rows.Select(Literal).ToArray()) + " }";
+                + (path.OwnerType == null ? "null" : TypeOf(path.OwnerType)) + ")";
         }
 
         /// <summary>
@@ -1009,15 +995,42 @@ namespace PmxEditorMcp.SignatureDump
                 : "new ToolItem[] { " + string.Join(", ", items) + " }";
         }
 
-        private static string List(SignatureRecord signature, string element)
+        /// <summary>
+        /// リストを読み書きする中継をC#の式にする。<paramref name="sole"/> はそのリストに並ばず
+        /// 同じ型の実体を1つだけ返す行で、行キーの昇順で並びの先頭に入り、そこからは取り除けない。
+        /// </summary>
+        private static string List(
+            SignatureRecord signature,
+            string element,
+            IList<string> sole,
+            IDictionary<string, SignatureRecord> signatures)
         {
             string owner = "((" + Code(signature.DeclaringType) + ")owner)." + signature.MemberName;
+            if (sole == null || sole.Count == 0)
+            {
+                return "new SdkList("
+                    + "owner => " + owner + ".Count, "
+                    + "(owner, index) => " + owner + "[index], "
+                    + "(owner, item) => " + owner + ".Add((" + Code(element) + ")item), "
+                    + "(owner, index) => " + owner + ".RemoveAt(index))";
+            }
+
+            string[] ahead = sole
+                .Select(k => "((" + Code(signatures[k].DeclaringType) + ")owner)."
+                    + signatures[k].MemberName)
+                .ToArray();
+            string at = owner + "[index - " + ahead.Length + "]";
+            for (int back = ahead.Length - 1; back >= 0; back--)
+            {
+                at = "index == " + back + " ? (object)" + ahead[back] + " : " + at;
+            }
 
             return "new SdkList("
-                + "owner => " + owner + ".Count, "
-                + "(owner, index) => " + owner + "[index], "
+                + "owner => " + ahead.Length + " + " + owner + ".Count, "
+                + "(owner, index) => " + at + ", "
                 + "(owner, item) => " + owner + ".Add((" + Code(element) + ")item), "
-                + "(owner, index) => " + owner + ".RemoveAt(index))";
+                + "(owner, index) => " + owner
+                + ".RemoveAt(SdkList.Behind(index, " + ahead.Length + ")))";
         }
 
         private static string Field(

@@ -72,9 +72,7 @@ namespace PmxEditorMcp
     /// <summary>要素へ至る途中の一歩。</summary>
     public sealed class ToolHop
     {
-        private static readonly string[] NoRows = new string[0];
-
-        public ToolHop(string rowKey, bool listed, IList<string> excluded = null)
+        public ToolHop(string rowKey, bool listed)
         {
             if (rowKey == null)
             {
@@ -83,7 +81,6 @@ namespace PmxEditorMcp
 
             RowKey = rowKey;
             Listed = listed;
-            Excluded = new ReadOnlyCollection<string>(excluded ?? NoRows);
         }
 
         /// <summary>その一歩を進む行のキー。</summary>
@@ -91,12 +88,6 @@ namespace PmxEditorMcp
 
         /// <summary>リストの段か。偽なら、そのプロパティを1つ辿る段。</summary>
         public bool Listed { get; }
-
-        /// <summary>
-        /// その並びに混ざる実体を1つだけ返す行。行を呼んで得た実体と参照が一致する要素は、位置で
-        /// 数える並びに入らない。外す実体の無い一歩では空。
-        /// </summary>
-        public IList<string> Excluded { get; }
     }
 
     /// <summary>
@@ -109,8 +100,6 @@ namespace PmxEditorMcp
 
         private static readonly ToolItem[] NoItems = new ToolItem[0];
 
-        private static readonly string[] NoRows = new string[0];
-
         public ToolAccess(
             ToolAccessKind kind,
             string rowKey,
@@ -120,8 +109,7 @@ namespace PmxEditorMcp
             Func<object, bool> isElement,
             string itemType = null,
             IList<ToolItem> items = null,
-            Type owner = null,
-            IList<string> excluded = null)
+            Type owner = null)
         {
             if (kind != ToolAccessKind.Whole && rowKey == null)
             {
@@ -142,7 +130,6 @@ namespace PmxEditorMcp
             ItemType = itemType;
             Items = new ReadOnlyCollection<ToolItem>(items ?? NoItems);
             Owner = owner;
-            Excluded = new ReadOnlyCollection<string>(excluded ?? NoRows);
         }
 
         public ToolAccessKind Kind { get; }
@@ -176,13 +163,6 @@ namespace PmxEditorMcp
         /// リストの要素でなければ、その親を指すハンドルは発行されない。
         /// </summary>
         public Type Owner { get; }
-
-        /// <summary>
-        /// そのリストに混ざる実体を1つだけ返す行。加えた要素の位置を数えるときだけ、行を呼んで得た
-        /// 実体と参照が一致する要素を数から外す。要素そのものを位置で指す道では外さない。外す実体の
-        /// 無い道では空。
-        /// </summary>
-        public IList<string> Excluded { get; }
 
         /// <summary>受け手そのものを相手にする道。</summary>
         public static ToolAccess Whole()

@@ -16,6 +16,40 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AMorphOnTheExpressionNodeIsCountedAsANodeThatPointsAtIt()
+        {
+            FakeMorph morph = new FakeMorph("モーフ", MorphKind.Vertex);
+            _fixture.Model.Morph.Add(morph);
+            _fixture.Model.ExpressionNode.Items.Add(new FakeMorphNodeItem(morph));
+
+            IDictionary<string, object> found = Found(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Morph),
+                ComposedEditFixture.Given(TargetNames.Element.Indices, new object[] { 0 }));
+
+            Assert.Equal(1, Counted(found)[ElementKinds.Node]);
+        }
+
+        [Fact]
+        public void TheExpressionAndRootNodesComeFirstInTheOrderNodesArePointedAtBy()
+        {
+            FakeMorph morph = new FakeMorph("モーフ", MorphKind.Vertex);
+            _fixture.Model.Morph.Add(morph);
+            FakeNode node = new FakeNode("枠");
+            node.Items.Add(new FakeMorphNodeItem(morph));
+            _fixture.Model.Node.Add(node);
+            _fixture.Model.ExpressionNode.Items.Add(new FakeMorphNodeItem(morph));
+
+            IDictionary<string, object> found = Found(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Morph),
+                ComposedEditFixture.Given(TargetNames.Element.Indices, new object[] { 0 }),
+                ComposedEditFixture.Given(ModelFindReferrers.DetailName, ModelFindReferrers.Indices),
+                ComposedEditFixture.Given(
+                    ModelFindReferrers.ReferrerKindName, ElementKinds.Node));
+
+            Assert.Equal(new[] { 0, 2 }, Places(found));
+        }
+
+        [Fact]
         public void TheCountOfEachKindThatPointsAtTheGivenElementComesBack()
         {
             Rigged();

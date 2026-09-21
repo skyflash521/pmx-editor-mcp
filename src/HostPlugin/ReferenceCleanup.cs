@@ -257,7 +257,9 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>モデルが持つ枠のすべて。根の枠と表情の枠も数に入る。</summary>
+        /// <summary>
+        /// モデルが持つ枠のすべて。表情の枠と根の枠も数に入り、この2つがこの順で先に並ぶ。
+        /// </summary>
         public static IEnumerable<IPXNode> Nodes(object pmx)
         {
             if (pmx == null)
@@ -267,7 +269,7 @@ namespace PmxEditorMcp
 
             IPXPmx model = (IPXPmx)pmx;
 
-            return new[] { model.RootNode, model.ExpressionNode }.Concat(model.Node);
+            return new[] { model.ExpressionNode, model.RootNode }.Concat(model.Node);
         }
 
         private static T Moved<T>(IDictionary<T, T> moved, T held)

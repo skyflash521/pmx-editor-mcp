@@ -92,8 +92,6 @@ namespace PmxEditorMcp
 
         private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
-        private static readonly object[] NoAside = new object[0];
-
         private readonly SdkRelayTable _relay;
 
         private readonly EventBindingTable _events;
@@ -2834,10 +2832,8 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 SdkList list;
-                IList<object> aside;
                 if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, null, false, out target, out refused)
-                    || !TryList(tool.Access.RowKey, out list, out refused)
-                    || !TryAside(tool.Access.Excluded, target.Pmx, out aside, out refused))
+                    || !TryList(tool.Access.RowKey, out list, out refused))
                 {
                     return;
                 }
@@ -2851,7 +2847,7 @@ namespace PmxEditorMcp
                     }
 
                     list.Add(target.Pmx, items[at]);
-                    indices[at] = Counted(list, target.Pmx, aside) - 1;
+                    indices[at] = list.Count(target.Pmx) - 1;
                 }
 
                 stage = Reflecting(tool.Receiver, target, stage);
@@ -2927,12 +2923,6 @@ namespace PmxEditorMcp
                 foreach (Assignment assignment in assignments)
                 {
                     object owner = byHandle ? assignment.Owner : owners[assignment.Parent];
-                    IList<object> aside;
-                    if (!TryAside(tool.Access.Excluded, owner, out aside, out refused))
-                    {
-                        return;
-                    }
-
                     foreach (object item in assignment.Items)
                     {
                         if (!byHandle && !TryApplyDeferred(item, target, out refused))
@@ -2941,7 +2931,7 @@ namespace PmxEditorMcp
                         }
 
                         list.Add(owner, item);
-                        indices.Add(Counted(list, owner, aside) - 1);
+                        indices.Add(list.Count(owner) - 1);
 
                         // 預かりを移すのは加わってからとする。加わらないまま移すと、預かりは親の
                         // もとに在るのに子はそこに居ないので、その子を別の親へ加え直しても解けない。
@@ -3834,9 +3824,7 @@ namespace PmxEditorMcp
             if (hop.Listed)
             {
                 SdkList list;
-                IList<object> aside;
-                if (!TryList(hop.RowKey, out list, out refused)
-                    || !TryAside(hop.Excluded, owner, out aside, out refused))
+                if (!TryList(hop.RowKey, out list, out refused))
                 {
                     return false;
                 }
@@ -3845,7 +3833,7 @@ namespace PmxEditorMcp
                 for (int at = 0; at < count; at++)
                 {
                     object item = list.At(owner, at);
-                    if (item != null && !Aside(aside, item))
+                    if (item != null)
                     {
                         next.Add(item);
                     }
@@ -3869,78 +3857,6 @@ namespace PmxEditorMcp
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// 位置で数える並びから外す実体。<paramref name="rows"/> の行を1つずつ呼んで並べる。外す
-        /// 行が無ければ空で、その並びからは何も外れない。
-        /// </summary>
-        private bool TryAside(
-            IList<string> rows, object owner, out IList<object> aside, out Refusal refused)
-        {
-            refused = null;
-            aside = NoAside;
-            if (rows.Count == 0 || owner == null)
-            {
-                return true;
-            }
-
-            List<object> found = new List<object>(rows.Count);
-            foreach (string rowKey in rows)
-            {
-                object value;
-                SdkRelayRefusal refusal;
-                if (!_relay.TryInvoke(rowKey, owner, new object[0], out value, out refusal))
-                {
-                    refused = Refusal.Of(rowKey, refusal);
-
-                    return false;
-                }
-
-                if (value != null)
-                {
-                    found.Add(value);
-                }
-            }
-
-            aside = found;
-
-            return true;
-        }
-
-        /// <summary>その実体を位置で数える並びから外すか。</summary>
-        private static bool Aside(IList<object> aside, object item)
-        {
-            for (int at = 0; at < aside.Count; at++)
-            {
-                if (ReferenceEquals(aside[at], item))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>位置で数える並びの件数。外す実体と参照が一致する要素は数に入らない。</summary>
-        private static int Counted(SdkList list, object owner, IList<object> aside)
-        {
-            int count = list.Count(owner);
-            if (aside.Count == 0)
-            {
-                return count;
-            }
-
-            int counted = 0;
-            for (int at = 0; at < count; at++)
-            {
-                if (!Aside(aside, list.At(owner, at)))
-                {
-                    counted++;
-                }
-            }
-
-            return counted;
         }
 
         /// <summary>

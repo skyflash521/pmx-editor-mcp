@@ -474,37 +474,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AListWithASoleMemberOfItsElementTypeCarriesThatRowAsAside()
+        public void AListWithASoleMemberOfItsElementTypePutsThatRowAtTheFrontOfTheList()
         {
             ToolBindingSource source = Build(Collection(), Head());
 
             Assert.Contains(
-                "new ToolAccess(ToolAccessKind.Element, \"" + ListKey
-                    + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
-                    + "), item => item is global::" + Vertex
-                    + ", \"vertex\", null, null, new string[] { \"" + HeadKey + "\" })",
+                "owner => 1 + ((global::" + Pmx + ")owner).Vertex.Count",
+                source.Text);
+            Assert.Contains(
+                "(owner, index) => index == 0 ? (object)((global::" + Pmx
+                    + ")owner).Head : ((global::" + Pmx + ")owner).Vertex[index - 1]",
                 source.Text);
         }
 
         [Fact]
-        public void AParentHopOverThatListCarriesTheSameAsideRow()
+        public void TheRowAtTheFrontOfTheListCannotBeTakenOutOfIt()
         {
-            ToolBindingSource source = Build(Collection(), Weights(), Head());
+            ToolBindingSource source = Build(Collection(), Head());
 
             Assert.Contains(
-                "new ToolHop(\"" + ListKey + "\", true, new string[] { \"" + HeadKey + "\" })",
+                "((global::" + Pmx + ")owner).Vertex.RemoveAt(SdkList.Behind(index, 1))",
                 source.Text);
         }
 
         [Fact]
-        public void AListWithNoSoleMemberOfItsElementTypeCarriesNoAsideRow()
+        public void AListWithNoSoleMemberOfItsElementTypeIsRelayedAsItIs()
         {
             ToolBindingSource source = Build(Collection(), Weights());
 
             Assert.Contains(
-                "new ToolHop(\"" + ListKey + "\", true)",
+                "owner => ((global::" + Pmx + ")owner).Vertex.Count",
                 source.Text);
-            Assert.DoesNotContain("new string[] { \"" + HeadKey + "\" }", source.Text);
+            Assert.DoesNotContain("SdkList.Behind(", source.Text);
         }
 
         /// <summary>そのリストと同じ要素の型を1つだけ返す、同じ型のメンバーの題材。</summary>

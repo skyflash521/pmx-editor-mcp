@@ -218,10 +218,13 @@ namespace PmxEditorMcp
                 Morph,
                 pmx => ((IPXPmx)pmx).Morph,
                 builder => builder.Morph());
-            ElementKind node = Rooted(
+            ElementKind node = new ElementKind(
                 Node,
-                pmx => ((IPXPmx)pmx).Node,
-                builder => builder.Node());
+                null,
+                pmx => ReferenceCleanup.Nodes(pmx).Cast<object>().ToList(),
+                PutNodes,
+                builder => ((IPXPmxBuilder)builder).Node(),
+                Copy);
             ElementKind softBody = Rooted(
                 SoftBody,
                 pmx => ((IPXPmx)pmx).SoftBody,
@@ -279,6 +282,33 @@ namespace PmxEditorMcp
                     held.Add((T)item);
                 }
             };
+        }
+
+        /// <summary>
+        /// 枠の並びを置き換える。先頭の2つはモデルがリストとは別に持つ枠で、リストへは入らない。
+        /// その2つが先頭に居ない並びは <see cref="ArgumentException"/> で断る。
+        /// </summary>
+        private static void PutNodes(object owner, IList<object> items)
+        {
+            IPXPmx model = (IPXPmx)owner;
+            object[] ahead = { model.ExpressionNode, model.RootNode };
+            for (int at = 0; at < ahead.Length; at++)
+            {
+                if (items.Count <= at || !ReferenceEquals(items[at], ahead[at]))
+                {
+                    throw new ArgumentException(
+                        "先頭の" + ahead.Length
+                            + "件はモデルがリストとは別に持つ枠で、取り除くことも動かすこともできない。",
+                        nameof(items));
+                }
+            }
+
+            IList<IPXNode> held = model.Node;
+            held.Clear();
+            for (int at = ahead.Length; at < items.Count; at++)
+            {
+                held.Add((IPXNode)items[at]);
+            }
         }
 
         private static object Copy(object item)
