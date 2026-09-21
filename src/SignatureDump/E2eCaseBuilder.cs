@@ -156,6 +156,19 @@ namespace PmxEditorMcp.SignatureDump
         private const int FirstPosition = 0;
 
         /// <summary>
+        /// そのツールが動かせる、いちばん手前の位置。並びの先頭に固定で並ぶ要素は取り除くことも
+        /// 動かすこともできないので、その件数だけ後ろを指す。
+        /// </summary>
+        private static int Movable(string tool, IDictionary<string, int> fixedLeading)
+        {
+            int ahead;
+
+            return fixedLeading != null && tool != null && fixedLeading.TryGetValue(tool, out ahead)
+                ? FirstPosition + ahead
+                : FirstPosition;
+        }
+
+        /// <summary>
         /// 対象を指す項目の名前。対象が決まっている呼び出しでは、この組を埋めない——ハンドルで
         /// 指した対象は、位置でも親でも指し直せない。
         /// </summary>
@@ -203,7 +216,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> addersByType = null,
             IDictionary<string, string> updaters = null,
             IDictionary<string, ISet<string>> targeted = null,
-            IDictionary<string, ParentValues> parentValues = null)
+            IDictionary<string, ParentValues> parentValues = null,
+            IDictionary<string, int> fixedLeading = null)
         {
             if (map == null)
             {
@@ -357,7 +371,8 @@ namespace PmxEditorMcp.SignatureDump
                     typeMakers,
                     parents,
                     stepSetups,
-                    wiring));
+                    wiring,
+                    fixedLeading));
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(
@@ -750,8 +765,10 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema,
             IDictionary<SchemaItem, string> sdkShapes,
             IDictionary<SchemaItem, object> sampled,
-            IDictionary<SchemaItem, string> handleTargets)
+            IDictionary<SchemaItem, string> handleTargets,
+            IDictionary<string, int> fixedLeading)
         {
+            int first = Movable(schema.Tool, fixedLeading);
             foreach (SchemaBranch branch in schema.Branches)
             {
                 IDictionary<string, object> arguments =
@@ -759,7 +776,7 @@ namespace PmxEditorMcp.SignatureDump
                 foreach (SchemaItem input in branch.Inputs.Where(
                     i => !i.Injected && Points(i.Name)))
                 {
-                    arguments[input.Name] = new object[] { FirstPosition };
+                    arguments[input.Name] = new object[] { first };
                 }
 
                 bool pointed = true;
@@ -772,7 +789,7 @@ namespace PmxEditorMcp.SignatureDump
                         break;
                     }
 
-                    arguments[name] = new object[] { FirstPosition };
+                    arguments[name] = new object[] { first };
                 }
 
                 if (pointed && arguments.Count != 0
@@ -952,7 +969,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, IList<string>> typeMakers,
             IDictionary<string, string> parents,
             IDictionary<string, IList<SetupOperation>> stepSetups,
-            ElementWiring wiring)
+            ElementWiring wiring,
+            IDictionary<string, int> fixedLeading)
         {
             // 行から導く名前を持たないツールは、行の値も接続の経路も持たない。
             string rowKey = row == null ? string.Empty : row.SignatureKey;
@@ -1072,7 +1090,8 @@ namespace PmxEditorMcp.SignatureDump
                 }
                 else
                 {
-                    IDictionary<string, object> pointing = Pointed(schema, sdkShapes, sampled, handleTargets);
+                    IDictionary<string, object> pointing =
+                        Pointed(schema, sdkShapes, sampled, handleTargets, fixedLeading);
                     if (pointing != null)
                     {
                         calls = true;

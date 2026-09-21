@@ -257,6 +257,51 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// ツールの名前から、そのツールが位置で数える並びの先頭に固定で並ぶ件数へ。固定の要素が
+        /// 無い並びのツールは持たない。位置を渡す検査は、この件数より後ろの位置を指す。
+        /// </summary>
+        public IDictionary<string, int> FixedLeading(InventoryRecord inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            IDictionary<string, SignatureRecord> signatures = inventory.Signatures
+                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+            IDictionary<string, IList<string>> aside = ElementCollectionEvidence.Aside(
+                signatures, new HashSet<string>(signatures.Keys, StringComparer.Ordinal));
+            Dictionary<string, int> leading =
+                new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, IList<string>> row in aside)
+            {
+                SignatureRecord listing;
+                string element;
+                if (row.Value.Count == 0
+                    || !signatures.TryGetValue(row.Key, out listing)
+                    || !ValueTypeName.TryElement(listing.ValueType, out element))
+                {
+                    continue;
+                }
+
+                foreach (TypeRoleRecord role in OwnedRoles(inventory).Types
+                    .Where(t => string.Equals(t.TypeName, element, StringComparison.Ordinal)))
+                {
+                    foreach (ToolVerb verb in (ToolVerb[])Enum.GetValues(typeof(ToolVerb)))
+                    {
+                        string named = ToolNameRule.OfRole(role, verb);
+                        if (!string.IsNullOrEmpty(named))
+                        {
+                            leading[named] = row.Value.Count;
+                        }
+                    }
+                }
+            }
+
+            return leading;
+        }
+
+        /// <summary>
         /// 要素をリストから外すツールの名前から、その要素をリストへ加えるツールの名前へ。外す
         /// 相手は段取りが加えた要素である——新しく作った要素はまだ並びに無いので外せない。
         /// </summary>
