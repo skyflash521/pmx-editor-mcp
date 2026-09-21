@@ -80,12 +80,12 @@ claude mcp add pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶�
 | `src/HostPlugin/` | ホスト |
 | `src/Bridge/` | ブリッジ |
 | `src/SignatureDump/` | SDKの公開APIを列挙し、台帳と機械可読の定義群をそれへ突き合わせる実行器。検査からだけ走らせる |
-| `tests/HostPlugin.Tests/`・`tests/Bridge.Tests/`・`tests/SignatureDump.Tests/` | xUnit。UIスレッドとエディタ実機に依存する部分は対象外で、実機に触る検査が担保する |
+| `tests/HostPlugin.Tests/`・`tests/Bridge.Tests/`・`tests/SignatureDump.Tests/` | xUnit。UIスレッドとエディタ実機に依存する部分は、実機に触る検査が担保する |
 | `docs/` | 規約と仕様書 |
 | `scripts/` | 検証の実行器と、それが使う補助。用途と使い方は各スクリプト冒頭のコメント |
 | `PmxEditorMcp.sln` | ソリューション。リポジトリ直下のこの1本にすべてのプロジェクトを集約する |
 
-**個々のファイルはここに列挙しない**(増やすたびに古くなる)。何があるかは `git ls-files` で分かる。
+この表は置き場の分類までを載せる。何があるかは `git ls-files` で分かる。
 
 ## 検証
 
