@@ -338,6 +338,34 @@
         },
         {
           "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "name"
+            ],
+            "nameContains": "どのボーンも持たない名前"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0",
+                "absent": true
+              },
+              {
+                "path": "nextOffset",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_list_bodies",
           "arguments": {
             "all": true,

@@ -227,6 +227,101 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void NarrowingAListByNameKeepsOnlyTheElementsWhoseNameHoldsTheText()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+            _model.Items.Add(new Item { Label = "左手" });
+            _model.Items.Add(new Item { Label = "右手の爪" });
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, "爪")));
+
+            Assert.Equal(
+                new[] { "左足の爪", "右手の爪" },
+                Items(value).Select(i => i["name"]).ToArray());
+            Assert.Equal(3, value[ToolDispatch.TotalName]);
+            Assert.False(value.ContainsKey(ToolDispatch.NextOffsetName));
+        }
+
+        [Fact]
+        public void TheNextPositionRunsToTheEndOfWhatTheNameNarrowingKept()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+            _model.Items.Add(new Item { Label = "左手" });
+            _model.Items.Add(new Item { Label = "右手の爪" });
+
+            IDictionary<string, object> first = Value(Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, "爪",
+                    ToolDispatch.LimitName, 1)));
+
+            Assert.Equal(new[] { "左足の爪" }, Items(first).Select(i => i["name"]).ToArray());
+            Assert.Equal(1, first[ToolDispatch.NextOffsetName]);
+
+            IDictionary<string, object> second = Value(Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, "爪",
+                    ToolDispatch.OffsetName, 1,
+                    ToolDispatch.LimitName, 1)));
+
+            Assert.Equal(new[] { "右手の爪" }, Items(second).Select(i => i["name"]).ToArray());
+            Assert.False(second.ContainsKey(ToolDispatch.NextOffsetName));
+        }
+
+        [Fact]
+        public void NarrowingByNameKeepsThePositionEachElementHasInTheWholeList()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+            _model.Items.Add(new Item { Label = "左手" });
+            _model.Items.Add(new Item { Label = "右手の爪" });
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, "爪")));
+
+            Assert.Equal(
+                new object[] { 0, 2 },
+                Items(value).Select(i => i[ToolDispatch.IndexName]).ToArray());
+        }
+
+        [Fact]
+        public void NarrowingByNameIsRefusedOnAListWhoseElementsHaveNoName()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, "爪"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void AnEmptyTextToNarrowByNameIsRefused()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, string.Empty));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
         public void EachElementOfAListWithoutParentsCarriesWhereItIs()
         {
             _model.Items.Add(new Item { Label = "一" });
@@ -3072,6 +3167,15 @@ namespace PmxEditorMcp.Tests
                 {
                     "model_list_items",
                     new ToolFields(false, true, Rooted(EditKind.Read), Direct(), Set(labels))
+                },
+                {
+                    "model_list_named",
+                    new ToolFields(
+                        false,
+                        true,
+                        Rooted(EditKind.Read),
+                        Direct(),
+                        Set(new[] { new ToolField("name", LabelKey, typeof(string)) }))
                 },
                 {
                     "model_update_items",

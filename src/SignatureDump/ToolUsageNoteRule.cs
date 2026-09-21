@@ -25,6 +25,12 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string WithParent = "親も " + ParentAllName + " に真を渡す。";
 
+        private const string NameContainsName = "nameContains";
+
+        private const string NarrowsByName =
+            NameContainsName + " を渡すと、name がその文字列を含む要素だけが残る。"
+                + "大文字小文字は区別し、" + TotalName + " は絞り込む前の件数のままになる。";
+
         private const string RangeIsNotClamped =
             RangeName + " は端で詰めず、リストの件数を超えると断る。";
 
@@ -69,6 +75,11 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     built.Append(WithParent);
                 }
+            }
+
+            if (Takes(schema, NameContainsName))
+            {
+                built.Append(NarrowsByName);
             }
 
             if (Takes(schema, RangeName))

@@ -53,6 +53,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AListingThatTakesNameContainsCarriesWhatItNarrows()
+        {
+            string note = Note(true, "indices", "range", "all", "offset", "limit", "nameContains");
+
+            Assert.Contains("nameContains", note, StringComparison.Ordinal);
+            Assert.Contains("name", note, StringComparison.Ordinal);
+            Assert.Contains("total", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingWithoutNameContainsDoesNotCarryIt()
+        {
+            Assert.DoesNotContain(
+                "nameContains", Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AToolThatTakesNeitherCarriesNoNote()
         {
             Assert.Null(Note(false, "pmxHandle"));

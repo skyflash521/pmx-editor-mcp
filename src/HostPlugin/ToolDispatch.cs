@@ -28,6 +28,11 @@ namespace PmxEditorMcp
         /// <summary>一覧が切り出す件数を受け取る共通引数の名前。</summary>
         public const string LimitName = "limit";
 
+        /// <summary>一覧を名前の一部で絞り込む共通引数の名前。</summary>
+        public const string NameContainsName = "nameContains";
+
+        private const string NameFieldName = "name";
+
         /// <summary>更新が受け取る値の組の名前。</summary>
         public const string ValueName = "value";
 
@@ -2189,12 +2194,18 @@ namespace PmxEditorMcp
             long? handle;
             int offset;
             int limit;
+            string needle;
             Pointed pointed;
+            ToolField named = NameField(tool);
             List<string> known = new List<string> { FieldsName };
             if (tool.Listing)
             {
                 known.Add(OffsetName);
                 known.Add(LimitName);
+                if (named != null)
+                {
+                    known.Add(NameContainsName);
+                }
             }
 
             known.AddRange(Pointing(tool.Access, true, tool.Receiver));
@@ -2203,6 +2214,7 @@ namespace PmxEditorMcp
                 || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
                 || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
                 || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message)
+                || !TryNameContains(context, out needle, out code, out message)
                 || !TryFields(context, out requested, out code, out message)
                 || !TryPointed(
                     context, tool.Access, true, handle, out pointed, out code, out message,
@@ -2243,6 +2255,12 @@ namespace PmxEditorMcp
                         out total,
                         out refused)
                     || !TryOfDeclaredType(column, tool.Access, divided, out refused))
+                {
+                    return;
+                }
+
+                if (needle != null
+                    && !TryNarrow(column, named, needle, out column, out refused))
                 {
                     return;
                 }
@@ -2342,6 +2360,81 @@ namespace PmxEditorMcp
             return tool.Listing
                 ? Listed(context, items, total, pointedCount, offset, limit, warnings)
                 : ToolEnvelope.Success(items[0], warnings);
+        }
+
+        /// <summary>
+        /// 一覧の要素が名前を持つなら、その名前を読む項目。持たなければ null で、名前での絞り込みは
+        /// 受け取らない。
+        /// </summary>
+        private static ToolField NameField(ToolFields tool)
+        {
+            return tool.Fields.FirstOrDefault(
+                f => string.Equals(f.Name, NameFieldName, StringComparison.Ordinal)
+                    && f.Type == typeof(string));
+        }
+
+        /// <summary>
+        /// 名前が渡された文字列を含む要素だけを残す。名前を読めなければ偽で、
+        /// <paramref name="refused"/> に断りを持たせる。照合は序数で、大文字小文字を同じにしない。
+        /// </summary>
+        private bool TryNarrow(
+            IList<Spot> column,
+            ToolField named,
+            string needle,
+            out IList<Spot> kept,
+            out Refusal refused)
+        {
+            refused = null;
+            List<Spot> held = new List<Spot>();
+            foreach (Spot spot in column)
+            {
+                object value;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(named.RowKey, spot.Item, new object[0], out value, out refusal))
+                {
+                    kept = column;
+                    refused = Refusal.Of(named.RowKey, refusal);
+
+                    return false;
+                }
+
+                string name = value as string;
+                if (name != null && name.IndexOf(needle, StringComparison.Ordinal) >= 0)
+                {
+                    held.Add(spot);
+                }
+            }
+
+            kept = held;
+
+            return true;
+        }
+
+        /// <summary>名前での絞り込みの頼み方。渡していなければ絞り込まないものとする。</summary>
+        private static bool TryNameContains(
+            McpMethodContext context, out string needle, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            needle = null;
+            object value;
+            if (!context.Params.TryGetValue(NameContainsName, out value))
+            {
+                return true;
+            }
+
+            string text = value as string;
+            if (string.IsNullOrEmpty(text))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = NameContainsName + " は1文字以上の文字列でなければならない。";
+
+                return false;
+            }
+
+            needle = text;
+
+            return true;
         }
 
         /// <summary>その要素から読む項目。選んだ名前のうち、その実行時の型が持つものを並びの順で採る。</summary>

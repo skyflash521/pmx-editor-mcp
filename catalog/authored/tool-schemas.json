@@ -6711,6 +6711,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
@@ -6759,6 +6765,12 @@
               "name": "limit",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ]
@@ -6912,6 +6924,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
@@ -6960,6 +6978,12 @@
               "name": "limit",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ]
@@ -8007,6 +8031,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
@@ -8055,6 +8085,12 @@
               "name": "limit",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ]
@@ -8201,6 +8237,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
@@ -8249,6 +8291,12 @@
               "name": "limit",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ]
@@ -8848,6 +8896,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
@@ -8896,6 +8950,12 @@
               "name": "limit",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ]
@@ -9343,6 +9403,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
@@ -9391,6 +9457,12 @@
               "name": "limit",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ]
@@ -9578,6 +9650,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
@@ -9626,6 +9704,12 @@
               "name": "limit",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ]
@@ -27090,6 +27174,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ]
         }
@@ -40262,6 +40352,12 @@
               "name": "limit",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "nameContains",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ]
