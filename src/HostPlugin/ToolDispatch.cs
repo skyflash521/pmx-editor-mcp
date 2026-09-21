@@ -58,6 +58,17 @@ namespace PmxEditorMcp
         /// <summary>加えるツールが受け取る、親ごとの組の並びの名前。</summary>
         public const string AssignmentsName = "assignments";
 
+        /// <summary>
+        /// 一覧の各項目が持つ、その対象を指す位置の名前。親を辿らない一覧の項目がこれを持つ。
+        /// </summary>
+        public const string IndexName = "index";
+
+        /// <summary>
+        /// 一覧の各項目が持つ、その対象を指すハンドルの名前。対象をハンドルで指した呼び出しの
+        /// 項目がこれを持つ。
+        /// </summary>
+        public const string HandleName = "handle";
+
         /// <summary>親を指す位置の名前。一覧の各項目と、親ごとの組がこれを持つ。</summary>
         public const string ParentIndexName = "parentIndex";
 
@@ -2352,6 +2363,16 @@ namespace PmxEditorMcp
                 return itemType;
             }
 
+            if (string.Equals(name, HandleName, StringComparison.Ordinal))
+            {
+                return spot.Handle;
+            }
+
+            if (string.Equals(name, IndexName, StringComparison.Ordinal))
+            {
+                return spot.Position;
+            }
+
             if (string.Equals(name, ParentHandleName, StringComparison.Ordinal))
             {
                 return spot.ParentHandle;
@@ -3076,8 +3097,9 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 一覧の各項目が常に持つ合成の項目。親を辿る道の、位置で指した呼び出しだけが持つ
-        /// ——ハンドルで指した対象はまだどの親にも属していない。
+        /// 一覧の各項目が常に持つ合成の項目。どの項目が付くかは対象の指し方で決まり、要求がその
+        /// 対象をもう一度指すのに足りるものを載せる——ハンドルで指した対象はそのハンドル、親を
+        /// 辿る道は親と親の中の位置、親を辿らない道はその列の中の位置である。
         /// </summary>
         private static IList<string> Composed(ToolAccess access, Pointed pointed)
         {
@@ -3087,13 +3109,27 @@ namespace PmxEditorMcp
                 composed.Add(ItemTypeName);
             }
 
-            if (access.Kind == ToolAccessKind.Element
-                && access.Parents.Count != 0
-                && !pointed.ByHandle)
+            if (pointed.ByHandle)
             {
-                composed.Add(pointed.ParentByHandle ? ParentHandleName : ParentIndexName);
-                composed.Add(IndexInParentName);
+                composed.Add(HandleName);
+
+                return composed;
             }
+
+            if (access.Kind != ToolAccessKind.Element)
+            {
+                return composed;
+            }
+
+            if (access.Parents.Count == 0 && access.Owner == null)
+            {
+                composed.Add(IndexName);
+
+                return composed;
+            }
+
+            composed.Add(pointed.ParentByHandle ? ParentHandleName : ParentIndexName);
+            composed.Add(IndexInParentName);
 
             return composed;
         }
@@ -3466,7 +3502,7 @@ namespace PmxEditorMcp
             }
 
             column = resolved.Handles
-                .Select((id, at) => new Spot(null, at, -1, -1, resolve(id)))
+                .Select((id, at) => new Spot(null, at, -1, -1, resolve(id), null, id))
                 .ToList();
 
             return true;
@@ -4770,7 +4806,8 @@ namespace PmxEditorMcp
                 int parentIndex,
                 int indexInParent,
                 object item,
-                long? parentHandle = null)
+                long? parentHandle = null,
+                long? handle = null)
             {
                 Owner = owner;
                 Position = position;
@@ -4778,6 +4815,7 @@ namespace PmxEditorMcp
                 IndexInParent = indexInParent;
                 Item = item;
                 ParentHandle = parentHandle;
+                Handle = handle;
             }
 
             /// <summary>親をまたいで平らにした列の中の位置。要求が対象を指す位置である。</summary>
@@ -4794,6 +4832,9 @@ namespace PmxEditorMcp
 
             /// <summary>親を指すハンドル。親を位置で指した呼び出しでは null。</summary>
             public long? ParentHandle { get; }
+
+            /// <summary>その対象を指すハンドル。対象を位置で指した呼び出しでは null。</summary>
+            public long? Handle { get; }
 
             /// <summary>対象そのもの。</summary>
             public object Item { get; }

@@ -183,6 +183,106 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void EachElementOfAListWithoutParentsCarriesWhereItIs()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+            _model.Items.Add(new Item { Label = "三" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items",
+                Arguments(TargetNames.Element.Indices, new object[] { 2, 0 }));
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.Equal(new[] { "三", "一" }, items.Select(i => i["label"]).ToArray());
+            Assert.Equal(
+                new object[] { 2, 0 },
+                items.Select(i => i[ToolDispatch.IndexName]).ToArray());
+        }
+
+        [Fact]
+        public void TheCutOutOfAListWithoutParentsCarriesThePositionInTheWholeList()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+            _model.Items.Add(new Item { Label = "三" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.OffsetName, 1,
+                    ToolDispatch.LimitName, 1));
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.Equal(new[] { "二" }, items.Select(i => i["label"]).ToArray());
+            Assert.Equal(new object[] { 1 }, items.Select(i => i[ToolDispatch.IndexName]).ToArray());
+        }
+
+        [Fact]
+        public void AnElementUnderParentsNamesItsPlaceByTheParentAndNotByAFlattenedPosition()
+        {
+            Group first = new Group();
+            first.Leaves.Add(new Item { Label = "一" });
+            Group second = new Group();
+            second.Leaves.Add(new Item { Label = "二" });
+            _model.Groups.Add(first);
+            _model.Groups.Add(second);
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_leaves",
+                Arguments(TargetNames.Parent.All, true, TargetNames.Element.All, true));
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.All(items, i => Assert.False(i.ContainsKey(ToolDispatch.IndexName)));
+        }
+
+        [Fact]
+        public void EachElementPointedAtByHandleCarriesThatHandle()
+        {
+            HandleLedger handles = Ledger();
+            int first = handles.Issue(typeof(Item).FullName, new Item { Label = "一" }, () => { });
+            int second = handles.Issue(typeof(Item).FullName, new Item { Label = "二" }, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items",
+                Arguments(TargetNames.Element.Handles, new object[] { second, first }),
+                handles);
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.Equal(new[] { "二", "一" }, items.Select(i => i["label"]).ToArray());
+            Assert.Equal(
+                new object[] { (long)second, (long)first },
+                items.Select(i => i[ToolDispatch.HandleName]).ToArray());
+            Assert.All(items, i => Assert.False(i.ContainsKey(ToolDispatch.IndexName)));
+        }
+
+        [Fact]
+        public void TheElementsOfAParentWithNoPathFromTheModelNameThatParentAndTheIndexInIt()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            held.Leaves.Add(new Item { Label = "一" });
+            held.Leaves.Add(new Item { Label = "二" });
+            int handle = handles.Issue(typeof(Group).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_sprigs",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.All, true),
+                handles);
+
+            IList<IDictionary<string, object>> items = Items(Value(envelope));
+            Assert.Equal(
+                new object[] { (long)handle, (long)handle },
+                items.Select(i => i[ToolDispatch.ParentHandleName]).ToArray());
+            Assert.Equal(
+                new object[] { 0, 1 },
+                items.Select(i => i[ToolDispatch.IndexInParentName]).ToArray());
+        }
+
+        [Fact]
         public void AListingThatPointsAtNothingIsRefused()
         {
             IDictionary<string, object> envelope = Call("model_list_items", Arguments());
