@@ -11310,6 +11310,33 @@
               "required": false
             },
             {
+              "name": "rotation",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": false
+            },
+            {
+              "name": "scale",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": false
+            },
+            {
+              "name": "center",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": false
+            },
+            {
               "name": "targets",
               "origin": "hostInput",
               "required": true,

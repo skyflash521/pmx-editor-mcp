@@ -237,6 +237,159 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
+        [Fact]
+        public void RotatingTurnsThePositionsAndTheNormalsAboutTheCentre()
+        {
+            FakeVertex vertex = Vertex(2f, 0f, 0f);
+            FakeBone bone = Bone(1f, 0f, 1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationName, 0f, 90f, 0f),
+                Triple(ModelPlaceElements.CenterName, 1f, 0f, 0f),
+                Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Bone, 0))));
+
+            // 行ベクトルへ右から掛ける取り決めで、Y軸まわりに90度回すと +X は -Z へ向く。
+            Near(1.0, vertex.Position.X);
+            Near(-1.0, vertex.Position.Z);
+            Near(2.0, bone.Position.X);
+            Near(0.0, bone.Position.Z);
+            Near(1.0, vertex.Normal.Y);
+            Assert.Equal(2, value[ModelPlaceElements.ChangedName]);
+        }
+
+        [Fact]
+        public void RotatingAboutXTurnsTheNormalToo()
+        {
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Normal = new V3(0f, 1f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationName, 90f, 0f, 0f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(0.0, vertex.Normal.Y);
+            Near(1.0, vertex.Normal.Z);
+        }
+
+        [Fact]
+        public void RotatingABodyAlsoTurnsItsRotation()
+        {
+            FakeBody body = Body(1f, 0f, 0f);
+            body.Rotation = new V3(0f, 0f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationName, 0f, 90f, 0f),
+                Targets(Target(ElementKinds.Body, 0)));
+
+            Near(0.0, body.Position.X);
+            Near(-1.0, body.Position.Z);
+            Near(Math.PI / 2, body.Rotation.Y);
+            Near(0.0, body.Rotation.X);
+            Near(0.0, body.Rotation.Z);
+        }
+
+        [Fact]
+        public void ATurnThatRoundsToAQuarterInSinglePrecisionTakesTheEditorsQuarterTurnBranch()
+        {
+            FakeBody body = Body(0f, 0f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationName, 89.99999f, 0f, 30f),
+                Targets(Target(ElementKinds.Body, 0)));
+
+            Assert.Equal((float)Math.PI / 2f, body.Rotation.X);
+            Near(-Math.PI / 6, body.Rotation.Y);
+            Assert.Equal(0f, body.Rotation.Z);
+        }
+
+        [Fact]
+        public void RotatingARotatedBodyComposesTheTwoTurns()
+        {
+            FakeBody body = Body(0f, 0f, 0f);
+            body.Rotation = new V3(0f, (float)(Math.PI / 4), 0f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationName, 0f, 45f, 0f),
+                Targets(Target(ElementKinds.Body, 0)));
+
+            Near(Math.PI / 2, body.Rotation.Y);
+        }
+
+        [Fact]
+        public void ScalingEvenlyAlsoScalesTheSizeOfABody()
+        {
+            FakeBody body = Body(1f, 2f, 3f);
+            body.BoxSize = new V3(1f, 0.5f, 2f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 2f, 2f),
+                Targets(Target(ElementKinds.Body, 0)));
+
+            Near(2.0, body.Position.X);
+            Near(6.0, body.Position.Z);
+            Near(2.0, body.BoxSize.X);
+            Near(1.0, body.BoxSize.Y);
+            Near(4.0, body.BoxSize.Z);
+        }
+
+        [Fact]
+        public void ScalingUnevenlyLeavesTheSizeOfABody()
+        {
+            FakeBody body = Body(1f, 1f, 1f);
+            body.BoxSize = new V3(1f, 1f, 1f);
+            FakeBone bone = Bone(1f, 1f, 1f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 1f, 1f),
+                Triple(ModelPlaceElements.CenterName, 0f, 1f, 0f),
+                Targets(Target(ElementKinds.Body, 0), Target(ElementKinds.Bone, 0)));
+
+            Near(2.0, body.Position.X);
+            Near(1.0, body.BoxSize.X);
+            Near(2.0, bone.Position.X);
+            Near(1.0, bone.Position.Y);
+        }
+
+        [Fact]
+        public void RotatingRefusesTheAmountToTranslateBy()
+        {
+            Bone(1f, 1f, 1f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationName, 0f, 90f, 0f),
+                Offset(1f, 0f, 0f),
+                Targets(Target(ElementKinds.Bone, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void TranslatingRefusesTheCentre()
+        {
+            Bone(1f, 1f, 1f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(1f, 0f, 0f),
+                Triple(ModelPlaceElements.CenterName, 0f, 0f, 0f),
+                Targets(Target(ElementKinds.Bone, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        private static KeyValuePair<string, object> Triple(string name, float x, float y, float z)
+        {
+            return ComposedEditFixture.Given(name, new object[] { x, y, z });
+        }
+
         private static KeyValuePair<string, object> Offset(float x, float y, float z)
         {
             return ComposedEditFixture.Given(

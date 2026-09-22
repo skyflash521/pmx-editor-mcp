@@ -4508,6 +4508,67 @@
         },
         {
           "kind": "tool",
+          "tool": "model_place_elements",
+          "arguments": {
+            "operation": "rotateBy",
+            "rotation": [
+              0,
+              90,
+              0
+            ],
+            "targets": [
+              {
+                "kind": "bone",
+                "all": true
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_place_elements",
+          "arguments": {
+            "operation": "scaleBy",
+            "scale": [
+              2,
+              2,
+              2
+            ],
+            "targets": [
+              {
+                "kind": "bone",
+                "all": true
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position.1",
+                "equals": 10
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_create_physics",
           "arguments": {
             "operation": "bodyFollowBone",

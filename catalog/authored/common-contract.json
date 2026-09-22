@@ -407,7 +407,7 @@
     {
       "tool": "model_place_elements",
       "branching": false,
-      "duty": "種類をまたいで指した要素の位置を、渡した点へそろえるか、同じ量だけずらす。targets は、そろえる要素を種類ごとに指した組の並びで、組ごとに kind が vertex・bone・body・joint のいずれかを取り、その中の要素を indices・range・all・selected のどれか1つで指す。同じ種類を二度並べることはできない。operation は alignTo・translateBy のいずれか。alignTo は position にそろえる先の点を3つの数で渡し、axes に xyz・x・y・z のいずれかを渡して、そろえる軸を選ぶ。xyz は3つの軸すべてをそろえ、残りはその軸だけをそろえて他の2つは動かさない。translateBy は offset にずらす量を3つの数で渡し、指した要素すべてを同じ量だけずらす。position と axes は alignTo だけが、offset は translateBy だけが受け取り、ほかの操作で渡すと invalid_argument になる。changed に動いた要素の数を返す。"
+      "duty": "種類をまたいで指した要素を、渡した点へそろえるか、同じ量だけずらす・回す・拡縮する。targets は、そろえる要素を種類ごとに指した組の並びで、組ごとに kind が vertex・bone・body・joint のいずれかを取り、その中の要素を indices・range・all・selected のどれか1つで指す。同じ種類を二度並べることはできない。operation は alignTo・translateBy・rotateBy・scaleBy のいずれか。alignTo は position にそろえる先の点を3つの数で渡し、axes に xyz・x・y・z のいずれかを渡して、そろえる軸を選ぶ。xyz は3つの軸すべてをそろえ、残りはその軸だけをそろえて他の2つは動かさない。translateBy は offset にずらす量を3つの数で渡し、指した要素すべてを同じ量だけずらす。rotateBy は rotation にX・Y・Z軸まわりの角を度で3つ渡し、Z軸・X軸・Y軸の順に回す。頂点は位置と法線を、ボーンは位置を、剛体とジョイントは位置と回転を回す。scaleBy は scale に3つの軸の倍率を渡す。頂点・ボーン・ジョイントは位置を、剛体は位置を拡縮し、3つの倍率がそろうときだけ大きさもその倍率にする。rotateBy と scaleBy は center に不動の点を3つの数で渡せ、省くと原点になる。position と axes は alignTo だけが、offset は translateBy だけが、rotation は rotateBy だけが、scale は scaleBy だけが、center は rotateBy と scaleBy だけが受け取り、ほかの操作で渡すと invalid_argument になる。動かすと有限の数で表せない値になる要素があれば、1つも動かさず invalid_argument になる。changed に動いた要素の数を返す。"
     },
     {
       "tool": "model_reorder_elements",

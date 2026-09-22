@@ -16,9 +16,19 @@ namespace PmxEditorMcp
 
         public const string OffsetName = "offset";
 
+        public const string RotateBy = "rotateBy";
+
+        public const string ScaleBy = "scaleBy";
+
+        public const string RotationName = "rotation";
+
+        public const string ScaleName = "scale";
+
+        public const string CenterName = "center";
+
         public static IList<string> Operations
         {
-            get { return new[] { AlignTo, TranslateBy }; }
+            get { return new[] { AlignTo, TranslateBy, RotateBy, ScaleBy }; }
         }
 
         public const string TargetsName = "targets";
@@ -80,6 +90,9 @@ namespace PmxEditorMcp
                 PositionName,
                 AxesName,
                 OffsetName,
+                RotationName,
+                ScaleName,
+                CenterName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -90,50 +103,166 @@ namespace PmxEditorMcp
             string operation;
             string code;
             string message;
-            string axes = null;
-            V3 spot = null;
-            V3 offset = null;
+            Func<object, Change> plan;
             IList<KeyValuePair<string, IList<int>>> targets;
             if (!ComposedOperation.TryTake(
-                    context, Operations, out operation, out code, out message))
-            {
-                return ComposedEditResult.Refuse(code, message);
-            }
-
-            bool aligning = string.Equals(operation, AlignTo, StringComparison.Ordinal);
-            if (!TryOnlyFor(context, operation, aligning, out code, out message)
-                || (aligning
-                    && (!ComposedInput.TryChoice(
-                            context, AxesName, Axes, out axes, out code, out message)
-                        || !TryPoint(context, PositionName, out spot, out code, out message)))
-                || (!aligning && !TryPoint(context, OffsetName, out offset, out code, out message))
+                    context, Operations, out operation, out code, out message)
+                || !TryOnlyFor(context, operation, out code, out message)
+                || !TryPlan(context, operation, out plan, out code, out message)
                 || !TryTargets(context, model, out targets, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
 
-            List<object> picked = targets
-                .SelectMany(t => t.Value.Select(at => Held(model, t.Key)[at]))
+            List<Change> changes = targets
+                .SelectMany(t => t.Value.Select(at => plan(Held(model, t.Key)[at])))
                 .ToList();
-            if (!aligning && picked.Any(item => !Vectors.Finite(Moved(Spot(item), offset))))
+            if (!changes.All(c => c.Finite))
             {
                 return ComposedEditResult.Refuse(
                     ToolEnvelope.InvalidArgument,
-                    OffsetName + " だけずらすと、有限の数で表せない座標になる要素がある。");
-            }
-
-            int changed = 0;
-            foreach (object item in picked)
-            {
-                bool moved = aligning ? Placed(item, spot, axes) : Shifted(item, offset);
-                changed += moved ? 1 : 0;
+                    operation + " で動かすと、有限の数で表せない値になる要素がある。");
             }
 
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
-                    { ChangedName, changed },
+                    { ChangedName, changes.Count(c => c.Apply()) },
                 });
+        }
+
+        private static bool TryPlan(
+            McpMethodContext context,
+            string operation,
+            out Func<object, Change> plan,
+            out string code,
+            out string message)
+        {
+            plan = null;
+            V3 center = new V3(0f, 0f, 0f);
+            V3 given;
+            switch (operation)
+            {
+                case AlignTo:
+                    string axes;
+                    if (!ComposedInput.TryChoice(
+                            context, AxesName, Axes, out axes, out code, out message)
+                        || !TryPoint(context, PositionName, out given, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    plan = item => Change.Of(item, Aligned(Spot(item), given, axes));
+
+                    return true;
+
+                case TranslateBy:
+                    if (!TryPoint(context, OffsetName, out given, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    plan = item => Change.Of(item, Vectors.Add(Spot(item), given));
+
+                    return true;
+
+                case RotateBy:
+                    if (!TryPoint(context, RotationName, out given, out code, out message)
+                        || !TryCenter(context, ref center, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    RowMatrix turn = RowMatrix.YawPitchRoll(
+                        Radians(given.Y), Radians(given.X), Radians(given.Z));
+                    plan = item => Turned(item, turn, center);
+
+                    return true;
+
+                default:
+                    if (!TryPoint(context, ScaleName, out given, out code, out message)
+                        || !TryCenter(context, ref center, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    RowMatrix stretch = RowMatrix.Diagonal(given.X, given.Y, given.Z);
+                    float? even = given.X == given.Y && given.Y == given.Z
+                        ? given.X
+                        : (float?)null;
+                    plan = item => Stretched(item, stretch, center, even);
+
+                    return true;
+            }
+        }
+
+        private static bool TryCenter(
+            McpMethodContext context, ref V3 center, out string code, out string message)
+        {
+            code = null;
+            message = null;
+
+            return !context.Params.ContainsKey(CenterName)
+                || TryPoint(context, CenterName, out center, out code, out message);
+        }
+
+        private static Change Turned(object item, RowMatrix turn, V3 center)
+        {
+            Change made = Change.Of(item, turn.TransformAbout(Spot(item), center));
+            IPXVertex vertex = item as IPXVertex;
+            if (vertex != null)
+            {
+                made.Normal = turn.Transform(vertex.Normal);
+            }
+
+            V3 rotation = Rotation(item);
+            if (rotation != null)
+            {
+                made.Rotation = RowMatrix
+                    .YawPitchRoll(rotation.Y, rotation.X, rotation.Z)
+                    .Times(turn)
+                    .ToEulerZxy();
+            }
+
+            return made;
+        }
+
+        private static Change Stretched(object item, RowMatrix stretch, V3 center, float? even)
+        {
+            Change made = Change.Of(item, stretch.TransformAbout(Spot(item), center));
+            IPXBody body = item as IPXBody;
+            if (body != null && even.HasValue)
+            {
+                made.Size = Vectors.Scale(body.BoxSize, even.Value);
+            }
+
+            return made;
+        }
+
+        private static V3 Aligned(V3 before, V3 spot, string axes)
+        {
+            return new V3(
+                Taken(axes, ModelEditVertices.AxisX) ? spot.X : before.X,
+                Taken(axes, ModelEditVertices.AxisY) ? spot.Y : before.Y,
+                Taken(axes, ModelEditVertices.AxisZ) ? spot.Z : before.Z);
+        }
+
+        private static double Radians(float degrees)
+        {
+            return degrees * Math.PI / 180d;
+        }
+
+        private static V3 Rotation(object item)
+        {
+            IPXBody body = item as IPXBody;
+            if (body != null)
+            {
+                return body.Rotation;
+            }
+
+            IPXJoint joint = item as IPXJoint;
+
+            return joint == null ? null : joint.Rotation;
         }
 
         private static bool TryTargets(
@@ -210,16 +339,33 @@ namespace PmxEditorMcp
         }
 
         private static bool TryOnlyFor(
-            McpMethodContext context,
-            string operation,
-            bool aligning,
-            out string code,
-            out string message)
+            McpMethodContext context, string operation, out string code, out string message)
         {
             code = null;
             message = null;
-            string[] foreign = aligning ? new[] { OffsetName } : new[] { PositionName, AxesName };
-            string given = foreign.FirstOrDefault(context.Params.ContainsKey);
+            string[] taken;
+            switch (operation)
+            {
+                case AlignTo:
+                    taken = new[] { PositionName, AxesName };
+                    break;
+
+                case TranslateBy:
+                    taken = new[] { OffsetName };
+                    break;
+
+                case RotateBy:
+                    taken = new[] { RotationName, CenterName };
+                    break;
+
+                default:
+                    taken = new[] { ScaleName, CenterName };
+                    break;
+            }
+
+            string given = new[] { PositionName, AxesName, OffsetName, RotationName, ScaleName, CenterName }
+                .Where(n => !taken.Contains(n, StringComparer.Ordinal))
+                .FirstOrDefault(context.Params.ContainsKey);
             if (given == null)
             {
                 return true;
@@ -282,43 +428,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>動いたなら真を返す。</summary>
-        private static bool Placed(object item, V3 spot, string axes)
-        {
-            V3 before = Spot(item);
-            V3 after = new V3(
-                Taken(axes, ModelEditVertices.AxisX) ? spot.X : before.X,
-                Taken(axes, ModelEditVertices.AxisY) ? spot.Y : before.Y,
-                Taken(axes, ModelEditVertices.AxisZ) ? spot.Z : before.Z);
-            if (Vectors.Same(before, after))
-            {
-                return false;
-            }
-
-            Put(item, after);
-
-            return true;
-        }
-
-        private static bool Shifted(object item, V3 offset)
-        {
-            V3 before = Spot(item);
-            V3 after = Moved(before, offset);
-            if (Vectors.Same(before, after))
-            {
-                return false;
-            }
-
-            Put(item, after);
-
-            return true;
-        }
-
-        private static V3 Moved(V3 before, V3 offset)
-        {
-            return new V3(before.X + offset.X, before.Y + offset.Y, before.Z + offset.Z);
-        }
-
         private static bool Taken(string axes, string axis)
         {
             return string.Equals(axes, AllAxes, StringComparison.Ordinal)
@@ -371,6 +480,80 @@ namespace PmxEditorMcp
             }
 
             ((IPXJoint)item).Position = spot;
+        }
+
+        private sealed class Change
+        {
+            private readonly object _item;
+
+            private readonly V3 _position;
+
+            private Change(object item, V3 position)
+            {
+                _item = item;
+                _position = position;
+            }
+
+            public V3 Normal { get; set; }
+
+            public V3 Rotation { get; set; }
+
+            public V3 Size { get; set; }
+
+            public bool Finite
+            {
+                get
+                {
+                    return new[] { _position, Normal, Rotation, Size }
+                        .Where(v => v != null)
+                        .All(Vectors.Finite);
+                }
+            }
+
+            public static Change Of(object item, V3 position)
+            {
+                return new Change(item, position);
+            }
+
+            /// <summary>書いた値のどれかが前と違っていれば真。</summary>
+            public bool Apply()
+            {
+                bool changed = false;
+                if (!Vectors.Same(Spot(_item), _position))
+                {
+                    Put(_item, _position);
+                    changed = true;
+                }
+
+                IPXVertex vertex = _item as IPXVertex;
+                if (Normal != null && vertex != null && !Vectors.Same(vertex.Normal, Normal))
+                {
+                    vertex.Normal = Normal;
+                    changed = true;
+                }
+
+                IPXBody body = _item as IPXBody;
+                IPXJoint joint = _item as IPXJoint;
+                if (Rotation != null && body != null && !Vectors.Same(body.Rotation, Rotation))
+                {
+                    body.Rotation = Rotation;
+                    changed = true;
+                }
+
+                if (Rotation != null && joint != null && !Vectors.Same(joint.Rotation, Rotation))
+                {
+                    joint.Rotation = Rotation;
+                    changed = true;
+                }
+
+                if (Size != null && body != null && !Vectors.Same(body.BoxSize, Size))
+                {
+                    body.BoxSize = Size;
+                    changed = true;
+                }
+
+                return changed;
+            }
         }
     }
 }
