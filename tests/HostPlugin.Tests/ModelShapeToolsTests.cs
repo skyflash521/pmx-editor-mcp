@@ -699,7 +699,10 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, _fixture.Model.Vertex.Count);
             Assert.Equal(1f, _fixture.Model.Vertex[0].Position.X);
             Assert.Equal(-1f, _fixture.Model.Vertex[1].Position.X);
-            Assert.Equal(new object[] { 1 }, (object[])value[ModelEditVertices.AddedName]);
+            IDictionary<string, object> added =
+                (IDictionary<string, object>)value[ModelEditVertices.AddedName];
+            Assert.Equal(1, added[TargetInput.StartName]);
+            Assert.Equal(1, added[TargetInput.CountName]);
         }
 
         [Fact]

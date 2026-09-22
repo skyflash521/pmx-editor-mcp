@@ -34,8 +34,8 @@ namespace PmxEditorMcp
         /// <summary>指した位置へ動かす。</summary>
         public const string To = "to";
 
-        /// <summary>動いた後の位置を返す項目の名前。</summary>
-        public const string IndicesName = "indices";
+        /// <summary>動いた後の位置を、連なった区間ごとに先頭と件数の組で返す項目の名前。</summary>
+        public const string RangesName = "ranges";
 
         /// <summary>受け取れる動かし方。スキーマが並べる順。</summary>
         public static IList<string> Moves
@@ -82,6 +82,8 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            List<IList<int>> picks = new List<IList<int>>();
+            List<IList<int>> lands = new List<IList<int>>();
             List<object> moved = new List<object>();
             foreach (object owner in owners)
             {
@@ -92,27 +94,40 @@ namespace PmxEditorMcp
                     return ComposedEditResult.Refuse(code, message);
                 }
 
-                IList<object> items = kind.Items(owner);
-                if (to.HasValue && (to.Value < 0 || to.Value >= items.Count))
+                int length = kind.Items(owner).Count;
+                if (to.HasValue && (to.Value < 0 || to.Value >= length))
                 {
                     return ComposedEditResult.Refuse(
                         ToolEnvelope.IndexOutOfRange,
                         ToIndexName + " が並びの外を指している: " + to.Value);
                 }
 
-                IList<int> landed = Landed(move, to, chosen, items.Count);
-                kind.Replace(owner, Ordered(items, chosen, landed));
-                foreach (int at in landed)
-                {
-                    moved.Add(at);
-                }
+                IList<int> landed = Landed(move, to, chosen, length);
+                picks.Add(chosen);
+                lands.Add(landed);
+                moved.AddRange(PositionRuns.Joined(landed));
             }
 
-            return ComposedEditResult.Complete(
+            Dictionary<string, object> answer =
                 new Dictionary<string, object>(StringComparer.Ordinal)
-                {
-                    { IndicesName, moved.ToArray() },
-                });
+            {
+                { RangesName, moved.ToArray() },
+            };
+            if (!ResponseSize.Fits(answer, context.BudgetChars))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.ResponseTooLarge,
+                    "動いた後の位置が値の枠に収まらないので、何も動かさなかった。"
+                        + "動かす要素を分けて呼ぶ。");
+            }
+
+            for (int each = 0; each < owners.Count; each++)
+            {
+                kind.Replace(
+                    owners[each], Ordered(kind.Items(owners[each]), picks[each], lands[each]));
+            }
+
+            return ComposedEditResult.Complete(answer);
         }
 
         private static IList<int> Landed(string move, int? to, IList<int> chosen, int count)

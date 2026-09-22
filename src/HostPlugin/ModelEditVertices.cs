@@ -54,7 +54,10 @@ namespace PmxEditorMcp
         /// <summary>3つの頂点が揃わなくなって落ちた面の数を返す項目の名前。</summary>
         public const string RemovedFacesName = "removedFaces";
 
-        /// <summary>足した頂点の位置を返す項目の名前。</summary>
+        /// <summary>
+        /// 足した頂点の位置を、先頭と件数の組で返す項目の名前。足した頂点は並びの末尾に連なる。
+        /// 足していなければ件数は0で、先頭は頂点の数になる。
+        /// </summary>
         public const string AddedName = "added";
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
@@ -151,7 +154,7 @@ namespace PmxEditorMcp
                     return Joined(model, VertexClusters.Near(picked, threshold));
 
                 case Align:
-                    return Aligned(picked, axis);
+                    return Aligned(model, picked, axis);
 
                 case MirrorCopy:
                     return Copied(model, picked, axis);
@@ -182,14 +185,15 @@ namespace PmxEditorMcp
 
             int faces = ReferenceCleanup.DropUnsoundFaces(model);
 
-            return Answer(moved.Count, moved.Count, faces, new int[0]);
+            return Answer(moved.Count, moved.Count, faces, None(model));
         }
 
-        private static ComposedEditResult Aligned(IList<IPXVertex> picked, string axis)
+        private static ComposedEditResult Aligned(
+            IPXPmx model, IList<IPXVertex> picked, string axis)
         {
             if (picked.Count == 0)
             {
-                return Answer(0, 0, 0, new int[0]);
+                return Answer(0, 0, 0, None(model));
             }
 
             float middle = picked.Select(v => Component(v.Position, axis)).Sum() / picked.Count;
@@ -198,22 +202,21 @@ namespace PmxEditorMcp
                 vertex.Position = Written(vertex.Position, axis, middle);
             }
 
-            return Answer(picked.Count, 0, 0, new int[0]);
+            return Answer(picked.Count, 0, 0, None(model));
         }
 
         private static ComposedEditResult Copied(
             IPXPmx model, IList<IPXVertex> picked, string axis)
         {
-            List<int> added = new List<int>();
+            int start = model.Vertex.Count;
             foreach (IPXVertex vertex in picked)
             {
                 IPXVertex made = (IPXVertex)vertex.Clone();
                 Flip(made, axis);
                 model.Vertex.Add(made);
-                added.Add(model.Vertex.Count - 1);
             }
 
-            return Answer(picked.Count, 0, 0, added);
+            return Answer(picked.Count, 0, 0, PositionRuns.Of(start, picked.Count));
         }
 
         private static ComposedEditResult Mirrored(
@@ -243,7 +246,7 @@ namespace PmxEditorMcp
                 }
             }
 
-            return Answer(picked.Count, 0, 0, new int[0]);
+            return Answer(picked.Count, 0, 0, None(model));
         }
 
         private static void Flip(IPXVertex vertex, string axis)
@@ -284,7 +287,7 @@ namespace PmxEditorMcp
         }
 
         private static ComposedEditResult Answer(
-            int changed, int removed, int faces, IList<int> added)
+            int changed, int removed, int faces, IDictionary<string, object> added)
         {
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
@@ -292,8 +295,13 @@ namespace PmxEditorMcp
                     { ChangedName, changed },
                     { RemovedName, removed },
                     { RemovedFacesName, faces },
-                    { AddedName, added.Cast<object>().ToArray() },
+                    { AddedName, added },
                 });
+        }
+
+        private static IDictionary<string, object> None(IPXPmx model)
+        {
+            return PositionRuns.Of(model.Vertex.Count, 0);
         }
 
     }

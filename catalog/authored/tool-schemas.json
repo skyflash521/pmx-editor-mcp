@@ -5866,10 +5866,18 @@
           {
             "name": "added",
             "origin": "hostOutput",
-            "element": {
-              "origin": "hostOutput",
-              "shape": "number"
-            }
+            "members": [
+              {
+                "name": "start",
+                "origin": "hostOutput",
+                "shape": "number"
+              },
+              {
+                "name": "count",
+                "origin": "hostOutput",
+                "shape": "number"
+              }
+            ]
           }
         ]
       }
@@ -7107,11 +7115,22 @@
         "origin": "hostOutput",
         "members": [
           {
-            "name": "indices",
+            "name": "ranges",
             "origin": "hostOutput",
             "element": {
               "origin": "hostOutput",
-              "shape": "number"
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
             }
           }
         ]
@@ -12908,11 +12927,22 @@
         "origin": "hostOutput",
         "members": [
           {
-            "name": "indices",
+            "name": "ranges",
             "origin": "hostOutput",
             "element": {
               "origin": "hostOutput",
-              "shape": "number"
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
             }
           }
         ]

@@ -367,7 +367,7 @@
     {
       "tool": "model_edit_vertices",
       "branching": false,
-      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all・selected のどれか1つで指す。operation は weld・weldNear・align・mirrorCopy・mirrorModel のいずれか。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis に x・y・z のいずれかを渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces・added を返す。"
+      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all・selected のどれか1つで指す。operation は weld・weldNear・align・mirrorCopy・mirrorModel のいずれか。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis に x・y・z のいずれかを渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces を返し、added に足した頂点の位置を start と count の組で返す。足した頂点は並びの末尾に連なる。"
     },
     {
       "tool": "model_edit_weights",
@@ -392,7 +392,7 @@
     {
       "tool": "model_insert_elements",
       "branching": false,
-      "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation は new か clone のいずれかで、new のときは count に作る数(1以上の整数。省くと1)を渡し、clone のときは indices・range・all・selected のどれか1つで写す元を指す。親が並びを持つ5つは、ほかの要素を指して初めて意味を持つ種類なので new では作れず、clone だけを受け取る。morph を new で作るときは、variant に vertex・uv・uvA1・uvA2・uvA3・uvA4・bone・material・group・flip・impulse のいずれかを渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。indices に入った位置を返す。"
+      "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation は new か clone のいずれかで、new のときは count に作る数(1以上の整数。省くと1)を渡し、clone のときは indices・range・all・selected のどれか1つで写す元を指す。親が並びを持つ5つは、ほかの要素を指して初めて意味を持つ種類なので new では作れず、clone だけを受け取る。morph を new で作るときは、variant に vertex・uv・uvA1・uvA2・uvA3・uvA4・bone・material・group・flip・impulse のいずれかを渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。ranges に、入った位置を親ごとに start と count の組で返し、親を指さない8つでは組は1つになる。組が値の枠に収まらないときは何も入れず response_too_large を返す。"
     },
     {
       "tool": "model_mirror_elements",
@@ -412,7 +412,7 @@
     {
       "tool": "model_reorder_elements",
       "branching": false,
-      "duty": "指した要素を並びの中で動かす。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all・selected のどれか1つで指す。move は up・down・top・bottom・to のいずれかで、to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。indices に動いた後の位置を返す。"
+      "duty": "指した要素を並びの中で動かす。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all・selected のどれか1つで指す。move は up・down・top・bottom・to のいずれかで、to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。ranges に、動いた後の位置を連なった区間ごとに start と count の組で返す。組が値の枠に収まらないときは何も動かさず response_too_large を返す。"
     },
     {
       "tool": "model_set_deform_type",

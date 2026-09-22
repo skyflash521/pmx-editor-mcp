@@ -31,8 +31,43 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.Up)));
 
             Assert.Equal(new[] { "一", "三", "二" }, Names());
-            Assert.Equal(new object[] { 1 }, (object[])value[ModelReorderElements.IndicesName]);
+            Assert.Equal(new[] { "1+1" }, Moved(value));
             Assert.Equal(1, _fixture.Commits);
+        }
+
+        [Fact]
+        public void MovingManyAtOnceAnswersTheRunTheyLandedIn()
+        {
+            Bones(Enumerable.Range(0, 30000).Select(at => "骨" + at).ToArray());
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Reorder(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given("range", Span(0, 29999)),
+                ComposedEditFixture.Given(
+                    ModelReorderElements.MoveName, ModelReorderElements.Bottom)));
+
+            Assert.Equal("骨29999", _fixture.Model.Bone[0].Name);
+            Assert.Equal(new[] { "1+29999" }, Moved(value));
+        }
+
+        [Fact]
+        public void MovingSoManyScatteredOnesThatTheAnswerCannotFitChangesNothing()
+        {
+            Bones(Enumerable.Range(0, 1000).Select(at => "骨" + at).ToArray());
+            object[] odd = Enumerable.Range(0, 500).Select(at => (object)(at * 2 + 1)).ToArray();
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                ModelReorderElements.ToolName,
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                    ComposedEditFixture.Given("indices", odd),
+                    ComposedEditFixture.Given(
+                        ModelReorderElements.MoveName, ModelReorderElements.Up)),
+                10000);
+
+            Assert.Equal(ToolEnvelope.ResponseTooLarge, ComposedEditFixture.Code(envelope));
+            Assert.Equal("骨0", _fixture.Model.Bone[0].Name);
+            Assert.Equal(0, _fixture.Commits);
         }
 
         [Fact]
@@ -229,8 +264,23 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelInsertElements.AtName, 1)));
 
             Assert.Equal(4, _fixture.Model.Bone.Count);
-            Assert.Equal(new object[] { 1, 2 }, (object[])value[ModelInsertElements.IndicesName]);
+            Assert.Equal(new[] { "1+2" }, Landed(value));
             Assert.Equal(1, _fixture.Commits);
+        }
+
+        [Fact]
+        public void ManyNewElementsAnswerOneRangeInsteadOfEveryPosition()
+        {
+            Bones("一");
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.New),
+                ComposedEditFixture.Given(ModelInsertElements.CountName, 30000)));
+
+            Assert.Equal(30001, _fixture.Model.Bone.Count);
+            Assert.Equal(new[] { "1+30000" }, Landed(value));
         }
 
         [Fact]
@@ -565,7 +615,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.Up)));
 
             Assert.Equal(new[] { "二", "一", "四", "三" }, Names());
-            Assert.Equal(new object[] { 0, 2 }, (object[])value[ModelReorderElements.IndicesName]);
+            Assert.Equal(new[] { "0+1", "2+1" }, Moved(value));
         }
 
         [Fact]
@@ -642,7 +692,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(2, first.Faces.Count);
             Assert.Equal(2, second.Faces.Count);
-            Assert.Equal(new object[] { 1, 1 }, (object[])value[ModelInsertElements.IndicesName]);
+            Assert.Equal(new[] { "1+1", "1+1" }, Landed(value));
         }
 
         [Fact]
@@ -811,6 +861,33 @@ namespace PmxEditorMcp.Tests
         {
             return _fixture.Call(
                 ModelDeleteElements.ToolName, ComposedEditFixture.Arguments(given));
+        }
+
+        private static string[] Landed(IDictionary<string, object> value)
+        {
+            return Runs(value[ModelInsertElements.RangesName]);
+        }
+
+        private static string[] Moved(IDictionary<string, object> value)
+        {
+            return Runs(value[ModelReorderElements.RangesName]);
+        }
+
+        private static string[] Runs(object runs)
+        {
+            return ((object[])runs)
+                .Cast<IDictionary<string, object>>()
+                .Select(range => range[TargetInput.StartName] + "+" + range[TargetInput.CountName])
+                .ToArray();
+        }
+
+        private static IDictionary<string, object> Span(int start, int count)
+        {
+            return new Dictionary<string, object>
+            {
+                { TargetInput.StartName, start },
+                { TargetInput.CountName, count },
+            };
         }
 
         private void Bones(params string[] names)

@@ -3576,11 +3576,11 @@
             "ok": true,
             "values": [
               {
-                "path": "indices.0",
+                "path": "ranges.0.start",
                 "equals": 1
               },
               {
-                "path": "indices.1",
+                "path": "ranges.0.count",
                 "equals": 2
               }
             ]
@@ -3619,8 +3619,12 @@
             "ok": true,
             "values": [
               {
-                "path": "indices.0",
+                "path": "ranges.0.start",
                 "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
               }
             ]
           }
@@ -3737,8 +3741,12 @@
             "ok": true,
             "values": [
               {
-                "path": "indices.0",
+                "path": "ranges.0.start",
                 "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 3
               }
             ]
           }
@@ -3810,8 +3818,12 @@
             "ok": true,
             "values": [
               {
-                "path": "indices.0",
+                "path": "ranges.0.start",
                 "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
               }
             ]
           }
@@ -4283,8 +4295,12 @@
             "ok": true,
             "values": [
               {
-                "path": "indices.0",
+                "path": "ranges.0.start",
                 "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 3
               }
             ]
           }
@@ -4351,11 +4367,11 @@
             "ok": true,
             "values": [
               {
-                "path": "indices.0",
+                "path": "ranges.0.start",
                 "equals": 1
               },
               {
-                "path": "indices.1",
+                "path": "ranges.0.count",
                 "equals": 2
               }
             ]

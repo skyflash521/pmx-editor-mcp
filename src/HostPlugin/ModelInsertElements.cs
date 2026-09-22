@@ -29,8 +29,8 @@ namespace PmxEditorMcp
         /// <summary>新しい要素をいくつ入れるかを受け取る入力の名前。</summary>
         public const string CountName = "count";
 
-        /// <summary>入った位置を返す項目の名前。</summary>
-        public const string IndicesName = "indices";
+        /// <summary>入った位置を、親ごとに先頭と件数の組で返す項目の名前。</summary>
+        public const string RangesName = "ranges";
 
         /// <summary>作るモーフの種類を受け取る入力の名前。</summary>
         public const string VariantName = "variant";
@@ -181,33 +181,42 @@ namespace PmxEditorMcp
                 makes.Add(made);
             }
 
+            List<int> puts = new List<int>();
             List<object> landed = new List<object>();
             for (int each = 0; each < owners.Count; each++)
             {
-                object owner = owners[each];
-                IList<object> made = makes[each];
-                IList<object> items = kind.Items(owner);
-                int put = at ?? items.Count;
-                if (put < 0 || put > items.Count)
+                int length = kind.Items(owners[each]).Count;
+                int put = at ?? length;
+                if (put < 0 || put > length)
                 {
                     return ComposedEditResult.Refuse(
                         ToolEnvelope.IndexOutOfRange, AtName + " が並びの外を指している: " + put);
                 }
 
-                List<object> written = new List<object>(items);
-                written.InsertRange(put, made);
-                kind.Replace(owner, written);
-                for (int step = 0; step < made.Count; step++)
-                {
-                    landed.Add(put + step);
-                }
+                puts.Add(put);
+                landed.Add(PositionRuns.Of(put, makes[each].Count));
             }
 
-            return ComposedEditResult.Complete(
+            Dictionary<string, object> answer =
                 new Dictionary<string, object>(StringComparer.Ordinal)
-                {
-                    { IndicesName, landed.ToArray() },
-                });
+            {
+                { RangesName, landed.ToArray() },
+            };
+            if (!ResponseSize.Fits(answer, context.BudgetChars))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.ResponseTooLarge,
+                    "入った位置が値の枠に収まらないので、何も入れなかった。親を分けて呼ぶ。");
+            }
+
+            for (int each = 0; each < owners.Count; each++)
+            {
+                List<object> written = new List<object>(kind.Items(owners[each]));
+                written.InsertRange(puts[each], makes[each]);
+                kind.Replace(owners[each], written);
+            }
+
+            return ComposedEditResult.Complete(answer);
         }
 
         private static bool TryMade(

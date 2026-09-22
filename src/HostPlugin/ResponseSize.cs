@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp
 {
@@ -32,6 +33,12 @@ namespace PmxEditorMcp
             }
 
             return budgetChars - WarningChars;
+        }
+
+        /// <summary>値をJSONに綴った長さが、ツールの値に充てる枠に収まるときは真。</summary>
+        public static bool Fits(object value, int budgetChars)
+        {
+            return new JavaScriptSerializer().Serialize(value).Length <= ValueChars(budgetChars);
         }
 
         /// <summary>
