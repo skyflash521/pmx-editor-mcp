@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
@@ -17,7 +18,23 @@ namespace PmxEditorMcp
         /// <paramref name="modified"/> は修飾キーが押されているかどうか。
         /// </summary>
         public static bool TryAccept(
-            PreconditionKind kind, int? counted, bool modified, out string message)
+            PreconditionKind kind,
+            int? counted,
+            bool modified,
+            out string message)
+        {
+            return TryAccept(kind, counted, modified, null, out message);
+        }
+
+        /// <param name="pointed">
+        /// その一覧を位置で指す呼び出しが渡した位置。位置で指さない呼び出しでは null。
+        /// </param>
+        public static bool TryAccept(
+            PreconditionKind kind,
+            int? counted,
+            bool modified,
+            IList<long> pointed,
+            out string message)
         {
             message = null;
             if (kind == PreconditionKind.SavedEdits)
@@ -27,7 +44,7 @@ namespace PmxEditorMcp
 
             if (kind == PreconditionKind.ListedParts)
             {
-                return TryListed(counted, out message);
+                return TryListed(counted, out message) && TryInside(counted, pointed, out message);
             }
 
             if (kind != PreconditionKind.PickedObjects)
@@ -90,6 +107,32 @@ namespace PmxEditorMcp
                     + "開いても項目が並ばないなら、モデルにその種類の要素が無い。";
 
                 return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryInside(int? listed, IList<long> pointed, out string message)
+        {
+            message = null;
+            if (listed == null || pointed == null)
+            {
+                return true;
+            }
+
+            foreach (long at in pointed)
+            {
+                if (at < 0 || at >= listed.Value)
+                {
+                    message = "絞込の一覧に並んでいない位置を指している: " + at
+                        + "。並んでいるのは 0 から " + (listed.Value - 1) + " までの "
+                        + listed.Value + " 件で、この一覧はモデルの要素の数が変わっても"
+                        + "組み直されない。"
+                        + "view_update_model を挟むと組み直せる——ただし絞込の窓が表示されている"
+                        + "ときに限る。";
+
+                    return false;
+                }
             }
 
             return true;

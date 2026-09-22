@@ -92,6 +92,16 @@ namespace PmxEditorMcp
             }
 
             int[] shown = made.Distinct().OrderBy(at => at).ToArray();
+            if (!PreconditionGate.TryAccept(
+                    PreconditionKind.ListedParts,
+                    held.MaterialItemsCount,
+                    false,
+                    shown.Select(at => (long)at).ToList(),
+                    out message))
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.NotApplicable, message);
+            }
+
             held.SetCheckedMaterialIndices(shown);
 
             return Answer(ElementKinds.Material, shown.Length);

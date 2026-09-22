@@ -678,11 +678,29 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void NarrowingToAMaterialThatIsNotListedIsRefusedAndLeavesTheChecksAlone()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.Parts.Checked = new[] { 0 };
+            _fixture.Parts.MaterialItemsCount = 1;
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 3 };
+
+            IDictionary<string, object> envelope =
+                Filter(Operation(ViewFilterDisplay.MaterialsFromVertices));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(envelope));
+            Assert.Equal(new[] { 0 }, _fixture.Parts.Checked);
+        }
+
+        [Fact]
         public void OnlyTheMaterialsThatUseTheSelectedVerticesStayShown()
         {
             IList<IPXVertex> vertices = Vertices(4);
             Faces(Face(vertices, 0, 1, 2));
             Faces(Face(vertices, 1, 2, 3));
+            _fixture.Parts.MaterialItemsCount = 2;
             _fixture.View.Selected[ElementKinds.Vertex] = new[] { 3 };
 
             IDictionary<string, object> value = ComposedScreenFixture.Value(Filter(
@@ -712,6 +730,7 @@ namespace PmxEditorMcp.Tests
             Faces(Face(vertices, 0, 1, 2));
             Faces(Face(vertices, 1, 2, 3));
             _fixture.Parts.Checked = new[] { 0, 1 };
+            _fixture.Parts.MaterialItemsCount = 2;
             _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
 
             Filter(Operation(ViewFilterDisplay.ExcludeMaterialsFromFaces));

@@ -87,6 +87,36 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void PointingPastTheItemsThatAreListedStops()
+        {
+            string message;
+
+            Assert.False(PreconditionGate.TryAccept(
+                PreconditionKind.ListedParts, 62, false, new long[] { 0, 62 }, out message));
+            Assert.Contains("62", message);
+        }
+
+        [Fact]
+        public void PointingBelowTheFirstItemStops()
+        {
+            string message;
+
+            Assert.False(PreconditionGate.TryAccept(
+                PreconditionKind.ListedParts, 62, false, new long[] { -1 }, out message));
+            Assert.NotNull(message);
+        }
+
+        [Fact]
+        public void PointingAtTheItemsThatAreListedGoesThrough()
+        {
+            string message;
+
+            Assert.True(PreconditionGate.TryAccept(
+                PreconditionKind.ListedParts, 62, false, new long[] { 0, 61 }, out message));
+            Assert.Null(message);
+        }
+
+        [Fact]
         public void TouchingAListThatHasNotBeenBuiltStops()
         {
             string message;

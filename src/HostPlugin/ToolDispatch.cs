@@ -303,6 +303,7 @@ namespace PmxEditorMcp
                 precondition.Kind,
                 Counted(context, precondition, receiver),
                 _modifiers.AnyHeld(),
+                Pointing(context),
                 out message))
             {
                 return true;
@@ -311,6 +312,35 @@ namespace PmxEditorMcp
             refused = new Refusal(ToolEnvelope.Failure(ToolEnvelope.NotApplicable, message));
 
             return false;
+        }
+
+        private static IList<long> Pointing(McpMethodContext context)
+        {
+            object given;
+            if (!context.Params.TryGetValue(TargetNames.Element.Indices, out given))
+            {
+                return null;
+            }
+
+            object[] values = given as object[];
+            if (values == null)
+            {
+                return null;
+            }
+
+            List<long> pointed = new List<long>(values.Length);
+            foreach (object one in values)
+            {
+                long at;
+                if (!ValueInput.TryInteger(one, out at))
+                {
+                    return null;
+                }
+
+                pointed.Add(at);
+            }
+
+            return pointed;
         }
 
         /// <summary>
