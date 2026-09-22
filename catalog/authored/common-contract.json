@@ -347,7 +347,7 @@
     {
       "tool": "model_edit_nodes",
       "branching": false,
-      "duty": "表示枠への一括登録と、表情の枠の正規化を行う。枠は indices・range・all のどれか1つで指す。operation は registerUnlistedBones・registerUnlistedMorphs・registerPickedBones・registerPickedMorphs・normalizeExpressionNode のいずれか。registerUnlistedBones と registerUnlistedMorphs は、どの枠にも載っていないボーンかモーフを、指した枠のうち先頭の末尾へ足す。registerPickedBones と registerPickedMorphs は、targetIndices で指したボーンかモーフのうち、どの枠にも載っていないものだけを同じ末尾へ足す。registerPickedBones は targetSelected でも指せる。normalizeExpressionNode は、指した枠の中身をモーフの並びの順にそろえる。added に足した中身の数、changed に変えた枠の数を返す。"
+      "duty": "表示枠への一括登録と、表情の枠の正規化を行う。枠は indices・range・all のどれか1つで指す。operation は registerUnlistedBones・registerUnlistedMorphs・registerPickedBones・registerPickedMorphs・normalizeExpressionNode のいずれか。registerUnlistedBones と registerUnlistedMorphs は、どの枠にも載っていないボーンかモーフを、指した枠のうち先頭の末尾へ足す。ボーンを足す2つは、表情の枠を飛ばして次の枠へ足し、表情の枠しか指していなければ断る。registerPickedBones と registerPickedMorphs は、targetIndices で指したボーンかモーフのうち、どの枠にも載っていないものだけを同じ末尾へ足す。registerPickedBones は targetSelected でも指せる。normalizeExpressionNode は、指した枠の中身をモーフの並びの順にそろえる。added に足した中身の数、changed に変えた枠の数を返す。"
     },
     {
       "tool": "model_edit_normals",

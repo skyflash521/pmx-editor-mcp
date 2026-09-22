@@ -168,7 +168,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
                 Operation(ModelEditNodes.RegisterUnlistedBones),
-                ComposedEditFixture.Given("all", true)));
+                ComposedEditFixture.Given("indices", new object[] { 2 })));
 
             Assert.Equal(2, node.Items.Count);
             Assert.Same(missing, ((IPXBoneNodeItem)node.Items[1]).Bone);
@@ -183,7 +183,7 @@ namespace PmxEditorMcp.Tests
 
             Nodes(
                 Operation(ModelEditNodes.RegisterUnlistedMorphs),
-                ComposedEditFixture.Given("all", true));
+                ComposedEditFixture.Given("indices", new object[] { 2 }));
 
             Assert.Same(missing, ((IPXMorphNodeItem)Assert.Single(node.Items)).Morph);
         }
@@ -198,13 +198,91 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
                 Operation(ModelEditNodes.RegisterPickedBones),
-                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("indices", new object[] { 2 }),
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[] { 0, 1 })));
 
             Assert.Equal(2, node.Items.Count);
             Assert.Same(wanted, ((IPXBoneNodeItem)node.Items[1]).Bone);
             Assert.Equal(1, value[ModelEditNodes.AddedName]);
+        }
+
+        [Fact]
+        public void TheFramesTheModelHoldsApartComeFirstAmongThePositions()
+        {
+            IPXBone wanted = Bone("足したい");
+            Node("枠");
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
+                Operation(ModelEditNodes.RegisterPickedBones),
+                ComposedEditFixture.Given("indices", new object[] { 1 }),
+                ComposedEditFixture.Given(
+                    ModelEditNodes.TargetIndicesName, new object[] { 0 })));
+
+            Assert.Same(
+                wanted,
+                ((IPXBoneNodeItem)((FakeNode)_fixture.Model.RootNode).Items[0]).Bone);
+            Assert.Equal(1, value[ModelEditNodes.AddedName]);
+        }
+
+        [Fact]
+        public void ThePositionPastTheFramesReachesTheListTheModelKeeps()
+        {
+            Bone("足したい");
+            FakeNode node = Node("枠");
+
+            ComposedEditFixture.Value(Nodes(
+                Operation(ModelEditNodes.RegisterPickedBones),
+                ComposedEditFixture.Given("indices", new object[] { 2 }),
+                ComposedEditFixture.Given(
+                    ModelEditNodes.TargetIndicesName, new object[] { 0 })));
+
+            Assert.Single(node.Items);
+        }
+
+        [Fact]
+        public void BonesGoPastTheExpressionFrameToTheNextOneThatWasPicked()
+        {
+            IPXBone missing = Bone("載っていない");
+            Node("枠");
+
+            ComposedEditFixture.Value(Nodes(
+                Operation(ModelEditNodes.RegisterUnlistedBones),
+                ComposedEditFixture.Given("all", true)));
+
+            Assert.Empty(((FakeNode)_fixture.Model.ExpressionNode).Items);
+            Assert.Same(
+                missing,
+                ((IPXBoneNodeItem)Assert.Single(((FakeNode)_fixture.Model.RootNode).Items)).Bone);
+        }
+
+        [Fact]
+        public void PickingOnlyTheExpressionFrameForBonesIsRefused()
+        {
+            Bone("載っていない");
+
+            IDictionary<string, object> envelope = Nodes(
+                Operation(ModelEditNodes.RegisterUnlistedBones),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Contains("表情の枠にはボーンを載せられない", ComposedEditFixture.Message(envelope));
+            Assert.Empty(((FakeNode)_fixture.Model.ExpressionNode).Items);
+        }
+
+        [Fact]
+        public void MorphsGoIntoTheExpressionFrameWhenItIsThePickedOne()
+        {
+            IPXMorph missing = Morph("笑い", MorphKind.Vertex);
+
+            ComposedEditFixture.Value(Nodes(
+                Operation(ModelEditNodes.RegisterUnlistedMorphs),
+                ComposedEditFixture.Given("indices", new object[] { 0 })));
+
+            Assert.Same(
+                missing,
+                ((IPXMorphNodeItem)Assert.Single(
+                    ((FakeNode)_fixture.Model.ExpressionNode).Items)).Morph);
         }
 
         [Fact]
@@ -235,7 +313,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
                 Operation(ModelEditNodes.RegisterPickedBones),
-                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("indices", new object[] { 2 }),
                 ComposedEditFixture.Given(ModelEditNodes.TargetSelectedName, true)));
 
             Assert.Equal(2, node.Items.Count);
@@ -266,7 +344,7 @@ namespace PmxEditorMcp.Tests
 
             Nodes(
                 Operation(ModelEditNodes.RegisterPickedMorphs),
-                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("indices", new object[] { 2 }),
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[] { 0 }));
 
@@ -281,7 +359,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
                 Operation(ModelEditNodes.RegisterPickedBones),
-                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("indices", new object[] { 2 }),
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[] { 0, 0 })));
 

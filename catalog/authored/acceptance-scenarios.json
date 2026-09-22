@@ -4444,7 +4444,7 @@
           "arguments": {
             "operation": "registerPickedBones",
             "indices": [
-              0
+              2
             ],
             "targetIndices": [
               0
@@ -4460,7 +4460,7 @@
           "arguments": {
             "operation": "registerPickedMorphs",
             "indices": [
-              0
+              2
             ],
             "targetIndices": [
               0

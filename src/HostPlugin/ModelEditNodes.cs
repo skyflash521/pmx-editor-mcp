@@ -89,6 +89,7 @@ namespace PmxEditorMcp
             McpMethodContext context, object pmx, Func<object> builder)
         {
             IPXPmx model = (IPXPmx)pmx;
+            IList<IPXNode> frames = ReferenceCleanup.Nodes(model).ToList();
             string operation;
             string code;
             string message;
@@ -99,7 +100,7 @@ namespace PmxEditorMcp
                 || !TargetInput.TryPositions(
                     context.Params,
                     TargetNames.Element,
-                    model.Node.Count,
+                    frames.Count,
                     out chosen,
                     out code,
                     out message)
@@ -129,7 +130,7 @@ namespace PmxEditorMcp
                         + TargetSelectedName + " に真を渡すと、画面の選択で指す。");
             }
 
-            IList<IPXNode> picked = chosen.Select(at => model.Node[at]).ToList();
+            IList<IPXNode> picked = chosen.Select(at => frames[at]).ToList();
             int added = 0;
             int changed = 0;
             if (string.Equals(operation, NormalizeExpressionNode, StringComparison.Ordinal))
@@ -138,11 +139,21 @@ namespace PmxEditorMcp
             }
             else if (picked.Count > 0)
             {
+                bool bones = Bones.Contains(operation, StringComparer.Ordinal);
+                IPXNode into = picked.FirstOrDefault(
+                    node => !bones || !ReferenceEquals(node, model.ExpressionNode));
+                if (into == null)
+                {
+                    return ComposedEditResult.Refuse(
+                        ToolEnvelope.InvalidArgument,
+                        "表情の枠にはボーンを載せられない。ほかの枠も指す。");
+                }
+
                 added = Registered(
                     model,
-                    picked[0],
+                    into,
                     (IPXPmxBuilder)builder(),
-                    Bones.Contains(operation, StringComparer.Ordinal),
+                    bones,
                     Picking.Contains(operation, StringComparer.Ordinal) ? targets : null);
                 changed = added == 0 ? 0 : 1;
             }
