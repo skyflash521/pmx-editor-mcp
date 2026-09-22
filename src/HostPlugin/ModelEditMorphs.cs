@@ -45,6 +45,9 @@ namespace PmxEditorMcp
         /// <summary>足すオフセットが指す相手の位置を受け取る入力の名前。</summary>
         public const string TargetIndicesName = "targetIndices";
 
+        /// <summary>オフセットが指す相手を、画面の選択で指す入力の名前。</summary>
+        public const string TargetSelectedName = "targetSelected";
+
         /// <summary>足したモーフの名前を受け取る入力の名前。</summary>
         public const string NameName = "name";
 
@@ -109,6 +112,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.All,
                 NameName,
                 TargetIndicesName,
+                TargetSelectedName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -147,7 +151,11 @@ namespace PmxEditorMcp
                     Reach(model, operation, chosen),
                     out targets,
                     out code,
-                    out message))
+                    out message,
+                    null,
+                    TargetSelectedName,
+                    context.Screen.Pick(
+                        Aimed(model, operation, chosen), Reach(model, operation, chosen))))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -202,6 +210,43 @@ namespace PmxEditorMcp
             }
 
             return Aimed(model, model.Morph[chosen[0]].Kind).Count;
+        }
+
+        /// <summary>その操作が指す相手の種類。相手を指さない操作では null。</summary>
+        private static string Aimed(IPXPmx model, string operation, IList<int> chosen)
+        {
+            if (string.Equals(operation, VertexMorphFromVertices, StringComparison.Ordinal))
+            {
+                return ElementKinds.Vertex;
+            }
+
+            if (!string.Equals(operation, AddOffsets, StringComparison.Ordinal) || chosen.Count == 0)
+            {
+                return null;
+            }
+
+            switch (model.Morph[chosen[0]].Kind)
+            {
+                case MorphKind.Vertex:
+                case MorphKind.UV:
+                case MorphKind.UVA1:
+                case MorphKind.UVA2:
+                case MorphKind.UVA3:
+                case MorphKind.UVA4:
+                    return ElementKinds.Vertex;
+
+                case MorphKind.Bone:
+                    return ElementKinds.Bone;
+
+                case MorphKind.Material:
+                    return ElementKinds.Material;
+
+                case MorphKind.Impulse:
+                    return ElementKinds.Body;
+
+                default:
+                    return null;
+            }
         }
 
         /// <summary>その種類のモーフのオフセットが指す相手の並び。指す相手を持たない種類では空。</summary>

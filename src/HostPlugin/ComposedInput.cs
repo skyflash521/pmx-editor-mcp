@@ -270,6 +270,12 @@ namespace PmxEditorMcp
         /// 断る。要らない操作と、<paramref name="omittable"/> が挙げる操作で欠けているときは、空の
         /// 並びを渡す。
         /// </summary>
+        /// <param name="selectedName">
+        /// 位置の並びの代わりに画面の選択で指す入力の名前。その口を持たない入力では null。
+        /// </param>
+        /// <param name="picked">
+        /// 画面の選択を読む口。その回の相手を画面が選べないときは null。
+        /// </param>
         public static bool TryIndices(
             McpMethodContext context,
             string name,
@@ -279,11 +285,28 @@ namespace PmxEditorMcp
             out IList<int> indices,
             out string code,
             out string message,
-            IList<string> omittable = null)
+            IList<string> omittable = null,
+            string selectedName = null,
+            ScreenPick picked = null)
         {
             indices = new int[0];
+            code = null;
+            message = null;
             object given;
-            bool asked;
+            bool asked = false;
+            if (selectedName != null
+                && !TryPicked(
+                    context, selectedName, name, operation, wanted, ceiling, picked,
+                    out indices, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (asked)
+            {
+                return true;
+            }
+
             if (!TryWanted(context, name, operation, wanted, out given, out asked, out code, out message))
             {
                 return false;
@@ -325,6 +348,72 @@ namespace PmxEditorMcp
             }
 
             indices = taken;
+
+            return true;
+        }
+
+        private static bool TryPicked(
+            McpMethodContext context,
+            string selectedName,
+            string name,
+            string operation,
+            IList<string> wanted,
+            int ceiling,
+            ScreenPick picked,
+            out IList<int> indices,
+            out bool took,
+            out string code,
+            out string message)
+        {
+            indices = new int[0];
+            took = false;
+            code = null;
+            message = null;
+            object given;
+            bool asked;
+            if (!TryWanted(
+                context, selectedName, operation, wanted, out given, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (!asked || !context.Params.ContainsKey(selectedName))
+            {
+                return true;
+            }
+
+            if (!(given is bool) || !(bool)given)
+            {
+                return Refuse(selectedName + " は真でなければならない。", out code, out message);
+            }
+
+            if (context.Params.ContainsKey(name))
+            {
+                return Refuse(
+                    name + " と " + selectedName + " は同時に渡せない。どちらか1つで指す。",
+                    out code,
+                    out message);
+            }
+
+            if (picked == null)
+            {
+                return Refuse(
+                    selectedName + " で指せる相手ではない。" + name + " で位置を渡す。",
+                    out code,
+                    out message);
+            }
+
+            int[] inside = picked.Taken().Where(at => at >= 0 && at < ceiling).ToArray();
+            if (inside.Length == 0)
+            {
+                code = ToolEnvelope.NotApplicable;
+                message = "画面で何も選ばれていない。" + picked.Picking + " で選んでから呼ぶ。";
+
+                return false;
+            }
+
+            indices = inside;
+            took = true;
 
             return true;
         }

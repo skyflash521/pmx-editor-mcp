@@ -208,6 +208,56 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AnEmptyListOfTargetsIsTakenAsPickingNothing()
+        {
+            IPXBone listed = Bone("載っている");
+            Bone("足していない");
+            FakeNode node = Node("枠", new FakeBoneNodeItem(listed));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
+                Operation(ModelEditNodes.RegisterPickedBones),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditNodes.TargetIndicesName, new object[0])));
+
+            Assert.Single(node.Items);
+            Assert.Equal(0, value[ModelEditNodes.AddedName]);
+        }
+
+        [Fact]
+        public void TheScreenSelectionSaysWhichBonesToRegister()
+        {
+            IPXBone listed = Bone("載っている");
+            IPXBone wanted = Bone("足したい");
+            Bone("足したくない");
+            FakeNode node = Node("枠", new FakeBoneNodeItem(listed));
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 0, 1 };
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
+                Operation(ModelEditNodes.RegisterPickedBones),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditNodes.TargetSelectedName, true)));
+
+            Assert.Equal(2, node.Items.Count);
+            Assert.Same(wanted, ((IPXBoneNodeItem)node.Items[1]).Bone);
+            Assert.Equal(1, value[ModelEditNodes.AddedName]);
+        }
+
+        [Fact]
+        public void RegisteringMorphsRefusesTheScreenSelectionBecauseTheScreenCannotSelectThem()
+        {
+            Morph("足したい", MorphKind.Vertex);
+            Node("枠");
+
+            IDictionary<string, object> envelope = Nodes(
+                Operation(ModelEditNodes.RegisterPickedMorphs),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditNodes.TargetSelectedName, true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void OnlyThePickedMorphThatIsOnNoNodeIsAdded()
         {
             IPXMorph wanted = Morph("足したい", MorphKind.Vertex);
@@ -387,6 +437,26 @@ namespace PmxEditorMcp.Tests
             Assert.Same(
                 _fixture.Model.Vertex[1],
                 ((IPXVertexMorphOffset)morph.Offsets[1]).Vertex);
+        }
+
+        [Fact]
+        public void TheScreenSelectionSaysWhichVerticesTheOffsetsPointAt()
+        {
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f));
+            _fixture.Model.Vertex.Add(new FakeVertex(1f, 0f, 0f));
+            _fixture.Model.Morph.Add(new FakeMorph("笑い", MorphKind.Vertex));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 1 };
+
+            Morphs(
+                Operation(ModelEditMorphs.AddOffsets),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ModelEditMorphs.TargetSelectedName, true));
+
+            IPXMorph morph = _fixture.Model.Morph[0];
+            Assert.Single(morph.Offsets);
+            Assert.Same(
+                _fixture.Model.Vertex[1],
+                ((IPXVertexMorphOffset)morph.Offsets[0]).Vertex);
         }
 
         [Fact]

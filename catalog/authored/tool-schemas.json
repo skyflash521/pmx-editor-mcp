@@ -5138,8 +5138,12 @@
                 "bounds": {
                   "minimum": 0
                 }
-              },
-              "required": false
+              }
+            },
+            {
+              "name": "vertexSelected",
+              "origin": "hostInput",
+              "shape": "boolean"
             }
           ],
           "choices": [
@@ -5157,6 +5161,13 @@
                 "faceAll",
                 "faceIndices",
                 "faceRange"
+              ],
+              "required": false
+            },
+            {
+              "names": [
+                "vertexIndices",
+                "vertexSelected"
               ],
               "required": false
             }
@@ -5266,8 +5277,12 @@
                 "bounds": {
                   "minimum": 0
                 }
-              },
-              "required": false
+              }
+            },
+            {
+              "name": "targetSelected",
+              "origin": "hostInput",
+              "shape": "boolean"
             }
           ],
           "choices": [
@@ -5276,6 +5291,13 @@
                 "all",
                 "indices",
                 "range"
+              ],
+              "required": false
+            },
+            {
+              "names": [
+                "targetIndices",
+                "targetSelected"
               ],
               "required": false
             }
@@ -5379,8 +5401,12 @@
                 "bounds": {
                   "minimum": 0
                 }
-              },
-              "required": false
+              }
+            },
+            {
+              "name": "targetSelected",
+              "origin": "hostInput",
+              "shape": "boolean"
             }
           ],
           "choices": [
@@ -5391,6 +5417,13 @@
                 "range"
               ],
               "required": true
+            },
+            {
+              "names": [
+                "targetIndices",
+                "targetSelected"
+              ],
+              "required": false
             }
           ]
         }
@@ -41650,8 +41683,12 @@
                 "bounds": {
                   "minimum": 0
                 }
-              },
-              "required": false
+              }
+            },
+            {
+              "name": "materialSelected",
+              "origin": "hostInput",
+              "shape": "boolean"
             },
             {
               "name": "releaseSource",
@@ -41681,6 +41718,15 @@
               "name": "maxV",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "materialIndices",
+                "materialSelected"
+              ],
               "required": false
             }
           ]

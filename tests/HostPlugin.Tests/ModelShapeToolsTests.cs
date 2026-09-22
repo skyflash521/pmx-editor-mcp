@@ -465,6 +465,58 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheScreenSelectionSaysWhichVerticesToTakeTheFacesOutBy()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            FakeMaterial material = Material(
+                "材質", Face(vertices, 0, 1, 2), Face(vertices, 0, 2, 3));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0, 2, 3 };
+
+            ComposedEditFixture.Value(EditMaterials(
+                Operation(ModelEditMaterials.ExtractVertices),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditMaterials.VertexSelectedName, true)));
+
+            Assert.Equal(2, _fixture.Model.Material.Count);
+            Assert.Single(material.Faces);
+            Assert.Single(_fixture.Model.Material[1].Faces);
+        }
+
+        [Fact]
+        public void PointingTheVerticesBothWaysAtOnceIsRefused()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Material("材質", Face(vertices, 0, 1, 2));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0 };
+
+            IDictionary<string, object> envelope = EditMaterials(
+                Operation(ModelEditMaterials.ExtractVertices),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditMaterials.VertexIndicesName, new object[] { 0 }),
+                ComposedEditFixture.Given(ModelEditMaterials.VertexSelectedName, true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void AnEmptyListOfVerticesStaysAWayOfSayingNoVertices()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            FakeMaterial material = Material("材質", Face(vertices, 0, 1, 2));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(EditMaterials(
+                Operation(ModelEditMaterials.ExtractVertices),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(
+                    ModelEditMaterials.VertexIndicesName, new object[0])));
+
+            Assert.Single(_fixture.Model.Material);
+            Assert.Single(material.Faces);
+            Assert.Empty((object[])value[ModelEditMaterials.AddedName]);
+        }
+
+        [Fact]
         public void TakingFacesOutByVerticesWithoutSayingWhichVerticesIsRefused()
         {
             IList<IPXVertex> vertices = Vertices(3);

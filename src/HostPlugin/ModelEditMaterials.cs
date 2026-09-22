@@ -34,6 +34,9 @@ namespace PmxEditorMcp
 
         public const string VertexIndicesName = "vertexIndices";
 
+        /// <summary>移す面を作っている頂点を、画面の選択で指す入力の名前。</summary>
+        public const string VertexSelectedName = "vertexSelected";
+
         /// <summary>材質の持ち物を複製して新しい材質にする。</summary>
         public const string DuplicateParts = "duplicateParts";
 
@@ -134,6 +137,7 @@ namespace PmxEditorMcp
                 FaceRangeName,
                 FaceAllName,
                 VertexIndicesName,
+                VertexSelectedName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -190,7 +194,10 @@ namespace PmxEditorMcp
                     model.Vertex.Count,
                     out corners,
                     out code,
-                    out message))
+                    out message,
+                    null,
+                    VertexSelectedName,
+                    context.Screen.Pick(ElementKinds.Vertex, model.Vertex.Count)))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -315,11 +322,13 @@ namespace PmxEditorMcp
             IList<IPXMaterial> picked,
             IList<int> corners)
         {
-            if (!context.Params.ContainsKey(VertexIndicesName))
+            if (!context.Params.ContainsKey(VertexIndicesName)
+                && !context.Params.ContainsKey(VertexSelectedName))
             {
                 return ComposedEditResult.Refuse(
                     ToolEnvelope.InvalidArgument,
-                    VertexIndicesName + " に、移す面を作っている頂点の位置を渡す。");
+                    VertexIndicesName + " に、移す面を作っている頂点の位置を渡す。"
+                        + VertexSelectedName + " に真を渡すと、画面の選択で指す。");
             }
 
             HashSet<IPXVertex> chosen = new HashSet<IPXVertex>(

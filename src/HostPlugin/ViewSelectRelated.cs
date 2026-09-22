@@ -47,6 +47,9 @@ namespace PmxEditorMcp
         /// <summary>材質の位置を受け取る入力の名前。</summary>
         public const string MaterialIndicesName = "materialIndices";
 
+        /// <summary>面を選ぶ材質を、リストの選択で指す入力の名前。</summary>
+        public const string MaterialSelectedName = "materialSelected";
+
         public const string ReleaseSourceName = "releaseSource";
 
         public const string MinUName = "minU";
@@ -82,6 +85,7 @@ namespace PmxEditorMcp
             {
                 ComposedOperation.OperationName,
                 MaterialIndicesName,
+                MaterialSelectedName,
                 ReleaseSourceName,
                 MinUName,
                 MaxUName,
@@ -114,7 +118,9 @@ namespace PmxEditorMcp
                     out materials,
                     out code,
                     out message,
-                    new[] { UvRegionVertices })
+                    new[] { UvRegionVertices },
+                    MaterialSelectedName,
+                    context.Screen.Pick(ElementKinds.Material, model.Material.Count))
                 || !TryRegion(context, operation, out region, out code, out message)
                 || !TryReleaseSource(context, out release, out code, out message))
             {

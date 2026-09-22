@@ -26,6 +26,9 @@ namespace PmxEditorMcp
 
         public const string TargetIndicesName = "targetIndices";
 
+        /// <summary>枠へ足す要素を、画面の選択で指す入力の名前。</summary>
+        public const string TargetSelectedName = "targetSelected";
+
         /// <summary>表情の枠の中身を、モーフの並びの順にそろえる。</summary>
         public const string NormalizeExpressionNode = "normalizeExpressionNode";
 
@@ -76,6 +79,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
                 TargetIndicesName,
+                TargetSelectedName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -107,17 +111,22 @@ namespace PmxEditorMcp
                     Reach(model, operation),
                     out targets,
                     out code,
-                    out message))
+                    out message,
+                    null,
+                    TargetSelectedName,
+                    context.Screen.Pick(Aimed(operation), Reach(model, operation))))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
 
             if (Picking.Contains(operation, StringComparer.Ordinal)
-                && !context.Params.ContainsKey(TargetIndicesName))
+                && !context.Params.ContainsKey(TargetIndicesName)
+                && !context.Params.ContainsKey(TargetSelectedName))
             {
                 return ComposedEditResult.Refuse(
                     ToolEnvelope.InvalidArgument,
-                    TargetIndicesName + " に、枠へ足す要素の位置を渡す。");
+                    TargetIndicesName + " に、枠へ足す要素の位置を渡す。"
+                        + TargetSelectedName + " に真を渡すと、画面の選択で指す。");
             }
 
             IList<IPXNode> picked = chosen.Select(at => model.Node[at]).ToList();
@@ -154,6 +163,19 @@ namespace PmxEditorMcp
         private static IList<string> Bones
         {
             get { return new[] { RegisterUnlistedBones, RegisterPickedBones }; }
+        }
+
+        /// <summary>その操作が指す相手の種類。相手を指さない操作では null。</summary>
+        private static string Aimed(string operation)
+        {
+            if (!Picking.Contains(operation, StringComparer.Ordinal))
+            {
+                return null;
+            }
+
+            return Bones.Contains(operation, StringComparer.Ordinal)
+                ? ElementKinds.Bone
+                : ElementKinds.Morph;
         }
 
         private static int Reach(IPXPmx model, string operation)

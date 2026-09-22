@@ -387,6 +387,21 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheMaterialListSelectionSaysWhichMaterialsFacesToSelect()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.Form.SelectedMaterials = new[] { 1 };
+
+            Related(
+                Operation(ViewSelectRelated.MaterialToFaces),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaterialSelectedName, true));
+
+            Assert.Equal(new[] { 3, 4, 5 }, _fixture.View.Selected[ElementKinds.Face]);
+        }
+
+        [Fact]
         public void EachSelectedFaceReachesTheViewAsItsThreeCorners()
         {
             IList<IPXVertex> vertices = Vertices(5);
