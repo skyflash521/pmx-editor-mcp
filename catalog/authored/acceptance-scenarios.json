@@ -3996,6 +3996,28 @@
         },
         {
           "kind": "tool",
+          "tool": "model_find_material_vertices",
+          "arguments": {
+            "indices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "vertexIndices.2",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_draw_uv_layout",
           "arguments": {
             "all": true

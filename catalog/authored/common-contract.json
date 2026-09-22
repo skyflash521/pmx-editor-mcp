@@ -375,6 +375,11 @@
       "duty": "指した頂点のウェイトを整える。頂点は indices・range・all・selected のどれか1つで指す。operation は average・smooth・fromNearestBonePosition・fromNearestBoneAxis・fromMirror・normalize・repairMissingBone のいずれか。average は指した頂点のウェイトの平均へそろえる。smooth は strength に0以上1以下の強さを渡し、同じ面に載っている頂点のウェイトの平均へその強さのぶんだけ寄せる。fromNearestBonePosition はいちばん近いボーンへ、fromNearestBoneAxis は根元から表示先までの線分がいちばん近いボーンへ、ウェイトを全部振る。fromMirror は axis に x・y・z のいずれかを渡し、その軸の鏡像の位置にある頂点から、名前の左右を入れ替えたボーンのウェイトを写す。normalize はウェイトの合計を1にそろえ、repairMissingBone は並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。どの操作でも、重みが正の枠が1つも残らない頂点は先頭のボーンへ重み1を振り、並びに居ないボーンを指すウェイトは残っている祖先のボーンへ移す。changed に変えた頂点の数を返す。"
     },
     {
+      "tool": "model_find_material_vertices",
+      "branching": false,
+      "duty": "指した材質の面が使う頂点の位置を、重なりなく昇順で返す。材質は indices・range・all・selected のどれか1つで指す。モデルも画面の選択も変えない。offset と limit で切り出し、切り出す前の件数を total に、切り出した位置を vertexIndices に返す。値の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。limit に0以下を渡すと invalid_argument になる。"
+    },
+    {
       "tool": "model_find_referrers",
       "branching": false,
       "duty": "指した要素を指している要素を数えて返す。モデルは変えない。kind は vertex・material・bone・morph・body のいずれか。detail が count なら指す側の種類ごとの件数を referrers へ並べ、指される側を複数渡したときはどれか1つでも指されていれば1つに畳む。countPerTarget なら指される側1件ごとの位置 index と件数 referrers を targets へ、indices なら referrerKind で名指した1種類の位置を referrerIndices へ並べる。referrerKind はこのときだけ渡せ、ほかへ渡すと invalid_argument になる。後の2つだけは offset と limit で切り出し、総数 total を添え、応答の枠に収まる件数まで減らして警告を添え、残りがあれば nextOffset を返す。その値を次の offset へ渡すと続きが読める。count へ offset・limit を渡すと invalid_argument になる。1件も収まらなければ response_too_large を返す。指す側は、頂点へ face・material・morph・softBody、材質へ morph・softBody、ボーンへ vertex・bone・morph・node・body、モーフへ morph・node、剛体へ joint・morph・softBody。面の位置はモデル全体の通し番号。表示枠は model_list_nodes が並べる枠だけを数える。材質を指さない材質モーフのオフセットは全材質を指す。minWeight は kind が bone のときだけ渡せ、これより大きい重みの枠だけを数える。既定は0なので重みが0の枠は数えない。"

@@ -46,6 +46,7 @@ namespace PmxEditorMcp
             ModelMirrorElements.AddTo(methods, edit);
             ModelValidatePmx.AddTo(methods, edit);
             ModelFindReferrers.AddTo(methods, edit);
+            ModelFindMaterialVertices.AddTo(methods, edit);
             ModelInsertElements.AddTo(methods, edit, builder);
             ModelDeleteElements.AddTo(methods, edit);
         }
