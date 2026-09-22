@@ -74,7 +74,7 @@ namespace PmxEditorMcp
             {
                 IList<int> positions;
                 if (!ElementScope.TryPositions(
-                    context, kind, owner, out positions, out code, out message))
+                    context, pmx, kind, owner, out positions, out code, out message))
                 {
                     return ComposedEditResult.Refuse(code, message);
                 }

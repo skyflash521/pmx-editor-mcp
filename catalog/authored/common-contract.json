@@ -337,7 +337,7 @@
     {
       "tool": "model_edit_faces",
       "branching": false,
-      "duty": "指した面の向き・対角線・押し出し・共有頂点の分離を行う。材質は parentIndices・parentRange・parentAll のどれか1つ、その中の面は indices・range・all のどれか1つで指す。operation は flip・swapDiagonal・extrude・separateSharedVertices のいずれか。flip は2つめと3つめの頂点を入れ替える。swapDiagonal は辺を共有する2つの面が作る四角の対角線を引き直す。extrude は distance に押し出す長さを渡し、指した面をひとまとまりとして押し出して境界の辺へ側面を張る。separateSharedVertices は指していない面と共有する頂点を複製して分ける。changed・addedVertices・addedFaces を返す。"
+      "duty": "指した面の向き・対角線・押し出し・共有頂点の分離を行う。材質は parentIndices・parentRange・parentAll のどれか1つ、その中の面は indices・range・all・selected のどれか1つで指す。selected に真を渡すと、画面がいま選んでいる面のうち、指した材質のものを対象にする。operation は flip・swapDiagonal・extrude・separateSharedVertices のいずれか。flip は2つめと3つめの頂点を入れ替える。swapDiagonal は辺を共有する2つの面が作る四角の対角線を引き直す。extrude は distance に押し出す長さを渡し、指した面をひとまとまりとして押し出して境界の辺へ側面を張る。separateSharedVertices は指していない面と共有する頂点を複製して分ける。changed・addedVertices・addedFaces を返す。"
     },
     {
       "tool": "model_edit_materials",

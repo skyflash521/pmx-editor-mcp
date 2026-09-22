@@ -107,6 +107,19 @@ namespace PmxEditorMcp
                 && Selectable(access.Element);
         }
 
+        /// <summary>
+        /// その道が並べる要素を、画面がモデル全体で数えた位置から指せるか。材質ごとの面の並びが
+        /// 当たる——材質の並びの順に面を繋いだ位置が、画面の数える面の位置になる。
+        /// </summary>
+        public static bool SelectsAcross(ToolAccess access)
+        {
+            return access != null
+                && access.Kind == ToolAccessKind.Element
+                && access.Parents.Count == 1
+                && access.Owner == typeof(IPXMaterial)
+                && access.Element == typeof(IPXFace);
+        }
+
         /// <summary>その種類の選択を書き換えるツールの名前。画面が選べない種類では null。</summary>
         public static string Picking(string kind)
         {
@@ -118,6 +131,60 @@ namespace PmxEditorMcp
             return string.Equals(kind, ElementKinds.Material, StringComparison.Ordinal)
                 ? "session_set_selected_material_indices"
                 : "view_set_selected_" + kind + "_indices_pmd_view_connector";
+        }
+
+        /// <summary>
+        /// 画面がいま選んでいる面を、材質の位置とその材質の中の位置の組で読む。
+        /// <paramref name="counts"/> は材質ごとの面の数で、材質の並びの順に渡す。選んだ順のまま
+        /// 渡し、どの材質にも当たらない位置は外す。
+        /// </summary>
+        public IList<KeyValuePair<int, int>> TakenFaces(IList<int> counts)
+        {
+            if (counts == null)
+            {
+                throw new ArgumentNullException(nameof(counts));
+            }
+
+            int[] starts = new int[counts.Count];
+            int total = 0;
+            for (int at = 0; at < counts.Count; at++)
+            {
+                starts[at] = total;
+                total += counts[at];
+            }
+
+            List<KeyValuePair<int, int>> taken = new List<KeyValuePair<int, int>>();
+            foreach (int global in Taken(ElementKinds.Face, total))
+            {
+                int owner = Array.BinarySearch(starts, global);
+                if (owner < 0)
+                {
+                    owner = ~owner - 1;
+                }
+
+                while (owner + 1 < starts.Length && starts[owner + 1] == global)
+                {
+                    owner++;
+                }
+
+                if (owner >= 0 && global - starts[owner] < counts[owner])
+                {
+                    taken.Add(new KeyValuePair<int, int>(owner, global - starts[owner]));
+                }
+            }
+
+            return taken;
+        }
+
+        /// <summary>
+        /// 画面がいま選んでいる面のうち、<paramref name="owner"/> 番目の材質のものを、その材質の
+        /// 中の位置で読む口。<paramref name="counts"/> は <see cref="TakenFaces"/> と同じ。
+        /// </summary>
+        public ScreenPick PickFaces(IList<int> counts, int owner)
+        {
+            return new ScreenPick(
+                () => TakenFaces(counts).Where(p => p.Key == owner).Select(p => p.Value).ToList(),
+                Picking(ElementKinds.Face));
         }
 
         /// <summary>

@@ -742,6 +742,26 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
+        [Fact]
+        public void TheFaceEditActsOnTheFacesTheScreenPicks()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            IPXFace kept = Face(vertices, 0, 1, 2);
+            IPXFace flipped = Face(vertices, 0, 1, 2);
+            FakeMaterial material = Material("材質", kept, flipped);
+            // 画面は選んだ面を3つの頂点の位置の組で持つ。通し番号1の面を選ぶ。
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(EditFaces(
+                Operation(ModelEditFaces.Flip),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("selected", true)));
+
+            Assert.Equal(1, value[ModelEditFaces.ChangedName]);
+            Assert.Same(vertices[1], kept.Vertex2);
+            Assert.Same(vertices[2], flipped.Vertex2);
+        }
+
         [Theory]
         [InlineData(ModelEditUv.FlipU, 0.75f, 0.25f)]
         [InlineData(ModelEditUv.FlipV, 0.25f, 0.75f)]

@@ -3384,7 +3384,7 @@ namespace PmxEditorMcp
             yield return TargetNames.Element.Indices;
             yield return TargetNames.Element.Range;
             yield return TargetNames.Element.All;
-            if (ScreenTargets.Selects(access))
+            if (ScreenTargets.Selects(access) || ScreenTargets.SelectsAcross(access))
             {
                 yield return TargetNames.Element.Selected;
             }
@@ -3683,6 +3683,17 @@ namespace PmxEditorMcp
                 selected = _screen.Pick(access.Element, spots.Count);
             }
 
+            bool elsewhere = false;
+            if (ScreenTargets.SelectsAcross(access) && !pointed.ParentByHandle)
+            {
+                if (!TryAcross(access, owners, spots, out selected, out elsewhere, out refused))
+                {
+                    return false;
+                }
+
+                allowed |= TargetForm.Selected;
+            }
+
             if (!TargetSelection.TryResolve(
                 pointed.Elements,
                 allowed,
@@ -3694,6 +3705,14 @@ namespace PmxEditorMcp
                 TargetNames.Element,
                 selected))
             {
+                if (elsewhere && code == ToolEnvelope.NotApplicable)
+                {
+                    column = new Spot[0];
+                    whole = spots.Count;
+
+                    return true;
+                }
+
                 refused = new Refusal(ToolEnvelope.Failure(code, message));
 
                 return false;
@@ -3701,6 +3720,54 @@ namespace PmxEditorMcp
 
             column = resolved.Indices.Select(i => spots[i]).ToList();
             whole = spots.Count;
+
+            return true;
+        }
+
+        /// <summary>
+        /// 画面がモデル全体で数えて選んでいる面を、辿った面の並びの中の位置で読む口を作る。
+        /// 指した親の外の面は外す。<paramref name="elsewhere"/> は、画面が面を選んでいるが、
+        /// そのどれも指した親の中に無いときに真。
+        /// </summary>
+        private bool TryAcross(
+            ToolAccess access,
+            IList<object> owners,
+            IList<Spot> spots,
+            out ScreenPick selected,
+            out bool elsewhere,
+            out Refusal refused)
+        {
+            selected = null;
+            elsewhere = false;
+            List<int> counts = new List<int>(owners.Count);
+            foreach (object owner in owners)
+            {
+                List<object> reached = new List<object>();
+                if (!TryStep(Step(access), owner, reached, out refused))
+                {
+                    return false;
+                }
+
+                counts.Add(reached.Count);
+            }
+
+            Dictionary<KeyValuePair<int, int>, int> placed =
+                new Dictionary<KeyValuePair<int, int>, int>();
+            for (int at = 0; at < spots.Count; at++)
+            {
+                placed[new KeyValuePair<int, int>(spots[at].ParentIndex, spots[at].IndexInParent)] = at;
+            }
+
+            ScreenTargets screen = _screen;
+            IList<KeyValuePair<int, int>> taken = screen.TakenFaces(counts);
+            elsewhere = taken.Count != 0 && !taken.Any(placed.ContainsKey);
+            selected = new ScreenPick(
+                () => screen.TakenFaces(counts)
+                    .Where(placed.ContainsKey)
+                    .Select(p => placed[p])
+                    .ToList(),
+                ScreenTargets.Picking(ElementKinds.Face));
+            refused = null;
 
             return true;
         }

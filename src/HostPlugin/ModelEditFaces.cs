@@ -72,6 +72,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
                 DistanceName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
@@ -112,19 +113,15 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            IList<int> counts = model.Material.Select(m => m.Faces.Count).ToList();
             List<KeyValuePair<IPXMaterial, IPXFace>> picked =
                 new List<KeyValuePair<IPXMaterial, IPXFace>>();
             foreach (int at in parents)
             {
                 IPXMaterial material = model.Material[at];
                 IList<int> chosen;
-                if (!TargetInput.TryPositions(
-                    context.Params,
-                    TargetNames.Element,
-                    material.Faces.Count,
-                    out chosen,
-                    out code,
-                    out message))
+                if (!ElementScope.TryFacePositions(
+                    context, counts, at, out chosen, out code, out message))
                 {
                     return ComposedEditResult.Refuse(code, message);
                 }

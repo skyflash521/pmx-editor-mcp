@@ -30,6 +30,10 @@ namespace PmxEditorMcp.Tests
 
         private const string CompactKey = "Sdk.Pmx.Compact()";
 
+        private const string MaterialsKey = "Sdk.Pmx.Material()";
+
+        private const string FacesKey = "PEPlugin.Pmx.IPXMaterial.Faces()";
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -76,6 +80,95 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> item =
                 (IDictionary<string, object>)((object[])value[ToolDispatch.ItemsName])[0];
             Assert.Equal(@"C:\models\a.pmx", item["filePath"]);
+        }
+
+        [Fact]
+        public void TheFacesTheScreenPicksAreListedAtTheirPlaceInTheirMaterial()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            for (int at = 0; at < 3; at++)
+            {
+                first.Faces.Add(new FakeFace());
+            }
+
+            for (int at = 0; at < 2; at++)
+            {
+                second.Faces.Add(new FakeFace());
+            }
+
+            _model.Materials.Add(first);
+            _model.Materials.Add(second);
+            // 画面は選んだ面を3つの頂点の位置の組で持つ。通し番号4と1の面を選ぶ。
+            _view.Selected[ElementKinds.Face] = new[] { 12, 13, 14, 3, 4, 5 };
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_faces", Arguments("parentAll", true, "selected", true)));
+            object[] items = (object[])value[ToolDispatch.ItemsName];
+
+            Assert.Equal(2, items.Length);
+            Assert.Equal(1, ((IDictionary<string, object>)items[0])["indexInParent"]);
+            Assert.Equal(1, ((IDictionary<string, object>)items[0])["parentIndex"]);
+            Assert.Equal(1, ((IDictionary<string, object>)items[1])["indexInParent"]);
+            Assert.Equal(0, ((IDictionary<string, object>)items[1])["parentIndex"]);
+        }
+
+        [Fact]
+        public void TheFacesTheScreenPicksOutsideThePointedMaterialsAreLeftOut()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            first.Faces.Add(new FakeFace());
+            second.Faces.Add(new FakeFace());
+            _model.Materials.Add(first);
+            _model.Materials.Add(second);
+            _view.Selected[ElementKinds.Face] = new[] { 0, 1, 2, 3, 4, 5 };
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_faces", Arguments("parentIndices", new object[] { 1 }, "selected", true)));
+            object[] items = (object[])value[ToolDispatch.ItemsName];
+
+            Assert.Single(items);
+            Assert.Equal(0, ((IDictionary<string, object>)items[0])["indexInParent"]);
+            Assert.Equal(1, ((IDictionary<string, object>)items[0])["parentIndex"]);
+        }
+
+        [Fact]
+        public void TheFacesTheScreenPicksOnlyInOtherMaterialsListNothing()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            first.Faces.Add(new FakeFace());
+            second.Faces.Add(new FakeFace());
+            _model.Materials.Add(first);
+            _model.Materials.Add(second);
+            _view.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_faces", Arguments("parentIndices", new object[] { 1 }, "selected", true)));
+
+            Assert.Empty((object[])value[ToolDispatch.ItemsName]);
+        }
+
+        [Fact]
+        public void TheScreenSelectionTogetherWithPositionsIsRefusedEvenWhenItLiesElsewhere()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            first.Faces.Add(new FakeFace());
+            second.Faces.Add(new FakeFace());
+            _model.Materials.Add(first);
+            _model.Materials.Add(second);
+            _view.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_faces",
+                Arguments(
+                    "parentIndices", new object[] { 1 },
+                    "selected", true,
+                    "indices", new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
         }
 
         [Fact]
@@ -562,6 +655,22 @@ namespace PmxEditorMcp.Tests
             return new Dictionary<string, SdkList>(StringComparer.Ordinal)
             {
                 {
+                    MaterialsKey,
+                    new SdkList(
+                        owner => ((Model)owner).Materials.Count,
+                        (owner, index) => ((Model)owner).Materials[index],
+                        (owner, item) => ((Model)owner).Materials.Add((FakeMaterial)item),
+                        (owner, index) => ((Model)owner).Materials.RemoveAt(index))
+                },
+                {
+                    FacesKey,
+                    new SdkList(
+                        owner => ((FakeMaterial)owner).Faces.Count,
+                        (owner, index) => ((FakeMaterial)owner).Faces[index],
+                        (owner, item) => ((FakeMaterial)owner).Faces.Add((PEPlugin.Pmx.IPXFace)item),
+                        (owner, index) => ((FakeMaterial)owner).Faces.RemoveAt(index))
+                },
+                {
                     ListKey,
                     new SdkList(
                         owner => ((Model)owner).Items.Count,
@@ -645,6 +754,24 @@ namespace PmxEditorMcp.Tests
                         false, true, Rooted(EditKind.Read), ToolAccess.Whole(), Set(fields))
                 },
                 {
+                    "model_list_faces",
+                    new ToolFields(
+                        false,
+                        true,
+                        Rooted(EditKind.Read),
+                        new ToolAccess(
+                            ToolAccessKind.Element,
+                            FacesKey,
+                            new[] { new ToolHop(MaterialsKey, true) },
+                            true,
+                            typeof(PEPlugin.Pmx.IPXFace),
+                            item => item is PEPlugin.Pmx.IPXFace,
+                            "face",
+                            null,
+                            typeof(PEPlugin.Pmx.IPXMaterial)),
+                        Set(new ToolField[0]))
+                },
+                {
                     "model_update_pmxes",
                     new ToolFields(
                         true, true, Rooted(EditKind.DuplicateEdit), ToolAccess.Whole(), Set(fields))
@@ -675,6 +802,8 @@ namespace PmxEditorMcp.Tests
             public bool Cleared { get; set; }
 
             public List<Item> Items { get; } = new List<Item>();
+
+            public List<FakeMaterial> Materials { get; } = new List<FakeMaterial>();
         }
 
         /// <summary>リストが並べる要素の題材。</summary>

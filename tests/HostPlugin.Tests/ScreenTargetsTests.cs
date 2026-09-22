@@ -86,6 +86,25 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1 }, Targets().Taken(ElementKinds.Face, 4));
         }
 
+        [Fact]
+        public void TheFaceSelectionComesBackAsTheMaterialAndThePlaceInIt()
+        {
+            _view.Selected[ElementKinds.Face] = new[] { 12, 13, 14, 3, 4, 5 };
+
+            Assert.Equal(
+                new[] { new KeyValuePair<int, int>(2, 1), new KeyValuePair<int, int>(0, 1) },
+                Targets().TakenFaces(new[] { 3, 0, 2 }));
+        }
+
+        [Fact]
+        public void TheFacesOfOneMaterialComeBackAtTheirPlaceInIt()
+        {
+            _view.Selected[ElementKinds.Face] = new[] { 12, 13, 14, 3, 4, 5 };
+
+            Assert.Equal(new[] { 1 }, Targets().PickFaces(new[] { 3, 0, 2 }, 2).Taken());
+            Assert.Empty(Targets().PickFaces(new[] { 3, 0, 2 }, 1).Taken());
+        }
+
         [Theory]
         [InlineData(ElementKinds.Vertex, "view_set_selected_vertex_indices_pmd_view_connector")]
         [InlineData(ElementKinds.Face, "view_set_selected_face_indices_pmd_view_connector")]

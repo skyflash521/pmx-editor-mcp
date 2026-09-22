@@ -420,11 +420,61 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
+        /// <paramref name="owner"/> 番目の材質の面の並びの中で、指した面の位置を解く。
+        /// <paramref name="counts"/> は材質ごとの面の数で、材質の並びの順に渡す。画面の選択で
+        /// 指すときは、モデル全体で数えた選択のうちその材質のものを採る。選択がほかの材質にだけ
+        /// あるときは、この材質からは1つも採らない。
+        /// </summary>
+        public static bool TryFacePositions(
+            McpMethodContext context,
+            IList<int> counts,
+            int owner,
+            out IList<int> positions,
+            out string code,
+            out string message)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (counts == null)
+            {
+                throw new ArgumentNullException(nameof(counts));
+            }
+
+            ScreenPick picked = context.Screen.PickFaces(counts, owner);
+            if (TargetInput.TryPositions(
+                context.Params,
+                TargetNames.Element,
+                counts[owner],
+                out positions,
+                out code,
+                out message,
+                picked))
+            {
+                return true;
+            }
+
+            if (code == ToolEnvelope.NotApplicable && context.Screen.TakenFaces(counts).Count != 0)
+            {
+                positions = new int[0];
+                code = null;
+                message = null;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// その相手の並びの中で、指した要素の位置を解く。位置は昇順で重なりを持たない。解けなければ
         /// 偽で、断る内容を渡す。
         /// </summary>
         public static bool TryPositions(
             McpMethodContext context,
+            object pmx,
             ElementKind kind,
             object owner,
             out IList<int> positions,
@@ -436,6 +486,11 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(context));
             }
 
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
             if (kind == null)
             {
                 throw new ArgumentNullException(nameof(kind));
@@ -443,6 +498,21 @@ namespace PmxEditorMcp
 
             positions = null;
             int count = kind.Items(owner).Count;
+            if (kind.Owner != null && string.Equals(kind.Name, ElementKinds.Face, StringComparison.Ordinal))
+            {
+                IList<object> owners = kind.Owner.Items(pmx);
+                int at = Enumerable.Range(0, owners.Count)
+                    .FirstOrDefault(i => ReferenceEquals(owners[i], owner));
+
+                return TryFacePositions(
+                    context,
+                    owners.Select(o => kind.Items(o).Count).ToList(),
+                    at,
+                    out positions,
+                    out code,
+                    out message);
+            }
+
             ScreenPick picked = kind.Owner == null ? context.Screen.Pick(kind.Name, count) : null;
             if (picked == null && context.Params.ContainsKey(TargetNames.Element.Selected))
             {

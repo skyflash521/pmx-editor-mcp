@@ -2489,6 +2489,11 @@
               "name": "all",
               "origin": "hostInput",
               "shape": "boolean"
+            },
+            {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
             }
           ],
           "choices": [
@@ -2504,7 +2509,8 @@
               "names": [
                 "all",
                 "indices",
-                "range"
+                "range",
+                "selected"
               ],
               "required": true
             }
@@ -5034,6 +5040,11 @@
               "shape": "boolean"
             },
             {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
               "name": "distance",
               "origin": "hostInput",
               "shape": "number",
@@ -5045,7 +5056,8 @@
               "names": [
                 "all",
                 "indices",
-                "range"
+                "range",
+                "selected"
               ],
               "required": true
             },
@@ -7430,6 +7442,11 @@
               "shape": "boolean"
             },
             {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
               "name": "fields",
               "origin": "hostInput",
               "element": {
@@ -7468,7 +7485,8 @@
               "names": [
                 "all",
                 "indices",
-                "range"
+                "range",
+                "selected"
               ],
               "required": true
             }
@@ -11369,6 +11387,11 @@
               "name": "all",
               "origin": "hostInput",
               "shape": "boolean"
+            },
+            {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
             }
           ],
           "choices": [
@@ -11384,7 +11407,8 @@
               "names": [
                 "all",
                 "indices",
-                "range"
+                "range",
+                "selected"
               ],
               "required": true
             }
@@ -14179,6 +14203,11 @@
               "shape": "boolean"
             },
             {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
               "name": "value",
               "origin": "hostInput",
               "members": [
@@ -14231,7 +14260,8 @@
               "names": [
                 "all",
                 "indices",
-                "range"
+                "range",
+                "selected"
               ],
               "required": true
             },

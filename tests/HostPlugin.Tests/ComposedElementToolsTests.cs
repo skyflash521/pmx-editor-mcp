@@ -645,6 +645,113 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { 1, 1 }, (object[])value[ModelInsertElements.IndicesName]);
         }
 
+        [Fact]
+        public void DeletingTheFacesTheScreenPicksTakesThemOutOfEachMaterial()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            IPXFace[] firsts = { Triangle(), Triangle(), Triangle() };
+            IPXFace[] seconds = { Triangle(), Triangle() };
+            foreach (IPXFace face in firsts)
+            {
+                first.Faces.Add(face);
+            }
+
+            foreach (IPXFace face in seconds)
+            {
+                second.Faces.Add(face);
+            }
+
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+            // 画面は選んだ面を3つの頂点の位置の組で持つ。通し番号4と1の面を選ぶ。
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 12, 13, 14, 3, 4, 5 };
+
+            ComposedEditFixture.Value(Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("selected", true)));
+
+            Assert.Equal(new[] { firsts[0], firsts[2] }, first.Faces.ToArray());
+            Assert.Equal(new[] { seconds[0] }, second.Faces.ToArray());
+        }
+
+        [Fact]
+        public void CloningTheFacesTheScreenPicksReadsTheSelectionBeforeAnyMaterialGrows()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            IPXFace[] firsts = { Triangle(), Triangle() };
+            IPXFace[] seconds = { Triangle(), Triangle() };
+            foreach (IPXFace face in firsts)
+            {
+                first.Faces.Add(face);
+            }
+
+            foreach (IPXFace face in seconds)
+            {
+                second.Faces.Add(face);
+            }
+
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+            // 通し番号0と3の面、つまり一の0番目と二の1番目を選ぶ。
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2, 9, 10, 11 };
+
+            ComposedEditFixture.Value(Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.Clone),
+                ComposedEditFixture.Given("selected", true)));
+
+            Assert.Equal(3, first.Faces.Count);
+            Assert.Equal(3, second.Faces.Count);
+            Assert.Same(firsts[0].Vertex1, first.Faces[2].Vertex1);
+            Assert.Same(seconds[1].Vertex1, second.Faces[2].Vertex1);
+        }
+
+        [Fact]
+        public void TheScreenSelectionTogetherWithPositionsIsRefusedEvenWhenItLiesElsewhere()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            first.Faces.Add(Triangle());
+            second.Faces.Add(Triangle());
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            IDictionary<string, object> envelope = Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("parentIndices", new object[] { 1 }),
+                ComposedEditFixture.Given("selected", true),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Single(second.Faces);
+        }
+
+        [Fact]
+        public void TheFacesTheScreenPicksOutsideThePointedMaterialsAreKept()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            first.Faces.Add(Triangle());
+            second.Faces.Add(Triangle());
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            ComposedEditFixture.Value(Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("parentIndices", new object[] { 1 }),
+                ComposedEditFixture.Given("selected", true)));
+
+            Assert.Single(first.Faces);
+            Assert.Single(second.Faces);
+        }
+
         private IPXFace Triangle()
         {
             FakeVertex[] corners =

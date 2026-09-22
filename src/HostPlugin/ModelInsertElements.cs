@@ -158,12 +158,13 @@ namespace PmxEditorMcp
                     OperationName + " が " + New + " のときは、写す元を指さない。");
             }
 
-            List<object> landed = new List<object>();
+            List<IList<object>> makes = new List<IList<object>>();
             foreach (object owner in owners)
             {
                 IList<object> made;
                 if (!TryMade(
                     context,
+                    pmx,
                     kind,
                     owner,
                     builder,
@@ -177,6 +178,14 @@ namespace PmxEditorMcp
                     return ComposedEditResult.Refuse(code, message);
                 }
 
+                makes.Add(made);
+            }
+
+            List<object> landed = new List<object>();
+            for (int each = 0; each < owners.Count; each++)
+            {
+                object owner = owners[each];
+                IList<object> made = makes[each];
                 IList<object> items = kind.Items(owner);
                 int put = at ?? items.Count;
                 if (put < 0 || put > items.Count)
@@ -203,6 +212,7 @@ namespace PmxEditorMcp
 
         private static bool TryMade(
             McpMethodContext context,
+            object pmx,
             ElementKind kind,
             object owner,
             Func<object> builder,
@@ -244,7 +254,8 @@ namespace PmxEditorMcp
             }
 
             IList<int> chosen;
-            if (!ElementScope.TryPositions(context, kind, owner, out chosen, out code, out message))
+            if (!ElementScope.TryPositions(
+                context, pmx, kind, owner, out chosen, out code, out message))
             {
                 return false;
             }

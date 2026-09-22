@@ -91,7 +91,7 @@ namespace PmxEditorMcp
             if (!TryTargetKind(context, out code, out message)
                 || !ElementScope.TryTake(context, pmx, out kind, out owners, out code, out message)
                 || !ElementScope.TryPositions(
-                    context, kind, owners[0], out targets, out code, out message)
+                    context, pmx, kind, owners[0], out targets, out code, out message)
                 || !TryDetail(context, out detail, out code, out message)
                 || !TryReferrerKind(context, kind, detail, out referrerKind, out code, out message)
                 || !TryMinWeight(context, kind, out minWeight, out code, out message)
