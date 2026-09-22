@@ -38,6 +38,12 @@ let CLIENT_COMMAND = "claude";
 const BUDGET_NAME = "PMX_EDITOR_MCP_BUDGET_CHARS";
 
 /**
+ * 参照クライアントの停止で音も通知も出させない環境変数。Claude Code の flow プラグインの
+ * Stop フックが読む。
+ */
+const UNATTENDED_NAME = "FLOW_UNATTENDED";
+
+/**
  * この検査で与える応答サイズ予算。受理される下限を採る——画像は予算で測ってはならないので、
  * 測っていないことを見るには、どんなに軽いビューの画像でも予算を超える値が要る。この開発環境の
  * 実測では、モデルを読み込んでいない起動直後のビューでも詰めた文字は15,174文字だったので、
@@ -273,6 +279,7 @@ try {
             encoding: "utf8",
             timeout: CLIENT_TIMEOUT_MS,
             shell: true,
+            env: { ...process.env, [UNATTENDED_NAME]: "1" },
             input: "次のツールを、書いてある引数のとおりに順に1回ずつ呼べ。結果は要らない。\n"
                 + orders,
         });
