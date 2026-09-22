@@ -5,7 +5,7 @@
       "searches": [
         [
           "動作 list",
-          "出所 PEPlugin.Pmx"
+          "model_list_"
         ]
       ],
       "tools": [
@@ -33,43 +33,111 @@
       "searches": [
         [
           "動作 add",
-          "出所 PEPlugin.Pmx.IPXPmx"
+          "対象 vertex /"
+        ],
+        [
+          "動作 add",
+          "対象 bone /"
+        ],
+        [
+          "動作 add",
+          "対象 material /"
+        ],
+        [
+          "動作 add",
+          "対象 morph /"
+        ],
+        [
+          "動作 add",
+          "対象 body /"
+        ],
+        [
+          "動作 add",
+          "対象 joint /"
+        ],
+        [
+          "動作 add",
+          "対象 node /"
+        ],
+        [
+          "動作 add",
+          "対象 soft_body /"
         ],
         [
           "動作 remove",
-          "出所 PEPlugin.Pmx.IPXPmx"
+          "対象 vertex /"
+        ],
+        [
+          "動作 remove",
+          "対象 bone /"
+        ],
+        [
+          "動作 remove",
+          "対象 material /"
+        ],
+        [
+          "動作 remove",
+          "対象 morph /"
+        ],
+        [
+          "動作 remove",
+          "対象 body /"
+        ],
+        [
+          "動作 remove",
+          "対象 joint /"
+        ],
+        [
+          "動作 remove",
+          "対象 node /"
+        ],
+        [
+          "動作 remove",
+          "対象 soft_body /"
         ],
         [
           "動作 update",
-          "出所 PEPlugin.Pmx.IPXVertex"
+          "対象 vertex /"
         ],
         [
           "動作 update",
-          "出所 PEPlugin.Pmx.IPXBone"
+          "対象 bone /"
         ],
         [
           "動作 update",
-          "出所 PEPlugin.Pmx.IPXMaterial"
+          "対象 material /"
         ],
         [
           "動作 update",
-          "出所 PEPlugin.Pmx.IPXMorph"
+          "対象 morph /"
         ],
         [
           "動作 update",
-          "出所 PEPlugin.Pmx.IPXBody"
+          "対象 morph_offset /"
         ],
         [
           "動作 update",
-          "出所 PEPlugin.Pmx.IPXJoint"
+          "対象 body /"
         ],
         [
           "動作 update",
-          "出所 PEPlugin.Pmx.IPXNode"
+          "対象 joint /"
         ],
         [
           "動作 update",
-          "出所 PEPlugin.Pmx.IPXSoftBody"
+          "対象 node /"
+        ],
+        [
+          "動作 update",
+          "対象 node_item /"
+        ],
+        [
+          "動作 update",
+          "対象 soft_body /"
+        ],
+        [
+          "動作 update",
+          "対象 soft_body_anchor /"
         ],
         [
           "動作 undo"
@@ -116,11 +184,11 @@
           "動作 save_pmx_file"
         ],
         [
-          "動作 from_file",
+          "ファイルから読み込み",
           "対象 pmx"
         ],
         [
-          "動作 to_file",
+          "ファイルへ保存",
           "対象 pmx"
         ]
       ],
@@ -135,15 +203,16 @@
       "task": "見た目の確認",
       "searches": [
         [
-          "動作 set_camera_view"
+          "カメラの一括設定"
         ],
         [
-          "動作 get_client_image",
-          "対象 pmd_view_connector"
+          "キャプチャ"
         ]
       ],
       "tools": [
+        "motion_get_client_image",
         "view_get_client_image_pmd_view_connector",
+        "view_get_client_image_sub_view_connector",
         "view_set_camera_view"
       ]
     },
@@ -151,16 +220,15 @@
       "task": "モーションの構築",
       "searches": [
         [
-          "動作 create_vmd",
-          "IPEVmdインスタンス生成"
+          "VMD",
+          "新しく作る"
         ],
         [
           "対象 vmd_bone_key",
           "動作 add"
         ],
         [
-          "動作 to_file",
-          "対象 vmd"
+          "VMDファイルへ保存"
         ],
         [
           "ハンドルを解放"
@@ -169,6 +237,13 @@
       "tools": [
         "motion_add_vmd_bone_keys",
         "motion_create_vmd",
+        "motion_create_vmd_bas_camera_key",
+        "motion_create_vmd_bone_key",
+        "motion_create_vmd_bone_pose_state",
+        "motion_create_vmd_ipl",
+        "motion_create_vmd_light_key",
+        "motion_create_vmd_morph_key",
+        "motion_create_vmd_self_shadow_key",
         "motion_to_file_vmd",
         "session_release_handle"
       ]
@@ -177,7 +252,7 @@
       "task": "画面の操作の受け取り",
       "searches": [
         [
-          "動作 create_view_event_listener"
+          "イベントリスナ生成"
         ],
         [
           "イベントを取り出す"
