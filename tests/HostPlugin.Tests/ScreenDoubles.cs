@@ -5,6 +5,480 @@ using System.Collections.Generic;
 
 namespace PmxEditorMcp.Tests
 {
+    /// <summary>ビューの表示の設定の題材。面の選択が画面に出るかだけを持つ。</summary>
+    public sealed class FakeViewSetting : PEPlugin.View.IPEViewSettingConnector
+    {
+        /// <summary>選んだ面を画面に出すか。</summary>
+        public bool Visible_SelectedFace { get; set; } = true;
+
+        public int SelectedTabPage
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Color BackColor
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Color AmbientColor
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Color LightColor
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public PEPlugin.Pmd.IPEVector3 LightDirection
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_Bone
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_Vertex
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_SelectedVertex
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_UnvisibleVertex
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_Normal
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_SelectedNormal
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_Body
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_SolidBody
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_Joint
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible_WeightMap
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool OnlyWeighting
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Color NonWeightingVertexColor
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public float ModelSize
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public float Perspective
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public PEPlugin.View.AntiAliasingType AAType
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool ColorBlending
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public PEPlugin.View.FillMode FillMode
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public float VertexPointSize
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Color VertexPointColor
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Color SelectedVertexPointColor
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public float NormalLength
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Color NormalColor
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public System.Drawing.Color SelectedNormalColor
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public float JointPointSize
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public PEPlugin.View.ToonType ToonType
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Edge
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public float EdgeSize
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public void InitializeLight()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void InitializeViewSetting()
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool LoadViewSetting(string path)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SaveViewSetting(string path)
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool Focus()
+        {
+            throw new NotSupportedException();
+        }
+
+        public System.Drawing.Point Location
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public bool Visible
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+
+            set
+            {
+                throw new NotSupportedException();
+            }
+        }
+    }
+
     public sealed class FakePmxView : PEPlugin.View.IPXPmxViewConnector
     {
         /// <summary>種類ごとの、画面で選ばれている位置。</summary>

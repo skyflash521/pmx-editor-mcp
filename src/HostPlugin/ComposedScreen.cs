@@ -22,17 +22,21 @@ namespace PmxEditorMcp
         Pmx = 4,
 
         Parts = 8,
+
+        /// <summary>ビューの表示の設定の口。</summary>
+        Setting = 16,
     }
 
     /// <summary>画面へ触るツールの中身が受け取る相手。要らないと言った相手は空になる。</summary>
     public sealed class ScreenParts
     {
-        public ScreenParts(object view, object form, object parts, object pmx)
+        public ScreenParts(object view, object form, object parts, object pmx, object setting = null)
         {
             View = view;
             Form = form;
             Parts = parts;
             Pmx = pmx;
+            Setting = setting;
         }
 
         /// <summary>3Dビューの口。</summary>
@@ -45,6 +49,9 @@ namespace PmxEditorMcp
 
         /// <summary>いま相手にするPMX。</summary>
         public object Pmx { get; }
+
+        /// <summary>ビューの表示の設定の口。</summary>
+        public object Setting { get; }
     }
 
     /// <summary>
@@ -62,6 +69,8 @@ namespace PmxEditorMcp
 
         private readonly Func<object> _parts;
 
+        private readonly Func<object> _setting;
+
         private readonly ScreenRefresh _refresh;
 
         public ComposedScreen(
@@ -69,7 +78,8 @@ namespace PmxEditorMcp
             Func<object> view,
             Func<object> form,
             Func<object> parts,
-            ScreenRefresh refresh)
+            ScreenRefresh refresh,
+            Func<object> setting = null)
         {
             if (session == null)
             {
@@ -101,6 +111,7 @@ namespace PmxEditorMcp
             _view = view;
             _form = form;
             _parts = parts;
+            _setting = setting ?? (() => null);
         }
 
         /// <summary>
@@ -155,6 +166,7 @@ namespace PmxEditorMcp
                     object view = Wanted(needs, ScreenNeeds.View) ? _view() : null;
                     object form = Wanted(needs, ScreenNeeds.Form) ? _form() : null;
                     object parts = Wanted(needs, ScreenNeeds.Parts) ? _parts() : null;
+                    object setting = Wanted(needs, ScreenNeeds.Setting) ? _setting() : null;
                     if (view == null && Wanted(needs, ScreenNeeds.View))
                     {
                         Refuse("3Dビューの口を引けない。", out refusedCode, out refusedMessage);
@@ -172,6 +184,13 @@ namespace PmxEditorMcp
                     if (parts == null && Wanted(needs, ScreenNeeds.Parts))
                     {
                         Refuse("絞込みの口を引けない。", out refusedCode, out refusedMessage);
+
+                        return;
+                    }
+
+                    if (setting == null && Wanted(needs, ScreenNeeds.Setting))
+                    {
+                        Refuse("ビューの表示の設定の口を引けない。", out refusedCode, out refusedMessage);
 
                         return;
                     }
@@ -194,7 +213,7 @@ namespace PmxEditorMcp
                     }
 
                     ComposedEditResult made =
-                        body(context, new ScreenParts(view, form, parts, pmx));
+                        body(context, new ScreenParts(view, form, parts, pmx, setting));
                     if (!made.IsDone)
                     {
                         refusedCode = made.Code;

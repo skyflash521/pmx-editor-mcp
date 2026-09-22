@@ -106,7 +106,10 @@ namespace PmxEditorMcp
             methods.Add(
                 ToolName,
                 screen.Method(
-                    known, ScreenNeeds.View | ScreenNeeds.Pmx, ScreenRefreshKind.Drawn, Run));
+                    known,
+                    ScreenNeeds.View | ScreenNeeds.Pmx | ScreenNeeds.Setting,
+                    ScreenRefreshKind.Drawn,
+                    Run));
         }
 
         private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)
@@ -134,6 +137,7 @@ namespace PmxEditorMcp
             }
 
             int selected = 0;
+            int faces = 0;
             IList<object> counts = new List<object>();
             foreach (string kind in kinds)
             {
@@ -146,6 +150,11 @@ namespace PmxEditorMcp
                 }
 
                 selected += took;
+                if (string.Equals(kind, ElementKinds.Face, StringComparison.Ordinal))
+                {
+                    faces += took;
+                }
+
                 counts.Add(new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { KindName, kind },
@@ -158,7 +167,10 @@ namespace PmxEditorMcp
                 {
                     { SelectedName, selected },
                     { CountsName, counts },
-                });
+                },
+                faces == 0
+                    ? new string[0]
+                    : ScreenFaceVisibility.Warnings(parts.Setting, ElementKinds.Face));
         }
 
         /// <summary>選び直せたなら null を、断るなら断りを返す。</summary>

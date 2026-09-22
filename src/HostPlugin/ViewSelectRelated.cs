@@ -95,7 +95,10 @@ namespace PmxEditorMcp
             methods.Add(
                 ToolName,
                 screen.Method(
-                    known, ScreenNeeds.View | ScreenNeeds.Pmx, ScreenRefreshKind.Drawn, Run));
+                    known,
+                    ScreenNeeds.View | ScreenNeeds.Pmx | ScreenNeeds.Setting,
+                    ScreenRefreshKind.Drawn,
+                    Run));
         }
 
         private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)
@@ -214,7 +217,10 @@ namespace PmxEditorMcp
                 {
                     { KindName, kind },
                     { SelectedName, made.Count },
-                });
+                },
+                made.Count == 0
+                    ? new string[0]
+                    : ScreenFaceVisibility.Warnings(parts.Setting, kind));
         }
 
         private static string Source(string operation)

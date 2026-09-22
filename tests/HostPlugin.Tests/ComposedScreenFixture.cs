@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using PEPlugin.SDX;
@@ -46,6 +47,9 @@ namespace PmxEditorMcp.Tests
 
         public FakePartsSelect Parts { get; } = new FakePartsSelect();
 
+        /// <summary>ビューの表示の設定の題材。</summary>
+        public FakeViewSetting Setting { get; } = new FakeViewSetting();
+
         public FakeSubView SubView { get; } = new FakeSubView();
 
         /// <summary>
@@ -88,7 +92,8 @@ namespace PmxEditorMcp.Tests
                         () => View,
                         () => Form,
                         () => Parts,
-                        new ScreenRefresh(() => View, () => Form)),
+                        new ScreenRefresh(() => View, () => Form),
+                        () => Setting),
                     () => Builder,
                     () => SubView);
             }
@@ -279,6 +284,16 @@ namespace PmxEditorMcp.Tests
         public static KeyValuePair<string, object> Given(string name, object value)
         {
             return ComposedEditFixture.Given(name, value);
+        }
+
+        /// <summary>包みが添えた知らせ。添えていなければ空。</summary>
+        public static IList<string> Warnings(IDictionary<string, object> envelope)
+        {
+            object held;
+
+            return envelope.TryGetValue("warnings", out held)
+                ? ((IEnumerable<string>)held).ToList()
+                : new List<string>();
         }
 
         /// <summary>包みが持つ誤りの符号。</summary>

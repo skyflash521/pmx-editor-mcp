@@ -25,6 +25,8 @@ namespace PmxEditorMcp
 
         private const string SubViewType = "PEPlugin.View.IPESubViewConnector";
 
+        private const string SettingType = "PEPlugin.View.IPEViewSettingConnector";
+
         private readonly object _operationGate = new object();
 
         private Form _uiAnchor;
@@ -219,7 +221,8 @@ namespace PmxEditorMcp
                         () => Receiver(receivers, ViewType),
                         () => Receiver(receivers, FormType),
                         () => Receiver(receivers, PartsType),
-                        refresh),
+                        refresh,
+                        () => Receiver(receivers, SettingType)),
                     () => Receiver(receivers, BuilderType),
                     () => Receiver(receivers, SubViewType));
                 HandleRelease.AddTo(methods);

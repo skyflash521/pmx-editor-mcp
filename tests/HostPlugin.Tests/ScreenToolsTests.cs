@@ -372,6 +372,48 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void PickingFacesWhileTheyAreNotDrawnSaysSo()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Faces(Face(vertices, 0, 1, 2));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0, 1, 2 };
+            _fixture.Setting.Visible_SelectedFace = false;
+
+            IDictionary<string, object> envelope = Related(
+                Operation(ViewSelectRelated.VerticesToFaces));
+
+            Assert.Contains(
+                "選んだ面は画面に出ない",
+                string.Join(" ", ComposedScreenFixture.Warnings(envelope)));
+        }
+
+        [Fact]
+        public void PickingFacesWhileTheyAreDrawnSaysNothingExtra()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Faces(Face(vertices, 0, 1, 2));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0, 1, 2 };
+
+            IDictionary<string, object> envelope = Related(
+                Operation(ViewSelectRelated.VerticesToFaces));
+
+            Assert.Empty(ComposedScreenFixture.Warnings(envelope));
+        }
+
+        [Fact]
+        public void PickingVerticesSaysNothingAboutFacesBeingDrawn()
+        {
+            Vertices(3);
+            _fixture.Setting.Visible_SelectedFace = false;
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
+
+            Assert.Empty(ComposedScreenFixture.Warnings(envelope));
+        }
+
+        [Fact]
         public void TheImageIsTakenFromTheViewpointThatWasGiven()
         {
             _fixture.View.CameraPosition = new V3(0f, 0f, 0f);
