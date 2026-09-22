@@ -21,6 +21,9 @@ namespace PmxEditorMcp.Tests
 
         private const string SaveKey = "Sdk.Form.Save(System.String)";
 
+        /// <summary>画面を撮る行。返る画像はその呼び出しが作ったものである。</summary>
+        private const string ShotKey = "PEPlugin.View.IPEPMDViewConnector.GetClientImage()";
+
         private const string SelectionKey =
             "PEPlugin.View.IPEPMDViewConnector.SetSelectedVertexIndices(System.Int32[])";
 
@@ -67,6 +70,15 @@ namespace PmxEditorMcp.Tests
         private readonly string _root;
 
         private readonly HostLog _log;
+
+        /// <summary>最後に撮った画像。手放されたかをここで見る。</summary>
+        private System.Drawing.Bitmap _shot;
+
+        /// <summary>撮ったものを詰められる形で返すか。偽なら詰める段が落ちる。</summary>
+        private bool _packable = true;
+
+        /// <summary>詰められない持ち物。詰める段が落ちた回に手放されたかを見る。</summary>
+        private Throwaway _unpackable;
 
         private readonly Target _target = new Target();
 
@@ -127,6 +139,24 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(0, _view.Repaints);
             Assert.Equal(0, _view.Redraws);
+        }
+
+        [Fact]
+        public void AShotTakenForTheAnswerIsLetGoOnceItIsPacked()
+        {
+            IDictionary<string, object> envelope = Call("view_shot", Arguments());
+
+            Assert.True((bool)envelope["ok"]);
+            Assert.Throws<ArgumentException>(() => _shot.Width);
+        }
+
+        [Fact]
+        public void AShotIsLetGoEvenWhenPackingItThrows()
+        {
+            _packable = false;
+
+            Assert.Throws<InvalidCastException>(() => Call("view_shot", Arguments()));
+            Assert.True(_unpackable.Released);
         }
 
         [Fact]
@@ -1271,6 +1301,18 @@ namespace PmxEditorMcp.Tests
             };
         }
 
+        /// <summary>画像として詰められない持ち物。</summary>
+        private sealed class Throwaway : IDisposable
+        {
+            /// <summary>手放されたか。</summary>
+            public bool Released { get; private set; }
+
+            public void Dispose()
+            {
+                Released = true;
+            }
+        }
+
         private SdkRelayTable Relay()
         {
             Dictionary<string, SdkCall> calls =
@@ -1285,6 +1327,22 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { CountKey, (target, arguments) => ((Target)target).Count },
+                    {
+                        ShotKey,
+                        (target, arguments) =>
+                        {
+                            if (!_packable)
+                            {
+                                _unpackable = new Throwaway();
+
+                                return _unpackable;
+                            }
+
+                            _shot = new System.Drawing.Bitmap(2, 2);
+
+                            return _shot;
+                        }
+                    },
                     {
                         SelectionKey,
                         (target, arguments) =>
@@ -1517,6 +1575,17 @@ namespace PmxEditorMcp.Tests
                         new[] { new ToolArgument("indices", typeof(int[])) },
                         new ToolArgument[0],
                         null)
+                },
+                {
+                    "view_shot",
+                    new ToolCall(
+                        ShotKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(System.Drawing.Bitmap))
                 },
                 {
                     "session_save",

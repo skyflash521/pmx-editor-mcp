@@ -949,9 +949,19 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Success(result);
             }
 
-            return call.Result == null
-                ? ToolEnvelope.Success(null)
-                : Written(call.Result, result);
+            if (call.Result == null)
+            {
+                return ToolEnvelope.Success(null);
+            }
+
+            try
+            {
+                return Written(call.Result, result);
+            }
+            finally
+            {
+                DrawnImages.Release(call.RowKey, result);
+            }
         }
 
         /// <summary>

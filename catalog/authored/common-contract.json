@@ -425,6 +425,11 @@
       "duty": "全部のリストの表示を今のデータで作り直す。引数は受け取らない。updated はいつも1で、全部の区分をまとめて1回で頼んだことを表す。"
     },
     {
+      "tool": "view_capture_image",
+      "branching": false,
+      "duty": "PMXビューの画像を撮る。position に視点の位置を、target に見る先を、upVector に上の向きを、それぞれ3つの数の並びで渡すと、撮る前に視点をそこへ入れて描き直し、撮ったあとは呼び出しの前の視点へ戻して描き直す。3つのうち一部だけを渡すと断る。どれも渡さなければ、いまの視点のまま撮る。値は画像そのもので、ブリッジがMCPの画像として返す。"
+    },
+    {
       "tool": "view_clear_vmd_view",
       "branching": false,
       "duty": "VMDViewの再生を止める。parts は motionOnly・modelAndMotion のいずれかで、motionOnly は再生を止めるだけ、modelAndMotion は読み込んだモーションを捨てて、いま編集しているモデルを読み直す。どちらの持ち物でも、VMDViewの窓は開いたままになる。"
@@ -474,6 +479,10 @@
     {
       "tool": "motion_get_client_image",
       "view": "transform"
+    },
+    {
+      "tool": "view_capture_image",
+      "view": "pmx"
     },
     {
       "tool": "view_get_client_image_pmd_view_connector",

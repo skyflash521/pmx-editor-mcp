@@ -159,9 +159,22 @@ namespace PmxEditorMcp.Tests
             throw new NotSupportedException();
         }
 
+        /// <summary>画像を撮ったときの視点。撮るたびに置き換わる。</summary>
+        public PEPlugin.Pmd.IPEVector3 ShotFrom { get; private set; }
+
+        /// <summary>画像を撮った回数。</summary>
+        public int Shots { get; private set; }
+
+        /// <summary>最後に渡した画像。手放されたかをここで見る。</summary>
+        public System.Drawing.Bitmap LastShot { get; private set; }
+
         public System.Drawing.Bitmap GetClientImage()
         {
-            throw new NotSupportedException();
+            ShotFrom = CameraPositionSet;
+            Shots++;
+            LastShot = new System.Drawing.Bitmap(2, 2);
+
+            return LastShot;
         }
 
         public bool[] GetJointVisibles()
@@ -275,44 +288,11 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        public PEPlugin.Pmd.IPEVector3 CameraPosition
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
+        public PEPlugin.Pmd.IPEVector3 CameraPosition { get; set; }
 
-            set
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public PEPlugin.Pmd.IPEVector3 CameraTarget { get; set; }
 
-        public PEPlugin.Pmd.IPEVector3 CameraTarget
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-
-            set
-            {
-                throw new NotSupportedException();
-            }
-        }
-
-        public PEPlugin.Pmd.IPEVector3 CameraUpVector
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-
-            set
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public PEPlugin.Pmd.IPEVector3 CameraUpVector { get; set; }
 
         public bool EnableCameraVmdView
         {

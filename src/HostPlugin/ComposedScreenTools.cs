@@ -42,6 +42,7 @@ namespace PmxEditorMcp
             ViewFilterDisplay.AddTo(methods, screen);
             ViewPartsSelectWindow.AddTo(methods, screen);
             ViewSetCameraRotateCenter.AddTo(methods, screen);
+            ViewCaptureImage.AddTo(methods, screen);
             ViewReloadModel.AddTo(methods, screen, subView);
             ViewLoadVmdView.AddTo(methods, screen, builder);
             ViewClearVmdView.AddTo(methods, screen, builder);

@@ -2273,6 +2273,50 @@
         },
         {
           "kind": "tool",
+          "tool": "view_capture_image",
+          "arguments": {
+            "position": [
+              0,
+              30,
+              0
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "upVector": [
+              0,
+              0,
+              1
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "capturedAs": "pmxViewSize"
+            }
+          },
+          "record": {
+            "name": "topImage",
+            "path": "",
+            "shape": "image"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "image": {
+              "capturedAs": "pmxViewSize",
+              "differsFrom": "topImage"
+            }
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "view_bootup_vmd_view",
           "arguments": {},
           "expect": {

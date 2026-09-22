@@ -372,6 +372,83 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheImageIsTakenFromTheViewpointThatWasGiven()
+        {
+            _fixture.View.CameraPosition = new V3(0f, 0f, 0f);
+            _fixture.View.CameraTarget = new V3(0f, 0f, 0f);
+            _fixture.View.CameraUpVector = new V3(0f, 1f, 0f);
+
+            Captured(
+                ComposedScreenFixture.Given("position", new object[] { 1, 2, 3 }),
+                ComposedScreenFixture.Given("target", new object[] { 0, 0, 0 }),
+                ComposedScreenFixture.Given("upVector", new object[] { 0, 1, 0 }));
+
+            Assert.Equal(1, _fixture.View.Shots);
+            Assert.Equal(1f, _fixture.View.ShotFrom.X);
+            Assert.Equal(2f, _fixture.View.ShotFrom.Y);
+            Assert.Equal(3f, _fixture.View.ShotFrom.Z);
+        }
+
+        [Fact]
+        public void TheViewpointGoesBackToWhereItWasAfterTheShot()
+        {
+            _fixture.View.CameraPosition = new V3(9f, 8f, 7f);
+            _fixture.View.CameraTarget = new V3(1f, 1f, 1f);
+            _fixture.View.CameraUpVector = new V3(0f, 1f, 0f);
+
+            Captured(
+                ComposedScreenFixture.Given("position", new object[] { 1, 2, 3 }),
+                ComposedScreenFixture.Given("target", new object[] { 0, 0, 0 }),
+                ComposedScreenFixture.Given("upVector", new object[] { 0, 1, 0 }));
+
+            Assert.Equal(9f, _fixture.View.CameraPositionSet.X);
+            Assert.Equal(8f, _fixture.View.CameraPositionSet.Y);
+            Assert.Equal(7f, _fixture.View.CameraPositionSet.Z);
+            Assert.Equal(1f, _fixture.View.CameraTargetSet.X);
+        }
+
+        [Fact]
+        public void LeavingOutTheViewpointTakesTheShotFromWhereTheCameraIs()
+        {
+            _fixture.View.CameraPosition = new V3(5f, 5f, 5f);
+
+            Captured();
+
+            Assert.Equal(1, _fixture.View.Shots);
+            Assert.Null(_fixture.View.CameraPositionSet);
+        }
+
+        [Fact]
+        public void TheShotIsLetGoOnceItHasBeenPackedForTheAnswer()
+        {
+            Captured();
+
+            Assert.Throws<ArgumentException>(() => _fixture.View.LastShot.Width);
+        }
+
+        [Fact]
+        public void GivingOnlyPartOfTheViewpointIsRefused()
+        {
+            IDictionary<string, object> envelope = Captured(
+                ComposedScreenFixture.Given("position", new object[] { 1, 2, 3 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+            Assert.Equal(0, _fixture.View.Shots);
+        }
+
+        [Fact]
+        public void AViewpointThatIsNotThreeNumbersIsRefused()
+        {
+            IDictionary<string, object> envelope = Captured(
+                ComposedScreenFixture.Given("position", new object[] { 1, 2 }),
+                ComposedScreenFixture.Given("target", new object[] { 0, 0, 0 }),
+                ComposedScreenFixture.Given("upVector", new object[] { 0, 1, 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+            Assert.Equal(0, _fixture.View.Shots);
+        }
+
+        [Fact]
         public void TheFacesOfThePickedMaterialAreSelected()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -1264,6 +1341,12 @@ namespace PmxEditorMcp.Tests
         {
             return _fixture.Call(
                 ViewSelectElements.ToolName, ComposedScreenFixture.Arguments(given));
+        }
+
+        private IDictionary<string, object> Captured(params KeyValuePair<string, object>[] given)
+        {
+            return _fixture.Call(
+                ViewCaptureImage.ToolName, ComposedScreenFixture.Arguments(given));
         }
 
         private IDictionary<string, object> Related(params KeyValuePair<string, object>[] given)

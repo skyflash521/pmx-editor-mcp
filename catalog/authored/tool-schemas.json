@@ -39162,6 +39162,47 @@
       }
     },
     {
+      "tool": "view_capture_image",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "position",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "target",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "upVector",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "shape": "image"
+      }
+    },
+    {
       "tool": "view_clear_text_control",
       "branches": [
         {

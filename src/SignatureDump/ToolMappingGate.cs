@@ -86,7 +86,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(targetedMembers));
             }
 
-            RequireViewImages(map, signatures, toolNames, viewImages, shapesByType);
+            RequireViewImages(map, schemas, signatures, toolNames, viewImages, shapesByType);
             RequireNamedMembers(schemas, unkeptMembers, "持ち続けない項目");
             RequireNamedMembers(schemas, targetedMembers, "指す先を埋める項目");
 
@@ -175,12 +175,18 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private static void RequireViewImages(
             ToolMap map,
+            ToolSchemaTable schemas,
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, string> toolNames,
             IDictionary<string, string> viewImages,
             IDictionary<string, string> shapesByType)
         {
-            HashSet<string> drawing = new HashSet<string>(StringComparer.Ordinal);
+            HashSet<string> drawing = new HashSet<string>(
+                schemas.Tools
+                    .Where(t => t.Output != null
+                        && string.Equals(t.Output.Shape, ImageShape, StringComparison.Ordinal))
+                    .Select(t => t.Tool),
+                StringComparer.Ordinal);
             foreach (ToolMapRow row in map.Rows)
             {
                 SignatureRecord signature;
