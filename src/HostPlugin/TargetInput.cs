@@ -37,8 +37,8 @@ namespace PmxEditorMcp
 
             code = null;
             message = null;
-            string[] held = { names.Indices, names.Range, names.All };
-            foreach (string name in held.Where(given.ContainsKey))
+            string[] held = { names.Indices, names.Range, names.All, names.Selected };
+            foreach (string name in held.Where(n => n != null && given.ContainsKey(n)))
             {
                 code = ToolEnvelope.InvalidArgument;
                 message = name + " を渡せるのは "
@@ -77,16 +77,18 @@ namespace PmxEditorMcp
             int? start;
             int? count;
             bool? all;
+            bool? selected;
             IList<long> held = null;
             if (!TryIndices(parameters, names, out indices, out code, out message)
                 || !TryRange(parameters, names, out start, out count, out code, out message)
                 || !TryAll(parameters, names, out all, out code, out message)
+                || !TryFlag(parameters, names.Selected, out selected, out code, out message)
                 || (handles && !TryHandles(parameters, names, out held, out code, out message)))
             {
                 return false;
             }
 
-            request = new TargetRequest(indices, start, count, all, held);
+            request = new TargetRequest(indices, start, count, all, held, selected);
 
             return true;
         }
@@ -138,7 +140,8 @@ namespace PmxEditorMcp
             int count,
             out IList<int> positions,
             out string code,
-            out string message)
+            out string message,
+            ScreenPick selected = null)
         {
             positions = null;
             TargetRequest request;
@@ -147,16 +150,23 @@ namespace PmxEditorMcp
                 return false;
             }
 
+            TargetForm allowed = TargetForm.Indices | TargetForm.Range | TargetForm.All;
+            if (selected != null)
+            {
+                allowed |= TargetForm.Selected;
+            }
+
             ResolvedTargets resolved;
             if (!TargetSelection.TryResolve(
                 request,
-                TargetForm.Indices | TargetForm.Range | TargetForm.All,
+                allowed,
                 count,
                 id => false,
                 out resolved,
                 out code,
                 out message,
-                names))
+                names,
+                selected))
             {
                 return false;
             }
@@ -269,11 +279,21 @@ namespace PmxEditorMcp
             out string code,
             out string message)
         {
+            return TryFlag(parameters, names.All, out all, out code, out message);
+        }
+
+        private static bool TryFlag(
+            IDictionary<string, object> parameters,
+            string name,
+            out bool? flag,
+            out string code,
+            out string message)
+        {
             code = null;
             message = null;
-            all = null;
+            flag = null;
             object value;
-            if (!parameters.TryGetValue(names.All, out value))
+            if (name == null || !parameters.TryGetValue(name, out value))
             {
                 return true;
             }
@@ -281,12 +301,12 @@ namespace PmxEditorMcp
             if (!(value is bool))
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = names.All + " は真偽でなければならない。";
+                message = name + " は真偽でなければならない。";
 
                 return false;
             }
 
-            all = (bool)value;
+            flag = (bool)value;
 
             return true;
         }

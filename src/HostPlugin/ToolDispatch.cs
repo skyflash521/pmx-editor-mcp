@@ -112,6 +112,8 @@ namespace PmxEditorMcp
 
         private readonly IModifierKeys _modifiers;
 
+        private readonly ScreenTargets _screen;
+
         /// <summary>
         /// ハンドルで持つ実体へ書かれた、位置で指す項目の値。位置はPMXの中のリストで数えるので、
         /// 書いた時点では解けない——ハンドルで持つ実体はまだどのPMXにも属していない。値のまま
@@ -131,8 +133,10 @@ namespace PmxEditorMcp
             UndoRecovery recovery,
             IModifierKeys modifiers,
             EventBindingTable events,
-            ScreenRefresh refresh)
+            ScreenRefresh refresh,
+            ScreenTargets screen)
         {
+            _screen = screen;
             _refresh = refresh;
             _events = events;
             _relay = relay;
@@ -161,7 +165,8 @@ namespace PmxEditorMcp
             IDictionary<string, ToolPrecondition> preconditions,
             IModifierKeys modifiers,
             EventBindingTable events,
-            ScreenRefresh refresh)
+            ScreenRefresh refresh,
+            ScreenTargets screen)
         {
             if (methods == null)
             {
@@ -238,9 +243,14 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(refresh));
             }
 
+            if (screen == null)
+            {
+                throw new ArgumentNullException(nameof(screen));
+            }
+
             ToolDispatch dispatch = new ToolDispatch(
                 relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events,
-                refresh);
+                refresh, screen);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
                 IList<ToolCall> bound = call.Value;
@@ -3251,6 +3261,11 @@ namespace PmxEditorMcp
             yield return TargetNames.Element.Indices;
             yield return TargetNames.Element.Range;
             yield return TargetNames.Element.All;
+            if (ScreenTargets.Selects(access))
+            {
+                yield return TargetNames.Element.Selected;
+            }
+
             if (handles)
             {
                 yield return TargetNames.Element.Handles;
@@ -3361,7 +3376,7 @@ namespace PmxEditorMcp
             }
 
             bool byHandle = elements.Handles != null;
-            if (byHandle && parents != null && Points(parents))
+            if (byHandle && parents != null && TargetSelection.Points(parents))
             {
                 code = ToolEnvelope.InvalidArgument;
                 message = "対象をハンドルで指した呼び出しは親の指し方を取らない。";
@@ -3408,16 +3423,6 @@ namespace PmxEditorMcp
             pointed = new Pointed(held, null, true);
 
             return true;
-        }
-
-        /// <summary>その指定が何かを指しているか。</summary>
-        private static bool Points(TargetRequest request)
-        {
-            return request.Indices != null
-                || request.RangeStart.HasValue
-                || request.RangeCount.HasValue
-                || request.All.HasValue
-                || request.Handles != null;
         }
 
         /// <summary>
@@ -3547,15 +3552,24 @@ namespace PmxEditorMcp
             ResolvedTargets resolved;
             string code;
             string message;
+            TargetForm allowed = TargetForm.Indices | TargetForm.Range | TargetForm.All;
+            ScreenPick selected = null;
+            if (ScreenTargets.Selects(access))
+            {
+                allowed |= TargetForm.Selected;
+                selected = _screen.Pick(access.Element, spots.Count);
+            }
+
             if (!TargetSelection.TryResolve(
                 pointed.Elements,
-                TargetForm.Indices | TargetForm.Range | TargetForm.All,
+                allowed,
                 spots.Count,
                 id => false,
                 out resolved,
                 out code,
                 out message,
-                TargetNames.Element))
+                TargetNames.Element,
+                selected))
             {
                 refused = new Refusal(ToolEnvelope.Failure(code, message));
 

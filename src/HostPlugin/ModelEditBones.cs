@@ -167,6 +167,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
                 AxisName,
                 LinkCountName,
             };
@@ -273,7 +274,10 @@ namespace PmxEditorMcp
                     vertices ? model.Vertex.Count : model.Bone.Count,
                     out chosen,
                     out code,
-                    out message);
+                    out message,
+                    context.Screen.Pick(
+                        vertices ? ElementKinds.Vertex : ElementKinds.Bone,
+                        vertices ? model.Vertex.Count : model.Bone.Count));
             }
 
             chosen = new int[0];

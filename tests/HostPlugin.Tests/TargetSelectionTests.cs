@@ -9,7 +9,8 @@ namespace PmxEditorMcp.Tests
     public class TargetSelectionTests
     {
         private const TargetForm EveryForm =
-            TargetForm.Indices | TargetForm.Range | TargetForm.All | TargetForm.Handles;
+            TargetForm.Indices | TargetForm.Range | TargetForm.All | TargetForm.Handles
+            | TargetForm.Selected;
 
         [Fact]
         public void IndicesKeepTheOrderTheRequestGave()
@@ -214,7 +215,9 @@ namespace PmxEditorMcp.Tests
                 resolved: out ResolvedTargets resolved,
                 code: out string code,
                 message: out string message,
-                names: TargetNames.Element);
+                names: TargetNames.Element,
+                selected: new ScreenPick(
+                    () => new int[0], "session_set_selected_material_indices"));
 
             Assert.False(resolvedOk);
             Assert.Null(resolved);
@@ -238,7 +241,9 @@ namespace PmxEditorMcp.Tests
                 resolved: out ResolvedTargets _,
                 code: out string _,
                 message: out string _,
-                names: TargetNames.Element);
+                names: TargetNames.Element,
+                selected: new ScreenPick(
+                    () => new int[0], "session_set_selected_material_indices"));
 
             Assert.Equal(new long[] { 1, 2, 3 }, asked);
         }
@@ -327,7 +332,72 @@ namespace PmxEditorMcp.Tests
             Assert.Throws<ArgumentException>(() => new TargetNames("indices", " ", "all", "handles"));
         }
 
-        private static ResolvedTargets Resolve(TargetRequest request, int listCount)
+        [Fact]
+        public void TheScreenSelectionComesBackInTheOrderTheScreenHolds()
+        {
+            ResolvedTargets resolved = Resolve(
+                new TargetRequest(selected: true), listCount: 6, selected: new[] { 4, 1 });
+
+            Assert.Equal(TargetForm.Selected, resolved.Form);
+            Assert.Equal(new[] { 4, 1 }, resolved.Indices);
+            Assert.Null(resolved.Handles);
+        }
+
+        [Fact]
+        public void AScreenSelectionThatHoldsNothingIsNotApplicable()
+        {
+            Failure failure = Reject(
+                new TargetRequest(selected: true), listCount: 6, selected: new int[0]);
+
+            Assert.Equal(ToolEnvelope.NotApplicable, failure.Code);
+            Assert.Contains("画面で何も選ばれていない", failure.Message);
+            Assert.Contains("session_set_selected_material_indices", failure.Message);
+        }
+
+        [Fact]
+        public void TheScreenSelectionMustBeAskedForWithTrue()
+        {
+            Failure failure = Reject(
+                new TargetRequest(selected: false), listCount: 6, selected: new[] { 0 });
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, failure.Code);
+            Assert.Contains("selected は真でなければならない", failure.Message);
+        }
+
+        [Fact]
+        public void TheScreenSelectionCannotBeCombinedWithAnotherForm()
+        {
+            Failure failure = Reject(
+                new TargetRequest(indices: new[] { 0 }, selected: true),
+                listCount: 6,
+                selected: new[] { 0 });
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, failure.Code);
+            Assert.Contains("indices", failure.Message);
+            Assert.Contains("selected", failure.Message);
+        }
+
+        [Fact]
+        public void TheScreenSelectionIsAnInvalidArgumentWhereTheToolDoesNotTakeIt()
+        {
+            bool resolvedOk = TargetSelection.TryResolve(
+                new TargetRequest(selected: true),
+                TargetForm.Indices | TargetForm.Range | TargetForm.All,
+                listCount: 3,
+                isUsableHandle: h => true,
+                resolved: out ResolvedTargets resolved,
+                code: out string code,
+                message: out string message,
+                names: TargetNames.Element);
+
+            Assert.False(resolvedOk);
+            Assert.Null(resolved);
+            Assert.Equal(ToolEnvelope.InvalidArgument, code);
+            Assert.Contains("このツールでは指定できない", message);
+        }
+
+        private static ResolvedTargets Resolve(
+            TargetRequest request, int listCount, IList<int> selected = null)
         {
             bool resolvedOk = TargetSelection.TryResolve(
                 request,
@@ -337,7 +407,9 @@ namespace PmxEditorMcp.Tests
                 resolved: out ResolvedTargets resolved,
                 code: out string code,
                 message: out string message,
-                names: TargetNames.Element);
+                names: TargetNames.Element,
+                selected: new ScreenPick(
+                    () => selected ?? new int[0], "session_set_selected_material_indices"));
 
             Assert.True(resolvedOk, code + ": " + message);
             Assert.Null(code);
@@ -346,7 +418,8 @@ namespace PmxEditorMcp.Tests
             return resolved;
         }
 
-        private static Failure Reject(TargetRequest request, int listCount)
+        private static Failure Reject(
+            TargetRequest request, int listCount, IList<int> selected = null)
         {
             bool resolvedOk = TargetSelection.TryResolve(
                 request,
@@ -356,7 +429,9 @@ namespace PmxEditorMcp.Tests
                 resolved: out ResolvedTargets resolved,
                 code: out string code,
                 message: out string message,
-                names: TargetNames.Element);
+                names: TargetNames.Element,
+                selected: new ScreenPick(
+                    () => selected ?? new int[0], "session_set_selected_material_indices"));
 
             Assert.False(resolvedOk);
             Assert.Null(resolved);

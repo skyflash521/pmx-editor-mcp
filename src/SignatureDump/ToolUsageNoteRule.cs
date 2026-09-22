@@ -13,6 +13,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string RangeName = "range";
 
+        private const string SelectedName = "selected";
+
         private const string TotalName = "total";
 
         private const string ItemsName = "items";
@@ -34,12 +36,16 @@ namespace PmxEditorMcp.SignatureDump
         private const string RangeIsNotClamped =
             RangeName + " は端で詰めず、リストの件数を超えると断る。";
 
+        private const string TakesTheScreenSelection =
+            SelectedName + " に真を渡すと、画面がいま選んでいるものを対象にする。";
+
         private const string MakesNew =
             "呼ぶたびに新しく作る。返るのは作ったもののハンドルの番号で、要らなくなったら"
                 + " session_release_handle へ渡す。";
 
         /// <summary>
-        /// そのツールの呼び方を、スキーマ正本から引いて組み立てる。正本に無いツールでは null。
+        /// そのツールの呼び方を、スキーマ正本から引いて組み立てる。対象の指し方は書かない。
+        /// 正本に無いツールでは null。
         /// </summary>
         public static string Of(string tool, ToolSchemaTable schemas)
         {
@@ -56,11 +62,16 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema = schemas.Tools.FirstOrDefault(
                 t => string.Equals(t.Tool, tool, StringComparison.Ordinal));
 
-            return schema == null ? null : Compose(schema);
+            return schema == null ? null : Compose(schema, false);
         }
 
-        /// <summary>そのツールの呼び方。書くことが無ければ null。</summary>
+        /// <summary>そのツールの呼び方。対象の指し方も書く。書くことが無ければ null。</summary>
         public static string Compose(ToolSchema schema)
+        {
+            return Compose(schema, true);
+        }
+
+        private static string Compose(ToolSchema schema, bool pointing)
         {
             if (schema == null)
             {
@@ -85,6 +96,11 @@ namespace PmxEditorMcp.SignatureDump
             if (Takes(schema, RangeName))
             {
                 built.Append(RangeIsNotClamped);
+            }
+
+            if (pointing && Takes(schema, SelectedName))
+            {
+                built.Append(TakesTheScreenSelection);
             }
 
             if (Issues(schema))

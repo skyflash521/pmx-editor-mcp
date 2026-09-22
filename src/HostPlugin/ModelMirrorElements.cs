@@ -656,13 +656,15 @@ namespace PmxEditorMcp
                 }
 
                 IList<int> positions;
+                int count = ViewSelection.Count(model, kind);
                 if (!TargetInput.TryPositions(
                     held,
                     TargetNames.Element,
-                    ViewSelection.Count(model, kind),
+                    count,
                     out positions,
                     out code,
-                    out message))
+                    out message,
+                    context.Screen.Pick(kind, count)))
                 {
                     return false;
                 }

@@ -23,6 +23,9 @@ namespace PmxEditorMcp
 
         /// <summary>まだリストへ加えていない生成物のハンドルの配列。</summary>
         Handles = 8,
+
+        /// <summary>画面がいま選んでいるもの。</summary>
+        Selected = 16,
     }
 
     /// <summary>
@@ -30,7 +33,8 @@ namespace PmxEditorMcp
     /// </summary>
     public sealed class TargetNames
     {
-        public TargetNames(string indices, string range, string all, string handles)
+        public TargetNames(
+            string indices, string range, string all, string handles, string selected = null)
         {
             if (string.IsNullOrWhiteSpace(indices))
             {
@@ -56,11 +60,12 @@ namespace PmxEditorMcp
             Range = range;
             All = all;
             Handles = handles;
+            Selected = selected;
         }
 
         /// <summary>対象そのものの集合を指す名前。</summary>
         public static TargetNames Element { get; } =
-            new TargetNames("indices", "range", "all", "handles");
+            new TargetNames("indices", "range", "all", "handles", "selected");
 
         /// <summary>親の集合を指す名前。</summary>
         public static TargetNames Parent { get; } =
@@ -73,6 +78,9 @@ namespace PmxEditorMcp
         public string All { get; }
 
         public string Handles { get; }
+
+        /// <summary>画面の選択を指す名前。その組が画面の選択を名指ししないなら null。</summary>
+        public string Selected { get; }
     }
 
     /// <summary>要求が持ってきた集合の指定。持たない形は null を渡す。</summary>
@@ -83,13 +91,15 @@ namespace PmxEditorMcp
             int? rangeStart = null,
             int? rangeCount = null,
             bool? all = null,
-            IList<long> handles = null)
+            IList<long> handles = null,
+            bool? selected = null)
         {
             Indices = indices;
             RangeStart = rangeStart;
             RangeCount = rangeCount;
             All = all;
             Handles = handles;
+            Selected = selected;
         }
 
         /// <summary>位置の配列。指定が無ければ null。</summary>
@@ -106,6 +116,9 @@ namespace PmxEditorMcp
 
         /// <summary>ハンドルの配列。指定が無ければ null。</summary>
         public IList<long> Handles { get; }
+
+        /// <summary>画面の選択の指定。指定が無ければ null。</summary>
+        public bool? Selected { get; }
     }
 
     /// <summary>解決した集合。</summary>
@@ -145,6 +158,9 @@ namespace PmxEditorMcp
         /// 受け付ける指し方。<paramref name="listCount"/> は対象のリストの件数で、
         /// <paramref name="isUsableHandle"/> はハンドルが使えるかを答えるもの。
         /// <paramref name="names"/> は解く集合を指す項目の名前で、説明はこの名前で書く。
+        /// <paramref name="selected"/> は画面の選択を読む口で、
+        /// <see cref="TargetForm.Selected"/> を受け付けるなら渡す。画面を読むのは、その指し方で
+        /// 指された回だけである。
         /// </summary>
         public static bool TryResolve(
             TargetRequest request,
@@ -154,7 +170,8 @@ namespace PmxEditorMcp
             out ResolvedTargets resolved,
             out string code,
             out string message,
-            TargetNames names)
+            TargetNames names,
+            ScreenPick selected = null)
         {
             if (request == null)
             {
@@ -174,6 +191,16 @@ namespace PmxEditorMcp
             if (names == null)
             {
                 throw new ArgumentNullException(nameof(names));
+            }
+
+            if (names.Selected == null)
+            {
+                allowed &= ~TargetForm.Selected;
+            }
+
+            if ((allowed & TargetForm.Selected) == TargetForm.Selected && selected == null)
+            {
+                throw new ArgumentNullException(nameof(selected));
             }
 
             resolved = null;
@@ -201,10 +228,26 @@ namespace PmxEditorMcp
                     return TryResolveAll(
                         request.All.Value, listCount, names, out resolved, out code, out message);
 
+                case TargetForm.Selected:
+                    return TryResolveSelected(
+                        request.Selected.Value, selected, listCount, names,
+                        out resolved, out code, out message);
+
                 default:
                     return TryResolveHandles(
                         request.Handles, isUsableHandle, names, out resolved, out code, out message);
             }
+        }
+
+        /// <summary>その指定が何かを指しているか。</summary>
+        public static bool Points(TargetRequest request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            return Given(request) != TargetForm.None;
         }
 
         /// <summary>要求が持ってきた指し方。2つ以上あればその全部が立つ。</summary>
@@ -229,6 +272,11 @@ namespace PmxEditorMcp
             if (request.Handles != null)
             {
                 given |= TargetForm.Handles;
+            }
+
+            if (request.Selected.HasValue)
+            {
+                given |= TargetForm.Selected;
             }
 
             return given;
@@ -417,6 +465,40 @@ namespace PmxEditorMcp
             return true;
         }
 
+        private static bool TryResolveSelected(
+            bool asked,
+            ScreenPick selected,
+            int listCount,
+            TargetNames names,
+            out ResolvedTargets resolved,
+            out string code,
+            out string message)
+        {
+            resolved = null;
+            code = null;
+            message = null;
+
+            if (!asked)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = names.Selected
+                    + " は真でなければならない。画面の選択を指さないなら、この指定を持たせない。";
+                return false;
+            }
+
+            int[] inside = selected.Taken().Where(at => at >= 0 && at < listCount).ToArray();
+            if (inside.Length == 0)
+            {
+                code = ToolEnvelope.NotApplicable;
+                message = "画面で何も選ばれていない。" + selected.Picking + " で選んでから呼ぶ。";
+                return false;
+            }
+
+            resolved = new ResolvedTargets(TargetForm.Selected, inside, null);
+
+            return true;
+        }
+
         private static bool TryResolveHandles(
             IList<long> handles,
             Func<long, bool> isUsableHandle,
@@ -476,6 +558,7 @@ namespace PmxEditorMcp
             yield return TargetForm.Range;
             yield return TargetForm.All;
             yield return TargetForm.Handles;
+            yield return TargetForm.Selected;
         }
 
         private static string AllowedText(TargetForm allowed, TargetNames names)
@@ -502,6 +585,9 @@ namespace PmxEditorMcp
 
                 case TargetForm.Handles:
                     return names.Handles;
+
+                case TargetForm.Selected:
+                    return names.Selected;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(form), form, "知らない指し方。");

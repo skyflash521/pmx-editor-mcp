@@ -28,7 +28,8 @@ namespace PmxEditorMcp
             IUiInvoker ui,
             int budgetChars,
             HandleLedger handles,
-            EventQueue events)
+            EventQueue events,
+            ScreenTargets screen = null)
         {
             if (parameters == null)
             {
@@ -55,6 +56,7 @@ namespace PmxEditorMcp
             BudgetChars = budgetChars;
             Handles = handles;
             Events = events;
+            Screen = screen ?? ScreenTargets.None;
         }
 
         /// <summary>要求の引数。省略されていたときは空。</summary>
@@ -71,6 +73,9 @@ namespace PmxEditorMcp
 
         /// <summary>このセッションが溜めている購読中のイベント。</summary>
         public EventQueue Events { get; }
+
+        /// <summary>画面がいま選んでいるものを読む相手。</summary>
+        public ScreenTargets Screen { get; }
 
         /// <summary>
         /// この呼び出しが変えた中身を、エディタの画面へ映せなかったか。映す段が置き、呼び出しを
@@ -181,6 +186,8 @@ namespace PmxEditorMcp
 
         private readonly UndoRecovery _recovery;
 
+        private readonly ScreenTargets _screen;
+
         /// <summary>
         /// 要求の処理を直列化する錠。複数の接続を同時に受けるので、SDKを呼んでいる区間が重ならない
         /// ことと、要求1件が発行したハンドルがその要求のものに定まることを、ここで保証する
@@ -205,7 +212,8 @@ namespace PmxEditorMcp
             int budgetChars,
             SdkRelayTable relays,
             string sdkVersion,
-            UndoRecovery recovery = null)
+            UndoRecovery recovery = null,
+            ScreenTargets screen = null)
             : this(
                 log,
                 methods,
@@ -216,7 +224,8 @@ namespace PmxEditorMcp
                 PipeClientProcess.TryOpen,
                 relays,
                 sdkVersion,
-                recovery)
+                recovery,
+                screen)
         {
         }
 
@@ -279,7 +288,8 @@ namespace PmxEditorMcp
             ClientProcessOpener openClient,
             SdkRelayTable relays,
             string sdkVersion,
-            UndoRecovery recovery = null)
+            UndoRecovery recovery = null,
+            ScreenTargets screen = null)
         {
             if (log == null)
             {
@@ -321,6 +331,7 @@ namespace PmxEditorMcp
             _relays = relays;
             _sdkVersion = sdkVersion;
             _recovery = recovery;
+            _screen = screen ?? ScreenTargets.None;
             _sessions = new SessionStore(log, _handleIds, _eventSequence, _requestGate);
         }
 
@@ -765,7 +776,7 @@ namespace PmxEditorMcp
             result = null;
 
             McpMethodContext context = new McpMethodContext(
-                parameters, scope.Ui, _budgetChars, scope.Handles, scope.Events);
+                parameters, scope.Ui, _budgetChars, scope.Handles, scope.Events, _screen);
             Task<object> running = Task.Factory.StartNew(
                 () => method(context), TaskCreationOptions.LongRunning);
 

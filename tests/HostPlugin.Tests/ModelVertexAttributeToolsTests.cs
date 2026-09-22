@@ -119,6 +119,37 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheScreenSelectionPicksTheVerticesToFlip()
+        {
+            FakeVertex first = Vertex(0f, 0f, 0f);
+            first.Normal = new V3(0f, 0f, 1f);
+            FakeVertex second = Vertex(1f, 0f, 0f);
+            second.Normal = new V3(0f, 0f, 1f);
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 1 };
+
+            Normals(
+                Operation(ModelEditNormals.Flip),
+                ComposedEditFixture.Given("selected", true));
+
+            Near(1.0, first.Normal.Z);
+            Near(-1.0, second.Normal.Z);
+        }
+
+        [Fact]
+        public void AnEmptyScreenSelectionLeavesTheNormalsAlone()
+        {
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Normal = new V3(0f, 0f, 1f);
+
+            IDictionary<string, object> answer = Normals(
+                Operation(ModelEditNormals.Flip),
+                ComposedEditFixture.Given("selected", true));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, ComposedEditFixture.Code(answer));
+            Near(1.0, vertex.Normal.Z);
+        }
+
+        [Fact]
         public void NormalisingANormalThatIsAlreadyTheRightLengthIsNotCounted()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);

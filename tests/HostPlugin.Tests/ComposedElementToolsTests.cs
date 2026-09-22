@@ -247,6 +247,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void MakingNewOnesRefusesTheScreenSelectionLikeTheOtherWaysOfPointing()
+        {
+            Bones("一", "二");
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 0 };
+
+            IDictionary<string, object> answer = Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.New),
+                ComposedEditFixture.Given("selected", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(answer));
+            Assert.Contains("写す元を指さない", ComposedEditFixture.Message(answer));
+            Assert.Equal(2, _fixture.Model.Bone.Count);
+        }
+
+        [Fact]
         public void CloningPutsACopyOfThePickedOneInWithoutTouchingTheOriginal()
         {
             Bones("一", "二");

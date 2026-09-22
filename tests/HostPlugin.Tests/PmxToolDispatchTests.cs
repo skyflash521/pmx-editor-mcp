@@ -446,7 +446,8 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
                 new StillModifierKeys(),
                 EventBindingFixture.Empty(),
-                Refresh());
+                Refresh(),
+                Screen());
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
@@ -685,6 +686,11 @@ namespace PmxEditorMcp.Tests
         private ScreenRefresh Refresh()
         {
             return new ScreenRefresh(() => _view, () => _form);
+        }
+
+        private ScreenTargets Screen()
+        {
+            return new ScreenTargets(() => _view, () => _form);
         }
     }
 }

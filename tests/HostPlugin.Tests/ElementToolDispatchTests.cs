@@ -2495,7 +2495,8 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
                 new StillModifierKeys(),
                 EventBindingFixture.Empty(),
-                Refresh());
+                Refresh(),
+                Screen());
 
             _methods = methods;
 
@@ -2546,6 +2547,11 @@ namespace PmxEditorMcp.Tests
         private static ScreenRefresh Refresh()
         {
             return new ScreenRefresh(() => null, () => null);
+        }
+
+        private static ScreenTargets Screen()
+        {
+            return ScreenTargets.None;
         }
 
         private HandleLedger Ledger()

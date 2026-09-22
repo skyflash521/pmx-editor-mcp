@@ -307,27 +307,27 @@
     {
       "tool": "model_clean_faces",
       "branching": false,
-      "duty": "指した材質から、不正な面と重なった面を落とす。材質は indices・range・all のどれか1つで指す。operation は invalid・duplicate・duplicateInMaterial のいずれかで、invalid は3つの頂点が揃っていない面を、duplicate はモデル全体で同じ3頂点を指す面を、duplicateInMaterial は材質ごとに同じ3頂点を指す面を、最初の1つだけ残して落とす。removed に落とした面の数を返す。"
+      "duty": "指した材質から、不正な面と重なった面を落とす。材質は indices・range・all・selected のどれか1つで指す。operation は invalid・duplicate・duplicateInMaterial のいずれかで、invalid は3つの頂点が揃っていない面を、duplicate はモデル全体で同じ3頂点を指す面を、duplicateInMaterial は材質ごとに同じ3頂点を指す面を、最初の1つだけ残して落とす。removed に落とした面の数を返す。"
     },
     {
       "tool": "model_copy_from_reference",
       "branching": false,
-      "duty": "剛体とJointへ、指している相手の名前や位置を写す。対象は indices・range・all のどれか1つで指し、bodyNameFromBone は剛体を、それ以外はJointを指す。operation は bodyNameFromBone・jointNameFromBodyA・jointNameFromBodyB・jointPositionFromBone・jointPositionFromSameNameBone のいずれか。jointPositionFromSameNameBone は、Jointと同じ名前のボーンを探し、その位置をJointへ写す。写す元を指していない要素は変えない。changed に変えた要素の数を返す。"
+      "duty": "剛体とJointへ、指している相手の名前や位置を写す。対象は indices・range・all・selected のどれか1つで指し、bodyNameFromBone は剛体を、それ以外はJointを指す。operation は bodyNameFromBone・jointNameFromBodyA・jointNameFromBodyB・jointPositionFromBone・jointPositionFromSameNameBone のいずれか。jointPositionFromSameNameBone は、Jointと同じ名前のボーンを探し、その位置をJointへ写す。写す元を指していない要素は変えない。changed に変えた要素の数を返す。"
     },
     {
       "tool": "model_create_physics",
       "branching": false,
-      "duty": "指したボーンや頂点から、剛体とJointを作る。対象は indices・range・all のどれか1つで指し、joint は剛体を、bodyAtVertices は頂点を、それ以外はボーンを指す。operation は bodyFollowBone・bodyPhysics・joint・bodyAndJoint・bodyAtVertices のいずれか。joint 以外は shape に sphere・box・capsule のいずれかを渡す。bodyFollowBone はボーンに追従する剛体を、bodyPhysics は物理で動く剛体を、ボーンごとに足す。joint は指した剛体を並びの順に、隣り合う組へJointで繋ぐ。bodyAndJoint は物理で動く剛体と、親のボーンを指す剛体へ繋ぐJointを足す。bodyAtVertices は指した頂点を包む大きさの剛体を1つ足す。その大きさは形ごとに読み分けられ、球は半径、箱は各軸の半幅、カプセルは半径と中心線の長さになる。その大きさが単精度で持てる範囲を超えるときは、剛体を足さずに断る。addedBodies と addedJoints に足した位置を返す。"
+      "duty": "指したボーンや頂点から、剛体とJointを作る。対象は indices・range・all・selected のどれか1つで指し、joint は剛体を、bodyAtVertices は頂点を、それ以外はボーンを指す。operation は bodyFollowBone・bodyPhysics・joint・bodyAndJoint・bodyAtVertices のいずれか。joint 以外は shape に sphere・box・capsule のいずれかを渡す。bodyFollowBone はボーンに追従する剛体を、bodyPhysics は物理で動く剛体を、ボーンごとに足す。joint は指した剛体を並びの順に、隣り合う組へJointで繋ぐ。bodyAndJoint は物理で動く剛体と、親のボーンを指す剛体へ繋ぐJointを足す。bodyAtVertices は指した頂点を包む大きさの剛体を1つ足す。その大きさは形ごとに読み分けられ、球は半径、箱は各軸の半幅、カプセルは半径と中心線の長さになる。その大きさが単精度で持てる範囲を超えるときは、剛体を足さずに断る。addedBodies と addedJoints に足した位置を返す。"
     },
     {
       "tool": "model_delete_elements",
       "branching": false,
-      "duty": "指した要素を並びから消す。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。消す対象は indices・range・all のどれか1つで指す。related は keep・repair・cascade のいずれかで、省くと repair になる。repair は指す先を失った口を直し、ウェイトは残るボーンへ移し、直せない口は落とす。cascade はそれに加えて、消した要素だけが使っていた要素も消す。keep は何も触らない。removed に消した件数、following に種類ごとのつられて消えた件数、repaired に直した口の数を返す。"
+      "duty": "指した要素を並びから消す。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。消す対象は indices・range・all・selected のどれか1つで指す。related は keep・repair・cascade のいずれかで、省くと repair になる。repair は指す先を失った口を直し、ウェイトは残るボーンへ移し、直せない口は落とす。cascade はそれに加えて、消した要素だけが使っていた要素も消す。keep は何も触らない。removed に消した件数、following に種類ごとのつられて消えた件数、repaired に直した口の数を返す。"
     },
     {
       "tool": "model_edit_bones",
       "branching": false,
-      "duty": "指したボーンの整理と生成と軸の設定を行う。ボーンは indices・range・all のどれか1つで指し、addAtVertices と addAtVerticesWithWeight だけは同じ指し方で頂点を指す。relevelHierarchy と addRootParent は並び全体を相手にするので、この3つのどれも渡さない。operation は mergeSameName・hideTipBones・tipToOffset・offsetToTip・addTipBones・dissolveTipBones・relevelHierarchy・addRootParent・addMultiStageParent・addMultiStageChild・addMiddle・addAppendParent・addAtVertices・addAtVerticesWithWeight・makeIk・mirrorPosition・fixAxisToTip・setLocalAxis・resetLocalAxis・setPmdBoneKind のいずれか。addTipBones は、表示先のボーンを持たないボーンの隔たりの先へ「～先」のボーンを足して表示先をそこへ移し、dissolveTipBones は名前が「先」で終わるボーンを外して、指していた表示先を隔たりへ戻す。addAtVerticesWithWeight は addAtVertices のボーンを足し、指した頂点のウェイトをそこへ全部振る。mergeSameName は同じ名前のボーンを先頭の1つへまとめ、指していた口をその1つへ付け替える。relevelHierarchy は親より先に子が来ないよう並びを組み直す。ボーンを足す操作は、上へ足すものは指したボーンの直前へ、下へ足すものは直後へ入れる。mirrorPosition は axis に x・y・z のいずれかを渡し、名前の左右が逆のボーンの位置の鏡像へそろえる。makeIk は linkCount に親を辿るリンクの数を、1以上の整数で渡す。setLocalAxis は表示先への向きをX、それと親からの向きに垂直な向きをZとする。added に足したボーンの位置、changed に変えたボーンの数、removed に消えたボーンの数を返す。"
+      "duty": "指したボーンの整理と生成と軸の設定を行う。ボーンは indices・range・all・selected のどれか1つで指し、addAtVertices と addAtVerticesWithWeight だけは同じ指し方で頂点を指す。relevelHierarchy と addRootParent は並び全体を相手にするので、この3つのどれも渡さない。operation は mergeSameName・hideTipBones・tipToOffset・offsetToTip・addTipBones・dissolveTipBones・relevelHierarchy・addRootParent・addMultiStageParent・addMultiStageChild・addMiddle・addAppendParent・addAtVertices・addAtVerticesWithWeight・makeIk・mirrorPosition・fixAxisToTip・setLocalAxis・resetLocalAxis・setPmdBoneKind のいずれか。addTipBones は、表示先のボーンを持たないボーンの隔たりの先へ「～先」のボーンを足して表示先をそこへ移し、dissolveTipBones は名前が「先」で終わるボーンを外して、指していた表示先を隔たりへ戻す。addAtVerticesWithWeight は addAtVertices のボーンを足し、指した頂点のウェイトをそこへ全部振る。mergeSameName は同じ名前のボーンを先頭の1つへまとめ、指していた口をその1つへ付け替える。relevelHierarchy は親より先に子が来ないよう並びを組み直す。ボーンを足す操作は、上へ足すものは指したボーンの直前へ、下へ足すものは直後へ入れる。mirrorPosition は axis に x・y・z のいずれかを渡し、名前の左右が逆のボーンの位置の鏡像へそろえる。makeIk は linkCount に親を辿るリンクの数を、1以上の整数で渡す。setLocalAxis は表示先への向きをX、それと親からの向きに垂直な向きをZとする。added に足したボーンの位置、changed に変えたボーンの数、removed に消えたボーンの数を返す。"
     },
     {
       "tool": "model_edit_faces",
@@ -337,7 +337,7 @@
     {
       "tool": "model_edit_materials",
       "branching": false,
-      "duty": "指した材質の結合・単一化・分割・取り出し・複製・色の丸めを行う。材質は indices・range・all のどれか1つで指す。operation は merge・mergeAll・mergeSame・extractFaces・extractFacesWithVertices・extractVertices・duplicateParts・clampColor のいずれか。merge は指した材質を先頭へまとめ、mergeAll は並びのすべてを1つへまとめる。mergeSame は colorTolerance に色の許容幅を渡し、その中で設定が同じ材質どうしをまとめる。extractFaces は faceIndices・faceRange・faceAll のどれか1つで材質の中の面を指し、その面を新しい材質へ移す。extractFacesWithVertices は同じ指し方で面を指し、指していない面と共にしている頂点を複製して分けたうえで新しい材質へ移す。extractVertices は vertexIndices で頂点を指し、その頂点だけで作られている面を、指した材質から集めて新しい材質へ移す。duplicateParts は parts に facesOnly・withVertices・withMorphs のいずれかを渡し、その持ち物を複製した材質を足す。clampColor は色の各成分を0以上1以下へ丸める。changed・removed・added を返す。"
+      "duty": "指した材質の結合・単一化・分割・取り出し・複製・色の丸めを行う。材質は indices・range・all・selected のどれか1つで指す。operation は merge・mergeAll・mergeSame・extractFaces・extractFacesWithVertices・extractVertices・duplicateParts・clampColor のいずれか。merge は指した材質を先頭へまとめ、mergeAll は並びのすべてを1つへまとめる。mergeSame は colorTolerance に色の許容幅を渡し、その中で設定が同じ材質どうしをまとめる。extractFaces は faceIndices・faceRange・faceAll のどれか1つで材質の中の面を指し、その面を新しい材質へ移す。extractFacesWithVertices は同じ指し方で面を指し、指していない面と共にしている頂点を複製して分けたうえで新しい材質へ移す。extractVertices は vertexIndices で頂点を指し、その頂点だけで作られている面を、指した材質から集めて新しい材質へ移す。duplicateParts は parts に facesOnly・withVertices・withMorphs のいずれかを渡し、その持ち物を複製した材質を足す。clampColor は色の各成分を0以上1以下へ丸める。changed・removed・added を返す。"
     },
     {
       "tool": "model_edit_morphs",
@@ -352,22 +352,22 @@
     {
       "tool": "model_edit_normals",
       "branching": false,
-      "duty": "指した頂点の法線を整える。頂点は indices・range・all のどれか1つで指す。operation は average・averageNear・fromFaces・normalize・flip のいずれか。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にする。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点の法線を整える。頂点は indices・range・all・selected のどれか1つで指す。operation は average・averageNear・fromFaces・normalize・flip のいずれか。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にする。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_edit_uv",
       "branching": false,
-      "duty": "指した頂点のUVの反転・写し取り・視線方向からの貼り直しを行う。頂点は indices・range・all のどれか1つで指す。operation は flipU・flipV・flipUV・copy・projectFromView のいずれか。反転は1から引く。copy は source に写す元の頂点の位置を渡す。projectFromView は direction に見る向きを3つの数で渡し、その向きに垂直な面へ落とした位置をUVにする。長さの無い向きは受け取らない。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点のUVの反転・写し取り・視線方向からの貼り直しを行う。頂点は indices・range・all・selected のどれか1つで指す。operation は flipU・flipV・flipUV・copy・projectFromView のいずれか。反転は1から引く。copy は source に写す元の頂点の位置を渡す。projectFromView は direction に見る向きを3つの数で渡し、その向きに垂直な面へ落とした位置をUVにする。長さの無い向きは受け取らない。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_edit_vertices",
       "branching": false,
-      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all のどれか1つで指す。operation は weld・weldNear・align・mirrorCopy・mirrorModel のいずれか。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis に x・y・z のいずれかを渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces・added を返す。"
+      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all・selected のどれか1つで指す。operation は weld・weldNear・align・mirrorCopy・mirrorModel のいずれか。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis に x・y・z のいずれかを渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces・added を返す。"
     },
     {
       "tool": "model_edit_weights",
       "branching": false,
-      "duty": "指した頂点のウェイトを整える。頂点は indices・range・all のどれか1つで指す。operation は average・smooth・fromNearestBonePosition・fromNearestBoneAxis・fromMirror・normalize・repairMissingBone のいずれか。average は指した頂点のウェイトの平均へそろえる。smooth は strength に0以上1以下の強さを渡し、同じ面に載っている頂点のウェイトの平均へその強さのぶんだけ寄せる。fromNearestBonePosition はいちばん近いボーンへ、fromNearestBoneAxis は根元から表示先までの線分がいちばん近いボーンへ、ウェイトを全部振る。fromMirror は axis に x・y・z のいずれかを渡し、その軸の鏡像の位置にある頂点から、名前の左右を入れ替えたボーンのウェイトを写す。normalize はウェイトの合計を1にそろえ、repairMissingBone は並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。どの操作でも、重みが正の枠が1つも残らない頂点は先頭のボーンへ重み1を振り、並びに居ないボーンを指すウェイトは残っている祖先のボーンへ移す。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点のウェイトを整える。頂点は indices・range・all・selected のどれか1つで指す。operation は average・smooth・fromNearestBonePosition・fromNearestBoneAxis・fromMirror・normalize・repairMissingBone のいずれか。average は指した頂点のウェイトの平均へそろえる。smooth は strength に0以上1以下の強さを渡し、同じ面に載っている頂点のウェイトの平均へその強さのぶんだけ寄せる。fromNearestBonePosition はいちばん近いボーンへ、fromNearestBoneAxis は根元から表示先までの線分がいちばん近いボーンへ、ウェイトを全部振る。fromMirror は axis に x・y・z のいずれかを渡し、その軸の鏡像の位置にある頂点から、名前の左右を入れ替えたボーンのウェイトを写す。normalize はウェイトの合計を1にそろえ、repairMissingBone は並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。どの操作でも、重みが正の枠が1つも残らない頂点は先頭のボーンへ重み1を振り、並びに居ないボーンを指すウェイトは残っている祖先のボーンへ移す。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_find_referrers",
@@ -377,12 +377,12 @@
     {
       "tool": "model_insert_elements",
       "branching": false,
-      "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation は new か clone のいずれかで、new のときは count に作る数(1以上の整数。省くと1)を渡し、clone のときは indices・range・all のどれか1つで写す元を指す。親が並びを持つ5つは、ほかの要素を指して初めて意味を持つ種類なので new では作れず、clone だけを受け取る。morph を new で作るときは、variant に vertex・uv・uvA1・uvA2・uvA3・uvA4・bone・material・group・flip・impulse のいずれかを渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。indices に入った位置を返す。"
+      "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation は new か clone のいずれかで、new のときは count に作る数(1以上の整数。省くと1)を渡し、clone のときは indices・range・all・selected のどれか1つで写す元を指す。親が並びを持つ5つは、ほかの要素を指して初めて意味を持つ種類なので new では作れず、clone だけを受け取る。morph を new で作るときは、variant に vertex・uv・uvA1・uvA2・uvA3・uvA4・bone・material・group・flip・impulse のいずれかを渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。indices に入った位置を返す。"
     },
     {
       "tool": "model_mirror_elements",
       "branching": false,
-      "duty": "X軸で左右を反転した写しを足すか、モデル全体を左右へ反転する。operation は copyTargets・mirrorModel のいずれか。copyTargets は targets で指した要素の写しを足す。targets は写す要素を種類ごとに指した組の並びで、組ごとに kind が vertex・face・bone・body・joint のいずれかを取り、その中の要素を indices・range・all のどれか1つで指す。同じ種類を二度並べることはできない。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。面は、その3つの頂点すべてを同じ呼び出しで写したものだけを写し、写していない頂点を使う面は飛ばす。写しは位置のxを打ち消し、名前の左右を入れ替え、左右を持たない名前には M- を頭へ足す。写した頂点を指す頂点モーフとUVモーフのオフセットも、写しを指すものを足す。写しどうしの指し先は写しへ繋ぎ替え、写していないボーンや剛体を指す先は、指していた相手と同じ名前で左右だけが違う相手があればそちらへ繋ぐ。mirrorModel は targets を受け取らず、頂点・面・ボーン・モーフ・剛体・Jointをまとめて反転し、ボーン・剛体・Jointの名前の左右を入れ替える。左右を持たない名前はそのままにする。added に足した要素の数、changed に反転した要素の数を返す。"
+      "duty": "X軸で左右を反転した写しを足すか、モデル全体を左右へ反転する。operation は copyTargets・mirrorModel のいずれか。copyTargets は targets で指した要素の写しを足す。targets は写す要素を種類ごとに指した組の並びで、組ごとに kind が vertex・face・bone・body・joint のいずれかを取り、その中の要素を indices・range・all・selected のどれか1つで指す。同じ種類を二度並べることはできない。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。面は、その3つの頂点すべてを同じ呼び出しで写したものだけを写し、写していない頂点を使う面は飛ばす。写しは位置のxを打ち消し、名前の左右を入れ替え、左右を持たない名前には M- を頭へ足す。写した頂点を指す頂点モーフとUVモーフのオフセットも、写しを指すものを足す。写しどうしの指し先は写しへ繋ぎ替え、写していないボーンや剛体を指す先は、指していた相手と同じ名前で左右だけが違う相手があればそちらへ繋ぐ。mirrorModel は targets を受け取らず、頂点・面・ボーン・モーフ・剛体・Jointをまとめて反転し、ボーン・剛体・Jointの名前の左右を入れ替える。左右を持たない名前はそのままにする。added に足した要素の数、changed に反転した要素の数を返す。"
     },
     {
       "tool": "model_morph_from_moved",
@@ -392,17 +392,17 @@
     {
       "tool": "model_place_elements",
       "branching": false,
-      "duty": "種類をまたいで指した要素の位置を、渡した点へそろえる。targets は、そろえる要素を種類ごとに指した組の並びで、組ごとに kind が vertex・bone・body・joint のいずれかを取り、その中の要素を indices・range・all のどれか1つで指す。同じ種類を二度並べることはできない。operation は alignTo のみ。position にそろえる先の点を3つの数で渡し、axes に xyz・x・y・z のいずれかを渡して、そろえる軸を選ぶ。xyz は3つの軸すべてをそろえ、残りはその軸だけをそろえて他の2つは動かさない。changed に動いた要素の数を返す。"
+      "duty": "種類をまたいで指した要素の位置を、渡した点へそろえる。targets は、そろえる要素を種類ごとに指した組の並びで、組ごとに kind が vertex・bone・body・joint のいずれかを取り、その中の要素を indices・range・all・selected のどれか1つで指す。同じ種類を二度並べることはできない。operation は alignTo のみ。position にそろえる先の点を3つの数で渡し、axes に xyz・x・y・z のいずれかを渡して、そろえる軸を選ぶ。xyz は3つの軸すべてをそろえ、残りはその軸だけをそろえて他の2つは動かさない。changed に動いた要素の数を返す。"
     },
     {
       "tool": "model_reorder_elements",
       "branching": false,
-      "duty": "指した要素を並びの中で動かす。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all のどれか1つで指す。move は up・down・top・bottom・to のいずれかで、to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。indices に動いた後の位置を返す。"
+      "duty": "指した要素を並びの中で動かす。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all・selected のどれか1つで指す。move は up・down・top・bottom・to のいずれかで、to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。indices に動いた後の位置を返す。"
     },
     {
       "tool": "model_set_deform_type",
       "branching": false,
-      "duty": "指した頂点の変形方式を変え、SDEFの値を整える。頂点は indices・range・all のどれか1つで指す。operation は convert・normalizeSdefC・repairInvalidSdef のいずれか。convert は deform に bdef1・bdef2・bdef4・sdef・qdef のいずれかを渡し、重みが正の枠を重い順にその方式が使う数まで残して、残した重みの合計が1になるようそろえる。normalizeSdefC はSDEFのC値を2つのボーンの位置と重みから決め直し、repairInvalidSdef は2つのボーンを保てないSDEFの頂点からSDEFの指定を落とす。convert のあとは、並びに居ないボーンを指すウェイトが残っている祖先のボーンへ移る。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点の変形方式を変え、SDEFの値を整える。頂点は indices・range・all・selected のどれか1つで指す。operation は convert・normalizeSdefC・repairInvalidSdef のいずれか。convert は deform に bdef1・bdef2・bdef4・sdef・qdef のいずれかを渡し、重みが正の枠を重い順にその方式が使う数まで残して、残した重みの合計が1になるようそろえる。normalizeSdefC はSDEFのC値を2つのボーンの位置と重みから決め直し、repairInvalidSdef は2つのボーンを保てないSDEFの頂点からSDEFの指定を落とす。convert のあとは、並びに居ないボーンを指すウェイトが残っている祖先のボーンへ移る。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_validate_pmx",

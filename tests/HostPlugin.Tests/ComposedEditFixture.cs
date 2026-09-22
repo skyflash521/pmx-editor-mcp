@@ -131,7 +131,8 @@ namespace PmxEditorMcp.Tests
                 new InlineInvoker(),
                 budgetChars,
                 Handles,
-                new EventQueue(new EventSequenceIssuer()));
+                new EventQueue(new EventSequenceIssuer()),
+                new ScreenTargets(() => View, () => Form));
         }
 
         /// <summary>画面へ映す段。題材の口を通して、映し直しの回数を数える。</summary>

@@ -182,6 +182,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheScreenSelectionPicksTheFacesToCopy()
+        {
+            IList<IPXVertex> corners = Corners();
+            FakeMaterial material = Material(
+                new FakeFace(corners[0], corners[1], corners[2]));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            Mirror(
+                Operation(ModelMirrorElements.CopyTargets),
+                Targets(
+                    Target(ElementKinds.Vertex, 0, 1, 2),
+                    Chosen(ElementKinds.Face)));
+
+            Assert.Equal(2, material.Faces.Count);
+        }
+
+        [Fact]
         public void AFaceWhoseCornersWereNotCopiedIsLeftAlone()
         {
             IList<IPXVertex> corners = Corners();
@@ -362,6 +379,16 @@ namespace PmxEditorMcp.Tests
         private static KeyValuePair<string, object> Targets(params object[] targets)
         {
             return ComposedEditFixture.Given(ModelMirrorElements.TargetsName, targets);
+        }
+
+        /// <summary>画面の選択でその種類を指す組。</summary>
+        private static object Chosen(string kind)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { ModelMirrorElements.KindName, kind },
+                { "selected", true },
+            };
         }
 
         private static object Target(string kind, params int[] at)

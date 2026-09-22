@@ -66,6 +66,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -90,7 +91,10 @@ namespace PmxEditorMcp
                     bodies ? model.Body.Count : model.Joint.Count,
                     out chosen,
                     out code,
-                    out message))
+                    out message,
+                    context.Screen.Pick(
+                        bodies ? ElementKinds.Body : ElementKinds.Joint,
+                        bodies ? model.Body.Count : model.Joint.Count)))
             {
                 return ComposedEditResult.Refuse(code, message);
             }

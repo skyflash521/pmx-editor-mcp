@@ -61,6 +61,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
                 MoveName,
                 ToIndexName,
             };

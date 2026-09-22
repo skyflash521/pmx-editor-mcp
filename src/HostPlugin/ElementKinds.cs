@@ -387,7 +387,7 @@ namespace PmxEditorMcp
             IList<object> all = ElementKinds.Owners(pmx, kind);
             if (kind.Owner == null)
             {
-                if (Pointed(request))
+                if (TargetSelection.Points(request))
                 {
                     code = ToolEnvelope.InvalidArgument;
                     message = kind.Name + " はPMXが直に並べる種類なので、親の指定を受け取らない。";
@@ -441,21 +441,33 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(kind));
             }
 
+            positions = null;
+            int count = kind.Items(owner).Count;
+            ScreenPick picked = kind.Owner == null ? context.Screen.Pick(kind.Name, count) : null;
+            if (picked == null && context.Params.ContainsKey(TargetNames.Element.Selected))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = kind.Owner == null
+                    ? TargetNames.Element.Selected + " で指せる種類ではない: " + kind.Name
+                        + "。画面が選べるのは "
+                        + string.Join("・", ScreenTargets.Kinds.ToArray()) + " である。"
+                    : TargetNames.Element.Selected + " が指す位置はモデル全体で数えるが、"
+                        + kind.Name + " は " + kind.Owner.Name + " ごとに数える並びである。"
+                        + TargetNames.Element.Indices + "・" + TargetNames.Element.Range + "・"
+                        + TargetNames.Element.All + " で指す。";
+
+                return false;
+            }
+
             return TargetInput.TryPositions(
                 context.Params,
                 TargetNames.Element,
-                kind.Items(owner).Count,
+                count,
                 out positions,
                 out code,
-                out message);
+                out message,
+                picked);
         }
 
-        private static bool Pointed(TargetRequest request)
-        {
-            return request.Indices != null
-                || request.RangeStart.HasValue
-                || request.RangeCount.HasValue
-                || request.All.HasValue;
-        }
     }
 }

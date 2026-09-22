@@ -91,6 +91,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
                 ShapeName,
             };
             methods.Add(
@@ -118,7 +119,8 @@ namespace PmxEditorMcp
                     Counted(model, operation),
                     out chosen,
                     out code,
-                    out message)
+                    out message,
+                    context.Screen.Pick(Pointed(operation), Counted(model, operation)))
                 || !ComposedInput.TryChoice(
                     context,
                     ShapeName,
@@ -144,6 +146,22 @@ namespace PmxEditorMcp
                 default:
                     return Attached(
                         model, made, chosen.Select(at => model.Bone[at]).ToList(), operation, shape);
+            }
+        }
+
+        /// <summary>その操作が指す要素の種類。</summary>
+        private static string Pointed(string operation)
+        {
+            switch (operation)
+            {
+                case Joint:
+                    return ElementKinds.Body;
+
+                case BodyAtVertices:
+                    return ElementKinds.Vertex;
+
+                default:
+                    return ElementKinds.Bone;
             }
         }
 

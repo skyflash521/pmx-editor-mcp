@@ -63,6 +63,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
                 ThresholdName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
@@ -83,7 +84,8 @@ namespace PmxEditorMcp
                     model.Vertex.Count,
                     out chosen,
                     out code,
-                    out message))
+                    out message,
+                    context.Screen.Pick(ElementKinds.Vertex, model.Vertex.Count)))
             {
                 return ComposedEditResult.Refuse(code, message);
             }

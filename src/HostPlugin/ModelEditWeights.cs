@@ -87,6 +87,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
                 StrengthName,
                 AxisName,
             };
@@ -108,7 +109,8 @@ namespace PmxEditorMcp
                     model.Vertex.Count,
                     out chosen,
                     out code,
-                    out message))
+                    out message,
+                    context.Screen.Pick(ElementKinds.Vertex, model.Vertex.Count)))
             {
                 return ComposedEditResult.Refuse(code, message);
             }

@@ -165,8 +165,15 @@ namespace PmxEditorMcp
                 }
 
                 IList<int> positions;
+                int count = Held(model, kind).Count;
                 if (!TargetInput.TryPositions(
-                    held, TargetNames.Element, Held(model, kind).Count, out positions, out code, out message))
+                    held,
+                    TargetNames.Element,
+                    count,
+                    out positions,
+                    out code,
+                    out message,
+                    context.Screen.Pick(kind, count)))
                 {
                     return false;
                 }

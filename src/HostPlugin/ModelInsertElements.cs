@@ -108,6 +108,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
                 OperationName,
                 AtName,
                 CountName,
@@ -258,7 +259,8 @@ namespace PmxEditorMcp
         {
             return string.Equals(name, TargetNames.Element.Indices, StringComparison.Ordinal)
                 || string.Equals(name, TargetNames.Element.Range, StringComparison.Ordinal)
-                || string.Equals(name, TargetNames.Element.All, StringComparison.Ordinal);
+                || string.Equals(name, TargetNames.Element.All, StringComparison.Ordinal)
+                || string.Equals(name, TargetNames.Element.Selected, StringComparison.Ordinal);
         }
 
         private static bool TryOperation(

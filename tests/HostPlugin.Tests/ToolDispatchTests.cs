@@ -1122,7 +1122,8 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
                 new StillModifierKeys(),
                 events,
-                Refresh());
+                Refresh(),
+                Screen());
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
@@ -1151,6 +1152,11 @@ namespace PmxEditorMcp.Tests
             return new ScreenRefresh(() => _view, () => _form);
         }
 
+        private ScreenTargets Screen()
+        {
+            return new ScreenTargets(() => _view, () => _form);
+        }
+
         /// <summary>その前提条件を持つツールとして登録し、引いた呼び出しを返す。</summary>
         private McpMethod Registered(ToolPrecondition precondition)
         {
@@ -1177,7 +1183,8 @@ namespace PmxEditorMcp.Tests
                 },
                 new StillModifierKeys(),
                 EventBindingFixture.Empty(),
-                Refresh());
+                Refresh(),
+                Screen());
 
             McpMethod method;
             Assert.True(methods.TryGet("session_count", out method));
@@ -1225,7 +1232,8 @@ namespace PmxEditorMcp.Tests
                 },
                 modifiers,
                 EventBindingFixture.Empty(),
-                Refresh());
+                Refresh(),
+                Screen());
 
             McpMethod method;
             Assert.True(methods.TryGet("session_count", out method));

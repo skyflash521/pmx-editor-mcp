@@ -205,7 +205,9 @@ namespace PmxEditorMcp
                     new PressedModifierKeys(),
                     new EventBindingTable(
                         GeneratedTools.Attachments(), GeneratedTools.Payloads()),
-                    refresh);
+                    refresh,
+                    new ScreenTargets(
+                        () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType)));
                 ComposedModelTools.AddTo(
                     methods,
                     new ComposedEdit(current, new UndoBarrier(recovery), refresh),
@@ -229,7 +231,9 @@ namespace PmxEditorMcp
                 DebugLargeText.AddTo(methods, debugHooks);
                 DebugConnectorExpiry.AddTo(methods, debugHooks, _resident);
                 _connection = new JsonRpcConnection(
-                    _log, methods, HostVersion, budget.Chars, relay, SdkVersion, recovery);
+                    _log, methods, HostVersion, budget.Chars, relay, SdkVersion, recovery,
+                    new ScreenTargets(
+                        () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType)));
 
                 _host = new McpHost(
                     McpHost.BuildPipeName(editorProcessId),

@@ -127,6 +127,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
+                TargetNames.Element.Selected,
                 ColorToleranceName,
                 PartsName,
                 FaceIndicesName,
@@ -152,7 +153,8 @@ namespace PmxEditorMcp
                     model.Material.Count,
                     out chosen,
                     out code,
-                    out message))
+                    out message,
+                    context.Screen.Pick(ElementKinds.Material, model.Material.Count)))
             {
                 return ComposedEditResult.Refuse(code, message);
             }

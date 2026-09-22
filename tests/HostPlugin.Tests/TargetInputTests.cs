@@ -45,6 +45,26 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheScreenSelectionComesThroughAsTheBooleanThatWasGiven()
+        {
+            TargetRequest request = Taken(
+                Arguments(new KeyValuePair<string, object>("selected", true)));
+
+            Assert.True(request.Selected);
+            Assert.Null(request.Indices);
+            Assert.Null(request.All);
+        }
+
+        [Fact]
+        public void AScreenSelectionThatIsNotABooleanIsRefused()
+        {
+            string code = Refused(
+                Arguments(new KeyValuePair<string, object>("selected", 1)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, code);
+        }
+
+        [Fact]
         public void TheParentNamesReadTheParentSetAndLeaveTheElementSetAlone()
         {
             TargetRequest request = Taken(
