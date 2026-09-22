@@ -4912,6 +4912,18 @@
         },
         {
           "kind": "tool",
+          "tool": "view_select_elements",
+          "arguments": {
+            "operation": "all",
+            "kind": "bone",
+            "mode": "intersect"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "view_set_selected_face_indices_pmd_view_connector",
           "arguments": {
             "indices": []

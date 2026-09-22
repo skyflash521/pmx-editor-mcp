@@ -102,6 +102,7 @@ namespace PmxEditorMcp
                 KindName,
                 KindsName,
                 AxisName,
+                ViewSelection.ModeName,
             };
             methods.Add(
                 ToolName,
@@ -117,11 +118,13 @@ namespace PmxEditorMcp
             IPXPmx model = (IPXPmx)parts.Pmx;
             string operation;
             string axis;
+            string mode;
             string code;
             string message;
             IList<string> kinds;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
+                || !ViewSelection.TryMode(context, out mode, out code, out message)
                 || !TryKinds(context, operation, out kinds, out code, out message)
                 || !ComposedInput.TryChoice(
                     context,
@@ -143,7 +146,7 @@ namespace PmxEditorMcp
             {
                 int took = 0;
                 ComposedEditResult refused =
-                    Chosen(model, parts, operation, kind, axis, ref took);
+                    Chosen(model, parts, operation, kind, axis, mode, ref took);
                 if (refused != null)
                 {
                     return refused;
@@ -180,6 +183,7 @@ namespace PmxEditorMcp
             string operation,
             string kind,
             string axis,
+            string mode,
             ref int selected)
         {
             int count = ViewSelection.Count(model, kind);
@@ -223,6 +227,7 @@ namespace PmxEditorMcp
                     break;
             }
 
+            made = ViewSelection.Combined(mode, held, made);
             ViewSelection.Put(parts.View, kind, made);
             selected += made.Count;
 

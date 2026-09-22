@@ -43339,6 +43339,12 @@
               "origin": "hostInput",
               "shape": "text",
               "required": false
+            },
+            {
+              "name": "mode",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ]
         }
@@ -43429,6 +43435,12 @@
               "name": "maxV",
               "origin": "hostInput",
               "shape": "number",
+              "required": false
+            },
+            {
+              "name": "mode",
+              "origin": "hostInput",
+              "shape": "text",
               "required": false
             }
           ],

@@ -15,6 +15,71 @@ namespace PmxEditorMcp
         // 画面のコネクタは面の選択を、面が並べる頂点の位置の並びの中の位置で受け渡す。面 n は 3n から3つ。
         private const int CornersPerFace = 3;
 
+        public const string ModeName = "mode";
+
+        public const string Replace = "replace";
+
+        public const string Add = "add";
+
+        public const string Subtract = "subtract";
+
+        public const string Intersect = "intersect";
+
+        public static IList<string> Modes
+        {
+            get { return new[] { Replace, Add, Subtract, Intersect }; }
+        }
+
+        /// <summary>渡していなければ <see cref="Replace"/> とする。</summary>
+        public static bool TryMode(
+            McpMethodContext context, out string mode, out string code, out string message)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (!context.Params.ContainsKey(ModeName))
+            {
+                mode = Replace;
+                code = null;
+                message = null;
+
+                return true;
+            }
+
+            return ComposedInput.TryChoice(context, ModeName, Modes, out mode, out code, out message);
+        }
+
+        /// <summary>いまの選択 <paramref name="held"/> と新しく作った選択を、その方法で掛け合わせる。</summary>
+        public static IList<int> Combined(string mode, IList<int> held, IList<int> made)
+        {
+            if (held == null)
+            {
+                throw new ArgumentNullException(nameof(held));
+            }
+
+            if (made == null)
+            {
+                throw new ArgumentNullException(nameof(made));
+            }
+
+            switch (mode)
+            {
+                case Add:
+                    return held.Union(made).ToList();
+
+                case Subtract:
+                    return held.Except(made).ToList();
+
+                case Intersect:
+                    return held.Intersect(made).ToList();
+
+                default:
+                    return made;
+            }
+        }
+
         /// <summary>画面が選べる要素の種類。スキーマが並べる順。</summary>
         public static IList<string> Kinds
         {

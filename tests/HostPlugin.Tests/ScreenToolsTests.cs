@@ -247,6 +247,60 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
+        [Theory]
+        [InlineData("intersect", new[] { 1 })]
+        [InlineData("subtract", new[] { 0 })]
+        [InlineData("add", new[] { 0, 1, 2 })]
+        [InlineData("replace", new[] { 1, 2 })]
+        public void TheModeCombinesTheNewSelectionWithTheOneAlreadyThere(string mode, int[] wanted)
+        {
+            Vertex(-1f, 0f, 0f);
+            Vertex(1f, 0f, 0f);
+            Vertex(2f, 0f, 0f);
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0, 1 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Select(
+                Operation(ViewSelectElements.HalfModel),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
+                ComposedScreenFixture.Given(
+                    ViewSelectElements.AxisName, ModelEditVertices.AxisX),
+                ComposedScreenFixture.Given(ViewSelection.ModeName, mode)));
+
+            Assert.Equal(wanted, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(wanted.Length, value[ViewSelectElements.SelectedName]);
+        }
+
+        [Fact]
+        public void TheRelatedSelectionCanBeNarrowedToTheOneAlreadyThere()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 1, 2, 3));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Related(
+                Operation(ViewSelectRelated.MaterialToFaces),
+                ComposedScreenFixture.Given(
+                    ViewSelectRelated.MaterialIndicesName, new object[] { 0, 1 }),
+                ComposedScreenFixture.Given(ViewSelection.ModeName, "intersect")));
+
+            Assert.Equal(new[] { 3, 4, 5 }, _fixture.View.Selected[ElementKinds.Face]);
+            Assert.Equal(1, value[ViewSelectRelated.SelectedName]);
+        }
+
+        [Fact]
+        public void AModeTheToolDoesNotKnowIsRefused()
+        {
+            Vertices(1);
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
+                ComposedScreenFixture.Given(ViewSelection.ModeName, "xor"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+        }
+
         [Fact]
         public void SelectingWithoutSayingTheKindIsRefused()
         {

@@ -91,6 +91,7 @@ namespace PmxEditorMcp
                 MaxUName,
                 MinVName,
                 MaxVName,
+                ViewSelection.ModeName,
             };
             methods.Add(
                 ToolName,
@@ -110,8 +111,10 @@ namespace PmxEditorMcp
             IList<int> materials;
             UvRegion region;
             bool release;
+            string mode;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
+                || !ViewSelection.TryMode(context, out mode, out code, out message)
                 || !ComposedInput.TryIndices(
                     context,
                     MaterialIndicesName,
@@ -205,6 +208,8 @@ namespace PmxEditorMcp
                     break;
             }
 
+            made = ViewSelection.Combined(
+                mode, ViewSelection.Taken(parts.View, kind, ViewSelection.Count(model, kind)), made);
             ViewSelection.Put(parts.View, kind, made);
             string source = Source(operation);
             if (release && source != null && !string.Equals(source, kind, StringComparison.Ordinal))
