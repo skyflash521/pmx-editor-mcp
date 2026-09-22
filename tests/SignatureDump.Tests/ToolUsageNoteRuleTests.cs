@@ -27,6 +27,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AListingUnderAParentSaysThatPointingOnlyTheParentListsEverythingUnderIt()
+        {
+            string note = Note(
+                true, "parentIndices", "parentRange", "parentAll", "indices", "range", "all",
+                "offset", "limit");
+
+            Assert.Contains("親だけを指せば、その下の要素をすべて並べる", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AListingWithNoParentDoesNotCarryTheParent()
         {
             Assert.DoesNotContain(

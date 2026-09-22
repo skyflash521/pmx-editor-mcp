@@ -2373,6 +2373,11 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(code, message);
             }
 
+            if (tool.Listing)
+            {
+                pointed = WholeUnderParents(pointed);
+            }
+
             int total = 0;
             int pointedCount = 0;
             List<Spot> taken = new List<Spot>();
@@ -3407,6 +3412,23 @@ namespace PmxEditorMcp
             {
                 yield return TargetNames.Parent.Handles;
             }
+        }
+
+        private static Pointed WholeUnderParents(Pointed pointed)
+        {
+            if (pointed.Parents == null
+                || !TargetSelection.Points(pointed.Parents)
+                || pointed.Elements == null
+                || TargetSelection.Points(pointed.Elements))
+            {
+                return pointed;
+            }
+
+            return new Pointed(
+                new TargetRequest(all: true),
+                pointed.Parents,
+                pointed.ByHandle,
+                pointed.ParentByHandle);
         }
 
         /// <summary>

@@ -151,6 +151,40 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ListingWithOnlyTheParentPointedListsEveryOneUnderIt()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            first.Faces.Add(new FakeFace());
+            second.Faces.Add(new FakeFace());
+            second.Faces.Add(new FakeFace());
+            _model.Materials.Add(first);
+            _model.Materials.Add(second);
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_faces", Arguments("parentIndices", new object[] { 1 })));
+            object[] items = (object[])value[ToolDispatch.ItemsName];
+
+            Assert.Equal(2, value[ToolDispatch.TotalName]);
+            Assert.Equal(2, items.Length);
+            Assert.All(
+                items,
+                item => Assert.Equal(1, ((IDictionary<string, object>)item)["parentIndex"]));
+        }
+
+        [Fact]
+        public void ListingWithNeitherTheParentNorTheElementsPointedIsRefused()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            first.Faces.Add(new FakeFace());
+            _model.Materials.Add(first);
+
+            IDictionary<string, object> envelope = Call("model_list_faces", Arguments());
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
         public void TheScreenSelectionTogetherWithPositionsIsRefusedEvenWhenItLiesElsewhere()
         {
             FakeMaterial first = new FakeMaterial("一");

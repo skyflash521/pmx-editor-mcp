@@ -25,7 +25,8 @@ namespace PmxEditorMcp.SignatureDump
             "端まで読むなら " + AllName + " に真を渡し、nextOffset が返らなくなるまで"
                 + " offset へ渡し直す。";
 
-        private const string WithParent = "親も " + ParentAllName + " に真を渡す。";
+        private const string WithParent =
+            "親も " + ParentAllName + " に真を渡す。親だけを指せば、その下の要素をすべて並べる。";
 
         private const string NameContainsName = "nameContains";
 

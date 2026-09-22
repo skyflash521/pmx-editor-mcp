@@ -7739,7 +7739,7 @@
                 "range",
                 "selected"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -7819,7 +7819,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -8106,7 +8106,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -8317,7 +8317,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -8397,7 +8397,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -9132,7 +9132,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -9212,7 +9212,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -9687,7 +9687,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -9767,7 +9767,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -10530,7 +10530,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
@@ -10610,7 +10610,7 @@
                 "indices",
                 "range"
               ],
-              "required": true
+              "required": false
             }
           ]
         },
