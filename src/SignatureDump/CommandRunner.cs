@@ -76,7 +76,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>能力対応表の2つの版から、中身の変わった行のキーを書き出す。</summary>
         public const string ChangedRowsCommand = "changed-rows";
 
-        /// <summary>受入シナリオが、登録される定義と要求仕様書に合うことを照合する。</summary>
+        /// <summary>受入シナリオが、登録される定義に合うことを照合する。</summary>
         public const string AcceptanceCasesCommand = "acceptance-cases";
 
         /// <summary>スキーマ正本のツールが実機の検査に覆われることを照合する。</summary>
@@ -347,7 +347,7 @@ namespace PmxEditorMcp.SignatureDump
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
                     + " <型役割表の正本のパス> <日本語名の正本のパス>"
                     + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
-                    + " <スキーマ正本のパス> <受入シナリオの正本のパス> <要求仕様書のパス>");
+                    + " <スキーマ正本のパス> <受入シナリオの正本のパス> <突き合わせの題材のパス>");
             error.WriteLine(
                 DiscoveryCommand
                     + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"

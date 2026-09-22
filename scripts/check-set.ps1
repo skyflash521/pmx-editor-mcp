@@ -31,7 +31,6 @@ $acceptanceStub = 'scripts/acceptance-stub-cases.json'
 $acceptanceStubForms = 'scripts/acceptance-stub-forms.json'
 $e2eStub = 'scripts/e2e-stub-cases.json'
 $e2eStubForms = 'scripts/e2e-stub-forms.json'
-$requirements = 'docs/specs/requirements.md'
 
 <#
     形を1つも壊さない通しの実行を指す綴り。どの照合もこの綴りで通しを走らせる。
@@ -1053,11 +1052,11 @@ $checks['規則適合検査'] = New-Check `
     -Run @($dump, 'tool-mapping', $editorDir, $ledger, $contract, $roles, $assignments,
         $toolMap, $toolSchemas)
 $checks['受入シナリオの照合'] = New-Check `
-    -Groups @('ドキュメント', '定義') `
+    -Groups @('定義') `
     -LimitSeconds 5 <# 変更禁止 #> `
     -Needs $buildOutput `
     -Run @($dump, 'acceptance-cases', $editorDir, $ledger, $contract, $roles, $names,
-        $assignments, $toolMap, $toolSchemas, $acceptance, $requirements, $acceptanceStub)
+        $assignments, $toolMap, $toolSchemas, $acceptance, $acceptanceStub)
 $checks['ブリッジの単独起動'] = New-Check `
     -Groups @('ブリッジ配布') `
     -LimitSeconds 17 <# 変更禁止 #> `

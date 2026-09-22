@@ -5,14 +5,9 @@ using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
 {
-    /// <summary>受入シナリオの定義が、実行器の解せる形と、登録される定義と要求に合うことの照合。</summary>
+    /// <summary>受入シナリオの定義が、実行器の解せる形と、登録される定義に合うことの照合。</summary>
     public sealed class AcceptanceScenarioGateTests
     {
-        private const string Task =
-            "公開APIでできてPMXエディタが1回の操作でできることは、ツールの1回の呼び出しでできる";
-
-        private const string Condition = "標準のMCPで動く製品にし、特定のクライアントに縛られない";
-
         private const string Listing = "model_list_vertices";
 
         private const string ListingSchema =
@@ -30,14 +25,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AScenarioThatCallsARegisteredToolWithArgumentsItsSchemaAcceptsIsAccepted()
         {
-            Require(Scenario(Task, Step(Listing, @"{""all"":true}")));
+            Require(Scenario(Step(Listing, @"{""all"":true}")));
         }
 
         [Fact]
         public void AScenarioThatCallsAToolNoDefinitionRegistersIsRejected()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario(Task, Step("model_list_wings", @"{""all"":true}"))));
+                () => Require(Scenario(Step("model_list_wings", @"{""all"":true}"))));
 
             Assert.Contains("model_list_wings", error.Message, StringComparison.Ordinal);
         }
@@ -46,7 +41,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AScenarioWhoseArgumentsTheInputSchemaRefusesIsRejected()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario(Task, Step(Listing, @"{""all"":true,""limit"":0}"))));
+                () => Require(Scenario(Step(Listing, @"{""all"":true,""limit"":0}"))));
 
             Assert.Contains(Listing, error.Message, StringComparison.Ordinal);
         }
@@ -55,33 +50,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AScenarioThatOmitsARequiredArgumentIsRejected()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario(Task, Step(Listing, @"{}"))));
+                () => Require(Scenario(Step(Listing, @"{}"))));
 
             Assert.Contains(Listing, error.Message, StringComparison.Ordinal);
         }
 
         [Fact]
-        public void AScenarioThatPointsAtARequirementTheDocumentDoesNotNameIsRejected()
+        public void AScenarioThatNamesRequirementsIsRejected()
         {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario("速いこと", Step(Listing, @"{""all"":true}"))));
-
-            Assert.Contains("速いこと", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void ScenariosThatLeaveATaskWithoutAnyScenarioAreRejected()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario(Condition, Step(Listing, @"{""all"":true}"))));
-
-            Assert.Contains(Task, error.Message, StringComparison.Ordinal);
+            Assert.Throws<FormatException>(
+                () => AcceptanceScenarioGate.Read(
+                    @"{""scenarios"":[{""id"":1,""title"":""読み取り"",""requirements"":[""速い""],"
+                        + @"""steps"":[" + Step(Listing, @"{""all"":true}") + "]}]}"));
         }
 
         [Fact]
         public void TwoScenariosWithTheSameNumberAreRejected()
         {
-            string one = Body(1, Task, Step(Listing, @"{""all"":true}"));
+            string one = Body(1, Step(Listing, @"{""all"":true}"));
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(one + "," + one));
 
@@ -95,7 +81,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + @""",""arguments"":{""all"":true,""limit"":{""$from"":""count""}},"
                 + @"""expect"":{""ok"":true}}";
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario(Task, step)));
+                () => Require(Scenario(step)));
 
             Assert.Contains("count", error.Message, StringComparison.Ordinal);
         }
@@ -110,7 +96,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + @""",""arguments"":{""all"":true,""limit"":{""$from"":""count""}},"
                 + @"""expect"":{""ok"":true}}";
 
-            Require(Scenario(Task, recording + "," + borrowing));
+            Require(Scenario(recording + "," + borrowing));
         }
 
         [Fact]
@@ -123,7 +109,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + @""",""arguments"":{""handles"":{""$from"":""made""}},"
                 + @"""expect"":{""ok"":true}}";
 
-            Require(Scenario(Task, recording + "," + borrowing));
+            Require(Scenario(recording + "," + borrowing));
         }
 
         [Fact]
@@ -136,7 +122,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + @""",""arguments"":{""all"":true,""limit"":{""$from"":""made""}},"
                 + @"""expect"":{""ok"":true}}";
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario(Task, recording + "," + borrowing)));
+                () => Require(Scenario(recording + "," + borrowing)));
 
             Assert.Contains(Listing, error.Message, StringComparison.Ordinal);
         }
@@ -148,7 +134,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + @""",""arguments"":{""all"":true},"
                 + @"""expect"":{""ok"":true,""image"":{""capturedAs"":""viewSize""}}}";
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario(Task, step)));
+                () => Require(Scenario(step)));
 
             Assert.Contains("viewSize", error.Message, StringComparison.Ordinal);
         }
@@ -160,7 +146,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 + @""",""arguments"":{""all"":true},""expect"":{""looksRight"":true}}";
             FormatException error = Assert.Throws<FormatException>(
                 () => AcceptanceScenarioGate.Read(
-                    @"{""scenarios"":[" + Body(1, Task, step) + "]}"));
+                    @"{""scenarios"":[" + Body(1, step) + "]}"));
 
             Assert.Contains("実行器の解せる形", error.Message, StringComparison.Ordinal);
         }
@@ -170,7 +156,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             FormatException error = Assert.Throws<FormatException>(
                 () => AcceptanceScenarioGate.Read(
-                    @"{""scenarios"":[" + Body(1, Task, @"{""kind"":""wait"",""seconds"":3}")
+                    @"{""scenarios"":[" + Body(1, @"{""kind"":""wait"",""seconds"":3}")
                         + "]}"));
 
             Assert.Contains("実行器の解せる形", error.Message, StringComparison.Ordinal);
@@ -186,7 +172,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string listing = @"{""kind"":""tool"",""tool"":""" + Listing
                 + @""",""arguments"":{""all"":true},""expect"":{""ok"":true}}";
 
-            Require(Scenario(Task, launching + "," + pinging + "," + listing));
+            Require(Scenario(launching + "," + pinging + "," + listing));
         }
 
         [Fact]
@@ -195,7 +181,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string step = @"{""kind"":""tool"",""tool"":""ping"",""arguments"":{""times"":2},"
                 + @"""expect"":{""ok"":true}}";
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => Require(Scenario(Task, step + "," + Step(Listing, @"{""all"":true}"))));
+                () => Require(Scenario(step + "," + Step(Listing, @"{""all"":true}"))));
 
             Assert.Contains("ping", error.Message, StringComparison.Ordinal);
         }
@@ -205,8 +191,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             AcceptanceScenarioGate.Require(
                 AcceptanceScenarioGate.Read(@"{""scenarios"":[" + scenarios + "]}"),
                 Definitions(),
-                Fixed(),
-                Requirements());
+                Fixed());
         }
 
         /// <summary>
@@ -298,18 +283,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static JsonNode Cases(string steps)
         {
             return JsonNode.Parse(
-                @"{""scenarios"":[" + Body(1, "読み取りができる", steps) + "]}");
+                @"{""scenarios"":[" + Body(1, steps) + "]}");
         }
 
-        private static string Scenario(string requirement, string steps)
+        private static string Scenario(string steps)
         {
-            return Body(1, requirement, steps);
+            return Body(1, steps);
         }
 
-        private static string Body(int id, string requirement, string steps)
+        private static string Body(int id, string steps)
         {
-            return @"{""id"":" + id + @",""title"":""読み取り"",""requirements"":[""" + requirement
-                + @"""],""steps"":[" + steps + "]}";
+            return @"{""id"":" + id + @",""title"":""読み取り"",""steps"":[" + steps + "]}";
         }
 
         private static string Step(string tool, string arguments)
@@ -330,11 +314,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static ISet<string> Fixed()
         {
             return new HashSet<string>(new[] { "ping" }, StringComparer.Ordinal);
-        }
-
-        private static RequirementNames Requirements()
-        {
-            return new RequirementNames(new[] { Task }, new[] { Condition });
         }
     }
 }

@@ -11,7 +11,7 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 受入シナリオの定義が、実行器の解せる形をしていて、書いたツールと引数が登録される定義に
-    /// 合い、指す要求が要求仕様書に実在することを照合する。
+    /// 合うことを照合する。
     /// </summary>
     public static class AcceptanceScenarioGate
     {
@@ -247,8 +247,7 @@ namespace PmxEditorMcp.SignatureDump
         public static void Require(
             JsonNode scenarios,
             IList<ToolDefinition> definitions,
-            ISet<string> fixedTools,
-            RequirementNames requirements)
+            ISet<string> fixedTools)
         {
             if (scenarios == null)
             {
@@ -265,15 +264,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(fixedTools));
             }
 
-            if (requirements == null)
-            {
-                throw new ArgumentNullException(nameof(requirements));
-            }
-
             IDictionary<string, JsonSchema> schemas = Schemas(definitions, fixedTools);
-            ISet<string> named = new HashSet<string>(
-                requirements.Tasks.Concat(requirements.Conditions), StringComparer.Ordinal);
-            ISet<string> covered = new HashSet<string>(StringComparer.Ordinal);
             ISet<int> ids = new HashSet<int>();
 
             // 覚えた値はシナリオをまたいで残るので、名前の照合も並び順のまま通して行う。
@@ -287,26 +278,7 @@ namespace PmxEditorMcp.SignatureDump
                     throw Broken("シナリオの番号が二度現れる: " + id);
                 }
 
-                foreach (JsonNode requirement in scenario["requirements"].AsArray())
-                {
-                    string name = requirement.GetValue<string>();
-                    if (!named.Contains(name))
-                    {
-                        throw Broken(
-                            "シナリオ" + id + " が要求仕様書に無い要求を指している: " + name);
-                    }
-
-                    covered.Add(name);
-                }
-
                 Steps(scenario, id, schemas, recorded);
-            }
-
-            string[] missing = requirements.Tasks.Where(t => !covered.Contains(t)).ToArray();
-            if (missing.Length != 0)
-            {
-                throw Broken(
-                    "どのシナリオも当たっていない作業がある: " + string.Join("・", missing));
             }
         }
 

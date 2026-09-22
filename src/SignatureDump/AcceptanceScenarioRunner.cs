@@ -8,7 +8,7 @@ using System.Text.Json.Nodes;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 受入シナリオの定義を、登録されるツール定義と要求仕様書へ突き合わせる配線。実機のエディタも
+    /// 受入シナリオの定義を、登録されるツール定義へ突き合わせる配線。実機のエディタも
     /// MCPクライアントも要らないので、常設の検査から走らせられる。
     /// </summary>
     public static class AcceptanceScenarioRunner
@@ -30,14 +30,13 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 11)
+            if (args.Length != 10)
             {
                 error.WriteLine(
-                    "引数は11個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                    "引数は10個: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
                         + " <共通契約の正本のパス> <型役割表の正本のパス> <日本語名の正本のパス>"
                         + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
-                        + " <スキーマ正本のパス> <受入シナリオの正本のパス> <要求仕様書のパス>"
-                        + " <突き合わせの題材のパス>");
+                        + " <スキーマ正本のパス> <受入シナリオの正本のパス> <突き合わせの題材のパス>");
                 return ExitCodes.InvalidArguments;
             }
 
@@ -52,13 +51,11 @@ namespace PmxEditorMcp.SignatureDump
             ToolDefinitionInputs inputs;
             JsonNode scenarios;
             JsonNode stub;
-            RequirementNames requirements;
             try
             {
                 inputs = ToolDefinitionInputs.Read(editorDirectory, args);
                 scenarios = AcceptanceScenarioGate.Read(Read(args[8], "受入シナリオの正本"));
-                requirements = RequirementDocumentReader.Read(Read(args[9], "要求仕様書"));
-                stub = AcceptanceScenarioGate.Read(Read(args[10], "突き合わせの題材"));
+                stub = AcceptanceScenarioGate.Read(Read(args[9], "突き合わせの題材"));
             }
             catch (Exception exception)
             {
@@ -97,13 +94,12 @@ namespace PmxEditorMcp.SignatureDump
                     scenarios,
                     definitions,
                     new HashSet<string>(
-                        FixedToolTable.Descriptions(debugHooks: true).Keys, StringComparer.Ordinal),
-                    requirements);
+                        FixedToolTable.Descriptions(debugHooks: true).Keys, StringComparer.Ordinal));
                 AcceptanceScenarioGate.RequireCoveredByStub(scenarios, stub);
             }
             catch (InvalidOperationException exception)
             {
-                error.WriteLine("受入シナリオが登録される定義と要求に合わない。");
+                error.WriteLine("受入シナリオが登録される定義に合わない。");
                 error.WriteLine(exception.Message);
                 return ExitCodes.Unresolved;
             }
@@ -111,10 +107,9 @@ namespace PmxEditorMcp.SignatureDump
             JsonArray listed = scenarios["scenarios"].AsArray();
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: シナリオ {0} 本・段 {1} 件・作業 {2} 件",
+                "照合した: シナリオ {0} 本・段 {1} 件",
                 listed.Count,
-                listed.Sum(s => s["steps"].AsArray().Count),
-                requirements.Tasks.Count));
+                listed.Sum(s => s["steps"].AsArray().Count)));
 
             return ExitCodes.Success;
         }
