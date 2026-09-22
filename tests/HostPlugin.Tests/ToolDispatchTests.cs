@@ -31,6 +31,9 @@ namespace PmxEditorMcp.Tests
 
         private const string PickedKey = "Sdk.Form.Picked()";
 
+        /// <summary>番号の並びを丸ごと返す行。応答は位置と件数で切り出す。</summary>
+        private const string PagedKey = "Sdk.Form.Paged()";
+
         private const string FlagKey = "Sdk.Form.Flag()";
 
         private const string LostKey = "Sdk.Form.Lost()";
@@ -157,6 +160,151 @@ namespace PmxEditorMcp.Tests
 
             Assert.Throws<InvalidCastException>(() => Call("view_shot", Arguments()));
             Assert.True(_unpackable.Released);
+        }
+
+        [Fact]
+        public void APagedCallReturnsTheSliceWithTheTotalAndWhereToGoOn()
+        {
+            _target.Paged = Enumerable.Range(0, 10).ToArray();
+
+            IDictionary<string, object> value = Value(
+                Call("session_paged", Arguments("offset", 2, "limit", 3)));
+
+            Assert.Equal(10, value["total"]);
+            Assert.Equal(new object[] { 2, 3, 4 }, (object[])value["items"]);
+            Assert.Equal(5, value["nextOffset"]);
+        }
+
+        [Fact]
+        public void APagedCallWithoutOffsetOrLimitReturnsTheWholeListWhenItFits()
+        {
+            _target.Paged = Enumerable.Range(0, 10).ToArray();
+
+            IDictionary<string, object> value = Value(Call("session_paged", Arguments()));
+
+            Assert.Equal(10, value["total"]);
+            Assert.Equal(10, ((object[])value["items"]).Length);
+            Assert.False(value.ContainsKey("nextOffset"));
+        }
+
+        [Fact]
+        public void APagedCallCutsTheListDownToWhatTheAnswerCanHold()
+        {
+            _target.Paged = Enumerable.Range(0, 200000).ToArray();
+
+            IDictionary<string, object> envelope = Call("session_paged", Arguments());
+            IDictionary<string, object> value = Value(envelope);
+            int taken = ((object[])value["items"]).Length;
+
+            Assert.Equal(200000, value["total"]);
+            Assert.InRange(taken, 1, 199999);
+            Assert.Equal(taken, value["nextOffset"]);
+        }
+
+        [Fact]
+        public void APagedCallOnHeldReceiversSlicesTheListOfEachOne()
+        {
+            HandleLedger ledger = Ledger();
+            ledger.Issue(TargetType, new Target { Paged = new[] { 0, 1, 2, 3, 4 } }, () => { });
+            ledger.Issue(TargetType, new Target { Paged = new[] { 0, 1, 2 } }, () => { });
+            IDictionary<string, object> arguments = Arguments("offset", 1, "limit", 2);
+            arguments.Add("handles", new object[] { 1L, 2L });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_paged_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+            object[] each = (object[])envelope["value"];
+            IDictionary<string, object> first = (IDictionary<string, object>)each[0];
+            IDictionary<string, object> second = (IDictionary<string, object>)each[1];
+
+            Assert.Equal(5, first["total"]);
+            Assert.Equal(new object[] { 1, 2 }, (object[])first["items"]);
+            Assert.Equal(3, first["nextOffset"]);
+            Assert.Equal(3, second["total"]);
+            Assert.Equal(new object[] { 1, 2 }, (object[])second["items"]);
+            Assert.False(second.ContainsKey("nextOffset"));
+        }
+
+        [Fact]
+        public void APagedCallSlicesTheItemsReadOutOfEachReturnedThing()
+        {
+            _infos = new[] { new Info { Name = "一" }, new Info { Name = "二" }, new Info { Name = "三" } };
+
+            IDictionary<string, object> value = Value(
+                Call("session_infos_paged", Arguments("offset", 1, "limit", 1)));
+            object[] items = (object[])value["items"];
+
+            Assert.Equal(3, value["total"]);
+            Assert.Equal("二", ((IDictionary<string, object>)Assert.Single(items))["name"]);
+            Assert.Equal(2, value["nextOffset"]);
+        }
+
+        [Fact]
+        public void EveryPageOfAPagedCallOnHeldReceiversFitsInTheValueFrameAsAWhole()
+        {
+            const int Budget = 10000;
+            HandleLedger ledger = Ledger();
+            List<object> handles = new List<object>();
+            for (int at = 0; at < 40; at++)
+            {
+                ledger.Issue(
+                    TargetType,
+                    new Target { Paged = Enumerable.Range(0, 1000).ToArray() },
+                    () => { });
+                handles.Add((long)(at + 1));
+            }
+
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", handles.ToArray());
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_paged_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), Budget, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.InRange(
+                new System.Web.Script.Serialization.JavaScriptSerializer()
+                    .Serialize(envelope["value"]).Length,
+                1,
+                ResponseSize.ValueChars(Budget));
+        }
+
+        [Fact]
+        public void APagedCallOnMoreHeldReceiversThanTheValueFrameHoldsIsRefused()
+        {
+            HandleLedger ledger = Ledger();
+            List<object> handles = new List<object>();
+            for (int at = 0; at < 600; at++)
+            {
+                ledger.Issue(TargetType, new Target(), () => { });
+                handles.Add((long)(at + 1));
+            }
+
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("handles", handles.ToArray());
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_paged_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 10000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.ResponseTooLarge, Code(envelope));
+            Assert.Contains("handles", Message(envelope));
+        }
+
+        [Fact]
+        public void APagedCallRefusesALimitOfZero()
+        {
+            IDictionary<string, object> envelope = Call("session_paged", Arguments("limit", 0));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void ACallThatIsNotPagedRefusesAnOffset()
+        {
+            IDictionary<string, object> envelope = Call("session_picked", Arguments("offset", 0));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
         }
 
         [Fact]
@@ -1368,6 +1516,7 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { PickedKey, (target, arguments) => ((Target)target).Picked },
+                    { PagedKey, (target, arguments) => ((Target)target).Paged },
                     {
                         FlagKey,
                         (target, arguments) => arguments.Length == 0
@@ -1740,6 +1889,18 @@ namespace PmxEditorMcp.Tests
                         null)
                 },
                 {
+                    "session_paged",
+                    new ToolCall(
+                        PagedKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(int[]),
+                        paged: true)
+                },
+                {
                     "session_picked",
                     new ToolCall(
                         PickedKey,
@@ -1781,6 +1942,40 @@ namespace PmxEditorMcp.Tests
                                 typeof(Option),
                                 new[] { new ToolField("bootup", OptionBootupKey, typeof(bool)) }),
                         })
+                },
+                {
+                    "session_infos_paged",
+                    new ToolCall(
+                        InfosKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Info[]),
+                        null,
+                        new[] { new ToolField("name", InfoNameKey, typeof(string)) },
+                        null,
+                        false,
+                        true,
+                        paged: true)
+                },
+                {
+                    "session_paged_held",
+                    new ToolCall(
+                        PagedKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            TargetType,
+                            EditKind.Read,
+                            false,
+                            item => item is Target),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(int[]),
+                        paged: true)
                 },
                 {
                     "session_infos",
@@ -1915,6 +2110,8 @@ namespace PmxEditorMcp.Tests
         private class Target
         {
             public int[] Picked { get; set; } = new int[0];
+
+            public int[] Paged { get; set; } = new int[0];
 
             public string Saved { get; set; }
 

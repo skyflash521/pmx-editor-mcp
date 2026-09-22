@@ -180,6 +180,12 @@ namespace PmxEditorMcp.SignatureDump
                 && string.Equals(named, tool, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// 位置と件数で切り出す応答が、切り出した並びを載せる項目の名前。戻り値の並びの要素が
+        /// その項目の要素へ当たる。
+        /// </summary>
+        private const string SlicedName = "items";
+
         /// <summary>独立したツールを持つ行。引数が入力へ、戻り値が応答へ当たる。</summary>
         private static void Dispatched(
             IDictionary<SchemaItem, string> shapes,
@@ -219,6 +225,17 @@ namespace PmxEditorMcp.SignatureDump
             if (output.Element != null && output.Element.Origin == null)
             {
                 Assign(shapes, schema.Tool, output.Element, valueType, valuesByType);
+
+                return;
+            }
+
+            SchemaItem sliced = (output.Members ?? new SchemaItem[0]).FirstOrDefault(
+                m => string.Equals(m.Name, SlicedName, StringComparison.Ordinal)
+                    && m.Element != null
+                    && m.Element.Origin == null);
+            if (sliced != null)
+            {
+                Assign(shapes, schema.Tool, sliced, valueType, valuesByType);
             }
         }
 

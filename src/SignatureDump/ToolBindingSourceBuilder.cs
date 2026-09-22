@@ -588,7 +588,8 @@ namespace PmxEditorMcp.SignatureDump
                 + (string.Equals(signature.ValueType, VoidTypeName, StringComparison.Ordinal)
                     ? "null"
                     : TypeOf(signature.ValueType))
-                + tail + chosen + ")";
+                + tail + chosen
+                + (PagedCallRule.Pages(row, signature) ? ", paged: true" : string.Empty) + ")";
         }
 
         /// <summary>

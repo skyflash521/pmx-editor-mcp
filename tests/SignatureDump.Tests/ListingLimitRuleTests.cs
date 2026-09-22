@@ -123,6 +123,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AListOfPlainValuesTakesAsManyAsTheRoomHoldsForBothCounts()
+        {
+            ToolSchema schema = Tool(
+                Group(null, Value("total", "number"), Items(Chosen(null, "number"))));
+
+            ListingLimits limits = ListingLimitRule.Derive(schema, Lengths, 98000);
+
+            // 値1つは 11、区切りに1。
+            Assert.Equal((98000 - 1000) / 12, limits.LimitDefault);
+            Assert.Equal((98000 - 1000) / 12, limits.LimitMaximum);
+        }
+
+        [Fact]
         public void AnElementWithoutAChosenItemStops()
         {
             ToolSchema schema = Listing(Value("index", "number"));
@@ -138,10 +151,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             yield return new object[] { Value(null, "number") };
             yield return new object[] { Group(null, Value("total", "number")) };
             yield return new object[] { Group(null, Value("items", "number")) };
-            yield return new object[]
-            {
-                Group(null, Items(Value(null, "number"))),
-            };
         }
 
         [Theory]

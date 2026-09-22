@@ -374,7 +374,8 @@ namespace PmxEditorMcp
             bool returnsMany = false,
             bool respondsMany = false,
             string selectorName = null,
-            string selectorValue = null)
+            string selectorValue = null,
+            bool paged = false)
         {
             if (rowKey == null)
             {
@@ -416,7 +417,14 @@ namespace PmxEditorMcp
             RespondsMany = respondsMany;
             SelectorName = selectorName;
             SelectorValue = selectorValue;
+            Paged = paged;
         }
+
+        /// <summary>
+        /// 返す並びを位置と件数で切り出すか。真なら offset と limit を受け取り、総数と切り出した並びと
+        /// 続きの位置を返す。
+        /// </summary>
+        public bool Paged { get; }
 
         /// <summary>呼び分けを選ぶ項目の名前。名前だけでは見分けられないツールが持つ。</summary>
         public string SelectorName { get; }

@@ -4799,8 +4799,8 @@
             "ok": true,
             "values": [
               {
-                "path": "0",
-                "absent": true
+                "path": "total",
+                "equals": 0
               }
             ]
           }

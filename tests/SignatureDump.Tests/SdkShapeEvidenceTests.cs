@@ -59,6 +59,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheSlicedListOfARowReadInPagesTakesTheSpellingOfTheReturnedElement()
+        {
+            IDictionary<SchemaItem, string> shapes = Resolve(
+                Schemas(Dispatched(
+                    "session_save",
+                    "{\"name\":\"path\",\"required\":true}",
+                    "{\"origin\":\"hostOutput\",\"members\":["
+                        + "{\"name\":\"total\",\"origin\":\"hostOutput\",\"shape\":\"number\"},"
+                        + "{\"name\":\"items\",\"origin\":\"hostOutput\",\"element\":{}}]}")),
+                Map(Row("Save", "System.Boolean[]", "path")),
+                Signatures(Method("Save", "System.Boolean[]", "path")),
+                Named("Save", "session_save"));
+
+            Assert.Contains("boolean", shapes.Values);
+        }
+
+        [Fact]
         public void AnOutputTheHostDecidesIsLeftAlone()
         {
             IDictionary<SchemaItem, string> shapes = Resolve(

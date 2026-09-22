@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -824,14 +825,24 @@ namespace PmxEditorMcp
                 known.Add(IssuanceInput.CountName);
             }
 
+            if (call.Paged)
+            {
+                known.Add(OffsetName);
+                known.Add(LimitName);
+            }
+
             int count = 1;
+            int offset;
+            int limit;
             int most = Most(context);
             if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
                 || !TryConfirm(context, out confirm, out code, out message)
                 || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
                 || !TryPassDanger(call, handle, confirm, out code, out message)
                 || (counts && !TryCount(
-                    context, IssuanceInput.CountName, 1, 1, out count, out code, out message)))
+                    context, IssuanceInput.CountName, 1, 1, out count, out code, out message))
+                || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
+                || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message))
             {
                 return ToolEnvelope.Failure(code, message);
             }
@@ -942,6 +953,12 @@ namespace PmxEditorMcp
             if (issues)
             {
                 return Issued(context, call, results, called);
+            }
+
+            if (call.Paged)
+            {
+                return Paged(
+                    call, result, offset, limit, ResponseSize.ValueChars(context.BudgetChars));
             }
 
             if (call.Projected != null)
@@ -1311,11 +1328,21 @@ namespace PmxEditorMcp
                 known.Add(ConfirmName);
             }
 
+            if (call.Paged)
+            {
+                known.Add(OffsetName);
+                known.Add(LimitName);
+            }
+
             known.AddRange(Pointing(call.Access, true, call.Receiver));
+            int offset;
+            int limit;
             if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
                 || !TryConfirm(context, out confirm, out code, out message)
                 || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
                 || !TryPassDanger(call, handle, confirm, out code, out message)
+                || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
+                || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message)
                 || !TryPointed(
                     context, call.Access, true, handle, out pointed, out code, out message,
                     call.Receiver))
@@ -1430,18 +1457,22 @@ namespace PmxEditorMcp
 
             List<object> written = new List<object>(results.Count);
             List<string> warnings = new List<string>();
+            int share = (ResponseSize.ValueChars(context.BudgetChars) - results.Count - 1)
+                / Math.Max(1, results.Count);
             foreach (object one in results)
             {
-                if (call.Projected != null)
+                if (call.Projected != null && !call.Paged)
                 {
                     written.Add(one);
 
                     continue;
                 }
 
-                IDictionary<string, object> envelope = call.Outputs.Count != 0
-                    ? Written(call, one)
-                    : Written(call.Result, one);
+                IDictionary<string, object> envelope = call.Paged
+                    ? Paged(call, one, offset, limit, share)
+                    : call.Outputs.Count != 0
+                        ? Written(call, one)
+                        : Written(call.Result, one);
                 object value;
                 if (!envelope.TryGetValue("value", out value))
                 {
@@ -1456,7 +1487,18 @@ namespace PmxEditorMcp
                 }
             }
 
-            return ToolEnvelope.Success(SetResponse.PerTarget(written, invoked), warnings);
+            IList<object> answered = SetResponse.PerTarget(written, invoked);
+            if (call.Paged
+                && Serializer.Serialize(answered).Length
+                    > ResponseSize.ValueChars(context.BudgetChars))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.ResponseTooLarge,
+                    "対象ごとの応答を並べると値の枠に収まらない: " + invoked
+                        + " 件。handles を分けて渡す。");
+            }
+
+            return ToolEnvelope.Success(answered, warnings);
         }
 
         /// <summary>
@@ -3219,25 +3261,96 @@ namespace PmxEditorMcp
                 0,
                 limit,
                 ResponseSize.ValueChars(context.BudgetChars),
-                taken => Serializer.Serialize(taken).Length,
+                taken => Serializer.Serialize(ListedValue(taken, total, pointed, offset)).Length,
                 out page))
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.ResponseTooLarge, "値の枠に1件も収まらない。");
             }
 
-            int next = offset + page.Items.Count;
+            return ToolEnvelope.Success(
+                ListedValue(page.Items, total, pointed, offset),
+                warnings.Concat(page.Warnings).ToList());
+        }
+
+        /// <summary>切り出した一覧を、総数と続きの位置を添えた応答の値にする。</summary>
+        private static IDictionary<string, object> ListedValue(
+            IList<IDictionary<string, object>> taken, int total, int pointed, int offset)
+        {
+            int next = offset + taken.Count;
             Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { TotalName, total },
-                { ItemsName, page.Items.ToArray() },
+                { ItemsName, taken.ToArray() },
             };
             if (next < pointed)
             {
                 value.Add(NextOffsetName, next);
             }
 
-            return ToolEnvelope.Success(value, warnings.Concat(page.Warnings).ToList());
+            return value;
+        }
+
+        /// <summary>
+        /// 並びを返す呼び出しの値を、<paramref name="offset"/> の位置から <paramref name="limit"/>
+        /// 件までに切り出して返す。<paramref name="valueChars"/> に収まらなければ収まる件数まで
+        /// 減らす。総数は切り出す前の件数で、続きがあるときだけ次に渡す位置を添える。項目を読み出した
+        /// 値は読み出した並びを、そのほかは値を写した並びを切り出す。
+        /// </summary>
+        private static IDictionary<string, object> Paged(
+            ToolCall call, object value, int offset, int limit, int valueChars)
+        {
+            object json = value;
+            IList<string> warnings = new string[0];
+            string code;
+            string message;
+            if (call.Projected == null && !ValueShape.TryToJson(
+                call.Result,
+                value,
+                ImageTransfer.SoleValueMaxLongSide,
+                out json,
+                out warnings,
+                out code,
+                out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            IEnumerable listed = json as IEnumerable;
+            object[] whole = listed == null ? new object[0] : listed.Cast<object>().ToArray();
+            Page<object> page;
+            if (!Paging.TryTake(
+                whole,
+                offset,
+                limit,
+                valueChars,
+                taken => Serializer.Serialize(PageValue(whole.Length, offset, taken)).Length,
+                out page))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.ResponseTooLarge, "値の枠に1件も収まらない。");
+            }
+
+            return ToolEnvelope.Success(
+                PageValue(whole.Length, offset, page.Items), warnings.Concat(page.Warnings).ToList());
+        }
+
+        /// <summary>切り出した並びを、総数と続きの位置を添えた応答の値にする。</summary>
+        private static IDictionary<string, object> PageValue(
+            int total, int offset, IList<object> taken)
+        {
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { TotalName, total },
+                { ItemsName, taken.ToArray() },
+            };
+            int next = Math.Min(offset, total) + taken.Count;
+            if (next < total)
+            {
+                value.Add(NextOffsetName, next);
+            }
+
+            return value;
         }
 
         /// <summary>受け手をハンドルから得る呼び出しか。対象はハンドルでだけ指せる。</summary>

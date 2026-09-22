@@ -302,8 +302,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""tools"": [
                 { ""tool"": """ + ReadTool + @""",
-                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
-                  ""output"": { ""element"": {} } },
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [" + PagedInputs + @"] }],
+                  ""output"": " + PagedOutput + @" },
                 { ""tool"": """ + WriteTool + @""",
                   ""branches"": [{ ""branch"": ""only"", ""inputs"": [
                     { ""name"": ""indices"", ""origin"": ""hostInput"", ""required"": true,
@@ -319,8 +319,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""tools"": [
                 { ""tool"": """ + ReadTool + @""",
-                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
-                  ""output"": { ""element"": {} } },
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [" + PagedInputs + @"] }],
+                  ""output"": " + PagedOutput + @" },
                 { ""tool"": """ + WriteTool + @""",
                   ""branches"": [{ ""branch"": ""only"", ""inputs"": [
                     { ""name"": ""args"", ""origin"": ""hostInput"", ""required"": true,
@@ -334,8 +334,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return @"{ ""tools"": [
                 { ""tool"": """ + ReadTool + @""",
-                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
-                  ""output"": { ""element"": {} } },
+                  ""branches"": [{ ""branch"": ""only"", ""inputs"": [" + PagedInputs + @"] }],
+                  ""output"": " + PagedOutput + @" },
                 { ""tool"": """ + WriteTool + @""",
                   ""branches"": [{ ""branch"": ""only"", ""inputs"": [
                     { ""name"": ""indices"", ""required"": true,
@@ -610,6 +610,88 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "発行したハンドルを並びで返さない",
                 error.Message,
                 StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AcceptsARowReturningAWholeListThatIsReadInPages()
+        {
+            Require(PagedSchemaJson(PagedInputs, PagedOutput), signatures: WholeList());
+        }
+
+        [Fact]
+        public void AcceptsARowReturningAWholeListThatIsReadInPagesForEachTarget()
+        {
+            Require(
+                PagedSchemaJson(
+                    PagedInputs,
+                    @"{ ""origin"": ""hostOutput"", ""element"": " + PagedOutput + " }"),
+                signatures: WholeList());
+        }
+
+        [Fact]
+        public void RejectsARowReturningAWholeListThatCannotBeReadInPages()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    PagedSchemaJson(string.Empty, @"{ ""element"": { } }"),
+                    signatures: WholeList()));
+
+            Assert.Contains("位置と件数で切り出す形", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsARowReturningAWholeListWhoseAnswerDoesNotCarryTheTotal()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    PagedSchemaJson(
+                        PagedInputs,
+                        @"{ ""origin"": ""hostOutput"", ""members"": [
+                          { ""name"": ""items"", ""origin"": ""hostOutput"", ""element"": { } },
+                          { ""name"": ""nextOffset"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }"),
+                    signatures: WholeList()));
+
+            Assert.Contains("位置と件数で切り出す形", error.Message, StringComparison.Ordinal);
+        }
+
+        private const string PagedInputs = @"
+            { ""name"": ""offset"", ""origin"": ""hostInput"", ""shape"": ""number"", ""required"": false },
+            { ""name"": ""limit"", ""origin"": ""hostInput"", ""shape"": ""number"", ""required"": false }";
+
+        private const string PagedOutput = @"{ ""origin"": ""hostOutput"", ""members"": [
+            { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
+            { ""name"": ""items"", ""origin"": ""hostOutput"", ""element"": { } },
+            { ""name"": ""nextOffset"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }";
+
+        /// <summary>引数を取らない行のツールの形。</summary>
+        private static string PagedSchemaJson(string inputs, string output)
+        {
+            return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",
+                ""branches"": [{ ""branch"": ""only"", ""inputs"": [" + inputs + @"] }],
+                ""output"": " + output + " }] }";
+        }
+
+        /// <summary>引数を取らず、番号の並びを丸ごと返す行。</summary>
+        private static IDictionary<string, SignatureRecord> WholeList()
+        {
+            return new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
+            {
+                {
+                    Key,
+                    new SignatureRecord(
+                        Key,
+                        Vertex,
+                        MemberKind.Method,
+                        "Move",
+                        false,
+                        0,
+                        new ParameterRecord[0],
+                        "System.Int32[]",
+                        false,
+                        false,
+                        OperationDirection.Read)
+                },
+            };
         }
 
         [Fact]

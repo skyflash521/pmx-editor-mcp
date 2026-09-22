@@ -27,6 +27,13 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string IndicesName = "indices";
 
+        /// <summary>切り出す行の入力と応答の項目の名前。</summary>
+        private static readonly string[] PagedInputs = { "offset", "limit" };
+
+        private static readonly string[] PagedOutputs = { "total", "items", "nextOffset" };
+
+        private const string PagedItemsName = "items";
+
         private const string IndicesParameters = "(System.Int32[])";
 
         private const string WriterPrefix = ".Set";
@@ -113,6 +120,11 @@ namespace PmxEditorMcp.SignatureDump
                 RequireInjection(signature, schema, byType);
                 RequireReceiver(signature, schema, byType, paths);
                 RequireOutput(signature, schema);
+                if (PagedCallRule.Pages(row, signature))
+                {
+                    RequirePaged(schema);
+                }
+
                 if (issuing.Contains(row.SignatureKey))
                 {
                     RequireDerivedIssuanceLimit(schema);
@@ -373,6 +385,42 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new InvalidOperationException(
                     "値を返すシグネチャなのに応答が値を持たない: " + schema.Tool);
+            }
+        }
+
+        /// <summary>
+        /// 並びを丸ごと返す行のツールが、どの呼び分けでも offset と limit を受け取り、総数と
+        /// 切り出した並びと続きの位置を返すことを求める。対象ごとに返すツールでは対象ごとの応答が
+        /// その形を持つ。切り出した並びの要素は行の戻り値から導く。
+        /// </summary>
+        private static void RequirePaged(ToolSchema schema)
+        {
+            SchemaItem answer = schema.Output;
+            while (answer.Members == null
+                && answer.Origin == ItemOrigin.HostOutput
+                && answer.Element != null
+                && answer.Element.Origin == ItemOrigin.HostOutput)
+            {
+                answer = answer.Element;
+            }
+
+            SchemaItem[] members = answer.Members == null
+                ? new SchemaItem[0]
+                : answer.Members.ToArray();
+            SchemaItem items = members.FirstOrDefault(
+                m => string.Equals(m.Name, PagedItemsName, StringComparison.Ordinal));
+            bool taken = schema.Branches.All(b => PagedInputs.All(n => b.Inputs.Any(
+                i => i.Origin == ItemOrigin.HostInput
+                    && string.Equals(i.Name, n, StringComparison.Ordinal))));
+            bool answered = answer.Origin == ItemOrigin.HostOutput
+                && PagedOutputs.All(n => members.Any(
+                    m => string.Equals(m.Name, n, StringComparison.Ordinal)))
+                && items.Element != null
+                && items.Element.Origin == null;
+            if (!taken || !answered)
+            {
+                throw new InvalidOperationException(
+                    "並びを丸ごと返す行のツールが位置と件数で切り出す形を持たない: " + schema.Tool);
             }
         }
 

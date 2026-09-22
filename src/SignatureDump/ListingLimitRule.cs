@@ -45,6 +45,9 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>`value` の内側の総数と続きの位置と配列の構文に充てる分。</summary>
         private const int ListingOverhead = 1000;
 
+        /// <summary>値だけが並ぶ並びで、要素1つごとに足す区切りの分。</summary>
+        private const int ListSeparator = 1;
+
         /// <summary>逆算できなければ <see cref="InvalidOperationException"/>。</summary>
         public static ListingLimits Derive(
             ToolSchema schema, AssumedLength lengths, int valueChars)
@@ -65,6 +68,13 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new InvalidOperationException(
                     "値の枠が一覧応答の枠に足りない: " + schema.Tool);
+            }
+
+            if (element.Members == null)
+            {
+                int limit = Count(room, lengths.Of(element) + ListSeparator);
+
+                return new ListingLimits(limit, limit);
             }
 
             int always = element.Members.Where(m => m.Origin == ItemOrigin.HostOutput)
@@ -92,12 +102,15 @@ namespace PmxEditorMcp.SignatureDump
             return count < 1 ? 1 : count;
         }
 
-        /// <summary>切り出した並びの要素の項目。一覧の形をしていなければ例外。</summary>
+        /// <summary>
+        /// 切り出した並びの要素の項目。項目の組のほか、値だけが並ぶ並びの要素もここへ当たる。一覧の
+        /// 形をしていなければ例外。
+        /// </summary>
         private static SchemaItem Element(ToolSchema schema)
         {
             SchemaItem items = (schema.Output.Members ?? new SchemaItem[0]).FirstOrDefault(
                 m => string.Equals(m.Name, ItemsName, StringComparison.Ordinal));
-            if (items == null || items.Element == null || items.Element.Members == null)
+            if (items == null || items.Element == null)
             {
                 throw new InvalidOperationException(
                     "一覧の応答が切り出した並びを持たない: " + schema.Tool);

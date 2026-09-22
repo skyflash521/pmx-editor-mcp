@@ -87,6 +87,45 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 source.Text);
         }
 
+        [Theory]
+        [InlineData("System.Int32[]")]
+        [InlineData("System.Boolean[]")]
+        [InlineData("System.String[]")]
+        public void ACallThatReturnsAWholeListIsPaged(string valueType)
+        {
+            ToolBindingSource source = Build(
+                Dispatched("view_get_selected_indices", Method("GetSelectedIndices", valueType)));
+
+            Assert.Contains(", paged: true) });", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatTakesSomethingIsAlsoPagedWhenItReturnsAList()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("view_get_indices", Method("GetIndices", "System.Int32[]", "name")));
+
+            Assert.Contains(", paged: true) });", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsBytesIsNotPaged()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_get_buffer", Method("GetBuffer", "System.Byte[]")));
+
+            Assert.DoesNotContain("paged", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsOneValueIsNotPaged()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_get_count", Method("GetCount", "System.Int32")));
+
+            Assert.DoesNotContain("paged", source.Text);
+        }
+
         [Fact]
         public void ACallThatReturnsNothingCarriesNoResultType()
         {
@@ -180,6 +219,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "typeof(global::" + Held + "[]), typeof(global::" + Held + "), null, \""
                     + Held + ".Drop()\", false, true, true)",
                 source.Text);
+            Assert.DoesNotContain("paged", source.Text);
         }
 
         [Fact]
@@ -840,7 +880,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains(
                 "typeof(global::" + Info + "[]), null, new ToolField[] { new ToolField(\"name\", \""
-                    + Info + ".Name()\", typeof(global::System.String)) }, null, false, true)",
+                    + Info + ".Name()\", typeof(global::System.String)) }, null, false, true,"
+                    + " paged: true)",
                 source.Text);
         }
 
