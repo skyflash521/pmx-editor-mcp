@@ -11171,7 +11171,7 @@
               "name": "axes",
               "origin": "hostInput",
               "shape": "text",
-              "required": true
+              "required": false
             },
             {
               "name": "position",
@@ -11180,7 +11180,16 @@
                 "origin": "hostInput",
                 "shape": "number"
               },
-              "required": true
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": false
             },
             {
               "name": "targets",

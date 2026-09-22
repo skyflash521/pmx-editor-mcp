@@ -188,6 +188,13 @@ namespace PmxEditorMcp
             return given.X != 0f || given.Y != 0f || given.Z != 0f;
         }
 
+        public static bool Finite(V3 given)
+        {
+            return !float.IsNaN(given.X) && !float.IsInfinity(given.X)
+                && !float.IsNaN(given.Y) && !float.IsInfinity(given.Y)
+                && !float.IsNaN(given.Z) && !float.IsInfinity(given.Z);
+        }
+
         /// <summary>2つの点の隔たり。点の差も倍精度で求める。</summary>
         public static float Distance(V3 left, V3 right)
         {

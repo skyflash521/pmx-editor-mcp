@@ -402,7 +402,7 @@
     {
       "tool": "model_place_elements",
       "branching": false,
-      "duty": "種類をまたいで指した要素の位置を、渡した点へそろえる。targets は、そろえる要素を種類ごとに指した組の並びで、組ごとに kind が vertex・bone・body・joint のいずれかを取り、その中の要素を indices・range・all・selected のどれか1つで指す。同じ種類を二度並べることはできない。operation は alignTo のみ。position にそろえる先の点を3つの数で渡し、axes に xyz・x・y・z のいずれかを渡して、そろえる軸を選ぶ。xyz は3つの軸すべてをそろえ、残りはその軸だけをそろえて他の2つは動かさない。changed に動いた要素の数を返す。"
+      "duty": "種類をまたいで指した要素の位置を、渡した点へそろえるか、同じ量だけずらす。targets は、そろえる要素を種類ごとに指した組の並びで、組ごとに kind が vertex・bone・body・joint のいずれかを取り、その中の要素を indices・range・all・selected のどれか1つで指す。同じ種類を二度並べることはできない。operation は alignTo・translateBy のいずれか。alignTo は position にそろえる先の点を3つの数で渡し、axes に xyz・x・y・z のいずれかを渡して、そろえる軸を選ぶ。xyz は3つの軸すべてをそろえ、残りはその軸だけをそろえて他の2つは動かさない。translateBy は offset にずらす量を3つの数で渡し、指した要素すべてを同じ量だけずらす。position と axes は alignTo だけが、offset は translateBy だけが受け取り、ほかの操作で渡すと invalid_argument になる。changed に動いた要素の数を返す。"
     },
     {
       "tool": "model_reorder_elements",

@@ -12,9 +12,13 @@ namespace PmxEditorMcp
 
         public const string AlignTo = "alignTo";
 
+        public const string TranslateBy = "translateBy";
+
+        public const string OffsetName = "offset";
+
         public static IList<string> Operations
         {
-            get { return new[] { AlignTo }; }
+            get { return new[] { AlignTo, TranslateBy }; }
         }
 
         public const string TargetsName = "targets";
@@ -75,6 +79,7 @@ namespace PmxEditorMcp
                 TargetsName,
                 PositionName,
                 AxesName,
+                OffsetName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -85,26 +90,43 @@ namespace PmxEditorMcp
             string operation;
             string code;
             string message;
-            string axes;
-            V3 spot;
+            string axes = null;
+            V3 spot = null;
+            V3 offset = null;
             IList<KeyValuePair<string, IList<int>>> targets;
             if (!ComposedOperation.TryTake(
-                    context, Operations, out operation, out code, out message)
-                || !ComposedInput.TryChoice(context, AxesName, Axes, out axes, out code, out message)
-                || !TryPosition(context, out spot, out code, out message)
+                    context, Operations, out operation, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            bool aligning = string.Equals(operation, AlignTo, StringComparison.Ordinal);
+            if (!TryOnlyFor(context, operation, aligning, out code, out message)
+                || (aligning
+                    && (!ComposedInput.TryChoice(
+                            context, AxesName, Axes, out axes, out code, out message)
+                        || !TryPoint(context, PositionName, out spot, out code, out message)))
+                || (!aligning && !TryPoint(context, OffsetName, out offset, out code, out message))
                 || !TryTargets(context, model, out targets, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
 
-            int changed = 0;
-            foreach (KeyValuePair<string, IList<int>> target in targets)
+            List<object> picked = targets
+                .SelectMany(t => t.Value.Select(at => Held(model, t.Key)[at]))
+                .ToList();
+            if (!aligning && picked.Any(item => !Vectors.Finite(Moved(Spot(item), offset))))
             {
-                IList<object> items = Held(model, target.Key);
-                foreach (int at in target.Value)
-                {
-                    changed += Placed(items[at], spot, axes) ? 1 : 0;
-                }
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    OffsetName + " だけずらすと、有限の数で表せない座標になる要素がある。");
+            }
+
+            int changed = 0;
+            foreach (object item in picked)
+            {
+                bool moved = aligning ? Placed(item, spot, axes) : Shifted(item, offset);
+                changed += moved ? 1 : 0;
             }
 
             return ComposedEditResult.Complete(
@@ -187,19 +209,41 @@ namespace PmxEditorMcp
             return true;
         }
 
-        private static bool TryPosition(
-            McpMethodContext context, out V3 spot, out string code, out string message)
+        private static bool TryOnlyFor(
+            McpMethodContext context,
+            string operation,
+            bool aligning,
+            out string code,
+            out string message)
+        {
+            code = null;
+            message = null;
+            string[] foreign = aligning ? new[] { OffsetName } : new[] { PositionName, AxesName };
+            string given = foreign.FirstOrDefault(context.Params.ContainsKey);
+            if (given == null)
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = given + " は " + operation + " では渡せない。";
+
+            return false;
+        }
+
+        private static bool TryPoint(
+            McpMethodContext context, string name, out V3 spot, out string code, out string message)
         {
             spot = null;
             code = ToolEnvelope.InvalidArgument;
             message = null;
             object given;
-            context.Params.TryGetValue(PositionName, out given);
+            context.Params.TryGetValue(name, out given);
             object[] items = given as object[];
             float[] taken = new float[3];
             if (items == null || items.Length != taken.Length)
             {
-                message = PositionName + " は3つの数の並びでなければならない。";
+                message = name + " は3つの数の並びでなければならない。";
 
                 return false;
             }
@@ -208,7 +252,7 @@ namespace PmxEditorMcp
             {
                 if (!ValueInput.TrySingle(items[at], out taken[at]))
                 {
-                    message = PositionName + " は3つの有限の数の並びでなければならない。";
+                    message = name + " は3つの有限の数の並びでなければならない。";
 
                     return false;
                 }
@@ -254,6 +298,25 @@ namespace PmxEditorMcp
             Put(item, after);
 
             return true;
+        }
+
+        private static bool Shifted(object item, V3 offset)
+        {
+            V3 before = Spot(item);
+            V3 after = Moved(before, offset);
+            if (Vectors.Same(before, after))
+            {
+                return false;
+            }
+
+            Put(item, after);
+
+            return true;
+        }
+
+        private static V3 Moved(V3 before, V3 offset)
+        {
+            return new V3(before.X + offset.X, before.Y + offset.Y, before.Z + offset.Z);
         }
 
         private static bool Taken(string axes, string axis)

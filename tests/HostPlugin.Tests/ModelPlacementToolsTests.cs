@@ -137,6 +137,112 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
+        [Fact]
+        public void TranslatingMovesEveryKindThatWasPointedAtByTheSameAmount()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 1f);
+            FakeBone bone = Bone(2f, 2f, 2f);
+            FakeBody body = Body(3f, 3f, 3f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 0.5f, -1f),
+                Targets(
+                    Target(ElementKinds.Vertex, 0),
+                    Target(ElementKinds.Bone, 0),
+                    Target(ElementKinds.Body, 0))));
+
+            Near(1.5, vertex.Position.Y);
+            Near(0.0, vertex.Position.Z);
+            Near(2.5, bone.Position.Y);
+            Near(1.0, bone.Position.Z);
+            Near(3.5, body.Position.Y);
+            Near(2.0, body.Position.Z);
+            Assert.Equal(3, value[ModelPlaceElements.ChangedName]);
+            Assert.Equal(1, _fixture.Commits);
+        }
+
+        [Fact]
+        public void TranslatingPastTheEndOfTheFloatRangeIsRefusedWithoutMovingAnything()
+        {
+            FakeBone near = Bone(0f, 0f, 0f);
+            FakeBone far = Bone(3e38f, 0f, 0f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(3e38f, 0f, 0f),
+                Targets(new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { ModelPlaceElements.KindName, ElementKinds.Bone },
+                    { "all", true },
+                }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Near(0.0, near.Position.X);
+            Assert.Equal(3e38f, far.Position.X);
+            Assert.Equal(0, _fixture.Commits);
+        }
+
+        [Fact]
+        public void TranslatingByNothingCountsNothing()
+        {
+            Bone(2f, 2f, 2f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 0f, 0f),
+                Targets(Target(ElementKinds.Bone, 0))));
+
+            Assert.Equal(0, value[ModelPlaceElements.ChangedName]);
+        }
+
+        [Fact]
+        public void TranslatingRefusesThePlaceToAlignTo()
+        {
+            Bone(2f, 2f, 2f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(1f, 0f, 0f),
+                Position(5f, 6f, 7f),
+                Targets(Target(ElementKinds.Bone, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void AligningRefusesTheAmountToTranslateBy()
+        {
+            Bone(2f, 2f, 2f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.AlignTo),
+                Axes(ModelPlaceElements.AllAxes),
+                Position(5f, 6f, 7f),
+                Offset(1f, 0f, 0f),
+                Targets(Target(ElementKinds.Bone, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void LeavingOutTheAmountToTranslateByIsRefused()
+        {
+            Bone(2f, 2f, 2f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Targets(Target(ElementKinds.Bone, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        private static KeyValuePair<string, object> Offset(float x, float y, float z)
+        {
+            return ComposedEditFixture.Given(
+                ModelPlaceElements.OffsetName, new object[] { x, y, z });
+        }
+
         private IDictionary<string, object> Place(params KeyValuePair<string, object>[] given)
         {
             return _fixture.Call(

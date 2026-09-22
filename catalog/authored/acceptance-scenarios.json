@@ -4432,6 +4432,56 @@
         },
         {
           "kind": "tool",
+          "tool": "model_place_elements",
+          "arguments": {
+            "operation": "translateBy",
+            "offset": [
+              0,
+              1,
+              0
+            ],
+            "targets": [
+              {
+                "kind": "bone",
+                "all": true
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position.1",
+                "equals": 5
+              },
+              {
+                "path": "items.2.position.1",
+                "equals": 5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_create_physics",
           "arguments": {
             "operation": "bodyFollowBone",
