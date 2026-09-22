@@ -6329,6 +6329,124 @@
       }
     },
     {
+      "tool": "model_find_vertex_bounds",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "materialIndices",
+                "range",
+                "selected"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "count",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "min",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          },
+          {
+            "name": "max",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          },
+          {
+            "name": "center",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_from_file_pmx",
       "branches": [
         {

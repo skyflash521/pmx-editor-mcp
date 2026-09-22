@@ -73,33 +73,7 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }
 
-            Dictionary<IPXVertex, int> placed = new Dictionary<IPXVertex, int>(
-                ReferenceComparer<IPXVertex>.Instance);
-            for (int at = 0; at < model.Vertex.Count; at++)
-            {
-                if (!placed.ContainsKey(model.Vertex[at]))
-                {
-                    placed.Add(model.Vertex[at], at);
-                }
-            }
-
-            SortedSet<int> used = new SortedSet<int>();
-            foreach (int material in chosen)
-            {
-                foreach (IPXFace face in model.Material[material].Faces)
-                {
-                    foreach (IPXVertex corner in ViewSelection.Corners(face))
-                    {
-                        int position;
-                        if (corner != null && placed.TryGetValue(corner, out position))
-                        {
-                            used.Add(position);
-                        }
-                    }
-                }
-            }
-
-            object[] all = used.Cast<object>().ToArray();
+            object[] all = Used(model, chosen).Cast<object>().ToArray();
             Page<object> page;
             if (!Paging.TryTake(
                     all,
@@ -115,6 +89,47 @@ namespace PmxEditorMcp
 
             return ComposedEditResult.Complete(
                 Valued(all.Length, offset, page.Items), page.Warnings);
+        }
+
+        public static SortedSet<int> Used(IPXPmx model, IEnumerable<int> materials)
+        {
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
+            if (materials == null)
+            {
+                throw new ArgumentNullException(nameof(materials));
+            }
+
+            Dictionary<IPXVertex, int> placed = new Dictionary<IPXVertex, int>(
+                ReferenceComparer<IPXVertex>.Instance);
+            for (int at = 0; at < model.Vertex.Count; at++)
+            {
+                if (!placed.ContainsKey(model.Vertex[at]))
+                {
+                    placed.Add(model.Vertex[at], at);
+                }
+            }
+
+            SortedSet<int> used = new SortedSet<int>();
+            foreach (int material in materials)
+            {
+                foreach (IPXFace face in model.Material[material].Faces)
+                {
+                    foreach (IPXVertex corner in ViewSelection.Corners(face))
+                    {
+                        int position;
+                        if (corner != null && placed.TryGetValue(corner, out position))
+                        {
+                            used.Add(position);
+                        }
+                    }
+                }
+            }
+
+            return used;
         }
 
         private static IDictionary<string, object> Valued(

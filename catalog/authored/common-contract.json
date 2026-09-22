@@ -385,6 +385,11 @@
       "duty": "指した要素を指している要素を数えて返す。モデルは変えない。kind は vertex・material・bone・morph・body のいずれか。detail が count なら指す側の種類ごとの件数を referrers へ並べ、指される側を複数渡したときはどれか1つでも指されていれば1つに畳む。countPerTarget なら指される側1件ごとの位置 index と件数 referrers を targets へ、indices なら referrerKind で名指した1種類の位置を referrerIndices へ並べる。referrerKind はこのときだけ渡せ、ほかへ渡すと invalid_argument になる。後の2つだけは offset と limit で切り出し、総数 total を添え、応答の枠に収まる件数まで減らして警告を添え、残りがあれば nextOffset を返す。その値を次の offset へ渡すと続きが読める。count へ offset・limit を渡すと invalid_argument になる。1件も収まらなければ response_too_large を返す。指す側は、頂点へ face・material・morph・softBody、材質へ morph・softBody、ボーンへ vertex・bone・morph・node・body、モーフへ morph・node、剛体へ joint・morph・softBody。面の位置はモデル全体の通し番号。表示枠は model_list_nodes が並べる枠だけを数える。材質を指さない材質モーフのオフセットは全材質を指す。minWeight は kind が bone のときだけ渡せ、これより大きい重みの枠だけを数える。既定は0なので重みが0の枠は数えない。"
     },
     {
+      "tool": "model_find_vertex_bounds",
+      "branching": false,
+      "duty": "指した頂点の座標の範囲を返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。count に頂点の数を、min・max に3つの軸それぞれの最小と最大を、center にその中ほどを返す。頂点が1つも無ければ count だけを返す。"
+    },
+    {
       "tool": "model_insert_elements",
       "branching": false,
       "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation は new か clone のいずれかで、new のときは count に作る数(1以上の整数。省くと1)を渡し、clone のときは indices・range・all・selected のどれか1つで写す元を指す。親が並びを持つ5つは、ほかの要素を指して初めて意味を持つ種類なので new では作れず、clone だけを受け取る。morph を new で作るときは、variant に vertex・uv・uvA1・uvA2・uvA3・uvA4・bone・material・group・flip・impulse のいずれかを渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。indices に入った位置を返す。"

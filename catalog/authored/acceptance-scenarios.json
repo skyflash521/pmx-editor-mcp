@@ -4018,6 +4018,32 @@
         },
         {
           "kind": "tool",
+          "tool": "model_find_vertex_bounds",
+          "arguments": {
+            "materialIndices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 3
+              },
+              {
+                "path": "min.0",
+                "equals": -10
+              },
+              {
+                "path": "max.0",
+                "equals": 10
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_draw_uv_layout",
           "arguments": {
             "all": true
