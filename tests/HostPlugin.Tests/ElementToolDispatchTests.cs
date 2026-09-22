@@ -498,6 +498,10 @@ namespace PmxEditorMcp.Tests
                     ToolDispatch.ValuesName, new object[] { Value("label", "壱") }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains(
+                "values は 1 件、対象は 2 件",
+                (string)((IDictionary<string, object>)envelope["error"])["message"],
+                StringComparison.Ordinal);
             Assert.Equal(new[] { "一", "二" }, _model.Items.Select(i => i.Label).ToArray());
             Assert.Equal(0, _commits);
         }

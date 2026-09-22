@@ -1395,7 +1395,8 @@ namespace PmxEditorMcp
                 {
                     refused = new Refusal(ToolEnvelope.Failure(
                         ToolEnvelope.InvalidArgument,
-                        ArgsListName + " の件数が対象の件数と合わない。"));
+                        ArgsListName + " の件数が対象の件数と合わない: " + ArgsListName + " は "
+                            + passing.Count + " 件、対象は " + column.Count + " 件。"));
 
                     return;
                 }
@@ -2772,7 +2773,8 @@ namespace PmxEditorMcp
                 {
                     refused = new Refusal(ToolEnvelope.Failure(
                         ToolEnvelope.InvalidArgument,
-                        ValuesName + " の件数が対象の件数と合わない。"));
+                        ValuesName + " の件数が対象の件数と合わない: " + ValuesName + " は "
+                            + writing.Count + " 件、対象は " + column.Count + " 件。"));
 
                     return;
                 }

@@ -101,6 +101,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnUpdateThatTakesValuesSaysHowTheyPairWithTheTargets()
+        {
+            string note = Note(false, "indices", "value", "values");
+
+            Assert.Contains("values は指した対象の並びの順に1件ずつ当て", note, StringComparison.Ordinal);
+            Assert.Contains("value は指した対象の全部へ同じ値を当てる", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ACallThatTakesArgsListSaysHowItPairsWithTheTargets()
+        {
+            string note = Note(false, "handles", "args", "argsList");
+
+            Assert.Contains("argsList は指した対象の並びの順に1件ずつ当て", note, StringComparison.Ordinal);
+            Assert.Contains("args は指した対象の全部へ同じ引数を当てる", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheArgumentsAreChecked()
         {
             Assert.Throws<ArgumentNullException>(() => ToolUsageNoteRule.Compose(null));

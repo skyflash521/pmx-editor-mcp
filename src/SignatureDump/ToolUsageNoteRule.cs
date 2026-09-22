@@ -39,6 +39,22 @@ namespace PmxEditorMcp.SignatureDump
         private const string TakesTheScreenSelection =
             SelectedName + " に真を渡すと、画面がいま選んでいるものを対象にする。";
 
+        private const string ValueName = "value";
+
+        private const string ValuesName = "values";
+
+        private const string ArgsName = "args";
+
+        private const string ArgsListName = "argsList";
+
+        private const string PairsValues =
+            ValuesName + " は指した対象の並びの順に1件ずつ当て、件数は対象の数とそろえる。"
+                + ValueName + " は指した対象の全部へ同じ値を当てる。";
+
+        private const string PairsArgs =
+            ArgsListName + " は指した対象の並びの順に1件ずつ当て、件数は対象の数とそろえる。"
+                + ArgsName + " は指した対象の全部へ同じ引数を当てる。";
+
         private const string MakesNew =
             "呼ぶたびに新しく作る。返るのは作ったもののハンドルの番号で、要らなくなったら"
                 + " session_release_handle へ渡す。";
@@ -101,6 +117,16 @@ namespace PmxEditorMcp.SignatureDump
             if (pointing && Takes(schema, SelectedName))
             {
                 built.Append(TakesTheScreenSelection);
+            }
+
+            if (Takes(schema, ValuesName))
+            {
+                built.Append(PairsValues);
+            }
+
+            if (Takes(schema, ArgsListName))
+            {
+                built.Append(PairsArgs);
             }
 
             if (Issues(schema))
