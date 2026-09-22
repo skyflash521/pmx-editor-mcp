@@ -32,6 +32,7 @@ namespace PmxEditorMcp
             ModelEditMaterials.AddTo(methods, edit);
             ModelEditVertices.AddTo(methods, edit);
             ModelEditUv.AddTo(methods, edit);
+            ModelDrawUvLayout.AddTo(methods, edit);
             ModelEditNormals.AddTo(methods, edit);
             ModelEditWeights.AddTo(methods, edit);
             ModelSetDeformType.AddTo(methods, edit);

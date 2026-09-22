@@ -51,6 +51,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheToolsThatDrawTheirOwnImageAreReadApartFromTheViewImages()
+        {
+            CommonContractTable contract = CommonContractJsonReader.Read(
+                new CommonContractJsonBuilder()
+                    .AddViewImage("view_capture_image", "pmx")
+                    .AddDrawnImage("model_draw_uv_layout")
+                    .ToString());
+
+            Assert.Equal(new[] { "model_draw_uv_layout" }, contract.DrawnImages.ToArray());
+            Assert.False(contract.ViewImages.ContainsKey("model_draw_uv_layout"));
+        }
+
+        [Fact]
         public void NeitherTableHasToNameAnything()
         {
             CommonContractTable contract = CommonContractJsonReader.Read(

@@ -103,6 +103,7 @@ namespace PmxEditorMcp.SignatureDump
                             t => t.Role,
                             StringComparer.Ordinal)),
                     contract.ViewImages,
+                    contract.DrawnImages,
                     contract.Types
                         .Where(t => t.Shape != null)
                         .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal),

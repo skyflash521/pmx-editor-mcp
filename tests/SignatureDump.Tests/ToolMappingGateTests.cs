@@ -748,39 +748,43 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    null, roles, signatures, schemas, names, composed, Concrete(), empty, empty, Named(), Named()));
+                    null, roles, signatures, schemas, names, composed, Concrete(), empty, Drawn(), empty, Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, null, signatures, schemas, names, composed, Concrete(), empty, empty, Named(), Named()));
+                    map, null, signatures, schemas, names, composed, Concrete(), empty, Drawn(), empty, Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, null, schemas, names, composed, Concrete(), empty, empty, Named(), Named()));
+                    map, roles, null, schemas, names, composed, Concrete(), empty, Drawn(), empty, Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, null, names, composed, Concrete(), empty, empty, Named(), Named()));
+                    map, roles, signatures, null, names, composed, Concrete(), empty, Drawn(), empty, Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, null, composed, Concrete(), empty, empty, Named(), Named()));
+                    map, roles, signatures, schemas, null, composed, Concrete(), empty, Drawn(), empty, Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, null, Concrete(), empty, empty, Named(), Named()));
+                    map, roles, signatures, schemas, names, null, Concrete(), empty, Drawn(), empty, Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, null, empty, empty, Named(), Named()));
+                    map, roles, signatures, schemas, names, composed, null, empty, Drawn(), empty, Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, Concrete(), null, empty, Named(), Named()));
+                    map, roles, signatures, schemas, names, composed, Concrete(), null, Drawn(), empty, Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, Concrete(), empty, null,
+                    map, roles, signatures, schemas, names, composed, Concrete(), empty, null, empty,
                     Named(), Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, Concrete(), empty, empty,
+                    map, roles, signatures, schemas, names, composed, Concrete(), empty, Drawn(), null,
+                    Named(), Named()));
+            Assert.Throws<ArgumentNullException>(
+                () => ToolMappingGate.Require(
+                    map, roles, signatures, schemas, names, composed, Concrete(), empty, Drawn(), empty,
                     null, Named()));
             Assert.Throws<ArgumentNullException>(
                 () => ToolMappingGate.Require(
-                    map, roles, signatures, schemas, names, composed, Concrete(), empty, empty,
+                    map, roles, signatures, schemas, names, composed, Concrete(), empty, Drawn(), empty,
                     Named(), null));
         }
 
@@ -815,12 +819,81 @@ namespace PmxEditorMcp.SignatureDump.Tests
             });
         }
 
+        [Fact]
+        public void AComposedToolThatDrawsItsOwnImageIsNamedAsDrawn()
+        {
+            RequireDrawn(Drawn(Release));
+        }
+
+        [Fact]
+        public void AComposedToolThatDrawsAnImageMustBeNamedAsDrawnOrWithAView()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireDrawn(Drawn()));
+
+            Assert.Contains("ビューを名指しされていない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ARowThatReturnsAnImageCannotBeNamedAsDrawn()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireImage(
+                    new Dictionary<string, string>(StringComparer.Ordinal),
+                    Drawn(ImageTool)));
+
+            Assert.Contains("ビューを写す行", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolCannotBeNamedBothWithAViewAndAsDrawn()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireImage(
+                    new Dictionary<string, string>(StringComparer.Ordinal) { { ImageTool, "pmx" } },
+                    Drawn(ImageTool)));
+
+            Assert.Contains("両方", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatReturnsNoImageMustNotBeNamedAsDrawn()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => RequireImage(
+                    new Dictionary<string, string>(StringComparer.Ordinal) { { ImageTool, "pmx" } },
+                    Drawn("view_get_name")));
+
+            Assert.Contains("画像を返さないツール", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>画像を返す合成ツールを1つだけ持つ表で、描いた画像の名指しだけを見る呼び出し。</summary>
+        private static void RequireDrawn(ISet<string> drawnImages)
+        {
+            Require(
+                ToolMapJsonReader.Read(@"{ ""rows"": [] }"),
+                Roles(),
+                Signatures(),
+                schemas: @"{ ""tools"": [{ ""tool"": """ + Release + @""",
+                    ""branches"": [{ ""branch"": ""only"", ""inputs"": [] }],
+                    ""output"": { ""origin"": ""hostOutput"", ""shape"": ""image"" } }] }",
+                composedTools: Composed(false),
+                drawnImages: drawnImages);
+        }
+
+        /// <summary>描いた画像を返すと名指すツールの集まり。</summary>
+        private static ISet<string> Drawn(params string[] tools)
+        {
+            return new HashSet<string>(tools, StringComparer.Ordinal);
+        }
+
         private const string ImageTool = "view_get_client_image";
 
         private const string ImageKey = "PEPlugin.View.IPEPMDViewConnector.GetClientImage()";
 
         /// <summary>画像を返す行を1つだけ持つ表で、ビューの名指しの過不足だけを見る呼び出し。</summary>
-        private static void RequireImage(IDictionary<string, string> viewImages)
+        private static void RequireImage(
+            IDictionary<string, string> viewImages, ISet<string> drawnImages = null)
         {
             const string Bitmap = "System.Drawing.Bitmap";
             Require(
@@ -834,6 +907,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 },
                 toolNames: Names(ImageKey, ImageTool),
                 viewImages: viewImages,
+                drawnImages: drawnImages,
                 shapesByType: new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { Bitmap, "image" },
@@ -853,6 +927,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, ComposedTool> composedTools = null,
             IDictionary<string, IList<string>> concrete = null,
             IDictionary<string, string> viewImages = null,
+            ISet<string> drawnImages = null,
             IDictionary<string, string> shapesByType = null,
             IDictionary<string, ISet<string>> unkeptMembers = null,
             IDictionary<string, ISet<string>> targetedMembers = null)
@@ -868,6 +943,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 composedTools ?? new Dictionary<string, ComposedTool>(StringComparer.Ordinal),
                 concrete ?? Concrete(),
                 viewImages ?? new Dictionary<string, string>(StringComparer.Ordinal),
+                drawnImages ?? Drawn(),
                 shapesByType ?? new Dictionary<string, string>(StringComparer.Ordinal),
                 unkeptMembers ?? Named(),
                 targetedMembers ?? Named());

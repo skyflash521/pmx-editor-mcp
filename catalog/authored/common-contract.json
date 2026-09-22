@@ -325,6 +325,11 @@
       "duty": "指した要素を並びから消す。kind は vertex・face・material・bone・ikLink・morph・morphOffset・node・nodeItem・body・joint・softBody・softBodyAnchor のいずれかで、親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。消す対象は indices・range・all・selected のどれか1つで指す。related は keep・repair・cascade のいずれかで、省くと repair になる。repair は指す先を失った口を直し、ウェイトは残るボーンへ移し、直せない口は落とす。cascade はそれに加えて、消した要素だけが使っていた要素も消す。keep は何も触らない。removed に消した件数、following に種類ごとのつられて消えた件数、repaired に直した口の数を返す。"
     },
     {
+      "tool": "model_draw_uv_layout",
+      "branching": false,
+      "duty": "指した材質の面の辺を、UVの上へ線で描いた画像を返す。材質は indices・range・all・selected のどれか1つで指す。画像は一辺1024画素の正方形で、Uを右へ、Vを下へ取り、0から1の範囲と描く点のすべてが収まる大きさで描く。0から1の範囲を灰色の枠で示し、辺の色は材質ごとに変える。UVに有限でない値を持つ面は描かない。モデルは変えない。値は画像そのもので、ブリッジがMCPの画像として返す。"
+    },
+    {
       "tool": "model_edit_bones",
       "branching": false,
       "duty": "指したボーンの整理と生成と軸の設定を行う。ボーンは indices・range・all・selected のどれか1つで指し、addAtVertices と addAtVerticesWithWeight だけは同じ指し方で頂点を指す。relevelHierarchy と addRootParent は並び全体を相手にするので、この3つのどれも渡さない。operation は mergeSameName・hideTipBones・tipToOffset・offsetToTip・addTipBones・dissolveTipBones・relevelHierarchy・addRootParent・addMultiStageParent・addMultiStageChild・addMiddle・addAppendParent・addAtVertices・addAtVerticesWithWeight・makeIk・mirrorPosition・fixAxisToTip・setLocalAxis・resetLocalAxis・setPmdBoneKind のいずれか。addTipBones は、表示先のボーンを持たないボーンの隔たりの先へ「～先」のボーンを足して表示先をそこへ移し、dissolveTipBones は名前が「先」で終わるボーンを外して、指していた表示先を隔たりへ戻す。addAtVerticesWithWeight は addAtVertices のボーンを足し、指した頂点のウェイトをそこへ全部振る。mergeSameName は同じ名前のボーンを先頭の1つへまとめ、指していた口をその1つへ付け替える。relevelHierarchy は親より先に子が来ないよう並びを組み直す。ボーンを足す操作は、上へ足すものは指したボーンの直前へ、下へ足すものは直後へ入れる。mirrorPosition は axis に x・y・z のいずれかを渡し、名前の左右が逆のボーンの位置の鏡像へそろえる。makeIk は linkCount に親を辿るリンクの数を、1以上の整数で渡す。setLocalAxis は表示先への向きをX、それと親からの向きに垂直な向きをZとする。added に足したボーンの位置、changed に変えたボーンの数、removed に消えたボーンの数を返す。"
@@ -491,6 +496,11 @@
     {
       "tool": "view_get_client_image_sub_view_connector",
       "view": "sub"
+    }
+  ],
+  "drawnImages": [
+    {
+      "tool": "model_draw_uv_layout"
     }
   ],
   "unkeptMembers": [

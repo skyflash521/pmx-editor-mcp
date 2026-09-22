@@ -24,6 +24,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private readonly SortedDictionary<string, string> _views =
             new SortedDictionary<string, string>(StringComparer.Ordinal);
 
+        private readonly SortedSet<string> _drawn = new SortedSet<string>(StringComparer.Ordinal);
+
         private readonly SortedDictionary<string, string> _unkept =
             new SortedDictionary<string, string>(StringComparer.Ordinal);
 
@@ -71,6 +73,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Quoted(tool),
                 branching ? "true" : "false",
                 Quoted(duty));
+
+            return this;
+        }
+
+        public CommonContractJsonBuilder AddDrawnImage(string tool)
+        {
+            _drawn.Add(tool);
 
             return this;
         }
@@ -169,6 +178,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     _composed.Values.ToList(), Composed("session_release_handle"))))
                 .Append("],\"viewImages\":[")
                 .Append(string.Join(",", _views.Values))
+                .Append("],\"drawnImages\":[")
+                .Append(string.Join(",", _drawn.Select(t => "{\"tool\":" + Quoted(t) + "}")))
                 .Append("],\"unkeptMembers\":[")
                 .Append(string.Join(",", _unkept.Values))
                 .Append("],\"targetedMembers\":[")

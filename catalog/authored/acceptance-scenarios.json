@@ -3792,6 +3792,10 @@
                   -10,
                   -10,
                   0
+                ],
+                "uv": [
+                  0.1,
+                  0.1
                 ]
               },
               {
@@ -3799,6 +3803,10 @@
                   10,
                   -10,
                   0
+                ],
+                "uv": [
+                  0.9,
+                  0.1
                 ]
               },
               {
@@ -3806,6 +3814,10 @@
                   0,
                   10,
                   0
+                ],
+                "uv": [
+                  0.1,
+                  0.9
                 ]
               }
             ]
@@ -3984,6 +3996,21 @@
         },
         {
           "kind": "tool",
+          "tool": "model_draw_uv_layout",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "uvBeforeFlip",
+            "path": "",
+            "shape": "image"
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_uv",
           "arguments": {
             "operation": "flipUV",
@@ -3997,6 +4024,19 @@
                 "equals": 3
               }
             ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_draw_uv_layout",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uvBeforeFlip"
+            }
           }
         },
         {

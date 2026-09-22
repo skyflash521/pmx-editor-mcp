@@ -27,6 +27,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ComposedTool> composedTools,
             IDictionary<string, IList<string>> concrete,
             IDictionary<string, string> viewImages,
+            ISet<string> drawnImages,
             IDictionary<string, string> shapesByType,
             IDictionary<string, ISet<string>> unkeptMembers,
             IDictionary<string, ISet<string>> targetedMembers)
@@ -71,6 +72,11 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(viewImages));
             }
 
+            if (drawnImages == null)
+            {
+                throw new ArgumentNullException(nameof(drawnImages));
+            }
+
             if (shapesByType == null)
             {
                 throw new ArgumentNullException(nameof(shapesByType));
@@ -86,7 +92,8 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(targetedMembers));
             }
 
-            RequireViewImages(map, schemas, signatures, toolNames, viewImages, shapesByType);
+            RequireViewImages(
+                map, schemas, signatures, toolNames, viewImages, drawnImages, shapesByType);
             RequireNamedMembers(schemas, unkeptMembers, "持ち続けない項目");
             RequireNamedMembers(schemas, targetedMembers, "指す先を埋める項目");
 
@@ -170,8 +177,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 画像を返す行のツールと、ビューの名前を引く表が一対一で対応することを確かめる。対応が
-        /// 欠けると、その画像がどのビューのものかを確かめる検査だけが黙って減る。
+        /// 画像を返すツールが、ビューの名前を引く表か描いた画像を返すツールの表のどちらか一方だけに
+        /// 載ることを確かめる。対応が欠けると、その画像がどのビューのものかを確かめる検査だけが
+        /// 黙って減る。行が返す画像はビューを写すので、描いた画像を返すツールの表には載せられない。
         /// </summary>
         private static void RequireViewImages(
             ToolMap map,
@@ -179,8 +187,10 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, SignatureRecord> signatures,
             IDictionary<string, string> toolNames,
             IDictionary<string, string> viewImages,
+            ISet<string> drawnImages,
             IDictionary<string, string> shapesByType)
         {
+            HashSet<string> rowImages = new HashSet<string>(StringComparer.Ordinal);
             HashSet<string> drawing = new HashSet<string>(
                 schemas.Tools
                     .Where(t => t.Output != null
@@ -199,11 +209,33 @@ namespace PmxEditorMcp.SignatureDump
                     && string.Equals(shape, ImageShape, StringComparison.Ordinal)
                     && toolNames.TryGetValue(row.SignatureKey, out tool))
                 {
-                    drawing.Add(tool);
+                    rowImages.Add(tool);
                 }
             }
 
-            string[] unnamed = drawing.Where(t => !viewImages.ContainsKey(t))
+            drawing.UnionWith(rowImages);
+            string[] both = drawnImages.Where(viewImages.ContainsKey)
+                .OrderBy(t => t, StringComparer.Ordinal)
+                .ToArray();
+            if (both.Length != 0)
+            {
+                throw new InvalidOperationException(
+                    "ビューの名指しと描いた画像の名指しの両方を持つツールがある: "
+                        + string.Join("・", both));
+            }
+
+            string[] fromRows = drawnImages.Where(rowImages.Contains)
+                .OrderBy(t => t, StringComparer.Ordinal)
+                .ToArray();
+            if (fromRows.Length != 0)
+            {
+                throw new InvalidOperationException(
+                    "ビューを写す行のツールが描いた画像を返すと名指しされている: "
+                        + string.Join("・", fromRows));
+            }
+
+            string[] unnamed = drawing
+                .Where(t => !viewImages.ContainsKey(t) && !drawnImages.Contains(t))
                 .OrderBy(t => t, StringComparer.Ordinal)
                 .ToArray();
             if (unnamed.Length != 0)
@@ -213,13 +245,14 @@ namespace PmxEditorMcp.SignatureDump
                         + string.Join("・", unnamed));
             }
 
-            string[] extra = viewImages.Keys.Where(t => !drawing.Contains(t))
+            string[] extra = viewImages.Keys.Concat(drawnImages)
+                .Where(t => !drawing.Contains(t))
                 .OrderBy(t => t, StringComparer.Ordinal)
                 .ToArray();
             if (extra.Length != 0)
             {
                 throw new InvalidOperationException(
-                    "画像を返さないツールがビューを名指しされている: " + string.Join("・", extra));
+                    "画像を返さないツールが画像を返すと名指しされている: " + string.Join("・", extra));
             }
         }
 

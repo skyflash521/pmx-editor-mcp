@@ -20,6 +20,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly IDictionary<string, string> _viewImages;
 
+        private readonly ISet<string> _drawnImages;
+
         private readonly IDictionary<string, ISet<string>> _unkeptMembers;
 
         private readonly IDictionary<string, ISet<string>> _targetedMembers;
@@ -39,6 +41,7 @@ namespace PmxEditorMcp.SignatureDump
             CommonAssignmentTable assignments,
             IDictionary<string, ComposedTool> composedTools,
             IDictionary<string, string> viewImages,
+            ISet<string> drawnImages,
             IDictionary<string, ISet<string>> unkeptMembers,
             IDictionary<string, ISet<string>> targetedMembers,
             IDictionary<string, ParentValues> parentValues,
@@ -60,6 +63,7 @@ namespace PmxEditorMcp.SignatureDump
             _assignments = assignments;
             _composedTools = composedTools;
             _viewImages = viewImages;
+            _drawnImages = drawnImages;
             _unkeptMembers = unkeptMembers;
             _targetedMembers = targetedMembers;
             _parentValues = parentValues;
@@ -541,6 +545,7 @@ namespace PmxEditorMcp.SignatureDump
                 CommonAssignmentJsonReader.Read(ReadFile(args[5], "共通契約割当の正本")),
                 contract.ComposedTools,
                 contract.ViewImages,
+                contract.DrawnImages,
                 contract.UnkeptMembers,
                 contract.TargetedMembers,
                 contract.ParentValues,
@@ -644,12 +649,15 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 画像を返すツールの名前。ビューを名指しされたツールがそれで、名指しと画像を返すことの
-        /// 一致は[写像の規則](ToolMappingGate)が見る。
+        /// 画像を返すツールの名前。ビューを名指しされたツールと、描いた画像を返すと名指しされた
+        /// ツールがそれで、名指しと画像を返すことの一致は[写像の規則](ToolMappingGate)が見る。
         /// </summary>
         public ISet<string> DrawingTools()
         {
-            return new HashSet<string>(_viewImages.Keys, StringComparer.Ordinal);
+            HashSet<string> drawing = new HashSet<string>(_viewImages.Keys, StringComparer.Ordinal);
+            drawing.UnionWith(_drawnImages);
+
+            return drawing;
         }
 
         /// <summary>確認を要するツールの名前。行の側の判定をツールの名前へ写す。</summary>
