@@ -64,6 +64,43 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RunsGatherTheConsecutivePositionsIntoStartAndCount()
+        {
+            IList<IPXVertex> vertices = Vertices(5);
+            Material(Face(vertices, 4, 2, 0), Face(vertices, 0, 2, 3));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given("runs", true)));
+
+            Assert.Equal(2, value["total"]);
+            Assert.False(value.ContainsKey("vertexIndices"));
+            object[] runs = (object[])value["vertexRuns"];
+            Assert.Equal(2, runs.Length);
+            Assert.Equal(0, ((IDictionary<string, object>)runs[0])["start"]);
+            Assert.Equal(1, ((IDictionary<string, object>)runs[0])["count"]);
+            Assert.Equal(2, ((IDictionary<string, object>)runs[1])["start"]);
+            Assert.Equal(3, ((IDictionary<string, object>)runs[1])["count"]);
+        }
+
+        [Fact]
+        public void RunsAreReadInPartsFromTheOffset()
+        {
+            IList<IPXVertex> vertices = Vertices(6);
+            Material(Face(vertices, 0, 2, 4));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("runs", true),
+                ComposedEditFixture.Given("offset", 1),
+                ComposedEditFixture.Given("limit", 1)));
+
+            Assert.Equal(3, value["total"]);
+            Assert.Equal(2, ((IDictionary<string, object>)((object[])value["vertexRuns"])[0])["start"]);
+            Assert.Equal(2, value["nextOffset"]);
+        }
+
+        [Fact]
         public void ALimitOfZeroIsRefused()
         {
             IList<IPXVertex> vertices = Vertices(3);

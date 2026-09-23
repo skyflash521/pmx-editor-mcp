@@ -19,6 +19,10 @@ namespace PmxEditorMcp
 
         public const string VertexIndicesName = "vertexIndices";
 
+        public const string RunsName = "runs";
+
+        public const string VertexRunsName = "vertexRuns";
+
         public const string NextOffsetName = "nextOffset";
 
         private static readonly JavaScriptSerializer Sizer = new JavaScriptSerializer();
@@ -43,6 +47,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Selected,
                 OffsetName,
                 LimitName,
+                RunsName,
             };
             methods.Add(ToolName, edit.Read(known, Run));
         }
@@ -67,20 +72,24 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            bool runs;
             if (!TryNumber(context, OffsetName, 0, ref offset, out message)
-                || !TryNumber(context, LimitName, 1, ref limit, out message))
+                || !TryNumber(context, LimitName, 1, ref limit, out message)
+                || !TryRuns(context, out runs, out message))
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }
 
-            object[] all = Used(model, chosen).Cast<object>().ToArray();
+            SortedSet<int> used = Used(model, chosen);
+            object[] all = runs ? PositionRuns.Joined(used).ToArray() : used.Cast<object>().ToArray();
+            string listed = runs ? VertexRunsName : VertexIndicesName;
             Page<object> page;
             if (!Paging.TryTake(
                     all,
                     offset,
                     limit,
                     ResponseSize.ValueChars(context.BudgetChars),
-                    taken => Sizer.Serialize(Valued(all.Length, offset, taken)).Length,
+                    taken => Sizer.Serialize(Valued(listed, all.Length, offset, taken)).Length,
                     out page))
             {
                 return ComposedEditResult.Refuse(
@@ -88,7 +97,29 @@ namespace PmxEditorMcp
             }
 
             return ComposedEditResult.Complete(
-                Valued(all.Length, offset, page.Items), page.Warnings);
+                Valued(listed, all.Length, offset, page.Items), page.Warnings);
+        }
+
+        private static bool TryRuns(McpMethodContext context, out bool runs, out string message)
+        {
+            runs = false;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(RunsName, out given))
+            {
+                return true;
+            }
+
+            if (!(given is bool))
+            {
+                message = RunsName + " は真か偽でなければならない。";
+
+                return false;
+            }
+
+            runs = (bool)given;
+
+            return true;
         }
 
         public static SortedSet<int> Used(IPXPmx model, IEnumerable<int> materials)
@@ -133,12 +164,12 @@ namespace PmxEditorMcp
         }
 
         private static IDictionary<string, object> Valued(
-            int total, int offset, IList<object> taken)
+            string listed, int total, int offset, IList<object> taken)
         {
             Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { TotalName, total },
-                { VertexIndicesName, taken.ToArray() },
+                { listed, taken.ToArray() },
             };
             int next = Math.Min(offset, total) + taken.Count;
             if (next < total)

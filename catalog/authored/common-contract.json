@@ -397,7 +397,7 @@
     {
       "tool": "model_find_material_vertices",
       "branching": false,
-      "duty": "指した材質の面が使う頂点の位置を、重なりなく昇順で返す。材質は indices・range・all・selected のどれか1つで指す。モデルも画面の選択も変えない。offset と limit で切り出し、切り出す前の件数を total に、切り出した位置を vertexIndices に返す。値の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。limit に0以下を渡すと invalid_argument になる。"
+      "duty": "指した材質の面が使う頂点の位置を、重なりなく昇順で返す。材質は indices・range・all・selected のどれか1つで指す。モデルも画面の選択も変えない。offset と limit で切り出し、切り出す前の件数を total に、切り出した位置を vertexIndices に返す。runs に真を渡すと、連続した位置を start と count の組にまとめて vertexIndices の代わりに vertexRuns に返し、total・offset・limit・nextOffset はその組の数で数える。値の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。limit に0以下を渡すと invalid_argument になる。"
     },
     {
       "tool": "model_find_referrers",

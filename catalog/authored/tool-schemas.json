@@ -6211,6 +6211,12 @@
               "bounds": {
                 "minimum": 1
               }
+            },
+            {
+              "name": "runs",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
             }
           ],
           "choices": [
@@ -6240,6 +6246,25 @@
             "element": {
               "origin": "hostOutput",
               "shape": "number"
+            }
+          },
+          {
+            "name": "vertexRuns",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
             }
           },
           {
