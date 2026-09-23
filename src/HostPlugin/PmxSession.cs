@@ -158,7 +158,8 @@ namespace PmxEditorMcp
         /// していない呼び出しでは何もしない。<paramref name="suppressUndo"/> を頼まれたら、この
         /// 反映をエディタのUndoへ積ませない。映せなかったときは
         /// <paramref name="context"/> へその印を置く——映せないことは反映の失敗ではないので、
-        /// 断りへ変えない。反映できなければ偽で、断る内容を渡す。
+        /// 断りへ変えない。反映できなければ偽で、断る内容を渡す。<paramref name="listRow"/> は
+        /// 反映で変えたリストの行で、分からなければ null。
         /// </summary>
         public bool TryCommit(
             PmxTarget target,
@@ -166,7 +167,8 @@ namespace PmxEditorMcp
             McpMethodContext context,
             ScreenRefresh refresh,
             out string code,
-            out string message)
+            out string message,
+            string listRow = null)
         {
             if (target == null)
             {
@@ -192,7 +194,7 @@ namespace PmxEditorMcp
 
             if (reflected)
             {
-                if (!refresh.Apply(ScreenRefreshKind.Rebuilt))
+                if (!refresh.ApplyReflected(listRow))
                 {
                     context.NotShown = true;
                 }

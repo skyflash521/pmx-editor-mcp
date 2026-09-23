@@ -2860,7 +2860,7 @@ namespace PmxEditorMcp
 
                 updated = column.Count;
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(context, tool.Receiver, target);
+                refused = Commit(context, tool.Receiver, target, RootList(tool.Access));
             }, out failure, out unavailable))
             {
                 return Unavailable(unavailable);
@@ -2986,7 +2986,7 @@ namespace PmxEditorMcp
                 }
 
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(context, tool.Receiver, target);
+                refused = Commit(context, tool.Receiver, target, RootList(tool.Access));
                 if (refused == null)
                 {
                     Settle(items);
@@ -3078,7 +3078,7 @@ namespace PmxEditorMcp
                 }
 
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(context, tool.Receiver, target);
+                refused = Commit(context, tool.Receiver, target, RootList(tool.Access));
                 if (refused == null)
                 {
                     Settle(assignments.SelectMany(a => a.Items));
@@ -4608,9 +4608,12 @@ namespace PmxEditorMcp
             return Reflects(receiver, target) ? EditStage.AtCommit : stage;
         }
 
-        /// <summary>複製編集型の呼び出しを、現在のPMXへ反映する。</summary>
+        /// <summary>
+        /// 複製編集型の呼び出しを、現在のPMXへ反映する。<paramref name="listRow"/> は変えた
+        /// リストの行で、分からなければ null。
+        /// </summary>
         private Refusal Commit(
-            McpMethodContext context, ToolReceiver receiver, PmxTarget target)
+            McpMethodContext context, ToolReceiver receiver, PmxTarget target, string listRow = null)
         {
             if (!Reflects(receiver, target))
             {
@@ -4621,9 +4624,16 @@ namespace PmxEditorMcp
             string message;
 
             return Session(receiver).TryCommit(
-                    target, Suppressed(context), context, Refresh(receiver), out code, out message)
+                    target, Suppressed(context), context, Refresh(receiver), out code, out message,
+                    listRow)
                 ? null
                 : new Refusal(ToolEnvelope.Failure(code, message));
+        }
+
+        /// <summary>その道が辿る、PMXが直に持つリストの行。親の下の要素では最初の親のリスト。</summary>
+        private static string RootList(ToolAccess access)
+        {
+            return access.Parents.Count > 0 ? access.Parents[0].RowKey : access.RowKey;
         }
 
         /// <summary>

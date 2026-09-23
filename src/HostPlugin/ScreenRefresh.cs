@@ -72,6 +72,15 @@ namespace PmxEditorMcp
                 "PEPlugin.View.IPEVertexEditConnector.Scaling(PEPlugin.Pmd.IPEVector3)",
             };
 
+        /// <summary>ビューでは、その区分だけを作り直せば映るリストの行。</summary>
+        private static readonly Dictionary<string, Action<IPXPmxViewConnector>> Remakes =
+            new Dictionary<string, Action<IPXPmxViewConnector>>(StringComparer.Ordinal)
+            {
+                { "PEPlugin.Pmx.IPXPmx.Bone()", view => view.UpdateModel_Bone() },
+                { "PEPlugin.Pmx.IPXPmx.Body()", view => view.UpdateModel_Body() },
+                { "PEPlugin.Pmx.IPXPmx.Joint()", view => view.UpdateModel_Joint() },
+            };
+
         /// <summary>
         /// 何も映さない段。映し直しをエディタ自身が行う経路が、ホストからは何もしないために使う。
         /// </summary>
@@ -166,6 +175,41 @@ namespace PmxEditorMcp
             try
             {
                 Show(kind);
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 複製を反映した後に映し直す。<paramref name="listRow"/> は反映で変えたリストの行で、
+        /// 分からなければ null。
+        /// </summary>
+        public bool ApplyReflected(string listRow)
+        {
+            Action<IPXPmxViewConnector> remake;
+            if (listRow == null || !Remakes.TryGetValue(listRow, out remake))
+            {
+                return Apply(ScreenRefreshKind.Rebuilt);
+            }
+
+            try
+            {
+                IPEFormConnector form = _form() as IPEFormConnector;
+                if (form != null)
+                {
+                    form.UpdateList(UpdateObject.All);
+                }
+
+                IPXPmxViewConnector view = _view() as IPXPmxViewConnector;
+                if (view != null)
+                {
+                    remake(view);
+                    view.UpdateView();
+                }
 
                 return true;
             }

@@ -501,6 +501,9 @@ namespace PmxEditorMcp.Tests
         /// <summary>画面を描き直した回数。</summary>
         public int Repaints { get; private set; }
 
+        /// <summary>区分だけを作り直した先を、頼まれた順に並べたもの。</summary>
+        public IList<string> Remade { get; } = new List<string>();
+
         /// <summary>VMDViewへ読み込んだモデル。</summary>
         public PEPlugin.Pmx.IPXPmx Loaded { get; private set; }
 
@@ -726,17 +729,17 @@ namespace PmxEditorMcp.Tests
 
         public void UpdateModel_Body()
         {
-            throw new NotSupportedException();
+            Remade.Add(ElementKinds.Body);
         }
 
         public void UpdateModel_Bone()
         {
-            throw new NotSupportedException();
+            Remade.Add(ElementKinds.Bone);
         }
 
         public void UpdateModel_Joint()
         {
-            throw new NotSupportedException();
+            Remade.Add(ElementKinds.Joint);
         }
 
         public void UpdateModel_Material(int index)

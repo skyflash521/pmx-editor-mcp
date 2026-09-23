@@ -147,6 +147,41 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { PEPlugin.Pmd.UpdateObject.All }, form.Updated);
         }
 
+        [Theory]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Bone()", ElementKinds.Bone)]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Body()", ElementKinds.Body)]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Joint()", ElementKinds.Joint)]
+        public void AReflectionIntoOneKindRemakesOnlyThatKindInTheView(string listRow, string kind)
+        {
+            FakePmxView view = new FakePmxView();
+            FakeFormConnector form = new FakeFormConnector();
+
+            Assert.True(Refresh(view, form).ApplyReflected(listRow));
+
+            Assert.Equal(new[] { PEPlugin.Pmd.UpdateObject.All }, form.Updated);
+            Assert.Equal(new[] { kind }, view.Remade);
+            Assert.Equal(0, view.Redraws);
+            Assert.Equal(1, view.Repaints);
+        }
+
+        [Theory]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Vertex()")]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Material()")]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Morph()")]
+        [InlineData(null)]
+        public void AnyOtherReflectionRebuildsTheWholeModel(string listRow)
+        {
+            FakePmxView view = new FakePmxView();
+            FakeFormConnector form = new FakeFormConnector();
+
+            Assert.True(Refresh(view, form).ApplyReflected(listRow));
+
+            Assert.Equal(new[] { PEPlugin.Pmd.UpdateObject.All }, form.Updated);
+            Assert.Empty(view.Remade);
+            Assert.Equal(1, view.Redraws);
+            Assert.Equal(1, view.Repaints);
+        }
+
         private static ScreenRefresh Refresh(FakePmxView view, FakeFormConnector form)
         {
             return new ScreenRefresh(() => view, () => form);
