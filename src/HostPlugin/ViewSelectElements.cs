@@ -49,18 +49,18 @@ namespace PmxEditorMcp
         /// <summary>軸を受け取る入力の名前。</summary>
         public const string AxisName = "axis";
 
-        /// <summary>X軸の値が0以下の側。</summary>
+        /// <summary>X軸の値が境以下の側。</summary>
         public const string NegativeX = "negativeX";
 
-        /// <summary>Y軸の値が0以下の側。</summary>
+        /// <summary>Y軸の値が境以下の側。</summary>
         public const string NegativeY = "negativeY";
 
-        /// <summary>Z軸の値が0以下の側。</summary>
+        /// <summary>Z軸の値が境以下の側。</summary>
         public const string NegativeZ = "negativeZ";
 
         /// <summary>
-        /// 受け取れる軸。スキーマが並べる順。x・y・z はその軸の値が0以上の側を、negative の3つは
-        /// 0以下の側を指す。
+        /// 受け取れる軸。スキーマが並べる順。x・y・z はその軸の値が境以上の側を、negative の3つは
+        /// 境以下の側を指す。
         /// </summary>
         public static IList<string> Axes
         {
@@ -77,6 +77,9 @@ namespace PmxEditorMcp
                 };
             }
         }
+
+        /// <summary>半モデルの境の値を受け取る入力の名前。</summary>
+        public const string BoundaryName = "boundary";
 
         /// <summary>選んだ要素の数を返す項目の名前。</summary>
         public const string SelectedName = "selected";
@@ -102,6 +105,7 @@ namespace PmxEditorMcp
                 KindName,
                 KindsName,
                 AxisName,
+                BoundaryName,
                 ViewSelection.ModeName,
             };
             methods.Add(
@@ -122,6 +126,7 @@ namespace PmxEditorMcp
             string code;
             string message;
             IList<string> kinds;
+            float boundary;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
                 || !ViewSelection.TryMode(context, out mode, out code, out message)
@@ -134,7 +139,8 @@ namespace PmxEditorMcp
                     Axes,
                     out axis,
                     out code,
-                    out message))
+                    out message)
+                || !TryBoundary(context, operation, out boundary, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -146,7 +152,7 @@ namespace PmxEditorMcp
             {
                 int took = 0;
                 ComposedEditResult refused =
-                    Chosen(model, parts, operation, kind, axis, mode, ref took);
+                    Chosen(model, parts, operation, kind, axis, boundary, mode, ref took);
                 if (refused != null)
                 {
                     return refused;
@@ -183,6 +189,7 @@ namespace PmxEditorMcp
             string operation,
             string kind,
             string axis,
+            float boundary,
             string mode,
             ref int selected)
         {
@@ -212,7 +219,7 @@ namespace PmxEditorMcp
                     break;
 
                 case HalfModel:
-                    made = Halved(model, kind, axis);
+                    made = Halved(model, kind, axis, boundary);
 
                     break;
 
@@ -385,38 +392,75 @@ namespace PmxEditorMcp
         }
 
         /// <summary>その軸の片側に置かれている要素。面は3つの頂点がすべて片側にあるものを選ぶ。</summary>
-        private static IList<int> Halved(IPXPmx model, string kind, string axis)
+        private static IList<int> Halved(IPXPmx model, string kind, string axis, float boundary)
         {
             IList<IList<V3>> spots = ViewSelection.Spots(model, kind);
 
             return Enumerable.Range(0, spots.Count)
-                .Where(at => spots[at].All(spot => Aside(spot, axis)))
+                .Where(at => spots[at].All(spot => Aside(spot, axis, boundary)))
                 .ToList();
         }
 
-        /// <summary>その点が、指した軸の側にあるか。軸の上にある点はどちらの側にも入る。</summary>
-        private static bool Aside(V3 spot, string axis)
+        /// <summary>その点が、指した軸の側にあるか。境の上にある点はどちらの側にも入る。</summary>
+        private static bool Aside(V3 spot, string axis, float boundary)
         {
             switch (axis)
             {
                 case ModelEditVertices.AxisX:
-                    return spot.X >= 0f;
+                    return spot.X >= boundary;
 
                 case ModelEditVertices.AxisY:
-                    return spot.Y >= 0f;
+                    return spot.Y >= boundary;
 
                 case ModelEditVertices.AxisZ:
-                    return spot.Z >= 0f;
+                    return spot.Z >= boundary;
 
                 case NegativeX:
-                    return spot.X <= 0f;
+                    return spot.X <= boundary;
 
                 case NegativeY:
-                    return spot.Y <= 0f;
+                    return spot.Y <= boundary;
 
                 default:
-                    return spot.Z <= 0f;
+                    return spot.Z <= boundary;
             }
+        }
+
+        /// <summary>半モデルの境の値を読む。渡されなければ0。</summary>
+        private static bool TryBoundary(
+            McpMethodContext context,
+            string operation,
+            out float boundary,
+            out string code,
+            out string message)
+        {
+            boundary = 0f;
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(BoundaryName, out given))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            if (!string.Equals(operation, HalfModel, StringComparison.Ordinal))
+            {
+                message = BoundaryName + " を渡せるのは " + HalfModel + " のときだけである。";
+
+                return false;
+            }
+
+            if (!ValueInput.TrySingle(given, out boundary))
+            {
+                message = BoundaryName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
         }
 
         private static IDictionary<T, int> Placed<T>(IList<T> items)

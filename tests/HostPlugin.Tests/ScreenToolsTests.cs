@@ -248,6 +248,38 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
+        [InlineData("x", new[] { 2, 3 })]
+        [InlineData("negativeX", new[] { 0, 1, 2 })]
+        public void TheBoundaryMovesWhereTheModelIsHalved(string axis, int[] wanted)
+        {
+            Vertex(-1f, 0f, 0f);
+            Vertex(1f, 0f, 0f);
+            Vertex(1.5f, 0f, 0f);
+            Vertex(2f, 0f, 0f);
+
+            Select(
+                Operation(ViewSelectElements.HalfModel),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
+                ComposedScreenFixture.Given(ViewSelectElements.AxisName, axis),
+                ComposedScreenFixture.Given(ViewSelectElements.BoundaryName, 1.5));
+
+            Assert.Equal(wanted, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
+        [Fact]
+        public void TheBoundaryIsRefusedForOtherOperations()
+        {
+            Vertex(0f, 0f, 0f);
+
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ComposedScreenFixture.Code(Select(
+                    Operation(ViewSelectElements.All),
+                    ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
+                    ComposedScreenFixture.Given(ViewSelectElements.BoundaryName, 1.0))));
+        }
+
+        [Theory]
         [InlineData("intersect", new[] { 1 })]
         [InlineData("subtract", new[] { 0 })]
         [InlineData("add", new[] { 0, 1, 2 })]

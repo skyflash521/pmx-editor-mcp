@@ -43522,6 +43522,12 @@
               "required": false
             },
             {
+              "name": "boundary",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
               "name": "mode",
               "origin": "hostInput",
               "shape": "text",

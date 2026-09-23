@@ -497,7 +497,7 @@
     {
       "tool": "view_select_elements",
       "branching": false,
-      "duty": "画面の選択を、種類ごとにまとめて選び直す。kind は vertex・face・bone・body・joint のいずれかで、その種類の選択だけを置き換える。all と invert のときは kind の代わりに kinds へ同じ名前を並べて渡せ、並べた種類の選択をまとめて置き換える。kind と kinds は、どちらか1つだけを渡す。operation は all・invert・expand・reduce・childChain・halfModel のいずれか。expand と reduce は面で隣り合う頂点で広げ狭めるので vertex にだけ、childChain は選んだボーンの子孫を足すので bone にだけ当てられる。halfModel は axis で片側を指し、x・y・z はその軸の値が0以上の側、negativeX・negativeY・negativeZ は0以下の側で、面は3つの頂点がすべて片側にあるものを選ぶ。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。mode は選んだ結果の入れ方で、replace(既定)は置き換え、add は加え、subtract は除き、intersect は重なりだけを残す。"
+      "duty": "画面の選択を、種類ごとにまとめて選び直す。kind は vertex・face・bone・body・joint のいずれかで、その種類の選択だけを置き換える。all と invert のときは kind の代わりに kinds へ同じ名前を並べて渡せ、並べた種類の選択をまとめて置き換える。kind と kinds は、どちらか1つだけを渡す。operation は all・invert・expand・reduce・childChain・halfModel のいずれか。expand と reduce は面で隣り合う頂点で広げ狭めるので vertex にだけ、childChain は選んだボーンの子孫を足すので bone にだけ当てられる。halfModel は axis で片側を指し、x・y・z はその軸の値が境以上の側、negativeX・negativeY・negativeZ は境以下の側で、面は3つの頂点がすべて片側にあるものを選ぶ。境は boundary に数で渡し、省くと0である。boundary を渡せるのは halfModel のときだけである。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。mode は選んだ結果の入れ方で、replace(既定)は置き換え、add は加え、subtract は除き、intersect は重なりだけを残す。"
     },
     {
       "tool": "view_select_related",
