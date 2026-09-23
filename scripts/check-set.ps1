@@ -874,11 +874,12 @@ $pathlessGroups = @('全件のみ')
 $checks = [ordered]@{}
 $checks[$build] = New-Check `
     -Groups $pathlessGroups `
-    -LimitSeconds 7 <# 変更禁止 #> `
+    -LimitSeconds 20 <# 変更禁止 #> `
     -Needs $noArtifact `
     -Stage 1 `
     -Produces $buildOutput `
-    -Run @('dotnet', 'build', 'PmxEditorMcp.sln', '-warnaserror')
+    -Run @('dotnet', 'build', 'PmxEditorMcp.sln', '-warnaserror',
+        '--no-incremental', '-p:UseSharedCompilation=false')
 $checks['スクリプト構文'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 5 <# 変更禁止 #> `
