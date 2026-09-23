@@ -414,7 +414,7 @@ namespace PmxEditorMcp.Bridge
                     "ホストの中継とブリッジのツール定義が別の能力対応表から作られている。"
                         + "ホストの指紋は " + hostToolMapDigest + " で、ブリッジの指紋は "
                         + GeneratedToolDefinitions.ToolMapDigest + " である。"
-                        + "同じ版のホストDLLとブリッジを使う。");
+                        + "同じバージョンのホストDLLとブリッジを使う。");
             }
 
             if (hostBudgetChars != BudgetChars)

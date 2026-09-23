@@ -563,7 +563,7 @@ namespace PmxEditorMcp
             Version version;
             if (spelled == null || !Version.TryParse(spelled, out version))
             {
-                return Invalid("版の標準の表記でない。", out code, out message);
+                return Invalid("バージョン番号の標準の表記でない。", out code, out message);
             }
 
             value = version;

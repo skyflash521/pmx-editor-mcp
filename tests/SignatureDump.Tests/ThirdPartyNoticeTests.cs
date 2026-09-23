@@ -76,7 +76,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             FormatException error = Assert.Throws<FormatException>(
                 () => ShippingLedger.Read(new[] { Ledger("asset=a.dll|Some.Package|") }));
 
-            Assert.Contains("版が無い", error.Message, StringComparison.Ordinal);
+            Assert.Contains("バージョンが無い", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]

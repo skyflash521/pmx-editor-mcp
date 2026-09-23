@@ -33,7 +33,7 @@ namespace PmxEditorMcp.SignatureDump
                     { PingName, "ホストが応答することを確かめる。" },
                     {
                         SdkStatusName,
-                        "ホストが稼働しているSDKの版・中継を作った時点のSDKの版・中継を作れなかった"
+                        "ホストが稼働しているSDKのバージョン・中継を作った時点のSDKのバージョン・中継を作れなかった"
                             + "行・呼び出しの失敗で無効にした行・ホストがツールとして答える名前を"
                             + "返す。その名前に " + PingName + " と " + SdkStatusName
                             + " は入らない——どちらもホストの接続自身が受け持つ。"

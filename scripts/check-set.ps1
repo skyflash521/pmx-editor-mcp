@@ -754,7 +754,7 @@ function Test-FormDerivation {
 
     $tables = Get-PackageTables
     Assert-DerivedForms -What '配布パッケージの表' -Forms @(& $Checks['配布パッケージの生成'].Forms) `
-        -Named (@($wholeForm, '版の食い違い') +
+        -Named (@($wholeForm, 'バージョンの食い違い') +
             @($tables.forbidden | ForEach-Object { '再配布できない物.' + $_ }) +
             @($tables.copies | ForEach-Object { '写しの書き換え.' + $_ }) +
             @($tables.contents | ForEach-Object { '内容物の欠落.' + $_ }))
@@ -784,7 +784,7 @@ function Get-PackageSpoils {
 
     $tables = Get-PackageTables
     $spoils = [ordered]@{
-        '版の食い違い' = @{ Spoil = { }; Code = 'PACKAGE_VERSION' }
+        'バージョンの食い違い' = @{ Spoil = { }; Code = 'PACKAGE_VERSION' }
     }
 
     foreach ($named in $tables.forbidden) {
@@ -815,7 +815,7 @@ function Test-PackageContents {
     <#
         .SYNOPSIS
         内容物を確かめる側が、中身を違えたときに落ちることを見る。通しでは組み立てたものが通り、
-        組み立てる側が版を綴りで持っていないことを見る。形を指したときは、その違えを写しへ入れた
+        組み立てる側がバージョンを綴りで持っていないことを見る。形を指したときは、その違えを写しへ入れた
         実行が落ちることを見る——組み立てた本体は配布物なので、こちらで傷つけない。
     #>
     param([string]$Form)
@@ -831,7 +831,7 @@ function Test-PackageContents {
         $literal = @(Get-ChildItem scripts/package*.ps1 |
             Select-String -Pattern $version -SimpleMatch)
         if ($literal.Count -ne 0) {
-            throw ("組み立てる側が版を綴りで持っている: " +
+            throw ("組み立てる側がバージョンを綴りで持っている: " +
                 (($literal | ForEach-Object { $_.Path + ':' + $_.LineNumber }) -join '・'))
         }
 
@@ -845,7 +845,7 @@ function Test-PackageContents {
         if (-not $spoils.Contains($Form)) { throw "知らない形: $Form" }
 
         & $spoils[$Form].Spoil
-        $asked = if ($Form -eq '版の食い違い') { '9.9.9' } else { $version }
+        $asked = if ($Form -eq 'バージョンの食い違い') { '9.9.9' } else { $version }
 
         $said = ''
         try {

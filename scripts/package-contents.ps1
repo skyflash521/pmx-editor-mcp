@@ -1,6 +1,6 @@
 # 組み立てた配布パッケージの中身を確かめる。
 # 並べたものが過不足なく在ること、再配布を禁じられている物が混じっていないこと、写しが元と
-# バイトで一致すること、実行ファイルが名乗る版が渡された版と合うことを見る。
+# バイトで一致すること、実行ファイルが名乗るバージョンが渡されたバージョンと合うことを見る。
 # 組み立てと別に呼べるようにしてあるのは、中身を違えたときに落ちることを確かめられるようにする
 # ためである——落ちない検査は、通っても何も言っていない。
 [CmdletBinding()]
@@ -9,7 +9,7 @@ param(
     [Parameter(Mandatory = $true, ParameterSetName = 'Check')]
     [string]$Staged,
 
-    # 実行ファイルが名乗るはずの版。
+    # 実行ファイルが名乗るはずのバージョン。
     [Parameter(Mandatory = $true, ParameterSetName = 'Check')]
     [string]$Version,
 
@@ -28,7 +28,7 @@ $Expected = @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe", "INSTALL.md", "LICE
 # 再配布を禁じられている物。PMXエディタ配布物の利用規約が、パッケージ内データの再配布を禁じる。
 $Forbidden = @("PEPlugin.dll", "SlimDX.dll")
 
-# 版を名乗るはずの実行ファイル。
+# バージョンを名乗るはずの実行ファイル。
 $Versioned = @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe")
 
 # 配布物へ入る写しと、その原本。写した先が1バイトも違わないことを見る。
@@ -71,8 +71,8 @@ foreach ($name in $Copies.Keys) {
     }
 }
 
-# 名乗る版は4つ組で、与えられた版は3つ組で書く。書き出しが同じだけでは合ったことにならない
-# ——末尾の数が桁を増やした成果物が、与えられた版を前に置いた一致で通ってしまう。数の組にそろえてから
+# 名乗るバージョンは4つ組で、与えられたバージョンは3つ組で書く。書き出しが同じだけでは合ったことにならない
+# ——末尾の数が桁を増やした成果物が、与えられたバージョンを前に置いた一致で通ってしまう。数の組にそろえてから
 # 比べる。
 $wanted = [version]$Version
 foreach ($name in $Versioned) {
@@ -82,7 +82,7 @@ foreach ($name in $Versioned) {
     $same = $parsed -and $told.Major -eq $wanted.Major -and $told.Minor -eq $wanted.Minor `
         -and $told.Build -eq $wanted.Build
     if (-not $same) {
-        throw "PACKAGE_VERSION: $name が名乗る版が $Version と合わない: $said"
+        throw "PACKAGE_VERSION: $name が名乗るバージョンが $Version と合わない: $said"
     }
 }
 

@@ -23,14 +23,14 @@ $distribution = Join-Path $repository "dist"
 function Get-Version {
     <#
         .SYNOPSIS
-        配布の版。追跡下の Directory.Build.props が定める。綴りから読むのではなく MSBuild に
+        配布のバージョン。追跡下の Directory.Build.props が定める。綴りから読むのではなく MSBuild に
         評価させて取る——条件や継承で決まる値を、こちらで組み立て直さない。
     #>
     $said = dotnet msbuild $hostProject -getProperty:Version
-    if ($LASTEXITCODE -ne 0) { throw "版を読めない。" }
+    if ($LASTEXITCODE -ne 0) { throw "バージョンを読めない。" }
 
     $version = $said.Trim()
-    if (-not $version) { throw "版が空である。" }
+    if (-not $version) { throw "バージョンが空である。" }
 
     $version
 }

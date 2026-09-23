@@ -307,14 +307,14 @@ $cases['起動の記録'] = {
     }
 }
 
-$cases['版の食い違い'] = {
+$cases['バージョンの食い違い'] = {
     # 断られるのは繋ぎに来た側だけで、待受もホストの状態も変わらない。
     $editor = Get-SharedEditor
 
-    # 版が合わなければホストは断って接続を切る。切ったことは、こちらから閉じずに待てば分かる
+    # バージョンが合わなければホストは断って接続を切る。切ったことは、こちらから閉じずに待てば分かる
     # ——クライアントは、切断が要るエラー応答のあとの切断を専用の終了コードで名乗る。
     $ran = Invoke-Client -EditorProcessId $editor -Requests @('handshake', '{"protocol":2}')
-    Assert-Client -Ran $ran -Code $ClosedAfterDisconnectingErrorCode -What '版の食い違い'
+    Assert-Client -Ran $ran -Code $ClosedAfterDisconnectingErrorCode -What 'バージョンの食い違い'
 }
 
 $cases['パイプの権限'] = {

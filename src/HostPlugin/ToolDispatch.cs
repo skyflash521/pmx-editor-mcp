@@ -5346,10 +5346,10 @@ namespace PmxEditorMcp
                         return "中継を持たない呼び出し: " + rowKey;
 
                     case SdkRelayRefusal.Unresolved:
-                        return "この版のSDKでは組み立てられなかった呼び出し: " + rowKey;
+                        return "このバージョンのSDKでは組み立てられなかった呼び出し: " + rowKey;
 
                     case SdkRelayRefusal.Disabled:
-                        return "この版のSDKに無くなった呼び出し: " + rowKey;
+                        return "このバージョンのSDKに無くなった呼び出し: " + rowKey;
 
                     default:
                         return "断られた呼び出し: " + rowKey;

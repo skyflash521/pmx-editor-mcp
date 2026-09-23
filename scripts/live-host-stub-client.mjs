@@ -11,7 +11,7 @@ import process from "node:process";
 /** 待受のパイプ名の付け方。ホスト側の実装が定める。 */
 const PIPE_PREFIX = "pmx-editor-mcp-";
 
-/** 版が合わないハンドシェイクへホストが返すエラーコード。共通契約が定める。 */
+/** バージョンが合わないハンドシェイクへホストが返すエラーコード。共通契約が定める。 */
 const PROTOCOL_MISMATCH = -32001;
 
 /** 題材が違える形を伝える環境変数。操作役・待受・この代わりが同じ値を読む。 */
@@ -77,7 +77,7 @@ async function hold(editor, broken) {
     return broken === "client.holdCode" ? EXIT_OK : EXIT_CLOSED_WHILE_HOLDING;
 }
 
-/** 版の合わないハンドシェイクへの答え。断って切ることまでを言う。 */
+/** バージョンの合わないハンドシェイクへの答え。断って切ることまでを言う。 */
 function mismatched(broken) {
     console.log("handshake {\"protocol\":2} -> エラー " + PROTOCOL_MISMATCH);
     console.log("切断が要るエラー応答(" + PROTOCOL_MISMATCH

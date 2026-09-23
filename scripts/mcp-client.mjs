@@ -6,7 +6,7 @@ import { spawn } from "node:child_process";
 /** 要求と応答の jsonrpc に固定で置く値。 */
 const JSONRPC_VERSION = "2.0";
 
-/** MCPの版。クライアントが名乗り、サーバーが合わせる。 */
+/** MCPのバージョン。クライアントが名乗り、サーバーが合わせる。 */
 export const MCP_PROTOCOL_VERSION = "2025-06-18";
 
 /** 1件の応答を待つ上限。ホスト側の処理上限へ往復の余裕を足した値。 */

@@ -9,7 +9,7 @@ namespace PmxEditorMcp.SignatureDump
     /// <summary>
     /// 同梱する第三者ライセンス表示を、出荷台帳と転記元から組み立てて書き出す配線。
     /// 書き出す先は配布物の中で、追跡下には残さない——出荷する物を数えれば毎回同じ物が作れるので、
-    /// 写しを版管理に置いても読む相手がいない。
+    /// 写しをバージョン管理に置いても読む相手がいない。
     /// </summary>
     public static class ThirdPartyNoticeRunner
     {

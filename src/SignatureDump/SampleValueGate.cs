@@ -333,7 +333,7 @@ namespace PmxEditorMcp.SignatureDump
             if (string.Equals(typeName, VersionTypeName, StringComparison.Ordinal))
             {
                 Version version;
-                RequireThat(Version.TryParse(text, out version), place + " が版の表記でない。");
+                RequireThat(Version.TryParse(text, out version), place + " がバージョン番号の表記でない。");
             }
         }
 

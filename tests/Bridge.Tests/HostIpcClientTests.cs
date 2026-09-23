@@ -125,7 +125,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Theory]
-        // 別の要求の識別子・版の不一致・解析できない本文。
+        // 別の要求の識別子・バージョンの不一致・解析できない本文。
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":OTHER_ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
         [InlineData("{\"jsonrpc\":\"1.0\",\"id\":ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
         [InlineData("これはJSONではない")]

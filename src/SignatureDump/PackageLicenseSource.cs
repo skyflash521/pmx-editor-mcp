@@ -72,7 +72,7 @@ namespace PmxEditorMcp.SignatureDump
             return new PackageLicenseSource(package, expression, files, carriesBody);
         }
 
-        /// <summary>パッケージを展開してある場所。綴りも版も小文字へそろえた名前になる。</summary>
+        /// <summary>パッケージを展開してある場所。綴りもバージョンも小文字へそろえた名前になる。</summary>
         public static string PathOf(string packageRoot, ShippedPackage package)
         {
             if (packageRoot == null)

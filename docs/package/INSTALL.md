@@ -37,8 +37,8 @@ PMXエディタをMCP経由で操作できるようにする。
 | 項目 | 確かめる |
 |---|---|
 | x64 の Windows | OSが64ビットであること |
-| .NET Framework 4.8 以上 | レジストリ `HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full` の `Version` が `4.8` 以上(文字列でなく版として比べる) |
-| PMXエディタ(x64版) | 導入フォルダに `PmxEditor_x64.exe` が在る |
+| .NET Framework 4.8 以上 | レジストリ `HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full` の `Version` が `4.8` 以上(文字列でなくバージョン番号として比べる) |
+| PMXエディタ(x64版) 0.2.7.3 以上 | 導入フォルダに `PmxEditor_x64.exe` が在り、ファイルバージョンが `0.2.7.3` 以上。導入フォルダの `Lib\PEPlugin\PEPlugin.dll` のファイルバージョンが `0.0.8.9` 以上(いずれも文字列でなくバージョン番号として比べる) |
 | 書き込み | `_plugin\User` が `C:\Program Files` の下にあるなら、管理者権限で実行する |
 
 ## 置き場
@@ -181,8 +181,8 @@ foreach ($editor in (Get-TargetEditor -FinalPath $target)) {
 展開した場所から `%LOCALAPPDATA%\pmx-editor-mcp` へ5点とも複写し、複写した全ファイルのブロック
 属性を解除する。上書きするのはこの5点だけとする。
 
-確かめる: 導入先に5点が揃っており、5点ともハッシュが展開した場所のそれと一致する。ファイル版では
-足りない——版を持つのは `.exe` と `.dll` だけで、複写が途中で切れても同じ版なら一致する。
+確かめる: 導入先に5点が揃っており、5点ともハッシュが展開した場所のそれと一致する。ファイルバージョンでは
+足りない——バージョンを持つのは `.exe` と `.dll` だけで、複写が途中で切れても同じバージョンなら一致する。
 
 ## ホストを配置する
 
@@ -304,6 +304,6 @@ Bridge のプロセスは、登録したMCPクライアントが起こす。**�
 [止める](#止める)を行う。`_plugin\User` が `C:\Program Files` の下にあるなら、管理者権限で実行し
 直す。
 
-### 入っている版を知る
+### 入っているバージョンを知る
 
-`%LOCALAPPDATA%\pmx-editor-mcp\PmxEditorMcp.Bridge.exe` のファイル版を見る。
+`%LOCALAPPDATA%\pmx-editor-mcp\PmxEditorMcp.Bridge.exe` のファイルバージョンを見る。

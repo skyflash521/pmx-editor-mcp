@@ -189,7 +189,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AVersionThatIsNotTheStandardNotationStops()
         {
-            Rejects("版の表記でない", Replaced("System.Version", "いち", "2.0"));
+            Rejects("バージョン番号の表記でない", Replaced("System.Version", "いち", "2.0"));
         }
 
         [Fact]

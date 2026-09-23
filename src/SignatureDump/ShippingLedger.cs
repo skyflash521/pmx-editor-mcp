@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>出荷する物の出所になるパッケージ。綴りも版も、発行が解決した値そのままである。</summary>
+    /// <summary>出荷する物の出所になるパッケージ。綴りもバージョンも、発行が解決した値そのままである。</summary>
     public sealed class ShippedPackage : IEquatable<ShippedPackage>
     {
         public ShippedPackage(string id, string version)
@@ -16,7 +16,7 @@ namespace PmxEditorMcp.SignatureDump
 
             if (string.IsNullOrEmpty(version))
             {
-                throw new ArgumentException("パッケージの版が空である。", nameof(version));
+                throw new ArgumentException("パッケージのバージョンが空である。", nameof(version));
             }
 
             Id = id;
@@ -141,7 +141,7 @@ namespace PmxEditorMcp.SignatureDump
 
                 if (parts[2].Length == 0)
                 {
-                    throw new FormatException("出所はあるのに版が無い資産がある: " + line);
+                    throw new FormatException("出所はあるのにバージョンが無い資産がある: " + line);
                 }
 
                 packages.Add(new ShippedPackage(parts[1], parts[2]));

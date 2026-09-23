@@ -37,8 +37,8 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// 行キーから中継を引く表。生成に使ったSDKの版を持ち、解決できない行はその行だけを断る
-    /// ——版が違うだけで待受ごと止めると、エンドユーザーには何も渡らない。
+    /// 行キーから中継を引く表。生成に使ったSDKのバージョンを持ち、解決できない行はその行だけを断る
+    /// ——バージョンが違うだけで待受ごと止めると、エンドユーザーには何も渡らない。
     /// 複数のスレッドから同時に呼んでよい。
     /// </summary>
     public sealed class SdkRelayTable
@@ -52,7 +52,7 @@ namespace PmxEditorMcp
         private readonly object _gate = new object();
 
         /// <summary>
-        /// 生成に使ったSDKの版・中継を作った能力対応表の指紋・解決できた行の中継・生成の時点で
+        /// 生成に使ったSDKのバージョン・中継を作った能力対応表の指紋・解決できた行の中継・生成の時点で
         /// 解決できなかった行を与えて生成する。
         /// </summary>
         public SdkRelayTable(
@@ -87,7 +87,7 @@ namespace PmxEditorMcp
             _unresolved = new HashSet<string>(unresolved, StringComparer.Ordinal);
         }
 
-        /// <summary>生成に使ったSDKの版。</summary>
+        /// <summary>生成に使ったSDKのバージョン。</summary>
         public string GeneratedSdkVersion { get; }
 
         /// <summary>中継を作った能力対応表の指紋。ブリッジの定義と同じ表から作られたことを示す。</summary>
@@ -119,7 +119,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 行キーの指すメンバーを呼ぶ。断ったときは偽で、<paramref name="refusal"/> がその理由。
-        /// 読み込まれたSDKが生成時と違う版で、生成時に在ったメンバーが失われている場合は、その行の
+        /// 読み込まれたSDKが生成時と違うバージョンで、生成時に在ったメンバーが失われている場合は、その行の
         /// 呼び出しが型かメンバーの解決の失敗として落ちるので、それを捕らえてその行だけを断り、
         /// 以後その行を無効にする。
         /// </summary>
@@ -182,7 +182,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// 読み込まれたSDKの型かメンバーへ届かないことを表す失敗かどうか。無くなった場合だけでなく
         /// 公開をやめた場合も届かないので、どちらも同じ扱いにする。処理そのものの失敗は含めない
-        /// ——含めると、SDKが返した誤りを版の違いとして無効化してしまう。
+        /// ——含めると、SDKが返した誤りをバージョンの違いとして無効化してしまう。
         /// </summary>
         private static bool IsResolutionFailure(Exception exception)
         {

@@ -9,7 +9,7 @@ import process from "node:process";
 /** 要求と応答の jsonrpc に固定で置く値。 */
 const JSONRPC_VERSION = "2.0";
 
-/** MCPの版。実行器が名乗る版に合わせる。 */
+/** MCPのバージョン。実行器が名乗るバージョンに合わせる。 */
 const MCP_PROTOCOL_VERSION = "2025-06-18";
 
 /** 呼び先が無いことを表すJSON-RPCの綴り。 */

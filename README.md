@@ -26,7 +26,7 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 | PowerShell | `pwsh` 7.6以上。Windows標準の `powershell.exe` は別物で、スクリプトはこれでは動かない |
 | lychee | 文書のリンク検査に用いる。`winget install lycheeverse.lychee` |
 | OS | Windows x64。表示言語は日本語([操作役のスクリプト](scripts/host-control.ps1)がメニューの文言と確認ボタンの表示名を手がかりにする) |
-| PMXエディタ | 各自が導入したx64版の配布物。操作の対象は `PmxEditor_x64.exe` |
+| PMXエディタ | 各自が導入したx64版の配布物で、0.2.7.3 以上(同梱の `PEPlugin.dll` は 0.0.8.9 以上)。操作の対象は `PmxEditor_x64.exe` |
 | セッション | ログオンした対話的なデスクトップ。実機に触る検査はエディタの画面を操作する |
 
 ### 構築手順

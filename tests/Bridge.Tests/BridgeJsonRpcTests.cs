@@ -139,7 +139,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("[1,2]")]
         [InlineData("\"pong\"")]
         [InlineData("null")]
-        // 版の欠落と不一致。
+        // バージョンの欠落と不一致。
         [InlineData("{\"id\":3,\"result\":1}")]
         [InlineData("{\"jsonrpc\":\"1.0\",\"id\":3,\"result\":1}")]
         [InlineData("{\"jsonrpc\":2,\"id\":3,\"result\":1}")]

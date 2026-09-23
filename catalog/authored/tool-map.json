@@ -1067,7 +1067,7 @@
     {
       "signatureKey": "PEPlugin.IPERegisteredPluginInfo.Version()",
       "editKind": "read",
-      "basis": "登録プラグインの版を返すだけで、エディタの状態を動かさない。",
+      "basis": "登録プラグインのバージョンを返すだけで、エディタの状態を動かさない。",
       "embeddedIn": [
         "session_get_plugin_info",
         "session_get_c_plugin_info_system_connector"
@@ -1172,7 +1172,7 @@
     {
       "signatureKey": "PEPlugin.IPESystemConnector.PEPluginAssemblyVersion()",
       "editKind": "read",
-      "basis": "PEプラグインのアセンブリの版を返すだけで、エディタの状態を動かさない。",
+      "basis": "PEプラグインのアセンブリバージョンを返すだけで、エディタの状態を動かさない。",
       "embeddedIn": [
         "session_get_system_connector"
       ]
@@ -2486,7 +2486,7 @@
       "updateSpec": {
         "refresh": []
       },
-      "basis": "いまのPMXを複製してPMXの版を変え、まとめて反映するので、複製編集型に当たる。",
+      "basis": "いまのPMXを複製してPMXのバージョンを変え、まとめて反映するので、複製編集型に当たる。",
       "embeddedIn": [
         "model_list_headers",
         "model_update_headers"
@@ -13903,7 +13903,7 @@
     {
       "signatureKey": "PXCPlugin.PXPluginInfo.Version()",
       "editKind": "read",
-      "basis": "プラグインの版を返すだけで、エディタの状態を動かさない。",
+      "basis": "プラグインのバージョンを返すだけで、エディタの状態を動かさない。",
       "embeddedIn": [
         "session_get_c_plugin_info_system_control",
         "session_get_pe_plugin_info"
