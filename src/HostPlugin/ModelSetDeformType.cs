@@ -149,11 +149,12 @@ namespace PmxEditorMcp
                 changed += before[at].Holds(picked[at]) ? 0 : 1;
             }
 
-            return ComposedEditResult.Complete(
+            return ComposedEditResult.CompleteRewriting(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { ChangedName, changed },
-                });
+                },
+                new[] { ScreenRefresh.WeightKind });
         }
 
         private static void Written(IPXVertex vertex, string operation, string deform)

@@ -754,7 +754,7 @@ namespace PmxEditorMcp.Tests
 
         public void UpdateModel_Weight()
         {
-            throw new NotSupportedException();
+            Remade.Add(ScreenRefresh.WeightKind);
         }
 
         public bool[] BodyVisible

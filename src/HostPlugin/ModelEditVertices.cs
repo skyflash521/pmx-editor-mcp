@@ -202,7 +202,7 @@ namespace PmxEditorMcp
                 vertex.Position = Written(vertex.Position, axis, middle);
             }
 
-            return Answer(picked.Count, 0, 0, None(model));
+            return Answer(picked.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
         }
 
         private static ComposedEditResult Copied(
@@ -286,17 +286,28 @@ namespace PmxEditorMcp
             }
         }
 
+        /// <summary>
+        /// 結末を作る。<paramref name="rewritten"/> は並びを変えずに中身だけを書き換えた種類で、
+        /// 並びを変えうる操作では null。
+        /// </summary>
         private static ComposedEditResult Answer(
-            int changed, int removed, int faces, IDictionary<string, object> added)
+            int changed,
+            int removed,
+            int faces,
+            IDictionary<string, object> added,
+            IList<string> rewritten = null)
         {
-            return ComposedEditResult.Complete(
-                new Dictionary<string, object>(StringComparer.Ordinal)
-                {
-                    { ChangedName, changed },
-                    { RemovedName, removed },
-                    { RemovedFacesName, faces },
-                    { AddedName, added },
-                });
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { ChangedName, changed },
+                { RemovedName, removed },
+                { RemovedFacesName, faces },
+                { AddedName, added },
+            };
+
+            return rewritten == null
+                ? ComposedEditResult.Complete(value)
+                : ComposedEditResult.CompleteRewriting(value, rewritten);
         }
 
         private static IDictionary<string, object> None(IPXPmx model)

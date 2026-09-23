@@ -678,6 +678,35 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AligningRemakesOnlyTheVerticesInTheView()
+        {
+            _fixture.Model.Vertex.Add(new FakeVertex(1f, 2f, 3f));
+            _fixture.Model.Vertex.Add(new FakeVertex(5f, 6f, 7f));
+
+            EditVertices(
+                Operation(ModelEditVertices.Align),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditVertices.AxisName, ModelEditVertices.AxisY));
+
+            Assert.Equal(new[] { ElementKinds.Vertex }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
+        public void WeldingStillRebuildsTheWholeModelInTheView()
+        {
+            IList<IPXVertex> vertices = Quad();
+            Material("材質", Face(vertices, 0, 1, 2), Face(vertices, 0, 2, 3));
+
+            EditVertices(
+                Operation(ModelEditVertices.Weld),
+                ComposedEditFixture.Given("indices", new object[] { 0, 1 }));
+
+            Assert.Empty(_fixture.View.Remade);
+            Assert.Equal(1, _fixture.View.Redraws);
+        }
+
+        [Fact]
         public void AligningPutsThePickedVerticesOnTheAverageOfTheChosenAxis()
         {
             _fixture.Model.Vertex.Add(new FakeVertex(1f, 2f, 3f));

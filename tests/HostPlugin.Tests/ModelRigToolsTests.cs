@@ -59,6 +59,30 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void HidingTipBonesRemakesOnlyTheBonesInTheView()
+        {
+            IList<IPXBone> bones = Bones("親", "子");
+            bones[1].Parent = bones[0];
+
+            Bone(Operation(ModelEditBones.HideTipBones), ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(new[] { ElementKinds.Bone }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
+        public void RelevelingStillRebuildsTheWholeModelInTheView()
+        {
+            IList<IPXBone> bones = Bones("子", "親");
+            bones[0].Parent = bones[1];
+
+            Bone(Operation(ModelEditBones.RelevelHierarchy));
+
+            Assert.Empty(_fixture.View.Remade);
+            Assert.Equal(1, _fixture.View.Redraws);
+        }
+
+        [Fact]
         public void TheTipBoneBecomesTheGapToThatBone()
         {
             IList<IPXBone> bones = Bones("元", "先");

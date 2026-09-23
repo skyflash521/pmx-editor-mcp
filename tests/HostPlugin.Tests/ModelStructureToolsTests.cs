@@ -472,6 +472,35 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void NamingBodiesRemakesOnlyTheBodiesInTheView()
+        {
+            IPXBone bone = Bone("腕");
+            Body("古い名前", bone);
+
+            Copy(
+                Operation(ModelCopyFromReference.BodyNameFromBone),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(new[] { ElementKinds.Body }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
+        public void MovingJointsRemakesOnlyTheJointsInTheView()
+        {
+            FakeBone bone = (FakeBone)Bone("腕");
+            bone.Position = new V3(1f, 2f, 3f);
+            Joint("Joint", Body("一", bone), Body("二", null));
+
+            Copy(
+                Operation(ModelCopyFromReference.JointPositionFromBone),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(new[] { ElementKinds.Joint }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
         public void AJointTakesTheNameOfTheFirstBodyItTies()
         {
             FakeBody first = Body("一", null);

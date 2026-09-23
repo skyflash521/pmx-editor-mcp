@@ -103,11 +103,12 @@ namespace PmxEditorMcp
                 ? chosen.Select(at => model.Body[at]).Count(Named)
                 : chosen.Select(at => model.Joint[at]).Count(joint => Taken(model, joint, operation));
 
-            return ComposedEditResult.Complete(
+            return ComposedEditResult.CompleteRewriting(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { ChangedName, changed },
-                });
+                },
+                new[] { bodies ? ElementKinds.Body : ElementKinds.Joint });
         }
 
         /// <summary>剛体の名前を、指すボーンの名前にする。変えたなら真を返す。</summary>

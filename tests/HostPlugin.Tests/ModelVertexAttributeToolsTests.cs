@@ -336,6 +336,39 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RewritingTheWeightsRemakesOnlyTheWeightsInTheView()
+        {
+            IList<IPXBone> bones = Bones("一", "二");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Bone1 = bones[0];
+            vertex.Weight1 = 1f;
+
+            Weights(
+                Operation(ModelEditWeights.Normalize),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(new[] { ScreenRefresh.WeightKind }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
+        public void ConvertingTheDeformTypeRemakesOnlyTheWeightsInTheView()
+        {
+            IList<IPXBone> bones = Bones("一");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Bone1 = bones[0];
+            vertex.Weight1 = 1f;
+
+            Deform(
+                Operation(ModelSetDeformType.Convert),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelSetDeformType.DeformName, ModelSetDeformType.Bdef1));
+
+            Assert.Equal(new[] { ScreenRefresh.WeightKind }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
         public void NormalisingAVertexWithNoWeightAtAllPutsItAllOnItsFirstBone()
         {
             IList<IPXBone> bones = Bones("一", "二");

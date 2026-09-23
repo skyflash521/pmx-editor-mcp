@@ -252,7 +252,11 @@ namespace PmxEditorMcp
                     return Dissolved(model, picked);
 
                 default:
-                    return Answer(new int[0], picked.Count(bone => Set(model, bone, operation, axis)), 0);
+                    return Answer(
+                        new int[0],
+                        picked.Count(bone => Set(model, bone, operation, axis)),
+                        0,
+                        new[] { ElementKinds.Bone });
             }
         }
 
@@ -819,15 +823,23 @@ namespace PmxEditorMcp
 
         private const string IkTail = "IK";
 
-        private static ComposedEditResult Answer(IList<int> added, int changed, int removed)
+        /// <summary>
+        /// 結末を作る。<paramref name="rewritten"/> は並びを変えずに中身だけを書き換えた種類で、
+        /// 並びを変えうる操作では null。
+        /// </summary>
+        private static ComposedEditResult Answer(
+            IList<int> added, int changed, int removed, IList<string> rewritten = null)
         {
-            return ComposedEditResult.Complete(
-                new Dictionary<string, object>(StringComparer.Ordinal)
-                {
-                    { AddedName, added.Cast<object>().ToArray() },
-                    { ChangedName, changed },
-                    { RemovedName, removed },
-                });
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { AddedName, added.Cast<object>().ToArray() },
+                { ChangedName, changed },
+                { RemovedName, removed },
+            };
+
+            return rewritten == null
+                ? ComposedEditResult.Complete(value)
+                : ComposedEditResult.CompleteRewriting(value, rewritten);
         }
     }
 }

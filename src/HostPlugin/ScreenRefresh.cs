@@ -93,7 +93,14 @@ namespace PmxEditorMcp
                 { ElementKinds.Bone, view => view.UpdateModel_Bone() },
                 { ElementKinds.Body, view => view.UpdateModel_Body() },
                 { ElementKinds.Joint, view => view.UpdateModel_Joint() },
+                { WeightKind, view => view.UpdateModel_Weight() },
             };
+
+        /// <summary>
+        /// 頂点のウェイトと変形方式だけを書き換えたことを表す区分の名前。頂点の区分と同じく頂点の
+        /// バッファを作り直し、ウェイトの表示も作り直す。
+        /// </summary>
+        public const string WeightKind = "weight";
 
         /// <summary>
         /// 何も映さない段。映し直しをエディタ自身が行う経路が、ホストからは何もしないために使う。

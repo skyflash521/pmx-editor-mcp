@@ -182,11 +182,12 @@ namespace PmxEditorMcp
                 changed += VertexWeights.Same(picked[at], before[at]) ? 0 : 1;
             }
 
-            return ComposedEditResult.Complete(
+            return ComposedEditResult.CompleteRewriting(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { ChangedName, changed },
-                });
+                },
+                new[] { ScreenRefresh.WeightKind });
         }
 
         private static IList<KeyValuePair<IPXBone, float>> Averaged(IList<IPXVertex> picked)
