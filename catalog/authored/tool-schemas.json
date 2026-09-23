@@ -150,6 +150,30 @@
       }
     },
     {
+      "tool": "editor_get_prompt",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "shown",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          },
+          {
+            "name": "text",
+            "origin": "hostOutput",
+            "shape": "text"
+          }
+        ]
+      }
+    },
+    {
       "tool": "editor_get_screen_structure",
       "branches": [
         {

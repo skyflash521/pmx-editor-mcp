@@ -27,6 +27,8 @@ namespace PmxEditorMcp
 
         private const string SettingType = "PEPlugin.View.IPEViewSettingConnector";
 
+        private const int PromptTextLimitMs = 500;
+
         private readonly object _operationGate = new object();
 
         private Form _uiAnchor;
@@ -229,6 +231,9 @@ namespace PmxEditorMcp
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
                 UiTree.AddTo(methods);
+                EditorPrompt.AddTo(
+                    methods,
+                    new DesktopModalWindowProbe(TimeSpan.FromMilliseconds(PromptTextLimitMs)));
                 bool debugHooks = DebugHooks.ReadFromEnvironment();
                 DebugEventInjection.AddTo(methods, debugHooks);
                 DebugLargeText.AddTo(methods, debugHooks);

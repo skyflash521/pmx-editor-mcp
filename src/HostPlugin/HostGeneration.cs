@@ -237,7 +237,9 @@ namespace PmxEditorMcp
         private static string Shown(string shown)
         {
             return "エディタが人の応答を待つ表示を出していて進められない。表示へ答えると進む。"
-                + "この呼び出しが実行されたかどうかは確かめられない。表示: " + shown;
+                + "この呼び出しが実行されたかどうかは確かめられない。表示が消えてから対象を読み直し、"
+                + "いまの状態を確かめる。表示が消えたかは " + EditorPrompt.ToolName
+                + " で確かめる。表示: " + shown;
         }
 
         /// <summary>

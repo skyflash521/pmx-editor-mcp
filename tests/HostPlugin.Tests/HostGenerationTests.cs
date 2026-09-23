@@ -34,6 +34,8 @@ namespace PmxEditorMcp.Tests
             Assert.False(invocation.DidRun);
             Assert.Contains(Shown, invocation.Unavailable);
             Assert.Contains("確かめられない", invocation.Unavailable);
+            Assert.Contains("読み直し", invocation.Unavailable);
+            Assert.Contains(EditorPrompt.ToolName, invocation.Unavailable);
         }
 
         [Fact]

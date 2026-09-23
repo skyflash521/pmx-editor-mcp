@@ -136,6 +136,20 @@
               }
             ]
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_get_prompt",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "shown",
+                "equals": false
+              }
+            ]
+          }
         }
       ]
     },
