@@ -121,8 +121,8 @@ namespace PmxEditorMcp
         /// 預かり、その実体を並びへ加える呼び出しが、自分が相手にするPMXの中で解いて書き込む。
         /// 実体が捨てられれば預かりも消えるように、実体を弱く指す表に持つ。
         /// </summary>
-        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, IList<DeferredWrite>> _deferred =
-            new System.Runtime.CompilerServices.ConditionalWeakTable<object, IList<DeferredWrite>>();
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites> _deferred =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites>();
 
         private ToolDispatch(
             SdkRelayTable relay,
@@ -1877,27 +1877,14 @@ namespace PmxEditorMcp
         /// </summary>
         private void Defer(object keeper, DeferredWrite pending)
         {
-            IList<DeferredWrite> held;
+            DeferredWrites held;
             if (!_deferred.TryGetValue(keeper, out held))
             {
-                held = new List<DeferredWrite>();
+                held = new DeferredWrites();
                 _deferred.Add(keeper, held);
             }
 
-            // 同じ相手の同じ項目を二度書いたら、後の値だけを残す——直に書くときと同じ結末にする。
-            for (int at = 0; at < held.Count; at++)
-            {
-                if (ReferenceEquals(held[at].Target, pending.Target)
-                    && string.Equals(
-                        held[at].Field.RowKey, pending.Field.RowKey, StringComparison.Ordinal))
-                {
-                    held[at] = pending;
-
-                    return;
-                }
-            }
-
-            held.Add(pending);
+            held.Put(pending);
         }
 
         /// <summary>
@@ -1906,7 +1893,7 @@ namespace PmxEditorMcp
         /// </summary>
         private void Carry(object item, object owner)
         {
-            IList<DeferredWrite> held;
+            DeferredWrites held;
             if (!_deferred.TryGetValue(item, out held))
             {
                 return;
@@ -1930,7 +1917,7 @@ namespace PmxEditorMcp
             object item, PmxTarget target, ReachedLists reached, out Refusal refused)
         {
             refused = null;
-            IList<DeferredWrite> held;
+            DeferredWrites held;
             if (!_deferred.TryGetValue(item, out held))
             {
                 return true;
@@ -3300,11 +3287,10 @@ namespace PmxEditorMcp
         /// <summary>加え終えたハンドルを解く。</summary>
         private static void Release(McpMethodContext context, IEnumerable<long> handles)
         {
-            foreach (long id in handles)
-            {
-                HandleReleaseResult released;
-                context.Handles.TryRelease((int)id, out released);
-            }
+            HandleReleaseResult released;
+            context.Handles.TryReleaseAll(
+                handles.Select(id => (int)id).Where(context.Handles.IsValid).ToList(),
+                out released);
         }
 
         /// <summary>

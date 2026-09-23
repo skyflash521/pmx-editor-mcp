@@ -416,11 +416,12 @@ namespace PmxEditorMcp
                 .Where(g => g.Count() > 1))
             {
                 IPXMorph kept = group.First();
+                Dictionary<object, IPXMorphOffset> toward = Towards(kept);
                 foreach (IPXMorph dropped in group.Skip(1))
                 {
                     foreach (IPXMorphOffset offset in dropped.Offsets.ToList())
                     {
-                        Take(kept, offset, adding);
+                        Take(kept, toward, offset, adding);
                     }
 
                     model.Morph.Remove(dropped);
@@ -435,20 +436,52 @@ namespace PmxEditorMcp
             return Answer(new int[0], changed, moved.Count);
         }
 
-        private static void Take(IPXMorph kept, IPXMorphOffset offset, bool adding)
+        /// <summary>そのモーフのオフセットを、指す相手ごとに最初の1つで引く表。</summary>
+        private static Dictionary<object, IPXMorphOffset> Towards(IPXMorph morph)
+        {
+            Dictionary<object, IPXMorphOffset> toward =
+                new Dictionary<object, IPXMorphOffset>(ReferenceComparer<object>.Instance);
+            foreach (IPXMorphOffset offset in morph.Offsets)
+            {
+                Remember(toward, offset);
+            }
+
+            return toward;
+        }
+
+        private static void Remember(Dictionary<object, IPXMorphOffset> toward, IPXMorphOffset offset)
+        {
+            object target = Toward(offset);
+            if (target != null && !toward.ContainsKey(target))
+            {
+                toward.Add(target, offset);
+            }
+        }
+
+        /// <summary>
+        /// <paramref name="offset"/> を <paramref name="kept"/> へ移す。<paramref name="toward"/> は
+        /// <paramref name="kept"/> のオフセットを指す相手ごとに引く表で、移したぶんもここへ足す。
+        /// </summary>
+        private static void Take(
+            IPXMorph kept,
+            Dictionary<object, IPXMorphOffset> toward,
+            IPXMorphOffset offset,
+            bool adding)
         {
             if (!adding)
             {
                 kept.Offsets.Add(offset);
+                Remember(toward, offset);
 
                 return;
             }
 
-            IPXMorphOffset held = kept.Offsets.FirstOrDefault(
-                item => ReferenceEquals(Toward(item), Toward(offset)) && Toward(offset) != null);
-            if (held == null)
+            object target = Toward(offset);
+            IPXMorphOffset held;
+            if (target == null || !toward.TryGetValue(target, out held))
             {
                 kept.Offsets.Add(offset);
+                Remember(toward, offset);
 
                 return;
             }

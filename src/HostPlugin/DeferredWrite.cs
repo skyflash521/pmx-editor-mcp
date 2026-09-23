@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
@@ -60,5 +62,56 @@ namespace PmxEditorMcp
 
         /// <summary>書かれた位置。数える先のリストの中で0から数える。</summary>
         public int Position { get; }
+    }
+
+    /// <summary>
+    /// 1つの実体が預かる書き込みの並び。同じ相手の同じ項目は1つだけ持ち、預けた順に並ぶ。
+    /// </summary>
+    public sealed class DeferredWrites : IEnumerable<DeferredWrite>
+    {
+        private readonly List<DeferredWrite> _held = new List<DeferredWrite>();
+
+        private readonly Dictionary<object, Dictionary<string, int>> _at =
+            new Dictionary<object, Dictionary<string, int>>(ReferenceComparer<object>.Instance);
+
+        /// <summary>
+        /// 預かる。同じ相手の同じ項目を二度書いたら、前の位置のまま後の値だけを残す——直に書く
+        /// ときと同じ結末にする。
+        /// </summary>
+        public void Put(DeferredWrite pending)
+        {
+            if (pending == null)
+            {
+                throw new ArgumentNullException(nameof(pending));
+            }
+
+            Dictionary<string, int> fields;
+            if (!_at.TryGetValue(pending.Target, out fields))
+            {
+                fields = new Dictionary<string, int>(StringComparer.Ordinal);
+                _at.Add(pending.Target, fields);
+            }
+
+            int at;
+            if (fields.TryGetValue(pending.Field.RowKey, out at))
+            {
+                _held[at] = pending;
+
+                return;
+            }
+
+            fields.Add(pending.Field.RowKey, _held.Count);
+            _held.Add(pending);
+        }
+
+        public IEnumerator<DeferredWrite> GetEnumerator()
+        {
+            return _held.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }

@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -58,13 +60,28 @@ namespace PmxEditorMcp
             Append(exception == null ? message : message + Environment.NewLine + exception);
         }
 
-        private void Append(string body)
+        /// <summary>並べた行を、1度ファイルを開いて順に追記する。</summary>
+        public void WriteAll(IEnumerable<string> messages)
         {
+            if (messages == null)
+            {
+                throw new ArgumentNullException(nameof(messages));
+            }
+
+            Append(messages.ToArray());
+        }
+
+        private void Append(params string[] bodies)
+        {
+            if (bodies.Length == 0)
+            {
+                return;
+            }
+
             try
             {
-                string entry = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)
-                    + " [" + Thread.CurrentThread.ManagedThreadId.ToString(CultureInfo.InvariantCulture) + "] "
-                    + body;
+                string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)
+                    + " [" + Thread.CurrentThread.ManagedThreadId.ToString(CultureInfo.InvariantCulture) + "] ";
 
                 lock (_gate)
                 {
@@ -72,7 +89,10 @@ namespace PmxEditorMcp
                     using (FileStream stream = new FileStream(FilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
                     using (StreamWriter writer = new StreamWriter(stream, Utf8WithoutBom))
                     {
-                        writer.WriteLine(entry);
+                        foreach (string body in bodies)
+                        {
+                            writer.WriteLine(stamp + body);
+                        }
                     }
                 }
             }

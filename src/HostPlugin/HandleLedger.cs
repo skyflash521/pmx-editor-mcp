@@ -32,6 +32,9 @@ namespace PmxEditorMcp
     {
         private readonly Dictionary<int, Entry> _entries = new Dictionary<int, Entry>();
 
+        /// <summary>依存元ごとの、それへ直に依存する有効なハンドル。発行した順に並ぶ。</summary>
+        private readonly Dictionary<int, List<int>> _dependents = new Dictionary<int, List<int>>();
+
         private readonly object _gate = new object();
 
         private readonly HostLog _log;
@@ -141,6 +144,17 @@ namespace PmxEditorMcp
 
                 _lastId = _issuer.Next();
                 _entries.Add(_lastId, new Entry(type, target, release, listed));
+                foreach (int dependency in listed.Distinct())
+                {
+                    List<int> direct;
+                    if (!_dependents.TryGetValue(dependency, out direct))
+                    {
+                        direct = new List<int>();
+                        _dependents.Add(dependency, direct);
+                    }
+
+                    direct.Add(_lastId);
+                }
 
                 return _lastId;
             }
@@ -217,7 +231,7 @@ namespace PmxEditorMcp
                     return false;
                 }
 
-                taken = Take(Dependents(id).Concat(new[] { id }));
+                taken = Take(Ordered(new[] { id }));
             }
 
             result = ReleaseInOrder(taken);
@@ -246,19 +260,7 @@ namespace PmxEditorMcp
                     return false;
                 }
 
-                List<int> order = new List<int>();
-                foreach (int id in listed)
-                {
-                    foreach (int dependent in Dependents(id).Concat(new[] { id }))
-                    {
-                        if (!order.Contains(dependent))
-                        {
-                            order.Add(dependent);
-                        }
-                    }
-                }
-
-                taken = Take(order);
+                taken = Take(Ordered(listed));
             }
 
             result = ReleaseInOrder(taken);
@@ -275,19 +277,8 @@ namespace PmxEditorMcp
             List<Taken> taken;
             lock (_gate)
             {
-                List<int> order = new List<int>();
-                foreach (int issued in _entries.Keys.Where(i => i > id).OrderByDescending(i => i))
-                {
-                    foreach (int dependent in Dependents(issued).Concat(new[] { issued }))
-                    {
-                        if (!order.Contains(dependent))
-                        {
-                            order.Add(dependent);
-                        }
-                    }
-                }
-
-                taken = Take(order);
+                taken = Take(Ordered(
+                    _entries.Keys.Where(i => i > id).OrderByDescending(i => i).ToList()));
             }
 
             return ReleaseInOrder(taken);
@@ -303,19 +294,7 @@ namespace PmxEditorMcp
             lock (_gate)
             {
                 _closed = true;
-                List<int> order = new List<int>();
-                foreach (int id in _entries.Keys.OrderByDescending(i => i))
-                {
-                    foreach (int dependent in Dependents(id).Concat(new[] { id }))
-                    {
-                        if (!order.Contains(dependent))
-                        {
-                            order.Add(dependent);
-                        }
-                    }
-                }
-
-                taken = Take(order);
+                taken = Take(Ordered(_entries.Keys.OrderByDescending(i => i).ToList()));
             }
 
             HandleReleaseResult result = ReleaseInOrder(taken);
@@ -326,25 +305,56 @@ namespace PmxEditorMcp
             return result;
         }
 
-        /// <summary>そのハンドルへ直に、または間に挟んで依存するハンドル。子が先に並ぶ。</summary>
-        private IList<int> Dependents(int id)
+        /// <summary>
+        /// 並べたハンドルを、それぞれへ依存するハンドルを先に置いて解放する順。子が先に並び、直に
+        /// 依存するものは後に発行したものから並ぶ。重なりは最初の1つだけを残す。
+        /// </summary>
+        private List<int> Ordered(IEnumerable<int> roots)
         {
-            List<int> found = new List<int>();
-            foreach (KeyValuePair<int, Entry> pair in _entries.OrderByDescending(p => p.Key))
+            List<int> order = new List<int>();
+            HashSet<int> seen = new HashSet<int>();
+            Stack<KeyValuePair<int, int>> path = new Stack<KeyValuePair<int, int>>();
+            foreach (int root in roots)
             {
-                if (pair.Value.Dependencies.Contains(id))
+                if (!seen.Add(root))
                 {
-                    foreach (int dependent in Dependents(pair.Key).Concat(new[] { pair.Key }))
+                    continue;
+                }
+
+                path.Push(new KeyValuePair<int, int>(root, Direct(root).Count));
+                while (path.Count != 0)
+                {
+                    KeyValuePair<int, int> top = path.Pop();
+                    IList<int> direct = Direct(top.Key);
+                    int next = top.Value - 1;
+                    while (next >= 0 && seen.Contains(direct[next]))
                     {
-                        if (!found.Contains(dependent))
-                        {
-                            found.Add(dependent);
-                        }
+                        next--;
                     }
+
+                    if (next < 0)
+                    {
+                        order.Add(top.Key);
+
+                        continue;
+                    }
+
+                    int child = direct[next];
+                    seen.Add(child);
+                    path.Push(new KeyValuePair<int, int>(top.Key, next));
+                    path.Push(new KeyValuePair<int, int>(child, Direct(child).Count));
                 }
             }
 
-            return found;
+            return order;
+        }
+
+        /// <summary>そのハンドルへ直に依存する有効なハンドル。発行した順に並ぶ。</summary>
+        private IList<int> Direct(int id)
+        {
+            List<int> direct;
+
+            return _dependents.TryGetValue(id, out direct) ? direct : (IList<int>)new int[0];
         }
 
         /// <summary>
@@ -359,6 +369,17 @@ namespace PmxEditorMcp
                 if (_entries.TryGetValue(id, out entry))
                 {
                     _entries.Remove(id);
+                    _dependents.Remove(id);
+                    foreach (int dependency in entry.Dependencies)
+                    {
+                        List<int> direct;
+                        if (_dependents.TryGetValue(dependency, out direct) && direct.Remove(id)
+                            && direct.Count == 0)
+                        {
+                            _dependents.Remove(dependency);
+                        }
+                    }
+
                     taken.Add(new Taken(id, entry));
                 }
             }
@@ -373,22 +394,25 @@ namespace PmxEditorMcp
         {
             List<int> invalidated = new List<int>();
             List<int> failed = new List<int>();
+            List<string> written = new List<string>();
             foreach (Taken item in taken)
             {
                 invalidated.Add(item.Id);
                 try
                 {
                     item.Entry.Release();
-                    _log.Write("ハンドルの解放: id=" + item.Id + " type=" + item.Entry.Type);
+                    written.Add("ハンドルの解放: id=" + item.Id + " type=" + item.Entry.Type);
                 }
                 catch (Exception exception)
                 {
                     failed.Add(item.Id);
-                    _log.WriteException(
-                        "ハンドルの解放で例外が起きた: id=" + item.Id + " type=" + item.Entry.Type,
-                        exception);
+                    written.Add(
+                        "ハンドルの解放で例外が起きた: id=" + item.Id + " type=" + item.Entry.Type
+                            + Environment.NewLine + exception);
                 }
             }
+
+            _log.WriteAll(written);
 
             return new HandleReleaseResult(invalidated, failed);
         }

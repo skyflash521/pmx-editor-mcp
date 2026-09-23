@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
@@ -15,6 +16,10 @@ namespace PmxEditorMcp.Tests
     {
         /// <summary>小数の突き合わせで見る桁。</summary>
         private const int Digits = 4;
+
+        private const int ManyOffsets = 30000;
+
+        private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -69,6 +74,27 @@ namespace PmxEditorMcp.Tests
 
             IPXVertexMorphOffset held = (IPXVertexMorphOffset)Assert.Single(first.Offsets);
             Near(3.0, held.Offset.X);
+        }
+
+        [Fact]
+        public void MergingLargeMorphsByKindWithAddingFinishesInTime()
+        {
+            IPXVertex[] vertices = Enumerable.Range(0, ManyOffsets)
+                .Select(at => Vertex(at, 0f, 0f))
+                .ToArray();
+            FakeMorph first = Morph(
+                "一", MorphKind.Vertex, vertices.Select(v => Shift(v, 1f)).ToArray());
+            Morph("二", MorphKind.Vertex, vertices.Reverse().Select(v => Shift(v, 2f)).ToArray());
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            Morphs(
+                Operation(ModelEditMorphs.MergeSameKindAdd),
+                ComposedEditFixture.Given("all", true));
+            elapsed.Stop();
+
+            Assert.Equal(ManyOffsets, first.Offsets.Count);
+            Near(3.0, ((IPXVertexMorphOffset)first.Offsets[0]).Offset.X);
+            Assert.True(elapsed.Elapsed < TimeLimit, "合わせるのに " + elapsed.Elapsed + " かかった");
         }
 
         [Fact]

@@ -196,8 +196,9 @@ namespace PmxEditorMcp
                 filled[landed[at]] = true;
             }
 
+            HashSet<int> moved = new HashSet<int>(chosen);
             Queue<object> rest = new Queue<object>(
-                items.Where((item, at) => !chosen.Contains(at)));
+                items.Where((item, at) => !moved.Contains(at)));
             for (int at = 0; at < written.Length; at++)
             {
                 if (!filled[at])

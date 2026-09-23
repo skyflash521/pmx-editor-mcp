@@ -101,6 +101,8 @@ namespace PmxEditorMcp.Tests
 
         private const int AddedItems = 1000;
 
+        private const int HeldChildren = 30000;
+
         private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
         private readonly string _root;
@@ -1487,6 +1489,43 @@ namespace PmxEditorMcp.Tests
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
             Assert.Same(_model.Items[0], child.Mate);
+        }
+
+        [Fact]
+        public void PuttingManyChildrenWithPositionsUnderAHeldParentFinishesInTime()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            HandleLedger handles = Ledger();
+            int under = handles.Issue(typeof(Group).FullName, new Group(), () => { });
+            object[] held = Enumerable.Range(0, HeldChildren)
+                .Select(at => (object)handles.Issue(
+                    typeof(Item).FullName, new Item { Label = "子" + at }, () => { }))
+                .ToArray();
+            Call(
+                "model_update_mates",
+                Arguments(
+                    TargetNames.Element.Handles, held,
+                    ToolDispatch.ValuesName, held.Select(h => (object)Value("mate", 0)).ToArray()),
+                handles);
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> envelope = Call(
+                "model_add_leaves",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[]
+                    {
+                        new Dictionary<string, object>(StringComparer.Ordinal)
+                        {
+                            { ToolDispatch.ParentHandleName, under },
+                            { TargetNames.Element.Handles, held },
+                        },
+                    }),
+                handles);
+            elapsed.Stop();
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.True(elapsed.Elapsed < TimeLimit, "加えるのに " + elapsed.Elapsed + " かかった");
         }
 
         [Fact]

@@ -111,7 +111,8 @@ namespace PmxEditorMcp
         private static void Drop(ElementKind kind, object owner, IList<int> positions)
         {
             IList<object> items = kind.Items(owner);
-            kind.Replace(owner, items.Where((item, at) => !positions.Contains(at)).ToList());
+            HashSet<int> dropped = new HashSet<int>(positions);
+            kind.Replace(owner, items.Where((item, at) => !dropped.Contains(at)).ToList());
         }
 
         private static void Drag(object pmx, string name, IList<object> going)
@@ -123,11 +124,11 @@ namespace PmxEditorMcp
                 throw new InvalidOperationException(message);
             }
 
+            HashSet<object> dropped = new HashSet<object>(going, ReferenceComparer<object>.Instance);
             foreach (object owner in ElementKinds.Owners(pmx, kind))
             {
                 IList<object> items = kind.Items(owner);
-                kind.Replace(
-                    owner, items.Where(item => !going.Any(g => ReferenceEquals(g, item))).ToList());
+                kind.Replace(owner, items.Where(item => !dropped.Contains(item)).ToList());
             }
         }
 

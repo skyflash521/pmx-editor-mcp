@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -11,6 +12,10 @@ namespace PmxEditorMcp.Tests
         private const string UiModel = "uiModel";
 
         private const string Listener = "eventListener";
+
+        private const int ManyHandles = 10000;
+
+        private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
         private readonly string _root;
 
@@ -230,6 +235,56 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { leaf, right, left, root }, result.Invalidated);
             Assert.Equal(new[] { 4 }, _releases.Where(r => r == 4));
             Assert.Equal(0, _ledger.Count);
+        }
+
+        [Fact]
+        public void ReleasingManyHandlesAtOnceFinishesInTime()
+        {
+            int[] issued = Enumerable.Range(0, ManyHandles).Select(at => Issue(UiModel)).ToArray();
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(issued, out result);
+            elapsed.Stop();
+
+            Assert.Equal(ManyHandles, result.Invalidated.Count);
+            Assert.True(elapsed.Elapsed < TimeLimit, "解放に " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void ReleasingEveryHandleOfAFullLedgerFinishesInTime()
+        {
+            foreach (int at in Enumerable.Range(0, ManyHandles))
+            {
+                Issue(UiModel);
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            HandleReleaseResult result = _ledger.ReleaseAll();
+            elapsed.Stop();
+
+            Assert.Equal(ManyHandles, result.Invalidated.Count);
+            Assert.True(elapsed.Elapsed < TimeLimit, "解放に " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void ReleasingTheRootOfALongChainFinishesInTime()
+        {
+            int root = Issue(UiModel);
+            int last = root;
+            for (int at = 1; at < ManyHandles; at++)
+            {
+                last = Issue(Listener, last);
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            HandleReleaseResult result;
+            _ledger.TryRelease(root, out result);
+            elapsed.Stop();
+
+            Assert.Equal(last, result.Invalidated[0]);
+            Assert.Equal(root, result.Invalidated[ManyHandles - 1]);
+            Assert.True(elapsed.Elapsed < TimeLimit, "解放に " + elapsed.Elapsed + " かかった");
         }
 
         [Fact]

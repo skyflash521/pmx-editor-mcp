@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using PEPlugin.Pmx;
 using Xunit;
@@ -12,6 +13,11 @@ namespace PmxEditorMcp.Tests
     /// </summary>
     public sealed class ComposedElementToolsTests : IDisposable
     {
+        private const int ManyElements = 100000;
+
+        private const int ManyFaces = 10000;
+
+        private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -843,6 +849,73 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(1, value[ModelDeleteElements.RepairedName]);
             Assert.Null(_fixture.Model.Body[0].Bone);
+        }
+
+        [Fact]
+        public void DeletingEveryVertexOfALargeModelFinishesInTime()
+        {
+            for (int at = 0; at < ManyElements; at++)
+            {
+                _fixture.Model.Vertex.Add(new FakeVertex());
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> value = ComposedEditFixture.Value(Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Vertex),
+                ComposedEditFixture.Given("all", true)));
+            elapsed.Stop();
+
+            Assert.Equal(ManyElements, value[ModelDeleteElements.RemovedName]);
+            Assert.Empty(_fixture.Model.Vertex);
+            Assert.True(elapsed.Elapsed < TimeLimit, "消すのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void CascadingAMaterialWithManyFacesFinishesInTime()
+        {
+            FakeMaterial going = new FakeMaterial("消す");
+            for (int at = 0; at < ManyFaces; at++)
+            {
+                FakeVertex[] corners = { new FakeVertex(), new FakeVertex(), new FakeVertex() };
+                foreach (FakeVertex corner in corners)
+                {
+                    _fixture.Model.Vertex.Add(corner);
+                }
+
+                going.Faces.Add(new FakeFace(corners[0], corners[1], corners[2]));
+            }
+
+            _fixture.Model.Material.Add(going);
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Material),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ReferenceCleanup.RelatedName, ReferenceCleanup.Cascade));
+            elapsed.Stop();
+
+            Assert.Empty(_fixture.Model.Vertex);
+            Assert.True(elapsed.Elapsed < TimeLimit, "消すのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void MovingEveryVertexOfALargeModelToTheBottomFinishesInTime()
+        {
+            for (int at = 0; at < ManyElements; at++)
+            {
+                _fixture.Model.Vertex.Add(new FakeVertex(at, 0f, 0f));
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            Reorder(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Vertex),
+                ComposedEditFixture.Given("range", Span(1, ManyElements - 1)),
+                ComposedEditFixture.Given(
+                    ModelReorderElements.MoveName, ModelReorderElements.Top));
+            elapsed.Stop();
+
+            Assert.Equal(1f, _fixture.Model.Vertex[0].Position.X);
+            Assert.True(elapsed.Elapsed < TimeLimit, "並べ替えるのに " + elapsed.Elapsed + " かかった");
         }
 
         private IDictionary<string, object> Reorder(params KeyValuePair<string, object>[] given)
