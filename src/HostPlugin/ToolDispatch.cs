@@ -1401,6 +1401,19 @@ namespace PmxEditorMcp
                     return;
                 }
 
+                for (int at = 0; at < column.Count; at++)
+                {
+                    string lacking;
+                    if (!VmePathPoints.TryCall(
+                        call.RowKey, column[at].Item, spread ? passing[0] : passing[at], out lacking))
+                    {
+                        refused = new Refusal(
+                            ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, lacking));
+
+                        return;
+                    }
+                }
+
                 stage = Changing(call.Receiver, target);
                 for (int at = 0; at < column.Count; at++)
                 {
@@ -2787,6 +2800,26 @@ namespace PmxEditorMcp
                 if (!TryPointing(writing, target, out pointing, out refused))
                 {
                     return;
+                }
+
+                for (int at = 0; at < column.Count; at++)
+                {
+                    int which = spread ? 0 : at;
+                    for (int field = 0; field < writing[which].Fields.Count; field++)
+                    {
+                        string lacking;
+                        if (!VmePathPoints.TryWrite(
+                            writing[which].Fields[field].RowKey,
+                            column[at].Item,
+                            pointing[which][field],
+                            out lacking))
+                        {
+                            refused = new Refusal(
+                                ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, lacking));
+
+                            return;
+                        }
+                    }
                 }
 
                 stage = Changing(tool.Receiver, target);
