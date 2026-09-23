@@ -134,6 +134,53 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentNullException>(() => ToolUsageNoteRule.Compose(null));
         }
 
+        [Fact]
+        public void AToolThatTakesExactlyOneOfItsInputsSaysSo()
+        {
+            List<SchemaItem> inputs = new List<SchemaItem>
+            {
+                Item("selectedBoneIndex", "number", null, null),
+                Item("morphValue", "number", null, null),
+            };
+            ToolSchema schema = new ToolSchema(
+                "motion_update_transform_view_connector",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        inputs,
+                        new[] { new SchemaChoice(new[] { "selectedBoneIndex", "morphValue" }, true) }),
+                },
+                Item(null, "boolean", null, null),
+                null);
+
+            Assert.Contains("1回の呼び出しで1つだけ", ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AChoiceOfHowToPointDoesNotSayOnlyOneInputIsTaken()
+        {
+            List<SchemaItem> inputs = new List<SchemaItem>
+            {
+                Item("indices", "number", null, null),
+                Item("all", "boolean", null, null),
+                Item("offset", "number", null, null),
+            };
+            ToolSchema schema = new ToolSchema(
+                "model_list_vertices",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only", null, null, inputs, new[] { new SchemaChoice(new[] { "indices", "all" }, true) }),
+                },
+                Listed(),
+                null);
+
+            Assert.DoesNotContain("1回の呼び出しで1つだけ", ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
+        }
+
         private static string Note(bool listing, params string[] inputs)
         {
             return ToolUsageNoteRule.Compose(Schema(listing, inputs));

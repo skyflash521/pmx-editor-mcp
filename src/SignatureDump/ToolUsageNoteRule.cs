@@ -28,6 +28,8 @@ namespace PmxEditorMcp.SignatureDump
         private const string WithParent =
             AllName + " だけを渡せばすべての親の下を並べ、親だけを指せばその親の下の要素をすべて並べる。";
 
+        private const string OneAtATime = "書き込む項目は1回の呼び出しで1つだけ渡す。";
+
         private const string NameContainsName = "nameContains";
 
         private const string NarrowsByName =
@@ -105,6 +107,11 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
+            if (OnlyOneOfAll(schema))
+            {
+                built.Append(OneAtATime);
+            }
+
             if (Takes(schema, NameContainsName))
             {
                 built.Append(NarrowsByName);
@@ -143,6 +150,22 @@ namespace PmxEditorMcp.SignatureDump
             return schema.Branches.Any(
                 b => b.Inputs.Any(
                     i => !i.Injected && string.Equals(i.Name, name, StringComparison.Ordinal)));
+        }
+
+        /// <summary>渡せる入力のすべてを、ちょうど1つを選ぶ組が占める分岐を持つか。</summary>
+        private static bool OnlyOneOfAll(ToolSchema schema)
+        {
+            return schema.Branches.Any(
+                b =>
+                {
+                    List<string> inputs = b.Inputs.Where(i => !i.Injected).Select(i => i.Name).ToList();
+
+                    return inputs.Count > 1
+                        && b.Choices.Any(
+                            c => c.Required
+                                && c.Names.Count == inputs.Count
+                                && inputs.All(n => c.Names.Contains(n)));
+                });
         }
 
         private static bool Issues(ToolSchema schema)
