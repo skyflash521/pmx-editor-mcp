@@ -54,6 +54,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string PmxTypeName = "PEPlugin.Pmx.IPXPmx";
 
+        private const string UpdateObjectTypeName = "PEPlugin.Pmx.PmxUpdateObject";
+
         /// <summary>Cプラグイン連携の橋渡しの型。ここから得る受け手は、そちらの流れで扱う。</summary>
         private const string BridgeTypeName = "PXCPlugin.PXCBridge";
 
@@ -1342,10 +1344,42 @@ namespace PmxEditorMcp.SignatureDump
                 ? string.Empty
                 : ", " + Literal(UndoRow(assignments, signatures, commit, StopUndoMember))
                     + ", " + Literal(UndoRow(assignments, signatures, commit, ResumeUndoMember));
+            string partial = Partial(assignments, signatures, commit);
 
             return "new PmxFlow(" + Literal(read) + ", " + Literal(commit) + ", "
                 + (received ? Literal(DeclaringTypeOf(read)) : "null") + ", "
-                + Slots(signatures, read) + ", " + Slots(signatures, commit) + paired + ")";
+                + Slots(signatures, read) + ", " + Slots(signatures, commit) + paired
+                + (partial == null ? string.Empty : ", partialCommit: " + Literal(partial)) + ")";
+        }
+
+        /// <summary>
+        /// 反映と同じ受け手が持つ、複製と反映する区分と位置を取る反映の行。複製編集の流れへ
+        /// 割り当てた行のうち、この形のものを採る。持たない流れでは null。
+        /// </summary>
+        private static string Partial(
+            CommonAssignmentTable assignments,
+            IDictionary<string, SignatureRecord> signatures,
+            string commit)
+        {
+            string owner = DeclaringTypeOf(commit);
+            string[] found = assignments.Assignments
+                .Where(a => a.Assignment == CommonAssignmentKind.InternalFlow
+                    && string.Equals(a.Target, "duplicateEdit", StringComparison.Ordinal)
+                    && signatures.ContainsKey(a.SignatureKey)
+                    && string.Equals(DeclaringTypeOf(a.SignatureKey), owner, StringComparison.Ordinal))
+                .Select(a => a.SignatureKey)
+                .Where(key => PartialShape(signatures[key].Parameters))
+                .ToArray();
+
+            return found.Length == 1 ? found[0] : null;
+        }
+
+        private static bool PartialShape(IList<ParameterRecord> parameters)
+        {
+            return parameters.Count == 3
+                && string.Equals(parameters[0].TypeName, PmxTypeName, StringComparison.Ordinal)
+                && string.Equals(parameters[1].TypeName, UpdateObjectTypeName, StringComparison.Ordinal)
+                && string.Equals(parameters[2].TypeName, "System.Int32", StringComparison.Ordinal);
         }
 
         /// <summary>その反映が、Undoの記録を止めるかどうかを引数で取るか。</summary>

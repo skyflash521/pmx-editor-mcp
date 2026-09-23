@@ -22,6 +22,9 @@ namespace PmxEditorMcp.Tests
 
         private const string CommitKey = "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx)";
 
+        private const string PartialCommitKey =
+            "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32)";
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -60,6 +63,10 @@ namespace PmxEditorMcp.Tests
 
         /// <summary>まとめて反映した回数。</summary>
         public int Commits { get; private set; }
+
+        /// <summary>1つの区分だけを反映した回の、区分と位置。全体を反映した回は入らない。</summary>
+        public IList<KeyValuePair<PEPlugin.Pmx.PmxUpdateObject, int>> Partials { get; } =
+            new List<KeyValuePair<PEPlugin.Pmx.PmxUpdateObject, int>>();
 
         /// <summary>反映へ届いたUndoの抑止の頼み。</summary>
         public bool Suppressed { get; private set; }
@@ -159,7 +166,8 @@ namespace PmxEditorMcp.Tests
                     CommitKey,
                     ConnectorType,
                     new FlowSlot[0],
-                    new[] { FlowSlot.Pmx, FlowSlot.UndoLock }),
+                    new[] { FlowSlot.Pmx, FlowSlot.UndoLock },
+                    partialCommit: PartialCommitKey),
                 typeof(FakePmx),
                 new UndoSuppression(_log));
         }
@@ -247,6 +255,17 @@ namespace PmxEditorMcp.Tests
                         {
                             Commits++;
                             Suppressed = arguments.Length > 1 && Equals(arguments[1], true);
+
+                            return null;
+                        }
+                    },
+                    {
+                        PartialCommitKey,
+                        (target, arguments) =>
+                        {
+                            Commits++;
+                            Partials.Add(new KeyValuePair<PEPlugin.Pmx.PmxUpdateObject, int>(
+                                (PEPlugin.Pmx.PmxUpdateObject)arguments[1], (int)arguments[2]));
 
                             return null;
                         }

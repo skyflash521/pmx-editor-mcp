@@ -426,6 +426,52 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.View.Redraws);
         }
 
+        [Fact]
+        public void MovingOnlyBonesReflectsOnlyTheBonesOfTheCopy()
+        {
+            Bone(1f, 1f, 1f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 1f, 0f),
+                Targets(Target(ElementKinds.Bone, 0)));
+
+            KeyValuePair<PmxUpdateObject, int> partial = Assert.Single(_fixture.Partials);
+            Assert.Equal(PmxUpdateObject.Bone, partial.Key);
+            Assert.Equal(-1, partial.Value);
+            Assert.Equal(1, _fixture.Commits);
+        }
+
+        [Fact]
+        public void MovingSeveralKindsReflectsTheWholeCopyOnce()
+        {
+            Vertex(1f, 1f, 1f);
+            Bone(2f, 2f, 2f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 1f, 0f),
+                Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Bone, 0)));
+
+            Assert.Empty(_fixture.Partials);
+            Assert.Equal(1, _fixture.Commits);
+        }
+
+        [Fact]
+        public void SuppressingTheUndoInAFlowThatTakesItAsAnArgumentReflectsTheWholeCopy()
+        {
+            Bone(1f, 1f, 1f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 1f, 0f),
+                Targets(Target(ElementKinds.Bone, 0)),
+                ComposedEditFixture.Given(UndoBarrier.SuppressName, true));
+
+            Assert.Empty(_fixture.Partials);
+            Assert.True(_fixture.Suppressed);
+        }
+
         private static object Every(string kind)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal)

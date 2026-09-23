@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
 {
@@ -29,6 +30,20 @@ namespace PmxEditorMcp
     {
         /// <summary>どのPMXを見るかを切り替える共通引数の名前。</summary>
         public const string HandleName = "pmxHandle";
+
+        /// <summary>1つの区分だけを反映する行へ渡す、区分の全体を表す位置。</summary>
+        private const int WholeKind = -1;
+
+        /// <summary>書き換えた種類から、その中身を持つ反映の区分へ。</summary>
+        private static readonly Dictionary<string, PmxUpdateObject> Parts =
+            new Dictionary<string, PmxUpdateObject>(StringComparer.Ordinal)
+            {
+                { ElementKinds.Vertex, PmxUpdateObject.Vertex },
+                { ScreenRefresh.WeightKind, PmxUpdateObject.Vertex },
+                { ElementKinds.Bone, PmxUpdateObject.Bone },
+                { ElementKinds.Body, PmxUpdateObject.Body },
+                { ElementKinds.Joint, PmxUpdateObject.Joint },
+            };
 
         private readonly SdkRelayTable _relay;
 
@@ -184,14 +199,15 @@ namespace PmxEditorMcp
                 return true;
             }
 
+            object part = Part(rewritten, suppressUndo);
             bool reflected = false;
             if (_flow.StopUndo != null && suppressUndo)
             {
-                _undo.Run(new UndoRows(this), () => reflected = Reflect(target, false));
+                _undo.Run(new UndoRows(this), () => reflected = Reflect(target, false, part));
             }
             else
             {
-                reflected = Reflect(target, suppressUndo);
+                reflected = Reflect(target, suppressUndo, part);
             }
 
             if (reflected)
@@ -208,16 +224,59 @@ namespace PmxEditorMcp
             }
 
             code = ToolEnvelope.NotApplicable;
-            message = "複製したPMXを反映できない: " + _flow.Commit;
+            message = "複製したPMXを反映できない: " + (part == null ? _flow.Commit : _flow.PartialCommit);
 
             return false;
         }
 
-        /// <summary>まとめて反映する行を1度呼ぶ。</summary>
-        private bool Reflect(PmxTarget target, bool suppressUndo)
+        /// <summary>
+        /// 1つの区分だけを反映できるときの、その区分。書き換えた種類が1つの区分に収まらないとき、
+        /// 流れがその行を持たないとき、Undoの抑止を反映する行の引数でしか渡せない流れで抑止を
+        /// 頼まれたときは null で、複製の全体を反映する。
+        /// </summary>
+        private object Part(IList<string> rewritten, bool suppressUndo)
+        {
+            if (rewritten == null || _flow.PartialCommit == null
+                || (suppressUndo && _flow.StopUndo == null))
+            {
+                return null;
+            }
+
+            List<PmxUpdateObject> parts = new List<PmxUpdateObject>();
+            foreach (string kind in rewritten)
+            {
+                PmxUpdateObject part;
+                if (!Parts.TryGetValue(kind, out part))
+                {
+                    return null;
+                }
+
+                if (!parts.Contains(part))
+                {
+                    parts.Add(part);
+                }
+            }
+
+            return parts.Count == 1 ? (object)parts[0] : null;
+        }
+
+        /// <summary>
+        /// まとめて反映する行を1度呼ぶ。<paramref name="part"/> を渡せば、複製のうちその区分だけを
+        /// 反映する。
+        /// </summary>
+        private bool Reflect(PmxTarget target, bool suppressUndo, object part)
         {
             object ignored;
             SdkRelayRefusal refusal;
+            if (part != null)
+            {
+                return _relay.TryInvoke(
+                    _flow.PartialCommit,
+                    Receiver(),
+                    new[] { target.Pmx, part, (object)WholeKind },
+                    out ignored,
+                    out refusal);
+            }
 
             return _relay.TryInvoke(
                 _flow.Commit,

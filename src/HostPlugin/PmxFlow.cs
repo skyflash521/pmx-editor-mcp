@@ -30,7 +30,8 @@ namespace PmxEditorMcp
             IList<FlowSlot> reading,
             IList<FlowSlot> reflecting,
             string stopUndo = null,
-            string resumeUndo = null)
+            string resumeUndo = null,
+            string partialCommit = null)
         {
             if (stateRead == null)
             {
@@ -59,6 +60,7 @@ namespace PmxEditorMcp
             Reflecting = new ReadOnlyCollection<FlowSlot>(reflecting);
             StopUndo = stopUndo;
             ResumeUndo = resumeUndo;
+            PartialCommit = partialCommit;
         }
 
         /// <summary>現在のPMXの複製を得る行。</summary>
@@ -83,5 +85,11 @@ namespace PmxEditorMcp
 
         /// <summary>止めたUndoの記録を戻す行。<see cref="StopUndo"/> と対で持つ。</summary>
         public string ResumeUndo { get; }
+
+        /// <summary>
+        /// 複製のうち1つの区分だけを反映する行。複製と、反映する区分と、位置(-1で区分の全体)を
+        /// 取る。持たない流れでは null。
+        /// </summary>
+        public string PartialCommit { get; }
     }
 }
