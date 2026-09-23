@@ -584,7 +584,7 @@ namespace PmxEditorMcp
             IDictionary<IPXVertex, int> islands = Islands(model);
             Dictionary<IPXMorph, IPXMorph> moved =
                 new Dictionary<IPXMorph, IPXMorph>(ReferenceComparer<IPXMorph>.Instance);
-            List<int> added = new List<int>();
+            List<IPXMorph> split = new List<IPXMorph>();
             foreach (IPXMorph morph in picked.Where(m => m.Kind == MorphKind.Vertex))
             {
                 IList<IPXMorph> parts = Parted(model, made, morph, islands);
@@ -596,15 +596,20 @@ namespace PmxEditorMcp
                 model.Morph.Remove(morph);
                 moved[morph] = parts[0];
                 Spread(model, made, morph, parts);
-                foreach (IPXMorph part in parts)
-                {
-                    added.Add(model.Morph.IndexOf(part));
-                }
+                split.AddRange(parts);
             }
 
             ReferenceCleanup.Repoint(model, moved);
+            Dictionary<IPXMorph, int> at = new Dictionary<IPXMorph, int>(ReferenceComparer<IPXMorph>.Instance);
+            for (int index = 0; index < model.Morph.Count; index++)
+            {
+                if (!at.ContainsKey(model.Morph[index]))
+                {
+                    at.Add(model.Morph[index], index);
+                }
+            }
 
-            return Answer(added, 0, moved.Count);
+            return Answer(split.Select(part => at[part]).ToList(), 0, moved.Count);
         }
 
         private static void Spread(

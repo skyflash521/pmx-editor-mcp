@@ -150,6 +150,27 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SplittingSeveralMorphsAnswersWhereEachPartStandsAfterTheCall()
+        {
+            IPXVertex near = Vertex(0f, 0f, 0f);
+            IPXVertex apart = Vertex(20f, 0f, 0f);
+            Face(near, apart);
+            Morph("一", MorphKind.Vertex, Shift(near, 1f), Shift(apart, 1f));
+            Morph("二", MorphKind.Vertex, Shift(near, 2f), Shift(apart, 2f));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Morphs(
+                Operation(ModelEditMorphs.SplitVertices),
+                ComposedEditFixture.Given("all", true)));
+
+            int[] added = ((object[])value[ModelEditMorphs.AddedName]).Cast<int>().ToArray();
+            Assert.Equal(4, added.Distinct().Count());
+            Assert.Equal(
+                new[] { 1f, 1f, 2f, 2f },
+                added.Select(at => ((IPXVertexMorphOffset)Assert.Single(
+                    _fixture.Model.Morph[at].Offsets)).Offset.X).ToArray());
+        }
+
+        [Fact]
         public void SplittingAMorphOverALongStripFinishesInTime()
         {
             List<IPXVertex> bottom = new List<IPXVertex>();
