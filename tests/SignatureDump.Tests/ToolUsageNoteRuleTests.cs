@@ -17,13 +17,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AListingUnderAParentAlsoCarriesTheParent()
+        public void AListingUnderAParentSaysThatAllAloneListsUnderEveryParent()
         {
             string note = Note(
                 true, "parentIndices", "parentRange", "parentAll", "indices", "range", "all",
                 "offset", "limit");
 
-            Assert.Contains("parentAll", note, StringComparison.Ordinal);
+            Assert.Contains("all だけを渡せばすべての親の下を並べ", note, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -33,14 +33,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 true, "parentIndices", "parentRange", "parentAll", "indices", "range", "all",
                 "offset", "limit");
 
-            Assert.Contains("親だけを指せば、その下の要素をすべて並べる", note, StringComparison.Ordinal);
+            Assert.Contains("親だけを指せばその親の下の要素をすべて並べる", note, StringComparison.Ordinal);
         }
 
         [Fact]
         public void AListingWithNoParentDoesNotCarryTheParent()
         {
             Assert.DoesNotContain(
-                "parentAll", Note(true, "indices", "range", "all", "offset", "limit"),
+                "親", Note(true, "indices", "range", "all", "offset", "limit"),
                 StringComparison.Ordinal);
         }
 

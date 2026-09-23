@@ -173,6 +173,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ListingWithOnlyAllListsEveryOneUnderEveryParent()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            first.Faces.Add(new FakeFace());
+            second.Faces.Add(new FakeFace());
+            second.Faces.Add(new FakeFace());
+            _model.Materials.Add(first);
+            _model.Materials.Add(second);
+
+            IDictionary<string, object> value = Value(Call("model_list_faces", Arguments("all", true)));
+
+            Assert.Equal(3, value[ToolDispatch.TotalName]);
+            Assert.Equal(3, ((object[])value[ToolDispatch.ItemsName]).Length);
+        }
+
+        [Fact]
         public void ListingWithNeitherTheParentNorTheElementsPointedIsRefused()
         {
             FakeMaterial first = new FakeMaterial("一");

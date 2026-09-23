@@ -7840,7 +7840,7 @@
                 "parentIndices",
                 "parentRange"
               ],
-              "required": true
+              "required": false
             },
             {
               "names": [
@@ -8208,7 +8208,7 @@
                 "parentIndices",
                 "parentRange"
               ],
-              "required": true
+              "required": false
             },
             {
               "names": [
@@ -8419,7 +8419,7 @@
                 "parentIndices",
                 "parentRange"
               ],
-              "required": true
+              "required": false
             },
             {
               "names": [
@@ -9234,7 +9234,7 @@
                 "parentIndices",
                 "parentRange"
               ],
-              "required": true
+              "required": false
             },
             {
               "names": [
@@ -9789,7 +9789,7 @@
                 "parentIndices",
                 "parentRange"
               ],
-              "required": true
+              "required": false
             },
             {
               "names": [
@@ -10632,7 +10632,7 @@
                 "parentIndices",
                 "parentRange"
               ],
-              "required": true
+              "required": false
             },
             {
               "names": [

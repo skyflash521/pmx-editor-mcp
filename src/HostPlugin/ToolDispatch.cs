@@ -3461,10 +3461,23 @@ namespace PmxEditorMcp
 
         private static Pointed WholeUnderParents(Pointed pointed)
         {
-            if (pointed.Parents == null
-                || !TargetSelection.Points(pointed.Parents)
-                || pointed.Elements == null
-                || TargetSelection.Points(pointed.Elements))
+            if (pointed.Parents == null || pointed.Elements == null)
+            {
+                return pointed;
+            }
+
+            if (!TargetSelection.Points(pointed.Parents))
+            {
+                return pointed.Elements.All == true
+                        ? new Pointed(
+                            pointed.Elements,
+                            new TargetRequest(all: true),
+                            pointed.ByHandle,
+                            pointed.ParentByHandle)
+                        : pointed;
+            }
+
+            if (TargetSelection.Points(pointed.Elements))
             {
                 return pointed;
             }

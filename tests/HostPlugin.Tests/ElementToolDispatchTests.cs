@@ -877,14 +877,20 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AListingUnderParentsThatPointsAtNoParentIsRefused()
+        public void AListingUnderParentsThatPointsAtOnlyAllListsUnderEveryParent()
         {
-            _model.Groups.Add(new Group());
+            Group first = new Group();
+            first.Leaves.Add(new Item { Label = "一" });
+            Group second = new Group();
+            second.Leaves.Add(new Item { Label = "二" });
+            second.Leaves.Add(new Item { Label = "三" });
+            _model.Groups.Add(first);
+            _model.Groups.Add(second);
 
-            IDictionary<string, object> envelope = Call(
-                "model_list_leaves", Arguments(TargetNames.Element.All, true));
+            IDictionary<string, object> value = Value(Call(
+                "model_list_leaves", Arguments(TargetNames.Element.All, true)));
 
-            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Equal(3, value[ToolDispatch.TotalName]);
         }
 
         [Fact]

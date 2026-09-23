@@ -26,7 +26,7 @@ namespace PmxEditorMcp.SignatureDump
                 + " offset へ渡し直す。";
 
         private const string WithParent =
-            "親も " + ParentAllName + " に真を渡す。親だけを指せば、その下の要素をすべて並べる。";
+            AllName + " だけを渡せばすべての親の下を並べ、親だけを指せばその親の下の要素をすべて並べる。";
 
         private const string NameContainsName = "nameContains";
 
