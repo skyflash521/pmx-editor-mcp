@@ -295,9 +295,14 @@
   ],
   "composedTools": [
     {
+      "tool": "editor_close_window",
+      "branching": false,
+      "duty": "エディタのウィンドウを閉じる。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。閉じていれば何もせず alreadyClosed に真を返し、開いていれば閉じて alreadyClosed に偽を返す。主画面 PmxEditor.PmxForm(Pmx編集)は、閉じるとエディタが終了するので閉じずに TOOL_NOT_APPLICABLE を返す。エディタを終了するなら session_close を使う。閉じると editor_open_window で開き直せないウィンドウも閉じない。閉じるときにエディタが確認の表示を出したら TOOL_PROMPT_SHOWN を返す。"
+    },
+    {
       "tool": "editor_find_operation",
       "branching": false,
-      "duty": "文言から画面の部品を探し、主画面からそこまでの道筋を返す。エディタが起きていなくても、窓が閉じていても同じ答えを返す。text は1文字以上の文字列で、窓の題・部品の文言・部品を指したときに出る説明・その窓が出す確認や報告の文言へ部分一致で当てる。大文字小文字と全角半角と仮名の種類は区別しない。matches の各件は窓の型の完全名 form を持ち、題のある窓では題 title も持つ。部品に当たったものは窓の根からその部品までの path、確認や報告の文言に当たったものは message を持つ。route は主画面からその窓を開くまでの各段で、段ごとに開く側の窓 form と、その窓の中で辿る部品 via と、辿り着いた部品のショートカット shortcut を持つ。主画面から開けない窓は route の代わりに unreachable を持つ。total は当たった総数で、limit と応答の枠で返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。limit は1以上500以下の整数で既定は50、offset は0以上2147483647以下の整数で既定は0である。"
+      "duty": "文言から画面の部品を探し、主画面からそこまでの道筋を返す。エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。text は1文字以上の文字列で、ウィンドウの題・部品の文言・部品を指したときに出る説明・そのウィンドウが出す確認や報告の文言へ部分一致で当てる。大文字小文字と全角半角と仮名の種類は区別しない。matches の各件はウィンドウの型の完全名 form を持ち、題のあるウィンドウでは題 title も持つ。部品に当たったものはウィンドウの根からその部品までの path、確認や報告の文言に当たったものは message を持つ。route は主画面からそのウィンドウを開くまでの各段で、段ごとに開く側のウィンドウ form と、そのウィンドウの中で辿る部品 via と、辿り着いた部品のショートカット shortcut を持つ。主画面から開けないウィンドウは route の代わりに unreachable を持つ。total は当たった総数で、limit と応答の枠で返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。limit は1以上500以下の整数で既定は50、offset は0以上2147483647以下の整数で既定は0である。"
     },
     {
       "tool": "editor_get_prompt",
@@ -307,7 +312,12 @@
     {
       "tool": "editor_get_screen_structure",
       "branching": false,
-      "duty": "窓の一覧と、窓の中の部品の木を返す。エディタが起きていなくても、窓が閉じていても同じ答えを返す。window を省くと全部の窓の一覧を返す。window は型の完全名か窓の題で指す。型の完全名が当たればその窓だけ、当たらなければ題が一致する窓すべて、それも無ければ名前か題に部分一致する窓すべてを返し、どれも当たらなければ空を返す。型の完全名か題が一致した窓には、どこから開くか openedBy と、部品の木 node と、その窓が出す確認や報告の文言 messages が付く。node は type と name と text と toolTip と shortcut と contextMenu と fragment と dynamic と opens と children を持つ。children は同じ形の節が並ぶ。fragment はその節へ差し込んだ断片のクラス、dynamic は件数が実行時に決まる枝で組み立てる method を持ち、opens はその部品が開く窓の型の完全名である。無い項目は省く。path は node の根から降りる name の並びで、渡すとその部品を根とする木を返す。depth は返す段数で、0以上100以下の整数である。0はその節だけ、省くと下まで全部を返す。木が応答の枠に収まらないときは段数を縮めずにエラーを返すので、path で降りるか window で1つに絞って取り直す。total は当たった窓の総数で、返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。offset は0以上2147483647以下の整数で既定は0である。"
+      "duty": "ウィンドウの一覧と、ウィンドウの中の部品の木を返す。エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。window を省くと全部のウィンドウの一覧を返す。window は型の完全名かウィンドウの題で指す。型の完全名が当たればそのウィンドウだけ、当たらなければ題が一致するウィンドウすべて、それも無ければ名前か題に部分一致するウィンドウすべてを返し、どれも当たらなければ空を返す。型の完全名か題が一致したウィンドウには、どこから開くか openedBy と、部品の木 node と、そのウィンドウが出す確認や報告の文言 messages が付く。node は type と name と text と toolTip と shortcut と contextMenu と fragment と dynamic と opens と children を持つ。children は同じ形の節が並ぶ。fragment はその節へ差し込んだ断片のクラス、dynamic は件数が実行時に決まる枝で組み立てる method を持ち、opens はその部品が開くウィンドウの型の完全名である。無い項目は省く。path は node の根から降りる name の並びで、渡すとその部品を根とする木を返す。depth は返す段数で、0以上100以下の整数である。0はその節だけ、省くと下まで全部を返す。木が応答の枠に収まらないときは段数を縮めずにエラーを返すので、path で降りるか window で1つに絞って取り直す。total は当たったウィンドウの総数で、返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。offset は0以上2147483647以下の整数で既定は0である。"
+    },
+    {
+      "tool": "editor_open_window",
+      "branching": false,
+      "duty": "エディタのウィンドウを開く。TransformView のように、ほかのツールが相手にするウィンドウが閉じているときに使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。いま開いているウィンドウから、押すとそのウィンドウだけを開くメニュー項目かボタンを辿り、人が押すのと同じ順に押して開く。途中のウィンドウが閉じていればそれも開く。右クリックメニューの中の項目は辿らない。開いていれば何もせず alreadyOpen に真を返し、開いたら alreadyOpen に偽を返す。title は開いているウィンドウの題である。辿れる道が無いとき、途中の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。開くときにエディタが確認の表示を出したら TOOL_PROMPT_SHOWN を返す。"
     },
     {
       "tool": "model_clean_faces",
@@ -452,7 +462,7 @@
     {
       "tool": "view_clear_vmd_view",
       "branching": false,
-      "duty": "VMDViewの再生を止める。parts は motionOnly・modelAndMotion のいずれかで、motionOnly は再生を止めるだけ、modelAndMotion は読み込んだモーションを捨てて、いま編集しているモデルを読み直す。どちらの持ち物でも、VMDViewの窓は開いたままになる。"
+      "duty": "VMDViewの再生を止める。parts は motionOnly・modelAndMotion のいずれかで、motionOnly は再生を止めるだけ、modelAndMotion は読み込んだモーションを捨てて、いま編集しているモデルを読み直す。どちらの持ち物でも、VMDViewのウィンドウは開いたままになる。"
     },
     {
       "tool": "view_filter_display",
@@ -472,7 +482,7 @@
     {
       "tool": "view_reload_model",
       "branching": false,
-      "duty": "テクスチャを読み直してモデルの描画を作り直し、画面を描き直す。別窓のビューが開いていればその描画も作り直す。引数は受け取らない。"
+      "duty": "テクスチャを読み直してモデルの描画を作り直し、画面を描き直す。別ウィンドウのビューが開いていればその描画も作り直す。引数は受け取らない。"
     },
     {
       "tool": "view_select_elements",
@@ -492,7 +502,7 @@
     {
       "tool": "view_update_parts_select_window",
       "branching": false,
-      "duty": "PMXビューの絞込の窓の表示を切り替える。visible に真を渡すと開き、偽を渡すと閉じる。この窓は一度表示するまで材質・ボーン・表情の一覧を組まず、組まれていない間、一覧の位置を読み書きするツールは断る。切り替えたあとの表示を visible に、3つの一覧に並んでいる項目の数を materialItemsCount・boneItemsCount・expressionItemsCount に返す。"
+      "duty": "PMXビューの絞込のウィンドウの表示を切り替える。visible に真を渡すと開き、偽を渡すと閉じる。このウィンドウは一度表示するまで材質・ボーン・表情の一覧を組まず、組まれていない間、一覧の位置を読み書きするツールは断る。切り替えたあとの表示を visible に、3つの一覧に並んでいる項目の数を materialItemsCount・boneItemsCount・expressionItemsCount に返す。"
     }
   ],
   "viewImages": [

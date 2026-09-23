@@ -231,6 +231,8 @@ namespace PmxEditorMcp
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
                 UiTree.AddTo(methods);
+                UiOpenWindow.AddTo(methods, OpenForms);
+                UiCloseWindow.AddTo(methods, OpenForms);
                 EditorPrompt.AddTo(
                     methods,
                     new DesktopModalWindowProbe(TimeSpan.FromMilliseconds(PromptTextLimitMs)));
@@ -256,6 +258,20 @@ namespace PmxEditorMcp
                     _log.Write("起動時に待受を開始しなかった: " + reason);
                 }
             }
+        }
+
+        private IEnumerable<Form> OpenForms()
+        {
+            List<Form> forms = new List<Form>();
+            foreach (Form form in Application.OpenForms)
+            {
+                if (!ReferenceEquals(form, _uiAnchor))
+                {
+                    forms.Add(form);
+                }
+            }
+
+            return forms;
         }
 
         /// <summary>

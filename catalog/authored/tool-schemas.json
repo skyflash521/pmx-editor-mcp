@@ -1,6 +1,32 @@
 {
   "tools": [
     {
+      "tool": "editor_close_window",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "window",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "alreadyClosed",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          }
+        ]
+      }
+    },
+    {
       "tool": "editor_find_operation",
       "branches": [
         {
@@ -305,6 +331,37 @@
             "name": "nextOffset",
             "origin": "hostOutput",
             "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "editor_open_window",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "window",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "title",
+            "origin": "hostOutput",
+            "shape": "text"
+          },
+          {
+            "name": "alreadyOpen",
+            "origin": "hostOutput",
+            "shape": "boolean"
           }
         ]
       }

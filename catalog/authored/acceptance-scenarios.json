@@ -150,6 +150,74 @@
               }
             ]
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_open_window",
+          "arguments": {
+            "window": "PmxViewForm.TransformView"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "alreadyOpen",
+                "equals": false
+              },
+              {
+                "path": "title",
+                "equals": "TransformView"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_open_window",
+          "arguments": {
+            "window": "PmxViewForm.TransformView"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "alreadyOpen",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_close_window",
+          "arguments": {
+            "window": "PmxViewForm.TransformView"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "alreadyClosed",
+                "equals": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_close_window",
+          "arguments": {
+            "window": "PmxViewForm.TransformView"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "alreadyClosed",
+                "equals": true
+              }
+            ]
+          }
         }
       ]
     },
