@@ -35,35 +35,41 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void SettingTooFewPointsOnASplineIsRefused()
         {
+            string code;
             string message;
 
             Assert.False(VmePathPoints.TryCall(
                 VmePathPoints.SetPointKey,
                 new FakeVmePath(PEVmePathType.Spline, 0),
                 new object[] { new Vector3[2] },
+                out code,
                 out message));
             Assert.Contains("3", message);
             Assert.True(VmePathPoints.TryCall(
                 VmePathPoints.SetPointKey,
                 new FakeVmePath(PEVmePathType.Spline, 0),
                 new object[] { new Vector3[3] },
+                out code,
                 out message));
         }
 
         [Fact]
         public void AddingAPointIsRefusedUntilTheSplineCanHaveEnough()
         {
+            string code;
             string message;
 
             Assert.False(VmePathPoints.TryCall(
                 VmePathPoints.AddPointKey,
                 new FakeVmePath(PEVmePathType.Spline, 1),
                 new object[] { new Vector3() },
+                out code,
                 out message));
             Assert.True(VmePathPoints.TryCall(
                 VmePathPoints.AddPointKey,
                 new FakeVmePath(PEVmePathType.Spline, 2),
                 new object[] { new Vector3() },
+                out code,
                 out message));
         }
 
@@ -87,17 +93,61 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void OtherCallsAndOtherItemsPass()
         {
+            string code;
             string message;
 
             Assert.True(VmePathPoints.TryCall(
                 "PEPlugin.Vme.IPEVmePath.Clear()",
                 new FakeVmePath(PEVmePathType.Spline, 1),
                 new object[0],
+                out code,
                 out message));
             Assert.True(VmePathPoints.TryCall(
-                VmePathPoints.SetPointKey, new object(), new object[] { new Vector3[1] }, out message));
+                VmePathPoints.SetPointKey,
+                new object(),
+                new object[] { new Vector3[1] },
+                out code,
+                out message));
             Assert.True(VmePathPoints.TryWrite(
                 VmePathPoints.PathTypeKey, new object(), PEVmePathType.Spline, out message));
+        }
+
+        [Fact]
+        public void ReadingPointsFromAPathWithNoPointsIsRefused()
+        {
+            string code;
+            string message;
+
+            Assert.False(VmePathPoints.TryCall(
+                VmePathPoints.GetPathPointsKey,
+                new FakeVmePath(PEVmePathType.Spline, 0),
+                new object[] { 1.0 },
+                out code,
+                out message));
+            Assert.Equal(ToolEnvelope.NotApplicable, code);
+            Assert.Contains("点を置いてから", message);
+            Assert.True(VmePathPoints.TryCall(
+                VmePathPoints.GetPathPointsKey,
+                new FakeVmePath(PEVmePathType.Spline, 3),
+                new object[] { 1.0 },
+                out code,
+                out message));
+        }
+
+        [Fact]
+        public void TheStartOfTheRangeOfAPathWithNoPointsIsZero()
+        {
+            object value;
+
+            Assert.True(VmePathPoints.TryRead(
+                VmePathPoints.RangeMinKey, new FakeVmePath(PEVmePathType.Spline, 0), out value));
+            Assert.Equal(0.0, value);
+            Assert.False(VmePathPoints.TryRead(
+                VmePathPoints.RangeMinKey, new FakeVmePath(PEVmePathType.Spline, 3), out value));
+            Assert.False(VmePathPoints.TryRead(
+                "PEPlugin.Vme.IPEVmePath.RangeMax()",
+                new FakeVmePath(PEVmePathType.Spline, 0),
+                out value));
         }
 
         private sealed class FakeVmePath : IPEVmePath

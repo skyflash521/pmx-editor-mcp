@@ -7,7 +7,9 @@ namespace PmxEditorMcp
     /// VMEのパスへ点を置く・足す呼び出しと、経路の種類の書き込みを、書いた後の点の数が経路の
     /// 種類の下限を割るときに呼ぶ前に断る。SDKはスプラインを3点未満で組むと配列の境界外で落ち、
     /// 点を置いたまま経路を壊して残す。直線は2点未満だと経路を組まずに戻り、読むと置いた点と
-    /// 違う点を返す。0点は経路を空にするだけなので断らない。
+    /// 違う点を返す。0点は経路を空にするだけなので断らない。点が0個のパスは、SDKの RangeMin と
+    /// 間隔だけを渡す GetPathPoints が空の距離の配列の先頭を読んで落ちるので、RangeMin には
+    /// 一次資料が固定と書く0を返し、点列の読み取りは呼ぶ前に断る。
     /// </summary>
     public static class VmePathPoints
     {
@@ -16,6 +18,11 @@ namespace PmxEditorMcp
         public const string AddPointKey = "PEPlugin.Vme.IPEVmePath.AddPoint(SlimDX.Vector3)";
 
         public const string PathTypeKey = "PEPlugin.Vme.IPEVmePath.PathType()";
+
+        public const string GetPathPointsKey =
+            "PEPlugin.Vme.IPEVmePath.GetPathPoints(System.Double)";
+
+        public const string RangeMinKey = "PEPlugin.Vme.IPEVmePath.RangeMin()";
 
         private const int SplineLeast = 3;
 
@@ -77,9 +84,11 @@ namespace PmxEditorMcp
             return inside + 1;
         }
 
-        /// <summary>パスへ点を置く・足す呼び出しでなければ確かめずに通す。</summary>
-        public static bool TryCall(string rowKey, object item, object[] args, out string message)
+        /// <summary>パスへ点を置く・足す呼び出しと、点列の読み取りでなければ確かめずに通す。</summary>
+        public static bool TryCall(
+            string rowKey, object item, object[] args, out string code, out string message)
         {
+            code = ToolEnvelope.InvalidArgument;
             message = null;
             IPEVmePath path = item as IPEVmePath;
             if (path == null || args == null)
@@ -98,6 +107,34 @@ namespace PmxEditorMcp
             {
                 return TryAccept(path.PathType, Count(path) + 1, out message);
             }
+
+            if (string.Equals(rowKey, GetPathPointsKey, StringComparison.Ordinal)
+                && Count(path) == 0)
+            {
+                code = ToolEnvelope.NotApplicable;
+                message = "点が置かれていないパスからは点列を読めない。点を置いてから読む。";
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// SDKを呼ばずに答える読み取りなら真で、その値を渡す。点が0個のパスの RangeMin だけが当たる。
+        /// </summary>
+        public static bool TryRead(string rowKey, object item, out object value)
+        {
+            value = null;
+            IPEVmePath path = item as IPEVmePath;
+            if (path == null
+                || !string.Equals(rowKey, RangeMinKey, StringComparison.Ordinal)
+                || Count(path) != 0)
+            {
+                return false;
+            }
+
+            value = 0.0;
 
             return true;
         }

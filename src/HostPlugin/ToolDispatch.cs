@@ -1403,12 +1403,14 @@ namespace PmxEditorMcp
 
                 for (int at = 0; at < column.Count; at++)
                 {
-                    string lacking;
                     if (!VmePathPoints.TryCall(
-                        call.RowKey, column[at].Item, spread ? passing[0] : passing[at], out lacking))
+                        call.RowKey,
+                        column[at].Item,
+                        spread ? passing[0] : passing[at],
+                        out code,
+                        out message))
                     {
-                        refused = new Refusal(
-                            ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, lacking));
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
 
                         return;
                     }
@@ -2439,8 +2441,9 @@ namespace PmxEditorMcp
                     {
                         object value;
                         SdkRelayRefusal refusal;
-                        if (!_relay.TryInvoke(
-                            fields[at].RowKey, spot.Item, new object[0], out value, out refusal))
+                        if (!VmePathPoints.TryRead(fields[at].RowKey, spot.Item, out value)
+                            && !_relay.TryInvoke(
+                                fields[at].RowKey, spot.Item, new object[0], out value, out refusal))
                         {
                             refused = Refusal.Of(fields[at].RowKey, refusal);
 
