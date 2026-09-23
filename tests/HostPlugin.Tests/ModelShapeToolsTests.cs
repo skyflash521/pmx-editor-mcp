@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
@@ -10,8 +11,14 @@ namespace PmxEditorMcp.Tests
     /// <summary>
     /// 面と材質と頂点の形を変える5つ。どれも1回の呼び出しで、1回のまとめての反映に収まる。
     /// </summary>
+    [Collection(TimedCollection.Name)]
     public sealed class ModelShapeToolsTests : IDisposable
     {
+        private const int ManyFaces = 20000;
+
+        private const int StripQuads = 3000;
+
+        private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -932,6 +939,95 @@ namespace PmxEditorMcp.Tests
         private static KeyValuePair<string, object> Operation(string operation)
         {
             return ComposedEditFixture.Given(ComposedOperation.OperationName, operation);
+        }
+
+        [Fact]
+        public void SwappingTheDiagonalsOfManyLooseFacesFinishesInTime()
+        {
+            List<IPXFace> faces = new List<IPXFace>();
+            for (int at = 0; at < ManyFaces; at++)
+            {
+                IList<IPXVertex> corners = Vertices(3);
+                faces.Add(Face(corners, 0, 1, 2));
+            }
+
+            Material("材質", faces.ToArray());
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> value = ComposedEditFixture.Value(EditFaces(
+                Operation(ModelEditFaces.SwapDiagonal),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("all", true)));
+            elapsed.Stop();
+
+            Assert.Equal(0, value[ModelEditFaces.ChangedName]);
+            Assert.True(elapsed.Elapsed < TimeLimit, "入れ替えるのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void SwappingTheDiagonalsOfAWideFanFinishesInTime()
+        {
+            IList<IPXVertex> rim = Vertices(ManyFaces * 2 + 1);
+            List<IPXFace> faces = new List<IPXFace>();
+            for (int at = 0; at < ManyFaces; at++)
+            {
+                faces.Add(new FakeFace(rim[0], rim[(at * 2) + 1], rim[(at * 2) + 2]));
+            }
+
+            Material("材質", faces.ToArray());
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> value = ComposedEditFixture.Value(EditFaces(
+                Operation(ModelEditFaces.SwapDiagonal),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("all", true)));
+            elapsed.Stop();
+
+            Assert.Equal(0, value[ModelEditFaces.ChangedName]);
+            Assert.True(elapsed.Elapsed < TimeLimit, "入れ替えるのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void ExtrudingALongStripFinishesInTime()
+        {
+            FakeMaterial material = Material("材質", Strip(StripQuads).ToArray());
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> value = ComposedEditFixture.Value(EditFaces(
+                Operation(ModelEditFaces.Extrude),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditFaces.DistanceName, 1.0)));
+            elapsed.Stop();
+
+            Assert.Equal((StripQuads + 1) * 2, value[ModelEditFaces.AddedVerticesName]);
+            Assert.Equal((StripQuads * 2 + 2) * 2, value[ModelEditFaces.AddedFacesName]);
+            Assert.True(elapsed.Elapsed < TimeLimit, "押し出すのに " + elapsed.Elapsed + " かかった");
+        }
+
+        /// <summary>X方向へ並べた四角の帯。四角ごとに面を2つ作る。</summary>
+        private IList<IPXFace> Strip(int quads)
+        {
+            List<IPXVertex> bottom = new List<IPXVertex>();
+            List<IPXVertex> top = new List<IPXVertex>();
+            for (int at = 0; at <= quads; at++)
+            {
+                FakeVertex low = new FakeVertex(at, 0f, 0f);
+                FakeVertex high = new FakeVertex(at, 1f, 0f);
+                _fixture.Model.Vertex.Add(low);
+                _fixture.Model.Vertex.Add(high);
+                bottom.Add(low);
+                top.Add(high);
+            }
+
+            List<IPXFace> faces = new List<IPXFace>();
+            for (int at = 0; at < quads; at++)
+            {
+                faces.Add(new FakeFace(bottom[at], bottom[at + 1], top[at + 1]));
+                faces.Add(new FakeFace(bottom[at], top[at + 1], top[at]));
+            }
+
+            return faces;
         }
 
         private IList<IPXVertex> Vertices(int count)

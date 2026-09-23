@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
 
@@ -163,6 +164,8 @@ namespace PmxEditorMcp
             IList<KeyValuePair<IPXMaterial, IPXFace>> picked)
         {
             HashSet<IPXFace> taken = new HashSet<IPXFace>(ReferenceComparer<IPXFace>.Instance);
+            Dictionary<object, List<int>> touching = Touching(picked);
+            Dictionary<Pair, List<int>> sides = Sides(picked);
             int changed = 0;
             for (int at = 0; at < picked.Count; at++)
             {
@@ -172,26 +175,139 @@ namespace PmxEditorMcp
                     continue;
                 }
 
-                for (int other = at + 1; other < picked.Count; other++)
+                int partner = Candidates(left, touching, sides)
+                    .Where(other => other > at)
+                    .Distinct()
+                    .OrderBy(other => other)
+                    .Where(other => !taken.Contains(picked[other].Value)
+                        && ReferenceEquals(picked[at].Key, picked[other].Key)
+                        && Shared(left, picked[other].Value).Count == SharedCorners)
+                    .DefaultIfEmpty(-1)
+                    .First();
+                if (partner < 0)
                 {
-                    IPXFace right = picked[other].Value;
-                    if (taken.Contains(right)
-                        || !ReferenceEquals(picked[at].Key, picked[other].Key)
-                        || Shared(left, right).Count != SharedCorners)
-                    {
-                        continue;
-                    }
-
-                    Redraw(left, right);
-                    taken.Add(left);
-                    taken.Add(right);
-                    changed += 2;
-
-                    break;
+                    continue;
                 }
+
+                IPXFace right = picked[partner].Value;
+                Redraw(left, right);
+                taken.Add(left);
+                taken.Add(right);
+                changed += 2;
             }
 
             return Answer(changed, 0, 0);
+        }
+
+        /// <summary>
+        /// 角を2つ共有しうる面の位置。角がすべて異なる面では、自分の角の組を持つ面に限られる。
+        /// 同じ頂点を2度角に持つ面は、角を1つ共有するだけの相手とも2つと数えるので、角ごとに引く。
+        /// </summary>
+        private static IEnumerable<int> Candidates(
+            IPXFace face, Dictionary<object, List<int>> touching, Dictionary<Pair, List<int>> sides)
+        {
+            object[] corners = Corners(face).Select(Keyed).ToArray();
+            bool distinct = !ReferenceEquals(corners[0], corners[1])
+                && !ReferenceEquals(corners[1], corners[2])
+                && !ReferenceEquals(corners[0], corners[2]);
+            if (!distinct)
+            {
+                return corners.SelectMany(corner => touching[corner]);
+            }
+
+            return Pairs(corners).SelectMany(pair => sides[pair]);
+        }
+
+        /// <summary>角の組ごとの、その2つの頂点を角に持つ面の位置。位置は昇順に並ぶ。</summary>
+        private static Dictionary<Pair, List<int>> Sides(
+            IList<KeyValuePair<IPXMaterial, IPXFace>> picked)
+        {
+            Dictionary<Pair, List<int>> sides = new Dictionary<Pair, List<int>>();
+            for (int at = 0; at < picked.Count; at++)
+            {
+                foreach (Pair pair in Pairs(Corners(picked[at].Value).Select(Keyed).ToArray()).Distinct())
+                {
+                    List<int> held;
+                    if (!sides.TryGetValue(pair, out held))
+                    {
+                        held = new List<int>();
+                        sides.Add(pair, held);
+                    }
+
+                    held.Add(at);
+                }
+            }
+
+            return sides;
+        }
+
+        private static IEnumerable<Pair> Pairs(object[] corners)
+        {
+            yield return new Pair(corners[0], corners[1]);
+            yield return new Pair(corners[1], corners[2]);
+            yield return new Pair(corners[0], corners[2]);
+        }
+
+        /// <summary>向きを問わない2つの頂点の組。同じ実体かどうかだけで比べる。</summary>
+        private struct Pair : IEquatable<Pair>
+        {
+            private readonly object _one;
+
+            private readonly object _other;
+
+            public Pair(object one, object other)
+            {
+                _one = one;
+                _other = other;
+            }
+
+            public bool Equals(Pair pair)
+            {
+                return (ReferenceEquals(_one, pair._one) && ReferenceEquals(_other, pair._other))
+                    || (ReferenceEquals(_one, pair._other) && ReferenceEquals(_other, pair._one));
+            }
+
+            public override bool Equals(object other)
+            {
+                return other is Pair && Equals((Pair)other);
+            }
+
+            public override int GetHashCode()
+            {
+                return RuntimeHelpers.GetHashCode(_one) ^ RuntimeHelpers.GetHashCode(_other);
+            }
+        }
+
+        /// <summary>角が指さない頂点を、表の鍵として表す目印。</summary>
+        private static readonly object NoCorner = new object();
+
+        private static object Keyed(IPXVertex corner)
+        {
+            return (object)corner ?? NoCorner;
+        }
+
+        /// <summary>頂点ごとの、その頂点を角に持つ面の位置。位置は昇順に並ぶ。</summary>
+        private static Dictionary<object, List<int>> Touching(
+            IList<KeyValuePair<IPXMaterial, IPXFace>> picked)
+        {
+            Dictionary<object, List<int>> touching =
+                new Dictionary<object, List<int>>(ReferenceComparer<object>.Instance);
+            for (int at = 0; at < picked.Count; at++)
+            {
+                foreach (IPXVertex corner in Corners(picked[at].Value))
+                {
+                    List<int> held;
+                    if (!touching.TryGetValue(Keyed(corner), out held))
+                    {
+                        held = new List<int>();
+                        touching.Add(Keyed(corner), held);
+                    }
+
+                    held.Add(at);
+                }
+            }
+
+            return touching;
         }
 
         private static void Redraw(IPXFace left, IPXFace right)
@@ -241,6 +357,7 @@ namespace PmxEditorMcp
                 raised[lifted.Key] = made;
             }
 
+            Dictionary<object, Dictionary<object, int>> edges = Edges(picked);
             int walls = 0;
             foreach (KeyValuePair<IPXMaterial, IPXFace> held in picked)
             {
@@ -249,7 +366,7 @@ namespace PmxEditorMcp
                 {
                     IPXVertex from = winding[at];
                     IPXVertex to = winding[(at + 1) % winding.Length];
-                    if (Inside(picked, from, to))
+                    if (Inside(edges, from, to))
                     {
                         continue;
                     }
@@ -270,10 +387,13 @@ namespace PmxEditorMcp
             return Answer(picked.Count, raised.Count, walls);
         }
 
-        private static bool Inside(
-            IList<KeyValuePair<IPXMaterial, IPXFace>> picked, IPXVertex from, IPXVertex to)
+        /// <summary>選んだ面の辺ごとの、向きを付けたまま数えた出現の数。</summary>
+        private static Dictionary<object, Dictionary<object, int>> Edges(
+            IList<KeyValuePair<IPXMaterial, IPXFace>> picked)
         {
-            int found = 0;
+            Dictionary<object, Dictionary<object, int>> edges =
+                new Dictionary<object, Dictionary<object, int>>(
+                    ReferenceComparer<object>.Instance);
             foreach (KeyValuePair<IPXMaterial, IPXFace> held in picked)
             {
                 IPXVertex[] winding = Corners(held.Value);
@@ -281,15 +401,42 @@ namespace PmxEditorMcp
                 {
                     IPXVertex left = winding[at];
                     IPXVertex right = winding[(at + 1) % winding.Length];
-                    if ((ReferenceEquals(left, from) && ReferenceEquals(right, to))
-                        || (ReferenceEquals(left, to) && ReferenceEquals(right, from)))
+                    Dictionary<object, int> onward;
+                    if (!edges.TryGetValue(Keyed(left), out onward))
                     {
-                        found++;
+                        onward = new Dictionary<object, int>(ReferenceComparer<object>.Instance);
+                        edges.Add(Keyed(left), onward);
                     }
+
+                    int count;
+                    onward.TryGetValue(Keyed(right), out count);
+                    onward[Keyed(right)] = count + 1;
                 }
             }
 
+            return edges;
+        }
+
+        /// <summary>その辺を、選んだ面のうち2つ以上が向きを問わず持つか。</summary>
+        private static bool Inside(
+            Dictionary<object, Dictionary<object, int>> edges, IPXVertex from, IPXVertex to)
+        {
+            int found = Counted(edges, from, to)
+                + (ReferenceEquals(from, to) ? 0 : Counted(edges, to, from));
+
             return found > 1;
+        }
+
+        private static int Counted(
+            Dictionary<object, Dictionary<object, int>> edges, IPXVertex from, IPXVertex to)
+        {
+            Dictionary<object, int> onward;
+            int count;
+
+            return edges.TryGetValue(Keyed(from), out onward)
+                && onward.TryGetValue(Keyed(to), out count)
+                ? count
+                : 0;
         }
 
         private static ComposedEditResult Separated(

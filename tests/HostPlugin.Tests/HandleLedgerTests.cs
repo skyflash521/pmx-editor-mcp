@@ -7,6 +7,7 @@ using Xunit;
 
 namespace PmxEditorMcp.Tests
 {
+    [Collection(TimedCollection.Name)]
     public sealed class HandleLedgerTests : IDisposable
     {
         private const string UiModel = "uiModel";

@@ -11,6 +11,7 @@ namespace PmxEditorMcp.Tests
     /// 並びを動かす・要素を入れる・要素を消すの3つ。どれも1回の呼び出しで、1回のまとめての
     /// 反映に収まる。
     /// </summary>
+    [Collection(TimedCollection.Name)]
     public sealed class ComposedElementToolsTests : IDisposable
     {
         private const int ManyElements = 100000;

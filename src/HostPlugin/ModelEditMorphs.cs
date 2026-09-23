@@ -733,37 +733,60 @@ namespace PmxEditorMcp
                 islands[vertex] = next++;
             }
 
-            for (bool joined = true; joined;)
+            int[] parent = Enumerable.Range(0, next).ToArray();
+            foreach (IPXMaterial material in model.Material)
             {
-                joined = false;
-                foreach (IPXMaterial material in model.Material)
+                foreach (IPXFace face in material.Faces)
                 {
-                    foreach (IPXFace face in material.Faces)
+                    if (ReferenceCleanup.IsSoundFace(face))
                     {
-                        if (ReferenceCleanup.IsSoundFace(face))
-                        {
-                            joined |= Joined(islands, face);
-                        }
+                        int first = islands[face.Vertex1];
+                        Join(parent, first, islands[face.Vertex2]);
+                        Join(parent, first, islands[face.Vertex3]);
                     }
                 }
+            }
+
+            foreach (IPXVertex vertex in islands.Keys.ToList())
+            {
+                islands[vertex] = Root(parent, islands[vertex]);
             }
 
             return islands;
         }
 
-        /// <summary>寄せたなら真を返す。</summary>
-        private static bool Joined(IDictionary<IPXVertex, int> islands, IPXFace face)
+        /// <summary>2つのまとまりをつなぐ。つないだまとまりの代表は、小さい方の位置になる。</summary>
+        private static void Join(int[] parent, int left, int right)
         {
-            IPXVertex[] corners = { face.Vertex1, face.Vertex2, face.Vertex3 };
-            int least = corners.Min(corner => islands[corner]);
-            bool joined = false;
-            foreach (IPXVertex corner in corners)
+            int one = Root(parent, left);
+            int other = Root(parent, right);
+            if (one < other)
             {
-                joined |= islands[corner] != least;
-                islands[corner] = least;
+                parent[other] = one;
+            }
+            else if (other < one)
+            {
+                parent[one] = other;
+            }
+        }
+
+        /// <summary>その位置のまとまりの代表。まとまりの中で最も小さい位置である。</summary>
+        private static int Root(int[] parent, int at)
+        {
+            int root = at;
+            while (parent[root] != root)
+            {
+                root = parent[root];
             }
 
-            return joined;
+            while (parent[at] != root)
+            {
+                int up = parent[at];
+                parent[at] = root;
+                at = up;
+            }
+
+            return root;
         }
 
         private static ComposedEditResult FromMaterials(

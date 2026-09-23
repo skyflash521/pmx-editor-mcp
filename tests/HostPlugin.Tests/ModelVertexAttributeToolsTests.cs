@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
 using Xunit;
@@ -10,10 +12,19 @@ namespace PmxEditorMcp.Tests
     /// 頂点が持つ法線・ウェイト・変形方式を変える3つ。どれも1回の呼び出しで、1回のまとめての
     /// 反映に収まる。
     /// </summary>
+    [Collection(TimedCollection.Name)]
     public sealed class ModelVertexAttributeToolsTests : IDisposable
     {
         /// <summary>小数の突き合わせで見る桁。</summary>
         private const int Digits = 4;
+
+        private const int ManyVertices = 30000;
+
+        private const int WeighedVertices = 50000;
+
+        private const int ManyBones = 1000;
+
+        private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -700,6 +711,66 @@ namespace PmxEditorMcp.Tests
         private IDictionary<string, object> Deform(params KeyValuePair<string, object>[] given)
         {
             return _fixture.Call(ModelSetDeformType.ToolName, ComposedEditFixture.Arguments(given));
+        }
+
+        [Fact]
+        public void AveragingNearAcrossManyVerticesFinishesInTime()
+        {
+            for (int at = 0; at < ManyVertices; at++)
+            {
+                Vertex(at, at % 2 == 0 ? 0f : 0.05f, 0f).Normal = new V3(0f, 0f, 1f);
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            Normals(
+                Operation(ModelEditNormals.AverageNear),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditNormals.ThresholdName, 0.1));
+            elapsed.Stop();
+
+            Assert.True(elapsed.Elapsed < TimeLimit, "平均するのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void AveragingOnlyTheSameSpotsAcrossManyCloseVerticesFinishesInTime()
+        {
+            for (int at = 0; at < ManyVertices; at++)
+            {
+                Vertex(at / (float)ManyVertices, 0f, 0f).Normal = new V3(0f, 0f, 1f);
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            Normals(
+                Operation(ModelEditNormals.AverageNear),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditNormals.ThresholdName, 0.0));
+            elapsed.Stop();
+
+            Assert.True(elapsed.Elapsed < TimeLimit, "平均するのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void TakingTheWeightFromTheNearestBoneForManyVerticesFinishesInTime()
+        {
+            IList<IPXBone> bones = Bones(
+                Enumerable.Range(0, ManyBones).Select(at => "骨" + at).ToArray());
+            for (int at = 0; at < ManyBones; at++)
+            {
+                ((FakeBone)bones[at]).Position = new V3(at, 0f, 0f);
+            }
+
+            for (int at = 0; at < WeighedVertices; at++)
+            {
+                Vertex(at % ManyBones, 1f, 0f);
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            Weights(
+                Operation(ModelEditWeights.FromNearestBonePosition),
+                ComposedEditFixture.Given("all", true));
+            elapsed.Stop();
+
+            Assert.True(elapsed.Elapsed < TimeLimit, "振るのに " + elapsed.Elapsed + " かかった");
         }
 
         private static KeyValuePair<string, object> Operation(string operation)

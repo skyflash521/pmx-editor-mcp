@@ -284,27 +284,41 @@ namespace PmxEditorMcp
                 return;
             }
 
+            IList<IPXBone> bones = model.Bone;
+            NearestBones table = bones.All(bone => Vectors.Finite(bone.Position)
+                    && (!alongTheBone || Vectors.Finite(Tip(bone))))
+                ? (alongTheBone ? NearestBones.BySegment(bones, Tip) : NearestBones.ByPosition(bones))
+                : null;
             foreach (IPXVertex vertex in picked)
             {
-                IPXBone closest = null;
-                float best = 0f;
-                foreach (IPXBone bone in model.Bone)
-                {
-                    float apart = alongTheBone
-                        ? Vectors.DistanceToSegment(vertex.Position, bone.Position, Tip(bone))
-                        : Vectors.Distance(vertex.Position, bone.Position);
-                    if (closest != null && apart >= best)
-                    {
-                        continue;
-                    }
-
-                    closest = bone;
-                    best = apart;
-                }
-
+                IPXBone closest = table != null && Vectors.Finite(vertex.Position)
+                    ? table.Closest(vertex.Position)
+                    : Scanned(bones, vertex, alongTheBone);
                 VertexWeights.Write(
                     vertex, new[] { new KeyValuePair<IPXBone, float>(closest, 1f) });
             }
+        }
+
+        /// <summary>全ボーンを順に比べて最も近いものを選ぶ。距離が等しければ先のものを残す。</summary>
+        private static IPXBone Scanned(IList<IPXBone> bones, IPXVertex vertex, bool alongTheBone)
+        {
+            IPXBone closest = null;
+            float best = 0f;
+            foreach (IPXBone bone in bones)
+            {
+                float apart = alongTheBone
+                    ? Vectors.DistanceToSegment(vertex.Position, bone.Position, Tip(bone))
+                    : Vectors.Distance(vertex.Position, bone.Position);
+                if (closest != null && apart >= best)
+                {
+                    continue;
+                }
+
+                closest = bone;
+                best = apart;
+            }
+
+            return closest;
         }
 
         /// <summary>そのボーンの表示先の点。表示先を持たないボーンでは根元と同じ点になる。</summary>

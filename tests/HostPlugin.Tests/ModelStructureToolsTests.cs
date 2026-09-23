@@ -12,12 +12,15 @@ namespace PmxEditorMcp.Tests
     /// モーフの整理と生成、表示枠への登録、指している相手からの写し取り。どれも1回の呼び出しで、
     /// 1回のまとめての反映に収まる。
     /// </summary>
+    [Collection(TimedCollection.Name)]
     public sealed class ModelStructureToolsTests : IDisposable
     {
         /// <summary>小数の突き合わせで見る桁。</summary>
         private const int Digits = 4;
 
         private const int ManyOffsets = 30000;
+
+        private const int StripQuads = 5000;
 
         private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
@@ -144,6 +147,37 @@ namespace PmxEditorMcp.Tests
             Assert.All(
                 _fixture.Model.Morph.Where(morph => morph.Kind == MorphKind.Vertex),
                 morph => Assert.Single(morph.Offsets));
+        }
+
+        [Fact]
+        public void SplittingAMorphOverALongStripFinishesInTime()
+        {
+            List<IPXVertex> bottom = new List<IPXVertex>();
+            List<IPXVertex> top = new List<IPXVertex>();
+            for (int at = 0; at <= StripQuads; at++)
+            {
+                bottom.Add(Vertex(at, 0f, 0f));
+                top.Add(Vertex(at, 1f, 0f));
+            }
+
+            FakeMaterial material = new FakeMaterial("材質");
+            for (int at = StripQuads - 1; at >= 0; at--)
+            {
+                material.Faces.Add(new FakeFace(bottom[at], bottom[at + 1], top[at + 1]));
+                material.Faces.Add(new FakeFace(bottom[at], top[at + 1], top[at]));
+            }
+
+            _fixture.Model.Material.Add(material);
+            Morph("笑い", MorphKind.Vertex, bottom.Concat(top).Select(v => Shift(v, 1f)).ToArray());
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> value = ComposedEditFixture.Value(Morphs(
+                Operation(ModelEditMorphs.SplitVertices),
+                ComposedEditFixture.Given("all", true)));
+            elapsed.Stop();
+
+            Assert.Single((object[])value[ModelEditMorphs.AddedName]);
+            Assert.True(elapsed.Elapsed < TimeLimit, "分けるのに " + elapsed.Elapsed + " かかった");
         }
 
         [Fact]

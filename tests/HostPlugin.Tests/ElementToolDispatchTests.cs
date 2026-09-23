@@ -10,6 +10,7 @@ namespace PmxEditorMcp.Tests
     /// <summary>
     /// PMXの中に並ぶ要素を相手にするツールの振り分け。親の列を辿る道と、実行時の型で絞る道を含む。
     /// </summary>
+    [Collection(TimedCollection.Name)]
     public sealed class ElementToolDispatchTests : IDisposable
     {
         private const string ModulePath = @"C:\plugins\PmxEditorMcp.HostPlugin.dll";

@@ -7,6 +7,7 @@ using Xunit;
 
 namespace PmxEditorMcp.Tests
 {
+    [Collection(TimedCollection.Name)]
     public sealed class ModelPlacementToolsTests : IDisposable
     {
         private const int Digits = 4;
