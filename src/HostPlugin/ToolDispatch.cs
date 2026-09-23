@@ -53,6 +53,9 @@ namespace PmxEditorMcp
         /// <summary>一覧の応答が持つ続きの位置の名前。</summary>
         public const string NextOffsetName = "nextOffset";
 
+        /// <summary>読み返した選択の数を返す項目の名前。</summary>
+        public const string SelectedName = "selected";
+
         /// <summary>更新が受け取る、対象ごとの値の組の並びの名前。</summary>
         public const string ValuesName = "values";
 
@@ -868,6 +871,7 @@ namespace PmxEditorMcp
 
             object result = null;
             object called = null;
+            int? readBack = null;
             List<object> results = new List<object>();
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
@@ -930,6 +934,29 @@ namespace PmxEditorMcp
 
                 stage = Reflecting(call.Receiver, target, stage);
                 refused = Commit(context, call.Receiver, target);
+                if (refused == null && call.ReadBack != null)
+                {
+                    object back;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(call.ReadBack, column[0].Item, new object[0], out back, out refusal))
+                    {
+                        refused = Refusal.Of(call.ReadBack, refusal);
+
+                        return;
+                    }
+
+                    Array positions = back as Array;
+                    if (positions == null)
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(
+                            ToolEnvelope.OperationFailed,
+                            "書き込んだが、読み返した値が位置の並びでなかった: " + call.ReadBack));
+
+                        return;
+                    }
+
+                    readBack = positions.Length;
+                }
             }, out failure, out unavailable))
             {
                 return Unavailable(unavailable);
@@ -964,6 +991,14 @@ namespace PmxEditorMcp
             if (call.Projected != null)
             {
                 return ToolEnvelope.Success(result);
+            }
+
+            if (readBack.HasValue)
+            {
+                return ToolEnvelope.Success(new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { SelectedName, readBack.Value },
+                });
             }
 
             if (call.Result == null)

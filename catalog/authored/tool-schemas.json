@@ -40041,7 +40041,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44262,7 +44268,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44282,7 +44294,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44302,7 +44320,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44527,7 +44551,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44547,7 +44577,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44567,7 +44603,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44587,7 +44629,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44607,7 +44655,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44627,7 +44681,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44647,7 +44707,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44667,7 +44733,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44687,7 +44759,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44707,7 +44785,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44753,7 +44837,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -44773,7 +44863,13 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "selected",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {

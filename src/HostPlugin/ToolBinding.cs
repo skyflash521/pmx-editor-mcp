@@ -375,7 +375,8 @@ namespace PmxEditorMcp
             bool respondsMany = false,
             string selectorName = null,
             string selectorValue = null,
-            bool paged = false)
+            bool paged = false,
+            string readBack = null)
         {
             if (rowKey == null)
             {
@@ -418,6 +419,7 @@ namespace PmxEditorMcp
             SelectorName = selectorName;
             SelectorValue = selectorValue;
             Paged = paged;
+            ReadBack = readBack;
         }
 
         /// <summary>
@@ -425,6 +427,12 @@ namespace PmxEditorMcp
         /// 続きの位置を返す。
         /// </summary>
         public bool Paged { get; }
+
+        /// <summary>
+        /// 呼んだ後に同じ受け手から読み返す行のキー。持つ呼び出しは、読み返した並びの件数を selected に
+        /// 返す。持たなければ null。
+        /// </summary>
+        public string ReadBack { get; }
 
         /// <summary>呼び分けを選ぶ項目の名前。名前だけでは見分けられないツールが持つ。</summary>
         public string SelectorName { get; }

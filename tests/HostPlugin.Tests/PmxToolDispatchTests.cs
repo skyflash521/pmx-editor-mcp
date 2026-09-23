@@ -18,6 +18,10 @@ namespace PmxEditorMcp.Tests
 
         private const string ConnectorType = "Sdk.PmxConnector";
 
+        private const string SetMarksKey = "Sdk.PmxConnector.SetMarks(System.Int32[])";
+
+        private const string GetMarksKey = "Sdk.PmxConnector.GetMarks()";
+
         private const string StateReadKey = "Sdk.PmxConnector.GetCurrentState()";
 
         private const string CommitKey = "Sdk.PmxConnector.Update(Sdk.Pmx)";
@@ -47,6 +51,10 @@ namespace PmxEditorMcp.Tests
         private int _commits;
 
         private int _clones;
+
+        private int[] _marks = new int[0];
+
+        private bool _marksReadable = true;
 
         private bool _reflectionBreaks;
 
@@ -170,6 +178,26 @@ namespace PmxEditorMcp.Tests
             Assert.All(
                 items,
                 item => Assert.Equal(1, ((IDictionary<string, object>)item)["parentIndex"]));
+        }
+
+        [Fact]
+        public void SettingASelectionAnswersHowManyAreSelectedAfterward()
+        {
+            IDictionary<string, object> value = Value(Call(
+                "view_set_marks", Arguments("indices", new object[] { 3, 1, 3 })));
+
+            Assert.Equal(2, value["selected"]);
+        }
+
+        [Fact]
+        public void ASelectionThatCannotBeReadBackIsNotAnsweredAsEmpty()
+        {
+            _marksReadable = false;
+
+            IDictionary<string, object> envelope = Call(
+                "view_set_marks", Arguments("indices", new object[] { 1 }));
+
+            Assert.Equal(ToolEnvelope.OperationFailed, Code(envelope));
         }
 
         [Fact]
@@ -648,6 +676,18 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, SdkCall>(StringComparer.Ordinal)
                 {
                     {
+                        SetMarksKey,
+                        (target, arguments) =>
+                        {
+                            _marks = ((int[])arguments[0]).Distinct().ToArray();
+                            return null;
+                        }
+                    },
+                    {
+                        GetMarksKey,
+                        (target, arguments) => _marksReadable ? _marks : null
+                    },
+                    {
                         StateReadKey,
                         (target, arguments) =>
                         {
@@ -778,6 +818,18 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         new ToolArgument[0],
                         null)
+                },
+                {
+                    "view_set_marks",
+                    new ToolCall(
+                        SetMarksKey,
+                        new ToolReceiver(ToolReceiverKind.Connection, ConnectorType, EditKind.ViewSession),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[] { new ToolArgument("indices", typeof(int[])) },
+                        new ToolArgument[0],
+                        null,
+                        readBack: GetMarksKey)
                 },
                 {
                     "model_compact_pmx",

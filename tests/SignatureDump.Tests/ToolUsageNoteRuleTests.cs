@@ -181,6 +181,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.DoesNotContain("1回の呼び出しで1つだけ", ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void AToolAnsweringOnlyTheSelectedCountSaysWhatItCounts()
+        {
+            ToolSchema schema = new ToolSchema(
+                "view_set_selected_bone_indices_pmd_view_connector",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new List<SchemaItem> { Item("indices", null, null, Item(null, "number", null, null)) },
+                        new SchemaChoice[0]),
+                },
+                Item(null, null, new List<SchemaItem> { Item("selected", "number", null, null) }, null),
+                null);
+
+            Assert.Contains("selected", ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
+        }
+
         private static string Note(bool listing, params string[] inputs)
         {
             return ToolUsageNoteRule.Compose(Schema(listing, inputs));

@@ -571,6 +571,7 @@ namespace PmxEditorMcp.SignatureDump
                 returnsMany,
                 responds ? "true" : null);
 
+            string readBack = ReadBackRule.Of(signature, signatures);
             string chosen = selected == null
                 ? string.Empty
                 : ", selectorName: " + Literal(selected.SelectorName)
@@ -591,7 +592,8 @@ namespace PmxEditorMcp.SignatureDump
                     ? "null"
                     : TypeOf(signature.ValueType))
                 + tail + chosen
-                + (PagedCallRule.Pages(row, signature) ? ", paged: true" : string.Empty) + ")";
+                + (PagedCallRule.Pages(row, signature) ? ", paged: true" : string.Empty)
+                + (readBack == null ? string.Empty : ", readBack: " + Literal(readBack)) + ")";
         }
 
         /// <summary>

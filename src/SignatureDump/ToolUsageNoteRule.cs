@@ -30,6 +30,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string OneAtATime = "書き込む項目は1回の呼び出しで1つだけ渡す。";
 
+        private const string ReadsBack = "設定した後に読み返した位置の数を " + SelectedName + " に返す。";
+
         private const string NameContainsName = "nameContains";
 
         private const string NarrowsByName =
@@ -112,6 +114,11 @@ namespace PmxEditorMcp.SignatureDump
                 built.Append(OneAtATime);
             }
 
+            if (AnswersOnlySelected(schema))
+            {
+                built.Append(ReadsBack);
+            }
+
             if (Takes(schema, NameContainsName))
             {
                 built.Append(NarrowsByName);
@@ -166,6 +173,15 @@ namespace PmxEditorMcp.SignatureDump
                                 && c.Names.Count == inputs.Count
                                 && inputs.All(n => c.Names.Contains(n)));
                 });
+        }
+
+        private static bool AnswersOnlySelected(ToolSchema schema)
+        {
+            IList<SchemaItem> members = schema.Output == null ? null : schema.Output.Members;
+
+            return members != null
+                && members.Count == 1
+                && string.Equals(members[0].Name, SelectedName, StringComparison.Ordinal);
         }
 
         private static bool Issues(ToolSchema schema)
