@@ -104,7 +104,7 @@ namespace PmxEditorMcp
                         UiStructureCatalog.Node(window, UiStructureCatalog.RootName);
                     foreach (string step in path)
                     {
-                        node = Child(node, step);
+                        node = UiStructureCatalog.Child(node, step);
                         if (node == null)
                         {
                             return ToolEnvelope.Failure(
@@ -321,21 +321,8 @@ namespace PmxEditorMcp
             return kept;
         }
 
-        private static IDictionary<string, object> Child(IDictionary<string, object> node, string name)
-        {
-            foreach (IDictionary<string, object> child in UiStructureCatalog.Children(node))
-            {
-                if (string.Equals(
-                    UiStructureCatalog.Text(child, UiStructureCatalog.NameName), name, StringComparison.Ordinal))
-                {
-                    return child;
-                }
-            }
-
-            return null;
-        }
-
-        private static IList<string> Steps(McpMethodContext context)
+        /// <summary>path の名前の並び。渡されなければ空、文字列の並びでなければ null。</summary>
+        internal static IList<string> Steps(McpMethodContext context)
         {
             object given;
             if (!context.Params.TryGetValue(PathName, out given) || given == null)

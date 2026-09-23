@@ -233,6 +233,7 @@ namespace PmxEditorMcp
                 UiTree.AddTo(methods);
                 UiOpenWindow.AddTo(methods, OpenForms);
                 UiCloseWindow.AddTo(methods, OpenForms);
+                UiPressItem.AddTo(methods, OpenForms);
                 EditorPrompt.AddTo(
                     methods,
                     new DesktopModalWindowProbe(TimeSpan.FromMilliseconds(PromptTextLimitMs)));

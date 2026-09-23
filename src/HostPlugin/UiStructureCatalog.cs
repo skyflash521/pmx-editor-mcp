@@ -10,7 +10,7 @@ namespace PmxEditorMcp
     ///
     /// 窓の名前は型の完全名で、題はフォーム自身の Text である。部品の節は、型・受け皿の名前・
     /// 文言・指したときに出る説明・ショートカット・右クリックメニューの名前・断片のクラス・
-    /// 実行時に組み立てる印・開く窓・子を持ち、無い項目は省かれている。
+    /// 実行時に組み立てる印・開く窓・押したときの危険の区分・子を持ち、無い項目は省かれている。
     /// </summary>
     internal static class UiStructureCatalog
     {
@@ -47,6 +47,13 @@ namespace PmxEditorMcp
         internal const string ShortcutName = "shortcut";
 
         internal const string ChildrenName = "children";
+
+        internal const string DangerName = "danger";
+
+        private static readonly HashSet<string> PressableTypes = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "ToolStripMenuItem", "ToolStripButton", "Button",
+        };
 
         private static readonly object Gate = new object();
 
@@ -173,6 +180,26 @@ namespace PmxEditorMcp
             }
 
             return children;
+        }
+
+        /// <summary>台帳の節が、押すと何かが起きる部品か。</summary>
+        internal static bool Pressable(IDictionary<string, object> node)
+        {
+            return PressableTypes.Contains(Text(node, TypeName) ?? string.Empty);
+        }
+
+        /// <summary>台帳の節の、その名前の子。無ければ null。</summary>
+        internal static IDictionary<string, object> Child(IDictionary<string, object> node, string name)
+        {
+            foreach (IDictionary<string, object> child in Children(node))
+            {
+                if (string.Equals(Text(child, NameName), name, StringComparison.Ordinal))
+                {
+                    return child;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>文字列の並びを取り出す。</summary>

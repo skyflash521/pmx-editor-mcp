@@ -123,6 +123,156 @@ namespace PmxEditorMcp.Tests
             });
         }
 
+        [Fact]
+        public void AMenuItemInAnOpenWindowIsPressed()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    int pressed = 0;
+                    screen.Pose.Click += (sender, e) => pressed++;
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    Value(Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SetupCurrentPose"));
+
+                    Assert.Equal(1, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void AnItemInsideAContainerMissingFromTheCatalogIsPressed()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    int pressed = 0;
+                    screen.Initialize.Click += (sender, e) => pressed++;
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    Value(Press(screen, Transform, "extMenuStrip1", "MenuItem_Init", "MenuItem_Initialize"));
+
+                    Assert.Equal(1, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void AnItemInAClosedWindowIsNotPressed()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    IDictionary<string, object> refused =
+                        Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SetupCurrentPose");
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.Contains(UiOpenWindow.ToolName, Said(refused));
+                }
+            });
+        }
+
+        [Fact]
+        public void ADangerousItemIsRefusedWithoutPressing()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    int pressed = 0;
+                    screen.Save.Click += (sender, e) => pressed++;
+
+                    IDictionary<string, object> refused =
+                        Press(screen, MainForm, "menuStrip1", "MenuItem_File", "MenuItem_Save");
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.Equal(0, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void ADisabledItemIsNotPressedEither()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    int pressed = 0;
+                    screen.Item.Click += (sender, e) => pressed++;
+                    screen.Item.Enabled = false;
+
+                    Assert.Equal(
+                        ToolEnvelope.NotApplicable,
+                        Code(Press(screen, View, "menuStrip1", "MenuItem_View", "MenuItem_TransformView")));
+                    Assert.Equal(0, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void AButtonOnADialogWaitingForAnAnswerIsNotPressed()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                using (Form dialog = new Form { Name = "InputDialog", ShowInTaskbar = false })
+                {
+                    int pressed = 0;
+                    Button ok = new Button { Name = "btnOK" };
+                    ok.Click += (sender, e) => pressed++;
+                    dialog.Controls.Add(ok);
+                    screen.Add(dialog);
+                    IDictionary<string, object> refused = null;
+                    dialog.Shown += (sender, e) =>
+                    {
+                        refused = Press(screen, "PmxEditor.InputDialog", "btnOK");
+                        dialog.Close();
+                    };
+
+                    dialog.ShowDialog();
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.Equal(0, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void OnlyAPressableLeafIsAccepted()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Assert.Equal(ToolEnvelope.InvalidArgument, Code(Press(screen, View, "menuStrip1", "MenuItem_View")));
+                    Assert.Equal(ToolEnvelope.InvalidArgument, Code(Press(screen, View, "menuStrip1", "MenuItem_Nothing")));
+                    Assert.Equal(ToolEnvelope.InvalidArgument, Code(Press(screen, "TransformView", "menuStrip1")));
+                    Assert.Equal(ToolEnvelope.InvalidArgument, Code(Press(screen, View)));
+                }
+            });
+        }
+
+        private static IDictionary<string, object> Press(Screen screen, string window, params string[] path)
+        {
+            return Call(
+                screen,
+                UiPressItem.ToolName,
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { UiPressItem.WindowName, window },
+                    { UiPressItem.PathName, path },
+                });
+        }
+
+        private static string Said(IDictionary<string, object> envelope)
+        {
+            return (string)((IDictionary<string, object>)envelope["error"])["message"];
+        }
+
         private static Func<string, bool> Open(params string[] open)
         {
             return named => Array.IndexOf(open, named) >= 0;
@@ -130,14 +280,22 @@ namespace PmxEditorMcp.Tests
 
         private static IDictionary<string, object> Call(Screen screen, string tool, string window)
         {
+            return Call(
+                screen, tool, new Dictionary<string, object>(StringComparer.Ordinal) { { "window", window } });
+        }
+
+        private static IDictionary<string, object> Call(
+            Screen screen, string tool, IDictionary<string, object> arguments)
+        {
             McpMethodTable methods = new McpMethodTable();
             UiOpenWindow.AddTo(methods, screen.Forms);
             UiCloseWindow.AddTo(methods, screen.Forms);
+            UiPressItem.AddTo(methods, screen.Forms);
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていない。");
 
             return (IDictionary<string, object>)method(new McpMethodContext(
-                new Dictionary<string, object>(StringComparer.Ordinal) { { "window", window } },
+                arguments,
                 new InlineInvoker(),
                 100000,
                 new HandleLedger(
@@ -192,14 +350,23 @@ namespace PmxEditorMcp.Tests
             internal Screen()
             {
                 Main = Shown("PmxForm", "Pmx編集");
+                Save = new ToolStripMenuItem("上書き保存(&U)") { Name = "MenuItem_Save" };
+                Main.Controls.Add(Strip(Menu("MenuItem_File", Save)));
                 View = Shown("PMXView", "PmxView");
-                MenuStrip strip = new MenuStrip { Name = "menuStrip1" };
-                ToolStripMenuItem viewMenu = new ToolStripMenuItem("表示(&V)") { Name = "MenuItem_View" };
                 Item = new ToolStripMenuItem("TransformView(&T)") { Name = "MenuItem_TransformView" };
-                Item.Click += (sender, e) => Transform = Shown("TransformView", "TransformView");
-                viewMenu.DropDownItems.Add(Item);
-                strip.Items.Add(viewMenu);
-                View.Controls.Add(strip);
+                Item.Click += (sender, e) =>
+                {
+                    Transform = Shown("TransformView", "TransformView");
+                    Transform.Controls.Add(Strip(Menu("MenuItem_File", Pose)));
+                    SplitContainer split = new SplitContainer { Name = "splitContainer1" };
+                    MenuStrip ext = new MenuStrip { Name = "extMenuStrip1" };
+                    ext.Items.Add(Menu("MenuItem_Init", Initialize));
+                    split.Panel2.Controls.Add(ext);
+                    Transform.Controls.Add(split);
+                };
+                View.Controls.Add(Strip(Menu("MenuItem_View", Item)));
+                Pose = new ToolStripMenuItem("現在の変形状態でモデル形状を更新(&U)") { Name = "MenuItem_SetupCurrentPose" };
+                Initialize = new ToolStripMenuItem("全て初期化(&Q)") { Name = "MenuItem_Initialize" };
             }
 
             internal Form Main { get; }
@@ -209,6 +376,17 @@ namespace PmxEditorMcp.Tests
             internal Form Transform { get; private set; }
 
             internal ToolStripMenuItem Item { get; }
+
+            internal ToolStripMenuItem Save { get; }
+
+            internal ToolStripMenuItem Pose { get; }
+
+            internal ToolStripMenuItem Initialize { get; }
+
+            internal void Add(Form form)
+            {
+                _forms.Add(form);
+            }
 
             internal IEnumerable<Form> Forms()
             {
@@ -221,6 +399,22 @@ namespace PmxEditorMcp.Tests
                 {
                     form.Dispose();
                 }
+            }
+
+            private static MenuStrip Strip(ToolStripMenuItem menu)
+            {
+                MenuStrip strip = new MenuStrip { Name = "menuStrip1" };
+                strip.Items.Add(menu);
+
+                return strip;
+            }
+
+            private static ToolStripMenuItem Menu(string name, ToolStripMenuItem item)
+            {
+                ToolStripMenuItem menu = new ToolStripMenuItem(name) { Name = name };
+                menu.DropDownItems.Add(item);
+
+                return menu;
             }
 
             private Form Shown(string name, string title)

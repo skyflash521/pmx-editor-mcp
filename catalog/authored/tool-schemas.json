@@ -367,6 +367,35 @@
       }
     },
     {
+      "tool": "editor_press_item",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "window",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "path",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": []
+      }
+    },
+    {
       "tool": "model_add_bodies",
       "branches": [
         {

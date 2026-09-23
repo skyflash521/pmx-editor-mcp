@@ -14,11 +14,6 @@ namespace PmxEditorMcp
 
         public const string TitleName = "title";
 
-        private static readonly HashSet<string> Pressable = new HashSet<string>(StringComparer.Ordinal)
-        {
-            "ToolStripMenuItem", "ToolStripButton", "Button",
-        };
-
         /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
         {
@@ -90,7 +85,7 @@ namespace PmxEditorMcp
                 UiStructureCatalog.Window(opener), UiStructureCatalog.RootName);
             foreach (string step in path)
             {
-                at = Child(at, step);
+                at = UiStructureCatalog.Child(at, step);
                 if (at == null
                     || string.Equals(
                         UiStructureCatalog.Text(at, UiStructureCatalog.TypeName), "ContextMenuStrip",
@@ -102,23 +97,9 @@ namespace PmxEditorMcp
 
             IList<string> opens = UiStructureCatalog.Texts(at, "opens");
 
-            return Pressable.Contains(UiStructureCatalog.Text(at, UiStructureCatalog.TypeName) ?? string.Empty)
+            return UiStructureCatalog.Pressable(at)
                 && opens.Count == 1
                 && string.Equals(opens[0], named, StringComparison.Ordinal);
-        }
-
-        private static IDictionary<string, object> Child(IDictionary<string, object> node, string name)
-        {
-            foreach (IDictionary<string, object> child in UiStructureCatalog.Children(node))
-            {
-                if (string.Equals(
-                    UiStructureCatalog.Text(child, UiStructureCatalog.NameName), name, StringComparison.Ordinal))
-                {
-                    return child;
-                }
-            }
-
-            return null;
         }
 
         private static object Open(McpMethodContext context, Func<IEnumerable<Form>> forms)
@@ -172,7 +153,7 @@ namespace PmxEditorMcp
                 {
                     try
                     {
-                        refused = Press(forms, hop.Key, hop.Value);
+                        refused = UiLive.Press(UiLive.Shown(forms(), hop.Key), hop.Key, hop.Value);
                     }
                     catch (Exception exception)
                     {
@@ -212,54 +193,6 @@ namespace PmxEditorMcp
             }
 
             return Opened(title, false);
-        }
-
-        /// <summary>部品を押す。押せなければその事情を返し、押したら null。</summary>
-        private static string Press(Func<IEnumerable<Form>> forms, string opener, IList<string> path)
-        {
-            Form form = UiLive.Shown(forms(), opener);
-            List<UiMenu> menus = new List<UiMenu>();
-            object part = form == null ? null : UiLive.Find(form, path, menus);
-            if (part == null)
-            {
-                return "開く道筋の部品が見つからない: " + opener + " の " + string.Join("/", path);
-            }
-
-            bool enabled;
-            try
-            {
-                foreach (UiMenu menu in menus)
-                {
-                    menu.Open();
-                }
-
-                ToolStripItem item = part as ToolStripItem;
-                enabled = item != null ? item.Enabled && item.Available : ((Control)part).Enabled;
-            }
-            finally
-            {
-                for (int at = menus.Count - 1; at >= 0; at--)
-                {
-                    menus[at].Close();
-                }
-            }
-
-            if (!enabled)
-            {
-                return "開く道筋の部品がいまは押せない: " + opener + " の " + string.Join("/", path);
-            }
-
-            ToolStripItem pressed = part as ToolStripItem;
-            if (pressed != null)
-            {
-                pressed.PerformClick();
-            }
-            else
-            {
-                ((Button)part).PerformClick();
-            }
-
-            return null;
         }
 
         private static IDictionary<string, object> Opened(string title, bool already)

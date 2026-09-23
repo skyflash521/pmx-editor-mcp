@@ -312,12 +312,17 @@
     {
       "tool": "editor_get_screen_structure",
       "branching": false,
-      "duty": "ウィンドウの一覧と、ウィンドウの中の部品の木を返す。エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。window を省くと全部のウィンドウの一覧を返す。window は型の完全名かウィンドウの題で指す。型の完全名が当たればそのウィンドウだけ、当たらなければ題が一致するウィンドウすべて、それも無ければ名前か題に部分一致するウィンドウすべてを返し、どれも当たらなければ空を返す。型の完全名か題が一致したウィンドウには、どこから開くか openedBy と、部品の木 node と、そのウィンドウが出す確認や報告の文言 messages が付く。node は type と name と text と toolTip と shortcut と contextMenu と fragment と dynamic と opens と children を持つ。children は同じ形の節が並ぶ。fragment はその節へ差し込んだ断片のクラス、dynamic は件数が実行時に決まる枝で組み立てる method を持ち、opens はその部品が開くウィンドウの型の完全名である。無い項目は省く。path は node の根から降りる name の並びで、渡すとその部品を根とする木を返す。depth は返す段数で、0以上100以下の整数である。0はその節だけ、省くと下まで全部を返す。木が応答の枠に収まらないときは段数を縮めずにエラーを返すので、path で降りるか window で1つに絞って取り直す。total は当たったウィンドウの総数で、返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。offset は0以上2147483647以下の整数で既定は0である。"
+      "duty": "ウィンドウの一覧と、ウィンドウの中の部品の木を返す。エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。window を省くと全部のウィンドウの一覧を返す。window は型の完全名かウィンドウの題で指す。型の完全名が当たればそのウィンドウだけ、当たらなければ題が一致するウィンドウすべて、それも無ければ名前か題に部分一致するウィンドウすべてを返し、どれも当たらなければ空を返す。型の完全名か題が一致したウィンドウには、どこから開くか openedBy と、部品の木 node と、そのウィンドウが出す確認や報告の文言 messages が付く。node は type と name と text と toolTip と shortcut と contextMenu と fragment と dynamic と opens と danger と children を持つ。children は同じ形の節が並ぶ。fragment はその節へ差し込んだ断片のクラス、dynamic は件数が実行時に決まる枝で組み立てる method を持ち、opens はその部品が開くウィンドウの型の完全名である。danger は editor_press_item が押さない部品の区分である。無い項目は省く。path は node の根から降りる name の並びで、渡すとその部品を根とする木を返す。depth は返す段数で、0以上100以下の整数である。0はその節だけ、省くと下まで全部を返す。木が応答の枠に収まらないときは段数を縮めずにエラーを返すので、path で降りるか window で1つに絞って取り直す。total は当たったウィンドウの総数で、返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。offset は0以上2147483647以下の整数で既定は0である。"
     },
     {
       "tool": "editor_open_window",
       "branching": false,
       "duty": "エディタのウィンドウを開く。TransformView のように、ほかのツールが相手にするウィンドウが閉じているときに使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。いま開いているウィンドウから、押すとそのウィンドウだけを開くメニュー項目かボタンを辿り、人が押すのと同じ順に押して開く。途中のウィンドウが閉じていればそれも開く。右クリックメニューの中の項目は辿らない。開いていれば何もせず alreadyOpen に真を返し、開いたら alreadyOpen に偽を返す。title は開いているウィンドウの題である。辿れる道が無いとき、途中の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。開くときにエディタが確認の表示を出したら TOOL_PROMPT_SHOWN を返す。"
+    },
+    {
+      "tool": "editor_press_item",
+      "branching": false,
+      "duty": "開いているウィンドウの中のメニュー項目かボタンを1つ、人が押すのと同じように押す。ほかのツールに無い、そのウィンドウでしかできない操作に使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。path はウィンドウの根から押す部品までの name の並びで、editor_get_screen_structure の node と editor_find_operation の path で分かる。押せるのは子を持たないメニュー項目とボタンで、右クリックメニューの中の項目と、人の応答を待つ表示の中の部品は押さない。ウィンドウが閉じているときは TOOL_NOT_APPLICABLE を返すので、editor_open_window で開いてから呼ぶ。部品がいまは押せないとき、エディタを終了させる部品・ファイルへ書き込む部品・編集中のモデルを空にする部品のときも、押さずに TOOL_NOT_APPLICABLE を返す。どの部品がそれに当たるかは editor_get_screen_structure の node の danger で分かる。押したあと、エディタが確認や入力の表示を出したら TOOL_PROMPT_SHOWN を返す。成功したときは何も返さない。"
     },
     {
       "tool": "model_clean_faces",

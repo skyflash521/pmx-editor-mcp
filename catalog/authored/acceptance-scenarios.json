@@ -189,6 +189,37 @@
         },
         {
           "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "extMenuStrip1",
+              "MenuItem_Init",
+              "MenuItem_Initialize"
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxEditor.PmxForm",
+            "path": [
+              "menuStrip1",
+              "MenuItem_File",
+              "MenuItem_Save"
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_NOT_APPLICABLE"
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "editor_close_window",
           "arguments": {
             "window": "PmxViewForm.TransformView"
