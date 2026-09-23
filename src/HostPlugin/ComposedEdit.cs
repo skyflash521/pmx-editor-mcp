@@ -7,13 +7,19 @@ namespace PmxEditorMcp
     public sealed class ComposedEditResult
     {
         private ComposedEditResult(
-            bool done, object value, string code, string message, IList<string> warnings)
+            bool done,
+            object value,
+            string code,
+            string message,
+            IList<string> warnings,
+            IList<string> rewritten = null)
         {
             IsDone = done;
             Value = value;
             Code = code;
             Message = message;
             Warnings = warnings;
+            Rewritten = rewritten;
         }
 
         /// <summary>済んだか。偽なら断っている。</summary>
@@ -31,6 +37,12 @@ namespace PmxEditorMcp
         /// <summary>済んだときに包みへ添える警告。添えないときは null。</summary>
         public IList<string> Warnings { get; }
 
+        /// <summary>
+        /// 要素の数を変えずに中身だけを書き換えた種類。それ以外も変えうるときは null で、反映の
+        /// あとはビューのモデルを丸ごと作り直す。
+        /// </summary>
+        public IList<string> Rewritten { get; }
+
         /// <summary>済んだ結末を作る。</summary>
         public static ComposedEditResult Complete(object value)
         {
@@ -41,6 +53,20 @@ namespace PmxEditorMcp
         {
             return new ComposedEditResult(
                 true, value, null, null, warnings != null && warnings.Count > 0 ? warnings : null);
+        }
+
+        /// <summary>
+        /// 要素の数を変えずに、<paramref name="kinds"/> の種類の中身だけを書き換えて済んだ結末を
+        /// 作る。種類は <see cref="ElementKinds"/> の名前で渡す。
+        /// </summary>
+        public static ComposedEditResult CompleteRewriting(object value, IList<string> kinds)
+        {
+            if (kinds == null)
+            {
+                throw new ArgumentNullException(nameof(kinds));
+            }
+
+            return new ComposedEditResult(true, value, null, null, null, kinds);
         }
 
         /// <summary>断る結末を作る。</summary>
@@ -259,7 +285,13 @@ namespace PmxEditorMcp
                     }
 
                     if (_session.TryCommit(
-                        target, suppress, context, _refresh, out refusedCode, out refusedMessage))
+                        target,
+                        suppress,
+                        context,
+                        _refresh,
+                        out refusedCode,
+                        out refusedMessage,
+                        rewritten: made.Rewritten))
                     {
                         answered = made;
                     }

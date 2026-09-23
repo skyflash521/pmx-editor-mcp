@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PEPlugin.Form;
 using PEPlugin.Pmd;
 using PEPlugin.View;
@@ -79,6 +80,19 @@ namespace PmxEditorMcp
                 { "PEPlugin.Pmx.IPXPmx.Bone()", view => view.UpdateModel_Bone() },
                 { "PEPlugin.Pmx.IPXPmx.Body()", view => view.UpdateModel_Body() },
                 { "PEPlugin.Pmx.IPXPmx.Joint()", view => view.UpdateModel_Joint() },
+            };
+
+        /// <summary>
+        /// ビューでは、要素の数を変えずに中身だけを書き換えたとき、その区分だけを作り直せば映る
+        /// 要素の種類。
+        /// </summary>
+        private static readonly Dictionary<string, Action<IPXPmxViewConnector>> Rewrites =
+            new Dictionary<string, Action<IPXPmxViewConnector>>(StringComparer.Ordinal)
+            {
+                { ElementKinds.Vertex, view => view.UpdateModel_Vertex() },
+                { ElementKinds.Bone, view => view.UpdateModel_Bone() },
+                { ElementKinds.Body, view => view.UpdateModel_Body() },
+                { ElementKinds.Joint, view => view.UpdateModel_Joint() },
             };
 
         /// <summary>
@@ -196,6 +210,32 @@ namespace PmxEditorMcp
                 return Apply(ScreenRefreshKind.Rebuilt);
             }
 
+            return Remake(new[] { remake });
+        }
+
+        /// <summary>
+        /// 要素の数を変えずに、<paramref name="kinds"/> の種類の中身だけを書き換えた複製を反映した
+        /// 後に映し直す。種類は <see cref="ElementKinds"/> の名前で渡す。区分だけの作り直しを
+        /// 持たない種類が混じれば、ビューのモデルを丸ごと作り直す。
+        /// </summary>
+        public bool ApplyRewritten(IList<string> kinds)
+        {
+            if (kinds == null)
+            {
+                throw new ArgumentNullException(nameof(kinds));
+            }
+
+            if (!kinds.All(Rewrites.ContainsKey))
+            {
+                return Apply(ScreenRefreshKind.Rebuilt);
+            }
+
+            return Remake(kinds.Select(kind => Rewrites[kind]).ToList());
+        }
+
+        /// <summary>リストを作り直し、ビューは渡した区分だけを作り直してから描き直す。</summary>
+        private bool Remake(IList<Action<IPXPmxViewConnector>> remakes)
+        {
             try
             {
                 IPEFormConnector form = _form() as IPEFormConnector;
@@ -207,7 +247,11 @@ namespace PmxEditorMcp
                 IPXPmxViewConnector view = _view() as IPXPmxViewConnector;
                 if (view != null)
                 {
-                    remake(view);
+                    foreach (Action<IPXPmxViewConnector> remake in remakes)
+                    {
+                        remake(view);
+                    }
+
                     view.UpdateView();
                 }
 

@@ -182,6 +182,39 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, view.Repaints);
         }
 
+        [Fact]
+        public void RewritingTheKindsInPlaceRemakesOnlyThoseKindsInTheView()
+        {
+            FakePmxView view = new FakePmxView();
+            FakeFormConnector form = new FakeFormConnector();
+
+            Assert.True(Refresh(view, form).ApplyRewritten(new[]
+            {
+                ElementKinds.Vertex, ElementKinds.Bone, ElementKinds.Body, ElementKinds.Joint,
+            }));
+
+            Assert.Equal(new[] { PEPlugin.Pmd.UpdateObject.All }, form.Updated);
+            Assert.Equal(
+                new[] { ElementKinds.Vertex, ElementKinds.Bone, ElementKinds.Body, ElementKinds.Joint },
+                view.Remade);
+            Assert.Equal(0, view.Redraws);
+            Assert.Equal(1, view.Repaints);
+        }
+
+        [Fact]
+        public void RewritingAKindWithoutItsOwnRemakeRebuildsTheWholeModel()
+        {
+            FakePmxView view = new FakePmxView();
+            FakeFormConnector form = new FakeFormConnector();
+
+            Assert.True(Refresh(view, form).ApplyRewritten(
+                new[] { ElementKinds.Bone, ElementKinds.Material }));
+
+            Assert.Empty(view.Remade);
+            Assert.Equal(1, view.Redraws);
+            Assert.Equal(1, view.Repaints);
+        }
+
         private static ScreenRefresh Refresh(FakePmxView view, FakeFormConnector form)
         {
             return new ScreenRefresh(() => view, () => form);

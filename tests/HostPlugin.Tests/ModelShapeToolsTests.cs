@@ -785,6 +785,19 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RewritingTheUvRemakesOnlyTheVerticesInTheView()
+        {
+            FakeVertex vertex = new FakeVertex();
+            vertex.UV = new V2(0.25f, 0.25f);
+            _fixture.Model.Vertex.Add(vertex);
+
+            EditUv(Operation(ModelEditUv.FlipU), ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(new[] { ElementKinds.Vertex }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
         public void CopyingTheUvTakesItFromTheVertexThatWasNamed()
         {
             FakeVertex source = new FakeVertex();

@@ -114,11 +114,12 @@ namespace PmxEditorMcp
                 vertex.UV = Written(operation, vertex, taken, across, down);
             }
 
-            return ComposedEditResult.Complete(
+            return ComposedEditResult.CompleteRewriting(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { ChangedName, chosen.Count },
-                });
+                },
+                new[] { ElementKinds.Vertex });
         }
 
         private static V2 Written(

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -93,6 +94,14 @@ namespace PmxEditorMcp.Tests
         private const string SplitKey = "Sdk.Item.Split(out System.String,out System.String)";
 
         private const string TagKey = "Sdk.Leaf.Tag()";
+
+        private const int ManyItems = 20000;
+
+        private const int StandingItems = 100000;
+
+        private const int AddedItems = 1000;
+
+        private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
         private readonly string _root;
 
@@ -1328,6 +1337,96 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ReadingWhereEveryItemOfALongListPointsFinishesInTime()
+        {
+            Item[] made = Many(ManyItems);
+            for (int at = 0; at < made.Length; at++)
+            {
+                made[at].Mate = made[made.Length - 1 - at];
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IList<IDictionary<string, object>> items = Items(Value(Call(
+                "model_list_mates", Arguments(TargetNames.Element.All, true))));
+            elapsed.Stop();
+
+            Assert.Equal(ManyItems - 1, items[0]["mate"]);
+            Assert.True(elapsed.Elapsed < TimeLimit, "読むのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void WritingWhereEveryItemOfALongListPointsFinishesInTime()
+        {
+            Item[] made = Many(ManyItems);
+            object[] values = Enumerable.Range(0, ManyItems)
+                .Select(at => (object)Value("mate", ManyItems - 1 - at))
+                .ToArray();
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> envelope = Call(
+                "model_update_mates",
+                Arguments(TargetNames.Element.All, true, ToolDispatch.ValuesName, values));
+            elapsed.Stop();
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(made[ManyItems - 1], made[0].Mate);
+            Assert.True(elapsed.Elapsed < TimeLimit, "書くのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void AddingItemsThatPointIntoALongListFinishesInTime()
+        {
+            Item[] standing = Many(StandingItems);
+            HandleLedger handles = Ledger();
+            Item[] adding = Enumerable.Range(0, AddedItems)
+                .Select(at => new Item { Label = "加" + at })
+                .ToArray();
+            object[] held = adding
+                .Select(item => (object)handles.Issue(typeof(Item).FullName, item, () => { }))
+                .ToArray();
+            Call(
+                "model_update_mates",
+                Arguments(
+                    TargetNames.Element.Handles, held,
+                    ToolDispatch.ValuesName,
+                    held.Select(h => (object)Value("mate", StandingItems - 1)).ToArray()),
+                handles);
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> envelope = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, held),
+                handles);
+            elapsed.Stop();
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(standing[StandingItems - 1], adding[AddedItems - 1].Mate);
+            Assert.True(elapsed.Elapsed < TimeLimit, "加えるのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void AnItemAddedEarlierInTheSameCallCanBePointedAtByALaterOne()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            HandleLedger handles = Ledger();
+            Item first = new Item { Label = "二" };
+            Item second = new Item { Label = "三" };
+            int held = handles.Issue(typeof(Item).FullName, first, () => { });
+            int other = handles.Issue(typeof(Item).FullName, second, () => { });
+
+            Write(handles, held, 0);
+            Write(handles, other, 1);
+            IDictionary<string, object> envelope = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, new object[] { held, other }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], first.Mate);
+            Assert.Same(first, second.Mate);
+        }
+
+        [Fact]
         public void AFailedAddKeepsThePositionsItAlreadyWroteInHandSoTheCallCanBeMadeAgain()
         {
             _model.Items.Add(new Item { Label = "一" });
@@ -2556,6 +2655,20 @@ namespace PmxEditorMcp.Tests
         private static ScreenTargets Screen()
         {
             return ScreenTargets.None;
+        }
+
+        /// <summary>並びへ別々の名札の要素を並べて返す。</summary>
+        private Item[] Many(int count)
+        {
+            Item[] made = Enumerable.Range(0, count)
+                .Select(at => new Item { Label = "並" + at })
+                .ToArray();
+            foreach (Item item in made)
+            {
+                _model.Items.Add(item);
+            }
+
+            return made;
         }
 
         private HandleLedger Ledger()

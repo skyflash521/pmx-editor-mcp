@@ -1665,7 +1665,8 @@ namespace PmxEditorMcp
                 }
 
                 IList<object> listed;
-                if (!TryListed(argument.Referenced, target, out listed, out refused))
+                if (!TryListed(
+                    argument.Referenced, target, new ReachedLists(), out listed, out refused))
                 {
                     return false;
                 }
@@ -1738,13 +1739,19 @@ namespace PmxEditorMcp
             pointing = null;
             refused = null;
             List<object[]> resolved = new List<object[]>(writing.Count);
+            ReachedLists reached = new ReachedLists();
             foreach (Change one in writing)
             {
                 object[] given = new object[one.Fields.Count];
                 for (int field = 0; field < one.Fields.Count; field++)
                 {
                     if (!TryPointed(
-                        one.Fields[field], one.Values[field], target, out given[field], out refused))
+                        one.Fields[field],
+                        one.Values[field],
+                        target,
+                        reached,
+                        out given[field],
+                        out refused))
                     {
                         return false;
                     }
@@ -1763,7 +1770,12 @@ namespace PmxEditorMcp
         /// 実体のときは、数える先のリストがまだ無いので解かず、預かりとして渡す。
         /// </summary>
         private bool TryPointed(
-            ToolField field, object value, PmxTarget target, out object pointed, out Refusal refused)
+            ToolField field,
+            object value,
+            PmxTarget target,
+            ReachedLists reached,
+            out object pointed,
+            out Refusal refused)
         {
             pointed = value;
             refused = null;
@@ -1780,7 +1792,7 @@ namespace PmxEditorMcp
             }
 
             IList<object> listed;
-            if (!TryListed(field.Referenced, target, out listed, out refused))
+            if (!TryListed(field.Referenced, target, reached, out listed, out refused))
             {
                 return false;
             }
@@ -1806,7 +1818,12 @@ namespace PmxEditorMcp
         /// null で写る。
         /// </summary>
         private bool TryPosition(
-            ToolField field, object value, PmxTarget target, out object json, out Refusal refused)
+            ToolField field,
+            object value,
+            PmxTarget target,
+            ReachedLists reached,
+            out object json,
+            out Refusal refused)
         {
             json = null;
             refused = null;
@@ -1831,14 +1848,14 @@ namespace PmxEditorMcp
             }
 
             IList<object> listed;
-            if (!TryListed(field.Referenced, target, out listed, out refused))
+            if (!TryListed(field.Referenced, target, reached, out listed, out refused))
             {
                 return false;
             }
 
             if (given == null)
             {
-                json = Position(listed, value);
+                json = reached.Position(field.Referenced, value);
 
                 return true;
             }
@@ -1846,7 +1863,7 @@ namespace PmxEditorMcp
             List<object> positions = new List<object>();
             foreach (object one in pointing)
             {
-                positions.Add(Position(listed, one));
+                positions.Add(reached.Position(field.Referenced, one));
             }
 
             json = positions.ToArray();
@@ -1909,7 +1926,8 @@ namespace PmxEditorMcp
         /// 残らないので、外してしまうと投げ直しても解き直せなくなる。外すのは反映まで済んでからで、
         /// <see cref="Settle"/> が行う。
         /// </summary>
-        private bool TryApplyDeferred(object item, PmxTarget target, out Refusal refused)
+        private bool TryApplyDeferred(
+            object item, PmxTarget target, ReachedLists reached, out Refusal refused)
         {
             refused = null;
             IList<DeferredWrite> held;
@@ -1921,7 +1939,7 @@ namespace PmxEditorMcp
             foreach (DeferredWrite pending in held)
             {
                 IList<object> listed;
-                if (!TryListed(pending.Field.Referenced, target, out listed, out refused))
+                if (!TryListed(pending.Field.Referenced, target, reached, out listed, out refused))
                 {
                     return false;
                 }
@@ -1963,23 +1981,16 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>その実体の、列の中での位置。列に居なければ null。</summary>
-        private static object Position(IList<object> listed, object value)
-        {
-            for (int at = 0; at < listed.Count; at++)
-            {
-                if (ReferenceEquals(listed[at], value))
-                {
-                    return at;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>その道が指すリストの要素。位置で受け取る引数は、この列の中の位置で指す。</summary>
+        /// <summary>
+        /// その道が指すリストの要素。位置で受け取る引数は、この列の中の位置で指す。
+        /// <paramref name="reached"/> が同じ道を覚えていれば、辿り直さずにそれを返す。
+        /// </summary>
         private bool TryListed(
-            ToolAccess access, PmxTarget target, out IList<object> listed, out Refusal refused)
+            ToolAccess access,
+            PmxTarget target,
+            ReachedLists reached,
+            out IList<object> listed,
+            out Refusal refused)
         {
             listed = null;
             refused = null;
@@ -1993,22 +2004,28 @@ namespace PmxEditorMcp
                 return false;
             }
 
+            if (reached.TryGet(access, out listed))
+            {
+                return true;
+            }
+
             IList<object> owners;
             if (!TryOwners(access, target, out owners, out refused))
             {
                 return false;
             }
 
-            List<object> reached = new List<object>();
+            List<object> found = new List<object>();
             foreach (object owner in owners)
             {
-                if (!TryStep(Step(access), owner, reached, out refused))
+                if (!TryStep(Step(access), owner, found, out refused))
                 {
                     return false;
                 }
             }
 
-            listed = reached;
+            reached.Keep(access, found);
+            listed = found;
 
             return true;
         }
@@ -2428,6 +2445,7 @@ namespace PmxEditorMcp
                     return;
                 }
 
+                ReachedLists reached = new ReachedLists();
                 pointedCount = column.Count;
                 taken.AddRange(tool.Listing ? column.Skip(offset).Take(limit) : column);
                 foreach (Spot spot in taken)
@@ -2451,7 +2469,8 @@ namespace PmxEditorMcp
                         }
 
                         if (fields[at].Referenced != null
-                            && !TryPosition(fields[at], value, target, out value, out refused))
+                            && !TryPosition(
+                                fields[at], value, target, reached, out value, out refused))
                         {
                             return;
                         }
@@ -2974,14 +2993,16 @@ namespace PmxEditorMcp
                 }
 
                 stage = Changing(tool.Receiver, target);
+                ReachedLists reached = new ReachedLists();
                 for (int at = 0; at < items.Length; at++)
                 {
-                    if (!TryApplyDeferred(items[at], target, out refused))
+                    if (!TryApplyDeferred(items[at], target, reached, out refused))
                     {
                         return;
                     }
 
                     list.Add(target.Pmx, items[at]);
+                    reached.Added(tool.Access.RowKey, true, items[at]);
                     indices[at] = list.Count(target.Pmx) - 1;
                 }
 
@@ -3055,17 +3076,19 @@ namespace PmxEditorMcp
                 }
 
                 stage = Changing(tool.Receiver, target);
+                ReachedLists reached = new ReachedLists();
                 foreach (Assignment assignment in assignments)
                 {
                     object owner = byHandle ? assignment.Owner : owners[assignment.Parent];
                     foreach (object item in assignment.Items)
                     {
-                        if (!byHandle && !TryApplyDeferred(item, target, out refused))
+                        if (!byHandle && !TryApplyDeferred(item, target, reached, out refused))
                         {
                             return;
                         }
 
                         list.Add(owner, item);
+                        reached.Added(tool.Access.RowKey, false, item);
                         indices.Add(list.Count(owner) - 1);
 
                         // 預かりを移すのは加わってからとする。加わらないまま移すと、預かりは親の
@@ -5363,6 +5386,90 @@ namespace PmxEditorMcp
 
                     default:
                         return "断られた呼び出し: " + rowKey;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 位置を数えるリストを、1回の呼び出しの中で道ごとに一度だけ辿って覚えておく表。並びへ
+        /// 加えたら <see cref="Added"/> で知らせる。知らせないと、覚えた列が並びとずれる。
+        /// </summary>
+        private sealed class ReachedLists
+        {
+            private readonly Dictionary<ToolAccess, List<object>> _lists =
+                new Dictionary<ToolAccess, List<object>>(ReferenceComparer<ToolAccess>.Instance);
+
+            private readonly Dictionary<ToolAccess, Dictionary<object, int>> _positions =
+                new Dictionary<ToolAccess, Dictionary<object, int>>(
+                    ReferenceComparer<ToolAccess>.Instance);
+
+            public bool TryGet(ToolAccess access, out IList<object> listed)
+            {
+                List<object> kept;
+                bool found = _lists.TryGetValue(access, out kept);
+                listed = kept;
+
+                return found;
+            }
+
+            public void Keep(ToolAccess access, List<object> listed)
+            {
+                _lists[access] = listed;
+                _positions.Remove(access);
+            }
+
+            /// <summary>その実体の、覚えた列の中で最初に現れる位置。列に居なければ null。</summary>
+            public object Position(ToolAccess access, object value)
+            {
+                Dictionary<object, int> positions;
+                if (!_positions.TryGetValue(access, out positions))
+                {
+                    positions = new Dictionary<object, int>(ReferenceComparer<object>.Instance);
+                    List<object> listed = _lists[access];
+                    for (int at = 0; at < listed.Count; at++)
+                    {
+                        if (!positions.ContainsKey(listed[at]))
+                        {
+                            positions.Add(listed[at], at);
+                        }
+                    }
+
+                    _positions.Add(access, positions);
+                }
+
+                int found;
+
+                return positions.TryGetValue(value, out found) ? (object)found : null;
+            }
+
+            /// <summary>
+            /// その行のリストの末尾へ1件加えたことを知らせる。PMXが直に持つその行の列は末尾へ
+            /// 足して覚え続け、その行を親の段に持つ列と、親を辿る先のその行の列は忘れる。
+            /// </summary>
+            public void Added(string rowKey, bool atRoot, object item)
+            {
+                foreach (ToolAccess access in _lists.Keys.ToList())
+                {
+                    bool same = string.Equals(access.RowKey, rowKey, StringComparison.Ordinal);
+                    if (same && atRoot && access.Parents.Count == 0)
+                    {
+                        _lists[access].Add(item);
+                        Dictionary<object, int> positions;
+                        if (_positions.TryGetValue(access, out positions)
+                            && !positions.ContainsKey(item))
+                        {
+                            positions.Add(item, _lists[access].Count - 1);
+                        }
+
+                        continue;
+                    }
+
+                    if (same || access.Parents.Any(
+                        hop => string.Equals(hop.RowKey, rowKey, StringComparison.Ordinal)))
+                    {
+                        _lists.Remove(access);
+                        _positions.Remove(access);
+                    }
                 }
             }
         }

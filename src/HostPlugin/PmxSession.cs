@@ -159,7 +159,8 @@ namespace PmxEditorMcp
         /// 反映をエディタのUndoへ積ませない。映せなかったときは
         /// <paramref name="context"/> へその印を置く——映せないことは反映の失敗ではないので、
         /// 断りへ変えない。反映できなければ偽で、断る内容を渡す。<paramref name="listRow"/> は
-        /// 反映で変えたリストの行で、分からなければ null。
+        /// 反映で変えたリストの行で、分からなければ null。<paramref name="rewritten"/> は要素の
+        /// 数を変えずに中身だけを書き換えた種類で、渡せばそれを映し直しの手がかりにする。
         /// </summary>
         public bool TryCommit(
             PmxTarget target,
@@ -168,7 +169,8 @@ namespace PmxEditorMcp
             ScreenRefresh refresh,
             out string code,
             out string message,
-            string listRow = null)
+            string listRow = null,
+            IList<string> rewritten = null)
         {
             if (target == null)
             {
@@ -194,7 +196,10 @@ namespace PmxEditorMcp
 
             if (reflected)
             {
-                if (!refresh.ApplyReflected(listRow))
+                bool shown = rewritten == null
+                    ? refresh.ApplyReflected(listRow)
+                    : refresh.ApplyRewritten(rewritten);
+                if (!shown)
                 {
                     context.NotShown = true;
                 }

@@ -119,6 +119,18 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RewritingTheNormalsRemakesOnlyTheVerticesInTheView()
+        {
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Normal = new V3(0f, 0f, 1f);
+
+            Normals(Operation(ModelEditNormals.Flip), ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(new[] { ElementKinds.Vertex }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        [Fact]
         public void TheScreenSelectionPicksTheVerticesToFlip()
         {
             FakeVertex first = Vertex(0f, 0f, 0f);

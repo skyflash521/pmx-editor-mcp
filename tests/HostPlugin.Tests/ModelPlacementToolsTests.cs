@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
 using Xunit;
@@ -9,6 +10,10 @@ namespace PmxEditorMcp.Tests
     public sealed class ModelPlacementToolsTests : IDisposable
     {
         private const int Digits = 4;
+
+        private const int ManyElements = 20000;
+
+        private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
 
         private readonly ComposedEditFixture _fixture = new ComposedEditFixture();
 
@@ -383,6 +388,50 @@ namespace PmxEditorMcp.Tests
                 Targets(Target(ElementKinds.Bone, 0)));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void MovingEveryVertexOfALargeModelFinishesInTime()
+        {
+            for (int at = 0; at < ManyElements; at++)
+            {
+                Vertex(0f, 0f, 0f);
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 1f, 0f),
+                Targets(Every(ElementKinds.Vertex))));
+            elapsed.Stop();
+
+            Assert.Equal(ManyElements, value[ModelPlaceElements.ChangedName]);
+            Assert.True(elapsed.Elapsed < TimeLimit, "動かすのに " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void MovingRemakesOnlyTheKindsThatWerePointedAtInTheView()
+        {
+            Vertex(1f, 1f, 1f);
+            Bone(2f, 2f, 2f);
+            Body(3f, 3f, 3f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 1f, 0f),
+                Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Bone, 0)));
+
+            Assert.Equal(new[] { ElementKinds.Vertex, ElementKinds.Bone }, _fixture.View.Remade);
+            Assert.Equal(0, _fixture.View.Redraws);
+        }
+
+        private static object Every(string kind)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { ModelPlaceElements.KindName, kind },
+                { TargetNames.Element.All, true },
+            };
         }
 
         private static KeyValuePair<string, object> Triple(string name, float x, float y, float z)

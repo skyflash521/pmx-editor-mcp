@@ -749,7 +749,7 @@ namespace PmxEditorMcp.Tests
 
         public void UpdateModel_Vertex()
         {
-            throw new NotSupportedException();
+            Remade.Add(ElementKinds.Vertex);
         }
 
         public void UpdateModel_Weight()

@@ -148,11 +148,12 @@ namespace PmxEditorMcp
                 changed += Vectors.Same(before[at], picked[at].Normal) ? 0 : 1;
             }
 
-            return ComposedEditResult.Complete(
+            return ComposedEditResult.CompleteRewriting(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { ChangedName, changed },
-                });
+                },
+                new[] { ElementKinds.Vertex });
         }
 
         private static V3 Shared(IEnumerable<IPXVertex> picked)

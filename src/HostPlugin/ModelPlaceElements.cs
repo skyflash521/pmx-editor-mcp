@@ -114,9 +114,12 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
-            List<Change> changes = targets
-                .SelectMany(t => t.Value.Select(at => plan(Held(model, t.Key)[at])))
-                .ToList();
+            List<Change> changes = new List<Change>();
+            foreach (KeyValuePair<string, IList<int>> target in targets)
+            {
+                IList<object> held = Held(model, target.Key);
+                changes.AddRange(target.Value.Select(at => plan(held[at])));
+            }
             if (!changes.All(c => c.Finite))
             {
                 return ComposedEditResult.Refuse(
@@ -124,11 +127,12 @@ namespace PmxEditorMcp
                     operation + " で動かすと、有限の数で表せない値になる要素がある。");
             }
 
-            return ComposedEditResult.Complete(
+            return ComposedEditResult.CompleteRewriting(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { ChangedName, changes.Count(c => c.Apply()) },
-                });
+                },
+                targets.Select(t => t.Key).ToList());
         }
 
         private static bool TryPlan(
