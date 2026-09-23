@@ -32456,6 +32456,47 @@
       }
     },
     {
+      "tool": "motion_set_camera_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "position",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "target",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "upVector",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": []
+      }
+    },
+    {
       "tool": "motion_set_gs_vme_scaling_event_operator",
       "branches": [
         {

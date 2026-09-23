@@ -226,7 +226,8 @@ namespace PmxEditorMcp
                         refresh,
                         () => Receiver(receivers, SettingType)),
                     () => Receiver(receivers, BuilderType),
-                    () => Receiver(receivers, SubViewType));
+                    () => Receiver(receivers, SubViewType),
+                    OpenForms);
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);

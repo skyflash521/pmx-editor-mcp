@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace PmxEditorMcp
 {
@@ -9,13 +11,14 @@ namespace PmxEditorMcp
     {
         /// <summary>
         /// 組み立ての画面ツールを表へ足す。<paramref name="builder"/> は、VMDやPMXを作る相手を、
-        /// <paramref name="subView"/> は別窓の描画の口を返す。
+        /// <paramref name="subView"/> は別窓の描画の口を、<paramref name="forms"/> は開いているウィンドウを返す。
         /// </summary>
         public static void AddTo(
             McpMethodTable methods,
             ComposedScreen screen,
             Func<object> builder,
-            Func<object> subView)
+            Func<object> subView,
+            Func<IEnumerable<Form>> forms)
         {
             if (methods == null)
             {
@@ -37,6 +40,11 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(subView));
             }
 
+            if (forms == null)
+            {
+                throw new ArgumentNullException(nameof(forms));
+            }
+
             ViewSelectElements.AddTo(methods, screen);
             ViewSelectRelated.AddTo(methods, screen);
             ViewFilterDisplay.AddTo(methods, screen);
@@ -48,6 +56,7 @@ namespace PmxEditorMcp
             ViewClearVmdView.AddTo(methods, screen, builder);
             SessionUpdateAllLists.AddTo(methods, screen);
             SessionSelectListsFromView.AddTo(methods, screen);
+            MotionSetCameraView.AddTo(methods, screen, forms);
         }
     }
 }

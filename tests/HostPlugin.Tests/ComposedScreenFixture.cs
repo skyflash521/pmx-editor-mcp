@@ -52,6 +52,9 @@ namespace PmxEditorMcp.Tests
 
         public FakeSubView SubView { get; } = new FakeSubView();
 
+        /// <summary>開いているウィンドウとしてツールへ渡す一覧。</summary>
+        public List<System.Windows.Forms.Form> Forms { get; } = new List<System.Windows.Forms.Form>();
+
         /// <summary>
         /// 後片付けで、モデルの中身が呼び出しの前と同じままかを確かめる。画面へ触るツールはモデルを
         /// 変えないので、この題材を使うテストはすべてこの不変条件を通る。
@@ -95,7 +98,8 @@ namespace PmxEditorMcp.Tests
                         new ScreenRefresh(() => View, () => Form),
                         () => Setting),
                     () => Builder,
-                    () => SubView);
+                    () => SubView,
+                    () => new List<System.Windows.Forms.Form>(Forms));
             }
 
             McpMethod method;

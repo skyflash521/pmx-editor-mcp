@@ -113,7 +113,8 @@ namespace PmxEditorMcp
                 : ComposedEditResult.Refuse(code, message);
         }
 
-        private static bool TrySpot(
+        /// <summary>3つの有限の数の並びを受け取る。受け取れなければ断る符号と事情を返す。</summary>
+        internal static bool TrySpot(
             McpMethodContext context, string name, out V3 spot, out string code, out string message)
         {
             spot = new V3(0f, 0f, 0f);

@@ -2422,11 +2422,61 @@
         },
         {
           "kind": "tool",
+          "tool": "editor_open_window",
+          "arguments": {
+            "window": "PmxViewForm.TransformView"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "motion_get_client_image",
           "arguments": {},
           "expect": {
             "ok": true,
             "image": {}
+          },
+          "record": {
+            "name": "transformImage",
+            "path": "",
+            "shape": "image"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_camera_view",
+          "arguments": {
+            "position": [
+              0,
+              30,
+              0
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "upVector": [
+              0,
+              0,
+              1
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_client_image",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "transformImage"
+            }
           }
         },
         {
