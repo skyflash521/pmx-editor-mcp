@@ -96,6 +96,15 @@ namespace PmxEditorMcp
                 { WeightKind, view => view.UpdateModel_Weight() },
             };
 
+        private static readonly Dictionary<string, string[]> Lists =
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                { "PEPlugin.Pmx.IPXPmx.Vertex()", new[] { ElementKinds.Vertex, WeightKind } },
+                { "PEPlugin.Pmx.IPXPmx.Bone()", new[] { ElementKinds.Bone } },
+                { "PEPlugin.Pmx.IPXPmx.Body()", new[] { ElementKinds.Body } },
+                { "PEPlugin.Pmx.IPXPmx.Joint()", new[] { ElementKinds.Joint } },
+            };
+
         /// <summary>
         /// 頂点のウェイトと変形方式だけを書き換えたことを表す区分の名前。頂点の区分と同じく頂点の
         /// バッファを作り直し、ウェイトの表示も作り直す。
@@ -218,6 +227,17 @@ namespace PmxEditorMcp
             }
 
             return Remake(new[] { remake });
+        }
+
+        /// <summary>
+        /// そのリストの要素の中身だけを書き換えたときの、書き換えうる種類。頂点の要素はウェイトも
+        /// 持つので、ウェイトの区分も含める。区分だけの作り直しと反映を持たないリストでは null。
+        /// </summary>
+        public static IList<string> RewrittenIn(string listRow)
+        {
+            string[] kinds;
+
+            return listRow != null && Lists.TryGetValue(listRow, out kinds) ? kinds.ToArray() : null;
         }
 
         /// <summary>

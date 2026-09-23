@@ -427,7 +427,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void MovingOnlyBonesReflectsOnlyTheBonesOfTheCopy()
+        public void MovingOnlyBonesWhileTheUndoIsRecordedReflectsTheWholeCopy()
         {
             Bone(1f, 1f, 1f);
 
@@ -436,10 +436,31 @@ namespace PmxEditorMcp.Tests
                 Offset(0f, 1f, 0f),
                 Targets(Target(ElementKinds.Bone, 0)));
 
-            KeyValuePair<PmxUpdateObject, int> partial = Assert.Single(_fixture.Partials);
-            Assert.Equal(PmxUpdateObject.Bone, partial.Key);
-            Assert.Equal(-1, partial.Value);
+            Assert.Empty(_fixture.Partials);
             Assert.Equal(1, _fixture.Commits);
+        }
+
+        [Fact]
+        public void MovingOnlyBonesWithTheUndoLockedReflectsOnlyTheBonesOfTheCopy()
+        {
+            using (ComposedEditFixture locking = new ComposedEditFixture(lockingUndo: true))
+            {
+                locking.Model.Bone.Add(new FakeBone("ボーン") { Position = new V3(1f, 1f, 1f) });
+
+                locking.Call(
+                    ModelPlaceElements.ToolName,
+                    ComposedEditFixture.Arguments(
+                        Operation(ModelPlaceElements.TranslateBy),
+                        Offset(0f, 1f, 0f),
+                        Targets(Target(ElementKinds.Bone, 0)),
+                        ComposedEditFixture.Given(UndoBarrier.SuppressName, true)));
+
+                KeyValuePair<PmxUpdateObject, int> partial = Assert.Single(locking.Partials);
+                Assert.Equal(PmxUpdateObject.Bone, partial.Key);
+                Assert.Equal(-1, partial.Value);
+                Assert.Equal(1, locking.Commits);
+                Assert.False(locking.UndoLocked);
+            }
         }
 
         [Fact]

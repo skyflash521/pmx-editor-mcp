@@ -183,6 +183,32 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RewritingTheVerticesTellsTheWeightsTooSinceTheUpdateCanWriteThem()
+        {
+            Assert.Equal(
+                new[] { ElementKinds.Vertex, ScreenRefresh.WeightKind },
+                ScreenRefresh.RewrittenIn("PEPlugin.Pmx.IPXPmx.Vertex()"));
+        }
+
+        [Theory]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Bone()", ElementKinds.Bone)]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Body()", ElementKinds.Body)]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Joint()", ElementKinds.Joint)]
+        public void RewritingTheItemsOfAListTellsTheKindItHolds(string listRow, string kind)
+        {
+            Assert.Equal(new[] { kind }, ScreenRefresh.RewrittenIn(listRow));
+        }
+
+        [Theory]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Material()")]
+        [InlineData("PEPlugin.Pmx.IPXPmx.Morph()")]
+        [InlineData(null)]
+        public void RewritingTheItemsOfAnyOtherListTellsNoKind(string listRow)
+        {
+            Assert.Null(ScreenRefresh.RewrittenIn(listRow));
+        }
+
+        [Fact]
         public void RewritingTheKindsInPlaceRemakesOnlyThoseKindsInTheView()
         {
             FakePmxView view = new FakePmxView();

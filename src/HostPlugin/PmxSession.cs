@@ -34,7 +34,6 @@ namespace PmxEditorMcp
         /// <summary>1つの区分だけを反映する行へ渡す、区分の全体を表す位置。</summary>
         private const int WholeKind = -1;
 
-        /// <summary>書き換えた種類から、その中身を持つ反映の区分へ。</summary>
         private static readonly Dictionary<string, PmxUpdateObject> Parts =
             new Dictionary<string, PmxUpdateObject>(StringComparer.Ordinal)
             {
@@ -230,14 +229,14 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 1つの区分だけを反映できるときの、その区分。書き換えた種類が1つの区分に収まらないとき、
-        /// 流れがその行を持たないとき、Undoの抑止を反映する行の引数でしか渡せない流れで抑止を
-        /// 頼まれたときは null で、複製の全体を反映する。
+        /// 1つの区分だけを反映できるときの、その区分。Undoの記録を止め戻しする行で抑止を頼まれ、
+        /// 書き換えた種類が1つの区分に収まり、流れがその行を持つときだけ返す。ほかは null で、
+        /// 複製の全体を反映する。
         /// </summary>
         private object Part(IList<string> rewritten, bool suppressUndo)
         {
             if (rewritten == null || _flow.PartialCommit == null
-                || (suppressUndo && _flow.StopUndo == null))
+                || !suppressUndo || _flow.StopUndo == null)
             {
                 return null;
             }

@@ -2866,7 +2866,7 @@ namespace PmxEditorMcp
 
                 updated = column.Count;
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(context, tool.Receiver, target, RootList(tool.Access));
+                refused = Commit(context, tool.Receiver, target, RootList(tool.Access), true);
             }, out failure, out unavailable))
             {
                 return Unavailable(unavailable);
@@ -4619,10 +4619,15 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 複製編集型の呼び出しを、現在のPMXへ反映する。<paramref name="listRow"/> は変えた
-        /// リストの行で、分からなければ null。
+        /// リストの行で、分からなければ null。<paramref name="rewriting"/> は、そのリストの要素の
+        /// 件数も並びも変えずに中身だけを書き換えたときに真。
         /// </summary>
         private Refusal Commit(
-            McpMethodContext context, ToolReceiver receiver, PmxTarget target, string listRow = null)
+            McpMethodContext context,
+            ToolReceiver receiver,
+            PmxTarget target,
+            string listRow = null,
+            bool rewriting = false)
         {
             if (!Reflects(receiver, target))
             {
@@ -4633,8 +4638,14 @@ namespace PmxEditorMcp
             string message;
 
             return Session(receiver).TryCommit(
-                    target, Suppressed(context), context, Refresh(receiver), out code, out message,
-                    listRow)
+                    target,
+                    Suppressed(context),
+                    context,
+                    Refresh(receiver),
+                    out code,
+                    out message,
+                    listRow,
+                    rewriting ? ScreenRefresh.RewrittenIn(listRow) : null)
                 ? null
                 : new Refusal(ToolEnvelope.Failure(code, message));
         }

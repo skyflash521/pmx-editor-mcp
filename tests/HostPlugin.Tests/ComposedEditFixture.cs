@@ -31,10 +31,21 @@ namespace PmxEditorMcp.Tests
 
         private readonly ComposedEdit _edit;
 
+        private const string StopUndoKey = "PEPlugin.Pmx.IPXPmxConnector.LockUndo()";
+
+        private const string ResumeUndoKey = "PEPlugin.Pmx.IPXPmxConnector.UnlockUndo()";
+
+        private readonly bool _lockingUndo;
+
         private McpMethodTable _tools;
 
-        public ComposedEditFixture()
+        /// <summary>
+        /// 題材を組む。<paramref name="lockingUndo"/> が真なら、Undoの記録を止め戻しする行を
+        /// 持ち、反映する行は複製だけを取る流れにする。偽なら、反映する行がUndoの抑止を引数で取る。
+        /// </summary>
+        public ComposedEditFixture(bool lockingUndo = false)
         {
+            _lockingUndo = lockingUndo;
             _root = Path.Combine(
                 Path.GetTempPath(), "pmx-editor-mcp-composed-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_root);
@@ -63,6 +74,9 @@ namespace PmxEditorMcp.Tests
 
         /// <summary>まとめて反映した回数。</summary>
         public int Commits { get; private set; }
+
+        /// <summary>Undoの記録を止めている間か。止め戻しする行を持つ流れでだけ動く。</summary>
+        public bool UndoLocked { get; private set; }
 
         /// <summary>1つの区分だけを反映した回の、区分と位置。全体を反映した回は入らない。</summary>
         public IList<KeyValuePair<PEPlugin.Pmx.PmxUpdateObject, int>> Partials { get; } =
@@ -161,13 +175,23 @@ namespace PmxEditorMcp.Tests
                 Relay(),
                 Receivers(),
                 Connection(),
-                new PmxFlow(
-                    StateReadKey,
-                    CommitKey,
-                    ConnectorType,
-                    new FlowSlot[0],
-                    new[] { FlowSlot.Pmx, FlowSlot.UndoLock },
-                    partialCommit: PartialCommitKey),
+                _lockingUndo
+                    ? new PmxFlow(
+                        StateReadKey,
+                        CommitKey,
+                        ConnectorType,
+                        new FlowSlot[0],
+                        new[] { FlowSlot.Pmx },
+                        StopUndoKey,
+                        ResumeUndoKey,
+                        PartialCommitKey)
+                    : new PmxFlow(
+                        StateReadKey,
+                        CommitKey,
+                        ConnectorType,
+                        new FlowSlot[0],
+                        new[] { FlowSlot.Pmx, FlowSlot.UndoLock },
+                        partialCommit: PartialCommitKey),
                 typeof(FakePmx),
                 new UndoSuppression(_log));
         }
@@ -259,6 +283,8 @@ namespace PmxEditorMcp.Tests
                             return null;
                         }
                     },
+                    { StopUndoKey, (target, arguments) => { UndoLocked = true; return null; } },
+                    { ResumeUndoKey, (target, arguments) => { UndoLocked = false; return null; } },
                     {
                         PartialCommitKey,
                         (target, arguments) =>
