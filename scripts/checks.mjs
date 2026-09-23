@@ -80,6 +80,16 @@ export function verdictOf({ failed, skipped, over }) {
     return (failed.length > 0 || skipped.length > 0 || over) ? 1 : 0;
 }
 
+export function stagesOf(checks) {
+    const stages = new Map();
+    for (const check of checks) {
+        if (!stages.has(check.stage)) stages.set(check.stage, []);
+        stages.get(check.stage).push(check);
+    }
+
+    return [...stages.keys()].sort((left, right) => left - right).map((stage) => stages.get(stage));
+}
+
 /** 検査を束へ分ける。束を指していない検査は自分だけの束に入る。 */
 export function bundlesOf(checks) {
     const bundles = new Map();

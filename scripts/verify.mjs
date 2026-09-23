@@ -8,7 +8,7 @@ import { spec } from 'node:test/reporters';
 
 import {
     NO_ARTIFACT, bundlesOf, derivedLimitOf, killDescendants,
-    manifestOf, pathsTouch, selectGroups, splitIntoForms, verdictOf, weightOf,
+    manifestOf, pathsTouch, selectGroups, splitIntoForms, stagesOf, verdictOf, weightOf,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -213,7 +213,6 @@ function discardQuietly(place) {
     }
 }
 
-/** 一覧を読み、検査を選び、2回に分けて走らせて、実行を終わらせる終了コードを返す。 */
 async function verify(set, all) {
     const began = process.hrtime.bigint();
     const work = mkdtempSync(join(tmpdir(), 'pmx-editor-mcp-verify-'));
@@ -229,8 +228,7 @@ async function verify(set, all) {
             return 0;
         }
 
-        const runs = [wanted.filter((check) => check.stage === 1),
-            wanted.filter((check) => check.stage !== 1)];
+        const runs = stagesOf(wanted);
         const limit = derivedLimitOf(runs.map((checks) => splitIntoForms(checks, work, atOnce)));
 
         const stopper = new AbortController();

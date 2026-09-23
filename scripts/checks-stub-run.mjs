@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 
 import {
     CAPPED_CODE, bundlesOf, derivedLimitOf, isReady, judgeResult, killDescendants,
-    pathsTouch, runCapped, splitIntoForms, verdictOf, weightOf,
+    pathsTouch, runCapped, splitIntoForms, stagesOf, verdictOf, weightOf,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -116,6 +116,9 @@ const derived = () => derivedLimitOf([
         { name: naming(2), limitSeconds: 13, bundle: naming(9) },
         { name: naming(3), limitSeconds: 17, bundle: naming(8) }],
 ]);
+const staged = () => stagesOf([
+    { name: naming(0), stage: 3 }, { name: naming(1), stage: 1 }, { name: naming(2), stage: 2 },
+    { name: naming(3), stage: 3 }]);
 const bundles = () => bundlesOf([
     { name: naming(0), bundle: naming(9) }, { name: naming(1) },
     { name: naming(2), bundle: naming(9) }]);
@@ -168,6 +171,9 @@ const items = [
     { named: '門の通過', wanted: true, got: () => isReady(naming(1), namings(2)) },
     { named: '門の遮断', wanted: false, got: () => isReady(naming(1), namings(1)) },
     { named: '導いた値', wanted: 31, got: derived },
+    { named: '段の数', wanted: 3, got: () => staged().length },
+    { named: '段の並び', wanted: '1|2|0,3',
+        got: () => staged().map((checks) => checks.map((check) => check.name).join(',')).join('|') },
     { named: '束の数', wanted: 2, got: () => bundles().size },
     { named: '同じ束の併合', wanted: 2, got: () => bundles().get(naming(9)).length },
     { named: '単独の束', wanted: 1, got: () => bundles().get(naming(1)).length },

@@ -957,12 +957,14 @@ $checks['整形'] = New-Check `
     -Groups @('コード') `
     -LimitSeconds 53 <# 変更禁止 #> `
     -Needs $buildOutput `
+    -Stage 3 `
     -Bundle $msbuildBundle `
     -Run @('dotnet', 'format', 'PmxEditorMcp.sln', '--verify-no-changes')
 $checks['テスト'] = New-Check `
     -Groups @('定義', 'コード') `
     -LimitSeconds 62 <# 変更禁止 #> `
     -Needs $buildOutput `
+    -Stage 3 `
     -Run @('dotnet', 'test', 'PmxEditorMcp.sln', '--no-build')
 $checks['台帳とSDKの照合'] = New-Check `
     -Groups @('定義') `
@@ -1062,6 +1064,7 @@ $checks['ブリッジの単独起動'] = New-Check `
     -Groups @('ブリッジ配布') `
     -LimitSeconds 17 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -Stage 3 `
     -Bundle $msbuildBundle `
     -Run @('pwsh', '-NoProfile', '-File', 'scripts/bridge-standalone.ps1')
 $checks['形の導出の照合'] = New-Check `
@@ -1073,6 +1076,7 @@ $checks['配布パッケージの生成'] = New-Check `
     -Groups @('ブリッジ配布') `
     -LimitSeconds 21 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -Stage 3 `
     -Bundle $msbuildBundle `
     -FormsInOrder `
     -Forms { @($wholeForm) + @((Get-PackageSpoils -Copy '').Keys) } `
