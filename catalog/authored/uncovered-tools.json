@@ -409,10 +409,6 @@
       "reason": "noCase"
     },
     {
-      "tool": "motion_update_transform_view_connector",
-      "reason": "noCase"
-    },
-    {
       "tool": "motion_update_vmd_ik_enables",
       "reason": "noCase"
     },

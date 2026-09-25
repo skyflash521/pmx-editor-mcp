@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// いまの物理的な押し方で修飾キーを見る。スレッドごとの入力の状態から見ると、メッセージを
+    /// いまの物理的なキーの状態で修飾キーを見る。スレッドごとの入力の状態から見ると、メッセージを
     /// 受け取らないワーカースレッドでは押されていないことになってしまう。
     /// </summary>
     public sealed class PressedModifierKeys : IModifierKeys

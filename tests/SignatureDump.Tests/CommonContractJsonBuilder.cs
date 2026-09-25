@@ -26,6 +26,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private readonly SortedSet<string> _drawn = new SortedSet<string>(StringComparer.Ordinal);
 
+        private readonly SortedSet<string> _overwriting = new SortedSet<string>(StringComparer.Ordinal);
+
         private readonly SortedDictionary<string, string> _unkept =
             new SortedDictionary<string, string>(StringComparer.Ordinal);
 
@@ -80,6 +82,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public CommonContractJsonBuilder AddDrawnImage(string tool)
         {
             _drawn.Add(tool);
+
+            return this;
+        }
+
+        public CommonContractJsonBuilder AddOverwritingTool(string tool)
+        {
+            _overwriting.Add(tool);
 
             return this;
         }
@@ -180,6 +189,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Append(string.Join(",", _views.Values))
                 .Append("],\"drawnImages\":[")
                 .Append(string.Join(",", _drawn.Select(t => "{\"tool\":" + Quoted(t) + "}")))
+                .Append("],\"overwritingTools\":[")
+                .Append(string.Join(",", _overwriting.Select(t => "{\"tool\":" + Quoted(t) + "}")))
                 .Append("],\"unkeptMembers\":[")
                 .Append(string.Join(",", _unkept.Values))
                 .Append("],\"targetedMembers\":[")

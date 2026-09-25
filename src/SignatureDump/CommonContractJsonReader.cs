@@ -112,11 +112,13 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ComposedTool> composedTools,
             IDictionary<string, string> viewImages,
             ISet<string> drawnImages,
+            ISet<string> overwritingTools,
             IDictionary<string, ISet<string>> unkeptMembers,
             IDictionary<string, ISet<string>> targetedMembers,
             IDictionary<string, ParentValues> parentValues,
             SizeBudgets budgets)
         {
+            OverwritingTools = new HashSet<string>(overwritingTools, StringComparer.Ordinal);
             Spellings = new ReadOnlyCollection<ValueSpellingRow>(spellings);
             Types = new ReadOnlyCollection<ValueShapeRow>(types);
             Components = new ReadOnlyDictionary<string, int>(components);
@@ -147,6 +149,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>ビューを写さず、呼び出しが描いた画像を返すツールの名前。</summary>
         public ISet<string> DrawnImages { get; }
+
+        /// <summary>ファイルへ書き込むので確認を要する合成ツールの名前。</summary>
+        public ISet<string> OverwritingTools { get; }
 
         /// <summary>
         /// 値を書き換えるツールの名前から、書いてもモデルが持ち続けない項目の名前へ。持ち主の
@@ -196,6 +201,8 @@ namespace PmxEditorMcp.SignatureDump
         private const string ViewImagesName = "viewImages";
 
         private const string DrawnImagesName = "drawnImages";
+
+        private const string OverwritingToolsName = "overwritingTools";
 
         private const string ViewName = "view";
 
@@ -274,6 +281,11 @@ namespace PmxEditorMcp.SignatureDump
                     JsonForm.Member(ToolName, JsonForm.Text())),
                 ToolName,
                 allowEmpty: true)),
+            JsonForm.Member(OverwritingToolsName, JsonForm.Array(
+                JsonForm.Object(
+                    JsonForm.Member(ToolName, JsonForm.Text())),
+                ToolName,
+                allowEmpty: true)),
             JsonForm.Member(UnkeptMembersName, JsonForm.Array(
                 JsonForm.Object(
                     JsonForm.Member(ToolName, JsonForm.Text()),
@@ -303,12 +315,26 @@ namespace PmxEditorMcp.SignatureDump
                 JsonForm.Member(RequestBytesName, JsonForm.Count()),
                 JsonForm.Member(StructureTokenLimitName, JsonForm.Count()))));
 
-        /// <summary>形が違えば <see cref="FormatException"/>。</summary>
+        /// <summary>
+        /// 形が違えば <see cref="FormatException"/>。ファイルへ書き込むと名指したツールが合成ツールに
+        /// 無いときも同じ。
+        /// </summary>
         public static CommonContractTable Read(string json)
         {
             IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
             IDictionary<string, object> budgets =
                 (IDictionary<string, object>)root[BudgetsName];
+            ISet<string> composed = new HashSet<string>(
+                Rows(root, ComposedToolsName).Select(r => (string)r[ToolName]), StringComparer.Ordinal);
+            string[] stray = Rows(root, OverwritingToolsName)
+                .Select(r => (string)r[ToolName])
+                .Where(t => !composed.Contains(t))
+                .ToArray();
+            if (stray.Length > 0)
+            {
+                throw new FormatException(
+                    OverwritingToolsName + " が合成ツールでないものを名指している: " + string.Join("・", stray));
+            }
 
             return new CommonContractTable(
                 Rows(root, SpellingsName)
@@ -333,6 +359,9 @@ namespace PmxEditorMcp.SignatureDump
                     StringComparer.Ordinal),
                 new HashSet<string>(
                     Rows(root, DrawnImagesName).Select(r => (string)r[ToolName]),
+                    StringComparer.Ordinal),
+                new HashSet<string>(
+                    Rows(root, OverwritingToolsName).Select(r => (string)r[ToolName]),
                     StringComparer.Ordinal),
                 Rows(root, UnkeptMembersName).ToDictionary(
                     r => (string)r[ToolName],

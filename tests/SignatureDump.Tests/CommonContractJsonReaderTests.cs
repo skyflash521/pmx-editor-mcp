@@ -64,6 +64,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheComposedToolsThatWriteFilesAreRead()
+        {
+            CommonContractTable contract = CommonContractJsonReader.Read(
+                new CommonContractJsonBuilder()
+                    .AddComposedTool("motion_save_transformed_pmx_file", false, "変形した形を保存する。")
+                    .AddOverwritingTool("motion_save_transformed_pmx_file")
+                    .ToString());
+
+            Assert.Equal(new[] { "motion_save_transformed_pmx_file" }, contract.OverwritingTools.ToArray());
+        }
+
+        [Fact]
+        public void AWritingToolThatIsNotComposedIsRefused()
+        {
+            Assert.Throws<FormatException>(() => CommonContractJsonReader.Read(
+                new CommonContractJsonBuilder()
+                    .AddOverwritingTool("model_to_file_pmx")
+                    .ToString()));
+        }
+
+        [Fact]
         public void NeitherTableHasToNameAnything()
         {
             CommonContractTable contract = CommonContractJsonReader.Read(
@@ -71,6 +92,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Empty(contract.UnkeptMembers);
             Assert.Empty(contract.TargetedMembers);
+            Assert.Empty(contract.OverwritingTools);
         }
     }
 }

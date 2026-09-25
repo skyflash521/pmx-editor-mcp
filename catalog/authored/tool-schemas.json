@@ -31474,6 +31474,26 @@
       }
     },
     {
+      "tool": "motion_save_transformed_pmx_file",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "path",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": []
+      }
+    },
+    {
       "tool": "motion_scale_vme_bone",
       "branches": [
         {

@@ -38,6 +38,12 @@ namespace PmxEditorMcp
             return ModalWindows.Describe(Windows());
         }
 
+        internal string Said(IntPtr window)
+        {
+            return ModalWindows.Describe(new[] { new WindowNote(Text(window), Body(window), true, true) })
+                ?? string.Empty;
+        }
+
         private IEnumerable<WindowNote> Windows()
         {
             List<WindowNote> notes = new List<WindowNote>();
@@ -60,7 +66,9 @@ namespace PmxEditorMcp
                         // 文字列の取得は同じプロセスの窓へ要求を送るので、送る先を、持ち主を
                         // 使用不可にしている可視の窓だけに絞る。
                         IntPtr owner = GetWindow(window, GetWindowOwner);
-                        bool holdsOwner = owner != IntPtr.Zero && !IsWindowEnabled(owner);
+                        bool holdsOwner = owner != IntPtr.Zero
+                            && !IsWindowEnabled(owner)
+                            && !(AnsweringDialogs.Hides(owner, window) && IsDialog(window));
                         bool visible = IsWindowVisible(window);
                         notes.Add(visible && holdsOwner
                             ? new WindowNote(Text(window), Body(window), true, true)
@@ -115,10 +123,20 @@ namespace PmxEditorMcp
 
         private static bool IsStatic(IntPtr window)
         {
+            return IsClass(window, "Static");
+        }
+
+        private static bool IsDialog(IntPtr window)
+        {
+            return IsClass(window, "#32770");
+        }
+
+        private static bool IsClass(IntPtr window, string wanted)
+        {
             StringBuilder name = new StringBuilder(MaxTextLength);
             GetClassName(window, name, name.Capacity);
 
-            return string.Equals(name.ToString(), "Static", StringComparison.Ordinal);
+            return string.Equals(name.ToString(), wanted, StringComparison.Ordinal);
         }
 
         /// <summary>

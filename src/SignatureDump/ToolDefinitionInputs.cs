@@ -22,6 +22,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly ISet<string> _drawnImages;
 
+        private readonly ISet<string> _overwritingTools;
+
         private readonly IDictionary<string, ISet<string>> _unkeptMembers;
 
         private readonly IDictionary<string, ISet<string>> _targetedMembers;
@@ -42,6 +44,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ComposedTool> composedTools,
             IDictionary<string, string> viewImages,
             ISet<string> drawnImages,
+            ISet<string> overwritingTools,
             IDictionary<string, ISet<string>> unkeptMembers,
             IDictionary<string, ISet<string>> targetedMembers,
             IDictionary<string, ParentValues> parentValues,
@@ -64,6 +67,7 @@ namespace PmxEditorMcp.SignatureDump
             _composedTools = composedTools;
             _viewImages = viewImages;
             _drawnImages = drawnImages;
+            _overwritingTools = overwritingTools;
             _unkeptMembers = unkeptMembers;
             _targetedMembers = targetedMembers;
             _parentValues = parentValues;
@@ -546,6 +550,7 @@ namespace PmxEditorMcp.SignatureDump
                 contract.ComposedTools,
                 contract.ViewImages,
                 contract.DrawnImages,
+                contract.OverwritingTools,
                 contract.UnkeptMembers,
                 contract.TargetedMembers,
                 contract.ParentValues,
@@ -660,7 +665,10 @@ namespace PmxEditorMcp.SignatureDump
             return drawing;
         }
 
-        /// <summary>確認を要するツールの名前。行の側の判定をツールの名前へ写す。</summary>
+        /// <summary>
+        /// 確認を要するツールの名前。行の側の判定をツールの名前へ写し、共通契約がファイルへ書き込むと
+        /// 名指しした合成ツールを加える。
+        /// </summary>
         public ISet<string> DangerousTools(InventoryRecord inventory)
         {
             if (inventory == null)
@@ -669,10 +677,12 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             IDictionary<string, string> tools = ToolsByRow(inventory);
-
-            return new HashSet<string>(
+            HashSet<string> dangerous = new HashSet<string>(
                 Dangerous(inventory).Where(tools.ContainsKey).Select(k => tools[k]),
                 StringComparer.Ordinal);
+            dangerous.UnionWith(_overwritingTools);
+
+            return dangerous;
         }
 
         /// <summary>

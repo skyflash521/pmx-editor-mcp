@@ -445,6 +445,11 @@
       "duty": "PMXの不整合を数えて返す。モデルは変えない。返す項目は、3つの頂点が揃っていない面の数 unsoundFaces、並びに居ない頂点を指す面の数 danglingFaces、並びに居ないボーンを指す頂点の数 danglingWeights、並びに居ないボーンを指すボーンの口の数 danglingBones、指す先が並びに居ないモーフのオフセットの数 danglingMorphOffsets、指す先が並びに居ない表示枠の項目の数 danglingNodeItems、指す先が並びに居ない剛体・Joint・SoftBodyの口の数 danglingPhysics、ウェイトのそろっていない頂点の数 unnormalizedWeights、同じ材質の中で3つの頂点が同じ面の数 duplicateFaces、およびそれらを足した found である。1つの要素が複数の分類に入ることがあるので、found は分類ごとの数を足したものであって、不整合のある要素の数ではない。ウェイトがそろっているとは、ボーンの入った枠が前から重い順に詰まり、同じボーンが2つ以上の枠に入らず、その重みがどれも正で合計が1になり、ボーンの入っていない枠の重みが0であることをいう。ボーンが1本も入っていない頂点は、4つの枠の重みがすべて0ならそろっている。数えるのはいまの編集ツールで直せる不整合だけで、どこにあるかは返さない。"
     },
     {
+      "tool": "motion_save_transformed_pmx_file",
+      "branching": false,
+      "duty": "TransformView でいま変形している形を、PMXファイルとして path へ書く。TransformView のファイルメニューの「現在の形状で保存」に当たる。ボーンとそのローカル軸・頂点とその法線・剛体・Joint の位置と向きが、ボーンの変形とモーフを当てた後の値で書かれる。編集中のモデルと TransformView の変形は変えない。path は在るフォルダの中のファイルを指す絶対パスで、同じ名前のファイルが在れば置き換える。書き出しで頂点モーフを正規化せず、ファイルメニューの正規化の入り切りは呼び出しの前のまま残す。ファイルへ書くので confirm に真を渡す。TransformView が開いていないとき、保存の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。変形後の位置を数で読むには、model_pmx で作ったハンドルへ model_from_file_pmx でこのファイルを読み、そのハンドルを pmxHandle に添えて model_list_bones・model_list_vertices などを呼ぶ。成功したときは何も返さない。"
+    },
+    {
       "tool": "motion_set_camera_view",
       "branching": false,
       "duty": "TransformView の視点を動かす。position に視点の位置を、target に見る先を、upVector に上の向きを、それぞれ3つの数の並びで渡す。3つとも要る。PMXView の視点をいったんそこへ入れ、PMXView の表示メニューのカメラ同期で TransformView へ写してから、PMXView の視点と同期の入り切りを呼び出しの前へ戻す。同期で写すので、SubView の視点も同じ位置へ動く。TransformView か SubView のカメラをロックしていると、その視点は動かない。PMXView が4画面モードのとき、カメラ同期の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。撮るには続けて motion_get_client_image を呼ぶ。成功したときは何も返さない。"
@@ -536,6 +541,11 @@
   "drawnImages": [
     {
       "tool": "model_draw_uv_layout"
+    }
+  ],
+  "overwritingTools": [
+    {
+      "tool": "motion_save_transformed_pmx_file"
     }
   ],
   "unkeptMembers": [

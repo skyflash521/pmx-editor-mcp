@@ -136,22 +136,22 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// このスレッドの鍵盤の状態で Shift を押したことにして押す。エディタが見る修飾キーはこの状態から
-        /// 読まれ、物理的な押し方にも、ほかのスレッドにも及ばない。
+        /// このスレッドのキーボードの状態で Shift を押したことにして押す。エディタが見る修飾キーはこの状態から
+        /// 読まれ、物理的なキーの状態にも、ほかのスレッドにも及ばない。
         /// </summary>
         private static void PressWithShift(ToolStripItem item)
         {
             byte[] held = new byte[256];
             if (!GetKeyboardState(held))
             {
-                throw new InvalidOperationException("鍵盤の状態を読めなかった。");
+                throw new InvalidOperationException("キーボードの状態を読めなかった。");
             }
 
             byte[] shifted = held.ToArray();
             shifted[ShiftKey] |= Down;
             if (!SetKeyboardState(shifted))
             {
-                throw new InvalidOperationException("鍵盤の状態を書けなかった。");
+                throw new InvalidOperationException("キーボードの状態を書けなかった。");
             }
 
             try
@@ -162,7 +162,7 @@ namespace PmxEditorMcp
             {
                 if (!SetKeyboardState(held))
                 {
-                    throw new InvalidOperationException("Shift を押した扱いにした鍵盤の状態を戻せなかった。");
+                    throw new InvalidOperationException("Shift を押した扱いにしたキーボードの状態を戻せなかった。");
                 }
             }
         }

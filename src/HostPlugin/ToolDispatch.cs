@@ -4877,7 +4877,7 @@ namespace PmxEditorMcp
             return ConfirmGate.TryPass(call.Danger, confirm, out code, out message);
         }
 
-        private static bool TryConfirm(
+        internal static bool TryConfirm(
             McpMethodContext context, out bool confirm, out string code, out string message)
         {
             code = null;
