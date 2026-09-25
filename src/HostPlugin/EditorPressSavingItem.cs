@@ -19,10 +19,6 @@ namespace PmxEditorMcp
 
         private static readonly TimeSpan PromptReadLimit = TimeSpan.FromSeconds(1);
 
-        private const string DefaultSettingAsked = "標準設定へ上書きします.よろしいですか？";
-
-        private const string UnsavedListed = "未保存の対象はリストへ登録されません.よろしいですか？";
-
         private static readonly Dictionary<string, SavingItem> ItemsByWindowAndPath =
             new Dictionary<string, SavingItem>(StringComparer.Ordinal)
             {
@@ -31,50 +27,29 @@ namespace PmxEditorMcp
                 {
                     "PmxEditor.PmxForm|menuStrip1/MenuItem_File/MenuItem_Export",
                     SavingItem.Asking()
-                        .Then(AnsweredDialog.Pressed("サイズ調整他", "OK"))
+                        .Then(AnsweredDialog.Pressed("ExportForm", "btnOK"))
                         .Instead(".pmx", "session_save_pmx_file")
                         .Instead(".pmd", "session_save_pmd_file")
                 },
                 { "PmxViewForm.EffectView|menuStrip1/MenuItem_File/MenuItem_SaveAs", SavingItem.Asking() },
-                {
-                    "PmxViewForm.EffectView|menuStrip1/MenuItem_File/MenuItem_SaveDefault",
-                    SavingItem.Fixed("標準設定に保存してもよろしいですか？")
-                },
+                { "PmxViewForm.EffectView|menuStrip1/MenuItem_File/MenuItem_SaveDefault", SavingItem.Fixed(1) },
                 { "PmxViewForm.PmxSkeletonView|menuStrip1/MenuItem_File/MenuItem_SaveSkeleton", SavingItem.Asking() },
-                {
-                    "PmxViewForm.PmxSkeletonView|menuStrip1/MenuItem_File/MenuItem_SaveSkeletonAll",
-                    SavingItem.Asking(
-                        "標準のアンカースケルトンと同じ保存先になっていますが よろしいですか？ "
-                            + "※自動保存により上書きされる可能性があります.")
-                },
+                { "PmxViewForm.PmxSkeletonView|menuStrip1/MenuItem_File/MenuItem_SaveSkeletonAll", SavingItem.Asking(1) },
                 { "PmxViewForm.TransMorphSlider|menuStrip1/MenuItem_Edit/MenuItem_SaveGroup", SavingItem.Asking() },
                 { "PmxViewForm.TransSendView|btnSend", SavingItem.Fixed() },
                 { "PmxViewForm.TransSlider|menuStrip1/MenuItem_File/MenuItem_Save", SavingItem.Asking() },
-                {
-                    "PmxViewForm.TransformView|menuStrip1/MenuItem_Edit/MenuItem_Vpd/MenuItem_Vpd_Save",
-                    SavingItem.Asking("変形項目がありませんがありませんが保存しますか？")
-                },
+                { "PmxViewForm.TransformView|menuStrip1/MenuItem_Edit/MenuItem_Vpd/MenuItem_Vpd_Save", SavingItem.Asking(1) },
                 { "PmxViewForm.UVSkinTexForm|btnCreate", SavingItem.Asking() },
-                {
-                    "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveList",
-                    SavingItem.Fixed("標準リストへ保存してもよろしいですか？", UnsavedListed)
-                },
-                { "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveAs", SavingItem.Asking(UnsavedListed) },
-                {
-                    "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_File/MenuItem_SaveFixVmd",
-                    SavingItem.Asking(
-                        "Fixモーションが作成されていません.構築しますか？",
-                        "非物理化モーションへの変換は状態によっては不正な結果になる場合があります.ご注意ください. "
-                            + "※物理関連でのIKをOFFにすることで改善する場合があります.",
-                        "保存完了")
-                },
+                { "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveList", SavingItem.Fixed(2) },
+                { "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveAs", SavingItem.Asking(1) },
+                { "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_File/MenuItem_SaveFixVmd", SavingItem.Asking(1, 1) },
                 {
                     "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_View/MenuItem_ViewFile/MenuItem_ViewFile_SaveAs",
                     SavingItem.Asking()
                 },
                 {
                     "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_View/MenuItem_ViewFile/MenuItem_ViewFile_Save",
-                    SavingItem.Fixed(DefaultSettingAsked)
+                    SavingItem.Fixed(1)
                 },
             };
 
@@ -221,8 +196,8 @@ namespace PmxEditorMcp
             bool written = false;
             try
             {
-                DialogAnswer answer = DialogAnswer.Start(
-                    IntPtr.Zero, expected, item.Agreeable, new string[0], DialogAnswer.Limit);
+                DialogAnswer answer = DialogAnswer.StartAcknowledging(
+                    expected, item.Questions, item.Cautions, DialogAnswer.Limit);
                 try
                 {
                     refused = UiLive.Press(form, window, path);
@@ -292,12 +267,14 @@ namespace PmxEditorMcp
         {
             private SavingItem(
                 bool asksFile,
-                string[] agreeable,
+                int questions,
+                int cautions,
                 AnsweredDialog[] following,
                 IDictionary<string, string> sdkToolsByExtension)
             {
                 AsksFile = asksFile;
-                Agreeable = agreeable;
+                Questions = questions;
+                Cautions = cautions;
                 Following = following;
                 SdkToolsByExtension = new Dictionary<string, string>(
                     sdkToolsByExtension, StringComparer.OrdinalIgnoreCase);
@@ -305,7 +282,11 @@ namespace PmxEditorMcp
 
             internal bool AsksFile { get; }
 
-            internal string[] Agreeable { get; }
+            /// <summary>押したあとエディタが出す、はいといいえを持つ問いのうち、はいで答えてよい数。</summary>
+            internal int Questions { get; }
+
+            /// <summary>押したあとエディタが出す、ボタンが1つだけでアイコンの付いた知らせのうち、閉じて続けてよい数。</summary>
+            internal int Cautions { get; }
 
             /// <summary>保存のダイアログの後に答える表示。</summary>
             internal AnsweredDialog[] Following { get; }
@@ -313,20 +294,21 @@ namespace PmxEditorMcp
             /// <summary>書き先の拡張子から、同じことを画面を経ずに行うツールへ。</summary>
             internal IDictionary<string, string> SdkToolsByExtension { get; }
 
-            internal static SavingItem Asking(params string[] agreeable)
+            internal static SavingItem Asking(int questions = 0, int cautions = 0)
             {
-                return new SavingItem(true, agreeable, new AnsweredDialog[0], new Dictionary<string, string>());
+                return new SavingItem(
+                    true, questions, cautions, new AnsweredDialog[0], new Dictionary<string, string>());
             }
 
-            internal static SavingItem Fixed(params string[] agreeable)
+            internal static SavingItem Fixed(int questions = 0)
             {
-                return new SavingItem(false, agreeable, new AnsweredDialog[0], new Dictionary<string, string>());
+                return new SavingItem(false, questions, 0, new AnsweredDialog[0], new Dictionary<string, string>());
             }
 
             internal SavingItem Then(AnsweredDialog following)
             {
                 return new SavingItem(
-                    AsksFile, Agreeable, Following.Concat(new[] { following }).ToArray(), SdkToolsByExtension);
+                    AsksFile, Questions, Cautions, Following.Concat(new[] { following }).ToArray(), SdkToolsByExtension);
             }
 
             internal SavingItem Instead(string extension, string tool)
@@ -336,7 +318,7 @@ namespace PmxEditorMcp
                     { extension, tool },
                 };
 
-                return new SavingItem(AsksFile, Agreeable, Following, tools);
+                return new SavingItem(AsksFile, Questions, Cautions, Following, tools);
             }
         }
     }

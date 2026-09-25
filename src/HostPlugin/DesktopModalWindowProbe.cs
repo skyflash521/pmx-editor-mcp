@@ -38,11 +38,6 @@ namespace PmxEditorMcp
             return ModalWindows.Describe(Windows());
         }
 
-        internal string Caption(IntPtr window)
-        {
-            return Text(window);
-        }
-
         /// <summary>表示の中のラベル(Static)の文字を、空白で繋いだもの。</summary>
         internal string Message(IntPtr window)
         {
@@ -80,7 +75,7 @@ namespace PmxEditorMcp
                         bool holdsOwner = owner != IntPtr.Zero && !IsWindowEnabled(owner);
                         bool visible = IsWindowVisible(window);
                         string caption = visible && holdsOwner ? Text(window) : null;
-                        if (caption != null && AnsweringDialogs.Hides(owner, window, caption, IsDialog(window)))
+                        if (caption != null && AnsweringDialogs.Hides(owner, window, IsDialog(window)))
                         {
                             holdsOwner = false;
                         }

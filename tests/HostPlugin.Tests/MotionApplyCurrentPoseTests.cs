@@ -119,8 +119,9 @@ namespace PmxEditorMcp.Tests
                 }
             });
             thread.SetApartmentState(ApartmentState.STA);
+            thread.IsBackground = true;
             thread.Start();
-            thread.Join();
+            Assert.True(thread.Join(TimeSpan.FromSeconds(30)), "表示が閉じられず、STAのスレッドが終わらなかった。");
             if (caught != null)
             {
                 throw new InvalidOperationException("STAのスレッドで落ちた。", caught);
@@ -180,10 +181,11 @@ namespace PmxEditorMcp.Tests
                 }
 
                 float threshold;
-                using (Form asking = Offscreen("頂点モーフ再計算用閾値"))
+                using (Form asking = Offscreen("エディタの題と違う題"))
                 {
+                    asking.Name = "InputDialog";
                     TextBox text = new TextBox { Name = "txtMessage", Text = "0.00001" };
-                    Button ok = new Button { Name = "btnOK", Text = "OK", DialogResult = DialogResult.OK };
+                    Button ok = new Button { Name = "btnOK", Text = "決める", DialogResult = DialogResult.OK };
                     Button cancel = new Button { Name = "btnCancel", Text = "Cancel", DialogResult = DialogResult.Cancel };
                     ok.Location = new Point(0, 30);
                     cancel.Location = new Point(80, 30);
@@ -199,8 +201,9 @@ namespace PmxEditorMcp.Tests
                     threshold = float.Parse(text.Text, CultureInfo.InvariantCulture);
                 }
 
-                using (Form progress = Offscreen("経過状態"))
+                using (Form progress = Offscreen("エディタの題と違う進み具合"))
                 {
+                    progress.Name = "CountProgressForm";
                     _view.Enabled = false;
                     progress.Show(_view);
                     for (int step = 0; step < 10; step++)

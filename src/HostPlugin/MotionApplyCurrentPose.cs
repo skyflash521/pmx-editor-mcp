@@ -16,10 +16,7 @@ namespace PmxEditorMcp
 
         private const string TransformForm = "PmxViewForm.TransformView";
 
-        // エディタが閾値の入力と、正規化の進み具合の表示に付ける題。
-        private const string ThresholdCaption = "頂点モーフ再計算用閾値";
-
-        private const string ProgressCaption = "経過状態";
+        private const string ProgressForm = "CountProgressForm";
 
         private static readonly string[] ApplyPath = { "menuStrip1", "MenuItem_File", "MenuItem_SetupCurrentPose" };
 
@@ -106,12 +103,12 @@ namespace PmxEditorMcp
 
             // エディタは閾値の文字列を、動いているカルチャで数へ読む。
             AnsweredDialog expected = threshold.HasValue
-                ? AnsweredDialog.Input(ThresholdCaption, threshold.Value.ToString("R", CultureInfo.CurrentCulture))
+                ? AnsweredDialog.Input(threshold.Value.ToString("R", CultureInfo.CurrentCulture))
                 : null;
             string failure;
             bool normalized = normalize.Checked;
             byte[] held = Keyboard();
-            DialogAnswer answer = DialogAnswer.Start(view.Handle, expected, new[] { ProgressCaption }, DialogAnswer.Limit);
+            DialogAnswer answer = DialogAnswer.Start(view.Handle, expected, new[] { ProgressForm }, DialogAnswer.Limit);
             try
             {
                 // 正規化が入っているとエディタは閾値を訊き、Shift を押しているとその入り切りを逆に扱う。

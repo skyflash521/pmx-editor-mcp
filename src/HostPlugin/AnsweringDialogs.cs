@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace PmxEditorMcp
 {
@@ -8,20 +9,20 @@ namespace PmxEditorMcp
         private static readonly Dictionary<IntPtr, Answering> Owners = new Dictionary<IntPtr, Answering>();
 
         /// <summary>
-        /// <paramref name="owner"/> を持ち主とするダイアログ(#32770)と、題が <paramref name="captions"/> の
-        /// どれかに当たる表示は(<paramref name="owner"/> が <see cref="IntPtr.Zero"/> ならすべての表示は)、<see cref="GiveBack"/> したものを除き、<see cref="Remove"/> までの間、人の応答を
+        /// <paramref name="owner"/> を持ち主とするダイアログ(#32770)と、Name が <paramref name="forms"/> のどれかに当たる
+        /// WinForms のフォームは(<paramref name="owner"/> が <see cref="IntPtr.Zero"/> ならすべての表示は)、<see cref="GiveBack"/> したものを除き、<see cref="Remove"/> までの間、人の応答を
         /// 待つ表示に数えない。どのスレッドからも呼べる。
         /// </summary>
-        public static void Add(IntPtr owner, IEnumerable<string> captions)
+        public static void Add(IntPtr owner, IEnumerable<string> forms)
         {
-            if (captions == null)
+            if (forms == null)
             {
-                throw new ArgumentNullException(nameof(captions));
+                throw new ArgumentNullException(nameof(forms));
             }
 
             lock (Owners)
             {
-                Owners[owner] = new Answering(captions);
+                Owners[owner] = new Answering(forms);
             }
         }
 
@@ -51,8 +52,9 @@ namespace PmxEditorMcp
         }
 
         /// <summary><paramref name="isDialog"/> は <paramref name="window"/> が #32770 かどうか。</summary>
-        public static bool Hides(IntPtr owner, IntPtr window, string caption, bool isDialog)
+        public static bool Hides(IntPtr owner, IntPtr window, bool isDialog)
         {
+            string form = FormName(window);
             lock (Owners)
             {
                 foreach (KeyValuePair<IntPtr, Answering> entry in Owners)
@@ -64,7 +66,7 @@ namespace PmxEditorMcp
 
                     if (entry.Key == IntPtr.Zero
                         || (entry.Key == owner && isDialog)
-                        || (caption != null && entry.Value.Captions.Contains(caption)))
+                        || (form != null && entry.Value.Forms.Contains(form)))
                     {
                         return true;
                     }
@@ -74,14 +76,22 @@ namespace PmxEditorMcp
             }
         }
 
+        /// <summary>どのスレッドからも呼べる。<paramref name="window"/> がこのプロセスの WinForms の部品なら、その Name。</summary>
+        public static string FormName(IntPtr window)
+        {
+            Control control = Control.FromHandle(window);
+
+            return control == null ? null : control.Name;
+        }
+
         private sealed class Answering
         {
-            internal Answering(IEnumerable<string> captions)
+            internal Answering(IEnumerable<string> forms)
             {
-                Captions = new HashSet<string>(captions, StringComparer.Ordinal);
+                Forms = new HashSet<string>(forms, StringComparer.Ordinal);
             }
 
-            internal HashSet<string> Captions { get; }
+            internal HashSet<string> Forms { get; }
 
             internal HashSet<IntPtr> GivenBack { get; } = new HashSet<IntPtr>();
         }

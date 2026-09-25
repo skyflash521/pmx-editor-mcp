@@ -21,7 +21,9 @@ namespace PmxEditorMcp.Tests
 
         private static readonly string[] Reload = { "menuStrip1", "MenuItem_File", "MenuItem_Reload" };
 
-        private const string Asked = "標準設定に保存してもよろしいですか？";
+        private const string Asked = "エディタの文面と違う問い";
+
+        private const string Caution = "エディタの文面と違う注意";
 
         [Fact]
         public void AMessageTheItemDoesNotExpectIsReturnedAsAFailureAndTheExistingFileIsKept()
@@ -91,9 +93,17 @@ namespace PmxEditorMcp.Tests
                                 return;
                             }
 
-                            using (Form size = Offscreen("サイズ調整他"))
+                            using (Form size = Offscreen("エディタの題と違う題"))
                             {
-                                size.Controls.Add(new Button { Text = "OK", DialogResult = DialogResult.OK });
+                                size.Name = "ExportForm";
+                                size.Controls.Add(new Button { Name = "btnCancel", Text = "やめる", DialogResult = DialogResult.Cancel });
+                                size.Controls.Add(new Button
+                                {
+                                    Name = "btnOK",
+                                    Text = "決める",
+                                    DialogResult = DialogResult.OK,
+                                    Location = new Point(80, 0),
+                                });
                                 sized.Add(size.ShowDialog(main));
                             }
 
@@ -142,7 +152,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ANoticeWithOnlyOkIsAgreedAndReturned()
+        public void ACautionTheItemMayShowAndANoticeWithOnlyOkAreAgreedAndReturned()
         {
             using (Folder folder = new Folder())
             {
@@ -155,6 +165,7 @@ namespace PmxEditorMcp.Tests
                         view.Name = "VMDViewForm";
                         Item(view, SaveFixVmd, () =>
                         {
+                            MessageBox.Show(Caution, "注意", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             string chosen = Chosen();
                             if (chosen == null)
                             {
@@ -170,11 +181,43 @@ namespace PmxEditorMcp.Tests
                         IDictionary<string, object> value = ComposedScreenFixture.Value(
                             Call(fixture, "VmdViewLib.VMDViewForm", SaveFixVmd, path, true));
 
-                        Assert.Equal(new[] { "保存完了" }, ((IEnumerable<object>)value["messages"]).Cast<string>());
+                        Assert.Equal(
+                            new[] { Caution, "保存完了" }, ((IEnumerable<object>)value["messages"]).Cast<string>());
                     }
                 });
 
                 Assert.Equal(Screen.Written, File.ReadAllText(path));
+            }
+        }
+
+        [Fact]
+        public void ACautionBeyondWhatTheItemMayShowIsReturnedAsAFailure()
+        {
+            using (Folder folder = new Folder())
+            {
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Form view = Offscreen("VMDViewForm"))
+                    {
+                        view.Name = "VMDViewForm";
+                        Item(view, SaveFixVmd, () =>
+                        {
+                            MessageBox.Show(Caution, "注意", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            MessageBox.Show("二つ目の注意", "注意", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        });
+                        view.Show();
+                        fixture.Forms.Add(view);
+
+                        IDictionary<string, object> answered =
+                            Call(fixture, "VmdViewLib.VMDViewForm", SaveFixVmd, folder.Path("非物理化.vmd"), true);
+
+                        Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(answered));
+                        Assert.StartsWith("エディタが表示を出したので閉じた", ComposedEditFixture.Message(answered));
+                        Assert.Contains("二つ目の注意", ComposedEditFixture.Message(answered));
+                        Assert.Contains(Caution, ComposedEditFixture.Message(answered));
+                    }
+                });
             }
         }
 
@@ -244,13 +287,14 @@ namespace PmxEditorMcp.Tests
                 using (ComposedScreenFixture fixture = new ComposedScreenFixture())
                 using (Screen screen = new Screen(fixture))
                 {
-                    screen.Asking = "ほかの設定も書き換えますか？";
+                    screen.Further = "ほかの設定も書き換えますか？";
 
                     IDictionary<string, object> answered = Call(fixture, SaveDefault, null, true);
 
                     Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(answered));
+                    Assert.Contains(Asked, ComposedEditFixture.Message(answered));
                     Assert.Contains("ほかの設定も書き換えますか？", ComposedEditFixture.Message(answered));
-                    Assert.Equal(new[] { DialogResult.No }, screen.Answers);
+                    Assert.Equal(new[] { DialogResult.Yes, DialogResult.No }, screen.Answers);
                 }
             });
         }
@@ -445,8 +489,9 @@ namespace PmxEditorMcp.Tests
                 }
             });
             thread.SetApartmentState(ApartmentState.STA);
+            thread.IsBackground = true;
             thread.Start();
-            thread.Join();
+            Assert.True(thread.Join(TimeSpan.FromSeconds(30)), "表示が閉じられず、STAのスレッドが終わらなかった。");
             if (caught != null)
             {
                 throw new InvalidOperationException("STAのスレッドで落ちた。", caught);
@@ -517,7 +562,7 @@ namespace PmxEditorMcp.Tests
 
             internal string FailWithMessage { get; set; }
 
-            internal string Asking { get; set; } = Asked;
+            internal string Further { get; set; }
 
             internal bool WriteNothing { get; set; }
 
@@ -553,7 +598,11 @@ namespace PmxEditorMcp.Tests
 
             private void SaveToDefault()
             {
-                Answers.Add(MessageBox.Show(Asking, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question));
+                Answers.Add(MessageBox.Show(Asked, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question));
+                if (Further != null)
+                {
+                    Answers.Add(MessageBox.Show(Further, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question));
+                }
             }
         }
     }
