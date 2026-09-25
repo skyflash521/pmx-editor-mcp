@@ -12,11 +12,27 @@ namespace PmxEditorMcp
 
         public const string PathName = "path";
 
-        private static readonly Dictionary<string, string> OwnToolsByWindowAndPath = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            { "PmxViewForm.TransformView|menuStrip1/MenuItem_File/MenuItem_SetupCurrentPose", MotionApplyCurrentPose.ToolName },
-            { "PmxViewForm.TransformView|menuStrip1/MenuItem_File/MenuItem_SaveModel", MotionSaveTransformedPmxFile.ToolName },
-        };
+        private static readonly Dictionary<string, string> OwnToolGuidesByWindowAndPath =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                {
+                    "PmxViewForm.TransformView|menuStrip1/MenuItem_File/MenuItem_SetupCurrentPose",
+                    MotionApplyCurrentPose.ToolName + " で行う。"
+                },
+                {
+                    "PmxViewForm.TransformView|menuStrip1/MenuItem_File/MenuItem_SaveModel",
+                    MotionSaveTransformedPmxFile.ToolName + " で行う。"
+                },
+                { "PmxEditor.PmxForm|menuStrip1/MenuItem_File/MenuItem_Save", SavePmxGuide },
+                { "PmxEditor.PmxForm|menuStrip1/MenuItem_File/MenuItem_SaveAs", SavePmxGuide },
+                { "PmxViewForm.PmxViewSetting|menuStrip1/MenuItem_File/MenuItem_SaveAs", ViewSettingGuide },
+                { "PmxViewForm.PmxViewSetting|menuStrip1/MenuItem_File/MenuItem_Save", ViewSettingGuide },
+            };
+
+        private const string SavePmxGuide = "session_save_pmx_file で行う。";
+
+        private const string ViewSettingGuide =
+            "PMXView の表示設定をファイルへ書くのは view_save_view_setting で行う。TransformView と SubView の表示設定を書くツールは無い。";
 
         /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
@@ -79,15 +95,14 @@ namespace PmxEditorMcp
                     "押すと何かが起きるメニュー項目かボタンではない: " + string.Join("/", path));
             }
 
-            string own;
-            if (OwnToolsByWindowAndPath.TryGetValue(named + "|" + string.Join("/", path), out own))
+            string guide;
+            if (OwnToolGuidesByWindowAndPath.TryGetValue(named + "|" + string.Join("/", path), out guide))
             {
                 return ToolEnvelope.Failure(
-                    ToolEnvelope.NotApplicable,
-                    "この項目は押さない: " + string.Join("/", path) + "。" + own + " で行う。");
+                    ToolEnvelope.NotApplicable, "この項目は押さない: " + string.Join("/", path) + "。" + guide);
             }
 
-            string danger = Danger(UiStructureCatalog.Text(node, UiStructureCatalog.DangerName), string.Join("/", path));
+            string danger = Danger(UiStructureCatalog.Text(node, UiStructureCatalog.DangerName), named, path);
             if (danger != null)
             {
                 return ToolEnvelope.Failure(ToolEnvelope.NotApplicable, danger);
@@ -154,8 +169,9 @@ namespace PmxEditorMcp
         }
 
         /// <summary>台帳の危険の区分を、断る事情の文へ直す。危険でなければ null。</summary>
-        private static string Danger(string kind, string part)
+        private static string Danger(string kind, string window, IList<string> path)
         {
+            string part = string.Join("/", path);
             switch (kind)
             {
                 case null:
@@ -166,12 +182,14 @@ namespace PmxEditorMcp
                         + " で行う。";
 
                 case "overwrite":
-                    return "ファイルへ書き込むので押さない: " + part
-                        + "。書き込みは session_save_pmx_file などの専用のツールで行う。";
+                    return EditorPressSavingItem.Presses(window, path)
+                        ? "ファイルへ書き込むので押さない: " + part + "。書き込みは " + EditorPressSavingItem.ToolName
+                            + " で押して行う。"
+                        : "ファイルへ書き込むので押さない: " + part + "。";
 
                 case "reset":
                     return "編集中のモデルを空にするので押さない: " + part
-                        + "。空にするのは session_initialize_pmx などの専用のツールで行う。";
+                        + "。空にするのは session_initialize_pmx で行う。";
 
                 default:
                     return "危険の区分 " + kind + " に当たるので押さない: " + part;

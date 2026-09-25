@@ -8,7 +8,8 @@ namespace PmxEditorMcp
         private static readonly Dictionary<IntPtr, Answering> Owners = new Dictionary<IntPtr, Answering>();
 
         /// <summary>
-        /// <paramref name="owner"/> を持ち主とするダイアログ(#32770)と、題が <paramref name="captions"/> の
+        /// <paramref name="owner"/> を持ち主とするダイアログ(#32770。<paramref name="owner"/> が <see cref="IntPtr.Zero"/>
+        /// なら持ち主を問わない)と、題が <paramref name="captions"/> の
         /// どれかに当たる表示は、<see cref="GiveBack"/> したものを除き、<see cref="Remove"/> までの間、人の応答を
         /// 待つ表示に数えない。どのスレッドからも呼べる。
         /// </summary>
@@ -62,7 +63,8 @@ namespace PmxEditorMcp
                         continue;
                     }
 
-                    if ((entry.Key == owner && isDialog) || (caption != null && entry.Value.Captions.Contains(caption)))
+                    if (((entry.Key == owner || entry.Key == IntPtr.Zero) && isDialog)
+                        || (caption != null && entry.Value.Captions.Contains(caption)))
                     {
                         return true;
                     }

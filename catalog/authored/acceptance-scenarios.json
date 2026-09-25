@@ -2559,6 +2559,51 @@
           "path": "%TEMP%\\pmx-editor-mcp-acceptance\\変形後.pmx"
         },
         {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\姿勢.vpd"
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "menuStrip1",
+              "MenuItem_Edit",
+              "MenuItem_Vpd",
+              "MenuItem_Vpd_Save"
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_NOT_APPLICABLE"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_saving_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "menuStrip1",
+              "MenuItem_Edit",
+              "MenuItem_Vpd",
+              "MenuItem_Vpd_Save"
+            ],
+            "file": "%TEMP%\\pmx-editor-mcp-acceptance\\姿勢.vpd",
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectPresent",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\姿勢.vpd"
+        },
+        {
           "kind": "tool",
           "tool": "model_pmx",
           "arguments": {},

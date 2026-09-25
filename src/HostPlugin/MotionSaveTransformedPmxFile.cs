@@ -16,8 +16,6 @@ namespace PmxEditorMcp
 
         private const string TransformForm = "PmxViewForm.TransformView";
 
-        private static readonly TimeSpan DialogLimit = TimeSpan.FromSeconds(10);
-
         private static readonly string[] SavePath = { "menuStrip1", "MenuItem_File", "MenuItem_SaveModel" };
 
         private static readonly string[] NormalizePath = { "menuStrip1", "MenuItem_File", "MenuItem_SaveNormalize" };
@@ -118,7 +116,7 @@ namespace PmxEditorMcp
             bool normalized = normalize.Checked;
             byte[] held = Keyboard();
             DialogAnswer answer = DialogAnswer.Start(
-                view.Handle, AnsweredDialog.Save(staging), new string[0], DialogLimit);
+                view.Handle, AnsweredDialog.Save(staging), new string[0], DialogAnswer.Limit);
             try
             {
                 // 正規化が入っていると、エディタは閾値を訊く表示を出す。
@@ -166,7 +164,7 @@ namespace PmxEditorMcp
             return ComposedEditResult.Complete(new Dictionary<string, object>(StringComparer.Ordinal));
         }
 
-        private static bool IsFullyQualified(string path)
+        internal static bool IsFullyQualified(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || path.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
             {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -14,7 +15,7 @@ namespace PmxEditorMcp.Tests
     public sealed class MotionSaveTransformedPmxFileTests
     {
         [Fact]
-        public void TheTransformedShapeIsWrittenToTheGivenPath()
+        public void TheTransformedShapeIsWrittenToTheGivenPathWithTheNormalizationOffAndThenBack()
         {
             using (Folder folder = new Folder())
             {
@@ -24,9 +25,13 @@ namespace PmxEditorMcp.Tests
                     using (ComposedScreenFixture fixture = new ComposedScreenFixture())
                     using (Screen screen = new Screen(fixture))
                     {
+                        screen.Normalize.Checked = true;
+
                         ComposedScreenFixture.Value(Call(fixture, path, true));
 
                         Assert.Equal(1, screen.Saves);
+                        Assert.Equal(new[] { false }, screen.NormalizedWhenSaved);
+                        Assert.True(screen.Normalize.Checked, "正規化の入り切りを元へ戻していない。");
                     }
                 });
 
@@ -53,28 +58,6 @@ namespace PmxEditorMcp.Tests
 
                 Assert.Equal(Screen.Written, File.ReadAllText(path));
                 Assert.Equal(new[] { path }, Directory.GetFiles(folder.Root));
-            }
-        }
-
-        [Fact]
-        public void TheNormalizationIsOffWhileSavingAndComesBack()
-        {
-            using (Folder folder = new Folder())
-            {
-                string path = folder.Path("変形後.pmx");
-                OnSta(() =>
-                {
-                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
-                    using (Screen screen = new Screen(fixture))
-                    {
-                        screen.Normalize.Checked = true;
-
-                        ComposedScreenFixture.Value(Call(fixture, path, true));
-
-                        Assert.Equal(new[] { false }, screen.NormalizedWhenSaved);
-                        Assert.True(screen.Normalize.Checked, "正規化の入り切りを元へ戻していない。");
-                    }
-                });
             }
         }
 
@@ -195,16 +178,16 @@ namespace PmxEditorMcp.Tests
             using (Folder folder = new Folder())
             {
                 string path = folder.Path("変形後.pmx");
-                OnSta(() =>
+                OnSta(() => WithLimit(ShortLimit, () =>
                 {
                     using (ComposedScreenFixture fixture = new ComposedScreenFixture())
                     using (Screen screen = new Screen(fixture))
                     {
-                        screen.DelayBeforeDialog = TimeSpan.FromSeconds(11);
+                        screen.DelayBeforeDialog = ShortLimit + PastLimit;
 
                         ComposedScreenFixture.Value(Call(fixture, path, true));
                     }
-                });
+                }));
 
                 Assert.Equal(Screen.Written, File.ReadAllText(path));
             }
@@ -262,7 +245,7 @@ namespace PmxEditorMcp.Tests
             {
                 string early = null;
                 string late = null;
-                OnSta(() =>
+                OnSta(() => WithLimit(ShortLimit, () =>
                 {
                     using (ComposedScreenFixture fixture = new ComposedScreenFixture())
                     using (Screen screen = new Screen(fixture))
@@ -272,11 +255,13 @@ namespace PmxEditorMcp.Tests
                         DesktopModalWindowProbe probe = new DesktopModalWindowProbe(TimeSpan.FromSeconds(1));
                         Task watching = Task.Run(() =>
                         {
-                            Thread.Sleep(TimeSpan.FromSeconds(3));
+                            IntPtr shown = ShownDialog(owner);
+                            Stopwatch since = Stopwatch.StartNew();
+                            Thread.Sleep(BeforeLimit);
                             early = probe.TryDescribe();
-                            Thread.Sleep(TimeSpan.FromSeconds(9));
+                            Thread.Sleep(ShortLimit + PastLimit - since.Elapsed);
                             late = probe.TryDescribe();
-                            PostMessage(OwnedDialog(owner), CloseMessage, IntPtr.Zero, IntPtr.Zero);
+                            PostMessage(shown, CloseMessage, IntPtr.Zero, IntPtr.Zero);
                         });
 
                         Assert.Equal(
@@ -284,27 +269,33 @@ namespace PmxEditorMcp.Tests
                             ComposedScreenFixture.Code(Call(fixture, folder.Path("変形後.pmx"), true)));
                         watching.Wait();
                     }
-                });
+                }));
 
                 Assert.Null(early);
                 Assert.NotNull(late);
             }
         }
 
-        private static IntPtr OwnedDialog(IntPtr owner)
+        private static IntPtr ShownDialog(IntPtr owner)
         {
-            IntPtr dialog = FindWindowEx(IntPtr.Zero, IntPtr.Zero, "#32770", null);
-            while (dialog != IntPtr.Zero)
+            Stopwatch waited = Stopwatch.StartNew();
+            while (waited.Elapsed < TimeSpan.FromSeconds(10))
             {
-                if (GetWindow(dialog, GetWindowOwner) == owner && IsWindowVisible(dialog))
+                IntPtr dialog = FindWindowEx(IntPtr.Zero, IntPtr.Zero, "#32770", null);
+                while (dialog != IntPtr.Zero)
                 {
-                    return dialog;
+                    if (GetWindow(dialog, GetWindowOwner) == owner && IsWindowVisible(dialog))
+                    {
+                        return dialog;
+                    }
+
+                    dialog = FindWindowEx(IntPtr.Zero, dialog, "#32770", null);
                 }
 
-                dialog = FindWindowEx(IntPtr.Zero, dialog, "#32770", null);
+                Thread.Sleep(20);
             }
 
-            throw new InvalidOperationException("持ち主のダイアログが無い。");
+            throw new InvalidOperationException("持ち主のダイアログが出なかった。");
         }
 
         private const uint CloseMessage = 0x0010;
@@ -333,6 +324,26 @@ namespace PmxEditorMcp.Tests
                 ComposedScreenFixture.Arguments(
                     ComposedScreenFixture.Given("path", path),
                     ComposedScreenFixture.Given("confirm", confirm)));
+        }
+
+        private static readonly TimeSpan ShortLimit = TimeSpan.FromSeconds(3);
+
+        private static readonly TimeSpan BeforeLimit = TimeSpan.FromSeconds(2);
+
+        private static readonly TimeSpan PastLimit = TimeSpan.FromSeconds(0.5);
+
+        private static void WithLimit(TimeSpan limit, Action action)
+        {
+            TimeSpan held = DialogAnswer.Limit;
+            DialogAnswer.Limit = limit;
+            try
+            {
+                action();
+            }
+            finally
+            {
+                DialogAnswer.Limit = held;
+            }
         }
 
         private static void OnSta(Action action)

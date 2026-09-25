@@ -163,6 +163,45 @@ namespace PmxEditorMcp.Tests
             });
         }
 
+        [Theory]
+        [InlineData("PmxEditor.PmxForm", "menuStrip1/MenuItem_File/MenuItem_Save", "session_save_pmx_file")]
+        [InlineData("PmxEditor.PmxForm", "menuStrip1/MenuItem_File/MenuItem_SaveAs", "session_save_pmx_file")]
+        [InlineData("PmxViewForm.EffectView", "menuStrip1/MenuItem_File/MenuItem_SaveAs", EditorPressSavingItem.ToolName)]
+        [InlineData("VmdViewLib.VMDViewForm", "menuStrip1/MenuItem_File/MenuItem_SaveFixVmd", EditorPressSavingItem.ToolName)]
+        [InlineData("PmxViewForm.PmxViewSetting", "menuStrip1/MenuItem_File/MenuItem_SaveAs", "view_save_view_setting")]
+        [InlineData("PmxViewForm.PmxViewSetting", "menuStrip1/MenuItem_File/MenuItem_Save", "view_save_view_setting")]
+        public void AnItemThatWritesAFileIsRefusedAndTheToolThatWritesItIsNamed(string window, string path, string tool)
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    IDictionary<string, object> refused = Press(screen, window, path.Split('/'));
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.Contains(tool, Said(refused));
+                }
+            });
+        }
+
+        [Theory]
+        [InlineData("VmdViewLib.RecForm", "btnStart")]
+        [InlineData("PmxEditor.ExportForm", "btnOK")]
+        public void AnItemThatWritesAFileWithoutAToolNamesNoTool(string window, string path)
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    IDictionary<string, object> refused = Press(screen, window, path.Split('/'));
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.DoesNotContain("session_save_pmx_file", Said(refused));
+                    Assert.DoesNotContain(EditorPressSavingItem.ToolName, Said(refused));
+                }
+            });
+        }
+
         [Fact]
         public void AnItemInsideAContainerMissingFromTheCatalogIsPressed()
         {

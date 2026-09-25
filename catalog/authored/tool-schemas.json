@@ -396,6 +396,50 @@
       }
     },
     {
+      "tool": "editor_press_saving_item",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "window",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": true
+            },
+            {
+              "name": "path",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
+              "required": true
+            },
+            {
+              "name": "file",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "messages",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "text"
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_add_bodies",
       "branches": [
         {

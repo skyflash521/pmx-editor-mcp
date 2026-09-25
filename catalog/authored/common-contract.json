@@ -322,7 +322,12 @@
     {
       "tool": "editor_press_item",
       "branching": false,
-      "duty": "開いているウィンドウの中のメニュー項目かボタンを1つ、人が押すのと同じように押す。ほかのツールに無い、そのウィンドウでしかできない操作に使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。path はウィンドウの根から押す部品までの name の並びで、editor_get_screen_structure の node と editor_find_operation の path で分かる。押せるのは子を持たないメニュー項目とボタンで、右クリックメニューの中の項目と、人の応答を待つ表示の中の部品は押さない。ウィンドウが閉じているときは TOOL_NOT_APPLICABLE を返すので、editor_open_window で開いてから呼ぶ。部品がいまは押せないとき、エディタを終了させる部品・ファイルへ書き込む部品・編集中のモデルを空にする部品のときも、押さずに TOOL_NOT_APPLICABLE を返す。どの部品がそれに当たるかは editor_get_screen_structure の node の danger で分かる。押したあと、エディタが確認や入力の表示を出したら TOOL_PROMPT_SHOWN を返す。成功したときは何も返さない。"
+      "duty": "開いているウィンドウの中のメニュー項目かボタンを1つ、人が押すのと同じように押す。ほかのツールに無い、そのウィンドウでしかできない操作に使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。path はウィンドウの根から押す部品までの name の並びで、editor_get_screen_structure の node と editor_find_operation の path で分かる。押せるのは子を持たないメニュー項目とボタンで、右クリックメニューの中の項目と、人の応答を待つ表示の中の部品は押さない。ウィンドウが閉じているときは TOOL_NOT_APPLICABLE を返すので、editor_open_window で開いてから呼ぶ。部品がいまは押せないとき、エディタを終了させる部品・ファイルへ書き込む部品・編集中のモデルを空にする部品のときも、押さずに TOOL_NOT_APPLICABLE を返す。どの部品がそれに当たるかは editor_get_screen_structure の node の danger で分かる。その部品の働きを受け持つツールがあれば、断りの文にそのツールの名前が入る。押したあと、エディタが確認や入力の表示を出したら TOOL_PROMPT_SHOWN を返す。成功したときは何も返さない。"
+    },
+    {
+      "tool": "editor_press_saving_item",
+      "branching": false,
+      "duty": "開いているウィンドウの中の、ファイルへ書き込むメニュー項目かボタンを1つ押し、そのあとエディタが出す保存のダイアログと確認の表示へ答える。window と path は editor_press_item と同じ形で、押せるのは editor_press_item が「このツールで押して行う」と断る部品である。保存のダイアログで書き先を訊く部品では、file に在るフォルダの中の、拡張子の付いたファイルを指す絶対パスを渡す。エディタにはその名前をそのまま答える。同じ名前のファイルが在れば置き換え、エディタが書かなかったときは元のファイルを残す。決まった場所へ書く部品では file を渡さない。ファイルへ書くので confirm に真を渡す。押したあとエディタが出す確認のうち、その部品がふつうに訊くものには、はいで答える。答えた確認の文面を、出た順に messages に返す。それ以外の表示が出たら、いいえか取り消しで閉じ、文面を添えて TOOL_OPERATION_FAILED を返す。書き先を訊く部品で、エディタがファイルを書かなかったときも TOOL_OPERATION_FAILED を返す。PmxForm のエクスポートは、保存のダイアログのあとに出るサイズ調整他の表示を、エディタが最初に入れておく値のまま OK で閉じる。エクスポートで拡張子 .pmx・.pmd のファイルへ書くのは、session_save_pmx_file・session_save_pmd_file が受け持つので TOOL_NOT_APPLICABLE を返す。ウィンドウが閉じているときは TOOL_NOT_APPLICABLE を返すので、editor_open_window で開いてから呼ぶ。エディタがどこかに人の応答を待つ表示を出しているとき、部品がいまは押せないときも TOOL_NOT_APPLICABLE を返す。"
     },
     {
       "tool": "model_clean_faces",
@@ -549,6 +554,9 @@
     }
   ],
   "overwritingTools": [
+    {
+      "tool": "editor_press_saving_item"
+    },
     {
       "tool": "motion_save_transformed_pmx_file"
     }

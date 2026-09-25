@@ -26,6 +26,7 @@ namespace PmxEditorMcp
         /// <summary>null なら、持ち主の #32770 のうち答えを書く欄を持つものを当たりとする。</summary>
         internal string Caption { get; }
 
+        /// <summary>null なら、答えを書かずに押すだけで答える。</summary>
         internal Func<IntPtr, IntPtr> Field { get; }
 
         internal string Value { get; }
@@ -57,6 +58,22 @@ namespace PmxEditorMcp
                     dialog, child => DialogAnswer.ClassHas(child, "BUTTON") && DialogAnswer.TextOf(child) == "OK")),
                 DialogAnswer.Close);
         }
+
+        /// <summary>
+        /// エディタが出す WinForms のフォームで、題が <paramref name="caption"/> のもの。表示が <paramref name="button"/>
+        /// の文字のボタンを押して答える。
+        /// </summary>
+        internal static AnsweredDialog Pressed(string caption, string button)
+        {
+            return new AnsweredDialog(
+                "「" + caption + "」の表示",
+                caption,
+                null,
+                null,
+                dialog => DialogAnswer.Click(DialogAnswer.Descendant(
+                    dialog, child => DialogAnswer.ClassHas(child, "BUTTON") && DialogAnswer.TextOf(child) == button)),
+                DialogAnswer.Close);
+        }
     }
 
     internal sealed class DialogAnswer
@@ -65,13 +82,22 @@ namespace PmxEditorMcp
 
         private static readonly TimeSpan TextLimit = TimeSpan.FromSeconds(1);
 
+        /// <summary>ツールが <see cref="Start(IntPtr, AnsweredDialog, IEnumerable{string}, TimeSpan)"/> へ渡す上限。</summary>
+        internal static TimeSpan Limit { get; set; } = TimeSpan.FromSeconds(10);
+
         private readonly TimeSpan _poll;
 
         private readonly IntPtr _owner;
 
         private readonly uint _uiThread;
 
-        private readonly AnsweredDialog _expected;
+        private readonly List<AnsweredDialog> _expected;
+
+        private readonly HashSet<string> _agreeable;
+
+        private readonly List<string> _agreed = new List<string>();
+
+        private readonly HashSet<IntPtr> _handled = new HashSet<IntPtr>();
 
         private readonly HashSet<string> _quiet;
 
@@ -95,20 +121,25 @@ namespace PmxEditorMcp
 
         private bool _pressed;
 
-        private bool _answered;
-
-        private bool _settled;
+        private int _next;
 
         private string _failure;
 
         private delegate bool WindowVisitor(IntPtr window, IntPtr state);
 
         private DialogAnswer(
-            IntPtr owner, uint uiThread, AnsweredDialog expected, IEnumerable<string> quiet, TimeSpan limit, TimeSpan poll)
+            IntPtr owner,
+            uint uiThread,
+            IEnumerable<AnsweredDialog> expected,
+            IEnumerable<string> agreeable,
+            IEnumerable<string> quiet,
+            TimeSpan limit,
+            TimeSpan poll)
         {
             _owner = owner;
             _uiThread = uiThread;
-            _expected = expected;
+            _expected = expected.ToList();
+            _agreeable = new HashSet<string>(agreeable.Select(Spaced), StringComparer.Ordinal);
             _quiet = new HashSet<string>(quiet, StringComparer.Ordinal);
             _limit = limit;
             _poll = poll;
@@ -136,23 +167,70 @@ namespace PmxEditorMcp
         internal static DialogAnswer Start(
             IntPtr owner, AnsweredDialog expected, IEnumerable<string> quiet, TimeSpan limit, TimeSpan poll)
         {
+            return Start(
+                owner,
+                expected == null ? new AnsweredDialog[0] : new[] { expected },
+                new string[0],
+                quiet,
+                limit,
+                poll);
+        }
+
+        /// <summary>
+        /// <paramref name="expected"/> には並びの順に答える。<paramref name="owner"/> が <see cref="IntPtr.Zero"/>
+        /// なら、持ち主を問わずUIスレッドのダイアログを受け持つ。知らせの表示のうち、文面が
+        /// <paramref name="agreeable"/> のどれかに当たるものは、はい(無ければOK)を押して文面を <see cref="Agreed"/>
+        /// へ控える。文面は空白の並びを1つの空白と見て比べる。
+        /// </summary>
+        internal static DialogAnswer Start(
+            IntPtr owner,
+            IEnumerable<AnsweredDialog> expected,
+            IEnumerable<string> agreeable,
+            IEnumerable<string> quiet,
+            TimeSpan limit)
+        {
+            return Start(owner, expected, agreeable, quiet, limit, DefaultPoll);
+        }
+
+        internal static DialogAnswer Start(
+            IntPtr owner,
+            IEnumerable<AnsweredDialog> expected,
+            IEnumerable<string> agreeable,
+            IEnumerable<string> quiet,
+            TimeSpan limit,
+            TimeSpan poll)
+        {
+            if (expected == null)
+            {
+                throw new ArgumentNullException(nameof(expected));
+            }
+
+            if (agreeable == null)
+            {
+                throw new ArgumentNullException(nameof(agreeable));
+            }
+
             if (quiet == null)
             {
                 throw new ArgumentNullException(nameof(quiet));
             }
 
-            DialogAnswer answer = new DialogAnswer(owner, GetCurrentThreadId(), expected, quiet, limit, poll);
-            IEnumerable<string> captions = expected != null && expected.Caption != null
-                ? answer._quiet.Concat(new[] { expected.Caption })
-                : answer._quiet;
-            AnsweringDialogs.Add(owner, captions.ToList());
+            DialogAnswer answer = new DialogAnswer(
+                owner, GetCurrentThreadId(), expected, agreeable, quiet, limit, poll);
+            AnsweringDialogs.Add(owner, answer._quiet.Concat(answer.Captions()).ToList());
             answer._watch.Start();
             answer._thread.Start();
 
             return answer;
         }
 
-        /// <summary>答えるダイアログへ答えて閉じられたか、答えるダイアログを待たなかったら null、そうでなければその事情を返す。</summary>
+        /// <summary><see cref="Stop"/> までに、はいかOKを押して答えた知らせの文面。出た順に並ぶ。</summary>
+        internal IList<string> Agreed
+        {
+            get { return _agreed.AsReadOnly(); }
+        }
+
+        /// <summary>答えるダイアログのすべてへ答えて閉じられたら null、そうでなければその事情を返す。</summary>
         internal string Stop()
         {
             _stopped.Set();
@@ -165,7 +243,17 @@ namespace PmxEditorMcp
                 return _failure;
             }
 
-            return _expected == null || _answered ? null : _expected.Name + "が出なかった。";
+            return _next < _expected.Count ? _expected[_next].Name + "が出なかった。" : null;
+        }
+
+        private AnsweredDialog Current
+        {
+            get { return _next < _expected.Count ? _expected[_next] : null; }
+        }
+
+        private IEnumerable<string> Captions()
+        {
+            return _expected.Where(one => one.Caption != null).Select(one => one.Caption);
         }
 
         private void Run()
@@ -179,7 +267,7 @@ namespace PmxEditorMcp
                         continue;
                     }
 
-                    if (_expected != null && !_settled && _answering == IntPtr.Zero && IsExpected(dialog.Key, dialog.Value))
+                    if (Current != null && _answering == IntPtr.Zero && IsExpected(dialog.Key, dialog.Value))
                     {
                         _answering = dialog.Key;
                         _answeringSince = _watch.Elapsed;
@@ -207,30 +295,41 @@ namespace PmxEditorMcp
 
         private bool IsExpected(IntPtr dialog, string caption)
         {
-            if (_expected.Caption != null)
+            if (_handled.Contains(dialog))
             {
-                return string.Equals(caption, _expected.Caption, StringComparison.Ordinal);
+                return false;
             }
 
-            return GetWindow(dialog, GetWindowOwner) == _owner
+            if (Current.Caption != null)
+            {
+                return string.Equals(caption, Current.Caption, StringComparison.Ordinal);
+            }
+
+            return IsOwned(dialog)
                 && IsClass(dialog, DialogClass)
-                && _expected.Field(dialog) != IntPtr.Zero;
+                && Current.Field != null
+                && Current.Field(dialog) != IntPtr.Zero;
+        }
+
+        private bool IsOwned(IntPtr dialog)
+        {
+            return _owner == IntPtr.Zero || GetWindow(dialog, GetWindowOwner) == _owner;
         }
 
         private void Answer()
         {
             if (!_pressed)
             {
-                IntPtr field = _expected.Field(_answering);
-                if (field != IntPtr.Zero && SetText(field, _expected.Value))
+                IntPtr field = Current.Field == null ? IntPtr.Zero : Current.Field(_answering);
+                if (Current.Field == null || (field != IntPtr.Zero && SetText(field, Current.Value)))
                 {
-                    _expected.Press(_answering);
+                    Current.Press(_answering);
                     _pressed = true;
                     _answeringSince = _watch.Elapsed;
                 }
                 else if (_watch.Elapsed - _answeringSince >= _limit)
                 {
-                    Settle(_expected.Name + "へ書き込めなかった。");
+                    Settle(Current.Name + "へ書き込めなかった。");
                 }
 
                 return;
@@ -238,36 +337,49 @@ namespace PmxEditorMcp
 
             if (!IsWindow(_answering) || !IsWindowVisible(_answering))
             {
-                _answered = true;
+                _handled.Add(_answering);
                 _answering = IntPtr.Zero;
-                _settled = true;
+                _pressed = false;
+                _next++;
             }
             else if (_watch.Elapsed - _answeringSince >= _limit)
             {
-                Settle(_expected.Name + "が閉じなかった。");
+                Settle(Current.Name + "が閉じなかった。");
             }
         }
 
         private void Settle(string failure)
         {
-            _expected.Cancel(_answering);
+            Current.Cancel(_answering);
             Fail(failure);
+            _handled.Add(_answering);
             _answering = IntPtr.Zero;
-            _settled = true;
+            _pressed = false;
+            _next = _expected.Count;
         }
 
         private void Dismiss(IntPtr dialog)
         {
-            if (_givenBack.Contains(dialog))
+            if (_givenBack.Contains(dialog) || _handled.Contains(dialog))
             {
                 return;
             }
 
             if (IsMessage(dialog))
             {
+                _handled.Add(dialog);
+                string body = _reader.Message(dialog);
+                if (_agreeable.Contains(Spaced(body)))
+                {
+                    _agreed.Add(body);
+                    Agree(dialog);
+
+                    return;
+                }
+
                 string said = _reader.Said(dialog);
                 Fail("エディタが表示を出したので閉じた: " + (said.Length == 0 ? "文面なし" : said));
-                Close(dialog);
+                Refuse(dialog);
 
                 return;
             }
@@ -285,6 +397,37 @@ namespace PmxEditorMcp
                 AnsweringDialogs.GiveBack(_owner, dialog);
                 _givenBack.Add(dialog);
             }
+        }
+
+        /// <summary>OK だけの知らせでは、OK のボタンが取り消しの番号を持つ。</summary>
+        private static void Agree(IntPtr dialog)
+        {
+            Press(dialog, YesCommand, OkCommand, CancelCommand);
+        }
+
+        private static void Refuse(IntPtr dialog)
+        {
+            Press(dialog, NoCommand, CancelCommand, OkCommand);
+        }
+
+        private static void Press(IntPtr dialog, params int[] commands)
+        {
+            foreach (int command in commands)
+            {
+                if (GetDlgItem(dialog, command) != IntPtr.Zero)
+                {
+                    Command(dialog, command);
+
+                    return;
+                }
+            }
+
+            Close(dialog);
+        }
+
+        private static string Spaced(string text)
+        {
+            return string.Join(" ", text.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
         }
 
         private static bool IsMessage(IntPtr dialog)
@@ -344,10 +487,9 @@ namespace PmxEditorMcp
             List<KeyValuePair<IntPtr, string>> found = new List<KeyValuePair<IntPtr, string>>();
             foreach (IntPtr window in visible)
             {
-                bool owned = GetWindow(window, GetWindowOwner) == _owner && IsClass(window, DialogClass);
+                bool owned = IsOwned(window) && IsClass(window, DialogClass);
                 string caption = _reader.Caption(window);
-                bool named = _quiet.Contains(caption)
-                    || (_expected != null && string.Equals(caption, _expected.Caption, StringComparison.Ordinal));
+                bool named = _quiet.Contains(caption) || Captions().Contains(caption, StringComparer.Ordinal);
                 if (owned || named)
                 {
                     found.Add(new KeyValuePair<IntPtr, string>(window, caption));
@@ -488,6 +630,10 @@ namespace PmxEditorMcp
         internal const int OkCommand = 1;
 
         internal const int CancelCommand = 2;
+
+        private const int YesCommand = 6;
+
+        private const int NoCommand = 7;
 
         private const uint CommandMessage = 0x0111;
 

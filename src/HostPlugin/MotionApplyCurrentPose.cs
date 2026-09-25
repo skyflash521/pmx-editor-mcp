@@ -21,8 +21,6 @@ namespace PmxEditorMcp
 
         private const string ProgressCaption = "経過状態";
 
-        private static readonly TimeSpan DialogLimit = TimeSpan.FromSeconds(10);
-
         private static readonly string[] ApplyPath = { "menuStrip1", "MenuItem_File", "MenuItem_SetupCurrentPose" };
 
         private static readonly string[] NormalizePath = { "menuStrip1", "MenuItem_File", "MenuItem_SaveNormalize" };
@@ -113,7 +111,7 @@ namespace PmxEditorMcp
             string failure;
             bool normalized = normalize.Checked;
             byte[] held = Keyboard();
-            DialogAnswer answer = DialogAnswer.Start(view.Handle, expected, new[] { ProgressCaption }, DialogLimit);
+            DialogAnswer answer = DialogAnswer.Start(view.Handle, expected, new[] { ProgressCaption }, DialogAnswer.Limit);
             try
             {
                 // 正規化が入っているとエディタは閾値を訊き、Shift を押しているとその入り切りを逆に扱う。

@@ -43,6 +43,12 @@ namespace PmxEditorMcp
             return Text(window);
         }
 
+        /// <summary>表示の中のラベル(Static)の文字を、空白で繋いだもの。</summary>
+        internal string Message(IntPtr window)
+        {
+            return Body(window);
+        }
+
         internal string Said(IntPtr window)
         {
             return ModalWindows.Describe(new[] { new WindowNote(Text(window), Body(window), true, true) })
