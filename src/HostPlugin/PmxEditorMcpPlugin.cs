@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Forms;
 using PEPlugin;
+using PXCPlugin;
 
 namespace PmxEditorMcp
 {
@@ -38,6 +39,7 @@ namespace PmxEditorMcp
         private McpHost _host;
         private JsonRpcConnection _connection;
         private ResidentConnection _resident;
+        private ModelUpdateWatch _modelUpdates;
 
         /// <summary>起動時実行とメニュー登録を有効にして生成する。</summary>
         public PmxEditorMcpPlugin()
@@ -130,6 +132,12 @@ namespace PmxEditorMcp
                     if (_host != null)
                     {
                         _host.Stop();
+                    }
+
+                    if (_modelUpdates != null)
+                    {
+                        _modelUpdates.Dispose();
+                        _modelUpdates = null;
                     }
 
                     if (_resident != null)
@@ -255,7 +263,7 @@ namespace PmxEditorMcp
                     McpHost.BuildPipeName(editorProcessId),
                     _log,
                     budget,
-                    new FormUiDispatcher(_uiAnchor),
+                    Following(new FormUiDispatcher(_uiAnchor), receivers),
                     (stream, generation) => _connection.Handle(stream, generation));
 
                 string reason;
@@ -297,20 +305,41 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 接続の根を常駐保持し、Cプラグイン連携のコネクタを先に得ておく。要求を受ける前に済ませる。
-        /// コネクタを得られなくても根は保ち、待受も続けるので、失敗は記録にとどめる。
+        /// 接続の根を常駐保持し、Cプラグイン連携のコネクタを先に得て、モデルの更新を数え始める。要求を受ける前に
+        /// 済ませる。コネクタを得られなくても、数え始められなくても根は保ち、待受も続けるので、失敗は記録にとどめる。
         /// </summary>
         private void HoldResidentConnection(IPERunArgs args)
         {
             _resident = ResidentConnection.Hold(args, _log);
+            IPXCPluginConnector connector;
             try
             {
-                _resident.Use();
+                connector = _resident.Use();
             }
             catch (Exception exception)
             {
                 _log.WriteException("Cプラグインコネクタを取得できなかった。", exception);
+
+                return;
             }
+
+            try
+            {
+                _modelUpdates = ModelUpdateWatch.Start(connector);
+            }
+            catch (Exception exception)
+            {
+                _log.WriteException(
+                    "モデルの更新を数え始められなかった。エディタにモデルを更新させるツールのあと、TransformView を読み直させない。",
+                    exception);
+            }
+        }
+
+        private IUiDispatcher Following(IUiDispatcher dispatcher, IDictionary<string, SdkReceiver> receivers)
+        {
+            return _modelUpdates == null
+                ? dispatcher
+                : new TransformViewFollowing(dispatcher, _modelUpdates, () => Receiver(receivers, TransformViewType));
         }
 
         private void ShowStatus()
