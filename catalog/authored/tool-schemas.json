@@ -22255,6 +22255,26 @@
       }
     },
     {
+      "tool": "motion_apply_current_pose",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "morphThreshold",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": []
+      }
+    },
+    {
       "tool": "motion_bone_rotate",
       "branches": [
         {

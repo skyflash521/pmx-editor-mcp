@@ -5,49 +5,83 @@ namespace PmxEditorMcp
 {
     public static class AnsweringDialogs
     {
-        private static readonly Dictionary<IntPtr, HashSet<IntPtr>> GivenBack =
-            new Dictionary<IntPtr, HashSet<IntPtr>>();
+        private static readonly Dictionary<IntPtr, Answering> Owners = new Dictionary<IntPtr, Answering>();
 
         /// <summary>
-        /// <paramref name="owner"/> を持ち主とするダイアログ(#32770)は、<see cref="GiveBack"/> したものを除き、
-        /// <see cref="Remove"/> までの間、人の応答を待つ表示に数えない。どのスレッドからも呼べる。
+        /// <paramref name="owner"/> を持ち主とするダイアログ(#32770)と、題が <paramref name="captions"/> の
+        /// どれかに当たる表示は、<see cref="GiveBack"/> したものを除き、<see cref="Remove"/> までの間、人の応答を
+        /// 待つ表示に数えない。どのスレッドからも呼べる。
         /// </summary>
+        public static void Add(IntPtr owner, IEnumerable<string> captions)
+        {
+            if (captions == null)
+            {
+                throw new ArgumentNullException(nameof(captions));
+            }
+
+            lock (Owners)
+            {
+                Owners[owner] = new Answering(captions);
+            }
+        }
+
         public static void Add(IntPtr owner)
         {
-            lock (GivenBack)
-            {
-                GivenBack[owner] = new HashSet<IntPtr>();
-            }
+            Add(owner, new string[0]);
         }
 
         public static void GiveBack(IntPtr owner, IntPtr dialog)
         {
-            lock (GivenBack)
+            lock (Owners)
             {
-                HashSet<IntPtr> dialogs;
-                if (GivenBack.TryGetValue(owner, out dialogs))
+                Answering answering;
+                if (Owners.TryGetValue(owner, out answering))
                 {
-                    dialogs.Add(dialog);
+                    answering.GivenBack.Add(dialog);
                 }
             }
         }
 
         public static void Remove(IntPtr owner)
         {
-            lock (GivenBack)
+            lock (Owners)
             {
-                GivenBack.Remove(owner);
+                Owners.Remove(owner);
             }
         }
 
-        public static bool Hides(IntPtr owner, IntPtr dialog)
+        /// <summary><paramref name="isDialog"/> は <paramref name="window"/> が #32770 かどうか。</summary>
+        public static bool Hides(IntPtr owner, IntPtr window, string caption, bool isDialog)
         {
-            lock (GivenBack)
+            lock (Owners)
             {
-                HashSet<IntPtr> dialogs;
+                foreach (KeyValuePair<IntPtr, Answering> entry in Owners)
+                {
+                    if (entry.Value.GivenBack.Contains(window))
+                    {
+                        continue;
+                    }
 
-                return GivenBack.TryGetValue(owner, out dialogs) && !dialogs.Contains(dialog);
+                    if ((entry.Key == owner && isDialog) || (caption != null && entry.Value.Captions.Contains(caption)))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
             }
+        }
+
+        private sealed class Answering
+        {
+            internal Answering(IEnumerable<string> captions)
+            {
+                Captions = new HashSet<string>(captions, StringComparer.Ordinal);
+            }
+
+            internal HashSet<string> Captions { get; }
+
+            internal HashSet<IntPtr> GivenBack { get; } = new HashSet<IntPtr>();
         }
     }
 }

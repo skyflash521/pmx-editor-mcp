@@ -132,12 +132,33 @@ namespace PmxEditorMcp.Tests
                 using (Screen screen = new Screen())
                 {
                     int pressed = 0;
-                    screen.Pose.Click += (sender, e) => pressed++;
+                    screen.Normalize.Click += (sender, e) => pressed++;
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
 
-                    Value(Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SetupCurrentPose"));
+                    Value(Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SaveNormalize"));
 
                     Assert.Equal(1, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void AnItemThatHasItsOwnToolIsRefusedAndTheToolIsNamed()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    int pressed = 0;
+                    screen.Apply.Click += (sender, e) => pressed++;
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> refused =
+                        Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SetupCurrentPose");
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.Contains(MotionApplyCurrentPose.ToolName, Said(refused));
+                    Assert.Equal(0, pressed);
                 }
             });
         }
@@ -168,7 +189,7 @@ namespace PmxEditorMcp.Tests
                 using (Screen screen = new Screen())
                 {
                     IDictionary<string, object> refused =
-                        Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SetupCurrentPose");
+                        Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SaveNormalize");
 
                     Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
                     Assert.Contains(UiOpenWindow.ToolName, Said(refused));
@@ -358,7 +379,7 @@ namespace PmxEditorMcp.Tests
                 Item.Click += (sender, e) =>
                 {
                     Transform = Shown("TransformView", "TransformView");
-                    Transform.Controls.Add(Strip(Menu("MenuItem_File", Pose)));
+                    Transform.Controls.Add(Strip(Menu("MenuItem_File", Normalize, Apply)));
                     SplitContainer split = new SplitContainer { Name = "splitContainer1" };
                     MenuStrip ext = new MenuStrip { Name = "extMenuStrip1" };
                     ext.Items.Add(Menu("MenuItem_Init", Initialize));
@@ -366,7 +387,8 @@ namespace PmxEditorMcp.Tests
                     Transform.Controls.Add(split);
                 };
                 View.Controls.Add(Strip(Menu("MenuItem_View", Item)));
-                Pose = new ToolStripMenuItem("現在の変形状態でモデル形状を更新(&U)") { Name = "MenuItem_SetupCurrentPose" };
+                Normalize = new ToolStripMenuItem("保存／更新時などの頂点モーフ正規化(&N)") { Name = "MenuItem_SaveNormalize" };
+                Apply = new ToolStripMenuItem("現在の変形状態でモデル形状を更新(&U)") { Name = "MenuItem_SetupCurrentPose" };
                 Initialize = new ToolStripMenuItem("全て初期化(&Q)") { Name = "MenuItem_Initialize" };
             }
 
@@ -380,7 +402,9 @@ namespace PmxEditorMcp.Tests
 
             internal ToolStripMenuItem Save { get; }
 
-            internal ToolStripMenuItem Pose { get; }
+            internal ToolStripMenuItem Normalize { get; }
+
+            internal ToolStripMenuItem Apply { get; }
 
             internal ToolStripMenuItem Initialize { get; }
 
@@ -410,10 +434,10 @@ namespace PmxEditorMcp.Tests
                 return strip;
             }
 
-            private static ToolStripMenuItem Menu(string name, ToolStripMenuItem item)
+            private static ToolStripMenuItem Menu(string name, params ToolStripMenuItem[] items)
             {
                 ToolStripMenuItem menu = new ToolStripMenuItem(name) { Name = name };
-                menu.DropDownItems.Add(item);
+                menu.DropDownItems.AddRange(items);
 
                 return menu;
             }

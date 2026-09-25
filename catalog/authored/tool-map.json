@@ -1,6 +1,18 @@
 {
   "toolSetups": [
     {
+      "tool": "motion_apply_current_pose",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "editor_open_window",
+          "args": {
+            "window": "PmxViewForm.TransformView"
+          }
+        }
+      ]
+    },
+    {
       "tool": "motion_get_element_vme_group",
       "setup": [
         {

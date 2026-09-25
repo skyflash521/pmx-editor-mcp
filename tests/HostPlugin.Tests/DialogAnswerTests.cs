@@ -8,7 +8,7 @@ using Xunit;
 namespace PmxEditorMcp.Tests
 {
     [Collection(ModalWindowCollection.Name)]
-    public sealed class SaveDialogAnswerTests
+    public sealed class DialogAnswerTests
     {
         [Fact]
         public void ADialogClosedJustBeforeStopCountsAsAnswered()
@@ -28,8 +28,12 @@ namespace PmxEditorMcp.Tests
                     })
                     {
                         owner.Show();
-                        SaveDialogAnswer answer = SaveDialogAnswer.Start(
-                            owner.Handle, written, TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(1500));
+                        DialogAnswer answer = DialogAnswer.Start(
+                            owner.Handle,
+                            AnsweredDialog.Save(written),
+                            new string[0],
+                            TimeSpan.FromSeconds(10),
+                            TimeSpan.FromMilliseconds(1500));
                         using (SaveFileDialog dialog = new SaveFileDialog())
                         {
                             dialog.ShowDialog(owner);

@@ -12,6 +12,12 @@ namespace PmxEditorMcp
 
         public const string PathName = "path";
 
+        private static readonly Dictionary<string, string> OwnToolsByWindowAndPath = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "PmxViewForm.TransformView|menuStrip1/MenuItem_File/MenuItem_SetupCurrentPose", MotionApplyCurrentPose.ToolName },
+            { "PmxViewForm.TransformView|menuStrip1/MenuItem_File/MenuItem_SaveModel", MotionSaveTransformedPmxFile.ToolName },
+        };
+
         /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
         {
@@ -71,6 +77,14 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(
                     ToolEnvelope.InvalidArgument,
                     "押すと何かが起きるメニュー項目かボタンではない: " + string.Join("/", path));
+            }
+
+            string own;
+            if (OwnToolsByWindowAndPath.TryGetValue(named + "|" + string.Join("/", path), out own))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "この項目は押さない: " + string.Join("/", path) + "。" + own + " で行う。");
             }
 
             string danger = Danger(UiStructureCatalog.Text(node, UiStructureCatalog.DangerName), string.Join("/", path));

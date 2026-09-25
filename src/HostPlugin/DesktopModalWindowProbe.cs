@@ -38,6 +38,11 @@ namespace PmxEditorMcp
             return ModalWindows.Describe(Windows());
         }
 
+        internal string Caption(IntPtr window)
+        {
+            return Text(window);
+        }
+
         internal string Said(IntPtr window)
         {
             return ModalWindows.Describe(new[] { new WindowNote(Text(window), Body(window), true, true) })
@@ -66,12 +71,16 @@ namespace PmxEditorMcp
                         // 文字列の取得は同じプロセスの窓へ要求を送るので、送る先を、持ち主を
                         // 使用不可にしている可視の窓だけに絞る。
                         IntPtr owner = GetWindow(window, GetWindowOwner);
-                        bool holdsOwner = owner != IntPtr.Zero
-                            && !IsWindowEnabled(owner)
-                            && !(AnsweringDialogs.Hides(owner, window) && IsDialog(window));
+                        bool holdsOwner = owner != IntPtr.Zero && !IsWindowEnabled(owner);
                         bool visible = IsWindowVisible(window);
+                        string caption = visible && holdsOwner ? Text(window) : null;
+                        if (caption != null && AnsweringDialogs.Hides(owner, window, caption, IsDialog(window)))
+                        {
+                            holdsOwner = false;
+                        }
+
                         notes.Add(visible && holdsOwner
-                            ? new WindowNote(Text(window), Body(window), true, true)
+                            ? new WindowNote(caption, Body(window), true, true)
                             : new WindowNote(string.Empty, string.Empty, visible, holdsOwner));
                     }
                 }
