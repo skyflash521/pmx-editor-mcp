@@ -247,12 +247,13 @@ namespace PmxEditorMcp
 
             if (failure != null)
             {
-                return ComposedEditResult.Refuse(ToolEnvelope.OperationFailed, failure);
+                return ComposedEditResult.Refuse(ToolEnvelope.OperationFailed, UiAnswering.Told(failure, agreed));
             }
 
             if (!written)
             {
-                return ComposedEditResult.Refuse(ToolEnvelope.OperationFailed, "エディタがファイルを書かなかった。");
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.OperationFailed, UiAnswering.Told("エディタがファイルを書かなかった。", agreed));
             }
 
             return ComposedEditResult.Complete(new Dictionary<string, object>(StringComparer.Ordinal)

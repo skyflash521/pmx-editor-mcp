@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace PmxEditorMcp
@@ -13,6 +14,8 @@ namespace PmxEditorMcp
         public const string AlreadyOpenName = "alreadyOpen";
 
         public const string TitleName = "title";
+
+        public const string MessagesName = "messages";
 
         /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
@@ -135,7 +138,7 @@ namespace PmxEditorMcp
 
             if (title != null)
             {
-                return Opened(title, true);
+                return Opened(title, true, new string[0]);
             }
 
             if (hops == null)
@@ -145,34 +148,66 @@ namespace PmxEditorMcp
                     "いま開いているウィンドウから、そのウィンドウだけを開くメニュー項目かボタンを辿って開ける道が無い: " + named);
             }
 
+            List<string> notices = new List<string>();
             foreach (KeyValuePair<string, IList<string>> hop in hops)
             {
+                string waiting = null;
                 string refused = null;
                 Exception failure = null;
+                UiAnswering answered = null;
                 invocation = context.Ui.TryInvokeOnUi(() =>
                 {
-                    try
+                    waiting = UiAnswering.Waiting();
+                    if (waiting != null)
                     {
-                        refused = UiLive.Press(UiLive.Shown(forms(), hop.Key), hop.Key, hop.Value);
+                        return;
                     }
-                    catch (Exception exception)
+
+                    answered = UiAnswering.Around(() =>
                     {
-                        failure = exception;
-                    }
+                        try
+                        {
+                            refused = UiLive.Press(UiLive.Shown(forms(), hop.Key), hop.Key, hop.Value);
+                        }
+                        catch (Exception exception)
+                        {
+                            failure = exception;
+                        }
+                    });
                 });
                 if (!invocation.DidRun)
                 {
                     return ToolFailure.Unavailable(invocation);
                 }
 
+                if (waiting != null)
+                {
+                    return ToolEnvelope.Failure(
+                        ToolEnvelope.NotApplicable,
+                        UiAnswering.Told(
+                            "エディタが人の応答を待つ表示を出しているので開かない: " + waiting + "。表示が消えたかは "
+                                + EditorPrompt.ToolName + " で確かめる。",
+                            notices));
+                }
+
                 if (failure != null)
                 {
-                    return ToolEnvelope.Failure(ToolEnvelope.OperationFailed, failure.Message);
+                    return ToolEnvelope.Failure(
+                        ToolEnvelope.OperationFailed,
+                        UiAnswering.Told(answered.Thrown(failure), notices));
                 }
+
+                notices.AddRange(answered.Notices);
 
                 if (refused != null)
                 {
-                    return ToolEnvelope.Failure(ToolEnvelope.NotApplicable, refused);
+                    return ToolEnvelope.Failure(ToolEnvelope.NotApplicable, UiAnswering.Told(refused, notices));
+                }
+
+                if (answered.Failure != null)
+                {
+                    return ToolEnvelope.Failure(
+                        ToolEnvelope.OperationFailed, UiAnswering.Told(answered.Failure, notices));
                 }
             }
 
@@ -189,18 +224,20 @@ namespace PmxEditorMcp
             if (title == null)
             {
                 return ToolEnvelope.Failure(
-                    ToolEnvelope.OperationFailed, "押したが、そのウィンドウは開かなかった: " + named);
+                    ToolEnvelope.OperationFailed,
+                    UiAnswering.Told("押したが、そのウィンドウは開かなかった: " + named, notices));
             }
 
-            return Opened(title, false);
+            return Opened(title, false, notices);
         }
 
-        private static IDictionary<string, object> Opened(string title, bool already)
+        private static IDictionary<string, object> Opened(string title, bool already, IList<string> notices)
         {
             return ToolEnvelope.Success(new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { TitleName, title },
                 { AlreadyOpenName, already },
+                { MessagesName, notices.ToArray() },
             });
         }
     }

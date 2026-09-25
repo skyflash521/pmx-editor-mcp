@@ -22,6 +22,14 @@
             "name": "alreadyClosed",
             "origin": "hostOutput",
             "shape": "boolean"
+          },
+          {
+            "name": "messages",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "text"
+            }
           }
         ]
       }
@@ -362,6 +370,14 @@
             "name": "alreadyOpen",
             "origin": "hostOutput",
             "shape": "boolean"
+          },
+          {
+            "name": "messages",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "text"
+            }
           }
         ]
       }
@@ -392,7 +408,16 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "members": []
+        "members": [
+          {
+            "name": "messages",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "text"
+            }
+          }
+        ]
       }
     },
     {

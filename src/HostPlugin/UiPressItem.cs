@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace PmxEditorMcp
@@ -11,6 +12,8 @@ namespace PmxEditorMcp
         public const string WindowName = "window";
 
         public const string PathName = "path";
+
+        public const string MessagesName = "messages";
 
         private static readonly Dictionary<string, string> OwnToolGuidesByWindowAndPath =
             new Dictionary<string, string>(StringComparer.Ordinal)
@@ -110,7 +113,9 @@ namespace PmxEditorMcp
 
             bool shown = false;
             bool modal = false;
+            string waiting = null;
             string refused = null;
+            UiAnswering answered = null;
             Exception failure = null;
             UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
             {
@@ -127,14 +132,23 @@ namespace PmxEditorMcp
                     return;
                 }
 
-                try
+                waiting = UiAnswering.Waiting();
+                if (waiting != null)
                 {
-                    refused = UiLive.Press(form, named, path);
+                    return;
                 }
-                catch (Exception exception)
+
+                answered = UiAnswering.Around(() =>
                 {
-                    failure = exception;
-                }
+                    try
+                    {
+                        refused = UiLive.Press(form, named, path);
+                    }
+                    catch (Exception exception)
+                    {
+                        failure = exception;
+                    }
+                });
             });
             if (!invocation.DidRun)
             {
@@ -155,9 +169,17 @@ namespace PmxEditorMcp
                     "そのウィンドウは人の応答を待つ表示で、答えるのは人なので押さない: " + named);
             }
 
+            if (waiting != null)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "エディタが人の応答を待つ表示を出しているので押さない: " + waiting + "。表示が消えたかは "
+                        + EditorPrompt.ToolName + " で確かめる。");
+            }
+
             if (failure != null)
             {
-                return ToolEnvelope.Failure(ToolEnvelope.OperationFailed, failure.Message);
+                return ToolEnvelope.Failure(ToolEnvelope.OperationFailed, answered.Thrown(failure));
             }
 
             if (refused != null)
@@ -165,7 +187,16 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(ToolEnvelope.NotApplicable, refused);
             }
 
-            return ToolEnvelope.Success(new Dictionary<string, object>(StringComparer.Ordinal));
+            if (answered.Failure != null)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.OperationFailed, UiAnswering.Told(answered.Failure, answered.Notices));
+            }
+
+            return ToolEnvelope.Success(new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { MessagesName, answered.Notices.ToArray() },
+            });
         }
 
         /// <summary>台帳の危険の区分を、断る事情の文へ直す。危険でなければ null。</summary>

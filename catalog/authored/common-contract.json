@@ -297,7 +297,7 @@
     {
       "tool": "editor_close_window",
       "branching": false,
-      "duty": "エディタのウィンドウを閉じる。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。閉じていれば何もせず alreadyClosed に真を返し、開いていれば閉じて alreadyClosed に偽を返す。主画面 PmxEditor.PmxForm(Pmx編集)は、閉じるとエディタが終了するので閉じずに TOOL_NOT_APPLICABLE を返す。エディタを終了するなら session_close を使う。閉じると editor_open_window で開き直せないウィンドウも閉じない。閉じるときにエディタが確認の表示を出したら TOOL_PROMPT_SHOWN を返す。"
+      "duty": "エディタのウィンドウを閉じる。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。閉じていれば何もせず alreadyClosed に真を返し、開いていれば閉じて alreadyClosed に偽を返す。主画面 PmxEditor.PmxForm(Pmx編集)は、閉じるとエディタが終了するので閉じずに TOOL_NOT_APPLICABLE を返す。エディタを終了するなら session_close を使う。閉じると editor_open_window で開き直せないウィンドウも閉じない。閉じるときにエディタが出した表示は、editor_press_item と同じく呼び出しの中で片付け、ボタン1つで閉じた知らせの文面を messages に返す。確認をいいえで閉じたときは、ウィンドウは開いたままで TOOL_OPERATION_FAILED を返す。エディタがすでに人の応答を待つ表示を出しているときは、閉じずに TOOL_NOT_APPLICABLE を返す。"
     },
     {
       "tool": "editor_find_operation",
@@ -317,12 +317,12 @@
     {
       "tool": "editor_open_window",
       "branching": false,
-      "duty": "エディタのウィンドウを開く。TransformView のように、ほかのツールが相手にするウィンドウが閉じているときに使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。いま開いているウィンドウから、押すとそのウィンドウだけを開くメニュー項目かボタンを辿り、人が押すのと同じ順に押して開く。途中のウィンドウが閉じていればそれも開く。右クリックメニューの中の項目は辿らない。開いていれば何もせず alreadyOpen に真を返し、開いたら alreadyOpen に偽を返す。title は開いているウィンドウの題である。辿れる道が無いとき、途中の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。開くときにエディタが確認の表示を出したら TOOL_PROMPT_SHOWN を返す。"
+      "duty": "エディタのウィンドウを開く。TransformView のように、ほかのツールが相手にするウィンドウが閉じているときに使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。いま開いているウィンドウから、押すとそのウィンドウだけを開くメニュー項目かボタンを辿り、人が押すのと同じ順に押して開く。途中のウィンドウが閉じていればそれも開く。右クリックメニューの中の項目は辿らない。開いていれば何もせず alreadyOpen に真を返し、開いたら alreadyOpen に偽を返す。title は開いているウィンドウの題である。辿れる道が無いとき、途中の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。開くときにエディタが出した表示は、editor_press_item と同じく呼び出しの中で片付け、ボタン1つで閉じた知らせの文面を messages に返す。エディタがすでに人の応答を待つ表示を出しているときは、開かずに TOOL_NOT_APPLICABLE を返す。"
     },
     {
       "tool": "editor_press_item",
       "branching": false,
-      "duty": "開いているウィンドウの中のメニュー項目かボタンを1つ、人が押すのと同じように押す。ほかのツールに無い、そのウィンドウでしかできない操作に使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。path はウィンドウの根から押す部品までの name の並びで、editor_get_screen_structure の node と editor_find_operation の path で分かる。押せるのは子を持たないメニュー項目とボタンで、右クリックメニューの中の項目と、人の応答を待つ表示の中の部品は押さない。ウィンドウが閉じているときは TOOL_NOT_APPLICABLE を返すので、editor_open_window で開いてから呼ぶ。部品がいまは押せないとき、エディタを終了させる部品・ファイルへ書き込む部品・編集中のモデルを空にする部品のときも、押さずに TOOL_NOT_APPLICABLE を返す。どの部品がそれに当たるかは editor_get_screen_structure の node の danger で分かる。その部品の働きを受け持つツールがあれば、断りの文にそのツールの名前が入る。押したあと、エディタが確認や入力の表示を出したら TOOL_PROMPT_SHOWN を返す。成功したときは何も返さない。"
+      "duty": "開いているウィンドウの中のメニュー項目かボタンを1つ、人が押すのと同じように押す。ほかのツールに無い、そのウィンドウでしかできない操作に使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。path はウィンドウの根から押す部品までの name の並びで、editor_get_screen_structure の node と editor_find_operation の path で分かる。押せるのは子を持たないメニュー項目とボタンで、右クリックメニューの中の項目と、人の応答を待つ表示の中の部品は押さない。ウィンドウが閉じているときは TOOL_NOT_APPLICABLE を返すので、editor_open_window で開いてから呼ぶ。部品がいまは押せないとき、エディタを終了させる部品・ファイルへ書き込む部品・編集中のモデルを空にする部品のときも、押さずに TOOL_NOT_APPLICABLE を返す。どの部品がそれに当たるかは editor_get_screen_structure の node の danger で分かる。その部品の働きを受け持つツールがあれば、断りの文にそのツールの名前が入る。押したあとエディタが出した表示は、呼び出しの中で片付けてから戻る。ボタンが1つだけでアイコンの無い知らせはそのボタンで閉じ、その文面を出た順に messages に返す。アイコンの付いた知らせ・確認・入力・そのほかの表示は、いいえか取り消しで閉じ、それまでに閉じた知らせの文面とあわせて TOOL_OPERATION_FAILED で返す。エディタがすでに人の応答を待つ表示を出しているときは、押さずに TOOL_NOT_APPLICABLE を返す。"
     },
     {
       "tool": "editor_press_saving_item",

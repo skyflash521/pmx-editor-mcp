@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace PmxEditorMcp
@@ -13,6 +14,8 @@ namespace PmxEditorMcp
         public const string AlreadyClosedName = "alreadyClosed";
 
         public const string ShutdownToolName = "session_close";
+
+        public const string MessagesName = "messages";
 
         /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
@@ -52,6 +55,8 @@ namespace PmxEditorMcp
             bool shown = false;
             bool reopenable = false;
             bool closed = false;
+            string waiting = null;
+            UiAnswering answered = null;
             Exception failure = null;
             UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
             {
@@ -69,15 +74,24 @@ namespace PmxEditorMcp
                     return;
                 }
 
-                try
+                waiting = UiAnswering.Waiting();
+                if (waiting != null)
                 {
-                    form.Close();
-                    closed = !form.Visible;
+                    return;
                 }
-                catch (Exception exception)
+
+                answered = UiAnswering.Around(() =>
                 {
-                    failure = exception;
-                }
+                    try
+                    {
+                        form.Close();
+                        closed = !form.Visible;
+                    }
+                    catch (Exception exception)
+                    {
+                        failure = exception;
+                    }
+                });
             });
             if (!invocation.DidRun)
             {
@@ -86,7 +100,7 @@ namespace PmxEditorMcp
 
             if (!shown)
             {
-                return Closed(true);
+                return Closed(true, new string[0]);
             }
 
             if (!reopenable)
@@ -96,25 +110,43 @@ namespace PmxEditorMcp
                     "閉じると " + UiOpenWindow.ToolName + " で開き直せないので、閉じない: " + named);
             }
 
+            if (waiting != null)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "エディタが人の応答を待つ表示を出しているので閉じない: " + waiting + "。表示が消えたかは "
+                        + EditorPrompt.ToolName + " で確かめる。");
+            }
+
             if (failure != null)
             {
-                return ToolEnvelope.Failure(ToolEnvelope.OperationFailed, failure.Message);
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.OperationFailed, answered.Thrown(failure));
+            }
+
+            if (answered.Failure != null)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.OperationFailed, UiAnswering.Told(answered.Failure, answered.Notices));
             }
 
             if (!closed)
             {
                 return ToolEnvelope.Failure(
-                    ToolEnvelope.OperationFailed, "閉じる処理をエディタが取りやめ、ウィンドウは開いたままである: " + named);
+                    ToolEnvelope.OperationFailed,
+                    UiAnswering.Told(
+                        "閉じる処理をエディタが取りやめ、ウィンドウは開いたままである: " + named, answered.Notices));
             }
 
-            return Closed(false);
+            return Closed(false, answered.Notices);
         }
 
-        private static IDictionary<string, object> Closed(bool already)
+        private static IDictionary<string, object> Closed(bool already, IList<string> notices)
         {
             return ToolEnvelope.Success(new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { AlreadyClosedName, already },
+                { MessagesName, notices.ToArray() },
             });
         }
     }

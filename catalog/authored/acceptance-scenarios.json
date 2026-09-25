@@ -2930,6 +2930,59 @@
         },
         {
           "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "menuStrip1",
+              "MenuItem_File",
+              "MenuItem_SaveNormalize"
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "menuStrip1",
+              "MenuItem_File",
+              "MenuItem_PushArchive"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "messages",
+                "equals": [
+                  "追加しました."
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "menuStrip1",
+              "MenuItem_File",
+              "MenuItem_SaveNormalize"
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "session_release_handle",
           "arguments": {
             "handles": [

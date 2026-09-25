@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using Xunit;
@@ -203,6 +204,231 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ANoticeTheItemShowsIsClosedWithOkAndReturned()
+        {
+            OnSta(() => WithLimit(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    List<DialogResult> answers = new List<DialogResult>();
+                    screen.Archive.Click += (sender, e) =>
+                        answers.Add(MessageBox.Show("追加しました.", "確認", MessageBoxButtons.OK));
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> value = Value(Press(screen, Transform, ArchivePath));
+
+                    Assert.Equal(new[] { DialogResult.OK }, answers);
+                    Assert.Equal(new object[] { "追加しました." }, (object[])value[UiPressItem.MessagesName]);
+                }
+            }));
+        }
+
+        [Fact]
+        public void AQuestionTheItemAsksIsAnsweredNoAndReturnedAsAFailure()
+        {
+            OnSta(() => WithLimit(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    List<DialogResult> answers = new List<DialogResult>();
+                    screen.Archive.Click += (sender, e) => answers.Add(
+                        MessageBox.Show("追加しますか？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question));
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> refused = Press(screen, Transform, ArchivePath);
+
+                    Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
+                    Assert.Contains("追加しますか？", Said(refused));
+                    Assert.Equal(new[] { DialogResult.No }, answers);
+                }
+            }));
+        }
+
+        [Fact]
+        public void AnErrorNoticeTheItemShowsIsClosedAndReturnedAsAFailure()
+        {
+            OnSta(() => WithLimit(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    List<DialogResult> answers = new List<DialogResult>();
+                    screen.Archive.Click += (sender, e) => answers.Add(MessageBox.Show(
+                        "失敗しました.", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Exclamation));
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> refused = Press(screen, Transform, ArchivePath);
+
+                    Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
+                    Assert.Contains("失敗しました.", Said(refused));
+                    Assert.Single(answers);
+                }
+            }));
+        }
+
+        [Fact]
+        public void ANoticeClosedBeforeAFailureIsReturnedWithIt()
+        {
+            OnSta(() => WithLimit(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    screen.Archive.Click += (sender, e) =>
+                    {
+                        MessageBox.Show("変更しました.", "結果", MessageBoxButtons.OK);
+                        MessageBox.Show("続けますか？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    };
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> refused = Press(screen, Transform, ArchivePath);
+
+                    Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
+                    Assert.Contains("変更しました.", Said(refused));
+                    Assert.Contains("続けますか？", Said(refused));
+                }
+            }));
+        }
+
+        [Fact]
+        public void AQuestionShownWhileClosingIsAnsweredNoAndReturnedAsAFailure()
+        {
+            OnSta(() => WithLimit(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    List<DialogResult> answers = new List<DialogResult>();
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    screen.Transform.FormClosing += (sender, e) =>
+                    {
+                        DialogResult answer = MessageBox.Show(
+                            "閉じますか？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        answers.Add(answer);
+                        e.Cancel = answer != DialogResult.Yes;
+                    };
+
+                    IDictionary<string, object> refused = Call(screen, UiCloseWindow.ToolName, Transform);
+
+                    Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
+                    Assert.Contains("閉じますか？", Said(refused));
+                    Assert.Equal(new[] { DialogResult.No }, answers);
+                    Assert.True(screen.Transform.Visible, "閉じた。");
+                }
+            }));
+        }
+
+        [Fact]
+        public void ANoticeShownWhileOpeningIsClosedWithOkAndReturned()
+        {
+            OnSta(() => WithLimit(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    List<DialogResult> answers = new List<DialogResult>();
+                    screen.Item.Click += (sender, e) =>
+                        answers.Add(MessageBox.Show("開きました.", "結果", MessageBoxButtons.OK));
+
+                    IDictionary<string, object> opened = Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    Assert.Equal(new[] { DialogResult.OK }, answers);
+                    Assert.Equal(new object[] { "開きました." }, (object[])opened[UiOpenWindow.MessagesName]);
+                }
+            }));
+        }
+
+        [Fact]
+        public void AWindowIsNotOpenedWhileTheEditorWaitsForAnAnswer()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                using (Form asking = Asking())
+                {
+                    asking.Show(screen.Main);
+                    EnableWindow(screen.Main.Handle, false);
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(Call(screen, UiOpenWindow.ToolName, Transform)));
+                    Assert.Null(screen.Transform);
+                }
+            });
+        }
+
+        [Fact]
+        public void AWindowIsNotClosedWhileTheEditorWaitsForAnAnswer()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                using (Form asking = Asking())
+                {
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    asking.Show(screen.Main);
+                    EnableWindow(screen.Main.Handle, false);
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(Call(screen, UiCloseWindow.ToolName, Transform)));
+                    Assert.True(screen.Transform.Visible, "閉じた。");
+                }
+            });
+        }
+
+        [Fact]
+        public void AFormTheItemOpensModallyIsClosedAndReturnedAsAFailure()
+        {
+            OnSta(() => WithLimit(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    List<DialogResult> answers = new List<DialogResult>();
+                    screen.Archive.Click += (sender, e) =>
+                    {
+                        using (Form asking = new Form
+                        {
+                            Text = "頂点モーフ再計算用閾値",
+                            ShowInTaskbar = false,
+                            StartPosition = FormStartPosition.Manual,
+                            Location = new Point(-32000, -32000),
+                        })
+                        {
+                            answers.Add(asking.ShowDialog(screen.Transform));
+                        }
+                    };
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> refused = Press(screen, Transform, ArchivePath);
+
+                    Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
+                    Assert.Contains("頂点モーフ再計算用閾値", Said(refused));
+                    Assert.Equal(new[] { DialogResult.Cancel }, answers);
+                    Assert.True(screen.Transform.Visible, "押した先のウィンドウまで閉じた。");
+                }
+            }));
+        }
+
+        [Fact]
+        public void AnItemIsNotPressedWhileTheEditorWaitsForAnAnswer()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                using (Form asking = new Form
+                {
+                    Text = "確認",
+                    ShowInTaskbar = false,
+                    StartPosition = FormStartPosition.Manual,
+                    Location = new Point(-32000, -32000),
+                })
+                {
+                    int pressed = 0;
+                    screen.Archive.Click += (sender, e) => pressed++;
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    asking.Show(screen.Main);
+                    EnableWindow(screen.Main.Handle, false);
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(Press(screen, Transform, ArchivePath)));
+                    Assert.Equal(0, pressed);
+                }
+            });
+        }
+
+        [Fact]
         public void AnItemInsideAContainerMissingFromTheCatalogIsPressed()
         {
             OnSta(() =>
@@ -317,6 +543,36 @@ namespace PmxEditorMcp.Tests
             });
         }
 
+        private static Form Asking()
+        {
+            return new Form
+            {
+                Text = "確認",
+                ShowInTaskbar = false,
+                StartPosition = FormStartPosition.Manual,
+                Location = new Point(-32000, -32000),
+            };
+        }
+
+        private static readonly string[] ArchivePath = { "menuStrip1", "MenuItem_File", "MenuItem_PushArchive" };
+
+        private static void WithLimit(Action action)
+        {
+            TimeSpan held = DialogAnswer.Limit;
+            DialogAnswer.Limit = TimeSpan.FromSeconds(1);
+            try
+            {
+                action();
+            }
+            finally
+            {
+                DialogAnswer.Limit = held;
+            }
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool EnableWindow(IntPtr window, bool enable);
+
         private static IDictionary<string, object> Press(Screen screen, string window, params string[] path)
         {
             return Call(
@@ -396,8 +652,9 @@ namespace PmxEditorMcp.Tests
                 }
             });
             thread.SetApartmentState(ApartmentState.STA);
+            thread.IsBackground = true;
             thread.Start();
-            thread.Join();
+            Assert.True(thread.Join(TimeSpan.FromSeconds(30)), "表示が閉じられず、STAのスレッドが終わらなかった。");
             if (caught != null)
             {
                 throw new InvalidOperationException("STAのスレッドで落ちた。", caught);
@@ -418,7 +675,7 @@ namespace PmxEditorMcp.Tests
                 Item.Click += (sender, e) =>
                 {
                     Transform = Shown("TransformView", "TransformView");
-                    Transform.Controls.Add(Strip(Menu("MenuItem_File", Normalize, Apply)));
+                    Transform.Controls.Add(Strip(Menu("MenuItem_File", Normalize, Apply, Archive)));
                     SplitContainer split = new SplitContainer { Name = "splitContainer1" };
                     MenuStrip ext = new MenuStrip { Name = "extMenuStrip1" };
                     ext.Items.Add(Menu("MenuItem_Init", Initialize));
@@ -429,6 +686,7 @@ namespace PmxEditorMcp.Tests
                 Normalize = new ToolStripMenuItem("保存／更新時などの頂点モーフ正規化(&N)") { Name = "MenuItem_SaveNormalize" };
                 Apply = new ToolStripMenuItem("現在の変形状態でモデル形状を更新(&U)") { Name = "MenuItem_SetupCurrentPose" };
                 Initialize = new ToolStripMenuItem("全て初期化(&Q)") { Name = "MenuItem_Initialize" };
+                Archive = new ToolStripMenuItem("現在の形状をアーカイブ追加(&A)") { Name = "MenuItem_PushArchive" };
             }
 
             internal Form Main { get; }
@@ -446,6 +704,8 @@ namespace PmxEditorMcp.Tests
             internal ToolStripMenuItem Apply { get; }
 
             internal ToolStripMenuItem Initialize { get; }
+
+            internal ToolStripMenuItem Archive { get; }
 
             internal void Add(Form form)
             {
