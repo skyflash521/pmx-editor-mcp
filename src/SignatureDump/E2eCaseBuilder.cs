@@ -56,6 +56,8 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>いま開いているモデルを空へ戻すツールの名前。共通契約が名前を定める。</summary>
         private const string InitializeToolName = "session_initialize_pmx";
 
+        private const string OpenWindowToolName = "editor_open_window";
+
         /// <summary>
         /// いま開いているモデルをPMDで書き出すツールの名前。共通契約が名前を定める。読み込める
         /// モデルを作れるのはエディタだけなので、読み込む中身が要るツールはこれが書いたものを読む。
@@ -346,7 +348,7 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     held = trailing;
                 }
-                held.AddRange(Cases(
+                List<E2eCase> group = Cases(
                     row,
                     schema,
                     schemas,
@@ -372,7 +374,11 @@ namespace PmxEditorMcp.SignatureDump
                     parents,
                     stepSetups,
                     wiring,
-                    fixedLeading));
+                    fixedLeading).ToList();
+                held.AddRange(
+                    group.Any(c => string.Equals(c.Tool, OpenWindowToolName, StringComparison.Ordinal))
+                        ? group.Select(c => c.RunAfterViews())
+                        : group);
                 cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
                 cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
                 cases.AddRange(PositionCases(

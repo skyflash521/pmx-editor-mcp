@@ -83,6 +83,11 @@ namespace PmxEditorMcp.SignatureDump
                 written.AddText("differs", one.Differs);
             }
 
+            if (one.AfterViews)
+            {
+                written.AddBoolean("afterViews", true);
+            }
+
             return written.Text;
         }
 

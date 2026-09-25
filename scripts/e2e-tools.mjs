@@ -408,7 +408,7 @@ const OPENED_VIEWS = ["transform", "sub"];
 const VIEW_SESSION = "viewSession";
 
 function needsViews(one) {
-    return one.expect === "viewImage" || one.editKind === VIEW_SESSION;
+    return one.expect === "viewImage" || one.editKind === VIEW_SESSION || one.afterViews === true;
 }
 
 async function editorOf(given) {

@@ -18,6 +18,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>受け手へ至る列の2段目。</summary>
         private const string SecondStep = "motion_camera_vme_object";
 
+        private const string OpenWindow = "editor_open_window";
+
         private const string Angle = "angle";
 
         private const string LoopCount = "loopCount";
@@ -151,6 +153,57 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.True(
                 cases.IndexOf(preparing) < cases.IndexOf(back),
                 "名前で置いた段取りが、読み返しより後に来ている。");
+        }
+
+        [Fact]
+        public void ACaseGroupThatOpensAWindowRunsAfterTheViews()
+        {
+            IList<E2eCase> cases = Built(
+                new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal)
+                {
+                    {
+                        Reading,
+                        new[]
+                        {
+                            SetupOperation.CallTool(
+                                OpenWindow,
+                                new Dictionary<string, object>(StringComparer.Ordinal)
+                                {
+                                    { "window", "PmxViewForm.TransformView" },
+                                },
+                                null),
+                        }
+                    },
+                });
+            IList<E2eCase> opening = cases
+                .Where(c => string.Equals(c.Tool, OpenWindow, StringComparison.Ordinal))
+                .ToList();
+            IList<E2eCase> steps = cases
+                .Where(c => string.Equals(c.Purpose, "呼び出しの相手を1つ作れること", StringComparison.Ordinal))
+                .ToList();
+            IList<E2eCase> backs = cases
+                .Where(c => string.Equals(c.Purpose, ReadBack, StringComparison.Ordinal))
+                .ToList();
+            IList<E2eCase> others = cases
+                .Where(c => string.Equals(c.Tool, Reading, StringComparison.Ordinal)
+                    && !string.Equals(c.Purpose, ReadBack, StringComparison.Ordinal))
+                .ToList();
+
+            Assert.NotEmpty(opening);
+            Assert.NotEmpty(steps);
+            Assert.NotEmpty(backs);
+            Assert.NotEmpty(others);
+            Assert.All(opening, c => Assert.True(c.AfterViews, "ウィンドウを開く段取りが先に回っている。"));
+            Assert.All(steps, c => Assert.True(c.AfterViews, "段取りより前の道の段が先に回っている。"));
+            Assert.True(Updated(cases).AfterViews, "段取りより前の呼び出しが先に回っている。");
+            Assert.All(backs, c => Assert.True(c.AfterViews, "段取りに続く読み返しが先に回っている。"));
+            Assert.All(others, c => Assert.False(c.AfterViews, "段取りを含まない組が後へ回っている。"));
+        }
+
+        [Fact]
+        public void ACaseGroupThatOpensNoWindowStaysBeforeTheViews()
+        {
+            Assert.All(Built(), c => Assert.False(c.AfterViews, c.Tool + " が後へ回っている。"));
         }
 
         /// <summary>その検査が書き換えるツールへ渡した値の組。</summary>

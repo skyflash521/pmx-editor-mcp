@@ -175,5 +175,15 @@ namespace PmxEditorMcp.SignatureDump
         /// 実機へ投げる綴りには出さない。実行器はどの宣言のために呼ぶのかを知らずに済む。
         /// </summary>
         public string Checks { get; }
+
+        public bool AfterViews { get; private set; }
+
+        public E2eCase RunAfterViews()
+        {
+            E2eCase moved = (E2eCase)MemberwiseClone();
+            moved.AfterViews = true;
+
+            return moved;
+        }
     }
 }

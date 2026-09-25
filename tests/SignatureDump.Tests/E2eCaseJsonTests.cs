@@ -30,6 +30,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
         }
 
+        [Fact]
+        public void OnlyACaseRunAfterTheViewsCarriesTheMark()
+        {
+            E2eCase plain = new E2eCase(
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                "motion_apply_current_pose",
+                "確かめること",
+                new Dictionary<string, object>(StringComparer.Ordinal),
+                E2eExpectation.Called,
+                null);
+
+            Assert.DoesNotContain("afterViews", E2eCaseJson.Compose(new[] { plain }));
+            Assert.Matches(
+                "\"afterViews\"\\s*:\\s*true",
+                E2eCaseJson.Compose(new[] { plain.RunAfterViews() }));
+        }
+
         /// <summary>その結末を綴った文字列。綴りを決めるのは書き手なので、書かせて読み取る。</summary>
         private static string Written(E2eExpectation expectation)
         {
