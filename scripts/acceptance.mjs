@@ -4,7 +4,8 @@
 // シナリオの中身はこの実行器が決めず、定義に書かれたものだけを読む。
 // 導入の前置は差し替え点で、経路ごとの前置スクリプトが受け持つ。
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -109,6 +110,137 @@ function invokeScript(script, args, timeoutMs) {
     }
 
     return { written: (done.stdout ?? "").trim(), unavailable: null };
+}
+
+const CONTROL_SERVER = path.join(
+    path.dirname(url.fileURLToPath(import.meta.url)), "control-server.ps1");
+
+/**
+ * run は1度に1つずつ呼ぶ。戻り値は invokeScript と同じ形で、上限を過ぎた操作は中継ごと終わらせ、
+ * 次の run で起こし直す。
+ */
+class ControlSession {
+    constructor(script) {
+        this.script = script;
+        this.token = crypto.randomUUID().replaceAll("-", "");
+        this.child = null;
+        this.waiter = null;
+        this.lines = [];
+        this.stderr = "";
+    }
+
+    start() {
+        const child = spawn(
+            "pwsh",
+            ["-NoProfile", "-File", CONTROL_SERVER, "-Target", this.script, "-Token", this.token],
+            { stdio: ["pipe", "pipe", "pipe"] });
+        child.stdout.setEncoding("utf8");
+        child.stderr.setEncoding("utf8");
+        let pending = "";
+        child.stdout.on("data", (chunk) => {
+            if (this.child !== child) {
+                return;
+            }
+
+            pending += chunk;
+            let at;
+            while ((at = pending.indexOf("\n")) >= 0) {
+                const line = pending.slice(0, at).replace(/\r$/, "");
+                pending = pending.slice(at + 1);
+                this.take(line);
+            }
+        });
+        child.stderr.on("data", (chunk) => {
+            if (this.child === child) {
+                this.stderr += chunk;
+            }
+        });
+        const ended = (reason) => {
+            if (this.child !== child) {
+                return;
+            }
+
+            this.child = null;
+            this.settle({
+                written: null,
+                unavailable: this.script + " の中継が終わりました: "
+                    + (this.stderr.trim() || reason),
+            });
+        };
+        child.on("error", (error) => ended("pwsh を起こせません: " + error.message));
+        child.on("exit", (code) => ended("終了コード " + code));
+        child.stdin.on("error", (error) => ended("中継へ依頼を書けません: " + error.message));
+        this.child = child;
+        this.lines = [];
+    }
+
+    take(line) {
+        if (!line.startsWith(this.token + " ")) {
+            this.lines.push(line);
+
+            return;
+        }
+
+        const [, status, encoded] = line.split(" ");
+        const written = this.lines.join("\n").trim();
+        this.lines = [];
+        const said = Buffer.from(encoded ?? "", "base64").toString("utf8");
+        this.settle(status === "0"
+            ? { written, unavailable: null }
+            : { written: null, unavailable: this.script + " が失敗しました: " + said });
+    }
+
+    settle(done) {
+        const waiter = this.waiter;
+        this.waiter = null;
+        if (waiter !== null) {
+            waiter(done);
+        }
+    }
+
+    run(args, timeoutMs) {
+        if (this.child === null) {
+            this.start();
+        }
+
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                const child = this.child;
+                this.child = null;
+                this.settle({
+                    written: null,
+                    unavailable: this.script + " が " + timeoutMs + " ミリ秒以内に終わりませんでした。",
+                });
+                child?.kill();
+            }, timeoutMs);
+            this.waiter = (done) => {
+                clearTimeout(timer);
+                resolve(done);
+            };
+            this.stderr = "";
+            this.child.stdin.write(JSON.stringify(args) + "\n");
+        });
+    }
+
+    close() {
+        const child = this.child;
+        this.child = null;
+        if (child === null) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                child.kill();
+                resolve();
+            }, CONTROL_TIMEOUT_MS);
+            child.once("exit", () => {
+                clearTimeout(timer);
+                resolve();
+            });
+            child.stdin.end();
+        });
+    }
 }
 
 /**
@@ -519,8 +651,8 @@ function takeFromResponse(step, response) {
  * 動いているエディタのプロセスID。待受で数えない——ホストを停止させたエディタはパイプを
  * 持たないが、実行ファイルは掴んだまま残るので、閉じ残すと次の配置が失敗する。
  */
-function listEditors(control) {
-    const done = invokeScript(control, ["-Action", "editors"], CONTROL_TIMEOUT_MS);
+async function listEditors(control) {
+    const done = await control.run(["-Action", "editors"], CONTROL_TIMEOUT_MS);
     if (done.written === null) {
         throw new Error(done.unavailable);
     }
@@ -534,22 +666,23 @@ function listEditors(control) {
  * 後始末をして、成ったかどうかを返す。ここで投げさせると、走らせた結果の判定も終了区分も
  * 書き出す前に失われる。
  */
-function cleanUp(control) {
+async function cleanUp(control) {
     try {
-        closeEditors(control);
+        await closeEditors(control);
 
         return true;
     } catch (thrown) {
         console.error("後始末に失敗しました: " + thrown.message);
 
         return false;
+    } finally {
+        await control.close();
     }
 }
 
-function closeEditors(control) {
-    for (const editor of listEditors(control)) {
-        const done = invokeScript(
-            control,
+async function closeEditors(control) {
+    for (const editor of await listEditors(control)) {
+        const done = await control.run(
             ["-Action", "close", "-ProcessId", String(editor)],
             CONTROL_TIMEOUT_MS);
         if (done.written === null) {
@@ -559,9 +692,9 @@ function closeEditors(control) {
 }
 
 /** エディタとホストの操作を1つ行い、覚える値があれば返す。 */
-function operate(step, remembered, control) {
+async function operate(step, remembered, control) {
     if (step.action === "closeAll") {
-        closeEditors(control);
+        await closeEditors(control);
 
         return null;
     }
@@ -578,7 +711,7 @@ function operate(step, remembered, control) {
         args.push("-Path", path.join(os.tmpdir(), "pmx-editor-mcp-acceptance-view.png"));
     }
 
-    const done = invokeScript(control, args, CONTROL_TIMEOUT_MS);
+    const done = await control.run(args, CONTROL_TIMEOUT_MS);
     if (done.written === null) {
         throw new Error(done.unavailable);
     }
@@ -676,7 +809,7 @@ async function runStep(step, client, remembered, control) {
     }
 
     if (step.kind === "control") {
-        remember(step, operate(step, remembered, control), remembered);
+        remember(step, await operate(step, remembered, control), remembered);
 
         return null;
     }
@@ -732,12 +865,13 @@ if (prepared.server === null) {
 }
 
 const client = new McpClient(prepared.server);
+const control = new ControlSession(parsed.control);
 const remembered = new Map();
 let failed = null;
 try {
     await client.start();
     for (const scenario of scenarios) {
-        const ran = await runScenario(scenario, client, remembered, parsed.control);
+        const ran = await runScenario(scenario, client, remembered, control);
         const where = "シナリオ" + scenario.id + " " + scenario.title
             + "(段 " + ran.done + "/" + scenario.steps.length + ")";
         if (ran.reason !== null) {
@@ -751,12 +885,12 @@ try {
 } catch (thrown) {
     console.error("走らせられませんでした: " + thrown.message);
     await client.stop();
-    cleanUp(parsed.control);
+    await cleanUp(control);
     process.exit(EXIT_INPUT_UNAVAILABLE);
 }
 
 await client.stop();
-const cleaned = cleanUp(parsed.control);
+const cleaned = await cleanUp(control);
 
 console.log("");
 console.log(
