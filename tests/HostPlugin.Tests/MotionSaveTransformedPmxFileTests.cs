@@ -10,6 +10,7 @@ using Xunit;
 
 namespace PmxEditorMcp.Tests
 {
+    [Collection(ModalWindowCollection.Name)]
     public sealed class MotionSaveTransformedPmxFileTests
     {
         [Fact]
