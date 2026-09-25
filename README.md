@@ -11,7 +11,7 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 
 | 対象 | 置き場 |
 |---|---|
-| 仕様書 | [docs/specs/](docs/specs/) |
+| 製品の要求 | [docs/conventions/requirements.md](docs/conventions/requirements.md) |
 | 規約 | [docs/conventions/](docs/conventions/) |
 | 検査と生成が読むデータ | [catalog/](catalog/) |
 
@@ -21,11 +21,11 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 
 | 項目 | 条件 |
 |---|---|
-| .NET SDK | 10 以上。ブリッジが net10.0 を対象にする。net48 の参照アセンブリは `Microsoft.NETFramework.ReferenceAssemblies` で解決するので Developer Pack は要らない |
+| .NET SDK | 10 以上。net48 の参照アセンブリは `Microsoft.NETFramework.ReferenceAssemblies` で解決するので Developer Pack は要らない |
 | Node.js | 22以上。検査の実行に用いる |
 | PowerShell | `pwsh` 7.6以上。Windows標準の `powershell.exe` は別物で、スクリプトはこれでは動かない |
 | lychee | 文書のリンク検査に用いる。`winget install lycheeverse.lychee` |
-| OS | Windows x64。表示言語は日本語([操作役のスクリプト](scripts/host-control.ps1)がメニューの文言と確認ボタンの表示名を手がかりにする) |
+| OS | Windows x64。表示言語は日本語 |
 | PMXエディタ | 各自が導入したx64版の配布物で、0.2.7.3 以上(同梱の `PEPlugin.dll` は 0.0.8.9 以上)。操作の対象は `PmxEditor_x64.exe` |
 | セッション | ログオンした対話的なデスクトップ。実機に触る検査はエディタの画面を操作する |
 
@@ -61,7 +61,7 @@ pwsh -File scripts/deploy-host.ps1
 ```
 
 ブリッジをMCPサーバーとして登録する。登録は一度だけで、以後エディタを起動し直しても登録し直さない。
-パスは空白を含みうるので引用符で囲む。
+パスは引用符で囲む。
 
 ```
 pwsh -File scripts/publish-bridge.ps1 -Destination <発行先>

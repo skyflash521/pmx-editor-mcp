@@ -11,7 +11,7 @@
 
 | 対象 | 置き場 |
 |---|---|
-| 仕様書 | [docs/specs/](docs/specs/) |
+| 製品の要求 | [docs/conventions/requirements.md](docs/conventions/requirements.md) |
 | 規約 | [docs/conventions/](docs/conventions/) |
 | 検査と生成が読むデータ | [catalog/](catalog/) |
 | 人も読む情報 | [README.md](README.md) |
