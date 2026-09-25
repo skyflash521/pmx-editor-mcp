@@ -2635,6 +2635,93 @@
         },
         {
           "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "position": [
+                0,
+                1,
+                0
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "menuStrip1",
+              "MenuItem_File",
+              "MenuItem_SaveNormalize"
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "menuStrip1",
+              "MenuItem_File",
+              "MenuItem_SetupCurrentPose"
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "menuStrip1",
+              "MenuItem_File",
+              "MenuItem_SaveNormalize"
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  3,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "session_release_handle",
           "arguments": {
             "handles": [

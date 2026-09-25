@@ -4704,13 +4704,10 @@ namespace PmxEditorMcp
             return access.Parents.Count > 0 ? access.Parents[0].RowKey : access.RowKey;
         }
 
-        /// <summary>
-        /// その受け手の反映が使う映す段。Cプラグイン連携の橋渡しから反映する経路はエディタが自分で
-        /// リストとモデルを作り直してから描き直すので、ホストからは何もしない段を渡す。
-        /// </summary>
         private ScreenRefresh Refresh(ToolReceiver receiver)
         {
-            return receiver.Bridged ? ScreenRefresh.Idle : _refresh;
+            // Cプラグイン連携の橋渡しからの反映では、エディタが自分でリストとモデルを作り直してから描き直す。
+            return receiver.Bridged ? _refresh.WithoutViews() : _refresh;
         }
 
         /// <summary>その受け手の複製編集の流れ。橋渡しから得る受け手は、そちらの流れを使う。</summary>

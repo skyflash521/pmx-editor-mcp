@@ -25,6 +25,8 @@ namespace PmxEditorMcp
 
         private const string SubViewType = "PEPlugin.View.IPESubViewConnector";
 
+        private const string TransformViewType = "PEPlugin.View.IPETransformViewConnector";
+
         private const string SettingType = "PEPlugin.View.IPEViewSettingConnector";
 
         private const int PromptTextLimitMs = 500;
@@ -186,7 +188,9 @@ namespace PmxEditorMcp
                 SdkRelayTable relay = GeneratedSdkRelay.Create();
                 Dictionary<string, SdkReceiver> receivers = GeneratedSdkReceivers.Create();
                 ScreenRefresh refresh = new ScreenRefresh(
-                    () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType));
+                    () => Receiver(receivers, ViewType),
+                    () => Receiver(receivers, FormType),
+                    () => TransformViewSync.Refresh(Receiver(receivers, TransformViewType)));
                 PmxSession current = new PmxSession(
                     relay, receivers, _resident, GeneratedSdkFlows.Current,
                     GeneratedSdkFlows.Pmx, undo);

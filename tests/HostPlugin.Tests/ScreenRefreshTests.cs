@@ -241,6 +241,54 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, view.Repaints);
         }
 
+        [Fact]
+        public void RebuildingTheModelTellsThatTheModelChanged()
+        {
+            int changed = 0;
+            new ScreenRefresh(() => new FakePmxView(), () => new FakeFormConnector(), () => changed++)
+                .Apply(ScreenRefreshKind.Rebuilt);
+
+            Assert.Equal(1, changed);
+        }
+
+        [Fact]
+        public void RemakingOneKindTellsThatTheModelChanged()
+        {
+            int changed = 0;
+            new ScreenRefresh(() => new FakePmxView(), () => new FakeFormConnector(), () => changed++)
+                .ApplyReflected("PEPlugin.Pmx.IPXPmx.Bone()");
+
+            Assert.Equal(1, changed);
+        }
+
+        [Fact]
+        public void TheRefreshWithoutViewsTouchesNothingButStillTellsThatTheModelChanged()
+        {
+            int changed = 0;
+            FakePmxView view = new FakePmxView();
+            FakeFormConnector form = new FakeFormConnector();
+            ScreenRefresh bare = new ScreenRefresh(() => view, () => form, () => changed++).WithoutViews();
+
+            bare.Apply(ScreenRefreshKind.Rebuilt);
+            bare.ApplyReflected("PEPlugin.Pmx.IPXPmx.Bone()");
+
+            Assert.Equal(2, changed);
+            Assert.Equal(0, view.Redraws);
+            Assert.Equal(0, view.Repaints);
+            Assert.Empty(view.Remade);
+            Assert.Empty(form.Updated);
+        }
+
+        [Fact]
+        public void DrawingAgainDoesNotTellThatTheModelChanged()
+        {
+            int changed = 0;
+            new ScreenRefresh(() => new FakePmxView(), () => new FakeFormConnector(), () => changed++)
+                .Apply(ScreenRefreshKind.Drawn);
+
+            Assert.Equal(0, changed);
+        }
+
         private static ScreenRefresh Refresh(FakePmxView view, FakeFormConnector form)
         {
             return new ScreenRefresh(() => view, () => form);

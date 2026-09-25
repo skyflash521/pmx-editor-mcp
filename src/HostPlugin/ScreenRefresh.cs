@@ -111,14 +111,11 @@ namespace PmxEditorMcp
         /// </summary>
         public const string WeightKind = "weight";
 
-        /// <summary>
-        /// 何も映さない段。映し直しをエディタ自身が行う経路が、ホストからは何もしないために使う。
-        /// </summary>
-        public static readonly ScreenRefresh Idle = new ScreenRefresh(() => null, () => null);
-
         private readonly Func<object> _view;
 
         private readonly Func<object> _form;
+
+        private readonly Action _modelChanged = () => { };
 
         /// <summary>
         /// 3Dビューの口とリストの口を引く手立てを与えて生成する。引けないときは null を返してよく、
@@ -138,6 +135,19 @@ namespace PmxEditorMcp
 
             _view = view;
             _form = form;
+        }
+
+        /// <summary><paramref name="modelChanged"/> は、ビューのモデルを作り直した後に呼ばれる。</summary>
+        public ScreenRefresh(Func<object> view, Func<object> form, Action modelChanged)
+            : this(view, form)
+        {
+            _modelChanged = modelChanged ?? throw new ArgumentNullException(nameof(modelChanged));
+        }
+
+        /// <summary>ビューとリストには触らず、モデルが変わったことだけを伝える段。</summary>
+        public ScreenRefresh WithoutViews()
+        {
+            return new ScreenRefresh(() => null, () => null, _modelChanged);
         }
 
         /// <summary>
@@ -282,6 +292,8 @@ namespace PmxEditorMcp
                     view.UpdateView();
                 }
 
+                _modelChanged();
+
                 return true;
             }
             catch (Exception)
@@ -303,17 +315,20 @@ namespace PmxEditorMcp
             }
 
             IPXPmxViewConnector view = _view() as IPXPmxViewConnector;
-            if (view == null)
+            if (view != null)
             {
-                return;
+                if (kind == ScreenRefreshKind.Rebuilt)
+                {
+                    view.UpdateModel();
+                }
+
+                view.UpdateView();
             }
 
             if (kind == ScreenRefreshKind.Rebuilt)
             {
-                view.UpdateModel();
+                _modelChanged();
             }
-
-            view.UpdateView();
         }
 
     }
