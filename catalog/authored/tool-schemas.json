@@ -11560,6 +11560,31 @@
               "required": false
             },
             {
+              "name": "ramp",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "axis",
+                  "origin": "hostInput",
+                  "shape": "text",
+                  "required": true
+                },
+                {
+                  "name": "from",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "to",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ],
+              "required": false
+            },
+            {
               "name": "targets",
               "origin": "hostInput",
               "required": true,

@@ -26,6 +26,14 @@ namespace PmxEditorMcp
 
         public const string CenterName = "center";
 
+        public const string RampName = "ramp";
+
+        public const string RampAxisName = "axis";
+
+        public const string RampFromName = "from";
+
+        public const string RampToName = "to";
+
         public static IList<string> Operations
         {
             get { return new[] { AlignTo, TranslateBy, RotateBy, ScaleBy }; }
@@ -93,6 +101,7 @@ namespace PmxEditorMcp
                 RotationName,
                 ScaleName,
                 CenterName,
+                RampName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -103,12 +112,14 @@ namespace PmxEditorMcp
             string operation;
             string code;
             string message;
-            Func<object, Change> plan;
+            Func<object, float, Change> plan;
+            Func<V3, float> weight;
             IList<KeyValuePair<string, IList<int>>> targets;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
                 || !TryOnlyFor(context, operation, out code, out message)
                 || !TryPlan(context, operation, out plan, out code, out message)
+                || !TryRamp(context, out weight, out code, out message)
                 || !TryTargets(context, model, out targets, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
@@ -118,7 +129,7 @@ namespace PmxEditorMcp
             foreach (KeyValuePair<string, IList<int>> target in targets)
             {
                 IList<object> held = Held(model, target.Key);
-                changes.AddRange(target.Value.Select(at => plan(held[at])));
+                changes.AddRange(target.Value.Select(at => plan(held[at], weight(Spot(held[at])))));
             }
             if (!changes.All(c => c.Finite))
             {
@@ -138,7 +149,7 @@ namespace PmxEditorMcp
         private static bool TryPlan(
             McpMethodContext context,
             string operation,
-            out Func<object, Change> plan,
+            out Func<object, float, Change> plan,
             out string code,
             out string message)
         {
@@ -156,7 +167,7 @@ namespace PmxEditorMcp
                         return false;
                     }
 
-                    plan = item => Change.Of(item, Aligned(Spot(item), given, axes));
+                    plan = (item, strength) => Change.Of(item, Aligned(Spot(item), given, axes));
 
                     return true;
 
@@ -166,7 +177,7 @@ namespace PmxEditorMcp
                         return false;
                     }
 
-                    plan = item => Change.Of(item, Vectors.Add(Spot(item), given));
+                    plan = (item, strength) => Change.Of(item, Vectors.Add(Spot(item), Vectors.Scale(given, strength)));
 
                     return true;
 
@@ -177,9 +188,11 @@ namespace PmxEditorMcp
                         return false;
                     }
 
-                    RowMatrix turn = RowMatrix.YawPitchRoll(
-                        Radians(given.Y), Radians(given.X), Radians(given.Z));
-                    plan = item => Turned(item, turn, center);
+                    plan = (item, strength) => Turned(
+                        item,
+                        RowMatrix.YawPitchRoll(
+                            Radians(given.Y * strength), Radians(given.X * strength), Radians(given.Z * strength)),
+                        center);
 
                     return true;
 
@@ -190,14 +203,85 @@ namespace PmxEditorMcp
                         return false;
                     }
 
-                    RowMatrix stretch = RowMatrix.Diagonal(given.X, given.Y, given.Z);
-                    float? even = given.X == given.Y && given.Y == given.Z
-                        ? given.X
-                        : (float?)null;
-                    plan = item => Stretched(item, stretch, center, even);
+                    bool even = given.X == given.Y && given.Y == given.Z;
+                    plan = (item, strength) =>
+                    {
+                        V3 scale = new V3(
+                            Eased(given.X, strength), Eased(given.Y, strength), Eased(given.Z, strength));
+
+                        return Stretched(
+                            item,
+                            RowMatrix.Diagonal(scale.X, scale.Y, scale.Z),
+                            center,
+                            even ? scale.X : (float?)null);
+                    };
 
                     return true;
             }
+        }
+
+        private static float Eased(float scale, float strength)
+        {
+            return (scale * strength) + (1f - strength);
+        }
+
+        private static bool TryRamp(
+            McpMethodContext context, out Func<V3, float> weight, out string code, out string message)
+        {
+            weight = spot => 1f;
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(RampName, out given))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            IDictionary<string, object> held = given as IDictionary<string, object>;
+            object axisGiven = null;
+            object fromGiven = null;
+            object toGiven = null;
+            float from = 0f;
+            float to = 0f;
+            string axis = held != null && held.TryGetValue(RampAxisName, out axisGiven) ? axisGiven as string : null;
+            if (axis == null
+                || !new[] { ModelEditVertices.AxisX, ModelEditVertices.AxisY, ModelEditVertices.AxisZ }
+                    .Contains(axis, StringComparer.Ordinal))
+            {
+                message = RampName + " の " + RampAxisName + " は x・y・z のどれかでなければならない。";
+
+                return false;
+            }
+
+            if (!held.TryGetValue(RampFromName, out fromGiven)
+                || !held.TryGetValue(RampToName, out toGiven)
+                || !ValueInput.TrySingle(fromGiven, out from)
+                || !ValueInput.TrySingle(toGiven, out to))
+            {
+                message = RampName + " の " + RampFromName + " と " + RampToName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            if (from == to)
+            {
+                message = RampName + " の " + RampFromName + " と " + RampToName + " は違う値でなければならない。";
+
+                return false;
+            }
+
+            weight = spot =>
+            {
+                float along = string.Equals(axis, ModelEditVertices.AxisX, StringComparison.Ordinal)
+                    ? spot.X
+                    : string.Equals(axis, ModelEditVertices.AxisY, StringComparison.Ordinal) ? spot.Y : spot.Z;
+
+                return Math.Max(0f, Math.Min(1f, (along - from) / (to - from)));
+            };
+            code = null;
+
+            return true;
         }
 
         private static bool TryCenter(
@@ -355,19 +439,19 @@ namespace PmxEditorMcp
                     break;
 
                 case TranslateBy:
-                    taken = new[] { OffsetName };
+                    taken = new[] { OffsetName, RampName };
                     break;
 
                 case RotateBy:
-                    taken = new[] { RotationName, CenterName };
+                    taken = new[] { RotationName, CenterName, RampName };
                     break;
 
                 default:
-                    taken = new[] { ScaleName, CenterName };
+                    taken = new[] { ScaleName, CenterName, RampName };
                     break;
             }
 
-            string given = new[] { PositionName, AxesName, OffsetName, RotationName, ScaleName, CenterName }
+            string given = new[] { PositionName, AxesName, OffsetName, RotationName, ScaleName, CenterName, RampName }
                 .Where(n => !taken.Contains(n, StringComparer.Ordinal))
                 .FirstOrDefault(context.Params.ContainsKey);
             if (given == null)

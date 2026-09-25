@@ -15,11 +15,12 @@ namespace PmxEditorMcp.Tests
     public sealed class MotionSaveTransformedPmxFileTests
     {
         [Fact]
-        public void TheTransformedShapeIsWrittenToTheGivenPathWithTheNormalizationOffAndThenBack()
+        public void TheTransformedShapeReplacesTheGivenFileWithTheNormalizationOffAndThenBack()
         {
             using (Folder folder = new Folder())
             {
                 string path = folder.Path("変形後.pmx");
+                File.WriteAllText(path, "前の中身");
                 OnSta(() =>
                 {
                     using (ComposedScreenFixture fixture = new ComposedScreenFixture())
@@ -32,27 +33,6 @@ namespace PmxEditorMcp.Tests
                         Assert.Equal(1, screen.Saves);
                         Assert.Equal(new[] { false }, screen.NormalizedWhenSaved);
                         Assert.True(screen.Normalize.Checked, "正規化の入り切りを元へ戻していない。");
-                    }
-                });
-
-                Assert.Equal(Screen.Written, File.ReadAllText(path));
-                Assert.Equal(new[] { path }, Directory.GetFiles(folder.Root));
-            }
-        }
-
-        [Fact]
-        public void AnExistingFileIsReplaced()
-        {
-            using (Folder folder = new Folder())
-            {
-                string path = folder.Path("変形後.pmx");
-                File.WriteAllText(path, "前の中身");
-                OnSta(() =>
-                {
-                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
-                    using (Screen screen = new Screen(fixture))
-                    {
-                        ComposedScreenFixture.Value(Call(fixture, path, true));
                     }
                 });
 
@@ -326,9 +306,9 @@ namespace PmxEditorMcp.Tests
                     ComposedScreenFixture.Given("confirm", confirm)));
         }
 
-        private static readonly TimeSpan ShortLimit = TimeSpan.FromSeconds(3);
+        private static readonly TimeSpan ShortLimit = TimeSpan.FromSeconds(1.5);
 
-        private static readonly TimeSpan BeforeLimit = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan BeforeLimit = TimeSpan.FromSeconds(1);
 
         private static readonly TimeSpan PastLimit = TimeSpan.FromSeconds(0.5);
 

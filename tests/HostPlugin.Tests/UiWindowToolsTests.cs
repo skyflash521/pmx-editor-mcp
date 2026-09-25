@@ -559,7 +559,7 @@ namespace PmxEditorMcp.Tests
         private static void WithLimit(Action action)
         {
             TimeSpan held = DialogAnswer.Limit;
-            DialogAnswer.Limit = TimeSpan.FromSeconds(1);
+            DialogAnswer.Limit = TimeSpan.FromSeconds(0.5);
             try
             {
                 action();

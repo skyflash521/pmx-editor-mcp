@@ -364,6 +364,166 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ScalingWithARampScalesEachVertexByWhereItIsAlongTheAxis()
+        {
+            FakeVertex low = Vertex(1f, 0f, 0f);
+            FakeVertex middle = Vertex(1f, 1f, 0f);
+            FakeVertex high = Vertex(1f, 2f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 0.5f, 1f, 1f),
+                Ramp("y", 0f, 2f),
+                Targets(Every(ElementKinds.Vertex))));
+
+            Near(1.0, low.Position.X);
+            Near(0.75, middle.Position.X);
+            Near(0.5, high.Position.X);
+            Assert.Equal(2, value[ModelPlaceElements.ChangedName]);
+        }
+
+        [Fact]
+        public void ARampHoldsItsEndsOutsideTheRange()
+        {
+            FakeVertex below = Vertex(1f, -1f, 0f);
+            FakeVertex above = Vertex(1f, 3f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 0.5f, 1f, 1f),
+                Ramp("y", 0f, 2f),
+                Targets(Every(ElementKinds.Vertex)));
+
+            Near(1.0, below.Position.X);
+            Near(0.5, above.Position.X);
+        }
+
+        [Fact]
+        public void ARampFromTheHigherEndGrowsTowardsTheLowerEnd()
+        {
+            FakeVertex low = Vertex(0f, 0f, 0f);
+            FakeVertex high = Vertex(0f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 0f, 2f),
+                Ramp("y", 2f, 0f),
+                Targets(Every(ElementKinds.Vertex)));
+
+            Near(2.0, low.Position.Z);
+            Near(0.0, high.Position.Z);
+        }
+
+        [Fact]
+        public void TranslatingWithARampMovesEachElementByWhereItIsAlongTheAxis()
+        {
+            FakeVertex vertex = Vertex(0f, 1f, 0f);
+            FakeBone bone = Bone(0f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 0f, 2f),
+                Ramp("y", 0f, 2f),
+                Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Bone, 0)));
+
+            Near(1.0, vertex.Position.Z);
+            Near(2.0, bone.Position.Z);
+        }
+
+        [Fact]
+        public void RotatingWithARampTurnsEachVertexAndItsNormalByWhereItIsAlongTheAxis()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 0f);
+            vertex.Normal = new V3(1f, 0f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationName, 0f, 90f, 0f),
+                Ramp("y", 0f, 2f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(Math.Sqrt(0.5), vertex.Position.X);
+            Near(-Math.Sqrt(0.5), vertex.Position.Z);
+            Near(Math.Sqrt(0.5), vertex.Normal.X);
+            Near(-Math.Sqrt(0.5), vertex.Normal.Z);
+        }
+
+        [Fact]
+        public void ScalingWithoutARampMultipliesByTheGivenFactorItself()
+        {
+            FakeVertex vertex = Vertex(1000f, 0f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 0.001f, 1f, 1f),
+                Targets(Every(ElementKinds.Vertex)));
+
+            Assert.Equal(1000f * 0.001f, vertex.Position.X);
+        }
+
+        [Fact]
+        public void ScalingEvenlyWithARampScalesTheSizeOfABodyByItsStrength()
+        {
+            FakeBody body = Body(0f, 1f, 0f);
+            body.BoxSize = new V3(1f, 1f, 1f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 3f, 3f, 3f),
+                Ramp("y", 0f, 2f),
+                Targets(Target(ElementKinds.Body, 0)));
+
+            Near(2.0, body.Position.Y);
+            Near(2.0, body.BoxSize.X);
+            Near(2.0, body.BoxSize.Y);
+            Near(2.0, body.BoxSize.Z);
+        }
+
+        [Fact]
+        public void ARampWithTheSameEndsIsRefused()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 0f);
+
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ComposedEditFixture.Code(Place(
+                    Operation(ModelPlaceElements.ScaleBy),
+                    Triple(ModelPlaceElements.ScaleName, 0.5f, 1f, 1f),
+                    Ramp("y", 1f, 1f),
+                    Targets(Every(ElementKinds.Vertex)))));
+            Near(1.0, vertex.Position.X);
+        }
+
+        [Fact]
+        public void ARampAlongAnUnknownAxisIsRefused()
+        {
+            Vertex(1f, 1f, 0f);
+
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ComposedEditFixture.Code(Place(
+                    Operation(ModelPlaceElements.ScaleBy),
+                    Triple(ModelPlaceElements.ScaleName, 0.5f, 1f, 1f),
+                    Ramp("w", 0f, 2f),
+                    Targets(Every(ElementKinds.Vertex)))));
+        }
+
+        [Fact]
+        public void AligningRefusesARamp()
+        {
+            Vertex(1f, 1f, 0f);
+
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ComposedEditFixture.Code(Place(
+                    Operation(ModelPlaceElements.AlignTo),
+                    Position(0f, 0f, 0f),
+                    Axes(ModelPlaceElements.AllAxes),
+                    Ramp("y", 0f, 2f),
+                    Targets(Every(ElementKinds.Vertex)))));
+        }
+
+        [Fact]
         public void RotatingRefusesTheAmountToTranslateBy()
         {
             Bone(1f, 1f, 1f);
@@ -505,6 +665,18 @@ namespace PmxEditorMcp.Tests
         private static KeyValuePair<string, object> Triple(string name, float x, float y, float z)
         {
             return ComposedEditFixture.Given(name, new object[] { x, y, z });
+        }
+
+        private static KeyValuePair<string, object> Ramp(string axis, float from, float to)
+        {
+            return ComposedEditFixture.Given(
+                ModelPlaceElements.RampName,
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { ModelPlaceElements.RampAxisName, axis },
+                    { ModelPlaceElements.RampFromName, from },
+                    { ModelPlaceElements.RampToName, to },
+                });
         }
 
         private static KeyValuePair<string, object> Offset(float x, float y, float z)
