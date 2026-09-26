@@ -139,6 +139,8 @@ namespace PmxEditorMcp
 
         private readonly ScreenTargets _screen;
 
+        private readonly IDictionary<string, Func<object, object, IDictionary<string, object>>> _measures;
+
         /// <summary>
         /// ハンドルで持つ実体へ書かれた、位置で指す項目の値。位置はPMXの中のリストで数えるので、
         /// 書いた時点では解けない——ハンドルで持つ実体はまだどのPMXにも属していない。値のまま
@@ -159,9 +161,11 @@ namespace PmxEditorMcp
             IModifierKeys modifiers,
             EventBindingTable events,
             ScreenRefresh refresh,
-            ScreenTargets screen)
+            ScreenTargets screen,
+            IDictionary<string, Func<object, object, IDictionary<string, object>>> measures)
         {
             _screen = screen;
+            _measures = measures;
             _refresh = refresh;
             _events = events;
             _relay = relay;
@@ -191,7 +195,8 @@ namespace PmxEditorMcp
             IModifierKeys modifiers,
             EventBindingTable events,
             ScreenRefresh refresh,
-            ScreenTargets screen)
+            ScreenTargets screen,
+            IDictionary<string, Func<object, object, IDictionary<string, object>>> measures)
         {
             if (methods == null)
             {
@@ -273,9 +278,14 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(screen));
             }
 
+            if (measures == null)
+            {
+                throw new ArgumentNullException(nameof(measures));
+            }
+
             ToolDispatch dispatch = new ToolDispatch(
                 relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events,
-                refresh, screen);
+                refresh, screen, measures);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
                 IList<ToolCall> bound = call.Value;
@@ -926,6 +936,9 @@ namespace PmxEditorMcp
             object result = null;
             object called = null;
             int? readBack = null;
+            IDictionary<string, object> measured = null;
+            Func<object, object, IDictionary<string, object>> measure;
+            bool measures = _measures.TryGetValue(call.RowKey, out measure);
             List<object> results = new List<object>();
             Refusal refused = null;
             EditStage stage = EditStage.BeforeCommit;
@@ -953,6 +966,11 @@ namespace PmxEditorMcp
 
                 called = column[0].Item;
                 stage = Changing(call.Receiver, target);
+                PmxTarget before = null;
+                if (measures && !TryCurrent(context, out before, out refused))
+                {
+                    return;
+                }
 
                 int drawn = 0;
                 for (int at = 0; at < count; at++)
@@ -1011,6 +1029,17 @@ namespace PmxEditorMcp
 
                     readBack = positions.Length;
                 }
+
+                PmxTarget after;
+                if (refused == null && measures)
+                {
+                    if (!TryCurrent(context, out after, out refused))
+                    {
+                        return;
+                    }
+
+                    measured = measure(before.Pmx, after.Pmx);
+                }
             }, out failure, out unavailable))
             {
                 return Unavailable(unavailable);
@@ -1053,6 +1082,11 @@ namespace PmxEditorMcp
                 {
                     { SelectedName, readBack.Value },
                 });
+            }
+
+            if (measured != null)
+            {
+                return ToolEnvelope.Success(measured);
             }
 
             if (call.Result == null)
@@ -3570,6 +3604,22 @@ namespace PmxEditorMcp
 
             return ToolEnvelope.Success(
                 PageValue(name, whole.Length, offset, page.Items), warnings.Concat(page.Warnings).ToList());
+        }
+
+        private bool TryCurrent(McpMethodContext context, out PmxTarget current, out Refusal refused)
+        {
+            string code;
+            string message;
+            if (!_pmx.TryTake(null, context.Handles, out current, out code, out message))
+            {
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                return false;
+            }
+
+            refused = null;
+
+            return true;
         }
 
         private static bool Joins(ToolCall call)

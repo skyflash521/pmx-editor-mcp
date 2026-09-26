@@ -2645,7 +2645,8 @@ namespace PmxEditorMcp.Tests
                 new StillModifierKeys(),
                 EventBindingFixture.Empty(),
                 Refresh(),
-                Screen());
+                Screen(),
+                new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
 
             _methods = methods;
 

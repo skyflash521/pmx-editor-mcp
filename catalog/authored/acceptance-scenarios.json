@@ -6235,6 +6235,30 @@
               }
             ]
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_move",
+          "arguments": {
+            "val": [
+              1,
+              0,
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changedVertices",
+                "equals": 1
+              },
+              {
+                "path": "changedBones",
+                "equals": 0
+              }
+            ]
+          }
         }
       ]
     }

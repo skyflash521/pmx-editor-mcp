@@ -245,7 +245,8 @@ namespace PmxEditorMcp
                         GeneratedTools.Attachments(), GeneratedTools.Payloads()),
                     refresh,
                     new ScreenTargets(
-                        () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType)));
+                        () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType)),
+                    VertexEditMeasure.ByRowKey());
                 ComposedModelTools.AddTo(
                     methods,
                     new ComposedEdit(current, new UndoBarrier(recovery), refresh),

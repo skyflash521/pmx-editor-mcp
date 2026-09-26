@@ -11563,7 +11563,28 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "changedVertices",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBodies",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedJoints",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -11585,7 +11606,28 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "changedVertices",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBodies",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedJoints",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -13341,7 +13383,28 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "changedVertices",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBodies",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedJoints",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -13363,7 +13426,28 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "changedVertices",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBodies",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedJoints",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {
@@ -13385,7 +13469,28 @@
       ],
       "output": {
         "origin": "hostOutput",
-        "shape": "null_value"
+        "members": [
+          {
+            "name": "changedVertices",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedBodies",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "changedJoints",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
       }
     },
     {

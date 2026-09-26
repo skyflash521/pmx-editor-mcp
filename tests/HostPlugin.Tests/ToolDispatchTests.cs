@@ -32,6 +32,8 @@ namespace PmxEditorMcp.Tests
 
         private const string CountKey = "Sdk.Form.Count()";
 
+        private const string BumpKey = "Sdk.Form.Bump()";
+
         private const string PickedKey = "Sdk.Form.Picked()";
 
         /// <summary>番号の並びを丸ごと返す行。応答は位置と件数で切り出す。</summary>
@@ -454,6 +456,17 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> envelope = Call("session_count", Arguments());
 
             Assert.Equal(5, envelope["value"]);
+        }
+
+        [Fact]
+        public void AMeasuredCallAnswersWhatChangedBetweenTheModelBeforeAndAfter()
+        {
+            _target.Count = 2;
+
+            IDictionary<string, object> value = Value(Call("session_bump", Arguments()));
+
+            Assert.Equal(1, value["changed"]);
+            Assert.Equal(3, _target.Count);
         }
 
         [Fact]
@@ -1432,7 +1445,8 @@ namespace PmxEditorMcp.Tests
                 new StillModifierKeys(),
                 events,
                 Refresh(),
-                Screen());
+                Screen(),
+                Measures());
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);
@@ -1498,7 +1512,8 @@ namespace PmxEditorMcp.Tests
                 modifiers,
                 EventBindingFixture.Empty(),
                 Refresh(),
-                Screen());
+                Screen(),
+                new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method));
@@ -1547,7 +1562,8 @@ namespace PmxEditorMcp.Tests
                 modifiers,
                 EventBindingFixture.Empty(),
                 Refresh(),
-                Screen());
+                Screen(),
+                new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
 
             McpMethod method;
             Assert.True(methods.TryGet("session_count", out method));
@@ -1600,6 +1616,20 @@ namespace PmxEditorMcp.Tests
             }
         }
 
+        private static IDictionary<string, Func<object, object, IDictionary<string, object>>> Measures()
+        {
+            return new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal)
+            {
+                {
+                    BumpKey,
+                    (before, after) => new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { "changed", (int)after - (int)before },
+                    }
+                },
+            };
+        }
+
         private SdkRelayTable Relay()
         {
             Dictionary<string, SdkCall> calls =
@@ -1614,6 +1644,14 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { CountKey, (target, arguments) => ((Target)target).Count },
+                    {
+                        BumpKey,
+                        (target, arguments) =>
+                        {
+                            ((Target)target).Count++;
+                            return null;
+                        }
+                    },
                     {
                         ShotKey,
                         (target, arguments) =>
@@ -2104,6 +2142,17 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         new ToolArgument[0],
                         typeof(int[]))
+                },
+                {
+                    "session_bump",
+                    new ToolCall(
+                        BumpKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        null)
                 },
                 {
                     "session_count",
