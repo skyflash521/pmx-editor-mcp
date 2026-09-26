@@ -2646,7 +2646,7 @@ namespace PmxEditorMcp.Tests
                 EventBindingFixture.Empty(),
                 Refresh(),
                 Screen(),
-                new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
+                new Dictionary<string, Func<object, object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
 
             _methods = methods;
 

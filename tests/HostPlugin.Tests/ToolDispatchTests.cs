@@ -1513,7 +1513,7 @@ namespace PmxEditorMcp.Tests
                 EventBindingFixture.Empty(),
                 Refresh(),
                 Screen(),
-                new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
+                new Dictionary<string, Func<object, object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method));
@@ -1563,7 +1563,7 @@ namespace PmxEditorMcp.Tests
                 EventBindingFixture.Empty(),
                 Refresh(),
                 Screen(),
-                new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
+                new Dictionary<string, Func<object, object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
 
             McpMethod method;
             Assert.True(methods.TryGet("session_count", out method));
@@ -1616,13 +1616,13 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        private static IDictionary<string, Func<object, object, IDictionary<string, object>>> Measures()
+        private static IDictionary<string, Func<object, object, object, IDictionary<string, object>>> Measures()
         {
-            return new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal)
+            return new Dictionary<string, Func<object, object, object, IDictionary<string, object>>>(StringComparer.Ordinal)
             {
                 {
                     BumpKey,
-                    (before, after) => new Dictionary<string, object>(StringComparer.Ordinal)
+                    (receiver, before, after) => new Dictionary<string, object>(StringComparer.Ordinal)
                     {
                         { "changed", (int)after - (int)before },
                     }

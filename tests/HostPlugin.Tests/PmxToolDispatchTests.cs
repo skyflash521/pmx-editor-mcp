@@ -620,7 +620,7 @@ namespace PmxEditorMcp.Tests
                 EventBindingFixture.Empty(),
                 Refresh(),
                 Screen(),
-                new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
+                new Dictionary<string, Func<object, object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
 
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていないツール: " + tool);

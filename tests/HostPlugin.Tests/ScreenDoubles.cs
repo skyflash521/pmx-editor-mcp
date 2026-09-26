@@ -1182,13 +1182,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        public int RedoCount
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public int RedoCount { get; set; }
 
         public int SelectedBodyIndex
         {
@@ -1372,13 +1366,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        public int UndoCount
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public int UndoCount { get; set; }
 
         public int VertexItemsCount
         {

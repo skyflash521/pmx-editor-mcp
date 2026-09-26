@@ -892,7 +892,17 @@
           "tool": "session_undo",
           "arguments": {},
           "expect": {
-            "ok": true
+            "ok": true,
+            "values": [
+              {
+                "path": "changedVertices",
+                "equals": 3
+              },
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
           }
         },
         {
@@ -935,7 +945,17 @@
           "tool": "session_undo",
           "arguments": {},
           "expect": {
-            "ok": true
+            "ok": true,
+            "values": [
+              {
+                "path": "changedVertices",
+                "equals": 3
+              },
+              {
+                "path": "redoCount",
+                "equals": 2
+              }
+            ]
           }
         },
         {

@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using PEPlugin.Form;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
 
 namespace PmxEditorMcp
 {
-    public static class VertexEditMeasure
+    public static class EditMeasure
     {
         public const string ChangedVerticesName = "changedVertices";
 
@@ -14,6 +15,10 @@ namespace PmxEditorMcp
         public const string ChangedBodiesName = "changedBodies";
 
         public const string ChangedJointsName = "changedJoints";
+
+        public const string UndoCountName = "undoCount";
+
+        public const string RedoCountName = "redoCount";
 
         private static readonly string[] EditRowKeys =
         {
@@ -29,16 +34,37 @@ namespace PmxEditorMcp
             "PEPlugin.View.IPEVertexEditConnector.MoveNormalAxis(System.Single)",
         };
 
-        public static IDictionary<string, Func<object, object, IDictionary<string, object>>> ByRowKey()
+        private static readonly string[] HistoryRowKeys =
         {
-            Dictionary<string, Func<object, object, IDictionary<string, object>>> measures =
-                new Dictionary<string, Func<object, object, IDictionary<string, object>>>(StringComparer.Ordinal);
+            "PEPlugin.Form.IPEFormConnector.Undo()",
+            "PEPlugin.Form.IPEFormConnector.Redo()",
+        };
+
+        public static IDictionary<string, Func<object, object, object, IDictionary<string, object>>> ByRowKey()
+        {
+            Dictionary<string, Func<object, object, object, IDictionary<string, object>>> measures =
+                new Dictionary<string, Func<object, object, object, IDictionary<string, object>>>(StringComparer.Ordinal);
             foreach (string key in EditRowKeys)
             {
-                measures.Add(key, Changed);
+                measures.Add(key, (receiver, before, after) => Changed(before, after));
+            }
+
+            foreach (string key in HistoryRowKeys)
+            {
+                measures.Add(key, Stepped);
             }
 
             return measures;
+        }
+
+        private static IDictionary<string, object> Stepped(object receiver, object before, object after)
+        {
+            IPEFormConnector form = (IPEFormConnector)receiver;
+            IDictionary<string, object> made = Changed(before, after);
+            made.Add(UndoCountName, form.UndoCount);
+            made.Add(RedoCountName, form.RedoCount);
+
+            return made;
         }
 
         public static IDictionary<string, object> Changed(object before, object after)

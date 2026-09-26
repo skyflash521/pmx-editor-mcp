@@ -404,7 +404,7 @@
       "target": "IPEFormConnector.Undo",
       "status": "提供",
       "owner": "セッション",
-      "remarks": ""
+      "remarks": "契約注記: 呼ぶ前と後で、位置か法線が変わった頂点、位置が変わったボーン、位置・回転・大きさのどれかが変わった剛体、位置か回転が変わったジョイントの数を、順に changedVertices・changedBones・changedBodies・changedJoints に返す。要素が増減したときはその差も数える。名前や材質などそのほかの変化は数えない。呼んだ後にまだ取り消せる操作の数を undoCount に、やり直せる操作の数を redoCount に返す。取り消した操作の名前は返さない。新しく編集するとやり直せる操作は0になる。"
     },
     {
       "id": "CAP-051",
@@ -420,7 +420,7 @@
       "target": "IPEFormConnector.Redo",
       "status": "提供",
       "owner": "セッション",
-      "remarks": ""
+      "remarks": "契約注記: 呼ぶ前と後で、位置か法線が変わった頂点、位置が変わったボーン、位置・回転・大きさのどれかが変わった剛体、位置か回転が変わったジョイントの数を、順に changedVertices・changedBones・changedBodies・changedJoints に返す。要素が増減したときはその差も数える。名前や材質などそのほかの変化は数えない。呼んだ後にまだ取り消せる操作の数を undoCount に、やり直せる操作の数を redoCount に返す。取り消した操作の名前は返さない。新しく編集するとやり直せる操作は0になる。"
     },
     {
       "id": "CAP-053",

@@ -139,7 +139,7 @@ namespace PmxEditorMcp
 
         private readonly ScreenTargets _screen;
 
-        private readonly IDictionary<string, Func<object, object, IDictionary<string, object>>> _measures;
+        private readonly IDictionary<string, Func<object, object, object, IDictionary<string, object>>> _measures;
 
         /// <summary>
         /// ハンドルで持つ実体へ書かれた、位置で指す項目の値。位置はPMXの中のリストで数えるので、
@@ -162,7 +162,7 @@ namespace PmxEditorMcp
             EventBindingTable events,
             ScreenRefresh refresh,
             ScreenTargets screen,
-            IDictionary<string, Func<object, object, IDictionary<string, object>>> measures)
+            IDictionary<string, Func<object, object, object, IDictionary<string, object>>> measures)
         {
             _screen = screen;
             _measures = measures;
@@ -196,7 +196,7 @@ namespace PmxEditorMcp
             EventBindingTable events,
             ScreenRefresh refresh,
             ScreenTargets screen,
-            IDictionary<string, Func<object, object, IDictionary<string, object>>> measures)
+            IDictionary<string, Func<object, object, object, IDictionary<string, object>>> measures)
         {
             if (methods == null)
             {
@@ -937,7 +937,7 @@ namespace PmxEditorMcp
             object called = null;
             int? readBack = null;
             IDictionary<string, object> measured = null;
-            Func<object, object, IDictionary<string, object>> measure;
+            Func<object, object, object, IDictionary<string, object>> measure;
             bool measures = _measures.TryGetValue(call.RowKey, out measure);
             List<object> results = new List<object>();
             Refusal refused = null;
@@ -1038,7 +1038,7 @@ namespace PmxEditorMcp
                         return;
                     }
 
-                    measured = measure(before.Pmx, after.Pmx);
+                    measured = measure(called, before.Pmx, after.Pmx);
                 }
             }, out failure, out unavailable))
             {
