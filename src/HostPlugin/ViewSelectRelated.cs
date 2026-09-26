@@ -21,6 +21,8 @@ namespace PmxEditorMcp
 
         public const string MaterialToFaces = "materialToFaces";
 
+        public const string MaterialToVertices = "materialToVertices";
+
         public const string VerticesToMaterials = "verticesToMaterials";
 
         public const string FacesToMaterials = "facesToMaterials";
@@ -40,14 +42,13 @@ namespace PmxEditorMcp
         {
             get
             {
-                return new[] { VerticesToFaces, FacesToVertices, ExpandAdjacentFaces, MaterialToFaces, VerticesToMaterials, FacesToMaterials, ExcludeFacesMaterials, UnusedVertices, EdgeScaleChangedVertices, BonesToWeightedVertices, UvRegionVertices };
+                return new[] { VerticesToFaces, FacesToVertices, ExpandAdjacentFaces, MaterialToFaces, MaterialToVertices, VerticesToMaterials, FacesToMaterials, ExcludeFacesMaterials, UnusedVertices, EdgeScaleChangedVertices, BonesToWeightedVertices, UvRegionVertices };
             }
         }
 
         /// <summary>材質の位置を受け取る入力の名前。</summary>
         public const string MaterialIndicesName = "materialIndices";
 
-        /// <summary>面を選ぶ材質を、リストの選択で指す入力の名前。</summary>
         public const string MaterialSelectedName = "materialSelected";
 
         public const string ReleaseSourceName = "releaseSource";
@@ -119,7 +120,7 @@ namespace PmxEditorMcp
                     context,
                     MaterialIndicesName,
                     operation,
-                    new[] { MaterialToFaces, UvRegionVertices },
+                    new[] { MaterialToFaces, MaterialToVertices, UvRegionVertices },
                     model.Material.Count,
                     out materials,
                     out code,
@@ -157,6 +158,12 @@ namespace PmxEditorMcp
 
                 case MaterialToFaces:
                     made = Owned(owners, materials);
+
+                    break;
+
+                case MaterialToVertices:
+                    kind = ElementKinds.Vertex;
+                    made = Used(model, faces, Owned(owners, materials));
 
                     break;
 

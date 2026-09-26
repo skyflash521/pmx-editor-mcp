@@ -592,6 +592,37 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheVerticesThePickedMaterialsFacesUseAreSelected()
+        {
+            IList<IPXVertex> vertices = Vertices(5);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 2, 3, 4));
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Related(
+                Operation(ViewSelectRelated.MaterialToVertices),
+                ComposedScreenFixture.Given(
+                    ViewSelectRelated.MaterialIndicesName, new object[] { 1 })));
+
+            Assert.Equal(new[] { 2, 3, 4 }, _fixture.View.Selected[ElementKinds.Vertex].OrderBy(at => at));
+            Assert.Equal(3, value[ViewSelectRelated.SelectedName]);
+        }
+
+        [Fact]
+        public void TheMaterialListSelectionSaysWhichMaterialsVerticesToSelect()
+        {
+            IList<IPXVertex> vertices = Vertices(5);
+            Faces(Face(vertices, 0, 1, 2));
+            Faces(Face(vertices, 2, 3, 4));
+            _fixture.Form.SelectedMaterials = new[] { 0 };
+
+            Related(
+                Operation(ViewSelectRelated.MaterialToVertices),
+                ComposedScreenFixture.Given(ViewSelectRelated.MaterialSelectedName, true));
+
+            Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Vertex].OrderBy(at => at));
+        }
+
+        [Fact]
         public void TheMaterialListSelectionSaysWhichMaterialsFacesToSelect()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -725,6 +756,7 @@ namespace PmxEditorMcp.Tests
         [InlineData(ViewSelectRelated.FacesToVertices, ElementKinds.Vertex)]
         [InlineData(ViewSelectRelated.ExpandAdjacentFaces, ElementKinds.Face)]
         [InlineData(ViewSelectRelated.MaterialToFaces, ElementKinds.Face)]
+        [InlineData(ViewSelectRelated.MaterialToVertices, ElementKinds.Vertex)]
         [InlineData(ViewSelectRelated.VerticesToMaterials, ElementKinds.Face)]
         [InlineData(ViewSelectRelated.FacesToMaterials, ElementKinds.Face)]
         [InlineData(ViewSelectRelated.ExcludeFacesMaterials, ElementKinds.Face)]
@@ -1505,7 +1537,8 @@ namespace PmxEditorMcp.Tests
         {
             List<KeyValuePair<string, object>> given =
                 new List<KeyValuePair<string, object>> { Operation(operation) };
-            if (string.Equals(operation, ViewSelectRelated.MaterialToFaces, StringComparison.Ordinal))
+            if (string.Equals(operation, ViewSelectRelated.MaterialToFaces, StringComparison.Ordinal)
+                || string.Equals(operation, ViewSelectRelated.MaterialToVertices, StringComparison.Ordinal))
             {
                 given.Add(ComposedScreenFixture.Given(
                     ViewSelectRelated.MaterialIndicesName, new object[] { 0 }));

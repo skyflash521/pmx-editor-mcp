@@ -4944,6 +4944,29 @@
         },
         {
           "kind": "tool",
+          "tool": "view_select_related",
+          "arguments": {
+            "operation": "materialToVertices",
+            "materialIndices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "kind",
+                "equals": "vertex"
+              },
+              {
+                "path": "selected",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_find_vertex_bounds",
           "arguments": {
             "materialIndices": [
