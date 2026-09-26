@@ -262,6 +262,17 @@
         "view_create_view_event_listener_event_connector",
         "view_poll_events"
       ]
+    },
+    {
+      "task": "種類をまたいだ要素の平行移動",
+      "searches": [
+        [
+          "平行移動"
+        ]
+      ],
+      "tools": [
+        "model_place_elements"
+      ]
     }
   ]
 }
