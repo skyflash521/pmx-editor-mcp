@@ -39,6 +39,10 @@ namespace PmxEditorMcp.Tests
 
         private const string FlagKey = "Sdk.Form.Flag()";
 
+        private const string WriteDroppingKey = "Sdk.Form.Stuck()";
+
+        private const string TextHeldSizeKey = "Sdk.Form.Size()";
+
         private const string LostKey = "Sdk.Form.Lost()";
 
         private const string ThrowKey = "Sdk.Form.Throw()";
@@ -1248,6 +1252,26 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AnItemThatReadsBackOtherThanWhatWasWrittenIsAFailure()
+        {
+            _target.Count = 3;
+
+            IDictionary<string, object> envelope = Call("session_update_stuck", Arguments("stuck", 5));
+
+            Assert.Equal(ToolEnvelope.OperationFailed, Code(envelope));
+            Assert.Contains("3", (string)((IDictionary<string, object>)envelope["error"])["message"]);
+        }
+
+        [Fact]
+        public void AFractionReadBackTheSameToSevenDigitsIsASuccess()
+        {
+            IDictionary<string, object> envelope = Call("session_update_stuck", Arguments("size", 33.333333d));
+
+            Assert.Equal(1, Value(envelope)[SetResponse.UpdatedName]);
+            Assert.Equal("33.33333", _target.SizeText);
+        }
+
+        [Fact]
         public void AnUpdateThatChoosesNoItemIsRefused()
         {
             IDictionary<string, object> envelope = Call("session_update_form", Arguments());
@@ -1581,6 +1605,21 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) => arguments.Length == 0
                             ? (object)((Target)target).Flag
                             : Write((Target)target, (bool)arguments[0])
+                    },
+                    { WriteDroppingKey, (target, arguments) => arguments.Length == 0 ? (object)((Target)target).Count : null },
+                    {
+                        TextHeldSizeKey,
+                        (target, arguments) =>
+                        {
+                            if (arguments.Length == 0)
+                            {
+                                return float.Parse(((Target)target).SizeText, CultureInfo.InvariantCulture);
+                            }
+
+                            ((Target)target).SizeText = ((float)arguments[0]).ToString(CultureInfo.InvariantCulture);
+
+                            return null;
+                        }
                     },
                     { ThrowKey, (target, arguments) => { throw new InvalidOperationException("題材の失敗。"); } },
                     { InfoKey, (target, arguments) => _info },
@@ -2148,6 +2187,17 @@ namespace PmxEditorMcp.Tests
                         Set(new ToolField("flag", FlagKey, typeof(bool))))
                 },
                 {
+                    "session_update_stuck",
+                    new ToolFields(
+                        true,
+                        false,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        Set(
+                            new ToolField("stuck", WriteDroppingKey, typeof(int)),
+                            new ToolField("size", TextHeldSizeKey, typeof(float))))
+                },
+                {
                     "view_get_setting",
                     new ToolFields(
                         false,
@@ -2206,6 +2256,8 @@ namespace PmxEditorMcp.Tests
             public bool Flag { get; set; }
 
             public int Count { get; set; }
+
+            public string SizeText { get; set; } = "0";
 
             public Target Made { get; set; }
 

@@ -2761,14 +2761,28 @@ namespace PmxEditorMcp
             {
                 object ignored;
                 SdkRelayRefusal refusal;
+                object receiver = Receiver(context, tool.Receiver, null);
                 if (!_relay.TryInvoke(
                     field.RowKey,
-                    Receiver(context, tool.Receiver, null),
+                    receiver,
                     new[] { value },
                     out ignored,
                     out refusal))
                 {
                     refused = Refusal.Of(field.RowKey, refusal);
+
+                    return;
+                }
+
+                object back;
+                string read;
+                if (_relay.TryInvoke(field.RowKey, receiver, new object[0], out back, out refusal)
+                    && (read = Differs(field.Type, value, back)) != null)
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(
+                        ToolEnvelope.OperationFailed,
+                        "書き込んだが、" + field.Name + " を読み返すと " + read
+                            + " で、書いた値が保たれていない。"));
                 }
             }, out failure, out unavailable))
             {
@@ -2783,6 +2797,75 @@ namespace PmxEditorMcp
             return refused != null
                 ? refused.Envelope
                 : ToolEnvelope.Success(SetResponse.Updated(1));
+        }
+
+        /// <summary>
+        /// 読み返した値が書いた値と違えば、読み返した値をJSONで綴ったもの。同じなら null。どちらも同じ型の
+        /// JSONへ写してから比べ、小数は有効数字7桁で比べる。写せない値と画像は比べずに null とする。
+        /// </summary>
+        private static string Differs(Type declared, object written, object back)
+        {
+            if (declared == typeof(System.Drawing.Bitmap))
+            {
+                return null;
+            }
+
+            object wrote;
+            object read;
+            IList<string> warnings;
+            string code;
+            string message;
+            if (!ValueShape.TryToJson(
+                    declared, written, ImageTransfer.SoleValueMaxLongSide, out wrote, out warnings, out code, out message)
+                || !ValueShape.TryToJson(
+                    declared, back, ImageTransfer.SoleValueMaxLongSide, out read, out warnings, out code, out message))
+            {
+                return null;
+            }
+
+            return Same(wrote, read) ? null : Serializer.Serialize(read);
+        }
+
+        /// <summary>JSONへ写した2つの値が同じか。小数は有効数字7桁までを比べる。</summary>
+        private static bool Same(object left, object right)
+        {
+            IDictionary<string, object> leftMembers = left as IDictionary<string, object>;
+            IDictionary<string, object> rightMembers = right as IDictionary<string, object>;
+            if (leftMembers != null || rightMembers != null)
+            {
+                return leftMembers != null
+                    && rightMembers != null
+                    && leftMembers.Count == rightMembers.Count
+                    && leftMembers.All(member =>
+                        rightMembers.ContainsKey(member.Key) && Same(member.Value, rightMembers[member.Key]));
+            }
+
+            System.Collections.IList leftItems = left as System.Collections.IList;
+            System.Collections.IList rightItems = right as System.Collections.IList;
+            if (leftItems != null || rightItems != null)
+            {
+                return leftItems != null
+                    && rightItems != null
+                    && leftItems.Count == rightItems.Count
+                    && Enumerable.Range(0, leftItems.Count).All(at => Same(leftItems[at], rightItems[at]));
+            }
+
+            if (IsFraction(left) || IsFraction(right))
+            {
+                return ValueInput.IsNumber(left)
+                    && ValueInput.IsNumber(right)
+                    && string.Equals(
+                        Convert.ToDouble(left, CultureInfo.InvariantCulture).ToString("G7", CultureInfo.InvariantCulture),
+                        Convert.ToDouble(right, CultureInfo.InvariantCulture).ToString("G7", CultureInfo.InvariantCulture),
+                        StringComparison.Ordinal);
+            }
+
+            return Equals(left, right);
+        }
+
+        private static bool IsFraction(object value)
+        {
+            return value is float || value is double || value is decimal;
         }
 
         /// <summary>
