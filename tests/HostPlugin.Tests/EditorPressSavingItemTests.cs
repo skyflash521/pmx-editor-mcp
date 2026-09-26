@@ -367,6 +367,12 @@ namespace PmxEditorMcp.Tests
                             ComposedScreenFixture.Code(Call(fixture, SaveAs, folder.Path("無い\\設定.xml"), true)));
                         Assert.Equal(
                             ToolEnvelope.InvalidArgument,
+                            ComposedScreenFixture.Code(Call(fixture, SaveAs, folder.Root.Substring(0, 2) + "設定.xml", true)));
+                        Assert.Equal(
+                            ToolEnvelope.InvalidArgument,
+                            ComposedScreenFixture.Code(Call(fixture, SaveAs, folder.Root.Substring(2) + "\\設定.xml", true)));
+                        Assert.Equal(
+                            ToolEnvelope.InvalidArgument,
                             ComposedScreenFixture.Code(Call(fixture, SaveAs, folder.Path("設定"), true)));
                         Assert.Equal(
                             ToolEnvelope.InvalidArgument,

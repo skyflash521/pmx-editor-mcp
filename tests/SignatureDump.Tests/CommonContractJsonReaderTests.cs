@@ -68,11 +68,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             CommonContractTable contract = CommonContractJsonReader.Read(
                 new CommonContractJsonBuilder()
-                    .AddComposedTool("motion_save_transformed_pmx_file", false, "変形した形を保存する。")
-                    .AddOverwritingTool("motion_save_transformed_pmx_file")
+                    .AddComposedTool("editor_press_saving_item", false, "ファイルへ書く項目を押す。")
+                    .AddOverwritingTool("editor_press_saving_item")
                     .ToString());
 
-            Assert.Equal(new[] { "motion_save_transformed_pmx_file" }, contract.OverwritingTools.ToArray());
+            Assert.Equal(new[] { "editor_press_saving_item" }, contract.OverwritingTools.ToArray());
         }
 
         [Fact]

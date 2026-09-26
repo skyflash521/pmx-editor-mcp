@@ -24,10 +24,6 @@ namespace PmxEditorMcp
                     "PmxViewForm.TransformView|menuStrip1/MenuItem_File/MenuItem_SetupCurrentPose",
                     MotionApplyCurrentPose.ToolName + " で行う。"
                 },
-                {
-                    "PmxViewForm.TransformView|menuStrip1/MenuItem_File/MenuItem_SaveModel",
-                    MotionSaveTransformedPmxFile.ToolName + " で行う。"
-                },
                 { "PmxEditor.PmxForm|menuStrip1/MenuItem_File/MenuItem_Save", SavePmxGuide },
                 { "PmxEditor.PmxForm|menuStrip1/MenuItem_File/MenuItem_SaveAs", SavePmxGuide },
                 { "PmxViewForm.PmxViewSetting|menuStrip1/MenuItem_File/MenuItem_SaveAs", ViewSettingGuide },

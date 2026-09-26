@@ -2523,44 +2523,6 @@
         {
           "kind": "file",
           "action": "ensureMissing",
-          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\変形後.pmx"
-        },
-        {
-          "kind": "tool",
-          "tool": "motion_save_transformed_pmx_file",
-          "arguments": {
-            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\変形後.pmx",
-            "confirm": false
-          },
-          "expect": {
-            "ok": false,
-            "code": "TOOL_CONFIRM_REQUIRED"
-          }
-        },
-        {
-          "kind": "file",
-          "action": "expectMissing",
-          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\変形後.pmx"
-        },
-        {
-          "kind": "tool",
-          "tool": "motion_save_transformed_pmx_file",
-          "arguments": {
-            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\変形後.pmx",
-            "confirm": true
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "file",
-          "action": "expectPresent",
-          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\変形後.pmx"
-        },
-        {
-          "kind": "file",
-          "action": "ensureMissing",
           "path": "%TEMP%\\pmx-editor-mcp-acceptance\\姿勢.vpd"
         },
         {
@@ -2602,58 +2564,6 @@
           "kind": "file",
           "action": "expectPresent",
           "path": "%TEMP%\\pmx-editor-mcp-acceptance\\姿勢.vpd"
-        },
-        {
-          "kind": "tool",
-          "tool": "model_pmx",
-          "arguments": {},
-          "record": {
-            "name": "transformedPmx",
-            "path": "0",
-            "shape": "number"
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "model_from_file_pmx",
-          "arguments": {
-            "pmxHandle": {
-              "$from": "transformedPmx"
-            },
-            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\変形後.pmx"
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "model_list_bones",
-          "arguments": {
-            "pmxHandle": {
-              "$from": "transformedPmx"
-            },
-            "all": true,
-            "fields": [
-              "position"
-            ]
-          },
-          "expect": {
-            "ok": true,
-            "values": [
-              {
-                "path": "items.0.position",
-                "equals": [
-                  0,
-                  2,
-                  0
-                ]
-              }
-            ]
-          }
         },
         {
           "kind": "tool",
@@ -2993,20 +2903,6 @@
                 "equals": true
               }
             ]
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "session_release_handle",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "transformedPmx"
-              }
-            ]
-          },
-          "expect": {
-            "ok": true
           }
         },
         {

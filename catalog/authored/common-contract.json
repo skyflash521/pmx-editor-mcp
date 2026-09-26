@@ -455,11 +455,6 @@
       "duty": "TransformView でいま変形している形を、編集中のモデルの形状へ焼き込む。TransformView のファイルメニューの「現在の変形状態でモデル形状を更新」に当たる。ボーンとそのローカル軸・頂点とその法線・剛体・Joint の位置と向きが、ボーンの変形とモーフを当てた後の値になり、そのあと TransformView の変形とモーフは初期の状態へ戻る。エディタの元に戻す1回で呼び出しの前へ戻る。morphThreshold に正の数を渡すと、頂点モーフを焼き込んだ形に合わせて計算し直し、X・Y・Z の差がどれも morphThreshold 以下の頂点はオフセットから外す。このとき TransformView で当てていた頂点モーフ・グループモーフ・フリップモーフは0へ戻してから焼き込むので、それらの変形は形状に入らない。渡さなければ頂点モーフは計算し直さず、当てていたモーフはすべて形状に入る。ファイルメニューの正規化の入り切りは呼び出しの前のまま残す。TransformView が開いていないとき、人の応答を待つ表示を出しているとき、項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。成功したときは何も返さない。"
     },
     {
-      "tool": "motion_save_transformed_pmx_file",
-      "branching": false,
-      "duty": "TransformView でいま変形している形を、PMXファイルとして path へ書く。TransformView のファイルメニューの「現在の形状で保存」に当たる。ボーンとそのローカル軸・頂点とその法線・剛体・Joint の位置と向きが、ボーンの変形とモーフを当てた後の値で書かれる。編集中のモデルと TransformView の変形は変えない。path は在るフォルダの中のファイルを指す絶対パスで、同じ名前のファイルが在れば置き換える。書き出しで頂点モーフを正規化せず、ファイルメニューの正規化の入り切りは呼び出しの前のまま残す。ファイルへ書くので confirm に真を渡す。TransformView が開いていないとき、保存の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。変形後の位置を数で読むには、model_pmx で作ったハンドルへ model_from_file_pmx でこのファイルを読み、そのハンドルを pmxHandle に添えて model_list_bones・model_list_vertices などを呼ぶ。成功したときは何も返さない。"
-    },
-    {
       "tool": "motion_set_camera_view",
       "branching": false,
       "duty": "TransformView の視点を動かす。position に視点の位置を、target に見る先を、upVector に上の向きを、それぞれ3つの数の並びで渡す。3つとも要る。PMXView の視点をいったんそこへ入れ、PMXView の表示メニューのカメラ同期で TransformView へ写してから、PMXView の視点と同期の入り切りを呼び出しの前へ戻す。同期で写すので、SubView の視点も同じ位置へ動く。TransformView か SubView のカメラをロックしていると、その視点は動かない。PMXView が4画面モードのとき、カメラ同期の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。撮るには続けて motion_get_client_image を呼ぶ。成功したときは何も返さない。"
@@ -556,9 +551,6 @@
   "overwritingTools": [
     {
       "tool": "editor_press_saving_item"
-    },
-    {
-      "tool": "motion_save_transformed_pmx_file"
     }
   ],
   "unkeptMembers": [

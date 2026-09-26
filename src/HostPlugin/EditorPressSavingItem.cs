@@ -127,7 +127,7 @@ namespace PmxEditorMcp
             string file = context.Params.TryGetValue(FileName, out given) ? given as string : null;
             if (item.AsksFile)
             {
-                if (!MotionSaveTransformedPmxFile.IsFullyQualified(file) || Path.GetExtension(file).Length <= 1)
+                if (!IsFullyQualified(file) || Path.GetExtension(file).Length <= 1)
                 {
                     return ComposedEditResult.Refuse(
                         ToolEnvelope.InvalidArgument,
@@ -247,6 +247,26 @@ namespace PmxEditorMcp
             {
                 { MessagesName, agreed.ToArray() },
             });
+        }
+
+        private static bool IsFullyQualified(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || path.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+            {
+                return false;
+            }
+
+            if (path.Length >= 3 && char.IsLetter(path[0]) && path[1] == ':' && IsSeparator(path[2]))
+            {
+                return true;
+            }
+
+            return path.Length >= 3 && IsSeparator(path[0]) && IsSeparator(path[1]) && !IsSeparator(path[2]);
+        }
+
+        private static bool IsSeparator(char at)
+        {
+            return at == Path.DirectorySeparatorChar || at == Path.AltDirectorySeparatorChar;
         }
 
         private static string LackingMotion(string file)
