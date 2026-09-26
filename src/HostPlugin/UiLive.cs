@@ -45,6 +45,16 @@ namespace PmxEditorMcp
                 return "押す部品がいまは押せない: " + named + " の " + string.Join("/", path);
             }
 
+            Control control = part as Control;
+            if (control != null)
+            {
+                ChoosePages(control);
+                if (!control.Visible)
+                {
+                    return "押す部品が見えていないので押せない: " + named + " の " + string.Join("/", path);
+                }
+            }
+
             ToolStripItem pressed = part as ToolStripItem;
             CheckBox box = part as CheckBox;
             if (pressed != null)
@@ -215,6 +225,19 @@ namespace PmxEditorMcp
 
             return UiStructureCatalog.Text(
                 UiStructureCatalog.Node(window, UiStructureCatalog.RootName), UiStructureCatalog.NameName);
+        }
+
+        private static void ChoosePages(Control control)
+        {
+            for (Control at = control; at != null; at = at.Parent)
+            {
+                TabPage page = at as TabPage;
+                TabControl tabs = page == null ? null : page.Parent as TabControl;
+                if (tabs != null && tabs.SelectedTab != page)
+                {
+                    tabs.SelectedTab = page;
+                }
+            }
         }
 
         private const uint ClickMessage = 0x00F5;

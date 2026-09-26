@@ -207,6 +207,47 @@ namespace PmxEditorMcp.Tests
 
         private static readonly string[] ScaleOffsetPath = { "panel1", "tabControl1", "tabPage3", "chkScaleOffset" };
 
+        private static readonly string[] ScalePath = { "panel1", "tabControl1", "tabPage3", "btnIScale" };
+
+        [Fact]
+        public void AButtonOnATabPageNotShownIsPressedAfterItsPageIsChosen()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    int clicked = 0;
+                    screen.Scale.Click += (sender, e) => clicked++;
+
+                    Value(Press(screen, Transform, ScalePath));
+
+                    Assert.Equal(1, clicked);
+                    Assert.Same(screen.Hidden, screen.Tabs.SelectedTab);
+                }
+            });
+        }
+
+        [Fact]
+        public void AButtonThatStaysHiddenIsRefusedInsteadOfPretendingToPress()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    int clicked = 0;
+                    screen.Scale.Click += (sender, e) => clicked++;
+                    screen.Scale.Visible = false;
+
+                    IDictionary<string, object> refused = Press(screen, Transform, ScalePath);
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.Equal(0, clicked);
+                }
+            });
+        }
+
         [Fact]
         public void AMenuItemTellsItsCheckedStateAndIsPressedOnlyToReachTheAskedOne()
         {
@@ -924,6 +965,9 @@ namespace PmxEditorMcp.Tests
                     TabPage shown = new TabPage { Name = "tabPage1" };
                     TabPage hidden = new TabPage { Name = "tabPage3" };
                     hidden.Controls.Add(ScaleOffset);
+                    hidden.Controls.Add(Scale);
+                    Tabs = tabs;
+                    Hidden = hidden;
                     tabs.TabPages.Add(shown);
                     tabs.TabPages.Add(hidden);
                     panel.Controls.Add(tabs);
@@ -935,9 +979,16 @@ namespace PmxEditorMcp.Tests
                 Initialize = new ToolStripMenuItem("全て初期化(&Q)") { Name = "MenuItem_Initialize" };
                 Archive = new ToolStripMenuItem("現在の形状をアーカイブ追加(&A)") { Name = "MenuItem_PushArchive" };
                 ScaleOffset = new CheckBox { Name = "chkScaleOffset", Text = "現在値へ積算" };
+                Scale = new Button { Name = "btnIScale", Text = "スケール" };
             }
 
             internal CheckBox ScaleOffset { get; }
+
+            internal Button Scale { get; }
+
+            internal TabControl Tabs { get; private set; }
+
+            internal TabPage Hidden { get; private set; }
 
             internal Form Main { get; }
 
