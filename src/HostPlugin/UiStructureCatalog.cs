@@ -8,9 +8,9 @@ namespace PmxEditorMcp
     /// 組み込んだ画面の構造の台帳を引く。台帳は初めて要るときに1度だけ解き、以後は同じものを
     /// 返す。
     ///
-    /// 窓の名前は型の完全名で、題はフォーム自身の Text である。部品の節は、型・受け皿の名前・
+    /// ウィンドウの名前は型の完全名で、タイトルはフォーム自身の Text である。部品の節は、型・受け皿の名前・
     /// 文言・指したときに出る説明・ショートカット・右クリックメニューの名前・断片のクラス・
-    /// 実行時に組み立てる印・開く窓・押したときの危険の区分・子を持ち、無い項目は省かれている。
+    /// 実行時に組み立てる印・開くウィンドウ・押したときの危険の区分・子を持ち、無い項目は省かれている。
     /// </summary>
     internal static class UiStructureCatalog
     {
@@ -86,7 +86,7 @@ namespace PmxEditorMcp
             get { return Text(Read(), MainFormName); }
         }
 
-        /// <summary>窓の並び。台帳に並んだ順で返す。</summary>
+        /// <summary>ウィンドウの並び。台帳に並んだ順で返す。</summary>
         internal static IList<IDictionary<string, object>> Windows()
         {
             List<IDictionary<string, object>> windows = new List<IDictionary<string, object>>();
@@ -112,7 +112,7 @@ namespace PmxEditorMcp
             return null;
         }
 
-        /// <summary>題が完全に一致する窓。同じ題の窓は複数ある。</summary>
+        /// <summary>タイトルが完全に一致するウィンドウ。同じタイトルのウィンドウは複数ある。</summary>
         internal static IList<IDictionary<string, object>> ByTitle(string named)
         {
             List<IDictionary<string, object>> found = new List<IDictionary<string, object>>();
@@ -127,7 +127,7 @@ namespace PmxEditorMcp
             return found;
         }
 
-        /// <summary>名前か題に部分一致する窓。完全に一致するものが無いときの答えに使う。</summary>
+        /// <summary>名前かタイトルに部分一致するウィンドウ。完全に一致するものが無いときの答えに使う。</summary>
         internal static IList<IDictionary<string, object>> Similar(string named)
         {
             List<IDictionary<string, object>> found = new List<IDictionary<string, object>>();

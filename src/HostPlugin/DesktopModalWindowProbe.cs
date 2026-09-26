@@ -7,10 +7,8 @@ using System.Text;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// このプロセスが出している窓を数え上げて、人の応答を待つ表示を探す。呼び先はビルド時に
-    /// 決まるので、名前で引く経路は持たない。窓の文字列を得るのはその窓のスレッドへの要求なので、
-    /// 待つ長さに上限を置く——上限が無いと、UIスレッドが応答しないときにこの見張り自身が戻らなくなり、
-    /// 何が起きているかを伝えるという役目を果たせない。
+    /// このプロセスが出しているウィンドウを数え上げて、人の応答を待つ表示を探す。ウィンドウの文字列を得るのは
+    /// そのウィンドウのスレッドへの要求なので、待つ長さに上限を置く。
     /// </summary>
     public sealed class DesktopModalWindowProbe : IModalWindowProbe
     {
@@ -20,7 +18,7 @@ namespace PmxEditorMcp
 
         private delegate bool WindowVisitor(IntPtr window, IntPtr state);
 
-        /// <summary>窓の文字列を得るのに待つ長さの上限を与えて生成する。</summary>
+        /// <summary>ウィンドウの文字列を得るのに待つ長さの上限を与えて生成する。</summary>
         public DesktopModalWindowProbe(TimeSpan textLimit)
         {
             if (textLimit <= TimeSpan.Zero)
@@ -32,13 +30,13 @@ namespace PmxEditorMcp
             _textLimit = textLimit;
         }
 
-        /// <summary>出ている表示の文面。出ていなければ null。</summary>
+        /// <summary>出ているダイアログのタイトルと本文。出ていなければ null。</summary>
         public string TryDescribe()
         {
             return ModalWindows.Describe(Windows());
         }
 
-        /// <summary>表示の中のラベル(Static)の文字を、空白で繋いだもの。</summary>
+        /// <summary>ダイアログの中のラベル(Static)の文字を、空白で繋いだもの。</summary>
         internal string Message(IntPtr window)
         {
             return Body(window);
@@ -69,8 +67,8 @@ namespace PmxEditorMcp
                         IntPtr.Zero);
                     foreach (IntPtr window in windows)
                     {
-                        // 文字列の取得は同じプロセスの窓へ要求を送るので、送る先を、持ち主を
-                        // 使用不可にしている可視の窓だけに絞る。
+                        // 文字列の取得は同じプロセスのウィンドウへ要求を送るので、送る先を、持ち主を
+                        // 使用不可にしている可視のウィンドウだけに絞る。
                         IntPtr owner = GetWindow(window, GetWindowOwner);
                         bool holdsOwner = owner != IntPtr.Zero && !IsWindowEnabled(owner);
                         bool visible = IsWindowVisible(window);
@@ -91,8 +89,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 窓が見せている本文。子の文字列を順につないだもので、持たない窓では空になる。押す先の
-        /// 文言も混ざるが、何を訊かれているかは本文の側に出る。
+        /// ウィンドウが見せている本文。持たないウィンドウでは空になる。
         /// </summary>
         private string Body(IntPtr window)
         {
@@ -150,8 +147,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 窓の文字列。上限までに応答が無ければ空とする——応答しない窓から文面は得られないが、
-        /// 得られないことを理由に見張りが止まってはならない。
+        /// ウィンドウの文字列。上限までに応答が無ければ空とする。
         /// </summary>
         private string Text(IntPtr window)
         {
@@ -191,7 +187,7 @@ namespace PmxEditorMcp
         /// <summary>文字列を得る要求。</summary>
         private const uint GetTextMessage = 0x000D;
 
-        /// <summary>応答しない窓では待たずに戻る。</summary>
+        /// <summary>応答しないウィンドウでは待たずに戻る。</summary>
         private const uint AbortIfHung = 0x0002;
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]

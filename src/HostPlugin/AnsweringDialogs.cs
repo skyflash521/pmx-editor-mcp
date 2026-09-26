@@ -10,7 +10,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// <paramref name="owner"/> を持ち主とするダイアログ(#32770)と、Name が <paramref name="forms"/> のどれかに当たる
-        /// WinForms のフォームは(<paramref name="owner"/> が <see cref="IntPtr.Zero"/> ならすべての表示は)、<see cref="GiveBack"/> したものを除き、<see cref="Remove"/> までの間、人の応答を
+        /// WinForms のフォームは(<paramref name="owner"/> が <see cref="IntPtr.Zero"/> ならすべてのウィンドウは)、<see cref="GiveBack"/> したものを除き、<see cref="Remove"/> までの間、人の応答を
         /// 待つ表示に数えない。どのスレッドからも呼べる。
         /// </summary>
         public static void Add(IntPtr owner, IEnumerable<string> forms)

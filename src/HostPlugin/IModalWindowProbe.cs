@@ -9,7 +9,7 @@ namespace PmxEditorMcp
     /// </summary>
     public interface IModalWindowProbe
     {
-        /// <summary>出ている表示の文面。出ていなければ null。</summary>
+        /// <summary>出ているダイアログのタイトルと本文。出ていなければ null。</summary>
         string TryDescribe();
     }
 }

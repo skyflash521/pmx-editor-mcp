@@ -66,7 +66,7 @@ namespace PmxEditorMcp
         internal static AnsweredDialog Pressed(string form, string button)
         {
             return new AnsweredDialog(
-                form + " の表示",
+                form + " のダイアログ",
                 form,
                 null,
                 null,
@@ -162,7 +162,7 @@ namespace PmxEditorMcp
         /// か <paramref name="quiet"/> に当たる WinForms のフォームはここが受け持ち、人の応答を待つ表示に数えない。
         /// <paramref name="quiet"/> はフォームの Name の並び。<paramref name="expected"/> には答えを書いて押し、書けないまま、
         /// または押しても閉じないまま <paramref name="limit"/> が過ぎたら取り消して閉じる。<paramref name="quiet"/> の
-        /// フォームは、自分で閉じるまで待つ。知らせの表示は文面を控えて閉じる。どれとも見分けられないダイアログは閉じず、
+        /// フォームは、自分で閉じるまで待つ。メッセージボックスは本文を控えて閉じる。どれとも見分けられないダイアログは閉じず、
         /// <paramref name="limit"/> が過ぎたら人の応答を待つ表示として数えるよう戻す。<paramref name="expected"/>
         /// は null でよく、そのときは答えるダイアログを待たない。
         /// </summary>
@@ -186,11 +186,11 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// UIスレッドの上で呼ぶ。<see cref="Stop"/> までの間に新しく出た表示を、持ち主を問わず受け持つ。<paramref name="expected"/>
+        /// UIスレッドの上で呼ぶ。<see cref="Stop"/> までの間に新しく出たダイアログを、持ち主を問わず受け持つ。<paramref name="expected"/>
         /// には並びの順に答える。はいといいえを持つ問いは、先に出た <paramref name="questions"/> 個まで、はいを押す。
-        /// ボタンが1つだけでアイコンの付いた知らせは、先に出た <paramref name="cautions"/> 個まで、そのボタンを押す。ボタンが
-        /// 1つだけでアイコンの無い知らせは、そのボタンを押す。押した表示の文面は <see cref="Agreed"/> へ控える。ほかの
-        /// 表示は、いいえか取り消しで閉じる。見分けられないものは <paramref name="limit"/> が過ぎたら取り消して閉じる。
+        /// ボタンが1つだけでアイコンの付いたメッセージボックスは、先に出た <paramref name="cautions"/> 個まで、そのボタンを押す。ボタンが
+        /// 1つだけでアイコンの無いメッセージボックスは、そのボタンを押す。押したダイアログの本文は <see cref="Agreed"/> へ控える。ほかの
+        /// ダイアログは、いいえか取り消しで閉じる。見分けられないものは <paramref name="limit"/> が過ぎたら取り消して閉じる。
         /// </summary>
         internal static DialogAnswer StartAcknowledging(
             IEnumerable<AnsweredDialog> expected, int questions, int cautions, TimeSpan limit)
@@ -223,13 +223,13 @@ namespace PmxEditorMcp
             return answer;
         }
 
-        /// <summary>答える表示もはいで答える問いも持たない <see cref="StartAcknowledging(IEnumerable{AnsweredDialog}, int, int, TimeSpan)"/>。</summary>
+        /// <summary>答えるダイアログもはいで答える問いも持たない <see cref="StartAcknowledging(IEnumerable{AnsweredDialog}, int, int, TimeSpan)"/>。</summary>
         internal static DialogAnswer StartAcknowledging(TimeSpan limit)
         {
             return StartAcknowledging(new AnsweredDialog[0], 0, 0, limit);
         }
 
-        /// <summary><see cref="Stop"/> までに、はいかOKを押して答えた知らせの文面。出た順に並ぶ。</summary>
+        /// <summary><see cref="Stop"/> までに、はいかOKを押して答えたメッセージボックスの本文。出た順に並ぶ。</summary>
         internal IList<string> Agreed
         {
             get { return _agreed.AsReadOnly(); }
@@ -389,7 +389,7 @@ namespace PmxEditorMcp
                 }
 
                 string said = _reader.Said(dialog);
-                Fail("エディタが表示を出したので閉じた: " + (said.Length == 0 ? "文面なし" : said));
+                Fail("エディタがダイアログを出したので閉じた: " + (said.Length == 0 ? "本文なし" : said));
                 Refuse(dialog);
 
                 return;
@@ -418,7 +418,7 @@ namespace PmxEditorMcp
 
             _handled.Add(dialog);
             string shown = _reader.Said(dialog);
-            Fail("エディタが表示を出したので閉じた: " + (shown.Length == 0 ? "文面なし" : shown));
+            Fail("エディタがダイアログを出したので閉じた: " + (shown.Length == 0 ? "本文なし" : shown));
             if (IsClass(dialog, DialogClass))
             {
                 Refuse(dialog);
@@ -463,7 +463,7 @@ namespace PmxEditorMcp
             return count;
         }
 
-        /// <summary>知らせのアイコンは、SS_ICON の形のラベルとして置かれる。</summary>
+        /// <summary>メッセージボックスのアイコンは、SS_ICON の形のラベルとして置かれる。</summary>
         private static bool HasIcon(IntPtr dialog)
         {
             bool found = false;
@@ -480,7 +480,7 @@ namespace PmxEditorMcp
             return found;
         }
 
-        /// <summary>OK だけの知らせでは、OK のボタンが取り消しの番号を持つ。</summary>
+        /// <summary>OK だけのメッセージボックスでは、OK のボタンが取り消しの番号を持つ。</summary>
         private static void Agree(IntPtr dialog)
         {
             Press(dialog, YesCommand, OkCommand, CancelCommand);
@@ -562,7 +562,7 @@ namespace PmxEditorMcp
             return visible;
         }
 
-        /// <summary>受け持つ表示と、それが WinForms のフォームならその Name。</summary>
+        /// <summary>受け持つダイアログと、それが WinForms のフォームならその Name。</summary>
         private List<KeyValuePair<IntPtr, string>> Dialogs()
         {
             List<KeyValuePair<IntPtr, string>> found = new List<KeyValuePair<IntPtr, string>>();

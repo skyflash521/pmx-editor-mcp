@@ -6,12 +6,12 @@ using System.Web.Script.Serialization;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// 窓の一覧、または名指しした窓の部品の木を返すツール。答えは組み込んだ台帳だけから作り、
-    /// エディタが起きていなくても、窓が閉じていても同じ答えを返す。
+    /// ウィンドウの一覧、または名指ししたウィンドウの部品の木を返すツール。答えは組み込んだ台帳だけから作り、
+    /// エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。
     ///
-    /// 名指しが1つの窓に定まらなくてもエラーにしない。型の完全名で当たればその窓だけ、当たらなければ題が
-    /// 一致する窓すべて、それも無ければ名前か題に部分一致する窓すべてを返し、どれも当たらなければ
-    /// 空で返す。木を付けるのは、型の完全名か題が完全に一致した窓に限る。
+    /// 名指しが1つのウィンドウに定まらなくてもエラーにしない。型の完全名で当たればそのウィンドウだけ、当たらなければタイトルが
+    /// 一致するウィンドウすべて、それも無ければ名前かタイトルに部分一致するウィンドウすべてを返し、どれも当たらなければ
+    /// 空で返す。木を付けるのは、型の完全名かタイトルが完全に一致したウィンドウに限る。
     ///
     /// 木が値の枠に収まらないときは、深さを縮めずにエラーを返し、どう絞れば収まるかを添える。
     /// 木を付けない一覧は、収まらなければ入るところまでを返す。当たった数を total で示し、残りが
@@ -22,7 +22,7 @@ namespace PmxEditorMcp
         /// <summary>このツールの名前。</summary>
         public const string ToolName = "editor_get_screen_structure";
 
-        /// <summary>窓を選ぶ入力の名前。省くと一覧を返す。</summary>
+        /// <summary>ウィンドウを選ぶ入力の名前。省くと一覧を返す。</summary>
         public const string WindowName = "window";
 
         /// <summary>木の根から降りる名前の連なりを受け取る入力の名前。</summary>
@@ -155,7 +155,7 @@ namespace PmxEditorMcp
 
                 return ToolEnvelope.Failure(
                     ToolEnvelope.ResponseTooLarge,
-                    "当たった窓の木が値の枠に収まらない。" + WindowName + " を型の完全名で1つに絞る: "
+                    "当たったウィンドウの木が値の枠に収まらない。" + WindowName + " を型の完全名で1つに絞る: "
                         + string.Join("、", forms.ToArray()));
             }
 
@@ -178,7 +178,7 @@ namespace PmxEditorMcp
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.ResponseTooLarge,
-                    "窓が1件も値の枠に収まらない。応答の枠を広げる。");
+                    "ウィンドウが1件も値の枠に収まらない。応答の枠を広げる。");
             }
 
             return ToolEnvelope.Success(Value(written, total, offset));
@@ -238,7 +238,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>名指しから窓を選ぶ。木を付けてよいときは <paramref name="named"/> を真にする。</summary>
+        /// <summary>名指しからウィンドウを選ぶ。木を付けてよいときは <paramref name="named"/> を真にする。</summary>
         private static IList<IDictionary<string, object>> Choose(string wanted, out bool named)
         {
             named = false;
@@ -266,7 +266,7 @@ namespace PmxEditorMcp
             return UiStructureCatalog.Similar(wanted);
         }
 
-        /// <summary>窓1つの見出し。木を付ける窓には、どこから開くかも載せる。</summary>
+        /// <summary>ウィンドウ1つの見出し。木を付けるウィンドウには、どこから開くかも載せる。</summary>
         private static IDictionary<string, object> Listed(IDictionary<string, object> window, bool named)
         {
             Dictionary<string, object> listed = new Dictionary<string, object>(StringComparer.Ordinal)

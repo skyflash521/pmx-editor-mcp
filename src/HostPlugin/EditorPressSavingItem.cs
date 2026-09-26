@@ -285,10 +285,10 @@ namespace PmxEditorMcp
             /// <summary>押したあとエディタが出す、はいといいえを持つ問いのうち、はいで答えてよい数。</summary>
             internal int Questions { get; }
 
-            /// <summary>押したあとエディタが出す、ボタンが1つだけでアイコンの付いた知らせのうち、閉じて続けてよい数。</summary>
+            /// <summary>押したあとエディタが出す、ボタンが1つだけでアイコンの付いたメッセージボックスのうち、閉じて続けてよい数。</summary>
             internal int Cautions { get; }
 
-            /// <summary>保存のダイアログの後に答える表示。</summary>
+            /// <summary>保存のダイアログの後に答えるダイアログ。</summary>
             internal AnsweredDialog[] Following { get; }
 
             /// <summary>書き先の拡張子から、同じことを画面を経ずに行うツールへ。</summary>

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// いまエディタが人の応答を待つ表示を出しているかと、その題と文面を返すツール。UIスレッドを
+    /// いまエディタが人の応答を待つ表示を出しているかと、そのタイトルと本文を返すツール。UIスレッドを
     /// 使わずに答えるので、表示が出ていてほかのツールが進めない間も答えを返す。
     /// </summary>
     public static class EditorPrompt

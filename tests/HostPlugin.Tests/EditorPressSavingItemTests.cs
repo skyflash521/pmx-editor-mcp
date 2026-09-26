@@ -213,7 +213,7 @@ namespace PmxEditorMcp.Tests
                             Call(fixture, "VmdViewLib.VMDViewForm", SaveFixVmd, folder.Path("非物理化.vmd"), true);
 
                         Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(answered));
-                        Assert.StartsWith("エディタが表示を出したので閉じた", ComposedEditFixture.Message(answered));
+                        Assert.StartsWith("エディタがダイアログを出したので閉じた", ComposedEditFixture.Message(answered));
                         Assert.Contains("二つ目の注意", ComposedEditFixture.Message(answered));
                         Assert.Contains(Caution, ComposedEditFixture.Message(answered));
                     }

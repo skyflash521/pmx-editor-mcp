@@ -142,8 +142,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// UIスレッドで実行する。停止した稼働世代では実行しない。人の応答を待つ表示でUIスレッドが
-        /// 進まないときは、待ち続けずにその表示の文面を持って戻る——答えるのは人で、待っても
-        /// こちらからは進められないためである。
+        /// 進まないときは、待ち続けずにそのダイアログのタイトルと本文を持って戻る。
         /// </summary>
         public UiInvocation TryInvokeOnUi(Action action)
         {
