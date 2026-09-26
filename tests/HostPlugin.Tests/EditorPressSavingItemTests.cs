@@ -172,7 +172,7 @@ namespace PmxEditorMcp.Tests
                                 return;
                             }
 
-                            File.WriteAllText(chosen, Screen.Written);
+                            File.WriteAllBytes(chosen, Motion);
                             MessageBox.Show("保存完了", "結果", MessageBoxButtons.OK);
                         });
                         view.Show();
@@ -183,6 +183,47 @@ namespace PmxEditorMcp.Tests
 
                         Assert.Equal(
                             new[] { Caution, "保存完了" }, ((IEnumerable<object>)value["messages"]).Cast<string>());
+                    }
+                });
+
+                Assert.Equal(Motion, File.ReadAllBytes(path));
+            }
+        }
+
+        [Fact]
+        public void AMotionFileLeftCutShortIsAFailureEvenWhenItsNoticeIsAgreed()
+        {
+            using (Folder folder = new Folder())
+            {
+                string path = folder.Path("非物理化.vmd");
+                File.WriteAllText(path, Screen.Written);
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Form view = Offscreen("VMDViewForm"))
+                    {
+                        view.Name = "VMDViewForm";
+                        Item(view, SaveFixVmd, () =>
+                        {
+                            MessageBox.Show(Caution, "注意", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            string chosen = Chosen();
+                            if (chosen == null)
+                            {
+                                return;
+                            }
+
+                            File.WriteAllBytes(chosen, Motion.Take(Motion.Length - 1).ToArray());
+                            MessageBox.Show("保存に失敗しました.", "結果", MessageBoxButtons.OK);
+                        });
+                        view.Show();
+                        fixture.Forms.Add(view);
+
+                        IDictionary<string, object> answered =
+                            Call(fixture, "VmdViewLib.VMDViewForm", SaveFixVmd, path, true);
+
+                        Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(answered));
+                        Assert.Contains("VMD", ComposedEditFixture.Message(answered));
+                        Assert.Contains("保存に失敗しました.", ComposedEditFixture.Message(answered));
                     }
                 });
 
@@ -401,6 +442,9 @@ namespace PmxEditorMcp.Tests
         private static readonly string[] Export = { "menuStrip1", "MenuItem_File", "MenuItem_Export" };
 
         private static readonly string[] SaveFixVmd = { "menuStrip1", "MenuItem_File", "MenuItem_SaveFixVmd" };
+
+        private static readonly byte[] Motion =
+            VmdFileTests.Bytes(visibleIkThird: false, bones: 1, morphs: 1, cameras: 0, iks: 0);
 
         private static IDictionary<string, object> Call(
             ComposedScreenFixture fixture, string[] path, string file, bool confirm)

@@ -42,7 +42,10 @@ namespace PmxEditorMcp
                 { "PmxViewForm.UVSkinTexForm|btnCreate", SavingItem.Asking() },
                 { "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveList", SavingItem.Fixed(2) },
                 { "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveAs", SavingItem.Asking(1) },
-                { "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_File/MenuItem_SaveFixVmd", SavingItem.Asking(1, 1) },
+                {
+                    "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_File/MenuItem_SaveFixVmd",
+                    SavingItem.Asking(1, 1).Checked(LackingMotion)
+                },
                 {
                     "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_View/MenuItem_ViewFile/MenuItem_ViewFile_SaveAs",
                     SavingItem.Asking()
@@ -194,6 +197,7 @@ namespace PmxEditorMcp
             string failure = null;
             IList<string> agreed = new string[0];
             bool written = false;
+            string lacking = null;
             try
             {
                 DialogAnswer answer = DialogAnswer.StartAcknowledging(
@@ -208,7 +212,9 @@ namespace PmxEditorMcp
                     agreed = answer.Agreed;
                 }
 
-                written = refused == null && failure == null && (!item.AsksFile || File.Exists(file));
+                bool produced = refused == null && failure == null && (!item.AsksFile || File.Exists(file));
+                lacking = produced ? item.Lacking(file) : null;
+                written = produced && lacking == null;
             }
             finally
             {
@@ -225,6 +231,12 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(ToolEnvelope.OperationFailed, UiAnswering.Told(failure, agreed));
             }
 
+            if (lacking != null)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.OperationFailed, UiAnswering.Told("エディタが書いたファイルは、" + lacking, agreed));
+            }
+
             if (!written)
             {
                 return ComposedEditResult.Refuse(
@@ -235,6 +247,13 @@ namespace PmxEditorMcp
             {
                 { MessagesName, agreed.ToArray() },
             });
+        }
+
+        private static string LackingMotion(string file)
+        {
+            return VmdFile.IsWhole(File.ReadAllBytes(file))
+                ? null
+                : "VMDとしては途中で切れているか、エディタの書くヘッダーで始まっていない。";
         }
 
         private static void RestoreUnlessWritten(string file, string kept, bool written)
@@ -270,8 +289,10 @@ namespace PmxEditorMcp
                 int questions,
                 int cautions,
                 AnsweredDialog[] following,
-                IDictionary<string, string> sdkToolsByExtension)
+                IDictionary<string, string> sdkToolsByExtension,
+                Func<string, string> lacking)
             {
+                Lacking = lacking;
                 AsksFile = asksFile;
                 Questions = questions;
                 Cautions = cautions;
@@ -294,21 +315,30 @@ namespace PmxEditorMcp
             /// <summary>書き先の拡張子から、同じことを画面を経ずに行うツールへ。</summary>
             internal IDictionary<string, string> SdkToolsByExtension { get; }
 
+            /// <summary>書かれたファイルの中身が形式として揃っていなければ、どう揃っていないかを述べた文。揃っていれば null。</summary>
+            internal Func<string, string> Lacking { get; }
+
             internal static SavingItem Asking(int questions = 0, int cautions = 0)
             {
                 return new SavingItem(
-                    true, questions, cautions, new AnsweredDialog[0], new Dictionary<string, string>());
+                    true, questions, cautions, new AnsweredDialog[0], new Dictionary<string, string>(), Whole);
             }
 
             internal static SavingItem Fixed(int questions = 0)
             {
-                return new SavingItem(false, questions, 0, new AnsweredDialog[0], new Dictionary<string, string>());
+                return new SavingItem(
+                    false, questions, 0, new AnsweredDialog[0], new Dictionary<string, string>(), Whole);
             }
 
             internal SavingItem Then(AnsweredDialog following)
             {
                 return new SavingItem(
-                    AsksFile, Questions, Cautions, Following.Concat(new[] { following }).ToArray(), SdkToolsByExtension);
+                    AsksFile,
+                    Questions,
+                    Cautions,
+                    Following.Concat(new[] { following }).ToArray(),
+                    SdkToolsByExtension,
+                    Lacking);
             }
 
             internal SavingItem Instead(string extension, string tool)
@@ -318,7 +348,17 @@ namespace PmxEditorMcp
                     { extension, tool },
                 };
 
-                return new SavingItem(AsksFile, Questions, Cautions, Following, tools);
+                return new SavingItem(AsksFile, Questions, Cautions, Following, tools, Lacking);
+            }
+
+            internal SavingItem Checked(Func<string, string> lacking)
+            {
+                return new SavingItem(AsksFile, Questions, Cautions, Following, SdkToolsByExtension, lacking);
+            }
+
+            private static string Whole(string file)
+            {
+                return null;
             }
         }
     }
