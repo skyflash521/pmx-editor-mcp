@@ -11,8 +11,64 @@ using Xunit;
 namespace PmxEditorMcp.Tests
 {
     [Collection(ModalWindowCollection.Name)]
-    public sealed class EditorPressSavingItemTests
+    public sealed class EditorPressSavingItemTests : IDisposable
     {
+        private readonly Func<string> _heldEditorFolder = EditorPressSavingItem.EditorFolder;
+
+        private readonly Folder _editor = new Folder();
+
+        public EditorPressSavingItemTests()
+        {
+            EditorPressSavingItem.EditorFolder = () => _editor.Root;
+        }
+
+        public void Dispose()
+        {
+            EditorPressSavingItem.EditorFolder = _heldEditorFolder;
+            _editor.Dispose();
+        }
+
+        private string DefaultSetting
+        {
+            get { return Path.Combine(_editor.Root, "_data", "表示設定", "fx.xml"); }
+        }
+
+        [Fact]
+        public void AnItemThatWritesToAFixedPlaceIsAFailureWhenTheFileIsNotWritten()
+        {
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture))
+                {
+                    screen.WriteNothing = true;
+
+                    IDictionary<string, object> failed = Call(fixture, SaveDefault, null, true);
+
+                    Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(failed));
+                    Assert.Contains("fx.xml", ComposedEditFixture.Message(failed));
+                }
+            });
+        }
+
+        [Fact]
+        public void AnItemThatWritesToAFixedPlaceSucceedsWhenTheFileIsWritten()
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(DefaultSetting));
+            File.WriteAllText(DefaultSetting, "前の中身");
+            File.SetLastWriteTimeUtc(DefaultSetting, new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture))
+                {
+                    ComposedScreenFixture.Value(Call(fixture, SaveDefault, null, true));
+                }
+            });
+
+            Assert.Equal(Screen.Written, File.ReadAllText(DefaultSetting));
+        }
+
         private const string Window = "PmxViewForm.EffectView";
 
         private static readonly string[] SaveAs = { "menuStrip1", "MenuItem_File", "MenuItem_SaveAs" };
@@ -668,6 +724,15 @@ namespace PmxEditorMcp.Tests
                 {
                     Answers.Add(MessageBox.Show(Further, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question));
                 }
+
+                if (WriteNothing || Answers.Any(answer => answer != DialogResult.Yes))
+                {
+                    return;
+                }
+
+                string target = Path.Combine(EditorPressSavingItem.EditorFolder(), "_data", "表示設定", "fx.xml");
+                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                File.WriteAllText(target, Written);
             }
         }
     }

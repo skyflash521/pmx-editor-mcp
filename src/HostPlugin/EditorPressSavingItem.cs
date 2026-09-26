@@ -17,6 +17,8 @@ namespace PmxEditorMcp
 
         public const string MessagesName = "messages";
 
+        internal static Func<string> EditorFolder { get; set; } = () => Application.StartupPath;
+
         private static readonly TimeSpan PromptReadLimit = TimeSpan.FromSeconds(1);
 
         private static readonly Dictionary<string, SavingItem> ItemsByWindowAndPath =
@@ -32,7 +34,7 @@ namespace PmxEditorMcp
                         .Instead(".pmd", "session_save_pmd_file")
                 },
                 { "PmxViewForm.EffectView|menuStrip1/MenuItem_File/MenuItem_SaveAs", SavingItem.Asking() },
-                { "PmxViewForm.EffectView|menuStrip1/MenuItem_File/MenuItem_SaveDefault", SavingItem.Fixed(1) },
+                { "PmxViewForm.EffectView|menuStrip1/MenuItem_File/MenuItem_SaveDefault", SavingItem.Fixed(1).At("表示設定\\fx.xml") },
                 { "PmxViewForm.PmxSkeletonView|menuStrip1/MenuItem_File/MenuItem_SaveSkeleton", SavingItem.Asking() },
                 { "PmxViewForm.PmxSkeletonView|menuStrip1/MenuItem_File/MenuItem_SaveSkeletonAll", SavingItem.Asking(1) },
                 { "PmxViewForm.TransMorphSlider|menuStrip1/MenuItem_Edit/MenuItem_SaveGroup", SavingItem.Asking() },
@@ -40,7 +42,7 @@ namespace PmxEditorMcp
                 { "PmxViewForm.TransSlider|menuStrip1/MenuItem_File/MenuItem_Save", SavingItem.Asking() },
                 { "PmxViewForm.TransformView|menuStrip1/MenuItem_Edit/MenuItem_Vpd/MenuItem_Vpd_Save", SavingItem.Asking(1) },
                 { "PmxViewForm.UVSkinTexForm|btnCreate", SavingItem.Asking() },
-                { "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveList", SavingItem.Fixed(2) },
+                { "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveList", SavingItem.Fixed(2).At("VMDリスト.txt") },
                 { "PmxViewForm.VmdListView|menuStrip1/MenuItem_File/MenuItem_SaveAs", SavingItem.Asking(1) },
                 {
                     "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_File/MenuItem_SaveFixVmd",
@@ -52,7 +54,7 @@ namespace PmxEditorMcp
                 },
                 {
                     "VmdViewLib.VMDViewForm|menuStrip1/MenuItem_View/MenuItem_ViewFile/MenuItem_ViewFile_Save",
-                    SavingItem.Fixed(1)
+                    SavingItem.Fixed(1).At("表示設定\\_VMDView.vdw")
                 },
             };
 
@@ -193,6 +195,10 @@ namespace PmxEditorMcp
             }
 
             expected.AddRange(item.Following);
+            string target = item.Target == null
+                ? null
+                : Path.Combine(EditorDataFolder.Of(EditorFolder()), item.Target);
+            DateTime? before = target != null && File.Exists(target) ? File.GetLastWriteTimeUtc(target) : (DateTime?)null;
             string refused = null;
             string failure = null;
             IList<string> agreed = new string[0];
@@ -212,7 +218,10 @@ namespace PmxEditorMcp
                     agreed = answer.Agreed;
                 }
 
-                bool produced = refused == null && failure == null && (!item.AsksFile || File.Exists(file));
+                bool produced = refused == null
+                    && failure == null
+                    && (!item.AsksFile || File.Exists(file))
+                    && (target == null || (File.Exists(target) && File.GetLastWriteTimeUtc(target) != before));
                 lacking = produced ? item.Lacking(file) : null;
                 written = produced && lacking == null;
             }
@@ -240,7 +249,9 @@ namespace PmxEditorMcp
             if (!written)
             {
                 return ComposedEditResult.Refuse(
-                    ToolEnvelope.OperationFailed, UiAnswering.Told("エディタがファイルを書かなかった。", agreed));
+                    ToolEnvelope.OperationFailed,
+                    UiAnswering.Told(
+                        "エディタがファイルを書かなかった" + (target == null ? "" : ": " + target) + "。", agreed));
             }
 
             return ComposedEditResult.Complete(new Dictionary<string, object>(StringComparer.Ordinal)
@@ -310,8 +321,10 @@ namespace PmxEditorMcp
                 int cautions,
                 AnsweredDialog[] following,
                 IDictionary<string, string> sdkToolsByExtension,
-                Func<string, string> lacking)
+                Func<string, string> lacking,
+                string target)
             {
+                Target = target;
                 Lacking = lacking;
                 AsksFile = asksFile;
                 Questions = questions;
@@ -322,6 +335,9 @@ namespace PmxEditorMcp
             }
 
             internal bool AsksFile { get; }
+
+            /// <summary>決まった場所へ書く部品の書き先の、エディタのデータフォルダからの相対パス。確かめない部品では null。</summary>
+            internal string Target { get; }
 
             /// <summary>押したあとエディタが出す、はいといいえを持つ問いのうち、はいで答えてよい数。</summary>
             internal int Questions { get; }
@@ -341,13 +357,13 @@ namespace PmxEditorMcp
             internal static SavingItem Asking(int questions = 0, int cautions = 0)
             {
                 return new SavingItem(
-                    true, questions, cautions, new AnsweredDialog[0], new Dictionary<string, string>(), Whole);
+                    true, questions, cautions, new AnsweredDialog[0], new Dictionary<string, string>(), Whole, null);
             }
 
             internal static SavingItem Fixed(int questions = 0)
             {
                 return new SavingItem(
-                    false, questions, 0, new AnsweredDialog[0], new Dictionary<string, string>(), Whole);
+                    false, questions, 0, new AnsweredDialog[0], new Dictionary<string, string>(), Whole, null);
             }
 
             internal SavingItem Then(AnsweredDialog following)
@@ -358,7 +374,8 @@ namespace PmxEditorMcp
                     Cautions,
                     Following.Concat(new[] { following }).ToArray(),
                     SdkToolsByExtension,
-                    Lacking);
+                    Lacking,
+                    Target);
             }
 
             internal SavingItem Instead(string extension, string tool)
@@ -368,12 +385,17 @@ namespace PmxEditorMcp
                     { extension, tool },
                 };
 
-                return new SavingItem(AsksFile, Questions, Cautions, Following, tools, Lacking);
+                return new SavingItem(AsksFile, Questions, Cautions, Following, tools, Lacking, Target);
             }
 
             internal SavingItem Checked(Func<string, string> lacking)
             {
-                return new SavingItem(AsksFile, Questions, Cautions, Following, SdkToolsByExtension, lacking);
+                return new SavingItem(AsksFile, Questions, Cautions, Following, SdkToolsByExtension, lacking, Target);
+            }
+
+            internal SavingItem At(string target)
+            {
+                return new SavingItem(AsksFile, Questions, Cautions, Following, SdkToolsByExtension, Lacking, target);
             }
 
             private static string Whole(string file)
