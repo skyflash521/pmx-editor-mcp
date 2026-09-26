@@ -260,6 +260,35 @@ namespace PmxEditorMcp
             }
 
             code = ToolEnvelope.InvalidArgument;
+            object[] parts = given as object[];
+            if (parts == null || parts.Length == 0)
+            {
+                message = RampName + " は axis・from・to を持つ組を1つ以上並べた並びでなければならない。";
+
+                return false;
+            }
+
+            List<Func<V3, float>> weights = new List<Func<V3, float>>();
+            foreach (object part in parts)
+            {
+                Func<V3, float> one;
+                if (!TryRampPart(part, out one, out message))
+                {
+                    return false;
+                }
+
+                weights.Add(one);
+            }
+
+            weight = spot => weights.Aggregate(1f, (strength, one) => strength * one(spot));
+            code = null;
+
+            return true;
+        }
+
+        private static bool TryRampPart(object given, out Func<V3, float> weight, out string message)
+        {
+            weight = null;
             IDictionary<string, object> held = given as IDictionary<string, object>;
             object axisGiven = null;
             object fromGiven = null;
@@ -301,7 +330,7 @@ namespace PmxEditorMcp
 
                 return Math.Max(0f, Math.Min(1f, (along - from) / (to - from)));
             };
-            code = null;
+            message = null;
 
             return true;
         }

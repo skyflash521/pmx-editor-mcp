@@ -13,6 +13,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData("refIndices")]
         [InlineData("targets")]
         [InlineData("assignments")]
+        [InlineData("kinds")]
+        [InlineData("ramp")]
+        [InlineData("surfaceMaterialIndices")]
         public void AnArrayThatDecidesWhatTheCallActsOnCannotBeEmpty(string name)
         {
             Assert.True(NonEmptyArrayRule.NonEmpty(Array(name)));

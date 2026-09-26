@@ -526,6 +526,58 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheStrengthsOfSeveralRampsAreMultiplied()
+        {
+            FakeVertex both = Vertex(0f, 2f, 2f);
+            FakeVertex half = Vertex(0f, 1f, 2f);
+            FakeVertex none = Vertex(0f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(2f, 0f, 0f),
+                Ramps(RampPart("y", 0f, 2f), RampPart("z", 0f, 2f)),
+                Targets(Every(ElementKinds.Vertex)));
+
+            Near(2.0, both.Position.X);
+            Near(1.0, half.Position.X);
+            Near(0.0, none.Position.X);
+        }
+
+        [Fact]
+        public void ARisingAndAFallingRampOnOneAxisMoveOnlyTheSpanBetween()
+        {
+            FakeVertex before = Vertex(0f, 0f, 0.5f);
+            FakeVertex rising = Vertex(0f, 0f, 0.7f);
+            FakeVertex peak = Vertex(0f, 0f, 0.85f);
+            FakeVertex after = Vertex(0f, 0f, 1.2f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(1f, 0f, 0f),
+                Ramps(RampPart("z", 0.55f, 0.85f), RampPart("z", 1.1f, 0.85f)),
+                Targets(Every(ElementKinds.Vertex)));
+
+            Near(0.0, before.Position.X);
+            Near(0.5, rising.Position.X);
+            Near(1.0, peak.Position.X);
+            Near(0.0, after.Position.X);
+        }
+
+        [Fact]
+        public void AnEmptyListOfRampsIsRefused()
+        {
+            Vertex(0f, 0f, 0f);
+
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ComposedEditFixture.Code(Place(
+                    Operation(ModelPlaceElements.TranslateBy),
+                    Offset(1f, 0f, 0f),
+                    Ramps(),
+                    Targets(Every(ElementKinds.Vertex)))));
+        }
+
+        [Fact]
         public void TranslatingWithARampMovesEachElementByWhereItIsAlongTheAxis()
         {
             FakeVertex vertex = Vertex(0f, 1f, 0f);
@@ -780,14 +832,22 @@ namespace PmxEditorMcp.Tests
 
         private static KeyValuePair<string, object> Ramp(string axis, float from, float to)
         {
-            return ComposedEditFixture.Given(
-                ModelPlaceElements.RampName,
-                new Dictionary<string, object>(StringComparer.Ordinal)
-                {
-                    { ModelPlaceElements.RampAxisName, axis },
-                    { ModelPlaceElements.RampFromName, from },
-                    { ModelPlaceElements.RampToName, to },
-                });
+            return Ramps(RampPart(axis, from, to));
+        }
+
+        private static KeyValuePair<string, object> Ramps(params object[] parts)
+        {
+            return ComposedEditFixture.Given(ModelPlaceElements.RampName, parts);
+        }
+
+        private static object RampPart(string axis, float from, float to)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { ModelPlaceElements.RampAxisName, axis },
+                { ModelPlaceElements.RampFromName, from },
+                { ModelPlaceElements.RampToName, to },
+            };
         }
 
         private static KeyValuePair<string, object> Offset(float x, float y, float z)

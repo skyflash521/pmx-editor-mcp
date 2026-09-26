@@ -15,9 +15,12 @@ namespace PmxEditorMcp.SignatureDump
             "assignments",
             "handles",
             "indices",
+            "kinds",
             "parentHandles",
             "parentIndices",
+            "ramp",
             "refIndices",
+            "surfaceMaterialIndices",
             "targets",
         });
 
