@@ -280,6 +280,46 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheSaveDialogIsAnsweredWithoutShowingOnTheScreen()
+        {
+            using (Folder folder = new Folder())
+            {
+                string path = folder.Path("設定.xml");
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Screen screen = new Screen(fixture))
+                    using (DialogSightings sightings = new DialogSightings())
+                    {
+                        ComposedScreenFixture.Value(Call(fixture, SaveAs, path, true));
+
+                        Assert.Equal(0, sightings.Opaque);
+                        Assert.NotEqual(0, sightings.Transparent);
+                    }
+                });
+
+                Assert.Equal(Screen.Written, File.ReadAllText(path));
+            }
+        }
+
+        [Fact]
+        public void AConfirmationIsAgreedWithoutShowingOnTheScreen()
+        {
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture))
+                using (DialogSightings sightings = new DialogSightings())
+                {
+                    ComposedScreenFixture.Value(Call(fixture, SaveDefault, null, true));
+
+                    Assert.Equal(0, sightings.Opaque);
+                    Assert.NotEqual(0, sightings.Transparent);
+                }
+            });
+        }
+
+        [Fact]
         public void AConfirmationTheItemAsksIsAgreedAndReturned()
         {
             OnSta(() =>

@@ -132,6 +132,12 @@ namespace PmxEditorMcp
 
         private delegate bool WindowVisitor(IntPtr window, IntPtr state);
 
+        private delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
+
+        private HookProc _hookProc;
+
+        private IntPtr _hook;
+
         private DialogAnswer(
             IntPtr owner,
             uint uiThread,
@@ -219,6 +225,8 @@ namespace PmxEditorMcp
             AnsweringDialogs.Add(owner, answer._quiet.Concat(answer.Forms()).ToList());
             answer._watch.Start();
             answer._thread.Start();
+            answer._hookProc = answer.Hooked;
+            answer._hook = SetWindowsHookEx(CbtHook, answer._hookProc, IntPtr.Zero, answer._uiThread);
 
             return answer;
         }
@@ -238,6 +246,12 @@ namespace PmxEditorMcp
         /// <summary>答えるダイアログのすべてへ答えて閉じられたら null、そうでなければその事情を返す。</summary>
         internal string Stop()
         {
+            if (_hook != IntPtr.Zero)
+            {
+                UnhookWindowsHookEx(_hook);
+                _hook = IntPtr.Zero;
+            }
+
             _stopped.Set();
             _thread.Join();
             _stopped.Dispose();
@@ -543,6 +557,37 @@ namespace PmxEditorMcp
             }
         }
 
+        private IntPtr Hooked(int code, IntPtr wParam, IntPtr lParam)
+        {
+            if (code == ActivateCode && Closes(wParam))
+            {
+                SetWindowLong(wParam, ExtendedStyleIndex, GetWindowLong(wParam, ExtendedStyleIndex) | LayeredStyle);
+                SetLayeredWindowAttributes(wParam, 0, 0, AlphaFlag);
+            }
+
+            return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+        }
+
+        private bool Closes(IntPtr window)
+        {
+            if (_before.Contains(window))
+            {
+                return false;
+            }
+
+            IEnumerable<AnsweredDialog> ahead = _expected.Skip(_next);
+            string form = AnsweringDialogs.FormName(window);
+            if (form != null)
+            {
+                return ahead.Any(one => string.Equals(one.Form, form, StringComparison.Ordinal));
+            }
+
+            return IsClass(window, DialogClass)
+                && IsOwned(window)
+                && (IsMessage(window)
+                    || ahead.Any(one => one.Form == null && one.Field != null && one.Field(window) != IntPtr.Zero));
+        }
+
         private List<IntPtr> Visible()
         {
             List<IntPtr> visible = new List<IntPtr>();
@@ -711,6 +756,16 @@ namespace PmxEditorMcp
 
         private const int StyleIndex = -16;
 
+        private const int ExtendedStyleIndex = -20;
+
+        private const int LayeredStyle = 0x80000;
+
+        private const uint AlphaFlag = 0x2;
+
+        private const int CbtHook = 5;
+
+        private const int ActivateCode = 5;
+
         private const int StaticTypeMask = 0x1F;
 
         private const int IconStatic = 0x03;
@@ -757,6 +812,23 @@ namespace PmxEditorMcp
 
         [DllImport("user32.dll")]
         private static extern int GetWindowLong(IntPtr window, int index);
+
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr window, int index, int value);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SetLayeredWindowAttributes(IntPtr window, uint key, byte alpha, uint flags);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetWindowsHookEx(int kind, HookProc proc, IntPtr module, uint threadId);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool UnhookWindowsHookEx(IntPtr hook);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr CallNextHookEx(IntPtr hook, int code, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);

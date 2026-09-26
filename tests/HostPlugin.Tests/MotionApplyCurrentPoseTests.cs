@@ -52,6 +52,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheInputDialogIsAnsweredWithoutShowingOnTheScreen()
+        {
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture))
+                {
+                    screen.Normalize.Checked = false;
+
+                    ComposedScreenFixture.Value(Call(fixture, 0.001));
+
+                    Assert.True(screen.AskedTransparently, "しきい値を訊く表示が透明でないまま出た。");
+                }
+            });
+        }
+
+        [Fact]
         public void AClosedTransformViewIsRefused()
         {
             OnSta(() =>
@@ -166,6 +183,8 @@ namespace PmxEditorMcp.Tests
 
             internal Action WhileAsking { get; set; }
 
+            internal bool AskedTransparently { get; private set; }
+
             public void Dispose()
             {
                 _view.Dispose();
@@ -192,7 +211,11 @@ namespace PmxEditorMcp.Tests
                     asking.Controls.Add(text);
                     asking.Controls.Add(ok);
                     asking.Controls.Add(cancel);
-                    asking.Shown += (sender, e) => WhileAsking?.Invoke();
+                    asking.Shown += (sender, e) =>
+                    {
+                        AskedTransparently = DialogSightings.Hidden(asking.Handle);
+                        WhileAsking?.Invoke();
+                    };
                     if (asking.ShowDialog(_view) != DialogResult.OK)
                     {
                         return;
