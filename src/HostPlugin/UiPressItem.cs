@@ -93,7 +93,7 @@ namespace PmxEditorMcp
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.InvalidArgument,
-                    "押すと何かが起きるメニュー項目かボタンではない: " + string.Join("/", path));
+                    "押すと何かが起きるメニュー項目・ボタン・チェックボックスではない: " + string.Join("/", path));
             }
 
             string guide;
@@ -212,7 +212,7 @@ namespace PmxEditorMcp
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.InvalidArgument,
-                    CheckedName + " は入り切りを持つメニュー項目かツールバーのボタンにだけ渡す: " + string.Join("/", path));
+                    CheckedName + " は入り切りを持つメニュー項目・ツールバーのボタン・チェックボックスにだけ渡す: " + string.Join("/", path));
             }
 
             if (answered == null)

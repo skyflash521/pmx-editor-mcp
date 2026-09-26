@@ -182,6 +182,32 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ACheckBoxOnATabPageNotShownIsClickedAndTellsItsCheckedState()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    int clicked = 0;
+                    screen.ScaleOffset.Click += (sender, e) => clicked++;
+
+                    IDictionary<string, object> pressed = Value(Press(screen, Transform, ScaleOffsetPath));
+                    IDictionary<string, object> kept = Value(CheckedAt(screen, true, ScaleOffsetPath));
+                    IDictionary<string, object> turned = Value(CheckedAt(screen, false, ScaleOffsetPath));
+
+                    Assert.Equal(true, pressed[UiPressItem.CheckedName]);
+                    Assert.Equal(true, kept[UiPressItem.CheckedName]);
+                    Assert.Equal(false, turned[UiPressItem.CheckedName]);
+                    Assert.False(screen.ScaleOffset.Checked);
+                    Assert.Equal(2, clicked);
+                }
+            });
+        }
+
+        private static readonly string[] ScaleOffsetPath = { "panel1", "tabControl1", "tabPage3", "chkScaleOffset" };
+
+        [Fact]
         public void AMenuItemTellsItsCheckedStateAndIsPressedOnlyToReachTheAskedOne()
         {
             OnSta(() =>
@@ -893,13 +919,25 @@ namespace PmxEditorMcp.Tests
                     ext.Items.Add(Menu("MenuItem_Init", Initialize));
                     split.Panel2.Controls.Add(ext);
                     Transform.Controls.Add(split);
+                    Panel panel = new Panel { Name = "panel1" };
+                    TabControl tabs = new TabControl { Name = "tabControl1" };
+                    TabPage shown = new TabPage { Name = "tabPage1" };
+                    TabPage hidden = new TabPage { Name = "tabPage3" };
+                    hidden.Controls.Add(ScaleOffset);
+                    tabs.TabPages.Add(shown);
+                    tabs.TabPages.Add(hidden);
+                    panel.Controls.Add(tabs);
+                    Transform.Controls.Add(panel);
                 };
                 View.Controls.Add(Strip(Menu("MenuItem_View", Item)));
                 Normalize = new ToolStripMenuItem("保存／更新時などの頂点モーフ正規化(&N)") { Name = "MenuItem_SaveNormalize" };
                 Apply = new ToolStripMenuItem("現在の変形状態でモデル形状を更新(&U)") { Name = "MenuItem_SetupCurrentPose" };
                 Initialize = new ToolStripMenuItem("全て初期化(&Q)") { Name = "MenuItem_Initialize" };
                 Archive = new ToolStripMenuItem("現在の形状をアーカイブ追加(&A)") { Name = "MenuItem_PushArchive" };
+                ScaleOffset = new CheckBox { Name = "chkScaleOffset", Text = "現在値へ積算" };
             }
+
+            internal CheckBox ScaleOffset { get; }
 
             internal Form Main { get; }
 

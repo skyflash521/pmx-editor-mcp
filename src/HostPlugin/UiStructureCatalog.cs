@@ -52,7 +52,7 @@ namespace PmxEditorMcp
 
         private static readonly HashSet<string> PressableTypes = new HashSet<string>(StringComparer.Ordinal)
         {
-            "ToolStripMenuItem", "ToolStripButton", "Button",
+            "ToolStripMenuItem", "ToolStripButton", "Button", "CheckBox",
         };
 
         private static readonly object Gate = new object();

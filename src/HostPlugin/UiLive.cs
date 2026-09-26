@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace PmxEditorMcp
@@ -45,9 +46,14 @@ namespace PmxEditorMcp
             }
 
             ToolStripItem pressed = part as ToolStripItem;
+            CheckBox box = part as CheckBox;
             if (pressed != null)
             {
                 pressed.PerformClick();
+            }
+            else if (box != null)
+            {
+                SendMessage(box.Handle, ClickMessage, IntPtr.Zero, IntPtr.Zero);
             }
             else
             {
@@ -58,14 +64,20 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// その部品がメニュー項目かツールバーのボタンなら、辿った途中のメニューを開いてから読んだ入り切り。ほかの部品と、
-        /// 辿れなかったときは null。<paramref name="found"/> は部品を辿れたか。
+        /// その部品がメニュー項目・ツールバーのボタン・チェックボックスなら、辿った途中のメニューを開いてから読んだ
+        /// 入り切り。ほかの部品と、辿れなかったときは null。<paramref name="found"/> は部品を辿れたか。
         /// </summary>
         internal static bool? CheckedState(Form form, IList<string> path, out bool found)
         {
             List<UiMenu> menus = new List<UiMenu>();
             object part = Find(form, path, menus);
             found = part != null;
+            CheckBox box = part as CheckBox;
+            if (box != null)
+            {
+                return box.Checked;
+            }
+
             ToolStripMenuItem item = part as ToolStripMenuItem;
             ToolStripButton button = part as ToolStripButton;
             if (item == null && button == null)
@@ -204,6 +216,11 @@ namespace PmxEditorMcp
             return UiStructureCatalog.Text(
                 UiStructureCatalog.Node(window, UiStructureCatalog.RootName), UiStructureCatalog.NameName);
         }
+
+        private const uint ClickMessage = 0x00F5;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
     }
 
     internal sealed class UiMenu

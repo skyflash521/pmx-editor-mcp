@@ -2907,6 +2907,52 @@
         },
         {
           "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "panel1",
+              "tabControl1",
+              "tabPage3",
+              "chkScaleOffset"
+            ],
+            "checked": false
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "checked",
+                "equals": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_press_item",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "path": [
+              "panel1",
+              "tabControl1",
+              "tabPage3",
+              "chkScaleOffset"
+            ],
+            "checked": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "checked",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "session_initialize_pmx",
           "arguments": {
             "confirm": true
