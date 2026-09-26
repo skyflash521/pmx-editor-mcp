@@ -203,6 +203,49 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheConnectedPartAddsEveryVertexReachedThroughFaces()
+        {
+            IList<IPXVertex> vertices = Vertices(8);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 2, 3, 4));
+            Faces(Face(vertices, 4, 5, 6), Face(vertices, 1, 1, 1));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 6 };
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.Connected),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
+
+            Assert.Equal(new[] { 0, 1, 2, 3, 4, 5, 6 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(7, ComposedScreenFixture.Value(envelope)["selected"]);
+        }
+
+        [Fact]
+        public void TheConnectedPartOfAnUntouchedVertexIsItself()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 3 };
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.Connected),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
+
+            Assert.Equal(new[] { 3 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(1, ComposedScreenFixture.Value(envelope)["selected"]);
+        }
+
+        [Fact]
+        public void TheConnectedPartIsOnlyForVertices()
+        {
+            Bones("根");
+
+            IDictionary<string, object> envelope = Select(
+                Operation(ViewSelectElements.Connected),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Bone));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(envelope));
+        }
+
+        [Fact]
         public void ReducingDropsTheVerticesThatTouchOnesOutsideTheSelection()
         {
             IList<IPXVertex> vertices = Vertices(4);

@@ -26,6 +26,9 @@ namespace PmxEditorMcp
         /// <summary>いまの選択から、選んでいない要素と面で隣り合うものを外す。</summary>
         public const string Reduce = "reduce";
 
+        /// <summary>いまの選択に、面を伝ってつながる頂点をすべて足す。</summary>
+        public const string Connected = "connected";
+
         /// <summary>いま選んでいるボーンの子孫を足す。</summary>
         public const string ChildChain = "childChain";
 
@@ -37,7 +40,7 @@ namespace PmxEditorMcp
         {
             get
             {
-                return new[] { All, Invert, Expand, Reduce, ChildChain, HalfModel };
+                return new[] { All, Invert, Expand, Reduce, Connected, ChildChain, HalfModel };
             }
         }
 
@@ -223,6 +226,16 @@ namespace PmxEditorMcp
 
                     break;
 
+                case Connected:
+                    if (!string.Equals(kind, ElementKinds.Vertex, StringComparison.Ordinal))
+                    {
+                        return Only(Connected, ElementKinds.Vertex);
+                    }
+
+                    made = Reached(model, held);
+
+                    break;
+
                 default:
                     if (!string.Equals(kind, ElementKinds.Vertex, StringComparison.Ordinal))
                     {
@@ -355,6 +368,51 @@ namespace PmxEditorMcp
             return widening
                 ? chosen.Union(found).ToList()
                 : chosen.Except(found).ToList();
+        }
+
+        private static IList<int> Reached(IPXPmx model, IList<int> held)
+        {
+            IDictionary<IPXVertex, int> at = Placed(model.Vertex);
+            Dictionary<int, List<int>> neighbours = new Dictionary<int, List<int>>();
+            foreach (IPXFace face in ViewSelection.Faces(model))
+            {
+                List<int> corners = ViewSelection.Corners(face)
+                    .Where(vertex => vertex != null && at.ContainsKey(vertex))
+                    .Select(vertex => at[vertex])
+                    .ToList();
+                foreach (int corner in corners)
+                {
+                    List<int> linked;
+                    if (!neighbours.TryGetValue(corner, out linked))
+                    {
+                        linked = new List<int>();
+                        neighbours.Add(corner, linked);
+                    }
+
+                    linked.AddRange(corners);
+                }
+            }
+
+            HashSet<int> reached = new HashSet<int>(held);
+            Stack<int> pending = new Stack<int>(held);
+            while (pending.Count > 0)
+            {
+                List<int> linked;
+                if (!neighbours.TryGetValue(pending.Pop(), out linked))
+                {
+                    continue;
+                }
+
+                foreach (int next in linked)
+                {
+                    if (reached.Add(next))
+                    {
+                        pending.Push(next);
+                    }
+                }
+            }
+
+            return reached.ToList();
         }
 
         /// <summary>選んだボーンと、そのボーンを先祖に持つボーン。</summary>

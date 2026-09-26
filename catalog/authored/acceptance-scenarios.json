@@ -5055,6 +5055,23 @@
         },
         {
           "kind": "tool",
+          "tool": "view_select_elements",
+          "arguments": {
+            "operation": "connected",
+            "kind": "vertex"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "selected",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_find_vertex_bounds",
           "arguments": {
             "materialIndices": [
