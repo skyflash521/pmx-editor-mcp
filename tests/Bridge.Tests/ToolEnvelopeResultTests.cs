@@ -27,6 +27,42 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public void TextOutsideAsciiInTheValueIsKeptAsIs()
+        {
+            CallToolResult result = ToolEnvelopeResult.From(
+                JsonNode.Parse("{\"ok\":true,\"value\":{\"name\":\"右足首D\"}}"), Notice, Budget, false);
+
+            Assert.Equal(Notice + "\n{\"name\":\"右足首D\"}", Text(result));
+        }
+
+        [Fact]
+        public void OnlyWhatJsonRequiresIsEscapedInTheValue()
+        {
+            JsonObject value = new JsonObject
+            {
+                ["comment"] = "全　角\U0001F600\"引\\用\n改\u0001",
+                ["items"] = new JsonArray(1, 2.5, true, null),
+            };
+            JsonObject envelope = new JsonObject { ["ok"] = true, ["value"] = value };
+
+            CallToolResult result = ToolEnvelopeResult.From(envelope, Notice, Budget, false);
+
+            Assert.Equal(
+                Notice + "\n{\"comment\":\"全　角\U0001F600\\\"引\\\\用\\n改\\u0001\",\"items\":[1,2.5,true,null]}",
+                Text(result));
+        }
+
+        [Fact]
+        public void AHalfOfASurrogatePairStandingAloneIsEscaped()
+        {
+            JsonObject envelope = new JsonObject { ["ok"] = true, ["value"] = "前\uD800後\uDC00" };
+
+            CallToolResult result = ToolEnvelopeResult.From(envelope, Notice, Budget, false);
+
+            Assert.Equal(Notice + "\n\"前\\ud800後\\udc00\"", Text(result));
+        }
+
+        [Fact]
         public void ASuccessWithoutAValueBecomesNull()
         {
             CallToolResult result = ToolEnvelopeResult.From(

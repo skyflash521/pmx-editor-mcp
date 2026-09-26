@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
 using ModelContextProtocol.Protocol;
@@ -167,7 +168,129 @@ namespace PmxEditorMcp.Bridge
 
             JsonNode value = envelope[ValueName];
 
-            return value == null ? "null" : value.ToJsonString();
+            return value == null ? "null" : Written(value);
+        }
+
+        internal static string Written(JsonNode value)
+        {
+            StringBuilder written = new StringBuilder();
+            Write(written, value);
+
+            return written.ToString();
+        }
+
+        private static void Write(StringBuilder written, JsonNode node)
+        {
+            if (node == null)
+            {
+                written.Append("null");
+
+                return;
+            }
+
+            JsonObject members = node as JsonObject;
+            if (members != null)
+            {
+                written.Append('{');
+                bool first = true;
+                foreach (KeyValuePair<string, JsonNode> member in members)
+                {
+                    if (!first)
+                    {
+                        written.Append(',');
+                    }
+
+                    first = false;
+                    Quote(written, member.Key);
+                    written.Append(':');
+                    Write(written, member.Value);
+                }
+
+                written.Append('}');
+
+                return;
+            }
+
+            JsonArray items = node as JsonArray;
+            if (items != null)
+            {
+                written.Append('[');
+                for (int at = 0; at < items.Count; at++)
+                {
+                    if (at > 0)
+                    {
+                        written.Append(',');
+                    }
+
+                    Write(written, items[at]);
+                }
+
+                written.Append(']');
+
+                return;
+            }
+
+            string text;
+            if (((JsonValue)node).TryGetValue(out text))
+            {
+                Quote(written, text);
+
+                return;
+            }
+
+            written.Append(node.ToJsonString());
+        }
+
+        private static void Quote(StringBuilder written, string text)
+        {
+            written.Append('"');
+            for (int at = 0; at < text.Length; at++)
+            {
+                char letter = text[at];
+                switch (letter)
+                {
+                    case '"':
+                        written.Append("\\\"");
+                        break;
+                    case '\\':
+                        written.Append("\\\\");
+                        break;
+                    case '\n':
+                        written.Append("\\n");
+                        break;
+                    case '\r':
+                        written.Append("\\r");
+                        break;
+                    case '\t':
+                        written.Append("\\t");
+                        break;
+                    default:
+                        if (letter < ' ' || Unpaired(text, at))
+                        {
+                            written.Append("\\u")
+                                .Append(((int)letter).ToString("x4", CultureInfo.InvariantCulture));
+                        }
+                        else
+                        {
+                            written.Append(letter);
+                        }
+
+                        break;
+                }
+            }
+
+            written.Append('"');
+        }
+
+        private static bool Unpaired(string text, int at)
+        {
+            char letter = text[at];
+            if (char.IsHighSurrogate(letter))
+            {
+                return at + 1 >= text.Length || !char.IsLowSurrogate(text[at + 1]);
+            }
+
+            return char.IsLowSurrogate(letter) && (at == 0 || !char.IsHighSurrogate(text[at - 1]));
         }
 
         private static string Failure(JsonObject envelope)

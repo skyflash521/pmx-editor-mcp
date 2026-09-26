@@ -259,7 +259,7 @@ namespace PmxEditorMcp.Bridge
                 return text;
             }
 
-            return result.ToJsonString();
+            return ToolEnvelopeResult.Written(result);
         }
     }
 }
