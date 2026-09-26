@@ -6618,6 +6618,52 @@
                   "minimum": 0
                 }
               }
+            },
+            {
+              "name": "boxes",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "minX",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "maxX",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "minY",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "maxY",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "minZ",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "maxZ",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  }
+                ]
+              }
             }
           ],
           "choices": [
@@ -6664,6 +6710,44 @@
             "element": {
               "origin": "hostOutput",
               "shape": "number"
+            }
+          },
+          {
+            "name": "boxes",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "min",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "max",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "center",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                }
+              ]
             }
           }
         ]

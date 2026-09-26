@@ -4981,6 +4981,11 @@
           "arguments": {
             "materialIndices": [
               0
+            ],
+            "boxes": [
+              {
+                "minX": -1
+              }
             ]
           },
           "expect": {
@@ -4997,6 +5002,14 @@
               {
                 "path": "max.0",
                 "equals": 10
+              },
+              {
+                "path": "boxes.0.count",
+                "equals": 2
+              },
+              {
+                "path": "boxes.0.min.0",
+                "equals": 0
               }
             ]
           }

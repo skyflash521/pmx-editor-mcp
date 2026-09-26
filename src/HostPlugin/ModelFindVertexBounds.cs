@@ -20,6 +20,10 @@ namespace PmxEditorMcp
 
         public const string CenterName = "center";
 
+        public const string BoxesName = "boxes";
+
+        private static readonly string[] BoxEdgeNames = { "minX", "maxX", "minY", "maxY", "minZ", "maxZ" };
+
         private static readonly string[] VertexPointing =
         {
             TargetNames.Element.Indices,
@@ -40,7 +44,7 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(edit));
             }
 
-            List<string> known = new List<string>(VertexPointing) { MaterialIndicesName };
+            List<string> known = new List<string>(VertexPointing) { MaterialIndicesName, BoxesName };
             methods.Add(ToolName, edit.Read(known, Run));
         }
 
@@ -55,7 +59,26 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            List<float[]> boxes;
+            if (!TryBoxes(context, out boxes, out message))
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
+            }
+
             List<V3> points = chosen.Select(at => model.Vertex[at].Position).ToList();
+            Dictionary<string, object> value = Bounds(points);
+            if (boxes != null)
+            {
+                value.Add(
+                    BoxesName,
+                    boxes.Select(box => (object)Bounds(points.Where(p => Inside(box, p)).ToList())).ToArray());
+            }
+
+            return ComposedEditResult.Complete(value);
+        }
+
+        private static Dictionary<string, object> Bounds(List<V3> points)
+        {
             Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { CountName, points.Count },
@@ -69,7 +92,87 @@ namespace PmxEditorMcp
                 value.Add(CenterName, Components(Vectors.Between(low, high)));
             }
 
-            return ComposedEditResult.Complete(value);
+            return value;
+        }
+
+        private static bool Inside(float[] box, V3 point)
+        {
+            float[] components = { point.X, point.Y, point.Z };
+            for (int axis = 0; axis < components.Length; axis++)
+            {
+                if (components[axis] < box[axis * 2] || components[axis] > box[(axis * 2) + 1])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool TryBoxes(McpMethodContext context, out List<float[]> boxes, out string message)
+        {
+            boxes = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(BoxesName, out given))
+            {
+                return true;
+            }
+
+            string shape = BoxesName + " は " + string.Join("・", BoxEdgeNames)
+                + " を省いてよい数として持つ組の並びでなければならない。";
+            object[] items = given as object[];
+            if (items == null)
+            {
+                message = shape;
+
+                return false;
+            }
+
+            boxes = new List<float[]>();
+            foreach (object item in items)
+            {
+                IDictionary<string, object> members = item as IDictionary<string, object>;
+                if (members == null || members.Keys.Any(name => !BoxEdgeNames.Contains(name)))
+                {
+                    message = shape;
+
+                    return false;
+                }
+
+                float[] box = new float[BoxEdgeNames.Length];
+                for (int at = 0; at < BoxEdgeNames.Length; at++)
+                {
+                    object edge;
+                    float read;
+                    if (!members.TryGetValue(BoxEdgeNames[at], out edge))
+                    {
+                        read = at % 2 == 0 ? float.NegativeInfinity : float.PositiveInfinity;
+                    }
+                    else if (!ValueInput.TrySingle(edge, out read))
+                    {
+                        message = shape;
+
+                        return false;
+                    }
+
+                    box[at] = read;
+                }
+
+                for (int at = 0; at < BoxEdgeNames.Length; at += 2)
+                {
+                    if (box[at] > box[at + 1])
+                    {
+                        message = BoxEdgeNames[at] + " が " + BoxEdgeNames[at + 1] + " より大きい。";
+
+                        return false;
+                    }
+                }
+
+                boxes.Add(box);
+            }
+
+            return true;
         }
 
         private static bool TryChosen(
