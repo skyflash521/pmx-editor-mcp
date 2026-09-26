@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 この文書はエージェント専用。人も読む情報は [README.md](README.md) へ書く。
 
