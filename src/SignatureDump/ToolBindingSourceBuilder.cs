@@ -1663,7 +1663,6 @@ namespace PmxEditorMcp.SignatureDump
         {
             SortedDictionary<string, string> preconditions =
                 new SortedDictionary<string, string>(StringComparer.Ordinal);
-            string counting = PreconditionRule.Counting(signatures.Values);
             string[] picked = PreconditionRule.Picked(signatures.Values)
                 .Where(toolNames.ContainsKey)
                 .Select(k => toolNames[k])
@@ -1684,9 +1683,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 string[] tools = kind == PreconditionKind.PickedObjects ? picked : new string[0];
-                string listed = kind == PreconditionKind.ListedParts
-                    ? PreconditionRule.Listed(signature, signatures.Values)
-                    : kind == PreconditionKind.SavedEdits ? counting : null;
+                string listed = PreconditionRule.CountingOf(signature, signatures.Values);
                 string[] rows = listed != null ? new[] { listed } : new string[0];
                 preconditions[tool] = "new ToolPrecondition(PreconditionKind." + kind
                     + ", new string[] { " + string.Join(", ", tools.Select(Literal))

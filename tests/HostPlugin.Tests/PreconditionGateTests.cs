@@ -138,6 +138,69 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void GoingThroughTheHistoryWithSomethingLeftPasses()
+        {
+            string message;
+
+            Assert.True(PreconditionGate.TryAccept(PreconditionKind.UndoHistory, 1, true, out message));
+            Assert.Null(message);
+        }
+
+        [Fact]
+        public void GoingThroughTheHistoryWithNothingLeftStops()
+        {
+            string message;
+
+            Assert.False(PreconditionGate.TryAccept(PreconditionKind.UndoHistory, 0, false, out message));
+            Assert.Contains("戻せる操作が残っていない", message);
+        }
+
+        [Fact]
+        public void GoingThroughTheHistoryWithoutKnowingWhatIsLeftStops()
+        {
+            string message;
+
+            Assert.False(PreconditionGate.TryAccept(PreconditionKind.UndoHistory, null, false, out message));
+            Assert.Contains("読めなかった", message);
+        }
+
+        [Fact]
+        public void MovingAChosenBoneWithoutAModifierPasses()
+        {
+            string message;
+
+            Assert.True(PreconditionGate.TryAccept(PreconditionKind.TransformedBone, 0, false, out message));
+            Assert.Null(message);
+        }
+
+        [Fact]
+        public void MovingWithNoBoneChosenStops()
+        {
+            string message;
+
+            Assert.False(PreconditionGate.TryAccept(PreconditionKind.TransformedBone, -1, false, out message));
+            Assert.Contains("ボーンが選ばれていない", message);
+        }
+
+        [Fact]
+        public void MovingAChosenBoneWithAModifierHeldStops()
+        {
+            string message;
+
+            Assert.False(PreconditionGate.TryAccept(PreconditionKind.TransformedBone, 3, true, out message));
+            Assert.Contains("修飾キー", message);
+        }
+
+        [Fact]
+        public void MovingWithoutKnowingWhichBoneIsChosenStops()
+        {
+            string message;
+
+            Assert.False(PreconditionGate.TryAccept(PreconditionKind.TransformedBone, null, false, out message));
+            Assert.Contains("読めなかった", message);
+        }
+
+        [Fact]
         public void AHeldModifierStopsEvenWithSomethingPicked()
         {
             string message;

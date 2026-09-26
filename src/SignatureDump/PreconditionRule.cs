@@ -30,6 +30,20 @@ namespace PmxEditorMcp.SignatureDump
         /// 届かない。項目の数は呼ぶ前に読める。
         /// </summary>
         ListedParts,
+
+        /// <summary>
+        /// 操作を1つ取り消すか、やり直す。取り消せる操作・やり直せる操作が残っていないと、エディタは
+        /// 何もせずに戻る。残っている数は呼ぶ前に読める。
+        /// </summary>
+        UndoHistory,
+
+        /// <summary>
+        /// TransformView のビューで選んでいるボーンを、入力欄の値だけ動かす。ビューでボーンが
+        /// 選ばれていないと、エディタは何もせずに戻る。動かす量は押されている修飾キーで向きと倍率が
+        /// 変わる。ビューの選択は読めず、呼ぶ前に読めるのは一覧で選ばれているボーンの位置だけである。
+        /// 一覧で選ぶと、ビューの選択も同じボーンになる。
+        /// </summary>
+        TransformedBone,
     }
 
     /// <summary>
@@ -51,6 +65,21 @@ namespace PmxEditorMcp.SignatureDump
         private const string UndoCountMemberName = "UndoCount";
 
         private const string PartsTypeName = "PEPlugin.View.IPEPartsSelectConnector";
+
+        private const string TransformTypeName = "PEPlugin.View.IPETransformViewConnector";
+
+        private const string ChosenBoneMemberName = "SelectedBoneIndex";
+
+        private static readonly ReadOnlyDictionary<string, string> RemainingByMember =
+            new ReadOnlyDictionary<string, string>(
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { "Undo", UndoCountMemberName },
+                    { "Redo", "RedoCount" },
+                });
+
+        private static readonly ReadOnlyCollection<string> TransformingMembers =
+            Array.AsReadOnly(new[] { "BoneRotate", "BoneTranslate", "BoneScaling" });
 
         private static readonly ReadOnlyDictionary<string, string> CountsByMember =
             new ReadOnlyDictionary<string, string>(
@@ -108,6 +137,22 @@ namespace PmxEditorMcp.SignatureDump
                 return true;
             }
 
+            if (string.Equals(type, FormTypeName, StringComparison.Ordinal)
+                && RemainingByMember.ContainsKey(signature.MemberName))
+            {
+                kind = PreconditionKind.UndoHistory;
+
+                return true;
+            }
+
+            if (string.Equals(type, TransformTypeName, StringComparison.Ordinal)
+                && TransformingMembers.Contains(signature.MemberName, StringComparer.Ordinal))
+            {
+                kind = PreconditionKind.TransformedBone;
+
+                return true;
+            }
+
             return false;
         }
 
@@ -145,6 +190,57 @@ namespace PmxEditorMcp.SignatureDump
                         PartsTypeName,
                         StringComparison.Ordinal)
                     && string.Equals(s.MemberName, counting, StringComparison.Ordinal))
+                .Select(s => s.Key)
+                .OrderBy(k => k, StringComparer.Ordinal)
+                .FirstOrDefault();
+        }
+
+        /// <summary>
+        /// そのシグネチャを呼ぶ前に、呼ぶ先と同じ受け手の上で読む値(数か位置)のシグネチャの行キー。
+        /// 受け手を解き直さずに読める。読む値を持たない種別と、読む先が見つからないときは null。
+        /// </summary>
+        public static string CountingOf(SignatureRecord signature, IEnumerable<SignatureRecord> signatures)
+        {
+            if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
+            if (signatures == null)
+            {
+                throw new ArgumentNullException(nameof(signatures));
+            }
+
+            PreconditionKind kind;
+            if (!TryClassify(signature, out kind))
+            {
+                return null;
+            }
+
+            switch (kind)
+            {
+                case PreconditionKind.SavedEdits:
+                    return Counting(signatures);
+
+                case PreconditionKind.ListedParts:
+                    return Listed(signature, signatures);
+
+                case PreconditionKind.UndoHistory:
+                    return Member(signatures, FormTypeName, RemainingByMember[signature.MemberName]);
+
+                case PreconditionKind.TransformedBone:
+                    return Member(signatures, TransformTypeName, ChosenBoneMemberName);
+
+                default:
+                    return null;
+            }
+        }
+
+        private static string Member(IEnumerable<SignatureRecord> signatures, string typeName, string memberName)
+        {
+            return signatures
+                .Where(s => string.Equals(TypeDefinitionName.Of(s.DeclaringType), typeName, StringComparison.Ordinal)
+                    && string.Equals(s.MemberName, memberName, StringComparison.Ordinal))
                 .Select(s => s.Key)
                 .OrderBy(k => k, StringComparer.Ordinal)
                 .FirstOrDefault();

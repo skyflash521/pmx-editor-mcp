@@ -502,6 +502,8 @@ namespace PmxEditorMcp
                     break;
 
                 case PreconditionKind.ListedParts:
+                case PreconditionKind.UndoHistory:
+                case PreconditionKind.TransformedBone:
                     met = reading.Count == 0 && precondition.Counting.Count != 0;
                     break;
 

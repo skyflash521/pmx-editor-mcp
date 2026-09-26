@@ -16,6 +16,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string PartsType = "PEPlugin.View.IPEPartsSelectConnector";
 
+        private const string TransformType = "PEPlugin.View.IPETransformViewConnector";
+
         [Fact]
         public void TakingWhatIsPickedNeedsSomethingPicked()
         {
@@ -144,6 +146,68 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     new[] { Signature(PartsType, "MaterialItemsCount") }));
         }
 
+        [Theory]
+        [InlineData("Undo", "UndoCount")]
+        [InlineData("Redo", "RedoCount")]
+        public void GoingBackOrForwardNeedsHistoryLeftAndReadsItsCount(string memberName, string countName)
+        {
+            PreconditionKind kind;
+
+            Assert.True(PreconditionRule.TryClassify(Signature(FormType, memberName), out kind));
+            Assert.Equal(PreconditionKind.UndoHistory, kind);
+            Assert.Equal(
+                FormType + "." + countName + "()",
+                PreconditionRule.CountingOf(
+                    Signature(FormType, memberName),
+                    new[]
+                    {
+                        Signature(FormType, "UndoCount"),
+                        Signature(FormType, "RedoCount"),
+                        Signature(ViewType, countName),
+                    }));
+        }
+
+        [Theory]
+        [InlineData("BoneRotate")]
+        [InlineData("BoneTranslate")]
+        [InlineData("BoneScaling")]
+        public void MovingTheTransformViewsBoneNeedsABoneChosenAndReadsWhichOne(string memberName)
+        {
+            PreconditionKind kind;
+
+            Assert.True(PreconditionRule.TryClassify(Signature(TransformType, memberName), out kind));
+            Assert.Equal(PreconditionKind.TransformedBone, kind);
+            Assert.Equal(
+                TransformType + ".SelectedBoneIndex()",
+                PreconditionRule.CountingOf(
+                    Signature(TransformType, memberName),
+                    new[]
+                    {
+                        Signature(TransformType, "SelectedMorphIndex"),
+                        Signature(TransformType, "SelectedBoneIndex"),
+                        Signature(ViewType, "SelectedBoneIndex"),
+                    }));
+        }
+
+        [Fact]
+        public void ClosingAndTheNarrowingListReadTheirCountsAndOtherMembersReadNothing()
+        {
+            SignatureRecord[] signatures =
+            {
+                Signature(FormType, "UndoCount"),
+                Signature(PartsType, "BoneItemsCount"),
+            };
+
+            Assert.Equal(
+                FormType + ".UndoCount()",
+                PreconditionRule.CountingOf(Signature(FormType, "Close"), signatures));
+            Assert.Equal(
+                PartsType + ".BoneItemsCount()",
+                PreconditionRule.CountingOf(Signature(PartsType, "SetCheckedBoneIndices"), signatures));
+            Assert.Null(PreconditionRule.CountingOf(Signature(GuideType, "GetSelectedCurrentVertex"), signatures));
+            Assert.Null(PreconditionRule.CountingOf(Signature(FormType, "UndoCount"), signatures));
+        }
+
         [Fact]
         public void EveryArgumentIsRequired()
         {
@@ -157,6 +221,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => PreconditionRule.Listed(null, new SignatureRecord[0]));
             Assert.Throws<ArgumentNullException>(
                 () => PreconditionRule.Listed(Signature(PartsType, "BoneItemsCount"), null));
+            Assert.Throws<ArgumentNullException>(
+                () => PreconditionRule.CountingOf(null, new SignatureRecord[0]));
+            Assert.Throws<ArgumentNullException>(
+                () => PreconditionRule.CountingOf(Signature(FormType, "Undo"), null));
         }
 
         private static SignatureRecord Signature(string declaringType, string memberName)

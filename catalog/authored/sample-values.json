@@ -825,6 +825,27 @@
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneRotate()",
+      "arguments": {},
+      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、断る側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "TransformView の一覧でボーンが選ばれていないので呼べない"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneScaling()",
+      "arguments": {},
+      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、断る側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "TransformView の一覧でボーンが選ばれていないので呼べない"
+    },
+    {
+      "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneTranslate()",
+      "arguments": {},
+      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、断る側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
+      "refused": "TOOL_NOT_APPLICABLE",
+      "says": "TransformView の一覧でボーンが選ばれていないので呼べない"
+    },
+    {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpd(System.String)",
       "arguments": {
         "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.vpd"
