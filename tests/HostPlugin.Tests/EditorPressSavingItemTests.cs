@@ -108,6 +108,109 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AWriteTheEditorBreaksOffAndSwallowsIsAFailureAndTheExistingFileIsKept()
+        {
+            using (Folder folder = new Folder())
+            {
+                string path = folder.Path("設定.xml");
+                File.WriteAllText(path, "前の中身");
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Screen screen = new Screen(fixture))
+                    {
+                        screen.BreakPartway = true;
+
+                        IDictionary<string, object> answered = Call(fixture, SaveAs, path, true);
+
+                        Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(answered));
+                        Assert.Contains("ディスクがいっぱい", ComposedEditFixture.Message(answered));
+                    }
+                });
+
+                Assert.Equal("前の中身", File.ReadAllText(path));
+                Assert.Equal(new[] { path }, Directory.GetFiles(folder.Root));
+            }
+        }
+
+        [Fact]
+        public void AWriteBrokenOffToANewFileLeavesNoFileBehind()
+        {
+            using (Folder folder = new Folder())
+            {
+                string path = folder.Path("設定.xml");
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Screen screen = new Screen(fixture))
+                    {
+                        screen.BreakPartway = true;
+
+                        IDictionary<string, object> answered = Call(fixture, SaveAs, path, true);
+
+                        Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(answered));
+                    }
+                });
+
+                Assert.Empty(Directory.GetFiles(folder.Root));
+            }
+        }
+
+        [Fact]
+        public void AWriteBrokenOffInAFixedPlaceIsAFailureAndTheFileBeforeIsKept()
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(DefaultSetting));
+            File.WriteAllText(DefaultSetting, "前の中身");
+            File.SetLastWriteTimeUtc(DefaultSetting, new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture))
+                {
+                    screen.BreakPartway = true;
+
+                    IDictionary<string, object> failed = Call(fixture, SaveDefault, null, true);
+
+                    Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(failed));
+                }
+            });
+
+            Assert.Equal("前の中身", File.ReadAllText(DefaultSetting));
+            Assert.Equal(new[] { DefaultSetting }, Directory.GetFiles(Path.GetDirectoryName(DefaultSetting)));
+        }
+
+        [Fact]
+        public void AReadOnlyFileInAFixedPlaceIsReportedAsTheFailureAndLeftAsItWas()
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(DefaultSetting));
+            File.WriteAllText(DefaultSetting, "前の中身");
+            File.SetAttributes(DefaultSetting, FileAttributes.ReadOnly);
+            try
+            {
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Screen screen = new Screen(fixture))
+                    {
+                        screen.BreakPartway = true;
+
+                        IDictionary<string, object> failed = Call(fixture, SaveDefault, null, true);
+
+                        Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(failed));
+                        Assert.Contains("画面に出さずに続けた", ComposedEditFixture.Message(failed));
+                    }
+                });
+
+                Assert.Equal("前の中身", File.ReadAllText(DefaultSetting));
+                Assert.Equal(new[] { DefaultSetting }, Directory.GetFiles(Path.GetDirectoryName(DefaultSetting)));
+            }
+            finally
+            {
+                File.SetAttributes(DefaultSetting, FileAttributes.Normal);
+            }
+        }
+
+        [Fact]
         public void APromptAnotherWindowShowsIsRefusedWithoutPressing()
         {
             OnSta(() =>
@@ -687,6 +790,8 @@ namespace PmxEditorMcp.Tests
 
             internal bool WriteNothing { get; set; }
 
+            internal bool BreakPartway { get; set; }
+
             public void Dispose()
             {
                 _view.Dispose();
@@ -710,6 +815,20 @@ namespace PmxEditorMcp.Tests
                     }
 
                     Chosen.Add(dialog.FileName);
+                    if (BreakPartway)
+                    {
+                        try
+                        {
+                            File.WriteAllText(dialog.FileName, "書きかけ");
+                            throw new IOException("ディスクがいっぱい");
+                        }
+                        catch (Exception)
+                        {
+                        }
+
+                        return;
+                    }
+
                     if (!WriteNothing)
                     {
                         File.WriteAllText(dialog.FileName, Written);
@@ -732,6 +851,20 @@ namespace PmxEditorMcp.Tests
 
                 string target = Path.Combine(EditorPressSavingItem.EditorFolder(), "_data", "表示設定", "fx.xml");
                 Directory.CreateDirectory(Path.GetDirectoryName(target));
+                if (BreakPartway)
+                {
+                    try
+                    {
+                        File.WriteAllText(target, "書きかけ");
+                        throw new IOException("ディスクがいっぱい");
+                    }
+                    catch (Exception)
+                    {
+                    }
+
+                    return;
+                }
+
                 File.WriteAllText(target, Written);
             }
         }

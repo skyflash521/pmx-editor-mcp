@@ -179,13 +179,24 @@ namespace PmxEditorMcp
                         + "。表示が消えたかは " + EditorPrompt.ToolName + " で確かめる。");
             }
 
-            // 保存のダイアログは、書き先に同じ名前のファイルが在ると上書きを訊く。
-            string kept = item.AsksFile && File.Exists(file)
-                ? Path.Combine(Path.GetDirectoryName(file), "~" + Guid.NewGuid().ToString("N") + Path.GetExtension(file))
+            string target = item.Target == null
+                ? null
+                : Path.Combine(EditorDataFolder.Of(EditorFolder()), item.Target);
+            DateTime? before = target != null && File.Exists(target) ? File.GetLastWriteTimeUtc(target) : (DateTime?)null;
+            string destination = item.AsksFile ? file : target;
+            string kept = destination != null && File.Exists(destination)
+                ? Path.Combine(
+                    Path.GetDirectoryName(destination),
+                    "~" + Guid.NewGuid().ToString("N") + Path.GetExtension(destination))
                 : null;
-            if (kept != null)
+            if (kept != null && item.AsksFile)
             {
-                File.Move(file, kept);
+                // 保存のダイアログは、書き先に同じ名前のファイルが在ると上書きを訊く。
+                File.Move(destination, kept);
+            }
+            else if (kept != null)
+            {
+                File.Copy(destination, kept);
             }
 
             List<AnsweredDialog> expected = new List<AnsweredDialog>();
@@ -195,22 +206,23 @@ namespace PmxEditorMcp
             }
 
             expected.AddRange(item.Following);
-            string target = item.Target == null
-                ? null
-                : Path.Combine(EditorDataFolder.Of(EditorFolder()), item.Target);
-            DateTime? before = target != null && File.Exists(target) ? File.GetLastWriteTimeUtc(target) : (DateTime?)null;
             string refused = null;
             string failure = null;
             IList<string> agreed = new string[0];
             bool written = false;
             string lacking = null;
+            IList<string> swallowed = new string[0];
             try
             {
                 DialogAnswer answer = DialogAnswer.StartAcknowledging(
                     expected, item.Questions, item.Cautions, DialogAnswer.Limit);
                 try
                 {
-                    refused = UiLive.Press(form, window, path);
+                    using (SwallowedWriteFailures watch = new SwallowedWriteFailures())
+                    {
+                        refused = UiLive.Press(form, window, path);
+                        swallowed = watch.Messages;
+                    }
                 }
                 finally
                 {
@@ -220,6 +232,7 @@ namespace PmxEditorMcp
 
                 bool produced = refused == null
                     && failure == null
+                    && swallowed.Count == 0
                     && (!item.AsksFile || File.Exists(file))
                     && (target == null || (File.Exists(target) && File.GetLastWriteTimeUtc(target) != before));
                 lacking = produced ? item.Lacking(file) : null;
@@ -227,7 +240,7 @@ namespace PmxEditorMcp
             }
             finally
             {
-                RestoreUnlessWritten(file, kept, written);
+                RestoreUnlessWritten(destination, kept, written);
             }
 
             if (refused != null)
@@ -238,6 +251,14 @@ namespace PmxEditorMcp
             if (failure != null)
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.OperationFailed, UiAnswering.Told(failure, agreed));
+            }
+
+            if (swallowed.Count > 0)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.OperationFailed,
+                    UiAnswering.Told(
+                        "エディタがファイルの読み書きで失敗し、画面に出さずに続けた: " + string.Join(" / ", swallowed), agreed));
             }
 
             if (lacking != null)
@@ -289,24 +310,29 @@ namespace PmxEditorMcp
 
         private static void RestoreUnlessWritten(string file, string kept, bool written)
         {
-            if (kept == null)
+            bool untouched = file != null
+                && File.Exists(file)
+                && (File.GetAttributes(file) & FileAttributes.ReadOnly) != 0;
+            if (written || untouched)
             {
+                if (kept != null)
+                {
+                    File.SetAttributes(kept, FileAttributes.Normal);
+                    File.Delete(kept);
+                }
+
                 return;
             }
 
-            if (written)
-            {
-                File.Delete(kept);
-
-                return;
-            }
-
-            if (File.Exists(file))
+            if (file != null && File.Exists(file))
             {
                 File.Delete(file);
             }
 
-            File.Move(kept, file);
+            if (kept != null)
+            {
+                File.Move(kept, file);
+            }
         }
 
         [DllImport("user32.dll")]
