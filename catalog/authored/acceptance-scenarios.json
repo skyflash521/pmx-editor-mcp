@@ -2937,10 +2937,17 @@
               "menuStrip1",
               "MenuItem_File",
               "MenuItem_SaveNormalize"
-            ]
+            ],
+            "checked": false
           },
           "expect": {
-            "ok": true
+            "ok": true,
+            "values": [
+              {
+                "path": "checked",
+                "equals": false
+              }
+            ]
           }
         },
         {
@@ -2975,10 +2982,17 @@
               "menuStrip1",
               "MenuItem_File",
               "MenuItem_SaveNormalize"
-            ]
+            ],
+            "checked": true
           },
           "expect": {
-            "ok": true
+            "ok": true,
+            "values": [
+              {
+                "path": "checked",
+                "equals": true
+              }
+            ]
           }
         },
         {

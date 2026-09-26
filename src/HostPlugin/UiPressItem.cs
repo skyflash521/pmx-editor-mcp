@@ -15,6 +15,8 @@ namespace PmxEditorMcp
 
         public const string MessagesName = "messages";
 
+        public const string CheckedName = "checked";
+
         private static readonly Dictionary<string, string> OwnToolGuidesByWindowAndPath =
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
@@ -111,8 +113,22 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(ToolEnvelope.NotApplicable, danger);
             }
 
+            bool? wanted = null;
+            if (context.Params.TryGetValue(CheckedName, out given))
+            {
+                if (!(given is bool))
+                {
+                    return ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, CheckedName + " は真偽で与える。");
+                }
+
+                wanted = (bool)given;
+            }
+
             bool shown = false;
             bool modal = false;
+            bool? before = null;
+            bool found = false;
+            bool? after = null;
             string waiting = null;
             string refused = null;
             UiAnswering answered = null;
@@ -138,6 +154,17 @@ namespace PmxEditorMcp
                     return;
                 }
 
+                if (wanted.HasValue)
+                {
+                    before = UiLive.CheckedState(form, path, out found);
+                    if (before == null || before.Value == wanted.Value)
+                    {
+                        after = before;
+
+                        return;
+                    }
+                }
+
                 answered = UiAnswering.Around(() =>
                 {
                     try
@@ -149,6 +176,8 @@ namespace PmxEditorMcp
                         failure = exception;
                     }
                 });
+                bool pressedFound;
+                after = UiLive.CheckedState(form, path, out pressedFound);
             });
             if (!invocation.DidRun)
             {
@@ -177,6 +206,24 @@ namespace PmxEditorMcp
                         + EditorPrompt.ToolName + " で確かめる。");
             }
 
+            if (wanted.HasValue && !found)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "押す部品が見つからない: " + named + " の " + string.Join("/", path));
+            }
+
+            if (wanted.HasValue && before == null)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.InvalidArgument,
+                    CheckedName + " は入り切りを持つメニュー項目かツールバーのボタンにだけ渡す: " + string.Join("/", path));
+            }
+
+            if (answered == null)
+            {
+                return ToolEnvelope.Success(Pressed(new string[0], after));
+            }
+
             if (failure != null)
             {
                 return ToolEnvelope.Failure(ToolEnvelope.OperationFailed, answered.Thrown(failure));
@@ -193,10 +240,31 @@ namespace PmxEditorMcp
                     ToolEnvelope.OperationFailed, UiAnswering.Told(answered.Failure, answered.Notices));
             }
 
-            return ToolEnvelope.Success(new Dictionary<string, object>(StringComparer.Ordinal)
+            if (wanted.HasValue && after != wanted)
             {
-                { MessagesName, answered.Notices.ToArray() },
-            });
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.OperationFailed,
+                    UiAnswering.Told(
+                        "押したが、入り切りは頼んだ状態にならなかった(" + CheckedName + ": "
+                            + (after.HasValue ? after.Value.ToString().ToLowerInvariant() : "null") + ")。",
+                        answered.Notices));
+            }
+
+            return ToolEnvelope.Success(Pressed(answered.Notices, after));
+        }
+
+        private static IDictionary<string, object> Pressed(IList<string> notices, bool? after)
+        {
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { MessagesName, notices.ToArray() },
+            };
+            if (after.HasValue)
+            {
+                value.Add(CheckedName, after.Value);
+            }
+
+            return value;
         }
 
         /// <summary>台帳の危険の区分を、断る事情の文へ直す。危険でなければ null。</summary>

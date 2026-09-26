@@ -402,6 +402,12 @@
                 "shape": "text"
               },
               "required": true
+            },
+            {
+              "name": "checked",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
             }
           ]
         }
@@ -416,6 +422,11 @@
               "origin": "hostOutput",
               "shape": "text"
             }
+          },
+          {
+            "name": "checked",
+            "origin": "hostOutput",
+            "shape": "boolean"
           }
         ]
       }

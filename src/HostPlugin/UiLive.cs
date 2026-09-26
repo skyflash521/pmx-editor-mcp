@@ -57,6 +57,40 @@ namespace PmxEditorMcp
             return null;
         }
 
+        /// <summary>
+        /// その部品がメニュー項目かツールバーのボタンなら、辿った途中のメニューを開いてから読んだ入り切り。ほかの部品と、
+        /// 辿れなかったときは null。<paramref name="found"/> は部品を辿れたか。
+        /// </summary>
+        internal static bool? CheckedState(Form form, IList<string> path, out bool found)
+        {
+            List<UiMenu> menus = new List<UiMenu>();
+            object part = Find(form, path, menus);
+            found = part != null;
+            ToolStripMenuItem item = part as ToolStripMenuItem;
+            ToolStripButton button = part as ToolStripButton;
+            if (item == null && button == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                foreach (UiMenu menu in menus)
+                {
+                    menu.Open();
+                }
+
+                return item != null ? item.Checked : button.Checked;
+            }
+            finally
+            {
+                for (int at = menus.Count - 1; at >= 0; at--)
+                {
+                    menus[at].Close();
+                }
+            }
+        }
+
         /// <summary>その名前のウィンドウのうち、画面に出ている最初のもの。無ければ null。</summary>
         internal static Form Shown(IEnumerable<Form> forms, string named)
         {

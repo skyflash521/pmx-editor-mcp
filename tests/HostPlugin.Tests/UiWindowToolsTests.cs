@@ -144,6 +144,166 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AMenuItemTellsWhetherItIsCheckedAfterItIsPressed()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    screen.Normalize.CheckOnClick = true;
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> value =
+                        Value(Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SaveNormalize"));
+
+                    Assert.Equal(true, value[UiPressItem.CheckedName]);
+                }
+            });
+        }
+
+        [Fact]
+        public void AMenuItemAlreadyInTheAskedStateIsNotPressed()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    int pressed = 0;
+                    screen.Normalize.CheckOnClick = true;
+                    screen.Normalize.Checked = true;
+                    screen.Normalize.Click += (sender, e) => pressed++;
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> kept = Value(Checked(screen, true));
+                    IDictionary<string, object> turned = Value(Checked(screen, false));
+
+                    Assert.Equal(true, kept[UiPressItem.CheckedName]);
+                    Assert.Equal(false, turned[UiPressItem.CheckedName]);
+                    Assert.Equal(1, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void AnItemThatDoesNotTurnToTheAskedStateIsAFailure()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> failed = Checked(screen, true);
+
+                    Assert.Equal(ToolEnvelope.OperationFailed, Code(failed));
+                    Assert.Contains(UiPressItem.CheckedName, Said(failed));
+                }
+            });
+        }
+
+        [Fact]
+        public void AToolbarButtonTellsAndTakesItsCheckedStateToo()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    ToolStripButton realtime = new ToolStripButton("tbRealtime") { Name = "tbRealtime", CheckOnClick = true };
+                    ToolStrip strip = new ToolStrip { Name = "tsOperate" };
+                    strip.Items.Add(realtime);
+                    screen.Transform.Controls.Add(strip);
+
+                    IDictionary<string, object> pressed = Value(Press(screen, Transform, "tsOperate", "tbRealtime"));
+                    IDictionary<string, object> kept = Value(CheckedAt(screen, true, "tsOperate", "tbRealtime"));
+
+                    Assert.Equal(true, pressed[UiPressItem.CheckedName]);
+                    Assert.Equal(true, kept[UiPressItem.CheckedName]);
+                    Assert.True(realtime.Checked);
+                }
+            });
+        }
+
+        [Fact]
+        public void AMenuItemIsReadAfterItsMenuDecidesItsState()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    int pressed = 0;
+                    screen.Normalize.Click += (sender, e) => pressed++;
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    ToolStripMenuItem file = (ToolStripMenuItem)screen.Normalize.OwnerItem;
+                    file.DropDownOpening += (sender, e) => screen.Normalize.Checked = true;
+
+                    IDictionary<string, object> kept = Value(Checked(screen, true));
+
+                    Assert.Equal(true, kept[UiPressItem.CheckedName]);
+                    Assert.Equal(0, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void AnItemMissingFromTheScreenIsNotCalledOneWithoutAState()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    IDictionary<string, object> refused = CheckedAt(screen, true, "tsOperate", "tbRealtime");
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.Contains("見つからない", Said(refused));
+                }
+            });
+        }
+
+        [Fact]
+        public void AStateIsNotAskedOfAButton()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    List<string> happened = new List<string>();
+                    Form form = new Form
+                    {
+                        Name = "PmxViewSelector",
+                        ShowInTaskbar = false,
+                        StartPosition = FormStartPosition.Manual,
+                        Location = new Point(-32000, -32000),
+                    };
+                    screen.Add(form);
+                    Button all = new Button { Name = "btnBoneAll" };
+                    all.Click += (sender, e) => happened.Add("press");
+                    TabPage page = new TabPage { Name = "tabPage2" };
+                    page.Controls.Add(all);
+                    TabControl tabs = new TabControl { Name = "tabPage" };
+                    tabs.TabPages.Add(page);
+                    form.Controls.Add(tabs);
+                    form.Show();
+
+                    IDictionary<string, object> refused = Call(
+                        screen,
+                        UiPressItem.ToolName,
+                        new Dictionary<string, object>(StringComparer.Ordinal)
+                        {
+                            { UiPressItem.WindowName, "PmxViewForm.PmxViewSelector" },
+                            { UiPressItem.PathName, new[] { "tabPage", "tabPage2", "btnBoneAll" } },
+                            { UiPressItem.CheckedName, true },
+                        });
+
+                    Assert.Equal(ToolEnvelope.InvalidArgument, Code(refused));
+                    Assert.Empty(happened);
+                }
+            });
+        }
+
+        [Fact]
         public void AnItemThatHasItsOwnToolIsRefusedAndTheToolIsNamed()
         {
             OnSta(() =>
@@ -572,6 +732,24 @@ namespace PmxEditorMcp.Tests
 
         [DllImport("user32.dll")]
         private static extern bool EnableWindow(IntPtr window, bool enable);
+
+        private static IDictionary<string, object> Checked(Screen screen, bool state)
+        {
+            return CheckedAt(screen, state, "menuStrip1", "MenuItem_File", "MenuItem_SaveNormalize");
+        }
+
+        private static IDictionary<string, object> CheckedAt(Screen screen, bool state, params string[] path)
+        {
+            return Call(
+                screen,
+                UiPressItem.ToolName,
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { UiPressItem.WindowName, Transform },
+                    { UiPressItem.PathName, path },
+                    { UiPressItem.CheckedName, state },
+                });
+        }
 
         private static IDictionary<string, object> Press(Screen screen, string window, params string[] path)
         {
