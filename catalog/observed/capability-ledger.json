@@ -1396,7 +1396,7 @@
       "target": "IPETransformViewConnector.BoneRotate",
       "status": "提供",
       "owner": "変形・モーション",
-      "remarks": "契約注記: TransformView のビューで選んでいるボーンを、motion_update_transform_view_connector の boneRotateXyz の値だけ回す。値の単位は度で、Z・X・Y の順にいまの回転へ足し込み、置き換えない。軸はボーンのローカル軸ではなく、親ボーンの回転を受けたモデルの X・Y・Z 軸で、正の角で、X は +Y を +Z へ、Y は +Z を +X へ、Z は +X を +Y へ回す。軸固定のボーンでは、どの成分も固定軸まわりに回す。ビューでボーンが選ばれていないときは、一覧で選んでいても何もせずに成功を返す。一覧でボーンを選ぶとビューの選択も同じボーンになるが、絞込で表示から外れているボーンを一覧で選ぶとビューの選択は空になる。ビューの選択が外れても一覧の選択は残り、同じ位置を selectedBoneIndex へ渡し直してもビューの選択は戻らない。揃え直すには selectedBoneIndex に -1 を渡してから位置を渡す"
+      "remarks": "契約注記: TransformView のビューで選んでいるボーンを、motion_update_transform_view_connector の boneRotateXyz の値だけ回す。値の単位は度で、Z・X・Y の順にいまの回転へ足し込み、置き換えない。軸はボーンのローカル軸ではなく、親ボーンの回転を受けたモデルの X・Y・Z 軸で、正の角で、X は +Y を +Z へ、Y は +Z を +X へ、Z は +X を +Y へ回す。軸固定のボーンでは、どの成分も固定軸まわりに回す。IK のリンクに入っているボーンは、その IK が効いている間、回した後に IK が末端を目標へ届かせるよう回し直すので、目標へ向かう向きは変わらない。ビューでボーンが選ばれていないときは、一覧で選んでいても何もせずに成功を返す。一覧でボーンを選ぶとビューの選択も同じボーンになるが、絞込で表示から外れているボーンを一覧で選ぶとビューの選択は空になる。ビューの選択が外れても一覧の選択は残り、同じ位置を selectedBoneIndex へ渡し直してもビューの選択は戻らない。揃え直すには selectedBoneIndex に -1 を渡してから位置を渡す"
     },
     {
       "id": "CAP-175",
@@ -1444,7 +1444,7 @@
       "target": "IPETransformViewConnector.SetVpd",
       "status": "提供",
       "owner": "変形・モーション",
-      "remarks": ""
+      "remarks": "契約注記: IK のリンクに入っているボーンへ入れた回転は、その IK が効いている間、IK が末端を目標へ届かせるよう回し直すので、目標へ向かう向きは変わらない"
     },
     {
       "id": "CAP-181",
@@ -1452,7 +1452,7 @@
       "target": "IPETransformViewConnector.SetVpdFromText",
       "status": "提供",
       "owner": "変形・モーション",
-      "remarks": ""
+      "remarks": "契約注記: IK のリンクに入っているボーンへ入れた回転は、その IK が効いている間、IK が末端を目標へ届かせるよう回し直すので、目標へ向かう向きは変わらない"
     },
     {
       "id": "CAP-182",
@@ -2524,7 +2524,7 @@
       "target": "IPXUIModel.SetBone",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨。IK のリンクに入っているボーンは、その IK が効いている間、回した後に IK が末端を目標へ届かせるよう回し直すので、目標へ向かう向きは変わらない"
     },
     {
       "id": "CAP-316",
@@ -2540,7 +2540,7 @@
       "target": "IPXUIModel.SetBoneRotate",
       "status": "提供",
       "owner": "ビュー",
-      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨"
+      "remarks": "契約注記: 取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨。IK のリンクに入っているボーンは、その IK が効いている間、回した後に IK が末端を目標へ届かせるよう回し直すので、目標へ向かう向きは変わらない"
     },
     {
       "id": "CAP-318",
