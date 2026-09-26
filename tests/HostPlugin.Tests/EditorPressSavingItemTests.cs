@@ -211,6 +211,56 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AFileLeftUnwrittenCarriesWhatTheEditorThrewInside()
+        {
+            using (Folder folder = new Folder())
+            {
+                string path = folder.Path("設定.xml");
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Screen screen = new Screen(fixture))
+                    {
+                        screen.FailInside = true;
+
+                        IDictionary<string, object> answered = Call(fixture, SaveAs, path, true);
+
+                        Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(answered));
+                        string message = ComposedEditFixture.Message(answered);
+                        Assert.Contains("書かなかった", message);
+                        Assert.Contains("System.InvalidOperationException", message);
+                        Assert.Contains("描き出せない0", message);
+                    }
+                });
+            }
+        }
+
+        [Fact]
+        public void OnlyTheFirstOfManyExceptionsThrownInsideAreCarriedAndTheRestAreCounted()
+        {
+            using (Folder folder = new Folder())
+            {
+                string path = folder.Path("設定.xml");
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Screen screen = new Screen(fixture))
+                    {
+                        screen.FailInside = true;
+                        screen.FailuresInside = 7;
+
+                        string message = ComposedEditFixture.Message(Call(fixture, SaveAs, path, true));
+
+                        Assert.Contains("描き出せない0", message);
+                        Assert.Contains("描き出せない4", message);
+                        Assert.DoesNotContain("描き出せない5", message);
+                        Assert.Contains("ほか2件", message);
+                    }
+                });
+            }
+        }
+
+        [Fact]
         public void APromptAnotherWindowShowsIsRefusedWithoutPressing()
         {
             OnSta(() =>
@@ -792,6 +842,10 @@ namespace PmxEditorMcp.Tests
 
             internal bool BreakPartway { get; set; }
 
+            internal bool FailInside { get; set; }
+
+            internal int FailuresInside { get; set; } = 1;
+
             public void Dispose()
             {
                 _view.Dispose();
@@ -815,6 +869,22 @@ namespace PmxEditorMcp.Tests
                     }
 
                     Chosen.Add(dialog.FileName);
+                    if (FailInside)
+                    {
+                        for (int at = 0; at < FailuresInside; at++)
+                        {
+                            try
+                            {
+                                throw new InvalidOperationException("描き出せない" + at);
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+
+                        return;
+                    }
+
                     if (BreakPartway)
                     {
                         try

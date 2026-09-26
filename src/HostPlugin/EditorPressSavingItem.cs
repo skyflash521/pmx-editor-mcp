@@ -212,6 +212,8 @@ namespace PmxEditorMcp
             bool written = false;
             string lacking = null;
             IList<string> swallowed = new string[0];
+            string swallowedText = null;
+            string thrownText = null;
             try
             {
                 DialogAnswer answer = DialogAnswer.StartAcknowledging(
@@ -222,6 +224,8 @@ namespace PmxEditorMcp
                     {
                         refused = UiLive.Press(form, window, path);
                         swallowed = watch.Messages;
+                        swallowedText = Listed(watch.Messages, watch.MessagesBeyond);
+                        thrownText = Listed(watch.Thrown, watch.ThrownBeyond);
                     }
                 }
                 finally
@@ -258,7 +262,7 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(
                     ToolEnvelope.OperationFailed,
                     UiAnswering.Told(
-                        "エディタがファイルの読み書きで失敗し、画面に出さずに続けた: " + string.Join(" / ", swallowed), agreed));
+                        "エディタがファイルの読み書きで失敗し、画面に出さずに続けた: " + swallowedText, agreed));
             }
 
             if (lacking != null)
@@ -272,13 +276,22 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(
                     ToolEnvelope.OperationFailed,
                     UiAnswering.Told(
-                        "エディタがファイルを書かなかった" + (target == null ? "" : ": " + target) + "。", agreed));
+                        "エディタがファイルを書かなかった" + (target == null ? "" : ": " + target) + "。"
+                            + (string.IsNullOrEmpty(thrownText)
+                                ? ""
+                                : "押している間にエディタが画面に出さずに捕まえた例外: " + thrownText),
+                        agreed));
             }
 
             return ComposedEditResult.Complete(new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { MessagesName, agreed.ToArray() },
             });
+        }
+
+        private static string Listed(IList<string> lines, int beyond)
+        {
+            return string.Join(" / ", lines) + (beyond == 0 ? "" : " / ほか" + beyond + "件");
         }
 
         private static bool IsFullyQualified(string path)
