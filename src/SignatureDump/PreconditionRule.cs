@@ -44,6 +44,12 @@ namespace PmxEditorMcp.SignatureDump
         /// 表示されているボーンを一覧で選ぶと、ビューの選択も同じボーンになる。
         /// </summary>
         TransformedBone,
+
+        /// <summary>
+        /// 画面のボタンの処理をそのまま呼ぶ。その処理は押されている修飾キーを読み、頂点編集では編集の量と向きが、
+        /// 頂点ガイドの選択ではいまの選択との合わせ方が変わる。
+        /// </summary>
+        HeldModifiers,
     }
 
     /// <summary>
@@ -77,6 +83,13 @@ namespace PmxEditorMcp.SignatureDump
                     { "Undo", UndoCountMemberName },
                     { "Redo", "RedoCount" },
                 });
+
+        private const string VertexEditTypeName = "PEPlugin.View.IPEVertexEditConnector";
+
+        private const string GuideSelectingMemberName = "SelectVertex";
+
+        private static readonly ReadOnlyCollection<string> InputEditingMembers =
+            Array.AsReadOnly(new[] { "Move", "Rotate", "Scaling", "RotateNormal", "MoveNormalAxis" });
 
         private static readonly ReadOnlyCollection<string> TransformingMembers =
             Array.AsReadOnly(new[] { "BoneRotate", "BoneTranslate", "BoneScaling" });
@@ -149,6 +162,17 @@ namespace PmxEditorMcp.SignatureDump
                 && TransformingMembers.Contains(signature.MemberName, StringComparer.Ordinal))
             {
                 kind = PreconditionKind.TransformedBone;
+
+                return true;
+            }
+
+            if (((string.Equals(type, VertexEditTypeName, StringComparison.Ordinal)
+                        && InputEditingMembers.Contains(signature.MemberName, StringComparer.Ordinal))
+                    || (string.Equals(type, GuideTypeName, StringComparison.Ordinal)
+                        && string.Equals(signature.MemberName, GuideSelectingMemberName, StringComparison.Ordinal)))
+                && signature.Parameters.Count == 0)
+            {
+                kind = PreconditionKind.HeldModifiers;
 
                 return true;
             }

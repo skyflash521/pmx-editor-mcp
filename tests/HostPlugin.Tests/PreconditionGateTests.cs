@@ -201,6 +201,16 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void EditingByTheInputsPassesOnlyWithoutAModifierHeld()
+        {
+            string message;
+
+            Assert.True(PreconditionGate.TryAccept(PreconditionKind.HeldModifiers, null, false, out message));
+            Assert.False(PreconditionGate.TryAccept(PreconditionKind.HeldModifiers, null, true, out message));
+            Assert.Contains("修飾キー", message);
+        }
+
+        [Fact]
         public void AHeldModifierStopsEvenWithSomethingPicked()
         {
             string message;

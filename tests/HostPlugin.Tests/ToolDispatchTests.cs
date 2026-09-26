@@ -1418,6 +1418,11 @@ namespace PmxEditorMcp.Tests
         /// <summary>その前提条件を持つツールとして登録し、引いた呼び出しを返す。</summary>
         private McpMethod Registered(ToolPrecondition precondition)
         {
+            return Registered("session_count", precondition, new StillModifierKeys());
+        }
+
+        private McpMethod Registered(string tool, ToolPrecondition precondition, IModifierKeys modifiers)
+        {
             McpMethodTable methods = new McpMethodTable();
             SdkRelayTable relay = Relay();
             IDictionary<string, SdkReceiver> receivers = Receivers();
@@ -1437,15 +1442,15 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, ToolElements>(StringComparer.Ordinal),
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal)
                 {
-                    { "session_count", precondition },
+                    { tool, precondition },
                 },
-                new StillModifierKeys(),
+                modifiers,
                 EventBindingFixture.Empty(),
                 Refresh(),
                 Screen());
 
             McpMethod method;
-            Assert.True(methods.TryGet("session_count", out method));
+            Assert.True(methods.TryGet(tool, out method));
 
             return method;
         }
@@ -1759,6 +1764,35 @@ namespace PmxEditorMcp.Tests
             Call("session_share", Arguments("dataShape", given, "key", "k", "data", "v"));
 
             Assert.Equal(ran, _target.Shared);
+        }
+
+        [Fact]
+        public void APreconditionGuardingAnOverloadTheToolDoesNotHaveStopsTheBuild()
+        {
+            Assert.Throws<InvalidOperationException>(() => Registered(
+                "session_share",
+                new ToolPrecondition(
+                    PreconditionKind.HeldModifiers, new string[0], new string[0], new[] { "Sdk.Form.Share()" }),
+                new HeldModifierKeys()));
+        }
+
+        [Fact]
+        public void APreconditionOnOneOverloadIsCheckedOnlyWhenThatOverloadRuns()
+        {
+            McpMethod method = Registered(
+                "session_share",
+                new ToolPrecondition(PreconditionKind.HeldModifiers, new string[0], new string[0], new[] { ShareTextKey }),
+                new HeldModifierKeys());
+
+            IDictionary<string, object> refused = (IDictionary<string, object>)method(new McpMethodContext(
+                Arguments("dataShape", "text", "key", "k", "data", "v"), new InlineInvoker(), 100000, Ledger(), Events()));
+            IDictionary<string, object> ran = (IDictionary<string, object>)method(new McpMethodContext(
+                Arguments("dataShape", "base64", "key", "k", "data", "dg=="), new InlineInvoker(), 100000, Ledger(), Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+            Assert.Contains("修飾キー", Message(refused));
+            Assert.True(ToolEnvelope.Succeeded(ran));
+            Assert.Equal("base64", _target.Shared);
         }
 
         [Theory]

@@ -44,6 +44,12 @@ namespace PmxEditorMcp
         /// 表示されているボーンを一覧で選ぶと、ビューの選択も同じボーンになる。
         /// </summary>
         TransformedBone,
+
+        /// <summary>
+        /// 画面のボタンの処理をそのまま呼ぶ。その処理は押されている修飾キーを読み、頂点編集では編集の量と向きが、
+        /// 頂点ガイドの選択ではいまの選択との合わせ方が変わる。
+        /// </summary>
+        HeldModifiers,
     }
 
     /// <summary>
@@ -55,7 +61,22 @@ namespace PmxEditorMcp
     {
         public ToolPrecondition(
             PreconditionKind kind, IEnumerable<string> reading, IEnumerable<string> counting)
+            : this(kind, reading, counting, new string[0])
         {
+        }
+
+        /// <param name="guarded">確かめる呼び分けの行キー。空ならそのツールのどの呼び分けでも確かめる。</param>
+        public ToolPrecondition(
+            PreconditionKind kind,
+            IEnumerable<string> reading,
+            IEnumerable<string> counting,
+            IEnumerable<string> guarded)
+        {
+            if (guarded == null)
+            {
+                throw new ArgumentNullException(nameof(guarded));
+            }
+
             if (reading == null)
             {
                 throw new ArgumentNullException(nameof(reading));
@@ -69,6 +90,7 @@ namespace PmxEditorMcp
             Kind = kind;
             Reading = new ReadOnlyCollection<string>(reading.ToList());
             Counting = new ReadOnlyCollection<string>(counting.ToList());
+            Guarded = new ReadOnlyCollection<string>(guarded.ToList());
         }
 
         /// <summary>確かめることの種別。</summary>
@@ -81,5 +103,8 @@ namespace PmxEditorMcp
         /// 確かめる材料を得る行キー。呼ぶ先と同じ受け手の上で読むものが入るので、受け手を解き直さない。
         /// </summary>
         public IList<string> Counting { get; }
+
+        /// <summary>確かめる呼び分けの行キー。空ならそのツールのどの呼び分けでも確かめる。</summary>
+        public IList<string> Guarded { get; }
     }
 }

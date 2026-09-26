@@ -1687,7 +1687,8 @@ namespace PmxEditorMcp.SignatureDump
                 string[] rows = listed != null ? new[] { listed } : new string[0];
                 preconditions[tool] = "new ToolPrecondition(PreconditionKind." + kind
                     + ", new string[] { " + string.Join(", ", tools.Select(Literal))
-                    + " }, new string[] { " + string.Join(", ", rows.Select(Literal)) + " })";
+                    + " }, new string[] { " + string.Join(", ", rows.Select(Literal))
+                    + " }, new string[] { " + Literal(signature.Key) + " })";
             }
 
             return preconditions;

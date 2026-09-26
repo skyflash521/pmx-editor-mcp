@@ -58,6 +58,19 @@ namespace PmxEditorMcp
                 return TryChosenBone(counted, modified, out message);
             }
 
+            if (kind == PreconditionKind.HeldModifiers)
+            {
+                if (modified)
+                {
+                    message = "修飾キーが押されている間は、結果がその押し方で変わるので呼べない。"
+                        + "キーを放してから呼ぶ。";
+
+                    return false;
+                }
+
+                return true;
+            }
+
             if (kind != PreconditionKind.PickedObjects)
             {
                 return true;

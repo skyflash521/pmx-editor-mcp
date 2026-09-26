@@ -18,6 +18,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string TransformType = "PEPlugin.View.IPETransformViewConnector";
 
+        private const string VertexEditType = "PEPlugin.View.IPEVertexEditConnector";
+
         [Fact]
         public void TakingWhatIsPickedNeedsSomethingPicked()
         {
@@ -46,7 +48,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             PreconditionKind kind;
 
             Assert.False(
-                PreconditionRule.TryClassify(Signature(GuideType, "SelectVertex"), out kind));
+                PreconditionRule.TryClassify(Signature(GuideType, "GetVertexIndices"), out kind));
         }
 
         [Fact]
@@ -187,6 +189,53 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         Signature(TransformType, "SelectedBoneIndex"),
                         Signature(ViewType, "SelectedBoneIndex"),
                     }));
+        }
+
+        [Theory]
+        [InlineData("Move")]
+        [InlineData("Rotate")]
+        [InlineData("Scaling")]
+        [InlineData("RotateNormal")]
+        [InlineData("MoveNormalAxis")]
+        public void EditingByTheVertexEditInputsNeedsNoModifierHeldAndReadsNothing(string memberName)
+        {
+            PreconditionKind kind;
+
+            Assert.True(PreconditionRule.TryClassify(Signature(VertexEditType, memberName), out kind));
+            Assert.Equal(PreconditionKind.HeldModifiers, kind);
+            Assert.Null(PreconditionRule.CountingOf(Signature(VertexEditType, memberName), new SignatureRecord[0]));
+        }
+
+        [Fact]
+        public void SelectingByTheGuidesButtonNeedsNoModifierHeld()
+        {
+            PreconditionKind kind;
+
+            Assert.True(PreconditionRule.TryClassify(Signature(GuideType, "SelectVertex"), out kind));
+            Assert.Equal(PreconditionKind.HeldModifiers, kind);
+        }
+
+        [Fact]
+        public void EditingByGivenValuesNeedsNothing()
+        {
+            PreconditionKind kind;
+            SignatureRecord withValue = new SignatureRecord(
+                VertexEditType + ".Move(PEPlugin.Pmd.IPEVector3)",
+                VertexEditType,
+                MemberKind.Method,
+                "Move",
+                false,
+                0,
+                new List<ParameterRecord>
+                {
+                    new ParameterRecord("val", "PEPlugin.Pmd.IPEVector3", ParameterDirection.In, false),
+                },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Read);
+
+            Assert.False(PreconditionRule.TryClassify(withValue, out kind));
         }
 
         [Fact]

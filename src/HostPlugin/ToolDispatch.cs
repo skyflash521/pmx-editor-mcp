@@ -479,8 +479,18 @@ namespace PmxEditorMcp
             }
 
             RequireMaterials(precondition, reading, tool);
+            IList<ToolCall> overloads;
+            calls.TryGetValue(tool, out overloads);
+            foreach (string guarded in precondition.Guarded)
+            {
+                if (overloads == null || !overloads.Any(c => string.Equals(c.RowKey, guarded, StringComparison.Ordinal)))
+                {
+                    throw new InvalidOperationException(
+                        "呼ぶ前に確かめる呼び分けがそのツールに無い: " + tool + " の " + guarded);
+                }
+            }
 
-            return new ResolvedPrecondition(precondition.Kind, reading, precondition.Counting);
+            return new ResolvedPrecondition(precondition.Kind, reading, precondition.Counting, precondition.Guarded);
         }
 
         /// <summary>
@@ -505,6 +515,10 @@ namespace PmxEditorMcp
                 case PreconditionKind.UndoHistory:
                 case PreconditionKind.TransformedBone:
                     met = reading.Count == 0 && precondition.Counting.Count != 0;
+                    break;
+
+                case PreconditionKind.HeldModifiers:
+                    met = reading.Count == 0 && precondition.Counting.Count == 0;
                     break;
 
                 default:
@@ -537,11 +551,12 @@ namespace PmxEditorMcp
         private sealed class ResolvedPrecondition
         {
             public ResolvedPrecondition(
-                PreconditionKind kind, IList<ToolCall> reading, IList<string> counting)
+                PreconditionKind kind, IList<ToolCall> reading, IList<string> counting, IList<string> guarded)
             {
                 Kind = kind;
                 Reading = reading;
                 Counting = counting;
+                Guarded = guarded;
             }
 
             /// <summary>確かめることの種別。</summary>
@@ -552,6 +567,13 @@ namespace PmxEditorMcp
 
             /// <summary>確かめる材料を得る、呼ぶ先と同じ受け手の上の行キー。</summary>
             public IList<string> Counting { get; }
+
+            public IList<string> Guarded { get; }
+
+            public bool Guards(string rowKey)
+            {
+                return Guarded.Count == 0 || Guarded.Contains(rowKey);
+            }
         }
 
         /// <summary>呼び分けが揃って持つ編集の分類。揃っていなければ組み立てが誤っている。</summary>
@@ -631,7 +653,7 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(code, message);
             }
 
-            return Invoke(context, call, precondition);
+            return Invoke(context, call, precondition != null && precondition.Guards(call.RowKey) ? precondition : null);
         }
 
         /// <summary>
