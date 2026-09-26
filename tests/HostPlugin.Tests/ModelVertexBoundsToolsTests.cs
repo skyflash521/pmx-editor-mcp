@@ -31,6 +31,37 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheVerticesThatHoldTheLeastAndGreatestOfEachAxisComeBack()
+        {
+            Vertex(100f, 100f, 100f);
+            Vertex(1f, 2f, 3f);
+            Vertex(-1f, 4f, 0f);
+            Vertex(1f, 2f, 5f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("indices", new object[] { 3, 2, 1 })));
+
+            Assert.Equal(new object[] { 2, 1, 2 }, (object[])value["minVertices"]);
+            Assert.Equal(new object[] { 1, 2, 3 }, (object[])value["maxVertices"]);
+        }
+
+        [Fact]
+        public void EachBoxCarriesTheVerticesThatHoldItsLeastAndGreatest()
+        {
+            Vertex(0f, 0f, 0f);
+            Vertex(1f, 5f, 2f);
+            Vertex(2f, 10f, 4f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("boxes", new object[] { Box("minY", 1.0) })));
+
+            IDictionary<string, object> box = (IDictionary<string, object>)((object[])value["boxes"])[0];
+            Assert.Equal(new object[] { 1, 1, 1 }, (object[])box["minVertices"]);
+            Assert.Equal(new object[] { 2, 2, 2 }, (object[])box["maxVertices"]);
+        }
+
+        [Fact]
         public void TheVerticesTheFacesOfTheMaterialsUseCanBePointedInstead()
         {
             IPXVertex first = Vertex(1f, 0f, 0f);
@@ -78,6 +109,8 @@ namespace PmxEditorMcp.Tests
             Assert.False(value.ContainsKey("min"));
             Assert.False(value.ContainsKey("max"));
             Assert.False(value.ContainsKey("center"));
+            Assert.False(value.ContainsKey("minVertices"));
+            Assert.False(value.ContainsKey("maxVertices"));
         }
 
         [Fact]

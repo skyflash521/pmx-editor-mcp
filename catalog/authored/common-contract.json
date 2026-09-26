@@ -412,7 +412,7 @@
     {
       "tool": "model_find_vertex_bounds",
       "branching": false,
-      "duty": "指した頂点の座標の範囲を返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。count に頂点の数を、min・max に3つの軸それぞれの最小と最大を、center にその中ほどを返す。頂点が1つも無ければ count だけを返す。boxes に箱を並べると、指した頂点のうち箱に入るものの count・min・max・center を、箱ごとに同じ並びで boxes に返す。箱は minX・maxX・minY・maxY・minZ・maxZ で軸ごとの境を持ち、境の上の頂点も箱に入る。省いた境はその側を切らない。最小が最大を超える箱は invalid_argument になる。"
+      "duty": "指した頂点の座標の範囲を返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。count に頂点の数を、min・max に3つの軸それぞれの最小と最大を、center にその中ほどを返す。minVertices・maxVertices に、軸ごとに最小・最大を取った頂点の位置を3つ返し、同じ値の頂点が複数あれば位置が最も小さいものを返す。頂点が1つも無ければ count だけを返す。boxes に箱を並べると、指した頂点のうち箱に入るものの count・min・max・center・minVertices・maxVertices を、箱ごとに同じ並びで boxes に返す。箱は minX・maxX・minY・maxY・minZ・maxZ で軸ごとの境を持ち、境の上の頂点も箱に入る。省いた境はその側を切らない。最小が最大を超える箱は invalid_argument になる。"
     },
     {
       "tool": "model_insert_elements",

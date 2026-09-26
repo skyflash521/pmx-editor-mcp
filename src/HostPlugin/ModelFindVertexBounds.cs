@@ -20,6 +20,10 @@ namespace PmxEditorMcp
 
         public const string CenterName = "center";
 
+        public const string MinVerticesName = "minVertices";
+
+        public const string MaxVerticesName = "maxVertices";
+
         public const string BoxesName = "boxes";
 
         private static readonly string[] BoxEdgeNames = { "minX", "maxX", "minY", "maxY", "minZ", "maxZ" };
@@ -65,34 +69,65 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }
 
-            List<V3> points = chosen.Select(at => model.Vertex[at].Position).ToList();
+            List<KeyValuePair<int, V3>> points = chosen
+                .Select(at => new KeyValuePair<int, V3>(at, model.Vertex[at].Position))
+                .ToList();
             Dictionary<string, object> value = Bounds(points);
             if (boxes != null)
             {
                 value.Add(
                     BoxesName,
-                    boxes.Select(box => (object)Bounds(points.Where(p => Inside(box, p)).ToList())).ToArray());
+                    boxes.Select(box => (object)Bounds(points.Where(p => Inside(box, p.Value)).ToList())).ToArray());
             }
 
             return ComposedEditResult.Complete(value);
         }
 
-        private static Dictionary<string, object> Bounds(List<V3> points)
+        private static Dictionary<string, object> Bounds(List<KeyValuePair<int, V3>> points)
         {
             Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { CountName, points.Count },
             };
-            if (points.Count != 0)
+            if (points.Count == 0)
             {
-                V3 low = new V3(points.Min(p => p.X), points.Min(p => p.Y), points.Min(p => p.Z));
-                V3 high = new V3(points.Max(p => p.X), points.Max(p => p.Y), points.Max(p => p.Z));
-                value.Add(MinName, Components(low));
-                value.Add(MaxName, Components(high));
-                value.Add(CenterName, Components(Vectors.Between(low, high)));
+                return value;
             }
 
+            KeyValuePair<int, V3>[] lows = new KeyValuePair<int, V3>[3];
+            KeyValuePair<int, V3>[] highs = new KeyValuePair<int, V3>[3];
+            for (int axis = 0; axis < 3; axis++)
+            {
+                lows[axis] = points[0];
+                highs[axis] = points[0];
+                foreach (KeyValuePair<int, V3> point in points)
+                {
+                    if (Component(point.Value, axis) < Component(lows[axis].Value, axis))
+                    {
+                        lows[axis] = point;
+                    }
+
+                    if (Component(point.Value, axis) > Component(highs[axis].Value, axis))
+                    {
+                        highs[axis] = point;
+                    }
+                }
+            }
+
+            V3 min = new V3(lows[0].Value.X, lows[1].Value.Y, lows[2].Value.Z);
+            V3 max = new V3(highs[0].Value.X, highs[1].Value.Y, highs[2].Value.Z);
+            value.Add(MinName, Components(min));
+            value.Add(MaxName, Components(max));
+            value.Add(CenterName, Components(Vectors.Between(min, max)));
+            value.Add(MinVerticesName, lows.Select(p => (object)p.Key).ToArray());
+            value.Add(MaxVerticesName, highs.Select(p => (object)p.Key).ToArray());
+
             return value;
+        }
+
+        private static float Component(V3 point, int axis)
+        {
+            return axis == 0 ? point.X : axis == 1 ? point.Y : point.Z;
         }
 
         private static bool Inside(float[] box, V3 point)

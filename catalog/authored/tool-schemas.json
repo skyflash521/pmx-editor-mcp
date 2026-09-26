@@ -6738,6 +6738,22 @@
             }
           },
           {
+            "name": "minVertices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          },
+          {
+            "name": "maxVertices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          },
+          {
             "name": "boxes",
             "origin": "hostOutput",
             "element": {
@@ -6766,6 +6782,22 @@
                 },
                 {
                   "name": "center",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "minVertices",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "maxVertices",
                   "origin": "hostOutput",
                   "element": {
                     "origin": "hostOutput",

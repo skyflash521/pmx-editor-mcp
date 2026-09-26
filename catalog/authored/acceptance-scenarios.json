@@ -4906,6 +4906,14 @@
               {
                 "path": "boxes.0.min.0",
                 "equals": 0
+              },
+              {
+                "path": "minVertices.0",
+                "equals": 0
+              },
+              {
+                "path": "maxVertices.0",
+                "equals": 1
               }
             ]
           }
