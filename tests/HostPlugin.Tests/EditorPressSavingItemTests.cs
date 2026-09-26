@@ -152,7 +152,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ACautionTheItemMayShowAndANoticeWithOnlyOkAreAgreedAndReturned()
+        public void ANoticeIsAgreedAndReturnedButAMotionFileLeftCutShortIsAFailureThatKeepsTheFileBefore()
         {
             using (Folder folder = new Folder())
             {
@@ -163,12 +163,21 @@ namespace PmxEditorMcp.Tests
                     using (Form view = Offscreen("VMDViewForm"))
                     {
                         view.Name = "VMDViewForm";
+                        bool cut = false;
                         Item(view, SaveFixVmd, () =>
                         {
                             MessageBox.Show(Caution, "注意", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             string chosen = Chosen();
                             if (chosen == null)
                             {
+                                return;
+                            }
+
+                            if (cut)
+                            {
+                                File.WriteAllBytes(chosen, Motion.Take(Motion.Length - 1).ToArray());
+                                MessageBox.Show("保存に失敗しました.", "結果", MessageBoxButtons.OK);
+
                                 return;
                             }
 
@@ -180,54 +189,20 @@ namespace PmxEditorMcp.Tests
 
                         IDictionary<string, object> value = ComposedScreenFixture.Value(
                             Call(fixture, "VmdViewLib.VMDViewForm", SaveFixVmd, path, true));
-
                         Assert.Equal(
                             new[] { Caution, "保存完了" }, ((IEnumerable<object>)value["messages"]).Cast<string>());
-                    }
-                });
+                        Assert.Equal(Motion, File.ReadAllBytes(path));
 
-                Assert.Equal(Motion, File.ReadAllBytes(path));
-            }
-        }
-
-        [Fact]
-        public void AMotionFileLeftCutShortIsAFailureEvenWhenItsNoticeIsAgreed()
-        {
-            using (Folder folder = new Folder())
-            {
-                string path = folder.Path("非物理化.vmd");
-                File.WriteAllText(path, Screen.Written);
-                OnSta(() =>
-                {
-                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
-                    using (Form view = Offscreen("VMDViewForm"))
-                    {
-                        view.Name = "VMDViewForm";
-                        Item(view, SaveFixVmd, () =>
-                        {
-                            MessageBox.Show(Caution, "注意", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                            string chosen = Chosen();
-                            if (chosen == null)
-                            {
-                                return;
-                            }
-
-                            File.WriteAllBytes(chosen, Motion.Take(Motion.Length - 1).ToArray());
-                            MessageBox.Show("保存に失敗しました.", "結果", MessageBoxButtons.OK);
-                        });
-                        view.Show();
-                        fixture.Forms.Add(view);
-
+                        cut = true;
                         IDictionary<string, object> answered =
                             Call(fixture, "VmdViewLib.VMDViewForm", SaveFixVmd, path, true);
-
                         Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(answered));
                         Assert.Contains("VMD", ComposedEditFixture.Message(answered));
                         Assert.Contains("保存に失敗しました.", ComposedEditFixture.Message(answered));
                     }
                 });
 
-                Assert.Equal(Screen.Written, File.ReadAllText(path));
+                Assert.Equal(Motion, File.ReadAllBytes(path));
             }
         }
 

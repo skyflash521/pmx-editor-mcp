@@ -81,7 +81,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AWindowTheSdkCanShowIsOpenedAndClosedThroughItWithoutTheMenu()
+        public void AWindowTheSdkCanShowIsOpenedAndClosedThroughItButAnotherOfTheSameTypeIsClosedByItself()
         {
             OnSta(() =>
             {
@@ -105,27 +105,14 @@ namespace PmxEditorMcp.Tests
                     Assert.False(connector.IsDisposed, "隠すのでなく破棄した。");
                     Assert.Equal(new[] { true, false }, connector.Written);
                     Assert.Equal(0, pressed);
-                }
-            });
-        }
 
-        [Fact]
-        public void AWindowShownAsAnotherOfTheSameTypeIsClosedByItself()
-        {
-            OnSta(() =>
-            {
-                using (Screen screen = new Screen())
-                {
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
-                    FakeWindowConnector connector = new FakeWindowConnector();
-                    screen.Add(connector);
-
-                    IDictionary<string, object> closed = Value(Call(
+                    IDictionary<string, object> closedOther = Value(Call(
                         screen, UiCloseWindow.ToolName, Transform, named => connector));
 
-                    Assert.Equal(false, closed[UiCloseWindow.AlreadyClosedName]);
+                    Assert.Equal(false, closedOther[UiCloseWindow.AlreadyClosedName]);
                     Assert.False(screen.Transform.Visible, "開いていた方が閉じていない。");
-                    Assert.Empty(connector.Written);
+                    Assert.Equal(new[] { true, false }, connector.Written);
                 }
             });
         }
@@ -195,48 +182,41 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AMenuItemTellsWhetherItIsCheckedAfterItIsPressed()
-        {
-            OnSta(() =>
-            {
-                using (Screen screen = new Screen())
-                {
-                    screen.Normalize.CheckOnClick = true;
-                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
-
-                    IDictionary<string, object> value =
-                        Value(Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SaveNormalize"));
-
-                    Assert.Equal(true, value[UiPressItem.CheckedName]);
-                }
-            });
-        }
-
-        [Fact]
-        public void AMenuItemAlreadyInTheAskedStateIsNotPressed()
+        public void AMenuItemTellsItsCheckedStateAndIsPressedOnlyToReachTheAskedOne()
         {
             OnSta(() =>
             {
                 using (Screen screen = new Screen())
                 {
                     int pressed = 0;
-                    screen.Normalize.CheckOnClick = true;
-                    screen.Normalize.Checked = true;
                     screen.Normalize.Click += (sender, e) => pressed++;
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
 
+                    IDictionary<string, object> failed = Checked(screen, true);
+                    Assert.Equal(ToolEnvelope.OperationFailed, Code(failed));
+                    Assert.Contains(UiPressItem.CheckedName, Said(failed));
+
+                    screen.Normalize.CheckOnClick = true;
+                    Assert.Equal(true, Value(Press(screen, Transform, "menuStrip1", "MenuItem_File", "MenuItem_SaveNormalize"))[UiPressItem.CheckedName]);
+
+                    pressed = 0;
                     IDictionary<string, object> kept = Value(Checked(screen, true));
                     IDictionary<string, object> turned = Value(Checked(screen, false));
-
                     Assert.Equal(true, kept[UiPressItem.CheckedName]);
                     Assert.Equal(false, turned[UiPressItem.CheckedName]);
                     Assert.Equal(1, pressed);
+
+                    pressed = 0;
+                    ToolStripMenuItem file = (ToolStripMenuItem)screen.Normalize.OwnerItem;
+                    file.DropDownOpening += (sender, e) => screen.Normalize.Checked = true;
+                    Assert.Equal(true, Value(Checked(screen, true))[UiPressItem.CheckedName]);
+                    Assert.Equal(0, pressed);
                 }
             });
         }
 
         [Fact]
-        public void AnItemThatDoesNotTurnToTheAskedStateIsAFailure()
+        public void AToolbarButtonTellsAndTakesItsCheckedStateOnceItIsOnTheScreen()
         {
             OnSta(() =>
             {
@@ -244,22 +224,10 @@ namespace PmxEditorMcp.Tests
                 {
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
 
-                    IDictionary<string, object> failed = Checked(screen, true);
+                    IDictionary<string, object> refused = CheckedAt(screen, true, "tsOperate", "tbRealtime");
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
+                    Assert.Contains("見つからない", Said(refused));
 
-                    Assert.Equal(ToolEnvelope.OperationFailed, Code(failed));
-                    Assert.Contains(UiPressItem.CheckedName, Said(failed));
-                }
-            });
-        }
-
-        [Fact]
-        public void AToolbarButtonTellsAndTakesItsCheckedStateToo()
-        {
-            OnSta(() =>
-            {
-                using (Screen screen = new Screen())
-                {
-                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
                     ToolStripButton realtime = new ToolStripButton("tbRealtime") { Name = "tbRealtime", CheckOnClick = true };
                     ToolStrip strip = new ToolStrip { Name = "tsOperate" };
                     strip.Items.Add(realtime);
@@ -271,44 +239,6 @@ namespace PmxEditorMcp.Tests
                     Assert.Equal(true, pressed[UiPressItem.CheckedName]);
                     Assert.Equal(true, kept[UiPressItem.CheckedName]);
                     Assert.True(realtime.Checked);
-                }
-            });
-        }
-
-        [Fact]
-        public void AMenuItemIsReadAfterItsMenuDecidesItsState()
-        {
-            OnSta(() =>
-            {
-                using (Screen screen = new Screen())
-                {
-                    int pressed = 0;
-                    screen.Normalize.Click += (sender, e) => pressed++;
-                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
-                    ToolStripMenuItem file = (ToolStripMenuItem)screen.Normalize.OwnerItem;
-                    file.DropDownOpening += (sender, e) => screen.Normalize.Checked = true;
-
-                    IDictionary<string, object> kept = Value(Checked(screen, true));
-
-                    Assert.Equal(true, kept[UiPressItem.CheckedName]);
-                    Assert.Equal(0, pressed);
-                }
-            });
-        }
-
-        [Fact]
-        public void AnItemMissingFromTheScreenIsNotCalledOneWithoutAState()
-        {
-            OnSta(() =>
-            {
-                using (Screen screen = new Screen())
-                {
-                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
-
-                    IDictionary<string, object> refused = CheckedAt(screen, true, "tsOperate", "tbRealtime");
-
-                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
-                    Assert.Contains("見つからない", Said(refused));
                 }
             });
         }
