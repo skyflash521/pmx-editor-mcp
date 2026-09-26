@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
@@ -20,6 +21,16 @@ namespace PmxEditorMcp
         /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
         {
+            AddTo(methods, forms, named => null);
+        }
+
+        /// <summary>
+        /// <paramref name="windows"/> はウィンドウの型の完全名から、そのウィンドウを開閉する SDK のコネクタを返す。コネクタの無い
+        /// ウィンドウでは null を返す。UIスレッドで呼ばれる。
+        /// </summary>
+        public static void AddTo(
+            McpMethodTable methods, Func<IEnumerable<Form>> forms, Func<string, IPEBaseWindowConnector> windows)
+        {
             if (methods == null)
             {
                 throw new ArgumentNullException(nameof(methods));
@@ -30,10 +41,16 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(forms));
             }
 
-            methods.Add(ToolName, context => Close(context, forms));
+            if (windows == null)
+            {
+                throw new ArgumentNullException(nameof(windows));
+            }
+
+            methods.Add(ToolName, context => Close(context, forms, windows));
         }
 
-        private static object Close(McpMethodContext context, Func<IEnumerable<Form>> forms)
+        private static object Close(
+            McpMethodContext context, Func<IEnumerable<Form>> forms, Func<string, IPEBaseWindowConnector> windows)
         {
             object given;
             string named = context.Params.TryGetValue(WindowName, out given) ? given as string : null;
@@ -68,7 +85,14 @@ namespace PmxEditorMcp
                 }
 
                 shown = true;
-                reopenable = UiOpenWindow.Hops(named, opener => UiLive.Shown(open, opener) != null) != null;
+                IPEBaseWindowConnector connector = windows(named);
+                if (!ReferenceEquals(connector, form))
+                {
+                    connector = null;
+                }
+
+                reopenable = connector != null
+                    || UiOpenWindow.Hops(named, opener => UiLive.Shown(open, opener) != null) != null;
                 if (!reopenable)
                 {
                     return;
@@ -84,7 +108,15 @@ namespace PmxEditorMcp
                 {
                     try
                     {
-                        form.Close();
+                        if (connector != null)
+                        {
+                            connector.Visible = false;
+                        }
+                        else
+                        {
+                            form.Close();
+                        }
+
                         closed = !form.Visible;
                     }
                     catch (Exception exception)

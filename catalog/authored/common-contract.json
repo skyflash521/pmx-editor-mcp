@@ -317,7 +317,7 @@
     {
       "tool": "editor_open_window",
       "branching": false,
-      "duty": "エディタのウィンドウを開く。TransformView のように、ほかのツールが相手にするウィンドウが閉じているときに使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。いま開いているウィンドウから、押すとそのウィンドウだけを開くメニュー項目かボタンを辿り、人が押すのと同じ順に押して開く。途中のウィンドウが閉じていればそれも開く。右クリックメニューの中の項目は辿らない。開いていれば何もせず alreadyOpen に真を返し、開いたら alreadyOpen に偽を返す。title は開いているウィンドウのタイトルである。辿れる道が無いとき、途中の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。開くときにエディタが出したダイアログは、editor_press_item と同じく呼び出しの中で片付け、ボタン1つで閉じたメッセージボックスの本文を messages に返す。エディタがすでに人の応答を待つ表示を出しているときは、開かずに TOOL_NOT_APPLICABLE を返す。"
+      "duty": "エディタのウィンドウを開く。TransformView のように、ほかのツールが相手にするウィンドウが閉じているときに使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。TransformView・PmxSubView・PmxViewSelector など、SDK のコネクタで開閉できるウィンドウはそのコネクタで開く。ほかのウィンドウは、いま開いているウィンドウから、押すとそのウィンドウだけを開くメニュー項目かボタンを辿り、人が押すのと同じ順に押して開く。途中のウィンドウが閉じていればそれも開く。右クリックメニューの中の項目は辿らない。開いていれば何もせず alreadyOpen に真を返し、開いたら alreadyOpen に偽を返す。title は開いているウィンドウのタイトルである。辿れる道が無いとき、途中の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。開くときにエディタが出したダイアログは、editor_press_item と同じく呼び出しの中で片付け、ボタン1つで閉じたメッセージボックスの本文を messages に返す。エディタがすでに人の応答を待つ表示を出しているときは、開かずに TOOL_NOT_APPLICABLE を返す。"
     },
     {
       "tool": "editor_press_item",

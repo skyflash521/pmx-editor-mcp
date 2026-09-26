@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using PEPlugin.View;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -75,6 +76,56 @@ namespace PmxEditorMcp.Tests
                     Assert.Equal(false, Value(Call(screen, UiCloseWindow.ToolName, Transform))[UiCloseWindow.AlreadyClosedName]);
                     Assert.False(screen.Transform.Visible, "閉じていない。");
                     Assert.Equal(true, Value(Call(screen, UiCloseWindow.ToolName, Transform))[UiCloseWindow.AlreadyClosedName]);
+                }
+            });
+        }
+
+        [Fact]
+        public void AWindowTheSdkCanShowIsOpenedAndClosedThroughItWithoutTheMenu()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    int pressed = 0;
+                    screen.Item.Click += (sender, e) => pressed++;
+                    FakeWindowConnector connector = new FakeWindowConnector();
+                    screen.Add(connector);
+                    Func<string, IPEBaseWindowConnector> windows =
+                        named => string.Equals(named, Transform, StringComparison.Ordinal) ? connector : null;
+
+                    IDictionary<string, object> opened = Value(Call(screen, UiOpenWindow.ToolName, Transform, windows));
+                    Assert.True(connector.Visible, "開いていない。");
+                    IDictionary<string, object> closed = Value(Call(screen, UiCloseWindow.ToolName, Transform, windows));
+
+                    Assert.Equal(false, opened[UiOpenWindow.AlreadyOpenName]);
+                    Assert.Equal("TransformView", opened[UiOpenWindow.TitleName]);
+                    Assert.Equal(false, closed[UiCloseWindow.AlreadyClosedName]);
+                    Assert.False(connector.Visible, "閉じていない。");
+                    Assert.False(connector.IsDisposed, "隠すのでなく破棄した。");
+                    Assert.Equal(new[] { true, false }, connector.Written);
+                    Assert.Equal(0, pressed);
+                }
+            });
+        }
+
+        [Fact]
+        public void AWindowShownAsAnotherOfTheSameTypeIsClosedByItself()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+                    FakeWindowConnector connector = new FakeWindowConnector();
+                    screen.Add(connector);
+
+                    IDictionary<string, object> closed = Value(Call(
+                        screen, UiCloseWindow.ToolName, Transform, named => connector));
+
+                    Assert.Equal(false, closed[UiCloseWindow.AlreadyClosedName]);
+                    Assert.False(screen.Transform.Visible, "開いていた方が閉じていない。");
+                    Assert.Empty(connector.Written);
                 }
             });
         }
@@ -780,11 +831,27 @@ namespace PmxEditorMcp.Tests
         }
 
         private static IDictionary<string, object> Call(
+            Screen screen, string tool, string window, Func<string, IPEBaseWindowConnector> windows)
+        {
+            return Call(
+                screen, tool, new Dictionary<string, object>(StringComparer.Ordinal) { { "window", window } }, windows);
+        }
+
+        private static IDictionary<string, object> Call(
             Screen screen, string tool, IDictionary<string, object> arguments)
         {
+            return Call(screen, tool, arguments, named => null);
+        }
+
+        private static IDictionary<string, object> Call(
+            Screen screen,
+            string tool,
+            IDictionary<string, object> arguments,
+            Func<string, IPEBaseWindowConnector> windows)
+        {
             McpMethodTable methods = new McpMethodTable();
-            UiOpenWindow.AddTo(methods, screen.Forms);
-            UiCloseWindow.AddTo(methods, screen.Forms);
+            UiOpenWindow.AddTo(methods, screen.Forms, windows);
+            UiCloseWindow.AddTo(methods, screen.Forms, windows);
             UiPressItem.AddTo(methods, screen.Forms);
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていない。");
@@ -836,6 +903,43 @@ namespace PmxEditorMcp.Tests
             if (caught != null)
             {
                 throw new InvalidOperationException("STAのスレッドで落ちた。", caught);
+            }
+        }
+
+        /// <summary>エディタのウィンドウと同じく、フォームそのものが SDK のコネクタを実装する。</summary>
+        private sealed class FakeWindowConnector : Form, IPEBaseWindowConnector
+        {
+            internal FakeWindowConnector()
+            {
+                Name = "TransformView";
+                Text = "TransformView";
+                ShowInTaskbar = false;
+                StartPosition = FormStartPosition.Manual;
+                Location = new Point(-32000, -32000);
+            }
+
+            internal List<bool> Written { get; } = new List<bool>();
+
+            bool IPEBaseWindowConnector.Visible
+            {
+                get { return Visible; }
+
+                set
+                {
+                    Written.Add(value);
+                    Visible = value;
+                }
+            }
+
+            Point IPEBaseWindowConnector.Location
+            {
+                get { return Location; }
+                set { Location = value; }
+            }
+
+            bool IPEBaseWindowConnector.Focus()
+            {
+                return Focus();
             }
         }
 

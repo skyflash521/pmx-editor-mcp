@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
@@ -20,6 +21,16 @@ namespace PmxEditorMcp
         /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
         {
+            AddTo(methods, forms, named => null);
+        }
+
+        /// <summary>
+        /// <paramref name="windows"/> はウィンドウの型の完全名から、そのウィンドウを開閉する SDK のコネクタを返す。コネクタの無い
+        /// ウィンドウでは null を返す。UIスレッドで呼ばれる。
+        /// </summary>
+        public static void AddTo(
+            McpMethodTable methods, Func<IEnumerable<Form>> forms, Func<string, IPEBaseWindowConnector> windows)
+        {
             if (methods == null)
             {
                 throw new ArgumentNullException(nameof(methods));
@@ -30,7 +41,12 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(forms));
             }
 
-            methods.Add(ToolName, context => Open(context, forms));
+            if (windows == null)
+            {
+                throw new ArgumentNullException(nameof(windows));
+            }
+
+            methods.Add(ToolName, context => Open(context, forms, windows));
         }
 
         /// <summary>
@@ -105,7 +121,8 @@ namespace PmxEditorMcp
                 && string.Equals(opens[0], named, StringComparison.Ordinal);
         }
 
-        private static object Open(McpMethodContext context, Func<IEnumerable<Form>> forms)
+        private static object Open(
+            McpMethodContext context, Func<IEnumerable<Form>> forms, Func<string, IPEBaseWindowConnector> windows)
         {
             object given;
             string named = context.Params.TryGetValue(WindowName, out given) ? given as string : null;
@@ -117,6 +134,7 @@ namespace PmxEditorMcp
             }
 
             IList<KeyValuePair<string, IList<string>>> hops = null;
+            IPEBaseWindowConnector connector = null;
             string title = null;
             UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
             {
@@ -129,7 +147,11 @@ namespace PmxEditorMcp
                     return;
                 }
 
-                hops = Hops(named, opener => UiLive.Shown(open, opener) != null);
+                connector = windows(named);
+                if (connector == null)
+                {
+                    hops = Hops(named, opener => UiLive.Shown(open, opener) != null);
+                }
             });
             if (!invocation.DidRun)
             {
@@ -141,7 +163,7 @@ namespace PmxEditorMcp
                 return Opened(title, true, new string[0]);
             }
 
-            if (hops == null)
+            if (connector == null && hops == null)
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.NotApplicable,
@@ -149,7 +171,11 @@ namespace PmxEditorMcp
             }
 
             List<string> notices = new List<string>();
-            foreach (KeyValuePair<string, IList<string>> hop in hops)
+            IList<Func<string>> steps = connector != null
+                ? new Func<string>[] { () => Show(connector) }
+                : hops.Select(hop => (Func<string>)(() =>
+                    UiLive.Press(UiLive.Shown(forms(), hop.Key), hop.Key, hop.Value))).ToList();
+            foreach (Func<string> step in steps)
             {
                 string waiting = null;
                 string refused = null;
@@ -167,7 +193,7 @@ namespace PmxEditorMcp
                     {
                         try
                         {
-                            refused = UiLive.Press(UiLive.Shown(forms(), hop.Key), hop.Key, hop.Value);
+                            refused = step();
                         }
                         catch (Exception exception)
                         {
@@ -225,10 +251,21 @@ namespace PmxEditorMcp
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.OperationFailed,
-                    UiAnswering.Told("押したが、そのウィンドウは開かなかった: " + named, notices));
+                    UiAnswering.Told(
+                        (connector != null
+                            ? "SDK のコネクタで表示を指示したが、そのウィンドウは開かなかった: "
+                            : "押したが、そのウィンドウは開かなかった: ") + named,
+                        notices));
             }
 
             return Opened(title, false, notices);
+        }
+
+        private static string Show(IPEBaseWindowConnector connector)
+        {
+            connector.Visible = true;
+
+            return null;
         }
 
         private static IDictionary<string, object> Opened(string title, bool already, IList<string> notices)

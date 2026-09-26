@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Forms;
 using PEPlugin;
+using PEPlugin.View;
 using PXCPlugin;
 
 namespace PmxEditorMcp
@@ -29,6 +30,23 @@ namespace PmxEditorMcp
         private const string TransformViewType = "PEPlugin.View.IPETransformViewConnector";
 
         private const string SettingType = "PEPlugin.View.IPEViewSettingConnector";
+
+        private const string ExtensionEditType = "PEPlugin.View.IPEExtensionEditConnector";
+
+        private static readonly Dictionary<string, string> WindowReceiverTypes =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { "PmxViewForm.PMXView", ViewType },
+                { "PmxViewForm.TransformView", TransformViewType },
+                { "PmxViewForm.PmxSubView", SubViewType },
+                { "PmxViewForm.PmxViewSelector", PartsType },
+                { "PmxViewForm.MappingEdit", "PEPlugin.View.IPEWeightEditConnector" },
+                { "PmxViewForm.PmxViewEdit", "PEPlugin.View.IPEVertexEditConnector" },
+                { "PmxViewForm.PmxViewEditExtension", ExtensionEditType },
+                { "PmxViewForm.PmxViewGuide", "PEPlugin.View.IPEVertexGuideConnector" },
+                { "PmxViewForm.PmxViewSetting", SettingType },
+                { "PmxEditor.PmxViewObjectSelect", "PEPlugin.View.IPEObjectSelectConnector" },
+            };
 
         private const int PromptTextLimitMs = 500;
 
@@ -248,8 +266,9 @@ namespace PmxEditorMcp
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
                 UiTree.AddTo(methods);
-                UiOpenWindow.AddTo(methods, OpenForms);
-                UiCloseWindow.AddTo(methods, OpenForms);
+                Func<string, IPEBaseWindowConnector> windows = named => SdkWindow(receivers, named);
+                UiOpenWindow.AddTo(methods, OpenForms, windows);
+                UiCloseWindow.AddTo(methods, OpenForms, windows);
                 UiPressItem.AddTo(methods, OpenForms);
                 EditorPrompt.AddTo(
                     methods,
@@ -278,6 +297,28 @@ namespace PmxEditorMcp
             }
         }
 
+        /// <summary>コネクタの無いウィンドウでは null を返す。</summary>
+        private IPEBaseWindowConnector SdkWindow(IDictionary<string, SdkReceiver> receivers, string named)
+        {
+            string type;
+            if (named == null || !WindowReceiverTypes.TryGetValue(named, out type))
+            {
+                return null;
+            }
+
+            SdkReceiver receiver;
+            if (receivers.TryGetValue(type, out receiver))
+            {
+                return receiver(_resident) as IPEBaseWindowConnector;
+            }
+
+            IPEPMDViewHelper helper = _resident.RunArgs.Host.Connector.View.PMDViewHelper;
+
+            return string.Equals(type, ExtensionEditType, StringComparison.Ordinal)
+                ? (IPEBaseWindowConnector)helper.ExtensionEdit
+                : helper.ObjectSelect;
+        }
+
         private IEnumerable<Form> OpenForms()
         {
             List<Form> forms = new List<Form>();
@@ -292,11 +333,6 @@ namespace PmxEditorMcp
             return forms;
         }
 
-        /// <summary>
-        /// その型の受け手。組み立てのツールが、要素を作る相手や画面の口を引くたびに呼ぶ。
-        /// 要素を作る相手はエディタ側のビルダから引く——Cプラグインの橋渡しが作る要素は、
-        /// 現在のPMXの流れが反映のときに読む型ではない。
-        /// </summary>
         private object Receiver(IDictionary<string, SdkReceiver> receivers, string type)
         {
             SdkReceiver receiver;
