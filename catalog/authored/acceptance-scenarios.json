@@ -5156,6 +5156,73 @@
               }
             ]
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_referrers",
+          "arguments": {
+            "kind": "vertex",
+            "indices": [
+              0
+            ],
+            "detail": "indices",
+            "referrerKind": "material",
+            "runs": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "referrerRuns.0.start",
+                "equals": 2
+              },
+              {
+                "path": "referrerIndices",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_select_elements",
+          "arguments": {
+            "operation": "all",
+            "kind": "vertex"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "selected",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_selected_vertex_indices_pmd_view_connector",
+          "arguments": {
+            "runs": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "itemRuns.0.start",
+                "equals": 0
+              },
+              {
+                "path": "items",
+                "absent": true
+              }
+            ]
+          }
         }
       ]
     },

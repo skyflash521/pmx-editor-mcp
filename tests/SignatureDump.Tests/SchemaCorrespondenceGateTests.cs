@@ -654,13 +654,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("位置と件数で切り出す形", error.Message, StringComparison.Ordinal);
         }
 
-        private const string PagedInputs = @"
+        [Fact]
+        public void RejectsARowReturningNumbersThatCannotBeJoinedIntoRuns()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(PagedSchemaJson(SlicingInputs, SlicedOutput), signatures: WholeList()));
+
+            Assert.Contains("区間", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AcceptsARowReturningTextsWithoutRuns()
+        {
+            Require(PagedSchemaJson(SlicingInputs, SlicedOutput), signatures: WholeList("System.String[]"));
+        }
+
+        private const string SlicingInputs = @"
             { ""name"": ""offset"", ""origin"": ""hostInput"", ""shape"": ""number"", ""required"": false },
             { ""name"": ""limit"", ""origin"": ""hostInput"", ""shape"": ""number"", ""required"": false }";
+
+        private const string PagedInputs = SlicingInputs + @",
+            { ""name"": ""runs"", ""origin"": ""hostInput"", ""shape"": ""boolean"", ""required"": false }";
+
+        private const string SlicedOutput = @"{ ""origin"": ""hostOutput"", ""members"": [
+            { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
+            { ""name"": ""items"", ""origin"": ""hostOutput"", ""element"": { } },
+            { ""name"": ""nextOffset"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }";
 
         private const string PagedOutput = @"{ ""origin"": ""hostOutput"", ""members"": [
             { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
             { ""name"": ""items"", ""origin"": ""hostOutput"", ""element"": { } },
+            { ""name"": ""itemRuns"", ""origin"": ""hostOutput"", ""element"": { ""origin"": ""hostOutput"", ""members"": [
+              { ""name"": ""start"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
+              { ""name"": ""count"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] } },
             { ""name"": ""nextOffset"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] }";
 
         /// <summary>引数を取らない行のツールの形。</summary>
@@ -674,6 +700,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>引数を取らず、番号の並びを丸ごと返す行。</summary>
         private static IDictionary<string, SignatureRecord> WholeList()
         {
+            return WholeList("System.Int32[]");
+        }
+
+        private static IDictionary<string, SignatureRecord> WholeList(string valueType)
+        {
             return new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
             {
                 {
@@ -686,7 +717,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         false,
                         0,
                         new ParameterRecord[0],
-                        "System.Int32[]",
+                        valueType,
                         false,
                         false,
                         OperationDirection.Read)

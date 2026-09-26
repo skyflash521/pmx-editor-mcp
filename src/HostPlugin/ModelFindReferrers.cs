@@ -38,6 +38,10 @@ namespace PmxEditorMcp
 
         public const string ReferrerIndicesName = "referrerIndices";
 
+        public const string RunsName = "runs";
+
+        public const string ReferrerRunsName = "referrerRuns";
+
         public const string TotalName = "total";
 
         public const string NextOffsetName = "nextOffset";
@@ -72,6 +76,7 @@ namespace PmxEditorMcp
                 MinWeightName,
                 OffsetName,
                 LimitName,
+                RunsName,
             };
             methods.Add(ToolName, edit.Read(known, Run));
         }
@@ -86,6 +91,7 @@ namespace PmxEditorMcp
             float minWeight;
             int offset;
             int limit;
+            bool runs;
             string code;
             string message;
             if (!TryTargetKind(context, out code, out message)
@@ -95,7 +101,8 @@ namespace PmxEditorMcp
                 || !TryDetail(context, out detail, out code, out message)
                 || !TryReferrerKind(context, kind, detail, out referrerKind, out code, out message)
                 || !TryMinWeight(context, kind, out minWeight, out code, out message)
-                || !TryPaging(context, detail, out offset, out limit, out code, out message))
+                || !TryPaging(context, detail, out offset, out limit, out code, out message)
+                || !TryRuns(context, detail, out runs, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -116,7 +123,7 @@ namespace PmxEditorMcp
                 ? PerTarget(
                     context, pmx, kind, targets, kind.Items(owners[0]).Count, minWeight, offset,
                     limit)
-                : Places(context, pmx, kind, targets, referrerKind, minWeight, offset, limit);
+                : Places(context, pmx, kind, targets, referrerKind, minWeight, runs, offset, limit);
         }
 
         private static ComposedEditResult PerTarget(
@@ -149,22 +156,24 @@ namespace PmxEditorMcp
             IList<int> targets,
             string referrerKind,
             float minWeight,
+            bool runs,
             int offset,
             int limit)
         {
             IList<int> found = ReferenceEdges.Union(pmx, kind.Name, targets, minWeight)
                 .Of(referrerKind);
+            IList<object> all = runs ? PositionRuns.Joined(found) : found.Cast<object>().ToList();
 
             return Cut(
                 context,
-                Asked(found, offset, limit).Cast<object>().ToList(),
-                ReferrerIndicesName,
-                found.Count,
-                found.Count,
+                Asked(all, offset, limit),
+                runs ? ReferrerRunsName : ReferrerIndicesName,
+                all.Count,
+                all.Count,
                 offset);
         }
 
-        private static IList<int> Asked(IList<int> all, int offset, int limit)
+        private static IList<T> Asked<T>(IList<T> all, int offset, int limit)
         {
             return all.Skip(offset).Take(limit).ToList();
         }
@@ -360,6 +369,44 @@ namespace PmxEditorMcp
             }
 
             minWeight = (float)taken;
+            code = null;
+
+            return true;
+        }
+
+        private static bool TryRuns(
+            McpMethodContext context,
+            string detail,
+            out bool runs,
+            out string code,
+            out string message)
+        {
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            runs = false;
+            object given;
+            if (!context.Params.TryGetValue(RunsName, out given))
+            {
+                code = null;
+
+                return true;
+            }
+
+            if (!string.Equals(detail, Indices, StringComparison.Ordinal))
+            {
+                message = RunsName + " を渡せるのは " + DetailName + " が " + Indices + " のときだけである。";
+
+                return false;
+            }
+
+            if (!(given is bool))
+            {
+                message = RunsName + " は真か偽でなければならない。";
+
+                return false;
+            }
+
+            runs = (bool)given;
             code = null;
 
             return true;

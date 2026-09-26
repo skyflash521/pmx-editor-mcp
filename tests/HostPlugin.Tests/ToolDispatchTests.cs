@@ -305,6 +305,57 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void APagedCallOfNumbersJoinsThemIntoRunsWhenRunsAreAsked()
+        {
+            _target.Paged = new[] { 0, 1, 2, 5, 6, 9 };
+
+            IDictionary<string, object> value = Value(
+                Call("session_paged", Arguments("runs", true, "offset", 1, "limit", 1)));
+            IDictionary<string, object> run =
+                (IDictionary<string, object>)Assert.Single((object[])value["itemRuns"]);
+
+            Assert.Equal(3, value["total"]);
+            Assert.Equal(5, run["start"]);
+            Assert.Equal(2, run["count"]);
+            Assert.Equal(2, value["nextOffset"]);
+            Assert.False(value.ContainsKey("items"));
+        }
+
+        [Fact]
+        public void APagedCallOnHeldReceiversJoinsTheNumbersOfEachOneIntoRuns()
+        {
+            HandleLedger ledger = Ledger();
+            ledger.Issue(TargetType, new Target { Paged = new[] { 0, 1, 2, 4 } }, () => { });
+            IDictionary<string, object> arguments = Arguments("runs", true);
+            arguments.Add("handles", new object[] { 1L });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_paged_held")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+            IDictionary<string, object> first =
+                (IDictionary<string, object>)((object[])envelope["value"])[0];
+
+            Assert.Equal(2, first["total"]);
+            Assert.Equal(2, ((object[])first["itemRuns"]).Length);
+        }
+
+        [Fact]
+        public void RunsAreRefusedForAPagedCallThatDoesNotReturnNumbers()
+        {
+            IDictionary<string, object> envelope = Call("session_infos_paged", Arguments("runs", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void RunsThatAreNotTrueOrFalseAreRefusedForAPagedCall()
+        {
+            IDictionary<string, object> envelope = Call("session_paged", Arguments("runs", "yes"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
         public void APagedCallRefusesALimitOfZero()
         {
             IDictionary<string, object> envelope = Call("session_paged", Arguments("limit", 0));

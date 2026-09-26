@@ -246,6 +246,81 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheIndicesComeBackJoinedIntoRunsWhenRunsAreAsked()
+        {
+            IList<IPXBone> bones = Bones(2);
+            Weighted(bones[0]);
+            Weighted(bones[0]);
+            Weighted(bones[1]);
+            Weighted(bones[0]);
+
+            IDictionary<string, object> found = Found(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(TargetNames.Element.Indices, new object[] { 0 }),
+                ComposedEditFixture.Given("detail", "indices"),
+                ComposedEditFixture.Given("referrerKind", ElementKinds.Vertex),
+                ComposedEditFixture.Given("runs", true));
+
+            Assert.Equal(2, found["total"]);
+            Assert.Equal(new[] { "0+2", "3+1" }, Runs(found));
+            Assert.False(found.ContainsKey("referrerIndices"));
+            Assert.False(found.ContainsKey("nextOffset"));
+        }
+
+        [Fact]
+        public void TheOffsetAndLimitCountRunsWhenRunsAreAsked()
+        {
+            IList<IPXBone> bones = Bones(2);
+            Weighted(bones[0]);
+            Weighted(bones[1]);
+            Weighted(bones[0]);
+            Weighted(bones[1]);
+            Weighted(bones[0]);
+
+            IDictionary<string, object> found = Found(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(TargetNames.Element.Indices, new object[] { 0 }),
+                ComposedEditFixture.Given("detail", "indices"),
+                ComposedEditFixture.Given("referrerKind", ElementKinds.Vertex),
+                ComposedEditFixture.Given("runs", true),
+                ComposedEditFixture.Given("offset", 1),
+                ComposedEditFixture.Given("limit", 1));
+
+            Assert.Equal(3, found["total"]);
+            Assert.Equal(new[] { "2+1" }, Runs(found));
+            Assert.Equal(2, found["nextOffset"]);
+        }
+
+        [Fact]
+        public void AskingForRunsIsRefusedWhenTheIndicesAreNotAsked()
+        {
+            Bones(1);
+
+            IDictionary<string, object> envelope = Call(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(TargetNames.Element.All, true),
+                ComposedEditFixture.Given("runs", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Contains("indices", ComposedEditFixture.Message(envelope));
+        }
+
+        [Fact]
+        public void RunsThatAreNotTrueOrFalseAreRefused()
+        {
+            Bones(1);
+
+            IDictionary<string, object> envelope = Call(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(TargetNames.Element.All, true),
+                ComposedEditFixture.Given("detail", "indices"),
+                ComposedEditFixture.Given("referrerKind", ElementKinds.Vertex),
+                ComposedEditFixture.Given("runs", "yes"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void ASlotWhoseWeightDoesNotPassTheThresholdIsNotCounted()
         {
             IList<IPXBone> bones = Bones(2);
@@ -498,6 +573,14 @@ namespace PmxEditorMcp.Tests
         {
             return ((IEnumerable<object>)held["referrerIndices"])
                 .Select(Convert.ToInt32)
+                .ToArray();
+        }
+
+        private static string[] Runs(IDictionary<string, object> held)
+        {
+            return ((IEnumerable<object>)held["referrerRuns"])
+                .Cast<IDictionary<string, object>>()
+                .Select(run => run["start"] + "+" + run["count"])
                 .ToArray();
         }
 

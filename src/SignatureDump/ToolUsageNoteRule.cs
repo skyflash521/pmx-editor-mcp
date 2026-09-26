@@ -25,6 +25,12 @@ namespace PmxEditorMcp.SignatureDump
             "端まで読むなら " + AllName + " に真を渡し、nextOffset が返らなくなるまで"
                 + " offset へ渡し直す。";
 
+        private const string RunsName = "runs";
+
+        private const string JoinsRuns =
+            RunsName + " に真を渡すと、連続した番号を start と count の組にまとめて " + ItemsName
+                + " の代わりに itemRuns に返し、" + TotalName + "・offset・limit・nextOffset はその組の数で数える。";
+
         private const string WithParent =
             AllName + " だけを渡せばすべての親の下を並べ、親だけを指せばその親の下の要素をすべて並べる。";
 
@@ -113,6 +119,11 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     built.Append(WithParent);
                 }
+            }
+
+            if (IsListing(schema) && Takes(schema, RunsName))
+            {
+                built.Append(JoinsRuns);
             }
 
             if (OnlyOneOfAll(schema))

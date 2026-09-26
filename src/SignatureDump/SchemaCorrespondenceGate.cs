@@ -34,6 +34,12 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string PagedItemsName = "items";
 
+        private const string RunsName = "runs";
+
+        private const string ItemRunsName = "itemRuns";
+
+        private const string NumbersType = "System.Int32[]";
+
         private const string IndicesParameters = "(System.Int32[])";
 
         private const string WriterPrefix = ".Set";
@@ -122,7 +128,7 @@ namespace PmxEditorMcp.SignatureDump
                 RequireOutput(signature, schema);
                 if (PagedCallRule.Pages(row, signature))
                 {
-                    RequirePaged(schema);
+                    RequirePaged(schema, signature);
                 }
 
                 if (issuing.Contains(row.SignatureKey))
@@ -393,7 +399,7 @@ namespace PmxEditorMcp.SignatureDump
         /// 切り出した並びと続きの位置を返すことを求める。対象ごとに返すツールでは対象ごとの応答が
         /// その形を持つ。切り出した並びの要素は行の戻り値から導く。
         /// </summary>
-        private static void RequirePaged(ToolSchema schema)
+        private static void RequirePaged(ToolSchema schema, SignatureRecord signature)
         {
             SchemaItem answer = schema.Output;
             while (answer.Members == null
@@ -421,6 +427,22 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new InvalidOperationException(
                     "並びを丸ごと返す行のツールが位置と件数で切り出す形を持たない: " + schema.Tool);
+            }
+
+            if (!string.Equals(signature.ValueType, NumbersType, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            bool joins = schema.Branches.All(b => b.Inputs.Any(
+                i => i.Origin == ItemOrigin.HostInput
+                    && string.Equals(i.Name, RunsName, StringComparison.Ordinal)));
+            SchemaItem runs = members.FirstOrDefault(
+                m => string.Equals(m.Name, ItemRunsName, StringComparison.Ordinal));
+            if (!joins || runs == null || runs.Element == null || runs.Element.Members == null)
+            {
+                throw new InvalidOperationException(
+                    "番号の並びを返す行のツールが、連なった区間へまとめて返す形を持たない: " + schema.Tool);
             }
         }
 

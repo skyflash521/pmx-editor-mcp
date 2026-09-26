@@ -17,6 +17,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AListingThatTakesRunsSaysWhereTheRunsComeBack()
+        {
+            string note = Note(true, "offset", "limit", "runs");
+
+            Assert.Contains("itemRuns", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AListingUnderAParentSaysThatAllAloneListsUnderEveryParent()
         {
             string note = Note(
