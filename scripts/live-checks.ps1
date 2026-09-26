@@ -55,7 +55,7 @@ $checks['受入シナリオ'] = New-Check `
 $environment = [ordered]@{ PMX_EDITOR_MCP_PREPARED = '1' }
 
 $conditional = [ordered]@{
-    '参照クライアントの実機動作確認' = @('docs/*', '.issues/*', '.scratch/*', '*.md')
+    '参照クライアントの実機動作確認' = @('docs/*', '.scratch/*', '*.md')
 }
 
 $afterFailure = @('pwsh', '-NoProfile', '-NonInteractive', '-File', 'scripts/close-editors.ps1')
