@@ -86,6 +86,9 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly ReadOnlyCollection<string> Allowed =
             Array.AsReadOnly(new[]
             {
+                "System.AppDomain.add_FirstChanceException",
+                "System.AppDomain.get_CurrentDomain",
+                "System.AppDomain.remove_FirstChanceException",
                 "System.Delegate.Combine",
                 "System.Delegate.Remove",
                 "System.Reflection.Assembly.GetName",

@@ -66,6 +66,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Empty(ReflectionFreeGate.Find(new[] { reference }));
         }
 
+        [Theory]
+        [InlineData("System.AppDomain.get_CurrentDomain")]
+        [InlineData("System.AppDomain.add_FirstChanceException")]
+        [InlineData("System.AppDomain.remove_FirstChanceException")]
+        public void WatchingTheExceptionsOfTheRunningDomainIsAllowed(string reference)
+        {
+            Assert.Empty(ReflectionFreeGate.Find(new[] { reference }));
+        }
+
         [Fact]
         public void BuildingAnAttributeIsAllowed()
         {
