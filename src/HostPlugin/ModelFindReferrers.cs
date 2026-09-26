@@ -120,9 +120,7 @@ namespace PmxEditorMcp
             }
 
             return string.Equals(detail, CountPerTarget, StringComparison.Ordinal)
-                ? PerTarget(
-                    context, pmx, kind, targets, kind.Items(owners[0]).Count, minWeight, offset,
-                    limit)
+                ? PerTarget(context, pmx, kind, targets, minWeight, offset, limit)
                 : Places(context, pmx, kind, targets, referrerKind, minWeight, runs, offset, limit);
         }
 
@@ -131,7 +129,6 @@ namespace PmxEditorMcp
             object pmx,
             ElementKind kind,
             IList<int> targets,
-            int whole,
             float minWeight,
             int offset,
             int limit)
@@ -146,7 +143,7 @@ namespace PmxEditorMcp
                 })
                 .ToList();
 
-            return Cut(context, rows, TargetsName, whole, targets.Count, offset);
+            return Cut(context, rows, TargetsName, targets.Count, targets.Count, offset);
         }
 
         private static ComposedEditResult Places(

@@ -21,6 +21,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string CountName = "count";
 
+        private const string TotalCountsPointed = TotalName + " は指した要素の数を返す。";
+
         private const string ToTheEnd =
             "端まで読むなら " + AllName + " に真を渡し、nextOffset が返らなくなるまで"
                 + " offset へ渡し直す。";
@@ -114,6 +116,7 @@ namespace PmxEditorMcp.SignatureDump
             StringBuilder built = new StringBuilder();
             if (IsListing(schema) && Takes(schema, AllName))
             {
+                built.Append(TotalCountsPointed);
                 built.Append(ToTheEnd);
                 if (Takes(schema, ParentAllName))
                 {

@@ -5148,7 +5148,7 @@
             "values": [
               {
                 "path": "total",
-                "equals": 6
+                "equals": 1
               },
               {
                 "path": "targets.0.index",
@@ -6174,7 +6174,7 @@
             "values": [
               {
                 "path": "total",
-                "equals": 3
+                "equals": 1
               },
               {
                 "path": "items.0.index",

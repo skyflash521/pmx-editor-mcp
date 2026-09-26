@@ -197,7 +197,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheWholeCountComesBackEvenWhenOnlyAFewPositionsWerePointedAt()
+        public void TheTotalCountsOnlyThePointedPositions()
         {
             _model.Items.Add(new Item { Label = "一" });
             _model.Items.Add(new Item { Label = "二" });
@@ -207,7 +207,7 @@ namespace PmxEditorMcp.Tests
                 "model_list_items",
                 Arguments(TargetNames.Element.Indices, new object[] { 2, 0 })));
 
-            Assert.Equal(3, value[ToolDispatch.TotalName]);
+            Assert.Equal(2, value[ToolDispatch.TotalName]);
             Assert.False(value.ContainsKey(ToolDispatch.NextOffsetName));
         }
 
@@ -225,7 +225,7 @@ namespace PmxEditorMcp.Tests
                     TargetNames.Element.Indices, new object[] { 0, 1, 2 },
                     ToolDispatch.LimitName, 2)));
 
-            Assert.Equal(4, first[ToolDispatch.TotalName]);
+            Assert.Equal(3, first[ToolDispatch.TotalName]);
             Assert.Equal(2, first[ToolDispatch.NextOffsetName]);
 
             IDictionary<string, object> second = Value(Call(
@@ -235,7 +235,7 @@ namespace PmxEditorMcp.Tests
                     ToolDispatch.OffsetName, 2,
                     ToolDispatch.LimitName, 2)));
 
-            Assert.Equal(4, second[ToolDispatch.TotalName]);
+            Assert.Equal(3, second[ToolDispatch.TotalName]);
             Assert.Equal(new[] { "三" }, Items(second).Select(i => i["label"]).ToArray());
             Assert.False(second.ContainsKey(ToolDispatch.NextOffsetName));
         }

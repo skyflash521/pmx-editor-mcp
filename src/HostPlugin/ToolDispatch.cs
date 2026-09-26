@@ -2517,13 +2517,13 @@ namespace PmxEditorMcp
                         pointed,
                         Accepted(tool.Access, null, divided),
                         out column,
-                        out total,
                         out refused)
                     || !TryOfDeclaredType(column, tool.Access, divided, out refused))
                 {
                     return;
                 }
 
+                total = column.Count;
                 if (needle != null
                     && !TryNarrow(column, named, needle, out column, out refused))
                 {
@@ -3477,11 +3477,6 @@ namespace PmxEditorMcp
                 out released);
         }
 
-        /// <summary>
-        /// 切り出した並びを一覧の形にする。<paramref name="items"/> は位置と件数で切り出した後の
-        /// 並び、<paramref name="total"/> は指し方で絞る前の並びの件数、<paramref name="pointed"/>
-        /// は指された要素の件数で、続きの位置は後者と位置から決まる。
-        /// </summary>
         private static object Listed(
             McpMethodContext context,
             IList<IDictionary<string, object>> items,
@@ -3863,36 +3858,12 @@ namespace PmxEditorMcp
             out IList<Spot> column,
             out Refusal refused)
         {
-            int whole;
-
-            return TryColumn(
-                context, access, receiver, target, pointed, accepted, out column, out whole,
-                out refused);
-        }
-
-        /// <summary>
-        /// 指された要素を切り出す。<paramref name="whole"/> は指し方で絞る前の並びの件数で、
-        /// 絞り方を持たない受け手では切り出したものの件数と同じになる。
-        /// </summary>
-        private bool TryColumn(
-            McpMethodContext context,
-            ToolAccess access,
-            ToolReceiver receiver,
-            PmxTarget target,
-            Pointed pointed,
-            Func<object, bool> accepted,
-            out IList<Spot> column,
-            out int whole,
-            out Refusal refused)
-        {
             column = null;
-            whole = 0;
             refused = null;
             if (Handled(receiver))
             {
                 bool held = TryHeld(
                     id => Held(context, receiver.Accepts, id), pointed, out column, out refused);
-                whole = column == null ? 0 : column.Count;
 
                 return held;
             }
@@ -3900,7 +3871,6 @@ namespace PmxEditorMcp
             if (access.Kind == ToolAccessKind.Whole)
             {
                 column = new[] { new Spot(null, 0, -1, -1, Receiver(context, receiver, target)) };
-                whole = column.Count;
 
                 return true;
             }
@@ -3909,7 +3879,6 @@ namespace PmxEditorMcp
             {
                 bool held = TryHeld(
                     id => Held(context, accepted, id), pointed, out column, out refused);
-                whole = column == null ? 0 : column.Count;
 
                 return held;
             }
@@ -3937,7 +3906,6 @@ namespace PmxEditorMcp
                 }
 
                 column = child.Select(one => new Spot(null, 0, -1, -1, one)).ToList();
-                whole = column.Count;
 
                 return true;
             }
@@ -4009,7 +3977,6 @@ namespace PmxEditorMcp
                 if (elsewhere && code == ToolEnvelope.NotApplicable)
                 {
                     column = new Spot[0];
-                    whole = spots.Count;
 
                     return true;
                 }
@@ -4020,7 +3987,6 @@ namespace PmxEditorMcp
             }
 
             column = resolved.Indices.Select(i => spots[i]).ToList();
-            whole = spots.Count;
 
             return true;
         }

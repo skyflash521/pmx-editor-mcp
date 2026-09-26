@@ -17,6 +17,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AListingSaysThatTheTotalCountsThePointedElements()
+        {
+            string note = Note(true, "indices", "range", "all", "offset", "limit");
+
+            Assert.Contains("total は指した要素の数", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AListingThatTakesRunsSaysWhereTheRunsComeBack()
         {
             string note = Note(true, "offset", "limit", "runs");

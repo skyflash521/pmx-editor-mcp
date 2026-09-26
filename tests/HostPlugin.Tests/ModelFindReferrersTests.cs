@@ -158,7 +158,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheCountPerTargetSaysHowManyElementsOfThatKindThereAreInAll()
+        public void TheCountPerTargetTotalsOnlyThePointedElements()
         {
             Bones(3);
 
@@ -168,7 +168,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     "detail", "countPerTarget"));
 
-            Assert.Equal(3, found["total"]);
+            Assert.Equal(1, found["total"]);
             Assert.Single(Items(found));
             Assert.False(found.ContainsKey("nextOffset"));
         }
