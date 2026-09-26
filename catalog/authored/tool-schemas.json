@@ -42400,6 +42400,12 @@
                 "shape": "text"
               },
               "required": false
+            },
+            {
+              "name": "view",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ]
         }
@@ -42583,7 +42589,14 @@
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "view",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            }
+          ]
         }
       ],
       "output": {
@@ -42596,7 +42609,14 @@
       "branches": [
         {
           "branch": "only",
-          "inputs": []
+          "inputs": [
+            {
+              "name": "view",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            }
+          ]
         }
       ],
       "output": {
@@ -42791,6 +42811,12 @@
             {
               "name": "path",
               "required": true
+            },
+            {
+              "name": "view",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ]
         }
@@ -43644,6 +43670,12 @@
             {
               "name": "path",
               "required": true
+            },
+            {
+              "name": "view",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ]
         }
@@ -46202,6 +46234,12 @@
             },
             {
               "name": "visibleWeightMap"
+            },
+            {
+              "name": "view",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [

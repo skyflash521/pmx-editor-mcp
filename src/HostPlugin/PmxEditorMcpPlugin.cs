@@ -195,6 +195,10 @@ namespace PmxEditorMcp
                 UndoSuppression undo = new UndoSuppression(_log);
                 SdkRelayTable relay = GeneratedSdkRelay.Create();
                 Dictionary<string, SdkReceiver> receivers = GeneratedSdkReceivers.Create();
+                receivers[ToolDispatch.ReceiverKey(ToolDispatch.ViewSettingType, ToolDispatch.Views[1])] =
+                    connection => connection.RunArgs.Host.Connector.View.TransformViewSetting;
+                receivers[ToolDispatch.ReceiverKey(ToolDispatch.ViewSettingType, ToolDispatch.Views[2])] =
+                    connection => connection.RunArgs.Host.Connector.View.PMDViewHelper.SubViewSetting;
                 ScreenRefresh refresh = new ScreenRefresh(
                     () => Receiver(receivers, ViewType),
                     () => Receiver(receivers, FormType),

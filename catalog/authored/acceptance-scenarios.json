@@ -3004,6 +3004,303 @@
           "expect": {
             "ok": true
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ]
+          },
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "pmxPointSize",
+            "path": "vertexPointSize",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ],
+            "view": "transformView"
+          },
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "transformPointSize",
+            "path": "vertexPointSize",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_setting_connector",
+          "arguments": {
+            "vertexPointSize": 2.5
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_setting_connector",
+          "arguments": {
+            "vertexPointSize": 4.5,
+            "view": "transformView"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "vertexPointSize",
+                "equals": 2.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ],
+            "view": "transformView"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "vertexPointSize",
+                "equals": 4.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\TransformView表示.xml"
+        },
+        {
+          "kind": "tool",
+          "tool": "view_save_view_setting",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\TransformView表示.xml",
+            "view": "transformView",
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectPresent",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance\\TransformView表示.xml"
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_setting_connector",
+          "arguments": {
+            "vertexPointSize": 6.5,
+            "view": "transformView"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_load_view_setting",
+          "arguments": {
+            "path": "%TEMP%\\pmx-editor-mcp-acceptance\\TransformView表示.xml",
+            "view": "transformView"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ],
+            "view": "transformView"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "vertexPointSize",
+                "equals": 4.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "vertexPointSize",
+                "equals": 2.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ],
+            "view": "subView"
+          },
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "subPointSize",
+            "path": "vertexPointSize",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_setting_connector",
+          "arguments": {
+            "vertexPointSize": 5.5,
+            "view": "subView"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ],
+            "view": "transformView"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "vertexPointSize",
+                "equals": 4.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ],
+            "view": "subView"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "vertexPointSize",
+                "equals": 5.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_setting_connector",
+          "arguments": {
+            "fields": [
+              "vertexPointSize"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "vertexPointSize",
+                "equals": 2.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_setting_connector",
+          "arguments": {
+            "vertexPointSize": {
+              "$from": "subPointSize"
+            },
+            "view": "subView"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_setting_connector",
+          "arguments": {
+            "vertexPointSize": {
+              "$from": "pmxPointSize"
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_setting_connector",
+          "arguments": {
+            "vertexPointSize": {
+              "$from": "transformPointSize"
+            },
+            "view": "transformView"
+          },
+          "expect": {
+            "ok": true
+          }
         }
       ]
     },

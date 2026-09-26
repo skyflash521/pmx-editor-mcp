@@ -60,6 +60,12 @@ namespace PmxEditorMcp.SignatureDump
             ArgsListName + " は指した対象の並びの順に1件ずつ当て、件数は対象の数とそろえる。"
                 + ArgsName + " は指した対象の全部へ同じ引数を当てる。";
 
+        private const string ViewName = "view";
+
+        private const string ChoosesTheView =
+            ViewName + " に pmxView・transformView・subView を渡すと、それぞれ PMXView・TransformView・SubView の"
+                + "表示設定を相手にする。渡さなければ PMXView の表示設定を相手にする。";
+
         private const string MakesNew =
             "呼ぶたびに新しく作る。返るのは作ったもののハンドルの番号で、要らなくなったら"
                 + " session_release_handle へ渡す。";
@@ -142,6 +148,11 @@ namespace PmxEditorMcp.SignatureDump
             if (Takes(schema, ArgsListName))
             {
                 built.Append(PairsArgs);
+            }
+
+            if (Takes(schema, ViewName))
+            {
+                built.Append(ChoosesTheView);
             }
 
             if (Issues(schema))

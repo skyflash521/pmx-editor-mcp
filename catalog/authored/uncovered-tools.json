@@ -591,10 +591,6 @@
     {
       "tool": "view_update_view_control",
       "reason": "noCase"
-    },
-    {
-      "tool": "view_update_view_setting_connector",
-      "reason": "noCase"
     }
   ]
 }

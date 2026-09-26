@@ -81,6 +81,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolThatTakesViewSaysWhichViewsSettingEachValueReaches()
+        {
+            string note = Note(false, "path", "view");
+
+            Assert.Contains("view", note, StringComparison.Ordinal);
+            Assert.Contains("pmxView", note, StringComparison.Ordinal);
+            Assert.Contains("transformView", note, StringComparison.Ordinal);
+            Assert.Contains("subView", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AToolThatTakesNeitherCarriesNoNote()
         {
             Assert.Null(Note(false, "pmxHandle"));

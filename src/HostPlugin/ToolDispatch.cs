@@ -68,6 +68,23 @@ namespace PmxEditorMcp
         /// <summary>加えるツールが受け取る、親ごとの組の並びの名前。</summary>
         public const string AssignmentsName = "assignments";
 
+        /// <summary>表示設定の受け手を取るツールが受け取る、どのビューの設定かの名前。</summary>
+        public const string ViewName = "view";
+
+        /// <summary>ビューごとに実体の分かれる表示設定の受け手の型。</summary>
+        public const string ViewSettingType = "PEPlugin.View.IPEViewSettingConnector";
+
+        /// <summary><see cref="ViewName"/> が取る値。先頭は渡さなかったときと同じ PMXView を指す。</summary>
+        public static readonly string[] Views = { "pmxView", "transformView", "subView" };
+
+        /// <summary>受け手の表を引く名前。PMXView を指す値は型の名前のままにする。</summary>
+        public static string ReceiverKey(string typeName, string view)
+        {
+            return view == null || string.Equals(view, Views[0], StringComparison.Ordinal)
+                ? typeName
+                : typeName + "|" + view;
+        }
+
         /// <summary>
         /// 一覧の各項目が持つ、その対象を指す位置の名前。親を辿らない一覧の項目がこれを持つ。
         /// </summary>
@@ -834,11 +851,13 @@ namespace PmxEditorMcp
                 known.Add(LimitName);
             }
 
+            known.AddRange(Choosing(call.Receiver));
             int count = 1;
             int offset;
             int limit;
             int most = Most(context);
             if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
+                || !TryView(context, out code, out message)
                 || !TryConfirm(context, out confirm, out code, out message)
                 || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
                 || !TryPassDanger(call, handle, confirm, out code, out message)
@@ -2406,8 +2425,10 @@ namespace PmxEditorMcp
             }
 
             known.AddRange(Pointing(tool.Access, true, tool.Receiver));
+            known.AddRange(Choosing(tool.Receiver));
             bool divided = Divided(tool);
             if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
+                || !TryView(context, out code, out message)
                 || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
                 || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
                 || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message)
@@ -2702,10 +2723,13 @@ namespace PmxEditorMcp
             string code;
             string message;
             if (!TryOnlyKnown(
-                context,
-                Known(tool.Sets[0].Fields.Select(f => f.Name).ToList(), tool.Receiver.Kind == ToolReceiverKind.Pmx),
-                out code,
-                out message))
+                    context,
+                    Known(
+                        tool.Sets[0].Fields.Select(f => f.Name).Concat(Choosing(tool.Receiver)).ToList(),
+                        tool.Receiver.Kind == ToolReceiverKind.Pmx),
+                    out code,
+                    out message)
+                || !TryView(context, out code, out message))
             {
                 return ToolEnvelope.Failure(code, message);
             }
@@ -2737,7 +2761,7 @@ namespace PmxEditorMcp
                 SdkRelayRefusal refusal;
                 if (!_relay.TryInvoke(
                     field.RowKey,
-                    Receiver(tool.Receiver, null),
+                    Receiver(context, tool.Receiver, null),
                     new[] { value },
                     out ignored,
                     out refusal))
@@ -3715,7 +3739,7 @@ namespace PmxEditorMcp
 
             if (access.Kind == ToolAccessKind.Whole)
             {
-                column = new[] { new Spot(null, 0, -1, -1, Receiver(receiver, target)) };
+                column = new[] { new Spot(null, 0, -1, -1, Receiver(context, receiver, target)) };
                 whole = column.Count;
 
                 return true;
@@ -4758,7 +4782,7 @@ namespace PmxEditorMcp
         /// 受け手。接続の道から得るものはビルド時に決めた道を辿り、PMXから得るものはその実体を
         /// そのまま渡す。静的なメンバーは相手を取らない。
         /// </summary>
-        private object Receiver(ToolReceiver receiver, PmxTarget target)
+        private object Receiver(McpMethodContext context, ToolReceiver receiver, PmxTarget target)
         {
             if (receiver.Kind == ToolReceiverKind.Pmx)
             {
@@ -4770,13 +4794,44 @@ namespace PmxEditorMcp
                 return null;
             }
 
+            object view;
+            string key = Choosing(receiver).Count > 0 && context.Params.TryGetValue(ViewName, out view)
+                ? ReceiverKey(receiver.TypeName, (string)view)
+                : receiver.TypeName;
             SdkReceiver found;
-            if (!_receivers.TryGetValue(receiver.TypeName, out found))
+            if (!_receivers.TryGetValue(key, out found))
             {
-                throw new InvalidOperationException("受け手を得る道が無い: " + receiver.TypeName);
+                throw new InvalidOperationException("受け手を得る道が無い: " + key);
             }
 
             return found(_connection);
+        }
+
+        /// <summary>受け手を選ぶために受け取る名前。表示設定の受け手だけがどのビューの設定かを受け取る。</summary>
+        private static IList<string> Choosing(ToolReceiver receiver)
+        {
+            return receiver.Kind == ToolReceiverKind.Connection
+                && string.Equals(receiver.TypeName, ViewSettingType, StringComparison.Ordinal)
+                    ? new[] { ViewName }
+                    : new string[0];
+        }
+
+        /// <summary>どのビューの設定かが渡されていれば、その値が <see cref="Views"/> のどれかであることを確かめる。</summary>
+        private static bool TryView(McpMethodContext context, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(ViewName, out given)
+                || (given is string && Array.IndexOf(Views, (string)given) >= 0))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = ViewName + " は " + string.Join("・", Views) + " のどれかで与える。";
+
+            return false;
         }
 
         /// <summary>

@@ -19,6 +19,9 @@ namespace PmxEditorMcp.Tests
 
         private const string TargetType = "Sdk.Form";
 
+        /// <summary>ビューごとに実体の分かれる受け手。どのビューの設定かを view で選ぶ。</summary>
+        private const string SettingType = "PEPlugin.View.IPEViewSettingConnector";
+
         private const string SaveKey = "Sdk.Form.Save(System.String)";
 
         /// <summary>画面を撮る行。返る画像はその呼び出しが作ったものである。</summary>
@@ -84,6 +87,12 @@ namespace PmxEditorMcp.Tests
         private Throwaway _unpackable;
 
         private readonly Target _target = new Target();
+
+        private readonly Target _pmxSetting = new Target();
+
+        private readonly Target _transformSetting = new Target();
+
+        private readonly Target _subSetting = new Target();
 
         private readonly FakePmxView _view = new FakePmxView();
 
@@ -324,6 +333,53 @@ namespace PmxEditorMcp.Tests
 
             Assert.True((bool)envelope["ok"]);
             Assert.Equal("a.pmx", _target.Saved);
+        }
+
+        [Fact]
+        public void TheViewChosenForASettingDecidesWhichViewsSettingIsReached()
+        {
+            Assert.True((bool)Call("view_save_setting", Arguments("path", "t.xml", "view", "transformView"))["ok"]);
+            Assert.True((bool)Call("view_save_setting", Arguments("path", "s.xml", "view", "subView"))["ok"]);
+            Assert.True((bool)Call("view_save_setting", Arguments("path", "p.xml", "view", "pmxView"))["ok"]);
+
+            Assert.Equal("t.xml", _transformSetting.Saved);
+            Assert.Equal("s.xml", _subSetting.Saved);
+            Assert.Equal("p.xml", _pmxSetting.Saved);
+        }
+
+        [Fact]
+        public void ASettingWithoutAViewIsThePmxViewsSetting()
+        {
+            Assert.True((bool)Call("view_save_setting", Arguments("path", "p.xml"))["ok"]);
+
+            Assert.Equal("p.xml", _pmxSetting.Saved);
+            Assert.Null(_transformSetting.Saved);
+        }
+
+        [Fact]
+        public void TheViewChosenForASettingIsReadAndWrittenThere()
+        {
+            _subSetting.Count = 7;
+
+            Assert.Equal(7, Value(Call("view_get_setting", Arguments("view", "subView")))["count"]);
+            Assert.True((bool)Call("view_update_setting", Arguments("flag", true, "view", "transformView"))["ok"]);
+
+            Assert.True(_transformSetting.Flag);
+            Assert.False(_pmxSetting.Flag);
+        }
+
+        [Fact]
+        public void AViewThatIsNotKnownIsRefusedAndNotTakenByOtherReceivers()
+        {
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                Code(Call("view_save_setting", Arguments("path", "x.xml", "view", "front"))));
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                Code(Call("session_save", Arguments("path", "a.pmx", "confirm", true, "view", "transformView"))));
+
+            Assert.Null(_pmxSetting.Saved);
+            Assert.Null(_target.Saved);
         }
 
         [Fact]
@@ -1446,6 +1502,9 @@ namespace PmxEditorMcp.Tests
             return new Dictionary<string, SdkReceiver>(StringComparer.Ordinal)
             {
                 { TargetType, connection => _target },
+                { SettingType, connection => _pmxSetting },
+                { ToolDispatch.ReceiverKey(SettingType, "transformView"), connection => _transformSetting },
+                { ToolDispatch.ReceiverKey(SettingType, "subView"), connection => _subSetting },
             };
         }
 
@@ -1743,6 +1802,17 @@ namespace PmxEditorMcp.Tests
                         Direct(),
                         ToolAccess.Whole(),
                         DangerKind.Overwrite,
+                        new[] { new ToolArgument("path", typeof(string)) },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "view_save_setting",
+                    new ToolCall(
+                        SaveKey,
+                        new ToolReceiver(ToolReceiverKind.Connection, SettingType, EditKind.DirectChange),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
                         new[] { new ToolArgument("path", typeof(string)) },
                         new ToolArgument[0],
                         null)
@@ -2074,6 +2144,24 @@ namespace PmxEditorMcp.Tests
                         true,
                         false,
                         Direct(),
+                        ToolAccess.Whole(),
+                        Set(new ToolField("flag", FlagKey, typeof(bool))))
+                },
+                {
+                    "view_get_setting",
+                    new ToolFields(
+                        false,
+                        false,
+                        new ToolReceiver(ToolReceiverKind.Connection, SettingType, EditKind.Read),
+                        ToolAccess.Whole(),
+                        Set(new ToolField("count", CountKey, typeof(int))))
+                },
+                {
+                    "view_update_setting",
+                    new ToolFields(
+                        true,
+                        false,
+                        new ToolReceiver(ToolReceiverKind.Connection, SettingType, EditKind.DirectChange),
                         ToolAccess.Whole(),
                         Set(new ToolField("flag", FlagKey, typeof(bool))))
                 },

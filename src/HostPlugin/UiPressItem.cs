@@ -35,7 +35,7 @@ namespace PmxEditorMcp
         private const string SavePmxGuide = "session_save_pmx_file で行う。";
 
         private const string ViewSettingGuide =
-            "PMXView の表示設定をファイルへ書くのは view_save_view_setting で行う。TransformView と SubView の表示設定を書くツールは無い。";
+            "表示設定をファイルへ書くのは view_save_view_setting で行う。どのビューの表示設定かは view で選ぶ。";
 
         /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
