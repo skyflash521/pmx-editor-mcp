@@ -1396,7 +1396,7 @@
       "target": "IPETransformViewConnector.BoneRotate",
       "status": "提供",
       "owner": "変形・モーション",
-      "remarks": ""
+      "remarks": "契約注記: TransformView のビューで選んでいるボーンを、motion_update_transform_view_connector の boneRotateXyz の値だけ回す。ビューでボーンが選ばれていないときは、一覧で選んでいても何もせずに成功を返す。一覧でボーンを選ぶとビューの選択も同じボーンになるが、絞込で表示から外れているボーンを一覧で選ぶとビューの選択は空になる。ビューの選択が外れても一覧の選択は残り、同じ位置を selectedBoneIndex へ渡し直してもビューの選択は戻らない。揃え直すには selectedBoneIndex に -1 を渡してから位置を渡す"
     },
     {
       "id": "CAP-175",
@@ -1404,7 +1404,7 @@
       "target": "IPETransformViewConnector.BoneTranslate",
       "status": "提供",
       "owner": "変形・モーション",
-      "remarks": ""
+      "remarks": "契約注記: TransformView のビューで選んでいるボーンを、motion_update_transform_view_connector の boneTranslateXyz の値だけ動かす。ビューでボーンが選ばれていないときは、一覧で選んでいても何もせずに成功を返す。一覧でボーンを選ぶとビューの選択も同じボーンになるが、絞込で表示から外れているボーンを一覧で選ぶとビューの選択は空になる。ビューの選択が外れても一覧の選択は残り、同じ位置を selectedBoneIndex へ渡し直してもビューの選択は戻らない。揃え直すには selectedBoneIndex に -1 を渡してから位置を渡す"
     },
     {
       "id": "CAP-176",
@@ -1412,7 +1412,7 @@
       "target": "IPETransformViewConnector.BoneScaling",
       "status": "提供",
       "owner": "変形・モーション",
-      "remarks": ""
+      "remarks": "契約注記: TransformView のビューで選んでいるボーンを、motion_update_transform_view_connector の boneScaleXyz の値だけ拡大縮小する。ビューでボーンが選ばれていないときは、一覧で選んでいても何もせずに成功を返す。一覧でボーンを選ぶとビューの選択も同じボーンになるが、絞込で表示から外れているボーンを一覧で選ぶとビューの選択は空になる。ビューの選択が外れても一覧の選択は残り、同じ位置を selectedBoneIndex へ渡し直してもビューの選択は戻らない。揃え直すには selectedBoneIndex に -1 を渡してから位置を渡す"
     },
     {
       "id": "CAP-177",

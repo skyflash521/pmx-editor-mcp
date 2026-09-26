@@ -176,7 +176,7 @@ namespace PmxEditorMcp
             {
                 message = "TransformView の一覧でボーンが選ばれていないので呼べない。"
                     + "motion_update_transform_view_connector の selectedBoneIndex でボーンを選んでから呼ぶ。"
-                    + "一覧で選ぶと、ビューの選択も同じボーンになる。";
+                    + "表示されているボーンを一覧で選ぶと、ビューの選択も同じボーンになる。";
 
                 return false;
             }
