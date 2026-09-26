@@ -273,6 +273,30 @@
       "tools": [
         "model_place_elements"
       ]
+    },
+    {
+      "task": "TransformView の姿勢の焼き込み",
+      "searches": [
+        [
+          "姿勢",
+          "焼き込"
+        ]
+      ],
+      "tools": [
+        "motion_apply_current_pose"
+      ]
+    },
+    {
+      "task": "TransformView の姿勢の取り消し",
+      "searches": [
+        [
+          "姿勢",
+          "取り消"
+        ]
+      ],
+      "tools": [
+        "motion_reset_transform"
+      ]
     }
   ]
 }

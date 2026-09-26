@@ -1356,7 +1356,7 @@
       "target": "IPETransformViewConnector.ResetTransform",
       "status": "提供",
       "owner": "変形・モーション",
-      "remarks": ""
+      "remarks": "契約注記: TransformView でボーンに取らせている姿勢とモーフの値を取り消し、初期の状態へ戻す"
     },
     {
       "id": "CAP-170",
