@@ -674,7 +674,7 @@ namespace PmxEditorMcp.Tests
         private static readonly string[] SaveFixVmd = { "menuStrip1", "MenuItem_File", "MenuItem_SaveFixVmd" };
 
         private static readonly byte[] Motion =
-            VmdFileTests.Bytes(visibleIkThird: false, bones: 1, morphs: 1, cameras: 0, iks: 0);
+            VmdSamples.Bytes(visibleIkThird: false, bones: 1, morphs: 1, cameras: 0, iks: 0);
 
         private static IDictionary<string, object> Call(
             ComposedScreenFixture fixture, string[] path, string file, bool confirm)

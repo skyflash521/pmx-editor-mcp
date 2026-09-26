@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.0.0.0
@@ -30,6 +30,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SignatureDump.Tests", "SignatureDump.Tests", "{C65B1A32-DEC6-A860-3E33-629FD0EE6293}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PmxEditorMcp.SignatureDump.Tests", "tests\SignatureDump.Tests\PmxEditorMcp.SignatureDump.Tests.csproj", "{56F10376-D417-4A9B-A36D-59F84B68F624}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HostPlugin.ModalTests", "HostPlugin.ModalTests", "{78015943-8AB7-7F8E-63B1-95B335267906}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PmxEditorMcp.HostPlugin.ModalTests", "tests\HostPlugin.ModalTests\PmxEditorMcp.HostPlugin.ModalTests.csproj", "{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -113,6 +117,18 @@ Global
 		{56F10376-D417-4A9B-A36D-59F84B68F624}.Release|x64.Build.0 = Release|Any CPU
 		{56F10376-D417-4A9B-A36D-59F84B68F624}.Release|x86.ActiveCfg = Release|Any CPU
 		{56F10376-D417-4A9B-A36D-59F84B68F624}.Release|x86.Build.0 = Release|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Debug|x64.Build.0 = Debug|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Debug|x86.Build.0 = Debug|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Release|x64.ActiveCfg = Release|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Release|x64.Build.0 = Release|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Release|x86.ActiveCfg = Release|Any CPU
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -130,5 +146,6 @@ Global
 		{B44C423D-8DAB-4A3A-A187-D23964451639} = {55B7695E-1799-9AA0-3ABF-DB9DCC041DB7}
 		{C65B1A32-DEC6-A860-3E33-629FD0EE6293} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{56F10376-D417-4A9B-A36D-59F84B68F624} = {C65B1A32-DEC6-A860-3E33-629FD0EE6293}
+		{7E8497A9-05CE-4FFA-BC68-14B10A75F6A0} = {78015943-8AB7-7F8E-63B1-95B335267906}
 	EndGlobalSection
 EndGlobal

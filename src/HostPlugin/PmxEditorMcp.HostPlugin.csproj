@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.Tests" />
+    <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.ModalTests" />
   </ItemGroup>
 
   <ItemGroup>
