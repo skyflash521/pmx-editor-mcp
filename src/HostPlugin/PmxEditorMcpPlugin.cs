@@ -266,7 +266,7 @@ namespace PmxEditorMcp
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
-                UiTree.AddTo(methods);
+                UiTree.AddTo(methods, OpenForms);
                 Func<string, IPEBaseWindowConnector> windows = named => SdkWindow(receivers, named);
                 UiOpenWindow.AddTo(methods, OpenForms, windows);
                 UiCloseWindow.AddTo(methods, OpenForms, windows);

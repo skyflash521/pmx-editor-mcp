@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
@@ -161,6 +162,69 @@ namespace PmxEditorMcp.Tests
                     Assert.Equal(ToolEnvelope.InvalidArgument, Code(Call(screen, UiCloseWindow.ToolName, "TransformView")));
                 }
             });
+        }
+
+        [Fact]
+        public void TheScreenStructureTellsWhetherEachWindowIsOpen()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    Assert.Equal(false, OpenOf(Value(Call(screen, UiTree.ToolName, Transform))));
+
+                    Value(Call(screen, UiOpenWindow.ToolName, Transform));
+
+                    Assert.Equal(true, OpenOf(Value(Call(screen, UiTree.ToolName, Transform))));
+                }
+            });
+        }
+
+        [Fact]
+        public void TheOpenStateIsLeftOutWithTheReasonWhenTheUiThreadCannotBeReached()
+        {
+            OnSta(() =>
+            {
+                using (Screen screen = new Screen())
+                {
+                    IDictionary<string, object> envelope = Call(
+                        screen,
+                        UiTree.ToolName,
+                        new Dictionary<string, object>(StringComparer.Ordinal) { { "window", Transform } },
+                        named => null,
+                        new BlockedInvoker("人の応答を待つ表示"));
+                    IDictionary<string, object> window =
+                        (IDictionary<string, object>)((object[])Value(envelope)["windows"])[0];
+
+                    Assert.False(window.ContainsKey("open"));
+                    Assert.Contains(
+                        ((System.Collections.IEnumerable)envelope["warnings"]).Cast<object>(),
+                        warning => ((string)warning).Contains("人の応答を待つ表示"));
+                }
+            });
+        }
+
+        private sealed class BlockedInvoker : IUiInvoker
+        {
+            private readonly string _shown;
+
+            internal BlockedInvoker(string shown)
+            {
+                _shown = shown;
+            }
+
+            public UiInvocation TryInvokeOnUi(Action action)
+            {
+                return UiInvocation.Blocked(_shown);
+            }
+        }
+
+        private static object OpenOf(IDictionary<string, object> structure)
+        {
+            IDictionary<string, object> window =
+                (IDictionary<string, object>)((object[])structure["windows"])[0];
+
+            return window["open"];
         }
 
         [Fact]
@@ -846,16 +910,27 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> arguments,
             Func<string, IPEBaseWindowConnector> windows)
         {
+            return Call(screen, tool, arguments, windows, new InlineInvoker());
+        }
+
+        private static IDictionary<string, object> Call(
+            Screen screen,
+            string tool,
+            IDictionary<string, object> arguments,
+            Func<string, IPEBaseWindowConnector> windows,
+            IUiInvoker invoker)
+        {
             McpMethodTable methods = new McpMethodTable();
             UiOpenWindow.AddTo(methods, screen.Forms, windows);
             UiCloseWindow.AddTo(methods, screen.Forms, windows);
             UiPressItem.AddTo(methods, screen.Forms);
+            UiTree.AddTo(methods, screen.Forms);
             McpMethod method;
             Assert.True(methods.TryGet(tool, out method), "登録されていない。");
 
             return (IDictionary<string, object>)method(new McpMethodContext(
                 arguments,
-                new InlineInvoker(),
+                invoker,
                 100000,
                 new HandleLedger(
                     new HostLog(System.IO.Path.Combine(

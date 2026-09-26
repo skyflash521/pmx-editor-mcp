@@ -68,6 +68,10 @@
               {
                 "path": "windows.0.node",
                 "absent": true
+              },
+              {
+                "path": "windows.0.open",
+                "equals": false
               }
             ]
           }
@@ -97,6 +101,10 @@
               {
                 "path": "windows.0.openedBy.0.form",
                 "equals": "PmxEditor.PmxForm"
+              },
+              {
+                "path": "windows.0.open",
+                "equals": false
               }
             ]
           }
@@ -2428,6 +2436,23 @@
           },
           "expect": {
             "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "editor_get_screen_structure",
+          "arguments": {
+            "window": "PmxViewForm.TransformView",
+            "depth": 0
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "windows.0.open",
+                "equals": true
+              }
+            ]
           }
         },
         {

@@ -2,21 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Web.Script.Serialization;
+using System.Windows.Forms;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// ウィンドウの一覧、または名指ししたウィンドウの部品の木を返すツール。答えは組み込んだ台帳だけから作り、
-    /// エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。
-    ///
-    /// 名指しが1つのウィンドウに定まらなくてもエラーにしない。型の完全名で当たればそのウィンドウだけ、当たらなければタイトルが
-    /// 一致するウィンドウすべて、それも無ければ名前かタイトルに部分一致するウィンドウすべてを返し、どれも当たらなければ
-    /// 空で返す。木を付けるのは、型の完全名かタイトルが完全に一致したウィンドウに限る。
-    ///
-    /// 木が値の枠に収まらないときは、深さを縮めずにエラーを返し、どう絞れば収まるかを添える。
-    /// 木を付けない一覧は、収まらなければ入るところまでを返す。当たった数を total で示し、残りが
-    /// あれば次に渡す offset を nextOffset で示す。
-    /// </summary>
     public static class UiTree
     {
         /// <summary>このツールの名前。</summary>
@@ -39,24 +28,31 @@ namespace PmxEditorMcp
 
         private const string NodeName = "node";
 
+        private const string OpenName = "open";
+
         private const string TotalName = "total";
 
         private const string NextOffsetName = "nextOffset";
 
         private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
-        /// <summary>ツールを表へ足す。</summary>
-        public static void AddTo(McpMethodTable methods)
+        /// <param name="forms">開いているウィンドウを返す。UIスレッドで呼ばれる。</param>
+        public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
         {
             if (methods == null)
             {
                 throw new ArgumentNullException(nameof(methods));
             }
 
-            methods.Add(ToolName, Get);
+            if (forms == null)
+            {
+                throw new ArgumentNullException(nameof(forms));
+            }
+
+            methods.Add(ToolName, context => Get(context, forms));
         }
 
-        private static object Get(McpMethodContext context)
+        private static object Get(McpMethodContext context, Func<IEnumerable<Form>> forms)
         {
             object given;
             string wanted = context.Params.TryGetValue(WindowName, out given) ? given as string : null;
@@ -94,10 +90,40 @@ namespace PmxEditorMcp
                 chosen.Add(found[at]);
             }
 
+            HashSet<string> collected = null;
+            UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
+            {
+                HashSet<string> shown = new HashSet<string>(StringComparer.Ordinal);
+                foreach (Form form in forms())
+                {
+                    if (form.Visible)
+                    {
+                        shown.Add(form.Name);
+                    }
+                }
+
+                collected = shown;
+            });
+            HashSet<string> open = invocation.DidRun ? collected : null;
+            List<string> warnings = new List<string>();
+            if (open == null)
+            {
+                warnings.Add("開いているかを読めなかったので open を添えない: " + invocation.Unavailable);
+            }
+
             List<object> windows = new List<object>();
             foreach (IDictionary<string, object> window in chosen)
             {
                 IDictionary<string, object> listed = Listed(window, named);
+                if (open != null)
+                {
+                    listed.Add(
+                        OpenName,
+                        open.Contains(UiStructureCatalog.Text(
+                            UiStructureCatalog.Node(window, UiStructureCatalog.RootName),
+                            UiStructureCatalog.NameName) ?? string.Empty));
+                }
+
                 if (named)
                 {
                     IDictionary<string, object> node =
@@ -127,8 +153,8 @@ namespace PmxEditorMcp
             int room = ResponseSize.ValueChars(context.BudgetChars);
 
             return named
-                ? Whole(windows, chosen, found.Count, offset, room)
-                : Some(windows, found.Count, offset, room);
+                ? Whole(windows, chosen, found.Count, offset, room, warnings)
+                : Some(windows, found.Count, offset, room, warnings);
         }
 
         /// <summary>木を付けた答え。収まらないときは絞り方を添えたエラーを返す。</summary>
@@ -137,12 +163,13 @@ namespace PmxEditorMcp
             IList<IDictionary<string, object>> chosen,
             int total,
             int offset,
-            int room)
+            int room,
+            IList<string> warnings)
         {
             IDictionary<string, object> value = Value(windows, total, offset);
             if (Serializer.Serialize(value).Length <= room)
             {
-                return ToolEnvelope.Success(value);
+                return ToolEnvelope.Success(value, warnings);
             }
 
             if (chosen.Count > 1)
@@ -165,7 +192,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>木を付けない一覧。収まるところまでを返し、残りは次の offset で取り直せる。</summary>
-        private static object Some(IList<object> windows, int total, int offset, int room)
+        private static object Some(IList<object> windows, int total, int offset, int room, IList<string> warnings)
         {
             List<object> written = new List<object>(windows);
             while (written.Count > 0
@@ -181,7 +208,7 @@ namespace PmxEditorMcp
                     "ウィンドウが1件も値の枠に収まらない。応答の枠を広げる。");
             }
 
-            return ToolEnvelope.Success(Value(written, total, offset));
+            return ToolEnvelope.Success(Value(written, total, offset), warnings);
         }
 
         private static IDictionary<string, object> Value(IList<object> windows, int total, int offset)

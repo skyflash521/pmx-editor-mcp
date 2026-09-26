@@ -293,6 +293,11 @@
                   "nullable": true
                 },
                 {
+                  "name": "open",
+                  "origin": "hostOutput",
+                  "shape": "boolean"
+                },
+                {
                   "name": "openedBy",
                   "origin": "hostOutput",
                   "element": {
