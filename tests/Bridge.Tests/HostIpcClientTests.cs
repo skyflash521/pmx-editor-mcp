@@ -511,11 +511,11 @@ namespace PmxEditorMcp.Bridge.Tests
 
             // 接続先の決定だけを固定し、パイプを開く処理は製品と同じものを通す。
             string absent = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
-            NamedPipeHostConnector connector = new NamedPipeHostConnector(() => absent, limit);
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(selected => absent, limit);
 
             Stopwatch elapsed = Stopwatch.StartNew();
             BridgeException error = await ThrowsWithin<BridgeException>(
-                () => connector.ConnectAsync(CancellationToken.None));
+                () => connector.ConnectAsync(null, CancellationToken.None));
             elapsed.Stop();
 
             Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
@@ -545,10 +545,10 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task NameRejectedByOsFailsToConnect()
         {
             NamedPipeHostConnector connector = new NamedPipeHostConnector(
-                () => string.Empty, NamedPipeHostConnector.OpenNamedPipeAsync);
+                selected => string.Empty, NamedPipeHostConnector.OpenNamedPipeAsync);
 
             BridgeException error = await ThrowsWithin<BridgeException>(
-                () => connector.ConnectAsync(CancellationToken.None));
+                () => connector.ConnectAsync(null, CancellationToken.None));
 
             Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
         }
@@ -558,10 +558,10 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             string absent = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
             NamedPipeHostConnector connector = new NamedPipeHostConnector(
-                () => absent, NamedPipeHostConnector.OpenNamedPipeAsync);
+                selected => absent, NamedPipeHostConnector.OpenNamedPipeAsync);
 
             using CancellationTokenSource connecting = new CancellationTokenSource();
-            Task<HostConnection> opening = connector.ConnectAsync(connecting.Token);
+            Task<HostConnection> opening = connector.ConnectAsync(null, connecting.Token);
 
             await Task.Delay(TimeSpan.FromMilliseconds(300));
             connecting.Cancel();
@@ -574,9 +574,9 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             string pipeName = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
             NamedPipeHostConnector connector = new NamedPipeHostConnector(
-                () => pipeName, NamedPipeHostConnector.OpenNamedPipeAsync);
+                selected => pipeName, NamedPipeHostConnector.OpenNamedPipeAsync);
 
-            Task<HostConnection> connecting = connector.ConnectAsync(CancellationToken.None);
+            Task<HostConnection> connecting = connector.ConnectAsync(null, CancellationToken.None);
 
             await Task.Delay(TimeSpan.FromMilliseconds(300));
             using NamedPipeServerStream listening = new NamedPipeServerStream(
@@ -598,12 +598,12 @@ namespace PmxEditorMcp.Bridge.Tests
             // 接続先の決定も差し替える。実行環境に待ち受けているホストが無い・複数あると、パイプを
             // 開く手前の分岐で終わってしまい、確かめたい変換へ届かない。
             NamedPipeHostConnector connector = new NamedPipeHostConnector(
-                () => "pmx-editor-mcp-0",
+                selected => "pmx-editor-mcp-0",
                 (pipeName, cancellationToken) =>
                     Task.FromException<Stream>((Exception)Activator.CreateInstance(failure)));
 
             BridgeException error = await Assert.ThrowsAsync<BridgeException>(
-                () => connector.ConnectAsync(CancellationToken.None));
+                () => connector.ConnectAsync(null, CancellationToken.None));
 
             Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
         }
@@ -615,7 +615,7 @@ namespace PmxEditorMcp.Bridge.Tests
             List<string> opened = new List<string>();
 
             NamedPipeHostConnector connector = new NamedPipeHostConnector(
-                () => "pmx-editor-mcp-" + (++resolved).ToString(CultureInfo.InvariantCulture),
+                selected => "pmx-editor-mcp-" + (++resolved).ToString(CultureInfo.InvariantCulture),
                 (pipeName, cancellationToken) =>
                 {
                     opened.Add(pipeName);
@@ -623,11 +623,32 @@ namespace PmxEditorMcp.Bridge.Tests
                 });
 
             await Assert.ThrowsAsync<BridgeException>(
-                () => connector.ConnectAsync(CancellationToken.None));
+                () => connector.ConnectAsync(null, CancellationToken.None));
             await Assert.ThrowsAsync<BridgeException>(
-                () => connector.ConnectAsync(CancellationToken.None));
+                () => connector.ConnectAsync(null, CancellationToken.None));
 
             Assert.Equal(new string[] { "pmx-editor-mcp-1", "pmx-editor-mcp-2" }, opened);
+        }
+
+        [Fact]
+        public async Task SelectedTargetIsHandedToTheResolver()
+        {
+            List<string> asked = new List<string>();
+
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                selected =>
+                {
+                    asked.Add(selected);
+                    return selected ?? "pmx-editor-mcp-1";
+                },
+                (pipeName, cancellationToken) => Task.FromException<Stream>(new IOException()));
+
+            await Assert.ThrowsAsync<BridgeException>(
+                () => connector.ConnectAsync("pmx-editor-mcp-10", CancellationToken.None));
+            await Assert.ThrowsAsync<BridgeException>(
+                () => connector.ConnectAsync(null, CancellationToken.None));
+
+            Assert.Equal(new string[] { "pmx-editor-mcp-10", null }, asked);
         }
 
         /// <summary>待機の上限を、本文に現れるのと同じ表記で得る。</summary>
@@ -756,6 +777,166 @@ namespace PmxEditorMcp.Bridge.Tests
                 moved.TargetNotice);
         }
 
+        [Fact]
+        public async Task SelectionMovesTheConnectionAndLaterCallsStayOnTheSelectedHost()
+        {
+            using FakeHost left = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using FakeHost right = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = Connect(left);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            HostCallResult selected = await WithinTestWait(
+                client.SelectAsync(right.PipeName, CancellationToken.None));
+            Assert.Equal(
+                "接続先が変わった: " + left.PipeName + " から " + right.PipeName
+                    + " へ。以前の応答は別のエディタのものである。",
+                selected.TargetNotice);
+
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal("接続先: " + right.PipeName, response.TargetNotice);
+            Assert.Equal(2, left.Requests.Count);
+            Assert.Equal(2, right.Requests.Count);
+            Assert.Equal(right.PipeName, client.SelectedPipeName);
+        }
+
+        [Fact]
+        public async Task ReconnectingAfterSelectionAsksOnlyForTheSelectedHost()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Disconnect()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector("pmx-editor-mcp-test-unselected");
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            await WithinTestWait(client.SelectAsync(host.PipeName, CancellationToken.None));
+            await ThrowsWithin<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            // 繋ぎ直しで選び直しを忘れる作りは、選んでいないときの接続先へ向かう。
+            Assert.Equal(new string[] { host.PipeName, host.PipeName }, connector.SelectedPipeNames);
+        }
+
+        [Fact]
+        public async Task SelectingTheConnectedHostKeepsTheConnection()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            HostCallResult selected = await WithinTestWait(
+                client.SelectAsync(host.PipeName, CancellationToken.None));
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal("接続先: " + host.PipeName, selected.TargetNotice);
+            Assert.Equal(1, connector.ConnectCount);
+            Assert.Equal(host.PipeName, client.SelectedPipeName);
+        }
+
+        [Fact]
+        public async Task FailedSelectionKeepsTheCurrentConnectionAndSelection()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            RefusingSelectionConnector connector = new RefusingSelectionConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            BridgeException error = await ThrowsWithin<BridgeException>(
+                () => client.SelectAsync("pmx-editor-mcp-10", CancellationToken.None));
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
+            Assert.Equal("接続先: " + host.PipeName, response.TargetNotice);
+            Assert.Null(client.SelectedPipeName);
+            Assert.Equal(3, host.Requests.Count);
+        }
+
+        [Fact]
+        public async Task SelectionWhoseHandshakeIsRefusedKeepsTheCurrentConnectionAndSelection()
+        {
+            using FakeHost current = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using FakeHost refusing = new FakeHost()
+                .Reply(request => Error(request, -32001, "protocol mismatch"))
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector(current.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            BridgeException error = await ThrowsWithin<BridgeException>(
+                () => client.SelectAsync(refusing.PipeName, CancellationToken.None));
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.Equal("接続先: " + current.PipeName, response.TargetNotice);
+            Assert.Null(client.SelectedPipeName);
+            Assert.Equal(3, current.Requests.Count);
+            Assert.Equal(2, connector.ConnectCount);
+        }
+
+        [Fact]
+        public async Task SelectionCancelledDuringHandshakeKeepsTheCurrentConnectionAndSelection()
+        {
+            using FakeHost current = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using FakeHost stalling = new FakeHost()
+                .Stall()
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector(current.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            using CancellationTokenSource cancelling = new CancellationTokenSource();
+            Task<HostCallResult> selecting = client.SelectAsync(stalling.PipeName, cancelling.Token);
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            cancelling.Cancel();
+            await ThrowsWithin<OperationCanceledException>(() => selecting);
+
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal("接続先: " + current.PipeName, response.TargetNotice);
+            Assert.Null(client.SelectedPipeName);
+            Assert.Equal(3, current.Requests.Count);
+        }
+
         /// <summary>ハンドシェイクの成功応答を、受け取った要求の識別子に合わせて組み立てる。</summary>
         private static Func<string, string> HandshakeResultOf(int budgetChars)
         {
@@ -804,9 +985,32 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>接続の確立に失敗したことを知らせる接続役。</summary>
         private sealed class RefusingConnector : IHostConnector
         {
-            public Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
+            public Task<HostConnection> ConnectAsync(
+                string selectedPipeName, CancellationToken cancellationToken)
             {
                 throw new BridgeException(BridgeErrorCodes.ConnectFailed, "接続を確立できない。");
+            }
+        }
+
+        /// <summary>選ばれていないときだけ繋ぎ、選ばれた接続先は起動していないとして断る接続役。</summary>
+        private sealed class RefusingSelectionConnector : IHostConnector
+        {
+            private readonly FakeHostConnector _unselected;
+
+            public RefusingSelectionConnector(string pipeName)
+            {
+                _unselected = new FakeHostConnector(pipeName);
+            }
+
+            public Task<HostConnection> ConnectAsync(
+                string selectedPipeName, CancellationToken cancellationToken)
+            {
+                if (selectedPipeName != null)
+                {
+                    throw new BridgeException(BridgeErrorCodes.NoEditor, "起動していない。");
+                }
+
+                return _unselected.ConnectAsync(null, cancellationToken);
             }
         }
     }

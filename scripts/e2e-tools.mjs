@@ -28,7 +28,7 @@ const STATUS_TOOL = "sdk_status";
 const FIND_TOOL = "find_tool";
 
 /** スキーマ正本を持たず、ブリッジが固定のツールとして公開する名前。突き合わせでは両側から引く。 */
-const FIXED_TOOLS = ["ping", STATUS_TOOL, FIND_TOOL];
+const FIXED_TOOLS = ["ping", STATUS_TOOL, FIND_TOOL, "list_editors", "select_editor"];
 
 /** 検査からだけ使う入口が開いているときだけ在るツールの名前の頭。突き合わせでは両側から引く。 */
 const DEBUG_PREFIX = "debug_";

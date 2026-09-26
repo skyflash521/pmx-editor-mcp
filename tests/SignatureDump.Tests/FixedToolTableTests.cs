@@ -13,8 +13,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[]
                 {
                     FixedToolTable.FindToolName,
+                    FixedToolTable.ListEditorsName,
                     FixedToolTable.PingName,
                     FixedToolTable.SdkStatusName,
+                    FixedToolTable.SelectEditorName,
                 },
                 FixedToolTable.Descriptions(debugHooks: false).Keys
                     .OrderBy(name => name, StringComparer.Ordinal)

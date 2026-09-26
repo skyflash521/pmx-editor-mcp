@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using Xunit;
 
 namespace PmxEditorMcp.Bridge.Tests
@@ -8,8 +10,9 @@ namespace PmxEditorMcp.Bridge.Tests
     public class PipeTargetResolverTests
     {
         private const string MultipleHostsMessage =
-            "ホストが 3 つ待ち受けているため接続先を1つに決められない。どのエディタを対象に"
-                + "するかを利用者に確かめる。待ち受けているホスト:\n"
+            "ホストが 3 つ待ち受けているため接続先を1つに決められない。select_editor へ対象の"
+                + "エディタのプロセスIDを渡して接続先を決める。どれが対象かは list_editors の"
+                + "ウィンドウのタイトルで見分ける。待ち受けているホスト:\n"
                 + "pmx-editor-mcp-2\npmx-editor-mcp-10\npmx-editor-mcp-30";
 
         /// <summary>
@@ -362,6 +365,154 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(
                 material + "を調べられなかったため接続先を決められない: " + refused.Message,
                 error.Message);
+        }
+
+        [Fact]
+        public void SelectedTargetIsUsedAmongMultipleListeners()
+        {
+            string resolved = PipeTargetResolver.ResolveFrom(
+                name => null,
+                directory => Entries("pmx-editor-mcp-30", "pmx-editor-mcp-2", "pmx-editor-mcp-10"),
+                processName => new int[] { 2, 10, 30 },
+                "pmx-editor-mcp-10");
+
+            Assert.Equal("pmx-editor-mcp-10", resolved);
+        }
+
+        [Fact]
+        public void SelectedTargetOutranksTestOnlyEnvironmentVariable()
+        {
+            string resolved = PipeTargetResolver.ResolveFrom(
+                name => name == PipeTargetResolver.TestPipeEnvironmentVariableName
+                    ? "pmx-editor-mcp-30"
+                    : null,
+                directory => Entries("pmx-editor-mcp-30", "pmx-editor-mcp-10"),
+                processName => new int[] { 10, 30 },
+                "pmx-editor-mcp-10");
+
+            Assert.Equal("pmx-editor-mcp-10", resolved);
+        }
+
+        [Fact]
+        public void SelectedEditorThatEndedIsNotReplacedByTheOnlyOtherListener()
+        {
+            BridgeException error = Assert.Throws<BridgeException>(
+                () => PipeTargetResolver.ResolveFrom(
+                    name => null,
+                    directory => Entries("pmx-editor-mcp-30"),
+                    processName => new int[] { 30 },
+                    "pmx-editor-mcp-10"));
+
+            Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
+            Assert.Equal(
+                "接続先に選んだPMXエディタ(プロセスID 10)が起動していない。ほかのエディタへは"
+                    + "繋がない。select_editor で接続先を選び直す。",
+                error.Message);
+        }
+
+        [Fact]
+        public void SelectedEditorWhoseHostStoppedIsNotReplacedByAnotherListener()
+        {
+            BridgeException error = Assert.Throws<BridgeException>(
+                () => PipeTargetResolver.ResolveFrom(
+                    name => null,
+                    directory => Entries("pmx-editor-mcp-30"),
+                    processName => new int[] { 10, 30 },
+                    "pmx-editor-mcp-10"));
+
+            Assert.Equal(BridgeErrorCodes.NoHost, error.Code);
+            Assert.Equal(
+                "接続先に選んだPMXエディタ(プロセスID 10)は起動しているが、ホストが待ち受けて"
+                    + "いない。エディタのプラグインメニュー「PMX Editor MCP」で稼働状態を確かめる。",
+                error.Message);
+        }
+
+        [Fact]
+        public void ConfinedDirectoryLeavesOnlyItsEditorsAsCandidates()
+        {
+            string resolved = PipeTargetResolver.ResolveFrom(
+                name => name == PipeTargetResolver.TestEditorDirectoryEnvironmentVariableName
+                    ? @"C:\mine"
+                    : null,
+                directory => Entries("pmx-editor-mcp-10", "pmx-editor-mcp-30"),
+                processName => new int[] { 10, 30 },
+                null,
+                ExecutablesIn(10, @"C:\other", 30, @"C:\Mine\"));
+
+            Assert.Equal("pmx-editor-mcp-30", resolved);
+        }
+
+        [Fact]
+        public void ConfinedDirectoryCountsOnlyItsEditorsForGuidance()
+        {
+            BridgeException error = Assert.Throws<BridgeException>(
+                () => PipeTargetResolver.ResolveFrom(
+                    name => name == PipeTargetResolver.TestEditorDirectoryEnvironmentVariableName
+                        ? @"C:\mine"
+                        : null,
+                    directory => Entries("pmx-editor-mcp-10"),
+                    processName => new int[] { 10 },
+                    null,
+                    ExecutablesIn(10, @"C:\other")));
+
+            Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
+        }
+
+        [Fact]
+        public void WithoutConfinedDirectoryNoExecutableIsRead()
+        {
+            string resolved = PipeTargetResolver.ResolveFrom(
+                name => null,
+                directory => Entries("pmx-editor-mcp-10"),
+                processName => new int[] { 10 },
+                null,
+                processId => throw new InvalidOperationException("読まれてはならない。"));
+
+            Assert.Equal("pmx-editor-mcp-10", resolved);
+        }
+
+        /// <summary>プロセスIDと、その実行ファイルを置いたフォルダを交互に並べて、道を引く処理にする。</summary>
+        private static Func<int, string> ExecutablesIn(params object[] pairs)
+        {
+            Dictionary<int, string> paths = new Dictionary<int, string>();
+            for (int index = 0; index < pairs.Length; index += 2)
+            {
+                paths[(int)pairs[index]] = Path.Combine(
+                    (string)pairs[index + 1], PipeTargetResolver.EditorProcessName + ".exe");
+            }
+
+            return processId => paths.TryGetValue(processId, out string path) ? path : string.Empty;
+        }
+
+        [Fact]
+        public void SurveyListsListeningHostsAndEditorsInProcessIdOrder()
+        {
+            IReadOnlyList<EditorSurveyEntry> surveyed = PipeTargetResolver.SurveyFrom(
+                directory => Entries("pmx-editor-mcp-30", "lsass", "pmx-editor-mcp-2"),
+                processName => new int[] { 30, 10, 2 },
+                processId => "タイトル" + processId.ToString(CultureInfo.InvariantCulture));
+
+            Assert.Equal(new int[] { 2, 10, 30 }, surveyed.Select(entry => entry.ProcessId).ToArray());
+            Assert.Equal(
+                new bool[] { true, false, true }, surveyed.Select(entry => entry.Listening).ToArray());
+            Assert.Equal(
+                new string[] { "タイトル2", "タイトル10", "タイトル30" },
+                surveyed.Select(entry => entry.Title).ToArray());
+        }
+
+        [Fact]
+        public void SurveyListsListenerWhoseEditorWasNotCounted()
+        {
+            // 数えるのは導入フォルダにホストを置いたエディタだけで、待ち受けているパイプの
+            // 持ち主がそこに入るとは限らない。
+            IReadOnlyList<EditorSurveyEntry> surveyed = PipeTargetResolver.SurveyFrom(
+                directory => Entries("pmx-editor-mcp-7"),
+                processName => new int[0],
+                processId => string.Empty);
+
+            EditorSurveyEntry only = Assert.Single(surveyed);
+            Assert.Equal(7, only.ProcessId);
+            Assert.True(only.Listening);
         }
 
         /// <summary>パイプ名の並びを、ディレクトリを列挙したときの項目の形へ直す。</summary>

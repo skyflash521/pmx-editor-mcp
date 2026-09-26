@@ -50,6 +50,14 @@ namespace PmxEditorMcp.Bridge
                 {
                     tools.Add(FindTool(Entries(own, generated), fixedTool.Value, client, declared));
                 }
+                else if (fixedTool.Key == FixedToolTable.ListEditorsName)
+                {
+                    tools.Add(ListEditors(client, declared, fixedTool.Value));
+                }
+                else if (fixedTool.Key == FixedToolTable.SelectEditorName)
+                {
+                    tools.Add(SelectEditor(client, declared, fixedTool.Value));
+                }
                 else
                 {
                     tools.Add(Relay(client, declared, fixedTool.Key, fixedTool.Value));
@@ -147,6 +155,110 @@ namespace PmxEditorMcp.Bridge
                         ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
                         : null,
                 });
+        }
+
+        /// <summary>
+        /// 接続先に選べるエディタを並べるツールを作る。ホストへは渡らない——並べるのはブリッジが
+        /// パイプとプロセスから読む。
+        /// </summary>
+        private static McpServerTool ListEditors(
+            HostIpcClient client, bool declared, string description)
+        {
+            return McpServerTool.Create(
+                () => ListEditorsResult(client),
+                new McpServerToolCreateOptions
+                {
+                    Name = FixedToolTable.ListEditorsName,
+                    Description = description,
+                    Meta = declared
+                        ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
+                        : null,
+                });
+        }
+
+        private static CallToolResult ListEditorsResult(HostIpcClient client)
+        {
+            IReadOnlyList<EditorSurveyEntry> surveyed;
+            try
+            {
+                surveyed = PipeTargetResolver.SurveyRunningEditors();
+            }
+            catch (BridgeException error)
+            {
+                return error.ToToolResult();
+            }
+
+            string selected = client.SelectedPipeName;
+            string connected = client.ConnectedPipeName;
+            JsonArray editors = new JsonArray();
+            foreach (EditorSurveyEntry entry in surveyed)
+            {
+                string pipeName = PipeTargetResolver.PipeNameForProcess(entry.ProcessId);
+                editors.Add(new JsonObject
+                {
+                    ["processId"] = entry.ProcessId,
+                    ["listening"] = entry.Listening,
+                    ["title"] = entry.Title,
+                    ["selected"] = string.Equals(pipeName, selected, StringComparison.Ordinal),
+                    ["connected"] = string.Equals(pipeName, connected, StringComparison.Ordinal),
+                });
+            }
+
+            return ToolEnvelopeResult.From(
+                new JsonObject
+                {
+                    ["ok"] = true,
+                    ["value"] = new JsonObject { ["editors"] = editors },
+                },
+                string.Empty,
+                client.BudgetChars,
+                false);
+        }
+
+        /// <summary>
+        /// 接続先のエディタを選ぶツールを作る。選んだ接続先はこのブリッジのプロセスだけが持つ。
+        /// </summary>
+        private static McpServerTool SelectEditor(
+            HostIpcClient client, bool declared, string description)
+        {
+            return McpServerTool.Create(
+                (int processId, CancellationToken cancellationToken) =>
+                    SelectEditorAsync(client, processId, cancellationToken),
+                new McpServerToolCreateOptions
+                {
+                    Name = FixedToolTable.SelectEditorName,
+                    Description = description,
+                    Meta = declared
+                        ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
+                        : null,
+                });
+        }
+
+        private static async Task<CallToolResult> SelectEditorAsync(
+            HostIpcClient client, int processId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                HostCallResult selected = await client
+                    .SelectAsync(PipeTargetResolver.PipeNameForProcess(processId), cancellationToken)
+                    .ConfigureAwait(false);
+                return ToolEnvelopeResult.From(
+                    new JsonObject
+                    {
+                        ["ok"] = true,
+                        ["value"] = new JsonObject
+                        {
+                            [FixedToolTable.SelectEditorProcessIdParameter] = processId,
+                        },
+                    },
+                    selected.TargetNotice,
+                    client.BudgetChars,
+                    false);
+            }
+            catch (BridgeException error)
+            {
+                return error.ToToolResult();
+            }
         }
 
         /// <summary>ホストの同名のメソッドへ中継するツールを作る。</summary>

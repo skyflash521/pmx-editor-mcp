@@ -4483,21 +4483,43 @@
           }
         },
         {
-          "kind": "control",
-          "action": "stop",
-          "editor": {
-            "$from": "editorC"
+          "kind": "tool",
+          "tool": "select_editor",
+          "arguments": {
+            "processId": {
+              "$from": "editorD"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "notice": {
+              "editor": {
+                "$from": "editorD"
+              }
+            }
           }
         },
         {
           "kind": "tool",
-          "tool": "ping",
-          "arguments": {},
+          "tool": "model_list_model_infos",
+          "arguments": {
+            "fields": [
+              "modelName"
+            ]
+          },
           "expect": {
             "ok": true,
-            "body": {
-              "equals": "pong"
-            }
+            "notice": {
+              "editor": {
+                "$from": "editorD"
+              }
+            },
+            "values": [
+              {
+                "path": "items.0.modelName",
+                "equals": "acceptance-d"
+              }
+            ]
           }
         },
         {
@@ -4522,6 +4544,26 @@
           "arguments": {},
           "expect": {
             "ok": false,
+            "code": "BRIDGE_NO_EDITOR"
+          }
+        },
+        {
+          "kind": "control",
+          "action": "stop",
+          "editor": {
+            "$from": "editorC"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "select_editor",
+          "arguments": {
+            "processId": {
+              "$from": "editorC"
+            }
+          },
+          "expect": {
+            "ok": false,
             "code": "BRIDGE_NO_HOST"
           }
         },
@@ -4530,6 +4572,39 @@
           "action": "start",
           "editor": {
             "$from": "editorC"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "select_editor",
+          "arguments": {
+            "processId": {
+              "$from": "editorC"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "notice": {
+              "changedTo": {
+                "$from": "editorC"
+              }
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "ping",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "notice": {
+              "editor": {
+                "$from": "editorC"
+              }
+            },
+            "body": {
+              "equals": "pong"
+            }
           }
         }
       ]

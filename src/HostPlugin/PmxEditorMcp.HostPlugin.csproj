@@ -101,8 +101,12 @@
     </ItemGroup>
   </Target>
 
+  <!-- 配置先の導入ディレクトリ。与えなければ参照を読む PmxEditorDir へ置く。 -->
   <Target Name="Deploy" DependsOnTargets="Build">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PmxEditorDir)\_plugin\User\" SkipUnchangedFiles="true" />
+    <PropertyGroup>
+      <PmxEditorDeployDir Condition="'$(PmxEditorDeployDir)' == ''">$(PmxEditorDir)</PmxEditorDeployDir>
+    </PropertyGroup>
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PmxEditorDeployDir)\_plugin\User\" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

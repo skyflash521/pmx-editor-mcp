@@ -21,6 +21,15 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>そのツールへ渡す、探す語の引数の名前。</summary>
         public const string FindToolTextParameter = "text";
 
+        /// <summary>接続先に選べるPMXエディタを並べるツールの名前。</summary>
+        public const string ListEditorsName = "list_editors";
+
+        /// <summary>接続先のPMXエディタを選ぶツールの名前。</summary>
+        public const string SelectEditorName = "select_editor";
+
+        /// <summary>そのツールへ渡す、選ぶエディタのプロセスIDの引数の名前。</summary>
+        public const string SelectEditorProcessIdParameter = "processId";
+
         /// <summary>指定した文字数のテキストを返す、検査からだけ使うツールの名前。</summary>
         public const string LargeTextName = "debug_large_text";
 
@@ -37,6 +46,10 @@ namespace PmxEditorMcp.SignatureDump
                         + "\"offset\":{\"type\":[\"integer\",\"null\"]}},\"required\":[\""
                         + FindToolTextParameter + "\",\"limit\",\"offset\"],"
                         + "\"additionalProperties\":false}";
+                case SelectEditorName:
+                    return "{\"type\":\"object\",\"properties\":{\"" + SelectEditorProcessIdParameter
+                        + "\":{\"type\":\"integer\"}},\"required\":[\""
+                        + SelectEditorProcessIdParameter + "\"],\"additionalProperties\":false}";
                 case LargeTextName:
                     return "{\"type\":\"object\",\"properties\":{\"chars\":{\"type\":\"integer\"}},"
                         + "\"required\":[\"chars\"],\"additionalProperties\":false}";
@@ -68,6 +81,22 @@ namespace PmxEditorMcp.SignatureDump
                             + "ときに使う。当たりが多いときは total に総数を返し、"
                             + "limit と応答の枠で返しきれなかった残りがあるときは nextOffset を"
                             + "返す。その値を offset へ渡すと続きが読める。"
+                    },
+                    {
+                        ListEditorsName,
+                        "接続先に選べるPMXエディタを、プロセスIDの昇順に全部返す。1件ごとに processId・"
+                            + "ホストが待ち受けているか(listening)・ウィンドウのタイトル(title)・"
+                            + SelectEditorName + " で選んだ接続先か(selected)・いま繋いでいるか"
+                            + "(connected)を返す。エディタが複数動いているときに、どれを接続先に"
+                            + "するかを見分けるために使う。エディタが起動していなくても答える。"
+                    },
+                    {
+                        SelectEditorName,
+                        "ツールの呼び出しを送るPMXエディタを、" + SelectEditorProcessIdParameter
+                            + " にそのプロセスIDを渡して選ぶ。選んだエディタへ繋いでから返り、以後の"
+                            + "呼び出しはそのエディタへだけ送る。選んだエディタが終了しても、ほかの"
+                            + "エディタへは繋がない。エディタが複数動いているときは、呼び出しの前に"
+                            + "これで接続先を選ぶ。待ち受けているホストが無いエディタは選べない。"
                     },
                 };
             if (debugHooks)

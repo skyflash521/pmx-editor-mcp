@@ -357,9 +357,10 @@ namespace PmxEditorMcp.Bridge.Tests
             /// <summary>本文の書き出しが呼ばれた回数。呼ばれた時点で数える。</summary>
             public int WriteCount => Volatile.Read(ref _writes);
 
-            public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
+            public async Task<HostConnection> ConnectAsync(
+                string selectedPipeName, CancellationToken cancellationToken)
             {
-                HostConnection inner = await _inner.ConnectAsync(cancellationToken).ConfigureAwait(false);
+                HostConnection inner = await _inner.ConnectAsync(selectedPipeName, cancellationToken).ConfigureAwait(false);
                 return new HostConnection(
                     new RecordingStream(inner.Stream, () => Interlocked.Increment(ref _writes)),
                     inner.PipeName);
@@ -450,7 +451,8 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>いつまでも接続を開き終えない接続役。</summary>
         private sealed class NeverOpeningConnector : IHostConnector
         {
-            public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
+            public async Task<HostConnection> ConnectAsync(
+                string selectedPipeName, CancellationToken cancellationToken)
             {
                 await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
                 throw new InvalidOperationException("ここへは到達しない。");
@@ -471,7 +473,8 @@ namespace PmxEditorMcp.Bridge.Tests
                 _release = release;
             }
 
-            public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
+            public async Task<HostConnection> ConnectAsync(
+                string selectedPipeName, CancellationToken cancellationToken)
             {
                 if (++_opened == 1)
                 {
@@ -480,7 +483,7 @@ namespace PmxEditorMcp.Bridge.Tests
                     await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
                 }
 
-                return await _inner.ConnectAsync(cancellationToken).ConfigureAwait(false);
+                return await _inner.ConnectAsync(selectedPipeName, cancellationToken).ConfigureAwait(false);
             }
         }
     }

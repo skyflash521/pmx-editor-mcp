@@ -4,6 +4,7 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot 'checks.ps1')
+. (Join-Path $PSScriptRoot 'editor-dir.ps1')
 
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
@@ -52,7 +53,12 @@ $checks['受入シナリオ'] = New-Check `
         '--cases', 'catalog/authored/acceptance-scenarios.json',
         '--setup', 'scripts/acceptance-setup-dev.ps1')
 
-$environment = [ordered]@{ PMX_EDITOR_MCP_PREPARED = '1' }
+# 検査が起こすブリッジは、ほかのセッションのエディタが待ち受けていても、この導入先から動く
+# エディタだけを接続先の候補にする。
+$environment = [ordered]@{
+    PMX_EDITOR_MCP_PREPARED = '1'
+    PMX_EDITOR_MCP_TEST_EDITOR_DIR = (Get-SessionEditorDirectory)
+}
 
 $conditional = [ordered]@{
     '参照クライアントの実機動作確認' = @('docs/*', '.scratch/*', '*.md')

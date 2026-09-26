@@ -350,10 +350,18 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>これまでに接続を開いた回数。繋ぎ直しの有無を外から数えるために持つ。</summary>
         public int ConnectCount { get; private set; }
 
-        /// <summary>生成時に与えられたパイプへ接続する。</summary>
-        public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
+        /// <summary>接続を開くときに渡された、選んだ接続先。選んでいなければ null が入る。</summary>
+        public List<string> SelectedPipeNames { get; } = new List<string>();
+
+        /// <summary>
+        /// 接続先が選ばれていればそのパイプへ、選ばれていなければ生成時に与えられたパイプへ接続する。
+        /// </summary>
+        public async Task<HostConnection> ConnectAsync(
+            string selectedPipeName, CancellationToken cancellationToken)
         {
-            string pipeName = _pipeNames[Math.Min(ConnectCount, _pipeNames.Length - 1)];
+            SelectedPipeNames.Add(selectedPipeName);
+            string pipeName = selectedPipeName
+                ?? _pipeNames[Math.Min(ConnectCount, _pipeNames.Length - 1)];
             ConnectCount++;
 
             NamedPipeClientStream pipe = new NamedPipeClientStream(

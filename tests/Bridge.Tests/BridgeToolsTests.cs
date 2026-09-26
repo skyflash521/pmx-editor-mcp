@@ -528,6 +528,107 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.DoesNotContain("\n", TextOf(result));
         }
 
+        [Fact]
+        public async Task SelectedEditorStaysTheOnlyTargetUntilAndAfterItEnds()
+        {
+            // 実機のプロセスIDと重ならない大きな値で名乗り、選ばない方の待受も並べておく。
+            // 選ばない方は応答を積まない——繋がれれば要求が残るので、それで移ったことが分かる。
+            using FakeHost other = new FakeHost(PipeTargetResolver.PipeNameForProcess(2000000001))
+                .Start();
+            FakeHost chosen = new FakeHost(PipeTargetResolver.PipeNameForProcess(2000000002))
+                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            bool ended = false;
+            try
+            {
+                await SelectAndEndAsync(other, chosen, () => ended = true);
+            }
+            finally
+            {
+                if (!ended)
+                {
+                    chosen.Dispose();
+                }
+            }
+        }
+
+        private static async Task SelectAndEndAsync(FakeHost other, FakeHost chosen, Action ending)
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await StartBridgeWithAsync(null, null, null, limit.Token);
+
+            // 待ち受けていないエディタは選べず、選べなかったことで何も選ばれない。
+            CallToolResult refused = await client.CallToolAsync(
+                FixedToolTable.SelectEditorName,
+                ProcessIdArgument(2000000005),
+                cancellationToken: limit.Token);
+            CallToolResult listedBefore = await client.CallToolAsync(
+                FixedToolTable.ListEditorsName, cancellationToken: limit.Token);
+
+            Assert.True(refused.IsError);
+            Assert.StartsWith(BridgeErrorCodes.NoEditor + ": ", TextOf(refused));
+            Assert.DoesNotContain(EditorsOf(listedBefore), editor => (bool)editor["selected"]);
+
+            CallToolResult selected = await client.CallToolAsync(
+                FixedToolTable.SelectEditorName,
+                ProcessIdArgument(2000000002),
+                cancellationToken: limit.Token);
+            CallToolResult pinged = await client.CallToolAsync("ping", cancellationToken: limit.Token);
+            CallToolResult listed = await client.CallToolAsync(
+                FixedToolTable.ListEditorsName, cancellationToken: limit.Token);
+
+            Assert.NotEqual(true, selected.IsError);
+            Assert.Equal(
+                "接続先: " + chosen.PipeName + "\n{\"processId\":2000000002}", TextOf(selected));
+            Assert.Equal(Relayed(chosen.PipeName, "pong"), TextOf(pinged));
+            Assert.Equal(new string[] { "handshake", "ping" }, MethodsOf(chosen.Requests));
+            Assert.Empty(other.Requests);
+
+            Assert.NotEqual(true, listed.IsError);
+            System.Text.Json.Nodes.JsonObject[] editors = EditorsOf(listed);
+            System.Text.Json.Nodes.JsonObject otherEntry = Assert.Single(
+                editors, editor => (int)editor["processId"] == 2000000001);
+            System.Text.Json.Nodes.JsonObject chosenEntry = Assert.Single(
+                editors, editor => (int)editor["processId"] == 2000000002);
+
+            Assert.True((bool)otherEntry["listening"]);
+            Assert.False((bool)otherEntry["selected"]);
+            Assert.False((bool)otherEntry["connected"]);
+            Assert.True((bool)chosenEntry["listening"]);
+            Assert.True((bool)chosenEntry["selected"]);
+            Assert.True((bool)chosenEntry["connected"]);
+
+            ending();
+            chosen.Dispose();
+
+            // 繋いでいた接続が切れたことを知らせる応答は、切れ方で変わるので見ない。見るのは、
+            // 待受がほかに1つだけ残っても、そちらへ移らないことである。
+            await client.CallToolAsync("ping", cancellationToken: limit.Token);
+            CallToolResult afterEnd = await client.CallToolAsync("ping", cancellationToken: limit.Token);
+
+            Assert.True(afterEnd.IsError);
+            Assert.StartsWith(BridgeErrorCodes.NoEditor + ": ", TextOf(afterEnd));
+            Assert.Empty(other.Requests);
+        }
+
+        private static Dictionary<string, object> ProcessIdArgument(int processId)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                [FixedToolTable.SelectEditorProcessIdParameter] = processId,
+            };
+        }
+
+        private static System.Text.Json.Nodes.JsonObject[] EditorsOf(CallToolResult listed)
+        {
+            return System.Text.Json.Nodes.JsonNode.Parse(TextOf(listed))
+                .AsObject()["editors"]
+                .AsArray()
+                .Select(editor => editor.AsObject())
+                .ToArray();
+        }
+
         /// <summary>
         /// 待受の列挙で相手を見つけたことを確かめる。実機のホストが同時に待ち受けていると
         /// 候補が増えるので、その場合は候補として挙がるところまでを見る。どちらの結果も、
@@ -593,6 +694,7 @@ namespace PmxEditorMcp.Bridge.Tests
             {
                 [IgnoredPipeEnvironmentVariableName] = null,
                 [PipeTargetResolver.TestPipeEnvironmentVariableName] = null,
+                [PipeTargetResolver.TestEditorDirectoryEnvironmentVariableName] = null,
                 [BridgeBudget.EnvironmentVariableName] = budgetChars,
                 [BridgeDebugHooks.EnvironmentVariableName] = debugHooks,
                 [BridgeDeclaration.EnvironmentVariableName] = declareMeta,
@@ -660,6 +762,8 @@ namespace PmxEditorMcp.Bridge.Tests
                 FixedToolTable.PingName,
                 FixedToolTable.SdkStatusName,
                 FixedToolTable.FindToolName,
+                FixedToolTable.ListEditorsName,
+                FixedToolTable.SelectEditorName,
             };
             names.AddRange(GeneratedToolDefinitions.Create().Select(d => d.Name));
             if (debugHooks)

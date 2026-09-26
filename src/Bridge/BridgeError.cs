@@ -8,10 +8,10 @@ namespace PmxEditorMcp.Bridge
     /// <summary>ブリッジがMCPツール結果へ載せるエラーコード。</summary>
     public static class BridgeErrorCodes
     {
-        /// <summary>PMXエディタが起動していない。</summary>
+        /// <summary>接続先になるPMXエディタが起動していない。選んだエディタが終了したときもこれを返す。</summary>
         public const string NoEditor = "BRIDGE_NO_EDITOR";
 
-        /// <summary>PMXエディタは起動しているが、待ち受けているホストがない。</summary>
+        /// <summary>接続先になるPMXエディタは起動しているが、待ち受けているホストがない。</summary>
         public const string NoHost = "BRIDGE_NO_HOST";
 
         /// <summary>ホストが複数待ち受けていて接続先を1つに決められない。</summary>

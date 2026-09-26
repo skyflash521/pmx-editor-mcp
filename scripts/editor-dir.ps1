@@ -39,3 +39,82 @@ function Get-EditorDirectory {
 
     $value
 }
+
+# セッションごとの導入先を並べる親。
+$SessionEditorRoot = Join-Path $env:LOCALAPPDATA "pmx-editor-mcp-dev-editors"
+
+# 複製の元を書き留めるファイルの名前。書き換えた時刻が、そのセッションが最後に使った時刻になる。
+$SessionEditorSourceFileName = ".source"
+
+# 使われなくなった複製を消すまでの日数。
+$SessionEditorKeepDays = 7
+
+function Get-SessionEditorDirectory {
+    <#
+        .SYNOPSIS
+        エディタを起動しホストを配置する導入先を返す。Claude Code のセッションの中では、local.props
+        の導入先をセッションごとの置き場へ複製したものを返し、無ければ作る。セッションの外では
+        local.props の導入先をそのまま返す。
+    #>
+    $shared = Get-EditorDirectory
+    $session = $env:CLAUDE_CODE_SESSION_ID
+    if ([string]::IsNullOrEmpty($session)) { return $shared }
+
+    $sharedFull = [System.IO.Path]::GetFullPath($shared)
+    $directory = Join-Path $SessionEditorRoot $session
+    $sourceFile = Join-Path $directory $SessionEditorSourceFileName
+
+    if (Test-Path -LiteralPath $directory) {
+        $recorded = if (Test-Path -LiteralPath $sourceFile) {
+            (Get-Content -LiteralPath $sourceFile -Raw -Encoding UTF8).Trim()
+        } else { "" }
+        if (-not [string]::Equals($recorded, $sharedFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "このセッションの導入先 $directory は $recorded の複製で、local.props の " +
+                "$sharedFull と違う。エディタを閉じてからそのフォルダを消す。"
+        }
+    }
+    else {
+        Remove-UnusedSessionEditorDirectories
+
+        # 複製し終える前の状態を導入先として見せないよう、別の名前で作ってから名前を変える。
+        $partial = "$directory.part"
+        if (Test-Path -LiteralPath $partial) { Remove-Item -LiteralPath $partial -Recurse -Force }
+        New-Item -ItemType Directory -Path $partial -Force | Out-Null
+        Copy-Item -Path (Join-Path $sharedFull "*") -Destination $partial -Recurse -Force
+        Set-Content -LiteralPath (Join-Path $partial $SessionEditorSourceFileName) `
+            -Value $sharedFull -Encoding UTF8 -NoNewline
+        Rename-Item -LiteralPath $partial -NewName (Split-Path -Leaf $directory)
+    }
+
+    (Get-Item -LiteralPath $sourceFile).LastWriteTime = Get-Date
+    $directory
+}
+
+function Remove-UnusedSessionEditorDirectories {
+    <#
+        .SYNOPSIS
+        ほかのセッションの導入先のうち、決めた日数のあいだ使われておらず、そこからエディタも
+        動いていないものを消す。消せないものは残す。
+    #>
+    if (-not (Test-Path -LiteralPath $SessionEditorRoot)) { return }
+
+    $limit = (Get-Date).AddDays(-$SessionEditorKeepDays)
+    $running = @(Get-Process -Name "PmxEditor_x64" -ErrorAction Ignore | ForEach-Object {
+        try { $_.Path } catch { $null }
+    } | Where-Object { $_ })
+
+    foreach ($candidate in @(Get-ChildItem -LiteralPath $SessionEditorRoot -Directory)) {
+        $sourceFile = Join-Path $candidate.FullName $SessionEditorSourceFileName
+        $used = if (Test-Path -LiteralPath $sourceFile) {
+            (Get-Item -LiteralPath $sourceFile).LastWriteTime
+        } else { $candidate.LastWriteTime }
+        if ($used -gt $limit) { continue }
+
+        $prefix = $candidate.FullName.TrimEnd('\') + '\'
+        if ($running | Where-Object { $_.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase) }) {
+            continue
+        }
+
+        Remove-Item -LiteralPath $candidate.FullName -Recurse -Force -ErrorAction Ignore
+    }
+}

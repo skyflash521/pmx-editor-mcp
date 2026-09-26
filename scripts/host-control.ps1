@@ -20,8 +20,9 @@
 param(
     # 行う操作。
     #   pipes  待ち受けているホストのパイプ名を一覧する
-    #   editors 動いているPMXエディタのプロセスIDを一覧する(ホストの稼働状態を問わない)
-    #   launch PMXエディタを起動し、そのホストの待受が現れるまで待ち、-View を指していれば
+    #   editors このセッションの導入先から動いているPMXエディタのプロセスIDを一覧する(ホストの
+    #          稼働状態を問わない)。導入先は editor-dir.ps1 の Get-SessionEditorDirectory が決める
+    #   launch このセッションの導入先のPMXエディタを起動し、そのホストの待受が現れるまで待ち、-View を指していれば
     #          そのビューを開いてからプロセスIDを返す。待受が現れないときは、起こしたエディタを
     #          こちらで閉じてから失敗する
     #   close  指定したエディタを通常の手順で終了し、終了と待受の消失を待つ
@@ -568,9 +569,10 @@ function Get-EditorProcess {
         throw "プロセスの実行ファイルを読めない: $OwnerProcessId ($($process.ProcessName))"
     }
 
-    $expected = [HostControlPath]::Final((Join-Path (Get-EditorDirectory) "PmxEditor_x64.exe"))
+    $editorDirectory = Get-SessionEditorDirectory
+    $expected = [HostControlPath]::Final((Join-Path $editorDirectory "PmxEditor_x64.exe"))
     if ($null -eq $expected) {
-        throw "導入ディレクトリのエディタの実行ファイルを開けない: $(Get-EditorDirectory)"
+        throw "導入ディレクトリのエディタの実行ファイルを開けない: $editorDirectory"
     }
 
     $resolved = [HostControlPath]::Final($actual)
@@ -1576,7 +1578,7 @@ switch ($Action) {
         Get-EditorProcessIds
     }
     "launch" {
-        $editorPath = Join-Path (Get-EditorDirectory) "PmxEditor_x64.exe"
+        $editorPath = Join-Path (Get-SessionEditorDirectory) "PmxEditor_x64.exe"
         if (-not (Test-Path $editorPath)) { throw "エディタの実行ファイルが無い: $editorPath" }
 
         $started = Start-Process -FilePath $editorPath -PassThru

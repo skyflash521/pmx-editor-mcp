@@ -4,12 +4,35 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp.Bridge
 {
+    /// <summary>接続先に選べるPMXエディタの1件。</summary>
+    public sealed class EditorSurveyEntry
+    {
+        /// <summary>プロセスIDと、ホストが待ち受けているかと、ウィンドウのタイトルを与えて生成する。</summary>
+        public EditorSurveyEntry(int processId, bool listening, string title)
+        {
+            ProcessId = processId;
+            Listening = listening;
+            Title = title;
+        }
+
+        /// <summary>エディタのプロセスID。</summary>
+        public int ProcessId { get; }
+
+        /// <summary>そのエディタのホストが待ち受けているか。</summary>
+        public bool Listening { get; }
+
+        /// <summary>エディタのメインウィンドウのタイトル。読めなければ空。</summary>
+        public string Title { get; }
+    }
+
     /// <summary>
-    /// ホストの待受パイプ名を決める。待ち受けているホストが1つならそれを接続先にし、
-    /// 決められないときは要求元へ返せるエラーにする。
+    /// ホストの待受パイプ名を決める。接続先が選ばれていればそれだけを相手にし、選ばれていなければ
+    /// 待ち受けているホストが1つのときだけそれを接続先にする。決められないときは要求元へ返せる
+    /// エラーにする。
     /// </summary>
     public static class PipeTargetResolver
     {
@@ -19,6 +42,13 @@ namespace PmxEditorMcp.Bridge
         /// 接続先の選び分けにはこの環境変数を用いない。
         /// </summary>
         public const string TestPipeEnvironmentVariableName = "PMX_EDITOR_MCP_TEST_PIPE";
+
+        /// <summary>
+        /// テスト専用。接続先を選んでいないとき、候補をこのフォルダの実行ファイルから動くエディタに
+        /// 限る環境変数の名前。実機の検査が、ほかのエディタが動いている中で自分の起こしたエディタ
+        /// だけを相手にするために使う。
+        /// </summary>
+        public const string TestEditorDirectoryEnvironmentVariableName = "PMX_EDITOR_MCP_TEST_EDITOR_DIR";
 
         /// <summary>待受が無いときの案内を分けるために数えるPMXエディタのプロセス名。</summary>
         public const string EditorProcessName = "PmxEditor_x64";
@@ -70,11 +100,17 @@ namespace PmxEditorMcp.Bridge
             return Decide(HostPipeNamesIn(pipeDirectoryEntries), () => editorProcessIds);
         }
 
-        /// <summary>待ち受けているホストから接続先のパイプ名を決める。</summary>
-        public static string ResolveFromRunningHosts()
+        /// <summary>
+        /// 待ち受けているホストから接続先のパイプ名を決める。<paramref name="selectedPipeName"/> が
+        /// null でなければ、それが待ち受けているときだけそれを返す。
+        /// </summary>
+        public static string ResolveFromRunningHosts(string selectedPipeName)
         {
             return ResolveFrom(
-                Environment.GetEnvironmentVariable, Directory.GetFiles, FindEditorProcessIds);
+                Environment.GetEnvironmentVariable,
+                Directory.GetFiles,
+                FindEditorProcessIds,
+                selectedPipeName);
         }
 
         /// <summary>
@@ -86,6 +122,57 @@ namespace PmxEditorMcp.Bridge
             Func<string, IReadOnlyList<string>> enumeratePipeDirectory,
             Func<string, IReadOnlyList<int>> findEditorProcessIds)
         {
+            return ResolveFrom(
+                readEnvironmentVariable, enumeratePipeDirectory, findEditorProcessIds, null);
+        }
+
+        /// <summary>
+        /// 選んだ接続先を与えて解決する。選んだ接続先が待ち受けていなければ、ほかの待受が在っても
+        /// そちらへ移さずエラーにする。
+        /// </summary>
+        internal static string ResolveFrom(
+            Func<string, string> readEnvironmentVariable,
+            Func<string, IReadOnlyList<string>> enumeratePipeDirectory,
+            Func<string, IReadOnlyList<int>> findEditorProcessIds,
+            string selectedPipeName)
+        {
+            return ResolveFrom(
+                readEnvironmentVariable,
+                enumeratePipeDirectory,
+                findEditorProcessIds,
+                selectedPipeName,
+                ExecutablePathOfProcess);
+        }
+
+        /// <summary>
+        /// プロセスIDから実行ファイルの道を引く処理も差し替えて解決する。道を引くのは、候補を
+        /// 限るフォルダが与えられたときだけである。
+        /// </summary>
+        internal static string ResolveFrom(
+            Func<string, string> readEnvironmentVariable,
+            Func<string, IReadOnlyList<string>> enumeratePipeDirectory,
+            Func<string, IReadOnlyList<int>> findEditorProcessIds,
+            string selectedPipeName,
+            Func<int, string> executablePathOf)
+        {
+            if (selectedPipeName != null)
+            {
+                IReadOnlyList<string> listening = HostPipeNamesIn(
+                    TakeMaterial(() => enumeratePipeDirectory(PipeDirectory), "待ち受けているパイプ"));
+                foreach (string pipeName in listening)
+                {
+                    if (string.Equals(pipeName, selectedPipeName, StringComparison.Ordinal))
+                    {
+                        return selectedPipeName;
+                    }
+                }
+
+                throw SelectedNotListening(
+                    selectedPipeName,
+                    TakeMaterial(
+                        () => findEditorProcessIds(EditorProcessName), "起動しているPMXエディタ"));
+            }
+
             string configuredPipeName = TakeMaterial(
                 () => readEnvironmentVariable(TestPipeEnvironmentVariableName), "接続先の指定");
 
@@ -96,13 +183,141 @@ namespace PmxEditorMcp.Bridge
                 return configuredPipeName;
             }
 
-            IReadOnlyList<string> listeningPipeNames = HostPipeNamesIn(
-                TakeMaterial(() => enumeratePipeDirectory(PipeDirectory), "待ち受けているパイプ"));
+            string confinedDirectory = TakeMaterial(
+                () => readEnvironmentVariable(TestEditorDirectoryEnvironmentVariableName), "候補の限り");
+            Func<int, bool> admits = processId => confinedDirectory == null
+                || RunsFrom(executablePathOf(processId), confinedDirectory);
+
+            List<string> listeningPipeNames = new List<string>();
+            foreach (string pipeName in HostPipeNamesIn(
+                TakeMaterial(() => enumeratePipeDirectory(PipeDirectory), "待ち受けているパイプ")))
+            {
+                if (admits(ProcessIdOf(PipeDirectory + pipeName)))
+                {
+                    listeningPipeNames.Add(pipeName);
+                }
+            }
 
             return Decide(
                 listeningPipeNames,
-                () => TakeMaterial(
-                    () => findEditorProcessIds(EditorProcessName), "起動しているPMXエディタ"));
+                () => Admitted(
+                    TakeMaterial(
+                        () => findEditorProcessIds(EditorProcessName), "起動しているPMXエディタ"),
+                    admits));
+        }
+
+        private static IReadOnlyList<int> Admitted(IReadOnlyList<int> processIds, Func<int, bool> admits)
+        {
+            List<int> admitted = new List<int>();
+            foreach (int processId in processIds)
+            {
+                if (admits(processId))
+                {
+                    admitted.Add(processId);
+                }
+            }
+
+            return admitted;
+        }
+
+        /// <summary>その実行ファイルが、そのフォルダの直下に置かれているか。大文字小文字は区別しない。</summary>
+        private static bool RunsFrom(string executablePath, string directory)
+        {
+            if (string.IsNullOrEmpty(executablePath))
+            {
+                return false;
+            }
+
+            try
+            {
+                string placed = Path.GetDirectoryName(Path.GetFullPath(executablePath));
+                string wanted = Path.GetFullPath(directory)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                return string.Equals(placed, wanted, StringComparison.OrdinalIgnoreCase);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+            catch (NotSupportedException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>そのプロセスの実行ファイルの道。読めなければ空を返す。</summary>
+        private static string ExecutablePathOfProcess(int processId)
+        {
+            try
+            {
+                using Process running = Process.GetProcessById(processId);
+                return ExecutablePathOf(running);
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// 接続先に選べるエディタを並べる。待ち受けているホストの持ち主と、導入フォルダにホストを
+        /// 置いたエディタの両方を、プロセスIDの昇順に1件ずつ返す。
+        /// </summary>
+        public static IReadOnlyList<EditorSurveyEntry> SurveyRunningEditors()
+        {
+            return SurveyFrom(Directory.GetFiles, FindEditorProcessIds, WindowTitleOf);
+        }
+
+        /// <summary>
+        /// 並べる材料の取り方を差し替えて並べる。実機のパイプとプロセスに依存せずに確かめられる
+        /// ようにするための入口。
+        /// </summary>
+        internal static IReadOnlyList<EditorSurveyEntry> SurveyFrom(
+            Func<string, IReadOnlyList<string>> enumeratePipeDirectory,
+            Func<string, IReadOnlyList<int>> findEditorProcessIds,
+            Func<int, string> windowTitleOf)
+        {
+            SortedDictionary<int, bool> listeningByProcessId = new SortedDictionary<int, bool>();
+            foreach (string entry in TakeMaterial(
+                () => enumeratePipeDirectory(PipeDirectory), "待ち受けているパイプ"))
+            {
+                int processId = ProcessIdOf(entry);
+                if (processId >= 0)
+                {
+                    listeningByProcessId[processId] = true;
+                }
+            }
+
+            foreach (int processId in TakeMaterial(
+                () => findEditorProcessIds(EditorProcessName), "起動しているPMXエディタ"))
+            {
+                if (!listeningByProcessId.ContainsKey(processId))
+                {
+                    listeningByProcessId[processId] = false;
+                }
+            }
+
+            List<EditorSurveyEntry> surveyed = new List<EditorSurveyEntry>();
+            foreach (KeyValuePair<int, bool> found in listeningByProcessId)
+            {
+                surveyed.Add(new EditorSurveyEntry(found.Key, found.Value, windowTitleOf(found.Key)));
+            }
+
+            return surveyed;
+        }
+
+        /// <summary>そのプロセスのメインウィンドウのタイトル。読めなければ空を返す。</summary>
+        private static string WindowTitleOf(int processId)
+        {
+            try
+            {
+                using Process editor = Process.GetProcessById(processId);
+                return editor.MainWindowTitle ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
         }
 
         /// <summary>
@@ -203,17 +418,57 @@ namespace PmxEditorMcp.Bridge
                     + "メニュー「PMX Editor MCP」で稼働状態を確かめる。");
         }
 
+        /// <summary>選んだ接続先が待ち受けていないことを、エディタが残っているかで分けて伝える。</summary>
+        private static BridgeException SelectedNotListening(
+            string selectedPipeName, IReadOnlyList<int> editorProcessIds)
+        {
+            int processId = ProcessIdOf(PipeDirectory + selectedPipeName);
+            string described = processId < 0
+                ? selectedPipeName
+                : "プロセスID " + processId.ToString(CultureInfo.InvariantCulture);
+
+            if (processId >= 0 && Contains(editorProcessIds, processId))
+            {
+                return new BridgeException(
+                    BridgeErrorCodes.NoHost,
+                    "接続先に選んだPMXエディタ(" + described + ")は起動しているが、ホストが"
+                        + "待ち受けていない。エディタのプラグインメニュー「PMX Editor MCP」で稼働"
+                        + "状態を確かめる。");
+            }
+
+            return new BridgeException(
+                BridgeErrorCodes.NoEditor,
+                "接続先に選んだPMXエディタ(" + described + ")が起動していない。ほかのエディタへは"
+                    + "繋がない。" + FixedToolTable.SelectEditorName + " で接続先を選び直す。");
+        }
+
+        private static bool Contains(IReadOnlyList<int> values, int wanted)
+        {
+            foreach (int value in values)
+            {
+                if (value == wanted)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>
-        /// 複数のホストが待ち受けているときの説明を作る。読むのは呼び出し元のエージェントで、
-        /// ブリッジの起動設定を書き換える立場にないので、決められない事実と候補だけを伝える。
+        /// 複数のホストが待ち受けているときの説明を作る。読むのは呼び出し元のエージェントなので、
+        /// 決められない事実と候補に、接続先を選ぶツールを添える。
         /// </summary>
         private static string DescribeCandidates(IReadOnlyList<string> listeningPipeNames)
         {
             StringBuilder described = new StringBuilder();
             described.Append("ホストが ")
                 .Append(listeningPipeNames.Count.ToString(CultureInfo.InvariantCulture))
-                .Append(" つ待ち受けているため接続先を1つに決められない。どのエディタを対象に")
-                .Append("するかを利用者に確かめる。待ち受けているホスト:");
+                .Append(" つ待ち受けているため接続先を1つに決められない。")
+                .Append(FixedToolTable.SelectEditorName)
+                .Append(" へ対象のエディタのプロセスIDを渡して接続先を決める。どれが対象かは ")
+                .Append(FixedToolTable.ListEditorsName)
+                .Append(" のウィンドウのタイトルで見分ける。待ち受けているホスト:");
 
             foreach (string pipeName in listeningPipeNames)
             {

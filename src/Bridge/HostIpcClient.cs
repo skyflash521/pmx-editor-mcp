@@ -49,10 +49,11 @@ namespace PmxEditorMcp.Bridge
     public interface IHostConnector
     {
         /// <summary>
-        /// ホストへの接続を開く。接続先を決められないときと確立に失敗したときは
+        /// ホストへの接続を開く。<paramref name="selectedPipeName"/> が null でなければそのパイプ
+        /// だけを相手にする。接続先を決められないときと確立に失敗したときは
         /// <see cref="BridgeException"/> を投げる。
         /// </summary>
-        Task<HostConnection> ConnectAsync(CancellationToken cancellationToken);
+        Task<HostConnection> ConnectAsync(string selectedPipeName, CancellationToken cancellationToken);
     }
 
     /// <summary>待ち受けているホストから決めた名前付きパイプへ接続する。</summary>
@@ -65,7 +66,7 @@ namespace PmxEditorMcp.Bridge
         /// </summary>
         public static readonly TimeSpan ConnectWaitLimit = TimeSpan.FromSeconds(5);
 
-        private readonly Func<string> _resolvePipeName;
+        private readonly Func<string, string> _resolvePipeName;
         private readonly Func<string, CancellationToken, Task<Stream>> _openPipe;
         private readonly TimeSpan _waitLimit;
 
@@ -83,7 +84,7 @@ namespace PmxEditorMcp.Bridge
         /// 接続先の決定も差し替えるのは、実行環境のエディタの起動状況で手前の分岐へ逸れないようにするため。
         /// </summary>
         internal NamedPipeHostConnector(
-            Func<string> resolvePipeName,
+            Func<string, string> resolvePipeName,
             Func<string, CancellationToken, Task<Stream>> openPipe)
             : this(resolvePipeName, openPipe, ConnectWaitLimit)
         {
@@ -93,7 +94,7 @@ namespace PmxEditorMcp.Bridge
         /// 待つ上限を差し替えて生成する。パイプを開く処理は製品と同じものを通す。既定の上限は
         /// 開かない相手を待ち切るのに実時間を費やすので、その振る舞いを確かめるときだけ短くする。
         /// </summary>
-        internal NamedPipeHostConnector(Func<string> resolvePipeName, TimeSpan waitLimit)
+        internal NamedPipeHostConnector(Func<string, string> resolvePipeName, TimeSpan waitLimit)
             : this(
                 resolvePipeName,
                 (name, cancellationToken) => OpenNamedPipeAsync(name, cancellationToken, waitLimit),
@@ -102,7 +103,7 @@ namespace PmxEditorMcp.Bridge
         }
 
         private NamedPipeHostConnector(
-            Func<string> resolvePipeName,
+            Func<string, string> resolvePipeName,
             Func<string, CancellationToken, Task<Stream>> openPipe,
             TimeSpan waitLimit)
         {
@@ -112,12 +113,13 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
-        /// 接続のたびに接続先を決め直してから開く。エディタの起動・終了でパイプ名は変わるので、
-        /// 一度決めた名前を握り続けると、繋ぎ直しが消えたエディタを指したままになる。
+        /// 接続のたびに接続先を決め直してから開く。選んだ接続先があれば、それが待ち受けているかを
+        /// 確かめるだけで、ほかの待受へは移らない。
         /// </summary>
-        public async Task<HostConnection> ConnectAsync(CancellationToken cancellationToken)
+        public async Task<HostConnection> ConnectAsync(
+            string selectedPipeName, CancellationToken cancellationToken)
         {
-            string pipeName = _resolvePipeName();
+            string pipeName = _resolvePipeName(selectedPipeName);
 
             try
             {
@@ -224,6 +226,7 @@ namespace PmxEditorMcp.Bridge
         private int _lastRequestId;
         private string _connectedPipeName;
         private string _reportedPipeName;
+        private string _selectedPipeName;
 
         /// <summary>
         /// 接続の開き方と、ホストと一致していなければならない応答サイズ予算の文字数を与えて生成する。
@@ -262,7 +265,88 @@ namespace PmxEditorMcp.Bridge
         /// ホストのメソッドを1件呼び、成功応答の結果と接続先の知らせを返す。未接続なら接続して
         /// handshake を済ませてから送る。失敗は <see cref="BridgeException"/> で返す。
         /// </summary>
-        public async Task<HostCallResult> CallAsync(string method, JsonObject parameters, CancellationToken cancellationToken)
+        public Task<HostCallResult> CallAsync(string method, JsonObject parameters, CancellationToken cancellationToken)
+        {
+            return InTurnAsync(
+                limited => CallCoreAsync(method, parameters, limited), cancellationToken);
+        }
+
+        /// <summary>
+        /// 接続先に選んだパイプ。選んでいなければ null。選ぶと、以後の接続はこのパイプへだけ開く。
+        /// </summary>
+        public string SelectedPipeName => _selectedPipeName;
+
+        /// <summary>いま繋いでいる相手のパイプ名。繋いでいなければ null。</summary>
+        public string ConnectedPipeName => _connectedPipeName;
+
+        /// <summary>
+        /// 接続先を <paramref name="pipeName"/> に選び、そこへ繋いで handshake を済ませてから、接続先の
+        /// 知らせを返す。そのパイプへ接続を開けなければ、選び直さず、いまの接続も保ったまま
+        /// <see cref="BridgeException"/> を投げる。
+        /// </summary>
+        public Task<HostCallResult> SelectAsync(string pipeName, CancellationToken cancellationToken)
+        {
+            if (pipeName == null)
+            {
+                throw new ArgumentNullException(nameof(pipeName));
+            }
+
+            return InTurnAsync(
+                limited => SelectCoreAsync(pipeName, limited), cancellationToken, false);
+        }
+
+        private async Task<HostCallResult> SelectCoreAsync(
+            string pipeName, CancellationToken cancellationToken)
+        {
+            if (IsConnected && string.Equals(_connectedPipeName, pipeName, StringComparison.Ordinal))
+            {
+                _selectedPipeName = pipeName;
+                return new HostCallResult(null, TakeTargetNotice());
+            }
+
+            HostConnection connection = await _connector
+                .ConnectAsync(pipeName, cancellationToken)
+                .ConfigureAwait(false);
+
+            // 新しい接続の handshake が済むまで、いまの接続は閉じずに脇へ置く。
+            Stream keptStream = _stream;
+            BridgeMessageChannel keptChannel = _channel;
+            string keptPipeName = _connectedPipeName;
+            _stream = null;
+            _channel = null;
+            _connectedPipeName = null;
+            try
+            {
+                await HandshakeAsync(connection, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                Close();
+                _stream = keptStream;
+                _channel = keptChannel;
+                _connectedPipeName = keptPipeName;
+                throw;
+            }
+
+            keptStream?.Dispose();
+            _selectedPipeName = pipeName;
+            return new HostCallResult(null, TakeTargetNotice());
+        }
+
+        private Task<HostCallResult> InTurnAsync(
+            Func<CancellationToken, Task<HostCallResult>> body, CancellationToken cancellationToken)
+        {
+            return InTurnAsync(body, cancellationToken, true);
+        }
+
+        /// <summary>
+        /// 順番を取り、待つ上限を掛けて <paramref name="body"/> を走らせる。
+        /// <paramref name="closesOnAbandon"/> が真なら、打ち切りと取り消しでは接続を捨てる。
+        /// </summary>
+        private async Task<HostCallResult> InTurnAsync(
+            Func<CancellationToken, Task<HostCallResult>> body,
+            CancellationToken cancellationToken,
+            bool closesOnAbandon)
         {
             await _queue.EnterAsync(cancellationToken).ConfigureAwait(false);
             try
@@ -276,21 +360,26 @@ namespace PmxEditorMcp.Bridge
 
                 try
                 {
-                    return await CallCoreAsync(method, parameters, limit.Token).ConfigureAwait(false);
+                    return await body(limit.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
                     // 呼び出し側ではなく待つ上限で打ち切った。遅れて届く応答を次の要求の応答と
                     // 取り違えないよう、接続を捨てる。
-                    throw FailAndClose(
-                        BridgeErrorCodes.Timeout,
-                        "ホストからの応答が " + Describe(WaitLimit) + " 以内に返らなかった。");
+                    string message = "ホストからの応答が " + Describe(WaitLimit) + " 以内に返らなかった。";
+                    throw closesOnAbandon
+                        ? FailAndClose(BridgeErrorCodes.Timeout, message)
+                        : new BridgeException(BridgeErrorCodes.Timeout, message);
                 }
                 catch (OperationCanceledException)
                 {
                     // 呼び出し側の取り消し。実行されたか分からない要求を残すので接続を捨て、
                     // 同じ要求を送り直さない。
-                    Close();
+                    if (closesOnAbandon)
+                    {
+                        Close();
+                    }
+
                     throw;
                 }
             }
@@ -380,7 +469,14 @@ namespace PmxEditorMcp.Bridge
 
         private async Task ConnectAndHandshakeAsync(CancellationToken cancellationToken)
         {
-            HostConnection connection = await _connector.ConnectAsync(cancellationToken).ConfigureAwait(false);
+            HostConnection connection = await _connector
+                .ConnectAsync(_selectedPipeName, cancellationToken)
+                .ConfigureAwait(false);
+            await HandshakeAsync(connection, cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task HandshakeAsync(HostConnection connection, CancellationToken cancellationToken)
+        {
             _stream = connection.Stream;
             _connectedPipeName = connection.PipeName;
             _channel = new BridgeMessageChannel(connection.Stream);

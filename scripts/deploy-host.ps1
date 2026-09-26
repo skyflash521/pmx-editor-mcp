@@ -1,5 +1,6 @@
-# ホストをエディタの導入物へ配置する。
-# 配置先は起動中のエディタがロックしているので、まず動いているエディタをすべて閉じる。
+# ホストを、このセッションの導入先(editor-dir.ps1 の Get-SessionEditorDirectory)へ配置する。
+# 配置先は起動中のエディタがロックしているので、まずその導入先から動いているエディタを閉じる。
+# ほかの導入先から動いているエディタには触れない。
 # 配置の指定はこの1本が持つ——受入の前置も実機動作確認もここを通すので、配置の仕方が分かれない。
 [CmdletBinding()]
 param()
@@ -54,10 +55,11 @@ function Get-LoadDirectories {
     ForEach-Object { [int]$_ } |
     ForEach-Object { & $control -Action close -ProcessId $_ | Out-Null }
 
-dotnet build $project -t:Deploy | Out-Null
+$editorDirectory = Get-SessionEditorDirectory
+dotnet build $project -t:Deploy "-p:PmxEditorDeployDir=$editorDirectory" | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "ホストの配置に失敗した(終了コード $LASTEXITCODE)。" }
 
-$pluginDirectory = Join-Path (Get-EditorDirectory) $PluginDirectoryName
+$pluginDirectory = Join-Path $editorDirectory $PluginDirectoryName
 $deployed = Join-Path (Join-Path $pluginDirectory "User") $HostAssemblyName
 if (-not (Test-Path $deployed)) { throw "配置したはずのホストが無い: $deployed" }
 
