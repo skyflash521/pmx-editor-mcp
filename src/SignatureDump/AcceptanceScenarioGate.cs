@@ -499,7 +499,7 @@ namespace PmxEditorMcp.SignatureDump
             return copied;
         }
 
-        /// <summary>ツールの名前から入力スキーマを引く表。固定のツールは引数を取らない。</summary>
+        /// <summary>ツールの名前から入力スキーマを引く表。固定のツールは固定の表から引く。</summary>
         private static IDictionary<string, JsonSchema> Schemas(
             IList<ToolDefinition> definitions, ISet<string> fixedTools)
         {
@@ -512,8 +512,7 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (string name in fixedTools)
             {
-                schemas[name] = JsonSchema.FromText(
-                    "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}");
+                schemas[name] = JsonSchema.FromText(FixedToolTable.InputSchema(name));
             }
 
             return schemas;

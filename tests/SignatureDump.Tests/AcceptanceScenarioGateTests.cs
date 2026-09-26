@@ -186,6 +186,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("ping", error.Message, StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void AFixedToolCalledWithTheArgumentsItTakesIsAccepted()
+        {
+            string step = @"{""kind"":""tool"",""tool"":""find_tool"","
+                + @"""arguments"":{""text"":""頂点"",""limit"":null,""offset"":null},"
+                + @"""expect"":{""ok"":true}}";
+
+            Require(Scenario(step + "," + Step(Listing, @"{""all"":true}")));
+        }
+
+        [Fact]
+        public void AFixedToolCalledWithoutAnArgumentItRequiresIsRejected()
+        {
+            string step = @"{""kind"":""tool"",""tool"":""find_tool"",""arguments"":{},"
+                + @"""expect"":{""ok"":true}}";
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(Scenario(step + "," + Step(Listing, @"{""all"":true}"))));
+
+            Assert.Contains("find_tool", error.Message, StringComparison.Ordinal);
+        }
+
         private static void Require(string scenarios)
         {
             AcceptanceScenarioGate.Require(
@@ -313,7 +334,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static ISet<string> Fixed()
         {
-            return new HashSet<string>(new[] { "ping" }, StringComparer.Ordinal);
+            return new HashSet<string>(new[] { "ping", "find_tool" }, StringComparer.Ordinal);
         }
     }
 }

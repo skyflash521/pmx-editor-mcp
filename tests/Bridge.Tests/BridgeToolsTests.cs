@@ -116,6 +116,63 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public async Task EveryFixedToolTakesTheArgumentsItsSchemaInTheTableNames()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            McpClient client = _shared.Client;
+
+            IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
+
+            // 受入シナリオの照合は表の側で引数を照らすので、表と公開する定義が食い違うと、
+            // 照合を通った引数が実際の呼び出しで断られる。
+            foreach (string name in FixedToolTable.Descriptions(debugHooks: false).Keys)
+            {
+                AssertSchemaMatchesTable(Named(tools, name));
+            }
+        }
+
+        private static void AssertSchemaMatchesTable(McpClientTool tool)
+        {
+            System.Text.Json.JsonElement published = tool.ProtocolTool.InputSchema;
+            System.Text.Json.JsonElement table = System.Text.Json.JsonDocument
+                .Parse(FixedToolTable.InputSchema(tool.Name)).RootElement;
+
+            Assert.Equal(PropertyNamesOf(table), PropertyNamesOf(published));
+            Assert.Equal(RequiredOf(table), RequiredOf(published));
+            foreach (string name in PropertyNamesOf(table))
+            {
+                Assert.Equal(
+                    TypesOf(table.GetProperty("properties").GetProperty(name)),
+                    TypesOf(published.GetProperty("properties").GetProperty(name)));
+            }
+        }
+
+        /// <summary>その引数が取る型の並び。null を許すなら null も入る。</summary>
+        private static string[] TypesOf(System.Text.Json.JsonElement property)
+        {
+            System.Text.Json.JsonElement type = property.GetProperty("type");
+            return type.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? Sorted(type.EnumerateArray().Select(one => one.GetString()))
+                : new string[] { type.GetString() };
+        }
+
+        private static string[] PropertyNamesOf(System.Text.Json.JsonElement schema)
+        {
+            System.Text.Json.JsonElement properties;
+            return schema.TryGetProperty("properties", out properties)
+                ? Sorted(properties.EnumerateObject().Select(property => property.Name))
+                : new string[0];
+        }
+
+        private static string[] RequiredOf(System.Text.Json.JsonElement schema)
+        {
+            System.Text.Json.JsonElement required;
+            return schema.TryGetProperty("required", out required)
+                ? Sorted(required.EnumerateArray().Select(name => name.GetString()))
+                : new string[0];
+        }
+
+        [Fact]
         public async Task TheLargeTextToolAppearsOnlyWithTheDebugEntry()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -125,6 +182,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             // ツールの一覧の並びは ModelContextProtocol のサーバーが決める。
             Assert.Equal(Expected(true), Sorted(tools.Select(tool => tool.Name)));
+            AssertSchemaMatchesTable(Named(tools, BridgeTools.LargeTextMethod));
         }
 
         [Fact]

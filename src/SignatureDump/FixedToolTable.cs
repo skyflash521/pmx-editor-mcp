@@ -24,6 +24,27 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>指定した文字数のテキストを返す、検査からだけ使うツールの名前。</summary>
         public const string LargeTextName = "debug_large_text";
 
+        /// <summary>
+        /// そのツールの入力スキーマ。引数の名前と型と必須かどうかだけを書き、説明は持たない。
+        /// </summary>
+        public static string InputSchema(string name)
+        {
+            switch (name)
+            {
+                case FindToolName:
+                    return "{\"type\":\"object\",\"properties\":{\"" + FindToolTextParameter
+                        + "\":{\"type\":\"string\"},\"limit\":{\"type\":[\"integer\",\"null\"]},"
+                        + "\"offset\":{\"type\":[\"integer\",\"null\"]}},\"required\":[\""
+                        + FindToolTextParameter + "\",\"limit\",\"offset\"],"
+                        + "\"additionalProperties\":false}";
+                case LargeTextName:
+                    return "{\"type\":\"object\",\"properties\":{\"chars\":{\"type\":\"integer\"}},"
+                        + "\"required\":[\"chars\"],\"additionalProperties\":false}";
+                default:
+                    return "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}";
+            }
+        }
+
         /// <summary>その入口の開き方で公開する、名前から説明文を引く表。</summary>
         public static IDictionary<string, string> Descriptions(bool debugHooks)
         {
