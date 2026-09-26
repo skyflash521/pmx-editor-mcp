@@ -9,6 +9,16 @@ namespace PmxEditorMcp.Tests
         }
     }
 
+    internal sealed class SwitchedModifierKeys : IModifierKeys
+    {
+        public bool Held { get; set; }
+
+        public bool AnyHeld()
+        {
+            return Held;
+        }
+    }
+
     /// <summary>修飾キーが押されている題材。</summary>
     internal sealed class HeldModifierKeys : IModifierKeys
     {

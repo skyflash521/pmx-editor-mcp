@@ -7,6 +7,8 @@ namespace PmxEditorMcp
 {
     public sealed class RowMatrix
     {
+        private static readonly double LockedCosine = Math.Sqrt(Math.Pow(2d, -50d));
+
         private readonly double[,] _cells;
 
         private RowMatrix(double[,] cells)
@@ -38,6 +40,22 @@ namespace PmxEditorMcp
                 new double[,] { { cy, 0d, -sy }, { 0d, 1d, 0d }, { sy, 0d, cy } });
 
             return aroundZ.Times(aroundX).Times(aroundY);
+        }
+
+        /// <summary>単位の軸 (x, y, z) のまわりに回す行列。正の角で、軸 X なら +Y を +Z へ回す。角はラジアン。</summary>
+        public static RowMatrix AroundAxis(double x, double y, double z, double angle)
+        {
+            double c = Math.Cos(angle);
+            double s = Math.Sin(angle);
+            double t = 1d - c;
+
+            return new RowMatrix(
+                new double[,]
+                {
+                    { (t * x * x) + c, (t * x * y) + (s * z), (t * x * z) - (s * y) },
+                    { (t * x * y) - (s * z), (t * y * y) + c, (t * y * z) + (s * x) },
+                    { (t * x * z) + (s * y), (t * y * z) - (s * x), (t * z * z) + c },
+                });
         }
 
         public RowMatrix Times(RowMatrix right)
@@ -124,6 +142,22 @@ namespace PmxEditorMcp
             }
 
             return new V3(x, y, z);
+        }
+
+        /// <summary>
+        /// <see cref="YawPitchRoll"/> へ Y・X・Z の順に渡すと同じ行列になる、X・Y・Z の角(ラジアン)。
+        /// X の余弦が0に近いときは Z を0にする。
+        /// </summary>
+        public V3 ToYawPitchRollAngles()
+        {
+            double x = Math.Asin(Math.Max(-1d, Math.Min(1d, -_cells[2, 1])));
+            if (Math.Cos(x) < LockedCosine)
+            {
+                return new V3((float)x, (float)Math.Atan2(-_cells[0, 2], _cells[0, 0]), 0f);
+            }
+
+            return new V3(
+                (float)x, (float)Math.Atan2(_cells[2, 0], _cells[2, 2]), (float)Math.Atan2(_cells[0, 1], _cells[1, 1]));
         }
 
         private static float Clamped(float value)

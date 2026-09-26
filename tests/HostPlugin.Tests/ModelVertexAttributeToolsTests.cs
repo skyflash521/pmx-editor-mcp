@@ -130,6 +130,68 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RotatingTurnsTheNormalAboutTheAxisAndLeavesThePositionAlone()
+        {
+            FakeVertex vertex = Vertex(1f, 2f, 3f);
+            vertex.Normal = new V3(1f, 0f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Normals(
+                Operation(ModelEditNormals.Rotate),
+                ComposedEditFixture.Given(ModelEditNormals.RotationAxisName, new object[] { 1f, 1f, 1f }),
+                ComposedEditFixture.Given(ModelEditNormals.RotationAngleName, 120f),
+                ComposedEditFixture.Given("all", true)));
+
+            Near(0.0, vertex.Normal.X);
+            Near(1.0, vertex.Normal.Y);
+            Near(0.0, vertex.Normal.Z);
+            Near(1.0, vertex.Position.X);
+            Near(3.0, vertex.Position.Z);
+            Assert.Equal(1, value[ModelEditNormals.ChangedName]);
+        }
+
+        [Fact]
+        public void RotatingNeedsAnAxisWithLength()
+        {
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.Normal = new V3(1f, 0f, 0f);
+
+            IDictionary<string, object> answer = Normals(
+                Operation(ModelEditNormals.Rotate),
+                ComposedEditFixture.Given(ModelEditNormals.RotationAxisName, new object[] { 0f, 0f, 0f }),
+                ComposedEditFixture.Given(ModelEditNormals.RotationAngleName, 120f),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(answer));
+            Near(1.0, vertex.Normal.X);
+        }
+
+        [Fact]
+        public void RotatingNeedsTheAngle()
+        {
+            Vertex(0f, 0f, 0f);
+
+            IDictionary<string, object> answer = Normals(
+                Operation(ModelEditNormals.Rotate),
+                ComposedEditFixture.Given(ModelEditNormals.RotationAxisName, new object[] { 0f, 1f, 0f }),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(answer));
+        }
+
+        [Fact]
+        public void TheAxisIsRefusedOutsideRotating()
+        {
+            Vertex(0f, 0f, 0f);
+
+            IDictionary<string, object> answer = Normals(
+                Operation(ModelEditNormals.Flip),
+                ComposedEditFixture.Given(ModelEditNormals.RotationAxisName, new object[] { 0f, 1f, 0f }),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(answer));
+        }
+
+        [Fact]
         public void RewritingTheNormalsRemakesOnlyTheVerticesInTheView()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);

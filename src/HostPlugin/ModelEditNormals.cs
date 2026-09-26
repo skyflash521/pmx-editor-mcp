@@ -6,9 +6,6 @@ using PEPlugin.SDX;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 指した頂点の法線の平均化・面法線化・正規化・反転を行うツール。
-    /// </summary>
     public static class ModelEditNormals
     {
         /// <summary>このツールの名前。</summary>
@@ -29,6 +26,12 @@ namespace PmxEditorMcp
         /// <summary>法線の向きを逆にする。</summary>
         public const string Flip = "flip";
 
+        public const string Rotate = "rotate";
+
+        public const string RotationAxisName = "rotationAxis";
+
+        public const string RotationAngleName = "rotationAngle";
+
         /// <summary>平均する距離のしきい値を受け取る入力の名前。</summary>
         public const string ThresholdName = "threshold";
 
@@ -40,7 +43,7 @@ namespace PmxEditorMcp
         {
             get
             {
-                return new[] { Average, AverageNear, FromFaces, Normalize, Flip };
+                return new[] { Average, AverageNear, FromFaces, Normalize, Flip, Rotate };
             }
         }
 
@@ -65,6 +68,8 @@ namespace PmxEditorMcp
                 TargetNames.Element.All,
                 TargetNames.Element.Selected,
                 ThresholdName,
+                RotationAxisName,
+                RotationAngleName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -105,6 +110,12 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            RowMatrix turn;
+            if (!TryTurn(context, operation, out turn, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
             IList<IPXVertex> picked = chosen.Select(at => model.Vertex[at]).ToList();
             IList<V3> before = picked.Select(vertex => Vectors.Copied(vertex.Normal)).ToList();
             switch (operation)
@@ -133,6 +144,14 @@ namespace PmxEditorMcp
 
                     break;
 
+                case Rotate:
+                    foreach (IPXVertex vertex in picked)
+                    {
+                        vertex.Normal = turn.Transform(vertex.Normal);
+                    }
+
+                    break;
+
                 default:
                     foreach (IPXVertex vertex in picked)
                     {
@@ -154,6 +173,49 @@ namespace PmxEditorMcp
                     { ChangedName, changed },
                 },
                 new[] { ElementKinds.Vertex });
+        }
+
+        private static bool TryTurn(
+            McpMethodContext context, string operation, out RowMatrix turn, out string code, out string message)
+        {
+            turn = null;
+            float angle;
+            if (!ComposedInput.TryFloat(
+                    context,
+                    RotationAngleName,
+                    operation,
+                    new[] { Rotate },
+                    ComposedInput.NoFloor,
+                    ComposedInput.NoCeiling,
+                    out angle,
+                    out code,
+                    out message))
+            {
+                return false;
+            }
+
+            if (!string.Equals(operation, Rotate, StringComparison.Ordinal))
+            {
+                if (!context.Params.ContainsKey(RotationAxisName))
+                {
+                    return true;
+                }
+
+                code = ToolEnvelope.InvalidArgument;
+                message = RotationAxisName + " を渡せるのは " + Rotate + " のときだけである。";
+
+                return false;
+            }
+
+            V3 axis;
+            if (!ComposedInput.TryDirection(context, RotationAxisName, out axis, out code, out message))
+            {
+                return false;
+            }
+
+            turn = RowMatrix.AroundAxis(axis.X, axis.Y, axis.Z, angle * Math.PI / 180d);
+
+            return true;
         }
 
         private static V3 Shared(IEnumerable<IPXVertex> picked)

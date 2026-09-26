@@ -262,7 +262,9 @@ namespace PmxEditorMcp
                         () => Receiver(receivers, SettingType)),
                     () => Receiver(receivers, BuilderType),
                     () => Receiver(receivers, SubViewType),
-                    OpenForms);
+                    OpenForms,
+                    () => Receiver(receivers, TransformViewType),
+                    new PressedModifierKeys());
                 HandleRelease.AddTo(methods);
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);

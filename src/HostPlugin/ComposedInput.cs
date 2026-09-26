@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using PEPlugin.SDX;
 
 namespace PmxEditorMcp
 {
@@ -14,6 +15,30 @@ namespace PmxEditorMcp
 
         /// <summary>下限を置かないときに渡す値。</summary>
         public const float NoFloor = float.MinValue;
+
+        /// <summary>
+        /// 3つの有限の数の並びで渡す向きを読み、長さ1にして渡す。長さを持たなければ偽を返し、断る内容を渡す。
+        /// </summary>
+        public static bool TryDirection(
+            McpMethodContext context, string name, out V3 unit, out string code, out string message)
+        {
+            unit = null;
+            V3 given;
+            if (!ViewCaptureImage.TrySpot(context, name, out given, out code, out message))
+            {
+                return false;
+            }
+
+            double length = Math.Sqrt((given.X * (double)given.X) + (given.Y * (double)given.Y) + (given.Z * (double)given.Z));
+            if (!(length > 0))
+            {
+                return Refuse(name + " は長さを持たなければならない。", out code, out message);
+            }
+
+            unit = new V3((float)(given.X / length), (float)(given.Y / length), (float)(given.Z / length));
+
+            return true;
+        }
 
         /// <summary>
         /// 要る操作のときだけ受け取る、有限の数を読む。要る操作で欠けていれば偽、要らない操作で

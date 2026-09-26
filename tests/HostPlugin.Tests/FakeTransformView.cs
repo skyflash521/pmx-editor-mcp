@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using PEPlugin.Pmd;
+using PEPlugin.SDX;
 using PEPlugin.View;
 
 namespace PmxEditorMcp.Tests
@@ -9,6 +11,8 @@ namespace PmxEditorMcp.Tests
     internal sealed class FakeTransformView : IPETransformViewConnector
     {
         public int Updates { get; private set; }
+
+        public List<V3> Rotations { get; } = new List<V3>();
 
         public bool Visible { get; set; }
 
@@ -49,7 +53,7 @@ namespace PmxEditorMcp.Tests
 
         public void BoneRotate()
         {
-            throw new NotSupportedException();
+            Rotations.Add(new V3(BoneRotate_XYZ));
         }
 
         public void BoneTranslate()

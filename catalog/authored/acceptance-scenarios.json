@@ -2978,6 +2978,41 @@
         },
         {
           "kind": "tool",
+          "tool": "motion_update_transform_view_connector",
+          "arguments": {
+            "selectedBoneIndex": 0
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_rotate_bone_about_axis",
+          "arguments": {
+            "axis": [
+              2,
+              0,
+              0
+            ],
+            "angle": 30
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "rotateXyz",
+                "equals": [
+                  30,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "session_initialize_pmx",
           "arguments": {
             "confirm": true
@@ -5377,6 +5412,23 @@
         },
         {
           "kind": "tool",
+          "tool": "model_edit_normals",
+          "arguments": {
+            "operation": "rotate",
+            "rotationAxis": [
+              1,
+              0,
+              0
+            ],
+            "rotationAngle": 90,
+            "all": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_weights",
           "arguments": {
             "operation": "normalize",
@@ -5551,6 +5603,28 @@
               90,
               0
             ],
+            "targets": [
+              {
+                "kind": "bone",
+                "all": true
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_place_elements",
+          "arguments": {
+            "operation": "rotateBy",
+            "rotationAxis": [
+              0,
+              2,
+              0
+            ],
+            "rotationAngle": -90,
             "targets": [
               {
                 "kind": "bone",

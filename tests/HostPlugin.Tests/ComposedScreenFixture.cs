@@ -52,6 +52,10 @@ namespace PmxEditorMcp.Tests
 
         public FakeSubView SubView { get; } = new FakeSubView();
 
+        public FakeTransformView TransformView { get; } = new FakeTransformView();
+
+        public SwitchedModifierKeys Keys { get; } = new SwitchedModifierKeys();
+
         /// <summary>開いているウィンドウとしてツールへ渡す一覧。</summary>
         public List<System.Windows.Forms.Form> Forms { get; } = new List<System.Windows.Forms.Form>();
 
@@ -99,7 +103,9 @@ namespace PmxEditorMcp.Tests
                         () => Setting),
                     () => Builder,
                     () => SubView,
-                    () => new List<System.Windows.Forms.Form>(Forms));
+                    () => new List<System.Windows.Forms.Form>(Forms),
+                    () => TransformView,
+                    Keys);
             }
 
             McpMethod method;

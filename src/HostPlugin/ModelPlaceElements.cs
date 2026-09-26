@@ -22,6 +22,10 @@ namespace PmxEditorMcp
 
         public const string RotationName = "rotation";
 
+        public const string RotationAxisName = "rotationAxis";
+
+        public const string RotationAngleName = "rotationAngle";
+
         public const string ScaleName = "scale";
 
         public const string CenterName = "center";
@@ -99,6 +103,8 @@ namespace PmxEditorMcp
                 AxesName,
                 OffsetName,
                 RotationName,
+                RotationAxisName,
+                RotationAngleName,
                 ScaleName,
                 CenterName,
                 RampName,
@@ -182,6 +188,22 @@ namespace PmxEditorMcp
                     return true;
 
                 case RotateBy:
+                    if (context.Params.ContainsKey(RotationAxisName) || context.Params.ContainsKey(RotationAngleName))
+                    {
+                        V3 axis;
+                        float angle;
+                        if (!TryAxisTurn(context, out axis, out angle, out code, out message)
+                            || !TryCenter(context, ref center, out code, out message))
+                        {
+                            return false;
+                        }
+
+                        plan = (item, strength) => Turned(
+                            item, RowMatrix.AroundAxis(axis.X, axis.Y, axis.Z, Radians(angle * strength)), center);
+
+                        return true;
+                    }
+
                     if (!TryPoint(context, RotationName, out given, out code, out message)
                         || !TryCenter(context, ref center, out code, out message))
                     {
@@ -280,6 +302,39 @@ namespace PmxEditorMcp
                 return Math.Max(0f, Math.Min(1f, (along - from) / (to - from)));
             };
             code = null;
+
+            return true;
+        }
+
+        private static bool TryAxisTurn(
+            McpMethodContext context, out V3 axis, out float angle, out string code, out string message)
+        {
+            axis = null;
+            angle = 0f;
+            code = ToolEnvelope.InvalidArgument;
+            if (context.Params.ContainsKey(RotationName))
+            {
+                message = RotationName + " と " + RotationAxisName + "・" + RotationAngleName + " は一緒に渡せない。";
+
+                return false;
+            }
+
+            if (!ComposedInput.TryDirection(context, RotationAxisName, out axis, out code, out message))
+            {
+                return false;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            object taken;
+            if (!context.Params.TryGetValue(RotationAngleName, out taken) || !ValueInput.TrySingle(taken, out angle))
+            {
+                message = RotationAngleName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            code = null;
+            message = null;
 
             return true;
         }
@@ -443,7 +498,7 @@ namespace PmxEditorMcp
                     break;
 
                 case RotateBy:
-                    taken = new[] { RotationName, CenterName, RampName };
+                    taken = new[] { RotationName, RotationAxisName, RotationAngleName, CenterName, RampName };
                     break;
 
                 default:
@@ -451,7 +506,11 @@ namespace PmxEditorMcp
                     break;
             }
 
-            string given = new[] { PositionName, AxesName, OffsetName, RotationName, ScaleName, CenterName, RampName }
+            string given = new[]
+                {
+                    PositionName, AxesName, OffsetName, RotationName, RotationAxisName, RotationAngleName, ScaleName,
+                    CenterName, RampName,
+                }
                 .Where(n => !taken.Contains(n, StringComparer.Ordinal))
                 .FirstOrDefault(context.Params.ContainsKey);
             if (given == null)

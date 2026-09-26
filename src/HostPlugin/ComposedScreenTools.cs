@@ -11,14 +11,17 @@ namespace PmxEditorMcp
     {
         /// <summary>
         /// 組み立ての画面ツールを表へ足す。<paramref name="builder"/> は、VMDやPMXを作る相手を、
-        /// <paramref name="subView"/> は別窓の描画の口を、<paramref name="forms"/> は開いているウィンドウを返す。
+        /// <paramref name="subView"/> は SubView のコネクタを、<paramref name="forms"/> は開いているウィンドウを、
+        /// <paramref name="transformView"/> は TransformView のコネクタを返す。
         /// </summary>
         public static void AddTo(
             McpMethodTable methods,
             ComposedScreen screen,
             Func<object> builder,
             Func<object> subView,
-            Func<IEnumerable<Form>> forms)
+            Func<IEnumerable<Form>> forms,
+            Func<object> transformView,
+            IModifierKeys keys)
         {
             if (methods == null)
             {
@@ -59,6 +62,7 @@ namespace PmxEditorMcp
             MotionSetCameraView.AddTo(methods, screen, forms);
             MotionApplyCurrentPose.AddTo(methods, screen, forms);
             EditorPressSavingItem.AddTo(methods, screen, forms);
+            MotionRotateBoneAboutAxis.AddTo(methods, screen, transformView, keys);
         }
     }
 }

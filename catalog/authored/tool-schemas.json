@@ -5804,6 +5804,21 @@
               "bounds": {
                 "minimum": 0
               }
+            },
+            {
+              "name": "rotationAxis",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "rotationAngle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ],
           "choices": [
@@ -11763,6 +11778,21 @@
                 "origin": "hostInput",
                 "shape": "number"
               },
+              "required": false
+            },
+            {
+              "name": "rotationAxis",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "rotationAngle",
+              "origin": "hostInput",
+              "shape": "number",
               "required": false
             },
             {
@@ -31659,6 +31689,44 @@
       "output": {
         "origin": "hostOutput",
         "shape": "null_value"
+      }
+    },
+    {
+      "tool": "motion_rotate_bone_about_axis",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "axis",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "angle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "rotateXyz",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          }
+        ]
       }
     },
     {

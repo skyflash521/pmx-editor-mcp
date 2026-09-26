@@ -265,6 +265,117 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RotatingAboutAnAxisTurnsLikeTheSameTurnGivenAsAngles()
+        {
+            FakeVertex vertex = Vertex(1f, 2f, 3f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationAxisName, 0f, 2f, 0f),
+                ComposedEditFixture.Given(ModelPlaceElements.RotationAngleName, 90f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(3.0, vertex.Position.X);
+            Near(2.0, vertex.Position.Y);
+            Near(-1.0, vertex.Position.Z);
+        }
+
+        [Fact]
+        public void RotatingAboutATiltedAxisTurnsAboutThatAxis()
+        {
+            FakeVertex vertex = Vertex(1f, 0f, 0f);
+            FakeBody body = Body(0f, 0f, 1f);
+            body.Rotation = new V3(0f, 0f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationAxisName, 1f, 1f, 1f),
+                ComposedEditFixture.Given(ModelPlaceElements.RotationAngleName, 120f),
+                Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Body, 0)));
+
+            Near(0.0, vertex.Position.X);
+            Near(1.0, vertex.Position.Y);
+            Near(0.0, vertex.Position.Z);
+            Near(1.0, body.Position.X);
+            Near(0.0, body.Position.Z);
+        }
+
+        [Fact]
+        public void TheAngleAboutAnAxisIsWeakenedByTheRamp()
+        {
+            FakeVertex vertex = Vertex(1f, 0f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationAxisName, 0f, 1f, 0f),
+                ComposedEditFixture.Given(ModelPlaceElements.RotationAngleName, 180f),
+                Ramp("x", 0f, 2f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(0.0, vertex.Position.X);
+            Near(-1.0, vertex.Position.Z);
+        }
+
+        [Theory]
+        [InlineData(true, true, true)]
+        [InlineData(false, true, false)]
+        [InlineData(false, false, true)]
+        [InlineData(false, false, false)]
+        public void RotatingTakesEitherTheAnglesOrTheAxisWithItsAngle(bool angles, bool axis, bool angle)
+        {
+            Vertex(1f, 0f, 0f);
+            List<KeyValuePair<string, object>> given = new List<KeyValuePair<string, object>>
+            {
+                Operation(ModelPlaceElements.RotateBy),
+                Targets(Target(ElementKinds.Vertex, 0)),
+            };
+            if (angles)
+            {
+                given.Add(Triple(ModelPlaceElements.RotationName, 0f, 90f, 0f));
+            }
+
+            if (axis)
+            {
+                given.Add(Triple(ModelPlaceElements.RotationAxisName, 0f, 1f, 0f));
+            }
+
+            if (angle)
+            {
+                given.Add(ComposedEditFixture.Given(ModelPlaceElements.RotationAngleName, 90f));
+            }
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(Place(given.ToArray())));
+        }
+
+        [Fact]
+        public void AnAxisWithoutLengthIsRefused()
+        {
+            Vertex(1f, 0f, 0f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationAxisName, 0f, 0f, 0f),
+                ComposedEditFixture.Given(ModelPlaceElements.RotationAngleName, 90f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void TheAxisIsRefusedOutsideRotating()
+        {
+            Vertex(1f, 0f, 0f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(1f, 0f, 0f),
+                Triple(ModelPlaceElements.RotationAxisName, 0f, 1f, 0f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void RotatingAboutXTurnsTheNormalToo()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
