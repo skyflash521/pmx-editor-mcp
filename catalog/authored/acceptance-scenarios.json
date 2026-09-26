@@ -4959,6 +4959,39 @@
         },
         {
           "kind": "tool",
+          "tool": "model_find_surface_distances",
+          "arguments": {
+            "materialIndices": [
+              0
+            ],
+            "surfaceMaterialIndices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 3
+              },
+              {
+                "path": "frontCount",
+                "equals": 3
+              },
+              {
+                "path": "backCount",
+                "equals": 0
+              },
+              {
+                "path": "maxDistance",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_vertices",
           "arguments": {
             "operation": "align",

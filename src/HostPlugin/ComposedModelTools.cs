@@ -48,6 +48,7 @@ namespace PmxEditorMcp
             ModelFindReferrers.AddTo(methods, edit);
             ModelFindMaterialVertices.AddTo(methods, edit);
             ModelFindVertexBounds.AddTo(methods, edit);
+            ModelFindSurfaceDistances.AddTo(methods, edit);
             ModelInsertElements.AddTo(methods, edit, builder);
             ModelDeleteElements.AddTo(methods, edit);
         }

@@ -6597,6 +6597,283 @@
       }
     },
     {
+      "tool": "model_find_surface_distances",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "boxes",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "minX",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "maxX",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "minY",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "maxY",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "minZ",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  },
+                  {
+                    "name": "maxZ",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
+                  }
+                ]
+              }
+            },
+            {
+              "name": "surfaceMaterialIndices",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "distanceLimit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "materialIndices",
+                "range",
+                "selected"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "count",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "frontCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "backCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "farCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "minDistance",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "minVertex",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "minPoint",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          },
+          {
+            "name": "maxDistance",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "maxVertex",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "maxPoint",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          },
+          {
+            "name": "boxes",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "frontCount",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "backCount",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "farCount",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "minDistance",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "minVertex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "minPoint",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "maxDistance",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "maxVertex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "maxPoint",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_find_vertex_bounds",
       "branches": [
         {

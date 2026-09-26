@@ -28,7 +28,7 @@ namespace PmxEditorMcp
 
         private static readonly string[] BoxEdgeNames = { "minX", "maxX", "minY", "maxY", "minZ", "maxZ" };
 
-        private static readonly string[] VertexPointing =
+        internal static readonly string[] VertexPointing =
         {
             TargetNames.Element.Indices,
             TargetNames.Element.Range,
@@ -130,7 +130,7 @@ namespace PmxEditorMcp
             return axis == 0 ? point.X : axis == 1 ? point.Y : point.Z;
         }
 
-        private static bool Inside(float[] box, V3 point)
+        internal static bool Inside(float[] box, V3 point)
         {
             float[] components = { point.X, point.Y, point.Z };
             for (int axis = 0; axis < components.Length; axis++)
@@ -144,7 +144,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        private static bool TryBoxes(McpMethodContext context, out List<float[]> boxes, out string message)
+        internal static bool TryBoxes(McpMethodContext context, out List<float[]> boxes, out string message)
         {
             boxes = null;
             message = null;
@@ -210,7 +210,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        private static bool TryChosen(
+        internal static bool TryChosen(
             McpMethodContext context,
             IPXPmx model,
             out IEnumerable<int> chosen,
