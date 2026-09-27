@@ -31,4 +31,5 @@ description: いまのHEADのブリッジとホストでMCPのツールを呼べ
 4. `$env:LOCALAPPDATA/pmx-editor-mcp-dev-bridge/` の下で、掴まれていない世代を消す。いま掴んでいる
    世代は残るので、次に開き直したときに消す。
 5. エディタを起こす。`pwsh -File scripts/host-control.ps1 -Action launch`
-6. `ping` が今のセッションに在るなら、`pong` を返すことを確かめる。
+6. `select_editor` が今のセッションに在るなら、手順5が出力したプロセスIDを `processId` へ渡して
+   接続先に選び、続けて `ping` が `pong` を返すことを確かめる。
