@@ -33,18 +33,18 @@ namespace PmxEditorMcp.Tests
                 _vertices.Add(made);
             }
 
-            _vertices[1].Weight1 = 0.7f;
-            _vertices[1].Bone2 = second;
-            _vertices[1].Weight2 = 0.3f;
-            _vertices[3].Bone1 = second;
-            _vertices[5].Weight1 = 0.5f;
-            _vertices[5].Bone2 = second;
-            _vertices[5].Weight2 = 0.5f;
+            NowAll(_vertices)[1].Weight1 = 0.7f;
+            NowAll(_vertices)[1].Bone2 = second;
+            NowAll(_vertices)[1].Weight2 = 0.3f;
+            NowAll(_vertices)[3].Bone1 = second;
+            NowAll(_vertices)[5].Weight1 = 0.5f;
+            NowAll(_vertices)[5].Bone2 = second;
+            NowAll(_vertices)[5].Weight2 = 0.5f;
 
             FakeMaterial even = new FakeMaterial("偶");
-            even.Faces.Add(new FakeFace(_vertices[0], _vertices[2], _vertices[4]));
+            even.Faces.Add(new FakeFace(NowAll(_vertices)[0], NowAll(_vertices)[2], NowAll(_vertices)[4]));
             FakeMaterial odd = new FakeMaterial("奇");
-            odd.Faces.Add(new FakeFace(_vertices[1], _vertices[3], _vertices[5]));
+            odd.Faces.Add(new FakeFace(NowAll(_vertices)[1], NowAll(_vertices)[3], NowAll(_vertices)[5]));
             _fixture.Model.Material.Add(even);
             _fixture.Model.Material.Add(odd);
         }
@@ -56,19 +56,20 @@ namespace PmxEditorMcp.Tests
 
         public static IEnumerable<object[]> Edits()
         {
-            yield return new object[] { ModelEditVertices.ToolName, Pairs("operation", "align", "axis", "x") };
-            yield return new object[] { ModelEditNormals.ToolName, Pairs("operation", "flip") };
-            yield return new object[] { ModelEditUv.ToolName, Pairs("operation", "flipU") };
-            yield return new object[] { ModelEditWeights.ToolName, Pairs("operation", "average") };
+            yield return new object[] { ModelEditVertices.ToolName, Pairs("operation", "align", "axis", "x"), "align" };
+            yield return new object[] { ModelEditNormals.ToolName, Pairs("operation", "flip"), "flip" };
+            yield return new object[] { ModelEditUv.ToolName, Pairs("operation", "flipU"), "flipU" };
+            yield return new object[] { ModelEditWeights.ToolName, Pairs("operation", "average"), "average" };
             yield return new object[]
             {
-                ModelSetDeformType.ToolName, Pairs("operation", "convert", "deform", "bdef1"),
+                ModelSetDeformType.ToolName, Pairs("operation", "convert", "deform", "bdef1"), "bdef1",
             };
         }
 
         [Theory]
         [MemberData(nameof(Edits))]
-        public void VerticesPointedAtByMaterialAreTheOnlyOnesEdited(string tool, object[] pairs)
+        public void VerticesPointedAtByMaterialAreTheOnlyOnesEdited(
+            string tool, object[] pairs, string edit)
         {
             List<string> before = _vertices.Select(Held).ToList();
             List<KeyValuePair<string, object>> given = Given(pairs);
@@ -77,6 +78,33 @@ namespace PmxEditorMcp.Tests
             ComposedEditFixture.Value(_fixture.Call(tool, ComposedEditFixture.Arguments(given.ToArray())));
 
             AssertOnlyOddChanged(before);
+            Assert.Equal(1, _fixture.Commits);
+            IPXVertex[] odd = { NowAll(_vertices)[1], NowAll(_vertices)[3], NowAll(_vertices)[5] };
+            switch (edit)
+            {
+                case "align":
+                    Assert.All(odd, v => Assert.Equal(4f, v.Position.X));
+                    break;
+
+                case "flip":
+                    Assert.All(odd, v => Assert.Equal(-1f, v.Normal.Y));
+                    break;
+
+                case "flipU":
+                    Assert.All(odd, v => Assert.Equal(0.8f, v.UV.X, 5));
+                    break;
+
+                case "average":
+                    Assert.Single(odd.Select(Weights).Distinct());
+                    break;
+
+                default:
+                    Assert.All(odd, v => Assert.Equal(1f, v.Weight1));
+                    Assert.All(odd, v => Assert.Equal(0f, v.Weight2));
+                    Assert.Equal("上", NowAll(_vertices)[1].Bone1.Name);
+                    Assert.Equal("下", NowAll(_vertices)[3].Bone1.Name);
+                    break;
+            }
         }
 
         [Fact]
@@ -93,6 +121,24 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(3, value[ModelPlaceElements.ChangedName]);
             AssertOnlyOddChanged(before);
+            Assert.Equal(1, _fixture.Commits);
+            Assert.Equal(1.5f, NowAll(_vertices)[1].Position.Y);
+            Assert.Equal(2.5f, NowAll(_vertices)[3].Position.Y);
+            Assert.Equal(3.5f, NowAll(_vertices)[5].Position.Y);
+        }
+
+        /// <summary>頂点のボーンと重みの組を、比べられる文字列にする。</summary>
+        private static string Weights(IPXVertex vertex)
+        {
+            return string.Join(
+                "|",
+                new object[]
+                {
+                    vertex.Bone1 == null ? string.Empty : vertex.Bone1.Name,
+                    vertex.Bone2 == null ? string.Empty : vertex.Bone2.Name,
+                    vertex.Weight1,
+                    vertex.Weight2,
+                }.Select(part => Convert.ToString(part, CultureInfo.InvariantCulture)));
         }
 
         [Fact]
@@ -169,13 +215,13 @@ namespace PmxEditorMcp.Tests
             {
                 if (at % 2 == 0)
                 {
-                    Assert.Equal(before[at], Held(_vertices[at]));
+                    Assert.Equal(before[at], Held(NowAll(_vertices)[at]));
                 }
             }
 
             Assert.Contains(
                 Enumerable.Range(0, _vertices.Count),
-                at => at % 2 == 1 && before[at] != Held(_vertices[at]));
+                at => at % 2 == 1 && before[at] != Held(NowAll(_vertices)[at]));
         }
 
         private static string Held(FakeVertex vertex)
@@ -191,6 +237,13 @@ namespace PmxEditorMcp.Tests
                     vertex.Bone2 == null ? string.Empty : vertex.Bone2.Name,
                     vertex.Weight1, vertex.Weight2,
                 }.Select(part => Convert.ToString(part, CultureInfo.InvariantCulture)));
+        }
+
+        /// <summary>握った要素の並びを、それぞれいまのモデルで同じ位置に並んでいる要素へ読み直す。</summary>
+        private IList<T> NowAll<T>(IList<T> held)
+            where T : class
+        {
+            return held.Select(_fixture.Now).ToList();
         }
 
         private static object[] Pairs(params object[] pairs)

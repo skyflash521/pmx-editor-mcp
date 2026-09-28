@@ -35,15 +35,16 @@ namespace PmxEditorMcp.Tests
         public void MorphsThatShareANameAreMergedIntoTheFirstOne()
         {
             IPXVertex vertex = Vertex(0f, 0f, 0f);
-            FakeMorph first = Morph("笑い", MorphKind.Vertex, Shift(vertex, 1f));
-            Morph("笑い", MorphKind.Vertex, Shift(vertex, 2f));
+            Morph("笑い", MorphKind.Vertex, Shift(vertex, 1f)).NameE = "smile1";
+            Morph("笑い", MorphKind.Vertex, Shift(vertex, 2f)).NameE = "smile2";
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Morphs(
                 Operation(ModelEditMorphs.MergeSameName),
                 ComposedEditFixture.Given("all", true)));
 
-            Assert.Same(first, Assert.Single(_fixture.Model.Morph));
-            Assert.Equal(2, first.Offsets.Count);
+            IPXMorph kept = Assert.Single(_fixture.Model.Morph);
+            Assert.Equal("smile1", kept.NameE);
+            Assert.Equal(2, kept.Offsets.Count);
             Assert.Equal(1, value[ModelEditMorphs.RemovedName]);
             Assert.Equal(1, _fixture.Commits);
         }
@@ -52,7 +53,7 @@ namespace PmxEditorMcp.Tests
         public void MorphsOfTheSameKindAreMergedIntoTheFirstOne()
         {
             IPXVertex vertex = Vertex(0f, 0f, 0f);
-            FakeMorph first = Morph("一", MorphKind.Vertex, Shift(vertex, 1f));
+            Morph("一", MorphKind.Vertex, Shift(vertex, 1f));
             Morph("二", MorphKind.Vertex, Shift(vertex, 2f));
             Morph("色", MorphKind.Material);
 
@@ -60,22 +61,24 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelEditMorphs.MergeSameKind),
                 ComposedEditFixture.Given("all", true));
 
-            Assert.Equal(2, _fixture.Model.Morph.Count);
-            Assert.Equal(2, first.Offsets.Count);
+            Assert.Equal(new[] { "一", "色" }, _fixture.Model.Morph.Select(morph => morph.Name).ToArray());
+            Assert.Equal(2, _fixture.Model.Morph[0].Offsets.Count);
         }
 
         [Fact]
         public void MergingByKindWithAddingPutsTheOffsetsForOneVertexTogether()
         {
             IPXVertex vertex = Vertex(0f, 0f, 0f);
-            FakeMorph first = Morph("一", MorphKind.Vertex, Shift(vertex, 1f));
+            Morph("一", MorphKind.Vertex, Shift(vertex, 1f));
             Morph("二", MorphKind.Vertex, Shift(vertex, 2f));
 
             Morphs(
                 Operation(ModelEditMorphs.MergeSameKindAdd),
                 ComposedEditFixture.Given("all", true));
 
-            IPXVertexMorphOffset held = (IPXVertexMorphOffset)Assert.Single(first.Offsets);
+            IPXMorph kept = Assert.Single(_fixture.Model.Morph);
+            Assert.Equal("一", kept.Name);
+            IPXVertexMorphOffset held = (IPXVertexMorphOffset)Assert.Single(kept.Offsets);
             Near(3.0, held.Offset.X);
         }
 
@@ -85,34 +88,39 @@ namespace PmxEditorMcp.Tests
             IPXVertex[] vertices = Enumerable.Range(0, ManyOffsets)
                 .Select(at => Vertex(at, 0f, 0f))
                 .ToArray();
-            FakeMorph first = Morph(
-                "一", MorphKind.Vertex, vertices.Select(v => Shift(v, 1f)).ToArray());
+            Morph("一", MorphKind.Vertex, vertices.Select(v => Shift(v, 1f)).ToArray());
             Morph("二", MorphKind.Vertex, vertices.Reverse().Select(v => Shift(v, 2f)).ToArray());
 
+            TimeSpan editor = _fixture.EditorTime;
             Stopwatch elapsed = Stopwatch.StartNew();
             Morphs(
                 Operation(ModelEditMorphs.MergeSameKindAdd),
                 ComposedEditFixture.Given("all", true));
             elapsed.Stop();
+            TimeSpan spent = elapsed.Elapsed - (_fixture.EditorTime - editor);
 
-            Assert.Equal(ManyOffsets, first.Offsets.Count);
-            Near(3.0, ((IPXVertexMorphOffset)first.Offsets[0]).Offset.X);
-            Assert.True(elapsed.Elapsed < TimeLimit, "合わせるのに " + elapsed.Elapsed + " かかった");
+            IPXMorph kept = Assert.Single(_fixture.Model.Morph);
+            Assert.Equal("一", kept.Name);
+            Assert.Equal(ManyOffsets, kept.Offsets.Count);
+            Near(3.0, ((IPXVertexMorphOffset)kept.Offsets[0]).Offset.X);
+            Assert.True(spent < TimeLimit, "合わせるのに " + spent + " かかった");
         }
 
         [Fact]
         public void AGroupMorphIsAddedThatCallsTheOnesThatWerePicked()
         {
-            FakeMorph held = Morph("笑い", MorphKind.Vertex);
+            Morph("笑い", MorphKind.Vertex);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Morphs(
                 Operation(ModelEditMorphs.GroupInto),
                 ComposedEditFixture.Given("all", true),
                 ComposedEditFixture.Given(ModelEditMorphs.NameName, "まとめ")));
 
-            IPXMorph made = _fixture.Model.Morph.Single(morph => morph.Kind == MorphKind.Group);
+            IPXMorph made = _fixture.Model.Morph.Single(morph => Now(morph).Kind == MorphKind.Group);
             Assert.Equal("まとめ", made.Name);
-            Assert.Same(held, ((IPXGroupMorphOffset)Assert.Single(made.Offsets)).Morph);
+            Assert.Same(
+                _fixture.Model.Morph.Single(morph => morph.Name == "笑い"),
+                ((IPXGroupMorphOffset)Assert.Single(made.Offsets)).Morph);
             Assert.Single((object[])value[ModelEditMorphs.AddedName]);
         }
 
@@ -127,7 +135,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("all", true),
                 ComposedEditFixture.Given(ModelEditMorphs.NameName, "切り替え"));
 
-            IPXMorph made = _fixture.Model.Morph.Single(morph => morph.Kind == MorphKind.Flip);
+            IPXMorph made = _fixture.Model.Morph.Single(morph => Now(morph).Kind == MorphKind.Flip);
             Assert.Equal(2, made.Offsets.Count);
         }
 
@@ -145,7 +153,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(2, ((object[])value[ModelEditMorphs.AddedName]).Length);
             Assert.All(
-                _fixture.Model.Morph.Where(morph => morph.Kind == MorphKind.Vertex),
+                _fixture.Model.Morph.Where(morph => Now(morph).Kind == MorphKind.Vertex),
                 morph => Assert.Single(morph.Offsets));
         }
 
@@ -191,14 +199,16 @@ namespace PmxEditorMcp.Tests
             _fixture.Model.Material.Add(material);
             Morph("笑い", MorphKind.Vertex, bottom.Concat(top).Select(v => Shift(v, 1f)).ToArray());
 
+            TimeSpan editor = _fixture.EditorTime;
             Stopwatch elapsed = Stopwatch.StartNew();
             IDictionary<string, object> value = ComposedEditFixture.Value(Morphs(
                 Operation(ModelEditMorphs.SplitVertices),
                 ComposedEditFixture.Given("all", true)));
             elapsed.Stop();
+            TimeSpan spent = elapsed.Elapsed - (_fixture.EditorTime - editor);
 
             Assert.Single((object[])value[ModelEditMorphs.AddedName]);
-            Assert.True(elapsed.Elapsed < TimeLimit, "分けるのに " + elapsed.Elapsed + " かかった");
+            Assert.True(spent < TimeLimit, "分けるのに " + spent + " かかった");
         }
 
         [Fact]
@@ -211,8 +221,8 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelEditMorphs.MaterialFromCurrent),
                 ComposedEditFixture.Given(ModelEditMorphs.NameName, "いまの色"));
 
-            IPXMorph made = _fixture.Model.Morph.Single(morph => morph.Kind == MorphKind.Material);
-            Assert.Same(material, ((IPXMaterialMorphOffset)Assert.Single(made.Offsets)).Material);
+            IPXMorph made = _fixture.Model.Morph.Single(morph => Now(morph).Kind == MorphKind.Material);
+            Assert.Same(Now(material), ((IPXMaterialMorphOffset)Assert.Single(made.Offsets)).Material);
         }
 
         [Fact]
@@ -251,8 +261,8 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelEditNodes.RegisterUnlistedBones),
                 ComposedEditFixture.Given("indices", new object[] { 2 })));
 
-            Assert.Equal(2, node.Items.Count);
-            Assert.Same(missing, ((IPXBoneNodeItem)node.Items[1]).Bone);
+            Assert.Equal(2, Now(node).Items.Count);
+            Assert.Same(Now(missing), ((IPXBoneNodeItem)Now(node).Items[1]).Bone);
             Assert.Equal(1, value[ModelEditNodes.AddedName]);
         }
 
@@ -266,7 +276,7 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelEditNodes.RegisterUnlistedMorphs),
                 ComposedEditFixture.Given("indices", new object[] { 2 }));
 
-            Assert.Same(missing, ((IPXMorphNodeItem)Assert.Single(node.Items)).Morph);
+            Assert.Same(Now(missing), ((IPXMorphNodeItem)Assert.Single(Now(node).Items)).Morph);
         }
 
         [Fact]
@@ -323,8 +333,8 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[] { 0, 1 })));
 
-            Assert.Equal(2, node.Items.Count);
-            Assert.Same(wanted, ((IPXBoneNodeItem)node.Items[1]).Bone);
+            Assert.Equal(2, Now(node).Items.Count);
+            Assert.Same(Now(wanted), ((IPXBoneNodeItem)Now(node).Items[1]).Bone);
             Assert.Equal(1, value[ModelEditNodes.AddedName]);
         }
 
@@ -341,7 +351,7 @@ namespace PmxEditorMcp.Tests
                     ModelEditNodes.TargetIndicesName, new object[] { 0 })));
 
             Assert.Same(
-                wanted,
+                Now(wanted),
                 ((IPXBoneNodeItem)((FakeNode)_fixture.Model.RootNode).Items[0]).Bone);
             Assert.Equal(1, value[ModelEditNodes.AddedName]);
         }
@@ -358,7 +368,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[] { 0 })));
 
-            Assert.Single(node.Items);
+            Assert.Single(Now(node).Items);
         }
 
         [Fact]
@@ -373,7 +383,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Empty(((FakeNode)_fixture.Model.ExpressionNode).Items);
             Assert.Same(
-                missing,
+                Now(missing),
                 ((IPXBoneNodeItem)Assert.Single(((FakeNode)_fixture.Model.RootNode).Items)).Bone);
         }
 
@@ -401,7 +411,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("indices", new object[] { 0 })));
 
             Assert.Same(
-                missing,
+                Now(missing),
                 ((IPXMorphNodeItem)Assert.Single(
                     ((FakeNode)_fixture.Model.ExpressionNode).Items)).Morph);
         }
@@ -419,7 +429,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[0])));
 
-            Assert.Single(node.Items);
+            Assert.Single(Now(node).Items);
             Assert.Equal(0, value[ModelEditNodes.AddedName]);
         }
 
@@ -437,8 +447,8 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("indices", new object[] { 2 }),
                 ComposedEditFixture.Given(ModelEditNodes.TargetSelectedName, true)));
 
-            Assert.Equal(2, node.Items.Count);
-            Assert.Same(wanted, ((IPXBoneNodeItem)node.Items[1]).Bone);
+            Assert.Equal(2, Now(node).Items.Count);
+            Assert.Same(Now(wanted), ((IPXBoneNodeItem)Now(node).Items[1]).Bone);
             Assert.Equal(1, value[ModelEditNodes.AddedName]);
         }
 
@@ -469,7 +479,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[] { 0 }));
 
-            Assert.Same(wanted, ((IPXMorphNodeItem)Assert.Single(node.Items)).Morph);
+            Assert.Same(Now(wanted), ((IPXMorphNodeItem)Assert.Single(Now(node).Items)).Morph);
         }
 
         [Fact]
@@ -484,7 +494,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[] { 0, 0 })));
 
-            Assert.Same(wanted, ((IPXBoneNodeItem)Assert.Single(node.Items)).Bone);
+            Assert.Same(Now(wanted), ((IPXBoneNodeItem)Assert.Single(Now(node).Items)).Bone);
             Assert.Equal(1, value[ModelEditNodes.AddedName]);
         }
 
@@ -513,23 +523,27 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelEditNodes.NormalizeExpressionNode),
                 ComposedEditFixture.Given("all", true)));
 
-            Assert.Same(first, ((IPXMorphNodeItem)node.Items[0]).Morph);
-            Assert.Same(second, ((IPXMorphNodeItem)node.Items[1]).Morph);
+            Assert.Same(Now(first), ((IPXMorphNodeItem)Now(node).Items[0]).Morph);
+            Assert.Same(Now(second), ((IPXMorphNodeItem)Now(node).Items[1]).Morph);
             Assert.Equal(1, value[ModelEditNodes.ChangedName]);
         }
 
-        [Fact]
-        public void ABodyTakesTheNameOfTheBoneItHolds()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ABodyTakesTheNameOfTheBoneItHolds(bool suppressed)
         {
             IPXBone bone = Bone("腕");
             FakeBody body = Body("古い名前", bone);
 
-            IDictionary<string, object> value = ComposedEditFixture.Value(Copy(
+            IDictionary<string, object> value = ComposedEditFixture.Value(Copy(Undo(
+                suppressed,
                 Operation(ModelCopyFromReference.BodyNameFromBone),
-                ComposedEditFixture.Given("all", true)));
+                ComposedEditFixture.Given("all", true))));
 
-            Assert.Equal("腕", body.Name);
+            Assert.Equal("腕", Now(body).Name);
             Assert.Equal(1, value[ModelCopyFromReference.ChangedName]);
+            Assert.Equal(suppressed ? 1 : 0, _fixture.Partials.Count);
         }
 
         [Fact]
@@ -561,18 +575,22 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _fixture.View.Redraws);
         }
 
-        [Fact]
-        public void AJointTakesTheNameOfTheFirstBodyItTies()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void AJointTakesTheNameOfTheFirstBodyItTies(bool suppressed)
         {
             FakeBody first = Body("一", null);
             FakeBody second = Body("二", null);
             FakeJoint joint = Joint("古い名前", first, second);
 
-            Copy(
+            Copy(Undo(
+                suppressed,
                 Operation(ModelCopyFromReference.JointNameFromBodyA),
-                ComposedEditFixture.Given("all", true));
+                ComposedEditFixture.Given("all", true)));
 
-            Assert.Equal("一", joint.Name);
+            Assert.Equal("一", Now(joint).Name);
+            Assert.Equal(suppressed ? 1 : 0, _fixture.Partials.Count);
         }
 
         [Fact]
@@ -586,7 +604,7 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelCopyFromReference.JointNameFromBodyB),
                 ComposedEditFixture.Given("all", true));
 
-            Assert.Equal("二", joint.Name);
+            Assert.Equal("二", Now(joint).Name);
         }
 
         [Fact]
@@ -601,8 +619,8 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelCopyFromReference.JointPositionFromBone),
                 ComposedEditFixture.Given("all", true));
 
-            Near(1.0, joint.Position.X);
-            Near(3.0, joint.Position.Z);
+            Near(1.0, Now(joint).Position.X);
+            Near(3.0, Now(joint).Position.Z);
         }
 
         [Fact]
@@ -616,8 +634,8 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelCopyFromReference.JointPositionFromSameNameBone),
                 ComposedEditFixture.Given("all", true));
 
-            Near(4.0, joint.Position.X);
-            Near(6.0, joint.Position.Z);
+            Near(4.0, Now(joint).Position.X);
+            Near(6.0, Now(joint).Position.Z);
         }
 
         [Fact]
@@ -625,13 +643,13 @@ namespace PmxEditorMcp.Tests
         {
             Bone("腕");
             FakeJoint joint = Joint("Joint", Body("一", null), Body("二", null));
-            joint.Position = new V3(1f, 1f, 1f);
+            Now(joint).Position = new V3(1f, 1f, 1f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Copy(
                 Operation(ModelCopyFromReference.JointPositionFromSameNameBone),
                 ComposedEditFixture.Given("all", true)));
 
-            Near(1.0, joint.Position.X);
+            Near(1.0, Now(joint).Position.X);
             Assert.Equal(0, value[ModelCopyFromReference.ChangedName]);
         }
 
@@ -661,7 +679,7 @@ namespace PmxEditorMcp.Tests
                     ModelEditMorphs.TargetIndicesName, new object[] { 0, 1 }));
 
             IPXMorph morph = _fixture.Model.Morph[0];
-            Assert.Equal(2, morph.Offsets.Count);
+            Assert.Equal(2, Now(morph).Offsets.Count);
             Assert.Same(
                 _fixture.Model.Vertex[1],
                 ((IPXVertexMorphOffset)morph.Offsets[1]).Vertex);
@@ -778,6 +796,68 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(1, value[ModelMorphFromMoved.OffsetsName]);
             Assert.Equal(0f, _fixture.Model.Vertex[0].Position.X, 3);
+        }
+
+        /// <summary>
+        /// 読み込んだままのモデルは、軽い方のボーンを先に持つBDEF2頂点を持ちうる。エディタは反映の
+        /// たびに頂点のウェイトを重い順へ並べ直すので、複製を取ってから頂点を動かすと、いまの頂点は
+        /// 同じボーンと重みを別の並びで持つ。
+        /// </summary>
+        [Fact]
+        public void ACopyTakenBeforeTheWeightsWereSortedIsStillTakenAfterAMove()
+        {
+            _fixture.Model.Bone.Add(new FakeBone("腕"));
+            _fixture.Model.Bone.Add(new FakeBone("ひじ"));
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f)
+            {
+                Bone1 = _fixture.Model.Bone[0],
+                Weight1 = 0.25f,
+                Bone2 = _fixture.Model.Bone[1],
+                Weight2 = 0.75f,
+            });
+            int handle = _fixture.Handles.Issue(
+                typeof(IPXPmx).FullName, FakeEditorState.Duplicate(_fixture.Model), () => { });
+            Moved(2f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle)));
+
+            Assert.Equal(1, value[ModelMorphFromMoved.OffsetsName]);
+            IPXVertexMorphOffset offset =
+                (IPXVertexMorphOffset)Assert.Single(_fixture.Model.Morph[0].Offsets);
+            Assert.Equal(2f, offset.Offset.X, 3);
+            Assert.Equal(0f, _fixture.Model.Vertex[0].Position.X, 3);
+        }
+
+        /// <summary>
+        /// エディタは反映のたびにSDEF頂点のボーンを並びの位置の小さい順へ直し、R0とR1も一緒に
+        /// 入れ替える。複製を取ってから頂点を動かすと、いまの頂点は同じ中身を別の並びで持つ。
+        /// </summary>
+        [Fact]
+        public void ACopyTakenBeforeTheSdefBonesWereSortedIsStillTakenAfterAMove()
+        {
+            _fixture.Model.Bone.Add(new FakeBone("腕"));
+            _fixture.Model.Bone.Add(new FakeBone("ひじ"));
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f)
+            {
+                Bone1 = _fixture.Model.Bone[1],
+                Weight1 = 0.5f,
+                Bone2 = _fixture.Model.Bone[0],
+                Weight2 = 0.5f,
+                SDEF = true,
+                SDEF_R0 = new V3(1f, 0f, 0f),
+                SDEF_R1 = new V3(-1f, 0f, 0f),
+            });
+            int handle = _fixture.Handles.Issue(
+                typeof(IPXPmx).FullName, FakeEditorState.Duplicate(_fixture.Model), () => { });
+            Moved(2f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle)));
+
+            Assert.Equal(1, value[ModelMorphFromMoved.OffsetsName]);
         }
 
         [Theory]
@@ -913,6 +993,40 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { 0 }, (object[])value[ModelEditMorphs.AddedName]);
         }
 
+        /// <summary>
+        /// <paramref name="suppressed"/> が真なら、項目の組へUndoの抑止の頼みを足す。抑止を頼むと、
+        /// 書き換えた種類だけを部分反映する経路を通る。
+        /// </summary>
+        private static KeyValuePair<string, object>[] Undo(
+            bool suppressed, params KeyValuePair<string, object>[] given)
+        {
+            return suppressed
+                ? given.Concat(new[] { ComposedEditFixture.Given(UndoBarrier.SuppressName, true) }).ToArray()
+                : given;
+        }
+
+        /// <summary>エディタの操作として、先頭の頂点をXへ動かして反映する。</summary>
+        private void Moved(float along)
+        {
+            ComposedEditFixture.Value(_fixture.Call(
+                ModelPlaceElements.ToolName,
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given(
+                        ComposedOperation.OperationName, ModelPlaceElements.TranslateBy),
+                    ComposedEditFixture.Given(
+                        ModelPlaceElements.OffsetName, new object[] { along, 0f, 0f }),
+                    ComposedEditFixture.Given(
+                        ModelPlaceElements.TargetsName,
+                        new object[]
+                        {
+                            new Dictionary<string, object>(StringComparer.Ordinal)
+                            {
+                                { ModelPlaceElements.KindName, ElementKinds.Vertex },
+                                { "indices", new object[] { 0 } },
+                            },
+                        }))));
+        }
+
         private IDictionary<string, object> FromMoved(
             params KeyValuePair<string, object>[] given)
         {
@@ -962,7 +1076,7 @@ namespace PmxEditorMcp.Tests
             FakeMorph morph = new FakeMorph(name, kind);
             foreach (IPXMorphOffset offset in offsets)
             {
-                morph.Offsets.Add(offset);
+                Now(morph).Offsets.Add(offset);
             }
 
             _fixture.Model.Morph.Add(morph);
@@ -975,7 +1089,7 @@ namespace PmxEditorMcp.Tests
             FakeNode node = new FakeNode(name);
             foreach (IPXNodeItem item in items)
             {
-                node.Items.Add(item);
+                Now(node).Items.Add(item);
             }
 
             _fixture.Model.Node.Add(node);
@@ -1010,6 +1124,13 @@ namespace PmxEditorMcp.Tests
         private static IPXMorphOffset Shift(IPXVertex vertex, float by)
         {
             return new FakeVertexMorphOffset(vertex) { Offset = new V3(by, 0f, 0f) };
+        }
+
+        /// <summary>握った要素が並んでいた位置に、いまのモデルで並んでいる要素。</summary>
+        private T Now<T>(T held)
+            where T : class
+        {
+            return _fixture.Now(held);
         }
 
         private static void Near(double wanted, double found)

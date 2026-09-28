@@ -5,8 +5,9 @@ using System.IO;
 namespace PmxEditorMcp.Tests
 {
     /// <summary>
-    /// 組み立てのツールを呼ぶための題材一式。現在のPMXの複製を1つだけ持ち、複製を得た回数と
-    /// まとめて反映した回数を数える。
+    /// 組み立てのツールを呼ぶための題材一式。エディタが持つ現在のPMXを1つ持ち、複製の要求には
+    /// その複製を返し、反映では渡された複製の中身を写す。複製を得た回数とまとめて反映した回数を
+    /// 数える。Undoの記録は、本番と同じくコネクタの止める行と戻す行で止め戻しする。
     /// </summary>
     internal sealed class ComposedEditFixture : IDisposable
     {
@@ -35,26 +36,45 @@ namespace PmxEditorMcp.Tests
 
         private const string ResumeUndoKey = "PEPlugin.Pmx.IPXPmxConnector.UnlockUndo()";
 
-        private readonly bool _lockingUndo;
+        private readonly UndoSuppression _undo;
+
+        private readonly PmxSession _session;
 
         private McpMethodTable _tools;
 
-        /// <summary>
-        /// 題材を組む。<paramref name="lockingUndo"/> が真なら、Undoの記録を止め戻しする行を
-        /// 持ち、反映する行は複製だけを取る流れにする。偽なら、反映する行がUndoの抑止を引数で取る。
-        /// </summary>
-        public ComposedEditFixture(bool lockingUndo = false)
+        private readonly System.Diagnostics.Stopwatch _editor = new System.Diagnostics.Stopwatch();
+
+        /// <summary>題材を組む。</summary>
+        public ComposedEditFixture()
         {
-            _lockingUndo = lockingUndo;
             _root = Path.Combine(
                 Path.GetTempPath(), "pmx-editor-mcp-composed-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_root);
             _log = new HostLog(Path.Combine(_root, "host.log"));
             Handles = new HandleLedger(_log, new HandleIdIssuer());
+            _undo = new UndoSuppression(_log);
+            _session = new PmxSession(
+                Relay(),
+                Receivers(),
+                Connection(),
+                new PmxFlow(
+                    StateReadKey,
+                    CommitKey,
+                    ConnectorType,
+                    new FlowSlot[0],
+                    new[] { FlowSlot.Pmx },
+                    StopUndoKey,
+                    ResumeUndoKey,
+                    PartialCommitKey),
+                typeof(PEPlugin.Pmx.IPXPmx),
+                _undo);
             _edit = new ComposedEdit(Session(), Barrier(), Refresh());
         }
 
-        /// <summary>現在のPMXとして複製を返す題材。</summary>
+        /// <summary>
+        /// エディタが持つ現在のPMX。複製の要求にはこれの複製を返し、反映では渡された複製の中身を
+        /// ここへ写す。呼び出しの結果はここを読んで確かめる。
+        /// </summary>
         public FakePmx Model { get; } = new FakePmx();
 
         /// <summary>3Dビューの題材。反映のあとに映し直したかをここで数える。</summary>
@@ -72,18 +92,30 @@ namespace PmxEditorMcp.Tests
         /// <summary>複製を得た回数。</summary>
         public int Clones { get; private set; }
 
+        /// <summary>エディタの代役が状態の複製と反映に使った時間の累計。</summary>
+        public TimeSpan EditorTime
+        {
+            get { return _editor.Elapsed; }
+        }
+
         /// <summary>まとめて反映した回数。</summary>
         public int Commits { get; private set; }
 
-        /// <summary>Undoの記録を止めている間か。止め戻しする行を持つ流れでだけ動く。</summary>
+        /// <summary>Undoの記録を止めている間か。</summary>
         public bool UndoLocked { get; private set; }
 
         /// <summary>1つの区分だけを反映した回の、区分と位置。全体を反映した回は入らない。</summary>
         public IList<KeyValuePair<PEPlugin.Pmx.PmxUpdateObject, int>> Partials { get; } =
             new List<KeyValuePair<PEPlugin.Pmx.PmxUpdateObject, int>>();
 
-        /// <summary>反映へ届いたUndoの抑止の頼み。</summary>
+        /// <summary>最後の反映が、Undoの記録を止めている間に届いたか。</summary>
         public bool Suppressed { get; private set; }
+
+        /// <summary>Undoの記録を戻す行を呼んだ回数。</summary>
+        public int Resumes { get; private set; }
+
+        /// <summary>この先、Undoの記録を戻す行が落ちる回数。</summary>
+        public int ResumeFailures { get; set; }
 
         /// <summary>複製編集の経路へ乗せる枠。</summary>
         public ComposedEdit Edit
@@ -162,38 +194,45 @@ namespace PmxEditorMcp.Tests
             return new ScreenRefresh(() => View, () => Form);
         }
 
-        /// <summary>Undoの前置きの包み。止め戻しする相手を持たない流れとする。</summary>
+        /// <summary>
+        /// Undoの前置きの包み。本番と同じく、複製編集の流れが止め戻しする相手と、その流れと同じ
+        /// Undoの抑止の枠を持つ。
+        /// </summary>
         public UndoBarrier Barrier()
         {
-            return new UndoBarrier(new UndoRecovery(new UndoSuppression(_log), null));
+            return new UndoBarrier(new UndoRecovery(_undo, _session.UndoLock));
         }
 
-        /// <summary>複製編集の流れ。受け手を取り、複製を1つとUndoの頼みを渡す形とする。</summary>
+        /// <summary>
+        /// 複製編集の流れ。本番のPMXのコネクタの流れと同じく、複製だけを取って全体を反映する行・
+        /// 1つの区分だけを反映する行・Undoの記録を止める行と戻す行を持つ。
+        /// </summary>
         public PmxSession Session()
         {
-            return new PmxSession(
-                Relay(),
-                Receivers(),
-                Connection(),
-                _lockingUndo
-                    ? new PmxFlow(
-                        StateReadKey,
-                        CommitKey,
-                        ConnectorType,
-                        new FlowSlot[0],
-                        new[] { FlowSlot.Pmx },
-                        StopUndoKey,
-                        ResumeUndoKey,
-                        PartialCommitKey)
-                    : new PmxFlow(
-                        StateReadKey,
-                        CommitKey,
-                        ConnectorType,
-                        new FlowSlot[0],
-                        new[] { FlowSlot.Pmx, FlowSlot.UndoLock },
-                        partialCommit: PartialCommitKey),
-                typeof(FakePmx),
-                new UndoSuppression(_log));
+            return _session;
+        }
+
+        /// <summary>
+        /// 反映で置き換えられて現在のPMXから外れた要素について、それが並んでいた位置に、いまの
+        /// <see cref="Model"/> で並んでいる要素を返す。外れていなければそのまま返す。操作の前に
+        /// 握った要素を操作の後に読むときは、これを通して現在のPMXから読む。
+        /// </summary>
+        public T Now<T>(T held)
+            where T : class
+        {
+            return FakeEditorState.Now(Model, held);
+        }
+
+        /// <summary>
+        /// <see cref="Model"/> そのものをハンドルで預け、そのハンドルで指す項目を返す。ハンドルで
+        /// 指したPMXは複製も反映も通らないので、並びの外を指す要素のように、エディタの現在のPMX
+        /// には置けない形をそのまま相手にさせられる。
+        /// </summary>
+        public KeyValuePair<string, object> HoldModel()
+        {
+            int handle = Handles.Issue(typeof(PEPlugin.Pmx.IPXPmx).FullName, Model, () => { });
+
+            return Given(PmxSession.HandleName, (long)handle);
         }
 
         /// <summary>項目の組を作る。</summary>
@@ -269,8 +308,15 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             Clones++;
-
-                            return Model;
+                            _editor.Start();
+                            try
+                            {
+                                return FakeEditorState.Duplicate(Model);
+                            }
+                            finally
+                            {
+                                _editor.Stop();
+                            }
                         }
                     },
                     {
@@ -278,20 +324,59 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             Commits++;
-                            Suppressed = arguments.Length > 1 && Equals(arguments[1], true);
+                            Suppressed = UndoLocked;
+                            _editor.Start();
+                            try
+                            {
+                                FakeEditorState.Reflect(
+                                    Model,
+                                    (PEPlugin.Pmx.IPXPmx)arguments[0],
+                                    PEPlugin.Pmx.PmxUpdateObject.All,
+                                    -1);
+                            }
+                            finally
+                            {
+                                _editor.Stop();
+                            }
 
                             return null;
                         }
                     },
                     { StopUndoKey, (target, arguments) => { UndoLocked = true; return null; } },
-                    { ResumeUndoKey, (target, arguments) => { UndoLocked = false; return null; } },
+                    {
+                        ResumeUndoKey,
+                        (target, arguments) =>
+                        {
+                            Resumes++;
+                            if (ResumeFailures > 0)
+                            {
+                                ResumeFailures--;
+                                throw new InvalidOperationException("Undoの記録を戻せない。");
+                            }
+
+                            UndoLocked = false;
+
+                            return null;
+                        }
+                    },
                     {
                         PartialCommitKey,
                         (target, arguments) =>
                         {
                             Commits++;
-                            Partials.Add(new KeyValuePair<PEPlugin.Pmx.PmxUpdateObject, int>(
-                                (PEPlugin.Pmx.PmxUpdateObject)arguments[1], (int)arguments[2]));
+                            Suppressed = UndoLocked;
+                            PEPlugin.Pmx.PmxUpdateObject part = (PEPlugin.Pmx.PmxUpdateObject)arguments[1];
+                            int index = (int)arguments[2];
+                            Partials.Add(new KeyValuePair<PEPlugin.Pmx.PmxUpdateObject, int>(part, index));
+                            _editor.Start();
+                            try
+                            {
+                                FakeEditorState.Reflect(Model, (PEPlugin.Pmx.IPXPmx)arguments[0], part, index);
+                            }
+                            finally
+                            {
+                                _editor.Stop();
+                            }
 
                             return null;
                         }

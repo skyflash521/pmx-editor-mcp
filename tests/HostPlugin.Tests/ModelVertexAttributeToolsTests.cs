@@ -33,43 +33,47 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Fact]
-        public void AveragingTheNormalsPutsEveryPickedOneOnTheSharedDirection()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void AveragingTheNormalsPutsEveryPickedOneOnTheSharedDirection(bool suppressed)
         {
             FakeVertex first = Vertex(0f, 0f, 0f);
-            first.Normal = new V3(1f, 0f, 0f);
+            Now(first).Normal = new V3(1f, 0f, 0f);
             FakeVertex second = Vertex(1f, 0f, 0f);
-            second.Normal = new V3(0f, 1f, 0f);
+            Now(second).Normal = new V3(0f, 1f, 0f);
 
-            IDictionary<string, object> value = ComposedEditFixture.Value(Normals(
+            IDictionary<string, object> value = ComposedEditFixture.Value(Normals(Undo(
+                suppressed,
                 Operation(ModelEditNormals.Average),
-                ComposedEditFixture.Given("all", true)));
+                ComposedEditFixture.Given("all", true))));
 
-            Near(0.70710678, first.Normal.X);
-            Near(0.70710678, first.Normal.Y);
-            Near(0.70710678, second.Normal.X);
+            Near(0.70710678, Now(first).Normal.X);
+            Near(0.70710678, Now(first).Normal.Y);
+            Near(0.70710678, Now(second).Normal.X);
             Assert.Equal(2, value[ModelEditNormals.ChangedName]);
             Assert.Equal(1, _fixture.Commits);
+            Assert.Equal(suppressed ? 1 : 0, _fixture.Partials.Count);
         }
 
         [Fact]
         public void AveragingNearOnlyJoinsTheOnesInsideTheThreshold()
         {
             FakeVertex first = Vertex(0f, 0f, 0f);
-            first.Normal = new V3(1f, 0f, 0f);
+            Now(first).Normal = new V3(1f, 0f, 0f);
             FakeVertex near = Vertex(0.05f, 0f, 0f);
-            near.Normal = new V3(0f, 1f, 0f);
+            Now(near).Normal = new V3(0f, 1f, 0f);
             FakeVertex apart = Vertex(5f, 0f, 0f);
-            apart.Normal = new V3(0f, 0f, 1f);
+            Now(apart).Normal = new V3(0f, 0f, 1f);
 
             Normals(
                 Operation(ModelEditNormals.AverageNear),
                 ComposedEditFixture.Given("all", true),
                 ComposedEditFixture.Given(ModelEditNormals.ThresholdName, 0.1));
 
-            Near(0.70710678, first.Normal.X);
-            Near(0.70710678, near.Normal.Y);
-            Near(1.0, apart.Normal.Z);
+            Near(0.70710678, Now(first).Normal.X);
+            Near(0.70710678, Now(near).Normal.Y);
+            Near(1.0, Now(apart).Normal.Z);
         }
 
         [Fact]
@@ -91,49 +95,49 @@ namespace PmxEditorMcp.Tests
             FakeVertex second = Vertex(1f, 0f, 0f);
             FakeVertex third = Vertex(0f, 1f, 0f);
             FakeMaterial material = new FakeMaterial("材質");
-            material.Faces.Add(new FakeFace(first, second, third));
+            Now(material).Faces.Add(new FakeFace(first, second, third));
             _fixture.Model.Material.Add(material);
 
             Normals(
                 Operation(ModelEditNormals.FromFaces),
                 ComposedEditFixture.Given("all", true));
 
-            Near(0.0, first.Normal.X);
-            Near(0.0, first.Normal.Y);
-            Near(1.0, first.Normal.Z);
+            Near(0.0, Now(first).Normal.X);
+            Near(0.0, Now(first).Normal.Y);
+            Near(1.0, Now(first).Normal.Z);
         }
 
         [Fact]
         public void NormalisingPutsTheNormalBackOnTheUnitLength()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Normal = new V3(0f, 0f, 2f);
+            Now(vertex).Normal = new V3(0f, 0f, 2f);
 
             Normals(
                 Operation(ModelEditNormals.Normalize),
                 ComposedEditFixture.Given("all", true));
 
-            Near(1.0, vertex.Normal.Z);
+            Near(1.0, Now(vertex).Normal.Z);
         }
 
         [Fact]
         public void FlippingTurnsTheNormalTheOtherWay()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Normal = new V3(0f, 0f, 1f);
+            Now(vertex).Normal = new V3(0f, 0f, 1f);
 
             Normals(
                 Operation(ModelEditNormals.Flip),
                 ComposedEditFixture.Given("all", true));
 
-            Near(-1.0, vertex.Normal.Z);
+            Near(-1.0, Now(vertex).Normal.Z);
         }
 
         [Fact]
         public void RotatingTurnsTheNormalAboutTheAxisAndLeavesThePositionAlone()
         {
             FakeVertex vertex = Vertex(1f, 2f, 3f);
-            vertex.Normal = new V3(1f, 0f, 0f);
+            Now(vertex).Normal = new V3(1f, 0f, 0f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Normals(
                 Operation(ModelEditNormals.Rotate),
@@ -141,11 +145,11 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelEditNormals.RotationAngleName, 120f),
                 ComposedEditFixture.Given("all", true)));
 
-            Near(0.0, vertex.Normal.X);
-            Near(1.0, vertex.Normal.Y);
-            Near(0.0, vertex.Normal.Z);
-            Near(1.0, vertex.Position.X);
-            Near(3.0, vertex.Position.Z);
+            Near(0.0, Now(vertex).Normal.X);
+            Near(1.0, Now(vertex).Normal.Y);
+            Near(0.0, Now(vertex).Normal.Z);
+            Near(1.0, Now(vertex).Position.X);
+            Near(3.0, Now(vertex).Position.Z);
             Assert.Equal(1, value[ModelEditNormals.ChangedName]);
         }
 
@@ -153,7 +157,7 @@ namespace PmxEditorMcp.Tests
         public void RotatingNeedsAnAxisWithLength()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Normal = new V3(1f, 0f, 0f);
+            Now(vertex).Normal = new V3(1f, 0f, 0f);
 
             IDictionary<string, object> answer = Normals(
                 Operation(ModelEditNormals.Rotate),
@@ -162,7 +166,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("all", true));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(answer));
-            Near(1.0, vertex.Normal.X);
+            Near(1.0, Now(vertex).Normal.X);
         }
 
         [Fact]
@@ -195,7 +199,7 @@ namespace PmxEditorMcp.Tests
         public void RewritingTheNormalsRemakesOnlyTheVerticesInTheView()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Normal = new V3(0f, 0f, 1f);
+            Now(vertex).Normal = new V3(0f, 0f, 1f);
 
             Normals(Operation(ModelEditNormals.Flip), ComposedEditFixture.Given("all", true));
 
@@ -207,38 +211,38 @@ namespace PmxEditorMcp.Tests
         public void TheScreenSelectionPicksTheVerticesToFlip()
         {
             FakeVertex first = Vertex(0f, 0f, 0f);
-            first.Normal = new V3(0f, 0f, 1f);
+            Now(first).Normal = new V3(0f, 0f, 1f);
             FakeVertex second = Vertex(1f, 0f, 0f);
-            second.Normal = new V3(0f, 0f, 1f);
+            Now(second).Normal = new V3(0f, 0f, 1f);
             _fixture.View.Selected[ElementKinds.Vertex] = new[] { 1 };
 
             Normals(
                 Operation(ModelEditNormals.Flip),
                 ComposedEditFixture.Given("selected", true));
 
-            Near(1.0, first.Normal.Z);
-            Near(-1.0, second.Normal.Z);
+            Near(1.0, Now(first).Normal.Z);
+            Near(-1.0, Now(second).Normal.Z);
         }
 
         [Fact]
         public void AnEmptyScreenSelectionLeavesTheNormalsAlone()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Normal = new V3(0f, 0f, 1f);
+            Now(vertex).Normal = new V3(0f, 0f, 1f);
 
             IDictionary<string, object> answer = Normals(
                 Operation(ModelEditNormals.Flip),
                 ComposedEditFixture.Given("selected", true));
 
             Assert.Equal(ToolEnvelope.NotApplicable, ComposedEditFixture.Code(answer));
-            Near(1.0, vertex.Normal.Z);
+            Near(1.0, Now(vertex).Normal.Z);
         }
 
         [Fact]
         public void NormalisingANormalThatIsAlreadyTheRightLengthIsNotCounted()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Normal = new V3(0f, 0f, 1f);
+            Now(vertex).Normal = new V3(0f, 0f, 1f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Normals(
                 Operation(ModelEditNormals.Normalize),
@@ -251,16 +255,16 @@ namespace PmxEditorMcp.Tests
         public void AveragingNormalsTooLargeToAddInSinglePrecisionStillPointsTheRightWay()
         {
             FakeVertex first = Vertex(0f, 0f, 0f);
-            first.Normal = new V3(float.MaxValue, 0f, 0f);
+            Now(first).Normal = new V3(float.MaxValue, 0f, 0f);
             FakeVertex second = Vertex(1f, 0f, 0f);
-            second.Normal = new V3(float.MaxValue, 0f, 0f);
+            Now(second).Normal = new V3(float.MaxValue, 0f, 0f);
 
             Normals(
                 Operation(ModelEditNormals.Average),
                 ComposedEditFixture.Given("all", true));
 
-            Near(1.0, first.Normal.X);
-            Near(1.0, second.Normal.X);
+            Near(1.0, Now(first).Normal.X);
+            Near(1.0, Now(second).Normal.X);
         }
 
         [Fact]
@@ -268,17 +272,17 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex first = Vertex(0f, 0f, 0f);
-            Weigh(first, bones[0], 1f);
+            Weigh(first, NowAll(bones)[0], 1f);
             FakeVertex second = Vertex(1f, 0f, 0f);
-            Weigh(second, bones[1], 1f);
+            Weigh(second, NowAll(bones)[1], 1f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
                 Operation(ModelEditWeights.Average),
                 ComposedEditFixture.Given("all", true)));
 
-            Near(0.5, Share(first, bones[0]));
-            Near(0.5, Share(first, bones[1]));
-            Near(0.5, Share(second, bones[0]));
+            Near(0.5, Share(first, NowAll(bones)[0]));
+            Near(0.5, Share(first, NowAll(bones)[1]));
+            Near(0.5, Share(second, NowAll(bones)[0]));
             Assert.Equal(2, value[ModelEditWeights.ChangedName]);
         }
 
@@ -287,11 +291,11 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex first = Vertex(0f, 0f, 0f);
-            Weigh(first, bones[0], 1f);
+            Weigh(first, NowAll(bones)[0], 1f);
             FakeVertex second = Vertex(1f, 0f, 0f);
-            Weigh(second, bones[1], 1f);
+            Weigh(second, NowAll(bones)[1], 1f);
             FakeMaterial material = new FakeMaterial("材質");
-            material.Faces.Add(new FakeFace(first, second, first));
+            Now(material).Faces.Add(new FakeFace(first, second, first));
             _fixture.Model.Material.Add(material);
 
             Weights(
@@ -299,9 +303,9 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("indices", new object[] { 0 }),
                 ComposedEditFixture.Given(ModelEditWeights.StrengthName, 0.5));
 
-            Near(0.5, Share(first, bones[0]));
-            Near(0.5, Share(first, bones[1]));
-            Near(1.0, Share(second, bones[1]));
+            Near(0.5, Share(first, NowAll(bones)[0]));
+            Near(0.5, Share(first, NowAll(bones)[1]));
+            Near(1.0, Share(second, NowAll(bones)[1]));
         }
 
         [Fact]
@@ -335,32 +339,32 @@ namespace PmxEditorMcp.Tests
         public void TakingTheWeightFromTheNearestBonePutsItAllOnThatBone()
         {
             IList<IPXBone> bones = Bones("近い", "遠い");
-            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(10f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(10f, 0f, 0f);
             FakeVertex vertex = Vertex(1f, 0f, 0f);
 
             Weights(
                 Operation(ModelEditWeights.FromNearestBonePosition),
                 ComposedEditFixture.Given("all", true));
 
-            Near(1.0, Share(vertex, bones[0]));
-            Near(0.0, Share(vertex, bones[1]));
+            Near(1.0, Share(vertex, NowAll(bones)[0]));
+            Near(0.0, Share(vertex, NowAll(bones)[1]));
         }
 
         [Fact]
         public void TakingTheWeightFromTheNearestBoneLineUsesTheStretchToTheTip()
         {
             IList<IPXBone> bones = Bones("線", "点");
-            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
-            ((FakeBone)bones[0]).ToOffset = new V3(10f, 0f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(0f, 4f, 0f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[0]).ToOffset = new V3(10f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(0f, 4f, 0f);
             FakeVertex vertex = Vertex(8f, 1f, 0f);
 
             Weights(
                 Operation(ModelEditWeights.FromNearestBoneAxis),
                 ComposedEditFixture.Given("all", true));
 
-            Near(1.0, Share(vertex, bones[0]));
+            Near(1.0, Share(vertex, NowAll(bones)[0]));
         }
 
         [Fact]
@@ -368,7 +372,7 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("左腕", "右腕");
             FakeVertex left = Vertex(1f, 0f, 0f);
-            Weigh(left, bones[0], 1f);
+            Weigh(left, NowAll(bones)[0], 1f);
             FakeVertex right = Vertex(-1f, 0f, 0f);
 
             Weights(
@@ -376,7 +380,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("indices", new object[] { 1 }),
                 ComposedEditFixture.Given(ModelEditWeights.AxisName, ModelEditVertices.AxisX));
 
-            Near(1.0, Share(right, bones[1]));
+            Near(1.0, Share(right, NowAll(bones)[1]));
         }
 
         [Fact]
@@ -384,17 +388,17 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 1f;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = 1f;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 1f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 1f;
 
             Weights(
                 Operation(ModelEditWeights.Normalize),
                 ComposedEditFixture.Given("all", true));
 
-            Near(0.5, vertex.Weight1);
-            Near(0.5, vertex.Weight2);
+            Near(0.5, Now(vertex).Weight1);
+            Near(0.5, Now(vertex).Weight2);
         }
 
         [Fact]
@@ -402,23 +406,23 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.SDEF = true;
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 0.25f;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = 0.75f;
-            vertex.SDEF_R0 = new V3(0f, 1f, 0f);
-            vertex.SDEF_R1 = new V3(0f, 2f, 0f);
+            Now(vertex).SDEF = true;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0.25f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 0.75f;
+            Now(vertex).SDEF_R0 = new V3(0f, 1f, 0f);
+            Now(vertex).SDEF_R1 = new V3(0f, 2f, 0f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
                 Operation(ModelEditWeights.Normalize),
                 ComposedEditFixture.Given("all", true)));
 
             Assert.Equal(0, value[ModelEditWeights.ChangedName]);
-            Assert.Same(bones[0], vertex.Bone1);
-            Assert.Same(bones[1], vertex.Bone2);
-            Near(1.0, vertex.SDEF_R0.Y);
-            Near(2.0, vertex.SDEF_R1.Y);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Assert.Same(NowAll(bones)[1], Now(vertex).Bone2);
+            Near(1.0, Now(vertex).SDEF_R0.Y);
+            Near(2.0, Now(vertex).SDEF_R1.Y);
         }
 
         [Fact]
@@ -426,8 +430,8 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 1f;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 1f;
 
             Weights(
                 Operation(ModelEditWeights.Normalize),
@@ -442,8 +446,8 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 1f;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 1f;
 
             Deform(
                 Operation(ModelSetDeformType.Convert),
@@ -459,55 +463,60 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 0f;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = 0f;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 0f;
 
             Weights(
                 Operation(ModelEditWeights.Normalize),
                 ComposedEditFixture.Given("all", true));
 
-            Assert.Same(bones[0], vertex.Bone1);
-            Near(1.0, vertex.Weight1);
-            Assert.Null(vertex.Bone2);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Near(1.0, Now(vertex).Weight1);
+            Assert.Null(Now(vertex).Bone2);
         }
 
         [Fact]
         public void AveragingLeavesNoWeightOnABoneThatIsNotInTheList()
         {
             IList<IPXBone> bones = Bones("親");
-            FakeBone gone = new FakeBone("消えた") { Parent = bones[0] };
+            FakeBone gone = new FakeBone("消えた") { Parent = NowAll(bones)[0] };
             FakeVertex first = Vertex(0f, 0f, 0f);
             Weigh(first, gone, 1f);
             FakeVertex second = Vertex(1f, 0f, 0f);
-            Weigh(second, bones[0], 1f);
+            Weigh(second, NowAll(bones)[0], 1f);
 
             Weights(
                 Operation(ModelEditWeights.Average),
-                ComposedEditFixture.Given("all", true));
+                ComposedEditFixture.Given("all", true),
+                _fixture.HoldModel());
 
-            Assert.Same(bones[0], first.Bone1);
-            Assert.Null(first.Bone2);
-            Near(1.0, Share(first, bones[0]));
-            Near(1.0, Share(second, bones[0]));
+            Assert.Same(NowAll(bones)[0], Now(first).Bone1);
+            Assert.Null(Now(first).Bone2);
+            Near(1.0, Share(first, NowAll(bones)[0]));
+            Near(1.0, Share(second, NowAll(bones)[0]));
         }
 
-        [Fact]
-        public void NormalisingClearsAWeightLeftInASlotWithNoBone()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void NormalisingClearsAWeightLeftInASlotWithNoBone(bool suppressed)
         {
             IList<IPXBone> bones = Bones("一");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 1f;
-            vertex.Weight2 = 0.5f;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 1f;
+            Now(vertex).Weight2 = 0.5f;
 
-            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(Undo(
+                suppressed,
                 Operation(ModelEditWeights.Normalize),
-                ComposedEditFixture.Given("all", true)));
+                ComposedEditFixture.Given("all", true))));
 
-            Near(0.0, vertex.Weight2);
+            Near(0.0, Now(vertex).Weight2);
             Assert.Equal(1, value[ModelEditWeights.ChangedName]);
+            Assert.Equal(suppressed ? 1 : 0, _fixture.Partials.Count);
         }
 
         [Fact]
@@ -515,35 +524,36 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex first = Vertex(0f, 0f, 0f);
-            first.Bone1 = bones[0];
-            first.Weight1 = float.MaxValue;
-            first.Bone2 = bones[0];
-            first.Weight2 = float.MaxValue;
+            Now(first).Bone1 = NowAll(bones)[0];
+            Now(first).Weight1 = float.MaxValue;
+            Now(first).Bone2 = NowAll(bones)[0];
+            Now(first).Weight2 = float.MaxValue;
             FakeVertex second = Vertex(1f, 0f, 0f);
-            Weigh(second, bones[1], 1f);
+            Weigh(second, NowAll(bones)[1], 1f);
 
             Weights(
                 Operation(ModelEditWeights.Average),
                 ComposedEditFixture.Given("all", true));
 
-            Near(1.0, Share(first, bones[0]));
-            Near(1.0, Share(second, bones[0]));
+            Near(1.0, Share(first, NowAll(bones)[0]));
+            Near(1.0, Share(second, NowAll(bones)[0]));
         }
 
         [Fact]
         public void RepairingMovesAWeightOffABoneThatIsNotInTheList()
         {
             IList<IPXBone> bones = Bones("親");
-            FakeBone gone = new FakeBone("消えた") { Parent = bones[0] };
+            FakeBone gone = new FakeBone("消えた") { Parent = NowAll(bones)[0] };
             FakeVertex vertex = Vertex(0f, 0f, 0f);
             Weigh(vertex, gone, 1f);
 
             Weights(
                 Operation(ModelEditWeights.RepairMissingBone),
-                ComposedEditFixture.Given("all", true));
+                ComposedEditFixture.Given("all", true),
+                _fixture.HoldModel());
 
-            Assert.Same(bones[0], vertex.Bone1);
-            Near(1.0, vertex.Weight1);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Near(1.0, Now(vertex).Weight1);
         }
 
         [Fact]
@@ -551,57 +561,62 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("親");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = new FakeBone("一") { Parent = bones[0] };
-            vertex.Weight1 = float.MaxValue;
-            vertex.Bone2 = new FakeBone("二") { Parent = bones[0] };
-            vertex.Weight2 = float.MaxValue;
-            vertex.Bone3 = new FakeBone("三") { Parent = bones[0] };
-            vertex.Weight3 = float.MaxValue;
-            vertex.Bone4 = new FakeBone("四") { Parent = bones[0] };
-            vertex.Weight4 = float.MaxValue;
+            Now(vertex).Bone1 = new FakeBone("一") { Parent = NowAll(bones)[0] };
+            Now(vertex).Weight1 = float.MaxValue;
+            Now(vertex).Bone2 = new FakeBone("二") { Parent = NowAll(bones)[0] };
+            Now(vertex).Weight2 = float.MaxValue;
+            Now(vertex).Bone3 = new FakeBone("三") { Parent = NowAll(bones)[0] };
+            Now(vertex).Weight3 = float.MaxValue;
+            Now(vertex).Bone4 = new FakeBone("四") { Parent = NowAll(bones)[0] };
+            Now(vertex).Weight4 = float.MaxValue;
 
             Weights(
                 Operation(ModelEditWeights.RepairMissingBone),
-                ComposedEditFixture.Given("all", true));
+                ComposedEditFixture.Given("all", true),
+                _fixture.HoldModel());
 
-            Assert.Same(bones[0], vertex.Bone1);
-            Near(1.0, vertex.Weight1);
-            Assert.Null(vertex.Bone2);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Near(1.0, Now(vertex).Weight1);
+            Assert.Null(Now(vertex).Bone2);
         }
 
-        [Fact]
-        public void ConvertingToOneBoneKeepsTheHeaviestAndDropsTheRest()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ConvertingToOneBoneKeepsTheHeaviestAndDropsTheRest(bool suppressed)
         {
             IList<IPXBone> bones = Bones("重い", "軽い");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[1];
-            vertex.Weight1 = 0.25f;
-            vertex.Bone2 = bones[0];
-            vertex.Weight2 = 0.75f;
+            Now(vertex).Bone1 = NowAll(bones)[1];
+            Now(vertex).Weight1 = 0.25f;
+            Now(vertex).Bone2 = NowAll(bones)[0];
+            Now(vertex).Weight2 = 0.75f;
 
-            IDictionary<string, object> value = ComposedEditFixture.Value(Deform(
+            IDictionary<string, object> value = ComposedEditFixture.Value(Deform(Undo(
+                suppressed,
                 Operation(ModelSetDeformType.Convert),
                 ComposedEditFixture.Given("all", true),
                 ComposedEditFixture.Given(
-                    ModelSetDeformType.DeformName, ModelSetDeformType.Bdef1)));
+                    ModelSetDeformType.DeformName, ModelSetDeformType.Bdef1))));
 
-            Assert.Same(bones[0], vertex.Bone1);
-            Near(1.0, vertex.Weight1);
-            Assert.Null(vertex.Bone2);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Near(1.0, Now(vertex).Weight1);
+            Assert.Null(Now(vertex).Bone2);
             Assert.Equal(1, value[ModelSetDeformType.ChangedName]);
+            Assert.Equal(suppressed ? 1 : 0, _fixture.Partials.Count);
         }
 
         [Fact]
         public void ConvertingToSdefKeepsTwoBonesAndTurnsTheStyleOn()
         {
             IList<IPXBone> bones = Bones("一", "二");
-            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(2f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(2f, 0f, 0f);
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 0.5f;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = 0.5f;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0.5f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 0.5f;
 
             Deform(
                 Operation(ModelSetDeformType.Convert),
@@ -609,41 +624,42 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelSetDeformType.DeformName, ModelSetDeformType.Sdef));
 
-            Assert.True(vertex.SDEF);
-            Assert.False(vertex.QDEF);
-            Near(1.0, vertex.SDEF_C.X);
+            Assert.True(Now(vertex).SDEF);
+            Assert.False(Now(vertex).QDEF);
+            Near(1.0, Now(vertex).SDEF_C.X);
         }
 
         [Fact]
         public void ConvertingToSdefUsesTheBonesThatOutliveTheOnesItDropped()
         {
             IList<IPXBone> bones = Bones("親一", "親二");
-            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(4f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(4f, 0f, 0f);
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = new FakeBone("消えた一")
+            Now(vertex).Bone1 = new FakeBone("消えた一")
             {
-                Parent = bones[0],
+                Parent = NowAll(bones)[0],
                 Position = new V3(100f, 0f, 0f),
             };
-            vertex.Weight1 = 0.5f;
-            vertex.Bone2 = new FakeBone("消えた二")
+            Now(vertex).Weight1 = 0.5f;
+            Now(vertex).Bone2 = new FakeBone("消えた二")
             {
-                Parent = bones[1],
+                Parent = NowAll(bones)[1],
                 Position = new V3(200f, 0f, 0f),
             };
-            vertex.Weight2 = 0.5f;
+            Now(vertex).Weight2 = 0.5f;
 
             Deform(
                 Operation(ModelSetDeformType.Convert),
                 ComposedEditFixture.Given("all", true),
                 ComposedEditFixture.Given(
-                    ModelSetDeformType.DeformName, ModelSetDeformType.Sdef));
+                    ModelSetDeformType.DeformName, ModelSetDeformType.Sdef),
+                _fixture.HoldModel());
 
-            Assert.Same(bones[0], vertex.Bone1);
-            Assert.Same(bones[1], vertex.Bone2);
-            Assert.True(vertex.SDEF);
-            Near(2.0, vertex.SDEF_C.X);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Assert.Same(NowAll(bones)[1], Now(vertex).Bone2);
+            Assert.True(Now(vertex).SDEF);
+            Near(2.0, Now(vertex).SDEF_C.X);
         }
 
         [Fact]
@@ -658,13 +674,13 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelSetDeformType.DeformName, ModelSetDeformType.Bdef2));
 
-            Assert.Same(bones[0], vertex.Bone1);
-            Assert.Same(bones[1], vertex.Bone2);
-            Assert.Null(vertex.Bone3);
-            Near(0.625, vertex.Weight1);
-            Near(0.375, vertex.Weight2);
-            Assert.False(vertex.SDEF);
-            Assert.False(vertex.QDEF);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Assert.Same(NowAll(bones)[1], Now(vertex).Bone2);
+            Assert.Null(Now(vertex).Bone3);
+            Near(0.625, Now(vertex).Weight1);
+            Near(0.375, Now(vertex).Weight2);
+            Assert.False(Now(vertex).SDEF);
+            Assert.False(Now(vertex).QDEF);
         }
 
         [Fact]
@@ -679,12 +695,12 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelSetDeformType.DeformName, ModelSetDeformType.Bdef4));
 
-            Assert.Same(bones[2], vertex.Bone3);
-            Assert.Null(vertex.Bone4);
-            Near(0.5, vertex.Weight1);
-            Near(0.2, vertex.Weight3);
-            Assert.False(vertex.SDEF);
-            Assert.False(vertex.QDEF);
+            Assert.Same(NowAll(bones)[2], Now(vertex).Bone3);
+            Near(0.0, Now(vertex).Weight4);
+            Near(0.5, Now(vertex).Weight1);
+            Near(0.2, Now(vertex).Weight3);
+            Assert.False(Now(vertex).SDEF);
+            Assert.False(Now(vertex).QDEF);
         }
 
         [Fact]
@@ -692,7 +708,7 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二", "三");
             FakeVertex vertex = Spread(bones, 0.5f, 0.3f, 0.2f);
-            vertex.SDEF = true;
+            Now(vertex).SDEF = true;
 
             Deform(
                 Operation(ModelSetDeformType.Convert),
@@ -700,9 +716,9 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelSetDeformType.DeformName, ModelSetDeformType.Qdef));
 
-            Assert.True(vertex.QDEF);
-            Assert.False(vertex.SDEF);
-            Assert.Same(bones[2], vertex.Bone3);
+            Assert.True(Now(vertex).QDEF);
+            Assert.False(Now(vertex).SDEF);
+            Assert.Same(NowAll(bones)[2], Now(vertex).Bone3);
         }
 
         [Fact]
@@ -710,7 +726,7 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            Weigh(vertex, bones[0], 1f);
+            Weigh(vertex, NowAll(bones)[0], 1f);
 
             Deform(
                 Operation(ModelSetDeformType.Convert),
@@ -718,9 +734,9 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelSetDeformType.DeformName, ModelSetDeformType.Sdef));
 
-            Assert.False(vertex.SDEF);
-            Assert.Same(bones[0], vertex.Bone1);
-            Near(1.0, vertex.Weight1);
+            Assert.False(Now(vertex).SDEF);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Near(1.0, Now(vertex).Weight1);
         }
 
         [Fact]
@@ -728,10 +744,10 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 0f;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = 0f;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 0f;
 
             Deform(
                 Operation(ModelSetDeformType.Convert),
@@ -739,9 +755,9 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelSetDeformType.DeformName, ModelSetDeformType.Bdef2));
 
-            Assert.Same(bones[0], vertex.Bone1);
-            Near(1.0, vertex.Weight1);
-            Assert.Null(vertex.Bone2);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Near(1.0, Now(vertex).Weight1);
+            Assert.Null(Now(vertex).Bone2);
         }
 
         [Fact]
@@ -761,22 +777,22 @@ namespace PmxEditorMcp.Tests
         public void NormalisingTheSdefCentreTakesTheMiddleOfTheTwoBones()
         {
             IList<IPXBone> bones = Bones("一", "二");
-            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(4f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(4f, 0f, 0f);
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.SDEF = true;
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 0.5f;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = 0.5f;
-            vertex.SDEF_C = new V3(99f, 99f, 99f);
+            Now(vertex).SDEF = true;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0.5f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 0.5f;
+            Now(vertex).SDEF_C = new V3(99f, 99f, 99f);
 
             Deform(
                 Operation(ModelSetDeformType.NormalizeSdefC),
                 ComposedEditFixture.Given("all", true));
 
-            Near(2.0, vertex.SDEF_C.X);
-            Near(0.0, vertex.SDEF_C.Y);
+            Near(2.0, Now(vertex).SDEF_C.X);
+            Near(0.0, Now(vertex).SDEF_C.Y);
         }
 
         [Fact]
@@ -784,17 +800,17 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.SDEF = true;
-            Weigh(vertex, bones[0], 1f);
+            Now(vertex).SDEF = true;
+            Weigh(vertex, NowAll(bones)[0], 1f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Deform(
                 Operation(ModelSetDeformType.RepairInvalidSdef),
                 ComposedEditFixture.Given("all", true)));
 
-            Assert.False(vertex.SDEF);
-            Assert.False(vertex.QDEF);
-            Assert.Same(bones[0], vertex.Bone1);
-            Near(1.0, vertex.Weight1);
+            Assert.False(Now(vertex).SDEF);
+            Assert.False(Now(vertex).QDEF);
+            Assert.Same(NowAll(bones)[0], Now(vertex).Bone1);
+            Near(1.0, Now(vertex).Weight1);
             Assert.Equal(1, value[ModelSetDeformType.ChangedName]);
         }
 
@@ -803,18 +819,30 @@ namespace PmxEditorMcp.Tests
         {
             IList<IPXBone> bones = Bones("一", "二");
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.SDEF = true;
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = 0.5f;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = 0.5f;
+            Now(vertex).SDEF = true;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0.5f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 0.5f;
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Deform(
                 Operation(ModelSetDeformType.RepairInvalidSdef),
                 ComposedEditFixture.Given("all", true)));
 
-            Assert.True(vertex.SDEF);
+            Assert.True(Now(vertex).SDEF);
             Assert.Equal(0, value[ModelSetDeformType.ChangedName]);
+        }
+
+        /// <summary>
+        /// <paramref name="suppressed"/> が真なら、項目の組へUndoの抑止の頼みを足す。抑止を頼むと、
+        /// 書き換えた種類だけを部分反映する経路を通る。
+        /// </summary>
+        private static KeyValuePair<string, object>[] Undo(
+            bool suppressed, params KeyValuePair<string, object>[] given)
+        {
+            return suppressed
+                ? given.Concat(new[] { ComposedEditFixture.Given(UndoBarrier.SuppressName, true) }).ToArray()
+                : given;
         }
 
         private IDictionary<string, object> Normals(params KeyValuePair<string, object>[] given)
@@ -840,14 +868,16 @@ namespace PmxEditorMcp.Tests
                 Vertex(at, at % 2 == 0 ? 0f : 0.05f, 0f).Normal = new V3(0f, 0f, 1f);
             }
 
+            TimeSpan editor = _fixture.EditorTime;
             Stopwatch elapsed = Stopwatch.StartNew();
             Normals(
                 Operation(ModelEditNormals.AverageNear),
                 ComposedEditFixture.Given("all", true),
                 ComposedEditFixture.Given(ModelEditNormals.ThresholdName, 0.1));
             elapsed.Stop();
+            TimeSpan spent = elapsed.Elapsed - (_fixture.EditorTime - editor);
 
-            Assert.True(elapsed.Elapsed < TimeLimit, "平均するのに " + elapsed.Elapsed + " かかった");
+            Assert.True(spent < TimeLimit, "平均するのに " + spent + " かかった");
         }
 
         [Fact]
@@ -858,14 +888,16 @@ namespace PmxEditorMcp.Tests
                 Vertex(at / (float)ManyVertices, 0f, 0f).Normal = new V3(0f, 0f, 1f);
             }
 
+            TimeSpan editor = _fixture.EditorTime;
             Stopwatch elapsed = Stopwatch.StartNew();
             Normals(
                 Operation(ModelEditNormals.AverageNear),
                 ComposedEditFixture.Given("all", true),
                 ComposedEditFixture.Given(ModelEditNormals.ThresholdName, 0.0));
             elapsed.Stop();
+            TimeSpan spent = elapsed.Elapsed - (_fixture.EditorTime - editor);
 
-            Assert.True(elapsed.Elapsed < TimeLimit, "平均するのに " + elapsed.Elapsed + " かかった");
+            Assert.True(spent < TimeLimit, "平均するのに " + spent + " かかった");
         }
 
         [Fact]
@@ -875,7 +907,7 @@ namespace PmxEditorMcp.Tests
                 Enumerable.Range(0, ManyBones).Select(at => "骨" + at).ToArray());
             for (int at = 0; at < ManyBones; at++)
             {
-                ((FakeBone)bones[at]).Position = new V3(at, 0f, 0f);
+                ((FakeBone)NowAll(bones)[at]).Position = new V3(at, 0f, 0f);
             }
 
             for (int at = 0; at < WeighedVertices; at++)
@@ -883,13 +915,15 @@ namespace PmxEditorMcp.Tests
                 Vertex(at % ManyBones, 1f, 0f);
             }
 
+            TimeSpan editor = _fixture.EditorTime;
             Stopwatch elapsed = Stopwatch.StartNew();
             Weights(
                 Operation(ModelEditWeights.FromNearestBonePosition),
                 ComposedEditFixture.Given("all", true));
             elapsed.Stop();
+            TimeSpan spent = elapsed.Elapsed - (_fixture.EditorTime - editor);
 
-            Assert.True(elapsed.Elapsed < TimeLimit, "振るのに " + elapsed.Elapsed + " かかった");
+            Assert.True(spent < TimeLimit, "振るのに " + spent + " かかった");
         }
 
         private static KeyValuePair<string, object> Operation(string operation)
@@ -922,37 +956,56 @@ namespace PmxEditorMcp.Tests
         private FakeVertex Spread(IList<IPXBone> bones, float first, float second, float third)
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Bone1 = bones[0];
-            vertex.Weight1 = first;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = second;
-            vertex.Bone3 = bones[2];
-            vertex.Weight3 = third;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = first;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = second;
+            Now(vertex).Bone3 = NowAll(bones)[2];
+            Now(vertex).Weight3 = third;
 
             return vertex;
         }
 
-        private static void Weigh(FakeVertex vertex, IPXBone bone, float share)
+        private static void Weigh(FakeVertex weighed, IPXBone bone, float share)
         {
-            vertex.Bone1 = bone;
-            vertex.Weight1 = share;
+            weighed.Bone1 = bone;
+            weighed.Weight1 = share;
         }
 
-        /// <summary>その頂点がそのボーンへ振っている重み。振っていなければ0。</summary>
-        private static float Share(IPXVertex vertex, IPXBone bone)
+        /// <summary>
+        /// その頂点がそのボーンへ振っている重み。振っていなければ0。頂点もボーンも、いまのモデルで
+        /// 同じ位置に並んでいるものを読む。
+        /// </summary>
+        private float Share(IPXVertex given, IPXBone weighed)
         {
-            IPXBone[] bones = { vertex.Bone1, vertex.Bone2, vertex.Bone3, vertex.Bone4 };
-            float[] weights = { vertex.Weight1, vertex.Weight2, vertex.Weight3, vertex.Weight4 };
+            IPXVertex now = _fixture.Now(given);
+            IPXBone target = _fixture.Now(weighed);
+            IPXBone[] held = { now.Bone1, now.Bone2, now.Bone3, now.Bone4 };
+            float[] weights = { now.Weight1, now.Weight2, now.Weight3, now.Weight4 };
             float share = 0f;
-            for (int at = 0; at < bones.Length; at++)
+            for (int at = 0; at < held.Length; at++)
             {
-                if (ReferenceEquals(bones[at], bone))
+                if (ReferenceEquals(held[at], target))
                 {
                     share += weights[at];
                 }
             }
 
             return share;
+        }
+
+        /// <summary>握った要素が並んでいた位置に、いまのモデルで並んでいる要素。</summary>
+        private T Now<T>(T held)
+            where T : class
+        {
+            return _fixture.Now(held);
+        }
+
+        /// <summary>握った要素の並びを、それぞれいまのモデルで同じ位置に並んでいる要素へ読み直す。</summary>
+        private IList<T> NowAll<T>(IList<T> held)
+            where T : class
+        {
+            return held.Select(_fixture.Now).ToList();
         }
 
         private static void Near(double wanted, double found)

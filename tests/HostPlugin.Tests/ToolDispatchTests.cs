@@ -984,6 +984,54 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void LeavingOutTheCountMakesOneThing()
+        {
+            _target.Made = new Target();
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_one")(
+                    new McpMethodContext(
+                        Arguments(), new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.Single((object[])envelope[ToolEnvelope.ValueName]);
+        }
+
+        [Fact]
+        public void AskingForAsManyThingsAsTheAnswerCanCarryIsTaken()
+        {
+            _target.Made = new Target();
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_one")(
+                    new McpMethodContext(
+                        Arguments("count", 727L), new InlineInvoker(), 10000, ledger, Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.Equal(727, ((object[])envelope[ToolEnvelope.ValueName]).Length);
+        }
+
+        [Theory]
+        [InlineData(1.5)]
+        [InlineData("2")]
+        public void ACountThatIsNotAWholeNumberIsRefusedWithNoHandleLeftInTheLedger(object count)
+        {
+            _target.Made = new Target();
+            HandleLedger ledger = Ledger();
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_one")(
+                    new McpMethodContext(
+                        Arguments("count", count), new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("count", Message(envelope));
+            Assert.Equal(0, ledger.LastIssuedId);
+        }
+
+        [Fact]
         public void AskingForMoreThingsThanTheAnswerCanCarryIsRefused()
         {
             _target.Made = new Target();
@@ -1370,6 +1418,7 @@ namespace PmxEditorMcp.Tests
                 "session_update_pair", Arguments("lost", true));
 
             Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Contains(LostKey, Message(envelope), StringComparison.Ordinal);
             Assert.False(_target.Flag);
         }
 
@@ -1752,6 +1801,13 @@ namespace PmxEditorMcp.Tests
                             ((Target)target).Dropped = true;
                             return null;
                         }
+                    },
+                    {
+                        // 解決できなかった行として並べる行。呼ばれれば書き込みが残る。
+                        LostKey,
+                        (target, arguments) => arguments.Length == 0
+                            ? (object)((Target)target).Flag
+                            : Write((Target)target, (bool)arguments[0])
                     },
                 };
 

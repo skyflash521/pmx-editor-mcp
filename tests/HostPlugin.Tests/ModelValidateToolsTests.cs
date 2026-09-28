@@ -42,7 +42,7 @@ namespace PmxEditorMcp.Tests
             IList<IPXVertex> corners = Corners();
             Material(new FakeFace(corners[0], corners[1], new FakeVertex(9f, 9f, 9f)));
 
-            Assert.Equal(1, Validated()[ModelValidatePmx.DanglingFacesName]);
+            Assert.Equal(1, Held()[ModelValidatePmx.DanglingFacesName]);
         }
 
         [Fact]
@@ -53,7 +53,7 @@ namespace PmxEditorMcp.Tests
             vertex.Weight1 = 1f;
             _fixture.Model.Vertex.Add(vertex);
 
-            IDictionary<string, object> found = Validated();
+            IDictionary<string, object> found = Held();
 
             Assert.Equal(1, found[ModelValidatePmx.DanglingWeightsName]);
             Assert.Equal(0, found[ModelValidatePmx.UnnormalizedWeightsName]);
@@ -67,7 +67,7 @@ namespace PmxEditorMcp.Tests
             bone.ToBone = new FakeBone("これも居ない");
             _fixture.Model.Bone.Add(bone);
 
-            Assert.Equal(2, Validated()[ModelValidatePmx.DanglingBonesName]);
+            Assert.Equal(2, Held()[ModelValidatePmx.DanglingBonesName]);
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace PmxEditorMcp.Tests
             morph.Offsets.Add(new FakeVertexMorphOffset(new FakeVertex(0f, 0f, 0f)));
             _fixture.Model.Morph.Add(morph);
 
-            Assert.Equal(1, Validated()[ModelValidatePmx.DanglingMorphOffsetsName]);
+            Assert.Equal(1, Held()[ModelValidatePmx.DanglingMorphOffsetsName]);
         }
 
         [Fact]
@@ -87,7 +87,7 @@ namespace PmxEditorMcp.Tests
             node.Items.Add(new FakeBoneNodeItem(new FakeBone("居ない")));
             _fixture.Model.Node.Add(node);
 
-            Assert.Equal(1, Validated()[ModelValidatePmx.DanglingNodeItemsName]);
+            Assert.Equal(1, Held()[ModelValidatePmx.DanglingNodeItemsName]);
         }
 
         [Fact]
@@ -97,7 +97,7 @@ namespace PmxEditorMcp.Tests
             body.Bone = new FakeBone("居ない");
             _fixture.Model.Body.Add(body);
 
-            Assert.Equal(1, Validated()[ModelValidatePmx.DanglingPhysicsName]);
+            Assert.Equal(1, Held()[ModelValidatePmx.DanglingPhysicsName]);
         }
 
         [Fact]
@@ -266,6 +266,17 @@ namespace PmxEditorMcp.Tests
         {
             return ComposedEditFixture.Value(
                 _fixture.Call(ModelValidatePmx.ToolName, ComposedEditFixture.Arguments()));
+        }
+
+        /// <summary>
+        /// 題材のモデルをハンドルで預けて調べる。並びの外を指す要素はエディタの現在のPMXには
+        /// 置けないので、ハンドルで持つPMXで調べる。
+        /// </summary>
+        private IDictionary<string, object> Held()
+        {
+            return ComposedEditFixture.Value(
+                _fixture.Call(
+                    ModelValidatePmx.ToolName, ComposedEditFixture.Arguments(_fixture.HoldModel())));
         }
 
         private IList<IPXVertex> Corners()

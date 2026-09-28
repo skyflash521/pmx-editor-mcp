@@ -57,6 +57,9 @@ namespace PmxEditorMcp.Tests
 
         private int _commits;
 
+        /// <summary>反映の行を呼んだ回数。反映が落ちた回も数える。</summary>
+        private int _reflections;
+
         private int _clones;
 
         private int[] _marks = new int[0];
@@ -312,7 +315,8 @@ namespace PmxEditorMcp.Tests
                     SetResponse.IndicesName, new object[] { 0 },
                     ToolDispatch.ValueName, Value("panel", 0)));
 
-            Assert.Equal(0, morph.Panel);
+            Assert.Equal(0, FakeEditorState.Now(_pmx, morph).Panel);
+            Assert.Equal(1, _commits);
             Assert.Contains(
                 ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>(),
                 warning => warning.Contains("「笑い」"));
@@ -336,7 +340,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ShowingAMorphOnTheExpressionNodeIsNotWarnedAbout()
         {
-            ExpressionMorph("笑い", 0);
+            FakeMorph morph = ExpressionMorph("笑い", 0);
 
             IDictionary<string, object> envelope = Call(
                 "model_update_morphs",
@@ -346,6 +350,8 @@ namespace PmxEditorMcp.Tests
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
             Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName), "警告が付いている。");
+            Assert.Equal(4, FakeEditorState.Now(_pmx, morph).Panel);
+            Assert.Equal(1, _commits);
         }
 
         [Fact]
@@ -520,6 +526,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(ToolEnvelope.OperationFailed, Code(envelope));
             Assert.Contains("結果不明", Message(envelope));
+            Assert.Equal(1, _reflections);
         }
 
         [Fact]
@@ -535,7 +542,8 @@ namespace PmxEditorMcp.Tests
         public void AddingPutsTheHeldElementAtTheEndAndConsumesTheHandle()
         {
             HandleLedger handles = Ledger();
-            Item item = new Item();
+            _model.Items.Add(new Item { Name = "元" });
+            Item item = new Item { Name = "預けた" };
             int handle = handles.Issue(typeof(Item).FullName, item, () => { });
 
             IDictionary<string, object> envelope = Call(
@@ -544,8 +552,8 @@ namespace PmxEditorMcp.Tests
                 handles);
 
             Assert.Equal(1, Value(envelope)[SetResponse.AddedName]);
-            Assert.Equal(new[] { 0 }, (int[])Value(envelope)[SetResponse.IndicesName]);
-            Assert.Same(item, Assert.Single(_model.Items));
+            Assert.Equal(new[] { 1 }, (int[])Value(envelope)[SetResponse.IndicesName]);
+            Assert.Equal(new[] { "元", "預けた" }, ItemNames());
             Assert.False(handles.IsValid(handle));
             Assert.Equal(1, _commits);
         }
@@ -565,17 +573,16 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void RemovingTakesOutThePositionsItIsGiven()
         {
-            _model.Items.Add(new Item());
-            _model.Items.Add(new Item());
-            Item kept = new Item();
-            _model.Items.Add(kept);
+            _model.Items.Add(new Item { Name = "一" });
+            _model.Items.Add(new Item { Name = "二" });
+            _model.Items.Add(new Item { Name = "残す" });
 
             IDictionary<string, object> envelope = Call(
                 "model_remove_vertices",
                 Arguments(TargetNames.Element.Indices, new object[] { 0, 1 }));
 
             Assert.Equal(2, Value(envelope)[SetResponse.RemovedName]);
-            Assert.Same(kept, Assert.Single(_model.Items));
+            Assert.Equal(new[] { "残す" }, ItemNames());
             Assert.Equal(1, _commits);
         }
 
@@ -609,6 +616,8 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(2, Value(envelope)[SetResponse.RemovedName]);
             Assert.Empty(_model.Items);
+            Assert.Equal(1, _commits);
+            Assert.Equal(1, _clones);
         }
 
         private static IDictionary<string, object> Arguments(params object[] pairs)
@@ -758,19 +767,35 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             _clones++;
-                            return _pmx ?? (object)_model;
+                            return _pmx != null
+                                ? FakeEditorState.Duplicate(_pmx)
+                                : (object)_model.Duplicate();
                         }
                     },
                     {
                         CommitKey,
                         (target, arguments) =>
                         {
+                            _reflections++;
                             if (_reflectionBreaks)
                             {
                                 throw new InvalidOperationException("反映が落ちた。");
                             }
 
                             _commits++;
+                            if (_pmx != null)
+                            {
+                                FakeEditorState.Reflect(
+                                    _pmx,
+                                    (PEPlugin.Pmx.IPXPmx)arguments[0],
+                                    PEPlugin.Pmx.PmxUpdateObject.All,
+                                    -1);
+                            }
+                            else
+                            {
+                                _model.Take((Model)arguments[0]);
+                            }
+
                             return null;
                         }
                     },
@@ -1000,7 +1025,10 @@ namespace PmxEditorMcp.Tests
             };
         }
 
-        /// <summary>複製して編集する相手の題材。</summary>
+        /// <summary>
+        /// 複製して編集する相手の題材。エディタが持つ現在のモデルとして置くと、複製の要求には
+        /// 別のオブジェクト一式を返し、反映では渡された複製の中身をここへ写す。
+        /// </summary>
         private sealed class Model
         {
             public string FilePath { get; set; }
@@ -1010,11 +1038,47 @@ namespace PmxEditorMcp.Tests
             public List<Item> Items { get; } = new List<Item>();
 
             public List<FakeMaterial> Materials { get; } = new List<FakeMaterial>();
+
+            /// <summary>複製の要求に返す、要素まで別のオブジェクトにした写し。</summary>
+            public Model Duplicate()
+            {
+                Model made = new Model { FilePath = FilePath, Cleared = Cleared };
+                made.Items.AddRange(Items.Select(item => item.Clone()));
+                made.Materials.AddRange(Materials.Select(material => (FakeMaterial)material.Clone()));
+
+                return made;
+            }
+
+            /// <summary>反映で渡された複製の中身を写す。</summary>
+            public void Take(Model passed)
+            {
+                FilePath = passed.FilePath;
+                Cleared = passed.Cleared;
+                List<Item> items = passed.Items.Select(item => item.Clone()).ToList();
+                Items.Clear();
+                Items.AddRange(items);
+                List<FakeMaterial> materials =
+                    passed.Materials.Select(material => (FakeMaterial)material.Clone()).ToList();
+                Materials.Clear();
+                Materials.AddRange(materials);
+            }
         }
 
         /// <summary>リストが並べる要素の題材。</summary>
         private sealed class Item
         {
+            public string Name { get; set; }
+
+            public Item Clone()
+            {
+                return new Item { Name = Name };
+            }
+        }
+
+        /// <summary>エディタのいまのモデルの要素の名前。</summary>
+        private string[] ItemNames()
+        {
+            return _model.Items.Select(item => item.Name).ToArray();
         }
 
         /// <summary>画面へ映す段。題材の口を通して、映し直しの結末を数える。</summary>

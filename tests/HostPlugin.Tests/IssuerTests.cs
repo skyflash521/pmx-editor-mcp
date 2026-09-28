@@ -32,9 +32,11 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheReservedIdIsNeverIssued()
         {
-            HandleIdIssuer issuer = new HandleIdIssuer();
+            HandleIdIssuer issuer = Exhausted();
+            int? issued = null;
 
-            Assert.NotEqual(HandleIdIssuer.Reserved, issuer.Next());
+            Assert.Throws<InvalidOperationException>(() => issued = issuer.Next());
+            Assert.Null(issued);
         }
 
         [Fact]
@@ -49,7 +51,11 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheLastIdBeforeTheReservedOneIsStillIssued()
         {
-            Assert.Equal(HandleIdIssuer.Reserved - 1, Exhausted().Last);
+            HandleIdIssuer issuer = new HandleIdIssuer();
+            issuer.SkipTo(HandleIdIssuer.Reserved - 2);
+
+            Assert.Equal(HandleIdIssuer.Reserved - 1, issuer.Next());
+            Assert.Throws<InvalidOperationException>(() => issuer.Next());
         }
 
         /// <summary>予約の1つ手前まで配った発行器。</summary>

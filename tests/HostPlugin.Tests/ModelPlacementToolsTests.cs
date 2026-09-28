@@ -39,9 +39,9 @@ namespace PmxEditorMcp.Tests
                     Target(ElementKinds.Bone, 0),
                     Target(ElementKinds.Body, 0))));
 
-            Near(5.0, vertex.Position.X);
-            Near(6.0, bone.Position.Y);
-            Near(7.0, body.Position.Z);
+            Near(5.0, Now(vertex).Position.X);
+            Near(6.0, Now(bone).Position.Y);
+            Near(7.0, Now(body).Position.Z);
             Assert.Equal(3, value[ModelPlaceElements.ChangedName]);
         }
 
@@ -56,9 +56,9 @@ namespace PmxEditorMcp.Tests
                 Position(5f, 6f, 7f),
                 Targets(Target(ElementKinds.Bone, 0)));
 
-            Near(2.0, bone.Position.X);
-            Near(6.0, bone.Position.Y);
-            Near(2.0, bone.Position.Z);
+            Near(2.0, Now(bone).Position.X);
+            Near(6.0, Now(bone).Position.Y);
+            Near(2.0, Now(bone).Position.Z);
         }
 
         [Fact]
@@ -158,12 +158,12 @@ namespace PmxEditorMcp.Tests
                     Target(ElementKinds.Bone, 0),
                     Target(ElementKinds.Body, 0))));
 
-            Near(1.5, vertex.Position.Y);
-            Near(0.0, vertex.Position.Z);
-            Near(2.5, bone.Position.Y);
-            Near(1.0, bone.Position.Z);
-            Near(3.5, body.Position.Y);
-            Near(2.0, body.Position.Z);
+            Near(1.5, Now(vertex).Position.Y);
+            Near(0.0, Now(vertex).Position.Z);
+            Near(2.5, Now(bone).Position.Y);
+            Near(1.0, Now(bone).Position.Z);
+            Near(3.5, Now(body).Position.Y);
+            Near(2.0, Now(body).Position.Z);
             Assert.Equal(3, value[ModelPlaceElements.ChangedName]);
             Assert.Equal(1, _fixture.Commits);
         }
@@ -184,8 +184,8 @@ namespace PmxEditorMcp.Tests
                 }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
-            Near(0.0, near.Position.X);
-            Assert.Equal(3e38f, far.Position.X);
+            Near(0.0, Now(near).Position.X);
+            Assert.Equal(3e38f, Now(far).Position.X);
             Assert.Equal(0, _fixture.Commits);
         }
 
@@ -247,6 +247,7 @@ namespace PmxEditorMcp.Tests
         public void RotatingTurnsThePositionsAndTheNormalsAboutTheCentre()
         {
             FakeVertex vertex = Vertex(2f, 0f, 0f);
+            Now(vertex).Normal = new V3(1f, 0f, 0f);
             FakeBone bone = Bone(1f, 0f, 1f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Place(
@@ -256,12 +257,63 @@ namespace PmxEditorMcp.Tests
                 Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Bone, 0))));
 
             // 行ベクトルへ右から掛ける取り決めで、Y軸まわりに90度回すと +X は -Z へ向く。
-            Near(1.0, vertex.Position.X);
-            Near(-1.0, vertex.Position.Z);
-            Near(2.0, bone.Position.X);
-            Near(0.0, bone.Position.Z);
-            Near(1.0, vertex.Normal.Y);
+            Near(1.0, Now(vertex).Position.X);
+            Near(-1.0, Now(vertex).Position.Z);
+            Near(2.0, Now(bone).Position.X);
+            Near(0.0, Now(bone).Position.Z);
+            Near(0.0, Now(vertex).Normal.X);
+            Near(-1.0, Now(vertex).Normal.Z);
             Assert.Equal(2, value[ModelPlaceElements.ChangedName]);
+        }
+
+        [Fact]
+        public void TranslatingMovesAJoint()
+        {
+            FakeJoint joint = Joint(1f, 2f, 3f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 1f, -1f),
+                Targets(Target(ElementKinds.Joint, 0))));
+
+            Near(1.0, Now(joint).Position.X);
+            Near(3.0, Now(joint).Position.Y);
+            Near(2.0, Now(joint).Position.Z);
+            Assert.Equal(1, value[ModelPlaceElements.ChangedName]);
+        }
+
+        [Fact]
+        public void AligningMovesAJointToThePlace()
+        {
+            FakeJoint joint = Joint(1f, 2f, 3f);
+
+            Place(
+                Operation(ModelPlaceElements.AlignTo),
+                Axes(ModelEditVertices.AxisX),
+                Position(5f, 6f, 7f),
+                Targets(Target(ElementKinds.Joint, 0)));
+
+            Near(5.0, Now(joint).Position.X);
+            Near(2.0, Now(joint).Position.Y);
+        }
+
+        [Fact]
+        public void RotatingAJointTurnsItsPlaceAndItsRotation()
+        {
+            FakeJoint joint = Joint(2f, 0f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationName, 0f, 90f, 0f),
+                Triple(ModelPlaceElements.CenterName, 0f, 0f, 0f),
+                Targets(Target(ElementKinds.Joint, 0))));
+
+            Near(0.0, Now(joint).Position.X);
+            Near(-2.0, Now(joint).Position.Z);
+            Near(Math.PI / 2, Now(joint).Rotation.Y);
+            Near(0.0, Now(joint).Rotation.X);
+            Near(0.0, Now(joint).Rotation.Z);
+            Assert.Equal(1, value[ModelPlaceElements.ChangedName]);
         }
 
         [Fact]
@@ -275,9 +327,9 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelPlaceElements.RotationAngleName, 90f),
                 Targets(Target(ElementKinds.Vertex, 0)));
 
-            Near(3.0, vertex.Position.X);
-            Near(2.0, vertex.Position.Y);
-            Near(-1.0, vertex.Position.Z);
+            Near(3.0, Now(vertex).Position.X);
+            Near(2.0, Now(vertex).Position.Y);
+            Near(-1.0, Now(vertex).Position.Z);
         }
 
         [Fact]
@@ -285,7 +337,7 @@ namespace PmxEditorMcp.Tests
         {
             FakeVertex vertex = Vertex(1f, 0f, 0f);
             FakeBody body = Body(0f, 0f, 1f);
-            body.Rotation = new V3(0f, 0f, 0f);
+            Now(body).Rotation = new V3(0f, 0f, 0f);
 
             Place(
                 Operation(ModelPlaceElements.RotateBy),
@@ -293,11 +345,11 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelPlaceElements.RotationAngleName, 120f),
                 Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Body, 0)));
 
-            Near(0.0, vertex.Position.X);
-            Near(1.0, vertex.Position.Y);
-            Near(0.0, vertex.Position.Z);
-            Near(1.0, body.Position.X);
-            Near(0.0, body.Position.Z);
+            Near(0.0, Now(vertex).Position.X);
+            Near(1.0, Now(vertex).Position.Y);
+            Near(0.0, Now(vertex).Position.Z);
+            Near(1.0, Now(body).Position.X);
+            Near(0.0, Now(body).Position.Z);
         }
 
         [Fact]
@@ -312,8 +364,8 @@ namespace PmxEditorMcp.Tests
                 Ramp("x", 0f, 2f),
                 Targets(Target(ElementKinds.Vertex, 0)));
 
-            Near(0.0, vertex.Position.X);
-            Near(-1.0, vertex.Position.Z);
+            Near(0.0, Now(vertex).Position.X);
+            Near(-1.0, Now(vertex).Position.Z);
         }
 
         [Theory]
@@ -379,33 +431,33 @@ namespace PmxEditorMcp.Tests
         public void RotatingAboutXTurnsTheNormalToo()
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            vertex.Normal = new V3(0f, 1f, 0f);
+            Now(vertex).Normal = new V3(0f, 1f, 0f);
 
             Place(
                 Operation(ModelPlaceElements.RotateBy),
                 Triple(ModelPlaceElements.RotationName, 90f, 0f, 0f),
                 Targets(Target(ElementKinds.Vertex, 0)));
 
-            Near(0.0, vertex.Normal.Y);
-            Near(1.0, vertex.Normal.Z);
+            Near(0.0, Now(vertex).Normal.Y);
+            Near(1.0, Now(vertex).Normal.Z);
         }
 
         [Fact]
         public void RotatingABodyAlsoTurnsItsRotation()
         {
             FakeBody body = Body(1f, 0f, 0f);
-            body.Rotation = new V3(0f, 0f, 0f);
+            Now(body).Rotation = new V3(0f, 0f, 0f);
 
             Place(
                 Operation(ModelPlaceElements.RotateBy),
                 Triple(ModelPlaceElements.RotationName, 0f, 90f, 0f),
                 Targets(Target(ElementKinds.Body, 0)));
 
-            Near(0.0, body.Position.X);
-            Near(-1.0, body.Position.Z);
-            Near(Math.PI / 2, body.Rotation.Y);
-            Near(0.0, body.Rotation.X);
-            Near(0.0, body.Rotation.Z);
+            Near(0.0, Now(body).Position.X);
+            Near(-1.0, Now(body).Position.Z);
+            Near(Math.PI / 2, Now(body).Rotation.Y);
+            Near(0.0, Now(body).Rotation.X);
+            Near(0.0, Now(body).Rotation.Z);
         }
 
         [Fact]
@@ -418,48 +470,48 @@ namespace PmxEditorMcp.Tests
                 Triple(ModelPlaceElements.RotationName, 89.99999f, 0f, 30f),
                 Targets(Target(ElementKinds.Body, 0)));
 
-            Assert.Equal((float)Math.PI / 2f, body.Rotation.X);
-            Near(-Math.PI / 6, body.Rotation.Y);
-            Assert.Equal(0f, body.Rotation.Z);
+            Assert.Equal((float)Math.PI / 2f, Now(body).Rotation.X);
+            Near(-Math.PI / 6, Now(body).Rotation.Y);
+            Assert.Equal(0f, Now(body).Rotation.Z);
         }
 
         [Fact]
         public void RotatingARotatedBodyComposesTheTwoTurns()
         {
             FakeBody body = Body(0f, 0f, 0f);
-            body.Rotation = new V3(0f, (float)(Math.PI / 4), 0f);
+            Now(body).Rotation = new V3(0f, (float)(Math.PI / 4), 0f);
 
             Place(
                 Operation(ModelPlaceElements.RotateBy),
                 Triple(ModelPlaceElements.RotationName, 0f, 45f, 0f),
                 Targets(Target(ElementKinds.Body, 0)));
 
-            Near(Math.PI / 2, body.Rotation.Y);
+            Near(Math.PI / 2, Now(body).Rotation.Y);
         }
 
         [Fact]
         public void ScalingEvenlyAlsoScalesTheSizeOfABody()
         {
             FakeBody body = Body(1f, 2f, 3f);
-            body.BoxSize = new V3(1f, 0.5f, 2f);
+            Now(body).BoxSize = new V3(1f, 0.5f, 2f);
 
             Place(
                 Operation(ModelPlaceElements.ScaleBy),
                 Triple(ModelPlaceElements.ScaleName, 2f, 2f, 2f),
                 Targets(Target(ElementKinds.Body, 0)));
 
-            Near(2.0, body.Position.X);
-            Near(6.0, body.Position.Z);
-            Near(2.0, body.BoxSize.X);
-            Near(1.0, body.BoxSize.Y);
-            Near(4.0, body.BoxSize.Z);
+            Near(2.0, Now(body).Position.X);
+            Near(6.0, Now(body).Position.Z);
+            Near(2.0, Now(body).BoxSize.X);
+            Near(1.0, Now(body).BoxSize.Y);
+            Near(4.0, Now(body).BoxSize.Z);
         }
 
         [Fact]
         public void ScalingUnevenlyLeavesTheSizeOfABody()
         {
             FakeBody body = Body(1f, 1f, 1f);
-            body.BoxSize = new V3(1f, 1f, 1f);
+            Now(body).BoxSize = new V3(1f, 1f, 1f);
             FakeBone bone = Bone(1f, 1f, 1f);
 
             Place(
@@ -468,10 +520,10 @@ namespace PmxEditorMcp.Tests
                 Triple(ModelPlaceElements.CenterName, 0f, 1f, 0f),
                 Targets(Target(ElementKinds.Body, 0), Target(ElementKinds.Bone, 0)));
 
-            Near(2.0, body.Position.X);
-            Near(1.0, body.BoxSize.X);
-            Near(2.0, bone.Position.X);
-            Near(1.0, bone.Position.Y);
+            Near(2.0, Now(body).Position.X);
+            Near(1.0, Now(body).BoxSize.X);
+            Near(2.0, Now(bone).Position.X);
+            Near(1.0, Now(bone).Position.Y);
         }
 
         [Fact]
@@ -487,9 +539,9 @@ namespace PmxEditorMcp.Tests
                 Ramp("y", 0f, 2f),
                 Targets(Every(ElementKinds.Vertex))));
 
-            Near(1.0, low.Position.X);
-            Near(0.75, middle.Position.X);
-            Near(0.5, high.Position.X);
+            Near(1.0, Now(low).Position.X);
+            Near(0.75, Now(middle).Position.X);
+            Near(0.5, Now(high).Position.X);
             Assert.Equal(2, value[ModelPlaceElements.ChangedName]);
         }
 
@@ -505,8 +557,8 @@ namespace PmxEditorMcp.Tests
                 Ramp("y", 0f, 2f),
                 Targets(Every(ElementKinds.Vertex)));
 
-            Near(1.0, below.Position.X);
-            Near(0.5, above.Position.X);
+            Near(1.0, Now(below).Position.X);
+            Near(0.5, Now(above).Position.X);
         }
 
         [Fact]
@@ -521,8 +573,8 @@ namespace PmxEditorMcp.Tests
                 Ramp("y", 2f, 0f),
                 Targets(Every(ElementKinds.Vertex)));
 
-            Near(2.0, low.Position.Z);
-            Near(0.0, high.Position.Z);
+            Near(2.0, Now(low).Position.Z);
+            Near(0.0, Now(high).Position.Z);
         }
 
         [Fact]
@@ -538,9 +590,9 @@ namespace PmxEditorMcp.Tests
                 Ramps(RampPart("y", 0f, 2f), RampPart("z", 0f, 2f)),
                 Targets(Every(ElementKinds.Vertex)));
 
-            Near(2.0, both.Position.X);
-            Near(1.0, half.Position.X);
-            Near(0.0, none.Position.X);
+            Near(2.0, Now(both).Position.X);
+            Near(1.0, Now(half).Position.X);
+            Near(0.0, Now(none).Position.X);
         }
 
         [Fact]
@@ -557,10 +609,10 @@ namespace PmxEditorMcp.Tests
                 Ramps(RampPart("z", 0.55f, 0.85f), RampPart("z", 1.1f, 0.85f)),
                 Targets(Every(ElementKinds.Vertex)));
 
-            Near(0.0, before.Position.X);
-            Near(0.5, rising.Position.X);
-            Near(1.0, peak.Position.X);
-            Near(0.0, after.Position.X);
+            Near(0.0, Now(before).Position.X);
+            Near(0.5, Now(rising).Position.X);
+            Near(1.0, Now(peak).Position.X);
+            Near(0.0, Now(after).Position.X);
         }
 
         [Fact]
@@ -589,8 +641,8 @@ namespace PmxEditorMcp.Tests
                 Ramp("y", 0f, 2f),
                 Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Bone, 0)));
 
-            Near(1.0, vertex.Position.Z);
-            Near(2.0, bone.Position.Z);
+            Near(1.0, Now(vertex).Position.Z);
+            Near(2.0, Now(bone).Position.Z);
         }
 
         [Fact]
@@ -605,8 +657,8 @@ namespace PmxEditorMcp.Tests
                 Ramps(Curved(RampPart("y", 0f, 2f), "smooth")),
                 Targets(Every(ElementKinds.Vertex)));
 
-            Near(0.15625, quarter.Position.Z);
-            Near(0.5, half.Position.Z);
+            Near(0.15625, Now(quarter).Position.Z);
+            Near(0.5, Now(half).Position.Z);
         }
 
         [Fact]
@@ -620,7 +672,7 @@ namespace PmxEditorMcp.Tests
                 Ramps(Curved(RampPart("y", 0f, 2f), "linear")),
                 Targets(Target(ElementKinds.Vertex, 0)));
 
-            Near(0.25, vertex.Position.Z);
+            Near(0.25, Now(vertex).Position.Z);
         }
 
         [Fact]
@@ -641,7 +693,7 @@ namespace PmxEditorMcp.Tests
         public void RotatingWithARampTurnsEachVertexAndItsNormalByWhereItIsAlongTheAxis()
         {
             FakeVertex vertex = Vertex(1f, 1f, 0f);
-            vertex.Normal = new V3(1f, 0f, 0f);
+            Now(vertex).Normal = new V3(1f, 0f, 0f);
 
             Place(
                 Operation(ModelPlaceElements.RotateBy),
@@ -649,10 +701,10 @@ namespace PmxEditorMcp.Tests
                 Ramp("y", 0f, 2f),
                 Targets(Target(ElementKinds.Vertex, 0)));
 
-            Near(Math.Sqrt(0.5), vertex.Position.X);
-            Near(-Math.Sqrt(0.5), vertex.Position.Z);
-            Near(Math.Sqrt(0.5), vertex.Normal.X);
-            Near(-Math.Sqrt(0.5), vertex.Normal.Z);
+            Near(Math.Sqrt(0.5), Now(vertex).Position.X);
+            Near(-Math.Sqrt(0.5), Now(vertex).Position.Z);
+            Near(Math.Sqrt(0.5), Now(vertex).Normal.X);
+            Near(-Math.Sqrt(0.5), Now(vertex).Normal.Z);
         }
 
         [Fact]
@@ -665,14 +717,14 @@ namespace PmxEditorMcp.Tests
                 Triple(ModelPlaceElements.ScaleName, 0.001f, 1f, 1f),
                 Targets(Every(ElementKinds.Vertex)));
 
-            Assert.Equal(1000f * 0.001f, vertex.Position.X);
+            Assert.Equal(1000f * 0.001f, Now(vertex).Position.X);
         }
 
         [Fact]
         public void ScalingEvenlyWithARampScalesTheSizeOfABodyByItsStrength()
         {
             FakeBody body = Body(0f, 1f, 0f);
-            body.BoxSize = new V3(1f, 1f, 1f);
+            Now(body).BoxSize = new V3(1f, 1f, 1f);
 
             Place(
                 Operation(ModelPlaceElements.ScaleBy),
@@ -680,10 +732,10 @@ namespace PmxEditorMcp.Tests
                 Ramp("y", 0f, 2f),
                 Targets(Target(ElementKinds.Body, 0)));
 
-            Near(2.0, body.Position.Y);
-            Near(2.0, body.BoxSize.X);
-            Near(2.0, body.BoxSize.Y);
-            Near(2.0, body.BoxSize.Z);
+            Near(2.0, Now(body).Position.Y);
+            Near(2.0, Now(body).BoxSize.X);
+            Near(2.0, Now(body).BoxSize.Y);
+            Near(2.0, Now(body).BoxSize.Z);
         }
 
         [Fact]
@@ -698,7 +750,7 @@ namespace PmxEditorMcp.Tests
                     Triple(ModelPlaceElements.ScaleName, 0.5f, 1f, 1f),
                     Ramp("y", 1f, 1f),
                     Targets(Every(ElementKinds.Vertex)))));
-            Near(1.0, vertex.Position.X);
+            Near(1.0, Now(vertex).Position.X);
         }
 
         [Fact]
@@ -766,15 +818,17 @@ namespace PmxEditorMcp.Tests
                 Vertex(0f, 0f, 0f);
             }
 
+            TimeSpan editor = _fixture.EditorTime;
             Stopwatch elapsed = Stopwatch.StartNew();
             IDictionary<string, object> value = ComposedEditFixture.Value(Place(
                 Operation(ModelPlaceElements.TranslateBy),
                 Offset(0f, 1f, 0f),
                 Targets(Every(ElementKinds.Vertex))));
             elapsed.Stop();
+            TimeSpan spent = elapsed.Elapsed - (_fixture.EditorTime - editor);
 
             Assert.Equal(ManyElements, value[ModelPlaceElements.ChangedName]);
-            Assert.True(elapsed.Elapsed < TimeLimit, "動かすのに " + elapsed.Elapsed + " かかった");
+            Assert.True(spent < TimeLimit, "動かすのに " + spent + " かかった");
         }
 
         [Fact]
@@ -810,24 +864,21 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void MovingOnlyBonesWithTheUndoLockedReflectsOnlyTheBonesOfTheCopy()
         {
-            using (ComposedEditFixture locking = new ComposedEditFixture(lockingUndo: true))
-            {
-                locking.Model.Bone.Add(new FakeBone("ボーン") { Position = new V3(1f, 1f, 1f) });
+            FakeBone bone = Bone(1f, 1f, 1f);
 
-                locking.Call(
-                    ModelPlaceElements.ToolName,
-                    ComposedEditFixture.Arguments(
-                        Operation(ModelPlaceElements.TranslateBy),
-                        Offset(0f, 1f, 0f),
-                        Targets(Target(ElementKinds.Bone, 0)),
-                        ComposedEditFixture.Given(UndoBarrier.SuppressName, true)));
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 1f, 0f),
+                Targets(Target(ElementKinds.Bone, 0)),
+                ComposedEditFixture.Given(UndoBarrier.SuppressName, true));
 
-                KeyValuePair<PmxUpdateObject, int> partial = Assert.Single(locking.Partials);
-                Assert.Equal(PmxUpdateObject.Bone, partial.Key);
-                Assert.Equal(-1, partial.Value);
-                Assert.Equal(1, locking.Commits);
-                Assert.False(locking.UndoLocked);
-            }
+            KeyValuePair<PmxUpdateObject, int> partial = Assert.Single(_fixture.Partials);
+            Assert.Equal(PmxUpdateObject.Bone, partial.Key);
+            Assert.Equal(-1, partial.Value);
+            Assert.Equal(1, _fixture.Commits);
+            Assert.True(_fixture.Suppressed);
+            Assert.False(_fixture.UndoLocked);
+            Near(2.0, Now(bone).Position.Y);
         }
 
         [Fact]
@@ -846,18 +897,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void SuppressingTheUndoInAFlowThatTakesItAsAnArgumentReflectsTheWholeCopy()
+        public void SuppressingTheUndoWhileMovingSeveralKindsReflectsTheWholeCopyWithTheUndoLocked()
         {
-            Bone(1f, 1f, 1f);
+            FakeVertex vertex = Vertex(1f, 1f, 1f);
+            FakeBone bone = Bone(2f, 2f, 2f);
 
             Place(
                 Operation(ModelPlaceElements.TranslateBy),
                 Offset(0f, 1f, 0f),
-                Targets(Target(ElementKinds.Bone, 0)),
+                Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Bone, 0)),
                 ComposedEditFixture.Given(UndoBarrier.SuppressName, true));
 
             Assert.Empty(_fixture.Partials);
+            Assert.Equal(1, _fixture.Commits);
             Assert.True(_fixture.Suppressed);
+            Assert.False(_fixture.UndoLocked);
+            Near(2.0, Now(vertex).Position.Y);
+            Near(3.0, Now(bone).Position.Y);
         }
 
         private static object Every(string kind)
@@ -963,6 +1019,21 @@ namespace PmxEditorMcp.Tests
         {
             FakeBody made = new FakeBody("剛体") { Position = new V3(x, y, z) };
             _fixture.Model.Body.Add(made);
+
+            return made;
+        }
+
+        /// <summary>握った要素が並んでいた位置に、いまのモデルで並んでいる要素。</summary>
+        private T Now<T>(T held)
+            where T : class
+        {
+            return _fixture.Now(held);
+        }
+
+        private FakeJoint Joint(float x, float y, float z)
+        {
+            FakeJoint made = new FakeJoint("Joint") { Position = new V3(x, y, z) };
+            _fixture.Model.Joint.Add(made);
 
             return made;
         }

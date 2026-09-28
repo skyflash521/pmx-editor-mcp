@@ -28,15 +28,18 @@ namespace PmxEditorMcp.Tests
         public void BonesThatShareANameAreMergedIntoTheFirstOne()
         {
             IList<IPXBone> bones = Bones("腕", "腕", "手");
+            NowAll(bones)[0].NameE = "arm1";
+            NowAll(bones)[1].NameE = "arm2";
             FakeVertex vertex = Vertex(0f, 0f, 0f);
-            Weigh(vertex, bones[1]);
+            Weigh(vertex, NowAll(bones)[1]);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Bone(
                 Operation(ModelEditBones.MergeSameName),
                 ComposedEditFixture.Given("all", true)));
 
             Assert.Equal(2, _fixture.Model.Bone.Count);
-            Assert.Same(bones[0], vertex.Bone1);
+            Assert.Equal("arm1", Named("腕").NameE);
+            Assert.Same(Named("腕"), Now(vertex).Bone1);
             Assert.Equal(1, value[ModelEditBones.RemovedName]);
             Assert.Equal(1, _fixture.Commits);
         }
@@ -45,24 +48,24 @@ namespace PmxEditorMcp.Tests
         public void ABoneWithNoChildIsPutOutOfReach()
         {
             IList<IPXBone> bones = Bones("親", "子");
-            Show(bones[0]);
-            Show(bones[1]);
-            bones[1].Parent = bones[0];
+            Show(NowAll(bones)[0]);
+            Show(NowAll(bones)[1]);
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
 
             Bone(
                 Operation(ModelEditBones.HideTipBones),
                 ComposedEditFixture.Given("all", true));
 
-            Assert.True(bones[0].Visible);
-            Assert.False(bones[1].Visible);
-            Assert.False(bones[1].Controllable);
+            Assert.True(NowAll(bones)[0].Visible);
+            Assert.False(NowAll(bones)[1].Visible);
+            Assert.False(NowAll(bones)[1].Controllable);
         }
 
         [Fact]
         public void HidingTipBonesRemakesOnlyTheBonesInTheView()
         {
             IList<IPXBone> bones = Bones("親", "子");
-            bones[1].Parent = bones[0];
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
 
             Bone(Operation(ModelEditBones.HideTipBones), ComposedEditFixture.Given("all", true));
 
@@ -74,7 +77,7 @@ namespace PmxEditorMcp.Tests
         public void RelevelingStillRebuildsTheWholeModelInTheView()
         {
             IList<IPXBone> bones = Bones("子", "親");
-            bones[0].Parent = bones[1];
+            NowAll(bones)[0].Parent = NowAll(bones)[1];
 
             Bone(Operation(ModelEditBones.RelevelHierarchy));
 
@@ -86,58 +89,61 @@ namespace PmxEditorMcp.Tests
         public void TheTipBoneBecomesTheGapToThatBone()
         {
             IList<IPXBone> bones = Bones("元", "先");
-            ((FakeBone)bones[0]).Position = new V3(0f, 1f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(0f, 3f, 0f);
-            bones[0].ToBone = bones[1];
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 1f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(0f, 3f, 0f);
+            NowAll(bones)[0].ToBone = NowAll(bones)[1];
 
             Bone(
                 Operation(ModelEditBones.TipToOffset),
                 ComposedEditFixture.Given("indices", new object[] { 0 }));
 
-            Assert.Null(bones[0].ToBone);
-            Near(2.0, bones[0].ToOffset.Y);
+            Assert.Null(NowAll(bones)[0].ToBone);
+            Near(2.0, NowAll(bones)[0].ToOffset.Y);
         }
 
         [Fact]
         public void TheGapBecomesTheChildItPointsAt()
         {
             IList<IPXBone> bones = Bones("元", "先");
-            ((FakeBone)bones[0]).Position = new V3(0f, 1f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(0f, 3f, 0f);
-            bones[1].Parent = bones[0];
-            bones[0].ToOffset = new V3(0f, 2f, 0f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 1f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(0f, 3f, 0f);
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[0].ToOffset = new V3(0f, 2f, 0f);
 
             Bone(
                 Operation(ModelEditBones.OffsetToTip),
                 ComposedEditFixture.Given("indices", new object[] { 0 }));
 
-            Assert.Same(bones[1], bones[0].ToBone);
+            Assert.Same(NowAll(bones)[1], NowAll(bones)[0].ToBone);
         }
 
         [Fact]
         public void AChildThatComesBeforeItsParentIsMovedAfterIt()
         {
             IList<IPXBone> bones = Bones("子", "親");
-            bones[0].Parent = bones[1];
+            NowAll(bones)[0].Parent = NowAll(bones)[1];
 
             IDictionary<string, object> value = ComposedEditFixture.Value(
                 Bone(Operation(ModelEditBones.RelevelHierarchy)));
 
-            Assert.Same(bones[1], _fixture.Model.Bone[0]);
-            Assert.Same(bones[0], _fixture.Model.Bone[1]);
+            Assert.Equal(new[] { "親", "子" }, _fixture.Model.Bone.Select(b => b.Name).ToArray());
+            Assert.Same(_fixture.Model.Bone[0], _fixture.Model.Bone[1].Parent);
             Assert.Equal(1, value[ModelEditBones.ChangedName]);
         }
 
         [Fact]
         public void ABoneWithNoParentGetsOneAboveIt()
         {
-            IList<IPXBone> bones = Bones("根");
+            Bones("根");
 
             IDictionary<string, object> value = ComposedEditFixture.Value(
                 Bone(Operation(ModelEditBones.AddRootParent)));
 
             Assert.Equal(2, _fixture.Model.Bone.Count);
-            Assert.NotNull(bones[0].Parent);
+            IPXBone made = Named("根").Parent;
+            Assert.NotNull(made);
+            Assert.NotSame(Named("根"), made);
+            Assert.Contains(made, _fixture.Model.Bone);
             Assert.Single((object[])value[ModelEditBones.AddedName]);
         }
 
@@ -145,16 +151,16 @@ namespace PmxEditorMcp.Tests
         public void AStageParentIsAddedAtTheSameSpotAndTakesOverTheOldParent()
         {
             IList<IPXBone> bones = Bones("親", "腕");
-            ((FakeBone)bones[1]).Position = new V3(1f, 2f, 3f);
-            bones[1].Parent = bones[0];
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(1f, 2f, 3f);
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
 
             Bone(
                 Operation(ModelEditBones.AddMultiStageParent),
                 ComposedEditFixture.Given("indices", new object[] { 1 }));
 
-            IPXBone made = bones[1].Parent;
-            Assert.NotSame(bones[0], made);
-            Assert.Same(bones[0], made.Parent);
+            IPXBone made = Named("腕").Parent;
+            Assert.NotSame(Named("親"), made);
+            Assert.Same(Named("親"), made.Parent);
             Near(1.0, made.Position.X);
         }
 
@@ -162,14 +168,14 @@ namespace PmxEditorMcp.Tests
         public void AStageChildIsAddedAtTheSameSpotBelowThePickedBone()
         {
             IList<IPXBone> bones = Bones("腕");
-            ((FakeBone)bones[0]).Position = new V3(1f, 2f, 3f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(1f, 2f, 3f);
 
             Bone(
                 Operation(ModelEditBones.AddMultiStageChild),
                 ComposedEditFixture.Given("all", true));
 
-            IPXBone made = _fixture.Model.Bone.Single(bone => !ReferenceEquals(bone, bones[0]));
-            Assert.Same(bones[0], made.Parent);
+            IPXBone made = _fixture.Model.Bone.Single(bone => bone.Name != "腕");
+            Assert.Same(Named("腕"), made.Parent);
             Near(3.0, made.Position.Z);
         }
 
@@ -177,30 +183,32 @@ namespace PmxEditorMcp.Tests
         public void ABoneIsAddedHalfwayBetweenThePickedOneAndItsParent()
         {
             IList<IPXBone> bones = Bones("親", "子");
-            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(0f, 4f, 0f);
-            bones[1].Parent = bones[0];
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(0f, 4f, 0f);
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
 
             Bone(
                 Operation(ModelEditBones.AddMiddle),
                 ComposedEditFixture.Given("indices", new object[] { 1 }));
 
-            IPXBone made = bones[1].Parent;
-            Assert.NotSame(bones[0], made);
+            IPXBone made = Named("子").Parent;
+            Assert.NotSame(Named("親"), made);
+            Assert.Same(Named("親"), made.Parent);
             Near(2.0, made.Position.Y);
         }
 
         [Fact]
         public void TheAddedParentTakesItsTurnFromTheBoneItWasAddedFor()
         {
-            IList<IPXBone> bones = Bones("腕");
+            Bones("腕");
 
             Bone(
                 Operation(ModelEditBones.AddAppendParent),
                 ComposedEditFixture.Given("all", true));
 
-            IPXBone made = bones[0].Parent;
-            Assert.Same(bones[0], made.AppendParent);
+            IPXBone made = Named("腕").Parent;
+            Assert.NotNull(made);
+            Assert.Same(Named("腕"), made.AppendParent);
             Assert.True(made.IsAppendRotation);
         }
 
@@ -224,16 +232,16 @@ namespace PmxEditorMcp.Tests
         public void AnIkBoneIsAddedThatReachesForThePickedBone()
         {
             IList<IPXBone> bones = Bones("根", "膝", "足首");
-            bones[1].Parent = bones[0];
-            bones[2].Parent = bones[1];
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[2].Parent = NowAll(bones)[1];
 
             Bone(
                 Operation(ModelEditBones.MakeIk),
                 ComposedEditFixture.Given("indices", new object[] { 2 }),
                 ComposedEditFixture.Given(ModelEditBones.LinkCountName, 2));
 
-            IPXBone made = _fixture.Model.Bone.Single(bone => bone.IsIK);
-            Assert.Same(bones[2], made.IK.Target);
+            IPXBone made = _fixture.Model.Bone.Single(bone => Now(bone).IsIK);
+            Assert.Same(Named("足首"), made.IK.Target);
             Assert.Equal(2, made.IK.Links.Count);
         }
 
@@ -241,40 +249,51 @@ namespace PmxEditorMcp.Tests
         public void ABoneNamedForTheOtherSideIsMovedToTheMirroredSpot()
         {
             IList<IPXBone> bones = Bones("左腕", "右腕");
-            ((FakeBone)bones[0]).Position = new V3(2f, 1f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(9f, 9f, 9f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(2f, 1f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(9f, 9f, 9f);
 
             Bone(
                 Operation(ModelEditBones.MirrorPosition),
                 ComposedEditFixture.Given("indices", new object[] { 1 }),
                 ComposedEditFixture.Given(ModelEditBones.AxisName, ModelEditVertices.AxisX));
 
-            Near(-2.0, bones[1].Position.X);
-            Near(1.0, bones[1].Position.Y);
+            Near(-2.0, NowAll(bones)[1].Position.X);
+            Near(1.0, NowAll(bones)[1].Position.Y);
         }
 
-        [Fact]
-        public void TheFixedAxisIsPointedAtTheTip()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TheFixedAxisIsPointedAtTheTip(bool suppressed)
         {
             IList<IPXBone> bones = Bones("腕");
-            ((FakeBone)bones[0]).ToOffset = new V3(0f, 5f, 0f);
+            ((FakeBone)NowAll(bones)[0]).ToOffset = new V3(0f, 5f, 0f);
 
-            Bone(
+            List<KeyValuePair<string, object>> given = new List<KeyValuePair<string, object>>
+            {
                 Operation(ModelEditBones.FixAxisToTip),
-                ComposedEditFixture.Given("all", true));
+                ComposedEditFixture.Given("all", true),
+            };
+            if (suppressed)
+            {
+                given.Add(ComposedEditFixture.Given(UndoBarrier.SuppressName, true));
+            }
 
-            Assert.True(bones[0].IsFixAxis);
-            Near(1.0, bones[0].FixAxis.Y);
+            Bone(given.ToArray());
+
+            Assert.True(NowAll(bones)[0].IsFixAxis);
+            Near(1.0, NowAll(bones)[0].FixAxis.Y);
+            Assert.Equal(suppressed ? 1 : 0, _fixture.Partials.Count);
         }
 
         [Fact]
         public void TheLocalAxisIsBuiltFromTheTipAndTheParent()
         {
             IList<IPXBone> bones = Bones("親", "腕");
-            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
-            ((FakeBone)bones[1]).Position = new V3(0f, 1f, 0f);
-            bones[1].Parent = bones[0];
-            ((FakeBone)bones[1]).ToOffset = new V3(2f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(0f, 1f, 0f);
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            ((FakeBone)NowAll(bones)[1]).ToOffset = new V3(2f, 0f, 0f);
 
             Bone(
                 Operation(ModelEditBones.SetLocalAxis),
@@ -283,8 +302,8 @@ namespace PmxEditorMcp.Tests
             V3 across;
             V3 up;
             V3 along;
-            bones[1].GetLocalAxis(out across, out up, out along);
-            Assert.True(bones[1].IsLocalFrame);
+            NowAll(bones)[1].GetLocalAxis(out across, out up, out along);
+            Assert.True(NowAll(bones)[1].IsLocalFrame);
             Near(1.0, across.X);
         }
 
@@ -292,28 +311,77 @@ namespace PmxEditorMcp.Tests
         public void TheLocalAxisIsTakenBackOff()
         {
             IList<IPXBone> bones = Bones("腕");
-            bones[0].IsLocalFrame = true;
+            NowAll(bones)[0].IsLocalFrame = true;
 
             Bone(
                 Operation(ModelEditBones.ResetLocalAxis),
                 ComposedEditFixture.Given("all", true));
 
-            Assert.False(bones[0].IsLocalFrame);
+            Assert.False(NowAll(bones)[0].IsLocalFrame);
         }
 
         [Fact]
         public void ThePmdKindIsSetFromWhatTheBoneCanDo()
         {
             IList<IPXBone> bones = Bones("腕");
-            bones[0].IsRotation = true;
-            bones[0].Visible = true;
+            NowAll(bones)[0].IsRotation = true;
+            NowAll(bones)[0].Visible = true;
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Bone(
                 Operation(ModelEditBones.SetPmdBoneKind),
                 ComposedEditFixture.Given("all", true)));
 
-            Assert.Equal(BoneKind.Rotate, ((FakeBone)bones[0]).PmdKind);
+            Assert.Equal(BoneKind.Rotate, ((FakeBone)NowAll(bones)[0]).PmdKind);
+            Assert.True(NowAll(bones)[0].IsRotation);
+            Assert.True(NowAll(bones)[0].Visible);
+            Assert.True(NowAll(bones)[0].Controllable);
+            Assert.False(NowAll(bones)[0].IsTranslation);
             Assert.Equal(1, value[ModelEditBones.ChangedName]);
+        }
+
+        /// <summary>
+        /// エディタのボーンのメニューの「PMDボーン種類で設定」は、表示の有無より先に回転付与を見て
+        /// 種類を選ぶ。付与率1・階層2で回転付与するボーンは、非表示でも回転影響下として設定し直され、
+        /// 付与と付与率を保ったまま表示される。
+        /// </summary>
+        [Fact]
+        public void AHiddenBoneThatAppendsRotationKeepsItsAppendWhenItsPmdKindIsSet()
+        {
+            IList<IPXBone> bones = Bones("親", "捩");
+            NowAll(bones)[1].IsAppendRotation = true;
+            NowAll(bones)[1].AppendParent = NowAll(bones)[0];
+            NowAll(bones)[1].AppendRatio = 1f;
+            NowAll(bones)[1].Level = 2;
+            NowAll(bones)[1].Visible = false;
+
+            Bone(
+                Operation(ModelEditBones.SetPmdBoneKind),
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
+
+            Assert.True(NowAll(bones)[1].IsAppendRotation, "回転付与が外れた。");
+            Near(1.0, NowAll(bones)[1].AppendRatio);
+            Assert.True(NowAll(bones)[1].Visible);
+            Assert.Equal(2, NowAll(bones)[1].Level);
+        }
+
+        /// <summary>
+        /// エディタの「PMDボーン種類で設定」は、表示の有無より先に軸固定を見て捩りとして選ぶ。
+        /// 非表示の軸固定ボーンは、軸固定を保ったまま表示される。
+        /// </summary>
+        [Fact]
+        public void AHiddenBoneWithAFixedAxisKeepsTheAxisWhenItsPmdKindIsSet()
+        {
+            IList<IPXBone> bones = Bones("捩");
+            NowAll(bones)[0].IsFixAxis = true;
+            NowAll(bones)[0].FixAxis = new V3(1f, 0f, 0f);
+            NowAll(bones)[0].Visible = false;
+
+            Bone(
+                Operation(ModelEditBones.SetPmdBoneKind),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.True(NowAll(bones)[0].IsFixAxis, "軸固定が外れた。");
+            Assert.True(NowAll(bones)[0].Visible);
         }
 
         [Fact]
@@ -344,7 +412,7 @@ namespace PmxEditorMcp.Tests
         public void ABodyThatFollowsItsBoneIsAddedForEachPickedBone()
         {
             IList<IPXBone> bones = Bones("腕", "手");
-            ((FakeBone)bones[0]).Position = new V3(1f, 2f, 3f);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(1f, 2f, 3f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Physics(
                 Operation(ModelCreatePhysics.BodyFollowBone),
@@ -353,7 +421,7 @@ namespace PmxEditorMcp.Tests
                     ModelCreatePhysics.ShapeName, ModelCreatePhysics.Sphere)));
 
             Assert.Equal(2, _fixture.Model.Body.Count);
-            Assert.Same(bones[0], _fixture.Model.Body[0].Bone);
+            Assert.Same(NowAll(bones)[0], _fixture.Model.Body[0].Bone);
             Near(1.0, _fixture.Model.Body[0].Position.X);
             Assert.Equal(2, ((object[])value[ModelCreatePhysics.AddedBodiesName]).Length);
         }
@@ -377,16 +445,16 @@ namespace PmxEditorMcp.Tests
         public void AJointIsAddedBetweenThePickedBodies()
         {
             IList<IPXBody> bodies = Bodies("一", "二");
-            ((FakeBody)bodies[0]).Position = new V3(0f, 0f, 0f);
-            ((FakeBody)bodies[1]).Position = new V3(0f, 2f, 0f);
+            ((FakeBody)NowAll(bodies)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBody)NowAll(bodies)[1]).Position = new V3(0f, 2f, 0f);
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Physics(
                 Operation(ModelCreatePhysics.Joint),
                 ComposedEditFixture.Given("indices", new object[] { 0, 1 })));
 
             IPXJoint made = Assert.Single(_fixture.Model.Joint);
-            Assert.Same(bodies[0], made.BodyA);
-            Assert.Same(bodies[1], made.BodyB);
+            Assert.Same(NowAll(bodies)[0], made.BodyA);
+            Assert.Same(NowAll(bodies)[1], made.BodyB);
             Assert.Single((object[])value[ModelCreatePhysics.AddedJointsName]);
         }
 
@@ -394,8 +462,8 @@ namespace PmxEditorMcp.Tests
         public void ABodyAndTheJointToItsParentAreAddedTogether()
         {
             IList<IPXBone> bones = Bones("親", "子");
-            bones[1].Parent = bones[0];
-            FakeBody held = new FakeBody("親の剛体") { Bone = bones[0] };
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            FakeBody held = new FakeBody("親の剛体") { Bone = NowAll(bones)[0] };
             _fixture.Model.Body.Add(held);
 
             Physics(
@@ -406,7 +474,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(2, _fixture.Model.Body.Count);
             IPXJoint made = Assert.Single(_fixture.Model.Joint);
-            Assert.Same(held, made.BodyA);
+            Assert.Same(_fixture.Model.Body.Single(body => body.Name == "親の剛体"), made.BodyA);
         }
 
         [Fact]
@@ -485,7 +553,7 @@ namespace PmxEditorMcp.Tests
             IPXBone made = _fixture.Model.Bone[1];
             Assert.Equal("腕先", made.Name);
             Assert.Equal(2f, made.Position.Y);
-            Assert.Same(made, bone.ToBone);
+            Assert.Same(made, Now(bone).ToBone);
             Assert.Equal(new object[] { 1 }, (object[])value[ModelEditBones.AddedName]);
         }
 
@@ -494,7 +562,7 @@ namespace PmxEditorMcp.Tests
         {
             FakeBone bone = new FakeBone("腕");
             FakeBone tip = new FakeBone("腕先") { Position = new V3(0f, 3f, 0f), Parent = bone };
-            bone.ToBone = tip;
+            Now(bone).ToBone = tip;
             _fixture.Model.Bone.Add(bone);
             _fixture.Model.Bone.Add(tip);
 
@@ -502,9 +570,10 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelEditBones.DissolveTipBones),
                 ComposedEditFixture.Given("indices", new object[] { 1 }));
 
-            Assert.Single(_fixture.Model.Bone);
-            Assert.Null(bone.ToBone);
-            Assert.Equal(3f, bone.ToOffset.Y);
+            IPXBone kept = Assert.Single(_fixture.Model.Bone);
+            Assert.Equal("腕", kept.Name);
+            Assert.Null(kept.ToBone);
+            Assert.Equal(3f, kept.ToOffset.Y);
         }
 
         [Fact]
@@ -523,8 +592,9 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelEditBones.DissolveTipBones),
                 ComposedEditFixture.Given("indices", new object[] { 1, 2 }));
 
-            Assert.Single(_fixture.Model.Bone);
-            Assert.Same(arm, vertex.Bone1);
+            IPXBone kept = Assert.Single(_fixture.Model.Bone);
+            Assert.Equal("腕", kept.Name);
+            Assert.Same(kept, Now(vertex).Bone1);
         }
 
         [Fact]
@@ -552,8 +622,8 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("indices", new object[] { 0 }));
 
             Assert.Equal(2, _fixture.Model.Bone.Count);
-            Assert.Same(_fixture.Model.Bone[1], vertex.Bone1);
-            Assert.Equal(1f, vertex.Weight1);
+            Assert.Same(_fixture.Model.Bone[1], Now(vertex).Bone1);
+            Assert.Equal(1f, Now(vertex).Weight1);
         }
 
         private IDictionary<string, object> Bone(params KeyValuePair<string, object>[] given)
@@ -583,6 +653,26 @@ namespace PmxEditorMcp.Tests
             }
 
             return made;
+        }
+
+        /// <summary>握った要素が並んでいた位置に、いまのモデルで並んでいる要素。</summary>
+        private T Now<T>(T held)
+            where T : class
+        {
+            return _fixture.Now(held);
+        }
+
+        /// <summary>握った要素の並びを、それぞれいまのモデルで同じ位置に並んでいる要素へ読み直す。</summary>
+        private IList<T> NowAll<T>(IList<T> held)
+            where T : class
+        {
+            return held.Select(_fixture.Now).ToList();
+        }
+
+        /// <summary>エディタのいまのボーンのうち、その名前のもの。</summary>
+        private IPXBone Named(string name)
+        {
+            return _fixture.Model.Bone.Single(bone => Now(bone).Name == name);
         }
 
         private IList<IPXBody> Bodies(params string[] names)

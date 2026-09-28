@@ -78,6 +78,24 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheLedgerCallsOffTheWholeReleaseWhenOneOfTheHandlesIsGone()
+        {
+            HandleLedger handles = Ledger();
+            bool released = false;
+            int held = handles.Issue("題材", new object(), () => released = true);
+            int gone = handles.Issue("題材", new object(), () => { });
+            HandleReleaseResult result;
+            Assert.True(handles.TryRelease(gone, out result));
+
+            Assert.False(handles.TryReleaseAll(new[] { held, gone }, out result));
+
+            Assert.Null(result);
+            Assert.True(handles.IsValid(held));
+            Assert.False(released, "取りやめた解放で後始末が走った。");
+            Assert.Equal(1, handles.Count);
+        }
+
+        [Fact]
         public void TheSameHandleTwiceIsRefused()
         {
             HandleLedger handles = Ledger();

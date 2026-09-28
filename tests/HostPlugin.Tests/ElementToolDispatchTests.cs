@@ -114,6 +114,9 @@ namespace PmxEditorMcp.Tests
 
         private int _commits;
 
+        /// <summary>現在のモデルの複製を求められた回数。</summary>
+        private int _stateReads;
+
         private object _attachedModel;
 
         private object _attachedItem;
@@ -1320,7 +1323,8 @@ namespace PmxEditorMcp.Tests
                 handles);
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
-            Assert.Same(_model.Items[0], made.Mate);
+            Assert.Equal("二", _model.Items[1].Label);
+            Assert.Same(_model.Items[0], _model.Items[1].Mate);
         }
 
         [Fact]
@@ -1385,7 +1389,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AddingItemsThatPointIntoALongListFinishesInTime()
         {
-            Item[] standing = Many(StandingItems);
+            Many(StandingItems);
             HandleLedger handles = Ledger();
             Item[] adding = Enumerable.Range(0, AddedItems)
                 .Select(at => new Item { Label = "加" + at })
@@ -1409,7 +1413,9 @@ namespace PmxEditorMcp.Tests
             elapsed.Stop();
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
-            Assert.Same(standing[StandingItems - 1], adding[AddedItems - 1].Mate);
+            Assert.Same(
+                _model.Items[StandingItems - 1],
+                _model.Items[StandingItems + AddedItems - 1].Mate);
             Assert.True(elapsed.Elapsed < TimeLimit, "加えるのに " + elapsed.Elapsed + " かかった");
         }
 
@@ -1431,8 +1437,8 @@ namespace PmxEditorMcp.Tests
                 handles);
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
-            Assert.Same(_model.Items[0], first.Mate);
-            Assert.Same(first, second.Mate);
+            Assert.Same(_model.Items[0], _model.Items[1].Mate);
+            Assert.Same(_model.Items[1], _model.Items[2].Mate);
         }
 
         [Fact]
@@ -1453,10 +1459,7 @@ namespace PmxEditorMcp.Tests
                 handles);
 
             Assert.Equal(ToolEnvelope.IndexOutOfRange, Code(refused));
-
-            // 実物は断られた呼び出しの複製ごと捨てるので、先に書き込んだぶんも残らない。この題材は
-            // 複製を作らず実体をそのまま渡すため、書き込みだけをこちらで戻して同じ状況を作る。
-            first.Mate = null;
+            Assert.Single(_model.Items);
 
             // 預かりを外していなければ、投げ直したときに解き直される。
             IDictionary<string, object> envelope = Call(
@@ -1465,7 +1468,8 @@ namespace PmxEditorMcp.Tests
                 handles);
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
-            Assert.Same(_model.Items[0], first.Mate);
+            Assert.Equal("二", _model.Items[1].Label);
+            Assert.Same(_model.Items[0], _model.Items[1].Mate);
         }
 
         [Fact]
@@ -1495,7 +1499,7 @@ namespace PmxEditorMcp.Tests
                 handles);
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
-            Assert.Same(_model.Items[0], child.Mate);
+            Assert.Same(_model.Items[0], ((Item)_model.Groups[0].Leaves[0]).Mate);
         }
 
         [Fact]
@@ -1565,7 +1569,7 @@ namespace PmxEditorMcp.Tests
                 handles);
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
-            Assert.Same(_model.Items[0], child.Mate);
+            Assert.Same(_model.Items[0], _model.Items[1].Mate);
         }
 
         [Fact]
@@ -1598,6 +1602,8 @@ namespace PmxEditorMcp.Tests
             IList<IDictionary<string, object>> items = Items(Value(envelope));
             Assert.Equal(new[] { "一" }, items.Select(i => i["label"]).ToArray());
             Assert.False(items[0].ContainsKey(ToolDispatch.ParentIndexName));
+            Assert.Equal(0, _stateReads);
+            Assert.Equal(0, _commits);
         }
 
         [Fact]
@@ -1992,8 +1998,11 @@ namespace PmxEditorMcp.Tests
                 "model_attach_maker", Arguments("item", 1, "label", "付けた"));
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
-            Assert.Same(_model.Items[1], _attachedItem);
-            Assert.Same(_model, _attachedModel);
+            Model attached = Assert.IsType<Model>(_attachedModel);
+            Assert.NotSame(_model, attached);
+            Assert.Same(attached.Items[1], _attachedItem);
+            Assert.Equal("二", ((Item)_attachedItem).Label);
+            Assert.Equal("付けた", _model.Note.Text);
             Assert.Equal(1, _commits);
         }
 
@@ -2026,11 +2035,17 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ANullPositionMeansThereIsNoRelation()
         {
+            _model.Items.Add(new Item { Label = "一" });
+            _attachedItem = new object();
+
             IDictionary<string, object> envelope = Call(
                 "model_attach_maker", Arguments("item", null, "label", "付けた"));
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
             Assert.Null(_attachedItem);
+            Assert.NotNull(_attachedModel);
+            Assert.Equal("付けた", _model.Note.Text);
+            Assert.Equal(1, _commits);
         }
 
         [Fact]
@@ -2740,13 +2755,22 @@ namespace PmxEditorMcp.Tests
             Dictionary<string, SdkCall> calls =
                 new Dictionary<string, SdkCall>(StringComparer.Ordinal)
                 {
-                    { StateReadKey, (target, arguments) => _model },
+                    {
+                        StateReadKey,
+                        (target, arguments) =>
+                        {
+                            _stateReads++;
+
+                            return _model.Duplicate();
+                        }
+                    },
                     {
                         CommitKey,
                         (target, arguments) =>
                         {
                             _commits++;
                             _undoCalls.Add(CommitKey);
+                            _model.Take((Model)arguments[0]);
                             return null;
                         }
                     },
@@ -3501,7 +3525,11 @@ namespace PmxEditorMcp.Tests
             };
         }
 
-        /// <summary>複製して編集する相手の題材。</summary>
+        /// <summary>
+        /// 複製して編集する相手の題材。エディタが持つ現在のモデルとして置くと、複製の要求には
+        /// 要素まで別のオブジェクトにした写しを返し、反映では渡された複製の中身を位置ごとに写す。
+        /// モデルの外を指す項目は、写したあと何も指さない。
+        /// </summary>
         private sealed class Model
         {
             public List<Item> Items { get; } = new List<Item>();
@@ -3512,6 +3540,199 @@ namespace PmxEditorMcp.Tests
             public Group Head { get; set; }
 
             public Note Note { get; } = new Note();
+
+            /// <summary>複製の要求に返す写し。</summary>
+            public Model Duplicate()
+            {
+                Model made = new Model();
+                Carry(this, made, false);
+
+                return made;
+            }
+
+            /// <summary>反映で渡された複製の中身を写す。</summary>
+            public void Take(Model passed)
+            {
+                Carry(passed, this, true);
+            }
+
+            /// <summary>
+            /// <paramref name="from"/> の中身を <paramref name="to"/> へ写す。<paramref name="reuse"/>
+            /// が真なら、同じ位置にある要素はそのオブジェクトへ中身を写して置き続ける。
+            /// </summary>
+            private static void Carry(Model from, Model to, bool reuse)
+            {
+                Dictionary<object, object> placed = new Dictionary<object, object>(Same.Instance);
+                List<Item> items = Placed(from.Items, reuse ? to.Items : null, placed, () => new Item());
+                List<Group> groups =
+                    Placed(from.Groups, reuse ? to.Groups : null, placed, () => new Group());
+                Group head = from.Head == null
+                    ? null
+                    : (Group)Place(from.Head, reuse ? to.Head : null, placed, () => new Group());
+                List<Group> owners = new List<Group>(groups);
+                if (head != null && !owners.Contains(head))
+                {
+                    owners.Add(head);
+                }
+
+                Dictionary<Group, List<Leaf>> leaves = new Dictionary<Group, List<Leaf>>(Same.Of<Group>());
+                Dictionary<Group, Mark> marks = new Dictionary<Group, Mark>(Same.Of<Group>());
+                Dictionary<Mark, List<Item>> veins = new Dictionary<Mark, List<Item>>(Same.Of<Mark>());
+                foreach (KeyValuePair<object, object> pair in placed.ToList())
+                {
+                    Group source = pair.Key as Group;
+                    if (source == null)
+                    {
+                        continue;
+                    }
+
+                    Group target = (Group)pair.Value;
+                    List<Leaf> made = new List<Leaf>();
+                    for (int at = 0; at < source.Leaves.Count; at++)
+                    {
+                        Leaf leaf = source.Leaves[at];
+                        Leaf old = reuse && at < target.Leaves.Count
+                            && target.Leaves[at].GetType() == leaf.GetType()
+                                ? target.Leaves[at]
+                                : null;
+                        made.Add((Leaf)Place(
+                            leaf, old, placed, () => leaf is Item ? (Leaf)new Item() : new Spare()));
+                    }
+
+                    leaves.Add(target, made);
+                    if (source.Mark != null)
+                    {
+                        Mark mark = (Mark)Place(
+                            source.Mark, reuse ? target.Mark : null, placed, () => new Mark());
+                        marks.Add(target, mark);
+                        veins.Add(mark, Placed(source.Mark.Veins, reuse ? mark.Veins : null, placed, () => new Item()));
+                    }
+                    else
+                    {
+                        marks.Add(target, null);
+                    }
+                }
+
+                foreach (KeyValuePair<object, object> pair in placed)
+                {
+                    Item item = pair.Key as Item;
+                    if (item != null)
+                    {
+                        Item made = (Item)pair.Value;
+                        made.Label = item.Label;
+                        made.Filled = item.Filled;
+                        made.Tag = item.Tag;
+                        made.Mate = Pointed(item.Mate, placed);
+                        List<Item> mates = item.Mates.Select(m => Pointed(m, placed)).ToList();
+                        made.Mates.Clear();
+                        foreach (Item mate in mates)
+                        {
+                            made.Mates.Add(mate);
+                        }
+
+                        continue;
+                    }
+
+                    Spare spare = pair.Key as Spare;
+                    if (spare != null)
+                    {
+                        ((Spare)pair.Value).Note = spare.Note;
+                        ((Spare)pair.Value).Tag = spare.Tag;
+                        continue;
+                    }
+
+                    Group group = pair.Key as Group;
+                    if (group != null)
+                    {
+                        ((Group)pair.Value).Tag = group.Tag;
+                        continue;
+                    }
+
+                    Mark mark = pair.Key as Mark;
+                    if (mark != null)
+                    {
+                        ((Mark)pair.Value).Width = mark.Width;
+                    }
+                }
+
+                foreach (KeyValuePair<Group, List<Leaf>> pair in leaves)
+                {
+                    pair.Key.Leaves.Clear();
+                    pair.Key.Leaves.AddRange(pair.Value);
+                    pair.Key.Mark = marks[pair.Key];
+                }
+
+                foreach (KeyValuePair<Mark, List<Item>> pair in veins)
+                {
+                    pair.Key.Veins.Clear();
+                    pair.Key.Veins.AddRange(pair.Value);
+                }
+
+                to.Items.Clear();
+                to.Items.AddRange(items);
+                to.Groups.Clear();
+                to.Groups.AddRange(groups);
+                to.Head = head;
+                to.Note.Text = from.Note.Text;
+            }
+
+            private static List<T> Placed<T>(
+                IList<T> source, IList<T> old, Dictionary<object, object> placed, Func<T> make)
+                where T : class
+            {
+                List<T> made = new List<T>(source.Count);
+                for (int at = 0; at < source.Count; at++)
+                {
+                    made.Add((T)Place(
+                        source[at], old != null && at < old.Count ? old[at] : null, placed, () => make()));
+                }
+
+                return made;
+            }
+
+            private static object Place(
+                object source, object old, Dictionary<object, object> placed, Func<object> make)
+            {
+                object found;
+                if (placed.TryGetValue(source, out found))
+                {
+                    return found;
+                }
+
+                object made = old ?? make();
+                placed.Add(source, made);
+
+                return made;
+            }
+
+            private static Item Pointed(Item item, Dictionary<object, object> placed)
+            {
+                object found;
+
+                return item != null && placed.TryGetValue(item, out found) ? (Item)found : null;
+            }
+        }
+
+        /// <summary>同一性で見分ける比べ方。値で等しい題材を別の要素として数える。</summary>
+        private sealed class Same : IEqualityComparer<object>
+        {
+            public static readonly Same Instance = new Same();
+
+            public static IEqualityComparer<T> Of<T>()
+                where T : class
+            {
+                return ReferenceComparer<T>.Instance;
+            }
+
+            public new bool Equals(object x, object y)
+            {
+                return ReferenceEquals(x, y);
+            }
+
+            public int GetHashCode(object obj)
+            {
+                return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+            }
         }
 
         /// <summary>要素を並べるリストを持つ、親の題材。</summary>

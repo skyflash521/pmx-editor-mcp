@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PEPlugin.Pmx;
+using PEPlugin.SDX;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -10,30 +11,33 @@ namespace PmxEditorMcp.Tests
     public class ElementKindsTests
     {
 
+        /// <summary>kind を受け取るツール。どれも共通の契約の役目の文で kind の名前を並べる。</summary>
+        public static IEnumerable<object[]> KindTools()
+        {
+            yield return new object[] { ModelDeleteElements.ToolName };
+            yield return new object[] { ModelInsertElements.ToolName };
+            yield return new object[] { ModelReorderElements.ToolName };
+        }
+
+        /// <summary>共通の契約が並べる kind の名前。</summary>
+        public static IEnumerable<object[]> ContractNames()
+        {
+            return Offered(ModelDeleteElements.ToolName).Select(name => new object[] { name });
+        }
+
         [Theory]
-        [InlineData(ElementKinds.Vertex)]
-        [InlineData(ElementKinds.Face)]
-        [InlineData(ElementKinds.Material)]
-        [InlineData(ElementKinds.Bone)]
-        [InlineData(ElementKinds.IkLink)]
-        [InlineData(ElementKinds.Morph)]
-        [InlineData(ElementKinds.MorphOffset)]
-        [InlineData(ElementKinds.Node)]
-        [InlineData(ElementKinds.NodeItem)]
-        [InlineData(ElementKinds.Body)]
-        [InlineData(ElementKinds.Joint)]
-        [InlineData(ElementKinds.SoftBody)]
-        [InlineData(ElementKinds.SoftBodyAnchor)]
+        [MemberData(nameof(ContractNames))]
         public void EveryNameTheSchemaOffersResolves(string name)
         {
             Assert.Contains(name, ElementKinds.Names);
             Assert.Equal(name, Resolved(name).Name);
         }
 
-        [Fact]
-        public void TheNamesAreTheOnesTheSchemaOffersAndNoOther()
+        [Theory]
+        [MemberData(nameof(KindTools))]
+        public void TheNamesAreTheOnesTheSchemaOffersAndNoOther(string tool)
         {
-            Assert.Equal(13, ElementKinds.Names.Count);
+            Assert.Equal(Offered(tool), ElementKinds.Names.ToArray());
         }
 
         [Fact]
@@ -186,15 +190,23 @@ namespace PmxEditorMcp.Tests
             Assert.Null(kind.Create(new FakeBuilder(), ElementKinds.Owners(pmx, kind)[0]));
         }
 
+        /// <summary>
+        /// SDKの要素の複製は、ベクトルを別のオブジェクトにして値を写す。複製のベクトルを変えても
+        /// 元は変わらない。
+        /// </summary>
         [Fact]
         public void CloningMakesAnotherObjectThatCarriesTheSameValues()
         {
-            FakeBone bone = new FakeBone("センター");
+            FakeBone bone = new FakeBone("センター") { Position = new V3(1f, 2f, 3f) };
 
-            object made = Resolved(ElementKinds.Bone).CloneOf(bone);
+            IPXBone made = (IPXBone)Resolved(ElementKinds.Bone).CloneOf(bone);
 
             Assert.NotSame(bone, made);
-            Assert.Equal("センター", ((IPXBone)made).Name);
+            Assert.Equal("センター", made.Name);
+            Assert.NotSame(bone.Position, made.Position);
+            Assert.Equal(2f, made.Position.Y);
+            made.Position.Y = 9f;
+            Assert.Equal(2f, bone.Position.Y);
         }
 
         [Theory]
@@ -226,7 +238,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheFramesStartWithTheExpressionAndTheRootFrameTheModelHoldsApart()
+        public void TheFramesStartWithTheRootAndTheExpressionFrameTheModelHoldsApart()
         {
             FakePmx pmx = Filled();
             ElementKind kind = Resolved(ElementKinds.Node);
@@ -234,8 +246,8 @@ namespace PmxEditorMcp.Tests
             IList<object> items = kind.Items(pmx);
 
             Assert.Equal(4, items.Count);
-            Assert.Same(pmx.ExpressionNode, items[0]);
-            Assert.Same(pmx.RootNode, items[1]);
+            Assert.Same(pmx.RootNode, items[0]);
+            Assert.Same(pmx.ExpressionNode, items[1]);
             Assert.Same(pmx.Node[0], items[2]);
             Assert.Same(pmx.Node[1], items[3]);
         }
@@ -325,10 +337,15 @@ namespace PmxEditorMcp.Tests
 
             Assert.NotSame(bone, made);
             Assert.True(made.IsIK);
+            Assert.NotSame(bone.IK, made.IK);
             Assert.Same(target, made.IK.Target);
             Assert.Equal(8, made.IK.LoopCount);
-            Assert.Same(target, Assert.Single(made.IK.Links).Bone);
+            IPXIKLink link = Assert.Single(made.IK.Links);
+            Assert.NotSame(bone.IK.Links[0], link);
+            Assert.Same(target, link.Bone);
             Assert.Same(target, made.Parent);
+            made.IK.Links.Clear();
+            Assert.Single(bone.IK.Links);
         }
 
         /// <summary>13種類の要素をそれぞれ2つずつ持つ題材。並びの入れ替えを見分けられる数にする。</summary>
@@ -375,6 +392,45 @@ namespace PmxEditorMcp.Tests
             }
 
             return pmx;
+        }
+
+        /// <summary>
+        /// 共通の契約(catalog/authored/common-contract.json)で、そのツールの役目の文が
+        /// 「kind は …・… のいずれか」と並べる名前。
+        /// </summary>
+        private static string[] Offered(string tool)
+        {
+            string path = Contract();
+            IDictionary<string, object> contract = (IDictionary<string, object>)
+                new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue }
+                    .DeserializeObject(System.IO.File.ReadAllText(path, System.Text.Encoding.UTF8));
+            string duty = ((object[])contract["composedTools"])
+                .Cast<IDictionary<string, object>>()
+                .Where(entry => Equals(entry["tool"], tool))
+                .Select(entry => (string)entry["duty"])
+                .Single();
+            System.Text.RegularExpressions.Match listed = System.Text.RegularExpressions.Regex.Match(
+                duty, ElementKinds.KindName + " は (?<names>[A-Za-z]+(・[A-Za-z]+)*) のいずれか");
+            Assert.True(listed.Success, tool + " の役目の文に kind の名前の並びが無い。");
+
+            return listed.Groups["names"].Value.Split('・');
+        }
+
+        /// <summary>テストの出力から上へ辿って見つけた、共通の契約のファイル。</summary>
+        private static string Contract()
+        {
+            for (System.IO.DirectoryInfo at = new System.IO.DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+                at != null;
+                at = at.Parent)
+            {
+                string path = System.IO.Path.Combine(at.FullName, "catalog", "authored", "common-contract.json");
+                if (System.IO.File.Exists(path))
+                {
+                    return path;
+                }
+            }
+
+            throw new InvalidOperationException("共通の契約のファイルが見つからない。");
         }
 
         private static ElementKind Resolved(string name)

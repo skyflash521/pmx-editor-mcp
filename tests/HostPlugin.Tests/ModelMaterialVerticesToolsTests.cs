@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PEPlugin.Pmx;
 using Xunit;
 
@@ -98,6 +99,34 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(3, value["total"]);
             Assert.Equal(2, ((IDictionary<string, object>)((object[])value["vertexRuns"])[0])["start"]);
             Assert.Equal(2, value["nextOffset"]);
+        }
+
+        [Fact]
+        public void AListTooLongForTheAnswerIsCutAtWhatFitsAndSaysWhereToGoOn()
+        {
+            IList<IPXVertex> vertices = Vertices(3000);
+            IPXFace[] faces = new IPXFace[1000];
+            for (int at = 0; at < faces.Length; at++)
+            {
+                faces[at] = Face(vertices, at * 3, at * 3 + 1, at * 3 + 2);
+            }
+
+            Material(faces);
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                ModelFindMaterialVertices.ToolName,
+                ComposedEditFixture.Arguments(ComposedEditFixture.Given("all", true)),
+                ResponseBudget.MinimumChars);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(envelope);
+            object[] taken = (object[])value["vertexIndices"];
+            Assert.Equal(3000, value["total"]);
+            Assert.InRange(taken.Length, 1, 2999);
+            Assert.Equal(taken.Length, value["nextOffset"]);
+            Assert.Equal(Enumerable.Range(0, taken.Length).Cast<object>().ToArray(), taken);
+            Assert.Contains(
+                ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>(),
+                warning => warning.Contains("件数を減らした"));
         }
 
         [Fact]

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PEPlugin.Pmx;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -27,6 +28,7 @@ namespace PmxEditorMcp.Tests
                 Method((context, pmx) =>
                 {
                     seen = pmx;
+                    ((IPXPmx)pmx).ModelInfo.ModelName = "書いた";
 
                     return ComposedEditResult.Complete(7);
                 }),
@@ -34,7 +36,8 @@ namespace PmxEditorMcp.Tests
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
             Assert.Equal(7, envelope["value"]);
-            Assert.Same(_fixture.Model, seen);
+            Assert.NotSame(_fixture.Model, seen);
+            Assert.Equal("書いた", _fixture.Model.ModelInfo.ModelName);
             Assert.Equal(1, _fixture.Clones);
             Assert.Equal(1, _fixture.Commits);
         }
@@ -84,7 +87,7 @@ namespace PmxEditorMcp.Tests
         public void PointingThePmxByHandleSkipsTheCloneAndTheReflection()
         {
             FakePmx held = new FakePmx();
-            int handle = _fixture.Handles.Issue(typeof(FakePmx).FullName, held, () => { });
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
             object seen = null;
 
             _fixture.Call(
@@ -140,13 +143,21 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ABodyThatRefusesLeavesTheModelUnreflected()
         {
+            _fixture.Model.ModelInfo.ModelName = "元";
+
             IDictionary<string, object> envelope = _fixture.Call(
-                Method((context, pmx) => ComposedEditResult.Refuse(
-                    ToolEnvelope.IndexOutOfRange, "並びの外を指している。")),
+                Method((context, pmx) =>
+                {
+                    ((IPXPmx)pmx).ModelInfo.ModelName = "書きかけ";
+
+                    return ComposedEditResult.Refuse(
+                        ToolEnvelope.IndexOutOfRange, "並びの外を指している。");
+                }),
                 ComposedEditFixture.Arguments());
 
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
             Assert.Equal(0, _fixture.Commits);
+            Assert.Equal("元", _fixture.Model.ModelInfo.ModelName);
         }
 
         [Fact]
@@ -165,7 +176,7 @@ namespace PmxEditorMcp.Tests
         public void ABodyThatThrowsOnAHeldPmxAnswersThatTheResultIsUnknown()
         {
             FakePmx held = new FakePmx();
-            int handle = _fixture.Handles.Issue(typeof(FakePmx).FullName, held, () => { });
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
 
             IDictionary<string, object> envelope = _fixture.Call(
                 Method((context, pmx) => throw new InvalidOperationException("途中で落ちた。")),
@@ -185,6 +196,84 @@ namespace PmxEditorMcp.Tests
                     ComposedEditFixture.Given(UndoBarrier.SuppressName, true)));
 
             Assert.True(_fixture.Suppressed, "抑止の頼みが反映へ届いていない。");
+            Assert.False(_fixture.UndoLocked, "Undoの記録を止めたまま戻していない。");
+        }
+
+        [Fact]
+        public void NotAskingToSuppressTheUndoRecordReflectsWithTheRecordRunning()
+        {
+            _fixture.Call(
+                Method((context, pmx) => ComposedEditResult.Complete(null)),
+                ComposedEditFixture.Arguments());
+
+            Assert.Equal(1, _fixture.Commits);
+            Assert.False(_fixture.Suppressed, "頼んでいない抑止が反映へ届いた。");
+            Assert.Equal(0, _fixture.Resumes);
+        }
+
+        [Fact]
+        public void AskingToSuppressTheUndoOnAHeldPmxIsRefusedBeforeTheBodyRuns()
+        {
+            FakePmx held = new FakePmx();
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
+            bool ran = false;
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                Method((context, pmx) =>
+                {
+                    ran = true;
+
+                    return ComposedEditResult.Complete(null);
+                }),
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given(PmxSession.HandleName, handle),
+                    ComposedEditFixture.Given(UndoBarrier.SuppressName, true)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.False(ran, "断るべき呼び出しで中身が走った。");
+        }
+
+        [Fact]
+        public void AnUndoRecordLeftStoppedIsWarnedAboutAndTheNextEditIsRefusedUntilItResumes()
+        {
+            _fixture.ResumeFailures = 2;
+
+            IDictionary<string, object> left = _fixture.Call(
+                Method((context, pmx) => ComposedEditResult.Complete(null)),
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given(UndoBarrier.SuppressName, true)));
+
+            Assert.True((bool)left["ok"], "包みが成功でない。");
+            Assert.Contains(
+                UndoGate.LeftoverWarning,
+                ((object[])left[ToolEnvelope.WarningsName]).Cast<string>());
+            Assert.True(_fixture.UndoLocked);
+
+            _fixture.ResumeFailures = 1;
+            bool ran = false;
+            IDictionary<string, object> refused = _fixture.Call(
+                Method((context, pmx) =>
+                {
+                    ran = true;
+
+                    return ComposedEditResult.Complete(null);
+                }),
+                ComposedEditFixture.Arguments());
+
+            Assert.Equal(ToolEnvelope.OperationFailed, ComposedEditFixture.Code(refused));
+            Assert.False(ran, "戻せていない間に中身が走った。");
+            Assert.Equal(1, _fixture.Commits);
+
+            IDictionary<string, object> recovered = _fixture.Call(
+                Method((context, pmx) => ComposedEditResult.Complete(null)),
+                ComposedEditFixture.Arguments());
+
+            Assert.True((bool)recovered["ok"], "包みが成功でない。");
+            Assert.Contains(
+                UndoGate.RecoveredWarning,
+                ((object[])recovered[ToolEnvelope.WarningsName]).Cast<string>());
+            Assert.False(_fixture.UndoLocked);
+            Assert.Equal(2, _fixture.Commits);
         }
 
         [Fact]
