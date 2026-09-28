@@ -14,7 +14,8 @@ $standing = Get-Process -Id $Root -ErrorAction Ignore
 if (-not $standing) { exit 0 }
 
 $since = $standing.StartTime
-$all = @(Get-CimInstance Win32_Process | Where-Object { $_.CreationDate -ge $since })
+$all = @(Get-CimInstance Win32_Process -Property ProcessId, ParentProcessId, CreationDate |
+        Where-Object { $_.CreationDate -ge $since })
 
 $want = @($Root)
 do {
@@ -27,7 +28,7 @@ do {
 # この1本も根の子孫なので、木には自分が入る。既に終わっている相手への始末は失敗を書き出すので、
 # 止まらずに残りを終わらせる。
 foreach ($one in @($want | Where-Object { $_ -ne $Root -and $_ -ne $PID })) {
-    try { & taskkill /F /PID $one 2>$null | Out-Null } catch { }
+    Stop-Process -Id $one -Force -ErrorAction Ignore
 }
 
 exit 0
