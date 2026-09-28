@@ -5114,6 +5114,14 @@
                   0
                 ]
               }
+            ],
+            "ramp": [
+              {
+                "axis": "x",
+                "from": -10,
+                "to": 10,
+                "curve": "smooth"
+              }
             ]
           },
           "expect": {

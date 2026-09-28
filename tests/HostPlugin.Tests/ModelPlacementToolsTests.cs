@@ -594,6 +594,50 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ASmoothRampEasesInAndOutInsteadOfGrowingLinearly()
+        {
+            FakeVertex quarter = Vertex(0f, 0.5f, 0f);
+            FakeVertex half = Vertex(0f, 1f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 0f, 1f),
+                Ramps(Curved(RampPart("y", 0f, 2f), "smooth")),
+                Targets(Every(ElementKinds.Vertex)));
+
+            Near(0.15625, quarter.Position.Z);
+            Near(0.5, half.Position.Z);
+        }
+
+        [Fact]
+        public void ALinearCurveIsTheSameAsLeavingTheCurveOut()
+        {
+            FakeVertex vertex = Vertex(0f, 0.5f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 0f, 1f),
+                Ramps(Curved(RampPart("y", 0f, 2f), "linear")),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(0.25, vertex.Position.Z);
+        }
+
+        [Fact]
+        public void AnUnknownCurveIsRefused()
+        {
+            Vertex(0f, 0.5f, 0f);
+
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ComposedEditFixture.Code(Place(
+                    Operation(ModelPlaceElements.TranslateBy),
+                    Offset(0f, 0f, 1f),
+                    Ramps(Curved(RampPart("y", 0f, 2f), "cubic")),
+                    Targets(Target(ElementKinds.Vertex, 0)))));
+        }
+
+        [Fact]
         public void RotatingWithARampTurnsEachVertexAndItsNormalByWhereItIsAlongTheAxis()
         {
             FakeVertex vertex = Vertex(1f, 1f, 0f);
@@ -848,6 +892,13 @@ namespace PmxEditorMcp.Tests
                 { ModelPlaceElements.RampFromName, from },
                 { ModelPlaceElements.RampToName, to },
             };
+        }
+
+        private static object Curved(object part, string curve)
+        {
+            ((IDictionary<string, object>)part).Add("curve", curve);
+
+            return part;
         }
 
         private static KeyValuePair<string, object> Offset(float x, float y, float z)

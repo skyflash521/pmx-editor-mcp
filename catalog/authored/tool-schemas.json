@@ -12327,6 +12327,12 @@
                     "origin": "hostInput",
                     "shape": "number",
                     "required": true
+                  },
+                  {
+                    "name": "curve",
+                    "origin": "hostInput",
+                    "shape": "text",
+                    "required": false
                   }
                 ]
               }

@@ -38,6 +38,12 @@ namespace PmxEditorMcp
 
         public const string RampToName = "to";
 
+        public const string RampCurveName = "curve";
+
+        public const string LinearCurve = "linear";
+
+        public const string SmoothCurve = "smooth";
+
         public static IList<string> Operations
         {
             get { return new[] { AlignTo, TranslateBy, RotateBy, ScaleBy }; }
@@ -322,13 +328,28 @@ namespace PmxEditorMcp
                 return false;
             }
 
+            object curveGiven;
+            string curve = held.TryGetValue(RampCurveName, out curveGiven) ? curveGiven as string : LinearCurve;
+            if (!string.Equals(curve, LinearCurve, StringComparison.Ordinal)
+                && !string.Equals(curve, SmoothCurve, StringComparison.Ordinal))
+            {
+                message = RampName + " の " + RampCurveName + " は " + LinearCurve + "・" + SmoothCurve
+                    + " のどちらかでなければならない。";
+
+                return false;
+            }
+
+            bool smooth = string.Equals(curve, SmoothCurve, StringComparison.Ordinal);
+
             weight = spot =>
             {
                 float along = string.Equals(axis, ModelEditVertices.AxisX, StringComparison.Ordinal)
                     ? spot.X
                     : string.Equals(axis, ModelEditVertices.AxisY, StringComparison.Ordinal) ? spot.Y : spot.Z;
 
-                return Math.Max(0f, Math.Min(1f, (along - from) / (to - from)));
+                float share = Math.Max(0f, Math.Min(1f, (along - from) / (to - from)));
+
+                return smooth ? share * share * (3f - (2f * share)) : share;
             };
             message = null;
 
