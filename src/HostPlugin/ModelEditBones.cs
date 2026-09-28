@@ -739,11 +739,6 @@ namespace PmxEditorMcp
                 return BoneKind.IK;
             }
 
-            if (!bone.Visible)
-            {
-                return BoneKind.Unvisible;
-            }
-
             if (bone.IsAppendRotation)
             {
                 return BoneKind.RotateEffect;
@@ -752,6 +747,11 @@ namespace PmxEditorMcp
             if (bone.IsFixAxis)
             {
                 return BoneKind.Twist;
+            }
+
+            if (!bone.Visible)
+            {
+                return BoneKind.Unvisible;
             }
 
             return bone.IsTranslation ? BoneKind.RotateMove : BoneKind.Rotate;

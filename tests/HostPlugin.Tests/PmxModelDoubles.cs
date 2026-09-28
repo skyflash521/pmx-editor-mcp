@@ -1462,13 +1462,12 @@ namespace PmxEditorMcp.Tests
 
             if (deform != Deform.Bdef4 && deform != Deform.Qdef)
             {
-                double total = 0d;
+                float sum = 0f;
                 for (int at = 0; at < values.Length; at++)
                 {
-                    total += values[at];
+                    sum += values[at];
                 }
 
-                float sum = (float)total;
                 if (sum != 0f && sum != 1f)
                 {
                     float scale = 1f / sum;

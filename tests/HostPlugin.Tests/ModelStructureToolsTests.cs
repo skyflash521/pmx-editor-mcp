@@ -286,7 +286,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> envelope = Nodes(
                 Operation(ModelEditNodes.RegisterUnlistedMorphs),
-                ComposedEditFixture.Given("indices", new object[] { 0 }));
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
 
             Assert.Contains(
                 ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>(),
@@ -300,7 +300,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> envelope = Nodes(
                 Operation(ModelEditNodes.RegisterUnlistedMorphs),
-                ComposedEditFixture.Given("indices", new object[] { 0 }));
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
 
             Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName), "警告が付いている。");
         }
@@ -314,7 +314,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> envelope = Nodes(
                 Operation(ModelEditNodes.RegisterUnlistedMorphs),
-                ComposedEditFixture.Given("indices", new object[] { 0 }));
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
 
             Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName), "警告が付いている。");
         }
@@ -346,7 +346,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Nodes(
                 Operation(ModelEditNodes.RegisterPickedBones),
-                ComposedEditFixture.Given("indices", new object[] { 1 }),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
                 ComposedEditFixture.Given(
                     ModelEditNodes.TargetIndicesName, new object[] { 0 })));
 
@@ -394,7 +394,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> envelope = Nodes(
                 Operation(ModelEditNodes.RegisterUnlistedBones),
-                ComposedEditFixture.Given("indices", new object[] { 0 }));
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
             Assert.Contains("表情の枠にはボーンを載せられない", ComposedEditFixture.Message(envelope));
@@ -408,7 +408,7 @@ namespace PmxEditorMcp.Tests
 
             ComposedEditFixture.Value(Nodes(
                 Operation(ModelEditNodes.RegisterUnlistedMorphs),
-                ComposedEditFixture.Given("indices", new object[] { 0 })));
+                ComposedEditFixture.Given("indices", new object[] { 1 })));
 
             Assert.Same(
                 Now(missing),
@@ -900,6 +900,110 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(_fixture.Model.Morph);
         }
 
+        /// <summary>
+        /// SDEFの参照点は、重みが0の枠と組になっていても、SDEFでない頂点が持っていても、座標以外の
+        /// 中身として比べる。
+        /// </summary>
+        [Theory]
+        [InlineData(true, 0)]
+        [InlineData(true, 1)]
+        [InlineData(false, 0)]
+        [InlineData(false, 1)]
+        public void ACopyWhoseSdefPointDiffersIsRefusedEvenWhenItsSlotHasNoWeight(bool sdef, int point)
+        {
+            FakePmx copy = new FakePmx();
+            copy.Bone.Add(new FakeBone("腕"));
+            copy.Bone.Add(new FakeBone("ひじ"));
+            copy.Vertex.Add(SdefPointed(new FakeVertex(0f, 0f, 0f), copy.Bone, sdef));
+            _fixture.Model.Bone.Add(new FakeBone("腕"));
+            _fixture.Model.Bone.Add(new FakeBone("ひじ"));
+            FakeVertex moved = SdefPointed(new FakeVertex(3f, 0f, 0f), _fixture.Model.Bone, sdef);
+            if (point == 0)
+            {
+                moved.SDEF_R0 = new V3(5f, 0f, 0f);
+            }
+            else
+            {
+                moved.SDEF_R1 = new V3(5f, 0f, 0f);
+            }
+
+            _fixture.Model.Vertex.Add(moved);
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
+
+            IDictionary<string, object> envelope = FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Empty(_fixture.Model.Morph);
+        }
+
+        /// <summary>
+        /// 重みが0の枠のボーンは、エディタが反映で書き換えないかぎり中身として比べる。
+        /// </summary>
+        [Fact]
+        public void ACopyWhoseBoneWithoutWeightDiffersIsRefused()
+        {
+            FakePmx copy = new FakePmx();
+            copy.Bone.Add(new FakeBone("腕"));
+            copy.Bone.Add(new FakeBone("ひじ"));
+            copy.Bone.Add(new FakeBone("手首"));
+            copy.Vertex.Add(new FakeVertex(0f, 0f, 0f)
+            {
+                Bone1 = copy.Bone[0],
+                Weight1 = 1f,
+                Bone2 = copy.Bone[1],
+                Weight2 = 0f,
+            });
+            _fixture.Model.Bone.Add(new FakeBone("腕"));
+            _fixture.Model.Bone.Add(new FakeBone("ひじ"));
+            _fixture.Model.Bone.Add(new FakeBone("手首"));
+            _fixture.Model.Vertex.Add(new FakeVertex(3f, 0f, 0f)
+            {
+                Bone1 = _fixture.Model.Bone[0],
+                Weight1 = 1f,
+                Bone2 = _fixture.Model.Bone[2],
+                Weight2 = 0f,
+            });
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
+
+            IDictionary<string, object> envelope = FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Empty(_fixture.Model.Morph);
+        }
+
+        /// <summary>
+        /// エディタは反映のたびに、使う枠のうちボーンを指さない枠をボーン0・重み0へ書き換える。
+        /// 複製を取ってから頂点を動かすと、いまの頂点はその枠にボーン0を持つ。
+        /// </summary>
+        [Fact]
+        public void ACopyTakenBeforeTheEmptySlotsWereFilledIsStillTakenAfterAMove()
+        {
+            _fixture.Model.Bone.Add(new FakeBone("腕"));
+            _fixture.Model.Bone.Add(new FakeBone("ひじ"));
+            _fixture.Model.Vertex.Add(new FakeVertex(0f, 0f, 0f)
+            {
+                Bone1 = _fixture.Model.Bone[0],
+                Weight1 = 0.5f,
+                Bone2 = _fixture.Model.Bone[1],
+                Weight2 = 0.5f,
+                QDEF = true,
+            });
+            int handle = _fixture.Handles.Issue(
+                typeof(IPXPmx).FullName, FakeEditorState.Duplicate(_fixture.Model), () => { });
+            Moved(2f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle)));
+
+            Assert.Same(_fixture.Model.Bone[0], _fixture.Model.Vertex[0].Bone3);
+            Assert.Equal(1, value[ModelMorphFromMoved.OffsetsName]);
+        }
+
         [Fact]
         public void ACopyWhoseVertexPointsAtABoneOutsideTheListIsRefused()
         {
@@ -1003,6 +1107,19 @@ namespace PmxEditorMcp.Tests
             return suppressed
                 ? given.Concat(new[] { ComposedEditFixture.Given(UndoBarrier.SuppressName, true) }).ToArray()
                 : given;
+        }
+
+        private static FakeVertex SdefPointed(FakeVertex vertex, IList<IPXBone> bones, bool sdef)
+        {
+            vertex.Bone1 = bones[0];
+            vertex.Weight1 = 1f;
+            vertex.Bone2 = bones[1];
+            vertex.Weight2 = 0f;
+            vertex.SDEF = sdef;
+            vertex.SDEF_R0 = new V3(1f, 0f, 0f);
+            vertex.SDEF_R1 = new V3(-1f, 0f, 0f);
+
+            return vertex;
         }
 
         /// <summary>エディタの操作として、先頭の頂点をXへ動かして反映する。</summary>

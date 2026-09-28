@@ -1,6 +1,7 @@
 // ComposedEdit に載る合成ツール。
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PEPlugin;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
@@ -148,34 +149,54 @@ namespace PmxEditorMcp
             return placed;
         }
 
-        /// <returns>座標を除いて同じ頂点なら真。ボーンは並びの中の位置で見る。</returns>
+        /// <returns>
+        /// 座標を除いて同じ頂点なら真。ボーンは並びの中の位置で見る。重みを持つ枠のボーンと重みの組は
+        /// 枠の並びを問わずに比べる。そのうえで、ボーン・重み・変形方式・SDEFの参照点を、エディタが
+        /// 反映のたびにかける正規化を両方へかけてから比べる。
+        /// </returns>
         private static bool Alike(
             IPXVertex based,
             IPXVertex vertex,
             IDictionary<IPXBone, int> basedBones,
             IDictionary<IPXBone, int> bones)
         {
-            return Same(based.Bone1, vertex.Bone1, basedBones, bones)
-                && Same(based.Bone2, vertex.Bone2, basedBones, bones)
-                && Same(based.Bone3, vertex.Bone3, basedBones, bones)
-                && Same(based.Bone4, vertex.Bone4, basedBones, bones)
-                && based.Weight1 == vertex.Weight1
-                && based.Weight2 == vertex.Weight2
-                && based.Weight3 == vertex.Weight3
-                && based.Weight4 == vertex.Weight4
+            Weights basedWeights = Weights.Normalized(based, basedBones);
+            Weights weights = Weights.Normalized(vertex, bones);
+
+            return basedWeights != null
+                && weights != null
+                && Weighted(based, basedBones).SequenceEqual(Weighted(vertex, bones))
+                && basedWeights.SameAs(weights)
                 && based.EdgeScale == vertex.EdgeScale
-                && based.QDEF == vertex.QDEF
-                && based.SDEF == vertex.SDEF
                 && Same(based.Normal, vertex.Normal)
                 && Same(based.SDEF_C, vertex.SDEF_C)
-                && Same(based.SDEF_R0, vertex.SDEF_R0)
-                && Same(based.SDEF_R1, vertex.SDEF_R1)
                 && based.UV.X == vertex.UV.X
                 && based.UV.Y == vertex.UV.Y
                 && Same(based.UVA1, vertex.UVA1)
                 && Same(based.UVA2, vertex.UVA2)
                 && Same(based.UVA3, vertex.UVA3)
                 && Same(based.UVA4, vertex.UVA4);
+        }
+
+        /// <returns>重みを持つ枠の、ボーンの位置と重みの組を並べたもの。ボーンを指さない枠の位置は -1。</returns>
+        private static IList<KeyValuePair<int, float>> Weighted(
+            IPXVertex vertex, IDictionary<IPXBone, int> bones)
+        {
+            IPXBone[] held = { vertex.Bone1, vertex.Bone2, vertex.Bone3, vertex.Bone4 };
+            float[] given = { vertex.Weight1, vertex.Weight2, vertex.Weight3, vertex.Weight4 };
+            List<KeyValuePair<int, float>> weighted = new List<KeyValuePair<int, float>>();
+            for (int slot = 0; slot < held.Length; slot++)
+            {
+                int at;
+                if (given[slot] != 0f)
+                {
+                    weighted.Add(new KeyValuePair<int, float>(
+                        held[slot] != null && bones.TryGetValue(held[slot], out at) ? at : -1,
+                        given[slot]));
+                }
+            }
+
+            return weighted.OrderBy(w => w.Key).ThenBy(w => w.Value).ToList();
         }
 
         private static bool Same(V3 based, V3 held)
@@ -189,27 +210,179 @@ namespace PmxEditorMcp
                 && based.W == held.W;
         }
 
-        /// <returns>
-        /// どちらも指していないか、どちらも並びの中の同じ位置を指すなら真。片方でも並びに
-        /// 居ないボーンを指していれば偽。
-        /// </returns>
-        private static bool Same(
-            IPXBone based,
-            IPXBone bone,
-            IDictionary<IPXBone, int> basedBones,
-            IDictionary<IPXBone, int> bones)
+        /// <summary>
+        /// 頂点のボーン・重み・変形方式・SDEFの参照点に、エディタが反映のたびにかける正規化
+        /// (PmxVertex.NormalizeWeight)をかけたもの。ボーンは並びの中の位置で持ち、指さない枠は -1。
+        /// </summary>
+        private sealed class Weights
         {
-            if (based == null || bone == null)
+            private const int Slots = 4;
+
+            private readonly int[] _bones = new int[Slots];
+
+            private readonly float[] _values = new float[Slots];
+
+            private Deform _deform;
+
+            private V3 _r0;
+
+            private V3 _r1;
+
+            private enum Deform
             {
-                return based == null && bone == null;
+                Bdef1,
+
+                Bdef2,
+
+                Bdef4,
+
+                Sdef,
+
+                Qdef,
             }
 
-            int basedAt;
-            int at;
+            /// <returns>重みを持つ枠が並びに居ないボーンを指していれば null。</returns>
+            public static Weights Normalized(IPXVertex vertex, IDictionary<IPXBone, int> bones)
+            {
+                IPXBone[] held = { vertex.Bone1, vertex.Bone2, vertex.Bone3, vertex.Bone4 };
+                float[] given = { vertex.Weight1, vertex.Weight2, vertex.Weight3, vertex.Weight4 };
+                Weights made = new Weights
+                {
+                    _deform = vertex.SDEF ? Deform.Sdef : vertex.QDEF ? Deform.Qdef : Deform.Bdef2,
+                    _r0 = vertex.SDEF_R0,
+                    _r1 = vertex.SDEF_R1,
+                };
+                for (int slot = 0; slot < Slots; slot++)
+                {
+                    int at;
+                    if (held[slot] == null)
+                    {
+                        at = -1;
+                    }
+                    else if (!bones.TryGetValue(held[slot], out at))
+                    {
+                        if (given[slot] != 0f)
+                        {
+                            return null;
+                        }
 
-            return basedBones.TryGetValue(based, out basedAt)
-                && bones.TryGetValue(bone, out at)
-                && basedAt == at;
+                        at = -1;
+                    }
+
+                    made._bones[slot] = at;
+                    made._values[slot] = at < 0 ? 0f : given[slot];
+                }
+
+                made.Normalize();
+
+                return made;
+            }
+
+            public bool SameAs(Weights other)
+            {
+                return _deform == other._deform
+                    && _bones.SequenceEqual(other._bones)
+                    && _values.SequenceEqual(other._values)
+                    && Same(_r0, other._r0)
+                    && Same(_r1, other._r1);
+            }
+
+            private void Normalize()
+            {
+                if (_deform == Deform.Sdef)
+                {
+                    if (_bones[0] > _bones[1])
+                    {
+                        Swap(0, 1);
+                        V3 first = _r0;
+                        _r0 = _r1;
+                        _r1 = first;
+                    }
+                }
+                else
+                {
+                    Order();
+                }
+
+                _deform = Settled();
+                if (_deform == Deform.Sdef)
+                {
+                    for (int slot = 2; slot < Slots; slot++)
+                    {
+                        _bones[slot] = -1;
+                        _values[slot] = 0f;
+                    }
+                }
+
+                if (_deform != Deform.Bdef4 && _deform != Deform.Qdef)
+                {
+                    float sum = 0f;
+                    for (int slot = 0; slot < Slots; slot++)
+                    {
+                        sum += _values[slot];
+                    }
+
+                    if (sum != 0f && sum != 1f)
+                    {
+                        float scale = 1f / sum;
+                        for (int slot = 0; slot < Slots; slot++)
+                        {
+                            _values[slot] *= scale;
+                        }
+                    }
+                }
+
+                int used = _deform == Deform.Bdef2 || _deform == Deform.Sdef ? 2
+                    : _deform == Deform.Bdef4 || _deform == Deform.Qdef ? Slots : 1;
+                for (int slot = 0; slot < used; slot++)
+                {
+                    if (_bones[slot] < 0)
+                    {
+                        _bones[slot] = 0;
+                        _values[slot] = 0f;
+                    }
+                }
+
+                _deform = Settled();
+            }
+
+            /// <summary>重みの絶対値の大きい順。同じ重みの枠は元の並びを保つ。</summary>
+            private void Order()
+            {
+                for (int slot = 1; slot < Slots; slot++)
+                {
+                    for (int to = slot; to > 0 && Math.Abs(_values[to - 1]) < Math.Abs(_values[to]); to--)
+                    {
+                        Swap(to - 1, to);
+                    }
+                }
+            }
+
+            private Deform Settled()
+            {
+                int count = _values.Count(v => v != 0f);
+                if (_deform == Deform.Sdef && count != 1)
+                {
+                    return Deform.Sdef;
+                }
+
+                if (_deform == Deform.Qdef && count != 1)
+                {
+                    return Deform.Qdef;
+                }
+
+                return count <= 1 ? Deform.Bdef1 : count == 2 ? Deform.Bdef2 : Deform.Bdef4;
+            }
+
+            private void Swap(int first, int second)
+            {
+                int bone = _bones[first];
+                _bones[first] = _bones[second];
+                _bones[second] = bone;
+                float value = _values[first];
+                _values[first] = _values[second];
+                _values[second] = value;
+            }
         }
 
         private static bool TryBase(

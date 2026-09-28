@@ -313,7 +313,7 @@ namespace PmxEditorMcp.Tests
         [InlineData(ElementKinds.Face, typeof(IPXFace))]
         [InlineData(ElementKinds.IkLink, typeof(IPXIKLink))]
         [InlineData(ElementKinds.MorphOffset, typeof(IPXVertexMorphOffset))]
-        [InlineData(ElementKinds.NodeItem, typeof(IPXMorphNodeItem))]
+        [InlineData(ElementKinds.NodeItem, typeof(IPXBoneNodeItem))]
         [InlineData(ElementKinds.SoftBodyAnchor, typeof(IPXSoftBodyAnchor))]
         public void TheKindsThatAParentHoldsCloneTheShapeTheirListHolds(string name, Type shape)
         {

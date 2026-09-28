@@ -291,7 +291,7 @@ namespace PmxEditorMcp
         private static void PutNodes(object owner, IList<object> items)
         {
             IPXPmx model = (IPXPmx)owner;
-            object[] ahead = { model.ExpressionNode, model.RootNode };
+            object[] ahead = { model.RootNode, model.ExpressionNode };
             for (int at = 0; at < ahead.Length; at++)
             {
                 if (items.Count <= at || !ReferenceEquals(items[at], ahead[at]))

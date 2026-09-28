@@ -531,7 +531,7 @@ namespace PmxEditorMcp.Tests
             _model.ExpressionNode.Items.Add(new FakeBoneNodeItem(bones[0]));
 
             Assert.Equal(
-                new[] { 0 },
+                new[] { 1 },
                 ReferenceEdges.Union(_model, ElementKinds.Bone, new[] { 0 }, 0f)
                     .Of(ElementKinds.Node));
         }

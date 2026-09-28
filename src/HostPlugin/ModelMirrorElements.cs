@@ -443,8 +443,6 @@ namespace PmxEditorMcp
             {
                 vertex.Position = Aside(vertex.Position);
                 vertex.Normal = Aside(vertex.Normal);
-                vertex.SDEF_R0 = Aside(vertex.SDEF_R0);
-                vertex.SDEF_R1 = Aside(vertex.SDEF_R1);
                 changed++;
             }
 

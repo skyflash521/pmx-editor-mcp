@@ -78,6 +78,12 @@ namespace PmxEditorMcp
         /// <summary>ビューごとに実体の分かれる表示設定の受け手の型。</summary>
         public const string ViewSettingType = "PEPlugin.View.IPEViewSettingConnector";
 
+        private const string PmxFilePathRow = "PEPlugin.Pmx.IPXPmx.FilePath()";
+
+        private const string PmxConnectorType = "PEPlugin.Pmx.IPXPmxConnector";
+
+        private const string CurrentPathRow = "PEPlugin.Pmx.IPXPmxConnector.CurrentPath()";
+
         /// <summary><see cref="ViewName"/> が取る値。先頭は渡さなかったときと同じ PMXView を指す。</summary>
         public static readonly string[] Views = { "pmxView", "transformView", "subView" };
 
@@ -149,6 +155,10 @@ namespace PmxEditorMcp
         /// </summary>
         private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites> _deferred =
             new System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites>();
+
+        /// <summary>生成物を預ける呼び出しの、位置で受け取る引数ごとに、生成物のその引数に当たる項目。</summary>
+        private readonly Dictionary<ToolArgument, ToolField> _issuedReferences =
+            new Dictionary<ToolArgument, ToolField>(ReferenceComparer<ToolArgument>.Instance);
 
         private ToolDispatch(
             SdkRelayTable relay,
@@ -286,6 +296,7 @@ namespace PmxEditorMcp
             ToolDispatch dispatch = new ToolDispatch(
                 relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events,
                 refresh, screen, measures);
+            dispatch.IssuedReferences(calls, aggregations);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
                 IList<ToolCall> bound = call.Value;
@@ -324,6 +335,51 @@ namespace PmxEditorMcp
                         ScreenRefresh.Needed(bound.Receiver.Edit, new string[0]),
                         context => Acting(dispatch, bound)(context)));
             }
+        }
+
+        /// <summary>
+        /// 生成物を預ける呼び出しの位置で受け取る引数を、生成物の型の書き込める項目のうち同じ名前で
+        /// 同じリストを指すものと組にする。組にできない引数があれば登録を止める。
+        /// </summary>
+        private void IssuedReferences(
+            IDictionary<string, IList<ToolCall>> calls, IDictionary<string, ToolFields> aggregations)
+        {
+            List<ToolField> writable = aggregations.Values
+                .Where(a => a.Writes)
+                .SelectMany(a => a.Sets)
+                .SelectMany(s => s.Fields)
+                .Where(f => f.Referenced != null && !f.Listed)
+                .ToList();
+            foreach (KeyValuePair<string, IList<ToolCall>> named in calls)
+            {
+                foreach (ToolCall call in named.Value.Where(c => c.Issues != null))
+                {
+                    foreach (ToolArgument argument in call.Arguments.Where(a => !a.Injected && a.Referenced != null))
+                    {
+                        ToolField field = writable.FirstOrDefault(
+                            f => string.Equals(f.Name, argument.Name, StringComparison.Ordinal)
+                                && string.Equals(Declaring(f.RowKey), call.Issues.FullName, StringComparison.Ordinal)
+                                && string.Equals(
+                                    f.Referenced.RowKey, argument.Referenced.RowKey, StringComparison.Ordinal));
+                        if (field == null)
+                        {
+                            throw new InvalidOperationException(
+                                named.Key + " の引数 " + argument.Name + " に当たる、"
+                                    + call.Issues.FullName + " の書き込める項目が無い。");
+                        }
+
+                        _issuedReferences[argument] = field;
+                    }
+                }
+            }
+        }
+
+        private static string Declaring(string rowKey)
+        {
+            int open = rowKey.IndexOf('(');
+            int dot = rowKey.LastIndexOf('.', open < 0 ? rowKey.Length - 1 : open);
+
+            return dot < 0 ? string.Empty : rowKey.Substring(0, dot);
         }
 
         /// <summary>
@@ -896,9 +952,9 @@ namespace PmxEditorMcp
 
             known.AddRange(Choosing(call.Receiver));
             int count = 1;
-            int offset;
-            int limit;
-            bool runs;
+            int offset = 0;
+            int limit = int.MaxValue;
+            bool runs = false;
             int most = Most(context);
             if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
                 || !TryView(context, out code, out message)
@@ -907,9 +963,9 @@ namespace PmxEditorMcp
                 || !TryPassDanger(call, handle, confirm, out code, out message)
                 || (counts && !TryCount(
                     context, IssuanceInput.CountName, 1, 1, out count, out code, out message))
-                || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
-                || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message)
-                || !TryRuns(context, out runs, out code, out message))
+                || (call.Paged && !TryCount(context, OffsetName, 0, 0, out offset, out code, out message))
+                || (call.Paged && !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message))
+                || (Joins(call) && !TryRuns(context, out runs, out code, out message)))
             {
                 return ToolEnvelope.Failure(code, message);
             }
@@ -933,6 +989,7 @@ namespace PmxEditorMcp
                 arguments[at] = value;
             }
 
+            object[] positions = (object[])arguments.Clone();
             object result = null;
             object called = null;
             int? readBack = null;
@@ -993,6 +1050,11 @@ namespace PmxEditorMcp
                     if (!TryProjected(call, value, out result, out refused))
                     {
                         return;
+                    }
+
+                    if (issues)
+                    {
+                        DeferIssued(call, value, positions);
                     }
 
                     drawn += Drawn(call, result);
@@ -2021,6 +2083,29 @@ namespace PmxEditorMcp
             }
 
             held.Put(pending);
+        }
+
+        /// <summary>
+        /// 生成物へ位置で渡した引数を、生成物の預かりにする。呼び出しが解いた実体は相手にした複製の
+        /// 中に居るので、生成物を並びへ加える呼び出しが、加える先のPMXの中で解き直して書き込む。
+        /// </summary>
+        private void DeferIssued(ToolCall call, object issued, object[] positions)
+        {
+            if (issued == null)
+            {
+                return;
+            }
+
+            for (int at = 0; at < call.Arguments.Count; at++)
+            {
+                ToolField field;
+                if (positions[at] == null || !_issuedReferences.TryGetValue(call.Arguments[at], out field))
+                {
+                    continue;
+                }
+
+                Defer(issued, new DeferredWrite(issued, field, (int)positions[at]));
+            }
         }
 
         /// <summary>
@@ -3090,7 +3175,8 @@ namespace PmxEditorMcp
 
                 updated = column.Count;
                 stage = Reflecting(tool.Receiver, target, stage);
-                refused = Commit(context, tool.Receiver, target, RootList(tool.Access), true);
+                refused = Commit(context, tool.Receiver, target, RootList(tool.Access), true)
+                    ?? CarryFilePath(tool.Receiver, target, writing, pointing);
             }, out failure, out unavailable))
             {
                 return Unavailable(unavailable);
@@ -3104,6 +3190,52 @@ namespace PmxEditorMcp
             return refused != null
                 ? refused.Envelope
                 : ToolEnvelope.Success(SetResponse.Updated(updated));
+        }
+
+        /// <summary>
+        /// 現在のPMXの複製へ書いたファイルパスを、エディタの現在のモデルへ書く。反映の行は
+        /// ファイルパスを写さない。
+        /// </summary>
+        private Refusal CarryFilePath(
+            ToolReceiver receiver, PmxTarget target, IList<Change> writing, IList<object[]> pointing)
+        {
+            if (!Reflects(receiver, target) || receiver.Bridged)
+            {
+                return null;
+            }
+
+            for (int which = 0; which < writing.Count; which++)
+            {
+                for (int field = 0; field < writing[which].Fields.Count; field++)
+                {
+                    if (!string.Equals(
+                        writing[which].Fields[field].RowKey, PmxFilePathRow, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    SdkReceiver found;
+                    if (!_receivers.TryGetValue(PmxConnectorType, out found))
+                    {
+                        return new Refusal(ToolEnvelope.Failure(
+                            ToolEnvelope.NotApplicable, "受け手を得る道が無い: " + PmxConnectorType));
+                    }
+
+                    object ignored;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(
+                        CurrentPathRow,
+                        found(_connection),
+                        new[] { pointing[which][field] },
+                        out ignored,
+                        out refusal))
+                    {
+                        return Refusal.Of(CurrentPathRow, refusal);
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

@@ -46,7 +46,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelFindReferrers.ReferrerKindName, ElementKinds.Node));
 
-            Assert.Equal(new[] { 0, 2 }, Places(found));
+            Assert.Equal(new[] { 1, 2 }, Places(found));
         }
 
         [Fact]
