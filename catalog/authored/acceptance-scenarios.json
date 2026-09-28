@@ -4685,6 +4685,69 @@
         },
         {
           "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "name": "骨A"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              1
+            ],
+            "value": {
+              "name": "骨B"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              2
+            ],
+            "value": {
+              "name": "骨C"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_reorder_elements",
           "arguments": {
             "kind": "bone",
@@ -4722,6 +4785,18 @@
               {
                 "path": "total",
                 "equals": 3
+              },
+              {
+                "path": "items.0.name",
+                "equals": "骨C"
+              },
+              {
+                "path": "items.1.name",
+                "equals": "骨A"
+              },
+              {
+                "path": "items.2.name",
+                "equals": "骨B"
               }
             ]
           }
@@ -4760,6 +4835,14 @@
               {
                 "path": "total",
                 "equals": 2
+              },
+              {
+                "path": "items.0.name",
+                "equals": "骨A"
+              },
+              {
+                "path": "items.1.name",
+                "equals": "骨B"
               }
             ]
           }
@@ -4769,7 +4852,13 @@
           "tool": "session_undo",
           "arguments": {},
           "expect": {
-            "ok": true
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
           }
         },
         {
@@ -4787,6 +4876,63 @@
               {
                 "path": "total",
                 "equals": 3
+              },
+              {
+                "path": "items.0.name",
+                "equals": "骨C"
+              },
+              {
+                "path": "items.1.name",
+                "equals": "骨A"
+              },
+              {
+                "path": "items.2.name",
+                "equals": "骨B"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "name"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.name",
+                "equals": "骨A"
+              },
+              {
+                "path": "items.1.name",
+                "equals": "骨B"
+              },
+              {
+                "path": "items.2.name",
+                "equals": "骨C"
               }
             ]
           }
@@ -4846,8 +4992,8 @@
                   0
                 ],
                 "uv": [
-                  0.1,
-                  0.1
+                  0.125,
+                  0.125
                 ]
               },
               {
@@ -4857,8 +5003,8 @@
                   0
                 ],
                 "uv": [
-                  0.9,
-                  0.1
+                  0.875,
+                  0.125
                 ]
               },
               {
@@ -4868,8 +5014,8 @@
                   0
                 ],
                 "uv": [
-                  0.1,
-                  0.9
+                  0.125,
+                  0.875
                 ]
               }
             ]
@@ -5167,6 +5313,77 @@
         },
         {
           "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  -10,
+                  -10,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  10,
+                  -10,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  0,
+                  10,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "align",
+            "all": true,
+            "axis": "y"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_find_material_vertices",
           "arguments": {
             "indices": [
@@ -5308,6 +5525,73 @@
         },
         {
           "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "uv"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.uv",
+                "equals": [
+                  0.125,
+                  0.125
+                ]
+              },
+              {
+                "path": "items.1.uv",
+                "equals": [
+                  0.875,
+                  0.125
+                ]
+              },
+              {
+                "path": "items.2.uv",
+                "equals": [
+                  0.125,
+                  0.875
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_uv",
+          "arguments": {
+            "operation": "flipUV",
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_draw_uv_layout",
           "arguments": {
             "all": true
@@ -5333,6 +5617,193 @@
               {
                 "path": "changed",
                 "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_faces",
+          "arguments": {
+            "parentAll": true,
+            "all": true,
+            "fields": [
+              "vertex1",
+              "vertex2",
+              "vertex3"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.vertex1",
+                "equals": 0
+              },
+              {
+                "path": "items.0.vertex2",
+                "equals": 1
+              },
+              {
+                "path": "items.0.vertex3",
+                "equals": 2
+              },
+              {
+                "path": "items.1.vertex1",
+                "equals": 0
+              },
+              {
+                "path": "items.1.vertex2",
+                "equals": 1
+              },
+              {
+                "path": "items.1.vertex3",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_faces",
+          "arguments": {
+            "operation": "flip",
+            "parentAll": true,
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "diffuse": [
+                2,
+                2,
+                2,
+                1
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_materials",
+          "arguments": {
+            "operation": "clampColor",
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "diffuse"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.diffuse",
+                "equals": [
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "diffuse"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.diffuse",
+                "equals": [
+                  2,
+                  2,
+                  2,
+                  1
+                ]
               }
             ]
           }
@@ -5373,6 +5844,54 @@
         },
         {
           "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_faces",
+          "arguments": {
+            "parentAll": true,
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clean_faces",
+          "arguments": {
+            "operation": "duplicateInMaterial",
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_materials",
           "arguments": {
             "operation": "extractFacesWithVertices",
@@ -5383,6 +5902,136 @@
           },
           "expect": {
             "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_materials",
+          "arguments": {
+            "operation": "extractFacesWithVertices",
+            "indices": [
+              0
+            ],
+            "faceAll": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_materials",
+          "arguments": {
+            "operation": "extractVertices",
+            "indices": [
+              1
+            ],
+            "vertexIndices": [
+              0,
+              1,
+              2
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added.0",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_materials",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              }
+            ]
           }
         },
         {
@@ -5448,6 +6097,134 @@
           },
           "expect": {
             "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_mirror_elements",
+          "arguments": {
+            "operation": "copyTargets",
+            "targets": [
+              {
+                "kind": "vertex",
+                "all": true
+              },
+              {
+                "kind": "face",
+                "all": true
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_mirror_elements",
+          "arguments": {
+            "operation": "mirrorModel"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position.0",
+                "equals": 10
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position.0",
+                "equals": -10
+              }
+            ]
           }
         },
         {
@@ -5628,6 +6405,128 @@
         },
         {
           "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "bone",
+            "operation": "new",
+            "count": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 1
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "all": true,
+            "value": {
+              "normal": [
+                0,
+                2,
+                0
+              ],
+              "bone1": 0,
+              "weight1": 0.5,
+              "bone2": 1,
+              "weight2": 0.5,
+              "bone3": 2,
+              "weight3": 1
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_normals",
+          "arguments": {
+            "operation": "normalize",
+            "all": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  0,
+                  1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  0,
+                  2,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_normals",
           "arguments": {
             "operation": "normalize",
@@ -5652,6 +6551,173 @@
           },
           "expect": {
             "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  0,
+                  1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_normals",
+          "arguments": {
+            "operation": "rotate",
+            "rotationAxis": [
+              1,
+              0,
+              0
+            ],
+            "rotationAngle": 90,
+            "all": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_weights",
+          "arguments": {
+            "operation": "normalize",
+            "all": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "bone1",
+              "weight1",
+              "bone2",
+              "weight2",
+              "bone3",
+              "weight3"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.bone1",
+                "equals": 2
+              },
+              {
+                "path": "items.0.weight1",
+                "equals": 0.5
+              },
+              {
+                "path": "items.0.bone2",
+                "equals": 0
+              },
+              {
+                "path": "items.0.weight2",
+                "equals": 0.25
+              },
+              {
+                "path": "items.0.bone3",
+                "equals": 1
+              },
+              {
+                "path": "items.0.weight3",
+                "equals": 0.25
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "bone1",
+              "weight1",
+              "bone2",
+              "weight2",
+              "bone3",
+              "weight3"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.bone1",
+                "equals": 2
+              },
+              {
+                "path": "items.0.weight1",
+                "equals": 1
+              },
+              {
+                "path": "items.0.bone2",
+                "equals": 0
+              },
+              {
+                "path": "items.0.weight2",
+                "equals": 0.5
+              },
+              {
+                "path": "items.0.bone3",
+                "equals": 1
+              },
+              {
+                "path": "items.0.weight3",
+                "equals": 0.5
+              }
+            ]
           }
         },
         {
@@ -5799,6 +6865,70 @@
         },
         {
           "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position.1",
+                "equals": 4
+              },
+              {
+                "path": "items.2.position.1",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_place_elements",
+          "arguments": {
+            "operation": "translateBy",
+            "offset": [
+              0,
+              1,
+              0
+            ],
+            "targets": [
+              {
+                "kind": "bone",
+                "all": true
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_list_bones",
           "arguments": {
             "all": true,
@@ -5886,6 +7016,64 @@
         },
         {
           "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position.1",
+                "equals": 5
+              },
+              {
+                "path": "items.2.position.1",
+                "equals": 5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_place_elements",
+          "arguments": {
+            "operation": "scaleBy",
+            "scale": [
+              2,
+              2,
+              2
+            ],
+            "targets": [
+              {
+                "kind": "bone",
+                "all": true
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_list_bones",
           "arguments": {
             "all": true,
@@ -5913,6 +7101,131 @@
           },
           "expect": {
             "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_create_physics",
+          "arguments": {
+            "operation": "bodyFollowBone",
+            "all": true,
+            "shape": "sphere"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bodies",
+          "arguments": {
+            "all": true,
+            "value": {
+              "name": "剛体"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_copy_from_reference",
+          "arguments": {
+            "operation": "bodyNameFromBone",
+            "all": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "name"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.name",
+                "equals": "剛体"
+              },
+              {
+                "path": "items.2.name",
+                "equals": "剛体"
+              }
+            ]
           }
         },
         {
@@ -5971,6 +7284,63 @@
         },
         {
           "kind": "tool",
+          "tool": "model_list_morphs",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morphs",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "materialFromCurrent",
+            "name": "いまの色"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_insert_elements",
           "arguments": {
             "kind": "node",
@@ -5996,6 +7366,49 @@
         },
         {
           "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "addTipBones",
+            "indices": [
+              1
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_morphs",
           "arguments": {
             "operation": "vertexMorphFromVertices",
@@ -6004,6 +7417,66 @@
           },
           "expect": {
             "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_node_items",
+          "arguments": {
+            "parentAll": true,
+            "all": true
+          },
+          "record": {
+            "name": "nodeItemsBeforeUnlistedBones",
+            "path": "total",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_nodes",
+          "arguments": {
+            "operation": "registerUnlistedBones",
+            "all": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_node_items",
+          "arguments": {
+            "parentAll": true,
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": {
+                  "$from": "nodeItemsBeforeUnlistedBones"
+                }
+              }
+            ]
           }
         },
         {
@@ -6661,6 +8134,5189 @@
                 "equals": 0
               }
             ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "受け手を作ってから呼ぶ",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "motion_create_vme",
+          "arguments": {},
+          "record": {
+            "name": "vme17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_bone_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ],
+            "args": {
+              "name": "骨",
+              "pos": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "record": {
+            "name": "vmeBone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_bone_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ],
+            "args": {
+              "name": "外す骨",
+              "pos": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "record": {
+            "name": "vmeBoneGone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_bs_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "boneState17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_d_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "directionEvents17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_direction_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "directionEventsAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_p_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "positionEvents17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_position_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "positionEventsAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_r_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "rotationEvents17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_rotate_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "rotationEventsAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_s_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "scalingEvents17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_scale_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "scalingEventsAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_t_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "translationEvents17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_translate_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "translationEventsAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_to_bone_state_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ],
+            "args": {
+              "state": {
+                "$from": "boneState17"
+              }
+            }
+          },
+          "record": {
+            "name": "toBoneState17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_to_bs_vme_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ],
+            "args": {
+              "state": {
+                "$from": "boneState17"
+              }
+            }
+          },
+          "record": {
+            "name": "toBs17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_d_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "toBoneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "direction17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_direction_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "directionAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_p_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "positionState17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_position_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "positionStateAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_r_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "toBs17"
+              }
+            ]
+          },
+          "record": {
+            "name": "rotation17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_rotation_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "rotationAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_s_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "scale17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_scale_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "scaleAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_t_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "translation17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_translation_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "translationAlias17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vme_directions",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "direction17"
+              }
+            ],
+            "value": {
+              "d": [
+                1,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vme_quaternion_values",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ],
+            "value": {
+              "v": [
+                0,
+                1,
+                0,
+                0
+              ],
+              "a": [
+                0,
+                1,
+                0,
+                0
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vme_scales",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "scale17"
+              }
+            ],
+            "value": {
+              "gs": [
+                2,
+                3,
+                4
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clone_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneState17"
+              }
+            ]
+          },
+          "record": {
+            "name": "stateClone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clone_vme_direction",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "direction17"
+              }
+            ]
+          },
+          "record": {
+            "name": "directionClone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clone_vme_quaternion_value",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "record": {
+            "name": "rotationClone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clone_vme_scale",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "scale17"
+              }
+            ]
+          },
+          "record": {
+            "name": "scaleClone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_r_vme_bone_state",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "stateClone17"
+              }
+            ]
+          },
+          "record": {
+            "name": "rotationStateClone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_directions",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "direction17"
+              },
+              {
+                "$from": "directionClone17"
+              },
+              {
+                "$from": "directionAlias17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.d",
+                "equals": [
+                  1,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.d",
+                "equals": [
+                  1,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.d",
+                "equals": [
+                  1,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_scales",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "scale17"
+              },
+              {
+                "$from": "scaleClone17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.gs",
+                "equals": [
+                  2,
+                  3,
+                  4
+                ]
+              },
+              {
+                "path": "items.1.gs",
+                "equals": [
+                  2,
+                  3,
+                  4
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_direction_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "direction17"
+              }
+            ],
+            "args": {
+              "q": [
+                0,
+                0,
+                1,
+                0
+              ],
+              "op": "Set"
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_direction_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "direction17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clear_vme_direction_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "direction17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ],
+            "args": {
+              "q": [
+                1,
+                0,
+                0,
+                0
+              ],
+              "op": "Set"
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_a_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ],
+            "args": {
+              "q": [
+                0,
+                0,
+                1,
+                0
+              ],
+              "op": "Set"
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_v_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ],
+            "args": {
+              "q": [
+                0,
+                0,
+                1,
+                0
+              ],
+              "op": "Set"
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_a_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_v_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  -1,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clear_a_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clear_v_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_quaternion_values",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              },
+              {
+                "$from": "rotationClone17"
+              },
+              {
+                "$from": "rotationStateClone17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.a",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "path": "items.0.v",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "path": "items.1.a",
+                "equals": [
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.v",
+                "equals": [
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.a",
+                "equals": [
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.v",
+                "equals": [
+                  0,
+                  1,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clear_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_gs_vme_scaling_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "scale17"
+              }
+            ],
+            "args": {
+              "v": [
+                5,
+                6,
+                7
+              ],
+              "op": "Set"
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_gs_vme_scaling_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "scale17"
+              },
+              {
+                "$from": "scaleClone17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "path": "1",
+                "equals": [
+                  2,
+                  3,
+                  4
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vme_bones",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ],
+            "value": {
+              "initialPosition": [
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_position_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "positionEventsAlias17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "pos": [
+                10,
+                10,
+                10
+              ],
+              "op": "Set",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_position_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "positionEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "pos": [
+                4,
+                4,
+                4
+              ],
+              "op": "Add",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_vector_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "translationEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "val": [
+                2,
+                2,
+                2
+              ],
+              "op": "Mul",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_vector_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "translationEventsAlias17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "val": [
+                1,
+                0,
+                0
+              ],
+              "op": "Add",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_gs_vme_scaling_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "scalingEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "scale": [
+                2,
+                2,
+                2
+              ],
+              "op": "Set",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_vector_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "scalingEventsAlias17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "val": [
+                1,
+                2,
+                3
+              ],
+              "op": "Add",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_quaternion_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotationEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "q": [
+                0,
+                1,
+                0,
+                0
+              ],
+              "op": "Mul",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_direction_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "directionEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "q": [
+                0,
+                1,
+                0,
+                0
+              ],
+              "op": "Mul",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_a_vme_quaternion_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotationEventsAlias17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "q": [
+                1,
+                0,
+                0,
+                0
+              ],
+              "op": "Set",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_v_vme_quaternion_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotationEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "q": [
+                0,
+                0,
+                1,
+                0
+              ],
+              "op": "Set",
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_zero_vme_quaternion_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotationEventsAlias17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "id": 2
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_zero_a_vme_quaternion_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotationEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "id": 2
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_zero_v_vme_quaternion_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotationEventsAlias17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "id": 2
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vme_path",
+          "arguments": {},
+          "record": {
+            "name": "vmePath17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_register_direction_event_vme_path",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmePath17"
+              }
+            ],
+            "args": {
+              "op": {
+                "$from": "directionEventsAlias17"
+              },
+              "frame": 5,
+              "dir": [
+                [
+                  0,
+                  0,
+                  -1
+                ],
+                [
+                  0,
+                  0,
+                  -1
+                ]
+              ],
+              "id": 3
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_run_event_vme_frame_event",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              },
+              {
+                "$from": "rotationAlias17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  -1
+                ]
+              },
+              {
+                "path": "1",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  -1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_quaternion_values",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ],
+            "fields": [
+              "a",
+              "v"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.a",
+                "equals": [
+                  1,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.0.v",
+                "equals": [
+                  0,
+                  0,
+                  1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_vector_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "translation17"
+              },
+              {
+                "$from": "scale17"
+              },
+              {
+                "$from": "translationAlias17"
+              },
+              {
+                "$from": "scaleAlias17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  27,
+                  24,
+                  22
+                ]
+              },
+              {
+                "path": "1",
+                "equals": [
+                  3,
+                  4,
+                  5
+                ]
+              },
+              {
+                "path": "2",
+                "equals": [
+                  27,
+                  24,
+                  22
+                ]
+              },
+              {
+                "path": "3",
+                "equals": [
+                  3,
+                  4,
+                  5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_position_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "positionState17"
+              },
+              {
+                "$from": "positionStateAlias17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  28,
+                  26,
+                  25
+                ]
+              },
+              {
+                "path": "1",
+                "equals": [
+                  28,
+                  26,
+                  25
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_run_event_vme_frame_event",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ],
+            "args": {
+              "frame": 5,
+              "id": 3
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_run_event_vme_frame_event",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "id": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_run_event_vme_frame_event",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "id": 2
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_quaternion_value_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_quaternion_values",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotation17"
+              }
+            ],
+            "fields": [
+              "a",
+              "v"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.a",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "path": "items.0.v",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_group_bone_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ]
+          },
+          "record": {
+            "name": "boneGroup17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_bone_vme_group_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneGroup17"
+              }
+            ],
+            "args": {
+              "el": {
+                "$from": "vmeBoneGone17"
+              }
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_groups",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneGroup17"
+              }
+            ],
+            "fields": [
+              "groupCount"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.groupCount",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_bones_vme_group_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneGroup17"
+              }
+            ],
+            "args": {
+              "elArr": [
+                {
+                  "$from": "vmeBone17"
+                }
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_groups",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneGroup17"
+              }
+            ],
+            "fields": [
+              "groupCount"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.groupCount",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_bone_vme_group_bone",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneGroup17"
+              }
+            ],
+            "args": {
+              "el": {
+                "$from": "vmeBoneGone17"
+              }
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_groups",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneGroup17"
+              }
+            ],
+            "fields": [
+              "groupCount"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.groupCount",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_frame_events",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeBone17"
+              },
+              {
+                "$from": "boneGroup17"
+              }
+            ],
+            "fields": [
+              "eventCount",
+              "lastFrame"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.eventCount",
+                "equals": 15
+              },
+              {
+                "path": "items.0.lastFrame",
+                "equals": 6
+              },
+              {
+                "path": "items.1.eventCount",
+                "equals": 30
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vme",
+          "arguments": {},
+          "record": {
+            "name": "vmeOther17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_bone_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeOther17"
+              }
+            ],
+            "args": {
+              "name": "よその骨",
+              "pos": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "record": {
+            "name": "otherBone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_morph_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeOther17"
+              }
+            ],
+            "args": {
+              "name": "よその表情"
+            }
+          },
+          "record": {
+            "name": "otherMorph17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vme_bones",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "vme17"
+                },
+                "handles": [
+                  {
+                    "$from": "otherBone17"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vme_single_value_elements",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "vme17"
+                },
+                "handles": [
+                  {
+                    "$from": "otherMorph17"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_run_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ],
+            "args": {
+              "begin": 0,
+              "end": 0
+            }
+          },
+          "record": {
+            "name": "midResult17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_bone_names_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "midResult17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0.items",
+                "equals": [
+                  "骨",
+                  "外す骨",
+                  "よその骨"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_morph_names_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "midResult17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0.items",
+                "equals": [
+                  "よその表情"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vme_single_value_elements",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vme17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_bone_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ],
+            "args": {
+              "bone": {
+                "$from": "vmeBoneGone17"
+              }
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vme_bones",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vme17"
+              }
+            ],
+            "indices": [
+              1
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_morph_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ],
+            "args": {
+              "name": "表情"
+            }
+          },
+          "record": {
+            "name": "vmeMorph17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_light_vme_object",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ]
+          },
+          "record": {
+            "name": "vmeLight17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_c_vme_light",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeLight17"
+              }
+            ]
+          },
+          "record": {
+            "name": "lightColorEvents17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_vector_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "lightColorEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "val": [
+                1,
+                1,
+                1
+              ],
+              "op": "Set",
+              "id": 0
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_camera_vme_object",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ]
+          },
+          "record": {
+            "name": "vmeCamera17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_pos_vme_camera",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeCamera17"
+              }
+            ]
+          },
+          "record": {
+            "name": "cameraPosition17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_p_vme_camera_position",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cameraPosition17"
+              }
+            ]
+          },
+          "record": {
+            "name": "cameraPositionEvents17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_position_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cameraPositionEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "pos": [
+                0,
+                0,
+                10
+              ],
+              "op": "Set",
+              "id": 0
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_v_vme_single_value_element",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeMorph17"
+              }
+            ]
+          },
+          "record": {
+            "name": "morphValueEvents17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_vme_single_value_event_operator",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "morphValueEvents17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "off": 0.5,
+              "op": "Set",
+              "id": 0
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_run_vme",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vme17"
+              }
+            ],
+            "args": {
+              "begin": 0,
+              "end": 0
+            }
+          },
+          "record": {
+            "name": "vmeResult17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_bone_names_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0.items",
+                "equals": [
+                  "骨"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_morph_names_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0.items",
+                "equals": [
+                  "表情"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_bone_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "boneIndex": 0
+            }
+          },
+          "record": {
+            "name": "boneResult17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_bone_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "boneIndex": 0
+            }
+          },
+          "record": {
+            "name": "boneResultKept17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clear_vme_bone_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneResult17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_bone_results",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "boneResult17"
+              },
+              {
+                "$from": "boneResultKept17"
+              }
+            ],
+            "fields": [
+              "t",
+              "s"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.t",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.0.s",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.t",
+                "equals": [
+                  27,
+                  24,
+                  22
+                ]
+              },
+              {
+                "path": "items.1.s",
+                "equals": [
+                  3,
+                  4,
+                  5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_morph_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "morphIndex": 0
+            }
+          },
+          "record": {
+            "name": "morphResult17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_morph_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ],
+            "args": {
+              "frame": 0,
+              "morphIndex": 0
+            }
+          },
+          "record": {
+            "name": "morphResultKept17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clear_vme_morph_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "morphResult17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_morph_results",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "morphResult17"
+              },
+              {
+                "$from": "morphResultKept17"
+              }
+            ],
+            "fields": [
+              "v"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.v",
+                "equals": 0
+              },
+              {
+                "path": "items.1.v",
+                "equals": 0.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_camera_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ],
+            "args": {
+              "frame": 0
+            }
+          },
+          "record": {
+            "name": "cameraResult17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_camera_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ],
+            "args": {
+              "frame": 0
+            }
+          },
+          "record": {
+            "name": "cameraResultKept17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clear_vme_camera_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cameraResult17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_camera_results",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cameraResult17"
+              },
+              {
+                "$from": "cameraResultKept17"
+              }
+            ],
+            "fields": [
+              "pos"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.pos",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.pos",
+                "equals": [
+                  0,
+                  0,
+                  10
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_light_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ],
+            "args": {
+              "frame": 0
+            }
+          },
+          "record": {
+            "name": "lightResult17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_light_vme_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "vmeResult17"
+              }
+            ],
+            "args": {
+              "frame": 0
+            }
+          },
+          "record": {
+            "name": "lightResultKept17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_clear_vme_light_result",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "lightResult17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vme_light_results",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "lightResult17"
+              },
+              {
+                "$from": "lightResultKept17"
+              }
+            ],
+            "fields": [
+              "c"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.c",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.c",
+                "equals": [
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd",
+          "arguments": {},
+          "record": {
+            "name": "vmd17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bas_camera_key",
+          "arguments": {},
+          "record": {
+            "name": "cameraKey17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_camera_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "vmd17"
+                },
+                "handles": [
+                  {
+                    "$from": "cameraKey17"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_camera_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vmd17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_camera_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vmd17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_light_key",
+          "arguments": {},
+          "record": {
+            "name": "lightKey17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_light_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "vmd17"
+                },
+                "handles": [
+                  {
+                    "$from": "lightKey17"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_light_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vmd17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_light_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vmd17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_morph_key",
+          "arguments": {},
+          "record": {
+            "name": "morphKey17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_morph_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "vmd17"
+                },
+                "handles": [
+                  {
+                    "$from": "morphKey17"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_morph_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vmd17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_morph_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vmd17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_self_shadow_key",
+          "arguments": {},
+          "record": {
+            "name": "selfshadowKey17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_self_shadow_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "vmd17"
+                },
+                "handles": [
+                  {
+                    "$from": "selfshadowKey17"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_self_shadow_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vmd17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_remove_vmd_self_shadow_keys",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "vmd17"
+              }
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 3
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "morph",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_materials",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "diffuse": [
+                1,
+                0,
+                1,
+                1
+              ],
+              "bothDraw": false,
+              "edge": false
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_box_primitive_builder",
+          "arguments": {
+            "material": 0,
+            "pos": [
+              0,
+              0,
+              0
+            ],
+            "width": 2,
+            "height": 2,
+            "depth": 2,
+            "bone": 0
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_plane_primitive_builder",
+          "arguments": {
+            "material": 0,
+            "pos": [
+              5,
+              0,
+              0
+            ],
+            "width": 2,
+            "height": 2,
+            "uc": 1,
+            "vc": 1,
+            "dir": 0,
+            "uv": true,
+            "bone": 0
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "record": {
+            "name": "uiBasePmx17",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "position": [
+                0,
+                1,
+                0
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_morph_from_moved",
+          "arguments": {
+            "basePmxHandle": {
+              "$from": "uiBasePmx17"
+            },
+            "name": "UIモデルの表情"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "offsets",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_camera_view",
+          "arguments": {
+            "position": [
+              60,
+              0,
+              30
+            ],
+            "target": [
+              60,
+              0,
+              0
+            ],
+            "upVector": [
+              0,
+              1,
+              0
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_setting_connector",
+          "arguments": {
+            "backColor": [
+              0.5,
+              0.5,
+              0.5,
+              1
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_register_ui_model",
+          "arguments": {
+            "name": "受け手の検査",
+            "m": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "visible": true,
+            "transform": true
+          },
+          "record": {
+            "name": "uiModel17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_world_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "m": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                60,
+                0,
+                0,
+                1
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_world_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  60,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_bone_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0,
+              "scale": [
+                2,
+                2,
+                2
+              ],
+              "rotate": [
+                0,
+                0,
+                1,
+                0
+              ],
+              "translate": [
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_transform_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_bone_matrix_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  -2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  1,
+                  2,
+                  3,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_bone_translate_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0,
+              "translate": [
+                4,
+                5,
+                6
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_bone_scale_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0,
+              "scale": [
+                3,
+                3,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_bone_rotate_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0,
+              "rotate": [
+                0,
+                1,
+                0,
+                0
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_morph_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "mx": 1,
+              "val": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_transform_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_vertex_position_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "vx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  4,
+                  8,
+                  6
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_reset_bone_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_reset_morph_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_transform_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_bone_position_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_vertex_position_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "vx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_vertex_normal_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "vx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView0_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {}
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_material_flags_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "mx": 0,
+              "type": 0,
+              "flag": true
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView1_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView0_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_material_color_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "mx": 0,
+              "type": 0,
+              "col": [
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView2_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView1_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_material_edge_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "mx": 0,
+              "edge": true,
+              "size": 2
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView3_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView2_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_bitmap_texture_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "mx": 0,
+              "bmp": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYPj/HwADAgH/5ncLrgAAAABJRU5ErkJggg==",
+              "mipmap": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView4_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView3_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_bitmap_texture_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "mx": 0,
+              "bmp": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView5_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView4_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_billboard_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "type": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView6_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView5_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_create_text_control",
+          "arguments": {
+            "uim": {
+              "$from": "uiModel17"
+            },
+            "mx": 0,
+            "width": 16,
+            "height": 16,
+            "backCol": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "f": {
+              "family": "MS Gothic",
+              "size": 9,
+              "style": "Regular"
+            }
+          },
+          "record": {
+            "name": "textControl17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView7_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView6_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_draw_text_text_control",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "textControl17"
+              }
+            ],
+            "args": {
+              "text": "字",
+              "br": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "f": {
+                "family": "MS Gothic",
+                "size": 9,
+                "style": "Regular"
+              }
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_text_image_text_control",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "textControl17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView8_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView7_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_text_controls",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "textControl17"
+              }
+            ],
+            "value": {
+              "backColor": [
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_list_text_controls",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "textControl17"
+              }
+            ],
+            "fields": [
+              "backColor",
+              "materialIndex"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.backColor",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "path": "items.0.materialIndex",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_clear_text_control",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "textControl17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_text_image_text_control",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "textControl17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_client_image_pmd_view_connector",
+          "arguments": {},
+          "record": {
+            "name": "uiView9_17",
+            "path": "",
+            "shape": "image"
+          },
+          "expect": {
+            "ok": true,
+            "image": {
+              "differsFrom": "uiView8_17"
+            }
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_ui_model_text_control",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "textControl17"
+              }
+            ]
+          },
+          "record": {
+            "name": "uiModelOfText17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_world_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModelOfText17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  60,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "isIk": true
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_ik_link",
+          "arguments": {
+            "bone": 0
+          },
+          "record": {
+            "name": "ikLink17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_ik_links",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "ikLink17"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_iks",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true,
+            "value": {
+              "loopCount": 7
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_ik",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true
+          },
+          "record": {
+            "name": "ikClone17",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_iks",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "ikClone17"
+              }
+            ],
+            "fields": [
+              "loopCount"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.loopCount",
+                "equals": 7
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_ik_links",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true,
+            "fields": [
+              "bone"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.bone",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_remove_ik_links",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_ik_links",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_headers",
+          "arguments": {
+            "value": {
+              "uvaCount": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_headers",
+          "arguments": {
+            "fields": [
+              "uvaCount"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.uvaCount",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_pmxes",
+          "arguments": {
+            "value": {
+              "filePath": "%TEMP%\\pmx-editor-mcp-acceptance\\受け手.pmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_pmxes",
+          "arguments": {
+            "fields": [
+              "filePath"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.filePath",
+                "equals": "%TEMP%\\pmx-editor-mcp-acceptance\\受け手.pmx"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_pmx_connector",
+          "arguments": {
+            "currentPath": "%TEMP%\\pmx-editor-mcp-acceptance\\接続先.pmx"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_get_pmx_connector",
+          "arguments": {
+            "fields": [
+              "currentPath"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "currentPath",
+                "equals": "%TEMP%\\pmx-editor-mcp-acceptance\\接続先.pmx"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertex_edit_connector",
+          "arguments": {
+            "moveOffset": 0.375
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_get_vertex_edit_connector",
+          "arguments": {
+            "fields": [
+              "moveOffset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "moveOffset",
+                "equals": 0.375
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_weight_edit_connector",
+          "arguments": {
+            "weightValue": 50
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_get_weight_edit_connector",
+          "arguments": {
+            "fields": [
+              "weightValue"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "weightValue",
+                "equals": 50
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_update_form_connector",
+          "arguments": {
+            "selectedTabPage": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_get_form_connector",
+          "arguments": {
+            "fields": [
+              "selectedTabPage"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "selectedTabPage",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_base_window_connector",
+          "arguments": {
+            "location": [
+              40,
+              30
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_base_window_connector",
+          "arguments": {
+            "fields": [
+              "location"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "location",
+                "equals": [
+                  40,
+                  30
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_parts_select_connector",
+          "arguments": {
+            "rangeBegin": 7
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_parts_select_connector",
+          "arguments": {
+            "fields": [
+              "rangeBegin"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "rangeBegin",
+                "equals": 7
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_pmd_view_connector",
+          "arguments": {
+            "enableHandleEdit": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_pmd_view_connector",
+          "arguments": {
+            "fields": [
+              "enableHandleEdit"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "enableHandleEdit",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_sizable_window_connector",
+          "arguments": {
+            "size": [
+              812,
+              614
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_sizable_window_connector",
+          "arguments": {
+            "fields": [
+              "size"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "size",
+                "equals": [
+                  812,
+                  614
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_control",
+          "arguments": {
+            "enableVAxis": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_view_control",
+          "arguments": {
+            "fields": [
+              "enableVAxis"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "enableVAxis",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmd",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
           }
         }
       ]

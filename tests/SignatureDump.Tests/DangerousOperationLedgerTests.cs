@@ -10,6 +10,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string TypeName = "N.T";
 
+        private const string OtherTypeName = "N.U";
+
         [Fact]
         public void ANoteIsResolvedToTheKeyOfItsSignature()
         {
@@ -65,6 +67,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ASignatureThatAnotherCapabilityOwnsStops()
+        {
+            SignatureRecord other = Signature(OtherTypeName, "Save", "System.String");
+            IList<CapabilityRecord> ledger = LedgerJsonReader.Read(new LedgerJsonBuilder()
+                .Add("CAP-001", "標本", TypeName, "提供", "モデル", "危険操作(上書き保存)。該当は Save(System.String)。")
+                .Add("CAP-002", "標本", OtherTypeName, "提供", "モデル", string.Empty)
+                .AddNamespaceRows()
+                .ToString());
+            InventoryRecord inventory = new InventoryRecord(
+                "PEPlugin",
+                "0.0.0.0",
+                new List<TypeRecord> { Type(TypeName), Type(OtherTypeName) },
+                new List<TypeRecord>(),
+                new List<SignatureRecord> { Signature("Do"), other });
+
+            InvalidOperationException failure = Assert.Throws<InvalidOperationException>(
+                () => DangerousOperationLedger.Read(
+                    ledger, LedgerPopulation.Resolve(ledger, inventory), inventory));
+
+            Assert.Contains("CAP-001", failure.Message, StringComparison.Ordinal);
+            Assert.Contains("Save(System.String)", failure.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheInputsAreRequired()
         {
             SignatureRecord save = Signature("Save", "System.String");
@@ -103,15 +129,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new InventoryRecord(
                 "PEPlugin",
                 "0.0.0.0",
-                new List<TypeRecord> { Type() },
+                new List<TypeRecord> { Type(TypeName) },
                 new List<TypeRecord>(),
                 signatures.ToList());
         }
 
-        private static TypeRecord Type()
+        private static TypeRecord Type(string name)
         {
             return new TypeRecord(
-                TypeName,
+                name,
                 TypeKind.Interface,
                 false,
                 true,
@@ -122,6 +148,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static SignatureRecord Signature(string memberName, string parameterType = null)
         {
+            return Signature(TypeName, memberName, parameterType);
+        }
+
+        private static SignatureRecord Signature(
+            string typeName, string memberName, string parameterType)
+        {
             List<ParameterRecord> parameters = new List<ParameterRecord>();
             if (parameterType != null)
             {
@@ -129,8 +161,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
 
             return new SignatureRecord(
-                SignatureKeyBuilder.Build(TypeName, memberName, 0, parameters, "System.Void"),
-                TypeName,
+                SignatureKeyBuilder.Build(typeName, memberName, 0, parameters, "System.Void"),
+                typeName,
                 MemberKind.Method,
                 memberName,
                 false,

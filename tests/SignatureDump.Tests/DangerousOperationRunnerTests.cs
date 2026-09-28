@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using Xunit;
 
@@ -123,13 +124,86 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 line);
         }
 
+        [Fact]
+        public void ALedgerThatNotesTheDangerousMemberAsDerivedSucceeds()
+        {
+            StringWriter output = new StringWriter();
+            string directory = DangerousSdk();
+
+            int code = DangerousOperationRunner.Run(
+                Arguments(directory, Ledger(DangerousAssembly(directory), "危険操作(上書き保存)。該当は SaveAll()。")),
+                output,
+                new StringWriter());
+
+            Assert.Equal(ExitCodes.Success, code);
+            Assert.Equal(
+                "照合した: 危険操作に当たるシグネチャ 1 件(エディタ終了 0・上書き保存 1・モデル初期化 0)",
+                output.ToString().Trim());
+        }
+
+        [Fact]
+        public void ADangerousMemberTheLedgerDoesNotNoteIsUnresolved()
+        {
+            StringWriter error = new StringWriter();
+            string directory = DangerousSdk();
+
+            int code = DangerousOperationRunner.Run(
+                Arguments(directory, Ledger(DangerousAssembly(directory), string.Empty)),
+                new StringWriter(),
+                error);
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+            Assert.Contains("台帳が危険操作として記していない", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("SaveAll()", error.ToString(), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AMemberTheLedgerNotesButTheRuleDoesNotDeriveIsUnresolved()
+        {
+            StringWriter error = new StringWriter();
+            string directory = DangerousSdk();
+
+            int code = DangerousOperationRunner.Run(
+                Arguments(
+                    directory,
+                    Ledger(
+                        DangerousAssembly(directory),
+                        "危険操作(上書き保存)。該当は SaveAll()。危険操作(エディタ終了)。該当は Touch()。")),
+                new StringWriter(),
+                error);
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+            Assert.Contains("決め方が危険操作としないものを台帳が記している", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("Touch()", error.ToString(), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AKindTheLedgerNotesDifferentlyIsUnresolved()
+        {
+            StringWriter error = new StringWriter();
+            string directory = DangerousSdk();
+
+            int code = DangerousOperationRunner.Run(
+                Arguments(directory, Ledger(DangerousAssembly(directory), "危険操作(モデル初期化)。該当は SaveAll()。")),
+                new StringWriter(),
+                error);
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+            Assert.Contains("種別が食い違う", error.ToString(), StringComparison.Ordinal);
+        }
+
         /// <summary>題材のアセンブリの公開型を提供として並べ、備考を与えた台帳。</summary>
         private static string Ledger(string remarks)
+        {
+            return Ledger(Sample, remarks);
+        }
+
+        private static string Ledger(Assembly sample, string remarks)
         {
             LedgerJsonBuilder builder = new LedgerJsonBuilder();
 
             int id = 1;
-            foreach (TypeRecord type in AssemblyEnumerator.Enumerate(Sample).Types)
+            foreach (TypeRecord type in AssemblyEnumerator.Enumerate(sample).Types)
             {
                 string capability = string.Format(
                     CultureInfo.InvariantCulture, "CAP-{0:D3}", id++);
@@ -179,6 +253,61 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
 
             return directory;
+        }
+
+        private string DangerousSdk()
+        {
+            string directory = Path.Combine(_root, "dangerous");
+            string assemblyPath = SdkAssemblyLocator.GetAssemblyPath(directory);
+            string folder = Path.GetDirectoryName(assemblyPath);
+            Directory.CreateDirectory(folder);
+            string fileName = Path.GetFileName(assemblyPath);
+
+            AssemblyBuilder assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(
+                new AssemblyName("DangerousSample" + Guid.NewGuid().ToString("N")),
+                AssemblyBuilderAccess.Save,
+                folder);
+            ModuleBuilder module = assembly.DefineDynamicModule(fileName, fileName);
+            TypeBuilder store = module.DefineType(
+                "DangerousSample.IStore",
+                TypeAttributes.Public | TypeAttributes.Interface | TypeAttributes.Abstract);
+            foreach (string name in new[] { "SaveAll", "Touch" })
+            {
+                store.DefineMethod(
+                    name,
+                    MethodAttributes.Public | MethodAttributes.Abstract | MethodAttributes.Virtual
+                        | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                    typeof(void),
+                    Type.EmptyTypes);
+            }
+
+            store.CreateType();
+            Root(module, "PEPlugin.IPERunArgs", "Version");
+            Root(module, "PXCPlugin.IPXCPluginRunArgs", "CPluginVersion");
+            Root(module, "PXCPlugin.PXCBridge", "BridgeVersion");
+            assembly.Save(fileName);
+
+            return directory;
+        }
+
+        private static void Root(ModuleBuilder module, string typeName, string propertyName)
+        {
+            TypeBuilder root = module.DefineType(
+                typeName, TypeAttributes.Public | TypeAttributes.Interface | TypeAttributes.Abstract);
+            MethodBuilder getter = root.DefineMethod(
+                "get_" + propertyName,
+                MethodAttributes.Public | MethodAttributes.Abstract | MethodAttributes.Virtual
+                    | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.SpecialName,
+                typeof(string),
+                Type.EmptyTypes);
+            root.DefineProperty(propertyName, PropertyAttributes.None, typeof(string), Type.EmptyTypes)
+                .SetGetMethod(getter);
+            root.CreateType();
+        }
+
+        private static Assembly DangerousAssembly(string directory)
+        {
+            return Assembly.Load(File.ReadAllBytes(SdkAssemblyLocator.GetAssemblyPath(directory)));
         }
 
         /// <summary>読み込めないアセンブリを置いた導入ディレクトリを作る。</summary>

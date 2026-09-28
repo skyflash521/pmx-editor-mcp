@@ -121,6 +121,67 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheCallRowsAreReadInOrderWithTheirRefusal()
+        {
+            SampleValueTable table = SampleValueJsonReader.Read(
+                "{\"types\":[],\"rows\":["
+                + "{\"signatureKey\":\"N.T.A()\",\"arguments\":{\"x\":1},\"basis\":\"根拠A\"}"
+                + ",{\"signatureKey\":\"N.T.B()\",\"arguments\":{},\"basis\":\"根拠B\""
+                + ",\"refused\":\"断る理由\",\"says\":\"文面\"}]}");
+
+            Assert.Equal(2, table.Calls.Count);
+            Assert.Equal("N.T.A()", table.Calls[0].SignatureKey);
+            Assert.Equal(1, table.Calls[0].Arguments["x"]);
+            Assert.Equal("根拠A", table.Calls[0].Basis);
+            Assert.Null(table.Calls[0].Refused);
+            Assert.Null(table.Calls[0].Says);
+            Assert.Equal("N.T.B()", table.Calls[1].SignatureKey);
+            Assert.Equal("断る理由", table.Calls[1].Refused);
+            Assert.Equal("文面", table.Calls[1].Says);
+        }
+
+        [Fact]
+        public void CallRowsOutOfAscendingOrderStop()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => SampleValueJsonReader.Read(
+                    "{\"types\":[],\"rows\":["
+                    + "{\"signatureKey\":\"N.T.B()\",\"arguments\":{},\"basis\":\"根拠\"}"
+                    + ",{\"signatureKey\":\"N.T.A()\",\"arguments\":{},\"basis\":\"根拠\"}]}"));
+
+            Assert.Contains("序数の昇順", error.Message, StringComparison.Ordinal);
+            Assert.Contains("N.T.A()", error.Message, StringComparison.Ordinal);
+        }
+
+        [Theory]
+        [InlineData("[1]")]
+        [InlineData("1")]
+        [InlineData("null")]
+        public void CallArgumentsThatAreNotAGroupStop(string arguments)
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => SampleValueJsonReader.Read(
+                    "{\"types\":[],\"rows\":[{\"signatureKey\":\"N.T.A()\",\"arguments\":"
+                    + arguments + ",\"basis\":\"根拠\"}]}"));
+
+            Assert.Contains("arguments は項目の組", error.Message, StringComparison.Ordinal);
+        }
+
+        [Theory]
+        [InlineData(",\"refused\":\"断る理由\"")]
+        [InlineData(",\"says\":\"文面\"")]
+        public void ARefusalWithoutItsWordingStops(string half)
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => SampleValueJsonReader.Read(
+                    "{\"types\":[],\"rows\":[{\"signatureKey\":\"N.T.A()\",\"arguments\":{}"
+                    + ",\"basis\":\"根拠\"" + half + "}]}"));
+
+            Assert.Contains("揃って書く", error.Message, StringComparison.Ordinal);
+            Assert.Contains("N.T.A()", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheArgumentsAreChecked()
         {
             Assert.Throws<ArgumentNullException>(() => SampleValueJsonReader.Read(null));

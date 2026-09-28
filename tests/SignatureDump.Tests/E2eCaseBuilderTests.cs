@@ -1201,6 +1201,46 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ADangerousRowThatNeedsAHeldTargetIsNotCalledWithoutGivenValues()
+        {
+            ToolSchema maker = Tool("model_make_bone", new SchemaItem[0]);
+            ToolSchema taker = Tool("model_bend_bones", Handles());
+            IList<E2eCase> cases = Making(maker, taker, "Sdk.Bone", dangerous: true);
+
+            Assert.DoesNotContain(
+                cases, c => c.Tool == taker.Tool && c.Expectation == E2eExpectation.Called);
+            Assert.DoesNotContain(
+                cases, c => c.Tool == maker.Tool && c.RowKey == RowKey);
+        }
+
+        [Fact]
+        public void ADangerousRowThatNeedsAHeldTargetIsCalledWithTheConfirmationWhenValuesAreGiven()
+        {
+            ToolSchema maker = Tool("model_make_bone", new SchemaItem[0]);
+            ToolSchema taker = Tool("model_bend_bones", Handles());
+            IList<E2eCase> cases = Making(
+                maker, taker, "Sdk.Bone", dangerous: true, given: true);
+
+            E2eCase called = Assert.Single(
+                cases, c => c.Tool == taker.Tool && c.Expectation == E2eExpectation.Called);
+            Assert.Equal(true, called.Arguments["confirm"]);
+            Assert.NotNull(called.Borrowed["handles/0"]);
+        }
+
+        [Fact]
+        public void ADangerousRowGetsNoPositionedCase()
+        {
+            ToolSchema writing = Positioning("model_update_bones");
+            ToolSchema reading = Listed("model_list_bones");
+            IList<E2eCase> cases = Positions(writing, reading, reading.Tool, dangerous: true);
+
+            Assert.DoesNotContain(cases, c => c.Code == "TOOL_INDEX_OUT_OF_RANGE");
+            Assert.DoesNotContain(
+                cases, c => c.Tool == writing.Tool && c.Expectation == E2eExpectation.Success);
+            Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Reads);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             ToolSchemaTable schemas = new ToolSchemaTable(new ToolSchema[0]);
@@ -1781,9 +1821,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>
         /// 受け手をハンドルで要るツールと、その型を作るツールで検査を組み立てる。
         /// <paramref name="maker"/> が null なら、その型を作るツールを持たない場を作る。
+        /// <paramref name="dangerous"/> が真なら行を確認を要するものとし、<paramref name="given"/>
+        /// が真なら行へ渡す値を正本に書いたものとする。
         /// </summary>
         private static IList<E2eCase> Making(
-            ToolSchema maker, ToolSchema taker, string held, string basis = "触る。")
+            ToolSchema maker,
+            ToolSchema taker,
+            string held,
+            string basis = "触る。",
+            bool dangerous = false,
+            bool given = false)
         {
             IList<ToolSchema> tools = maker == null
                 ? new[] { taker }
@@ -1809,10 +1856,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new ToolSchemaTable(tools),
                 named,
                 Paths(),
-                new HashSet<string>(StringComparer.Ordinal),
+                dangerous
+                    ? new HashSet<string>(new[] { RowKey }, StringComparer.Ordinal)
+                    : new HashSet<string>(StringComparer.Ordinal),
                 Shapes(),
                 new Dictionary<SchemaItem, string> { { Held(taker), held } },
-                null,
+                given
+                    ? new SampleValueTable(
+                        new SampleValueRow[0],
+                        new[]
+                        {
+                            new SampleCallRow(
+                                RowKey,
+                                new Dictionary<string, object>(StringComparer.Ordinal),
+                                "受け手だけを渡す。"),
+                        })
+                    : null,
                 null,
                 null,
                 null,
@@ -2048,7 +2107,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>
         /// 位置で指す項目を持つ書き換えのツール1つぶんの検査。<paramref name="writtenAdder"/> は
         /// 書き換える要素の並びへ加えるツール、<paramref name="pointedAdder"/> は位置が指す先の
-        /// 並びへ加えるツールで、null は加える手立てが無いことを表す。
+        /// 並びへ加えるツールで、null は加える手立てが無いことを表す。<paramref name="dangerous"/>
+        /// が真なら行を確認を要するものとする。
         /// </summary>
         private static IList<E2eCase> Positions(
             ToolSchema writing,
@@ -2056,7 +2116,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string reader,
             IDictionary<string, ISet<string>> unkept = null,
             string writtenAdder = AddBones,
-            string pointedAdder = AddBones)
+            string pointedAdder = AddBones,
+            bool dangerous = false)
         {
             SchemaItem member = writing.Branches[0].Inputs
                 .Single(i => i.Name == "value").Members.Single();
@@ -2074,7 +2135,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 }),
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, writing.Tool } },
                 Paths(),
-                new HashSet<string>(StringComparer.Ordinal),
+                dangerous
+                    ? new HashSet<string>(new[] { RowKey }, StringComparer.Ordinal)
+                    : new HashSet<string>(StringComparer.Ordinal),
                 Shapes(),
                 new Dictionary<SchemaItem, string> { { member, "Sdk.Bone" } },
                 null,

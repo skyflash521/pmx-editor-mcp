@@ -14,7 +14,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Receiver = "motion_create_vmd_bone_key";
 
-        private const string Other = "motion_create_vmd_bas_camera_key";
+        private const string Other = "motion_create_vmd_morph_key";
 
         private const string OtherType = "PEPlugin.Vmd.IPEVmdFrameKey";
 
@@ -156,7 +156,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         RowKey, ToolMapEditKind.Read, null, "相手と比べて並び順を返す。",
                         null, null, null, null, argumentTypes),
                 }),
-                new ToolSchemaTable(new[] { Taking(other), Free(Receiver), Free(Other) }),
+                new ToolSchemaTable(
+                    new[] { Taking(other), Free(Receiver), Free(Other), Free(Narrower) }),
                 new Dictionary<string, string>(StringComparer.Ordinal) { { RowKey, Tool } },
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 new HashSet<string>(StringComparer.Ordinal),

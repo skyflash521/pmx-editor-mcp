@@ -300,6 +300,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("restart", error.Message, StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void TheSucceedingToolsAreTheToolStepsThatExpectSuccess()
+        {
+            ISet<string> succeeding = AcceptanceScenarioGate.SucceedingTools(Cases(
+                Step(Listing, @"{""all"":true}")
+                    + @",{""kind"":""tool"",""tool"":""" + Adding + @""",""arguments"":{},"
+                    + @"""expect"":{""ok"":false,""code"":""TOOL_INVALID_ARGUMENT""}}"
+                    + @",{""kind"":""tool"",""tool"":""model_list_bones"",""arguments"":{}}"
+                    + @",{""kind"":""tool"",""tool"":""model_list_faces"",""arguments"":{},"
+                    + @"""expect"":{""code"":""TOOL_INVALID_ARGUMENT""}}"
+                    + @",{""kind"":""control"",""action"":""closeAll""}"));
+
+            Assert.Equal(new[] { Listing }, succeeding);
+        }
+
+        [Fact]
+        public void AToolThatSucceedsInOneStepAndIsRefusedInAnotherIsSucceeding()
+        {
+            ISet<string> succeeding = AcceptanceScenarioGate.SucceedingTools(Cases(
+                @"{""kind"":""tool"",""tool"":""" + Listing + @""",""arguments"":{},"
+                    + @"""expect"":{""ok"":false,""code"":""TOOL_INVALID_ARGUMENT""}},"
+                    + Step(Listing, @"{""all"":true}")));
+
+            Assert.Equal(new[] { Listing }, succeeding);
+        }
+
+        [Fact]
+        public void TheSucceedingToolsNeedTheScenarios()
+        {
+            Assert.Throws<ArgumentNullException>(() => AcceptanceScenarioGate.SucceedingTools(null));
+        }
+
         /// <summary>段だけを差し替えた定義。形と操作の照合はこれだけを読む。</summary>
         private static JsonNode Cases(string steps)
         {

@@ -77,6 +77,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ACaseThatChecksAnEffectTheRowDoesNotDeclareDoesNotCoverIt()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    Schemas(WipeTool),
+                    Map(Declaring(Wipe)),
+                    Named(Wipe, WipeTool),
+                    Reached(WipeTool)
+                        .Concat(Checking(ListTool, Wipe, "FileWritten/path", E2eExpectation.Success))
+                        .ToArray()));
+
+            Assert.Contains(WipeTool, error.Message, StringComparison.Ordinal);
+        }
+
+        [Theory]
+        [InlineData(E2eExpectation.Denied)]
+        [InlineData(E2eExpectation.Refusal)]
+        public void ACaseThatExpectsARefusalDoesNotCoverTheEffect(E2eExpectation expectation)
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    Schemas(WipeTool),
+                    Map(Declaring(Wipe)),
+                    Named(Wipe, WipeTool),
+                    Reached(WipeTool)
+                        .Concat(Checking(ListTool, Wipe, HandleCreated, expectation))
+                        .ToArray()));
+
+            Assert.Contains(WipeTool, error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AToolReachedOnlyByAnAcceptanceScenarioIsCovered()
         {
             Require(
@@ -409,6 +441,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// <summary>宣言した効果を確かめる検査。</summary>
         private static E2eCase[] Checking(string tool, string rowKey)
         {
+            return Checking(tool, rowKey, HandleCreated, E2eExpectation.Success);
+        }
+
+        private static E2eCase[] Checking(
+            string tool, string rowKey, string checks, E2eExpectation expectation)
+        {
             return new[]
             {
                 new E2eCase(
@@ -418,7 +456,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     tool,
                     "出したハンドルを引けること",
                     new Dictionary<string, object>(StringComparer.Ordinal),
-                    E2eExpectation.Success,
+                    expectation,
+                    expectation == E2eExpectation.Success ? null : E2eCaseBuilder.InvalidArgument,
                     null,
                     null,
                     null,
@@ -426,8 +465,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     null,
                     null,
                     null,
-                    null,
-                    HandleCreated),
+                    checks),
             };
         }
     }

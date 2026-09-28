@@ -74,6 +74,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => BranchRowRule.Resolve(Schema("text", "text"), Rows(), Shapes));
         }
 
+        [Fact]
+        public void ABranchThatNoRowIsTiedToIsRefused()
+        {
+            ToolSchema schema = new ToolSchema(
+                Tool,
+                new[] { Branch("first", "text"), Branch("second", "number"), Branch("third", "base64") },
+                Item(null, null),
+                null);
+
+            InvalidOperationException refused = Assert.Throws<InvalidOperationException>(
+                () => BranchRowRule.Resolve(schema, Rows(), Shapes));
+
+            Assert.Contains("呼び分けと行が一対一で対応しない", refused.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void BranchesThatMixSelectingAndNotSelectingAreRefused()
+        {
+            InvalidOperationException refused = Assert.Throws<InvalidOperationException>(
+                () => BranchRowRule.Resolve(Schema("text", null), Rows(), Shapes));
+
+            Assert.Contains("分岐を選ぶ項目を持たない呼び分けがある", refused.Message, StringComparison.Ordinal);
+        }
+
         private static IList<SignatureRecord> Rows()
         {
             return new[]

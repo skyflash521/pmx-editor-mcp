@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -94,6 +97,74 @@ namespace PmxEditorMcp.SignatureDump.Tests
             {
                 Assert.Equal(written[one.Expected.Member], one.Expected.Value);
             }
+        }
+
+        [Fact]
+        public void EveryValueWrittenToAFreshBodyDiffersFromWhatTheBodyStartsWith()
+        {
+            SampleValueTable samples = SampleValueJsonReader.Read(
+                File.ReadAllText(Catalog("sample-values.json"), new UTF8Encoding(false)));
+            IList<E2eCase> cases = Built(
+                members: FreshBody.Select(
+                    m => new KeyValuePair<string, string>(m.Key, m.Value.Key)).ToList(),
+                samples: new SampleValueTable(samples.Types));
+            IDictionary<string, object> written = Value(cases);
+            E2eCase[] read = ReadBacks(cases);
+
+            Assert.Equal(FreshBody.Count, written.Count);
+            Assert.Equal(FreshBody.Count, read.Length);
+            Assert.All(
+                written,
+                one => Assert.False(
+                    Same(FreshBody[one.Key].Value, one.Value),
+                    one.Key + " へ書く値 " + one.Value + " が、新しく作った剛体の初めの値と同じ。"));
+            Assert.All(
+                read,
+                one => Assert.False(
+                    Same(FreshBody[one.Expected.Member].Value, one.Expected.Value),
+                    one.Expected.Member + " の読み返しが待つ値 " + one.Expected.Value
+                        + " が、新しく作った剛体の初めの値と同じ。"));
+        }
+
+        private static readonly IDictionary<string, KeyValuePair<string, object>> FreshBody =
+            new Dictionary<string, KeyValuePair<string, object>>(StringComparer.Ordinal)
+            {
+                { "mass", new KeyValuePair<string, object>("System.Single", 1d) },
+                { "positionDamping", new KeyValuePair<string, object>("System.Single", 0.5d) },
+                { "rotationDamping", new KeyValuePair<string, object>("System.Single", 0.5d) },
+                { "restitution", new KeyValuePair<string, object>("System.Single", 0d) },
+                { "friction", new KeyValuePair<string, object>("System.Single", 0.5d) },
+                { "group", new KeyValuePair<string, object>("System.Int32", 0d) },
+                { "boxKind", new KeyValuePair<string, object>("PEPlugin.Pmd.BodyBoxKind", "Sphere") },
+                { "mode", new KeyValuePair<string, object>("PEPlugin.Pmd.BodyMode", "Static") },
+            };
+
+        private static bool Same(object initial, object written)
+        {
+            if (initial is double)
+            {
+                return written != null
+                    && !(written is string)
+                    && Convert.ToDouble(written, CultureInfo.InvariantCulture) == (double)initial;
+            }
+
+            return string.Equals(initial as string, written as string, StringComparison.Ordinal);
+        }
+
+        private static string Catalog(string name)
+        {
+            for (DirectoryInfo at = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+                at != null;
+                at = at.Parent)
+            {
+                string path = Path.Combine(at.FullName, "catalog", "authored", name);
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+            }
+
+            throw new FileNotFoundException("正本が見つからない: " + name);
         }
 
         [Fact]
@@ -212,21 +283,34 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return (IDictionary<string, object>)Updated(cases).Arguments["value"];
         }
 
+        /// <summary>
+        /// <paramref name="members"/> は書き換える項目の名前と型の組で、null なら題材の既定の4項目。
+        /// <paramref name="samples"/> は型ごとに書く値の表で、null なら題材の表。
+        /// </summary>
         private static IList<E2eCase> Built(
-            IDictionary<string, IList<SetupOperation>> toolSetups = null)
+            IDictionary<string, IList<SetupOperation>> toolSetups = null,
+            IList<KeyValuePair<string, string>> members = null,
+            SampleValueTable samples = null)
         {
             Dictionary<SchemaItem, string> sdkTypes = new Dictionary<SchemaItem, string>();
+            IList<KeyValuePair<string, string>> written = members ?? Members();
 
             return E2eCaseBuilder.Build(
                 new ToolMap(new ToolMapRow[0], toolSetups),
                 new ToolSchemaTable(
-                    new[] { Updating(sdkTypes), Listing(), Free(FirstStep), Held(SecondStep) }),
+                    new[]
+                    {
+                        Updating(sdkTypes, written),
+                        Listing(written),
+                        Free(FirstStep),
+                        Held(SecondStep),
+                    }),
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 new HashSet<string>(StringComparer.Ordinal),
                 new Dictionary<SchemaItem, string>(),
                 sdkTypes,
-                Samples(),
+                samples ?? Samples(),
                 null,
                 new HashSet<string>(new[] { ParentType }, StringComparer.Ordinal),
                 null,
@@ -247,6 +331,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 {
                     { Writing, new[] { FirstStep, SecondStep } },
                 });
+        }
+
+        private static IList<KeyValuePair<string, string>> Members()
+        {
+            return new[]
+            {
+                new KeyValuePair<string, string>(Angle, AngleType),
+                new KeyValuePair<string, string>(LoopCount, LoopCountType),
+                new KeyValuePair<string, string>(Target, TargetType),
+                new KeyValuePair<string, string>(Parent, ParentType),
+            };
         }
 
         /// <summary>項目の型ごとに書く値。綴りから決まる最小の値とは違う値を持たせる。</summary>
@@ -272,7 +367,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         /// 対象を位置でも親のハンドルでも自分のハンドルでも指せる、項目の組を書き換えるツール。
         /// 正本の書き換えるツールはどれもこの3つの呼び分けを持つ。
         /// </summary>
-        private static ToolSchema Updating(IDictionary<SchemaItem, string> sdkTypes)
+        private static ToolSchema Updating(
+            IDictionary<SchemaItem, string> sdkTypes, IList<KeyValuePair<string, string>> members)
         {
             return new ToolSchema(
                 Writing,
@@ -282,7 +378,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "position",
                         null,
                         null,
-                        Pointing().Concat(Values(sdkTypes)).ToList(),
+                        Pointing().Concat(Values(sdkTypes, members)).ToList(),
                         new[]
                         {
                             new SchemaChoice(
@@ -295,7 +391,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         null,
                         null,
                         new[] { Listed("parentHandles", true) }
-                            .Concat(Values(sdkTypes)).ToList(),
+                            .Concat(Values(sdkTypes, members)).ToList(),
                         new[]
                         {
                             new SchemaChoice(new[] { "all", "indices", "range" }, true),
@@ -305,7 +401,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         "held",
                         null,
                         null,
-                        new[] { Listed(HandlesName, true) }.Concat(Values(sdkTypes)).ToList(),
+                        new[] { Listed(HandlesName, true) }
+                            .Concat(Values(sdkTypes, members)).ToList(),
                         new[] { new SchemaChoice(new[] { "value", "values" }, true) }),
                 },
                 Counted("updated"),
@@ -313,7 +410,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>対象を同じ3つの呼び分けで指し、項目を並べて読むツール。</summary>
-        private static ToolSchema Listing()
+        private static ToolSchema Listing(IList<KeyValuePair<string, string>> members)
         {
             return new ToolSchema(
                 Reading,
@@ -343,7 +440,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                         new[] { Listed(HandlesName, true) }.Concat(Choosing()).ToList(),
                         new SchemaChoice[0]),
                 },
-                Listed(),
+                Listed(members),
                 null);
         }
 
@@ -399,18 +496,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>書き換える項目の組と、その並び。</summary>
-        private static IList<SchemaItem> Values(IDictionary<SchemaItem, string> sdkTypes)
+        private static IList<SchemaItem> Values(
+            IDictionary<SchemaItem, string> sdkTypes, IList<KeyValuePair<string, string>> members)
         {
-            SchemaItem angle = Member(Angle);
-            SchemaItem loopCount = Member(LoopCount);
-            SchemaItem target = Member(Target);
-            SchemaItem parent = Member(Parent);
-            sdkTypes[angle] = AngleType;
-            sdkTypes[loopCount] = LoopCountType;
-            sdkTypes[target] = TargetType;
-            sdkTypes[parent] = ParentType;
+            List<SchemaItem> written = new List<SchemaItem>();
+            foreach (KeyValuePair<string, string> one in members)
+            {
+                SchemaItem member = Member(one.Key);
+                sdkTypes[member] = one.Value;
+                written.Add(member);
+            }
+
             SchemaItem group = new SchemaItem(
-                null, new[] { angle, loopCount, target, parent }, null, "value",
+                null, written, null, "value",
                 ItemOrigin.HostInput,
                 null, null, false, null, null, null, false, null);
 
@@ -424,11 +522,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>並べたものと総数を返す応答。要素は書き換える項目をそのまま載せる。</summary>
-        private static SchemaItem Listed()
+        private static SchemaItem Listed(IList<KeyValuePair<string, string>> members)
         {
             SchemaItem element = new SchemaItem(
                 null,
-                new[] { Member(Angle), Member(LoopCount), Member(Target), Member(Parent) },
+                members.Select(m => Member(m.Key)).ToList(),
                 null,
                 null,
                 ItemOrigin.HostOutput,
