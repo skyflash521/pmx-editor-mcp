@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text;
+using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -444,19 +447,20 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(33554432, JsonRpcCodec.ParseMaxJsonLength);
         }
 
+        /// <summary>ホストのエラーコードは、ブリッジと揃えて持つ取り決めの表と過不足なく一致する。</summary>
         [Fact]
         public void ErrorCodesMatchContract()
         {
-            Assert.Equal(-32700, JsonRpcErrorCodes.ParseError);
-            Assert.Equal(-32600, JsonRpcErrorCodes.InvalidRequest);
-            Assert.Equal(-32601, JsonRpcErrorCodes.MethodNotFound);
-            Assert.Equal(-32602, JsonRpcErrorCodes.InvalidParams);
-            Assert.Equal(-32603, JsonRpcErrorCodes.InternalError);
-            Assert.Equal(-32001, JsonRpcErrorCodes.ProtocolMismatch);
-            Assert.Equal(-32002, JsonRpcErrorCodes.RequestTimeout);
-            Assert.Equal(-32003, JsonRpcErrorCodes.HandshakeRequired);
-            Assert.Equal(-32004, JsonRpcErrorCodes.RequestTooLarge);
-            Assert.Equal(-32005, JsonRpcErrorCodes.ResponseTooLarge);
+            Dictionary<string, int> declared = typeof(JsonRpcErrorCodes)
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(field => field.IsLiteral)
+                .ToDictionary(field => field.Name, field => (int)field.GetRawConstantValue());
+            Dictionary<string, int> agreed = HostBridgeContract.HostErrorCodes
+                .ToDictionary(entry => entry.Name, entry => entry.Code);
+
+            Assert.Equal(
+                agreed.OrderBy(entry => entry.Key, StringComparer.Ordinal),
+                declared.OrderBy(entry => entry.Key, StringComparer.Ordinal));
         }
     }
 }

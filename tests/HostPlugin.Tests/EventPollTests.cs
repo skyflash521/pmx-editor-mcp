@@ -96,6 +96,33 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value["dropped"]);
         }
 
+        /// <summary>
+        /// 先に収めたイベントのあとで収まらなくなったイベントは、捨てずに列へ残し、次の取り出しで返る。
+        /// </summary>
+        [Fact]
+        public void AnEventThatNoLongerFitsAfterOthersStaysForTheNextPoll()
+        {
+            EventQueue queue = Queue();
+            queue.Enqueue("view_redo", 1, Payload("text", new string('a', 5000)));
+            queue.Enqueue("view_undo", 2, Payload("text", new string('b', 5000)));
+            queue.Enqueue("view_redo", 3, null);
+
+            IDictionary<string, object> first = Value(Poll(queue, Arguments(), ResponseBudget.MinimumChars));
+
+            Assert.Equal(1, Member(Assert.Single((object[])first["events"]), "sourceHandle"));
+            Assert.Equal(0, first["dropped"]);
+            Assert.Equal(2, first["remaining"]);
+
+            IDictionary<string, object> second = Value(Poll(queue, Arguments(), ResponseBudget.MinimumChars));
+
+            object[] rest = (object[])second["events"];
+            Assert.Equal(2, rest.Length);
+            Assert.Equal(2, Member(rest[0], "sourceHandle"));
+            Assert.Equal(3, Member(rest[1], "sourceHandle"));
+            Assert.Equal(0, second["dropped"]);
+            Assert.Equal(0, second["remaining"]);
+        }
+
         [Theory]
         [InlineData(0L)]
         [InlineData(1001L)]

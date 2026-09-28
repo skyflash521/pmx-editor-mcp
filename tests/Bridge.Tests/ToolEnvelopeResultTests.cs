@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Nodes;
 using ModelContextProtocol.Protocol;
+using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
 namespace PmxEditorMcp.Bridge.Tests
@@ -97,6 +98,26 @@ namespace PmxEditorMcp.Bridge.Tests
                 false);
 
             Assert.Equal(Notice + "\n1\n警告: 表示の更新に失敗した。\n警告: 二つ目。", Text(result));
+        }
+
+        /// <summary>
+        /// 本文へ足した警告1件が使う、警告そのもの以外の文字数は、ホストと揃えて持つ取り決めの値に
+        /// 収まる。ホストはこの値で警告の枠を数える。
+        /// </summary>
+        [Fact]
+        public void AWarningLineTakesTheOverheadTheHostCounts()
+        {
+            const string Warning = "表示の更新に失敗した。";
+            string without = Text(ToolEnvelopeResult.From(
+                JsonNode.Parse("{\"ok\":true,\"value\":1}"), Notice, Budget, false));
+            string with = Text(ToolEnvelopeResult.From(
+                JsonNode.Parse("{\"ok\":true,\"value\":1,\"warnings\":[\"" + Warning + "\"]}"),
+                Notice,
+                Budget,
+                false));
+
+            Assert.Equal(
+                HostBridgeContract.WarningLineOverheadChars, with.Length - without.Length - Warning.Length);
         }
 
         [Fact]

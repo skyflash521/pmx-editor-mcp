@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -45,10 +46,13 @@ namespace PmxEditorMcp.Tests
                 ResponseSize.Length(new[] { "abc", "def" }));
         }
 
+        /// <summary>
+        /// 警告1件の行が使う文字数は、ブリッジが本文へ警告を足すときに使う文字数と揃えて持つ取り決めの値である。
+        /// </summary>
         [Fact]
-        public void TheOverheadIsTheLineBreakAndThePrefix()
+        public void TheOverheadMatchesTheSharedContract()
         {
-            Assert.Equal(5, ResponseSize.LineOverheadChars);
+            Assert.Equal(HostBridgeContract.WarningLineOverheadChars, ResponseSize.LineOverheadChars);
         }
 
         [Fact]

@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
 namespace PmxEditorMcp.Bridge.Tests
@@ -30,6 +31,19 @@ namespace PmxEditorMcp.Bridge.Tests
             using HostIpcClient client = new HostIpcClient(new FakeHostConnector("pmx-editor-mcp-0"), BudgetChars);
 
             Assert.Equal(HostIpcClient.DefaultWaitLimit, client.WaitLimit);
+        }
+
+        /// <summary>
+        /// ブリッジが待つ上限は、ホストが要求を受け取ってから応答を返すまでに許す時間より長い。
+        /// ホストの時間はホストと揃えて持つ取り決めの値で、ホストのテストが実装をその値と突き合わせる。
+        /// </summary>
+        [Fact]
+        public void WaitLimitOutlastsTheHostTimeLimit()
+        {
+            Assert.True(
+                HostIpcClient.DefaultWaitLimit > HostBridgeContract.HostRequestTimeout,
+                "ブリッジが " + HostIpcClient.DefaultWaitLimit + " で諦めるが、ホストは "
+                    + HostBridgeContract.HostRequestTimeout + " まで応答を返さないことがある。");
         }
 
         [Fact]

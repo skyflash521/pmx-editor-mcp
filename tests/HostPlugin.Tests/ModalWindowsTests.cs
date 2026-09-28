@@ -4,7 +4,7 @@ using Xunit;
 
 namespace PmxEditorMcp.Tests
 {
-    /// <summary>人の応答を待つ表示を窓の一覧から見分ける範囲。</summary>
+    /// <summary>人の応答を待つ表示をウィンドウの一覧から見分ける範囲。</summary>
     public sealed class ModalWindowsTests
     {
         [Fact]
@@ -55,10 +55,15 @@ namespace PmxEditorMcp.Tests
                     }));
         }
 
+        /// <summary>
+        /// 文字を持たないウィンドウしか当たらなくても、人の応答を待つ表示が出ていることは伝える。
+        /// </summary>
         [Fact]
-        public void AWindowWithNeitherCaptionNorBodyAloneIsNotSaid()
+        public void AWindowWithNeitherCaptionNorBodyAloneIsStillSaid()
         {
-            Assert.Null(ModalWindows.Describe(new[] { Window(" ", "	", true, true) }));
+            string said = ModalWindows.Describe(new[] { Window(" ", "	", true, true) });
+
+            Assert.False(string.IsNullOrWhiteSpace(said), "文字を持たない表示が、出ていないものとして扱われた。");
         }
 
         [Fact]

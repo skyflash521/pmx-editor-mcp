@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Web.Script.Serialization;
+using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -251,10 +253,11 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, JsonRpcConnection.Protocol);
         }
 
+        /// <summary>要求1件に許す時間は、ブリッジと揃えて持つ取り決めの値である。</summary>
         [Fact]
-        public void DefaultRequestTimeLimitIsOneHundredTwentySeconds()
+        public void DefaultRequestTimeLimitMatchesTheSharedContract()
         {
-            Assert.Equal(TimeSpan.FromSeconds(120), JsonRpcConnection.DefaultRequestTimeout);
+            Assert.Equal(HostBridgeContract.HostRequestTimeout, JsonRpcConnection.DefaultRequestTimeout);
         }
 
         [Theory]
@@ -1143,6 +1146,118 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, released);
             Assert.False(ledger.IsClosed);
             Assert.Equal(0, ledger.Count);
+        }
+
+        /// <summary>ブリッジと揃えて持つ取り決めの表にあるエラーコードの名前。</summary>
+        public static IEnumerable<object[]> ContractErrorCodes()
+        {
+            foreach (HostErrorCode entry in HostBridgeContract.HostErrorCodes)
+            {
+                yield return new object[] { entry.Name };
+            }
+        }
+
+        /// <summary>
+        /// 取り決めの表にあるエラーコードをそれぞれ起こし、そのあと接続を切るかどうかが表のとおりである。
+        /// 切ったかどうかは、続けて送った ping に応答するかで見る。
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(ContractErrorCodes))]
+        public void EachErrorCodeDisconnectsAsTheSharedContractSays(string name)
+        {
+            HostErrorCode entry = HostBridgeContract.HostErrorCodes.Single(e => e.Name == name);
+            string[] requests;
+            JsonRpcConnection connection = Provoking(entry.Code, out requests);
+            List<string> sent = new List<string>(requests) { Request(99, "ping") };
+
+            IList<IDictionary<string, object>> responses = Exchange(connection, sent.ToArray());
+
+            IDictionary<string, object> answered = responses.Last(r => !IsAnswerTo(r, 99));
+            Assert.Equal(entry.Code, ErrorCodeOf(answered));
+            Assert.Equal(!entry.Disconnects, responses.Any(r => IsAnswerTo(r, 99)));
+        }
+
+        private static bool IsAnswerTo(IDictionary<string, object> response, int id)
+        {
+            object given;
+
+            return response.TryGetValue("id", out given)
+                && given != null
+                && Convert.ToInt32(given, CultureInfo.InvariantCulture) == id;
+        }
+
+        /// <summary>そのエラーコードを返させる接続と、送る要求の並び。</summary>
+        private JsonRpcConnection Provoking(int code, out string[] requests)
+        {
+            McpMethodTable methods = new McpMethodTable();
+            switch (code)
+            {
+                case JsonRpcErrorCodes.ParseError:
+                    requests = new[] { "{" };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.InvalidRequest:
+                    requests = new[] { "{\"id\":1,\"method\":\"ping\"}" };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.MethodNotFound:
+                    requests = new[] { Handshake(), Request(2, "missing") };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.InvalidParams:
+                    requests = new[] { Handshake(), RequestWithArrayParams(2, "ping") };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.InternalError:
+                    methods.Add("boom", context => throw new InvalidOperationException("落ちた。"));
+                    requests = new[] { Handshake(), Request(2, "boom") };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.ProtocolMismatch:
+                    requests = new[] { Handshake(1, 2) };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.RequestTimeout:
+                    methods.Add("slow", context =>
+                    {
+                        Thread.Sleep(300);
+                        return "遅れて返る結果";
+                    });
+                    requests = new[] { Handshake(), Request(2, "slow") };
+                    return CreateConnection(
+                        methods, TimeSpan.FromMilliseconds(50), MessageChannel.DefaultMaxMessageBytes);
+
+                case JsonRpcErrorCodes.HandshakeRequired:
+                    requests = new[] { Request(1, "ping") };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.RequestTooLarge:
+                    requests = new[]
+                    {
+                        "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{\"protocol\":1,\"pad\":\""
+                            + new string('a', 2048) + "\"}}",
+                    };
+                    return CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024);
+
+                case JsonRpcErrorCodes.ResponseTooLarge:
+                    methods.Add("big", context => new string('a', 2048));
+                    requests = new[] { Handshake(), Request(2, "big") };
+                    return CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024);
+
+                case JsonRpcErrorCodes.SessionRefused:
+                    requests = new[] { Handshake() };
+                    return new JsonRpcConnection(
+                        _log,
+                        methods,
+                        HostVersion,
+                        BudgetChars,
+                        JsonRpcConnection.DefaultRequestTimeout,
+                        MessageChannel.DefaultMaxMessageBytes,
+                        StubClientProcess.ExitedOpener(LivingClientId));
+
+                default:
+                    throw new InvalidOperationException("起こし方を書いていないエラーコード: " + code);
+            }
         }
 
         [Fact]

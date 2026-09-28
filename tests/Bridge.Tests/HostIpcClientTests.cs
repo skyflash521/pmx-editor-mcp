@@ -4,9 +4,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
 namespace PmxEditorMcp.Bridge.Tests
@@ -275,6 +277,65 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, connector.ConnectCount);
         }
 
+        [Theory]
+        [MemberData(nameof(KeepingHostErrorCodes))]
+        public async Task HostErrorThatKeepsTheConnectionKeepsItHereToo(int hostErrorCode)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Error(request, hostErrorCode, "接続を保つエラー"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("kept", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ForHostError(hostErrorCode), error.Code);
+            Assert.True(client.IsConnected);
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+            Assert.Equal(1, connector.ConnectCount);
+        }
+
+        /// <summary>
+        /// 繋ぎ直したときは、前の接続でホストが名乗ったセッションを handshake で示す。示さなければ
+        /// ホストは新しいセッションを作り、前の接続で発行したハンドルが使えなくなる。
+        /// </summary>
+        [Fact]
+        public async Task ReconnectingPresentsTheSessionTheHostGaveBefore()
+        {
+            const string Session = "0123456789abcdef0123456789abcdef";
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeWithSession(BudgetChars, Session))
+                .Disconnect()
+                .Reply(HandshakeWithSession(BudgetChars, Session))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("lost", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+
+            Assert.Equal(2, connector.ConnectCount);
+            JsonObject again = JsonNode.Parse(host.Requests[2]).AsObject();
+            Assert.Equal("handshake", (string)again["method"]);
+            JsonObject parameters = again["params"].AsObject();
+            Assert.True(parameters.ContainsKey("session"), "繋ぎ直した handshake がセッションを示していない。");
+            Assert.Equal(Session, (string)parameters["session"]);
+        }
+
+        private static Func<string, string> HandshakeWithSession(int budgetChars, string session)
+        {
+            return request => Result(
+                request,
+                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                    + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + budgetChars
+                    + ",\"session\":\"" + session + "\"}");
+        }
+
         [Fact]
         public async Task HostErrorAfterHandshakeKeepsConnectionAndReturnsHostCode()
         {
@@ -296,12 +357,24 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
         }
 
+        /// <summary>ホストと揃えて持つ取り決めの表で、ホストが応答のあと切断するとしたコード。</summary>
+        public static IEnumerable<object[]> DisconnectingHostErrorCodes()
+        {
+            return HostBridgeContract.HostErrorCodes
+                .Where(entry => entry.Disconnects)
+                .Select(entry => new object[] { entry.Code });
+        }
+
+        /// <summary>ホストと揃えて持つ取り決めの表で、ホストが応答のあとも接続を保つとしたコード。</summary>
+        public static IEnumerable<object[]> KeepingHostErrorCodes()
+        {
+            return HostBridgeContract.HostErrorCodes
+                .Where(entry => !entry.Disconnects)
+                .Select(entry => new object[] { entry.Code });
+        }
+
         [Theory]
-        // ホストが応答のあと切断すると定めているコード。
-        [InlineData(-32700)]
-        [InlineData(-32001)]
-        [InlineData(-32003)]
-        [InlineData(-32004)]
+        [MemberData(nameof(DisconnectingHostErrorCodes))]
         public async Task HostErrorRequiringDisconnectDropsConnection(int hostErrorCode)
         {
             using FakeHost host = new FakeHost()

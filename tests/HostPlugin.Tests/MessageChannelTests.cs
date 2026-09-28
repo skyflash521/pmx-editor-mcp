@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -197,10 +198,11 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(16, new MessageChannel(new MemoryStream(), 16).MaxMessageBytes);
         }
 
+        /// <summary>メッセージの上限は、ブリッジと揃えて持つ取り決めの値である。</summary>
         [Fact]
-        public void DefaultLimitIsSixteenMebibytes()
+        public void DefaultLimitMatchesTheSharedContract()
         {
-            Assert.Equal(16777216, MessageChannel.DefaultMaxMessageBytes);
+            Assert.Equal(HostBridgeContract.MaxMessageBytes, MessageChannel.DefaultMaxMessageBytes);
         }
 
         [Fact]

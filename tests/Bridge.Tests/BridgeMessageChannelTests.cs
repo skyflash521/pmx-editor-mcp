@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
 namespace PmxEditorMcp.Bridge.Tests
@@ -20,10 +21,11 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(0, BridgeMessageChannel.MeasureBytes(string.Empty));
         }
 
+        /// <summary>メッセージの上限は、ホストと揃えて持つ取り決めの値である。</summary>
         [Fact]
         public void IoLimitMatchesContract()
         {
-            Assert.Equal(16 * 1024 * 1024, BridgeMessageChannel.DefaultMaxMessageBytes);
+            Assert.Equal(HostBridgeContract.MaxMessageBytes, BridgeMessageChannel.DefaultMaxMessageBytes);
         }
 
         [Fact]

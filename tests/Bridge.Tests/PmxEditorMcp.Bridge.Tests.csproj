@@ -25,6 +25,9 @@
          別のフレームワークなので実行ファイルからは検査できず、判じ方の本文をここへ持ち込む。 -->
     <Compile Include="..\..\src\SignatureDump\ReflectionFreeGate.cs"
              Link="ReflectionFreeGate.cs" />
+    <!-- ホストと揃えて持つ取り決め。ホストのテストと同じ1つを読んで、ブリッジの実装を突き合わせる。 -->
+    <Compile Include="..\HostPlugin.Tests\HostBridgeContract.cs"
+             Link="HostBridgeContract.cs" />
   </ItemGroup>
 
 </Project>
