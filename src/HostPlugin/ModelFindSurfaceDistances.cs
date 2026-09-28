@@ -68,7 +68,7 @@ namespace PmxEditorMcp
             }
 
             List<int> surface;
-            if (!TrySurface(context, model, out surface, out code, out message))
+            if (!TryMaterials(context, model, SurfaceMaterialIndicesName, out surface, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -153,19 +153,20 @@ namespace PmxEditorMcp
             return value;
         }
 
-        private static bool TrySurface(
+        internal static bool TryMaterials(
             McpMethodContext context,
             IPXPmx model,
+            string name,
             out List<int> surface,
             out string code,
             out string message)
         {
             surface = new List<int>();
             code = ToolEnvelope.InvalidArgument;
-            string shape = SurfaceMaterialIndicesName + " は材質の位置を1つ以上並べた並びでなければならない。";
+            string shape = name + " は材質の位置を1つ以上並べた並びでなければならない。";
             object given;
             object[] items;
-            if (!context.Params.TryGetValue(SurfaceMaterialIndicesName, out given)
+            if (!context.Params.TryGetValue(name, out given)
                 || (items = given as object[]) == null
                 || items.Length == 0)
             {
@@ -187,7 +188,7 @@ namespace PmxEditorMcp
                 if (at < 0 || at >= model.Material.Count)
                 {
                     code = ToolEnvelope.IndexOutOfRange;
-                    message = SurfaceMaterialIndicesName + " が並びの外を指している: " + at;
+                    message = name + " が並びの外を指している: " + at;
 
                     return false;
                 }
@@ -254,7 +255,7 @@ namespace PmxEditorMcp
             public double Signed { get; }
         }
 
-        private struct Vec
+        internal struct Vec
         {
             public readonly double X;
 
@@ -287,6 +288,11 @@ namespace PmxEditorMcp
             public static Vec operator *(Vec given, double by)
             {
                 return new Vec(given.X * by, given.Y * by, given.Z * by);
+            }
+
+            public double Length
+            {
+                get { return Math.Sqrt(Dot(this)); }
             }
 
             public double Dot(Vec other)

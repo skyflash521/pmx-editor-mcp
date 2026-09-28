@@ -6874,6 +6874,159 @@
       }
     },
     {
+      "tool": "model_find_surface_section",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "planePoint",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "planeNormal",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "from",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "to",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "via",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "spacing",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "lines",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "closed",
+                  "origin": "hostOutput",
+                  "shape": "boolean"
+                },
+                {
+                  "name": "length",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "points",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "element": {
+                      "origin": "hostOutput",
+                      "shape": "number"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "length",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "lineLength",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "closed",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          },
+          {
+            "name": "fromGap",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "toGap",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "points",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "element": {
+                "origin": "hostOutput",
+                "shape": "number"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_find_vertex_bounds",
       "branches": [
         {

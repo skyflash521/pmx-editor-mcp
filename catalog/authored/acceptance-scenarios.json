@@ -5067,6 +5067,38 @@
         },
         {
           "kind": "tool",
+          "tool": "model_find_surface_section",
+          "arguments": {
+            "materialIndices": [
+              0
+            ],
+            "planePoint": [
+              0,
+              0,
+              0
+            ],
+            "planeNormal": [
+              1,
+              0,
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "lines.0.closed",
+                "equals": false
+              },
+              {
+                "path": "lines.0.length",
+                "equals": 20
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_vertices",
           "arguments": {
             "operation": "align",

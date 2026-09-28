@@ -35,6 +35,7 @@
     </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
     <!-- 同梱依存ゼロでJSONを扱うため、.NET Framework 付属の JavaScriptSerializer を使う。 -->
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>

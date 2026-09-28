@@ -415,6 +415,11 @@
       "duty": "指した頂点それぞれから、surfaceMaterialIndices に並べた材質の面までの最も近い距離を、面の表の側を正、裏の側を負として測る。頂点の集まりが別の部品の面へめり込んでいないか、面からはみ出していないかを数で確かめるのに使う。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。面積の無い面は測る相手に含めない。表は、面の上の最も近い点でその面の3頂点の法線を補間した向きの側とし、補間した法線が0なら面の頂点の並びから決める。最も近い点から頂点へ向かう向きが表の向きと直交する頂点(距離が0の頂点を含む)は表に数える。count に測った頂点の数を、frontCount・backCount に表と裏の頂点の数を返す。minDistance・maxDistance に符号付きの距離の最小と最大を、minVertex・maxVertex にそれを取った頂点の位置を、minPoint・maxPoint にその頂点から最も近い面の上の点を返す。同じ値の頂点が複数あれば位置が最も小さいものを返す。distanceLimit に0以上の数を渡すと、面までそれより遠い頂点を count から外して farCount に数える。測った頂点が1つも無ければ距離・頂点・点は返さない。boxes に箱を並べると、指した頂点のうち箱に入るものについて同じ組を、箱ごとに同じ並びで boxes に返す。箱の書き方と境の扱いは model_find_vertex_bounds の boxes と同じ。surfaceMaterialIndices の材質に面積のある面が1つも無ければ not_applicable になる。"
     },
     {
+      "tool": "model_find_surface_section",
+      "branching": false,
+      "duty": "materialIndices の材質の面を、planePoint を通り planeNormal に直交する平面で切った線(断面)を、折れ線の点と長さで返す。曲面に沿った長さを測るのに使う。planePoint と planeNormal は3つの数で渡し、planeNormal は長さを持たなければならない。モデルも画面の選択も変えない。面積の無い面は切らない。位置の同じ頂点は1つとみなすので、頂点を分けた継ぎ目も1本の線になり、重なった面の線は1本に畳む。頂点が平面の上にあるかは、単精度へ丸めた planePoint・planeNormal と頂点の座標から厳密に決め、平面に乗る辺は線に含め、3頂点とも平面の上にある面は切らない。from と to を省くと、lines に線ごとの組を長い順に並べる。組は、始点へ戻る線なら closed に真を、length に長さを、points に角の点を線に沿って持ち、閉じた線でも始点を最後に繰り返さない。from と to に3つの数で点を渡すと、それぞれに最も近い線の上の点の間を線に沿って結ぶ。points は from の側から並べ、length にその長さを、lineLength と closed に線全体の長さと閉じているかを、fromGap と toGap に渡した点から線までの距離を返す。閉じた線では短い側を結び、via に点を渡すと via に最も近い線の上の点を通る側を結ぶ。via は from と to と一緒にだけ渡せ、from と to は揃えて渡す。spacing に正の数を渡すと、points を端から spacing おきの点へ置き直して最後の端の点を足す。長さは置き直す前の線で測る。平面が面と交わらないときと、from と to に最も近い点が別々の線に乗るときは not_applicable、points が応答の枠に収まらなければ response_too_large になる。"
+    },
+    {
       "tool": "model_find_vertex_bounds",
       "branching": false,
       "duty": "指した頂点の座標の範囲を返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。count に頂点の数を、min・max に3つの軸それぞれの最小と最大を、center にその中ほどを返す。minVertices・maxVertices に、軸ごとに最小・最大を取った頂点の位置を3つ返し、同じ値の頂点が複数あれば位置が最も小さいものを返す。頂点が1つも無ければ count だけを返す。boxes に箱を並べると、指した頂点のうち箱に入るものの count・min・max・center・minVertices・maxVertices を、箱ごとに同じ並びで boxes に返す。箱は minX・maxX・minY・maxY・minZ・maxZ で軸ごとの境を持ち、境の上の頂点も箱に入る。省いた境はその側を切らない。最小が最大を超える箱は invalid_argument になる。"
