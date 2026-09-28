@@ -34,6 +34,24 @@ namespace PmxEditorMcp
             "PEPlugin.View.IPEVertexEditConnector.MoveNormalAxis(System.Single)",
         };
 
+        private static readonly string[] PlacingRowKeys =
+        {
+            "PEPlugin.View.IPEVertexEditConnector.Move()",
+            "PEPlugin.View.IPEVertexEditConnector.Move(PEPlugin.Pmd.IPEVector3)",
+            "PEPlugin.View.IPEVertexEditConnector.Rotate()",
+            "PEPlugin.View.IPEVertexEditConnector.Rotate(PEPlugin.Pmd.IPEVector3)",
+            "PEPlugin.View.IPEVertexEditConnector.Scaling()",
+            "PEPlugin.View.IPEVertexEditConnector.Scaling(PEPlugin.Pmd.IPEVector3)",
+        };
+
+        private static readonly KeyValuePair<string, string>[] CountedKinds =
+        {
+            new KeyValuePair<string, string>(ElementKinds.Vertex, ChangedVerticesName),
+            new KeyValuePair<string, string>(ElementKinds.Bone, ChangedBonesName),
+            new KeyValuePair<string, string>(ElementKinds.Body, ChangedBodiesName),
+            new KeyValuePair<string, string>(ElementKinds.Joint, ChangedJointsName),
+        };
+
         private static readonly string[] HistoryRowKeys =
         {
             "PEPlugin.Form.IPEFormConnector.Undo()",
@@ -55,6 +73,73 @@ namespace PmxEditorMcp
             }
 
             return measures;
+        }
+
+        /// <summary>
+        /// 位置を動かす行で、呼ぶ前に選ばれていたのに1件も変わらなかった種類ごとの警告。ほかの行では空を返す。
+        /// </summary>
+        public static IList<string> Unmoved(
+            string rowKey, IDictionary<string, object> measured, IDictionary<string, int> picked)
+        {
+            if (measured == null)
+            {
+                throw new ArgumentNullException(nameof(measured));
+            }
+
+            if (picked == null)
+            {
+                throw new ArgumentNullException(nameof(picked));
+            }
+
+            List<string> warnings = new List<string>();
+            if (!Places(rowKey))
+            {
+                return warnings;
+            }
+
+            foreach (KeyValuePair<string, string> kind in CountedKinds)
+            {
+                int chosen;
+                object changed;
+                if (picked.TryGetValue(kind.Key, out chosen)
+                    && chosen > 0
+                    && measured.TryGetValue(kind.Value, out changed)
+                    && Equals(changed, 0))
+                {
+                    warnings.Add(
+                        "選ばれていた " + kind.Key + " は " + chosen + " 件とも変わらなかった。PMXView の選択対象から"
+                        + "外れている種類は動かない。種類をまたいで動かすなら model_place_elements を使う。");
+                }
+            }
+
+            return warnings;
+        }
+
+        public static bool Places(string rowKey)
+        {
+            return Array.IndexOf(PlacingRowKeys, rowKey) >= 0;
+        }
+
+        public static IDictionary<string, int> Picked(ScreenTargets screen, object pmx)
+        {
+            IPXPmx model = (IPXPmx)pmx;
+            if (screen == null)
+            {
+                throw new ArgumentNullException(nameof(screen));
+            }
+
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
+            return new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                { ElementKinds.Vertex, screen.Taken(ElementKinds.Vertex, model.Vertex.Count).Count },
+                { ElementKinds.Bone, screen.Taken(ElementKinds.Bone, model.Bone.Count).Count },
+                { ElementKinds.Body, screen.Taken(ElementKinds.Body, model.Body.Count).Count },
+                { ElementKinds.Joint, screen.Taken(ElementKinds.Joint, model.Joint.Count).Count },
+            };
         }
 
         private static IDictionary<string, object> Stepped(object receiver, object before, object after)

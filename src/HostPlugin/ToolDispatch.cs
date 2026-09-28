@@ -937,6 +937,7 @@ namespace PmxEditorMcp
             object called = null;
             int? readBack = null;
             IDictionary<string, object> measured = null;
+            IList<string> unmoved = null;
             Func<object, object, object, IDictionary<string, object>> measure;
             bool measures = _measures.TryGetValue(call.RowKey, out measure);
             List<object> results = new List<object>();
@@ -971,6 +972,10 @@ namespace PmxEditorMcp
                 {
                     return;
                 }
+
+                IDictionary<string, int> picked = measures && EditMeasure.Places(call.RowKey)
+                    ? EditMeasure.Picked(context.Screen, before.Pmx)
+                    : null;
 
                 int drawn = 0;
                 for (int at = 0; at < count; at++)
@@ -1039,6 +1044,7 @@ namespace PmxEditorMcp
                     }
 
                     measured = measure(called, before.Pmx, after.Pmx);
+                    unmoved = picked == null ? null : EditMeasure.Unmoved(call.RowKey, measured, picked);
                 }
             }, out failure, out unavailable))
             {
@@ -1086,7 +1092,7 @@ namespace PmxEditorMcp
 
             if (measured != null)
             {
-                return ToolEnvelope.Success(measured);
+                return ToolEnvelope.Success(measured, unmoved);
             }
 
             if (call.Result == null)

@@ -99,6 +99,62 @@ namespace PmxEditorMcp.Tests
             Assert.False(changed.ContainsKey(EditMeasure.UndoCountName));
         }
 
+        [Fact]
+        public void ASelectedKindOfWhichNothingMovedIsWarnedAbout()
+        {
+            IList<string> warnings = EditMeasure.Unmoved(
+                "PEPlugin.View.IPEVertexEditConnector.Move(PEPlugin.Pmd.IPEVector3)",
+                Counts(1, 0, 0, 0),
+                Picked(1, 1, 0, 0));
+
+            Assert.Single(warnings);
+            Assert.Contains(ElementKinds.Bone, warnings[0]);
+        }
+
+        [Fact]
+        public void KindsThatMovedOrWereNotSelectedAreNotWarnedAbout()
+        {
+            IList<string> warnings = EditMeasure.Unmoved(
+                "PEPlugin.View.IPEVertexEditConnector.Rotate(PEPlugin.Pmd.IPEVector3)",
+                Counts(2, 1, 0, 0),
+                Picked(2, 1, 0, 0));
+
+            Assert.Empty(warnings);
+        }
+
+        [Fact]
+        public void EditsOfTheNormalsAreNotWarnedAboutTheOtherKinds()
+        {
+            IList<string> warnings = EditMeasure.Unmoved(
+                "PEPlugin.View.IPEVertexEditConnector.RotateNormal(PEPlugin.Pmd.IPEVector3)",
+                Counts(1, 0, 0, 0),
+                Picked(1, 1, 1, 1));
+
+            Assert.Empty(warnings);
+        }
+
+        private static IDictionary<string, object> Counts(int vertices, int bones, int bodies, int joints)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { EditMeasure.ChangedVerticesName, vertices },
+                { EditMeasure.ChangedBonesName, bones },
+                { EditMeasure.ChangedBodiesName, bodies },
+                { EditMeasure.ChangedJointsName, joints },
+            };
+        }
+
+        private static IDictionary<string, int> Picked(int vertices, int bones, int bodies, int joints)
+        {
+            return new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                { ElementKinds.Vertex, vertices },
+                { ElementKinds.Bone, bones },
+                { ElementKinds.Body, bodies },
+                { ElementKinds.Joint, joints },
+            };
+        }
+
         private static FakePmx Model()
         {
             FakePmx made = new FakePmx();
