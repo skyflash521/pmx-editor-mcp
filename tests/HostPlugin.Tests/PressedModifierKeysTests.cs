@@ -9,12 +9,19 @@ namespace PmxEditorMcp.Tests
     {
         private const int ShiftKey = 0x10;
 
+        private const int ControlKey = 0x11;
+
+        private const int AltKey = 0x12;
+
         private const byte Down = 0x80;
 
-        [Fact]
-        public void AKeyHeldInTheInputStateOfTheCallingThreadIsHeld()
+        [Theory]
+        [InlineData(ShiftKey)]
+        [InlineData(ControlKey)]
+        [InlineData(AltKey)]
+        public void AKeyHeldInTheInputStateOfTheCallingThreadIsHeld(int key)
         {
-            Assert.True(OnThread(new[] { ShiftKey }));
+            Assert.True(OnThread(new[] { key }));
         }
 
         [Fact]

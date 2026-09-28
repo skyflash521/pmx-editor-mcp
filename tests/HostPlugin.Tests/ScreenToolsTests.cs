@@ -92,6 +92,91 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SelectingEverythingTakesOnlyTheVerticesTheNarrowedDisplayShows()
+        {
+            Vertices(4);
+            _fixture.View.SetVertexIndices(new[] { 0, 2 });
+
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex)));
+
+            Assert.Equal(new[] { 0, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
+            Assert.Equal(2, value[ViewSelectElements.SelectedName]);
+        }
+
+        [Fact]
+        public void SelectingEveryFaceTakesOnlyTheFacesWhoseCornersAreAllShown()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
+            _fixture.View.SetVertexIndices(new[] { 0, 1, 2 });
+
+            Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Face));
+
+            Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Face]);
+        }
+
+        [Fact]
+        public void SelectingEveryBodyLeavesOutTheHiddenBodies()
+        {
+            _fixture.Model.Body.Add(new FakeBody("一"));
+            _fixture.Model.Body.Add(new FakeBody("二"));
+            _fixture.Model.Body.Add(new FakeBody("三"));
+            _fixture.View.SetBodyVisibles(new[] { true, false, true });
+
+            Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Body));
+
+            Assert.Equal(new[] { 0, 2 }, _fixture.View.Selected[ElementKinds.Body]);
+        }
+
+        [Fact]
+        public void SelectingEveryJointLeavesOutTheHiddenJoints()
+        {
+            _fixture.Model.Joint.Add(new FakeJoint("一"));
+            _fixture.Model.Joint.Add(new FakeJoint("二"));
+            _fixture.View.SetJointVisibles(new[] { false, true });
+
+            Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Joint));
+
+            Assert.Equal(new[] { 1 }, _fixture.View.Selected[ElementKinds.Joint]);
+        }
+
+        [Fact]
+        public void InvertingLeavesTheVerticesTheNarrowedDisplayHidesUnselected()
+        {
+            Vertices(4);
+            _fixture.View.SetVertexIndices(new[] { 0, 1, 2 });
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 1 };
+
+            Select(
+                Operation(ViewSelectElements.Invert),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
+
+            Assert.Equal(new[] { 0, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
+        [Fact]
+        public void SelectingEveryBoneTakesThemAllWhateverTheDisplayShows()
+        {
+            Vertices(2);
+            Bones("根", "子");
+            _fixture.View.SetVertexIndices(new[] { 0 });
+
+            Select(
+                Operation(ViewSelectElements.All),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Bone));
+
+            Assert.Equal(new[] { 0, 1 }, _fixture.View.Selected[ElementKinds.Bone]);
+        }
+
+        [Fact]
         public void SelectingEverythingTakesEveryKindThatWasNamedInOneCall()
         {
             Vertices(2);
@@ -203,6 +288,35 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ExpandingDoesNotReachTheVerticesTheNarrowedDisplayHides()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            Faces(Face(vertices, 0, 1, 2));
+            _fixture.View.SetVertexIndices(new[] { 0, 1, 3 });
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0 };
+
+            Select(
+                Operation(ViewSelectElements.Expand),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
+
+            Assert.Equal(new[] { 0, 1 }, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
+        [Fact]
+        public void ExpandingKeepsOnlyTheVerticesOnTheEdgesThatTouchTheSelection()
+        {
+            IList<IPXVertex> vertices = Vertices(5);
+            Faces(Face(vertices, 0, 1, 2));
+            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0, 3 };
+
+            Select(
+                Operation(ViewSelectElements.Expand),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
+
+            Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
+        [Fact]
         public void TheConnectedPartAddsEveryVertexReachedThroughFaces()
         {
             IList<IPXVertex> vertices = Vertices(8);
@@ -290,9 +404,43 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { 1, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
+        [Fact]
+        public void TakingHalfTheModelTakesOnlyTheVerticesTheNarrowedDisplayShows()
+        {
+            Vertex(-1f, 0f, 0f);
+            Vertex(1f, 0f, 0f);
+            Vertex(2f, 0f, 0f);
+            _fixture.View.SetVertexIndices(new[] { 0, 2 });
+
+            Select(
+                Operation(ViewSelectElements.HalfModel),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
+                ComposedScreenFixture.Given(
+                    ViewSelectElements.AxisName, ModelEditVertices.AxisX));
+
+            Assert.Equal(new[] { 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
+        [Theory]
+        [InlineData("x", new[] { 1, 2 })]
+        [InlineData("negativeX", new[] { 0 })]
+        public void AVertexOnTheCentreLineGoesToThePositiveSideOnly(string axis, int[] wanted)
+        {
+            Vertex(-1f, 0f, 0f);
+            Vertex(0f, 0f, 0f);
+            Vertex(1f, 0f, 0f);
+
+            Select(
+                Operation(ViewSelectElements.HalfModel),
+                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
+                ComposedScreenFixture.Given(ViewSelectElements.AxisName, axis));
+
+            Assert.Equal(wanted, _fixture.View.Selected[ElementKinds.Vertex]);
+        }
+
         [Theory]
         [InlineData("x", new[] { 2, 3 })]
-        [InlineData("negativeX", new[] { 0, 1, 2 })]
+        [InlineData("negativeX", new[] { 0, 1 })]
         public void TheBoundaryMovesWhereTheModelIsHalved(string axis, int[] wanted)
         {
             Vertex(-1f, 0f, 0f);
@@ -501,6 +649,21 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheWholeRunOfFacesJoinedByEdgesToTheSelectedOnesIsAdded()
+        {
+            IList<IPXVertex> vertices = Vertices(7);
+            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3), Face(vertices, 2, 3, 4));
+            Faces(Face(vertices, 4, 5, 6));
+            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
+
+            Related(Operation(ViewSelectRelated.ExpandAdjacentFaces));
+
+            Assert.Equal(
+                new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 },
+                _fixture.View.Selected[ElementKinds.Face].OrderBy(at => at));
+        }
+
+        [Fact]
         public void PickingFacesWhileTheyAreNotDrawnSaysSo()
         {
             IList<IPXVertex> vertices = Vertices(3);
@@ -576,6 +739,9 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(8f, _fixture.View.CameraPositionSet.Y);
             Assert.Equal(7f, _fixture.View.CameraPositionSet.Z);
             Assert.Equal(1f, _fixture.View.CameraTargetSet.X);
+            Assert.Equal(9f, _fixture.View.DrawnFrom.X);
+            Assert.Equal(8f, _fixture.View.DrawnFrom.Y);
+            Assert.Equal(7f, _fixture.View.DrawnFrom.Z);
         }
 
         [Fact]
@@ -595,6 +761,29 @@ namespace PmxEditorMcp.Tests
             Captured();
 
             Assert.Throws<ArgumentException>(() => _fixture.View.LastShot.Width);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void AShotTheEditorCouldNotTakeIsNotReportedAsAnImage(bool viewpoint)
+        {
+            _fixture.View.CameraPosition = new V3(9f, 8f, 7f);
+            _fixture.View.CameraTarget = new V3(1f, 1f, 1f);
+            _fixture.View.CameraUpVector = new V3(0f, 1f, 0f);
+            _fixture.View.CannotShoot = true;
+
+            IDictionary<string, object> envelope = viewpoint
+                ? Captured(
+                    ComposedScreenFixture.Given("position", new object[] { 1, 2, 3 }),
+                    ComposedScreenFixture.Given("target", new object[] { 0, 0, 0 }),
+                    ComposedScreenFixture.Given("upVector", new object[] { 0, 1, 0 }))
+                : Captured();
+
+            Assert.Equal(1, _fixture.View.Shots);
+            Assert.True(
+                !(bool)envelope["ok"] || ComposedScreenFixture.Warnings(envelope).Count > 0,
+                "撮れなかったのに、知らせも添えず成功で返した。");
         }
 
         [Fact]
@@ -1053,10 +1242,15 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ShowingThePartsSelectWindowSaysHowManyItemsItsListsNowHold()
         {
+            Faces();
+            Faces();
+            Bones("一", "二", "三");
+            _fixture.Model.Morph.Add(new FakeMorph());
             _fixture.Parts.Visible = false;
-            _fixture.Parts.MaterialItemsCount = 62;
-            _fixture.Parts.BoneItemsCount = 643;
-            _fixture.Parts.ExpressionItemsCount = 30;
+            _fixture.Parts.MaterialItemsCount = 0;
+            _fixture.Parts.BoneItemsCount = 0;
+            _fixture.Parts.ExpressionItemsCount = 0;
+            _fixture.Parts.Outdated = true;
 
             IDictionary<string, object> value = ComposedScreenFixture.Value(_fixture.Call(
                 ViewPartsSelectWindow.ToolName,
@@ -1065,9 +1259,9 @@ namespace PmxEditorMcp.Tests
 
             Assert.True(_fixture.Parts.Visible);
             Assert.Equal(true, value[ViewPartsSelectWindow.VisibleName]);
-            Assert.Equal(62, value[ViewPartsSelectWindow.MaterialItemsName]);
-            Assert.Equal(643, value[ViewPartsSelectWindow.BoneItemsName]);
-            Assert.Equal(30, value[ViewPartsSelectWindow.ExpressionItemsName]);
+            Assert.Equal(2, value[ViewPartsSelectWindow.MaterialItemsName]);
+            Assert.Equal(3, value[ViewPartsSelectWindow.BoneItemsName]);
+            Assert.Equal(1, value[ViewPartsSelectWindow.ExpressionItemsName]);
         }
 
         [Fact]
@@ -1360,7 +1554,7 @@ namespace PmxEditorMcp.Tests
         {
             Vertices(1);
 
-            _fixture.Call(
+            IDictionary<string, object> envelope = _fixture.Call(
                 ViewLoadVmdView.ToolName,
                 ComposedScreenFixture.Arguments(
                     ComposedScreenFixture.Given(
@@ -1368,7 +1562,9 @@ namespace PmxEditorMcp.Tests
                     ComposedScreenFixture.Given(
                         ViewLoadVmdView.ModelPathName, @"C:\models\other.pmd")));
 
+            ComposedScreenFixture.Value(envelope);
             Assert.Equal(@"C:\models\other.pmd", _fixture.Builder.OlderPath);
+            Assert.Same(_fixture.Builder.OlderModel, _fixture.View.Older);
             Assert.Null(_fixture.View.Loaded);
         }
 
@@ -1422,9 +1618,8 @@ namespace PmxEditorMcp.Tests
                 _fixture.Call(
                     SessionUpdateAllLists.ToolName, ComposedScreenFixture.Arguments()));
 
-            Assert.Contains(UpdateObject.All, _fixture.Form.Updated);
-            Assert.Equal(
-                _fixture.Form.Updated.Count, value[SessionUpdateAllLists.UpdatedName]);
+            Assert.Equal(new[] { UpdateObject.All }, _fixture.Form.Updated);
+            Assert.Equal(1, value[SessionUpdateAllLists.UpdatedName]);
         }
 
         [Fact]
@@ -1446,10 +1641,10 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheFirstBoneSelectedInTheViewIsPickedInTheBoneList()
+        public void TheFirstOfTheBonesTheViewHandsOverIsPickedInTheBoneList()
         {
             Bones("一", "二", "三");
-            _fixture.View.Selected[ElementKinds.Bone] = new[] { 2, 0 };
+            _fixture.View.Selected[ElementKinds.Bone] = new[] { 2, 1 };
 
             IDictionary<string, object> value = ComposedScreenFixture.Value(_fixture.Call(
                 SessionSelectListsFromView.ToolName,
@@ -1457,7 +1652,7 @@ namespace PmxEditorMcp.Tests
                     SessionSelectListsFromView.KindsName,
                     new object[] { SessionSelectListsFromView.Bone }))));
 
-            Assert.Equal(2, _fixture.Form.SelectedBoneIndex);
+            Assert.Equal(1, _fixture.Form.SelectedBoneIndex);
             Assert.Equal(1, value[SessionSelectListsFromView.SelectedName]);
         }
 

@@ -62,6 +62,17 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheAnglesReturnedAreTheOnesTheEditorsInputFieldsHeld()
+        {
+            IDictionary<string, object> value = ComposedScreenFixture.Value(Rotate(new object[] { 0.3, -0.5, 0.8 }, -75.0));
+
+            V3 turned = Assert.Single(_fixture.TransformView.Rotations);
+            Assert.Equal(
+                new object[] { (double)turned.X, (double)turned.Y, (double)turned.Z },
+                (object[])value[MotionRotateBoneAboutAxis.RotateXyzName]);
+        }
+
+        [Fact]
         public void TheRotationInputFieldsAreLeftAsTheyWere()
         {
             Rotate(new object[] { 1.0, 0.0, 0.0 }, 30.0);

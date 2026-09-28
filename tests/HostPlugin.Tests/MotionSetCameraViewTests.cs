@@ -67,10 +67,32 @@ namespace PmxEditorMcp.Tests
                     Held(fixture);
                     screen.FailOnCopy = true;
 
-                    Assert.Equal(ToolEnvelope.OperationFailed, ComposedScreenFixture.Code(Call(fixture)));
+                    Call(fixture);
 
+                    Assert.Equal(1, screen.Failures);
                     Assert.False(screen.Sync.Checked, "同期を元へ戻していない。");
                     Assert.Equal(9f, fixture.View.CameraPositionSet.X);
+                    Assert.Equal(8f, fixture.View.CameraPositionSet.Y);
+                    Assert.Equal(7f, fixture.View.CameraPositionSet.Z);
+                }
+            });
+        }
+
+        [Fact]
+        public void ASyncItemThatCannotBePressedIsRefusedWithoutMovingAnything()
+        {
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture, false))
+                {
+                    Held(fixture);
+                    screen.Sync.Enabled = false;
+
+                    Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(Call(fixture)));
+                    Assert.Empty(screen.Copied);
+                    Assert.Equal(0, screen.Clicks);
+                    Assert.Null(fixture.View.CameraPositionSet);
                 }
             });
         }
@@ -158,6 +180,7 @@ namespace PmxEditorMcp.Tests
         /// <summary>
         /// PMXView の表示メニューにある、カメラ同期と4画面モードの項目。同期の項目は、エディタと同じく
         /// 押すたびに入り切りし、Shift を押して入れたときだけ、その場の PMXView の位置を写した先へ控える。
+        /// 押した処理の中で落ちても、エディタと同じく例外を外へ出さずに握りつぶす。
         /// </summary>
         private sealed class Screen : IDisposable
         {
@@ -176,14 +199,22 @@ namespace PmxEditorMcp.Tests
                 Sync.Click += (sender, e) =>
                 {
                     Clicks++;
-                    Sync.Checked = !Sync.Checked;
-                    if (Sync.Checked && (Control.ModifierKeys & Keys.Shift) == Keys.Shift)
+                    try
                     {
-                        Copied.Add((V3)fixture.View.CameraPositionSet);
-                        if (FailOnCopy)
+                        Sync.Checked = !Sync.Checked;
+                        if (Sync.Checked && (Control.ModifierKeys & Keys.Shift) == Keys.Shift)
                         {
-                            throw new InvalidOperationException("写す途中で落ちた。");
+                            if (FailOnCopy)
+                            {
+                                throw new InvalidOperationException("写す途中で落ちた。");
+                            }
+
+                            Copied.Add((V3)fixture.View.CameraPositionSet);
                         }
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        Failures++;
                     }
                 };
                 Split = new ToolStripMenuItem("4画面モード") { Name = "MenuItem_MultiView" };
@@ -203,7 +234,11 @@ namespace PmxEditorMcp.Tests
 
             internal int Clicks { get; private set; }
 
+            /// <summary>真なら、同期を入れたあと視点を写す途中で落ちる。</summary>
             internal bool FailOnCopy { get; set; }
+
+            /// <summary>押した処理の中で落ちて、握りつぶした回数。</summary>
+            internal int Failures { get; private set; }
 
             internal List<V3> Copied { get; } = new List<V3>();
 

@@ -34,11 +34,11 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheVertexSelectionComesFromTheViewInTheOrderTheScreenHolds()
+        public void TheVertexSelectionComesFromTheViewInTheOrderTheViewHandsOver()
         {
             _view.Selected[ElementKinds.Vertex] = new[] { 4, 1 };
 
-            Assert.Equal(new[] { 4, 1 }, Targets().Taken(typeof(IPXVertex), 6));
+            Assert.Equal(new[] { 1, 4 }, Targets().Taken(typeof(IPXVertex), 6));
         }
 
         [Fact]

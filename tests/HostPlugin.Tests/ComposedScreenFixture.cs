@@ -24,6 +24,13 @@ namespace PmxEditorMcp.Tests
 
         private string _before;
 
+        public ComposedScreenFixture()
+        {
+            View.Model = Model;
+            Parts.Model = Model;
+            TransformView = new FakeTransformView(() => Model.Bone.Count, () => Model.Morph.Count);
+        }
+
         /// <summary>現在のPMXとして複製を返す題材。</summary>
         public FakePmx Model
         {
@@ -52,7 +59,7 @@ namespace PmxEditorMcp.Tests
 
         public FakeSubView SubView { get; } = new FakeSubView();
 
-        public FakeTransformView TransformView { get; } = new FakeTransformView();
+        public FakeTransformView TransformView { get; }
 
         public SwitchedModifierKeys Keys { get; } = new SwitchedModifierKeys();
 

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PmxEditorMcp.Tests
 {
@@ -522,11 +523,40 @@ namespace PmxEditorMcp.Tests
         /// <summary>VMDViewが立ち上がっているか。</summary>
         public bool Booted { get; set; }
 
-        public int[] Narrowed { get; private set; } = new int[0];
+        /// <summary>絞り込んで表示している頂点。絞り込んでいなければ null で、そのときはモデルの頂点をすべて表示している。</summary>
+        public int[] Narrowed { get; private set; }
+
+        /// <summary>表示の既定を決めるモデル。絞り込みも隠しもしていない要素は、このモデルの要素がすべて見えている。</summary>
+        public PEPlugin.Pmx.IPXPmx Model { get; set; }
+
+        /// <summary>剛体ごとの表示。空ならモデルの剛体をすべて表示している。</summary>
+        public bool[] BodyShown { get; set; }
+
+        /// <summary>Jointごとの表示。空ならモデルのJointをすべて表示している。</summary>
+        public bool[] JointShown { get; set; }
+
+        /// <summary>
+        /// 画面が渡す選択。エディタと同じく、面を除く種類は昇順に並べ直した複製で、頂点は重なりも持たない。
+        /// </summary>
+        private int[] Handed(string kind)
+        {
+            IEnumerable<int> held = Selected[kind] ?? new int[0];
+            if (string.Equals(kind, ElementKinds.Face, StringComparison.Ordinal))
+            {
+                return held.ToArray();
+            }
+
+            if (string.Equals(kind, ElementKinds.Vertex, StringComparison.Ordinal))
+            {
+                held = held.Distinct();
+            }
+
+            return held.OrderBy(at => at).ToArray();
+        }
 
         public int[] GetSelectedVertexIndices()
         {
-            return Selected[ElementKinds.Vertex];
+            return Handed(ElementKinds.Vertex);
         }
 
         public void SetSelectedVertexIndices(int[] indices)
@@ -536,7 +566,7 @@ namespace PmxEditorMcp.Tests
 
         public int[] GetSelectedFaceIndices()
         {
-            return Selected[ElementKinds.Face];
+            return Handed(ElementKinds.Face);
         }
 
         public void SetSelectedFaceIndices(int[] indices)
@@ -546,7 +576,7 @@ namespace PmxEditorMcp.Tests
 
         public int[] GetSelectedBoneIndices()
         {
-            return Selected[ElementKinds.Bone];
+            return Handed(ElementKinds.Bone);
         }
 
         public void SetSelectedBoneIndices(int[] indices)
@@ -556,7 +586,7 @@ namespace PmxEditorMcp.Tests
 
         public int[] GetSelectedBodyIndices()
         {
-            return Selected[ElementKinds.Body];
+            return Handed(ElementKinds.Body);
         }
 
         public void SetSelectedBodyIndices(int[] indices)
@@ -566,7 +596,7 @@ namespace PmxEditorMcp.Tests
 
         public int[] GetSelectedJointIndices()
         {
-            return Selected[ElementKinds.Joint];
+            return Handed(ElementKinds.Joint);
         }
 
         public void SetSelectedJointIndices(int[] indices)
@@ -594,6 +624,8 @@ namespace PmxEditorMcp.Tests
             }
 
             Repaints++;
+            _drawn = CameraPosition;
+            _drawnKnown = true;
         }
 
         public void BootupVmdView(PEPlugin.Pmx.IPXPmx pmx, PEPlugin.Vmd.IPEVmd vmd)
@@ -633,8 +665,46 @@ namespace PmxEditorMcp.Tests
 
         public bool[] GetBodyVisibles()
         {
-            throw new NotSupportedException();
+            return Shown(BodyShown, Scene().Body.Count);
         }
+
+        /// <summary>表示を持たない要素は見えているものとして、その種類の表示を複製で渡す。</summary>
+        private static bool[] Shown(bool[] held, int count)
+        {
+            bool[] made = new bool[count];
+            for (int at = 0; at < count; at++)
+            {
+                made[at] = held == null || at >= held.Length || held[at];
+            }
+
+            return made;
+        }
+
+        private PEPlugin.Pmx.IPXPmx Scene()
+        {
+            if (Model == null)
+            {
+                throw new NotSupportedException("表示を読むには Model を渡す。");
+            }
+
+            return Model;
+        }
+
+        private PEPlugin.Pmd.IPEVector3 _drawn;
+
+        private bool _drawnKnown;
+
+        /// <summary>
+        /// 画面にいま描かれている視点。エディタと同じく、視点を入れただけでは描き直さず、描き直しを頼んだときの
+        /// 視点が残る。視点を入れる前は、そのときの視点が描かれている。
+        /// </summary>
+        public PEPlugin.Pmd.IPEVector3 DrawnFrom
+        {
+            get { return _drawnKnown ? _drawn : CameraPosition; }
+        }
+
+        /// <summary>真なら、エディタが描画の結果を読めなかったときと同じく、画像の代わりに空を渡す。</summary>
+        public bool CannotShoot { get; set; }
 
         /// <summary>画像を撮ったときの視点。撮るたびに置き換わる。</summary>
         public PEPlugin.Pmd.IPEVector3 ShotFrom { get; private set; }
@@ -647,8 +717,13 @@ namespace PmxEditorMcp.Tests
 
         public System.Drawing.Bitmap GetClientImage()
         {
-            ShotFrom = CameraPositionSet;
+            ShotFrom = DrawnFrom;
             Shots++;
+            if (CannotShoot)
+            {
+                return null;
+            }
+
             LastShot = new System.Drawing.Bitmap(2, 2);
 
             return LastShot;
@@ -656,7 +731,7 @@ namespace PmxEditorMcp.Tests
 
         public bool[] GetJointVisibles()
         {
-            throw new NotSupportedException();
+            return Shown(JointShown, Scene().Joint.Count);
         }
 
         public PEPlugin.SDX.M GetProjectionMatrix(int screen)
@@ -666,7 +741,9 @@ namespace PmxEditorMcp.Tests
 
         public int[] GetVertexIndices()
         {
-            throw new NotSupportedException();
+            return Narrowed == null
+                ? Enumerable.Range(0, Scene().Vertex.Count).ToArray()
+                : (int[])Narrowed.Clone();
         }
 
         public PEPlugin.Pmd.IPEVector3[] GetViewAxis()
@@ -681,7 +758,7 @@ namespace PmxEditorMcp.Tests
 
         public void SetBodyVisibles(bool[] v)
         {
-            throw new NotSupportedException();
+            BodyShown = (bool[])v.Clone();
         }
 
         public PEPlugin.Pmd.IPEVector3 CameraTargetSet { get; private set; }
@@ -692,19 +769,28 @@ namespace PmxEditorMcp.Tests
 
         public void SetCameraView(PEPlugin.Pmd.IPEVector3 target, PEPlugin.Pmd.IPEVector3 position, PEPlugin.Pmd.IPEVector3 upVector)
         {
+            if (!_drawnKnown)
+            {
+                _drawn = CameraPosition;
+                _drawnKnown = true;
+            }
+
             CameraTargetSet = target;
             CameraPositionSet = position;
             CameraUpSet = upVector;
+            CameraTarget = target;
+            CameraPosition = position;
+            CameraUpVector = upVector;
         }
 
         public void SetJointVisibles(bool[] v)
         {
-            throw new NotSupportedException();
+            JointShown = (bool[])v.Clone();
         }
 
         public void SetVertexIndices(int[] indices)
         {
-            Narrowed = indices;
+            Narrowed = indices == null ? null : (int[])indices.Clone();
         }
 
         public void SetVmeEvent(PEPlugin.Vme.IPEVme vme, int begin, int end)
@@ -1629,7 +1715,36 @@ namespace PmxEditorMcp.Tests
 
         public int ExpressionItemsCount { get; set; } = 1;
 
-        public bool Visible { get; set; }
+        /// <summary>一覧を組み直すときに読むモデル。</summary>
+        public PEPlugin.Pmx.IPXPmx Model { get; set; }
+
+        /// <summary>
+        /// 一覧が古いままか。エディタと同じく、隠れている間にモデルが変わっても一覧は組み直さず、この印だけを
+        /// 立てて、表示したときに組み直す。
+        /// </summary>
+        public bool Outdated { get; set; }
+
+        private bool _visible;
+
+        public bool Visible
+        {
+            get
+            {
+                return _visible;
+            }
+
+            set
+            {
+                _visible = value;
+                if (value && Outdated)
+                {
+                    MaterialItemsCount = Model.Material.Count;
+                    BoneItemsCount = Model.Bone.Count;
+                    ExpressionItemsCount = Model.Morph.Count;
+                    Outdated = false;
+                }
+            }
+        }
 
         public int[] GetCheckedMaterialIndices()
         {
@@ -1785,12 +1900,44 @@ namespace PmxEditorMcp.Tests
 
     }
 
+    /// <summary>その型として渡せるだけの題材。持ち物を読んだり呼んだりすると止まる。</summary>
+    internal sealed class Unsupported<T> : System.Runtime.Remoting.Proxies.RealProxy
+    {
+        private Unsupported()
+            : base(typeof(T))
+        {
+        }
+
+        public static T Made()
+        {
+            return (T)new Unsupported<T>().GetTransparentProxy();
+        }
+
+        public override System.Runtime.Remoting.Messaging.IMessage Invoke(
+            System.Runtime.Remoting.Messaging.IMessage message)
+        {
+            System.Runtime.Remoting.Messaging.IMethodCallMessage call =
+                (System.Runtime.Remoting.Messaging.IMethodCallMessage)message;
+            if (string.Equals(call.MethodName, "ToString", StringComparison.Ordinal))
+            {
+                return new System.Runtime.Remoting.Messaging.ReturnMessage(
+                    typeof(T).Name + " の題材", null, 0, call.LogicalCallContext, call);
+            }
+
+            return new System.Runtime.Remoting.Messaging.ReturnMessage(
+                new NotSupportedException(call.MethodName), call);
+        }
+    }
+
     public sealed class FakeHostBuilder : PEPlugin.IPEBuilder
     {
         public FakeBuilder PmxBuilder { get; } = new FakeBuilder();
 
         /// <summary>PMDとして読んだファイルの道。読んでいなければ空。</summary>
         public string OlderPath { get; private set; }
+
+        /// <summary>PMDとして読んで渡すモデル。</summary>
+        public PEPlugin.Pmd.IPEPmd OlderModel { get; } = Unsupported<PEPlugin.Pmd.IPEPmd>.Made();
 
         /// <summary>作って渡したVMD。</summary>
         public FakeVmd Motion { get; } = new FakeVmd();
@@ -1859,7 +2006,7 @@ namespace PmxEditorMcp.Tests
         {
             OlderPath = path;
 
-            return null;
+            return OlderModel;
         }
 
         public PEPlugin.Pmd.IPEVector2 CreateVector2()
