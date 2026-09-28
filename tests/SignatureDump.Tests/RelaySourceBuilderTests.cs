@@ -257,6 +257,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void APathWithAnInitializerCallsItOnTheRootBeforeTakingTheReceiver()
+        {
+            Assert.Contains(
+                "receivers.Add(\"Sdk.Events\", connection => {"
+                    + " global::PXCPlugin.PXCBridge.CreateEventConnectorInitialize(connection.Use());"
+                    + " return global::PXCPlugin.PXCBridge.CreateEventConnector(connection.Use()); });",
+                Receivers(
+                    "Sdk.Events",
+                    new ReceiverPath(
+                        "PXCPlugin.PXCBridge",
+                        "CreateEventConnector()",
+                        "CreateEventConnectorInitialize")));
+        }
+
+        [Fact]
         public void ARootTheResidentConnectionCannotGiveStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -267,6 +282,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static string Receivers(string type, string root, string steps)
         {
+            return Receivers(type, new ReceiverPath(root, steps));
+        }
+
+        private static string Receivers(string type, ReceiverPath path)
+        {
             return RelaySourceBuilder.Build(
                 new string[0],
                 Inventory(),
@@ -275,7 +295,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Digest,
                 new Dictionary<string, ReceiverPath>(StringComparer.Ordinal)
                 {
-                    { type, new ReceiverPath(root, steps) },
+                    { type, path },
                 }).Text;
         }
 

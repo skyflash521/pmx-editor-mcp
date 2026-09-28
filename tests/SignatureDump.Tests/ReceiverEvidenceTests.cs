@@ -113,6 +113,58 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("Connector.Sub", path.Steps);
         }
 
+        [Fact]
+        public void ARootThatDeclaresAnInitializerForTheFirstStepCarriesItsName()
+        {
+            ReceiverPath path = ReceiverEvidence.Resolve(
+                Inventory(Taking(Bridge, "CreateEventConnectorInitialize", "System.Void")),
+                new[] { Events })[Events];
+
+            Assert.Equal("CreateEventConnector()", path.Steps);
+            Assert.Equal("CreateEventConnectorInitialize", path.Initialize);
+        }
+
+        [Fact]
+        public void APathWhoseRootDeclaresNoInitializerHasNone()
+        {
+            Assert.Null(Resolve(Events)[Events].Initialize);
+        }
+
+        [Fact]
+        public void AnInitializerThatDoesNotTakeOnlyTheInjectedConnectorIsNotCalled()
+        {
+            SignatureRecord takingText = new SignatureRecord(
+                Bridge + ".CreateEventConnectorInitialize(System.String)",
+                Bridge,
+                MemberKind.Method,
+                "CreateEventConnectorInitialize",
+                true,
+                0,
+                new[]
+                {
+                    new ParameterRecord("text", "System.String", ParameterDirection.In, false),
+                },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Write);
+
+            ReceiverPath path = ReceiverEvidence.Resolve(
+                Inventory(takingText), new[] { Events })[Events];
+
+            Assert.Null(path.Initialize);
+        }
+
+        [Fact]
+        public void AnInitializerDeclaredOnAnotherTypeIsNotCalled()
+        {
+            ReceiverPath path = ReceiverEvidence.Resolve(
+                Inventory(Taking(Host, "CreateEventConnectorInitialize", "System.Void")),
+                new[] { Events })[Events];
+
+            Assert.Null(path.Initialize);
+        }
+
         private static IDictionary<string, ReceiverPath> Resolve(params string[] types)
         {
             return ReceiverEvidence.Resolve(Inventory(), types);
@@ -133,7 +185,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 });
         }
 
-        private static InventoryRecord Inventory()
+        private static InventoryRecord Inventory(params SignatureRecord[] more)
         {
             return new InventoryRecord(
                 "PEPlugin",
@@ -150,7 +202,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     Property(Sub, "Depth", "System.Int32"),
                     Taking(Bridge, "CreateEventConnector", Events),
                     Property(Events, "Count", "System.Int32"),
-                });
+                }.Concat(more).ToArray());
         }
 
         /// <summary>引数を取らない取得プロパティ。辿れる一歩になる。</summary>

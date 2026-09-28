@@ -54,6 +54,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AProvidedPropertyOfATypeThatIsEmbeddedWithoutARowIsRefused()
+        {
+            InvalidOperationException refused = Assert.Throws<InvalidOperationException>(
+                () => MapCoverageGate.Require(Provided(Property), Signatures(), Embedded(), Map()));
+
+            Assert.Contains("行を持たない提供対象がある", refused.Message, StringComparison.Ordinal);
+            Assert.Contains(Property, refused.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AProvidedFieldOfATypeThatIsEmbeddedWithoutARowIsRefused()
+        {
+            string key = "Sdk.Note.Size";
+            IDictionary<string, SignatureRecord> signatures = Signatures();
+            signatures.Add(key, Signature(key, NoteType, MemberKind.Field, "Size"));
+
+            InvalidOperationException refused = Assert.Throws<InvalidOperationException>(
+                () => MapCoverageGate.Require(Provided(key), signatures, Embedded(), Map()));
+
+            Assert.Contains("行を持たない提供対象がある", refused.Message, StringComparison.Ordinal);
+            Assert.Contains(key, refused.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheConstructorOfATypeThatIsEmbeddedNeedsNoRow()
         {
             string key = "Sdk.Note..ctor()";

@@ -523,6 +523,98 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void RejectsAnElementTypeInTheSetupBeforeTheCallThatTheTypeRoleTableDoesNotHave()
+        {
+            Require(
+                mapJson: WithRowSetup("vertex", "PEPlugin.SDX.V3"),
+                assignmentsJson: @"{ ""assignments"": [] }");
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: WithRowSetup("chouten", "PEPlugin.SDX.V3"),
+                    assignmentsJson: @"{ ""assignments"": [] }"));
+
+            Assert.Contains("型役割表に無い", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsASampledTypeInTheSetupBeforeTheCallThatThePublicApiDoesNotHave()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: WithRowSetup("vertex", "PEPlugin.SDX.V9"),
+                    assignmentsJson: @"{ ""assignments"": [] }"));
+
+            Assert.Contains("公開API列挙に無い", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AcceptsASetupPlacedByToolNameThatNamesWordsTheOtherCanonsHave()
+        {
+            Require(
+                mapJson: WithToolSetup("model_list_things", "vertex", "PEPlugin.SDX.V3"),
+                assignmentsJson: @"{ ""assignments"": [] }");
+        }
+
+        [Fact]
+        public void RejectsAnElementTypeInASetupPlacedByToolNameThatTheTypeRoleTableDoesNotHave()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: WithToolSetup("model_list_things", "chouten", "PEPlugin.SDX.V3"),
+                    assignmentsJson: @"{ ""assignments"": [] }"));
+
+            Assert.Contains("型役割表に無い", error.Message, StringComparison.Ordinal);
+            Assert.Contains("model_list_things", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsASampledTypeInASetupPlacedByToolNameThatThePublicApiDoesNotHave()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    mapJson: WithToolSetup("model_list_things", "vertex", "PEPlugin.SDX.V9"),
+                    assignmentsJson: @"{ ""assignments"": [] }"));
+
+            Assert.Contains("公開API列挙に無い", error.Message, StringComparison.Ordinal);
+            Assert.Contains("model_list_things", error.Message, StringComparison.Ordinal);
+        }
+
+        private static string SetupOperations(string elementType, string sample)
+        {
+            return @"[
+  { ""tag"": ""addElement"", ""elementType"": """ + elementType + @""", ""out"": ""added"" },
+  { ""tag"": ""callTool"", ""tool"": ""model_update_vertices"",
+    ""args"": { ""value"": ""sample:" + sample + @""" } }
+]";
+        }
+
+        private static string ReadbackMap()
+        {
+            return Dispatch(
+                @"{ ""effectType"": ""stateWritten"", ""effectKey"": ""name"", ""kind"": ""readback"",
+                    ""observerTool"": ""model_list_vertices"", ""observerArgs"": {},
+                    ""valuePath"": ""name"", ""comparison"": ""exists"" }");
+        }
+
+        private static string WithRowSetup(string elementType, string sample)
+        {
+            const string Anchor = @"""postcondition"":";
+            string map = ReadbackMap();
+            Assert.Contains(Anchor, map, StringComparison.Ordinal);
+            return map.Replace(
+                Anchor, @"""setup"": " + SetupOperations(elementType, sample) + ", " + Anchor);
+        }
+
+        private static string WithToolSetup(string tool, string elementType, string sample)
+        {
+            string rows = ReadbackMap().TrimEnd().TrimEnd('}');
+            return rows + @", ""toolSetups"": [
+  { ""tool"": """ + tool + @""", ""setup"": " + SetupOperations(elementType, sample) + @" }
+] }";
+        }
+
+        [Fact]
         public void RejectsAnSdkArgumentThatTheSignatureDoesNotHave()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(

@@ -71,11 +71,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void TypeInBothLedgerAndOutOfScopeFailsCollation()
         {
-            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
-                Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
-                Inventory(),
-                Excluded(),
-                OutOfScope(TypeEntry(Hub))));
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => LedgerCoverage.Verify(
+                    Ledger(Row("CAP-001", Thing), Row("CAP-002", Hub)),
+                    Inventory(),
+                    Excluded(),
+                    OutOfScope(TypeEntry(Hub))));
+
+            Assert.Contains(
+                "台帳の行が指す型 と 型単位の対象外 が重なる: " + Hub,
+                exception.Message,
+                StringComparison.Ordinal);
         }
 
         [Fact]
@@ -371,11 +377,29 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void OnlyAnExcludedCountAtTheStartOfRemarksIsRead()
         {
-            Assert.Throws<InvalidOperationException>(() => LedgerCoverage.Verify(
-                Ledger(Counted("CAP-001", Thing, "契約注記: 非対応件数: 1")),
-                Inventory(),
-                ExcludedSignatureBuilder.Build(Frozen2(), Inventory()),
-                OutOfScope(TypeEntry(Hub))));
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => LedgerCoverage.Verify(
+                    Ledger(Counted("CAP-001", Thing, "契約注記: 非対応件数: 1")),
+                    Inventory(),
+                    ExcludedSignatureBuilder.Build(Frozen2(), Inventory()),
+                    OutOfScope(TypeEntry(Hub))));
+
+            Assert.Contains(
+                "CAP-001 の非対応件数が備考の先頭にない", exception.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnExcludedCountAfterTheStartOfRemarksFailsEvenWhereNothingIsExcluded()
+        {
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                () => LedgerCoverage.Verify(
+                    Ledger(Counted("CAP-001", Thing, "契約注記: 非対応件数: 1")),
+                    Inventory(),
+                    Excluded(),
+                    OutOfScope(TypeEntry(Hub))));
+
+            Assert.Contains(
+                "CAP-001 の非対応件数が備考の先頭にない", exception.Message, StringComparison.Ordinal);
         }
 
         [Fact]

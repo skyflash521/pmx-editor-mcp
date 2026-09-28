@@ -946,6 +946,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ASignatureThatTwoCapabilitiesBothPointAtThrows()
+        {
+            const string Shared = "PEPlugin.IPEBuilder.CreateVme(PEPlugin.Pmd.IPEPmd)";
+            IList<SignatureRecord> signatures = SignatureRows
+                .Select(row => string.Equals((string)row[0], Shared, StringComparison.Ordinal)
+                    ? row.Select((cell, at) => at == 2 ? "PEPlugin.Pmd.IPEVme" : cell).ToArray()
+                    : row)
+                .Select(Signature)
+                .ToList();
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ExcludedBaselineBuilder.Build(Ledger(), signatures));
+
+            Assert.Contains(
+                "CAP-463 の非対応記載が他の能力と重なる: " + Shared,
+                error.Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void CapabilityMissingFromLedgerThrows()
         {
             IList<CapabilityRecord> ledger = Ledger().Where(c => c.Id != "CAP-459").ToList();

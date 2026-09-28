@@ -384,11 +384,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("文字列", error.Message);
         }
 
-        [Fact]
-        public void AnItemThatIsNotAnObjectStops()
+        [Theory]
+        [InlineData("{\"types\":[],\"issuances\":[\"N.A.Make()\"],\"collections\":[]}")]
+        [InlineData("{\"types\":[],\"issuances\":[],\"collections\":[\"N.A.Items()\"]}")]
+        public void AnItemThatIsNotAnObjectStops(string json)
         {
-            Assert.Throws<FormatException>(
-                () => TypeRoleTableJsonReader.ReadTypeRoles("{\"types\":[\"N.A\"]}"));
+            FormatException error = Assert.Throws<FormatException>(
+                () => TypeRoleTableJsonReader.ReadTypeRoles(json));
+
+            Assert.Equal("項目の組でなければならない。", error.Message);
         }
 
         [Fact]

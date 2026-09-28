@@ -103,6 +103,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.DoesNotContain("source: spdx", built, StringComparison.Ordinal);
             Assert.Contains("source: files LICENSE.TXT", built, StringComparison.Ordinal);
+            Assert.Contains(
+                ThirdPartyNoticeBuilder.BodyBegin + "\n--- LICENSE.TXT ---\n同梱の本文\n"
+                    + ThirdPartyNoticeBuilder.BodyEnd,
+                built,
+                StringComparison.Ordinal);
         }
 
         [Fact]
@@ -113,6 +118,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains("source: spdx MIT", built, StringComparison.Ordinal);
             Assert.Contains("source: files THIRD-PARTY-NOTICES.TXT", built, StringComparison.Ordinal);
+            Assert.Contains(
+                ThirdPartyNoticeBuilder.BodyBegin + "\n--- spdx MIT ---\nMITの標準の本文\n"
+                    + "--- THIRD-PARTY-NOTICES.TXT ---\n同梱の本文\n" + ThirdPartyNoticeBuilder.BodyEnd,
+                built,
+                StringComparison.Ordinal);
         }
 
         [Fact]
@@ -148,6 +158,32 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => Build(new[] { Package("Some.Package", "1.0.0", "BSD-3-Clause", null) }));
 
             Assert.Contains("標準の本文", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheRunnerRefusesALedgerThatNamesNoThirdPartySourceAndWritesNothing()
+        {
+            string work = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(work);
+            try
+            {
+                string ledger = Path.Combine(work, "ledger.txt");
+                Write(ledger, Ledger("asset=Bridge.exe||"));
+                string notice = Path.Combine(work, "out", "THIRD-PARTY-NOTICES.txt");
+                var output = new StringWriter();
+                var error = new StringWriter();
+
+                int code = ThirdPartyNoticeRunner.Run(
+                    new[] { notice, Path.Combine(work, "licenses"), ledger }, output, error);
+
+                Assert.Equal(ExitCodes.Unresolved, code);
+                Assert.Contains("1つも挙げていない", error.ToString(), StringComparison.Ordinal);
+                Assert.False(File.Exists(notice));
+            }
+            finally
+            {
+                Directory.Delete(work, true);
+            }
         }
 
         private static string Ledger(params string[] assets)

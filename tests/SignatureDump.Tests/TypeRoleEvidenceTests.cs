@@ -153,10 +153,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IDictionary<string, string> reached = TypeRoleEvidence.ReachableFromRoots(
                 Inventory(
                     Method(Root, "Apply", "System.Void", Arg("c", Injected)),
-                    Property("N.ISystem", "Value", "System.Int32")),
+                    Property("System.Void", "Value", "System.Int32")),
                 new[] { Root });
 
-            Assert.False(reached.ContainsKey("N.ISystem"));
+            Assert.False(reached.ContainsKey("System.Void"));
         }
 
         [Fact]

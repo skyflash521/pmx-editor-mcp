@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Reflection;
 using Xunit;
@@ -113,6 +114,33 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AReferenceWithoutADeclaringTypeIsJudgedByItsMemberName()
         {
             Assert.Equal(new[] { "GetMethod" }, ReflectionFreeGate.Find(new[] { "GetMethod", "Invoke" }));
+        }
+
+        [Fact]
+        public void ScanningAnAssemblyCatchesTheMemberReferencesThatLookUpByName()
+        {
+            ReflectionScan scan = ReflectionFreeGate.Scan(typeof(LooksUpByName).Assembly.ManifestModule);
+
+            Assert.Contains("System.Type.GetMethod", scan.Found);
+            Assert.Contains("System.Activator.CreateInstance", scan.Found);
+        }
+
+        [Fact]
+        public void ScanningAnAssemblyLeavesAlonePathsThatOnlyBuildAnAttributeOrLookAtTheShape()
+        {
+            ReflectionScan scan = ReflectionFreeGate.Scan(typeof(LooksUpByName).Assembly.ManifestModule);
+
+            Assert.DoesNotContain("System.Reflection.AssemblyTitleAttribute..ctor", scan.Found);
+            Assert.DoesNotContain("System.Type.GetTypeFromHandle", scan.Found);
+            Assert.DoesNotContain("System.Object.ToString", scan.Found);
+        }
+
+        private static class LooksUpByName
+        {
+            public static object Call(System.Type type)
+            {
+                return type.GetMethod("ToString") + Activator.CreateInstance(type).ToString();
+            }
         }
 
         /// <summary>綴りだけが属性に似ている型。継いだ先で判じていることを見るための題材。</summary>

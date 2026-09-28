@@ -328,6 +328,110 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ATableThatNamesEveryRootAsAConnectorPassesEvenWhenARootLeadsToNoProvidedType()
+        {
+            const string Thing = "N.IThing";
+            const string RunArgs = "PEPlugin.IPERunArgs";
+            List<TypeRecord> types = new List<TypeRecord>
+            {
+                new TypeRecord(
+                    Thing, TypeKind.Interface, false, true, false, new List<string>(), new List<string>()),
+            };
+            List<SignatureRecord> signatures = new List<SignatureRecord>
+            {
+                Property(RunArgs, "Thing", Thing),
+                Property(Thing, "Name", "System.String"),
+            };
+            foreach (string root in TypeRoleEvidence.ConnectionRoots)
+            {
+                types.Add(new TypeRecord(
+                    root, TypeKind.Interface, false, true, false, new List<string>(), new List<string>()));
+                signatures.Add(Property(root, "Version", "System.String"));
+            }
+
+            InventoryRecord inventory = new InventoryRecord(
+                "PEPlugin",
+                "0.0.0.0",
+                types,
+                new List<TypeRecord>
+                {
+                    new TypeRecord(
+                        "System.String",
+                        TypeKind.Class,
+                        false,
+                        true,
+                        false,
+                        new List<string>(),
+                        new List<string>()),
+                },
+                signatures);
+            IList<CapabilityRecord> ledger = new List<CapabilityRecord>
+            {
+                new CapabilityRecord(
+                    "CAP-001",
+                    "分類",
+                    Thing,
+                    CapabilityTargetKind.Single,
+                    new List<string> { Thing },
+                    CapabilityStatus.Provided,
+                    CapabilityOwner.Model,
+                    string.Empty),
+                NotSupportedPattern("CAP-463", "PEPlugin.Pmd.*"),
+                NotSupportedPattern("CAP-466", "PEPlugin.SDX.*"),
+            };
+            TypeRolePopulation population = TypeRolePopulation.Resolve(
+                ledger, inventory, new List<ExcludedSignatureRecord>());
+            TypeRoleTable table = Table(TypeRoleEvidence.ConnectionRoots
+                .Select(root => Record(root, TypeRole.Connector))
+                .Concat(new[] { Record(Thing, TypeRole.OperationTarget) })
+                .OrderBy(r => r.TypeName, StringComparer.Ordinal)
+                .ToArray());
+            IDictionary<string, TypeRole> roles = table.Types.ToDictionary(
+                r => r.TypeName, r => r.Role, StringComparer.Ordinal);
+
+            TypeRoleGate.Require(
+                table,
+                population.RoleTypes,
+                TypeRoleEvidence.ConnectionRoots,
+                TypeRoleEvidence.EventArgumentTypes(inventory),
+                TypeRoleEvidence.ConnectorCandidates(inventory, TypeRoleEvidence.ConnectionRoots),
+                HandleIssuanceEvidence.Candidates(inventory, roles, population.Signatures),
+                ElementCollectionEvidence.Candidates(inventory, roles, population.Signatures));
+        }
+
+        private static SignatureRecord Property(string declaringType, string memberName, string valueType)
+        {
+            ParameterRecord[] parameters = new ParameterRecord[0];
+
+            return new SignatureRecord(
+                SignatureKeyBuilder.Build(declaringType, memberName, 0, parameters, valueType),
+                declaringType,
+                MemberKind.Property,
+                memberName,
+                false,
+                0,
+                parameters,
+                valueType,
+                true,
+                false,
+                OperationDirection.Read,
+                false);
+        }
+
+        private static CapabilityRecord NotSupportedPattern(string id, string target)
+        {
+            return new CapabilityRecord(
+                id,
+                "分類",
+                target,
+                CapabilityTargetKind.Pattern,
+                new List<string> { target },
+                CapabilityStatus.NotSupported,
+                CapabilityOwner.None,
+                string.Empty);
+        }
+
+        [Fact]
         public void EveryArgumentIsRequired()
         {
             TypeRoleTable table = Table(Record(Root, TypeRole.Connector));

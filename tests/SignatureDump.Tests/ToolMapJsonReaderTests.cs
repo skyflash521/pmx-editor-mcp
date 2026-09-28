@@ -43,6 +43,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<FormatException>(() => ToolMapJsonReader.Read(Map(row)));
         }
 
+        private static void RejectsFor(string message, string row)
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => ToolMapJsonReader.Read(Map(row)));
+            Assert.Equal(message, error.Message);
+        }
+
         /// <summary>行から名前を引けないツールへも、呼ぶ前の段取りを置ける。</summary>
         [Fact]
         public void ReadsASetupPlacedByToolName()
@@ -368,11 +375,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RequiresTheObserverOnAReadbackJudgement()
         {
-            Rejects(Dispatch(
-                @"[{ ""effectType"": ""stateWritten"", ""effectKey"": ""name"",
-                     ""kind"": ""readback"", ""valuePath"": ""name"",
-                     ""comparison"": ""exists"" }]",
-                string.Empty));
+            RejectsFor(
+                "項目が無い: observerTool",
+                Dispatch(
+                    @"[{ ""effectType"": ""stateWritten"", ""effectKey"": ""name"",
+                         ""kind"": ""readback"",
+                         ""observerArgs"": { ""index"": ""arg:index"" },
+                         ""valuePath"": ""name"", ""comparison"": ""exists"" }]",
+                    string.Empty));
         }
 
         [Fact]
@@ -525,15 +535,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RequiresTheSetupExactlyOnTheTwoEffectsThatNeedAKnownState()
         {
-            Rejects(Dispatch(
-                @"[{ ""effectType"": ""observableChange"", ""effectKey"": """",
-                     ""kind"": ""readback"", ""comparison"": ""anyChanged"" }]",
-                string.Empty));
+            RejectsFor(
+                "項目が無い: setup",
+                Dispatch(
+                    @"[{ ""effectType"": ""observableChange"", ""effectKey"": """",
+                         ""kind"": ""readback"", ""observerTool"": ""model_list_vertices"",
+                         ""comparison"": ""anyChanged"" }]",
+                    string.Empty));
 
-            Rejects(Dispatch(
-                @"[{ ""effectType"": ""none"", ""effectKey"": """", ""kind"": ""callLogOnly"",
-                     ""comparison"": ""exists"", ""setup"": [{ ""tag"": ""initPmx"" }] }]",
-                string.Empty));
+            RejectsFor(
+                "この行が持てない項目がある: setup",
+                Dispatch(
+                    @"[{ ""effectType"": ""none"", ""effectKey"": """", ""kind"": ""callLogOnly"",
+                         ""comparison"": ""exists"", ""setup"": [{ ""tag"": ""initPmx"" }] }]",
+                    string.Empty));
         }
 
         [Fact]

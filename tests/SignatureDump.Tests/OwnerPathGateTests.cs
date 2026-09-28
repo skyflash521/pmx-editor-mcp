@@ -93,11 +93,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AStageThatIsNotAReadablePropertyStops()
+        public void AStageThatIsAMethodStops()
         {
-            Assert.Contains(
-                "N.IRoot.Make()",
-                Stops(Owned("N.IRoot.Middles()", "N.IRoot.Make()", "N.IRoot.Middles()")));
+            StopsAsNotAReadableProperty(
+                Signature(Root, MemberKind.Method, "MakeMiddles", List(Middle), true, 0));
+        }
+
+        [Fact]
+        public void AStageThatIsAPropertyThatCannotBeReadStops()
+        {
+            StopsAsNotAReadableProperty(
+                Signature(Root, MemberKind.Property, "SetMiddles", List(Middle), false, 0));
+        }
+
+        [Fact]
+        public void AStageThatIsAPropertyThatTakesArgumentsStops()
+        {
+            StopsAsNotAReadableProperty(
+                Signature(Root, MemberKind.Property, "Item", List(Middle), true, 1));
+        }
+
+        private static void StopsAsNotAReadableProperty(SignatureRecord stage)
+        {
+            IDictionary<string, SignatureRecord> signatures = Signatures();
+            signatures.Add(stage.Key, stage);
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => OwnerPathGate.Require(
+                    new List<ElementCollectionRecord> { Owned(stage.Key, stage.Key) },
+                    signatures,
+                    Roots()));
+
+            Assert.Equal("引数の無い取得プロパティでない段が在る: " + stage.Key, error.Message);
         }
 
         [Fact]
@@ -169,7 +196,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Property(Middle, "Leaves", List(Leaf)),
                 Property("N.ILeafHolder", "Leaves", List(Leaf)),
                 Property(Leaf, "Marks", List("N.IMark")),
-                Method(Root, "Make", Middle),
             }.ToDictionary(s => s.Key, StringComparer.Ordinal);
         }
 
@@ -184,16 +210,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return Signature(declaringType, MemberKind.Property, memberName, valueType);
         }
 
-        private static SignatureRecord Method(
-            string declaringType, string memberName, string valueType)
-        {
-            return Signature(declaringType, MemberKind.Method, memberName, valueType);
-        }
-
         private static SignatureRecord Signature(
             string declaringType, MemberKind memberKind, string memberName, string valueType)
         {
-            ParameterRecord[] parameters = new ParameterRecord[0];
+            return Signature(declaringType, memberKind, memberName, valueType, true, 0);
+        }
+
+        private static SignatureRecord Signature(
+            string declaringType,
+            MemberKind memberKind,
+            string memberName,
+            string valueType,
+            bool canRead,
+            int parameterCount)
+        {
+            ParameterRecord[] parameters = Enumerable.Range(0, parameterCount)
+                .Select(i => new ParameterRecord(
+                    "index" + i, "System.Int32", ParameterDirection.In, false))
+                .ToArray();
 
             return new SignatureRecord(
                 SignatureKeyBuilder.Build(declaringType, memberName, 0, parameters, valueType),
@@ -204,8 +238,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 0,
                 parameters,
                 valueType,
-                true,
-                false,
+                canRead,
+                !canRead,
                 OperationDirection.Read,
                 false);
         }

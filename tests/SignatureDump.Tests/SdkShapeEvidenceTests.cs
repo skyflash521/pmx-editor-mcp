@@ -171,8 +171,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TheBranchOfARowIsFoundFromTheSpellingTable()
         {
             IDictionary<string, SignatureRecord> signatures = Shares();
+            ToolSchemaTable schemas = Schemas(SharingSchema());
             IDictionary<SchemaItem, string> shapes = SdkShapeEvidence.Resolve(
-                Schemas(SharingSchema()),
+                schemas,
                 new ToolMap(signatures.Values.Select(SharingRow).ToList()),
                 signatures,
                 signatures.Keys.ToDictionary(
@@ -181,11 +182,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 ShapesByType);
 
             Assert.Equal(
-                new[] { "System.Int32", "System.String" },
-                shapes
-                    .Where(s => string.Equals(s.Key.Name, "data", StringComparison.Ordinal))
-                    .Select(s => s.Value)
-                    .OrderBy(v => v, StringComparer.Ordinal)
+                new[] { "text=System.String", "number=System.Int32" },
+                Assert.Single(schemas.Tools).Branches
+                    .Select(b => b.Branch + "=" + shapes[b.Inputs.Single(
+                        i => string.Equals(i.Name, "data", StringComparison.Ordinal))])
                     .ToArray());
         }
 
