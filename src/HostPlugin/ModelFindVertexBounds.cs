@@ -217,26 +217,43 @@ namespace PmxEditorMcp
             out string code,
             out string message)
         {
+            IList<int> positions;
+            bool taken = TryVertices(
+                context.Params,
+                model,
+                context.Screen.Pick(ElementKinds.Vertex, model.Vertex.Count),
+                out positions,
+                out code,
+                out message);
+            chosen = positions;
+
+            return taken;
+        }
+
+        internal static bool TryVertices(
+            IDictionary<string, object> parameters,
+            IPXPmx model,
+            ScreenPick selected,
+            out IList<int> chosen,
+            out string code,
+            out string message)
+        {
             chosen = null;
             object given;
-            if (!context.Params.TryGetValue(MaterialIndicesName, out given))
+            if (!parameters.TryGetValue(MaterialIndicesName, out given))
             {
-                IList<int> positions;
-                bool taken = TargetInput.TryPositions(
-                    context.Params,
+                return TargetInput.TryPositions(
+                    parameters,
                     TargetNames.Element,
                     model.Vertex.Count,
-                    out positions,
+                    out chosen,
                     out code,
                     out message,
-                    context.Screen.Pick(ElementKinds.Vertex, model.Vertex.Count));
-                chosen = positions;
-
-                return taken;
+                    selected);
             }
 
             code = ToolEnvelope.InvalidArgument;
-            string both = VertexPointing.FirstOrDefault(context.Params.ContainsKey);
+            string both = VertexPointing.FirstOrDefault(parameters.ContainsKey);
             if (both != null)
             {
                 message = MaterialIndicesName + " と " + both + " は同時に渡せない。";
@@ -274,7 +291,7 @@ namespace PmxEditorMcp
                 materials.Add(at);
             }
 
-            chosen = ModelFindMaterialVertices.Used(model, materials);
+            chosen = ModelFindMaterialVertices.Used(model, materials).ToList();
             code = null;
             message = null;
 

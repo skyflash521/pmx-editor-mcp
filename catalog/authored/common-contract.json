@@ -382,22 +382,22 @@
     {
       "tool": "model_edit_normals",
       "branching": false,
-      "duty": "指した頂点の法線を整える。頂点は indices・range・all・selected のどれか1つで指す。operation は average・averageNear・fromFaces・normalize・flip のいずれか。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にし、rotate は rotationAxis に軸の向きを3つの数で、rotationAngle に角を度で渡して、その軸のまわりに法線だけを回す。正の角で、軸が X なら +Y を +Z へ回す。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点の法線を整える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。operation は average・averageNear・fromFaces・normalize・flip のいずれか。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にし、rotate は rotationAxis に軸の向きを3つの数で、rotationAngle に角を度で渡して、その軸のまわりに法線だけを回す。正の角で、軸が X なら +Y を +Z へ回す。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_edit_uv",
       "branching": false,
-      "duty": "指した頂点のUVの反転・写し取り・視線方向からの貼り直しを行う。頂点は indices・range・all・selected のどれか1つで指す。operation は flipU・flipV・flipUV・copy・projectFromView のいずれか。反転は1から引く。copy は source に写す元の頂点の位置を渡す。projectFromView は direction に見る向きを3つの数で渡し、その向きに垂直な面へ落とした位置をUVにする。長さの無い向きは受け取らない。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点のUVの反転・写し取り・視線方向からの貼り直しを行う。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。operation は flipU・flipV・flipUV・copy・projectFromView のいずれか。反転は1から引く。copy は source に写す元の頂点の位置を渡す。projectFromView は direction に見る向きを3つの数で渡し、その向きに垂直な面へ落とした位置をUVにする。長さの無い向きは受け取らない。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_edit_vertices",
       "branching": false,
-      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all・selected のどれか1つで指す。operation は weld・weldNear・align・mirrorCopy・mirrorModel のいずれか。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis に x・y・z のいずれかを渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces を返し、added に足した頂点の位置を start と count の組で返す。足した頂点は並びの末尾に連なる。"
+      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。operation は weld・weldNear・align・mirrorCopy・mirrorModel のいずれか。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis に x・y・z のいずれかを渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces を返し、added に足した頂点の位置を start と count の組で返す。足した頂点は並びの末尾に連なる。"
     },
     {
       "tool": "model_edit_weights",
       "branching": false,
-      "duty": "指した頂点のウェイトを整える。頂点は indices・range・all・selected のどれか1つで指す。operation は average・smooth・fromNearestBonePosition・fromNearestBoneAxis・fromMirror・normalize・repairMissingBone のいずれか。average は指した頂点のウェイトの平均へそろえる。smooth は strength に0以上1以下の強さを渡し、同じ面に載っている頂点のウェイトの平均へその強さのぶんだけ寄せる。fromNearestBonePosition はいちばん近いボーンへ、fromNearestBoneAxis は根元から表示先までの線分がいちばん近いボーンへ、ウェイトを全部振る。fromMirror は axis に x・y・z のいずれかを渡し、その軸の鏡像の位置にある頂点から、名前の左右を入れ替えたボーンのウェイトを写す。normalize はウェイトの合計を1にそろえ、repairMissingBone は並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。どの操作でも、重みが正の枠が1つも残らない頂点は先頭のボーンへ重み1を振り、並びに居ないボーンを指すウェイトは残っている祖先のボーンへ移す。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点のウェイトを整える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。operation は average・smooth・fromNearestBonePosition・fromNearestBoneAxis・fromMirror・normalize・repairMissingBone のいずれか。average は指した頂点のウェイトの平均へそろえる。smooth は strength に0以上1以下の強さを渡し、同じ面に載っている頂点のウェイトの平均へその強さのぶんだけ寄せる。fromNearestBonePosition はいちばん近いボーンへ、fromNearestBoneAxis は根元から表示先までの線分がいちばん近いボーンへ、ウェイトを全部振る。fromMirror は axis に x・y・z のいずれかを渡し、その軸の鏡像の位置にある頂点から、名前の左右を入れ替えたボーンのウェイトを写す。normalize はウェイトの合計を1にそろえ、repairMissingBone は並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。どの操作でも、重みが正の枠が1つも残らない頂点は先頭のボーンへ重み1を振り、並びに居ないボーンを指すウェイトは残っている祖先のボーンへ移す。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_find_material_vertices",
@@ -432,7 +432,7 @@
     {
       "tool": "model_mirror_elements",
       "branching": false,
-      "duty": "X軸で左右を反転した写しを足すか、モデル全体を左右へ反転する。operation は copyTargets・mirrorModel のいずれか。copyTargets は targets で指した要素の写しを足す。targets は写す要素を種類ごとに指した組の並びで、組ごとに kind が vertex・face・bone・body・joint のいずれかを取り、その中の要素を indices・range・all・selected のどれか1つで指す。同じ種類を二度並べることはできない。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。面は、その3つの頂点すべてを同じ呼び出しで写したものだけを写し、写していない頂点を使う面は飛ばす。写しは位置のxを打ち消し、名前の左右を入れ替え、左右を持たない名前には M- を頭へ足す。写した頂点を指す頂点モーフとUVモーフのオフセットも、写しを指すものを足す。写しどうしの指し先は写しへ繋ぎ替え、写していないボーンや剛体を指す先は、指していた相手と同じ名前で左右だけが違う相手があればそちらへ繋ぐ。mirrorModel は targets を受け取らず、頂点・面・ボーン・モーフ・剛体・Jointをまとめて反転し、ボーン・剛体・Jointの名前の左右を入れ替える。左右を持たない名前はそのままにする。added に足した要素の数、changed に反転した要素の数を返す。"
+      "duty": "X軸で左右を反転した写しを足すか、モデル全体を左右へ反転する。operation は copyTargets・mirrorModel のいずれか。copyTargets は targets で指した要素の写しを足す。targets は写す要素を種類ごとに指した組の並びで、組ごとに kind が vertex・face・bone・body・joint のいずれかを取り、その中の要素を indices・range・all・selected のどれか1つで指す。頂点の組は代わりに materialIndices に材質の位置を並べ、その材質の面が使う頂点を指せる。同じ種類を二度並べることはできない。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。面は、その3つの頂点すべてを同じ呼び出しで写したものだけを写し、写していない頂点を使う面は飛ばす。写しは位置のxを打ち消し、名前の左右を入れ替え、左右を持たない名前には M- を頭へ足す。写した頂点を指す頂点モーフとUVモーフのオフセットも、写しを指すものを足す。写しどうしの指し先は写しへ繋ぎ替え、写していないボーンや剛体を指す先は、指していた相手と同じ名前で左右だけが違う相手があればそちらへ繋ぐ。mirrorModel は targets を受け取らず、頂点・面・ボーン・モーフ・剛体・Jointをまとめて反転し、ボーン・剛体・Jointの名前の左右を入れ替える。左右を持たない名前はそのままにする。added に足した要素の数、changed に反転した要素の数を返す。"
     },
     {
       "tool": "model_morph_from_moved",
@@ -442,7 +442,7 @@
     {
       "tool": "model_place_elements",
       "branching": false,
-      "duty": "種類をまたいで指した要素を、渡した点へそろえるか、ずらす・回す・拡縮する。targets は種類ごとに指した組の並びで、組ごとに kind に vertex・bone・body・joint のいずれかを取り、要素を indices・range・all・selected のどれか1つで指す。同じ種類は二度並べられない。operation は alignTo・translateBy・rotateBy・scaleBy のいずれか。translateBy は平行移動、rotateBy は回転、scaleBy は拡大縮小に当たる。alignTo は position にそろえる先の点を3つの数で、axes に xyz・x・y・z のいずれかを渡し、選んだ軸だけをそろえる。translateBy は offset にずらす量を3つの数で渡す。rotateBy は rotation にX・Y・Z軸まわりの角を度で3つ渡して Z軸・X軸・Y軸の順に回すか、rotationAxis に軸の向きを3つの数で、rotationAngle に角を度で渡してその軸のまわりに回す。正の角で、X軸は +Y を +Z へ、Y軸は +Z を +X へ、Z軸は +X を +Y へ回す。頂点は位置と法線を、ボーンは位置を、剛体とジョイントは位置と回転を回す。scaleBy は scale に3つの軸の倍率を渡し、位置を拡縮する。剛体は3つの倍率がそろうときだけ大きさもその倍率にする。rotateBy と scaleBy は center に不動の点を3つの数で渡せ、省くと原点になる。alignTo 以外は ramp に組を並べると、要素ごとに強さを変える。組は axis に x・y・z のいずれか、from と to に違う2つの数を持ち、その軸の座標が from で強さ0、to で強さ1、間は線形、外側は近い端の強さになる。組の強さは掛け合わせる。強さ s のとき、ずらす量と回す角は s 倍に、倍率は scale×s+(1−s) になる。動かすと有限でなくなる値を持つ要素があれば、1つも動かさず invalid_argument になる。changed に動いた要素の数を返す。"
+      "duty": "種類をまたいだ要素を、渡した点へそろえるか、ずらす・回す・拡縮する。targets は組の並びで、組は kind に vertex・bone・body・joint のいずれかを取り、要素を indices・range・all・selected のどれか1つで指す。vertex の組は materialIndices で材質の面が使う頂点も指せる。同じ種類は二度並べられない。operation は alignTo・translateBy・rotateBy・scaleBy のいずれか。translateBy・rotateBy・scaleBy は平行移動・回転・拡大縮小に当たる。alignTo は position にそろえる先の点を3つの数で、axes に xyz・x・y・z のいずれかを渡し、選んだ軸だけそろえる。translateBy は offset にずらす量を3つの数で渡す。rotateBy は rotation にX・Y・Z軸まわりの角を度で3つ渡して Z軸・X軸・Y軸の順に回すか、rotationAxis に軸の向きを3つの数で、rotationAngle に角を度で渡してその軸のまわりに回す。正の角で、X軸は +Y を +Z へ、Y軸は +Z を +X へ、Z軸は +X を +Y へ回す。頂点は位置と法線を、ボーンは位置を、剛体とジョイントは位置と回転を回す。scaleBy は scale に3つの軸の倍率を渡し、位置を拡縮する。剛体は倍率がそろうときだけ大きさもその倍率にする。rotateBy と scaleBy は center に不動の点を3つの数で渡せ、省くと原点になる。alignTo 以外は ramp の組で要素ごとに強さを変えられる。組は axis に x・y・z のいずれか、from と to に違う2つの数を持ち、その軸の座標が from で強さ0、to で強さ1、間は線形、外側は近い端の強さになる。組の強さは掛け合わせる。強さ s のとき、ずらす量と回す角は s 倍に、倍率は scale×s+(1−s) になる。動かすと有限でなくなる要素があれば、何も動かさず invalid_argument になる。changed に動いた数を返す。"
     },
     {
       "tool": "model_reorder_elements",
@@ -452,7 +452,7 @@
     {
       "tool": "model_set_deform_type",
       "branching": false,
-      "duty": "指した頂点の変形方式を変え、SDEFの値を整える。頂点は indices・range・all・selected のどれか1つで指す。operation は convert・normalizeSdefC・repairInvalidSdef のいずれか。convert は deform に bdef1・bdef2・bdef4・sdef・qdef のいずれかを渡し、重みが正の枠を重い順にその方式が使う数まで残して、残した重みの合計が1になるようそろえる。normalizeSdefC はSDEFのC値を2つのボーンの位置と重みから決め直し、repairInvalidSdef は2つのボーンを保てないSDEFの頂点からSDEFの指定を落とす。convert のあとは、並びに居ないボーンを指すウェイトが残っている祖先のボーンへ移る。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点の変形方式を変え、SDEFの値を整える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。operation は convert・normalizeSdefC・repairInvalidSdef のいずれか。convert は deform に bdef1・bdef2・bdef4・sdef・qdef のいずれかを渡し、重みが正の枠を重い順にその方式が使う数まで残して、残した重みの合計が1になるようそろえる。normalizeSdefC はSDEFのC値を2つのボーンの位置と重みから決め直し、repairInvalidSdef は2つのボーンを保てないSDEFの頂点からSDEFの指定を落とす。convert のあとは、並びに居ないボーンを指すウェイトが残っている祖先のボーンへ移る。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_validate_pmx",

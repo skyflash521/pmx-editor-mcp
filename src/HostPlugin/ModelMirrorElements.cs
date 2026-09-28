@@ -657,7 +657,23 @@ namespace PmxEditorMcp
 
                 IList<int> positions;
                 int count = ViewSelection.Count(model, kind);
-                if (!TargetInput.TryPositions(
+                if (string.Equals(kind, ElementKinds.Vertex, StringComparison.Ordinal))
+                {
+                    if (!ModelFindVertexBounds.TryVertices(
+                        held, model, context.Screen.Pick(kind, count), out positions, out code, out message))
+                    {
+                        return false;
+                    }
+                }
+                else if (held.ContainsKey(ModelFindVertexBounds.MaterialIndicesName))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = ModelFindVertexBounds.MaterialIndicesName + " は " + KindName + " が "
+                        + ElementKinds.Vertex + " の組でだけ渡せる。";
+
+                    return false;
+                }
+                else if (!TargetInput.TryPositions(
                     held,
                     TargetNames.Element,
                     count,

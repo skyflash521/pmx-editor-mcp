@@ -5797,6 +5797,17 @@
               "shape": "boolean"
             },
             {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
               "name": "threshold",
               "origin": "hostInput",
               "shape": "number",
@@ -5826,6 +5837,7 @@
               "names": [
                 "all",
                 "indices",
+                "materialIndices",
                 "range",
                 "selected"
               ],
@@ -5915,6 +5927,17 @@
               "shape": "boolean"
             },
             {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
               "name": "source",
               "origin": "hostInput",
               "shape": "number",
@@ -5938,6 +5961,7 @@
               "names": [
                 "all",
                 "indices",
+                "materialIndices",
                 "range",
                 "selected"
               ],
@@ -6027,6 +6051,17 @@
               "shape": "boolean"
             },
             {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
               "name": "threshold",
               "origin": "hostInput",
               "shape": "number",
@@ -6047,6 +6082,7 @@
               "names": [
                 "all",
                 "indices",
+                "materialIndices",
                 "range",
                 "selected"
               ],
@@ -6162,6 +6198,17 @@
               "shape": "boolean"
             },
             {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
               "name": "strength",
               "origin": "hostInput",
               "shape": "number",
@@ -6183,6 +6230,7 @@
               "names": [
                 "all",
                 "indices",
+                "materialIndices",
                 "range",
                 "selected"
               ],
@@ -11890,6 +11938,18 @@
                     "origin": "hostInput",
                     "shape": "boolean",
                     "required": false
+                  },
+                  {
+                    "name": "materialIndices",
+                    "origin": "hostInput",
+                    "required": false,
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number",
+                      "bounds": {
+                        "minimum": 0
+                      }
+                    }
                   }
                 ]
               }
@@ -12332,6 +12392,18 @@
                     "origin": "hostInput",
                     "shape": "boolean",
                     "required": false
+                  },
+                  {
+                    "name": "materialIndices",
+                    "origin": "hostInput",
+                    "required": false,
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number",
+                      "bounds": {
+                        "minimum": 0
+                      }
+                    }
                   }
                 ]
               }
@@ -14063,6 +14135,17 @@
               "shape": "boolean"
             },
             {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
               "name": "deform",
               "origin": "hostInput",
               "shape": "text",
@@ -14074,6 +14157,7 @@
               "names": [
                 "all",
                 "indices",
+                "materialIndices",
                 "range",
                 "selected"
               ],

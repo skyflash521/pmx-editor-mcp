@@ -92,6 +92,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
                 TargetNames.Element.Selected,
+                ModelFindVertexBounds.MaterialIndicesName,
                 ThresholdName,
                 AxisName,
             };
@@ -107,14 +108,13 @@ namespace PmxEditorMcp
             IList<int> chosen;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
-                || !TargetInput.TryPositions(
+                || !ModelFindVertexBounds.TryVertices(
                     context.Params,
-                    TargetNames.Element,
-                    model.Vertex.Count,
+                    model,
+                    context.Screen.Pick(ElementKinds.Vertex, model.Vertex.Count),
                     out chosen,
                     out code,
-                    out message,
-                    context.Screen.Pick(ElementKinds.Vertex, model.Vertex.Count)))
+                    out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
