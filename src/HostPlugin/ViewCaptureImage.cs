@@ -93,6 +93,12 @@ namespace PmxEditorMcp
                 }
             }
 
+            if (shot == null)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.OperationFailed, "エディタがPMXビューの画像を撮れなかった。");
+            }
+
             object json;
             IList<string> warnings;
             bool packed;

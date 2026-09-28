@@ -52,18 +52,18 @@ namespace PmxEditorMcp
         /// <summary>軸を受け取る入力の名前。</summary>
         public const string AxisName = "axis";
 
-        /// <summary>X軸の値が境以下の側。</summary>
+        /// <summary>X軸の値が境より小さい側。</summary>
         public const string NegativeX = "negativeX";
 
-        /// <summary>Y軸の値が境以下の側。</summary>
+        /// <summary>Y軸の値が境より小さい側。</summary>
         public const string NegativeY = "negativeY";
 
-        /// <summary>Z軸の値が境以下の側。</summary>
+        /// <summary>Z軸の値が境より小さい側。</summary>
         public const string NegativeZ = "negativeZ";
 
         /// <summary>
         /// 受け取れる軸。スキーマが並べる順。x・y・z はその軸の値が境以上の側を、negative の3つは
-        /// 境以下の側を指す。
+        /// 境より小さい側を指す。
         /// </summary>
         public static IList<string> Axes
         {
@@ -202,12 +202,12 @@ namespace PmxEditorMcp
             switch (operation)
             {
                 case All:
-                    made = Enumerable.Range(0, count).ToList();
+                    made = ViewSelection.Shown(parts.View, model, kind);
 
                     break;
 
                 case Invert:
-                    made = Enumerable.Range(0, count).Except(held).ToList();
+                    made = ViewSelection.Shown(parts.View, model, kind).Except(held).ToList();
 
                     break;
 
@@ -222,7 +222,9 @@ namespace PmxEditorMcp
                     break;
 
                 case HalfModel:
-                    made = Halved(model, kind, axis, boundary);
+                    made = Halved(model, kind, axis, boundary)
+                        .Intersect(ViewSelection.Shown(parts.View, model, kind))
+                        .ToList();
 
                     break;
 
@@ -242,7 +244,8 @@ namespace PmxEditorMcp
                         return Only(operation, ElementKinds.Vertex);
                     }
 
-                    made = Touching(model, held, operation);
+                    made = Touching(
+                        model, held, operation, ViewSelection.Shown(parts.View, model, kind));
 
                     break;
             }
@@ -342,10 +345,12 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 面で隣り合う頂点で選び直す。広げる操作は選んでいる頂点と面を共にする頂点を足し、狭める
+        /// 面で隣り合う頂点で選び直す。広げる操作は、選んでいる頂点を角に持つ面の頂点のうち
+        /// <paramref name="shown"/> にあるものを選び、どの面にも載らない頂点は選択から外れる。狭める
         /// 操作は選んでいない頂点と面を共にする頂点を外す。
         /// </summary>
-        private static IList<int> Touching(IPXPmx model, IList<int> held, string operation)
+        private static IList<int> Touching(
+            IPXPmx model, IList<int> held, string operation, IList<int> shown)
         {
             bool widening = string.Equals(operation, Expand, StringComparison.Ordinal);
             IDictionary<IPXVertex, int> at = Placed(model.Vertex);
@@ -366,7 +371,7 @@ namespace PmxEditorMcp
             }
 
             return widening
-                ? chosen.Union(found).ToList()
+                ? shown.Where(found.Contains).ToList()
                 : chosen.Except(found).ToList();
         }
 
@@ -459,7 +464,7 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>その点が、指した軸の側にあるか。境の上にある点はどちらの側にも入る。</summary>
+        /// <summary>その点が、指した軸の側にあるか。境の上にある点は x・y・z の側にだけ入る。</summary>
         private static bool Aside(V3 spot, string axis, float boundary)
         {
             switch (axis)
@@ -474,13 +479,13 @@ namespace PmxEditorMcp
                     return spot.Z >= boundary;
 
                 case NegativeX:
-                    return spot.X <= boundary;
+                    return spot.X < boundary;
 
                 case NegativeY:
-                    return spot.Y <= boundary;
+                    return spot.Y < boundary;
 
                 default:
-                    return spot.Z <= boundary;
+                    return spot.Z < boundary;
             }
         }
 

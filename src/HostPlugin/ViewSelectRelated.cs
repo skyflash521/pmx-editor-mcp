@@ -66,9 +66,6 @@ namespace PmxEditorMcp
 
         public const string KindName = "kind";
 
-        /// <summary>辺を共有する2つの面が同じくする頂点の数。</summary>
-        private const int SharedCorners = 2;
-
         /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
@@ -152,7 +149,9 @@ namespace PmxEditorMcp
                     break;
 
                 case ExpandAdjacentFaces:
-                    made = Beside(faces, Held(parts, model, ElementKinds.Face));
+                    made = Beside(model, faces, Held(parts, model, ElementKinds.Face))
+                        .Intersect(ViewSelection.Shown(parts.View, model, ElementKinds.Face))
+                        .ToList();
 
                     break;
 
@@ -359,21 +358,43 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>指した面と、その面と辺を共有する面。</summary>
-        private static IList<int> Beside(IList<IPXFace> faces, IList<int> held)
+        /// <summary>
+        /// 指した面と、その面から辺の共有を伝ってつながる面のすべて。辺は面の隣り合う2つの角の頂点の組で、
+        /// 向きは問わない。
+        /// </summary>
+        private static IList<int> Beside(IPXPmx model, IList<IPXFace> faces, IList<int> held)
         {
-            IDictionary<IPXVertex, IList<int>> touching = Touching(faces);
-            HashSet<int> made = new HashSet<int>(held);
-            foreach (int at in held)
+            IDictionary<IPXVertex, int> at = Placed(model.Vertex);
+            IList<long>[] sides = new IList<long>[faces.Count];
+            Dictionary<long, List<int>> sharing = new Dictionary<long, List<int>>();
+            for (int face = 0; face < faces.Count; face++)
             {
-                IPXVertex[] theirs = ViewSelection.Corners(faces[at]);
-                foreach (int other in Around(touching, theirs))
+                sides[face] = Sides(at, faces[face]);
+                foreach (long side in sides[face])
                 {
-                    if (ViewSelection.Corners(faces[other])
-                            .Count(corner => theirs.Any(held => ReferenceEquals(held, corner)))
-                        >= SharedCorners)
+                    List<int> owners;
+                    if (!sharing.TryGetValue(side, out owners))
                     {
-                        made.Add(other);
+                        owners = new List<int>();
+                        sharing.Add(side, owners);
+                    }
+
+                    owners.Add(face);
+                }
+            }
+
+            HashSet<int> made = new HashSet<int>(held);
+            Stack<int> pending = new Stack<int>(held);
+            while (pending.Count > 0)
+            {
+                foreach (long side in sides[pending.Pop()])
+                {
+                    foreach (int other in sharing[side])
+                    {
+                        if (made.Add(other))
+                        {
+                            pending.Push(other);
+                        }
                     }
                 }
             }
@@ -381,38 +402,26 @@ namespace PmxEditorMcp
             return made.ToList();
         }
 
-        /// <summary>頂点ごとの、その頂点を使っている面の位置。</summary>
-        private static IDictionary<IPXVertex, IList<int>> Touching(IList<IPXFace> faces)
+        /// <summary>その面の3つの辺。モデルに無い頂点を端に持つ辺は入らない。</summary>
+        private static IList<long> Sides(IDictionary<IPXVertex, int> at, IPXFace face)
         {
-            Dictionary<IPXVertex, IList<int>> made =
-                new Dictionary<IPXVertex, IList<int>>(ReferenceComparer<IPXVertex>.Instance);
-            for (int at = 0; at < faces.Count; at++)
+            IPXVertex[] corners = ViewSelection.Corners(face);
+            List<long> made = new List<long>();
+            for (int corner = 0; corner < corners.Length; corner++)
             {
-                foreach (IPXVertex corner in
-                    ViewSelection.Corners(faces[at]).Where(corner => corner != null))
+                IPXVertex next = corners[(corner + 1) % corners.Length];
+                int first;
+                int second;
+                if (corners[corner] != null
+                    && next != null
+                    && at.TryGetValue(corners[corner], out first)
+                    && at.TryGetValue(next, out second))
                 {
-                    IList<int> held;
-                    if (!made.TryGetValue(corner, out held))
-                    {
-                        held = new List<int>();
-                        made.Add(corner, held);
-                    }
-
-                    held.Add(at);
+                    made.Add(((long)Math.Min(first, second) << 32) | (uint)Math.Max(first, second));
                 }
             }
 
             return made;
-        }
-
-        /// <summary>その頂点のどれかを使っている面の位置。</summary>
-        private static IEnumerable<int> Around(
-            IDictionary<IPXVertex, IList<int>> touching, IEnumerable<IPXVertex> corners)
-        {
-            return corners
-                .Where(corner => corner != null && touching.ContainsKey(corner))
-                .SelectMany(corner => touching[corner])
-                .Distinct();
         }
 
         /// <summary>指した材質が持つ面の位置。</summary>

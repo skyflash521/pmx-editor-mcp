@@ -223,6 +223,72 @@ namespace PmxEditorMcp
             return places.Where(at => at >= 0).Select(at => at / CornersPerFace).Distinct();
         }
 
+        /// <summary>
+        /// その種類で、画面に表示している要素の位置。昇順に並ぶ。頂点は絞り込んだ表示に残っているもの、面は
+        /// 3つの頂点がすべて表示されているもの、剛体とJointは表示しているもので、ボーンは表示に関わらずすべて。
+        /// </summary>
+        public static IList<int> Shown(object view, IPXPmx model, string kind)
+        {
+            if (view == null)
+            {
+                throw new ArgumentNullException(nameof(view));
+            }
+
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
+            IPXPmxViewConnector held = (IPXPmxViewConnector)view;
+            int count = Count(model, kind);
+            switch (kind)
+            {
+                case ElementKinds.Vertex:
+                    return ShownVertices(held, count);
+
+                case ElementKinds.Face:
+                    return ShownFaces(held, model);
+
+                case ElementKinds.Bone:
+                    return Enumerable.Range(0, count).ToList();
+
+                case ElementKinds.Body:
+                    return Flagged(held.GetBodyVisibles(), count);
+
+                default:
+                    return Flagged(held.GetJointVisibles(), count);
+            }
+        }
+
+        private static IList<int> ShownVertices(IPXPmxViewConnector view, int count)
+        {
+            return (view.GetVertexIndices() ?? new int[0])
+                .Where(at => at >= 0 && at < count)
+                .Distinct()
+                .OrderBy(at => at)
+                .ToList();
+        }
+
+        private static IList<int> ShownFaces(IPXPmxViewConnector view, IPXPmx model)
+        {
+            HashSet<IPXVertex> shown = new HashSet<IPXVertex>(
+                ShownVertices(view, model.Vertex.Count).Select(at => model.Vertex[at]),
+                ReferenceComparer<IPXVertex>.Instance);
+            IList<IPXFace> faces = Faces(model);
+
+            return Enumerable.Range(0, faces.Count)
+                .Where(at => Corners(faces[at]).All(corner => corner != null && shown.Contains(corner)))
+                .ToList();
+        }
+
+        /// <summary>表示の並びが真の位置。並びが持たない位置は表示しているものとする。</summary>
+        private static IList<int> Flagged(bool[] flags, int count)
+        {
+            return Enumerable.Range(0, count)
+                .Where(at => flags == null || at >= flags.Length || flags[at])
+                .ToList();
+        }
+
         /// <summary>その種類の要素の数。</summary>
         public static int Count(IPXPmx model, string kind)
         {

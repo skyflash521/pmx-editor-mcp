@@ -103,9 +103,12 @@ namespace PmxEditorMcp
                 .ToYawPitchRollAngles();
             V3 turned = new V3((float)Degrees(radians.X), (float)Degrees(radians.Y), (float)Degrees(radians.Z));
             IPEVector3 held = view.BoneRotate_XYZ;
+            IPEVector3 applied;
             try
             {
+                // 入力欄は値を文字で持つので、書いた値は文字にした桁で丸まり、エディタは丸まった値で回す。
                 view.BoneRotate_XYZ = turned;
+                applied = view.BoneRotate_XYZ;
                 view.BoneRotate();
             }
             finally
@@ -116,7 +119,7 @@ namespace PmxEditorMcp
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
-                    { RotateXyzName, new object[] { (double)turned.X, (double)turned.Y, (double)turned.Z } },
+                    { RotateXyzName, new object[] { (double)applied.X, (double)applied.Y, (double)applied.Z } },
                 });
         }
 
