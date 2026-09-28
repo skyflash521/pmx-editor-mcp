@@ -929,18 +929,16 @@ $checks['要約の持ち主'] = New-Check `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $noArtifact `
     -Body {
+        $follows = [regex]::new(
+            '^[^\S\n]*(?:/// </summary>|/// <summary>[^\n]*</summary>)[^\S\n]*(?=\n[^\S\n]*/// <summary>)',
+            [System.Text.RegularExpressions.RegexOptions]'Multiline, IgnoreCase, CultureInvariant')
         $orphans = @()
         foreach ($file in Get-ChildItem -Path src, tests -Recurse -Filter *.cs -File |
             Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }) {
-            $lines = [System.IO.File]::ReadAllLines($file.FullName)
-            for ($at = 0; $at -lt $lines.Count - 1; $at++) {
-                $here = $lines[$at].Trim()
-                $ends = $here -eq '/// </summary>' -or
-                    ($here -like '/// <summary>*' -and $here -like '*</summary>')
-                if (-not $ends) { continue }
-                if ($lines[$at + 1].Trim() -notlike '/// <summary>*') { continue }
-
-                $orphans += ('{0}:{1}' -f $file.FullName, ($at + 2))
+            $text = [System.IO.File]::ReadAllText($file.FullName) -replace "`r`n?", "`n"
+            foreach ($match in $follows.Matches($text)) {
+                $line = $text.Substring(0, $match.Index).Split("`n").Count + 1
+                $orphans += ('{0}:{1}' -f $file.FullName, $line)
             }
         }
 
