@@ -398,6 +398,30 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void NormalisingAnSdefVertexKeepsItsBonesWithTheirCentres()
+        {
+            IList<IPXBone> bones = Bones("一", "二");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            vertex.SDEF = true;
+            vertex.Bone1 = bones[0];
+            vertex.Weight1 = 0.25f;
+            vertex.Bone2 = bones[1];
+            vertex.Weight2 = 0.75f;
+            vertex.SDEF_R0 = new V3(0f, 1f, 0f);
+            vertex.SDEF_R1 = new V3(0f, 2f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+                Operation(ModelEditWeights.Normalize),
+                ComposedEditFixture.Given("all", true)));
+
+            Assert.Equal(0, value[ModelEditWeights.ChangedName]);
+            Assert.Same(bones[0], vertex.Bone1);
+            Assert.Same(bones[1], vertex.Bone2);
+            Near(1.0, vertex.SDEF_R0.Y);
+            Near(2.0, vertex.SDEF_R1.Y);
+        }
+
+        [Fact]
         public void RewritingTheWeightsRemakesOnlyTheWeightsInTheView()
         {
             IList<IPXBone> bones = Bones("一", "二");

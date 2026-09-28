@@ -156,7 +156,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AVertexThatHoldsABoneInASlotWithoutWeightIsCounted()
+        public void ASlotWithoutWeightIsEmptyWhicheverBoneItHolds()
         {
             FakeBone held = new FakeBone("腕");
             FakeBone empty = new FakeBone("指");
@@ -167,6 +167,42 @@ namespace PmxEditorMcp.Tests
             vertex.Weight1 = 1f;
             vertex.Bone2 = empty;
             vertex.Weight2 = 0f;
+            _fixture.Model.Vertex.Add(vertex);
+
+            Assert.Equal(0, Validated()[ModelValidatePmx.UnnormalizedWeightsName]);
+        }
+
+        [Fact]
+        public void AnSdefVertexWhoseLighterBoneComesFirstIsNotCounted()
+        {
+            FakeBone light = new FakeBone("指");
+            FakeBone heavy = new FakeBone("腕");
+            _fixture.Model.Bone.Add(light);
+            _fixture.Model.Bone.Add(heavy);
+            FakeVertex vertex = new FakeVertex(0f, 0f, 0f);
+            vertex.SDEF = true;
+            vertex.Bone1 = light;
+            vertex.Weight1 = 0.25f;
+            vertex.Bone2 = heavy;
+            vertex.Weight2 = 0.75f;
+            _fixture.Model.Vertex.Add(vertex);
+
+            Assert.Equal(0, Validated()[ModelValidatePmx.UnnormalizedWeightsName]);
+        }
+
+        [Fact]
+        public void AnSdefVertexWhoseWeightsDoNotAddUpToOneIsCounted()
+        {
+            FakeBone light = new FakeBone("指");
+            FakeBone heavy = new FakeBone("腕");
+            _fixture.Model.Bone.Add(light);
+            _fixture.Model.Bone.Add(heavy);
+            FakeVertex vertex = new FakeVertex(0f, 0f, 0f);
+            vertex.SDEF = true;
+            vertex.Bone1 = light;
+            vertex.Weight1 = 0.25f;
+            vertex.Bone2 = heavy;
+            vertex.Weight2 = 0.5f;
             _fixture.Model.Vertex.Add(vertex);
 
             Assert.Equal(1, Validated()[ModelValidatePmx.UnnormalizedWeightsName]);

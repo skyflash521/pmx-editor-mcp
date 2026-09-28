@@ -34,7 +34,10 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>渡された順に枠へ書き、余った枠を空にする。5つめからは捨てる。</summary>
+        /// <summary>
+        /// 渡された順に枠へ書き、余った枠を空にする。5つめからは捨てる。SDEFの頂点へいまの2本のボーンを
+        /// 入れ替えた順で渡したときは、いまの順のまま書く。
+        /// </summary>
         public static void Write(
             IPXVertex vertex, IList<KeyValuePair<IPXBone, float>> shares)
         {
@@ -46,6 +49,14 @@ namespace PmxEditorMcp
             if (shares == null)
             {
                 throw new ArgumentNullException(nameof(shares));
+            }
+
+            if (vertex.SDEF
+                && shares.Count == 2
+                && ReferenceEquals(shares[0].Key, vertex.Bone2)
+                && ReferenceEquals(shares[1].Key, vertex.Bone1))
+            {
+                shares = new[] { shares[1], shares[0] };
             }
 
             vertex.Bone1 = BoneAt(shares, 0);
@@ -92,10 +103,27 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>その頂点の4つの枠が、そろえ直した並びと同じか。</summary>
+        /// <summary>
+        /// 重みが0でない枠が、そろえ直した並びと同じボーンと重みを同じ順に持つか。重みが0の枠はボーンを
+        /// 問わず空とみなし、SDEFの頂点は枠の順を問わない。
+        /// </summary>
         public static bool IsSound(IPXVertex vertex)
         {
-            return Same(vertex, Filled(Settled(Read(vertex))));
+            List<KeyValuePair<IPXBone, float>> weighted = All(vertex).Where(share => share.Value != 0f).ToList();
+            IList<KeyValuePair<IPXBone, float>> settled = Settled(Read(vertex));
+            if (weighted.Count != settled.Count)
+            {
+                return false;
+            }
+
+            if (vertex.SDEF)
+            {
+                return settled.All(share => weighted.Any(
+                    held => ReferenceEquals(held.Key, share.Key) && held.Value == share.Value));
+            }
+
+            return Enumerable.Range(0, settled.Count).All(
+                at => ReferenceEquals(weighted[at].Key, settled[at].Key) && weighted[at].Value == settled[at].Value);
         }
 
         /// <summary>その頂点の4つの枠が、渡された並びと同じボーンと重みを同じ順に持つか。</summary>
@@ -170,16 +198,6 @@ namespace PmxEditorMcp
             }
 
             return total;
-        }
-
-        /// <summary>並びを4つの枠ぶんに伸ばし、余った枠を空にする。</summary>
-        private static IList<KeyValuePair<IPXBone, float>> Filled(
-            IList<KeyValuePair<IPXBone, float>> shares)
-        {
-            return Enumerable.Range(0, Slots)
-                .Select(at => new KeyValuePair<IPXBone, float>(
-                    BoneAt(shares, at), ShareAt(shares, at)))
-                .ToList();
         }
 
         private static IPXBone BoneAt(IList<KeyValuePair<IPXBone, float>> shares, int at)
