@@ -1798,7 +1798,7 @@ namespace PmxEditorMcp.Bridge.Tests
             }
         }
 
-        private static IList<string> SdkAssemblyPaths()
+        internal static IList<string> SdkAssemblyPaths()
         {
             string editor = typeof(ShippedToolDefinitionTests).Assembly
                 .GetCustomAttributes(typeof(AssemblyMetadataAttribute), false)
@@ -1827,7 +1827,7 @@ namespace PmxEditorMcp.Bridge.Tests
             return paths;
         }
 
-        private sealed class SdkParameter
+        internal sealed class SdkParameter
         {
             public SdkParameter(string name, string type, bool isOut)
             {
@@ -1843,7 +1843,7 @@ namespace PmxEditorMcp.Bridge.Tests
             public bool IsOut { get; }
         }
 
-        private sealed class SdkMethod
+        internal sealed class SdkMethod
         {
             public SdkMethod(string name, IList<SdkParameter> parameters)
             {
@@ -1916,7 +1916,7 @@ namespace PmxEditorMcp.Bridge.Tests
             public IList<SdkMethod> Methods { get; }
         }
 
-        private sealed class SdkMetadata
+        internal sealed class SdkMetadata
         {
             private readonly Dictionary<string, SdkType> _types =
                 new Dictionary<string, SdkType>(StringComparer.Ordinal);
@@ -2177,7 +2177,7 @@ namespace PmxEditorMcp.Bridge.Tests
             }
         }
 
-        private sealed class SdkTypeNames : ISignatureTypeProvider<string, object>
+        internal sealed class SdkTypeNames : ISignatureTypeProvider<string, object>
         {
             public string Of(MetadataReader reader, EntityHandle handle)
             {

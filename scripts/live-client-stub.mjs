@@ -1,22 +1,33 @@
 // 参照クライアントの実機動作確認を確かめるための、呼び出しの記録を作って返すだけのクライアント。
 // 実物と同じ形の流れる記録を書き出し、実行器が読む項目——呼んだツール・乗った引数・返りの本文・
-// 画像の数——を、そのとおりに埋めるか、1か所だけ違えて埋める。
+// 誤りの印・画像の数——を、そのとおりに埋めるか、1か所だけ違えて埋める。
 // 実機のエディタもブリッジも参照クライアントも要らないので、常設の検査から走らせられる。
 
 import process from "node:process";
 import { CASES, named } from "./live-client-cases.mjs";
 
-/** 返りの本文。実行器は空でないことだけを見る。 */
-const SAID = "作った返りである。";
+/** ブリッジがホストへ中継した返りの1行目。ブリッジの実装が定める。 */
+const REACHED = "接続先: pmx-editor-mcp-1";
 
-/** 呼び出しが通らなかったことを指す書き出し。ホスト側の実装が定める。 */
-const REFUSED = "TOOL_OPERATION_FAILED: 作った断りである。";
+/** 返りの本文。ブリッジが中継した形で、1行目に接続先を名乗る。 */
+const SAID = REACHED + "\n作った返りである。";
+
+/** 呼び出しがホストまで届いたうえで通らなかった返り。書き出しはホスト側の実装が定める。 */
+const REFUSED = REACHED + "\nTOOL_OPERATION_FAILED: 作った断りである。";
+
+/**
+ * 呼び出しがサーバーへ届く前に参照クライアントの側で断られた返り。本文は塊の並びでなく文字列で
+ * 載せ、接続先を名乗らない。誤りの印を付ける。
+ */
+const UNREACHED = "<tool_use_error>作ったクライアント側の断りである。</tool_use_error>";
 
 /** 画像の塊に詰める中身。実行器は数だけを見る。 */
 const DRAWN = "iVBORw0KGgo=";
 
 /** 違え方の名前。実行器が見る項目ごとに1つずつ置く。 */
-const BROKEN = ["call", "arguments", "result", "refused", "image.missing", "image.extra"];
+const BROKEN = [
+    "call", "arguments", "result", "refused", "image.missing", "image.extra", "unreached", "isError",
+];
 
 const EXIT_INVALID_ARGUMENTS = 2;
 
@@ -50,6 +61,10 @@ function input(one, broken) {
 
 /** 返りの塊。本文と、画像を返すツールなら画像を1枚載せる。 */
 function content(one, broken) {
+    if (broken === "unreached") {
+        return UNREACHED;
+    }
+
     const blocks = [];
     if (broken === "result") {
         blocks.push({ type: "text", text: "" });
@@ -63,6 +78,11 @@ function content(one, broken) {
     }
 
     return blocks;
+}
+
+/** 返りに誤りの印を付けるか。通らなかった返りには、参照クライアントが印を付ける。 */
+function failed(broken) {
+    return broken === "refused" || broken === "unreached" || broken === "isError";
 }
 
 /** その違え方を当てる呼び出しか。違えるのは1か所だけなので、当たるのは1件に限る。 */
@@ -96,7 +116,12 @@ function transcribe(broken) {
             type: "user",
             message: {
                 content: [
-                    { type: "tool_result", tool_use_id: id, content: content(one, wrong) },
+                    {
+                        type: "tool_result",
+                        tool_use_id: id,
+                        content: content(one, wrong),
+                        is_error: failed(wrong),
+                    },
                 ],
             },
         });

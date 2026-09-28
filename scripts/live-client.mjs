@@ -57,6 +57,12 @@ const TOOL_ERROR_PREFIX = "TOOL_";
 /** ブリッジがホストへ届かなかったことを指す書き出し。ブリッジの実装が定める。 */
 const BRIDGE_ERROR_PREFIX = "BRIDGE_";
 
+/**
+ * ブリッジがホストへ中継した返りの1行目の書き出し。接続先を名乗る行と、接続先が変わったことを
+ * 知らせる行の2つがある。ブリッジの実装が定める。
+ */
+const REACHED_PREFIXES = ["接続先: ", "接続先が変わった: "];
+
 /** 操作役と前置を待つ上限。中で待ちを重ねるので、1つあたりの上限を上回る値を採る。 */
 const CONTROL_TIMEOUT_MS = 180000;
 
@@ -164,6 +170,7 @@ function readCalls(text) {
             if (block.type === "tool_result") {
                 const told = Array.isArray(block.content) ? block.content : [block.content];
                 results.set(block.tool_use_id, {
+                    failed: block.is_error === true,
                     // 画像の塊には text が無い。文字へ均すと、画像で届いたのか文字列で届いたのかを
                     // 見分けられなくなる。
                     said: told
@@ -322,11 +329,29 @@ try {
             }
 
             const line = lines[0];
+            if (!REACHED_PREFIXES.some((prefix) => line.startsWith(prefix))) {
+                fell.add(5);
+                console.error(
+                    "呼び出しがサーバーを経てホストへ届いていません: " + probe.tool
+                        + "\n  返り: " + said1.slice(0, 200));
+                code = EXIT_FAILED;
+                continue;
+            }
+
             const refused = lines.some(
                 (l) => l.startsWith(TOOL_ERROR_PREFIX) || l.startsWith(BRIDGE_ERROR_PREFIX));
             if (refused) {
                 fell.add(2);
                 console.error("呼び出しが通りませんでした: " + probe.tool + "\n  " + said1);
+                code = EXIT_FAILED;
+                continue;
+            }
+
+            if (call.failed) {
+                fell.add(6);
+                console.error(
+                    "呼び出しの返りが誤りの印を持っています: " + probe.tool
+                        + "\n  返り: " + said1.slice(0, 200));
                 code = EXIT_FAILED;
                 continue;
             }

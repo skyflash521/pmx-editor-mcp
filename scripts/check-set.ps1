@@ -169,6 +169,53 @@ function Test-CheckClient {
     }
 }
 
+function Invoke-McpCheckClient {
+    <#
+        .SYNOPSIS
+        応答を作るMCPサーバーの代わりを相手にMCPの確認クライアントを走らせ、終了コードと書き出した
+        ものを返す。Broken を与えると、その項目だけを違えた応答を返させる。
+    #>
+    param([string]$Broken)
+
+    $given = @('scripts/mcp-check.mjs', 'node', 'scripts/mcp-check-stub-server.mjs')
+    if ($Broken) { $given += @('--broken', $Broken) }
+
+    $said = node @given 2>&1
+    $code = $LASTEXITCODE
+    $global:LASTEXITCODE = 0
+
+    [pscustomobject]@{ Code = $code; Said = (@($said) -join "`n") }
+}
+
+function Get-McpCheckClientForms {
+    <#
+        .SYNOPSIS
+        MCPの確認クライアントが咎めるはずの、応答の違え方。
+    #>
+    @('stdout.nonjson', 'stdout.blank')
+}
+
+function Test-McpCheckClient {
+    <#
+        .SYNOPSIS
+        MCPの確認クライアントが、サーバーの応答を契約と突き合わせて合否を出すことを確かめる。通しでは
+        契約どおりの応答で合格することを、形を指したときはその項目だけを違えた実行が落ちることを見る。
+    #>
+    param([string]$Form)
+
+    if ($Form -eq $wholeForm) {
+        $ran = Invoke-McpCheckClient -Broken ''
+        if ($ran.Code -ne 0) { throw "契約どおりの応答で走らせて合格しない: $($ran.Said)" }
+
+        return
+    }
+
+    if ((Get-McpCheckClientForms) -notcontains $Form) { throw "知らない形: $Form" }
+
+    $ran = Invoke-McpCheckClient -Broken $Form
+    if ($ran.Code -eq 0) { throw "$Form を違えても不合格にならない: $($ran.Said)" }
+}
+
 function Invoke-LiveHostRunner {
     <#
         .SYNOPSIS
@@ -293,6 +340,8 @@ function Get-LiveClientRunnerForms {
         'refused' = 2
         'image.missing' = 3
         'image.extra' = 4
+        'unreached' = 5
+        'isError' = 6
     }
 }
 
@@ -1113,6 +1162,15 @@ $checks['確認クライアントの照合'] = New-Check `
     -Body { param([string]$Form)
 
         Test-CheckClient -Form $Form
+    }
+$checks['MCPの確認クライアントの照合'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 10 `
+    -Needs $noArtifact `
+    -Forms { @($wholeForm) + @(Get-McpCheckClientForms) } `
+    -Body { param([string]$Form)
+
+        Test-McpCheckClient -Form $Form
     }
 $checks['実機動作確認の実行器の照合'] = New-Check `
     -Groups @('スクリプト') `

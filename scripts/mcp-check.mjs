@@ -2,7 +2,8 @@
 // 渡された実行ファイルをMCPサーバーとして起こし、初期化してから ping を呼び、返った本文を書き出す。
 // 見るのはMCPの往復が成り立つところまでで、ホストへ繋がるかどうかは本文が述べる。
 // 初期化でサーバーが名乗る使い方も見る。名乗らないものと、公開しているツールの系統のうち
-// 名乗りが触れていないものがあるものは不合格とする。
+// 名乗りが触れていないものがあるものは不合格とする。標準出力へJSONでない行を書いたものも
+// 不合格とする。
 
 import process from "node:process";
 import { McpClient } from "./mcp-client.mjs";
@@ -39,6 +40,11 @@ try {
 const guidance = client.serverInstructions;
 
 await client.stop();
+
+if (client.protocolViolation !== null) {
+    console.error(client.protocolViolation);
+    process.exit(EXIT_FAILED);
+}
 
 if (guidance === "") {
     console.error("MCPサーバーが初期化で使い方を名乗りませんでした。");

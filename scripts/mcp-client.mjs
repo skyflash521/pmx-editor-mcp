@@ -22,11 +22,20 @@ export class McpClient {
         this._nextId = 1;
         this._ended = null;
         this._instructions = "";
+        this._violation = null;
     }
 
     /** サーバーが初期化のときに名乗った使い方。名乗らなければ空。 */
     get serverInstructions() {
         return this._instructions;
+    }
+
+    /**
+     * サーバーが標準出力へ書いた、JSONとして読めない最初の行を述べる文。そういう行が無ければ null。
+     * 起こし直しても消えない。
+     */
+    get protocolViolation() {
+        return this._violation;
     }
 
     /** サーバーを起こし、初期化まで済ませる。 */
@@ -203,16 +212,12 @@ export class McpClient {
 
             const line = this._buffer.slice(0, at).trim();
             this._buffer = this._buffer.slice(at + 1);
-            if (line === "") {
-                continue;
-            }
-
             let message;
             try {
                 message = JSON.parse(line);
             } catch {
-                // サーバーが診断を標準出力へ混ぜることがある。要求の応答ではないので読み飛ばす。
-                continue;
+                this._violate(line);
+                return;
             }
 
             if (message === null || typeof message !== "object" || message.id === undefined) {
@@ -228,6 +233,16 @@ export class McpClient {
             clearTimeout(waiting.timer);
             waiting.resolve(message);
         }
+    }
+
+    _violate(line) {
+        const told = "MCPサーバーが標準出力へJSONでない行を書きました: "
+            + (line === "" ? "(空行)" : line.slice(0, 200));
+        if (this._violation === null) {
+            this._violation = told;
+        }
+
+        this._end(told);
     }
 
     _end(reason) {
