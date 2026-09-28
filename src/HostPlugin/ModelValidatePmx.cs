@@ -29,6 +29,8 @@ namespace PmxEditorMcp
 
         public const string DuplicateFacesName = "duplicateFaces";
 
+        public const string HiddenMorphsInExpressionFrameName = "hiddenMorphsInExpressionFrame";
+
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
             if (methods == null)
@@ -67,6 +69,7 @@ namespace PmxEditorMcp
                 { DanglingPhysicsName, LoosePhysics(model, vertices, materials, bones, bodies) },
                 { UnnormalizedWeightsName, Unnormalized(model) },
                 { DuplicateFacesName, Doubled(model) },
+                { HiddenMorphsInExpressionFrameName, HiddenExpressionMorphs.Of(model).Count },
             };
             found[FoundName] = found.Values.Sum(count => (int)count);
 

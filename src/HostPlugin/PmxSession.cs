@@ -7,10 +7,13 @@ namespace PmxEditorMcp
     /// <summary>どのPMXを相手にするかを決めた結果。</summary>
     public sealed class PmxTarget
     {
-        public PmxTarget(object pmx, bool current)
+        public PmxTarget(object pmx, bool current, bool editing = false)
         {
             Pmx = pmx;
             Current = current;
+            HiddenInFrames = current && editing
+                ? HiddenExpressionMorphs.Listed(pmx)
+                : ReferenceCleanup.Held(new object[0]);
         }
 
         /// <summary>相手にするPMXの実体。</summary>
@@ -18,6 +21,12 @@ namespace PmxEditorMcp
 
         /// <summary>現在のPMXの複製か。偽ならハンドルが指すPMXのオブジェクト。</summary>
         public bool Current { get; }
+
+        /// <summary>
+        /// 複製を得た時点で表情枠に登録されていた、panel が 0 のモーフ。編集して反映する現在のPMXの
+        /// 複製でなければ空。
+        /// </summary>
+        public ISet<object> HiddenInFrames { get; }
     }
 
     /// <summary>
@@ -117,14 +126,16 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 相手にするPMXを決める。ハンドルが有効でなければ偽で、断る内容を渡す。現在のPMXを
-        /// 複製できなければ、その中継の断り方を渡す。
+        /// 複製できなければ、その中継の断り方を渡す。<paramref name="editing"/> は、複製を編集して
+        /// 反映する呼び出しのときに真。
         /// </summary>
         public bool TryTake(
             long? handle,
             HandleLedger handles,
             out PmxTarget target,
             out string code,
-            out string message)
+            out string message,
+            bool editing = false)
         {
             if (handles == null)
             {
@@ -162,7 +173,7 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            target = new PmxTarget(clone, true);
+            target = new PmxTarget(clone, true, editing);
 
             return true;
         }
@@ -175,6 +186,8 @@ namespace PmxEditorMcp
         /// 断りへ変えない。反映できなければ偽で、断る内容を渡す。<paramref name="listRow"/> は
         /// 反映で変えたリストの行で、分からなければ null。<paramref name="rewritten"/> は要素の
         /// 数を変えずに中身だけを書き換えた種類で、渡せばそれを映し直しの手がかりにする。
+        /// 反映で panel が 0 のまま表情枠に登録されたモーフが新しくできたら、その警告を
+        /// <paramref name="context"/> へ置く。
         /// </summary>
         public bool TryCommit(
             PmxTarget target,
@@ -211,6 +224,11 @@ namespace PmxEditorMcp
 
             if (reflected)
             {
+                foreach (string notice in HiddenExpressionMorphs.Arisen(target.HiddenInFrames, target.Pmx))
+                {
+                    context.Notices.Add(notice);
+                }
+
                 bool shown = rewritten == null
                     ? refresh.ApplyReflected(listRow)
                     : refresh.ApplyRewritten(rewritten);

@@ -2791,6 +2791,14 @@
       "remarks": "全公開メンバーへのアクセス(型単位)"
     },
     {
+      "id": "CAP-477",
+      "category": "モデルデータ型",
+      "target": "IPXMorph.Panel",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: panel の 0 はPMX仕様ではシステム予約だが、実用上は隠しモーフの印としても使われる。隠しモーフを解除するには panel に 1〜4 のどれかを書く。MMD は、panel が 0 のまま表情枠に登録されたモーフに VMD のキーが当たると落ちることがあるので、隠しモーフにするときは表情枠から外す。pmxHandle を渡さずに現在のモデルを編集してこの状態のモーフが新しくできたときは、成功のまま warnings で知らせる。pmxHandle を渡した編集では知らせないので、model_validate_pmx の hiddenMorphsInExpressionFrame で数える"
+    },
+    {
       "id": "CAP-349",
       "category": "モデルデータ型",
       "target": "IPXMorphOffset",

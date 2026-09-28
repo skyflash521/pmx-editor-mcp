@@ -38,11 +38,18 @@ namespace PmxEditorMcp.Tests
 
         private const string FacesKey = "PEPlugin.Pmx.IPXMaterial.Faces()";
 
+        private const string MorphsKey = "PEPlugin.Pmx.IPXPmx.Morph()";
+
+        private const string PanelKey = "PEPlugin.Pmx.IPXMorph.Panel()";
+
         private readonly string _root;
 
         private readonly HostLog _log;
 
         private readonly Model _model = new Model();
+
+        /// <summary>現在のPMXとして返すモデル。null なら <see cref="_model"/> を返す。</summary>
+        private FakePmx _pmx;
 
         private readonly FakePmxView _view = new FakePmxView();
 
@@ -292,6 +299,53 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(
                 ScreenRefresh.NotShownWarning,
                 ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>());
+        }
+
+        [Fact]
+        public void HidingAMorphOnTheExpressionNodeIsWarnedAbout()
+        {
+            FakeMorph morph = ExpressionMorph("笑い", 4);
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_morphs",
+                Arguments(
+                    SetResponse.IndicesName, new object[] { 0 },
+                    ToolDispatch.ValueName, Value("panel", 0)));
+
+            Assert.Equal(0, morph.Panel);
+            Assert.Contains(
+                ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>(),
+                warning => warning.Contains("「笑い」"));
+        }
+
+        [Fact]
+        public void AHiddenMorphAlreadyOnTheExpressionNodeIsNotWarnedAboutAgain()
+        {
+            ExpressionMorph("笑い", 0);
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_morphs",
+                Arguments(
+                    SetResponse.IndicesName, new object[] { 0 },
+                    ToolDispatch.ValueName, Value("panel", 0)));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName), "警告が付いている。");
+        }
+
+        [Fact]
+        public void ShowingAMorphOnTheExpressionNodeIsNotWarnedAbout()
+        {
+            ExpressionMorph("笑い", 0);
+
+            IDictionary<string, object> envelope = Call(
+                "model_update_morphs",
+                Arguments(
+                    SetResponse.IndicesName, new object[] { 0 },
+                    ToolDispatch.ValueName, Value("panel", 4)));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName), "警告が付いている。");
         }
 
         [Fact]
@@ -569,6 +623,17 @@ namespace PmxEditorMcp.Tests
             return arguments;
         }
 
+        /// <summary>現在のPMXを、表情枠にモーフを1つだけ載せたモデルにする。</summary>
+        private FakeMorph ExpressionMorph(string name, int panel)
+        {
+            FakeMorph morph = new FakeMorph(name) { Panel = panel };
+            _pmx = new FakePmx();
+            _pmx.Morph.Add(morph);
+            _pmx.ExpressionNode.Items.Add(new FakeMorphNodeItem(morph));
+
+            return morph;
+        }
+
         private static IDictionary<string, object> Value(string name, object value)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal) { { name, value } };
@@ -693,7 +758,7 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             _clones++;
-                            return _model;
+                            return _pmx ?? (object)_model;
                         }
                     },
                     {
@@ -727,6 +792,20 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             ((Model)target).Cleared = true;
+                            return null;
+                        }
+                    },
+                    {
+                        PanelKey,
+                        (target, arguments) =>
+                        {
+                            PEPlugin.Pmx.IPXMorph morph = (PEPlugin.Pmx.IPXMorph)target;
+                            if (arguments.Length == 0)
+                            {
+                                return morph.Panel;
+                            }
+
+                            morph.Panel = Convert.ToInt32(arguments[0]);
                             return null;
                         }
                     },
@@ -769,6 +848,14 @@ namespace PmxEditorMcp.Tests
                         (owner, index) => ((Model)owner).Items[index],
                         (owner, item) => ((Model)owner).Items.Add((Item)item),
                         (owner, index) => ((Model)owner).Items.RemoveAt(index))
+                },
+                {
+                    MorphsKey,
+                    new SdkList(
+                        owner => ((FakePmx)owner).Morph.Count,
+                        (owner, index) => ((FakePmx)owner).Morph[index],
+                        (owner, item) => ((FakePmx)owner).Morph.Add((PEPlugin.Pmx.IPXMorph)item),
+                        (owner, index) => ((FakePmx)owner).Morph.RemoveAt(index))
                 },
             };
         }
@@ -879,6 +966,21 @@ namespace PmxEditorMcp.Tests
                     "model_update_pmxes",
                     new ToolFields(
                         true, true, Rooted(EditKind.DuplicateEdit), ToolAccess.Whole(), Set(fields))
+                },
+                {
+                    "model_update_morphs",
+                    new ToolFields(
+                        true,
+                        true,
+                        Rooted(EditKind.DuplicateEdit),
+                        new ToolAccess(
+                            ToolAccessKind.Element,
+                            MorphsKey,
+                            null,
+                            true,
+                            typeof(PEPlugin.Pmx.IPXMorph),
+                            item => item is PEPlugin.Pmx.IPXMorph),
+                        Set(new[] { new ToolField("panel", PanelKey, typeof(int)) }))
                 },
             };
         }

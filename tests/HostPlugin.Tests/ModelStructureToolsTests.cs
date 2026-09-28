@@ -270,6 +270,46 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void PuttingAHiddenMorphOnTheExpressionNodeIsWarnedAbout()
+        {
+            Morph("隠し", MorphKind.Vertex);
+
+            IDictionary<string, object> envelope = Nodes(
+                Operation(ModelEditNodes.RegisterUnlistedMorphs),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            Assert.Contains(
+                ((object[])envelope[ToolEnvelope.WarningsName]).Cast<string>(),
+                warning => warning.Contains("「隠し」"));
+        }
+
+        [Fact]
+        public void PuttingAShownMorphOnTheExpressionNodeIsNotWarnedAbout()
+        {
+            Morph("表示", MorphKind.Vertex).Panel = 4;
+
+            IDictionary<string, object> envelope = Nodes(
+                Operation(ModelEditNodes.RegisterUnlistedMorphs),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName), "警告が付いている。");
+        }
+
+        [Fact]
+        public void AHiddenMorphAlreadyOnTheExpressionNodeIsNotWarnedAboutAgain()
+        {
+            FakeMorph kept = Morph("前から", MorphKind.Vertex);
+            _fixture.Model.ExpressionNode.Items.Add(new FakeMorphNodeItem(kept));
+            Morph("表示", MorphKind.Vertex).Panel = 4;
+
+            IDictionary<string, object> envelope = Nodes(
+                Operation(ModelEditNodes.RegisterUnlistedMorphs),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName), "警告が付いている。");
+        }
+
+        [Fact]
         public void OnlyThePickedBoneThatIsOnNoNodeIsAdded()
         {
             IPXBone listed = Bone("載っている");

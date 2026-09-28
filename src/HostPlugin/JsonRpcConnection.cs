@@ -82,6 +82,11 @@ namespace PmxEditorMcp
         /// 包む側が知らせへ移す——映す段はUIスレッドの中に居て、応答を組み立てる場所とは別である。
         /// </summary>
         public bool NotShown { get; set; }
+
+        /// <summary>
+        /// この呼び出しの応答へ添える警告。UIスレッドの中の段が置き、呼び出しを包む側が応答へ移す。
+        /// </summary>
+        public IList<string> Notices { get; } = new List<string>();
     }
 
     /// <summary>ホストが公開する処理。戻り値がそのまま応答の result になる。</summary>

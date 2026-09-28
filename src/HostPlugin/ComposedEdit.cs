@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PmxEditorMcp
 {
@@ -264,7 +265,12 @@ namespace PmxEditorMcp
                 {
                     PmxTarget target;
                     if (!_session.TryTake(
-                        handle, context.Handles, out target, out refusedCode, out refusedMessage))
+                        handle,
+                        context.Handles,
+                        out target,
+                        out refusedCode,
+                        out refusedMessage,
+                        true))
                     {
                         return;
                     }
@@ -315,7 +321,10 @@ namespace PmxEditorMcp
             return answered == null
                 ? ToolEnvelope.Failure(refusedCode, refusedMessage)
                 : ToolEnvelope.Success(
-                    answered.Value, ScreenRefresh.Noted(answered.Warnings, !context.NotShown));
+                    answered.Value,
+                    ScreenRefresh.Noted(
+                        (answered.Warnings ?? new string[0]).Concat(context.Notices).ToList(),
+                        !context.NotShown));
         }
 
         private static bool TryHandle(

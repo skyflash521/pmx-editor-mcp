@@ -223,6 +223,22 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AHiddenMorphOnTheExpressionNodeIsCounted()
+        {
+            FakeMorph hidden = new FakeMorph("隠し") { Panel = 0 };
+            FakeMorph shown = new FakeMorph("表示") { Panel = 4 };
+            _fixture.Model.Morph.Add(hidden);
+            _fixture.Model.Morph.Add(shown);
+            _fixture.Model.ExpressionNode.Items.Add(new FakeMorphNodeItem(hidden));
+            _fixture.Model.ExpressionNode.Items.Add(new FakeMorphNodeItem(shown));
+
+            IDictionary<string, object> found = Validated();
+
+            Assert.Equal(1, found[ModelValidatePmx.HiddenMorphsInExpressionFrameName]);
+            Assert.Equal(1, found[ModelValidatePmx.FoundName]);
+        }
+
+        [Fact]
         public void TheSameThreeVerticesInTwoMaterialsAreNotCounted()
         {
             IList<IPXVertex> corners = Corners();

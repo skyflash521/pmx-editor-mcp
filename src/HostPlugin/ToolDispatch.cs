@@ -637,9 +637,9 @@ namespace PmxEditorMcp
                         || !shown;
                 }
 
-                return context.NotShown
-                    ? UndoBarrier.Noted(answered, new[] { ScreenRefresh.NotShownWarning })
-                    : answered;
+                IList<string> notices = ScreenRefresh.Noted(context.Notices, !context.NotShown);
+
+                return notices.Count == 0 ? answered : UndoBarrier.Noted(answered, notices);
             };
         }
 
@@ -4827,7 +4827,13 @@ namespace PmxEditorMcp
 
             string code;
             string message;
-            if (Session(receiver).TryTake(handle, context.Handles, out target, out code, out message))
+            if (Session(receiver).TryTake(
+                handle,
+                context.Handles,
+                out target,
+                out code,
+                out message,
+                receiver.Edit == EditKind.DuplicateEdit))
             {
                 return true;
             }

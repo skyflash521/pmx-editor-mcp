@@ -22184,6 +22184,11 @@
             "shape": "number"
           },
           {
+            "name": "hiddenMorphsInExpressionFrame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
             "name": "found",
             "origin": "hostOutput",
             "shape": "number"

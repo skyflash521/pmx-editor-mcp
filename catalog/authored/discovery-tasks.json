@@ -297,6 +297,18 @@
       "tools": [
         "motion_reset_transform"
       ]
+    },
+    {
+      "task": "隠しモーフにする・隠しモーフを解除する・隠しモーフかどうかを調べる",
+      "searches": [
+        [
+          "隠しモーフ"
+        ]
+      ],
+      "tools": [
+        "model_list_morphs",
+        "model_update_morphs"
+      ]
     }
   ]
 }
