@@ -83,9 +83,39 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             string note = Note(true, "indices", "range", "all", "offset", "limit", "nameContains");
 
-            Assert.Contains("nameContains", note, StringComparison.Ordinal);
-            Assert.Contains("name", note, StringComparison.Ordinal);
-            Assert.Contains("total", note, StringComparison.Ordinal);
+            Assert.Contains(
+                "nameContains を渡すと、name がその文字列を含む要素だけが残る。", note, StringComparison.Ordinal);
+            Assert.Contains("大文字小文字は区別し", note, StringComparison.Ordinal);
+            Assert.Contains("total は絞り込む前の件数のままになる。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesSelectedSaysThatItTargetsWhatTheScreenHasSelected()
+        {
+            string note = Note(true, "indices", "range", "all", "selected", "offset", "limit");
+
+            Assert.Contains(
+                "selected に真を渡すと、画面がいま選んでいるものを対象にする。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatDoesNotTakeSelectedDoesNotSayItTargetsTheScreenSelection()
+        {
+            Assert.DoesNotContain(
+                "画面がいま選んでいるもの",
+                Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheNoteLookedUpByNameLeavesOutHowToPointAtTheScreenSelection()
+        {
+            ToolSchema schema = Schema(true, new[] { "indices", "all", "selected", "offset", "limit" });
+
+            string note = ToolUsageNoteRule.Of(schema.Tool, new ToolSchemaTable(new[] { schema }));
+
+            Assert.Contains("total は指した要素の数", note, StringComparison.Ordinal);
+            Assert.DoesNotContain("画面がいま選んでいるもの", note, StringComparison.Ordinal);
         }
 
         [Fact]

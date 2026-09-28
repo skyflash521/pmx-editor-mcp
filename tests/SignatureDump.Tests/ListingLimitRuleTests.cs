@@ -136,6 +136,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AListForEachTargetTakesTheSameCountsAsAListForOneTarget()
+        {
+            SchemaItem answer = Group(null, Value("total", "number"), Items(Chosen(null, "number")));
+            ToolSchema perTarget = Tool(new SchemaItem(
+                null, null, answer, null, ItemOrigin.HostOutput, null, null, false,
+                null, null, null, false, null));
+
+            ListingLimits limits = ListingLimitRule.Derive(perTarget, Lengths, 98000);
+
+            Assert.Equal((98000 - 1000) / 12, limits.LimitDefault);
+            Assert.Equal((98000 - 1000) / 12, limits.LimitMaximum);
+        }
+
+        [Fact]
         public void AnElementWithoutAChosenItemStops()
         {
             ToolSchema schema = Listing(Value("index", "number"));

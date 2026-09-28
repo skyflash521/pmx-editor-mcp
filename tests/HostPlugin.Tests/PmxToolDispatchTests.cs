@@ -376,23 +376,19 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _commits);
         }
 
-        [Fact]
-        public void ACallOnTheCurrentModelReflectsAfterItRuns()
+        [Theory]
+        [InlineData(null)]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ClearingWithoutAHandleIsRefusedAndLeavesTheCurrentModelWhateverTheConfirmation(
+            bool? confirm)
         {
             IDictionary<string, object> envelope = Call(
-                "model_clear_pmx", Arguments(ToolDispatch.ConfirmName, true));
+                "model_clear_pmx",
+                confirm.HasValue ? Arguments(ToolDispatch.ConfirmName, confirm.Value) : Arguments());
 
-            Assert.True((bool)envelope["ok"]);
-            Assert.True(_model.Cleared);
-            Assert.Equal(1, _commits);
-        }
-
-        [Fact]
-        public void ACallOnTheCurrentModelWithoutTheConfirmationIsRefused()
-        {
-            IDictionary<string, object> envelope = Call("model_clear_pmx", Arguments());
-
-            Assert.Equal(ToolEnvelope.ConfirmRequired, Code(envelope));
+            Assert.False((bool)envelope["ok"]);
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
             Assert.False(_model.Cleared);
             Assert.Equal(0, _commits);
         }
@@ -522,7 +518,7 @@ namespace PmxEditorMcp.Tests
             _reflectionBreaks = true;
 
             IDictionary<string, object> envelope = Call(
-                "model_clear_pmx", Arguments(ToolDispatch.ConfirmName, true));
+                "model_update_pmxes", Arguments(ToolDispatch.ValueName, Value("filePath", "b.pmx")));
 
             Assert.Equal(ToolEnvelope.OperationFailed, Code(envelope));
             Assert.Contains("結果不明", Message(envelope));

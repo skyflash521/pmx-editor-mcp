@@ -302,23 +302,35 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void TheDangerousToolsTakeNamesOfTheirOwnAndTheSafeOnesDoNot()
         {
-            ToolBindingSource source = Build(
-                Dispatched("session_close", Method("Close", "System.Void")),
-                Dispatched("session_initialize_pmx", Method("InitializePMX", "System.Void")),
-                Dispatched("session_save_pmx_file", Method("SavePMXFile", "System.Void", "path")),
-                Dispatched("session_undo", Method("Undo", "System.Void")));
+            ToolBindingSource source = Derived(
+                Schemas(),
+                Dispatched(null, Method("Close", "System.Void")),
+                Dispatched(null, Method("InitializePMX", "System.Void")),
+                Dispatched(null, Method("SavePMXFile", "System.Void", "path")),
+                Dispatched(null, Method("Undo", "System.Void")));
 
+            Assert.Equal(4, source.Calls.Count);
+            Assert.Equal(4, source.Calls.Distinct(StringComparer.Ordinal).Count());
+            IDictionary<string, string[]> dangers = source.Calls.ToDictionary(
+                t => t, t => DangersOf(source.Text, t), StringComparer.Ordinal);
+            Assert.All(dangers, d => Assert.Single(d.Value.Distinct(StringComparer.Ordinal)));
             Assert.Equal(
-                new[]
-                {
-                    "session_close", "session_initialize_pmx", "session_save_pmx_file",
-                    "session_undo",
-                },
-                source.Calls.ToArray());
-            Assert.Equal(3, Occurrences(source.Text, "DangerKind.Shutdown")
-                + Occurrences(source.Text, "DangerKind.Reset")
-                + Occurrences(source.Text, "DangerKind.Overwrite"));
-            Assert.Equal(1, Occurrences(source.Text, "DangerKind.None"));
+                new[] { "DangerKind.None", "DangerKind.Overwrite", "DangerKind.Reset", "DangerKind.Shutdown" },
+                dangers.Values.Select(d => d[0]).OrderBy(d => d, StringComparer.Ordinal).ToArray());
+        }
+
+        private static string[] DangersOf(string text, string tool)
+        {
+            string head = "calls.Add(\"" + tool + "\", ";
+            int from = text.IndexOf(head, StringComparison.Ordinal);
+            Assert.True(from >= 0, "ツールの呼び出しが組み立て文に無い: " + tool);
+            int end = text.IndexOf('\n', from);
+            string line = text.Substring(from, end - from);
+
+            return System.Text.RegularExpressions.Regex.Matches(line, "DangerKind\\.[A-Za-z]+")
+                .Cast<System.Text.RegularExpressions.Match>()
+                .Select(m => m.Value)
+                .ToArray();
         }
 
         [Fact]
@@ -433,9 +445,123 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void AListOfHandledItemsCarriesNoSuchTypes()
         {
-            ToolBindingSource source = Build(Kinds(Kept, KeptLeaf), Kepts());
+            ToolBindingSource source = Build(
+                RolesWith(
+                    new TypeRoleRecord[0],
+                    new[]
+                    {
+                        new ElementCollectionRecord(
+                            KeptListKey, true, "題材の根拠。", new[] { KeptListKey }),
+                    }),
+                Kinds(Kept, KeptLeaf),
+                Kepts());
 
+            Assert.Contains("elements.Add(\"model_add_kepts\",", source.Text);
+            Assert.Contains("typeof(global::" + Kept + "), item => item is global::" + Kept, source.Text);
             Assert.DoesNotContain("new ToolItem(", source.Text);
+        }
+
+        [Fact]
+        public void TheClosingToolChecksTheUndoableEditsBeforeItIsCalled()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_close", Method("Close", "System.Void")),
+                Released(Property("UndoCount", "System.Int32", true, false)));
+
+            Assert.Contains(
+                "preconditions.Add(\"session_close\", new ToolPrecondition(PreconditionKind.SavedEdits,"
+                    + " new string[] {  }, new string[] { \"" + Form + ".UndoCount()\" },"
+                    + " new string[] { \"" + Form + ".Close()\" }));",
+                source.Text);
+        }
+
+        [Fact]
+        public void EachUndoingToolChecksItsOwnRemainingCount()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_undo", Method("Undo", "System.Void")),
+                Dispatched("session_redo", Method("Redo", "System.Void")),
+                Dispatched("session_open_pmx_file", Method("OpenPMXFile", "System.Boolean", "path")),
+                Released(Property("UndoCount", "System.Int32", true, false)),
+                Released(Property("RedoCount", "System.Int32", true, false)));
+
+            Assert.Contains(
+                "preconditions.Add(\"session_undo\", new ToolPrecondition(PreconditionKind.UndoHistory,"
+                    + " new string[] {  }, new string[] { \"" + Form + ".UndoCount()\" },"
+                    + " new string[] { \"" + Form + ".Undo()\" }));",
+                source.Text);
+            Assert.Contains(
+                "preconditions.Add(\"session_redo\", new ToolPrecondition(PreconditionKind.UndoHistory,"
+                    + " new string[] {  }, new string[] { \"" + Form + ".RedoCount()\" },"
+                    + " new string[] { \"" + Form + ".Redo()\" }));",
+                source.Text);
+            Assert.Equal(2, Occurrences(source.Text, "preconditions.Add("));
+        }
+
+        [Fact]
+        public void TheCallOnWhatIsPickedReadsThePickedObjectsThroughTheirTools()
+        {
+            ToolBindingSource source = Build(
+                RolesWith(
+                    new[]
+                    {
+                        new TypeRoleRecord(
+                            Guide, TypeRole.Connector, "題材の根拠。", "vertex_guide_connector",
+                            string.Empty, CapabilityOwner.View),
+                        new TypeRoleRecord(
+                            PmdView, TypeRole.Connector, "題材の根拠。", "pmd_view_connector",
+                            string.Empty, CapabilityOwner.View),
+                    },
+                    new ElementCollectionRecord[0]),
+                new TypeRecord[0],
+                Dispatched(
+                    "view_get_selected_current_vertex",
+                    ConnectorMethod(Guide, "GetSelectedCurrentVertex", "System.Int32")),
+                Dispatched(
+                    "view_get_selected_vertex_indices",
+                    ConnectorMethod(PmdView, "GetSelectedVertexIndices", "System.Int32[]")),
+                Dispatched(
+                    "view_get_selected_face_indices",
+                    ConnectorMethod(PmdView, "GetSelectedFaceIndices", "System.Int32[]")));
+
+            Assert.Contains(
+                "preconditions.Add(\"view_get_selected_current_vertex\","
+                    + " new ToolPrecondition(PreconditionKind.PickedObjects,"
+                    + " new string[] { \"view_get_selected_face_indices\", \"view_get_selected_vertex_indices\" },"
+                    + " new string[] {  }, new string[] { \"" + Guide + ".GetSelectedCurrentVertex()\" }));",
+                source.Text);
+            Assert.Equal(1, Occurrences(source.Text, "preconditions.Add("));
+        }
+
+        private const string Guide = "PEPlugin.View.IPEVertexGuideConnector";
+
+        private const string PmdView = "PEPlugin.View.IPEPMDViewConnector";
+
+        private static SignatureRecord ConnectorMethod(string type, string member, string valueType)
+        {
+            return new SignatureRecord(
+                type + "." + member + "()",
+                type,
+                MemberKind.Method,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                false,
+                false,
+                OperationDirection.Read);
+        }
+
+        private static TypeRoleTable RolesWith(
+            IEnumerable<TypeRoleRecord> types, IEnumerable<ElementCollectionRecord> collections)
+        {
+            TypeRoleTable roles = Roles();
+
+            return new TypeRoleTable(
+                roles.Types.Concat(types).ToList(),
+                roles.Issuances,
+                roles.Collections.Concat(collections).ToList());
         }
 
         [Fact]
@@ -694,6 +820,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static ToolBindingSource Build(
             ToolSchemaTable schemas, IList<TypeRecord> types, params Binding[] bindings)
         {
+            return Build(schemas, Roles(), types, bindings);
+        }
+
+        private static ToolBindingSource Build(
+            TypeRoleTable roles, IList<TypeRecord> types, params Binding[] bindings)
+        {
+            return Build(new ToolSchemaTable(new ToolSchema[0]), roles, types, bindings);
+        }
+
+        private static ToolBindingSource Build(
+            ToolSchemaTable schemas,
+            TypeRoleTable roles,
+            IList<TypeRecord> types,
+            params Binding[] bindings)
+        {
             Dictionary<string, SignatureRecord> signatures = bindings.ToDictionary(
                 b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal);
             foreach (SignatureRecord flow in Flows())
@@ -703,7 +844,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             return ToolBindingSourceBuilder.Build(
                 new ToolMap(bindings.Select(b => b.Row).ToList()),
-                Roles(),
+                roles,
                 new InventoryRecord(
                     "題材",
                     "0.0.0.0",

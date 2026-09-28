@@ -51,6 +51,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void EachSizeBudgetIsReadFromItsOwnField()
+        {
+            CommonContractTable contract = CommonContractJsonReader.Read(
+                new CommonContractJsonBuilder()
+                    .WithBudgets(100001, 2002, 8000003, 200004)
+                    .ToString());
+
+            Assert.Equal(100001, contract.Budgets.ResponseDefaultChars);
+            Assert.Equal(2002, contract.Budgets.WarningRoomChars);
+            Assert.Equal(8000003, contract.Budgets.RequestBytes);
+            Assert.Equal(200004, contract.Budgets.StructureTokenLimit);
+        }
+
+        [Fact]
         public void TheToolsThatDrawTheirOwnImageAreReadApartFromTheViewImages()
         {
             CommonContractTable contract = CommonContractJsonReader.Read(

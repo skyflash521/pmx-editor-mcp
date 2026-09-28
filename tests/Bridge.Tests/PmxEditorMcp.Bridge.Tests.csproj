@@ -14,7 +14,32 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageReference Include="JsonSchema.Net" Version="9.4.0" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
+    <HostBindingPath>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\HostToolBindings.g.txt</HostBindingPath>
+    <CatalogDirectory>$(MSBuildThisFileDirectory)..\..\catalog</CatalogDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="PmxEditorDir" Value="$(PmxEditorDir)" />
+    <AssemblyMetadata Include="HostBindingPath" Value="$(HostBindingPath)" />
+  </ItemGroup>
+
+  <Target Name="BuildHostBindingGenerator">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\..\src\SignatureDump\PmxEditorMcp.SignatureDump.csproj"
+             Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="HostBindingGeneratorOutput" />
+    </MSBuild>
+  </Target>
+
+  <Target Name="GenerateHostBindings"
+          BeforeTargets="BeforeBuild"
+          DependsOnTargets="EnsurePmxEditorDir;BuildHostBindingGenerator">
+    <Exec Command="&quot;@(HostBindingGeneratorOutput)&quot; tool-bindings &quot;$(PmxEditorDir)&quot; &quot;$(CatalogDirectory)\observed\capability-ledger.json&quot; &quot;$(CatalogDirectory)\authored\type-roles.json&quot; &quot;$(CatalogDirectory)\authored\common-assignments.json&quot; &quot;$(CatalogDirectory)\authored\tool-map.json&quot; &quot;$(CatalogDirectory)\authored\tool-schemas.json&quot; &quot;$(CatalogDirectory)\authored\common-contract.json&quot; &quot;$(HostBindingPath)&quot;" />
+  </Target>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bridge\PmxEditorMcp.Bridge.csproj" />
@@ -25,6 +50,8 @@
          別のフレームワークなので実行ファイルからは検査できず、判じ方の本文をここへ持ち込む。 -->
     <Compile Include="..\..\src\SignatureDump\ReflectionFreeGate.cs"
              Link="ReflectionFreeGate.cs" />
+    <Compile Include="..\..\src\SignatureDump\ToolDescriptionRule.cs"
+             Link="ToolDescriptionRule.cs" />
     <!-- ホストと揃えて持つ取り決め。ホストのテストと同じ1つを読んで、ブリッジの実装を突き合わせる。 -->
     <Compile Include="..\HostPlugin.Tests\HostBridgeContract.cs"
              Link="HostBridgeContract.cs" />

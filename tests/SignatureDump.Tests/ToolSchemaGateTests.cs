@@ -143,6 +143,80 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
         }
 
+        private const string ListingForEachTargetOutput = @"{ ""origin"": ""hostOutput"",
+                ""element"": { ""origin"": ""hostOutput"", ""members"": [
+                  { ""name"": ""total"", ""origin"": ""hostOutput"", ""shape"": ""number"" },
+                  { ""name"": ""items"", ""origin"": ""hostOutput"", ""element"": { } },
+                  { ""name"": ""nextOffset"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] } }";
+
+        [Theory]
+        [InlineData(@", ""default"": 100", true)]
+        [InlineData(@", ""bounds"": { ""minimum"": 1, ""maximum"": 100 }", true)]
+        [InlineData(@", ""default"": 100", false)]
+        [InlineData(@", ""bounds"": { ""minimum"": 1, ""maximum"": 100 }", false)]
+        public void RejectsAListingForEachTargetThatWritesTheCountTheRuleDerives(
+            string limit, bool inTheFirstBranch)
+        {
+            string schemas = inTheFirstBranch
+                ? LimitSchemaJson(limit, string.Empty, ListingForEachTargetOutput)
+                : LimitSchemaJson(string.Empty, limit, ListingForEachTargetOutput);
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(schemas, MapJson()));
+
+            Assert.Contains(
+                "一覧の件数は導く値なので既定と上限を持たない",
+                error.Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AcceptsAListingForEachTargetWhoseCountIsLeftToTheRule()
+        {
+            Require(
+                LimitSchemaJson(
+                    @", ""bounds"": { ""minimum"": 1 }", string.Empty, ListingForEachTargetOutput),
+                MapJson());
+        }
+
+        [Fact]
+        public void RejectsAComposedToolWithoutBranchingWhoseSchemaHasEventBranches()
+        {
+            IDictionary<string, ComposedTool> composed =
+                new Dictionary<string, ComposedTool>(StringComparer.Ordinal)
+                {
+                    { "view_poll_events", new ComposedTool(false, "受け持つこと。") },
+                };
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    composed,
+                    SchemaJson(
+                        "view_poll_events",
+                        extra: @", ""payloads"": [{ ""type"": ""view.click"", ""members"": [] }]"),
+                    ToolAndEvent));
+
+            Assert.Contains(
+                "分岐の欄が入出力の形と合わない", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AcceptsAComposedToolWithBranchingWhoseSchemaHasEventBranches()
+        {
+            IDictionary<string, ComposedTool> composed =
+                new Dictionary<string, ComposedTool>(StringComparer.Ordinal)
+                {
+                    { "view_poll_events", new ComposedTool(true, "受け持つこと。") },
+                };
+
+            Require(
+                composed,
+                SchemaJson(
+                    "view_poll_events",
+                    extra: @", ""payloads"": [{ ""type"": ""view.click"", ""members"": [] }]"),
+                ToolAndEvent);
+        }
+
         [Fact]
         public void RejectsAComposedToolWhoseBranchingDoesNotMatchItsSchema()
         {

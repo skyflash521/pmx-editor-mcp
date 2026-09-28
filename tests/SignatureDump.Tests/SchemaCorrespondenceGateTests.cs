@@ -475,6 +475,53 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("ホストが入れる", thrown.Message);
         }
 
+        private const string ViewControl = "PXCPlugin.IPXViewControl";
+
+        private static TypeRoleTable RolesWithConnectorArgument()
+        {
+            return new TypeRoleTable(
+                new[]
+                {
+                    new TypeRoleRecord(
+                        Vertex, TypeRole.Dto, "根拠。", "vertex", "vertices", CapabilityOwner.None),
+                    new TypeRoleRecord(
+                        ViewControl,
+                        TypeRole.Connector,
+                        "根拠。",
+                        "view_control",
+                        string.Empty,
+                        CapabilityOwner.View),
+                },
+                new[] { new HandleIssuanceRecord(Key, false, "根拠。") },
+                new ElementCollectionRecord[0]);
+        }
+
+        private static void RequireWithConnectorArgument(string schemas)
+        {
+            SchemaCorrespondenceGate.Require(
+                ToolMapJsonReader.Read(MapJson()),
+                ToolSchemaJsonReader.Read(schemas),
+                RolesWithConnectorArgument(),
+                Signatures(parameterType: ViewControl),
+                Names(Key, Tool),
+                Paths(AccessPathKind.Element));
+        }
+
+        [Fact]
+        public void AcceptsAnArgumentOfAConnectorTypeThatTheSchemaDoesNotAskFor()
+        {
+            RequireWithConnectorArgument(InjectedSchemaJson());
+        }
+
+        [Fact]
+        public void RejectsAnArgumentOfAConnectorTypeThatTheSchemaAsksFor()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => RequireWithConnectorArgument(SchemaJson()));
+
+            Assert.Contains("ホストが入れる", thrown.Message);
+        }
+
         [Fact]
         public void RejectsAnArgumentTheSchemaMarksAsPutInByTheHost()
         {
@@ -661,6 +708,69 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => Require(PagedSchemaJson(SlicingInputs, SlicedOutput), signatures: WholeList()));
 
             Assert.Contains("区間", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsARowReturningAWholeListWhoseToolTakesNoOffsetAndLimit()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(
+                    PagedSchemaJson(
+                        @"{ ""name"": ""runs"", ""origin"": ""hostInput"", ""shape"": ""boolean"", ""required"": false }",
+                        PagedOutput),
+                    signatures: WholeList()));
+
+            Assert.Contains("位置と件数で切り出す形", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsARowReturningNumbersWhoseToolDoesNotTakeRuns()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(PagedSchemaJson(SlicingInputs, PagedOutput), signatures: WholeList()));
+
+            Assert.Contains("区間", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void RejectsARowReturningNumbersWhoseAnswerDoesNotCarryTheRuns()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(PagedSchemaJson(PagedInputs, SlicedOutput), signatures: WholeList()));
+
+            Assert.Contains("区間", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheListingForEachTargetThatThisGateTakesAsPagedIsAListingForTheLimitGateToo()
+        {
+            string perTarget = PagedSchemaJson(
+                SlicingInputs.Replace(
+                    @"""name"": ""limit"", ""origin"": ""hostInput"", ""shape"": ""number"", ""required"": false",
+                    @"""name"": ""limit"", ""origin"": ""hostInput"", ""shape"": ""number"", ""required"": false,
+                      ""default"": 100, ""bounds"": { ""minimum"": 1, ""maximum"": 1000 }")
+                    + @", { ""name"": ""runs"", ""origin"": ""hostInput"", ""shape"": ""boolean"", ""required"": false }",
+                @"{ ""origin"": ""hostOutput"", ""element"": " + PagedOutput + " }");
+
+            Assert.Contains("\"maximum\": 1000", perTarget, StringComparison.Ordinal);
+            Require(perTarget, signatures: WholeList());
+
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => ToolSchemaGate.Require(
+                    ToolSchemaJsonReader.Read(perTarget),
+                    ToolMapJsonReader.Read(MapJson()),
+                    new HashSet<string>(new[] { "number", "boolean" }, StringComparer.Ordinal),
+                    new Dictionary<string, int>(StringComparer.Ordinal)
+                    {
+                        { "number", 1 },
+                        { "boolean", 1 },
+                    },
+                    new Dictionary<string, ComposedTool>(StringComparer.Ordinal)));
+
+            Assert.Contains(
+                "一覧の件数は導く値なので既定と上限を持たない",
+                error.Message,
+                StringComparison.Ordinal);
         }
 
         [Fact]

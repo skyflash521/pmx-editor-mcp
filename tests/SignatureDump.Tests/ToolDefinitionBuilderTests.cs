@@ -245,7 +245,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AnInputRequiredByOnlySomeBranchesIsNotRequiredOverall()
+        public void AnInputThatMeetsOneBranchIsTakenAndOneThatMeetsNoBranchIsNot()
         {
             string schema = Schema(new ToolSchema(
                 "one",
@@ -258,7 +258,79 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Output("number"),
                 null));
 
-            Assert.DoesNotContain("\"required\"", schema);
+            Assert.True(Takes(schema, "{\"name\":\"a\"}"), schema);
+            Assert.True(Takes(schema, "{\"index\":1}"), schema);
+            Assert.False(Takes(schema, "{}"), schema);
+            Assert.False(Takes(schema, "{\"name\":\"a\",\"index\":1}"), schema);
+        }
+
+        [Fact]
+        public void TheInputsABranchRequiresTogetherStayRequiredTogether()
+        {
+            string schema = Schema(new ToolSchema(
+                "one",
+                new[]
+                {
+                    new SchemaBranch(
+                        "plain", null, null, new[] { Input("count", "number", false) },
+                        new SchemaChoice[0]),
+                    new SchemaBranch(
+                        "named",
+                        null,
+                        null,
+                        new[]
+                        {
+                            Array("boneNames", "text", 4),
+                            Array("morphNames", "text", 4),
+                            Input("count", "number", false),
+                        },
+                        new SchemaChoice[0]),
+                },
+                Output("number"),
+                null));
+
+            Assert.True(Takes(schema, "{}"), schema);
+            Assert.True(Takes(schema, "{\"count\":2}"), schema);
+            Assert.True(Takes(schema, "{\"boneNames\":[\"a\"],\"morphNames\":[\"b\"]}"), schema);
+            Assert.False(Takes(schema, "{\"morphNames\":[\"b\"]}"), schema);
+            Assert.False(Takes(schema, "{\"boneNames\":[\"a\"]}"), schema);
+        }
+
+        [Fact]
+        public void TheWaysOfPointingOfTwoBranchesAreNotTakenTogether()
+        {
+            string schema = Schema(new ToolSchema(
+                "one",
+                new[]
+                {
+                    new SchemaBranch(
+                        "position",
+                        null,
+                        null,
+                        new[]
+                        {
+                            Optional(Array("indices", "number", 4)),
+                            Input("all", "boolean", false),
+                            Input("limit", "number", false),
+                        },
+                        new[] { new SchemaChoice(new[] { "all", "indices" }, true) }),
+                    new SchemaBranch(
+                        "held",
+                        null,
+                        null,
+                        new[] { Array("handles", "number", 4), Input("limit", "number", false) },
+                        new SchemaChoice[0]),
+                },
+                Output("number"),
+                null));
+
+            Assert.True(Takes(schema, "{\"indices\":[0]}"), schema);
+            Assert.True(Takes(schema, "{\"all\":true,\"limit\":3}"), schema);
+            Assert.True(Takes(schema, "{\"handles\":[1]}"), schema);
+            Assert.False(Takes(schema, "{\"indices\":[0],\"handles\":[1]}"), schema);
+            Assert.False(Takes(schema, "{\"all\":true,\"handles\":[1]}"), schema);
+            Assert.False(Takes(schema, "{\"all\":true,\"indices\":[0]}"), schema);
+            Assert.False(Takes(schema, "{\"limit\":3}"), schema);
         }
 
         [Fact]
@@ -310,6 +382,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains("\"limit\":{\"type\":\"number\",\"minimum\":1,\"maximum\":", schema);
             Assert.Contains("\"default\":", schema);
+        }
+
+        [Fact]
+        public void TheNumberOfRowsAListForEachTargetReturnsComesFromTheBudget()
+        {
+            string schema = Schema(PerTargetListing());
+
+            Assert.Matches(
+                "\"limit\":\\{\"type\":\"number\",\"minimum\":1,\"maximum\":\\d+,\"default\":\\d+\\}",
+                schema);
         }
 
         [Fact]
@@ -466,7 +548,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AToolWhoseConfirmationDependsOnTheTargetDoesNotAlwaysRequireIt()
+        public void AToolThatEmptiesOnlyTheModelItsHandlePointsAtRequiresTheHandleAndTakesNoConfirmation()
         {
             ToolSchema schema = Tool(
                 "one",
@@ -485,11 +567,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 NoDangerousTools,
                 NoDrawingTools)[0].InputSchema;
 
-            Assert.Contains("\"confirm\":{\"type\":\"boolean\"}", written);
-            Assert.Contains("\"required\":[\"name\"],\"additionalProperties\":false", written);
-            Assert.Contains(
-                "\"anyOf\":[{\"required\":[\"pmxHandle\"]},{\"required\":[\"confirm\"]}]",
-                written);
+            Assert.DoesNotContain("confirm", written);
+            Assert.Contains("\"required\":[\"name\",\"pmxHandle\"],\"additionalProperties\":false", written);
         }
 
         [Fact]
@@ -614,6 +693,57 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[] { Branch(Input("limit", "number", false)) },
                 output,
                 null);
+        }
+
+        private static ToolSchema PerTargetListing()
+        {
+            SchemaItem answer = new SchemaItem(
+                null,
+                new[]
+                {
+                    Member("total", "number", ItemOrigin.HostOutput),
+                    new SchemaItem(
+                        null, null, Member(null, "text", null), "items", ItemOrigin.HostOutput, null,
+                        null, false, null, null, null, false, null),
+                    Member("nextOffset", "number", ItemOrigin.HostOutput),
+                },
+                null,
+                null,
+                ItemOrigin.HostOutput,
+                null,
+                null,
+                false,
+                null,
+                null,
+                null,
+                false,
+                null);
+
+            return new ToolSchema(
+                "one",
+                new[] { Branch(Array("handles", "number", null), Input("limit", "number", false)) },
+                new SchemaItem(
+                    null, null, answer, null, ItemOrigin.HostOutput, null, null, false,
+                    null, null, null, false, null),
+                null);
+        }
+
+        private static bool Takes(string schema, string input)
+        {
+            using (System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(input))
+            {
+                return Json.Schema.JsonSchema.FromText(schema)
+                    .Evaluate(document.RootElement)
+                    .IsValid;
+            }
+        }
+
+        private static SchemaItem Optional(SchemaItem item)
+        {
+            return new SchemaItem(
+                item.Shape, item.Members, item.Element, item.Name, item.Origin, false, item.Default,
+                item.HasDefault, item.Bounds, item.Nullable, item.Source, item.Injected,
+                item.MaxItems);
         }
 
         private static SchemaBranch Branch(params SchemaItem[] inputs)
