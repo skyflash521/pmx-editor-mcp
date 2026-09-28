@@ -37,7 +37,7 @@ namespace PmxEditorMcp.Tests
                 Operation(ModelCleanFaces.Invalid),
                 ComposedEditFixture.Given("all", true)));
 
-            Assert.Single(Now(material).Faces);
+            Assert.Equal(new[] { new[] { 0, 1, 2 } }, Places(material));
             Assert.Equal(1, value[ModelCleanFaces.RemovedName]);
             Assert.Equal(1, _fixture.Commits);
         }
@@ -418,8 +418,8 @@ namespace PmxEditorMcp.Tests
                     ModelEditMaterials.FaceIndicesName, new object[] { 1 })));
 
             Assert.Equal(2, _fixture.Model.Material.Count);
-            Assert.Single(Now(material).Faces);
-            Assert.Single(_fixture.Model.Material[1].Faces);
+            Assert.Equal(new[] { new[] { 0, 1, 2 } }, Places(material));
+            Assert.Equal(new[] { new[] { 0, 2, 3 } }, Places(_fixture.Model.Material[1]));
             Assert.Equal(new object[] { 1 }, (object[])value[ModelEditMaterials.AddedName]);
         }
 
@@ -489,8 +489,8 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelEditMaterials.VertexSelectedName, true)));
 
             Assert.Equal(2, _fixture.Model.Material.Count);
-            Assert.Single(Now(material).Faces);
-            Assert.Single(_fixture.Model.Material[1].Faces);
+            Assert.Equal(new[] { new[] { 0, 1, 2 } }, Places(material));
+            Assert.Equal(new[] { new[] { 0, 2, 3 } }, Places(_fixture.Model.Material[1]));
         }
 
         [Fact]
@@ -1173,6 +1173,13 @@ namespace PmxEditorMcp.Tests
             }
 
             return made;
+        }
+
+        private int[][] Places(IPXMaterial held)
+        {
+            return Now(held).Faces
+                .Select(face => Corners(face).Select(_fixture.Model.Vertex.IndexOf).ToArray())
+                .ToArray();
         }
 
         private static IPXVertex[] Corners(IPXFace face)

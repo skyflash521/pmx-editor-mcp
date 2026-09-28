@@ -36,6 +36,8 @@ namespace PmxEditorMcp.Tests
 
         private const string PickedKey = "Sdk.Form.Picked()";
 
+        private const string ShiftKey = "Sdk.Form.Shift(PEPlugin.SDX.V3)";
+
         /// <summary>番号の並びを丸ごと返す行。応答は位置と件数で切り出す。</summary>
         private const string PagedKey = "Sdk.Form.Paged()";
 
@@ -371,6 +373,20 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> envelope = Call("session_picked", Arguments("offset", 0));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void AnArgumentNamedOffsetOfACallThatIsNotPagedReachesTheMember()
+        {
+            IDictionary<string, object> envelope = Call(
+                "session_shift", Arguments("offset", new object[] { 0d, 2d, 0d }));
+
+            Assert.True(
+                ToolEnvelope.Succeeded(envelope),
+                "断られた: " + (ToolEnvelope.Succeeded(envelope) ? string.Empty : Message(envelope)));
+            Assert.Equal(
+                new[] { 0f, 2f, 0f },
+                new[] { _target.Shifted.X, _target.Shifted.Y, _target.Shifted.Z });
         }
 
         [Fact]
@@ -1742,6 +1758,14 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { PickedKey, (target, arguments) => ((Target)target).Picked },
+                    {
+                        ShiftKey,
+                        (target, arguments) =>
+                        {
+                            ((Target)target).Shifted = (PEPlugin.SDX.V3)arguments[0];
+                            return null;
+                        }
+                    },
                     { PagedKey, (target, arguments) => ((Target)target).Paged },
                     {
                         FlagKey,
@@ -2200,6 +2224,17 @@ namespace PmxEditorMcp.Tests
                         typeof(int[]))
                 },
                 {
+                    "session_shift",
+                    new ToolCall(
+                        ShiftKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[] { new ToolArgument("offset", typeof(PEPlugin.SDX.V3)) },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
                     "session_bump",
                     new ToolCall(
                         BumpKey,
@@ -2462,6 +2497,8 @@ namespace PmxEditorMcp.Tests
             public string Shared { get; set; }
 
             public int[] Selected { get; set; } = new int[0];
+
+            public PEPlugin.SDX.V3 Shifted { get; set; }
         }
 
         /// <summary>題材を継いだ型。台帳はこちらの名前で覚える。</summary>

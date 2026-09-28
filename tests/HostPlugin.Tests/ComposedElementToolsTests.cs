@@ -615,19 +615,29 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void DeletingFacesTakesThemFromTheMaterialThatOwnsThem()
         {
-            FakeVertex vertex = new FakeVertex();
-            _fixture.Model.Vertex.Add(vertex);
+            FakeVertex[] vertices = Enumerable.Range(0, 4)
+                .Select(at => new FakeVertex(at, 0f, 0f))
+                .ToArray();
+            foreach (FakeVertex vertex in vertices)
+            {
+                _fixture.Model.Vertex.Add(vertex);
+            }
+
             FakeMaterial material = new FakeMaterial("材質");
-            Now(material).Faces.Add(new FakeFace(vertex, vertex, vertex));
-            Now(material).Faces.Add(new FakeFace(vertex, vertex, vertex));
+            Now(material).Faces.Add(new FakeFace(vertices[0], vertices[1], vertices[2]));
+            Now(material).Faces.Add(new FakeFace(vertices[0], vertices[2], vertices[3]));
             _fixture.Model.Material.Add(material);
+            FakeMaterial other = new FakeMaterial("別");
+            Now(other).Faces.Add(new FakeFace(vertices[0], vertices[1], vertices[2]));
+            _fixture.Model.Material.Add(other);
 
             Delete(
                 ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
                 ComposedEditFixture.Given("parentIndices", new object[] { 0 }),
                 ComposedEditFixture.Given("indices", new object[] { 0 }));
 
-            Assert.Single(Now(material).Faces);
+            Assert.Equal(new[] { new[] { 0, 2, 3 } }, Places(material));
+            Assert.Equal(new[] { new[] { 0, 1, 2 } }, Places(other));
         }
 
         [Fact]
@@ -1003,6 +1013,15 @@ namespace PmxEditorMcp.Tests
         {
             return _fixture.Call(
                 ModelDeleteElements.ToolName, ComposedEditFixture.Arguments(given));
+        }
+
+        private int[][] Places(IPXMaterial held)
+        {
+            return Now(held).Faces
+                .Select(face => new[] { face.Vertex1, face.Vertex2, face.Vertex3 }
+                    .Select(_fixture.Model.Vertex.IndexOf)
+                    .ToArray())
+                .ToArray();
         }
 
         /// <summary>握った要素が並んでいた位置に、いまのモデルで並んでいる要素。</summary>

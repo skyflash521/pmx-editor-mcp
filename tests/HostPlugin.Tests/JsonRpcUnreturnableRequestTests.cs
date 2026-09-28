@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipes;
 using System.Text;
 using System.Threading;
 using Xunit;
@@ -18,6 +19,8 @@ namespace PmxEditorMcp.Tests
         private static readonly Encoding Utf8WithoutBom = new UTF8Encoding(false);
 
         private static readonly TimeSpan WaitLimit = TimeSpan.FromSeconds(10);
+
+        private static readonly TimeSpan EndLimit = TimeSpan.FromSeconds(2);
 
         private readonly string _directory;
 
@@ -91,6 +94,76 @@ namespace PmxEditorMcp.Tests
             }
         }
 
+        [Fact]
+        public void ARequestWhoseConnectionIsGoneWhileWaitingIsNeverRun()
+        {
+            string pipeName = "pmx-editor-mcp-unreturnable-" + Guid.NewGuid().ToString("N");
+
+            using (ManualResetEventSlim started = new ManualResetEventSlim())
+            using (ManualResetEventSlim release = new ManualResetEventSlim())
+            using (ExchangeStream holder = new ExchangeStream(Lines(Handshake(), Request(2, "hold"))))
+            using (NamedPipeServerStream server = new NamedPipeServerStream(
+                pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0))
+            {
+                JsonRpcConnection connection = Connection(
+                    Methods(started, release), JsonRpcConnection.DefaultRequestTimeout);
+
+                Thread holding = Serve(connection, holder);
+                Thread waiting = null;
+                bool endedWhileHeld = false;
+                try
+                {
+                    Assert.True(started.Wait(WaitLimit), "錠を持つ処理が始まらない。");
+
+                    waiting = new Thread(() =>
+                    {
+                        try
+                        {
+                            server.WaitForConnection();
+                            connection.Handle(server, new InlineInvoker());
+                        }
+                        catch (IOException)
+                        {
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                        }
+                    });
+                    waiting.IsBackground = true;
+                    waiting.Start();
+
+                    using (NamedPipeClientStream client = new NamedPipeClientStream(
+                        ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
+                    {
+                        client.Connect((int)WaitLimit.TotalMilliseconds);
+                        byte[] sent = Lines(Handshake(), Request(2, "edit"));
+                        // 緩衝を0にした名前付きパイプへの書き込みは、相手が読み取るまで戻らない。
+                        Within(
+                            () =>
+                            {
+                                client.Write(sent, 0, sent.Length);
+                                client.Flush();
+                            },
+                            "ホストが要求を読み取らない。");
+                        string answer = null;
+                        Within(() => answer = ReadLine(client), "handshake の応答が届かない。");
+                        Assert.NotNull(answer);
+                    }
+
+                    endedWhileHeld = waiting.Join(EndLimit);
+                }
+                finally
+                {
+                    release.Set();
+                    Assert.True(holding.Join(WaitLimit), "錠を持つ接続が終わらない。");
+                    Assert.True(waiting == null || waiting.Join(WaitLimit), "切断された接続が終わらない。");
+                }
+
+                Assert.True(_edited == 0, "相手が切断した後で、待たされた要求が実行された。");
+                Assert.True(endedWhileHeld, "相手が切断した接続が、錠の空くのを待ち続けた。");
+            }
+        }
+
         private McpMethodTable Methods(ManualResetEventSlim started, ManualResetEventSlim release)
         {
             McpMethodTable methods = new McpMethodTable();
@@ -145,6 +218,46 @@ namespace PmxEditorMcp.Tests
         private static byte[] Lines(params string[] requests)
         {
             return Utf8WithoutBom.GetBytes(string.Join("\n", requests) + "\n");
+        }
+
+        /// <summary>上限を過ぎたら <paramref name="late"/> で、例外で終わったらその例外を添えて落ちる。</summary>
+        private static void Within(Action action, string late)
+        {
+            Exception failed = null;
+            Thread worker = new Thread(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception thrown)
+                {
+                    failed = thrown;
+                }
+            });
+            worker.IsBackground = true;
+            worker.Start();
+
+            Assert.True(worker.Join(WaitLimit), late);
+            Assert.True(failed == null, "待った処理が例外で終わった: " + failed);
+        }
+
+        /// <summary>読み切る前に閉じられたら null。</summary>
+        private static string ReadLine(Stream stream)
+        {
+            List<byte> line = new List<byte>();
+            byte[] one = new byte[1];
+            while (stream.Read(one, 0, 1) == 1)
+            {
+                if (one[0] == (byte)'\n')
+                {
+                    return Utf8WithoutBom.GetString(line.ToArray());
+                }
+
+                line.Add(one[0]);
+            }
+
+            return null;
         }
     }
 }

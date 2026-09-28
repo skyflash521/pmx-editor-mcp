@@ -1079,6 +1079,7 @@ namespace PmxEditorMcp.Bridge.Tests
                             false,
                             SdkArgumentNames.Contains(name),
                             PropertyValueNames.Contains(name),
+                            branch["selector"] == null ? null : Text(branch["selector"], "value"),
                             sdk,
                             census);
                 }
@@ -1136,6 +1137,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 bool inArray,
                 bool carriesArguments,
                 bool carriesProperties,
+                string itemType,
                 IDictionary<string, Func<JsonNode, bool>> sdk,
                 HostTypeCensus census)
             {
@@ -1149,9 +1151,12 @@ namespace PmxEditorMcp.Bridge.Tests
                     if (carriesProperties)
                     {
                         KeyValuePair<string, string> source;
-                        IList<string> types = _sources.TryGetValue(tool, out source)
-                            ? _sdk.PropertyTypes(source.Key, name)
-                            : new string[0];
+                        IList<string> bound = FieldTypes(tool, itemType, new[] { name });
+                        IList<string> types = bound != null
+                            ? bound
+                            : _sources.TryGetValue(tool, out source)
+                                ? _sdk.PropertyTypes(source.Key, name)
+                                : new string[0];
                         List<Func<JsonNode, bool>> rules = types.Select(t => PropertyRule(t, census)).ToList();
                         Func<JsonNode, bool> rule = rules.Count == 0 || rules.Any(r => r == null)
                             ? null
@@ -1224,6 +1229,7 @@ namespace PmxEditorMcp.Bridge.Tests
                         true,
                         carriesArguments,
                         carriesProperties,
+                        itemType,
                         sdk,
                         census));
                 }
@@ -1237,7 +1243,16 @@ namespace PmxEditorMcp.Bridge.Tests
                     {
                         string memberName = Text(member, "name");
                         members[memberName] = Declared(
-                            tool, member, memberName, name, false, carriesArguments, carriesProperties, sdk, census);
+                            tool,
+                            member,
+                            memberName,
+                            name,
+                            false,
+                            carriesArguments,
+                            carriesProperties,
+                            itemType,
+                            sdk,
+                            census);
                         bool sdkArgument = carriesArguments && Text(member, "origin") == null;
                         if (sdkArgument || (member["required"] != null && member["required"].GetValue<bool>()))
                         {
@@ -1374,6 +1389,14 @@ namespace PmxEditorMcp.Bridge.Tests
                 string tool, IList<string> names, string selected, out string gap)
             {
                 gap = null;
+                IList<string> bound = IsConnectorUpdate(tool)
+                    ? FieldTypes(tool, null, names)
+                    : ArgumentTypes(tool, names, selected);
+                if (bound != null)
+                {
+                    return bound;
+                }
+
                 KeyValuePair<string, string> source;
                 if (!_sources.TryGetValue(tool, out source))
                 {
@@ -1435,6 +1458,82 @@ namespace PmxEditorMcp.Bridge.Tests
                 List<IList<string>> counted = Distinct(methods.Where(m => m.Count == names.Count));
 
                 return counted.Count == 1 ? counted[0] : null;
+            }
+
+            /// <summary>1つに決まらなければ null。</summary>
+            private IList<string> ArgumentTypes(string tool, IList<string> names, string selected)
+            {
+                HostBinding binding;
+                if (!_bindings.TryGetValue(tool, out binding))
+                {
+                    return null;
+                }
+
+                List<IList<string>> found = binding.Calls
+                    .Where(c => selected == null || c.Selector == null || c.Selector == selected)
+                    .Select(c => c.Arguments
+                        .Select(a => new KeyValuePair<string, string>(a.Key, SdkSpelled(a.Value)))
+                        .Where(a => Role(a.Value) != ConnectorRole)
+                        .ToList())
+                    .Where(a => a.Select(p => p.Key).SequenceEqual(names, StringComparer.Ordinal))
+                    .Select(a => (IList<string>)a.Select(p => p.Value).ToList())
+                    .GroupBy(t => string.Join(",", t), StringComparer.Ordinal)
+                    .Select(g => g.First())
+                    .ToList();
+
+                return found.Count == 1 ? found[0] : null;
+            }
+
+            /// <summary>1つでも引けなければ null。</summary>
+            private IList<string> FieldTypes(string tool, string itemType, IList<string> names)
+            {
+                HostBinding binding;
+                IDictionary<string, string> fields;
+                if (!_bindings.TryGetValue(tool, out binding)
+                    || !(binding.Fields.TryGetValue(itemType ?? string.Empty, out fields)
+                        || binding.Fields.TryGetValue(string.Empty, out fields)))
+                {
+                    return null;
+                }
+
+                List<string> types = names.Select(n => fields.TryGetValue(n, out string type) ? SdkSpelled(type) : null)
+                    .ToList();
+
+                return types.Any(t => t == null) ? null : types;
+            }
+
+            private string SdkSpelled(string written)
+            {
+                if (written.EndsWith("[]", StringComparison.Ordinal))
+                {
+                    return SdkSpelled(written.Substring(0, written.Length - 2)) + "[]";
+                }
+
+                int open = written.IndexOf('<');
+                if (open >= 0 && written.EndsWith(">", StringComparison.Ordinal))
+                {
+                    return written.Substring(0, open) + "<"
+                        + string.Join(
+                            ",",
+                            written.Substring(open + 1, written.Length - open - 2).Split(',').Select(SdkSpelled))
+                        + ">";
+                }
+
+                if (_sdk.Knows(written))
+                {
+                    return written;
+                }
+
+                for (int dot = written.LastIndexOf('.'); dot > 0; dot = written.LastIndexOf('.', dot - 1))
+                {
+                    string nested = written.Substring(0, dot) + "+" + written.Substring(dot + 1).Replace('.', '+');
+                    if (_sdk.Knows(nested))
+                    {
+                        return nested;
+                    }
+                }
+
+                return written;
             }
 
             private static string Spelling(string type)
@@ -1753,12 +1852,34 @@ namespace PmxEditorMcp.Bridge.Tests
 
             private static readonly Regex ItemPattern = new Regex("new ToolItem\\(\"([a-z0-9_]+)\"");
 
-            private HostBinding(string section, string edit, string elementKind, IList<string> items)
+            private static readonly Regex CallPattern = new Regex("new ToolCall\\(\"");
+
+            private static readonly Regex ArgumentsPattern = new Regex("new ToolArgument\\[\\] \\{");
+
+            private static readonly Regex ArgumentPattern =
+                new Regex("new ToolArgument\\(\"([A-Za-z0-9_]+)\", typeof\\(global::([^)]+)\\)");
+
+            private static readonly Regex SelectorPattern = new Regex("selectorValue: \"([^\"]+)\"");
+
+            private static readonly Regex FieldSetPattern = new Regex("new ToolFieldSet\\((?:null|\"([a-z0-9_]+)\")");
+
+            private static readonly Regex FieldPattern =
+                new Regex("new ToolField\\(\"([A-Za-z0-9_]+)\", \"[^\"]*\", typeof\\(global::([^)]+)\\)");
+
+            private HostBinding(
+                string section,
+                string edit,
+                string elementKind,
+                IList<string> items,
+                IList<HostCall> calls,
+                IDictionary<string, IDictionary<string, string>> fields)
             {
                 Section = section;
                 Edit = edit;
                 ElementKind = elementKind;
                 Items = items;
+                Calls = calls;
+                Fields = fields;
             }
 
             public string Section { get; }
@@ -1768,6 +1889,12 @@ namespace PmxEditorMcp.Bridge.Tests
             public string ElementKind { get; }
 
             public IList<string> Items { get; }
+
+            /// <summary>型は C# の綴りのまま。</summary>
+            public IList<HostCall> Calls { get; }
+
+            /// <summary>要素の型を分けない組は空の名前で引く。</summary>
+            public IDictionary<string, IDictionary<string, string>> Fields { get; }
 
             public static IDictionary<string, HostBinding> Read(string path)
             {
@@ -1791,11 +1918,74 @@ namespace PmxEditorMcp.Bridge.Tests
                         entry.Groups[1].Value,
                         edit.Success ? edit.Groups[1].Value : null,
                         element.Success ? element.Groups[1].Value : null,
-                        ItemPattern.Matches(body).Cast<Match>().Select(m => m.Groups[1].Value).Distinct().ToList());
+                        ItemPattern.Matches(body).Cast<Match>().Select(m => m.Groups[1].Value).Distinct().ToList(),
+                        entry.Groups[1].Value == "calls" ? CallsIn(body) : new HostCall[0],
+                        entry.Groups[1].Value == "aggregations"
+                            ? FieldsIn(body)
+                            : new Dictionary<string, IDictionary<string, string>>(StringComparer.Ordinal));
                 }
 
                 return bindings;
             }
+
+            private static IList<HostCall> CallsIn(string body)
+            {
+                List<int> starts = CallPattern.Matches(body).Cast<Match>().Select(m => m.Index).ToList();
+                List<HostCall> calls = new List<HostCall>();
+                for (int at = 0; at < starts.Count; at++)
+                {
+                    string call = body.Substring(
+                        starts[at], (at + 1 < starts.Count ? starts[at + 1] : body.Length) - starts[at]);
+                    MatchCollection lists = ArgumentsPattern.Matches(call);
+                    string arguments = lists.Count < 2
+                        ? string.Empty
+                        : call.Substring(lists[0].Index, lists[1].Index - lists[0].Index);
+                    Match selector = SelectorPattern.Match(call);
+                    calls.Add(new HostCall(
+                        selector.Success ? selector.Groups[1].Value : null,
+                        ArgumentPattern.Matches(arguments).Cast<Match>()
+                            .Select(m => new KeyValuePair<string, string>(m.Groups[1].Value, m.Groups[2].Value))
+                            .ToList()));
+                }
+
+                return calls;
+            }
+
+            private static IDictionary<string, IDictionary<string, string>> FieldsIn(string body)
+            {
+                Dictionary<string, IDictionary<string, string>> sets =
+                    new Dictionary<string, IDictionary<string, string>>(StringComparer.Ordinal);
+                IDictionary<string, string> current = null;
+                foreach (Match found in FieldSetPattern.Matches(body).Cast<Match>()
+                    .Concat(FieldPattern.Matches(body).Cast<Match>())
+                    .OrderBy(m => m.Index))
+                {
+                    if (found.Value.StartsWith("new ToolFieldSet", StringComparison.Ordinal))
+                    {
+                        current = new Dictionary<string, string>(StringComparer.Ordinal);
+                        sets[found.Groups[1].Success ? found.Groups[1].Value : string.Empty] = current;
+                    }
+                    else if (current != null)
+                    {
+                        current[found.Groups[1].Value] = found.Groups[2].Value;
+                    }
+                }
+
+                return sets;
+            }
+        }
+
+        private sealed class HostCall
+        {
+            public HostCall(string selector, IList<KeyValuePair<string, string>> arguments)
+            {
+                Selector = selector;
+                Arguments = arguments;
+            }
+
+            public string Selector { get; }
+
+            public IList<KeyValuePair<string, string>> Arguments { get; }
         }
 
         internal static IList<string> SdkAssemblyPaths()
@@ -2053,6 +2243,11 @@ namespace PmxEditorMcp.Bridge.Tests
                 SdkType found;
 
                 return _types.TryGetValue(type, out found) ? found.EnumNames : new string[0];
+            }
+
+            public bool Knows(string type)
+            {
+                return _types.ContainsKey(type);
             }
 
             public bool? IsValueType(string type)
