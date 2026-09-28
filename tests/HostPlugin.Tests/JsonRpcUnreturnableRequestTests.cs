@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -164,6 +165,75 @@ namespace PmxEditorMcp.Tests
             }
         }
 
+        [Fact]
+        public void ARequestWhoseConnectionIsFoundGoneOnTakingTheLockIsNeverRun()
+        {
+            using (ManualResetEventSlim started = new ManualResetEventSlim())
+            using (ManualResetEventSlim release = new ManualResetEventSlim())
+            using (ExchangeStream holder = new ExchangeStream(Lines(Handshake(), Request(2, "hold"))))
+            using (DetachingPipe waiter = new DetachingPipe(Lines(Handshake(), Request(2, "edit"))))
+            {
+                JsonRpcConnection connection = Connection(
+                    Methods(started, release), JsonRpcConnection.DefaultRequestTimeout, null, TimeSpan.FromHours(1));
+
+                Thread holding = Serve(connection, holder);
+                Thread waiting = null;
+                try
+                {
+                    Assert.True(started.Wait(WaitLimit), "錠を持つ処理が始まらない。");
+                    waiting = ServeCatching(connection, waiter);
+                    Assert.True(waiter.Consumed.Wait(WaitLimit), "待たされる接続が要求を読み取らない。");
+                    waiter.Detach();
+                }
+                finally
+                {
+                    release.Set();
+                    Assert.True(holding.Join(WaitLimit), "錠を持つ接続が終わらない。");
+                    Assert.True(waiting == null || waiting.Join(WaitLimit), "切断された接続が終わらない。");
+                }
+
+                Assert.True(_edited == 0, "錠を取れた時点で相手が切断していたのに、待たされた要求が実行された。");
+            }
+        }
+
+        [Fact]
+        public void ARequestWhoseTimeRunsOutAfterTakingTheLockIsAnsweredAndNeverRun()
+        {
+            SteppingClock clock = new SteppingClock(TimeSpan.FromHours(1));
+            using (ManualResetEventSlim started = new ManualResetEventSlim())
+            using (ManualResetEventSlim release = new ManualResetEventSlim())
+            using (ExchangeStream holder = new ExchangeStream(Lines(Handshake(), Request(2, "hold"))))
+            using (ExchangeStream waiter = new ExchangeStream(Lines(Handshake(), Request(2, "edit"))))
+            {
+                JsonRpcConnection connection = Connection(
+                    Methods(started, release), TimeSpan.FromMinutes(150), clock.Read, TimeSpan.FromHours(10));
+
+                Thread holding = Serve(connection, holder);
+                Thread waiting = null;
+                try
+                {
+                    Assert.True(started.Wait(WaitLimit), "錠を持つ処理が始まらない。");
+                    clock.Start();
+                    waiting = ServeCatching(connection, waiter);
+                    Assert.True(waiter.WaitForMessages(1, WaitLimit), "待たされる接続が handshake に答えない。");
+                }
+                finally
+                {
+                    release.Set();
+                    Assert.True(holding.Join(WaitLimit), "錠を持つ接続が終わらない。");
+                    Assert.True(waiting == null || waiting.Join(WaitLimit), "待たされた接続が終わらない。");
+                }
+
+                Assert.True(_edited == 0, "処理を始める前に時間が尽きたのに、待たされた要求が実行された。");
+
+                IList<IDictionary<string, object>> responses = waiter.ReadResponses();
+                Assert.Equal(2, responses.Count);
+                IDictionary<string, object> error =
+                    Assert.IsAssignableFrom<IDictionary<string, object>>(responses[1]["error"]);
+                Assert.Equal(JsonRpcErrorCodes.RequestTimeout, Convert.ToInt32(error["code"]));
+            }
+        }
+
         private McpMethodTable Methods(ManualResetEventSlim started, ManualResetEventSlim release)
         {
             McpMethodTable methods = new McpMethodTable();
@@ -194,6 +264,41 @@ namespace PmxEditorMcp.Tests
                 requestTimeout,
                 MessageChannel.DefaultMaxMessageBytes,
                 StubClientProcess.Opener(ClientId, ClientId));
+        }
+
+        private JsonRpcConnection Connection(
+            McpMethodTable methods, TimeSpan requestTimeout, Func<TimeSpan> clock, TimeSpan gatePollInterval)
+        {
+            return new JsonRpcConnection(
+                _log,
+                methods,
+                "1.2.3.4",
+                100000,
+                requestTimeout,
+                MessageChannel.DefaultMaxMessageBytes,
+                StubClientProcess.Opener(ClientId, ClientId),
+                new SdkRelayTable(string.Empty, string.Empty, new Dictionary<string, SdkCall>(), new string[0]),
+                string.Empty,
+                clock: clock,
+                gatePollInterval: gatePollInterval);
+        }
+
+        private static Thread ServeCatching(JsonRpcConnection connection, Stream stream)
+        {
+            Thread worker = new Thread(() =>
+            {
+                try
+                {
+                    connection.Handle(stream, new InlineInvoker());
+                }
+                catch (Exception)
+                {
+                }
+            });
+            worker.IsBackground = true;
+            worker.Start();
+
+            return worker;
         }
 
         private static Thread Serve(JsonRpcConnection connection, Stream stream)
@@ -258,6 +363,100 @@ namespace PmxEditorMcp.Tests
             }
 
             return null;
+        }
+
+        /// <summary>読まれるたびに決まった長さだけ進む時計。進め始めるまでは止まっている。</summary>
+        private sealed class SteppingClock
+        {
+            private readonly object _gate = new object();
+            private readonly TimeSpan _step;
+            private TimeSpan _now;
+            private bool _stepping;
+
+            internal SteppingClock(TimeSpan step)
+            {
+                _step = step;
+            }
+
+            internal void Start()
+            {
+                lock (_gate)
+                {
+                    _stepping = true;
+                }
+            }
+
+            internal TimeSpan Read()
+            {
+                lock (_gate)
+                {
+                    if (_stepping)
+                    {
+                        _now += _step;
+                    }
+
+                    return _now;
+                }
+            }
+        }
+
+        /// <summary>入力を渡し切ったことを知らせ、切断をこちらから起こせるパイプ。</summary>
+        private sealed class DetachingPipe : PipeStream
+        {
+            private readonly MemoryStream _input;
+            private readonly MemoryStream _output = new MemoryStream();
+
+            internal DetachingPipe(byte[] input)
+                : base(PipeDirection.InOut, 0)
+            {
+                _input = new MemoryStream(input);
+                IsConnected = true;
+            }
+
+            internal ManualResetEventSlim Consumed { get; } = new ManualResetEventSlim();
+
+            internal void Detach()
+            {
+                IsConnected = false;
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                int read = _input.Read(buffer, offset, count);
+                if (_input.Position == _input.Length)
+                {
+                    Consumed.Set();
+                }
+
+                return read;
+            }
+
+            public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            {
+                return Task.FromResult(Read(buffer, offset, count));
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                lock (_output)
+                {
+                    _output.Write(buffer, offset, count);
+                }
+            }
+
+            public override void Flush()
+            {
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    Consumed.Dispose();
+                }
+
+                base.Dispose(disposing);
+            }
         }
     }
 }

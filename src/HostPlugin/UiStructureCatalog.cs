@@ -10,7 +10,8 @@ namespace PmxEditorMcp
     ///
     /// ウィンドウの名前は型の完全名で、タイトルはフォーム自身の Text である。部品の節は、型・受け皿の名前・
     /// 文言・指したときに出る説明・ショートカット・右クリックメニューの名前・断片のクラス・
-    /// 実行時に組み立てる印・開くウィンドウ・押したときの危険の区分・子を持ち、無い項目は省かれている。
+    /// 実行時に組み立てる印・開くウィンドウ・押したときの危険の区分・押すとクリップボードを読むか書くかの印・
+    /// 子を持ち、無い項目は省かれている。
     /// </summary>
     internal static class UiStructureCatalog
     {
@@ -49,6 +50,12 @@ namespace PmxEditorMcp
         internal const string ChildrenName = "children";
 
         internal const string DangerName = "danger";
+
+        /// <summary>押すとエディタがクリップボードを読むか書く部品の節が、真で持つ項目。</summary>
+        internal const string ClipboardName = "clipboard";
+
+        /// <summary>画面の構造の応答で、クリップボードを読むか書く部品に付ける危険の区分。</summary>
+        internal const string ClipboardDanger = "clipboard";
 
         private static readonly HashSet<string> PressableTypes = new HashSet<string>(StringComparer.Ordinal)
         {
@@ -180,6 +187,14 @@ namespace PmxEditorMcp
             }
 
             return children;
+        }
+
+        /// <summary>台帳の節が、押すとエディタがクリップボードを読むか書く部品か。</summary>
+        internal static bool UsesClipboard(IDictionary<string, object> node)
+        {
+            object given;
+
+            return node != null && node.TryGetValue(ClipboardName, out given) && given is bool && (bool)given;
         }
 
         /// <summary>台帳の節が、押すと何かが起きる部品か。</summary>

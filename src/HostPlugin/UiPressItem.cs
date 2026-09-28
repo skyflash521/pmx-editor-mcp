@@ -103,6 +103,13 @@ namespace PmxEditorMcp
                     ToolEnvelope.NotApplicable, "この項目は押さない: " + string.Join("/", path) + "。" + guide);
             }
 
+            if (UiStructureCatalog.UsesClipboard(node))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "押すとエディタがクリップボードを読むか書くので押さない: " + string.Join("/", path) + "。");
+            }
+
             string danger = Danger(UiStructureCatalog.Text(node, UiStructureCatalog.DangerName), named, path);
             if (danger != null)
             {

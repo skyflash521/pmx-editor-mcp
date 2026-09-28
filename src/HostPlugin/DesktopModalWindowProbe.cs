@@ -44,8 +44,7 @@ namespace PmxEditorMcp
 
         internal string Said(IntPtr window)
         {
-            return ModalWindows.Describe(new[] { new WindowNote(Text(window), Body(window), true, true) })
-                ?? string.Empty;
+            return ModalWindows.Said(new WindowNote(Text(window), Body(window), true, true));
         }
 
         private IEnumerable<WindowNote> Windows()

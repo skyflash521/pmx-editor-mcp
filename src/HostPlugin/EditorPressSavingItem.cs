@@ -24,7 +24,10 @@ namespace PmxEditorMcp
         private static readonly Dictionary<string, SavingItem> ItemsByWindowAndPath =
             new Dictionary<string, SavingItem>(StringComparer.Ordinal)
             {
-                { "PmxEditor.CsvElementView|menuStrip1/MenuItem_File/MenuItem_SaveCsv", SavingItem.Asking() },
+                {
+                    "PmxEditor.CsvElementView|menuStrip1/MenuItem_File/MenuItem_SaveCsv",
+                    SavingItem.Asking().ClipboardOnlyWith("menuStrip1", "MenuItem_File", "MenuItem_AutoCopy")
+                },
                 { "PmxEditor.PmxForm|menuStrip1/MenuItem_File/MenuItem_TextInOut/MenuItem_TextSave", SavingItem.Asking() },
                 {
                     "PmxEditor.PmxForm|menuStrip1/MenuItem_File/MenuItem_Export",
@@ -170,6 +173,12 @@ namespace PmxEditorMcp
                     "そのウィンドウは開いていない。" + UiOpenWindow.ToolName + " で開いてから呼ぶ: " + window);
             }
 
+            string touching = ClipboardTouched(form, window, path, item);
+            if (touching != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.NotApplicable, touching);
+            }
+
             string shown = new DesktopModalWindowProbe(PromptReadLimit).TryDescribe();
             if (form.Modal || !IsWindowEnabled(form.Handle) || shown != null)
             {
@@ -289,6 +298,45 @@ namespace PmxEditorMcp
             });
         }
 
+        /// <summary>
+        /// 押すとクリップボードを読むか書くなら、押さない事情の文。読みも書きもしないなら null。台帳が印した部品は、
+        /// 書くのを止める入り切りを持ち、それが切れていると読めたときだけ押す。
+        /// </summary>
+        private static string ClipboardTouched(Form form, string window, IList<string> path, SavingItem item)
+        {
+            IDictionary<string, object> node =
+                UiStructureCatalog.Node(UiStructureCatalog.Window(window), UiStructureCatalog.RootName);
+            foreach (string step in path)
+            {
+                node = node == null ? null : UiStructureCatalog.Child(node, step);
+            }
+
+            if (!UiStructureCatalog.UsesClipboard(node))
+            {
+                return null;
+            }
+
+            string part = string.Join("/", path);
+            if (item.ClipboardSwitch == null)
+            {
+                return "押すとエディタがクリップボードを読むか書くので押さない: " + part + "。";
+            }
+
+            bool found;
+            bool? on = UiLive.CheckedState(form, item.ClipboardSwitch, out found);
+            if (on == false)
+            {
+                return null;
+            }
+
+            string toggle = string.Join("/", item.ClipboardSwitch);
+
+            return "押すとエディタがクリップボードへも書くので押さない: " + part + "。クリップボードへ書くのは "
+                + toggle + " が入っている間だけなので、" + UiPressItem.ToolName + " で " + toggle + " の "
+                + UiPressItem.CheckedName + " を偽にしてから呼ぶ"
+                + (on == null ? "(いまの入り切りを読めなかった)。" : "。");
+        }
+
         private static string Listed(IList<string> lines, int beyond)
         {
             return string.Join(" / ", lines) + (beyond == 0 ? "" : " / ほか" + beyond + "件");
@@ -361,8 +409,10 @@ namespace PmxEditorMcp
                 AnsweredDialog[] following,
                 IDictionary<string, string> sdkToolsByExtension,
                 Func<string, string> lacking,
-                string target)
+                string target,
+                string[] clipboardSwitch = null)
             {
+                ClipboardSwitch = clipboardSwitch;
                 Target = target;
                 Lacking = lacking;
                 AsksFile = asksFile;
@@ -390,6 +440,12 @@ namespace PmxEditorMcp
             /// <summary>書き先の拡張子から、同じことを画面を経ずに行うツールへ。</summary>
             internal IDictionary<string, string> SdkToolsByExtension { get; }
 
+            /// <summary>
+            /// 入っているときだけ押すとクリップボードへも書く、同じウィンドウの入り切りまでの名前の並び。そうした入り切りを
+            /// 持たない部品では null。
+            /// </summary>
+            internal string[] ClipboardSwitch { get; }
+
             /// <summary>書かれたファイルの中身が形式として揃っていなければ、どう揃っていないかを述べた文。揃っていれば null。</summary>
             internal Func<string, string> Lacking { get; }
 
@@ -414,7 +470,8 @@ namespace PmxEditorMcp
                     Following.Concat(new[] { following }).ToArray(),
                     SdkToolsByExtension,
                     Lacking,
-                    Target);
+                    Target,
+                    ClipboardSwitch);
             }
 
             internal SavingItem Instead(string extension, string tool)
@@ -424,17 +481,27 @@ namespace PmxEditorMcp
                     { extension, tool },
                 };
 
-                return new SavingItem(AsksFile, Questions, Cautions, Following, tools, Lacking, Target);
+                return new SavingItem(AsksFile, Questions, Cautions, Following, tools, Lacking, Target, ClipboardSwitch);
             }
 
             internal SavingItem Checked(Func<string, string> lacking)
             {
-                return new SavingItem(AsksFile, Questions, Cautions, Following, SdkToolsByExtension, lacking, Target);
+                return new SavingItem(AsksFile, Questions, Cautions, Following, SdkToolsByExtension, lacking, Target, ClipboardSwitch);
             }
 
             internal SavingItem At(string target)
             {
-                return new SavingItem(AsksFile, Questions, Cautions, Following, SdkToolsByExtension, Lacking, target);
+                return new SavingItem(AsksFile, Questions, Cautions, Following, SdkToolsByExtension, Lacking, target, ClipboardSwitch);
+            }
+
+            /// <summary>
+            /// 押すとクリップボードへも書くのが、<paramref name="clipboardSwitch"/> の入り切りが入っているときだけの部品にする。
+            /// <paramref name="clipboardSwitch"/> は同じウィンドウの根からその入り切りまでの名前の並び。
+            /// </summary>
+            internal SavingItem ClipboardOnlyWith(params string[] clipboardSwitch)
+            {
+                return new SavingItem(
+                    AsksFile, Questions, Cautions, Following, SdkToolsByExtension, Lacking, Target, clipboardSwitch);
             }
 
             private static string Whole(string file)

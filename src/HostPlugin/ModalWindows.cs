@@ -37,9 +37,13 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ModalWindows
     {
+        /// <summary>当たるウィンドウがどれもタイトルも本文も持たないときの <see cref="Describe"/> の値。</summary>
+        public const string Wordless = "タイトルも本文も持たない表示";
+
         /// <summary>
         /// 当たるウィンドウのタイトルと本文。両方を持つものは両方を、片方だけを持つものはその片方を返す。
-        /// 当たるウィンドウが無ければ null。2つ以上あるときは先に見つかったものを採る。
+        /// 2つ以上あるときは、タイトルか本文を持つもののうち先に見つかったものを採る。当たるウィンドウが
+        /// どれもタイトルも本文も持たなければ <see cref="Wordless"/>、当たるウィンドウが無ければ null。
         /// </summary>
         public static string Describe(IEnumerable<WindowNote> windows)
         {
@@ -48,13 +52,19 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(windows));
             }
 
-            WindowNote found = windows.FirstOrDefault(
-                w => w != null && w.Visible && w.HoldsOwner && Said(w).Length != 0);
+            List<WindowNote> found = windows.Where(w => w != null && w.Visible && w.HoldsOwner).ToList();
+            if (found.Count == 0)
+            {
+                return null;
+            }
 
-            return found == null ? null : Said(found);
+            WindowNote worded = found.FirstOrDefault(w => Said(w).Length != 0);
+
+            return worded == null ? Wordless : Said(worded);
         }
 
-        private static string Said(WindowNote window)
+        /// <summary>ウィンドウのタイトルと本文。どちらも持たなければ空。</summary>
+        internal static string Said(WindowNote window)
         {
             string caption = window.Caption.Trim();
             string body = window.Body.Trim();

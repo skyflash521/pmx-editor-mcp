@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Pipes;
@@ -217,9 +218,14 @@ namespace PmxEditorMcp.Bridge
         private const int HostProtocolMismatch = -32001;
         private const int HostHandshakeRequired = -32003;
         private const int HostInputTooLarge = -32004;
+        private const int HostSessionRefused = -32006;
 
         private readonly IHostConnector _connector;
         private readonly HostRequestQueue _queue = new HostRequestQueue();
+
+        /// <summary>パイプ名ごとの、そのホストが handshake で渡したセッションの識別子。</summary>
+        private readonly Dictionary<string, string> _sessionsByPipeName =
+            new Dictionary<string, string>(StringComparer.Ordinal);
 
         private Stream _stream;
         private BridgeMessageChannel _channel;
@@ -482,6 +488,13 @@ namespace PmxEditorMcp.Bridge
             _channel = new BridgeMessageChannel(connection.Stream);
 
             JsonObject parameters = new JsonObject { ["protocol"] = Protocol };
+            string presented;
+            if (connection.PipeName != null
+                && _sessionsByPipeName.TryGetValue(connection.PipeName, out presented))
+            {
+                parameters["session"] = presented;
+            }
+
             HostResponse response = await ExchangeAsync("handshake", parameters, true, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -495,9 +508,10 @@ namespace PmxEditorMcp.Bridge
 
             int hostBudgetChars;
             string hostToolMapDigest;
+            string session;
             string invalidReason;
             if (!TryReadHandshake(
-                response.Result, out hostBudgetChars, out hostToolMapDigest, out invalidReason))
+                response.Result, out hostBudgetChars, out hostToolMapDigest, out session, out invalidReason))
             {
                 throw FailAndClose(BridgeErrorCodes.HandshakeMismatch, invalidReason);
             }
@@ -519,6 +533,11 @@ namespace PmxEditorMcp.Bridge
                     BridgeErrorCodes.BudgetMismatch,
                     "ホストの応答サイズ予算は " + Describe(hostBudgetChars) + " 文字で、ブリッジの "
                         + Describe(BudgetChars) + " 文字と一致しない。両者へ同じ値を設定する。");
+            }
+
+            if (session != null && connection.PipeName != null)
+            {
+                _sessionsByPipeName[connection.PipeName] = session;
             }
         }
 
@@ -587,7 +606,8 @@ namespace PmxEditorMcp.Bridge
             return hostErrorCode == HostParseError
                 || hostErrorCode == HostProtocolMismatch
                 || hostErrorCode == HostHandshakeRequired
-                || hostErrorCode == HostInputTooLarge;
+                || hostErrorCode == HostInputTooLarge
+                || hostErrorCode == HostSessionRefused;
         }
 
         /// <summary>
@@ -600,10 +620,15 @@ namespace PmxEditorMcp.Bridge
         }
 
         private static bool TryReadHandshake(
-            JsonNode result, out int budgetChars, out string toolMapDigest, out string invalidReason)
+            JsonNode result,
+            out int budgetChars,
+            out string toolMapDigest,
+            out string session,
+            out string invalidReason)
         {
             budgetChars = 0;
             toolMapDigest = null;
+            session = null;
             invalidReason = null;
 
             JsonObject handshake = result as JsonObject;
@@ -651,6 +676,14 @@ namespace PmxEditorMcp.Bridge
                 || !BridgeJsonRpc.TryGetString(digestNode, out toolMapDigest))
             {
                 invalidReason = "handshake の結果の toolMapDigest が文字列でない。";
+                return false;
+            }
+
+            JsonNode sessionNode;
+            if (handshake.TryGetPropertyValue("session", out sessionNode)
+                && (sessionNode == null || !BridgeJsonRpc.TryGetString(sessionNode, out session)))
+            {
+                invalidReason = "handshake の結果の session が文字列でない。";
                 return false;
             }
 

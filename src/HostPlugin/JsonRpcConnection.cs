@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PmxEditorMcp
@@ -176,6 +178,11 @@ namespace PmxEditorMcp
         /// <summary>要求1件の処理に許す時間の既定。</summary>
         public static readonly TimeSpan DefaultRequestTimeout = TimeSpan.FromSeconds(120);
 
+        /// <summary>要求の処理を直列化する錠を待つ間に、相手の切断を見に行く間隔の既定。</summary>
+        public static readonly TimeSpan DefaultGatePollInterval = TimeSpan.FromMilliseconds(50);
+
+        private static readonly Stopwatch SinceLoaded = Stopwatch.StartNew();
+
         private readonly HostLog _log;
         private readonly McpMethodTable _methods;
         private readonly string _hostVersion;
@@ -192,6 +199,10 @@ namespace PmxEditorMcp
         private readonly UndoRecovery _recovery;
 
         private readonly ScreenTargets _screen;
+
+        private readonly Func<TimeSpan> _clock;
+
+        private readonly TimeSpan _gatePollInterval;
 
         /// <summary>
         /// 要求の処理を直列化する錠。複数の接続を同時に受けるので、SDKを呼んでいる区間が重ならない
@@ -282,7 +293,11 @@ namespace PmxEditorMcp
         {
         }
 
-        /// <summary>すべてを指定して生成する。</summary>
+        /// <summary>
+        /// すべてを指定して生成する。<paramref name="clock"/> は単調に進む時刻で、省くとホストの読み込みから数えた
+        /// 経過時間を用いる。<paramref name="gatePollInterval"/> は要求の処理を直列化する錠を待つ間に相手の切断を
+        /// 見に行く間隔で、省くと <see cref="DefaultGatePollInterval"/> を用いる。
+        /// </summary>
         public JsonRpcConnection(
             HostLog log,
             McpMethodTable methods,
@@ -294,7 +309,9 @@ namespace PmxEditorMcp
             SdkRelayTable relays,
             string sdkVersion,
             UndoRecovery recovery = null,
-            ScreenTargets screen = null)
+            ScreenTargets screen = null,
+            Func<TimeSpan> clock = null,
+            TimeSpan? gatePollInterval = null)
         {
             if (log == null)
             {
@@ -337,6 +354,8 @@ namespace PmxEditorMcp
             _sdkVersion = sdkVersion;
             _recovery = recovery;
             _screen = screen ?? ScreenTargets.None;
+            _clock = clock ?? (() => SinceLoaded.Elapsed);
+            _gatePollInterval = gatePollInterval ?? DefaultGatePollInterval;
             _sessions = new SessionStore(log, _handleIds, _eventSequence, _requestGate);
         }
 
@@ -457,6 +476,7 @@ namespace PmxEditorMcp
                         return;
                 }
 
+                TimeSpan received = _clock();
                 JsonRpcParseResult parsed = JsonRpcCodec.ParseRequest(line);
                 if (!parsed.IsValid)
                 {
@@ -538,9 +558,24 @@ namespace PmxEditorMcp
 
                 // 要求1件の処理をまるごと直列化する。境界の記録・実行・結果の確定か後始末までを
                 // 分けずに囲むのは、別の接続が同じ台帳へ発行したハンドルを、こちらの後始末が
-                // 巻き込まないようにするため。処理に許す時間を測り始めるのも錠を取ったあとで、
-                // 待っている間は数えない。
-                lock (_requestGate)
+                // 巻き込まないようにするため。処理に許す時間は要求を受け取ったときから数え、
+                // 錠を待つ間も数える。
+                GateEntry entry = EnterGate(channel, received);
+                if (entry == GateEntry.PeerGone)
+                {
+                    _log.Write("錠を待つ間に相手が切断した: " + request.Method);
+                    return;
+                }
+
+                if (entry == GateEntry.TimedOut)
+                {
+                    _log.Write("処理タイムアウト: " + request.Method);
+                    Respond(channel, errors, request.Id, JsonRpcErrorCodes.RequestTimeout,
+                        "処理が上限の時間を超えた。");
+                    continue;
+                }
+
+                try
                 {
                     // 錠を待つ間に別の接続が終わらせたかもしれない。終わったセッションの台帳と
                     // キューへ触らせないために、ここでもう一度見る。
@@ -572,7 +607,7 @@ namespace PmxEditorMcp
                             result = BuildSdkStatusResult();
                         }
                         else if (!TryInvoke(
-                            channel, errors, request, method, parameters, scope, out result))
+                            channel, errors, request, method, parameters, scope, received, out result))
                         {
                             DiscardHandles(scope, issuedBefore);
                             continue;
@@ -590,6 +625,64 @@ namespace PmxEditorMcp
                         DiscardHandles(scope, issuedBefore);
                         throw;
                     }
+                }
+                finally
+                {
+                    Monitor.Exit(_requestGate);
+                }
+            }
+        }
+
+        /// <summary>要求の処理を直列化する錠を待った結末。</summary>
+        private enum GateEntry
+        {
+            Entered,
+
+            /// <summary>錠を取る前に、要求に許す時間を過ぎた。錠は取っていない。</summary>
+            TimedOut,
+
+            /// <summary>錠を取る前に、応答を書き出す先の相手が切断した。錠は取っていない。</summary>
+            PeerGone,
+        }
+
+        /// <summary>
+        /// 要求の処理を直列化する錠を取る。要求に許す時間を過ぎるか、相手の切断が分かった時点で、
+        /// 錠を取らずに戻る。錠を取れた後でも、相手の切断が分かっているか時間が残っていなければ、錠を返して
+        /// その結末とする。
+        /// </summary>
+        private GateEntry EnterGate(MessageChannel channel, TimeSpan received)
+        {
+            while (true)
+            {
+                TimeSpan remaining = _requestTimeout - (_clock() - received);
+                if (remaining <= TimeSpan.Zero)
+                {
+                    return GateEntry.TimedOut;
+                }
+
+                if (Monitor.TryEnter(_requestGate, remaining < _gatePollInterval ? remaining : _gatePollInterval))
+                {
+                    if (channel.IsPeerGone)
+                    {
+                        Monitor.Exit(_requestGate);
+
+                        return GateEntry.PeerGone;
+                    }
+
+                    if (_clock() - received < _requestTimeout)
+                    {
+                        return GateEntry.Entered;
+                    }
+
+                    Monitor.Exit(_requestGate);
+
+                    return GateEntry.TimedOut;
+                }
+
+                channel.ReadAhead();
+                if (channel.IsPeerGone)
+                {
+                    return GateEntry.PeerGone;
                 }
             }
         }
@@ -776,9 +869,19 @@ namespace PmxEditorMcp
             McpMethod method,
             IDictionary<string, object> parameters,
             ConnectionScope scope,
+            TimeSpan received,
             out object result)
         {
             result = null;
+
+            TimeSpan remaining = _requestTimeout - (_clock() - received);
+            if (remaining <= TimeSpan.Zero)
+            {
+                _log.Write("処理タイムアウト: " + request.Method);
+                Respond(channel, errors, request.Id, JsonRpcErrorCodes.RequestTimeout, "処理が上限の時間を超えた。");
+
+                return false;
+            }
 
             McpMethodContext context = new McpMethodContext(
                 parameters, scope.Ui, _budgetChars, scope.Handles, scope.Events, _screen);
@@ -788,7 +891,7 @@ namespace PmxEditorMcp
             try
             {
                 // 処理が例外で終わったときは、待ち合わせ自体がその例外を運んでくる。
-                if (!running.Wait(_requestTimeout))
+                if (!running.Wait(remaining))
                 {
                     try
                     {

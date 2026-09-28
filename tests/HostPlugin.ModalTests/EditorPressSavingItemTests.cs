@@ -361,6 +361,81 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AnItemThatWritesTheClipboardWhileAutoCopyIsOnIsRefusedWithoutPressing()
+        {
+            using (Folder folder = new Folder())
+            {
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Form view = Offscreen("CsvElementView"))
+                    {
+                        view.Name = "CsvElementView";
+                        int pressed = 0;
+                        Item(view, SaveCsv, () => pressed++);
+                        Item(view, AutoCopy, () => { });
+                        AutoCopyItem(view).Checked = true;
+                        view.Show();
+                        fixture.Forms.Add(view);
+
+                        IDictionary<string, object> refused =
+                            Call(fixture, CsvWindow, SaveCsv, folder.Path("一覧.csv"), true);
+
+                        Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(refused));
+                        Assert.Equal(0, pressed);
+                    }
+                });
+
+                Assert.Empty(Directory.GetFiles(folder.Root));
+            }
+        }
+
+        [Fact]
+        public void AnItemThatWritesTheClipboardOnlyWithAutoCopyIsPressedWhileAutoCopyIsOff()
+        {
+            using (Folder folder = new Folder())
+            {
+                string path = folder.Path("一覧.csv");
+                OnSta(() =>
+                {
+                    using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                    using (Form view = Offscreen("CsvElementView"))
+                    {
+                        view.Name = "CsvElementView";
+                        Item(view, SaveCsv, () =>
+                        {
+                            string chosen = Chosen();
+                            if (chosen != null)
+                            {
+                                File.WriteAllText(chosen, Screen.Written);
+                            }
+                        });
+                        Item(view, AutoCopy, () => { });
+                        AutoCopyItem(view).Checked = false;
+                        view.Show();
+                        fixture.Forms.Add(view);
+
+                        ComposedScreenFixture.Value(Call(fixture, CsvWindow, SaveCsv, path, true));
+                    }
+                });
+
+                Assert.Equal(Screen.Written, File.ReadAllText(path));
+            }
+        }
+
+        private const string CsvWindow = "PmxEditor.CsvElementView";
+
+        private static readonly string[] SaveCsv = { "menuStrip1", "MenuItem_File", "MenuItem_SaveCsv" };
+
+        private static readonly string[] AutoCopy = { "menuStrip1", "MenuItem_File", "MenuItem_AutoCopy" };
+
+        private static ToolStripMenuItem AutoCopyItem(Form view)
+        {
+            return (ToolStripMenuItem)view.Controls.OfType<MenuStrip>().Single()
+                .Items.Find(AutoCopy[AutoCopy.Length - 1], true).Single();
+        }
+
+        [Fact]
         public void ANoticeIsAgreedAndReturnedButAMotionFileLeftCutShortIsAFailureThatKeepsTheFileBefore()
         {
             using (Folder folder = new Folder())

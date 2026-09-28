@@ -315,15 +315,20 @@ namespace PmxEditorMcp
             return listed;
         }
 
-        /// <summary>深さの分だけ残した木。深さを渡さないときはそのまま返す。</summary>
+        /// <summary>
+        /// 深さの分だけ残した木。深さを渡さないときは下まで全部を残す。危険の区分は、台帳の区分と、
+        /// 台帳がクリップボードを読むか書くと印した部品の区分を合わせた並びにする。
+        /// </summary>
         private static object Cut(IDictionary<string, object> node, int depth)
         {
-            if (depth >= MaxDepth)
+            Dictionary<string, object> kept = new Dictionary<string, object>(node, StringComparer.Ordinal);
+            kept.Remove(UiStructureCatalog.ClipboardName);
+            string[] dangers = Dangers(node);
+            if (dangers.Length > 0)
             {
-                return node;
+                kept[UiStructureCatalog.DangerName] = dangers;
             }
 
-            Dictionary<string, object> kept = new Dictionary<string, object>(node, StringComparer.Ordinal);
             if (depth <= 0)
             {
                 kept.Remove(UiStructureCatalog.ChildrenName);
@@ -340,12 +345,29 @@ namespace PmxEditorMcp
             object[] below = new object[children.Count];
             for (int at = 0; at < children.Count; at++)
             {
-                below[at] = Cut(children[at], depth - 1);
+                below[at] = Cut(children[at], depth >= MaxDepth ? depth : depth - 1);
             }
 
             kept[UiStructureCatalog.ChildrenName] = below;
 
             return kept;
+        }
+
+        private static string[] Dangers(IDictionary<string, object> node)
+        {
+            List<string> kinds = new List<string>();
+            string catalogued = UiStructureCatalog.Text(node, UiStructureCatalog.DangerName);
+            if (catalogued != null)
+            {
+                kinds.Add(catalogued);
+            }
+
+            if (UiStructureCatalog.UsesClipboard(node))
+            {
+                kinds.Add(UiStructureCatalog.ClipboardDanger);
+            }
+
+            return kinds.ToArray();
         }
 
         /// <summary>path の名前の並び。渡されなければ空、文字列の並びでなければ null。</summary>

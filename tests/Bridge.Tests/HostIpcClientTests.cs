@@ -327,6 +327,28 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(Session, (string)parameters["session"]);
         }
 
+        [Theory]
+        [InlineData("null")]
+        [InlineData("5")]
+        [InlineData("{}")]
+        public async Task AHandshakeWhoseSessionIsNotAStringFailsAndClosesConnection(string session)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Result(
+                    request,
+                    "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                        + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + BudgetChars
+                        + ",\"session\":" + session + "}"))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
         private static Func<string, string> HandshakeWithSession(int budgetChars, string session)
         {
             return request => Result(

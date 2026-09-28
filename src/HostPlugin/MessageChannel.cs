@@ -1,7 +1,9 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.IO.Pipes;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace PmxEditorMcp
 {
@@ -69,6 +71,7 @@ namespace PmxEditorMcp
 
         private int _readOffset;
         private int _readLength;
+        private Task<int> _pendingRead;
 
         /// <summary>上限を既定にして生成する。</summary>
         public MessageChannel(Stream stream)
@@ -96,6 +99,47 @@ namespace PmxEditorMcp
         /// <summary>1メッセージの本文に許すUTF-8バイト数の上限。</summary>
         public int MaxMessageBytes { get; }
 
+        /// <summary>
+        /// 応答を書き出す先の相手が切断したと分かっているときは真。切断は、読み取りが相手の切断を
+        /// 受け取った時点で分かる。<see cref="ReadAhead"/> で読み取りを先に始めておくと、次の
+        /// <see cref="Read"/> を呼ぶ前でも分かる。書き出す先が名前付きパイプのときだけ判定できる。
+        /// 先に始めた読み取りが切断で0バイトを返しても、<see cref="PipeStream.IsConnected"/> は真のまま残る。
+        /// </summary>
+        public bool IsPeerGone
+        {
+            get
+            {
+                PipeStream pipe = _stream as PipeStream;
+                if (pipe == null)
+                {
+                    return false;
+                }
+
+                if (!pipe.IsConnected)
+                {
+                    return true;
+                }
+
+                Task<int> pending = _pendingRead;
+
+                return pending != null
+                    && pending.IsCompleted
+                    && (pending.Status != TaskStatus.RanToCompletion || pending.Result == 0);
+            }
+        }
+
+        /// <summary>
+        /// 次の <see cref="Read"/> が受け取る分の読み取りを始めて、戻りを待たずに返る。
+        /// 未読の分が残っているとき・始めた読み取りが受け取られていないときは何もしない。
+        /// </summary>
+        public void ReadAhead()
+        {
+            if (_pendingRead == null && _readOffset >= _readLength)
+            {
+                _pendingRead = _stream.ReadAsync(_readBuffer, 0, _readBuffer.Length);
+            }
+        }
+
         /// <summary>本文のUTF-8バイト数を数える。</summary>
         public static int MeasureBytes(string message)
         {
@@ -118,7 +162,7 @@ namespace PmxEditorMcp
                 {
                     if (_readOffset >= _readLength)
                     {
-                        _readLength = _stream.Read(_readBuffer, 0, _readBuffer.Length);
+                        _readLength = FillBuffer();
                         _readOffset = 0;
                         if (_readLength <= 0)
                         {
@@ -178,6 +222,19 @@ namespace PmxEditorMcp
 
             _stream.Write(payload, 0, payload.Length);
             _stream.Flush();
+        }
+
+        private int FillBuffer()
+        {
+            Task<int> pending = _pendingRead;
+            if (pending == null)
+            {
+                return _stream.Read(_readBuffer, 0, _readBuffer.Length);
+            }
+
+            _pendingRead = null;
+
+            return pending.GetAwaiter().GetResult();
         }
 
         private int IndexOfLineFeed()
