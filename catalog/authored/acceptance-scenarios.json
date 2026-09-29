@@ -3033,6 +3033,62 @@
         },
         {
           "kind": "tool",
+          "tool": "motion_set_transform_view_ik",
+          "arguments": {
+            "enabled": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "makeIk",
+            "indices": [
+              0
+            ],
+            "linkCount": 1
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_transform_view_ik",
+          "arguments": {
+            "enabled": false
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "iks.0.enabled",
+                "equals": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_transform_view_ik",
+          "arguments": {
+            "enabled": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "iks.0.enabled",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "session_initialize_pmx",
           "arguments": {
             "confirm": true

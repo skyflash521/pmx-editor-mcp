@@ -34008,6 +34008,58 @@
       }
     },
     {
+      "tool": "motion_set_transform_view_ik",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "enabled",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": true
+            },
+            {
+              "name": "boneIndices",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "iks",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "boneIndex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "enabled",
+                  "origin": "hostOutput",
+                  "shape": "boolean"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_set_v_vme_quaternion_value_event_operator",
       "branches": [
         {

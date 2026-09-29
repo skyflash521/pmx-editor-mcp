@@ -57,7 +57,28 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AWindowWithoutAnOpenerCannotBeOpened()
         {
-            Assert.Null(UiOpenWindow.Hops(View, Open(MainForm)));
+            Assert.Null(UiOpenWindow.Hops(MainForm, Open(View)));
+        }
+
+        [Fact]
+        public void TheModelViewIsOpenedFromTheMainWindowsViewMenu()
+        {
+            IList<KeyValuePair<string, IList<string>>> hops = UiOpenWindow.Hops(View, Open(MainForm));
+
+            Assert.Single(hops);
+            Assert.Equal(MainForm, hops[0].Key);
+            Assert.Equal(new[] { "menuStrip1", "MenuItem_View", "MenuItem_View_ShowView" }, hops[0].Value);
+        }
+
+        [Fact]
+        public void TheTransformViewHasARouteFromTheMainWindowThroughTheModelView()
+        {
+            IList<IDictionary<string, object>> route = UiStructureRoute.To(Transform);
+
+            Assert.NotNull(route);
+            Assert.Equal(
+                new[] { MainForm, View },
+                route.Select(hop => (string)hop[UiStructureCatalog.FormName]).ToArray());
         }
 
         [Fact]
@@ -145,8 +166,19 @@ namespace PmxEditorMcp.Tests
                     string said = (string)((IDictionary<string, object>)main["error"])["message"];
                     Assert.Contains("終了", said);
                     Assert.Contains(UiCloseWindow.ShutdownToolName, said);
-                    Assert.Equal(ToolEnvelope.NotApplicable, Code(Call(screen, UiCloseWindow.ToolName, View)));
-                    Assert.True(screen.Main.Visible && screen.View.Visible, "閉じた。");
+                    Form orphan = new Form
+                    {
+                        Name = "ImExportSelectForm",
+                        ShowInTaskbar = false,
+                        StartPosition = FormStartPosition.Manual,
+                        Location = new Point(-32000, -32000),
+                    };
+                    orphan.Show();
+                    screen.Add(orphan);
+                    Assert.Equal(
+                        ToolEnvelope.NotApplicable,
+                        Code(Call(screen, UiCloseWindow.ToolName, "PmxEditor.ImExportSelectForm")));
+                    Assert.True(screen.Main.Visible && orphan.Visible, "閉じた。");
                 }
             });
         }

@@ -61,6 +61,7 @@ namespace PmxEditorMcp
             SessionSelectListsFromView.AddTo(methods, screen);
             MotionSetCameraView.AddTo(methods, screen, forms);
             MotionApplyCurrentPose.AddTo(methods, screen, forms);
+            MotionSetTransformViewIk.AddTo(methods, screen, forms);
             EditorPressSavingItem.AddTo(methods, screen, forms);
             MotionRotateBoneAboutAxis.AddTo(methods, screen, transformView, keys);
         }
