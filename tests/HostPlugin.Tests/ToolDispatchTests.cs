@@ -81,6 +81,10 @@ namespace PmxEditorMcp.Tests
 
         private const string ShareBytesKey = "Sdk.Form.Share(System.String,System.Byte[])";
 
+        private const string SetNamesKey = VmdNames.SetBoneNamesKey;
+
+        private const string CreateNamedKey = VmdNames.CreateVmdKey;
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -109,6 +113,8 @@ namespace PmxEditorMcp.Tests
         private Info _info;
 
         private Info[] _infos;
+
+        private int _namesRelayed;
 
         public ToolDispatchTests()
         {
@@ -1447,6 +1453,66 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
         }
 
+        [Fact]
+        public void NamesThatWouldShiftTheKeysAreRefusedBeforeTheHeldReceiverIsCalled()
+        {
+            HandleLedger ledger = Ledger();
+            int held = ledger.Issue(typeof(Target).FullName, new Target(), () => { });
+            IDictionary<string, object> arguments = Arguments(
+                "handles", new object[] { (long)held },
+                "args", Arguments("names", new object[] { "a", string.Empty }));
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("vmd_set_names")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Equal(0, _namesRelayed);
+        }
+
+        [Fact]
+        public void NamesThatKeepTheirPositionsReachTheHeldReceiver()
+        {
+            HandleLedger ledger = Ledger();
+            int held = ledger.Issue(typeof(Target).FullName, new Target(), () => { });
+            IDictionary<string, object> arguments = Arguments(
+                "handles", new object[] { (long)held },
+                "args", Arguments("names", new object[] { "a", "b" }));
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("vmd_set_names")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(1, _namesRelayed);
+        }
+
+        [Fact]
+        public void NamesThatWouldShiftTheKeysAreRefusedBeforeTheBuilderIsCalled()
+        {
+            IDictionary<string, object> envelope = Call(
+                "vmd_create_named",
+                Arguments(
+                    "boneNames", new object[] { "a", "a" },
+                    "morphNames", new object[] { "m" }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Equal(0, _namesRelayed);
+        }
+
+        [Fact]
+        public void NamesThatKeepTheirPositionsReachTheBuilder()
+        {
+            IDictionary<string, object> envelope = Call(
+                "vmd_create_named",
+                Arguments(
+                    "boneNames", new object[] { "a", "b" },
+                    "morphNames", new object[] { "m" }));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(1, _namesRelayed);
+        }
+
         private static IDictionary<string, object> Arguments(params object[] pairs)
         {
             Dictionary<string, object> arguments =
@@ -1709,6 +1775,22 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { CountKey, (target, arguments) => ((Target)target).Count },
+                    {
+                        SetNamesKey,
+                        (target, arguments) =>
+                        {
+                            _namesRelayed++;
+                            return null;
+                        }
+                    },
+                    {
+                        CreateNamedKey,
+                        (target, arguments) =>
+                        {
+                            _namesRelayed++;
+                            return null;
+                        }
+                    },
                     {
                         BumpKey,
                         (target, arguments) =>
@@ -2014,6 +2096,37 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, IList<ToolCall>> built =
                 Singles(new Dictionary<string, ToolCall>(StringComparer.Ordinal)
             {
+                {
+                    "vmd_set_names",
+                    new ToolCall(
+                        SetNamesKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            TargetType,
+                            EditKind.DirectChange,
+                            false,
+                            item => item is Target),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[] { new ToolArgument("names", typeof(string[])) },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "vmd_create_named",
+                    new ToolCall(
+                        CreateNamedKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument("boneNames", typeof(string[])),
+                            new ToolArgument("morphNames", typeof(string[])),
+                        },
+                        new ToolArgument[0],
+                        null)
+                },
                 {
                     "view_set_selected",
                     new ToolCall(

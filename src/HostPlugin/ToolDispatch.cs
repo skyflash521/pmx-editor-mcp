@@ -1026,6 +1026,13 @@ namespace PmxEditorMcp
                     return;
                 }
 
+                if (!VmdNames.TryCall(call.RowKey, arguments, out code, out message))
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                    return;
+                }
+
                 called = column[0].Item;
                 stage = Changing(call.Receiver, target);
                 PmxTarget before = null;
@@ -1601,6 +1608,16 @@ namespace PmxEditorMcp
                             + passing.Count + " 件、対象は " + column.Count + " 件。"));
 
                     return;
+                }
+
+                foreach (object[] one in passing)
+                {
+                    if (!VmdNames.TryCall(call.RowKey, one, out code, out message))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return;
+                    }
                 }
 
                 for (int at = 0; at < column.Count; at++)
