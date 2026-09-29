@@ -358,9 +358,9 @@ namespace PmxEditorMcp
             }
 
             double taken = Convert.ToDouble(given, CultureInfo.InvariantCulture);
-            if (taken < 0d || taken > 1d)
+            if (taken < -1d || taken > 1d)
             {
-                message = MinWeightName + " は0以上1以下の数である。";
+                message = MinWeightName + " は-1以上1以下の数である。";
 
                 return false;
             }

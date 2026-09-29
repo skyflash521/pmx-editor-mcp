@@ -101,7 +101,7 @@
     {"tool": "model_find_material_vertices", "input": "range.start", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_find_referrers", "input": "indices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_find_referrers", "input": "limit", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ModelFindReferrers.cs が1以上 int の最大値以下の整数として読む。"},
-    {"tool": "model_find_referrers", "input": "minWeight", "reads": "real", "least": 0, "most": 1, "basis": "ModelFindReferrers.cs が0以上1以下の数として読む。"},
+    {"tool": "model_find_referrers", "input": "minWeight", "reads": "real", "least": -1, "most": 1, "basis": "ModelFindReferrers.cs が-1以上1以下の数として読む。"},
     {"tool": "model_find_referrers", "input": "offset", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ModelFindReferrers.cs が0以上 int の最大値以下の整数として読む。"},
     {"tool": "model_find_referrers", "input": "pmxHandle", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "ComposedEdit.cs が long の範囲の整数として読む。"},
     {"tool": "model_find_referrers", "input": "range.count", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},

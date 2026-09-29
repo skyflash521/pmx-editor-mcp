@@ -345,6 +345,31 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ANegativeThresholdCountsASlotWhoseWeightIsZero()
+        {
+            IList<IPXBone> bones = Bones(2);
+            IPXVertex vertex = Weighted(bones[0]);
+            vertex.Bone2 = bones[1];
+            vertex.Weight2 = 0f;
+
+            Assert.Equal(0, Weighed(1, 0));
+            Assert.Equal(1, Weighed(1, -1));
+        }
+
+        [Fact]
+        public void AThresholdBelowMinusOneIsRefused()
+        {
+            Bones(1);
+
+            IDictionary<string, object> envelope = Call(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(TargetNames.Element.All, true),
+                ComposedEditFixture.Given("minWeight", -1.5));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void AKindThatNothingCanPointAtIsRefusedWithTheOnesThatCan()
         {
             Bones(1);

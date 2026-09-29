@@ -6663,7 +6663,7 @@
               "required": false,
               "default": 0,
               "bounds": {
-                "minimum": 0,
+                "minimum": -1,
                 "maximum": 1
               }
             },
