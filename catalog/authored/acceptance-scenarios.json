@@ -4303,6 +4303,96 @@
         },
         {
           "kind": "tool",
+          "tool": "motion_hold_vmd_bone_key",
+          "arguments": {
+            "parentHandles": [
+              {
+                "$from": "readBack"
+              }
+            ],
+            "indices": [
+              1
+            ]
+          },
+          "record": {
+            "name": "heldKey",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vmd_bone_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "heldKey"
+              }
+            ],
+            "fields": [
+              "boneIndex"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.boneIndex",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_list_vmd_frame_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "heldKey"
+              }
+            ],
+            "fields": [
+              "frameIndex"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.frameIndex",
+                "equals": 30
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "heldKey"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "motion_remove_vmd_bone_keys",
           "arguments": {
             "parentHandles": [

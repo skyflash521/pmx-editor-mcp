@@ -27610,7 +27610,476 @@
       }
     },
     {
+      "tool": "motion_hold_vmd_bone_key",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {
+          "origin": "hostOutput",
+          "shape": "number"
+        }
+      }
+    },
+    {
+      "tool": "motion_hold_vmd_camera_key",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {
+          "origin": "hostOutput",
+          "shape": "number"
+        }
+      }
+    },
+    {
+      "tool": "motion_hold_vmd_light_key",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {
+          "origin": "hostOutput",
+          "shape": "number"
+        }
+      }
+    },
+    {
+      "tool": "motion_hold_vmd_morph_key",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {
+          "origin": "hostOutput",
+          "shape": "number"
+        }
+      }
+    },
+    {
+      "tool": "motion_hold_vmd_self_shadow_key",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {
+          "origin": "hostOutput",
+          "shape": "number"
+        }
+      }
+    },
+    {
       "tool": "motion_hold_vmd_visible_ik_key",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {
+          "origin": "hostOutput",
+          "shape": "number"
+        }
+      }
+    },
+    {
+      "tool": "motion_hold_vme_bone",
+      "branches": [
+        {
+          "branch": "position",
+          "inputs": [
+            {
+              "name": "parentHandles",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": true
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "indices",
+                "range",
+                "all"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "element": {
+          "origin": "hostOutput",
+          "shape": "number"
+        }
+      }
+    },
+    {
+      "tool": "motion_hold_vme_single_value_element",
       "branches": [
         {
           "branch": "position",

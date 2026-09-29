@@ -16,6 +16,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string Element = "PEPlugin.Pmx.IPXVertex";
 
+        private const string KeyOwner = "PEPlugin.Vmd.IPEVmd";
+
+        private const string KeyListKey = KeyOwner + ".Bone()";
+
+        private const string KeyElement = "PEPlugin.Vmd.IPEVmdBoneKey";
+
         [Fact]
         public void TheElementTypeTakesAddingAndRemoving()
         {
@@ -141,6 +147,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ARowWhoseElementIsMadeButWhoseRootIsNotThePmxLeadsToHolding()
+        {
+            KeyValuePair<string, TypeRoleRecord> found = Assert.Single(
+                ElementToolRule.Holdings(
+                    Map(KeyListKey),
+                    KeySignatures(),
+                    KeyRoles(),
+                    new HashSet<string>(new[] { KeyElement }, StringComparer.Ordinal),
+                    new HashSet<string>(new[] { KeyOwner }, StringComparer.Ordinal)));
+
+            Assert.Equal(KeyListKey, found.Key);
+            Assert.Equal(KeyElement, found.Value.TypeName);
+        }
+
+        [Fact]
         public void TheMadeAndTheIssuedOfHoldingsAreRequired()
         {
             Assert.Throws<ArgumentNullException>(() => ElementToolRule.Holdings(
@@ -194,6 +215,51 @@ namespace PmxEditorMcp.SignatureDump.Tests
                             ListKey, true, "題材の根拠。", new[] { ListKey })
                         : new ElementCollectionRecord(ListKey, false, "題材の根拠。"),
                 });
+        }
+
+        private static TypeRoleTable KeyRoles()
+        {
+            return new TypeRoleTable(
+                new[]
+                {
+                    new TypeRoleRecord(
+                        KeyOwner, TypeRole.OperationTarget, "題材の根拠。", "vmd", "vmds", CapabilityOwner.MotionTransform),
+                    new TypeRoleRecord(
+                        KeyElement,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "vmd_bone_key",
+                        "vmd_bone_keys",
+                        CapabilityOwner.MotionTransform),
+                },
+                new HandleIssuanceRecord[0],
+                new[]
+                {
+                    new ElementCollectionRecord(
+                        KeyListKey, true, "題材の根拠。", new[] { KeyListKey }),
+                });
+        }
+
+        private static IDictionary<string, SignatureRecord> KeySignatures()
+        {
+            return new Dictionary<string, SignatureRecord>(StringComparer.Ordinal)
+            {
+                {
+                    KeyListKey,
+                    new SignatureRecord(
+                        KeyListKey,
+                        KeyOwner,
+                        MemberKind.Property,
+                        "Bone",
+                        false,
+                        0,
+                        new ParameterRecord[0],
+                        "System.Collections.Generic.IList<" + KeyElement + ">",
+                        true,
+                        false,
+                        OperationDirection.Read)
+                },
+            };
         }
 
         private static ToolMap Map(params string[] keys)

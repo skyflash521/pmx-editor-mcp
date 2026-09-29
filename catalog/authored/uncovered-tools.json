@@ -73,7 +73,31 @@
       "reason": "noEffectCheck"
     },
     {
+      "tool": "motion_hold_vmd_camera_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vmd_light_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vmd_morph_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vmd_self_shadow_key",
+      "reason": "noCase"
+    },
+    {
       "tool": "motion_hold_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vme_single_value_element",
       "reason": "noCase"
     },
     {

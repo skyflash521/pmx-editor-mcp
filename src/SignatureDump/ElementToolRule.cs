@@ -55,11 +55,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 行キーから、その要素をハンドルで指すツールが相手にする要素の型の役割を引く表。名前を
-        /// 持ち込むリストの行だけを持ち、持ち込むのは次の2つを満たす行である。1つは、その要素の型を
-        /// 1つ作るツールが無いこと——作れる型は、作って得たハンドルからその型の振る舞いへ届くので、
-        /// 在る要素を指す道が別に要らない。もう1つは、そのリストを持つ型へハンドルが出ること——親を
-        /// ハンドルで指せない道では、位置で辿った相手が複製になり、その中の要素を預けても書き換えが
-        /// 元のモデルへ届かない。
+        /// 持ち込むリストの行だけを持つ。
         /// <paramref name="made"/> はどれかの行が作ると述べる型の名前、
         /// <paramref name="issued"/> はハンドルが出る型の名前である。
         /// </summary>
@@ -84,7 +80,8 @@ namespace PmxEditorMcp.SignatureDump
                 new Dictionary<string, TypeRoleRecord>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, TypeRoleRecord> owned in Elements(map, signatures, roles))
             {
-                if (made.Contains(owned.Value.TypeName)
+                if ((made.Contains(owned.Value.TypeName)
+                        && RootedInPmx(signatures, roles, owned.Key))
                     || ElementPathEvidence.Owner(signatures, issued, owned.Key) == null)
                 {
                     continue;
@@ -94,6 +91,20 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return holdings;
+        }
+
+        private static bool RootedInPmx(
+            IDictionary<string, SignatureRecord> signatures, TypeRoleTable roles, string rowKey)
+        {
+            ElementCollectionRecord collection = roles.Collections
+                .First(c => string.Equals(c.SignatureKey, rowKey, StringComparison.Ordinal));
+            SignatureRecord root;
+
+            return !signatures.TryGetValue(collection.OwnerPath[0], out root)
+                || string.Equals(
+                    TypeDefinitionName.OfElement(root.DeclaringType),
+                    ElementPathEvidence.PmxTypeName,
+                    StringComparison.Ordinal);
         }
 
         /// <summary>
