@@ -77,8 +77,17 @@ namespace PmxEditorMcp
                             holdsOwner = false;
                         }
 
+                        string body = visible && holdsOwner ? Body(window) : string.Empty;
+
+                        if (visible && holdsOwner
+                            && (!IsWindow(window) || !IsWindowVisible(window) || IsWindowEnabled(owner)))
+                        {
+                            visible = false;
+                            holdsOwner = false;
+                        }
+
                         notes.Add(visible && holdsOwner
-                            ? new WindowNote(caption, Body(window), true, true)
+                            ? new WindowNote(caption, body, true, true)
                             : new WindowNote(string.Empty, string.Empty, visible, holdsOwner));
                     }
                 }
@@ -179,6 +188,9 @@ namespace PmxEditorMcp
 
         [DllImport("user32.dll")]
         private static extern bool IsWindowVisible(IntPtr window);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindow(IntPtr window);
 
         [DllImport("user32.dll")]
         private static extern bool IsWindowEnabled(IntPtr window);

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -82,6 +83,20 @@ namespace PmxEditorMcp.Tests
             }));
         }
 
+        [Fact]
+        public void AModalFormThatClosesWhileItsTextIsReadIsNotReported()
+        {
+            Assert.Null(WhileClosingOnRead(owner => Probe().TryDescribe()));
+        }
+
+        [Fact]
+        public void AModalFormWithNeitherCaptionNorBodyThatStaysIsReported()
+        {
+            Assert.Equal(ModalWindows.Wordless, WhileModalForm(owner => Probe().TryDescribe(), string.Empty));
+        }
+
+        private static readonly TimeSpan LookLimit = TimeSpan.FromSeconds(10);
+
         private static DesktopModalWindowProbe Probe()
         {
             return new DesktopModalWindowProbe(TimeSpan.FromSeconds(1));
@@ -112,10 +127,15 @@ namespace PmxEditorMcp.Tests
 
         private static string WhileModalForm(Func<IntPtr, string> look)
         {
+            return WhileModalForm(look, "訊く表示");
+        }
+
+        private static string WhileModalForm(Func<IntPtr, string> look, string title)
+        {
             return OnSta(owner =>
             {
                 string seen = null;
-                using (Form asking = Offscreen("訊く表示"))
+                using (Form asking = Offscreen(title))
                 {
                     IntPtr handle = owner.Handle;
                     asking.Shown += (sender, e) => Task.Run(() =>
@@ -133,6 +153,29 @@ namespace PmxEditorMcp.Tests
                 }
 
                 return seen;
+            });
+        }
+
+        private static string WhileClosingOnRead(Func<IntPtr, string> look)
+        {
+            return OnSta(owner =>
+            {
+                Task<string> looking = null;
+                using (ClosingOnRead asking = new ClosingOnRead(owner.Handle))
+                {
+                    IntPtr handle = owner.Handle;
+                    asking.Shown += (sender, e) => looking = Task.Run(() => look(handle));
+                    asking.ShowDialog(owner);
+
+                    Stopwatch waited = Stopwatch.StartNew();
+                    while (looking == null || !looking.Wait(10))
+                    {
+                        Assert.True(waited.Elapsed < LookLimit, "表示を探す処理が終わらない。");
+                        Application.DoEvents();
+                    }
+                }
+
+                return looking.Result;
             });
         }
 
@@ -198,6 +241,42 @@ namespace PmxEditorMcp.Tests
             };
         }
 
+        private sealed class ClosingOnRead : Form
+        {
+            private const int GetTextMessage = 0x000D;
+
+            private readonly IntPtr _owner;
+
+            private bool _closing;
+
+            internal ClosingOnRead(IntPtr owner)
+            {
+                _owner = owner;
+                Text = "訊く表示";
+                ShowInTaskbar = false;
+                StartPosition = FormStartPosition.Manual;
+                Location = new Point(-32000, -32000);
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                if (m.Msg == GetTextMessage && Visible && !_closing && InSendMessage())
+                {
+                    _closing = true;
+                    ShowWindow(Handle, HideWindow);
+                    EnableWindow(_owner, true);
+                    BeginInvoke(new Action(Close));
+                    m.Result = IntPtr.Zero;
+
+                    return;
+                }
+
+                base.WndProc(ref m);
+            }
+        }
+
+        private const int HideWindow = 0;
+
         private const uint CloseMessage = 0x0010;
 
         private const uint GetWindowOwner = 4;
@@ -210,6 +289,15 @@ namespace PmxEditorMcp.Tests
 
         [DllImport("user32.dll")]
         private static extern bool IsWindowVisible(IntPtr window);
+
+        [DllImport("user32.dll")]
+        private static extern bool InSendMessage();
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr window, int command);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnableWindow(IntPtr window, bool enable);
 
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
