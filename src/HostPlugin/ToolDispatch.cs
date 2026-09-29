@@ -2598,7 +2598,7 @@ namespace PmxEditorMcp
             long? handle;
             int offset;
             int limit;
-            string needle;
+            IList<string> needles;
             Pointed pointed;
             ToolField named = NameField(tool);
             List<string> known = new List<string> { FieldsName };
@@ -2620,7 +2620,7 @@ namespace PmxEditorMcp
                 || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
                 || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
                 || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message)
-                || !TryNameContains(context, out needle, out code, out message)
+                || !TryNameContains(context, out needles, out code, out message)
                 || !TryFields(context, out requested, out code, out message)
                 || !TryPointed(
                     context, tool.Access, true, handle, out pointed, out code, out message,
@@ -2670,8 +2670,8 @@ namespace PmxEditorMcp
                 }
 
                 total = column.Count;
-                if (needle != null
-                    && !TryNarrow(column, named, needle, out column, out refused))
+                if (needles != null
+                    && !TryNarrow(column, named, needles, out column, out refused))
                 {
                     return;
                 }
@@ -2788,13 +2788,13 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 名前が渡された文字列を含む要素だけを残す。名前を読めなければ偽で、
+        /// 名前が渡された文字列のどれかを含む要素だけを残す。名前を読めなければ偽で、
         /// <paramref name="refused"/> に断りを持たせる。照合は序数で、大文字小文字を同じにしない。
         /// </summary>
         private bool TryNarrow(
             IList<Spot> column,
             ToolField named,
-            string needle,
+            IList<string> needles,
             out IList<Spot> kept,
             out Refusal refused)
         {
@@ -2813,7 +2813,8 @@ namespace PmxEditorMcp
                 }
 
                 string name = value as string;
-                if (name != null && name.IndexOf(needle, StringComparison.Ordinal) >= 0)
+                if (name != null
+                    && needles.Any(n => name.IndexOf(n, StringComparison.Ordinal) >= 0))
                 {
                     held.Add(spot);
                 }
@@ -2826,27 +2827,29 @@ namespace PmxEditorMcp
 
         /// <summary>名前での絞り込みの頼み方。渡していなければ絞り込まないものとする。</summary>
         private static bool TryNameContains(
-            McpMethodContext context, out string needle, out string code, out string message)
+            McpMethodContext context, out IList<string> needles, out string code, out string message)
         {
             code = null;
             message = null;
-            needle = null;
+            needles = null;
             object value;
             if (!context.Params.TryGetValue(NameContainsName, out value))
             {
                 return true;
             }
 
-            string text = value as string;
-            if (string.IsNullOrEmpty(text))
+            object[] items = value as object[];
+            if (items == null
+                || items.Length == 0
+                || items.Any(i => !(i is string) || ((string)i).Length == 0))
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = NameContainsName + " は1文字以上の文字列でなければならない。";
+                message = NameContainsName + " は1文字以上の文字列を1つ以上並べた配列でなければならない。";
 
                 return false;
             }
 
-            needle = text;
+            needles = items.Cast<string>().ToList();
 
             return true;
         }

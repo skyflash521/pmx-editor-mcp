@@ -459,7 +459,10 @@
             "fields": [
               "name"
             ],
-            "nameContains": "どのボーンも持たない名前"
+            "nameContains": [
+              "どのボーンも持たない名前",
+              "これもどのボーンも持たない名前"
+            ]
           },
           "expect": {
             "ok": true,
@@ -2864,7 +2867,10 @@
           "tool": "model_list_bones",
           "arguments": {
             "all": true,
-            "nameContains": "右テスト",
+            "nameContains": [
+              "右テスト",
+              "どのボーンも持たない名前"
+            ],
             "fields": [
               "position"
             ]

@@ -256,7 +256,7 @@ namespace PmxEditorMcp.Tests
                 "model_list_named",
                 Arguments(
                     TargetNames.Element.All, true,
-                    ToolDispatch.NameContainsName, "爪")));
+                    ToolDispatch.NameContainsName, new object[] { "爪" })));
 
             Assert.Equal(
                 new[] { "左足の爪", "右手の爪" },
@@ -276,7 +276,7 @@ namespace PmxEditorMcp.Tests
                 "model_list_named",
                 Arguments(
                     TargetNames.Element.All, true,
-                    ToolDispatch.NameContainsName, "爪",
+                    ToolDispatch.NameContainsName, new object[] { "爪" },
                     ToolDispatch.LimitName, 1)));
 
             Assert.Equal(new[] { "左足の爪" }, Items(first).Select(i => i["name"]).ToArray());
@@ -286,7 +286,7 @@ namespace PmxEditorMcp.Tests
                 "model_list_named",
                 Arguments(
                     TargetNames.Element.All, true,
-                    ToolDispatch.NameContainsName, "爪",
+                    ToolDispatch.NameContainsName, new object[] { "爪" },
                     ToolDispatch.OffsetName, 1,
                     ToolDispatch.LimitName, 1)));
 
@@ -305,7 +305,7 @@ namespace PmxEditorMcp.Tests
                 "model_list_named",
                 Arguments(
                     TargetNames.Element.All, true,
-                    ToolDispatch.NameContainsName, "爪")));
+                    ToolDispatch.NameContainsName, new object[] { "爪" })));
 
             Assert.Equal(
                 new object[] { 0, 2 },
@@ -321,7 +321,7 @@ namespace PmxEditorMcp.Tests
                 "model_list_items",
                 Arguments(
                     TargetNames.Element.All, true,
-                    ToolDispatch.NameContainsName, "爪"));
+                    ToolDispatch.NameContainsName, new object[] { "爪" }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
         }
@@ -335,7 +335,86 @@ namespace PmxEditorMcp.Tests
                 "model_list_named",
                 Arguments(
                     TargetNames.Element.All, true,
-                    ToolDispatch.NameContainsName, string.Empty));
+                    ToolDispatch.NameContainsName, new object[] { string.Empty }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void NarrowingByNameKeepsTheElementsWhoseNameHoldsAnyOfTheTexts()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+            _model.Items.Add(new Item { Label = "左手" });
+            _model.Items.Add(new Item { Label = "右手の爪" });
+            _model.Items.Add(new Item { Label = "腰" });
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, new object[] { "足", "腰", "右" })));
+
+            Assert.Equal(
+                new[] { "左足の爪", "右手の爪", "腰" },
+                Items(value).Select(i => i["name"]).ToArray());
+            Assert.Equal(
+                new object[] { 0, 2, 3 },
+                Items(value).Select(i => i[ToolDispatch.IndexName]).ToArray());
+            Assert.Equal(4, value[ToolDispatch.TotalName]);
+        }
+
+        [Fact]
+        public void AnElementHoldingSeveralOfTheTextsIsListedOnce()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, new object[] { "足", "爪" })));
+
+            Assert.Single(Items(value));
+        }
+
+        [Fact]
+        public void ATextNotInAnArrayToNarrowByNameIsRefused()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, "爪"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void AnEmptyArrayToNarrowByNameIsRefused()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, new object[0]));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
+        public void AnEmptyTextAmongTheTextsToNarrowByNameIsRefused()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_named",
+                Arguments(
+                    TargetNames.Element.All, true,
+                    ToolDispatch.NameContainsName, new object[] { "爪", string.Empty }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
         }

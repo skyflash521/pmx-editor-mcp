@@ -16,6 +16,7 @@ namespace PmxEditorMcp.SignatureDump
             "handles",
             "indices",
             "kinds",
+            "nameContains",
             "parentHandles",
             "parentIndices",
             "ramp",

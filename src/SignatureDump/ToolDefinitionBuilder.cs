@@ -926,6 +926,14 @@ namespace PmxEditorMcp.SignatureDump
                 return written.Add("enum", JsonWriter.TextArray(writing.Readable));
             }
 
+            if (place.InArray
+                && place.UnderTop
+                && string.Equals(place.Container, NameContainsName, StringComparison.Ordinal)
+                && string.Equals(type, StringType, StringComparison.Ordinal))
+            {
+                return written.AddNumber("minLength", 1);
+            }
+
             if (!place.Top)
             {
                 return written;
@@ -935,12 +943,6 @@ namespace PmxEditorMcp.SignatureDump
                 && WholeNames.Contains(item.Name, StringComparer.Ordinal))
             {
                 return written.Add("const", "true");
-            }
-
-            if (string.Equals(type, StringType, StringComparison.Ordinal)
-                && string.Equals(item.Name, NameContainsName, StringComparison.Ordinal))
-            {
-                return written.AddNumber("minLength", 1);
             }
 
             return written;

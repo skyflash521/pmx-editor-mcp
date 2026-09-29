@@ -84,7 +84,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string note = Note(true, "indices", "range", "all", "offset", "limit", "nameContains");
 
             Assert.Contains(
-                "nameContains を渡すと、name がその文字列を含む要素だけが残る。", note, StringComparison.Ordinal);
+                "nameContains に文字列の配列を渡すと、name がそのどれかを含む要素だけが残る。", note, StringComparison.Ordinal);
             Assert.Contains("大文字小文字は区別し", note, StringComparison.Ordinal);
             Assert.Contains("total は絞り込む前の件数のままになる。", note, StringComparison.Ordinal);
         }

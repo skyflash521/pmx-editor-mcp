@@ -1225,6 +1225,15 @@ namespace PmxEditorMcp.Bridge.Tests
                     return FilledDistinctArrayOf(v => IsText(v) && readable.Contains(v.GetValue<string>()));
                 }
 
+                if (top && name == "nameContains" && dispatched && item["element"] != null)
+                {
+                    census.Count(HostTypeCensus.Checked);
+
+                    return value => value is JsonArray items
+                        && items.Count > 0
+                        && items.All(IsFilledText);
+                }
+
                 if (top && RangeNames.Contains(name) && item["members"] != null)
                 {
                     census.Count(HostTypeCensus.Checked);
@@ -1299,12 +1308,6 @@ namespace PmxEditorMcp.Bridge.Tests
                         return IsBoolean;
 
                     case "text":
-                        if (top && name == "nameContains" && dispatched)
-                        {
-                            census.Count(HostTypeCensus.Checked);
-                            return IsFilledText;
-                        }
-
                         census.Count(HostTypeCensus.HostTextNotToldChoices);
                         return IsText;
 

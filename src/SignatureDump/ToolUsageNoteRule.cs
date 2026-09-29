@@ -43,7 +43,7 @@ namespace PmxEditorMcp.SignatureDump
         private const string NameContainsName = "nameContains";
 
         private const string NarrowsByName =
-            NameContainsName + " を渡すと、name がその文字列を含む要素だけが残る。"
+            NameContainsName + " に文字列の配列を渡すと、name がそのどれかを含む要素だけが残る。"
                 + "大文字小文字は区別し、" + TotalName + " は絞り込む前の件数のままになる。";
 
         private const string RangeIsNotClamped =

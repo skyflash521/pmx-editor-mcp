@@ -8112,7 +8112,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ],
@@ -8168,7 +8171,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
@@ -8331,7 +8337,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ],
@@ -8387,7 +8396,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
@@ -9450,7 +9462,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ],
@@ -9506,7 +9521,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
@@ -9662,7 +9680,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ],
@@ -9718,7 +9739,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
@@ -10322,7 +10346,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ],
@@ -10377,7 +10404,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
@@ -10829,7 +10859,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ],
@@ -10884,7 +10917,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
@@ -11076,7 +11112,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ],
@@ -11131,7 +11170,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
@@ -29784,7 +29826,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
@@ -44772,7 +44817,10 @@
             {
               "name": "nameContains",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": false
             }
           ]
