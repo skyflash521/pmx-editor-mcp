@@ -7219,6 +7219,54 @@
         },
         {
           "kind": "tool",
+          "tool": "model_find_bone_weights",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 3
+              },
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "bones.0.index",
+                "equals": 2
+              },
+              {
+                "path": "bones.0.vertexCount",
+                "equals": 3
+              },
+              {
+                "path": "bones.0.weightSum",
+                "equals": 3
+              },
+              {
+                "path": "bones.0.weightMax",
+                "equals": 1
+              },
+              {
+                "path": "bones.1.index",
+                "equals": 0
+              },
+              {
+                "path": "bones.1.weightSum",
+                "equals": 1.5
+              },
+              {
+                "path": "bones.2.index",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_edit_weights",
           "arguments": {
             "operation": "normalize",

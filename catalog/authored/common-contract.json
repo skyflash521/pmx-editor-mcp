@@ -400,6 +400,11 @@
       "duty": "指した頂点のウェイトを整える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。operation は average・smooth・fromNearestBonePosition・fromNearestBoneAxis・fromMirror・normalize・repairMissingBone のいずれか。average は指した頂点のウェイトの平均へそろえる。smooth は strength に0以上1以下の強さを渡し、同じ面に載っている頂点のウェイトの平均へその強さのぶんだけ寄せる。fromNearestBonePosition はいちばん近いボーンへ、fromNearestBoneAxis は根元から表示先までの線分がいちばん近いボーンへ、ウェイトを全部振る。fromMirror は axis に x・y・z のいずれかを渡し、その軸の鏡像の位置にある頂点から、名前の左右を入れ替えたボーンのウェイトを写す。normalize はウェイトの合計を1にそろえ、repairMissingBone は並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。どの操作でも、重みが正の枠が1つも残らない頂点は先頭のボーンへ重み1を振り、並びに居ないボーンを指すウェイトは残っている祖先のボーンへ移す。changed に変えた頂点の数を返す。"
     },
     {
+      "tool": "model_find_bone_weights",
+      "branching": false,
+      "duty": "指した頂点のウェイトが乗っているボーンを、ボーンごとに集計して返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。頂点の4つの枠のうち重みが正の枠だけを数え、モデルのボーンの並びに居ないボーンを指す枠は数えず、1つの頂点が同じボーンを複数の枠で持つときはその頂点を1つと数えて重みを足す。count に指した頂点の数を返し、bones に乗っているボーンごとの組を weightSum の大きい順に並べる(同じ値はボーンの位置の小さい順)。組は、ボーンの位置 index・名前 name・そのボーンに重みが乗る指した頂点の数 vertexCount・その頂点の重みの合計 weightSum・頂点ごとの重みの最大 weightMax を持つ。offset と limit で切り出し、切り出す前の件数を total に返し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。limit に0以下を渡すと invalid_argument になる。1件も収まらなければ response_too_large を返す。"
+    },
+    {
       "tool": "model_find_material_vertices",
       "branching": false,
       "duty": "指した材質の面が使う頂点の位置を、重なりなく昇順で返す。材質は indices・range・all・selected のどれか1つで指す。モデルも画面の選択も変えない。offset と limit で切り出し、切り出す前の件数を total に、切り出した位置を vertexIndices に返す。runs に真を渡すと、連続した位置を start と count の組にまとめて vertexIndices の代わりに vertexRuns に返し、total・offset・limit・nextOffset はその組の数で数える。値の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。limit に0以下を渡すと invalid_argument になる。"

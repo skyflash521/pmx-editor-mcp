@@ -6285,6 +6285,163 @@
       }
     },
     {
+      "tool": "model_find_bone_weights",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 1
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "materialIndices",
+                "range",
+                "selected"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "count",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "total",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "bones",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "index",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "name",
+                  "origin": "hostOutput",
+                  "shape": "text"
+                },
+                {
+                  "name": "vertexCount",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "weightSum",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "weightMax",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_find_material_vertices",
       "branches": [
         {

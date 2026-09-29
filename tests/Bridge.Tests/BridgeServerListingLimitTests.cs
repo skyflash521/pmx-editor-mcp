@@ -78,6 +78,14 @@ namespace PmxEditorMcp.Bridge.Tests
                     new Listing(new[] { CountedTotal }, 0, "vertexIndices", "0".Length, 1)
                 },
                 {
+                    "model_find_bone_weights",
+                    new Listing(
+                        new[] { "count", CountedTotal },
+                        "0".Length,
+                        "bones",
+                        "{\"index\":0,\"name\":\"\",\"vertexCount\":0,\"weightSum\":0,\"weightMax\":0}".Length)
+                },
+                {
                     "editor_find_operation",
                     new Listing(
                         new[] { CountedTotal, "editorVersion" },
