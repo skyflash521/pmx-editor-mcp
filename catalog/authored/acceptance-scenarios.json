@@ -13377,6 +13377,30 @@
         },
         {
           "kind": "tool",
+          "tool": "model_list_iks",
+          "arguments": {
+            "parentAll": true,
+            "all": true,
+            "fields": [
+              "parentIndex"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.parentIndex",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_list_ik_links",
           "arguments": {
             "parentIndices": [

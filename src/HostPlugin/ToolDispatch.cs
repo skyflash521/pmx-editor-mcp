@@ -4129,9 +4129,18 @@ namespace PmxEditorMcp
                 return false;
             }
 
+            bool holdingOnly = !pointed.ParentByHandle
+                && !access.Listed
+                && pointed.Parents != null
+                && pointed.Parents.Indices == null;
             List<Spot> spots = new List<Spot>();
             foreach (int parent in chosen)
             {
+                if (holdingOnly && !StepPresence.Holds(access.RowKey, owners[parent]))
+                {
+                    continue;
+                }
+
                 List<object> reached = new List<object>();
                 if (!TryStep(Step(access), owners[parent], reached, out refused))
                 {
