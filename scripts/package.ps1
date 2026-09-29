@@ -7,8 +7,10 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# 外部コマンドの非0終了は終了エラーにしない。終了コードを見て自分で失敗させる。
+# 外部コマンドが0以外で終わっても例外にしない。終了コードを見て自分で失敗させる。
 $PSNativeCommandUseErrorActionPreference = $false
+
+. (Join-Path $PSScriptRoot "version.ps1")
 
 $repository = Split-Path -Parent $PSScriptRoot
 $hostProject = Join-Path $repository "src/HostPlugin/PmxEditorMcp.HostPlugin.csproj"
@@ -19,21 +21,6 @@ $license = Join-Path $repository "LICENSE"
 $instructions = Join-Path $repository "docs/package/INSTALL.md"
 $licenses = Join-Path $repository "catalog/observed/licenses"
 $distribution = Join-Path $repository "dist"
-
-function Get-Version {
-    <#
-        .SYNOPSIS
-        配布のバージョン。追跡下の Directory.Build.props が定める。綴りから読むのではなく MSBuild に
-        評価させて取る——条件や継承で決まる値を、こちらで組み立て直さない。
-    #>
-    $said = dotnet msbuild $hostProject -getProperty:Version
-    if ($LASTEXITCODE -ne 0) { throw "バージョンを読めない。" }
-
-    $version = $said.Trim()
-    if (-not $version) { throw "バージョンが空である。" }
-
-    $version
-}
 
 function Publish-Host {
     <#
@@ -96,3 +83,4 @@ try {
 Compress-Archive -Path (Join-Path $staged "*") -DestinationPath $archive
 
 Write-Host ("配布パッケージを組み立てた: " + $archive)
+$archive

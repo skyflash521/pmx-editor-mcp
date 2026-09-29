@@ -810,6 +810,7 @@ function Test-FormDerivation {
 }
 
 $packageTables = $null
+$packageVersion = $null
 
 function Get-PackageTables {
     <#
@@ -869,13 +870,12 @@ function Test-PackageContents {
     #>
     param([string]$Form)
 
-    $version = (Get-Content Directory.Build.props -Raw -Encoding UTF8 |
-        Select-String -Pattern '<Version>([^<]+)</Version>').Matches[0].Groups[1].Value
-    $staged = Join-Path 'dist' "pmx-editor-mcp-$version"
-
     if ($Form -eq $wholeForm) {
-        pwsh -NoProfile -File scripts/package.ps1
+        $said = @(pwsh -NoProfile -File scripts/package.ps1)
         if ($LASTEXITCODE -ne 0) { throw "配布パッケージを組み立てられない。" }
+        $script:packageVersion = [System.IO.Path]::GetFileNameWithoutExtension($said[-1]).
+            Substring('pmx-editor-mcp-'.Length)
+        $version = $script:packageVersion
 
         $literal = @(Get-ChildItem scripts/package*.ps1 |
             Select-String -Pattern $version -SimpleMatch)
@@ -886,6 +886,13 @@ function Test-PackageContents {
 
         return
     }
+
+    if ($null -eq $script:packageVersion) {
+        . scripts/version.ps1
+        $script:packageVersion = Get-Version
+    }
+    $version = $script:packageVersion
+    $staged = Join-Path 'dist' "pmx-editor-mcp-$version"
 
     $copy = Join-Path ([System.IO.Path]::GetTempPath()) ('contents-' + [guid]::NewGuid().ToString('N'))
     Copy-Item -Path $staged -Destination $copy -Recurse
@@ -909,6 +916,71 @@ function Test-PackageContents {
         }
     } finally {
         Remove-Item -Path $copy -Recurse -Force -ErrorAction Ignore
+    }
+}
+
+function Get-ChangelogSample {
+    @('# 変更履歴', '', '## 0.0.2 - 2026-09-29', '', '### 追加', '- 足した', '',
+        '## 0.0.1 - 2026-09-01', '', '初回リリース。')
+}
+
+function Get-ChangelogSpoils {
+    [ordered]@{
+        '題の欠落' = @{ Spoil = { param($l) $l | Select-Object -Skip 1 }; Code = 'CHANGELOG_TITLE' }
+        '見出しの形' = @{ Spoil = { param($l) $l -replace '^## 0\.0\.2 - .*$', '## v0.0.2' }; Code = 'CHANGELOG_HEADING' }
+        '並び' = @{ Spoil = { param($l) $l -replace '^## 0\.0\.1 ', '## 0.0.3 ' }; Code = 'CHANGELOG_ORDER' }
+        '知らない区分' = @{ Spoil = { param($l) $l -replace '^### 追加$', '### 改善' }; Code = 'CHANGELOG_CATEGORY' }
+        '空の区分' = @{ Spoil = { param($l) $l | Where-Object { $_ -ne '- 足した' } }; Code = 'CHANGELOG_EMPTY' }
+        '空の節' = @{ Spoil = { param($l) $l | Where-Object { $_ -ne '初回リリース。' } }; Code = 'CHANGELOG_EMPTY' }
+        '節の外の本文' = @{ Spoil = { param($l) @($l[0], '', '前置き') + @($l | Select-Object -Skip 1) }; Code = 'CHANGELOG_STRAY' }
+        'バージョンの食い違い' = @{ Spoil = { param($l) $l }; Code = 'CHANGELOG_VERSION' }
+    }
+}
+
+function Test-Changelog {
+    param([string]$Form)
+
+    $sample = Join-Path ([System.IO.Path]::GetTempPath()) ('changelog-' + [guid]::NewGuid().ToString('N') + '.md')
+    try {
+        if ($Form -eq $wholeForm) {
+            Set-Content -Path $sample -Value (Get-ChangelogSample) -Encoding UTF8
+            $notes = (& scripts/changelog.ps1 -Path $sample -Version '0.0.2' -Notes) -join "`n"
+            if ($notes -ne "### 追加`n- 足した") { throw "先頭の節の本文を返さない: $notes" }
+
+            if (Test-Path CHANGELOG.md) {
+                . scripts/version.ps1
+                & scripts/changelog.ps1 -Path CHANGELOG.md -Version (Get-Version) | Out-Null
+            } elseif (@(git tag --list 'v*').Count -ne 0) {
+                throw "リリースのタグが在るのに CHANGELOG.md が無い。"
+            } else {
+                git cat-file -e HEAD:CHANGELOG.md 2>$null
+                $committed = $LASTEXITCODE -eq 0
+                $global:LASTEXITCODE = 0
+                if ($committed) { throw "コミット済みの CHANGELOG.md が作業ツリーに無い。" }
+            }
+
+            return
+        }
+
+        $spoils = Get-ChangelogSpoils
+        if (-not $spoils.Contains($Form)) { throw "知らない形: $Form" }
+
+        Set-Content -Path $sample -Value @(& $spoils[$Form].Spoil (Get-ChangelogSample)) -Encoding UTF8
+        $asked = if ($Form -eq 'バージョンの食い違い') { '9.9.9' } else { '0.0.2' }
+
+        $said = ''
+        try {
+            & scripts/changelog.ps1 -Path $sample -Version $asked | Out-Null
+        } catch {
+            $said = [string]$_
+        }
+
+        if (-not $said) { throw "$Form を入れても落ちない。" }
+        if (-not $said.StartsWith($spoils[$Form].Code)) {
+            throw "$Form を入れて落ちたのは $($spoils[$Form].Code) ではない: $said"
+        }
+    } finally {
+        Remove-Item -Path $sample -Force -ErrorAction Ignore
     }
 }
 
@@ -1135,6 +1207,17 @@ $checks['配布パッケージの生成'] = New-Check `
     -Body { param([string]$Form)
 
         Test-PackageContents -Form $Form
+    }
+$checks['変更履歴'] = New-Check `
+    -Groups @('ドキュメント', 'スクリプト') `
+    -LimitSeconds 3 `
+    -Needs $noArtifact `
+    -WithoutEditor `
+    -FormsInOrder `
+    -Forms { @($wholeForm) + @((Get-ChangelogSpoils).Keys) } `
+    -Body { param([string]$Form)
+
+        Test-Changelog -Form $Form
     }
 $checks['E2Eの実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
