@@ -48,6 +48,7 @@
     {"tool": "model_reorder_elements", "input": "move", "choices": ["up", "down", "top", "bottom", "to"], "basis": "ModelReorderElements.cs が Moves にない名前を断る。"},
     {"tool": "model_set_deform_type", "input": "deform", "choices": ["bdef1", "bdef2", "bdef4", "sdef", "qdef"], "basis": "ModelSetDeformType.cs が ComposedInput.TryChoice で Deforms にない名前を断る。"},
     {"tool": "model_set_deform_type", "input": "operation", "choices": ["convert", "normalizeSdefC", "repairInvalidSdef"], "basis": "ModelSetDeformType.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},
+    {"tool": "model_validate_pmx", "input": "runs", "choices": ["unsoundFaces", "danglingFaces", "danglingWeights", "danglingBones", "unnormalizedWeights", "duplicateFaces", "hiddenMorphsInExpressionFrame"], "basis": "ModelValidatePmx.cs が ComposedInput.TryChoice で Locatable にない名前を断る。"},
     {"tool": "session_select_lists_from_view", "input": "kinds[]", "choices": ["material", "bone"], "basis": "SessionSelectListsFromView.cs が ComposedInput.TryChoices で Kinds にない名前を断る。"},
     {"tool": "view_clear_vmd_view", "input": "parts", "choices": ["motionOnly", "modelAndMotion"], "basis": "ViewClearVmdView.cs が ComposedInput.TryChoice で Parts にない名前を断る。"},
     {"tool": "view_filter_display", "input": "operation", "choices": ["materialsFromVertices", "materialsFromFaces", "excludeMaterialsFromFaces", "verticesByEdgeScale"], "basis": "ViewFilterDisplay.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},

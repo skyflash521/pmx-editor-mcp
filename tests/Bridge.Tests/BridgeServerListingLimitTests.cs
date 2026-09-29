@@ -86,6 +86,20 @@ namespace PmxEditorMcp.Bridge.Tests
                         "{\"index\":0,\"name\":\"\",\"vertexCount\":0,\"weightSum\":0,\"weightMax\":0}".Length)
                 },
                 {
+                    "model_validate_pmx",
+                    new Listing(
+                        new[]
+                        {
+                            "unsoundFaces", "danglingFaces", "danglingWeights", "danglingBones",
+                            "danglingMorphOffsets", "danglingNodeItems", "danglingPhysics",
+                            "unnormalizedWeights", "duplicateFaces", "hiddenMorphsInExpressionFrame",
+                            "found", "runsTotal",
+                        },
+                        "0".Length * 12,
+                        "runs",
+                        "{\"start\":0,\"count\":0}".Length)
+                },
+                {
                     "editor_find_operation",
                     new Listing(
                         new[] { CountedTotal, "editorVersion" },

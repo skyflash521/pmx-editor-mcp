@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Web.Script.Serialization;
 using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
@@ -10,6 +12,16 @@ namespace PmxEditorMcp
         public const string ToolName = "model_validate_pmx";
 
         public const string FoundName = "found";
+
+        public const string RunsName = "runs";
+
+        public const string RunsTotalName = "runsTotal";
+
+        public const string OffsetName = "offset";
+
+        public const string LimitName = "limit";
+
+        public const string NextOffsetName = "nextOffset";
 
         public const string UnsoundFacesName = "unsoundFaces";
 
@@ -31,6 +43,25 @@ namespace PmxEditorMcp
 
         public const string HiddenMorphsInExpressionFrameName = "hiddenMorphsInExpressionFrame";
 
+        private static readonly JavaScriptSerializer Sizer = new JavaScriptSerializer();
+
+        public static IList<string> Locatable
+        {
+            get
+            {
+                return new[]
+                {
+                    UnsoundFacesName,
+                    DanglingFacesName,
+                    DanglingWeightsName,
+                    DanglingBonesName,
+                    UnnormalizedWeightsName,
+                    DuplicateFacesName,
+                    HiddenMorphsInExpressionFrameName,
+                };
+            }
+        }
+
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
             if (methods == null)
@@ -43,11 +74,21 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(edit));
             }
 
-            methods.Add(ToolName, edit.Read(new List<string>(), Run));
+            methods.Add(ToolName, edit.Read(new List<string> { RunsName, OffsetName, LimitName }, Run));
         }
 
         private static ComposedEditResult Run(McpMethodContext context, object pmx)
         {
+            string asked;
+            int offset;
+            int limit;
+            string code;
+            string message;
+            if (!TryRuns(context, out asked, out offset, out limit, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
             IPXPmx model = (IPXPmx)pmx;
             ISet<object> vertices = ReferenceCleanup.Held(model.Vertex.Cast<object>());
             ISet<object> materials = ReferenceCleanup.Held(model.Material.Cast<object>());
@@ -55,11 +96,18 @@ namespace PmxEditorMcp
             ISet<object> morphs = ReferenceCleanup.Held(model.Morph.Cast<object>());
             ISet<object> bodies = ReferenceCleanup.Held(model.Body.Cast<object>());
 
+            IList<int> unsound = Unsound(model);
+            IList<int> looseFaces = LooseFaces(model, vertices);
+            IList<int> looseWeights = LooseWeights(model, bones);
+            IList<int> unnormalized = Unnormalized(model);
+            IList<int> doubled = Doubled(model);
+            IList<IPXMorph> hidden = HiddenExpressionMorphs.Of(model);
+
             Dictionary<string, object> found = new Dictionary<string, object>(StringComparer.Ordinal)
             {
-                { UnsoundFacesName, Unsound(model) },
-                { DanglingFacesName, LooseFaces(model, vertices) },
-                { DanglingWeightsName, LooseWeights(model, bones) },
+                { UnsoundFacesName, unsound.Count },
+                { DanglingFacesName, looseFaces.Count },
+                { DanglingWeightsName, looseWeights.Count },
                 { DanglingBonesName, LooseBones(model, bones) },
                 {
                     DanglingMorphOffsetsName,
@@ -67,51 +115,195 @@ namespace PmxEditorMcp
                 },
                 { DanglingNodeItemsName, LooseNodeItems(model, bones, morphs) },
                 { DanglingPhysicsName, LoosePhysics(model, vertices, materials, bones, bodies) },
-                { UnnormalizedWeightsName, Unnormalized(model) },
-                { DuplicateFacesName, Doubled(model) },
-                { HiddenMorphsInExpressionFrameName, HiddenExpressionMorphs.Of(model).Count },
+                { UnnormalizedWeightsName, unnormalized.Count },
+                { DuplicateFacesName, doubled.Count },
+                { HiddenMorphsInExpressionFrameName, hidden.Count },
             };
             found[FoundName] = found.Values.Sum(count => (int)count);
+            if (asked == null)
+            {
+                return ComposedEditResult.Complete(found);
+            }
 
-            return ComposedEditResult.Complete(found);
+            IDictionary<string, IList<int>> places = new Dictionary<string, IList<int>>(
+                StringComparer.Ordinal)
+            {
+                { UnsoundFacesName, unsound },
+                { DanglingFacesName, looseFaces },
+                { DanglingWeightsName, looseWeights },
+                { DanglingBonesName, BonesWithLoose(model, bones) },
+                { UnnormalizedWeightsName, unnormalized },
+                { DuplicateFacesName, doubled },
+                { HiddenMorphsInExpressionFrameName, PositionsOf(model.Morph, hidden) },
+            };
+            IList<object> all = PositionRuns.Joined(places[asked]);
+            Page<object> page;
+            if (!Paging.TryTake(
+                all,
+                offset,
+                limit,
+                ResponseSize.ValueChars(context.BudgetChars),
+                taken => Sizer.Serialize(Located(found, all.Count, offset, taken)).Length,
+                out page))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.ResponseTooLarge, "値の枠に1件も収まらない。");
+            }
+
+            return ComposedEditResult.Complete(
+                Located(found, all.Count, offset, page.Items), page.Warnings);
         }
 
-        private static int Unsound(IPXPmx model)
+        private static IDictionary<string, object> Located(
+            IDictionary<string, object> found, int total, int offset, IList<object> taken)
         {
-            return ViewSelection.Faces(model).Count(face => !ReferenceCleanup.IsSoundFace(face));
+            Dictionary<string, object> value = new Dictionary<string, object>(
+                found, StringComparer.Ordinal)
+            {
+                { RunsTotalName, total },
+                { RunsName, taken.ToArray() },
+            };
+            if (offset + taken.Count < total)
+            {
+                value.Add(NextOffsetName, offset + taken.Count);
+            }
+
+            return value;
         }
 
-        private static int LooseFaces(IPXPmx model, ISet<object> vertices)
+        private static bool TryRuns(
+            McpMethodContext context,
+            out string asked,
+            out int offset,
+            out int limit,
+            out string code,
+            out string message)
         {
-            return ViewSelection.Faces(model).Count(face =>
-                !ReferenceCleanup.Alive(face.Vertex1, vertices)
-                || !ReferenceCleanup.Alive(face.Vertex2, vertices)
-                || !ReferenceCleanup.Alive(face.Vertex3, vertices));
+            asked = null;
+            offset = 0;
+            limit = int.MaxValue;
+            if (!context.Params.ContainsKey(RunsName))
+            {
+                foreach (string name in new[] { OffsetName, LimitName })
+                {
+                    if (context.Params.ContainsKey(name))
+                    {
+                        code = ToolEnvelope.InvalidArgument;
+                        message = name + " を渡せるのは " + RunsName + " を渡したときだけである。";
+
+                        return false;
+                    }
+                }
+
+                code = null;
+                message = null;
+
+                return true;
+            }
+
+            if (!ComposedInput.TryChoice(context, RunsName, Locatable, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (!TryNumber(context, OffsetName, 0, ref offset, out message)
+                || !TryNumber(context, LimitName, 1, ref limit, out message))
+            {
+                code = ToolEnvelope.InvalidArgument;
+
+                return false;
+            }
+
+            return true;
         }
 
-        private static int LooseWeights(IPXPmx model, ISet<object> bones)
+        private static bool TryNumber(
+            McpMethodContext context, string name, int least, ref int taken, out string message)
         {
-            return model.Vertex.Count(vertex => VertexWeights.Read(vertex)
-                .Any(share => !ReferenceCleanup.Alive(share.Key, bones)));
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(name, out given) || given == null)
+            {
+                return true;
+            }
+
+            long number;
+            if (!ValueInput.TryInteger(given, out number)
+                || number < least
+                || number > int.MaxValue)
+            {
+                message = name + " は " + least.ToString(CultureInfo.InvariantCulture)
+                    + " 以上の整数でなければならない。";
+
+                return false;
+            }
+
+            taken = (int)number;
+
+            return true;
+        }
+
+        private static IList<int> PositionsOf(IList<IPXMorph> all, IList<IPXMorph> chosen)
+        {
+            return Enumerable.Range(0, all.Count)
+                .Where(at => chosen.Any(morph => ReferenceEquals(morph, all[at])))
+                .ToList();
+        }
+
+        private static IList<int> Unsound(IPXPmx model)
+        {
+            IList<IPXFace> faces = ViewSelection.Faces(model);
+
+            return Enumerable.Range(0, faces.Count)
+                .Where(at => !ReferenceCleanup.IsSoundFace(faces[at]))
+                .ToList();
+        }
+
+        private static IList<int> LooseFaces(IPXPmx model, ISet<object> vertices)
+        {
+            IList<IPXFace> faces = ViewSelection.Faces(model);
+
+            return Enumerable.Range(0, faces.Count)
+                .Where(at =>
+                    !ReferenceCleanup.Alive(faces[at].Vertex1, vertices)
+                    || !ReferenceCleanup.Alive(faces[at].Vertex2, vertices)
+                    || !ReferenceCleanup.Alive(faces[at].Vertex3, vertices))
+                .ToList();
+        }
+
+        private static IList<int> LooseWeights(IPXPmx model, ISet<object> bones)
+        {
+            return Enumerable.Range(0, model.Vertex.Count)
+                .Where(at => VertexWeights.Read(model.Vertex[at])
+                    .Any(share => !ReferenceCleanup.Alive(share.Key, bones)))
+                .ToList();
         }
 
         private static int LooseBones(IPXPmx model, ISet<object> bones)
         {
-            int found = 0;
-            foreach (IPXBone bone in model.Bone)
-            {
-                found += Loose(bone.Parent, bones) ? 1 : 0;
-                found += Loose(bone.ToBone, bones) ? 1 : 0;
-                found += Loose(bone.AppendParent, bones) ? 1 : 0;
-                if (bone.IK == null)
-                {
-                    continue;
-                }
+            return model.Bone.Sum(bone => LooseMouths(bone, bones));
+        }
 
-                found += bone.IsIK && !ReferenceCleanup.Alive(bone.IK.Target, bones) ? 1 : 0;
-                found += bone.IK.Links.Count(
-                    link => !ReferenceCleanup.Alive(link.Bone, bones));
+        private static IList<int> BonesWithLoose(IPXPmx model, ISet<object> bones)
+        {
+            return Enumerable.Range(0, model.Bone.Count)
+                .Where(at => LooseMouths(model.Bone[at], bones) > 0)
+                .ToList();
+        }
+
+        private static int LooseMouths(IPXBone bone, ISet<object> bones)
+        {
+            int found = 0;
+            found += Loose(bone.Parent, bones) ? 1 : 0;
+            found += Loose(bone.ToBone, bones) ? 1 : 0;
+            found += Loose(bone.AppendParent, bones) ? 1 : 0;
+            if (bone.IK == null)
+            {
+                return found;
             }
+
+            found += bone.IsIK && !ReferenceCleanup.Alive(bone.IK.Target, bones) ? 1 : 0;
+            found += bone.IK.Links.Count(link => !ReferenceCleanup.Alive(link.Bone, bones));
 
             return found;
         }
@@ -167,21 +359,29 @@ namespace PmxEditorMcp
             return found;
         }
 
-        private static int Unnormalized(IPXPmx model)
+        private static IList<int> Unnormalized(IPXPmx model)
         {
-            return model.Vertex.Count(vertex => !VertexWeights.IsSound(vertex));
+            return Enumerable.Range(0, model.Vertex.Count)
+                .Where(at => !VertexWeights.IsSound(model.Vertex[at]))
+                .ToList();
         }
 
-        private static int Doubled(IPXPmx model)
+        private static IList<int> Doubled(IPXPmx model)
         {
-            int found = 0;
+            List<int> found = new List<int>();
+            int at = 0;
             IDictionary<IPXVertex, int> places = ModelCleanFaces.Places(model);
             foreach (IPXMaterial material in model.Material)
             {
                 HashSet<string> met = new HashSet<string>(StringComparer.Ordinal);
                 foreach (IPXFace face in material.Faces)
                 {
-                    found += met.Add(ModelCleanFaces.Key(face, places)) ? 0 : 1;
+                    if (!met.Add(ModelCleanFaces.Key(face, places)))
+                    {
+                        found.Add(at);
+                    }
+
+                    at++;
                 }
             }
 

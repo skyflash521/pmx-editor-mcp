@@ -181,6 +181,8 @@
     {"tool": "model_set_deform_type", "input": "pmxHandle", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "ComposedEdit.cs が long の範囲の整数として読む。"},
     {"tool": "model_set_deform_type", "input": "range.count", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_set_deform_type", "input": "range.start", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
+    {"tool": "model_validate_pmx", "input": "limit", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ModelValidatePmx.cs が1以上 int の最大値以下の整数として読む。"},
+    {"tool": "model_validate_pmx", "input": "offset", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ModelValidatePmx.cs が0以上 int の最大値以下の整数として読む。"},
     {"tool": "model_validate_pmx", "input": "pmxHandle", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "ComposedEdit.cs が long の範囲の整数として読む。"},
     {"tool": "motion_apply_current_pose", "input": "morphThreshold", "reads": "real", "least": 0, "leastExcluded": true, "most": 3.4028234663852886e38, "basis": "MotionApplyCurrentPose.cs が0より大きい単精度の有限の数として読む。"},
     {"tool": "motion_rotate_bone_about_axis", "input": "angle", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "MotionRotateBoneAboutAxis.cs が単精度の有限の数として読む。"},

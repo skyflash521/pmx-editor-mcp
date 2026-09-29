@@ -22355,6 +22355,31 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "runs",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 1
+              }
             }
           ]
         }
@@ -22414,6 +22439,35 @@
           },
           {
             "name": "found",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "runsTotal",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "runs",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
             "origin": "hostOutput",
             "shape": "number"
           }
