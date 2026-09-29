@@ -180,6 +180,77 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { 0f, 5f, 0f }, (object[])box["min"]);
         }
 
+        [Fact]
+        public void RunsReturnThePositionsOfTheVerticesInEachBoxAsRuns()
+        {
+            Vertex(0f, 0f, 0f);
+            Vertex(0f, 5f, 0f);
+            Vertex(0f, 6f, 0f);
+            Vertex(0f, 1f, 0f);
+            Vertex(0f, 7f, 0f);
+            Vertex(0f, 9f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("runs", true),
+                ComposedEditFixture.Given("boxes", new object[] { Box("minY", 5.0), Box("maxY", -1.0) })));
+
+            object[] boxes = (object[])value["boxes"];
+            IDictionary<string, object> first = (IDictionary<string, object>)boxes[0];
+            Assert.Equal(4, first["count"]);
+            object[] runs = (object[])first["vertexRuns"];
+            Assert.Equal(2, runs.Length);
+            IDictionary<string, object> run = (IDictionary<string, object>)runs[0];
+            Assert.Equal(1, run["start"]);
+            Assert.Equal(2, run["count"]);
+            run = (IDictionary<string, object>)runs[1];
+            Assert.Equal(4, run["start"]);
+            Assert.Equal(2, run["count"]);
+            IDictionary<string, object> second = (IDictionary<string, object>)boxes[1];
+            Assert.Equal(0, second["count"]);
+            Assert.Empty((object[])second["vertexRuns"]);
+        }
+
+        [Fact]
+        public void VertexRunsAreLeftOutUnlessRunsIsTrue()
+        {
+            Vertex(0f, 5f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("boxes", new object[] { Box("minY", 5.0) })));
+
+            IDictionary<string, object> box = (IDictionary<string, object>)((object[])value["boxes"])[0];
+            Assert.False(box.ContainsKey("vertexRuns"));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void RunsWithoutBoxesAreRefused(bool runs)
+        {
+            Vertex(0f, 5f, 0f);
+
+            IDictionary<string, object> envelope = Find(
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("runs", runs));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void RunsThatAreNotBooleanAreRefused()
+        {
+            Vertex(0f, 5f, 0f);
+
+            IDictionary<string, object> envelope = Find(
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given("runs", "yes"),
+                ComposedEditFixture.Given("boxes", new object[] { Box("minY", 5.0) }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
         [Theory]
         [InlineData("minX", 2.0, "maxX", 1.0)]
         [InlineData("lowX", 0.0, "maxX", 1.0)]

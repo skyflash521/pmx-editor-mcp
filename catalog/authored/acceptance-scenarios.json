@@ -5943,7 +5943,8 @@
               {
                 "minX": -1
               }
-            ]
+            ],
+            "runs": true
           },
           "expect": {
             "ok": true,
@@ -5951,6 +5952,14 @@
               {
                 "path": "count",
                 "equals": 3
+              },
+              {
+                "path": "boxes.0.vertexRuns.0.start",
+                "equals": 1
+              },
+              {
+                "path": "boxes.0.vertexRuns.0.count",
+                "equals": 2
               },
               {
                 "path": "min.0",

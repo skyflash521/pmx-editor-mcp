@@ -26,6 +26,10 @@ namespace PmxEditorMcp
 
         public const string BoxesName = "boxes";
 
+        public const string RunsName = "runs";
+
+        public const string VertexRunsName = "vertexRuns";
+
         private static readonly string[] BoxEdgeNames = { "minX", "maxX", "minY", "maxY", "minZ", "maxZ" };
 
         internal static readonly string[] VertexPointing =
@@ -48,7 +52,7 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(edit));
             }
 
-            List<string> known = new List<string>(VertexPointing) { MaterialIndicesName, BoxesName };
+            List<string> known = new List<string>(VertexPointing) { MaterialIndicesName, BoxesName, RunsName };
             methods.Add(ToolName, edit.Read(known, Run));
         }
 
@@ -69,6 +73,12 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }
 
+            bool runs;
+            if (!TryRuns(context, boxes != null, out runs, out message))
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
+            }
+
             List<KeyValuePair<int, V3>> points = chosen
                 .Select(at => new KeyValuePair<int, V3>(at, model.Vertex[at].Position))
                 .ToList();
@@ -77,10 +87,59 @@ namespace PmxEditorMcp
             {
                 value.Add(
                     BoxesName,
-                    boxes.Select(box => (object)Bounds(points.Where(p => Inside(box, p.Value)).ToList())).ToArray());
+                    boxes.Select(box => (object)Boxed(points.Where(p => Inside(box, p.Value)).ToList(), runs))
+                        .ToArray());
+            }
+
+            if (runs && !ResponseSize.Fits(value, context.BudgetChars))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.ResponseTooLarge,
+                    VertexRunsName + " が値の枠に収まらない。指す頂点か箱を絞る。");
             }
 
             return ComposedEditResult.Complete(value);
+        }
+
+        private static Dictionary<string, object> Boxed(List<KeyValuePair<int, V3>> inside, bool runs)
+        {
+            Dictionary<string, object> value = Bounds(inside);
+            if (runs)
+            {
+                value.Add(
+                    VertexRunsName,
+                    PositionRuns.Joined(inside.Select(p => p.Key).Distinct().OrderBy(at => at)).ToArray());
+            }
+
+            return value;
+        }
+
+        private static bool TryRuns(McpMethodContext context, bool boxed, out bool runs, out string message)
+        {
+            runs = false;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(RunsName, out given))
+            {
+                return true;
+            }
+
+            if (!(given is bool))
+            {
+                message = RunsName + " は真か偽でなければならない。";
+
+                return false;
+            }
+
+            runs = (bool)given;
+            if (!boxed)
+            {
+                message = RunsName + " は " + BoxesName + " と一緒にだけ渡せる。";
+
+                return false;
+            }
+
+            return true;
         }
 
         private static Dictionary<string, object> Bounds(List<KeyValuePair<int, V3>> points)
