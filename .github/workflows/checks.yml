@@ -1,0 +1,44 @@
+name: checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  without-editor:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install PowerShell and lychee
+        shell: pwsh
+        env:
+          POWERSHELL_VERSION: 7.6.6
+          LYCHEE_VERSION: 0.24.2
+        run: |
+          $tools = Join-Path $env:RUNNER_TEMP 'tools'
+          $pwshZip = Join-Path $env:RUNNER_TEMP 'pwsh.zip'
+          $lycheeZip = Join-Path $env:RUNNER_TEMP 'lychee.zip'
+          Invoke-WebRequest -Uri "https://github.com/PowerShell/PowerShell/releases/download/v$env:POWERSHELL_VERSION/PowerShell-$env:POWERSHELL_VERSION-win-x64.zip" -OutFile $pwshZip
+          Invoke-WebRequest -Uri "https://github.com/lycheeverse/lychee/releases/download/lychee-v$env:LYCHEE_VERSION/lychee-x86_64-pc-windows-msvc.zip" -OutFile $lycheeZip
+          Expand-Archive -Path $pwshZip -DestinationPath (Join-Path $tools 'pwsh')
+          Expand-Archive -Path $lycheeZip -DestinationPath (Join-Path $tools 'lychee')
+          Join-Path $tools 'pwsh' | Add-Content -Path $env:GITHUB_PATH
+          Get-ChildItem -Path (Join-Path $tools 'lychee') -Recurse -Filter 'lychee.exe' |
+            Select-Object -First 1 | ForEach-Object { $_.DirectoryName } | Add-Content -Path $env:GITHUB_PATH
+
+      - name: Run checks without the editor
+        timeout-minutes: 10
+        shell: pwsh
+        run: node scripts/verify.mjs --set standing --without-editor
