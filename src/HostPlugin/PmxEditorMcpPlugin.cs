@@ -265,6 +265,7 @@ namespace PmxEditorMcp
                     () => Receiver(receivers, TransformViewType),
                     new PressedModifierKeys());
                 HandleRelease.AddTo(methods);
+                MotionGetVmdCameraView.AddTo(methods, () => Receiver(receivers, BuilderType));
                 EventPoll.AddTo(methods);
                 UiFind.AddTo(methods);
                 UiTree.AddTo(methods, OpenForms);

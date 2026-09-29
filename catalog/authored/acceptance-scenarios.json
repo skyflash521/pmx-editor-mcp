@@ -4338,6 +4338,342 @@
         },
         {
           "kind": "tool",
+          "tool": "motion_create_vmd",
+          "arguments": {},
+          "record": {
+            "name": "cameraVmd",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bas_camera_key",
+          "arguments": {},
+          "record": {
+            "name": "cameraFirst",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bas_camera_key",
+          "arguments": {},
+          "record": {
+            "name": "cameraLast",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_frame_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cameraFirst"
+              },
+              {
+                "$from": "cameraLast"
+              }
+            ],
+            "values": [
+              {
+                "frameIndex": 0
+              },
+              {
+                "frameIndex": 30
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_camera_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cameraFirst"
+              },
+              {
+                "$from": "cameraLast"
+              }
+            ],
+            "values": [
+              {
+                "distance": -10,
+                "position": [
+                  0,
+                  10,
+                  0
+                ],
+                "angle": [
+                  0,
+                  0,
+                  0
+                ],
+                "fov": 30
+              },
+              {
+                "distance": -20,
+                "position": [
+                  10,
+                  10,
+                  0
+                ],
+                "angle": [
+                  0,
+                  0,
+                  0
+                ],
+                "fov": 60
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_camera_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "cameraVmd"
+                },
+                "handles": [
+                  {
+                    "$from": "cameraFirst"
+                  },
+                  {
+                    "$from": "cameraLast"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vmd_camera_view",
+          "arguments": {
+            "frames": [
+              0,
+              30,
+              15
+            ],
+            "vmd": {
+              "$from": "cameraVmd"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "cameras.0.frame",
+                "equals": 0
+              },
+              {
+                "path": "cameras.0.position",
+                "equals": [
+                  0,
+                  10,
+                  -10
+                ]
+              },
+              {
+                "path": "cameras.0.target",
+                "equals": [
+                  0,
+                  10,
+                  0
+                ]
+              },
+              {
+                "path": "cameras.0.upVector",
+                "equals": [
+                  0,
+                  1,
+                  0
+                ]
+              },
+              {
+                "path": "cameras.0.fov",
+                "equals": 30
+              },
+              {
+                "path": "cameras.1.position",
+                "equals": [
+                  10,
+                  10,
+                  -20
+                ]
+              },
+              {
+                "path": "cameras.1.target",
+                "equals": [
+                  10,
+                  10,
+                  0
+                ]
+              },
+              {
+                "path": "cameras.1.fov",
+                "equals": 60
+              },
+              {
+                "path": "cameras.2.frame",
+                "equals": 15
+              },
+              {
+                "path": "cameras.2.position",
+                "equals": [
+                  5,
+                  10,
+                  -15
+                ]
+              },
+              {
+                "path": "cameras.2.target",
+                "equals": [
+                  5,
+                  10,
+                  0
+                ]
+              },
+              {
+                "path": "cameras.2.fov",
+                "equals": 45
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vmd_camera_view",
+          "arguments": {
+            "vmd": {
+              "$from": "cameraVmd"
+            },
+            "frames": [
+              15,
+              100
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "cameras.0.frame",
+                "equals": 15
+              },
+              {
+                "path": "cameras.0.position",
+                "equals": [
+                  5,
+                  10,
+                  -15
+                ]
+              },
+              {
+                "path": "cameras.0.fov",
+                "equals": 45
+              },
+              {
+                "path": "cameras.1.frame",
+                "equals": 100
+              },
+              {
+                "path": "cameras.1.position",
+                "equals": [
+                  10,
+                  10,
+                  -20
+                ]
+              },
+              {
+                "path": "cameras.1.target",
+                "equals": [
+                  10,
+                  10,
+                  0
+                ]
+              },
+              {
+                "path": "cameras.1.fov",
+                "equals": 60
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vmd_camera_view",
+          "arguments": {
+            "frames": [
+              0
+            ],
+            "vmd": {
+              "$from": "vmd"
+            }
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_NOT_APPLICABLE"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cameraVmd"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "session_release_handle",
           "arguments": {
             "handles": [

@@ -465,6 +465,11 @@
       "duty": "TransformView でいま変形している形——ボーンで取らせている姿勢とモーフ——を、編集中のモデルの形状へ焼き込む。TransformView のファイルメニューの「現在の変形状態でモデル形状を更新」に当たる。ボーンとそのローカル軸・頂点とその法線・剛体・Joint の位置と向きが、ボーンの変形とモーフを当てた後の値になり、そのあと TransformView の変形とモーフは初期の状態へ戻る。エディタの元に戻す1回で呼び出しの前へ戻る。morphThreshold に正の数を渡すと、頂点モーフを焼き込んだ形に合わせて計算し直し、X・Y・Z の差がどれも morphThreshold 以下の頂点はオフセットから外す。このとき TransformView で当てていた頂点モーフ・グループモーフ・フリップモーフは0へ戻してから焼き込むので、それらの変形は形状に入らない。渡さなければ頂点モーフは計算し直さず、当てていたモーフはすべて形状に入る。ファイルメニューの正規化の入り切りは呼び出しの前のまま残す。TransformView が開いていないとき、人の応答を待つ表示を出しているとき、項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。成功したときは何も返さない。"
     },
     {
+      "tool": "motion_get_vmd_camera_view",
+      "branching": false,
+      "duty": "VMD のカメラを、フレームごとに読む。vmd に VMD のハンドルを、frames に0以上の整数のフレームの番号を並べて渡す。frames の並びのまま、cameras に、フレーム frame・視点の位置 position・注視点 target・上の向き upVector・視野角 fov(度)を返す。position・target・upVector は3つの数の並びで、PMXエディタの VME がカメラの結果として返すのと同じ値である。キーとキーの間のフレームは、キーの補間曲線で補間した値になる。vmd に使えないハンドルを渡したとき、VMD でないハンドルを渡したときは TOOL_INVALID_HANDLE を、vmd が整数でないとき、frames が0以上の整数の並びでないときは TOOL_INVALID_ARGUMENT を、VMD にカメラのキーが無いときは TOOL_NOT_APPLICABLE を、frames が多くて返す値が応答の枠に収まらないときは TOOL_RESPONSE_TOO_LARGE を返す。最後のキーより後のフレームは、最後のキーの値になる。motion_set_vmd_vme は、PMX から初期化した VME では VMD のキーを登録しないので、カメラの視点は VME を通さずにこのツールで読む。"
+    },
+    {
       "tool": "motion_rotate_bone_about_axis",
       "branching": false,
       "duty": "TransformView のビューで選んでいるボーンを、axis の向きの軸まわりに angle 度だけ回す。axis は3つの数の並びで、長さは問わず、長さ0は断る。軸と回る向きは motion_bone_rotate と同じく親ボーンの回転を受けたモデルの X・Y・Z 軸で表し、axis が [1,0,0] なら boneRotateXyz の X に angle を渡して回したのと同じになる。いまの回転へ足し込み、置き換えない。回すときは boneRotateXyz へ Z・X・Y の順に重ねて同じ回転になる角度の組を入れて1回で回し、入力欄は元の値へ戻す。回すのに使った角度の組を、入力欄が文字で持つ桁に丸まった値で、rotateXyz に boneRotateXyz と同じ並びで返す。TransformView の一覧でボーンが選ばれていないとき、修飾キーが押されているとき、選ばれているボーンが軸固定のときは断る。IK のリンクの扱いと、ビューと一覧の選択の食い違いは motion_bone_rotate と同じである。"

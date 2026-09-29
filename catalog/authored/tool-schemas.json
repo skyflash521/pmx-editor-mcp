@@ -27373,6 +27373,82 @@
       }
     },
     {
+      "tool": "motion_get_vmd_camera_view",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "vmd",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true
+            },
+            {
+              "name": "frames",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "cameras",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "frame",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  },
+                  "name": "position"
+                },
+                {
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  },
+                  "name": "target"
+                },
+                {
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  },
+                  "name": "upVector"
+                },
+                {
+                  "name": "fov",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_get_vme_direction_operator",
       "branches": [
         {
