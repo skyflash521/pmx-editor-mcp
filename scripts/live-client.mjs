@@ -288,7 +288,7 @@ try {
             timeout: CLIENT_TIMEOUT_MS,
             shell: true,
             env: { ...process.env, [UNATTENDED_NAME]: "1" },
-            input: "次のツールを、書いてある引数のとおりに順に1回ずつ呼べ。結果は要らない。\n"
+            input: "次のツールを、書いてある引数のとおりに1回ずつ呼べ。互いに独立なので、1つの応答の中で全部を並べて同時に呼べ。結果は要らない。\n"
                 + orders,
         });
     if (said.error !== undefined && said.error !== null) {
