@@ -13,9 +13,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>一覧が何件返すかを受け取る入力の名前。</summary>
         private const string LimitName = "limit";
 
-        /// <summary>一覧が切り出す前の総数を返す項目の名前。</summary>
-        private const string TotalName = "total";
-
         /// <summary>食い違いがあれば <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
             ToolSchemaTable schemas,
@@ -176,7 +173,7 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private static void RequireDerivedListingLimits(ToolSchema schema)
         {
-            if (!IsListing(schema))
+            if (!ListingLimitRule.IsListing(schema))
             {
                 return;
             }
@@ -194,18 +191,6 @@ namespace PmxEditorMcp.SignatureDump
                 throw new InvalidOperationException(
                     "一覧の件数は導く値なので既定と上限を持たない: " + schema.Tool);
             }
-        }
-
-        /// <summary>応答が総数と切り出した並びを返す形か。一覧を返すツールはこの形を取る。</summary>
-        private static bool IsListing(ToolSchema schema)
-        {
-            IList<SchemaItem> members = schema.Output.Members;
-
-            return members != null
-                && members.Any(m => string.Equals(m.Name, TotalName, StringComparison.Ordinal))
-                && members.Any(
-                    m => string.Equals(m.Name, ListingLimitRule.ItemsName, StringComparison.Ordinal)
-                        && m.Element != null);
         }
 
         /// <summary>綴りの閉じた集合は共通契約の正本が持つので、そこに実在することまで求める。</summary>

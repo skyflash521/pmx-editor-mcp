@@ -157,6 +157,9 @@ namespace PmxEditorMcp
             new System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites>();
 
         /// <summary>生成物を預ける呼び出しの、位置で受け取る引数ごとに、生成物のその引数に当たる項目。</summary>
+        private readonly Dictionary<string, Func<object, bool>> _heldKinds =
+            new Dictionary<string, Func<object, bool>>(StringComparer.Ordinal);
+
         private readonly Dictionary<ToolArgument, ToolField> _issuedReferences =
             new Dictionary<ToolArgument, ToolField>(ReferenceComparer<ToolArgument>.Instance);
 
@@ -297,6 +300,7 @@ namespace PmxEditorMcp
                 relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events,
                 refresh, screen, measures);
             dispatch.IssuedReferences(calls, aggregations);
+            dispatch.HeldKinds(calls, aggregations, elements);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
                 IList<ToolCall> bound = call.Value;
@@ -922,7 +926,7 @@ namespace PmxEditorMcp
             bool confirm;
             long? handle;
             List<string> known = Given(call).Select(a => a.Name).ToList();
-            if (call.Danger != DangerKind.None)
+            if (call.Danger != DangerKind.None && !EmptiesOnlyTheHeld(call))
             {
                 known.Add(ConfirmName);
             }
@@ -1514,7 +1518,7 @@ namespace PmxEditorMcp
                 known.Add(ArgsListName);
             }
 
-            if (call.Danger != DangerKind.None)
+            if (call.Danger != DangerKind.None && !EmptiesOnlyTheHeld(call))
             {
                 known.Add(ConfirmName);
             }
@@ -4376,7 +4380,7 @@ namespace PmxEditorMcp
         /// ハンドルで指した親の列。要求に現れた順に並べ、同じ並びのハンドルも返す。親がまだ
         /// どのPMXにも属していないので、所有の経路は辿らない。
         /// </summary>
-        private static bool TryHeldOwners(
+        private bool TryHeldOwners(
             McpMethodContext context,
             ToolAccess access,
             Pointed pointed,
@@ -4394,7 +4398,7 @@ namespace PmxEditorMcp
                 pointed.Parents,
                 TargetForm.Handles,
                 0,
-                id => Held(context, access.Owner, id) != null,
+                id => HeldOwner(context, access, id) != null,
                 out resolved,
                 out code,
                 out message,
@@ -4406,7 +4410,7 @@ namespace PmxEditorMcp
             }
 
             ids = resolved.Handles;
-            owners = resolved.Handles.Select(id => Held(context, access.Owner, id)).ToList();
+            owners = resolved.Handles.Select(id => HeldOwner(context, access, id)).ToList();
 
             return true;
         }
@@ -4689,7 +4693,7 @@ namespace PmxEditorMcp
         /// 親ごとの組の並び。ハンドルは組をまたいで重ねられない。同じ親は2つ以上の組へ書けて、
         /// その順に末尾へ加わる。
         /// </summary>
-        private static bool TryAssignments(
+        private bool TryAssignments(
             McpMethodContext context,
             ToolElements tool,
             out IList<Assignment> assignments,
@@ -4743,7 +4747,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>親ごとの組1件。</summary>
-        private static bool TryAssignment(
+        private bool TryAssignment(
             McpMethodContext context,
             ToolElements tool,
             object given,
@@ -4840,7 +4844,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// 組が指す親。位置で指す組は親の列の中の位置を、ハンドルで指す組は台帳の実体を持つ。
         /// </summary>
-        private static bool TryParent(
+        private bool TryParent(
             McpMethodContext context,
             ToolElements tool,
             IDictionary<string, object> members,
@@ -4892,7 +4896,7 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            owner = Held(context, tool.Access.Owner, id);
+            owner = HeldOwner(context, tool.Access, id);
             if (owner == null)
             {
                 code = ToolEnvelope.InvalidHandle;
@@ -4902,6 +4906,33 @@ namespace PmxEditorMcp
             }
 
             return true;
+        }
+
+        private object HeldOwner(McpMethodContext context, ToolAccess access, long id)
+        {
+            Func<object, bool> accepts;
+
+            return _heldKinds.TryGetValue(access.Owner.FullName, out accepts)
+                ? Held(context, accepts, id)
+                : Held(context, access.Owner, id);
+        }
+
+        private void HeldKinds(
+            IDictionary<string, IList<ToolCall>> calls,
+            IDictionary<string, ToolFields> aggregations,
+            IDictionary<string, ToolElements> elements)
+        {
+            IEnumerable<ToolReceiver> receivers = calls.Values.SelectMany(c => c).Select(c => c.Receiver)
+                .Concat(aggregations.Values.Select(a => a.Receiver))
+                .Concat(elements.Values.Select(e => e.Receiver));
+            foreach (ToolReceiver receiver in receivers.Where(
+                r => r.Kind == ToolReceiverKind.Handle && r.TypeName != null && r.Accepts != null))
+            {
+                if (!_heldKinds.ContainsKey(receiver.TypeName))
+                {
+                    _heldKinds.Add(receiver.TypeName, receiver.Accepts);
+                }
+            }
         }
 
         /// <summary>そのハンドルが指す、期待する型の実体。指していなければ null。</summary>
@@ -5234,19 +5265,34 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 確認の要否。開いているPMXを空にする呼び出しだけが対象で要否の分かれる初期化に当たり、
-        /// 対象を指定した呼び出しは空にするのがメモリの上の生成物なので確認を要さない。
+        /// 確認の要否。PMXを受け手に取る初期化は、ハンドルで指したPMXだけを空にし、確認を取らない。
+        /// ハンドルが無ければ断る。
         /// </summary>
         private static bool TryPassDanger(
             ToolCall call, long? handle, bool confirm, out string code, out string message)
         {
-            if (call.Danger == DangerKind.Reset
-                && call.Receiver.Kind == ToolReceiverKind.Pmx)
+            if (EmptiesOnlyTheHeld(call))
             {
-                return ConfirmGate.TryPassClear(!handle.HasValue, confirm, out code, out message);
+                code = null;
+                message = null;
+                if (handle.HasValue)
+                {
+                    return true;
+                }
+
+                code = ToolEnvelope.InvalidArgument;
+                message = PmxSession.HandleName + " で空にするPMXを指す。開いているPMXを作り直すときは "
+                    + "session_initialize_pmx を呼ぶ。";
+
+                return false;
             }
 
             return ConfirmGate.TryPass(call.Danger, confirm, out code, out message);
+        }
+
+        private static bool EmptiesOnlyTheHeld(ToolCall call)
+        {
+            return call.Danger == DangerKind.Reset && call.Receiver.Kind == ToolReceiverKind.Pmx;
         }
 
         internal static bool TryConfirm(

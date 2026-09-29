@@ -33,7 +33,7 @@ namespace PmxEditorMcp.SignatureDump
         private const string SchemaResource =
             "PmxEditorMcp.SignatureDump.AcceptanceScenarioSchema.json";
 
-        /// <summary>引数の形を確かめるとき、覚えた値の代わりに差し込む数。</summary>
+        /// <summary>引数の形を確かめるとき、覚えた値の代わりに差し込む数の最初。</summary>
         private const int SubstitutedNumber = 1;
 
         /// <summary>ツールを呼ぶ段の種別。</summary>
@@ -482,12 +482,15 @@ namespace PmxEditorMcp.SignatureDump
             JsonNode reference = members[ReferenceName];
             if (reference != null)
             {
+                string name = reference.GetValue<string>();
                 string remembered;
-                recorded.TryGetValue(reference.GetValue<string>(), out remembered);
+                recorded.TryGetValue(name, out remembered);
+                int substituted = SubstitutedNumber + recorded.Keys
+                    .Count(k => string.CompareOrdinal(k, name) < 0);
 
                 return remembered == NumbersShape
-                    ? (JsonNode)new JsonArray(JsonValue.Create(SubstitutedNumber))
-                    : JsonValue.Create(SubstitutedNumber);
+                    ? (JsonNode)new JsonArray(JsonValue.Create(substituted))
+                    : JsonValue.Create(substituted);
             }
 
             JsonObject copied = new JsonObject();

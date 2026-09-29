@@ -83,6 +83,8 @@ namespace PmxEditorMcp.Tests
 
         private const string TouchNamedKey = "Sdk.Item.Touch(System.String)";
 
+        private const string TouchHolderKey = "Sdk.Holder.Touch()";
+
         private const string AttachKey = "Sdk.Maker.Attach(Sdk.Model,Sdk.Item,System.String)";
 
         private const string BridgeReadKey = "Sdk.Bridge.GetModel(Sdk.Connector)";
@@ -1659,6 +1661,48 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AnElementIsAddedUnderAParentHeldAsAKindOfTheTypeThatDeclaresTheList()
+        {
+            HandleLedger handles = Ledger();
+            Group parent = new Group();
+            Item child = new Item { Label = "一" };
+            int under = handles.Issue(typeof(Group).FullName, parent, () => { });
+            int held = handles.Issue(typeof(Item).FullName, child, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_holder_leaves",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { HeldAssignment(under, held) }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], (bool)envelope["ok"] ? string.Empty : "包みが成功でない: " + Message(envelope));
+            Assert.Equal(1, Value(envelope)[SetResponse.AddedName]);
+            Assert.Same(child, parent.Leaves.Single());
+        }
+
+        [Fact]
+        public void RemovingUnderAParentHeldAsAKindOfTheTypeThatDeclaresTheListTakesTheElementOut()
+        {
+            HandleLedger handles = Ledger();
+            Group held = new Group();
+            held.Leaves.Add(new Item { Label = "一" });
+            held.Leaves.Add(new Item { Label = "二" });
+            int handle = handles.Issue(typeof(Group).FullName, held, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "model_remove_holder_leaves",
+                Arguments(
+                    TargetNames.Parent.Handles, new object[] { handle },
+                    TargetNames.Element.Indices, new object[] { 0 }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], (bool)envelope["ok"] ? string.Empty : "包みが成功でない: " + Message(envelope));
+            Assert.Equal(1, Value(envelope)[SetResponse.RemovedName]);
+            Assert.Equal(new[] { "二" }, held.Leaves.Cast<Item>().Select(i => i.Label).ToArray());
+        }
+
+        [Fact]
         public void RemovingUnderAHeldParentTakesTheElementOutOfIt()
         {
             HandleLedger handles = Ledger();
@@ -3065,6 +3109,21 @@ namespace PmxEditorMcp.Tests
                 typeof(Group));
         }
 
+        /// <summary>親のリストを1つ挟んだ先の、親の基の型が宣言する要素のリストへ至る道。</summary>
+        private static ToolAccess HolderNested()
+        {
+            return new ToolAccess(
+                ToolAccessKind.Element,
+                LeavesKey,
+                new[] { new ToolHop(GroupsKey, true) },
+                true,
+                typeof(Item),
+                item => item is Item,
+                "item",
+                Kinds(),
+                typeof(IHolder));
+        }
+
         /// <summary>PMXから辿る道が無く、ハンドルで指した親の下にだけある要素のリストへ至る道。</summary>
         private static ToolAccess Sprigged()
         {
@@ -3346,6 +3405,24 @@ namespace PmxEditorMcp.Tests
                     Touching(TouchKey),
                     Touching(TouchNamedKey, new ToolArgument("label", typeof(string))),
                 });
+            calls.Add(
+                "model_touch_holder",
+                new[]
+                {
+                    new ToolCall(
+                        TouchHolderKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            typeof(IHolder).FullName,
+                            EditKind.ViewSession,
+                            false,
+                            item => item is IHolder),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        null),
+                });
 
             return calls;
         }
@@ -3517,6 +3594,8 @@ namespace PmxEditorMcp.Tests
                 { "model_add_groups", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Grouped()) },
                 { "model_add_leaves", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Nested()) },
                 { "model_remove_leaves", new ToolElements(ToolElementKind.Remove, Rooted(EditKind.DuplicateEdit), Nested()) },
+                { "model_add_holder_leaves", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), HolderNested()) },
+                { "model_remove_holder_leaves", new ToolElements(ToolElementKind.Remove, Rooted(EditKind.DuplicateEdit), HolderNested()) },
                 { "model_hold_leaf", new ToolElements(ToolElementKind.Hold, Rooted(EditKind.Read), Nested()) },
                 { "model_add_veins", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Veined()) },
                 { "model_add_sprigs", new ToolElements(ToolElementKind.Add, Rooted(EditKind.DuplicateEdit), Sprigged()) },
@@ -3735,8 +3814,13 @@ namespace PmxEditorMcp.Tests
             }
         }
 
+        /// <summary>要素を並べるリストを宣言する、親の基の型の題材。ハンドルは具象の型で出る。</summary>
+        private interface IHolder
+        {
+        }
+
         /// <summary>要素を並べるリストを持つ、親の題材。</summary>
-        private sealed class Group
+        private sealed class Group : IHolder
         {
             public List<Leaf> Leaves { get; } = new List<Leaf>();
 

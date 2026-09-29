@@ -36,6 +36,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private readonly IDictionary<string, string> _shapesByType;
 
+        private readonly IDictionary<string, int> _components;
+
         private ToolDefinitionInputs(
             IList<CapabilityRecord> ledger,
             TypeRoleTable roles,
@@ -51,6 +53,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes,
             IDictionary<string, string> shapesByType,
+            IDictionary<string, int> components,
             ToolMap map,
             string mapDigest,
             ToolSchemaTable schemas,
@@ -74,6 +77,7 @@ namespace PmxEditorMcp.SignatureDump
             _methodNotes = methodNotes;
             _propertyNotes = propertyNotes;
             _shapesByType = shapesByType;
+            _components = components;
             Map = map;
             MapDigest = mapDigest;
             Schemas = schemas;
@@ -408,7 +412,7 @@ namespace PmxEditorMcp.SignatureDump
                 OwnedRoles(inventory),
                 ToolsByRow(inventory),
                 Schemas,
-                ConditionalDangerousTools(inventory));
+                HeldOnlyResettingTools(inventory));
         }
 
         /// <summary>その行が、その型の実体を引数無しで1つ作るか。</summary>
@@ -557,6 +561,7 @@ namespace PmxEditorMcp.SignatureDump
                 DocumentNoteReader.ReadMethods(document),
                 DocumentNoteReader.Read(document),
                 ShapesByType(contract),
+                contract.Components,
                 ToolMapJsonReader.Read(map),
                 ToolMapDigest.Of(map),
                 ToolSchemaJsonReader.Read(ReadFile(args[7], "スキーマ正本")),
@@ -617,6 +622,56 @@ namespace PmxEditorMcp.SignatureDump
                 ToolsByRow(inventory),
                 itself,
                 Positioned());
+        }
+
+        /// <summary>
+        /// 入力をホストが受け取る値まで狭める材料。合成ツール以外は、ホストが一律の呼び分けで
+        /// 受け取る。<paramref name="composedReads"/> と <paramref name="composedTexts"/> は、合成ツールの
+        /// 数と文字の入力と並びをホストがどう読むか。
+        /// </summary>
+        public InputRules InputRules(
+            InventoryRecord inventory, ComposedReads composedReads, ComposedTextReads composedTexts)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            Dictionary<string, IList<string>> enumNames =
+                new Dictionary<string, IList<string>>(StringComparer.Ordinal);
+            HashSet<string> flagEnums = new HashSet<string>(StringComparer.Ordinal);
+            foreach (TypeRecord type in inventory.Types.Concat(inventory.ReferencedTypes)
+                .Where(t => t.Kind == TypeKind.Enum && t.EnumMembers.Count > 0))
+            {
+                enumNames[type.Name] = type.EnumMembers;
+                if (type.IsCombinable)
+                {
+                    flagEnums.Add(type.Name);
+                }
+            }
+
+            Type fontStyle = typeof(System.Drawing.FontStyle);
+            if (!enumNames.ContainsKey(fontStyle.FullName))
+            {
+                enumNames[fontStyle.FullName] = Enum.GetNames(fontStyle);
+                if (fontStyle.IsDefined(typeof(FlagsAttribute), false))
+                {
+                    flagEnums.Add(fontStyle.FullName);
+                }
+            }
+
+            return new InputRules(
+                SdkTypes(inventory),
+                enumNames,
+                flagEnums,
+                _components,
+                HandledTypes(),
+                PositionedTypes(),
+                new HashSet<string>(
+                    Schemas.Tools.Select(t => t.Tool).Where(t => !_composedTools.ContainsKey(t)),
+                    StringComparer.Ordinal),
+                composedReads,
+                composedTexts);
         }
 
         /// <summary>SDKに由来する項目から表現の綴りへ。正本が綴りを書かない項目をここで補う。</summary>
@@ -707,10 +762,10 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 確認の要否が呼ぶ対象で分かれるツールの名前。所有の根そのものを空にする初期化だけが
-        /// これに当たり、対象を指定した呼び出しはメモリの上の生成物を空にするので確認を要さない。
+        /// ハンドルで指した相手だけを空にするツールの名前。所有の根そのものを空にする初期化が
+        /// これに当たり、ハンドルを必ず取り、確認を取らない。
         /// </summary>
-        public ISet<string> ConditionalDangerousTools(InventoryRecord inventory)
+        public ISet<string> HeldOnlyResettingTools(InventoryRecord inventory)
         {
             if (inventory == null)
             {

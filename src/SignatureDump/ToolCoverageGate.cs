@@ -59,10 +59,12 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
             HashSet<string> examined = new HashSet<string>(
                 cases
-                    .Where(c => c.Checks != null && !string.IsNullOrEmpty(c.RowKey))
-                    .Select(c => c.RowKey),
+                    .Where(c => c.Checks != null
+                        && !string.IsNullOrEmpty(c.RowKey)
+                        && Succeeds(c.Expectation))
+                    .Select(c => Checked(c.RowKey, c.Checks)),
                 StringComparer.Ordinal);
-            IDictionary<string, ISet<string>> declaring = DeclaringRows(map, toolsByRow);
+            IDictionary<string, IList<ISet<string>>> declaring = DeclaringRows(map, toolsByRow);
 
             Dictionary<string, UncoveredReason> found =
                 new Dictionary<string, UncoveredReason>(StringComparer.Ordinal);
@@ -106,47 +108,66 @@ namespace PmxEditorMcp.SignatureDump
                     + (found.Length > 20 ? "・ほか" : string.Empty));
         }
 
-        /// <summary>そのツールが呼ぶ行のすべてに、宣言した効果を確かめる事例が在るか。</summary>
+        /// <summary>
+        /// そのツールが呼ぶ行のすべてに、その行が宣言した効果のどれかを確かめる事例が在るか。
+        /// </summary>
         private static bool Examined(
-            string tool, ISet<string> examined, IDictionary<string, ISet<string>> declaring)
+            string tool, ISet<string> examined, IDictionary<string, IList<ISet<string>>> declaring)
         {
-            ISet<string> declared;
+            IList<ISet<string>> rows;
 
-            return !declaring.TryGetValue(tool, out declared) || declared.All(examined.Contains);
+            return !declaring.TryGetValue(tool, out rows)
+                || rows.All(effects => effects.Any(examined.Contains));
         }
 
-        /// <summary>ツールの名前から、そのツールが呼ぶ行のうち効果を宣言するものの行キーへ。</summary>
-        private static IDictionary<string, ISet<string>> DeclaringRows(
+        /// <summary>
+        /// ツールの名前から、そのツールが呼ぶ行のうち効果を宣言するもの1つずつについて、その行と
+        /// 宣言した効果の組の並びへ。
+        /// </summary>
+        private static IDictionary<string, IList<ISet<string>>> DeclaringRows(
             ToolMap map, IDictionary<string, string> toolsByRow)
         {
-            Dictionary<string, ISet<string>> declaring =
-                new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
-            foreach (ToolMapRow row in map.Rows.Where(Declares))
+            Dictionary<string, IList<ISet<string>>> declaring =
+                new Dictionary<string, IList<ISet<string>>>(StringComparer.Ordinal);
+            foreach (ToolMapRow row in map.Rows)
             {
                 string tool;
-                if (!toolsByRow.TryGetValue(row.SignatureKey, out tool))
+                ISet<string> effects = Declared(row);
+                if (effects.Count == 0 || !toolsByRow.TryGetValue(row.SignatureKey, out tool))
                 {
                     continue;
                 }
 
-                ISet<string> keys;
-                if (!declaring.TryGetValue(tool, out keys))
+                IList<ISet<string>> rows;
+                if (!declaring.TryGetValue(tool, out rows))
                 {
-                    keys = new HashSet<string>(StringComparer.Ordinal);
-                    declaring.Add(tool, keys);
+                    rows = new List<ISet<string>>();
+                    declaring.Add(tool, rows);
                 }
 
-                keys.Add(row.SignatureKey);
+                rows.Add(effects);
             }
 
             return declaring;
         }
 
-        /// <summary>その行が、呼び出しの記録だけでは済まない効果を宣言しているか。</summary>
-        private static bool Declares(ToolMapRow row)
+        private static ISet<string> Declared(ToolMapRow row)
         {
-            return row.Postcondition != null
-                && row.Postcondition.Any(p => p.Kind != EffectCheckKind.CallLogOnly);
+            return new HashSet<string>(
+                (row.Postcondition ?? new Postcondition[0])
+                    .Where(p => p.Kind != EffectCheckKind.CallLogOnly)
+                    .Select(p => Checked(row.SignatureKey, p.EffectId)),
+                StringComparer.Ordinal);
+        }
+
+        private static string Checked(string rowKey, string effectId)
+        {
+            return rowKey + "\n" + effectId;
+        }
+
+        private static bool Succeeds(E2eExpectation expectation)
+        {
+            return expectation != E2eExpectation.Refusal && expectation != E2eExpectation.Denied;
         }
 
         /// <summary>

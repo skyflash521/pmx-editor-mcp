@@ -401,14 +401,7 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private static void RequirePaged(ToolSchema schema, SignatureRecord signature)
         {
-            SchemaItem answer = schema.Output;
-            while (answer.Members == null
-                && answer.Origin == ItemOrigin.HostOutput
-                && answer.Element != null
-                && answer.Element.Origin == ItemOrigin.HostOutput)
-            {
-                answer = answer.Element;
-            }
+            SchemaItem answer = ListingLimitRule.Answer(schema.Output);
 
             SchemaItem[] members = answer.Members == null
                 ? new SchemaItem[0]

@@ -197,7 +197,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// ハンドルを発行されうる型。列挙をそのまま持たない側のための形で、
-        /// <paramref name="concrete"/> は抽象の型からその枝の型を引く表である。
+        /// <paramref name="concrete"/> は抽象の型からその枝の型を引く表である。所有の根は、その枝の
+        /// 型へハンドルが発行されうるなら、根の型も発行されうるものに数える。
         /// </summary>
         public static ISet<string> Issued(
             IDictionary<string, SignatureRecord> signatures,
@@ -248,6 +249,15 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     issued.Add(TypeDefinitionName.OfElement(
                         ValueTypeName.Contained(signature.ValueType)));
+                }
+            }
+
+            foreach (string root in ElementCollectionEvidence.OwnershipRoots)
+            {
+                IList<string> leaves;
+                if (concrete.TryGetValue(root, out leaves) && leaves.Any(issued.Contains))
+                {
+                    issued.Add(root);
                 }
             }
 

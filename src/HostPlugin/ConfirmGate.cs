@@ -24,10 +24,7 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ConfirmGate
     {
-        /// <summary>
-        /// 確認が要るか。対象を選べる初期化だけは要否が対象で分かれるので、この入口では扱わず
-        /// <see cref="ClearNeedsConfirm"/> が受け持つ。
-        /// </summary>
+        /// <summary>確認が要るか。</summary>
         public static bool NeedsConfirm(DangerKind kind)
         {
             switch (kind)
@@ -43,15 +40,6 @@ namespace PmxEditorMcp
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "知らない種別。");
             }
-        }
-
-        /// <summary>
-        /// 対象を選べる初期化で確認が要るか。空にするのがエディタの開いているPMXのときだけ要る。
-        /// 対象を指定して呼ぶときに空になるのはメモリの上の生成物なので、要らない。
-        /// </summary>
-        public static bool ClearNeedsConfirm(bool emptiesOpenPmx)
-        {
-            return emptiesOpenPmx;
         }
 
         /// <summary>
@@ -72,20 +60,6 @@ namespace PmxEditorMcp
             message = Describe(kind) + "。取り返しが付かないので、confirm を真にして呼ぶ。";
 
             return false;
-        }
-
-        /// <summary>対象を選べる初期化について、<see cref="TryPass"/> と同じことを行う。</summary>
-        public static bool TryPassClear(
-            bool emptiesOpenPmx, bool confirm, out string code, out string message)
-        {
-            if (!ClearNeedsConfirm(emptiesOpenPmx))
-            {
-                code = null;
-                message = null;
-                return true;
-            }
-
-            return TryPass(DangerKind.Reset, confirm, out code, out message);
         }
 
         private static string Describe(DangerKind kind)

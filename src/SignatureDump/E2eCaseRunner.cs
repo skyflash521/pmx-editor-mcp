@@ -98,7 +98,7 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.ReceiverPaths(inventory),
                     inputs.ElementAdders(inventory),
                     inputs.ElementRemovers(inventory),
-                    inputs.ConditionalDangerousTools(inventory),
+                    inputs.HeldOnlyResettingTools(inventory),
                     inputs.TypePaths(inventory),
                     inputs.ElementParents(inventory),
                     inputs.ElementAddersByTool(inventory),

@@ -983,7 +983,8 @@ namespace PmxEditorMcp.SignatureDump
             string tool = schema.Tool;
             string path = row == null ? string.Empty : ConnectionPath(rowKey, connectionPaths);
             string editKind = row == null ? string.Empty : ToolMapJsonReader.SpellingOf(row.EditKind);
-            bool confirmed = row != null && dangerous.Contains(rowKey);
+            bool heldOnly = aimed != null && aimed.Contains(tool);
+            bool confirmed = row != null && dangerous.Contains(rowKey) && !heldOnly;
 
             // 確認を要さず、渡すものが決まる行は実際に呼ぶ。呼べない行は呼び先まで届く検査を1つも
             // 持たないままになる——呼び先が在ることだけを見ても、その行の振る舞いは確かめられない。
@@ -992,7 +993,7 @@ namespace PmxEditorMcp.SignatureDump
             bool written = row != null && given != null && given.ContainsKey(rowKey);
             IDictionary<string, object> calling =
                 new Dictionary<string, object>(StringComparer.Ordinal);
-            bool calls = row != null && (!confirmed || written)
+            bool calls = row != null && (!confirmed || written) && !heldOnly
                 && TryCalling(row, schema, sdkShapes, sampled, handleTargets, given, out calling)
                 && Satisfied(schema, calling);
 
@@ -1015,7 +1016,7 @@ namespace PmxEditorMcp.SignatureDump
             // 引数にハンドルで相手を取る呼び出しは、その相手も作ってから渡す。道ごとに作る列を
             // 分けて覚える——同じ型を2か所で取る呼び出しもあるが、渡すのは別の実体でよい。
             IDictionary<string, IList<string>> handing = null;
-            if (!calls && maker != null && aimed != null && aimed.Contains(tool) && Aims(schema))
+            if (!calls && maker != null && heldOnly && Aims(schema))
             {
                 calling = new Dictionary<string, object>(StringComparer.Ordinal)
                 {

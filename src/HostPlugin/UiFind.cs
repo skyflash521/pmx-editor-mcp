@@ -32,8 +32,8 @@ namespace PmxEditorMcp
         /// <summary>上限を省いたときに返す件数。</summary>
         public const int DefaultLimit = 50;
 
-        /// <summary>1回で返せる件数の上限。</summary>
-        public const int MaxLimit = 500;
+        /// <summary>頼める件数の上限。</summary>
+        public const int MaxLimit = int.MaxValue;
 
         private const string TotalName = "total";
 

@@ -56,6 +56,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map;
             ToolSchemaTable schemas;
             CommonContractTable contract;
+            IDictionary<string, string> returns;
             try
             {
                 ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
@@ -64,6 +65,8 @@ namespace PmxEditorMcp.SignatureDump
                 map = ToolMapJsonReader.Read(Read(args[4], "能力対応表の正本"));
                 schemas = ToolSchemaJsonReader.Read(Read(args[5], "スキーマ正本"));
                 contract = CommonContractJsonReader.Read(Read(args[6], "共通契約の正本"));
+                returns = CloneReturnJsonReader.Read(
+                    Read(CloneReturnJsonReader.Beside(args[1]), "エディタが返す型の表"));
             }
             catch (Exception exception)
             {
@@ -100,7 +103,8 @@ namespace PmxEditorMcp.SignatureDump
                     contract.Types
                         .Where(t => t.Shape != null)
                         .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal),
-                    contract.ComposedTools.Keys);
+                    contract.ComposedTools.Keys,
+                    returns);
             }
             catch (InvalidOperationException exception)
             {

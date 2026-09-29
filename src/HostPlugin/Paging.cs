@@ -53,6 +53,8 @@ namespace PmxEditorMcp
         /// 件数が増えたときに大きさが減らないようにする——ただし切り出したものを全件そのまま載せる
         /// ときだけは、続きの位置が付かないぶん小さくなってよい。その値が
         /// <paramref name="valueChars"/> を超えない最も多い件数まで減らす。1件も返せないときは偽。
+        /// <paramref name="measure"/> には、1つの要素だけの並びと、同じ要素を2つ並べた並びも渡す。
+        /// 枠に収まらなかった要素より後ろの要素は読まない。
         /// </summary>
         public static bool TryTake<T>(
             IList<T> all,
@@ -84,8 +86,8 @@ namespace PmxEditorMcp
 
             page = null;
             int asked = Math.Max(0, Math.Min(limit, all.Count - offset));
-            T[] taken = all.Skip(offset).Take(asked).ToArray();
-            int fitted = Fit(taken, valueChars, measure);
+            List<T> taken = Read(all, offset, asked, valueChars, measure);
+            int fitted = Fit(taken, asked, valueChars, measure);
             if (asked > 0 && fitted == 0)
             {
                 return false;
@@ -111,16 +113,47 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>枠に収まる最も多い件数。</summary>
-        private static int Fit<T>(T[] taken, int valueChars, Func<IList<T>, int> measure)
+        private static List<T> Read<T>(
+            IList<T> all, int offset, int asked, int valueChars, Func<IList<T>, int> measure)
         {
-            if (taken.Length == 0 || measure(taken) <= valueChars)
+            List<T> taken = new List<T>();
+            bool ending = offset + asked == all.Count;
+            long running = 0;
+            long room = valueChars;
+            for (int at = 0; at < asked; at++)
             {
-                return taken.Length;
+                T item = all[offset + at];
+                taken.Add(item);
+                int alone = measure(new[] { item });
+                int step = measure(new[] { item, item }) - alone;
+                if (at == 0)
+                {
+                    running = alone;
+                    room = ending ? valueChars + (long)Math.Max(0, alone - step) : valueChars;
+                }
+                else
+                {
+                    running += step;
+                }
+
+                if (running > room)
+                {
+                    break;
+                }
+            }
+
+            return taken;
+        }
+
+        private static int Fit<T>(List<T> taken, int asked, int valueChars, Func<IList<T>, int> measure)
+        {
+            if (taken.Count == 0 || (taken.Count == asked && measure(taken) <= valueChars))
+            {
+                return taken.Count;
             }
 
             int low = 0;
-            int high = taken.Length;
+            int high = taken.Count == asked ? taken.Count : taken.Count + 1;
             while (high - low > 1)
             {
                 int middle = low + ((high - low) / 2);

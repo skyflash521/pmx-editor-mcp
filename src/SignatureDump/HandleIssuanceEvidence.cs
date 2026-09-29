@@ -33,11 +33,21 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その行が台帳へ預ける生成物の型。戻り値の綴りが <see cref="object"/> の行だけは受け手の型で
-        /// 預ける——複製を返す呼び出しは受け取った相手と同じ型のものを返すので、綴りのまま預けると、
-        /// どのツールの受け手もその番号を引けない。
+        /// エディタが返す型の表を持たずに、台帳へ預ける生成物の型を決める。戻り値の綴りが
+        /// <see cref="object"/> の行は受け手の型で預ける。
         /// </summary>
         public static string Issued(SignatureRecord signature)
+        {
+            return Issued(signature, null);
+        }
+
+        /// <summary>
+        /// その行が台帳へ預ける生成物の型。戻り値の綴りが <see cref="object"/> の行は、
+        /// <paramref name="returns"/>(行キーから、エディタがその呼び出しで実際に返すものの型へ引く表)
+        /// の型で預ける。表を渡さなければ受け手の型で預ける。表を渡したのに行が無ければ
+        /// <see cref="InvalidOperationException"/>。
+        /// </summary>
+        public static string Issued(SignatureRecord signature, IDictionary<string, string> returns)
         {
             if (signature == null)
             {
@@ -45,10 +55,24 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             string made = ValueTypeName.Contained(signature.ValueType);
+            if (!string.Equals(made, ObjectTypeName, StringComparison.Ordinal))
+            {
+                return made;
+            }
 
-            return string.Equals(made, ObjectTypeName, StringComparison.Ordinal)
-                ? TypeDefinitionName.Of(signature.DeclaringType)
-                : made;
+            if (returns == null)
+            {
+                return TypeDefinitionName.Of(signature.DeclaringType);
+            }
+
+            string returned;
+            if (!returns.TryGetValue(signature.Key, out returned))
+            {
+                throw new InvalidOperationException(
+                    "戻り値の綴りが object の行が、エディタが返す型の表に無い: " + signature.Key);
+            }
+
+            return returned;
         }
 
         /// <summary>

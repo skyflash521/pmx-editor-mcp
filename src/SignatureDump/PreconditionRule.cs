@@ -260,6 +260,31 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
+        /// <summary>
+        /// 呼ぶ前に読んで足し合わせる数を読むシグネチャの行キー。閉じる呼び出しは、取り消せる編集と
+        /// やり直せる編集の両方を数える。読むものが無ければ空。
+        /// </summary>
+        public static IList<string> CountingsOf(
+            SignatureRecord signature, IEnumerable<SignatureRecord> signatures)
+        {
+            string counting = CountingOf(signature, signatures);
+            if (counting == null)
+            {
+                return new string[0];
+            }
+
+            PreconditionKind kind;
+            TryClassify(signature, out kind);
+            if (kind != PreconditionKind.SavedEdits)
+            {
+                return new[] { counting };
+            }
+
+            return new[] { counting, Member(signatures, FormTypeName, RemainingByMember["Redo"]) }
+                .Where(k => k != null)
+                .ToList();
+        }
+
         private static string Member(IEnumerable<SignatureRecord> signatures, string typeName, string memberName)
         {
             return signatures

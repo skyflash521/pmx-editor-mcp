@@ -42,6 +42,8 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>切り出した並びを載せる項目の名前。</summary>
         public const string ItemsName = "items";
 
+        public const string TotalName = "total";
+
         /// <summary>`value` の内側の総数と続きの位置と配列の構文に充てる分。</summary>
         private const int ListingOverhead = 1000;
 
@@ -108,7 +110,7 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private static SchemaItem Element(ToolSchema schema)
         {
-            SchemaItem items = (schema.Output.Members ?? new SchemaItem[0]).FirstOrDefault(
+            SchemaItem items = (Answer(schema.Output).Members ?? new SchemaItem[0]).FirstOrDefault(
                 m => string.Equals(m.Name, ItemsName, StringComparison.Ordinal));
             if (items == null || items.Element == null)
             {
@@ -117,6 +119,48 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return items.Element;
+        }
+
+        /// <summary>
+        /// 対象1つぶんの応答。対象ごとに返すツールでは、ホストが組む並びの要素へ降りる。
+        /// </summary>
+        public static SchemaItem Answer(SchemaItem output)
+        {
+            if (output == null)
+            {
+                throw new ArgumentNullException(nameof(output));
+            }
+
+            SchemaItem answer = output;
+            while (answer.Members == null
+                && answer.Origin == ItemOrigin.HostOutput
+                && answer.Element != null
+                && answer.Element.Origin == ItemOrigin.HostOutput)
+            {
+                answer = answer.Element;
+            }
+
+            return answer;
+        }
+
+        /// <summary>
+        /// 応答が総数と切り出した並びを返す形か。一覧を返すツールはこの形を取り、対象ごとに返す
+        /// ツールでは対象1つぶんの応答がこの形を取る。
+        /// </summary>
+        public static bool IsListing(ToolSchema schema)
+        {
+            if (schema == null)
+            {
+                throw new ArgumentNullException(nameof(schema));
+            }
+
+            IList<SchemaItem> members = Answer(schema.Output).Members;
+
+            return members != null
+                && members.Any(m => string.Equals(m.Name, TotalName, StringComparison.Ordinal))
+                && members.Any(
+                    m => string.Equals(m.Name, ItemsName, StringComparison.Ordinal)
+                        && m.Element != null);
         }
     }
 }

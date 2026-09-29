@@ -8900,7 +8900,32 @@
             "handles": [
               {
                 "$from": "scale17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
               },
+              {
+                "path": "items.0.gs",
+                "equals": [
+                  2,
+                  3,
+                  4
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_vector_value_operator",
+          "arguments": {
+            "handles": [
               {
                 "$from": "scaleClone17"
               }
@@ -8910,19 +8935,7 @@
             "ok": true,
             "values": [
               {
-                "path": "total",
-                "equals": 2
-              },
-              {
-                "path": "items.0.gs",
-                "equals": [
-                  2,
-                  3,
-                  4
-                ]
-              },
-              {
-                "path": "items.1.gs",
+                "path": "0",
                 "equals": [
                   2,
                   3,
@@ -9328,9 +9341,6 @@
             "handles": [
               {
                 "$from": "scale17"
-              },
-              {
-                "$from": "scaleClone17"
               }
             ]
           },
@@ -9344,9 +9354,25 @@
                   6,
                   7
                 ]
-              },
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_vme_vector_value_operator",
+          "arguments": {
+            "handles": [
               {
-                "path": "1",
+                "$from": "scaleClone17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
                 "equals": [
                   2,
                   3,
@@ -11867,342 +11893,6 @@
         },
         {
           "kind": "tool",
-          "tool": "view_set_bone_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "bx": 0,
-              "scale": [
-                2,
-                2,
-                2
-              ],
-              "rotate": [
-                0,
-                0,
-                1,
-                0
-              ],
-              "translate": [
-                1,
-                2,
-                3
-              ]
-            }
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_update_transform_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ]
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_get_transformed_bone_matrix_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "bx": 0
-            }
-          },
-          "expect": {
-            "ok": true,
-            "values": [
-              {
-                "path": "0",
-                "equals": [
-                  -2,
-                  0,
-                  0,
-                  0,
-                  0,
-                  -2,
-                  0,
-                  0,
-                  0,
-                  0,
-                  2,
-                  0,
-                  1,
-                  2,
-                  3,
-                  1
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_set_bone_translate_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "bx": 0,
-              "translate": [
-                4,
-                5,
-                6
-              ]
-            }
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_set_bone_scale_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "bx": 0,
-              "scale": [
-                3,
-                3,
-                3
-              ]
-            }
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_set_bone_rotate_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "bx": 0,
-              "rotate": [
-                0,
-                1,
-                0,
-                0
-              ]
-            }
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_set_morph_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "mx": 1,
-              "val": 1
-            }
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_update_transform_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ]
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_get_transformed_vertex_position_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "vx": 0
-            }
-          },
-          "expect": {
-            "ok": true,
-            "values": [
-              {
-                "path": "0",
-                "equals": [
-                  4,
-                  8,
-                  6
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_reset_bone_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ]
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_reset_morph_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ]
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_update_transform_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ]
-          },
-          "expect": {
-            "ok": true
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_get_transformed_bone_position_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "bx": 0
-            }
-          },
-          "expect": {
-            "ok": true,
-            "values": [
-              {
-                "path": "0",
-                "equals": [
-                  0,
-                  0,
-                  0
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_get_transformed_vertex_position_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "vx": 0
-            }
-          },
-          "expect": {
-            "ok": true,
-            "values": [
-              {
-                "path": "0",
-                "equals": [
-                  0,
-                  0,
-                  0
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "view_get_transformed_vertex_normal_ui_model",
-          "arguments": {
-            "handles": [
-              {
-                "$from": "uiModel17"
-              }
-            ],
-            "args": {
-              "vx": 0
-            }
-          },
-          "expect": {
-            "ok": true,
-            "values": [
-              {
-                "path": "0",
-                "equals": [
-                  0,
-                  1,
-                  0
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "kind": "tool",
           "tool": "view_get_client_image_pmd_view_connector",
           "arguments": {},
           "record": {
@@ -12723,10 +12413,368 @@
         },
         {
           "kind": "tool",
+          "tool": "view_set_bone_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0,
+              "scale": [
+                2,
+                2,
+                2
+              ],
+              "rotate": [
+                0,
+                0,
+                1,
+                0
+              ],
+              "translate": [
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_transform_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_bone_matrix_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  -2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  1,
+                  2,
+                  3,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_bone_translate_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0,
+              "translate": [
+                4,
+                5,
+                6
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_bone_scale_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0,
+              "scale": [
+                3,
+                3,
+                3
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_bone_rotate_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0,
+              "rotate": [
+                0,
+                1,
+                0,
+                0
+              ]
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_morph_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "mx": 1,
+              "val": 1
+            }
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_transform_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_vertex_position_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "vx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  4,
+                  8,
+                  6
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_reset_bone_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_reset_morph_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_transform_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_bone_position_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "bx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_vertex_position_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "vx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_transformed_vertex_normal_ui_model",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "uiModel17"
+              }
+            ],
+            "args": {
+              "vx": 0
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "0",
+                "equals": [
+                  0,
+                  -1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "makeIk",
+            "indices": [
+              0
+            ],
+            "linkCount": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": [
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_update_bones",
           "arguments": {
             "indices": [
-              0
+              1
             ],
             "value": {
               "isIk": true
@@ -12763,7 +12811,7 @@
           "arguments": {
             "assignments": [
               {
-                "parentIndex": 0,
+                "parentIndex": 1,
                 "handles": [
                   {
                     "$from": "ikLink17"
@@ -12787,7 +12835,7 @@
           "tool": "model_update_iks",
           "arguments": {
             "parentIndices": [
-              0
+              1
             ],
             "all": true,
             "value": {
@@ -12809,7 +12857,7 @@
           "tool": "model_clone_ik",
           "arguments": {
             "parentIndices": [
-              0
+              1
             ],
             "all": true
           },
@@ -12850,7 +12898,7 @@
           "tool": "model_list_ik_links",
           "arguments": {
             "parentIndices": [
-              0
+              1
             ],
             "all": true,
             "fields": [
@@ -12876,7 +12924,7 @@
           "tool": "model_remove_ik_links",
           "arguments": {
             "parentIndices": [
-              0
+              1
             ],
             "all": true
           },
@@ -12895,7 +12943,7 @@
           "tool": "model_list_ik_links",
           "arguments": {
             "parentIndices": [
-              0
+              1
             ],
             "all": true
           },

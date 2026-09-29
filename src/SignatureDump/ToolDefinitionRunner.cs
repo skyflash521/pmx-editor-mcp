@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace PmxEditorMcp.SignatureDump
@@ -51,9 +52,17 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             ToolDefinitionInputs inputs;
+            ComposedReads composedReads;
+            ComposedTextReads composedTexts;
             try
             {
                 inputs = ToolDefinitionInputs.Read(editorDirectory, args);
+                composedReads = ComposedNumberReadJsonReader.Read(
+                    File.ReadAllText(ComposedNumberReadJsonReader.Beside(args[1])));
+                composedTexts = ComposedTextReadJsonReader.Read(
+                    File.ReadAllText(ComposedTextReadJsonReader.Beside(args[1])),
+                    ComposedTextReadJsonReader.ReadWindowForms(
+                        File.ReadAllText(ComposedTextReadJsonReader.UiStructureBeside(args[1]))));
             }
             catch (Exception exception)
             {
@@ -86,9 +95,10 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.TokenLimit,
                     sdkShapes,
                     inputs.DangerousTools(inventory),
-                    inputs.ConditionalDangerousTools(inventory),
+                    inputs.HeldOnlyResettingTools(inventory),
                     inputs.SuppressingTools(inventory),
-                    inputs.DrawingTools());
+                    inputs.DrawingTools(),
+                    inputs.InputRules(inventory, composedReads, composedTexts));
             }
             catch (InvalidOperationException exception)
             {
@@ -100,7 +110,14 @@ namespace PmxEditorMcp.SignatureDump
             string digest = inputs.MapDigest;
             try
             {
-                WriteIfChanged(args[8], ToolDefinitionSource.Compose(definitions, digest));
+                WriteIfChanged(
+                    args[8],
+                    ToolDefinitionSource.Compose(
+                        definitions
+                            .Select(d => new ToolDefinition(
+                                d.Name, d.Description, SchemaCompactor.Compact(d.InputSchema), d.ReturnsImage))
+                            .ToList(),
+                        digest));
             }
             catch (Exception exception)
             {

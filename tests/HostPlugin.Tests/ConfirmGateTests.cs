@@ -28,18 +28,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void EmptyingTheOpenPmxNeedsConfirm()
-        {
-            Assert.True(ConfirmGate.ClearNeedsConfirm(emptiesOpenPmx: true));
-        }
-
-        [Fact]
-        public void EmptyingSomethingOtherThanTheOpenPmxDoesNotNeedConfirm()
-        {
-            Assert.False(ConfirmGate.ClearNeedsConfirm(emptiesOpenPmx: false));
-        }
-
-        [Fact]
         public void AConfirmedDangerousCallPasses()
         {
             Assert.True(ConfirmGate.TryPass(
@@ -80,32 +68,6 @@ namespace PmxEditorMcp.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => ConfirmGate.TryPass(
                 (DangerKind)99, confirm: true, code: out string _, message: out string _));
-        }
-
-        [Fact]
-        public void ClearingTheOpenPmxWithoutConfirmIsRefused()
-        {
-            Assert.False(ConfirmGate.TryPassClear(
-                emptiesOpenPmx: true, confirm: false, code: out string code, message: out string message));
-            Assert.Equal(ToolEnvelope.ConfirmRequired, code);
-            Assert.Contains("空にする", message);
-        }
-
-        [Fact]
-        public void ClearingSomethingOtherThanTheOpenPmxPassesWithoutConfirm()
-        {
-            Assert.True(ConfirmGate.TryPassClear(
-                emptiesOpenPmx: false, confirm: false, code: out string code, message: out string message));
-            Assert.Null(code);
-            Assert.Null(message);
-        }
-
-        [Fact]
-        public void ClearingTheOpenPmxWithConfirmPasses()
-        {
-            Assert.True(ConfirmGate.TryPassClear(
-                emptiesOpenPmx: true, confirm: true, code: out string code, message: out string _));
-            Assert.Null(code);
         }
     }
 }

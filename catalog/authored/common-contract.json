@@ -302,7 +302,7 @@
     {
       "tool": "editor_find_operation",
       "branching": false,
-      "duty": "文言から画面の部品を探し、主画面からそこまでの道筋を返す。エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。text は1文字以上の文字列で、ウィンドウのタイトル・部品の文言・部品を指したときに出る説明・そのウィンドウが出す確認や報告の文言へ部分一致で当てる。大文字小文字と全角半角と仮名の種類は区別しない。matches の各件はウィンドウの型の完全名 form を持ち、タイトルのあるウィンドウではタイトル title も持つ。部品に当たったものはウィンドウの根からその部品までの path、確認や報告の文言に当たったものは message を持つ。route は主画面からそのウィンドウを開くまでの各段で、段ごとに開く側のウィンドウ form と、そのウィンドウの中で辿る部品 via と、辿り着いた部品のショートカット shortcut を持つ。主画面から開けないウィンドウは route の代わりに unreachable を持つ。total は当たった総数で、limit と応答の枠で返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。limit は1以上500以下の整数で既定は50、offset は0以上2147483647以下の整数で既定は0である。"
+      "duty": "文言から画面の部品を探し、主画面からそこまでの道筋を返す。エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。text は1文字以上の文字列で、ウィンドウのタイトル・部品の文言・部品を指したときに出る説明・そのウィンドウが出す確認や報告の文言へ部分一致で当てる。大文字小文字と全角半角と仮名の種類は区別しない。matches の各件はウィンドウの型の完全名 form を持ち、タイトルのあるウィンドウではタイトル title も持つ。部品に当たったものはウィンドウの根からその部品までの path、確認や報告の文言に当たったものは message を持つ。route は主画面からそのウィンドウを開くまでの各段で、段ごとに開く側のウィンドウ form と、そのウィンドウの中で辿る部品 via と、辿り着いた部品のショートカット shortcut を持つ。主画面から開けないウィンドウは route の代わりに unreachable を持つ。total は当たった総数で、limit と応答の枠で返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。limit は1以上2147483647以下の整数で既定は50、offset は0以上2147483647以下の整数で既定は0である。"
     },
     {
       "tool": "editor_get_prompt",
@@ -382,7 +382,7 @@
     {
       "tool": "model_edit_normals",
       "branching": false,
-      "duty": "指した頂点の法線を整える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。operation は average・averageNear・fromFaces・normalize・flip のいずれか。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にし、rotate は rotationAxis に軸の向きを3つの数で、rotationAngle に角を度で渡して、その軸のまわりに法線だけを回す。正の角で、軸が X なら +Y を +Z へ回す。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点の法線を整える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。operation は average・averageNear・fromFaces・normalize・flip のいずれか。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にし、rotate は rotationAxis に軸の向きを3つの数で、rotationAngle に角を度で渡して、その軸のまわりに法線だけを回す。rotationAxis は長さを持たなければならない。正の角で、軸が X なら +Y を +Z へ回す。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_edit_uv",
@@ -422,7 +422,7 @@
     {
       "tool": "model_find_vertex_bounds",
       "branching": false,
-      "duty": "指した頂点の座標の範囲を返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。count に頂点の数を、min・max に3つの軸それぞれの最小と最大を、center にその中ほどを返す。minVertices・maxVertices に、軸ごとに最小・最大を取った頂点の位置を3つ返し、同じ値の頂点が複数あれば位置が最も小さいものを返す。頂点が1つも無ければ count だけを返す。boxes に箱を並べると、指した頂点のうち箱に入るものの count・min・max・center・minVertices・maxVertices を、箱ごとに同じ並びで boxes に返す。箱は minX・maxX・minY・maxY・minZ・maxZ で軸ごとの境を持ち、境の上の頂点も箱に入る。省いた境はその側を切らない。最小が最大を超える箱は invalid_argument になる。"
+      "duty": "指した頂点の座標の範囲を返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を並べて、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。count に頂点の数を、min・max に3つの軸それぞれの最小と最大を、center にその中ほどを返す。minVertices・maxVertices に、軸ごとに最小・最大を取った頂点の位置を3つ返し、同じ値の頂点が複数あれば位置が最も小さいものを返す。頂点が1つも無ければ count だけを返す。boxes に箱を並べると、指した頂点のうち箱に入るものの count・min・max・center・minVertices・maxVertices を、箱ごとに同じ並びで boxes に返す。箱は minX・maxX・minY・maxY・minZ・maxZ で軸ごとの境を持ち、境の上の頂点も箱に入る。両方の境を渡す軸では、min を max 以下にする。省いた境はその側を切らない。最小が最大を超える箱は invalid_argument になる。"
     },
     {
       "tool": "model_insert_elements",
@@ -442,7 +442,7 @@
     {
       "tool": "model_place_elements",
       "branching": false,
-      "duty": "種類をまたいだ要素を、点へそろえるか、ずらす・回す・拡縮する。targets は組の並びで、組は kind に vertex・bone・body・joint のどれかを取り、要素を indices・range・all・selected のどれか1つで指す。vertex の組は materialIndices で材質の面が使う頂点も指せる。同じ種類は二度並べられない。position・offset・rotationAxis・center は3つの数で渡す。operation は alignTo・translateBy(平行移動)・rotateBy(回転)・scaleBy(拡大縮小)のどれか。alignTo は position にそろえる先の点を、axes に xyz・x・y・z のどれかを渡し、選んだ軸だけそろえる。translateBy は offset にずらす量を渡す。rotateBy は rotation にX・Y・Z軸まわりの角を度で3つ渡して Z軸・X軸・Y軸の順に回すか、rotationAxis に軸の向きを、rotationAngle に角を度で渡してその軸のまわりに回す。正の角で、X軸は +Y を +Z へ、Y軸は +Z を +X へ、Z軸は +X を +Y へ回す。頂点は位置と法線を、ボーンは位置を、剛体とジョイントは位置と回転を回す。scaleBy は scale に3つの軸の倍率を渡し、位置を拡縮する。剛体は倍率がそろうときだけ大きさもその倍率にする。rotateBy と scaleBy は center に不動の点を渡せ、省くと原点になる。alignTo 以外は ramp で要素ごとに強さを変えられる。組は axis に x・y・z のどれか、from と to に違う数を持ち、その軸の座標が from で強さ0、to で強さ1、外側は近い端の強さ、間は curve が linear(既定)なら線形、smooth なら線形の強さ t を 3t²−2t³ にする。組の強さは掛け合わせる。強さ s では、ずらす量と回す角は s 倍、倍率は scale×s+(1−s) になる。動かすと有限でなくなる要素があれば、何も動かさず invalid_argument になる。changed に動いた数を返す。"
+      "duty": "種類をまたいだ要素を、点へそろえるか、ずらす・回す・拡縮する。targets は組の並びで、組は kind に種類を取り、要素を indices・range・all・selected のどれか1つで指す。vertex の組は materialIndices で材質の面が使う頂点も指せる。同じ種類は二度並べられない。position・offset・rotationAxis・center は3つの数で渡す。operation は alignTo・translateBy(平行移動)・rotateBy(回転)・scaleBy(拡大縮小)のどれか。alignTo は position にそろえる先の点を、axes に xyz・x・y・z のどれかを渡し、選んだ軸だけそろえる。translateBy は offset にずらす量を渡す。rotateBy は rotation にX・Y・Z軸まわりの角を度で3つ渡して Z軸・X軸・Y軸の順に回すか、rotationAxis に長さのある軸の向きを、rotationAngle に角を度で渡してその軸のまわりに回す。正の角で、X軸は +Y を +Z へ、Y軸は +Z を +X へ、Z軸は +X を +Y へ回す。頂点は位置と法線を、ボーンは位置を、剛体とジョイントは位置と回転を回す。scaleBy は scale に3つの軸の倍率を渡し、位置を拡縮する。剛体は倍率がそろうときだけ大きさもその倍率にする。rotateBy と scaleBy は center に不動の点を渡せ、省くと原点になる。alignTo 以外は ramp で要素ごとに強さを変えられる。組は axis に x・y・z のどれか、from と to に違う数を持ち、その軸の座標が from で強さ0、to で強さ1、外側は近い端の強さ、間は curve が linear(既定)なら線形、smooth なら線形の強さ t を 3t²−2t³ にする。組の強さは掛け合わせる。強さ s では、ずらす量と回す角は s 倍、倍率は scale×s+(1−s) になる。動かすと有限でなくなる要素があれば、何も動かさず invalid_argument になる。changed に動いた数を返す。"
     },
     {
       "tool": "model_reorder_elements",

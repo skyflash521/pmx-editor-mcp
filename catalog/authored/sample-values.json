@@ -2,13 +2,13 @@
   "types": [
     {
       "typeName": "PEPlugin.Pmd.BodyBoxKind",
-      "default": "Sphere",
-      "second": "Box"
+      "default": "Box",
+      "second": "Capsule"
     },
     {
       "typeName": "PEPlugin.Pmd.BodyMode",
-      "default": "Static",
-      "second": "Dynamic"
+      "default": "Dynamic",
+      "second": "DynamicWithBone"
     },
     {
       "typeName": "PEPlugin.Pmd.BoneKind",
@@ -395,7 +395,7 @@
     },
     {
       "typeName": "System.Single",
-      "default": 0.5,
+      "default": 0.25,
       "second": 1.5
     },
     {

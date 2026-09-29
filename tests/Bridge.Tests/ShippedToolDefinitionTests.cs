@@ -67,7 +67,8 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             List<string> violations = new List<string>();
             JsonSchema schema = JsonSchema.FromText(definition.InputSchema);
-            JsonObject properties = JsonNode.Parse(definition.InputSchema)["properties"].AsObject();
+            JsonObject properties =
+                SchemaRefs.Inlined(JsonNode.Parse(definition.InputSchema))["properties"].AsObject();
             HashSet<string> tried = new HashSet<string>(StringComparer.Ordinal);
             IEnumerable<JsonObject> inputs = Inputs(properties, branches, false)
                 .Concat(Inputs(properties, branches, true));
@@ -153,7 +154,7 @@ namespace PmxEditorMcp.Bridge.Tests
                     continue;
                 }
 
-                JsonNode limit = JsonNode.Parse(definition.InputSchema)["properties"]["limit"];
+                JsonNode limit = SchemaRefs.Inlined(JsonNode.Parse(definition.InputSchema))["properties"]["limit"];
                 IList<JsonObject> forms = Alternatives(limit);
                 if (forms.Count == 0
                     || !forms.All(f => f.ContainsKey("minimum")
@@ -286,7 +287,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 GeneratedToolDefinition definition = definitions[at];
                 JsonSchema schema = JsonSchema.FromText(definition.InputSchema);
                 JsonObject properties =
-                    JsonNode.Parse(definition.InputSchema)["properties"].AsObject();
+                    SchemaRefs.Inlined(JsonNode.Parse(definition.InputSchema))["properties"].AsObject();
                 bool takenOnlyWithConfirm = false;
                 bool takenWithoutConfirm = false;
                 HashSet<string> tried = new HashSet<string>(StringComparer.Ordinal);
@@ -562,6 +563,17 @@ namespace PmxEditorMcp.Bridge.Tests
             }
 
             IList<string> types = TypesOf(form);
+            if (form["enum"] is JsonArray named && named.Count > 0)
+            {
+                List<JsonNode> listed = new List<JsonNode> { named[0]?.DeepClone() };
+                if (offType)
+                {
+                    listed.AddRange(types.SelectMany(t => ValuesOfType(form, t, true)));
+                }
+
+                return listed;
+            }
+
             if (types.Count == 0)
             {
                 return new JsonNode[]
@@ -1002,7 +1014,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
                 return input =>
                 {
-                    if (confirms ? !IsTrue(input[ConfirmName]) : input.ContainsKey(ConfirmName))
+                    if (confirms ? !IsBoolean(input[ConfirmName]) : input.ContainsKey(ConfirmName))
                     {
                         return false;
                     }
@@ -1090,11 +1102,14 @@ namespace PmxEditorMcp.Bridge.Tests
             public bool IsConnectorUpdate(string tool)
             {
                 KeyValuePair<string, string> source;
+                HostBinding binding;
 
                 return _sources.TryGetValue(tool, out source)
                     && Role(source.Key) == ConnectorRole
                     && source.Value == UpdateAction
-                    && !_sdk.Methods(source.Key).Any(m => Squeezed(m.Name) == UpdateAction);
+                    && (_bindings.TryGetValue(tool, out binding)
+                        ? binding.Section == "aggregations"
+                        : !_sdk.Methods(source.Key).Any(m => Squeezed(m.Name) == UpdateAction));
             }
 
             private static void Tally(
@@ -1814,7 +1829,7 @@ namespace PmxEditorMcp.Bridge.Tests
                     ? null
                     : members.FirstOrDefault(m => Text(m, "name") == "items");
                 JsonArray listed = items == null || items["element"] == null
-                    ? null
+                    ? members
                     : items["element"]["members"] as JsonArray;
 
                 return new HashSet<string>(

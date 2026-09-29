@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
@@ -85,7 +84,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new ReadOnlyCollection<string>(descriptions
-                .Where(d => Holds(Folded(d.Key, d.Value), terms))
+                .Where(d => Holds(d.Key, d.Value, terms))
                 .Select(d => d.Key)
                 .OrderBy(t => t, StringComparer.Ordinal)
                 .ToList());
@@ -113,15 +112,10 @@ namespace PmxEditorMcp.SignatureDump
                 found.OrderBy(t => t, StringComparer.Ordinal).ToList());
         }
 
-        private static string Folded(string tool, string description)
-        {
-            return (tool + "\n" + description).ToLower(CultureInfo.InvariantCulture);
-        }
-
-        private static bool Holds(string folded, IList<string> terms)
+        private static bool Holds(string tool, string description, IList<string> terms)
         {
             return terms.Count != 0
-                && terms.All(t => folded.Contains(t.ToLower(CultureInfo.InvariantCulture)));
+                && terms.All(t => TextMatch.Contains(tool, t) || TextMatch.Contains(description, t));
         }
     }
 }

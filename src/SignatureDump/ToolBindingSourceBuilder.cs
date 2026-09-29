@@ -64,7 +64,8 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// 表を組み立てる。<paramref name="toolNames"/> は行キーからツールの名前へ、
         /// <paramref name="roles"/> は担当群を解いた型役割表、<paramref name="assignments"/> は
-        /// 共通契約割当の正本。
+        /// 共通契約割当の正本、<paramref name="returns"/> は行キーから、エディタがその呼び出しで
+        /// 実際に返すものの型へ引く表。
         /// </summary>
         public static ToolBindingSource Build(
             ToolMap map,
@@ -74,7 +75,8 @@ namespace PmxEditorMcp.SignatureDump
             CommonAssignmentTable assignments,
             ToolSchemaTable schemas,
             IDictionary<string, string> shapesByType,
-            IEnumerable<string> composedTools)
+            IEnumerable<string> composedTools,
+            IDictionary<string, string> returns = null)
         {
             if (shapesByType == null)
             {
@@ -204,7 +206,8 @@ namespace PmxEditorMcp.SignatureDump
                             assignments,
                             map,
                             tool,
-                            responding.Contains(tool)));
+                            responding.Contains(tool),
+                            returns));
                     Listing(lists, path, signatures, byType, aside);
                     continue;
                 }
@@ -532,7 +535,8 @@ namespace PmxEditorMcp.SignatureDump
             CommonAssignmentTable assignments,
             ToolMap map,
             string tool,
-            bool responds)
+            bool responds,
+            IDictionary<string, string> returns)
         {
             DangerKind kind;
             string danger = dangerous.TryGetValue(signature.Key, out kind)
@@ -552,7 +556,7 @@ namespace PmxEditorMcp.SignatureDump
                 ? Releases(signature, signatures, assignments)
                 : new string[0];
             string contained = ValueTypeName.Contained(signature.ValueType);
-            string made = issuing ? HandleIssuanceEvidence.Issued(signature) : contained;
+            string made = issuing ? HandleIssuanceEvidence.Issued(signature, returns) : contained;
             bool many = (issuing || projected != null)
                 && !string.Equals(contained, signature.ValueType, StringComparison.Ordinal);
             string releases = release.Length == 0 ? null : release[0];
@@ -1683,8 +1687,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 string[] tools = kind == PreconditionKind.PickedObjects ? picked : new string[0];
-                string listed = PreconditionRule.CountingOf(signature, signatures.Values);
-                string[] rows = listed != null ? new[] { listed } : new string[0];
+                IList<string> rows = PreconditionRule.CountingsOf(signature, signatures.Values);
                 preconditions[tool] = "new ToolPrecondition(PreconditionKind." + kind
                     + ", new string[] { " + string.Join(", ", tools.Select(Literal))
                     + " }, new string[] { " + string.Join(", ", rows.Select(Literal))

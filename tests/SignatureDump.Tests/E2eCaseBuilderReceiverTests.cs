@@ -525,17 +525,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Lent(made.Produces), called.Borrowed.Values.Single());
         }
 
-        [Fact]
-        public void TheConfirmationRefusalStaysForAToolThatIsAimed()
-        {
-            Assert.Contains(
-                Aiming(),
-                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal)
-                    && c.Expectation == E2eExpectation.Refusal
-                    && string.Equals(
-                        c.Code, E2eCaseBuilder.ConfirmRequired, StringComparison.Ordinal));
-        }
-
         /// <summary>新しく作った相手を指して呼ぶ、確認を要する行の検査。</summary>
         private static IList<E2eCase> Aiming()
         {

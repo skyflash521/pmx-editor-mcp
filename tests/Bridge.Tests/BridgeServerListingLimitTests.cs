@@ -74,6 +74,10 @@ namespace PmxEditorMcp.Bridge.Tests
                     new Listing(new[] { CountedTotal }, 0, "referrerIndices", "0".Length, 1)
                 },
                 {
+                    "model_find_material_vertices",
+                    new Listing(new[] { CountedTotal }, 0, "vertexIndices", "0".Length, 1)
+                },
+                {
                     "editor_find_operation",
                     new Listing(
                         new[] { CountedTotal, "editorVersion" },
@@ -282,7 +286,9 @@ namespace PmxEditorMcp.Bridge.Tests
             Dictionary<string, int> found = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (McpClientTool tool in tools)
             {
-                Collect(tool.Name, tool.ProtocolTool.InputSchema, found);
+                using JsonDocument inlined =
+                    JsonDocument.Parse(SchemaRefs.Inlined(tool.ProtocolTool.InputSchema.GetRawText()));
+                Collect(tool.Name, inlined.RootElement, found);
             }
 
             return found;
@@ -535,6 +541,27 @@ namespace PmxEditorMcp.Bridge.Tests
                 }
             }
 
+            private static JsonElement Answer(JsonElement output)
+            {
+                JsonElement answer = output;
+                while (!answer.TryGetProperty("members", out _)
+                    && IsHostOutput(answer)
+                    && answer.TryGetProperty("element", out JsonElement element)
+                    && IsHostOutput(element))
+                {
+                    answer = element;
+                }
+
+                return answer;
+            }
+
+            private static bool IsHostOutput(JsonElement item)
+            {
+                return item.ValueKind == JsonValueKind.Object
+                    && item.TryGetProperty("origin", out JsonElement origin)
+                    && origin.GetString() == HostOutputOrigin;
+            }
+
             public Listing Of(string tool, out string reason)
             {
                 reason = null;
@@ -554,7 +581,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
                 JsonElement items = default;
                 bool found = false;
-                if (schema.GetProperty("output").TryGetProperty("members", out JsonElement members))
+                if (Answer(schema.GetProperty("output")).TryGetProperty("members", out JsonElement members))
                 {
                     foreach (JsonElement member in members.EnumerateArray())
                     {
@@ -577,7 +604,14 @@ namespace PmxEditorMcp.Bridge.Tests
                 bool sourced = _sources.TryGetValue(tool, out source);
                 if (element.TryGetProperty("members", out JsonElement parts))
                 {
-                    IList<Way> ways = ObjectItemWays(tool, schema, parts, sourced ? source.Key : null, out reason);
+                    string returned = sourced ? ReturnType(source.Key, source.Value) : null;
+                    IList<Way> ways = ObjectItemWays(
+                        tool,
+                        schema,
+                        parts,
+                        sourced ? source.Key : null,
+                        returned == null ? null : ElementType(returned.TrimEnd('&')),
+                        out reason);
 
                     return ways == null ? null : new Listing(new[] { CountedTotal }, 0, ItemsName, ways);
                 }
@@ -611,7 +645,12 @@ namespace PmxEditorMcp.Bridge.Tests
             }
 
             private IList<Way> ObjectItemWays(
-                string tool, JsonElement schema, JsonElement parts, string source, out string reason)
+                string tool,
+                JsonElement schema,
+                JsonElement parts,
+                string source,
+                string returnedElement,
+                out string reason)
             {
                 reason = null;
                 Dictionary<string, int> hosted = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -622,6 +661,10 @@ namespace PmxEditorMcp.Bridge.Tests
                     bool host = part.TryGetProperty("origin", out JsonElement origin)
                         && origin.GetString() == HostOutputOrigin;
                     int? value = host ? CatalogValueChars(part) : SdkMemberChars(source, name, out reason);
+                    if (value == null && !host && returnedElement != null)
+                    {
+                        value = SdkMemberChars(returnedElement, name, out reason);
+                    }
                     if (value == null)
                     {
                         reason = reason ?? "ホストが返す項目 " + name + " の形が正本に無い";

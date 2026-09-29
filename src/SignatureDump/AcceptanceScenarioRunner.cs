@@ -51,11 +51,19 @@ namespace PmxEditorMcp.SignatureDump
             ToolDefinitionInputs inputs;
             JsonNode scenarios;
             JsonNode stub;
+            ComposedReads composedReads;
+            ComposedTextReads composedTexts;
             try
             {
                 inputs = ToolDefinitionInputs.Read(editorDirectory, args);
                 scenarios = AcceptanceScenarioGate.Read(Read(args[8], "受入シナリオの正本"));
                 stub = AcceptanceScenarioGate.Read(Read(args[9], "突き合わせの題材"));
+                composedReads = ComposedNumberReadJsonReader.Read(
+                    Read(ComposedNumberReadJsonReader.Beside(args[1]), "合成ツールの数の読み取りの表"));
+                composedTexts = ComposedTextReadJsonReader.Read(
+                    Read(ComposedTextReadJsonReader.Beside(args[1]), "合成ツールの文字の読み取りの表"),
+                    ComposedTextReadJsonReader.ReadWindowForms(
+                        Read(ComposedTextReadJsonReader.UiStructureBeside(args[1]), "観測台帳")));
             }
             catch (Exception exception)
             {
@@ -87,9 +95,10 @@ namespace PmxEditorMcp.SignatureDump
                     inputs.TokenLimit,
                     sdkShapes,
                     inputs.DangerousTools(inventory),
-                    inputs.ConditionalDangerousTools(inventory),
+                    inputs.HeldOnlyResettingTools(inventory),
                     inputs.SuppressingTools(inventory),
-                    inputs.DrawingTools());
+                    inputs.DrawingTools(),
+                    inputs.InputRules(inventory, composedReads, composedTexts));
                 AcceptanceScenarioGate.Require(
                     scenarios,
                     definitions,

@@ -46,10 +46,15 @@ namespace PmxEditorMcp.SignatureDump
             {
                 RequireFields(row, kinds[row.SignatureKey]);
                 RequireUpdateKind(row, evidence);
-                RequireSetup(row, evidence);
+                RequireSetup(row.SignatureKey, Setups(row), evidence);
                 RequireObservedOrExplained(row);
                 RequireNoBannedReason(row);
                 RequireSdkArguments(row, evidence);
+            }
+
+            foreach (KeyValuePair<string, IList<SetupOperation>> setup in map.ToolSetups)
+            {
+                RequireSetup(setup.Key, setup.Value, evidence);
             }
 
             RequireCommonContract(map, kinds, assignments);
@@ -141,15 +146,16 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// 用意の操作が指す要素型と型は別の正本が持つ語なので、そこに実在することまで求める。
         /// </summary>
-        private static void RequireSetup(ToolMapRow row, ToolMapEvidence evidence)
+        private static void RequireSetup(
+            string owner, IEnumerable<SetupOperation> setups, ToolMapEvidence evidence)
         {
-            foreach (SetupOperation operation in Setups(row))
+            foreach (SetupOperation operation in setups)
             {
                 if (operation.ElementType != null
                     && !evidence.ElementNouns.Contains(operation.ElementType))
                 {
                     throw new InvalidOperationException(
-                        "用意の操作が足す要素型が型役割表に無い: " + row.SignatureKey
+                        "用意の操作が足す要素型が型役割表に無い: " + owner
                             + "(" + operation.ElementType + ")");
                 }
 
@@ -164,7 +170,7 @@ namespace PmxEditorMcp.SignatureDump
                     if (!evidence.TypeNames.Contains(type))
                     {
                         throw new InvalidOperationException(
-                            "サンプル値を引く型が公開API列挙に無い: " + row.SignatureKey
+                            "サンプル値を引く型が公開API列挙に無い: " + owner
                                 + "(" + type + ")");
                     }
                 }

@@ -70,7 +70,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             IList<TypeRoleRecord> records = table.Types;
-            RequireSameTypes(records, roleTypes);
+            RequireSameTypes(records, roleTypes, connectionRoots);
             RequireRootsAreConnectors(records, connectionRoots);
             RequireEventArgumentsMatchTheEvidence(records, eventArgumentTypes);
             RequireConnectorsNeedNoInstanceFromTheCaller(records, connectorCandidates);
@@ -82,7 +82,8 @@ namespace PmxEditorMcp.SignatureDump
         /// 表の型と役割対象を一対一で突き合わせる。これが無いと、型を丸ごと書き落としても、対象外の型を
         /// 混ぜても、残った項目だけが条件を満たして通る。
         /// </summary>
-        private static void RequireSameTypes(IList<TypeRoleRecord> records, ISet<string> roleTypes)
+        private static void RequireSameTypes(
+            IList<TypeRoleRecord> records, ISet<string> roleTypes, IEnumerable<string> connectionRoots)
         {
             HashSet<string> listed = new HashSet<string>(StringComparer.Ordinal);
             foreach (TypeRoleRecord record in records)
@@ -101,6 +102,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             string extra = listed.Except(roleTypes, StringComparer.Ordinal)
+                .Except(connectionRoots, StringComparer.Ordinal)
                 .OrderBy(n => n, StringComparer.Ordinal).FirstOrDefault();
             if (extra != null)
             {

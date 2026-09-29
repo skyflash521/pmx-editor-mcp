@@ -133,7 +133,8 @@ namespace PmxEditorMcp.Bridge.Tests
 
         private static void AssertSchemaMatchesTable(McpClientTool tool)
         {
-            System.Text.Json.JsonElement published = tool.ProtocolTool.InputSchema;
+            System.Text.Json.JsonElement published = System.Text.Json.JsonDocument
+                .Parse(SchemaRefs.Inlined(tool.ProtocolTool.InputSchema.GetRawText())).RootElement;
             System.Text.Json.JsonElement table = System.Text.Json.JsonDocument
                 .Parse(FixedToolTable.InputSchema(tool.Name)).RootElement;
 
