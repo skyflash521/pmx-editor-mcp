@@ -1026,7 +1026,8 @@ namespace PmxEditorMcp
                     return;
                 }
 
-                if (!VmdNames.TryCall(call.RowKey, arguments, out code, out message))
+                if (!VmdNames.TryCall(call.RowKey, arguments, out code, out message)
+                    || !VmdSaving.TryCall(call.RowKey, column[0].Item, out code, out message))
                 {
                     refused = new Refusal(ToolEnvelope.Failure(code, message));
 
@@ -1622,6 +1623,13 @@ namespace PmxEditorMcp
 
                 for (int at = 0; at < column.Count; at++)
                 {
+                    if (!VmdSaving.TryCall(call.RowKey, column[at].Item, out code, out message))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return;
+                    }
+
                     if (!VmePathPoints.TryCall(
                         call.RowKey,
                         column[at].Item,

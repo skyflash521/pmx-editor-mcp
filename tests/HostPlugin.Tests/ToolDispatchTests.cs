@@ -85,6 +85,8 @@ namespace PmxEditorMcp.Tests
 
         private const string CreateNamedKey = VmdNames.CreateVmdKey;
 
+        private const string SaveVmdKey = VmdSaving.ToFileKey;
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -115,6 +117,8 @@ namespace PmxEditorMcp.Tests
         private Info[] _infos;
 
         private int _namesRelayed;
+
+        private int _vmdSaved;
 
         public ToolDispatchTests()
         {
@@ -1513,6 +1517,45 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _namesRelayed);
         }
 
+        [Fact]
+        public void AVmdHoldingKeysTheReaderWouldMisplaceIsRefusedBeforeItIsSaved()
+        {
+            FakeVmd vmd = new FakeVmd();
+            vmd.Fill();
+            HandleLedger ledger = Ledger();
+            int held = ledger.Issue(typeof(FakeVmd).FullName, vmd, () => { });
+            IDictionary<string, object> arguments = Arguments(
+                "handles", new object[] { (long)held },
+                "args", Arguments("path", "a.vmd", "trimKeys", false));
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("vmd_save")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Equal(0, _vmdSaved);
+        }
+
+        [Fact]
+        public void AVmdHoldingOnlyBoneAndMorphKeysIsSaved()
+        {
+            FakeVmd vmd = new FakeVmd();
+            vmd.Bone.Add(null);
+            vmd.Morph.Add(null);
+            HandleLedger ledger = Ledger();
+            int held = ledger.Issue(typeof(FakeVmd).FullName, vmd, () => { });
+            IDictionary<string, object> arguments = Arguments(
+                "handles", new object[] { (long)held },
+                "args", Arguments("path", "a.vmd", "trimKeys", false));
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("vmd_save")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(1, _vmdSaved);
+        }
+
         private static IDictionary<string, object> Arguments(params object[] pairs)
         {
             Dictionary<string, object> arguments =
@@ -1788,6 +1831,14 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             _namesRelayed++;
+                            return null;
+                        }
+                    },
+                    {
+                        SaveVmdKey,
+                        (target, arguments) =>
+                        {
+                            _vmdSaved++;
                             return null;
                         }
                     },
@@ -2109,6 +2160,26 @@ namespace PmxEditorMcp.Tests
                         ToolAccess.Whole(),
                         DangerKind.None,
                         new[] { new ToolArgument("names", typeof(string[])) },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "vmd_save",
+                    new ToolCall(
+                        SaveVmdKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            TargetType,
+                            EditKind.Read,
+                            false,
+                            item => item is FakeVmd),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument("path", typeof(string)),
+                            new ToolArgument("trimKeys", typeof(bool)),
+                        },
                         new ToolArgument[0],
                         null)
                 },
