@@ -777,7 +777,7 @@ namespace PmxEditorMcp.Tests
         /// <summary>保存のダイアログを持ち主なしで出し、選ばれた名前を返す。取り消されたら null。</summary>
         private static string Chosen()
         {
-            using (SaveFileDialog dialog = new SaveFileDialog { Filter = "すべて(*.*)|*.*" })
+            using (SaveFileDialog dialog = new SaveFileDialog { Filter = "すべて(*.*)|*.*", InitialDirectory = DialogStartFolder.Path })
             {
                 return dialog.ShowDialog() == DialogResult.OK ? dialog.FileName : null;
             }
@@ -929,7 +929,7 @@ namespace PmxEditorMcp.Tests
             private void Save()
             {
                 Saves++;
-                using (SaveFileDialog dialog = new SaveFileDialog { Filter = "XML(*.xml)|*.xml" })
+                using (SaveFileDialog dialog = new SaveFileDialog { Filter = "XML(*.xml)|*.xml", InitialDirectory = DialogStartFolder.Path })
                 {
                     if (dialog.ShowDialog() != DialogResult.OK)
                     {

@@ -34,7 +34,7 @@ namespace PmxEditorMcp.Tests
                             new string[0],
                             TimeSpan.FromSeconds(10),
                             TimeSpan.FromMilliseconds(1500));
-                        using (SaveFileDialog dialog = new SaveFileDialog())
+                        using (SaveFileDialog dialog = new SaveFileDialog { InitialDirectory = DialogStartFolder.Path })
                         {
                             dialog.ShowDialog(owner);
                         }
