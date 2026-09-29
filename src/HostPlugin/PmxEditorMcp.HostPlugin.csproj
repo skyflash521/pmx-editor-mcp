@@ -19,6 +19,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.Tests" />
     <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.ModalTests" />
+    <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.SavingItemTests" />
   </ItemGroup>
 
   <ItemGroup>

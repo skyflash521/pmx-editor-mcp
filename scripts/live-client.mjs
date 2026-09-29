@@ -278,6 +278,7 @@ try {
             "-p",
             "--mcp-config", quoted(config),
             "--strict-mcp-config",
+            "--effort", "low",
             "--allowedTools", quoted(naming.join(",")),
             "--output-format", "stream-json",
             "--verbose",

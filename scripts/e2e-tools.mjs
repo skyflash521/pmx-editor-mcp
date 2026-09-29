@@ -11,6 +11,7 @@ import path from "node:path";
 import process from "node:process";
 import url from "node:url";
 import { McpClient } from "./mcp-client.mjs";
+import { dropRedundantSetups } from "./e2e-setups.mjs";
 
 /** ブリッジが本文の先頭へ置く、接続先の名乗りの書き出し。中継した応答だけがこれを持つ。 */
 const TARGET_PREFIX = "接続先: ";
@@ -1207,6 +1208,12 @@ if (named["--rows"] !== null) {
 if (cases.length === 0) {
     console.log("検査が1件も無い。");
     process.exit(EXIT_SUCCESS);
+}
+
+const trimmed = dropRedundantSetups(cases);
+if (trimmed.dropped !== 0) {
+    console.log("重複する段取りを省く: " + trimmed.dropped + " 件");
+    cases = trimmed.cases;
 }
 
 fs.rmSync(TEMPORARY_PLACE, { recursive: true, force: true });

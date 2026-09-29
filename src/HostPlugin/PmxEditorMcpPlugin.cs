@@ -198,9 +198,8 @@ namespace PmxEditorMcp
                 _log = new HostLog(HostLog.BuildDefaultFilePath(editorProcessId));
                 _log.Write("プラグインを起動した: version=" + HostVersion);
 
-                _uiAnchor = new Form();
-                _uiAnchor.ShowInTaskbar = false;
-                _uiAnchor.FormBorderStyle = FormBorderStyle.None;
+                HostTables tables = HostTables.Start();
+                _uiAnchor = new HostSwitchForm(HostSwitch.ReadFromEnvironment(), StopByMessage, StartByMessage);
 
                 // 表示しないフォームはハンドルを持たず Invoke できないため、ここで確保する。
                 _ = _uiAnchor.Handle;
@@ -211,7 +210,7 @@ namespace PmxEditorMcp
                 // 基盤メソッドは接続が受け持つので、ここへはツールだけを載せる。
                 McpMethodTable methods = new McpMethodTable();
                 UndoSuppression undo = new UndoSuppression(_log);
-                SdkRelayTable relay = GeneratedSdkRelay.Create();
+                SdkRelayTable relay = tables.Relay;
                 Dictionary<string, SdkReceiver> receivers = GeneratedSdkReceivers.Create();
                 receivers[ToolDispatch.ReceiverKey(ToolDispatch.ViewSettingType, ToolDispatch.Views[1])] =
                     connection => connection.RunArgs.Host.Connector.View.TransformViewSetting;
@@ -236,13 +235,13 @@ namespace PmxEditorMcp
                         relay, receivers, _resident, GeneratedSdkFlows.Bridge,
                         GeneratedSdkFlows.Pmx, undo),
                     recovery,
-                    GeneratedTools.Calls(),
-                    GeneratedTools.Aggregations(),
-                    GeneratedTools.Elements(),
-                    GeneratedTools.Preconditions(),
+                    tables.Calls,
+                    tables.Aggregations,
+                    tables.Elements,
+                    tables.Preconditions,
                     new PressedModifierKeys(),
                     new EventBindingTable(
-                        GeneratedTools.Attachments(), GeneratedTools.Payloads()),
+                        tables.Attachments, tables.Payloads),
                     refresh,
                     new ScreenTargets(
                         () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType)),
@@ -383,6 +382,41 @@ namespace PmxEditorMcp
             return _modelUpdates == null
                 ? dispatcher
                 : new TransformViewFollowing(dispatcher, _modelUpdates, () => Receiver(receivers, TransformViewType));
+        }
+
+        private void StopByMessage()
+        {
+            lock (_operationGate)
+            {
+                McpHost host = _host;
+                if (host != null && host.Status == HostStatus.Running)
+                {
+                    host.Stop();
+                    _log.Write("メッセージから停止した。");
+                }
+            }
+        }
+
+        private void StartByMessage()
+        {
+            lock (_operationGate)
+            {
+                McpHost host = _host;
+                string reason;
+                if (host != null && host.Status == HostStatus.Stopped)
+                {
+                    _log.Write(host.TryStart(out reason)
+                        ? "メッセージから開始した。"
+                        : "メッセージからの開始を受け付けなかった: " + reason);
+                }
+            }
+        }
+
+        internal void ShowStatusOf(McpHost host, HostLog log)
+        {
+            _host = host;
+            _log = log;
+            ShowStatus();
         }
 
         private void ShowStatus()
