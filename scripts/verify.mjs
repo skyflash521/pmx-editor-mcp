@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { cpus, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -9,6 +9,7 @@ import { spec } from 'node:test/reporters';
 import {
     NO_ARTIFACT, bundlesOf, derivedLimitOf, killDescendants,
     manifestOf, pathsTouch, selectGroups, splitIntoForms, stagesOf, verdictOf, weightOf,
+    withoutEditorOf, withoutEditorRefusal,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -193,16 +194,31 @@ function selectChecks(manifest, all, paths) {
 
 async function main(argv) {
     const all = argv.includes('--all');
+    const withoutEditor = argv.includes('--without-editor');
     const at = argv.indexOf('--set');
-    if (at < 0 || !argv[at + 1]) {
-        console.error('使い方: node scripts/verify.mjs --set standing|live [--all]');
+    if (at < 0 || !argv[at + 1] || (withoutEditor && argv[at + 1] !== 'standing')) {
+        console.error('使い方: node scripts/verify.mjs --set standing|live [--all]'
+            + ' / node scripts/verify.mjs --set standing --without-editor');
 
         return 2;
     }
 
     process.chdir(root);
+    if (withoutEditor) {
+        const refused = withoutEditorRefusal({
+            onRunner: process.env.GITHUB_ACTIONS === 'true',
+            editorDefined: existsSync(join(root, 'local.props')),
+        });
+        if (refused) {
+            console.error(refused);
 
-    return await verify(argv[at + 1], all);
+            return 2;
+        }
+
+        process.env.PMX_EDITOR_MCP_WITHOUT_EDITOR = '1';
+    }
+
+    return await verify(argv[at + 1], all, withoutEditor);
 }
 
 function discardQuietly(place) {
@@ -213,15 +229,17 @@ function discardQuietly(place) {
     }
 }
 
-async function verify(set, all) {
+async function verify(set, all, withoutEditor) {
     const began = process.hrtime.bigint();
     const work = mkdtempSync(join(tmpdir(), 'pmx-editor-mcp-verify-'));
     process.env.PMX_EDITOR_MCP_WORK = work;
     try {
         const manifest = manifestOf(set);
         Object.assign(process.env, manifest.environment || {});
-        const paths = all ? [] : changedPaths();
-        const { wanted, scope, nothingChanged } = selectChecks(manifest, all, paths);
+        const paths = all || withoutEditor ? [] : changedPaths();
+        const { wanted, scope, nothingChanged } = withoutEditor
+            ? { wanted: withoutEditorOf(manifest.checks), scope: 'PMXエディタ無しで走る検査' }
+            : selectChecks(manifest, all, paths);
         if (nothingChanged) {
             console.log('変えたものが無いので、走らせる検査も無い。');
 
@@ -234,11 +252,11 @@ async function verify(set, all) {
         const stopper = new AbortController();
         let overran = false;
         const spent = Number(process.hrtime.bigint() - began) / 1e9;
-        const timer = setTimeout(() => {
+        const timer = limit > 0 ? setTimeout(() => {
             overran = true;
             killDescendants(process.pid);
             stopper.abort();
-        }, Math.max(0, limit - spent) * 1000);
+        }, Math.max(0, limit - spent) * 1000) : null;
 
         const failed = [];
         const skipped = [];
@@ -268,8 +286,8 @@ async function verify(set, all) {
         discardQuietly(work);
 
         const elapsed = Number(process.hrtime.bigint() - began) / 1e9;
-        const took = `${elapsed.toFixed(1)}秒 / 上限 ${limit}秒`;
-        const over = overran || elapsed > limit;
+        const took = `${elapsed.toFixed(1)}秒 / ` + (limit > 0 ? `上限 ${limit}秒` : '上限なし');
+        const over = limit > 0 && (overran || elapsed > limit);
 
         console.log('');
         if (over) console.log(`上限を超えた: ${took}`);

@@ -33,6 +33,7 @@ foreach ($name in $checks.Keys) {
         name = $name
         forms = $forms
         formsInOrder = $one.FormsInOrder
+        withoutEditor = $one.WithoutEditor
         formArgument = $one.FormArgument
         resultsArgument = $one.ResultsArgument
         limitSeconds = $one.LimitSeconds

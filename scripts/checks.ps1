@@ -33,6 +33,7 @@ class Check {
     [scriptblock]$Body
     [scriptblock]$Forms
     [bool]$FormsInOrder
+    [bool]$WithoutEditor
     [string]$FormArgument = '-Form'
     [string]$ResultsArgument = '-Results'
 
@@ -57,6 +58,7 @@ function New-Check {
         [scriptblock]$Body,
         [scriptblock]$Forms,
         [switch]$FormsInOrder,
+        [switch]$WithoutEditor,
         [string]$FormArgument = '-Form',
         [string]$ResultsArgument = '-Results'
     )
@@ -69,6 +71,7 @@ function New-Check {
     $one.Body = $Body
     $one.Forms = $Forms
     $one.FormsInOrder = [bool]$FormsInOrder
+    $one.WithoutEditor = [bool]$WithoutEditor
     $one.FormArgument = $FormArgument
     $one.ResultsArgument = $ResultsArgument
 

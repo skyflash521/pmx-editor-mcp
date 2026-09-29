@@ -154,6 +154,18 @@ export function derivedLimitOf(runs) {
     return Math.round(total * 1000) / 1000;
 }
 
+export function withoutEditorRefusal({ onRunner, editorDefined }) {
+    if (!onRunner) return 'PMXエディタ無しで走らせる指定は GitHub Actions の中でだけ受け付ける。';
+    if (editorDefined) return 'local.props があるので、PMXエディタ無しで走らせる指定は受け付けない。';
+
+    return null;
+}
+
+export function withoutEditorOf(checks) {
+    return checks.filter((check) => check.withoutEditor)
+        .map((check) => ({ ...check, limitSeconds: 0 }));
+}
+
 /** 束を並べる順を決める見積り。形へ割った検査は、その組が受け持つ形の数だけを見込む。 */
 export function weightOf(checks) {
     return checks.reduce((sum, check) => sum + (check.share ?? check.limitSeconds), 0);

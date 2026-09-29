@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 
 import {
     CAPPED_CODE, bundlesOf, derivedLimitOf, isReady, judgeResult, killDescendants,
-    pathsTouch, runCapped, splitIntoForms, stagesOf, verdictOf, weightOf,
+    pathsTouch, runCapped, splitIntoForms, stagesOf, verdictOf, weightOf, withoutEditorOf, withoutEditorRefusal,
 } from './checks.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -131,6 +131,10 @@ const splitting = (given) => splitIntoForms([{
 const split = () => splitting({});
 const inOrder = () => splitting({ formsInOrder: true });
 const bundled = () => splitting({ bundle: naming(9) });
+const withoutEditor = () => withoutEditorOf([
+    { name: naming(0), limitSeconds: 5, withoutEditor: true },
+    { name: naming(1), limitSeconds: 7, withoutEditor: false },
+    { name: naming(2), limitSeconds: 11, withoutEditor: true }]);
 const groupsOf = (checks) => new Set(checks.map((check) => check.group)).size;
 
 /** 題材の中だけで使う道。綴りの形だけが要るので、呼び名から作る。 */
@@ -205,6 +209,16 @@ const items = [
     { named: '宣言した束の組の数', wanted: 1, got: () => groupsOf(bundled()) },
     { named: '形を持たない検査', wanted: 1,
         got: () => splitIntoForms([{ name: naming(0), limitSeconds: 5 }], '', 2).length },
+    { named: 'エディタ無しで走る検査の選り分け', wanted: '0,2',
+        got: () => withoutEditor().map((check) => check.name).join(',') },
+    { named: 'エディタ無しで走る検査の上限', wanted: 0,
+        got: () => derivedLimitOf([withoutEditor()]) },
+    { named: 'ランナーの外でのエディタ無しの拒否', wanted: true,
+        got: () => withoutEditorRefusal({ onRunner: false, editorDefined: false }) !== null },
+    { named: '導入先の定義があるときのエディタ無しの拒否', wanted: true,
+        got: () => withoutEditorRefusal({ onRunner: true, editorDefined: true }) !== null },
+    { named: 'ランナーでのエディタ無しの受け入れ', wanted: true,
+        got: () => withoutEditorRefusal({ onRunner: true, editorDefined: false }) === null },
     { named: '道の一致', wanted: true,
         got: () => pathsTouch(namings(2).map(kept), [kept(naming(9)), naming(1) + '*']) },
     { named: '道の不一致', wanted: false,

@@ -9,7 +9,7 @@ $PSNativeCommandUseErrorActionPreference = $false
 
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
-$editorDir = Get-EditorDirectory
+$editorDir = if ($env:PMX_EDITOR_MCP_WITHOUT_EDITOR) { $null } else { Get-EditorDirectory }
 $dump = 'src/SignatureDump/bin/Debug/net48/PmxEditorMcp.SignatureDump.exe'
 $hostDll = 'src/HostPlugin/bin/Debug/net48/PmxEditorMcp.dll'
 $observed = 'catalog/observed'
@@ -933,6 +933,7 @@ $checks['スクリプト構文'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 5 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Body {
         $bad = @()
         foreach ($file in Get-ChildItem scripts/*.mjs) {
@@ -946,6 +947,7 @@ $checks['スクリプト構文(PowerShell)'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Body {
         $bad = @()
         foreach ($file in Get-ChildItem scripts/*.ps1) {
@@ -960,6 +962,7 @@ $checks['文書のリンク'] = New-Check `
     -Groups @('ドキュメント', '定義', 'スクリプト') `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Run @('lychee', '--offline', '--no-progress', '--include-fragments',
         '--exclude-path', '.scratch', '--exclude-path', 'docs/.scratch',
         '--exclude-path', 'dist', '**/*.md')
@@ -977,6 +980,7 @@ $checks['要約の持ち主'] = New-Check `
     -Groups @('コード') `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Body {
         $follows = [regex]::new(
             '^[^\S\n]*(?:/// </summary>|/// <summary>[^\n]*</summary>)[^\S\n]*(?=\n[^\S\n]*/// <summary>)',
@@ -1118,6 +1122,7 @@ $checks['形の導出の照合'] = New-Check `
     -Groups @('定義', 'スクリプト') `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Body { Test-FormDerivation -Checks $checks }
 $checks['配布パッケージの生成'] = New-Check `
     -Groups @('ブリッジ配布') `
@@ -1135,6 +1140,7 @@ $checks['E2Eの実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 63 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Forms {
         $defined = Get-Content $e2eStub -Raw -Encoding UTF8 | ConvertFrom-Json
 
@@ -1149,6 +1155,7 @@ $checks['検査の集計の照合'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 5 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -FormsInOrder `
     -Forms { @(node scripts/checks-stub-run.mjs --list) } `
     -FormArgument '--forms' `
@@ -1158,6 +1165,7 @@ $checks['確認クライアントの照合'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 32 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Forms { @($wholeForm) + @((Get-CheckClientForms).Keys) } `
     -Body { param([string]$Form)
 
@@ -1167,6 +1175,7 @@ $checks['MCPの確認クライアントの照合'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 10 `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Forms { @($wholeForm) + @(Get-McpCheckClientForms) } `
     -Body { param([string]$Form)
 
@@ -1176,6 +1185,7 @@ $checks['実機動作確認の実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 37 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Forms { @($wholeForm) + @((Get-LiveHostRunnerForms).Keys) } `
     -Body { param([string]$Form)
 
@@ -1185,6 +1195,7 @@ $checks['参照クライアントの実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 46 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Forms { @($wholeForm) + @((Get-LiveClientRunnerForms).Keys) } `
     -Body { param([string]$Form)
 
@@ -1194,6 +1205,7 @@ $checks['受入の実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
     -LimitSeconds 120 <# 変更禁止 #> `
     -Needs $noArtifact `
+    -WithoutEditor `
     -Forms {
         $defined = Get-Content $acceptanceStub -Raw | ConvertFrom-Json
 
