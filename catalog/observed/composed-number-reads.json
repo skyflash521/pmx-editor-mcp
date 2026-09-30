@@ -49,6 +49,7 @@
     {"tool": "model_edit_materials", "input": "range.count", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_edit_materials", "input": "range.start", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_edit_materials", "input": "vertexIndices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
+    {"tool": "model_edit_morphs", "input": "boundary", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ModelEditMorphs.cs が単精度の有限の数として読む。"},
     {"tool": "model_edit_morphs", "input": "indices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_edit_morphs", "input": "pmxHandle", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "ComposedEdit.cs が long の範囲の整数として読む。"},
     {"tool": "model_edit_morphs", "input": "range.count", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},

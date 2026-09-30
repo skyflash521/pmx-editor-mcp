@@ -8521,6 +8521,48 @@
         },
         {
           "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "splitVerticesByAxis",
+            "all": true,
+            "axis": "y",
+            "boundary": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "removed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morphs",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "name"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.name",
+                "equals": "伸ばした分2"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "session_release_handle",
           "arguments": {
             "handles": [

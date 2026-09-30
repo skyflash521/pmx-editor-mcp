@@ -5566,6 +5566,18 @@
               "name": "targetSelected",
               "origin": "hostInput",
               "shape": "boolean"
+            },
+            {
+              "name": "axis",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            },
+            {
+              "name": "boundary",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ],
           "choices": [

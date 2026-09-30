@@ -179,6 +179,140 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AVertexMorphIsSplitByWhichSideOfTheBoundaryEachVertexStandsOn()
+        {
+            IPXVertex left = Vertex(-1f, 0f, 0f);
+            IPXVertex onBoundary = Vertex(0f, 0f, 0f);
+            IPXVertex right = Vertex(2f, 0f, 0f);
+            Morph("まばたき", MorphKind.Vertex, Shift(left, 1f), Shift(onBoundary, 2f), Shift(right, 3f));
+            Morph("色", MorphKind.Material);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Morphs(
+                Operation(ModelEditMorphs.SplitVerticesByAxis),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ModelEditMorphs.AxisName, "x")));
+
+            int[] added = ((object[])value[ModelEditMorphs.AddedName]).Cast<int>().ToArray();
+            Assert.Equal(2, added.Length);
+            Assert.Equal(1, value[ModelEditMorphs.RemovedName]);
+            Assert.Equal(
+                new[] { "色", "まばたき1", "まばたき2" },
+                _fixture.Model.Morph.Select(m => m.Name).ToArray());
+            Assert.Equal(
+                new[] { 2f, 3f },
+                _fixture.Model.Morph[added[0]].Offsets
+                    .Select(offset => ((IPXVertexMorphOffset)offset).Offset.X).ToArray());
+            Assert.Equal(
+                new[] { 1f },
+                _fixture.Model.Morph[added[1]].Offsets
+                    .Select(offset => ((IPXVertexMorphOffset)offset).Offset.X).ToArray());
+        }
+
+        [Fact]
+        public void SplittingBySideReadsTheGivenAxisAndBoundary()
+        {
+            IPXVertex low = Vertex(0f, 1f, 5f);
+            IPXVertex high = Vertex(0f, 3f, 1f);
+            Morph("口", MorphKind.Vertex, Shift(low, 1f), Shift(high, 2f));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Morphs(
+                Operation(ModelEditMorphs.SplitVerticesByAxis),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditMorphs.AxisName, "y"),
+                ComposedEditFixture.Given(ModelEditMorphs.BoundaryName, 2.0)));
+
+            int[] added = ((object[])value[ModelEditMorphs.AddedName]).Cast<int>().ToArray();
+            Assert.Equal(
+                2f,
+                ((IPXVertexMorphOffset)Assert.Single(_fixture.Model.Morph[added[0]].Offsets)).Offset.X);
+            Assert.Equal(
+                1f,
+                ((IPXVertexMorphOffset)Assert.Single(_fixture.Model.Morph[added[1]].Offsets)).Offset.X);
+        }
+
+        [Fact]
+        public void SplittingBySideMakesOnlyTheSideThatHasOffsetsUnderItsOwnName()
+        {
+            IPXVertex right = Vertex(2f, 0f, 0f);
+            Morph("口", MorphKind.Vertex, Shift(right, 1f));
+
+            Morphs(
+                Operation(ModelEditMorphs.SplitVerticesByAxis),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditMorphs.AxisName, "x"),
+                ComposedEditFixture.Given(ModelEditMorphs.BoundaryName, 5.0));
+
+            Assert.Equal("口2", Assert.Single(_fixture.Model.Morph).Name);
+        }
+
+        [Fact]
+        public void SplittingBySideCallsBothPartsWhereTheOriginalWasCalled()
+        {
+            IPXVertex left = Vertex(-1f, 0f, 0f);
+            IPXVertex right = Vertex(1f, 0f, 0f);
+            FakeMorph morph = Morph("口", MorphKind.Vertex, Shift(left, 1f), Shift(right, 2f));
+            Morph("まとめ", MorphKind.Group, new FakeGroupMorphOffset(morph) { Ratio = 0.5f });
+
+            Morphs(
+                Operation(ModelEditMorphs.SplitVerticesByAxis),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ModelEditMorphs.AxisName, "x"));
+
+            IPXMorph group = _fixture.Model.Morph.Single(m => m.Name == "まとめ");
+            Assert.Equal(
+                new[] { "口1", "口2" },
+                group.Offsets
+                    .Select(offset => ((IPXGroupMorphOffset)offset).Morph.Name)
+                    .OrderBy(name => name, StringComparer.Ordinal)
+                    .ToArray());
+        }
+
+        [Fact]
+        public void SplittingBySideWithoutAnAxisIsRefused()
+        {
+            Morph("口", MorphKind.Vertex);
+
+            IDictionary<string, object> envelope = Morphs(
+                Operation(ModelEditMorphs.SplitVerticesByAxis),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void TheAxisAndTheBoundaryAreRefusedForOtherOperations()
+        {
+            Morph("口", MorphKind.Vertex);
+
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ComposedEditFixture.Code(Morphs(
+                    Operation(ModelEditMorphs.SplitVertices),
+                    ComposedEditFixture.Given("all", true),
+                    ComposedEditFixture.Given(ModelEditMorphs.AxisName, "x"))));
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                ComposedEditFixture.Code(Morphs(
+                    Operation(ModelEditMorphs.SplitVertices),
+                    ComposedEditFixture.Given("all", true),
+                    ComposedEditFixture.Given(ModelEditMorphs.BoundaryName, 0.0))));
+        }
+
+        [Fact]
+        public void SplittingBySideWithANonNumberBoundaryIsRefused()
+        {
+            Morph("口", MorphKind.Vertex);
+
+            IDictionary<string, object> envelope = Morphs(
+                Operation(ModelEditMorphs.SplitVerticesByAxis),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditMorphs.AxisName, "x"),
+                ComposedEditFixture.Given(ModelEditMorphs.BoundaryName, "0"));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void SplittingAMorphOverALongStripFinishesInTime()
         {
             List<IPXVertex> bottom = new List<IPXVertex>();

@@ -33,6 +33,12 @@ namespace PmxEditorMcp
         /// <summary>頂点モーフを、動く頂点のまとまりごとの別々のモーフへ分ける。</summary>
         public const string SplitVertices = "splitVertices";
 
+        public const string SplitVerticesByAxis = "splitVerticesByAxis";
+
+        public const string AxisName = "axis";
+
+        public const string BoundaryName = "boundary";
+
         /// <summary>いまの材質の値を写した材質モーフを1つ足す。</summary>
         public const string MaterialFromCurrent = "materialFromCurrent";
 
@@ -79,6 +85,7 @@ namespace PmxEditorMcp
                     GroupInto,
                     FlipInto,
                     SplitVertices,
+                    SplitVerticesByAxis,
                     MaterialFromCurrent,
                     AddOffsets,
                     VertexMorphFromVertices,
@@ -113,6 +120,8 @@ namespace PmxEditorMcp
                 NameName,
                 TargetIndicesName,
                 TargetSelectedName,
+                AxisName,
+                BoundaryName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -133,9 +142,21 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            string axis;
+            float boundary;
             string name;
             IList<int> targets;
-            if (!ComposedInput.TryText(
+            if (!ComposedInput.TryChoice(
+                    context,
+                    AxisName,
+                    operation,
+                    new[] { SplitVerticesByAxis },
+                    ModelEditVertices.Axes,
+                    out axis,
+                    out code,
+                    out message)
+                || !TryBoundary(context, operation, out boundary, out code, out message)
+                || !ComposedInput.TryText(
                     context,
                     NameName,
                     operation,
@@ -180,7 +201,20 @@ namespace PmxEditorMcp
                     return Calling(model, builder, picked, name, MorphKind.Flip);
 
                 case SplitVertices:
-                    return Split(model, builder, picked);
+                    IDictionary<IPXVertex, int> islands = null;
+                    return Split(
+                        model,
+                        builder,
+                        picked,
+                        (made, morph) => Parted(
+                            model, made, morph, islands ?? (islands = Islands(model))));
+
+                case SplitVerticesByAxis:
+                    return Split(
+                        model,
+                        builder,
+                        picked,
+                        (made, morph) => Sided(model, made, morph, axis, boundary));
 
                 case AddOffsets:
                     return Filled(model, builder, picked, targets);
@@ -573,21 +607,19 @@ namespace PmxEditorMcp
             return Answer(new[] { model.Morph.Count - 1 }, 0, 0);
         }
 
-        /// <summary>
-        /// 頂点モーフを、面で繋がった頂点のまとまりごとの別々のモーフへ分ける。元のモーフは並びから
-        /// 外す。
-        /// </summary>
         private static ComposedEditResult Split(
-            IPXPmx model, Func<object> builder, IList<IPXMorph> picked)
+            IPXPmx model,
+            Func<object> builder,
+            IList<IPXMorph> picked,
+            Func<IPXPmxBuilder, IPXMorph, IList<IPXMorph>> parted)
         {
             IPXPmxBuilder made = (IPXPmxBuilder)builder();
-            IDictionary<IPXVertex, int> islands = Islands(model);
             Dictionary<IPXMorph, IPXMorph> moved =
                 new Dictionary<IPXMorph, IPXMorph>(ReferenceComparer<IPXMorph>.Instance);
             List<IPXMorph> split = new List<IPXMorph>();
             foreach (IPXMorph morph in picked.Where(m => m.Kind == MorphKind.Vertex))
             {
-                IList<IPXMorph> parts = Parted(model, made, morph, islands);
+                IList<IPXMorph> parts = parted(made, morph);
                 if (parts.Count == 0)
                 {
                     continue;
@@ -726,6 +758,83 @@ namespace PmxEditorMcp
             }
 
             return order;
+        }
+
+        private static IList<IPXMorph> Sided(
+            IPXPmx model, IPXPmxBuilder builder, IPXMorph morph, string axis, float boundary)
+        {
+            IPXMorph[] sides = new IPXMorph[2];
+            foreach (IPXMorphOffset offset in morph.Offsets)
+            {
+                IPXVertexMorphOffset shifted = offset as IPXVertexMorphOffset;
+                if (shifted == null || shifted.Vertex == null)
+                {
+                    continue;
+                }
+
+                V3 spot = shifted.Vertex.Position;
+                float value = string.Equals(axis, ModelEditVertices.AxisX, StringComparison.Ordinal)
+                    ? spot.X
+                    : string.Equals(axis, ModelEditVertices.AxisY, StringComparison.Ordinal)
+                        ? spot.Y
+                        : spot.Z;
+                int side = value >= boundary ? 0 : 1;
+                if (sides[side] == null)
+                {
+                    IPXMorph part = builder.Morph();
+                    part.Name = morph.Name + (side + 1);
+                    part.NameE = string.Empty;
+                    part.Kind = MorphKind.Vertex;
+                    part.Panel = morph.Panel;
+                    sides[side] = part;
+                }
+
+                sides[side].Offsets.Add(offset);
+            }
+
+            List<IPXMorph> parts = sides.Where(part => part != null).ToList();
+            foreach (IPXMorph part in parts)
+            {
+                model.Morph.Add(part);
+            }
+
+            return parts;
+        }
+
+        private static bool TryBoundary(
+            McpMethodContext context,
+            string operation,
+            out float boundary,
+            out string code,
+            out string message)
+        {
+            boundary = 0f;
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(BoundaryName, out given))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            if (!string.Equals(operation, SplitVerticesByAxis, StringComparison.Ordinal))
+            {
+                message = BoundaryName + " を渡せるのは " + SplitVerticesByAxis + " のときだけである。";
+
+                return false;
+            }
+
+            if (!ValueInput.TrySingle(given, out boundary))
+            {
+                message = BoundaryName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
         }
 
         private static IDictionary<IPXVertex, int> Islands(IPXPmx model)
