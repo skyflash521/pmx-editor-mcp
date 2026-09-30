@@ -200,6 +200,13 @@
     {"tool": "view_capture_image", "input": "position[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewCaptureImage.cs の TrySpot が単精度の有限の数として読む。"},
     {"tool": "view_capture_image", "input": "target[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewCaptureImage.cs の TrySpot が単精度の有限の数として読む。"},
     {"tool": "view_capture_image", "input": "upVector[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewCaptureImage.cs の TrySpot が単精度の有限の数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "imageHeight", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ViewPickScreenPoint.cs が1以上 int の最大値以下の整数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "imageWidth", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ViewPickScreenPoint.cs が1以上 int の最大値以下の整数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "limit", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ViewPickScreenPoint.cs が1以上 int の最大値以下の整数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "materialIndices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "ModelFindSurfaceDistances.cs の TryMaterials が int の範囲の整数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "screen", "reads": "integer", "least": 0, "most": 3, "basis": "ViewPickScreenPoint.cs が0以上3以下の整数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "x", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewPickScreenPoint.cs が単精度の有限の数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "y", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewPickScreenPoint.cs が単精度の有限の数として読む。"},
     {"tool": "view_poll_events", "input": "limit", "reads": "integer", "least": 1, "most": 1000, "basis": "EventPoll.cs が1以上 EventQueue.MaxLimit(1000)以下の整数として読む。"},
     {"tool": "view_select_elements", "input": "boundary", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectElements.cs が単精度の有限の数として読む。"},
     {"tool": "view_select_related", "input": "materialIndices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "ViewSelectRelated.cs が ComposedInput.TryIndices で int の範囲の整数として読む。"},
@@ -276,6 +283,7 @@
     {"tool": "view_capture_image", "input": "position", "least": 3, "most": 3, "basis": "ViewCaptureImage.cs の TrySpot がちょうど3つの並びとして読む。"},
     {"tool": "view_capture_image", "input": "target", "least": 3, "most": 3, "basis": "ViewCaptureImage.cs の TrySpot がちょうど3つの並びとして読む。"},
     {"tool": "view_capture_image", "input": "upVector", "least": 3, "most": 3, "basis": "ViewCaptureImage.cs の TrySpot がちょうど3つの並びとして読む。"},
+    {"tool": "view_pick_screen_point", "input": "materialIndices", "least": 1, "basis": "ViewPickScreenPoint.cs が ModelFindSurfaceDistances.TryMaterials で読み、空の並びを断る。"},
     {"tool": "view_select_related", "input": "materialIndices", "basis": "ViewSelectRelated.cs が ComposedInput.TryIndices で要素の数を問わずに読む。"}
   ]
 }

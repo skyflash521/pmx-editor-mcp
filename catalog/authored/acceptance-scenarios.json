@@ -5701,6 +5701,116 @@
         },
         {
           "kind": "tool",
+          "tool": "view_set_camera_view",
+          "arguments": {
+            "position": [
+              0,
+              0,
+              30
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "upVector": [
+              0,
+              1,
+              0
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_update_view_pmd_view_connector",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_pick_screen_point",
+          "arguments": {
+            "x": 100,
+            "y": 100,
+            "imageWidth": 200,
+            "imageHeight": 200
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 1
+              },
+              {
+                "path": "hits.0.material",
+                "equals": 0
+              },
+              {
+                "path": "hits.0.face",
+                "equals": 0
+              },
+              {
+                "path": "hits.0.vertices",
+                "equals": [
+                  0,
+                  1,
+                  2
+                ]
+              },
+              {
+                "path": "hits.0.frontFacing",
+                "equals": true
+              },
+              {
+                "path": "hits.0.vertex",
+                "equals": 2
+              },
+              {
+                "path": "hits.0.point",
+                "present": true
+              },
+              {
+                "path": "hits.0.distance",
+                "present": true
+              },
+              {
+                "path": "hits.0.vertexScreen",
+                "present": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_pick_screen_point",
+          "arguments": {
+            "x": 100,
+            "y": 20,
+            "imageWidth": 200,
+            "imageHeight": 200
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 1
+              },
+              {
+                "path": "hits.0.vertex",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_find_surface_section",
           "arguments": {
             "materialIndices": [

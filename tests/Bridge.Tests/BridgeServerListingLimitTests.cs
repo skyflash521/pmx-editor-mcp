@@ -86,6 +86,15 @@ namespace PmxEditorMcp.Bridge.Tests
                         "{\"index\":0,\"name\":\"\",\"vertexCount\":0,\"weightSum\":0,\"weightMax\":0}".Length)
                 },
                 {
+                    "view_pick_screen_point",
+                    new Listing(
+                        new[] { "count" },
+                        "0".Length,
+                        "hits",
+                        ("{\"material\":0,\"face\":0,\"vertices\":[0,0,0],\"point\":[0,0,0],\"distance\":0,"
+                            + "\"frontFacing\":true,\"vertex\":0,\"vertexDistance\":0}").Length)
+                },
+                {
                     "model_validate_pmx",
                     new Listing(
                         new[]

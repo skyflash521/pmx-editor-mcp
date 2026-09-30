@@ -734,9 +734,22 @@ namespace PmxEditorMcp.Tests
             return Shown(JointShown, Scene().Joint.Count);
         }
 
+        public List<int> MatrixScreens { get; } = new List<int>();
+
+        public PEPlugin.SDX.M ViewMatrix { get; set; }
+
+        public PEPlugin.SDX.M ProjectionMatrix { get; set; }
+
         public PEPlugin.SDX.M GetProjectionMatrix(int screen)
         {
-            throw new NotSupportedException();
+            if (ProjectionMatrix == null)
+            {
+                throw new NotSupportedException();
+            }
+
+            MatrixScreens.Add(screen);
+
+            return ProjectionMatrix;
         }
 
         public int[] GetVertexIndices()
@@ -753,7 +766,14 @@ namespace PmxEditorMcp.Tests
 
         public PEPlugin.SDX.M GetViewMatrix(int screen)
         {
-            throw new NotSupportedException();
+            if (ViewMatrix == null)
+            {
+                throw new NotSupportedException();
+            }
+
+            MatrixScreens.Add(screen);
+
+            return ViewMatrix;
         }
 
         public void SetBodyVisibles(bool[] v)

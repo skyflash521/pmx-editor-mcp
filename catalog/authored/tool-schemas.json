@@ -45198,6 +45198,152 @@
       }
     },
     {
+      "tool": "view_pick_screen_point",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "x",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true
+            },
+            {
+              "name": "y",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true
+            },
+            {
+              "name": "imageWidth",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true,
+              "bounds": {
+                "minimum": 1
+              }
+            },
+            {
+              "name": "imageHeight",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true,
+              "bounds": {
+                "minimum": 1
+              }
+            },
+            {
+              "name": "screen",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 3
+              }
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 1,
+              "bounds": {
+                "minimum": 1
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "count",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "hits",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "material",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "face",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "vertices",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "point",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "distance",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "frontFacing",
+                  "origin": "hostOutput",
+                  "shape": "boolean"
+                },
+                {
+                  "name": "vertex",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "vertexDistance",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "vertexScreen",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_play_vmd_view",
       "branches": [
         {
