@@ -786,7 +786,8 @@ namespace PmxEditorMcp.SignatureDump
                 body.AddNumber("minItems", least);
             }
 
-            if ((place.Top
+            if (item.UniqueItems
+                || (place.Top
                     && (fields
                         || PositionListNames.Contains(item.Name, StringComparer.Ordinal)
                         || string.Equals(item.Name, AssignmentsName, StringComparison.Ordinal)))

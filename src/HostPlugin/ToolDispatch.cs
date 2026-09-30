@@ -1027,6 +1027,7 @@ namespace PmxEditorMcp
                 }
 
                 if (!VmdNames.TryCall(call.RowKey, arguments, out code, out message)
+                    || !VmdPoseStates.TryCall(call.RowKey, arguments, out code, out message)
                     || !VmdSaving.TryCall(call.RowKey, column[0].Item, out code, out message))
                 {
                     refused = new Refusal(ToolEnvelope.Failure(code, message));
@@ -5251,7 +5252,6 @@ namespace PmxEditorMcp
             return invocation.DidRun;
         }
 
-        /// <summary>そのツールが受け取る名前。PMXから受け手を得るものは切り替えも受け取る。</summary>
         private static IList<string> Known(IList<string> names, bool targets)
         {
             List<string> known = new List<string>(names) { SuppressName };
@@ -5263,13 +5263,9 @@ namespace PmxEditorMcp
             return known;
         }
 
-        /// <summary>
-        /// どのPMXを見るかの指定を受け取る呼び出しか。受け手をハンドルで指す呼び出しは受け取らない
-        /// ——ハンドルが指す実体はどのPMXにも属さないので、指定しても相手は変わらない。
-        /// </summary>
-        private static bool Accepts(ToolCall call)
+        internal static bool Accepts(ToolCall call)
         {
-            return Targets(call) && !Handled(call.Receiver);
+            return Targets(call);
         }
 
         /// <summary>
@@ -5287,8 +5283,7 @@ namespace PmxEditorMcp
         /// </summary>
         private static bool Targets(ToolCall call)
         {
-            return call.Receiver.Kind == ToolReceiverKind.Pmx
-                || call.Arguments.Any(a => a.Injected || a.Referenced != null);
+            return call.Receiver.Kind == ToolReceiverKind.Pmx || Takes(call);
         }
 
         /// <summary>知らない名前の引数を渡す要求を断る。名前の検証は適用より先に済ませる。</summary>
@@ -5357,7 +5352,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>どのPMXを見るかの切り替え。PMXから受け手を得ない呼び出しは受け取らない。</summary>
         private static bool TryPmxHandle(
             McpMethodContext context,
             bool targets,

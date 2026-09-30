@@ -59,7 +59,8 @@ namespace PmxEditorMcp.SignatureDump
             string source,
             bool injected,
             int? maxItems,
-            bool emptyAllowed = false)
+            bool emptyAllowed = false,
+            bool uniqueItems = false)
         {
             Shape = shape;
             Members = members == null ? null : new ReadOnlyCollection<SchemaItem>(members);
@@ -75,6 +76,7 @@ namespace PmxEditorMcp.SignatureDump
             Injected = injected;
             MaxItems = maxItems;
             EmptyAllowed = emptyAllowed;
+            UniqueItems = uniqueItems;
         }
 
         /// <summary>値の表現の綴り。組と配列、およびSDKに由来する項目では null。</summary>
@@ -120,6 +122,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>名前の上では空にできない並びのうち、空を通してよいもの。</summary>
         public bool EmptyAllowed { get; }
+
+        public bool UniqueItems { get; }
 
         /// <summary>この項目と、その内側の項目をすべて並べたもの。</summary>
         public IEnumerable<SchemaItem> WithNested

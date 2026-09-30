@@ -117,6 +117,17 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void OnlyAnArrayThatRefusesARepeatCarriesUniqueItems()
+        {
+            Assert.Contains(
+                "\"uniqueItems\":true",
+                Schema(Tool("one", Branch(Unique(Array("values", "number", null))))));
+            Assert.DoesNotContain(
+                "\"uniqueItems\"",
+                Schema(Tool("one", Branch(Array("values", "number", null)))));
+        }
+
+        [Fact]
         public void AnInputTheHostFillsInIsNotShownToTheCaller()
         {
             string schema = Schema(Tool(
@@ -790,6 +801,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new SchemaItem(
                 null, null, Element(shape), name, ItemOrigin.HostInput, true, null, false,
                 null, null, maxItems == null ? null : "一次資料", false, maxItems);
+        }
+
+        private static SchemaItem Unique(SchemaItem item)
+        {
+            return new SchemaItem(
+                item.Shape, item.Members, item.Element, item.Name, item.Origin, item.Required,
+                item.Default, item.HasDefault, item.Bounds, item.Nullable, item.Source,
+                item.Injected, item.MaxItems, uniqueItems: true);
         }
 
         private static SchemaItem Element(string shape)

@@ -150,6 +150,27 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolThatActsOnHeldThingsAndTakesAModelSaysWhichModelItUses()
+        {
+            string note = ToolUsageNoteRule.Compose(TakingAModel("handles", "pmxHandle"));
+
+            Assert.Contains("pmxHandle にPMXのハンドルを渡すと、そのPMXを使う", note, StringComparison.Ordinal);
+            Assert.Contains("渡さなければ編集中のモデルを使う", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesAModelButNoHeldThingsDoesNotSayWhichModelItUses()
+        {
+            Assert.Null(ToolUsageNoteRule.Compose(TakingAModel("pmxHandle")));
+        }
+
+        [Fact]
+        public void AToolThatActsOnHeldThingsWithoutTakingAModelDoesNotSayWhichModelItUses()
+        {
+            Assert.Null(Note(false, "handles", "pmxHandle"));
+        }
+
+        [Fact]
         public void AToolThatHandsBackHandlesSaysThatItMakesSomethingNew()
         {
             string note = ToolUsageNoteRule.Compose(Issuing());
@@ -275,6 +296,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "model_list_vertices",
                 new[] { new SchemaBranch("only", null, null, taken, new SchemaChoice[0]) },
                 listing ? Listed() : Item(null, "boolean", null, null),
+                null);
+        }
+
+        private static ToolSchema TakingAModel(params string[] inputs)
+        {
+            List<SchemaItem> taken = new List<SchemaItem>();
+            foreach (string name in inputs)
+            {
+                taken.Add(Item(name, "number", null, null));
+            }
+
+            taken.Add(new SchemaItem(
+                null, null, null, "pmx", null, null, null, false, null, null, null, true, null));
+
+            return new ToolSchema(
+                "motion_init_vmd",
+                new[] { new SchemaBranch("held", null, null, taken, new SchemaChoice[0]) },
+                Item(null, "boolean", null, null),
                 null);
         }
 

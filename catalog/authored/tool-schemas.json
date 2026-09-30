@@ -25626,7 +25626,8 @@
             {
               "name": "boneIndices",
               "required": true,
-              "element": {}
+              "element": {},
+              "uniqueItems": true
             },
             {
               "name": "count",
@@ -28495,6 +28496,12 @@
               "required": true
             },
             {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
               "name": "pmx",
               "injected": true
             }
@@ -28526,6 +28533,12 @@
                 "shape": "number"
               },
               "required": true
+            },
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             },
             {
               "name": "pmx",
@@ -31835,6 +31848,12 @@
                 "shape": "number"
               },
               "required": true
+            },
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             },
             {
               "name": "pmx",
@@ -41840,6 +41859,12 @@
               "origin": "hostInput",
               "shape": "number",
               "injected": true
+            },
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             },
             {
               "name": "pmx",

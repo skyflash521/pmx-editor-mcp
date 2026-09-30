@@ -58,6 +58,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string EmptyAllowedName = "emptyAllowed";
 
+        private const string UniqueItemsName = "uniqueItems";
+
         private const string MinimumName = "minimum";
 
         private const string MaximumName = "maximum";
@@ -321,7 +323,7 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     OriginName, ShapeName, MembersName, ElementName, RequiredName, DefaultName,
                     BoundsName, NullableName, SourceName, InjectedName, MaxItemsName,
-                    EmptyAllowedName,
+                    EmptyAllowedName, UniqueItemsName,
                 });
 
             string name = named ? Member(members[NameName], NameName) : null;
@@ -366,6 +368,12 @@ namespace PmxEditorMcp.SignatureDump
                 throw new FormatException(
                     EmptyAllowedName + " を書けるのは、名前の上では空にできない並びだけである: "
                         + Written(members, NameName));
+            }
+
+            if (members.ContainsKey(UniqueItemsName) && !members.ContainsKey(ElementName))
+            {
+                throw new FormatException(
+                    UniqueItemsName + " を書けるのは並びだけである: " + Written(members, NameName));
             }
 
             if (fromSdk && hasValue && !hasSource)
@@ -433,7 +441,9 @@ namespace PmxEditorMcp.SignatureDump
                     ? Count(members[MaxItemsName], MaxItemsName)
                     : (int?)null,
                 members.ContainsKey(EmptyAllowedName)
-                    && Flag(members[EmptyAllowedName], EmptyAllowedName));
+                    && Flag(members[EmptyAllowedName], EmptyAllowedName),
+                members.ContainsKey(UniqueItemsName)
+                    && Flag(members[UniqueItemsName], UniqueItemsName));
         }
 
         private static ValueBounds ReadBounds(object value)

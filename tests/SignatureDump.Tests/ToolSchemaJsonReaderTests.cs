@@ -244,6 +244,33 @@ namespace PmxEditorMcp.SignatureDump.Tests
                      ""element"": { ""origin"": ""hostInput"", ""shape"": ""number"" } }]")));
         }
 
+        [Fact]
+        public void ReadsThatAnArrayTakesNoItemTwice()
+        {
+            SchemaItem input = OnlyInput(Table(Branch(
+                @"[{ ""name"": ""boneIndices"", ""required"": true, ""uniqueItems"": true,
+                     ""element"": {} }]")));
+
+            Assert.True(input.UniqueItems);
+        }
+
+        [Fact]
+        public void AnArrayDoesNotRefuseARepeatUnlessItSays()
+        {
+            SchemaItem input = OnlyInput(Table(Branch(
+                @"[{ ""name"": ""boneIndices"", ""required"": true, ""element"": {} }]")));
+
+            Assert.False(input.UniqueItems);
+        }
+
+        [Fact]
+        public void RejectsRefusingARepeatOnAnItemThatIsNotAnArray()
+        {
+            Rejects("uniqueItems を書けるのは", Table(Branch(
+                @"[{ ""name"": ""value"", ""origin"": ""hostInput"", ""required"": true,
+                     ""uniqueItems"": true, ""shape"": ""number"" }]")));
+        }
+
         [Theory]
         [InlineData(@"""shape"": ""number"", ""members"": []")]
         [InlineData(@"""shape"": ""number"", ""element"": { ""origin"": ""hostInput"",

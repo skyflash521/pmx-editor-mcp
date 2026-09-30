@@ -42,6 +42,12 @@ namespace PmxEditorMcp.Tests
 
         private const string PanelKey = "PEPlugin.Pmx.IPXMorph.Panel()";
 
+        private const string InitKey = "Sdk.Holder.Init(Sdk.Pmx)";
+
+        private const string TouchKey = "Sdk.Holder.Touch()";
+
+        private const string ConnectOnlyKey = "Sdk.PmxConnector.Ping(Sdk.PmxConnector)";
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -468,6 +474,92 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheModelAHeldReceiverTakesIsTheDuplicateOfTheCurrentModelWithoutASwitch()
+        {
+            HandleLedger handles = Ledger();
+            Holder holder = new Holder();
+            int held = handles.Issue(typeof(Holder).FullName, holder, () => { });
+            _clones = 0;
+
+            IDictionary<string, object> envelope = Call(
+                "holder_init", Arguments(TargetNames.Element.Handles, new object[] { held }), handles);
+
+            Assert.True((bool)envelope["ok"]);
+            Assert.IsType<Model>(holder.Given);
+            Assert.NotSame(_model, holder.Given);
+            Assert.Equal(1, _clones);
+        }
+
+        [Fact]
+        public void TheModelAHeldReceiverTakesIsTheOneTheRequestPointsAt()
+        {
+            HandleLedger handles = Ledger();
+            Holder holder = new Holder();
+            int receiver = handles.Issue(typeof(Holder).FullName, holder, () => { });
+            Model pointed = new Model();
+            int handle = handles.Issue(typeof(Model).FullName, pointed, () => { });
+            _clones = 0;
+
+            IDictionary<string, object> envelope = Call(
+                "holder_init",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { receiver },
+                    PmxSession.HandleName, handle),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(pointed, holder.Given);
+            Assert.Equal(0, _clones);
+            Assert.Equal(0, _commits);
+        }
+
+        [Fact]
+        public void AModelTheLedgerDoesNotCarryIsRefusedForAHeldReceiverThatTakesAModel()
+        {
+            HandleLedger handles = Ledger();
+            Holder holder = new Holder();
+            int receiver = handles.Issue(typeof(Holder).FullName, holder, () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "holder_init",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { receiver },
+                    PmxSession.HandleName, 1),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidHandle, Code(envelope));
+            Assert.Null(holder.Given);
+        }
+
+        [Fact]
+        public void ACallThatInjectsOnlyTheConnectorDoesNotDuplicateTheCurrentModel()
+        {
+            _clones = 0;
+
+            IDictionary<string, object> envelope = Call("connector_only", Arguments());
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(0, _clones);
+        }
+
+        [Fact]
+        public void AHeldReceiverThatTakesNoModelDoesNotTakeTheSwitchOfWhichModelToSee()
+        {
+            HandleLedger handles = Ledger();
+            int receiver = handles.Issue(typeof(Holder).FullName, new Holder(), () => { });
+            int handle = handles.Issue(typeof(Model).FullName, new Model(), () => { });
+
+            IDictionary<string, object> envelope = Call(
+                "holder_touch",
+                Arguments(
+                    TargetNames.Element.Handles, new object[] { receiver },
+                    PmxSession.HandleName, handle),
+                handles);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
         public void AddingDoesNotTakeTheSwitchOfWhichModelToSee()
         {
             IDictionary<string, object> envelope = Call(
@@ -817,6 +909,16 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     {
+                        InitKey,
+                        (target, arguments) =>
+                        {
+                            ((Holder)target).Given = arguments[0];
+                            return null;
+                        }
+                    },
+                    { TouchKey, (target, arguments) => null },
+                    { ConnectOnlyKey, (target, arguments) => null },
+                    {
                         PanelKey,
                         (target, arguments) =>
                         {
@@ -894,6 +996,16 @@ namespace PmxEditorMcp.Tests
                 ToolAccessKind.Element, ListKey, null, true, typeof(Item), item => item is Item);
         }
 
+        private static ToolReceiver Held()
+        {
+            return new ToolReceiver(
+                ToolReceiverKind.Handle,
+                typeof(Holder).FullName,
+                EditKind.DirectChange,
+                false,
+                item => item is Holder);
+        }
+
         private static ToolReceiver Rooted(EditKind edit)
         {
             return new ToolReceiver(ToolReceiverKind.Pmx, null, edit);
@@ -939,6 +1051,39 @@ namespace PmxEditorMcp.Tests
                         new ToolArgument[0],
                         null,
                         readBack: GetMarksKey)
+                },
+                {
+                    "holder_init",
+                    new ToolCall(
+                        InitKey,
+                        Held(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[] { new ToolArgument("pmx", typeof(Model), injected: true) },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "connector_only",
+                    new ToolCall(
+                        ConnectOnlyKey,
+                        new ToolReceiver(ToolReceiverKind.Connection, ConnectorType, EditKind.ViewSession),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[] { new ToolArgument("c", typeof(object), injected: true, connector: true) },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "holder_touch",
+                    new ToolCall(
+                        TouchKey,
+                        Held(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        null)
                 },
                 {
                     "model_compact_pmx",
@@ -1058,6 +1203,11 @@ namespace PmxEditorMcp.Tests
                 Materials.Clear();
                 Materials.AddRange(materials);
             }
+        }
+
+        private sealed class Holder
+        {
+            public object Given { get; set; }
         }
 
         /// <summary>リストが並べる要素の題材。</summary>

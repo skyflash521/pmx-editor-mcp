@@ -74,6 +74,15 @@ namespace PmxEditorMcp.SignatureDump
             ViewName + " に pmxView・transformView・subView を渡すと、それぞれ PMXView・TransformView・SubView の"
                 + "表示設定を相手にする。渡さなければ PMXView の表示設定を相手にする。";
 
+        private const string PmxHandleName = "pmxHandle";
+
+        private const string HandlesName = "handles";
+
+        private const string PmxName = "pmx";
+
+        private const string ChoosesTheModel =
+            PmxHandleName + " にPMXのハンドルを渡すと、そのPMXを使う。渡さなければ編集中のモデルを使う。";
+
         private const string MakesNew =
             "呼ぶたびに新しく作る。返るのは作ったもののハンドルの番号で、要らなくなったら"
                 + " session_release_handle へ渡す。";
@@ -169,6 +178,11 @@ namespace PmxEditorMcp.SignatureDump
                 built.Append(ChoosesTheView);
             }
 
+            if (TakesAModelForHeldThings(schema))
+            {
+                built.Append(ChoosesTheModel);
+            }
+
             if (Issues(schema))
             {
                 built.Append(MakesNew);
@@ -182,6 +196,15 @@ namespace PmxEditorMcp.SignatureDump
             return schema.Branches.Any(
                 b => b.Inputs.Any(
                     i => !i.Injected && string.Equals(i.Name, name, StringComparison.Ordinal)));
+        }
+
+        private static bool TakesAModelForHeldThings(ToolSchema schema)
+        {
+            return Takes(schema, HandlesName)
+                && Takes(schema, PmxHandleName)
+                && schema.Branches.Any(
+                    b => b.Inputs.Any(
+                        i => i.Injected && string.Equals(i.Name, PmxName, StringComparison.Ordinal)));
         }
 
         /// <summary>渡せる入力のすべてを、ちょうど1つを選ぶ組が占める分岐を持つか。</summary>

@@ -87,6 +87,8 @@ namespace PmxEditorMcp.Tests
 
         private const string SaveVmdKey = VmdSaving.ToFileKey;
 
+        private const string CreatePoseStatesKey = VmdPoseStates.CreateKey;
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -119,6 +121,8 @@ namespace PmxEditorMcp.Tests
         private int _namesRelayed;
 
         private int _vmdSaved;
+
+        private int _poseStatesRelayed;
 
         public ToolDispatchTests()
         {
@@ -861,7 +865,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ACallOnAHeldReceiverDoesNotTakeWhichPmxToLookAt()
+        public void ACallOnAHeldReceiverThatTakesAPmxTakesWhichPmxToLookAt()
         {
             IDictionary<string, object> arguments = Arguments();
             arguments.Add("handles", new object[] { 1L });
@@ -873,7 +877,7 @@ namespace PmxEditorMcp.Tests
                 Method("session_takes_held")(
                     new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
 
-            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Equal(ToolEnvelope.InvalidHandle, Code(envelope));
             Assert.Contains(PmxSession.HandleName, Message(envelope), StringComparison.Ordinal);
         }
 
@@ -1518,6 +1522,39 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void BoneIndicesThatRepeatAreRefusedBeforeThePoseStateBuilderIsCalled()
+        {
+            HandleLedger ledger = Ledger();
+            int held = ledger.Issue(typeof(FakeVmd).FullName, new FakeVmd(), () => { });
+            IDictionary<string, object> arguments = Arguments(
+                "vmd", (long)held, "boneIndices", new object[] { 3, 5, 3 });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("vmd_create_pose_states")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Contains("3", Message(envelope), StringComparison.Ordinal);
+            Assert.Equal(0, _poseStatesRelayed);
+        }
+
+        [Fact]
+        public void BoneIndicesThatDoNotRepeatReachThePoseStateBuilder()
+        {
+            HandleLedger ledger = Ledger();
+            int held = ledger.Issue(typeof(FakeVmd).FullName, new FakeVmd(), () => { });
+            IDictionary<string, object> arguments = Arguments(
+                "vmd", (long)held, "boneIndices", new object[] { 3, 5 });
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("vmd_create_pose_states")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(1, _poseStatesRelayed);
+        }
+
+        [Fact]
         public void AVmdHoldingKeysTheReaderWouldMisplaceIsRefusedBeforeItIsSaved()
         {
             FakeVmd vmd = new FakeVmd();
@@ -1839,6 +1876,14 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             _vmdSaved++;
+                            return null;
+                        }
+                    },
+                    {
+                        CreatePoseStatesKey,
+                        (target, arguments) =>
+                        {
+                            _poseStatesRelayed++;
                             return null;
                         }
                     },
@@ -2194,6 +2239,22 @@ namespace PmxEditorMcp.Tests
                         {
                             new ToolArgument("boneNames", typeof(string[])),
                             new ToolArgument("morphNames", typeof(string[])),
+                        },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "vmd_create_pose_states",
+                    new ToolCall(
+                        CreatePoseStatesKey,
+                        Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument(
+                                "vmd", typeof(FakeVmd), held: typeof(FakeVmd), holds: item => item is FakeVmd),
+                            new ToolArgument("boneIndices", typeof(int[])),
                         },
                         new ToolArgument[0],
                         null)
