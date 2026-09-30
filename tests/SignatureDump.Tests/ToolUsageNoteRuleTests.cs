@@ -310,6 +310,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("selected", ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void AnItemThatSaysWhatNullMeansCarriesItToTheNote()
+        {
+            SchemaItem material = new SchemaItem(
+                null, null, null, "material", null, false, null, false, null, true, null, false,
+                null, false, nullMeaning: "全材質を指す");
+            ToolSchema schema = new ToolSchema(
+                "model_update_morph_offsets",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only", null, null, new[] { material }, new SchemaChoice[0]),
+                },
+                Item(null, "boolean", null, null),
+                null);
+
+            Assert.Contains(
+                "material に null を渡すと全材質を指す。",
+                ToolUsageNoteRule.Compose(schema),
+                StringComparison.Ordinal);
+        }
+
         private static string Note(bool listing, params string[] inputs)
         {
             return ToolUsageNoteRule.Compose(Schema(listing, inputs));

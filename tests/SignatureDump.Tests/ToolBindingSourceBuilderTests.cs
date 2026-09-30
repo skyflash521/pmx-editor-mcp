@@ -610,6 +610,48 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 source.Text);
         }
 
+        [Theory]
+        [InlineData(false, true)]
+        [InlineData(null, true)]
+        [InlineData(true, false)]
+        public void AnArgumentThatPointsAtAnElementRefusesNullUnlessTheSchemaAllowsIt(
+            bool? nullable, bool refuses)
+        {
+            SignatureRecord signature = new SignatureRecord(
+                Form + ".Shape(" + Pmx + "," + Vertex + ")",
+                Form,
+                MemberKind.Method,
+                "Shape",
+                false,
+                0,
+                new[]
+                {
+                    new ParameterRecord("pmx", Pmx, ParameterDirection.In, false),
+                    new ParameterRecord("vertex", Vertex, ParameterDirection.In, false),
+                },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Write);
+            SchemaItem input = new SchemaItem(
+                null, null, null, "vertex", null, true, null, false, null, nullable, null, false, null);
+            ToolSchema schema = new ToolSchema(
+                "session_shape_form_connector",
+                new[] { new SchemaBranch("only", null, null, new[] { input }, new SchemaChoice[0]) },
+                new SchemaItem(
+                    "number", null, null, null, ItemOrigin.HostOutput, null, null, false, null,
+                    null, null, false, null),
+                null);
+
+            ToolBindingSource source = Build(
+                new ToolSchemaTable(new[] { schema }),
+                new TypeRecord[0],
+                Collection(),
+                Dispatched("session_shape_form_connector", signature));
+
+            Assert.Equal(refuses, source.Text.Contains("refusesNull: true"));
+        }
+
         [Fact]
         public void ThePmxComesFromTheHostAndOtherOperationTargetsComeAsPositions()
         {
@@ -648,11 +690,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolBindingSource source = Build(Collection(), Head());
 
             Assert.Contains(
-                "owner => 1 + ((global::" + Pmx + ")owner).Vertex.Count",
+                "owner => 1 + " + Without() + ".Count",
                 source.Text);
             Assert.Contains(
                 "(owner, index) => index == 0 ? (object)((global::" + Pmx
-                    + ")owner).Head : ((global::" + Pmx + ")owner).Vertex[index - 1]",
+                    + ")owner).Head : " + Without() + "[index - 1]",
                 source.Text);
         }
 
@@ -662,7 +704,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ToolBindingSource source = Build(Collection(), Head());
 
             Assert.Contains(
-                "((global::" + Pmx + ")owner).Vertex.RemoveAt(SdkList.Behind(index, 1))",
+                "((global::" + Pmx + ")owner).Vertex.Remove(" + Without()
+                    + "[SdkList.Behind(index, 1)])",
                 source.Text);
         }
 
@@ -675,6 +718,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "owner => ((global::" + Pmx + ")owner).Vertex.Count",
                 source.Text);
             Assert.DoesNotContain("SdkList.Behind(", source.Text);
+        }
+
+        private static string Without()
+        {
+            return "SdkList.Without(((global::" + Pmx + ")owner).Vertex, new object[] { ((global::"
+                + Pmx + ")owner).Head })";
         }
 
         /// <summary>そのリストと同じ要素の型を1つだけ返す、同じ型のメンバーの題材。</summary>

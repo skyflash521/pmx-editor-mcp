@@ -459,6 +459,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ThePropertiesOfAnInterfaceCarryTheOrderTheyAreDeclaredIn()
+        {
+            IDictionary<string, SignatureRecord> rows = Enumerate().Signatures
+                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
+
+            Assert.True(
+                rows[Api + ".Value()"].DeclarationOrder < rows[Api + ".ReadOnlyName()"].DeclarationOrder,
+                "宣言順が Value、ReadOnlyName の順でない。");
+            Assert.True(
+                rows[Api + ".ReadOnlyName()"].DeclarationOrder
+                    < rows[Api + ".WriteOnlyLevel()"].DeclarationOrder,
+                "宣言順が ReadOnlyName、WriteOnlyLevel の順でない。");
+        }
+
+        [Fact]
         public void PublicTypesInOtherNamespacesAreEnumerated()
         {
             InventoryRecord inventory = Enumerate();

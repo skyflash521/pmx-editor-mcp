@@ -60,7 +60,8 @@ namespace PmxEditorMcp.SignatureDump
             bool injected,
             int? maxItems,
             bool emptyAllowed = false,
-            bool uniqueItems = false)
+            bool uniqueItems = false,
+            string nullMeaning = null)
         {
             Shape = shape;
             Members = members == null ? null : new ReadOnlyCollection<SchemaItem>(members);
@@ -77,6 +78,7 @@ namespace PmxEditorMcp.SignatureDump
             MaxItems = maxItems;
             EmptyAllowed = emptyAllowed;
             UniqueItems = uniqueItems;
+            NullMeaning = nullMeaning;
         }
 
         /// <summary>値の表現の綴り。組と配列、およびSDKに由来する項目では null。</summary>
@@ -108,6 +110,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>null を許すか。書かない項目では null。</summary>
         public bool? Nullable { get; }
+
+        public string NullMeaning { get; }
 
         /// <summary>
         /// SDKに由来する既定か範囲、または一次資料が定めた要素数の転記元。持たない項目では null。

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
@@ -77,7 +78,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 先頭へ置いた実体の分を戻した、リストそのものの中での位置。先頭へ置いた実体の位置を
+        /// 先頭へ置いた実体の分を戻した、先頭の実体を除いた並びの中での位置。先頭へ置いた実体の位置を
         /// 渡すと <see cref="ArgumentOutOfRangeException"/>。
         /// </summary>
         public static int Behind(int index, int ahead)
@@ -87,10 +88,34 @@ namespace PmxEditorMcp
                 throw new ArgumentOutOfRangeException(
                     nameof(index),
                     index,
-                    "先頭の" + ahead + "件はモデルがリストとは別に持つ実体で、取り除けない。");
+                    "先頭の" + ahead + "件は先頭へ置いた実体で、取り除けない。");
             }
 
             return index - ahead;
+        }
+
+        public static IList<T> Without<T>(IList<T> list, params object[] ahead)
+        {
+            if (list == null)
+            {
+                throw new ArgumentNullException(nameof(list));
+            }
+
+            if (ahead == null)
+            {
+                throw new ArgumentNullException(nameof(ahead));
+            }
+
+            List<T> kept = new List<T>(list.Count);
+            foreach (T item in list)
+            {
+                if (Array.FindIndex(ahead, held => ReferenceEquals(item, held)) < 0)
+                {
+                    kept.Add(item);
+                }
+            }
+
+            return kept;
         }
     }
 }

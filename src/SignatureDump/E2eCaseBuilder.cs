@@ -3181,15 +3181,18 @@ namespace PmxEditorMcp.SignatureDump
                         E2eExpectation.Refusal,
                         IndexOutOfRange);
 
+                    bool takesNull = member.Nullable == true;
                     yield return new E2eCase(
                         rowKey,
                         editKind,
                         path,
                         schema.Tool,
-                        "位置で指す項目へ関連が無いことを書けること",
+                        takesNull
+                            ? "位置で指す項目へ関連が無いことを書けること"
+                            : "関連が無いことを受け取らない位置の項目へ、関連が無いことを書くのを断ること",
                         Pointing(arguments, member.Name, null),
-                        E2eExpectation.Success,
-                        null);
+                        takesNull ? E2eExpectation.Success : E2eExpectation.Refusal,
+                        takesNull ? null : InvalidArgument);
                     // 先頭を指して書くには、指す先の並びと書かれる側の並びの両方に1つでも
                     // 要る。書かれる側が空だと、全件を指しても1件も触らずに済んでしまい、位置が
                     // 範囲内かどうかを確かめたことにならない。読み返すのにも書かれる側が要る。

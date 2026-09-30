@@ -183,7 +183,8 @@ namespace PmxEditorMcp
             Type held = null,
             string resident = null,
             ToolValueShape built = null,
-            Func<object, bool> holds = null)
+            Func<object, bool> holds = null,
+            bool refusesNull = false)
         {
             if (name == null)
             {
@@ -209,6 +210,7 @@ namespace PmxEditorMcp
             Resident = resident;
             Built = built;
             Holds = holds;
+            RefusesNull = refusesNull;
         }
 
         /// <summary>要求の引数の名前。</summary>
@@ -253,6 +255,8 @@ namespace PmxEditorMcp
         /// その引数の組み立て方。組で受け取ってSDKへ渡す実体を作る引数だけが持ち、ほかは null。
         /// </summary>
         public ToolValueShape Built { get; }
+
+        public bool RefusesNull { get; }
     }
 
     /// <summary>項目を集めるツールが持つ項目1件。</summary>
@@ -264,7 +268,8 @@ namespace PmxEditorMcp
             Type type,
             IList<ToolField> members = null,
             ToolAccess referenced = null,
-            bool listed = false)
+            bool listed = false,
+            bool refusesNull = false)
         {
             if (name == null)
             {
@@ -287,6 +292,7 @@ namespace PmxEditorMcp
             Members = members == null ? null : new ReadOnlyCollection<ToolField>(members);
             Referenced = referenced;
             Listed = listed;
+            RefusesNull = refusesNull;
         }
 
         /// <summary>応答と要求に現れる項目の名前。</summary>
@@ -312,6 +318,8 @@ namespace PmxEditorMcp
 
         /// <summary>その項目が実体を並びで指すか。1つだけ指す項目では偽。</summary>
         public bool Listed { get; }
+
+        public bool RefusesNull { get; }
     }
 
     /// <summary>受け手の得方と、呼び出しがエディタの状態へどう作用するか。</summary>

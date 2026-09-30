@@ -595,7 +595,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -639,7 +640,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -695,7 +697,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -747,7 +750,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -1257,7 +1261,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -1313,7 +1318,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -1481,7 +1487,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -1525,7 +1532,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -1577,7 +1585,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -1625,7 +1634,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -1677,7 +1687,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -1725,7 +1736,8 @@
             },
             {
               "name": "bone",
-              "required": true
+              "required": true,
+              "nullable": true
             }
           ]
         }
@@ -8014,7 +8026,8 @@
             },
             {
               "name": "body",
-              "required": true
+              "required": true,
+              "nullable": true
             },
             {
               "name": "local",
@@ -12326,7 +12339,8 @@
             },
             {
               "name": "morph",
-              "required": true
+              "required": true,
+              "nullable": true
             },
             {
               "name": "count",
@@ -14928,7 +14942,8 @@
               "members": [
                 {
                   "name": "bone",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "boxKind",
@@ -14997,7 +15012,8 @@
                 "members": [
                   {
                     "name": "bone",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "boxKind",
@@ -15097,7 +15113,8 @@
               "members": [
                 {
                   "name": "bone",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "boxKind",
@@ -15166,7 +15183,8 @@
                 "members": [
                   {
                     "name": "bone",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "boxKind",
@@ -15305,7 +15323,8 @@
               "members": [
                 {
                   "name": "appendParent",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "appendRatio",
@@ -15381,11 +15400,13 @@
                 },
                 {
                   "name": "parent",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "toBone",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "toOffset",
@@ -15405,7 +15426,8 @@
                 "members": [
                   {
                     "name": "appendParent",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "appendRatio",
@@ -15481,11 +15503,13 @@
                   },
                   {
                     "name": "parent",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "toBone",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "toOffset",
@@ -15536,7 +15560,8 @@
               "members": [
                 {
                   "name": "appendParent",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "appendRatio",
@@ -15612,11 +15637,13 @@
                 },
                 {
                   "name": "parent",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "toBone",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "toOffset",
@@ -15636,7 +15663,8 @@
                 "members": [
                   {
                     "name": "appendParent",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "appendRatio",
@@ -15712,11 +15740,13 @@
                   },
                   {
                     "name": "parent",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "toBone",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "toOffset",
@@ -16726,11 +16756,13 @@
                 },
                 {
                   "name": "bodyA",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "bodyB",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "limitAngleHigh",
@@ -16786,11 +16818,13 @@
                   },
                   {
                     "name": "bodyA",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "bodyB",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "limitAngleHigh",
@@ -16877,11 +16911,13 @@
                 },
                 {
                   "name": "bodyA",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "bodyB",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "limitAngleHigh",
@@ -16937,11 +16973,13 @@
                   },
                   {
                     "name": "bodyA",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "bodyB",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "limitAngleHigh",
@@ -17617,7 +17655,9 @@
                 },
                 {
                   "name": "material",
-                  "required": false
+                  "required": false,
+                  "nullable": true,
+                  "nullMeaning": "全材質を指す"
                 },
                 {
                   "name": "op",
@@ -17669,7 +17709,9 @@
                   },
                   {
                     "name": "material",
-                    "required": false
+                    "required": false,
+                    "nullable": true,
+                    "nullMeaning": "全材質を指す"
                   },
                   {
                     "name": "op",
@@ -17800,7 +17842,9 @@
                 },
                 {
                   "name": "material",
-                  "required": false
+                  "required": false,
+                  "nullable": true,
+                  "nullMeaning": "全材質を指す"
                 },
                 {
                   "name": "op",
@@ -17852,7 +17896,9 @@
                   },
                   {
                     "name": "material",
-                    "required": false
+                    "required": false,
+                    "nullable": true,
+                    "nullMeaning": "全材質を指す"
                   },
                   {
                     "name": "op",
@@ -17944,7 +17990,9 @@
                 },
                 {
                   "name": "material",
-                  "required": false
+                  "required": false,
+                  "nullable": true,
+                  "nullMeaning": "全材質を指す"
                 },
                 {
                   "name": "op",
@@ -17996,7 +18044,9 @@
                   },
                   {
                     "name": "material",
-                    "required": false
+                    "required": false,
+                    "nullable": true,
+                    "nullMeaning": "全材質を指す"
                   },
                   {
                     "name": "op",
@@ -19065,7 +19115,8 @@
               "members": [
                 {
                   "name": "body",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "local",
@@ -19089,7 +19140,8 @@
                 "members": [
                   {
                     "name": "body",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "local",
@@ -19192,7 +19244,8 @@
               "members": [
                 {
                   "name": "body",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "local",
@@ -19216,7 +19269,8 @@
                 "members": [
                   {
                     "name": "body",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "local",
@@ -19280,7 +19334,8 @@
               "members": [
                 {
                   "name": "body",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "local",
@@ -19304,7 +19359,8 @@
                 "members": [
                   {
                     "name": "body",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "local",
@@ -20213,7 +20269,8 @@
               "members": [
                 {
                   "name": "morph",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 }
               ]
             },
@@ -20225,7 +20282,8 @@
                 "members": [
                   {
                     "name": "morph",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   }
                 ]
               }
@@ -20316,7 +20374,8 @@
               "members": [
                 {
                   "name": "morph",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 }
               ]
             },
@@ -20328,7 +20387,8 @@
                 "members": [
                   {
                     "name": "morph",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   }
                 ]
               }
@@ -20380,7 +20440,8 @@
               "members": [
                 {
                   "name": "morph",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 }
               ]
             },
@@ -20392,7 +20453,8 @@
                 "members": [
                   {
                     "name": "morph",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   }
                 ]
               }
@@ -20766,7 +20828,8 @@
                 },
                 {
                   "name": "material",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "mt",
@@ -20931,7 +20994,8 @@
                   },
                   {
                     "name": "material",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "mt",
@@ -21126,7 +21190,8 @@
                 },
                 {
                   "name": "material",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "mt",
@@ -21291,7 +21356,8 @@
                   },
                   {
                     "name": "material",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "mt",
@@ -21475,7 +21541,8 @@
               "members": [
                 {
                   "name": "body",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "near",
@@ -21483,7 +21550,8 @@
                 },
                 {
                   "name": "vertex",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 }
               ]
             },
@@ -21495,7 +21563,8 @@
                 "members": [
                   {
                     "name": "body",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "near",
@@ -21503,7 +21572,8 @@
                   },
                   {
                     "name": "vertex",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   }
                 ]
               }
@@ -21584,7 +21654,8 @@
               "members": [
                 {
                   "name": "body",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "near",
@@ -21592,7 +21663,8 @@
                 },
                 {
                   "name": "vertex",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 }
               ]
             },
@@ -21604,7 +21676,8 @@
                 "members": [
                   {
                     "name": "body",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "near",
@@ -21612,7 +21685,8 @@
                   },
                   {
                     "name": "vertex",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   }
                 ]
               }
@@ -21654,7 +21728,8 @@
               "members": [
                 {
                   "name": "body",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "near",
@@ -21662,7 +21737,8 @@
                 },
                 {
                   "name": "vertex",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 }
               ]
             },
@@ -21674,7 +21750,8 @@
                 "members": [
                   {
                     "name": "body",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "near",
@@ -21682,7 +21759,8 @@
                   },
                   {
                     "name": "vertex",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   }
                 ]
               }
@@ -21851,19 +21929,23 @@
               "members": [
                 {
                   "name": "bone1",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "bone2",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "bone3",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "bone4",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "edgeScale",
@@ -21943,19 +22025,23 @@
                 "members": [
                   {
                     "name": "bone1",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "bone2",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "bone3",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "bone4",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "edgeScale",
@@ -22066,19 +22152,23 @@
               "members": [
                 {
                   "name": "bone1",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "bone2",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "bone3",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "bone4",
-                  "required": false
+                  "required": false,
+                  "nullable": true
                 },
                 {
                   "name": "edgeScale",
@@ -22158,19 +22248,23 @@
                 "members": [
                   {
                     "name": "bone1",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "bone2",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "bone3",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "bone4",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                   },
                   {
                     "name": "edgeScale",

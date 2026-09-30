@@ -13,6 +13,8 @@ namespace PmxEditorMcp.Tests
 
         private const string BuilderType = "PEPlugin.IPXPmxBuilder";
 
+        private const string FormType = "PEPlugin.Form.IPEFormConnector";
+
         private const string StateReadKey = "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()";
 
         private const string CommitKey = "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx)";
@@ -42,6 +44,7 @@ namespace PmxEditorMcp.Tests
             Dictionary<string, SdkReceiver> receivers = GeneratedSdkReceivers.Create();
             receivers[ConnectorType] = connection => _connector;
             receivers[BuilderType] = connection => Builder;
+            receivers[FormType] = connection => Form;
             ResidentConnection resident = ResidentConnection.Hold(
                 new StubRunArgs(
                     new StubPluginHost(

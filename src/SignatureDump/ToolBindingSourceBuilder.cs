@@ -207,7 +207,8 @@ namespace PmxEditorMcp.SignatureDump
                             map,
                             tool,
                             responding.Contains(tool),
-                            returns));
+                            returns,
+                            schemas));
                     Listing(lists, path, signatures, byType, aside);
                     continue;
                 }
@@ -273,7 +274,11 @@ namespace PmxEditorMcp.SignatureDump
                     members.Add(Field(
                         signature,
                         null,
-                        Positioning(signature, signatures, concrete, byType, paths, aside)));
+                        Positioning(signature, signatures, concrete, byType, paths, aside),
+                        RefusesNull(
+                            schemas,
+                            target.Tool,
+                            SdkShapeEvidence.MemberNameOf(signature.MemberName))));
                 }
             }
 
@@ -536,7 +541,8 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map,
             string tool,
             bool responds,
-            IDictionary<string, string> returns)
+            IDictionary<string, string> returns,
+            ToolSchemaTable schemas)
         {
             DangerKind kind;
             string danger = dangerous.TryGetValue(signature.Key, out kind)
@@ -544,7 +550,7 @@ namespace PmxEditorMcp.SignatureDump
                 : "DangerKind.None";
             string[] arguments = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.Out)
-                .Select(p => Argument(p, signatures, concrete, byType, paths, aside, map, tool))
+                .Select(p => Argument(p, signatures, concrete, byType, paths, aside, schemas, map, tool))
                 .ToArray();
             string[] outputs = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.In)
@@ -737,6 +743,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType,
             IDictionary<string, AccessPath> paths,
             IDictionary<string, IList<string>> aside,
+            ToolSchemaTable schemas,
             ToolMap map = null,
             string tool = null)
         {
@@ -779,7 +786,31 @@ namespace PmxEditorMcp.SignatureDump
                 return written + ")";
             }
 
-            return written + ", false, " + Access(listed, signatures, concrete, byType, aside) + ")";
+            return written + ", false, " + Access(listed, signatures, concrete, byType, aside)
+                + (RefusesNull(schemas, tool, parameter.Name) ? ", refusesNull: true)" : ")");
+        }
+
+        private static bool RefusesNull(ToolSchemaTable schemas, string tool, string name)
+        {
+            if (schemas == null || tool == null)
+            {
+                return false;
+            }
+
+            ToolSchema schema = schemas.Tools.FirstOrDefault(
+                t => string.Equals(t.Tool, tool, StringComparison.Ordinal));
+            if (schema == null)
+            {
+                return false;
+            }
+
+            SchemaItem[] found = schema.AllItems
+                .Where(i => i.Origin == null
+                    && i.Shape == null
+                    && string.Equals(i.Name, name, StringComparison.Ordinal))
+                .ToArray();
+
+            return found.Length > 0 && found.All(i => i.Nullable != true);
         }
 
         /// <summary>その型の受け手をハンドルから得るか。ハンドル操作型だけが当たる。</summary>
@@ -1005,8 +1036,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// リストを読み書きする中継をC#の式にする。<paramref name="sole"/> はそのリストに並ばず
-        /// 同じ型の実体を1つだけ返す行で、行キーの昇順で並びの先頭に入り、そこからは取り除けない。
+        /// <paramref name="sole"/> は同じ型の実体を1つだけ返す行で、
+        /// 渡した順で並びの先頭に入り、そこからは取り除けない。
         /// </summary>
         private static string List(
             SignatureRecord signature,
@@ -1028,22 +1059,27 @@ namespace PmxEditorMcp.SignatureDump
                 .Select(k => "((" + Code(signatures[k].DeclaringType) + ")owner)."
                     + signatures[k].MemberName)
                 .ToArray();
-            string at = owner + "[index - " + ahead.Length + "]";
+            string ordinary = "SdkList.Without(" + owner + ", new object[] { "
+                + string.Join(", ", ahead) + " })";
+            string at = ordinary + "[index - " + ahead.Length + "]";
             for (int back = ahead.Length - 1; back >= 0; back--)
             {
                 at = "index == " + back + " ? (object)" + ahead[back] + " : " + at;
             }
 
             return "new SdkList("
-                + "owner => " + ahead.Length + " + " + owner + ".Count, "
+                + "owner => " + ahead.Length + " + " + ordinary + ".Count, "
                 + "(owner, index) => " + at + ", "
                 + "(owner, item) => " + owner + ".Add((" + Code(element) + ")item), "
                 + "(owner, index) => " + owner
-                + ".RemoveAt(SdkList.Behind(index, " + ahead.Length + ")))";
+                + ".Remove(" + ordinary + "[SdkList.Behind(index, " + ahead.Length + ")]))";
         }
 
         private static string Field(
-            SignatureRecord signature, string members = null, string referenced = null)
+            SignatureRecord signature,
+            string members = null,
+            string referenced = null,
+            bool refusesNull = false)
         {
             string written = "new ToolField("
                 + Literal(SdkShapeEvidence.MemberNameOf(signature.MemberName))
@@ -1062,7 +1098,8 @@ namespace PmxEditorMcp.SignatureDump
             string element;
             bool listed = ValueTypeName.TryElement(signature.ValueType, out element);
 
-            return written + ", " + referenced + ", " + (listed ? "true" : "false") + ")";
+            return written + ", " + referenced + ", " + (listed ? "true" : "false")
+                + (refusesNull ? ", refusesNull: true)" : ")");
         }
 
         /// <summary>

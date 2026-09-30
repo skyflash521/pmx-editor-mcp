@@ -190,7 +190,7 @@ namespace PmxEditorMcp
                     return ScreenRefreshKind.Rebuilt;
                 }
 
-                if (Draws.Contains(rowKey))
+                if (Draws.Contains(rowKey) || ReplacedModelSelection.Replaces(rowKey))
                 {
                     needed = ScreenRefreshKind.Drawn;
                 }

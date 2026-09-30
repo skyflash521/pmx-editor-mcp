@@ -92,6 +92,36 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ANodeItemForAMorphWithNoMorphIsNotCounted()
+        {
+            FakeNode node = new FakeNode("枠");
+            node.Items.Add(new FakeMorphNodeItem(null));
+            _fixture.Model.Node.Add(node);
+
+            Assert.Equal(0, Held()[ModelValidatePmx.DanglingNodeItemsName]);
+        }
+
+        [Fact]
+        public void AnImpulseOffsetWithNoBodyIsNotCounted()
+        {
+            FakeMorph morph = new FakeMorph("衝撃", MorphKind.Impulse);
+            morph.Offsets.Add(new FakeImpulseMorphOffset(null));
+            _fixture.Model.Morph.Add(morph);
+
+            Assert.Equal(0, Held()[ModelValidatePmx.DanglingMorphOffsetsName]);
+        }
+
+        [Fact]
+        public void AnAnchorWithNoBodyOrNoVertexIsNotCounted()
+        {
+            FakeSoftBody soft = new FakeSoftBody();
+            soft.Anchors.Add(new FakeSoftBodyAnchor(null, null));
+            _fixture.Model.SoftBody.Add(soft);
+
+            Assert.Equal(0, Held()[ModelValidatePmx.DanglingPhysicsName]);
+        }
+
+        [Fact]
         public void ABodyThatPointsAtABoneOutsideTheListIsCounted()
         {
             FakeBody body = new FakeBody("剛体");

@@ -242,6 +242,21 @@ namespace PmxEditorMcp
             return view == null ? new int[0] : ViewSelection.Taken(view, kind, count);
         }
 
+        /// <summary>画面のコネクタを引けなければ何もしない。</summary>
+        public void ClearSelections()
+        {
+            object view = _view();
+            if (view == null)
+            {
+                return;
+            }
+
+            foreach (string kind in ViewSelection.Kinds)
+            {
+                ViewSelection.Put(view, kind, new int[0]);
+            }
+        }
+
         private static string Kind(Type element)
         {
             if (element == typeof(IPXMaterial))

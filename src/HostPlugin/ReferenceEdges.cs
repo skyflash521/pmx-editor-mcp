@@ -979,7 +979,8 @@ namespace PmxEditorMcp
                     repaired++;
                 }
 
-                repaired += Anchored(soft, anchor => !ReferenceCleanup.Alive(anchor.Vertex, live));
+                repaired += Anchored(
+                    soft, anchor => anchor.Vertex != null && !ReferenceCleanup.Alive(anchor.Vertex, live));
             }
 
             return repaired;
@@ -1123,6 +1124,7 @@ namespace PmxEditorMcp
         private static int MendNodeMorph(IPXPmx model, ISet<object> live)
         {
             return Unlisted(model, item => item.IsMorph
+                && item.MorphItem.Morph != null
                 && !ReferenceCleanup.Alive(item.MorphItem.Morph, live));
         }
 
@@ -1153,7 +1155,8 @@ namespace PmxEditorMcp
             {
                 IPXImpulseMorphOffset pushed = offset as IPXImpulseMorphOffset;
 
-                return pushed != null && !ReferenceCleanup.Alive(pushed.Body, live);
+                return pushed != null && pushed.Body != null
+                    && !ReferenceCleanup.Alive(pushed.Body, live);
             });
         }
 
@@ -1162,7 +1165,8 @@ namespace PmxEditorMcp
             int repaired = 0;
             foreach (IPXSoftBody soft in model.SoftBody)
             {
-                repaired += Anchored(soft, anchor => !ReferenceCleanup.Alive(anchor.Body, live));
+                repaired += Anchored(
+                    soft, anchor => anchor.Body != null && !ReferenceCleanup.Alive(anchor.Body, live));
             }
 
             return repaired;

@@ -330,7 +330,9 @@ namespace PmxEditorMcp
         {
             return ReferenceCleanup.Nodes(model).Sum(node => node.Items.Count(item => !(item.IsBone
                 ? ReferenceCleanup.Alive(item.BoneItem.Bone, bones)
-                : item.IsMorph && ReferenceCleanup.Alive(item.MorphItem.Morph, morphs))));
+                : item.IsMorph
+                    && (item.MorphItem.Morph == null
+                        || ReferenceCleanup.Alive(item.MorphItem.Morph, morphs)))));
         }
 
         private static int LoosePhysics(
@@ -352,8 +354,8 @@ namespace PmxEditorMcp
                 found += soft.Material != null && !materials.Contains(soft.Material) ? 1 : 0;
                 found += soft.Pins.Count(pin => !ReferenceCleanup.Alive(pin, vertices));
                 found += soft.Anchors.Count(anchor =>
-                    !ReferenceCleanup.Alive(anchor.Body, bodies)
-                    || !ReferenceCleanup.Alive(anchor.Vertex, vertices));
+                    (anchor.Body != null && !bodies.Contains(anchor.Body))
+                    || (anchor.Vertex != null && !vertices.Contains(anchor.Vertex)));
             }
 
             return found;

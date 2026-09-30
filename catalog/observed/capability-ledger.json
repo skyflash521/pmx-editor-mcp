@@ -60,7 +60,7 @@
       "target": "IPEFormConnector.InitializePMD",
       "status": "提供",
       "owner": "セッション",
-      "remarks": "契約注記: 危険操作(モデル初期化)。該当は InitializePMD()。呼び出しには確認が要る"
+      "remarks": "契約注記: 危険操作(モデル初期化)。該当は InitializePMD()。呼び出しには確認が要る。置き換えたあと、画面の頂点・面・ボーン・剛体・Jointの選択を全部外す"
     },
     {
       "id": "CAP-008",
@@ -68,7 +68,7 @@
       "target": "IPEFormConnector.OpenPMDFile",
       "status": "提供",
       "owner": "セッション",
-      "remarks": ""
+      "remarks": "契約注記: 置き換えたあと、画面の頂点・面・ボーン・剛体・Jointの選択を全部外す"
     },
     {
       "id": "CAP-009",
@@ -76,7 +76,7 @@
       "target": "IPEFormConnector.ImportXFile",
       "status": "提供",
       "owner": "セッション",
-      "remarks": ""
+      "remarks": "契約注記: 置き換えたあと、画面の頂点・面・ボーン・剛体・Jointの選択を全部外す"
     },
     {
       "id": "CAP-010",
@@ -116,7 +116,7 @@
       "target": "IPEFormConnector.InitializePMX",
       "status": "提供",
       "owner": "セッション",
-      "remarks": "契約注記: 危険操作(モデル初期化)。該当は InitializePMX()。呼び出しには確認が要る"
+      "remarks": "契約注記: 危険操作(モデル初期化)。該当は InitializePMX()。呼び出しには確認が要る。置き換えたあと、画面の頂点・面・ボーン・剛体・Jointの選択を全部外す"
     },
     {
       "id": "CAP-015",
@@ -124,7 +124,7 @@
       "target": "IPEFormConnector.OpenPMXFile",
       "status": "提供",
       "owner": "セッション",
-      "remarks": "PMXファイルパスを取り真偽値を返す"
+      "remarks": "PMXファイルパスを取り真偽値を返す。契約注記: 置き換えたあと、画面の頂点・面・ボーン・剛体・Jointの選択を全部外す"
     },
     {
       "id": "CAP-016",
@@ -2716,7 +2716,39 @@
       "target": "IPXPmx",
       "status": "提供",
       "owner": "モデル",
-      "remarks": "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外。危険操作(上書き保存)。該当は ToFile(System.String)。危険操作(モデル初期化)。該当は Clear()。現在のモデルを対象に呼ぶ場合に限って当たり、対象を指定して呼ぶ場合は当たらない。呼び出しには確認が要る"
+      "remarks": "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外"
+    },
+    {
+      "id": "CAP-478",
+      "category": "モデルデータ型",
+      "target": "IPXPmx.FromFile",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 編集中のモデルを対象に呼ぶと、読み込んだあと、画面の頂点・面・ボーン・剛体・Jointの選択を全部外す。pmxHandle で指したPMXを対象にすると、画面の選択は変わらない"
+    },
+    {
+      "id": "CAP-479",
+      "category": "モデルデータ型",
+      "target": "IPXPmx.Clear",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 危険操作(モデル初期化)。該当は Clear()。pmxHandle で指したPMXだけを空にする。編集中のモデルには呼べず、開いているPMXを作り直すには session_initialize_pmx を使う。"
+    },
+    {
+      "id": "CAP-480",
+      "category": "モデルデータ型",
+      "target": "IPXPmx.ToFile",
+      "status": "提供",
+      "owner": "モデル",
+      "remarks": "契約注記: 危険操作(上書き保存)。該当は ToFile(System.String)。呼び出しには確認が要る"
+    },
+    {
+      "id": "CAP-481",
+      "category": "VMDデータ型",
+      "target": "IPEVmd.ToFile",
+      "status": "提供",
+      "owner": "変形・モーション",
+      "remarks": "契約注記: 危険操作(上書き保存)。該当は ToFile(System.String,System.Boolean)。呼び出しには確認が要る"
     },
     {
       "id": "CAP-340",
@@ -3572,7 +3604,7 @@
       "target": "IPEVmd",
       "status": "提供",
       "owner": "変形・モーション",
-      "remarks": "非対応件数: 2。全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ。PMDモデルを要するシグネチャは非対応。危険操作(上書き保存)。該当は ToFile(System.String,System.Boolean)。呼び出しには確認が要る"
+      "remarks": "非対応件数: 2。全公開メンバー(型単位)。契約注記: 入出力はファイルパス版のみ。PMDモデルを要するシグネチャは非対応"
     },
     {
       "id": "CAP-446",

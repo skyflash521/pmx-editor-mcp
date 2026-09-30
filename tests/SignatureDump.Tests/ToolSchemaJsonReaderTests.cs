@@ -224,6 +224,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ReadsWhatNullMeansForAnItemThatTakesNull()
+        {
+            SchemaItem input = OnlyInput(Table(Branch(
+                @"[{ ""name"": ""material"", ""required"": true, ""nullable"": true, ""nullMeaning"": ""全材質を指す"" }]")));
+
+            Assert.Equal("全材質を指す", input.NullMeaning);
+        }
+
+        [Fact]
+        public void RejectsWhatNullMeansForAnItemThatDoesNotTakeNull()
+        {
+            Rejects("nullMeaning を書けるのは", Table(Branch(
+                @"[{ ""name"": ""material"", ""required"": true, ""nullMeaning"": ""全材質を指す"" }]")));
+        }
+
+        [Fact]
         public void ReadsThatAnArrayWhoseNameForbidsAnEmptyOneTakesItAnyway()
         {
             SchemaItem input = OnlyInput(Table(Branch(

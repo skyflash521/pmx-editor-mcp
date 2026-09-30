@@ -285,7 +285,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 枠の並びを置き換える。先頭の2つはモデルがリストとは別に持つ枠で、リストへは入らない。
+        /// 先頭の2つはRoot枠と表情枠で、取り除くことも動かすこともできない。
         /// その2つが先頭に居ない並びは <see cref="ArgumentException"/> で断る。
         /// </summary>
         private static void PutNodes(object owner, IList<object> items)
@@ -298,13 +298,20 @@ namespace PmxEditorMcp
                 {
                     throw new ArgumentException(
                         "先頭の" + ahead.Length
-                            + "件はモデルがリストとは別に持つ枠で、取り除くことも動かすこともできない。",
+                            + "件はRoot枠と表情枠で、取り除くことも動かすこともできない。",
                         nameof(items));
                 }
             }
 
             IList<IPXNode> held = model.Node;
+            IList<IPXNode> ordinary = SdkList.Without(held, ahead);
+            List<IPXNode> system = held.Where(node => !ordinary.Contains(node)).ToList();
             held.Clear();
+            foreach (IPXNode node in system)
+            {
+                held.Add(node);
+            }
+
             for (int at = ahead.Length; at < items.Count; at++)
             {
                 held.Add((IPXNode)items[at]);

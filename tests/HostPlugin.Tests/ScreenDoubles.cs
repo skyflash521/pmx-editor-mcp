@@ -501,6 +501,10 @@ namespace PmxEditorMcp.Tests
         /// <summary>画面を描き直した回数。</summary>
         public int Repaints { get; private set; }
 
+        public int SelectedAtLastRepaint { get; private set; }
+
+        public int? PaintsAllowed { get; set; }
+
         /// <summary>区分だけを作り直した先を、頼まれた順に並べたもの。</summary>
         public IList<string> Remade { get; } = new List<string>();
 
@@ -617,12 +621,13 @@ namespace PmxEditorMcp.Tests
 
         public void UpdateView()
         {
-            if (RefusesToPaint)
+            if (RefusesToPaint || (PaintsAllowed.HasValue && Repaints >= PaintsAllowed.Value))
             {
                 throw new InvalidOperationException("画面を映し直せない。");
             }
 
             Repaints++;
+            SelectedAtLastRepaint = Selected.Values.Sum(held => held.Length);
             _drawn = CameraPosition;
             _drawnKnown = true;
         }
@@ -1009,6 +1014,10 @@ namespace PmxEditorMcp.Tests
         public IList<PEPlugin.Pmd.UpdateObject> Updated { get; } =
             new List<PEPlugin.Pmd.UpdateObject>();
 
+        public IList<string> Replaced { get; } = new List<string>();
+
+        public bool ReplaceSucceeds { get; set; } = true;
+
         /// <summary>材質のリストで選ばれている位置。</summary>
         public int[] SelectedMaterials { get; set; } = new int[0];
 
@@ -1067,27 +1076,33 @@ namespace PmxEditorMcp.Tests
 
         public bool ImportXFile(string path)
         {
-            throw new NotSupportedException();
+            Replaced.Add("ImportXFile");
+
+            return ReplaceSucceeds;
         }
 
         public void InitializePMD()
         {
-            throw new NotSupportedException();
+            Replaced.Add("InitializePMD");
         }
 
         public void InitializePMX()
         {
-            throw new NotSupportedException();
+            Replaced.Add("InitializePMX");
         }
 
         public bool OpenPMDFile(string path)
         {
-            throw new NotSupportedException();
+            Replaced.Add("OpenPMDFile");
+
+            return ReplaceSucceeds;
         }
 
         public bool OpenPMXFile(string path)
         {
-            throw new NotSupportedException();
+            Replaced.Add("OpenPMXFile");
+
+            return ReplaceSucceeds;
         }
 
         public void Redo()

@@ -265,6 +265,41 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheTwoAFrameListAlsoHoldsAreNotCountedTwice()
+        {
+            FakePmx pmx = Filled();
+            pmx.Node.Insert(0, pmx.RootNode);
+            pmx.Node.Insert(1, pmx.ExpressionNode);
+            ElementKind kind = Resolved(ElementKinds.Node);
+
+            IList<object> items = kind.Items(pmx);
+
+            Assert.Equal(4, items.Count);
+            Assert.Same(pmx.RootNode, items[0]);
+            Assert.Same(pmx.ExpressionNode, items[1]);
+            Assert.Same(pmx.Node[2], items[2]);
+            Assert.Same(pmx.Node[3], items[3]);
+        }
+
+        [Fact]
+        public void PuttingTheFramesBackKeepsTheTwoInTheFrameListThatHoldsThem()
+        {
+            FakePmx pmx = Filled();
+            pmx.Node.Insert(0, pmx.RootNode);
+            pmx.Node.Insert(1, pmx.ExpressionNode);
+            ElementKind kind = Resolved(ElementKinds.Node);
+            IList<object> items = kind.Items(pmx);
+
+            kind.Replace(pmx, new[] { items[0], items[1], items[3], items[2] });
+
+            Assert.Equal(4, pmx.Node.Count);
+            Assert.Same(pmx.RootNode, pmx.Node[0]);
+            Assert.Same(pmx.ExpressionNode, pmx.Node[1]);
+            Assert.Same(items[3], pmx.Node[2]);
+            Assert.Same(items[2], pmx.Node[3]);
+        }
+
+        [Fact]
         public void PuttingTheFramesBackWithoutTheTwoTheModelHoldsApartIsRefused()
         {
             FakePmx pmx = Filled();

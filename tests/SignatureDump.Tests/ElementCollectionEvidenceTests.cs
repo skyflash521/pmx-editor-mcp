@@ -92,6 +92,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheSoleMembersAreAsideInTheOrderTheyAreDeclared()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+            SignatureRecord first = Property(Owner, "Zeta", Element, 1);
+            SignatureRecord second = Property(Owner, "Alpha", Element, 2);
+
+            Assert.Equal(
+                new[] { first.Key, second.Key },
+                Aside(list, second, first)[list.Key]);
+        }
+
+        [Fact]
+        public void SoleMembersWithoutADeclarationOrderAreAsideInTheOrderOfTheirKeys()
+        {
+            SignatureRecord list = Property(Owner, "Items", ElementList);
+            SignatureRecord head = Property(Owner, "Head", Element);
+            SignatureRecord tail = Property(Owner, "Tail", Element);
+
+            Assert.Equal(
+                new[] { head.Key, tail.Key },
+                Aside(list, tail, head)[list.Key]);
+        }
+
+        [Fact]
         public void AListWithNoSoleMemberOfItsElementTypeHasNothingAside()
         {
             SignatureRecord list = Property(Owner, "Items", ElementList);
@@ -309,9 +333,15 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         private static SignatureRecord Property(
-            string declaringType, string memberName, string valueType)
+            string declaringType, string memberName, string valueType, int declarationOrder = 0)
         {
-            return Signature(declaringType, MemberKind.Property, memberName, valueType, true);
+            return Signature(
+                declaringType,
+                MemberKind.Property,
+                memberName,
+                valueType,
+                true,
+                declarationOrder);
         }
 
         private static SignatureRecord Indexer(
@@ -342,7 +372,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             MemberKind memberKind,
             string memberName,
             string valueType,
-            bool canRead)
+            bool canRead,
+            int declarationOrder = 0)
         {
             ParameterRecord[] parameters = new ParameterRecord[0];
 
@@ -358,7 +389,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 canRead,
                 false,
                 OperationDirection.Read,
-                false);
+                false,
+                null,
+                declarationOrder);
         }
     }
 }

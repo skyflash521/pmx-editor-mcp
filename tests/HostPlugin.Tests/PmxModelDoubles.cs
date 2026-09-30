@@ -2261,9 +2261,18 @@ namespace PmxEditorMcp.Tests
     /// <summary>新しい要素を作る相手の題材。値を持たない空の要素を返す。</summary>
     public sealed class FakeBuilder : IPXPmxBuilder
     {
+        public bool SystemNodesInList { get; set; }
+
         public IPXPmx Pmx()
         {
-            return new FakePmx();
+            FakePmx made = new FakePmx();
+            if (SystemNodesInList)
+            {
+                made.Node.Add(made.RootNode);
+                made.Node.Add(made.ExpressionNode);
+            }
+
+            return made;
         }
 
         public IPXVertex Vertex()

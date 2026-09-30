@@ -200,6 +200,14 @@ namespace PmxEditorMcp.SignatureDump
                 built.Append(MakesNew);
             }
 
+            foreach (SchemaItem item in schema.AllItems
+                .Where(i => !i.Injected && !string.IsNullOrEmpty(i.NullMeaning))
+                .GroupBy(i => new { i.Name, i.NullMeaning })
+                .Select(g => g.First()))
+            {
+                built.Append(item.Name + " に null を渡すと" + item.NullMeaning + "。");
+            }
+
             return built.Length == 0 ? null : built.ToString();
         }
 

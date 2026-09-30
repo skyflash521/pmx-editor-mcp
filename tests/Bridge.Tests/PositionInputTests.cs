@@ -16,6 +16,25 @@ namespace PmxEditorMcp.Bridge.Tests
         private static readonly Regex EntryPattern = new Regex(
             "(calls|aggregations|elements|preconditions)\\.Add\\(\"([a-z0-9_]+)\", ");
 
+        private static readonly ISet<string> NoValueRefused = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "model_update_faces vertex1",
+            "model_update_faces vertex2",
+            "model_update_faces vertex3",
+            "model_update_iks target",
+            "model_update_ik_links bone",
+            "model_ik_link bone",
+            "model_update_morph_offsets vertex",
+            "model_update_morph_offsets bone",
+            "model_update_morph_offsets morph",
+            "model_update_node_items bone",
+            "model_bone_morph_offset bone",
+            "model_bone_node_item bone",
+            "model_group_morph_offset morph",
+            "model_uv_morph_offset vertex",
+            "model_vertex_morph_offset vertex",
+        };
+
         private static readonly Regex ReferencedFieldPattern = new Regex(
             "new ToolField\\(\"([A-Za-z0-9_]+)\", \"[^\"]*\", typeof\\(global::[^)]+\\), null, new ToolAccess\\(");
 
@@ -60,6 +79,52 @@ namespace PmxEditorMcp.Bridge.Tests
             }
 
             Assert.True(checkedForms > 0, "位置として読む入力を1つも見つけられない。");
+            Assert.True(wrong.Count == 0, wrong.Count + " 件:\n" + string.Join("\n", wrong.Distinct()));
+        }
+
+        [Fact]
+        public void EveryReferencedPositionInputTakesNullExceptWhereTheSdkCannotHoldNoValue()
+        {
+            IDictionary<string, JsonObject> schemas = GeneratedToolDefinitions.Create()
+                .ToDictionary(d => d.Name, d => SchemaRefs.Inlined(JsonNode.Parse(d.InputSchema)).AsObject(), StringComparer.Ordinal);
+            List<string> wrong = new List<string>();
+            int nullable = 0;
+            int notNullable = 0;
+            foreach (KeyValuePair<string, ISet<string>> tool in ReferencedPositions())
+            {
+                JsonObject schema;
+                if (!schemas.TryGetValue(tool.Key, out schema))
+                {
+                    continue;
+                }
+
+                foreach (string name in tool.Value)
+                {
+                    bool expected = !NoValueRefused.Contains(tool.Key + " " + name);
+                    foreach (JsonObject form in PropertiesNamed(schema, name).Where(IsInteger))
+                    {
+                        bool takesNull = form["type"] is JsonArray types
+                            && types.Any(t => t.GetValue<string>() == "null");
+                        if (takesNull != expected)
+                        {
+                            wrong.Add(tool.Key + " " + name + ": null を" + (expected ? "受け取る" : "受け取らない")
+                                + "はずだが、ツール定義は " + form.ToJsonString());
+                        }
+
+                        if (takesNull)
+                        {
+                            nullable++;
+                        }
+                        else
+                        {
+                            notNullable++;
+                        }
+                    }
+                }
+            }
+
+            Assert.True(nullable > 0, "null を受ける位置の入力を1つも見つけられない。");
+            Assert.True(notNullable > 0, "null を受けない位置の入力を1つも見つけられない。");
             Assert.True(wrong.Count == 0, wrong.Count + " 件:\n" + string.Join("\n", wrong.Distinct()));
         }
 

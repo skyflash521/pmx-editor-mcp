@@ -249,7 +249,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// モデルが持つ枠のすべて。根の枠と表情の枠も数に入り、この2つがこの順で先に並ぶ。
+        /// モデルが持つ枠のすべて。Root枠と表情枠も数に入り、この2つがこの順で先に並ぶ。
         /// </summary>
         public static IEnumerable<IPXNode> Nodes(object pmx)
         {
@@ -260,7 +260,8 @@ namespace PmxEditorMcp
 
             IPXPmx model = (IPXPmx)pmx;
 
-            return new[] { model.RootNode, model.ExpressionNode }.Concat(model.Node);
+            return new[] { model.RootNode, model.ExpressionNode }
+                .Concat(SdkList.Without(model.Node, model.RootNode, model.ExpressionNode));
         }
 
         private static T Moved<T>(IDictionary<T, T> moved, T held)
@@ -455,7 +456,7 @@ namespace PmxEditorMcp
             IPXImpulseMorphOffset pushed = offset as IPXImpulseMorphOffset;
             if (pushed != null)
             {
-                return Alive(pushed.Body, bodies);
+                return pushed.Body == null || Alive(pushed.Body, bodies);
             }
 
             IPXMaterialMorphOffset painted = offset as IPXMaterialMorphOffset;

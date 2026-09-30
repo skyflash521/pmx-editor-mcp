@@ -81,7 +81,8 @@ namespace PmxEditorMcp.SignatureDump
             bool canWrite,
             OperationDirection operationDirection,
             bool valueTypeIsTypeArgument = false,
-            IList<string> typeParameters = null)
+            IList<string> typeParameters = null,
+            int declarationOrder = 0)
         {
             Key = key;
             DeclaringType = declaringType;
@@ -96,6 +97,7 @@ namespace PmxEditorMcp.SignatureDump
             OperationDirection = operationDirection;
             ValueTypeIsTypeArgument = valueTypeIsTypeArgument;
             TypeParameters = typeParameters ?? new string[0];
+            DeclarationOrder = declarationOrder;
         }
 
         /// <summary>
@@ -145,6 +147,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary><see cref="ValueType"/> が総称型引数かどうか。</summary>
         public bool ValueTypeIsTypeArgument { get; }
+
+        public int DeclarationOrder { get; }
     }
 
     public sealed class TypeRecord

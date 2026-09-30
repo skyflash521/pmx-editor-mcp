@@ -533,7 +533,9 @@ namespace PmxEditorMcp.SignatureDump
                 getter != null,
                 setter != null,
                 OperationDirectionRule.ForProperty(getter != null),
-                IsTypeArgument(property.PropertyType));
+                IsTypeArgument(property.PropertyType),
+                null,
+                property.MetadataToken);
         }
 
         private static SignatureRecord FromField(Type type, FieldInfo field)
@@ -597,7 +599,8 @@ namespace PmxEditorMcp.SignatureDump
             bool canWrite,
             OperationDirection direction,
             bool valueTypeIsTypeArgument = false,
-            IList<string> typeParameters = null)
+            IList<string> typeParameters = null,
+            int declarationOrder = 0)
         {
             string declaringType = TypeNameFormatter.Format(type);
             string key = SignatureKeyBuilder.Build(declaringType, memberName, genericArity, parameters, valueType);
@@ -615,7 +618,8 @@ namespace PmxEditorMcp.SignatureDump
                 canWrite,
                 direction,
                 valueTypeIsTypeArgument,
-                typeParameters);
+                typeParameters,
+                declarationOrder);
         }
 
         private static bool IsTypeArgument(Type type)

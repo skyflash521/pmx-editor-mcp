@@ -135,7 +135,8 @@ namespace PmxEditorMcp.SignatureDump
 
             IList<SignatureRecord> sole = signatures.Values
                 .Where(s => Sole(s) && relayed.Contains(s.Key))
-                .OrderBy(s => s.Key, StringComparer.Ordinal)
+                .OrderBy(s => s.DeclarationOrder)
+                .ThenBy(s => s.Key, StringComparer.Ordinal)
                 .ToList();
             Dictionary<string, IList<string>> aside =
                 new Dictionary<string, IList<string>>(StringComparer.Ordinal);

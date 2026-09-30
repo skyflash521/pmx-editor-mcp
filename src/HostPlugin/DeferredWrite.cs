@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PmxEditorMcp
 {
@@ -102,6 +103,32 @@ namespace PmxEditorMcp
 
             fields.Add(pending.Field.RowKey, _held.Count);
             _held.Add(pending);
+        }
+
+        public void Forget(object target, string rowKey)
+        {
+            Dictionary<string, int> fields;
+            int at;
+            if (!_at.TryGetValue(target, out fields) || !fields.TryGetValue(rowKey, out at))
+            {
+                return;
+            }
+
+            List<DeferredWrite> kept = new List<DeferredWrite>(_held);
+            kept.RemoveAt(at);
+            _held.Clear();
+            _at.Clear();
+            foreach (DeferredWrite write in kept)
+            {
+                Put(write);
+            }
+        }
+
+        public IList<string> Rows(object target)
+        {
+            Dictionary<string, int> fields;
+
+            return _at.TryGetValue(target, out fields) ? fields.Keys.ToList() : new List<string>();
         }
 
         public IEnumerator<DeferredWrite> GetEnumerator()

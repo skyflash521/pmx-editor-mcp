@@ -60,6 +60,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string UniqueItemsName = "uniqueItems";
 
+        private const string NullMeaningName = "nullMeaning";
+
         private const string MinimumName = "minimum";
 
         private const string MaximumName = "maximum";
@@ -323,7 +325,7 @@ namespace PmxEditorMcp.SignatureDump
                 {
                     OriginName, ShapeName, MembersName, ElementName, RequiredName, DefaultName,
                     BoundsName, NullableName, SourceName, InjectedName, MaxItemsName,
-                    EmptyAllowedName, UniqueItemsName,
+                    EmptyAllowedName, UniqueItemsName, NullMeaningName,
                 });
 
             string name = named ? Member(members[NameName], NameName) : null;
@@ -374,6 +376,14 @@ namespace PmxEditorMcp.SignatureDump
             {
                 throw new FormatException(
                     UniqueItemsName + " を書けるのは並びだけである: " + Written(members, NameName));
+            }
+
+            if (members.ContainsKey(NullMeaningName)
+                && !(members.ContainsKey(NullableName) && Flag(members[NullableName], NullableName)))
+            {
+                throw new FormatException(
+                    NullMeaningName + " を書けるのは、null を受ける項目だけである: "
+                        + Written(members, NameName));
             }
 
             if (fromSdk && hasValue && !hasSource)
@@ -443,7 +453,10 @@ namespace PmxEditorMcp.SignatureDump
                 members.ContainsKey(EmptyAllowedName)
                     && Flag(members[EmptyAllowedName], EmptyAllowedName),
                 members.ContainsKey(UniqueItemsName)
-                    && Flag(members[UniqueItemsName], UniqueItemsName));
+                    && Flag(members[UniqueItemsName], UniqueItemsName),
+                members.ContainsKey(NullMeaningName)
+                    ? Text(members[NullMeaningName], NullMeaningName)
+                    : null);
         }
 
         private static ValueBounds ReadBounds(object value)

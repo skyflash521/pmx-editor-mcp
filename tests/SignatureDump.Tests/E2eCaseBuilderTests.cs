@@ -217,6 +217,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void APositionedMemberThatTakesNoNullIsRefusedWhenItIsGivenNull()
+        {
+            ToolSchema writing = Positioning("model_update_bones", false);
+            ToolSchema reading = Listed("model_list_bones");
+            IList<E2eCase> cases = Positions(writing, reading, reading.Tool)
+                .Where(c => c.Tool == writing.Tool)
+                .ToList();
+
+            E2eCase refused = Assert.Single(
+                cases,
+                c => c.Expectation == E2eExpectation.Refusal
+                    && c.Code == E2eCaseBuilder.InvalidArgument);
+            Assert.Null(((IDictionary<string, object>)refused.Arguments["value"])["parent"]);
+            Assert.DoesNotContain(
+                cases,
+                c => c.Expectation == E2eExpectation.Success
+                    && ((IDictionary<string, object>)c.Arguments["value"])["parent"] == null);
+        }
+
+        [Fact]
         public void TheWrittenPositionIsReadBackFromTheToolThatListsTheSameType()
         {
             ToolSchema writing = Positioning("model_update_bones");
@@ -2173,11 +2193,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>全件を指して値の組を書き換えるツール。値の組は位置で指す項目を1つ持つ。</summary>
-        private static ToolSchema Positioning(string name)
+        private static ToolSchema Positioning(string name, bool nullable = true)
         {
             SchemaItem parent = new SchemaItem(
                 "number", null, null, "parent", ItemOrigin.HostInput, null, null, false,
-                null, null, null, false, null);
+                null, nullable, null, false, null);
             SchemaItem value = new SchemaItem(
                 null, new[] { parent }, null, "value", ItemOrigin.HostInput, null, null, false,
                 null, null, null, false, null);

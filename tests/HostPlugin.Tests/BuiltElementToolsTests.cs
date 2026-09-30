@@ -155,6 +155,123 @@ namespace PmxEditorMcp.Tests
                     + (Equals(envelope["ok"], true) ? string.Empty : ComposedEditFixture.Message(envelope)));
         }
 
+        [Fact]
+        public void ANullWrittenToAnOffsetAddedToAHeldMorphSurvivesAddingTheMorph()
+        {
+            _fixture.Model.Body.Add(new FakeBody("一"));
+            _fixture.Model.Body.Add(new FakeBody("二"));
+            long morph = Built("model_morph");
+            Succeeded(_fixture.Call(
+                "model_update_morphs",
+                Given(TargetNames.Element.Handles, new object[] { morph }),
+                Given(ToolDispatch.ValueName, Value("kind", "Impulse"))));
+            long offset = Built(
+                "model_impulse_morph_offset",
+                Given("body", 0),
+                Given("local", false),
+                Given("velocity", new object[] { 0d, 0d, 0d }),
+                Given("torque", new object[] { 0d, 0d, 0d }));
+            Succeeded(_fixture.Call(
+                "model_update_morph_offsets",
+                Given(TargetNames.Element.Handles, new object[] { offset }),
+                Given(ToolDispatch.ItemTypeName, "impulse_morph_offset"),
+                Given(ToolDispatch.ValueName, Value("body", 1))));
+            Succeeded(_fixture.Call(
+                "model_add_morph_offsets",
+                Given(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { Assignment(ToolDispatch.ParentHandleName, morph, offset) })));
+            Succeeded(_fixture.Call(
+                "model_update_morph_offsets",
+                Given(TargetNames.Parent.Handles, new object[] { morph }),
+                Given("all", true),
+                Given(ToolDispatch.ItemTypeName, "impulse_morph_offset"),
+                Given(ToolDispatch.ValueName, Value("body", null))));
+
+            Succeeded(_fixture.Call(
+                "model_add_morphs", Given(TargetNames.Element.Handles, new object[] { morph })));
+
+            IPXMorph added = _fixture.Model.Morph.Last();
+            Assert.Null(((IPXImpulseMorphOffset)Assert.Single(added.Offsets)).Body);
+        }
+
+        [Fact]
+        public void APositionWrittenToAnOffsetAddedToAHeldMorphSurvivesAddingTheMorph()
+        {
+            _fixture.Model.Body.Add(new FakeBody("一"));
+            _fixture.Model.Body.Add(new FakeBody("二"));
+            long morph = Built("model_morph");
+            Succeeded(_fixture.Call(
+                "model_update_morphs",
+                Given(TargetNames.Element.Handles, new object[] { morph }),
+                Given(ToolDispatch.ValueName, Value("kind", "Impulse"))));
+            long offset = Built(
+                "model_impulse_morph_offset",
+                Given("body", 0),
+                Given("local", false),
+                Given("velocity", new object[] { 0d, 0d, 0d }),
+                Given("torque", new object[] { 0d, 0d, 0d }));
+            Succeeded(_fixture.Call(
+                "model_update_morph_offsets",
+                Given(TargetNames.Element.Handles, new object[] { offset }),
+                Given(ToolDispatch.ItemTypeName, "impulse_morph_offset"),
+                Given(ToolDispatch.ValueName, Value("body", 1))));
+            Succeeded(_fixture.Call(
+                "model_add_morph_offsets",
+                Given(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { Assignment(ToolDispatch.ParentHandleName, morph, offset) })));
+            Succeeded(_fixture.Call(
+                "model_update_morph_offsets",
+                Given(TargetNames.Parent.Handles, new object[] { morph }),
+                Given("all", true),
+                Given(ToolDispatch.ItemTypeName, "impulse_morph_offset"),
+                Given(ToolDispatch.ValueName, Value("body", 0))));
+
+            Succeeded(_fixture.Call(
+                "model_add_morphs", Given(TargetNames.Element.Handles, new object[] { morph })));
+
+            IPXMorph added = _fixture.Model.Morph.Last();
+            Assert.Same(
+                _fixture.Model.Body[0], ((IPXImpulseMorphOffset)Assert.Single(added.Offsets)).Body);
+        }
+
+        [Fact]
+        public void APositionWrittenToAnOffsetBuiltWithoutABodyAndAddedToAHeldMorphSurvivesAddingTheMorph()
+        {
+            _fixture.Model.Body.Add(new FakeBody("一"));
+            _fixture.Model.Body.Add(new FakeBody("二"));
+            long morph = Built("model_morph");
+            Succeeded(_fixture.Call(
+                "model_update_morphs",
+                Given(TargetNames.Element.Handles, new object[] { morph }),
+                Given(ToolDispatch.ValueName, Value("kind", "Impulse"))));
+            long offset = Built(
+                "model_impulse_morph_offset",
+                Given("body", null),
+                Given("local", false),
+                Given("velocity", new object[] { 0d, 0d, 0d }),
+                Given("torque", new object[] { 0d, 0d, 0d }));
+            Succeeded(_fixture.Call(
+                "model_add_morph_offsets",
+                Given(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { Assignment(ToolDispatch.ParentHandleName, morph, offset) })));
+            Succeeded(_fixture.Call(
+                "model_update_morph_offsets",
+                Given(TargetNames.Parent.Handles, new object[] { morph }),
+                Given("all", true),
+                Given(ToolDispatch.ItemTypeName, "impulse_morph_offset"),
+                Given(ToolDispatch.ValueName, Value("body", 1))));
+
+            Succeeded(_fixture.Call(
+                "model_add_morphs", Given(TargetNames.Element.Handles, new object[] { morph })));
+
+            IPXMorph added = _fixture.Model.Morph.Last();
+            Assert.Same(
+                _fixture.Model.Body[1], ((IPXImpulseMorphOffset)Assert.Single(added.Offsets)).Body);
+        }
+
         private static IDictionary<string, object> Assignment(string parentName, long parent, long handle)
         {
             return new Dictionary<string, object>(StringComparer.Ordinal)

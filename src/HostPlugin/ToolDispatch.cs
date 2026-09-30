@@ -156,6 +156,9 @@ namespace PmxEditorMcp
         private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites> _deferred =
             new System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites>();
 
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, object> _keeperOf =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<object, object>();
+
         /// <summary>生成物を預ける呼び出しの、位置で受け取る引数ごとに、生成物のその引数に当たる項目。</summary>
         private readonly Dictionary<string, Func<object, bool>> _heldKinds =
             new Dictionary<string, Func<object, bool>>(StringComparer.Ordinal);
@@ -857,7 +860,7 @@ namespace PmxEditorMcp
             string message;
             if (argument.Referenced != null)
             {
-                return TryReference(argument, given, out taken, out code, out message);
+                return TryReference(argument, false, given, out taken, out code, out message);
             }
 
             if (argument.Held != null)
@@ -1065,6 +1068,13 @@ namespace PmxEditorMcp
                         return;
                     }
 
+                    if (ReplacedModelSelection.Replaced(call.RowKey, value))
+                    {
+                        _screen.ClearSelections();
+                    }
+
+                    ClonedModelNodes.Relink(call.RowKey, column[0].Item, value);
+
                     if (issues)
                     {
                         DeferIssued(call, value, positions);
@@ -1086,6 +1096,18 @@ namespace PmxEditorMcp
 
                 stage = Reflecting(call.Receiver, target, stage);
                 refused = Commit(context, call.Receiver, target);
+                if (refused == null
+                    && target != null
+                    && target.Current
+                    && ReplacedModelSelection.ReplacesCurrent(call.RowKey))
+                {
+                    _screen.ClearSelections();
+                    if (!_refresh.Apply(ScreenRefreshKind.Drawn))
+                    {
+                        context.NotShown = true;
+                    }
+                }
+
                 if (refused == null && call.ReadBack != null)
                 {
                     object back;
@@ -1924,22 +1946,19 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>
-        /// 位置で指す項目へ渡された値。位置の整数か、指さないことを表す null でなければ断る。
-        /// </summary>
         private static bool TryGivenPosition(
             ToolField field, object given, out object position, out string code, out string message)
         {
             position = null;
             code = null;
             message = null;
-            if (given == null)
+            if (given == null && !field.RefusesNull)
             {
                 return true;
             }
 
             int index;
-            if (!field.Listed && ValueInput.TryIndex(given, out index))
+            if (given != null && !field.Listed && ValueInput.TryIndex(given, out index))
             {
                 position = index;
 
@@ -2099,6 +2118,22 @@ namespace PmxEditorMcp
             return true;
         }
 
+        private void Forget(object item, string rowKey)
+        {
+            DeferredWrites held;
+            if (_deferred.TryGetValue(KeeperOf(item), out held))
+            {
+                held.Forget(item, rowKey);
+            }
+        }
+
+        private IList<string> Deferred(object item)
+        {
+            DeferredWrites held;
+
+            return _deferred.TryGetValue(KeeperOf(item), out held) ? held.Rows(item) : new string[0];
+        }
+
         /// <summary>
         /// ハンドルで持つ実体への、位置で指す項目の書き込みを預かる。預かる先は、解く呼び出しまで
         /// 生き残る実体である——子を親へ加えたあとは親が預かる。
@@ -2113,6 +2148,18 @@ namespace PmxEditorMcp
             }
 
             held.Put(pending);
+            _keeperOf.Remove(pending.Target);
+            _keeperOf.Add(pending.Target, keeper);
+        }
+
+        private object KeeperOf(object item)
+        {
+            object keeper;
+            DeferredWrites held;
+
+            return _keeperOf.TryGetValue(item, out keeper) && _deferred.TryGetValue(keeper, out held)
+                ? keeper
+                : item;
         }
 
         /// <summary>
@@ -2147,6 +2194,15 @@ namespace PmxEditorMcp
             DeferredWrites held;
             if (!_deferred.TryGetValue(item, out held))
             {
+                DeferredWrites owning;
+                if (!_deferred.TryGetValue(owner, out owning))
+                {
+                    _deferred.Add(owner, new DeferredWrites());
+                }
+
+                _keeperOf.Remove(item);
+                _keeperOf.Add(item, owner);
+
                 return;
             }
 
@@ -2274,12 +2330,9 @@ namespace PmxEditorMcp
             return call.Arguments.Where(a => !a.Injected).ToList();
         }
 
-        /// <summary>
-        /// 位置で受け取る引数の指定。関連が無いことは null で表し、実体を解くのは相手にするPMXが
-        /// 決まってからなので、ここでは位置のまま持つ。
-        /// </summary>
         private static bool TryReference(
             ToolArgument argument,
+            bool refusing,
             object given,
             out object position,
             out string code,
@@ -2288,13 +2341,13 @@ namespace PmxEditorMcp
             position = null;
             code = null;
             message = null;
-            if (given == null)
+            if (given == null && !(refusing && argument.RefusesNull))
             {
                 return true;
             }
 
             int index;
-            if (ValueInput.TryIndex(given, out index))
+            if (given != null && ValueInput.TryIndex(given, out index))
             {
                 position = index;
 
@@ -2551,7 +2604,7 @@ namespace PmxEditorMcp
 
                 if (argument.Referenced != null)
                 {
-                    if (!TryReference(argument, value, out taken[at], out code, out message))
+                    if (!TryReference(argument, true, value, out taken[at], out code, out message))
                     {
                         return false;
                     }
@@ -3174,6 +3227,7 @@ namespace PmxEditorMcp
                 }
 
                 stage = Changing(tool.Receiver, target);
+                BoneDestination destinations = new BoneDestination();
                 for (int at = 0; at < column.Count; at++)
                 {
                     int which = spread ? 0 : at;
@@ -3184,12 +3238,13 @@ namespace PmxEditorMcp
                         if (waiting != null)
                         {
                             Defer(
-                                column[at].Item,
+                                KeeperOf(column[at].Item),
                                 new DeferredWrite(column[at].Item, waiting.Field, waiting.Position));
 
                             continue;
                         }
 
+                        Forget(column[at].Item, one.Fields[field].RowKey);
                         object ignored;
                         SdkRelayRefusal refusal;
                         if (!_relay.TryInvoke(
@@ -3204,6 +3259,19 @@ namespace PmxEditorMcp
                             return;
                         }
                     }
+
+                    destinations.Note(
+                        one.Fields.Select(f => f.RowKey),
+                        Deferred(column[at].Item),
+                        column[at].Item,
+                        column[at].Handle.HasValue
+                            ? "ハンドル " + column[at].Handle.Value
+                            : "位置 " + column[at].Position);
+                }
+
+                foreach (string notice in destinations.Notices())
+                {
+                    context.Notices.Add(notice);
                 }
 
                 updated = column.Count;
@@ -5489,7 +5557,7 @@ namespace PmxEditorMcp
 
             if (argument.Referenced != null)
             {
-                return TryReference(argument, json, out value, out code, out message);
+                return TryReference(argument, true, json, out value, out code, out message);
             }
 
             if (argument.Held != null)
