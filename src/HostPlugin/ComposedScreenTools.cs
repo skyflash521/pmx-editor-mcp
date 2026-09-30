@@ -23,6 +23,19 @@ namespace PmxEditorMcp
             Func<object> transformView,
             IModifierKeys keys)
         {
+            AddTo(methods, screen, builder, subView, forms, transformView, keys, new SdkVmdPoseSource());
+        }
+
+        internal static void AddTo(
+            McpMethodTable methods,
+            ComposedScreen screen,
+            Func<object> builder,
+            Func<object> subView,
+            Func<IEnumerable<Form>> forms,
+            Func<object> transformView,
+            IModifierKeys keys,
+            IVmdPoseSource poses)
+        {
             if (methods == null)
             {
                 throw new ArgumentNullException(nameof(methods));
@@ -65,6 +78,7 @@ namespace PmxEditorMcp
             MotionSetTransformViewIk.AddTo(methods, screen, forms);
             EditorPressSavingItem.AddTo(methods, screen, forms);
             MotionRotateBoneAboutAxis.AddTo(methods, screen, transformView, keys);
+            MotionSetTransformViewVmdFrame.AddTo(methods, screen, transformView, poses);
         }
     }
 }

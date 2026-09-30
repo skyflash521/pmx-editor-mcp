@@ -34916,6 +34916,52 @@
       }
     },
     {
+      "tool": "motion_set_transform_view_vmd_frame",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "vmd",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true
+            },
+            {
+              "name": "frame",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true,
+              "bounds": {
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "frame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "bones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "morphs",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "motion_set_v_vme_quaternion_value_event_operator",
       "branches": [
         {

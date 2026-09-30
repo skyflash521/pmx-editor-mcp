@@ -45,6 +45,12 @@ namespace PmxEditorMcp.Tests
 
         public int Updates { get; private set; }
 
+        public List<string> Calls { get; } = new List<string>();
+
+        public List<string> VpdTexts { get; } = new List<string>();
+
+        public bool AcceptsVpd { get; set; } = true;
+
         public List<V3> Rotations { get; } = new List<V3>();
 
         public bool Visible { get; set; }
@@ -140,7 +146,7 @@ namespace PmxEditorMcp.Tests
 
         public void ResetTransform()
         {
-            throw new NotSupportedException();
+            Calls.Add("reset");
         }
 
         public void BoneRotate()
@@ -165,7 +171,10 @@ namespace PmxEditorMcp.Tests
 
         public bool SetVpdFromText(string s)
         {
-            throw new NotSupportedException();
+            Calls.Add("vpd");
+            VpdTexts.Add(s);
+
+            return AcceptsVpd;
         }
 
         public bool Focus()

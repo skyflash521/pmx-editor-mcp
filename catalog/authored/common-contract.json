@@ -490,6 +490,11 @@
       "duty": "TransformView のIKごとの入り切りを、TransformView のIKの一覧の項目のチェックとして切り替える。enabled に真偽を渡す。IKを持つボーンの位置を boneIndices に並べるとそのボーンのIKだけを、省くとモデルのIKを持つボーンすべてを切り替える。IKを切ると、そのIKのリンクに入っているボーンを motion_bone_rotate・motion_rotate_bone_about_axis で回したとき、IKが回し直さない。切り替えた各IKの、IKを持つボーンの位置 boneIndex と、切り替え後の入り切り enabled を、iks に boneIndices の並びのまま返す。boneIndices に同じ位置が重なっているときは、1件にまとめて返す。TransformView が開いていないとき、TransformView のIKの一覧の数がモデルでIKを持つボーンの数と合わないとき、一覧のどれかの項目が、次のいずれかに当たるときは断る。一覧の中での番号で始まっていない。モデルでIKを持つボーンを並べたとき同じ順に当たるボーンの名前で終わっていない。番号と名前の間に英数字がある。番号と名前の間の文字列が、項目ごとに違う。boneIndices の位置がIKを持つボーンでないときは、何も切り替えずに断る。"
     },
     {
+      "tool": "motion_set_transform_view_vmd_frame",
+      "branching": false,
+      "duty": "VMD の1フレームの姿勢を、TransformView の変形にする。vmd に VMD のハンドルを、frame にフレームの番号を渡す。VMD のボーンとモーフのうち、名前がいまのモデルのボーンとモーフの名前に当たるものへ、そのフレームの値を当てる。キーとキーの間はキーの補間曲線で補間した値になり、最初のキーより前は、フレーム0の初期状態から最初のキーへの補間に、最後のキーより後は最後のキーの値になる。VMD のフレーム0のキーが、同じボーンまたはモーフの別のキーより後ろに並んでいるときは、並びの最初のキーの手前は補間せずそのキーの値になる。当てる前に TransformView の変形とモーフを初期の状態へ戻すので、キーの無いものは初期の状態になる。物理演算と VMD のIKの入り切りは当たらず、IKは TransformView のいまの入り切りのまま(切るには先に motion_set_transform_view_ik を呼ぶ)。当てたボーンの数を bones に、モーフの数を morphs に、フレームを frame に返す。名前が空、名前の先頭が空白、名前に改行を含むボーンとモーフは当たらない。モデルに同名のモーフがあるとき、エディタが VPD から捨てる、位置が名前の種類の数以上のモーフは当たらず、morphs に数えない。vmd に使えないハンドルを渡したとき、VMD でないハンドルを渡したときは TOOL_INVALID_HANDLE を、TransformView が開いていないとき、VMD のキーを持つ名前がモデルのボーンとモーフのどれにも当たらないとき、キーの値が有限の数でないとき、動いているカルチャの小数点が . でないときは、何も当てずに TOOL_NOT_APPLICABLE を返す。当てた姿勢をモデルの形状へ入れるには motion_apply_current_pose を呼ぶ。"
+    },
+    {
       "tool": "session_release_handle",
       "branching": false,
       "duty": "台帳が発行したハンドルを解放する"

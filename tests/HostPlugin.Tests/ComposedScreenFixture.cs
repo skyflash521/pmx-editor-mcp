@@ -61,6 +61,13 @@ namespace PmxEditorMcp.Tests
 
         public FakeTransformView TransformView { get; }
 
+        internal IVmdPoseSource Poses { get; set; } = new SdkVmdPoseSource();
+
+        public HandleLedger Handles
+        {
+            get { return _edit.Handles; }
+        }
+
         public SwitchedModifierKeys Keys { get; } = new SwitchedModifierKeys();
 
         /// <summary>開いているウィンドウとしてツールへ渡す一覧。</summary>
@@ -112,7 +119,8 @@ namespace PmxEditorMcp.Tests
                     () => SubView,
                     () => new List<System.Windows.Forms.Form>(Forms),
                     () => TransformView,
-                    Keys);
+                    Keys,
+                    Poses);
             }
 
             McpMethod method;

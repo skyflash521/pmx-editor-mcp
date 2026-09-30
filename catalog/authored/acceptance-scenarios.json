@@ -2753,6 +2753,419 @@
         },
         {
           "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "vertexMorphFromVertices",
+            "name": "笑い",
+            "targetIndices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  3,
+                  5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd",
+          "arguments": {
+            "boneNames": [
+              "センター"
+            ],
+            "morphNames": [
+              "笑い"
+            ]
+          },
+          "record": {
+            "name": "poseVmd",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bone_key",
+          "arguments": {},
+          "record": {
+            "name": "poseFirst",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bone_key",
+          "arguments": {},
+          "record": {
+            "name": "poseLast",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_morph_key",
+          "arguments": {},
+          "record": {
+            "name": "poseMorph",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_frame_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "poseFirst"
+              },
+              {
+                "$from": "poseLast"
+              },
+              {
+                "$from": "poseMorph"
+              }
+            ],
+            "values": [
+              {
+                "frameIndex": 0
+              },
+              {
+                "frameIndex": 30
+              },
+              {
+                "frameIndex": 30
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_bone_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "poseFirst"
+              },
+              {
+                "$from": "poseLast"
+              }
+            ],
+            "values": [
+              {
+                "boneIndex": 0,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "boneIndex": 0,
+                "translation": [
+                  0,
+                  10,
+                  0
+                ],
+                "rotation": [
+                  0,
+                  0,
+                  0.70710678,
+                  0.70710678
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_morph_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "poseMorph"
+              }
+            ],
+            "values": [
+              {
+                "morphIndex": 0,
+                "value": 1
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_bone_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "poseVmd"
+                },
+                "handles": [
+                  {
+                    "$from": "poseFirst"
+                  },
+                  {
+                    "$from": "poseLast"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_morph_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "poseVmd"
+                },
+                "handles": [
+                  {
+                    "$from": "poseMorph"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_transform_view_vmd_frame",
+          "arguments": {
+            "vmd": {
+              "$from": "poseVmd"
+            },
+            "frame": 15
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "frame",
+                "equals": 15
+              },
+              {
+                "path": "bones",
+                "equals": 1
+              },
+              {
+                "path": "morphs",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_transform_view_connector",
+          "arguments": {
+            "selectedMorphIndex": 0
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_get_transform_view_connector",
+          "arguments": {
+            "fields": [
+              "morphValue"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "morphValue",
+                "equals": 0.5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_apply_current_pose",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  9,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0.707106769,
+                  8.292893,
+                  5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd",
+          "arguments": {},
+          "record": {
+            "name": "emptyVmd",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_set_transform_view_vmd_frame",
+          "arguments": {
+            "vmd": {
+              "$from": "emptyVmd"
+            },
+            "frame": 0
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_NOT_APPLICABLE"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "emptyVmd"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "poseVmd"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "model_update_bones",
           "arguments": {
             "indices": [

@@ -287,6 +287,19 @@
       ]
     },
     {
+      "task": "VMD の1フレームの姿勢を TransformView へ当てる",
+      "searches": [
+        [
+          "VMD",
+          "TransformView",
+          "姿勢"
+        ]
+      ],
+      "tools": [
+        "motion_set_transform_view_vmd_frame"
+      ]
+    },
+    {
       "task": "TransformView の姿勢の取り消し",
       "searches": [
         [
