@@ -63,6 +63,15 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void PosingTwiceTakesOneClone()
+        {
+            Call(_motion, 30);
+            Call(_motion, 31);
+
+            Assert.Equal(1, _fixture.Clones);
+        }
+
+        [Fact]
         public void TheFrameAndTheNumbersOfBonesAndMorphsSetAreReturned()
         {
             IDictionary<string, object> value = ComposedScreenFixture.Value(Call(_motion, 30));

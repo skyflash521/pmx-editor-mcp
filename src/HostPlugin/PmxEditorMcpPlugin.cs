@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Forms;
 using PEPlugin;
+using PEPlugin.Form;
+using PEPlugin.Pmx;
 using PEPlugin.View;
 using PXCPlugin;
 
@@ -22,6 +24,8 @@ namespace PmxEditorMcp
         private const string ViewType = "PEPlugin.View.IPXPmxViewConnector";
 
         private const string FormType = "PEPlugin.Form.IPEFormConnector";
+
+        private const string PmxConnectorType = "PEPlugin.Pmx.IPXPmxConnector";
 
         private const string PartsType = "PEPlugin.View.IPEPartsSelectConnector";
 
@@ -220,9 +224,12 @@ namespace PmxEditorMcp
                     () => Receiver(receivers, ViewType),
                     () => Receiver(receivers, FormType),
                     () => TransformViewSync.Refresh(Receiver(receivers, TransformViewType)));
+                CloneCache cloneCache = _modelUpdates == null
+                    ? null
+                    : new CloneCache(() => Stamp(receivers));
                 PmxSession current = new PmxSession(
                     relay, receivers, _resident, GeneratedSdkFlows.Current,
-                    GeneratedSdkFlows.Pmx, undo);
+                    GeneratedSdkFlows.Pmx, undo, cloneCache);
                 UndoRecovery recovery = new UndoRecovery(undo, current.UndoLock);
                 ToolDispatch.AddTo(
                     methods,
@@ -233,7 +240,7 @@ namespace PmxEditorMcp
                     current,
                     new PmxSession(
                         relay, receivers, _resident, GeneratedSdkFlows.Bridge,
-                        GeneratedSdkFlows.Pmx, undo),
+                        GeneratedSdkFlows.Pmx, undo, cloneCache),
                     recovery,
                     tables.Calls,
                     tables.Aggregations,
@@ -289,7 +296,7 @@ namespace PmxEditorMcp
                     McpHost.BuildPipeName(editorProcessId),
                     _log,
                     budget,
-                    Following(new FormUiDispatcher(_uiAnchor), receivers),
+                    Kept(Following(new FormUiDispatcher(_uiAnchor), receivers), cloneCache),
                     (stream, generation) => _connection.Handle(stream, generation));
 
                 string reason;
@@ -376,6 +383,20 @@ namespace PmxEditorMcp
                     "モデルの更新を数え始められなかった。エディタにモデルを更新させるツールのあと、TransformView を読み直させない。",
                     exception);
             }
+        }
+
+        private ModelStamp Stamp(IDictionary<string, SdkReceiver> receivers)
+        {
+            IPEFormConnector form = (IPEFormConnector)Receiver(receivers, FormType);
+
+            IPXPmxConnector pmx = (IPXPmxConnector)Receiver(receivers, PmxConnectorType);
+
+            return ModelStampSource.Read(_modelUpdates, form, pmx, null);
+        }
+
+        private static IUiDispatcher Kept(IUiDispatcher dispatcher, CloneCache cache)
+        {
+            return cache == null ? dispatcher : new CloneCacheScope(dispatcher, cache);
         }
 
         private IUiDispatcher Following(IUiDispatcher dispatcher, IDictionary<string, SdkReceiver> receivers)

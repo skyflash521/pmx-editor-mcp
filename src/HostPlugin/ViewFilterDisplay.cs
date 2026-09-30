@@ -53,7 +53,7 @@ namespace PmxEditorMcp
                 ToolName,
                 screen.Method(
                     known,
-                    ScreenNeeds.View | ScreenNeeds.Parts | ScreenNeeds.Pmx,
+                    ScreenNeeds.View | ScreenNeeds.Parts | ScreenNeeds.Pmx | ScreenNeeds.ReadsPmx,
                     ScreenRefreshKind.Drawn,
                     Run));
         }

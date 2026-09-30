@@ -155,7 +155,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// <paramref name="body"/> を、相手にするPMXを読むだけの呼び出しにする。現在のPMXは
-        /// 複製を渡して反映せずに捨て、ハンドルが指すPMXは台帳の実体をそのまま渡すので、
+        /// 複製を渡して反映せず(続く読み取りへ残した複製を渡すことがある)、ハンドルが指すPMXは台帳の実体をそのまま渡すので、
         /// <paramref name="body"/> はどちらを渡されても変えてはならない。確定は行わないので、
         /// Undoへは何も積まない。
         /// </summary>
@@ -201,7 +201,12 @@ namespace PmxEditorMcp
                 {
                     PmxTarget target;
                     if (!_session.TryTake(
-                        handle, context.Handles, out target, out refusedCode, out refusedMessage))
+                        handle,
+                        context.Handles,
+                        out target,
+                        out refusedCode,
+                        out refusedMessage,
+                        reading: true))
                     {
                         return;
                     }

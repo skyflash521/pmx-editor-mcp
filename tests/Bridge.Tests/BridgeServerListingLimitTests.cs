@@ -86,6 +86,15 @@ namespace PmxEditorMcp.Bridge.Tests
                         "{\"index\":0,\"name\":\"\",\"vertexCount\":0,\"weightSum\":0,\"weightMax\":0}".Length)
                 },
                 {
+                    "model_find_surface_intersections",
+                    new Listing(
+                        new[] { "count", "faceCount", "otherFaceCount", "totalLength", "maxDepth" },
+                        "0".Length * 5,
+                        "pairs",
+                        ("{\"material\":0,\"face\":0,\"otherMaterial\":0,\"otherFace\":0,\"depth\":0,"
+                            + "\"length\":0,\"start\":[0,0,0],\"end\":[0,0,0]}").Length)
+                },
+                {
                     "view_pick_screen_point",
                     new Listing(
                         new[] { "count" },

@@ -493,7 +493,7 @@ namespace PmxEditorMcp
                 PmxTarget target;
                 IList<Spot> column;
                 Refusal unreadable;
-                if (!TryTake(context, reading.Receiver, false, null, false, out target, out unreadable)
+                if (!TryTake(context, reading.Receiver, false, null, false, out target, out unreadable, false, false)
                     || !TryColumn(
                         context,
                         reading.Access,
@@ -1013,7 +1013,7 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
-                if (!TryTake(context, call.Receiver, Targets(call), handle, false, out target, out refused)
+                if (!TryTake(context, call.Receiver, Targets(call), handle, false, out target, out refused, issues)
                     || !TryColumn(
                         context,
                         call.Access,
@@ -1608,7 +1608,8 @@ namespace PmxEditorMcp
                         handle,
                         pointed.Held && !Takes(call),
                         out target,
-                        out refused)
+                        out refused,
+                        call.Issues != null)
                     || !TryColumn(
                         context,
                         call.Access,
@@ -3625,7 +3626,7 @@ namespace PmxEditorMcp
                 PmxTarget target;
                 SdkList list;
                 IList<Spot> column;
-                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, handle, pointed.Held, out target, out refused)
+                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, handle, pointed.Held, out target, out refused, true)
                     || !TryList(tool.Access.RowKey, out list, out refused)
                     || !TryColumn(
                         context,
@@ -5188,10 +5189,18 @@ namespace PmxEditorMcp
             long? handle,
             bool held,
             out PmxTarget target,
-            out Refusal refused)
+            out Refusal refused,
+            bool issuing = false,
+            bool ofTool = true)
         {
             target = null;
             refused = null;
+            bool reading = receiver.Edit == EditKind.Read;
+            if (reading && ofTool)
+            {
+                Session(receiver).NoteRead();
+            }
+
             if (!targets)
             {
                 return true;
@@ -5212,7 +5221,8 @@ namespace PmxEditorMcp
                 out target,
                 out code,
                 out message,
-                receiver.Edit == EditKind.DuplicateEdit))
+                receiver.Edit == EditKind.DuplicateEdit,
+                reading && !issuing))
             {
                 return true;
             }

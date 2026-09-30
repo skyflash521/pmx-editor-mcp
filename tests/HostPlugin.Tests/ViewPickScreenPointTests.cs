@@ -51,6 +51,17 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void PickingTwiceTakesOneClone()
+        {
+            Layer(0f, 0, 1, 2, false, Triangle(0f, 2f, 2f, -2f, -2f, -2f));
+
+            Pick(100, 100);
+            Pick(100, 100);
+
+            Assert.Equal(1, _fixture.Clones);
+        }
+
+        [Fact]
         public void TheNearestCornerOfTheHitFaceComesBackWithItsPlaceOnTheImage()
         {
             Layer(0f, 0, 1, 2, false, Triangle(0f, 2f, 2f, -2f, -2f, -2f));

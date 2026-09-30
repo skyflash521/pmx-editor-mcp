@@ -30,6 +30,22 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SwitchingTwiceTakesOneClone()
+        {
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture, 2))
+                {
+                    ComposedScreenFixture.Value(Call(fixture, false, null));
+                    ComposedScreenFixture.Value(Call(fixture, true, null));
+
+                    Assert.Equal(1, fixture.Clones);
+                }
+            });
+        }
+
+        [Fact]
         public void OnlyTheGivenIkBoneIsSwitchedAndTheOthersStay()
         {
             OnSta(() =>

@@ -45,10 +45,12 @@
     <Compile Include="..\HostPlugin.Tests\ComposedEditFixture.cs" Link="Shared\ComposedEditFixture.cs" />
     <Compile Include="..\HostPlugin.Tests\ComposedScreenFixture.cs" Link="Shared\ComposedScreenFixture.cs" />
     <Compile Include="..\HostPlugin.Tests\DialogSightings.cs" Link="Shared\DialogSightings.cs" />
+    <Compile Include="..\HostPlugin.Tests\DispatchedInvoker.cs" Link="Shared\DispatchedInvoker.cs" />
     <Compile Include="..\HostPlugin.Tests\EventBindingFixture.cs" Link="Shared\EventBindingFixture.cs" />
     <Compile Include="..\HostPlugin.Tests\ExchangeStream.cs" Link="Shared\ExchangeStream.cs" />
     <Compile Include="..\HostPlugin.Tests\FakeTransformView.cs" Link="Shared\FakeTransformView.cs" />
     <Compile Include="..\HostPlugin.Tests\ModifierKeyDoubles.cs" Link="Shared\ModifierKeyDoubles.cs" />
+    <Compile Include="..\HostPlugin.Tests\ModelShape.cs" Link="Shared\ModelShape.cs" />
     <Compile Include="..\HostPlugin.Tests\PmxModelDoubles.cs" Link="Shared\PmxModelDoubles.cs" />
     <Compile Include="..\HostPlugin.Tests\ScreenDoubles.cs" Link="Shared\ScreenDoubles.cs" />
     <Compile Include="..\HostPlugin.Tests\SdkStubs.cs" Link="Shared\SdkStubs.cs" />

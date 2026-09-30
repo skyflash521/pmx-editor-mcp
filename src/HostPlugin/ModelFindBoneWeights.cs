@@ -171,7 +171,7 @@ namespace PmxEditorMcp
             return value;
         }
 
-        private static bool TryNumber(
+        internal static bool TryNumber(
             McpMethodContext context, string name, int least, ref int taken, out string message)
         {
             message = null;

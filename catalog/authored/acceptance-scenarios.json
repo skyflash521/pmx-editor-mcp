@@ -15599,6 +15599,498 @@
           }
         }
       ]
+    },
+    {
+      "id": 19,
+      "title": "面どうしの交差の測定",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 6
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "values": [
+              {
+                "position": [
+                  -10,
+                  -10,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  10,
+                  -10,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  10,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  -5,
+                  -5
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  -5,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  5,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "crossFaceA",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "crossFaceA"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "crossFaceA"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "crossFaceB",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "crossFaceB"
+              }
+            ],
+            "value": {
+              "vertex1": 3,
+              "vertex2": 4,
+              "vertex3": 5
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 1,
+                "handles": [
+                  {
+                    "$from": "crossFaceB"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_intersections",
+          "arguments": {
+            "surfaceMaterialIndices": [
+              0
+            ],
+            "otherSurfaceMaterialIndices": [
+              1
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 1
+              },
+              {
+                "path": "faceCount",
+                "equals": 1
+              },
+              {
+                "path": "otherFaceCount",
+                "equals": 1
+              },
+              {
+                "path": "totalLength",
+                "equals": 10
+              },
+              {
+                "path": "maxDepth",
+                "equals": 5
+              },
+              {
+                "path": "pairs.0.material",
+                "equals": 0
+              },
+              {
+                "path": "pairs.0.face",
+                "equals": 0
+              },
+              {
+                "path": "pairs.0.otherMaterial",
+                "equals": 1
+              },
+              {
+                "path": "pairs.0.otherFace",
+                "equals": 0
+              },
+              {
+                "path": "pairs.0.depth",
+                "equals": 5
+              },
+              {
+                "path": "pairs.0.length",
+                "equals": 10
+              },
+              {
+                "path": "pairs.0.start",
+                "equals": [
+                  0,
+                  -5,
+                  0
+                ]
+              },
+              {
+                "path": "pairs.0.end",
+                "equals": [
+                  0,
+                  5,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_intersections",
+          "arguments": {
+            "surfaceMaterialIndices": [
+              1
+            ],
+            "otherSurfaceMaterialIndices": [
+              0
+            ],
+            "offset": 0,
+            "limit": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 1
+              },
+              {
+                "path": "pairs.0.material",
+                "equals": 1
+              },
+              {
+                "path": "pairs.0.otherMaterial",
+                "equals": 0
+              },
+              {
+                "path": "nextOffset",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_intersections",
+          "arguments": {
+            "surfaceMaterialIndices": [
+              0
+            ],
+            "otherSurfaceMaterialIndices": [
+              1
+            ],
+            "offset": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 1
+              },
+              {
+                "path": "pairs",
+                "equals": []
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_intersections",
+          "arguments": {
+            "surfaceMaterialIndices": [
+              0,
+              1
+            ],
+            "otherSurfaceMaterialIndices": [
+              1
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              3,
+              4,
+              5
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  -5,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  -5,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  5,
+                  3
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_intersections",
+          "arguments": {
+            "surfaceMaterialIndices": [
+              0
+            ],
+            "otherSurfaceMaterialIndices": [
+              1
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 0
+              },
+              {
+                "path": "faceCount",
+                "equals": 0
+              },
+              {
+                "path": "otherFaceCount",
+                "equals": 0
+              },
+              {
+                "path": "totalLength",
+                "equals": 0
+              },
+              {
+                "path": "maxDepth",
+                "absent": true
+              },
+              {
+                "path": "pairs",
+                "equals": []
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }

@@ -46,7 +46,7 @@ namespace PmxEditorMcp
                 ToolName,
                 screen.Method(
                     new List<string> { EnabledName, BoneIndicesName },
-                    ScreenNeeds.Pmx,
+                    ScreenNeeds.Pmx | ScreenNeeds.ReadsPmx,
                     ScreenRefreshKind.None,
                     (context, parts) => Run(context, parts, forms)));
         }

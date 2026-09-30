@@ -104,6 +104,8 @@ namespace PmxEditorMcp.Tests
 
         private readonly Target _target = new Target();
 
+        private readonly CloneCache _cache = new CloneCache(new ModelStamps().Current);
+
         private readonly Target _pmxSetting = new Target();
 
         private readonly Target _transformSetting = new Target();
@@ -646,6 +648,25 @@ namespace PmxEditorMcp.Tests
 
             Assert.True(ToolEnvelope.Succeeded(envelope));
             Assert.Equal(7, envelope[ToolEnvelope.ValueName]);
+        }
+
+        [Fact]
+        public void AClonePutAsideBeforeAToolThatChecksWhatIsPickedIsNotKeptAfterIt()
+        {
+            _target.Picked = new[] { 3 };
+            _target.Count = 7;
+            PmxFlow probe = new PmxFlow("a", "b", null, new FlowSlot[0], new FlowSlot[0]);
+            _cache.Enter();
+            _cache.Put(probe, new object());
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Picking(new StillModifierKeys(), "session_glimpsed")(
+                    new McpMethodContext(Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
+            _cache.Exit();
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            object kept;
+            Assert.False(_cache.TryGet(probe, out kept));
         }
 
         [Fact]
@@ -1677,7 +1698,8 @@ namespace PmxEditorMcp.Tests
                 connection,
                 new PmxFlow(CountKey, CountKey, TargetType, new FlowSlot[0], new[] { FlowSlot.Pmx }),
                 typeof(object),
-                new UndoSuppression(_log));
+                new UndoSuppression(_log),
+                _cache);
         }
 
         private ScreenRefresh Refresh()
@@ -1740,7 +1762,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>選ばれているものが要るツールとして、題材の呼び出しを引く。</summary>
-        private McpMethod Picking(IModifierKeys modifiers)
+        private McpMethod Picking(IModifierKeys modifiers, string reading = "session_picked")
         {
             McpMethodTable methods = new McpMethodTable();
             SdkRelayTable relay = Relay();
@@ -1765,7 +1787,7 @@ namespace PmxEditorMcp.Tests
                         "session_count",
                         new ToolPrecondition(
                             PreconditionKind.PickedObjects,
-                            new[] { "session_picked" },
+                            new[] { reading },
                             new string[0])
                     },
                 },
@@ -2461,6 +2483,17 @@ namespace PmxEditorMcp.Tests
                     new ToolCall(
                         PickedKey,
                         Direct(),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(int[]))
+                },
+                {
+                    "session_glimpsed",
+                    new ToolCall(
+                        PickedKey,
+                        new ToolReceiver(ToolReceiverKind.Connection, TargetType, EditKind.Read),
                         ToolAccess.Whole(),
                         DangerKind.None,
                         new ToolArgument[0],

@@ -40,13 +40,29 @@ namespace PmxEditorMcp.Tests
 
         private readonly PmxSession _session;
 
+        private readonly CloneCache _cache;
+
+        private readonly ModelShape _shape = new ModelShape();
+
         private McpMethodTable _tools;
 
         private readonly System.Diagnostics.Stopwatch _editor = new System.Diagnostics.Stopwatch();
 
         /// <summary>題材を組む。</summary>
         public ComposedEditFixture()
+            : this(null)
         {
+        }
+
+        public ComposedEditFixture(ModelStamps stamps)
+        {
+            if (stamps != null)
+            {
+                CloneCache cache = new CloneCache(stamps.Current);
+                _cache = cache;
+                Invoker = new DispatchedInvoker(new CloneCacheScope(new ImmediateDispatcher(), cache));
+            }
+
             _root = Path.Combine(
                 Path.GetTempPath(), "pmx-editor-mcp-composed-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_root);
@@ -67,7 +83,8 @@ namespace PmxEditorMcp.Tests
                     ResumeUndoKey,
                     PartialCommitKey),
                 typeof(PEPlugin.Pmx.IPXPmx),
-                _undo);
+                _undo,
+                _cache);
             _edit = new ComposedEdit(Session(), Barrier(), Refresh());
         }
 
@@ -88,6 +105,10 @@ namespace PmxEditorMcp.Tests
 
         /// <summary>発行したハンドルの台帳。</summary>
         public HandleLedger Handles { get; }
+
+        public IUiInvoker Invoker { get; } = new InlineInvoker();
+
+        public FakePmx LastClone { get; private set; }
 
         /// <summary>複製を得た回数。</summary>
         public int Clones { get; private set; }
@@ -168,7 +189,15 @@ namespace PmxEditorMcp.Tests
         public IDictionary<string, object> Call(
             McpMethod method, IDictionary<string, object> arguments)
         {
-            return (IDictionary<string, object>)method(Context(arguments));
+            int commits = Commits;
+            IDictionary<string, object> envelope = (IDictionary<string, object>)method(Context(arguments));
+            if (Commits == commits && Equals(envelope["ok"], true) && LastClone != null
+                && !string.Equals(_shape.Of(Model), _shape.Of(LastClone), StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("反映しなかった呼び出しが、得た複製の中身を変えた。");
+            }
+
+            return envelope;
         }
 
         /// <summary>その項目の組を持つ呼び出しの場。</summary>
@@ -181,7 +210,7 @@ namespace PmxEditorMcp.Tests
         {
             return new McpMethodContext(
                 arguments,
-                new InlineInvoker(),
+                Invoker,
                 budgetChars,
                 Handles,
                 new EventQueue(new EventSequenceIssuer()),
@@ -310,7 +339,9 @@ namespace PmxEditorMcp.Tests
                             _editor.Start();
                             try
                             {
-                                return FakeEditorState.Duplicate(Model);
+                                LastClone = FakeEditorState.Duplicate(Model);
+
+                                return LastClone;
                             }
                             finally
                             {

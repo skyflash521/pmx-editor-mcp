@@ -7266,6 +7266,155 @@
       }
     },
     {
+      "tool": "model_find_surface_intersections",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "surfaceMaterialIndices",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "otherSurfaceMaterialIndices",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 1
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "count",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "faceCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "otherFaceCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "totalLength",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "maxDepth",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "pairs",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "material",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "face",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "otherMaterial",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "otherFace",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "depth",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "length",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "start",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "end",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_find_surface_section",
       "branches": [
         {

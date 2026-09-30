@@ -71,6 +71,8 @@ namespace PmxEditorMcp.Tests
         private sealed class Updates : IModelUpdates
         {
             public int Count { get; set; }
+
+            public int HistoryMoves { get; set; }
         }
 
         private sealed class InlineDispatcher : IUiDispatcher

@@ -51,6 +51,15 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TurningTwiceTakesOneClone()
+        {
+            Rotate(new object[] { 1.0, 0.0, 0.0 }, 30.0);
+            Rotate(new object[] { 1.0, 0.0, 0.0 }, 30.0);
+
+            Assert.Equal(1, _fixture.Clones);
+        }
+
+        [Fact]
         public void TheAnglesHandedToTheEditorAreReturned()
         {
             IDictionary<string, object> value = ComposedScreenFixture.Value(Rotate(new object[] { 0.0, 1.0, 0.0 }, 30.0));

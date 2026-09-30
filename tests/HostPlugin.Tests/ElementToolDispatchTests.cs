@@ -31,6 +31,10 @@ namespace PmxEditorMcp.Tests
 
         private const string ItemInfoKey = "Sdk.Item.Info()";
 
+        private const string PmxCloneKey = "Sdk.Pmx.Clone()";
+
+        private const string ItemCloneKey = "Sdk.Item.Clone()";
+
         private const string InfoLabelKey = "Sdk.ItemInfo.Label()";
 
         private const string ItemsKey = "Sdk.Pmx.Items()";
@@ -135,6 +139,12 @@ namespace PmxEditorMcp.Tests
 
         private PmxSession _session;
 
+        private readonly ModelStamps _updates = new ModelStamps();
+
+        private readonly CloneCache _cache;
+
+        private readonly IUiInvoker _invoker;
+
         private UndoRecovery _recovery;
 
         private McpMethodTable _methods;
@@ -155,6 +165,8 @@ namespace PmxEditorMcp.Tests
             Directory.CreateDirectory(_root);
             _log = new HostLog(Path.Combine(_root, "host.log"));
             _undo = new UndoSuppression(_log);
+            _cache = new CloneCache(_updates.Current);
+            _invoker = new DispatchedInvoker(new CloneCacheScope(new ImmediateDispatcher(), _cache));
         }
 
         public void Dispose()
@@ -166,6 +178,65 @@ namespace PmxEditorMcp.Tests
             catch (IOException)
             {
             }
+        }
+
+        [Fact]
+        public void ListingTwiceTakesOneClone()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+
+            Call("model_list_items", Arguments(TargetNames.Element.All, true));
+            Call("model_list_items", Arguments(TargetNames.Element.All, true));
+
+            Assert.Equal(1, _stateReads);
+        }
+
+        [Fact]
+        public void ARequestThatIssuesAHandleTakesItsOwnCloneEachTime()
+        {
+            Assert.True(ToolEnvelope.Succeeded(Call("model_clone_pmx", Arguments())));
+            Assert.True(ToolEnvelope.Succeeded(Call("model_clone_pmx", Arguments())));
+
+            Assert.Equal(2, _stateReads);
+        }
+
+        [Fact]
+        public void ARequestThatIssuesAHandleForPointedElementsTakesItsOwnCloneEachTime()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+
+            Assert.True(ToolEnvelope.Succeeded(Call(
+                "model_clone_item", Arguments(TargetNames.Element.Indices, new object[] { 0 }))));
+            Assert.True(ToolEnvelope.Succeeded(Call(
+                "model_clone_item", Arguments(TargetNames.Element.Indices, new object[] { 0 }))));
+
+            Assert.Equal(2, _stateReads);
+        }
+
+        [Fact]
+        public void ReadingAMemberTwiceTakesOneClone()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+
+            Call("model_info_items", Arguments(TargetNames.Element.All, true));
+            Call("model_info_items", Arguments(TargetNames.Element.All, true));
+
+            Assert.Equal(1, _stateReads);
+        }
+
+        [Fact]
+        public void AnEditBetweenTwoListingsMakesTheSecondTakeANewClone()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            Call("model_list_items", Arguments(TargetNames.Element.All, true));
+
+            Value(Call(
+                "model_clear_item",
+                Arguments(TargetNames.Element.All, true, ToolDispatch.ArgsName, Value("v", 2))));
+            Call("model_list_items", Arguments(TargetNames.Element.All, true));
+
+            Assert.Equal(3, _stateReads);
+            Assert.Equal(1, _commits);
         }
 
         [Fact]
@@ -2805,7 +2876,8 @@ namespace PmxEditorMcp.Tests
                         new[] { FlowSlot.Connector },
                         new[] { FlowSlot.Connector, FlowSlot.Pmx, FlowSlot.UndoLock }),
                     typeof(Model),
-                    _undo),
+                    _undo,
+                    _cache),
                 _recovery,
                 Calls(),
                 Aggregations(),
@@ -2834,7 +2906,7 @@ namespace PmxEditorMcp.Tests
             return (IDictionary<string, object>)method(
                 new McpMethodContext(
                     arguments,
-                    new InlineInvoker(),
+                    _invoker,
                     100000,
                     handles ?? Ledger(),
                     new EventQueue(new EventSequenceIssuer())));
@@ -2859,7 +2931,8 @@ namespace PmxEditorMcp.Tests
                     StopUndoKey,
                     ResumeUndoKey),
                 typeof(Model),
-                _undo);
+                _undo,
+                _cache);
         }
 
         private static ScreenRefresh Refresh()
@@ -2949,6 +3022,8 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     { NoteKey, (target, arguments) => ((Model)target).Note },
+                    { PmxCloneKey, (target, arguments) => ((Model)target).Duplicate() },
+                    { ItemCloneKey, (target, arguments) => new Item { Label = ((Item)target).Label } },
                     {
                         ItemInfoKey,
                         (target, arguments) => new ItemInfo { Label = ((Item)target).Label }
@@ -3389,6 +3464,30 @@ namespace PmxEditorMcp.Tests
                         new[] { new ToolArgument("v", typeof(float)) },
                         new ToolArgument[0],
                         null)
+                },
+                {
+                    "model_clone_item",
+                    new ToolCall(
+                        ItemCloneKey,
+                        Rooted(EditKind.Read),
+                        Direct(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Item),
+                        typeof(Item))
+                },
+                {
+                    "model_clone_pmx",
+                    new ToolCall(
+                        PmxCloneKey,
+                        Rooted(EditKind.Read),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Model),
+                        typeof(Model))
                 },
                 {
                     "model_info_items",

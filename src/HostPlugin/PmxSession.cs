@@ -65,6 +65,8 @@ namespace PmxEditorMcp
 
         private readonly UndoSuppression _undo;
 
+        private readonly CloneCache _cache;
+
         /// <summary>
         /// 中継・受け手の道・常駐と、複製編集の流れ・PMXの実体の型・Undoの抑止の枠を与えて
         /// 生成する。抑止の枠は接続をまたぐ1つの状態なので、流れが2つでも同じものを渡す。
@@ -75,7 +77,8 @@ namespace PmxEditorMcp
             ResidentConnection connection,
             PmxFlow flow,
             Type pmxType,
-            UndoSuppression undo)
+            UndoSuppression undo,
+            CloneCache cache = null)
         {
             if (relay == null)
             {
@@ -113,6 +116,7 @@ namespace PmxEditorMcp
             _flow = flow;
             _pmxType = pmxType;
             _undo = undo;
+            _cache = cache;
         }
 
         /// <summary>
@@ -135,7 +139,8 @@ namespace PmxEditorMcp
             out PmxTarget target,
             out string code,
             out string message,
-            bool editing = false)
+            bool editing = false,
+            bool reading = false)
         {
             if (handles == null)
             {
@@ -145,6 +150,11 @@ namespace PmxEditorMcp
             target = null;
             code = null;
             message = null;
+            if (reading)
+            {
+                NoteRead();
+            }
+
             if (handle.HasValue)
             {
                 object held;
@@ -162,7 +172,23 @@ namespace PmxEditorMcp
                 return true;
             }
 
+            if (editing && _cache != null)
+            {
+                _cache.NoteWrite();
+            }
+
+            bool kept = reading && _cache != null;
             object clone;
+            if (kept)
+            {
+                if (_cache.TryGet(_flow, out clone))
+                {
+                    target = new PmxTarget(clone, true);
+
+                    return true;
+                }
+            }
+
             SdkRelayRefusal refusal;
             if (!_relay.TryInvoke(
                 _flow.StateRead, Receiver(), Passed(_flow.Reading, null), out clone, out refusal))
@@ -171,6 +197,11 @@ namespace PmxEditorMcp
                 message = "現在のPMXを複製できない: " + _flow.StateRead;
 
                 return false;
+            }
+
+            if (kept)
+            {
+                _cache.Put(_flow, clone);
             }
 
             target = new PmxTarget(clone, true, editing);
@@ -244,6 +275,14 @@ namespace PmxEditorMcp
             message = "複製したPMXを反映できない: " + (part == null ? _flow.Commit : _flow.PartialCommit);
 
             return false;
+        }
+
+        public void NoteRead()
+        {
+            if (_cache != null)
+            {
+                _cache.NoteRead();
+            }
         }
 
         /// <summary>

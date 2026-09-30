@@ -22,6 +22,10 @@ namespace PmxEditorMcp
         Parts = 8,
 
         Setting = 16,
+
+        ReadsPmx = Pmx | 32,
+
+        ModelUntouched = 64,
     }
 
     /// <summary>画面へ触るツールの中身が受け取る相手。要らないと言った相手は空になる。</summary>
@@ -157,6 +161,11 @@ namespace PmxEditorMcp
             {
                 try
                 {
+                    if (Wanted(needs, ScreenNeeds.ModelUntouched))
+                    {
+                        _session.NoteRead();
+                    }
+
                     object view = Wanted(needs, ScreenNeeds.View) ? _view() : null;
                     object form = Wanted(needs, ScreenNeeds.Form) ? _form() : null;
                     object parts = Wanted(needs, ScreenNeeds.Parts) ? _parts() : null;
@@ -198,7 +207,8 @@ namespace PmxEditorMcp
                             context.Handles,
                             out target,
                             out refusedCode,
-                            out refusedMessage))
+                            out refusedMessage,
+                            reading: Wanted(needs, ScreenNeeds.ReadsPmx)))
                         {
                             return;
                         }

@@ -5,6 +5,8 @@ namespace PmxEditorMcp
     public interface IModelUpdates
     {
         int Count { get; }
+
+        int HistoryMoves { get; }
     }
 
     public sealed class TransformViewFollowing : IUiDispatcher

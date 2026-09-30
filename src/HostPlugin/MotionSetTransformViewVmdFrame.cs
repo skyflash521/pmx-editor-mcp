@@ -51,7 +51,7 @@ namespace PmxEditorMcp
                 ToolName,
                 screen.Method(
                     new List<string> { VmdName, FrameName },
-                    ScreenNeeds.Pmx,
+                    ScreenNeeds.Pmx | ScreenNeeds.ReadsPmx,
                     ScreenRefreshKind.None,
                     (context, parts) => Run(context, parts, transformView, poses)));
         }

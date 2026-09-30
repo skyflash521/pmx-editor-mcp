@@ -43,7 +43,11 @@ namespace PmxEditorMcp
             List<string> known = new List<string> { PositionName, TargetName, UpVectorName };
             methods.Add(
                 ToolName,
-                screen.Method(known, ScreenNeeds.View, ScreenRefreshKind.None, Run));
+                screen.Method(
+                    known,
+                    ScreenNeeds.View | ScreenNeeds.ModelUntouched,
+                    ScreenRefreshKind.None,
+                    Run));
         }
 
         private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)
