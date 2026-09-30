@@ -188,7 +188,6 @@ namespace PmxEditorMcp.Tests
                 new ScreenTargets(() => View, () => Form));
         }
 
-        /// <summary>画面へ映す段。題材の口を通して、映し直しの回数を数える。</summary>
         public ScreenRefresh Refresh()
         {
             return new ScreenRefresh(() => View, () => Form);

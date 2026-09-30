@@ -727,7 +727,6 @@ namespace PmxEditorMcp.Tests
             Assert.All(found.Kinds, kind => Assert.Empty(found.Of(kind)));
         }
 
-        /// <summary>その種類を指している口を、すべて別の相手へ付け替える。</summary>
         private void Moved(string targetKind, object from, object to)
         {
             foreach (ReferenceEdge edge in ReferenceEdges.Into(targetKind))
@@ -736,10 +735,6 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        /// <summary>
-        /// 16本の辺の口がすべて埋まった題材を組む。指される側はどの種類も位置0の1つだけで、同じ
-        /// 種類のほかの要素はどの口からも指されない。
-        /// </summary>
         private void Wired()
         {
             IList<IPXVertex> vertices = Vertices(2);
@@ -772,7 +767,6 @@ namespace PmxEditorMcp.Tests
             soft.Anchors.Add(new FakeSoftBodyAnchor(body, vertices[0]));
         }
 
-        /// <summary>そのボーンが持つボーンの口を、すべて同じ相手で埋める。</summary>
         private static void Rigged(IPXBone bone, IPXBone held)
         {
             bone.Parent = held;

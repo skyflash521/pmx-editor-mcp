@@ -12,10 +12,6 @@ namespace PmxEditorMcp
     /// </summary>
     public delegate void ReferenceVisit(object referrer, object target, float weight);
 
-    /// <summary>
-    /// 参照の辺1本。指す側の種類から指される側の種類へ向かう口をまとめ、指している組を並べる向きと、
-    /// 指す先を付け替える向きの両方を持つ。
-    /// </summary>
     public sealed class ReferenceEdge
     {
         private readonly Action<IPXPmx, ReferenceVisit> _walk;
@@ -55,7 +51,7 @@ namespace PmxEditorMcp
             get { return _retarget != null; }
         }
 
-        /// <summary>この辺で指している組を、指す側の並びの順に並べる。空の口は並ばない。</summary>
+        /// <summary>この辺で指している組を、指す側の並びの順に並べる。空の参照は並ばない。</summary>
         public void Walk(object pmx, ReferenceVisit visit)
         {
             if (pmx == null)
@@ -72,7 +68,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// この辺の口が指す先を、<paramref name="moved"/> が返す相手へ付け替える。空の口は空のまま
+        /// この辺の参照が指す先を、<paramref name="moved"/> が返す相手へ付け替える。空の参照は空のまま
         /// 残す。付け替えられない辺では何もしない。
         /// </summary>
         public void Retarget(object pmx, Func<object, object> moved)
@@ -94,10 +90,10 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// この辺の口のうち、<paramref name="live"/> に居ない相手を指しているものを片付ける。片付け方は
-        /// 辺ごとに違い、口を空にするもの・口を持つ要素ごと落とすもの・別の相手へ移すものがある。
+        /// この辺の参照のうち、<paramref name="live"/> に居ない相手を指しているものを片付ける。片付け方は
+        /// 辺ごとに違い、参照を空にするもの・参照を持つ要素ごと落とすもの・別の相手へ移すものがある。
         /// 片付けた数を返す。1件と数える単位も辺ごとに違い、落とした面・落としたオフセット・落とした
-        /// 表示枠の項目・空にした口・直した頂点が、それぞれ1件である。
+        /// 表示枠の項目・空にした参照・直した頂点が、それぞれ1件である。
         /// </summary>
         public int Mend(object pmx, ISet<object> live)
         {
@@ -213,7 +209,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 指された位置の要素のどれか1つでも指している要素を、指す側の種類ごとにまとめる。
-        /// <paramref name="minWeight"/> は重みを持つ辺のしきい値で、これより大きい重みだけを指す口と
+        /// <paramref name="minWeight"/> は重みを持つ辺のしきい値で、これより大きい重みだけを指す参照と
         /// して数える。
         /// </summary>
         public static ReferrerSets Union(

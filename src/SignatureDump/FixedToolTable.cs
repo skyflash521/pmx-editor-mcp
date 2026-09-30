@@ -18,8 +18,13 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>語からツールを引くツールの名前。</summary>
         public const string FindToolName = "find_tool";
 
-        /// <summary>そのツールへ渡す、探す語の引数の名前。</summary>
-        public const string FindToolTextParameter = "text";
+        public const string FindToolTextsParameter = "texts";
+
+        public const int FindToolDefaultLimit = 50;
+
+        public const int FindToolMinimumLimit = 1;
+
+        public const int FindToolMaximumLimit = 500;
 
         /// <summary>接続先に選べるPMXエディタを並べるツールの名前。</summary>
         public const string ListEditorsName = "list_editors";
@@ -41,10 +46,11 @@ namespace PmxEditorMcp.SignatureDump
             switch (name)
             {
                 case FindToolName:
-                    return "{\"type\":\"object\",\"properties\":{\"" + FindToolTextParameter
-                        + "\":{\"type\":\"string\"},\"limit\":{\"type\":[\"integer\",\"null\"]},"
+                    return "{\"type\":\"object\",\"properties\":{\"" + FindToolTextsParameter
+                        + "\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},"
+                        + "\"limit\":{\"type\":[\"integer\",\"null\"]},"
                         + "\"offset\":{\"type\":[\"integer\",\"null\"]}},\"required\":[\""
-                        + FindToolTextParameter + "\",\"limit\",\"offset\"],"
+                        + FindToolTextsParameter + "\",\"limit\",\"offset\"],"
                         + "\"additionalProperties\":false}";
                 case SelectEditorName:
                     return "{\"type\":\"object\",\"properties\":{\"" + SelectEditorProcessIdParameter
@@ -74,8 +80,13 @@ namespace PmxEditorMcp.SignatureDump
                     },
                     {
                         FindToolName,
-                        "語を含むツールを全部返す。" + FindToolTextParameter
-                            + " を名前と説明文へ当て、当たったツールの名前を名前の昇順で並べる。"
+                        "語を含むツールを返す。" + FindToolTextsParameter
+                            + " に並べた語のどれかを名前か説明文に含むツールの名前を、"
+                            + "名前の昇順で並べる。" + FindToolTextsParameter
+                            + " は空の配列も空の語も受け付けない。"
+                            + "limit は" + FindToolMinimumLimit + "以上" + FindToolMaximumLimit
+                            + "以下で既定は" + FindToolDefaultLimit
+                            + "、offset は0以上で既定は0である。"
                             + "大文字小文字と全角半角と仮名の種類は区別しない。エディタが起動して"
                             + "いなくても答える。やりたいことの言葉から、それを行うツールへ渡る"
                             + "ときに使う。当たりが多いときは total に総数を返し、"

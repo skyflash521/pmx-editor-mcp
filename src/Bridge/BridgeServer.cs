@@ -16,8 +16,8 @@ namespace PmxEditorMcp.Bridge
         public const string ServerInstructions =
             "PMXエディタを相手にするサーバー。ツールの名前は6つの系統に分かれ、" +
             "どれを引くかは何を知りたいかで決まる。" +
-            "どの系統を引けばよいか分からないときは find_tool に語を渡す。" +
-            "名前と説明文にその語を含むツールを返す。当たりが limit を超えると一部だけを返すので、" +
+            "どの系統を引けばよいか分からないときは find_tool に語を並べて渡す。" +
+            "名前と説明文にそのどれかの語を含むツールを返す。当たりが limit を超えると一部だけを返すので、" +
             "続きは返った nextOffset を offset へ渡して読む。" +
             "PMXエディタが複数動いているときは、list_editors で見分け、select_editor で" +
             "接続先を選んでから呼ぶ。" +

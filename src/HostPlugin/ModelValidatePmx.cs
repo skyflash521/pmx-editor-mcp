@@ -281,17 +281,17 @@ namespace PmxEditorMcp
 
         private static int LooseBones(IPXPmx model, ISet<object> bones)
         {
-            return model.Bone.Sum(bone => LooseMouths(bone, bones));
+            return model.Bone.Sum(bone => LooseReferences(bone, bones));
         }
 
         private static IList<int> BonesWithLoose(IPXPmx model, ISet<object> bones)
         {
             return Enumerable.Range(0, model.Bone.Count)
-                .Where(at => LooseMouths(model.Bone[at], bones) > 0)
+                .Where(at => LooseReferences(model.Bone[at], bones) > 0)
                 .ToList();
         }
 
-        private static int LooseMouths(IPXBone bone, ISet<object> bones)
+        private static int LooseReferences(IPXBone bone, ISet<object> bones)
         {
             int found = 0;
             found += Loose(bone.Parent, bones) ? 1 : 0;

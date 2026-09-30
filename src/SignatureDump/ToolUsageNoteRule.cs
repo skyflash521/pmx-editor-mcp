@@ -43,8 +43,11 @@ namespace PmxEditorMcp.SignatureDump
         private const string NameContainsName = "nameContains";
 
         private const string NarrowsByName =
-            NameContainsName + " に文字列の配列を渡すと、name がそのどれかを含む要素だけが残る。"
+            NameContainsName + " に並べた文字列のどれかを name に含む要素だけが残る。"
                 + "大文字小文字は区別し、" + TotalName + " は絞り込む前の件数のままになる。";
+
+        private const string NameNarrowsTheWholeList =
+            "対象を指さずに " + NameContainsName + " を渡すと全件から絞り込む。";
 
         private const string RangeIsNotClamped =
             RangeName + " は端で詰めず、リストの件数を超えると断る。";
@@ -151,6 +154,15 @@ namespace PmxEditorMcp.SignatureDump
             if (Takes(schema, NameContainsName))
             {
                 built.Append(NarrowsByName);
+            }
+
+            if (schema.Branches.Any(
+                b => b.Choices.Any(c => c.Required)
+                    && b.Inputs.Any(
+                        i => !i.Injected
+                            && string.Equals(i.Name, NameContainsName, StringComparison.Ordinal))))
+            {
+                built.Append(NameNarrowsTheWholeList);
             }
 
             if (Takes(schema, RangeName))

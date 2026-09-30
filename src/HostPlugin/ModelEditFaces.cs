@@ -524,7 +524,6 @@ namespace PmxEditorMcp
         private static IPXFace Wall(
             IPXFace from, IPXVertex first, IPXVertex second, IPXVertex third)
         {
-            // 面を作る口はSDKの並びに無いので、元の面を写して指し替える。
             IPXFace made = (IPXFace)from.Clone();
             made.Vertex1 = first;
             made.Vertex2 = second;

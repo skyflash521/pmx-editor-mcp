@@ -94,6 +94,8 @@ namespace PmxEditorMcp.Tests
             Assert.False(PreconditionGate.TryAccept(
                 PreconditionKind.ListedParts, 62, false, new long[] { 0, 62 }, out message));
             Assert.Contains("62", message);
+            Assert.Contains("絞込のウィンドウが表示されている", message);
+            Assert.DoesNotContain("窓", message);
         }
 
         [Fact]
@@ -123,7 +125,8 @@ namespace PmxEditorMcp.Tests
 
             Assert.False(
                 PreconditionGate.TryAccept(PreconditionKind.ListedParts, 0, false, out message));
-            Assert.Contains("絞込の窓を一度表示するまで組まれず", message);
+            Assert.Contains("絞込のウィンドウを一度表示するまで組まれず", message);
+            Assert.DoesNotContain("窓", message);
             Assert.Contains(ViewPartsSelectWindow.ToolName, message);
         }
 

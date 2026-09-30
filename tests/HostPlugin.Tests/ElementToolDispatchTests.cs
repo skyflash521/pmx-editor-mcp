@@ -313,6 +313,37 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void NarrowingByNameAloneListsFromTheWholeList()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+            _model.Items.Add(new Item { Label = "左手" });
+            _model.Items.Add(new Item { Label = "右手の爪" });
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_named",
+                Arguments(ToolDispatch.NameContainsName, new object[] { "爪" })));
+
+            Assert.Equal(
+                new[] { "左足の爪", "右手の爪" },
+                Items(value).Select(i => i["name"]).ToArray());
+            Assert.Equal(
+                new object[] { 0, 2 },
+                Items(value).Select(i => i[ToolDispatch.IndexName]).ToArray());
+            Assert.Equal(3, value[ToolDispatch.TotalName]);
+        }
+
+        [Fact]
+        public void ListingWithoutAnyTargetOrNameNarrowingIsStillRefused()
+        {
+            _model.Items.Add(new Item { Label = "左足の爪" });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_named", Arguments(ToolDispatch.LimitName, 1));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+        }
+
+        [Fact]
         public void NarrowingByNameIsRefusedOnAListWhoseElementsHaveNoName()
         {
             _model.Items.Add(new Item { Label = "左足の爪" });
@@ -2831,7 +2862,6 @@ namespace PmxEditorMcp.Tests
                 _undo);
         }
 
-        /// <summary>画面へ映す段。この題材は画面の口を持たない。</summary>
         private static ScreenRefresh Refresh()
         {
             return new ScreenRefresh(() => null, () => null);

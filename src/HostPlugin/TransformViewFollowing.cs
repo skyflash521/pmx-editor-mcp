@@ -15,7 +15,7 @@ namespace PmxEditorMcp
 
         private readonly Func<object> _transformView;
 
-        /// <summary><paramref name="transformView"/> は TransformView の口を返す。UIスレッドで呼ばれる。</summary>
+        /// <summary><paramref name="transformView"/> は TransformView のコネクタを返す。UIスレッドで呼ばれる。</summary>
         public TransformViewFollowing(IUiDispatcher inner, IModelUpdates updates, Func<object> transformView)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));

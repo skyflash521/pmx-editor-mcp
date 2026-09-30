@@ -324,7 +324,6 @@ namespace PmxEditorMcp.Tests
 
         public IPXIK IK { get; } = new FakeIk();
 
-        /// <summary>簡易設定で入れたローカル軸のX。読み戻す口がSDKに無いのでここへ残す。</summary>
         public V3 LocalAxisX { get; private set; }
 
         /// <summary>簡易設定で入れたローカル軸のZ。</summary>

@@ -2647,7 +2647,7 @@ namespace PmxEditorMcp
 
             if (tool.Listing)
             {
-                pointed = WholeUnderParents(pointed);
+                pointed = WholeUnderParents(pointed, needles != null);
             }
 
             int total = 0;
@@ -3894,11 +3894,18 @@ namespace PmxEditorMcp
             }
         }
 
-        private static Pointed WholeUnderParents(Pointed pointed)
+        private static Pointed WholeUnderParents(Pointed pointed, bool narrowedByName)
         {
-            if (pointed.Parents == null || pointed.Elements == null)
+            if (pointed.Elements == null)
             {
                 return pointed;
+            }
+
+            if (pointed.Parents == null)
+            {
+                return narrowedByName && !pointed.ByHandle && !TargetSelection.Points(pointed.Elements)
+                    ? new Pointed(new TargetRequest(all: true), null, false)
+                    : pointed;
             }
 
             if (!TargetSelection.Points(pointed.Parents))
@@ -4222,7 +4229,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 画面がモデル全体で数えて選んでいる面を、辿った面の並びの中の位置で読む口を作る。
+        /// 画面がモデル全体で数えて選んでいる面を、辿った面の並びの中の位置で読む手段を作る。
         /// 指した親の外の面は外す。<paramref name="elsewhere"/> は、画面が面を選んでいるが、
         /// そのどれも指した親の中に無いときに真。
         /// </summary>

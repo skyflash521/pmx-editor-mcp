@@ -158,7 +158,7 @@ namespace PmxEditorMcp
         /// 受け付ける指し方。<paramref name="listCount"/> は対象のリストの件数で、
         /// <paramref name="isUsableHandle"/> はハンドルが使えるかを答えるもの。
         /// <paramref name="names"/> は解く集合を指す項目の名前で、説明はこの名前で書く。
-        /// <paramref name="selected"/> は画面の選択を読む口で、
+        /// <paramref name="selected"/> は画面の選択を読む手段で、
         /// <see cref="TargetForm.Selected"/> を受け付けるなら渡す。画面を読むのは、その指し方で
         /// 指された回だけである。
         /// </summary>

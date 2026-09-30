@@ -34,8 +34,7 @@ namespace PmxEditorMcp
         private HostGeneration _stopped;
 
         /// <summary>
-        /// 待受に使うパイプ名・ログ・応答サイズ予算・UIディスパッチ・接続処理を与えて生成する。
-        /// 人の応答を待つ表示を見るものは、与えなければこのプロセスの窓を数え上げるものを使う。
+        /// 人の応答を待つ表示を見るものは、与えなければこのプロセスのウィンドウを数え上げるものを使う。
         /// </summary>
         public McpHost(
             string pipeName,

@@ -1,7 +1,7 @@
 {
   "inputs": [
     {"tool": "editor_close_window", "input": "window", "choicesFrom": "windowForms", "basis": "UiCloseWindow.cs が空の文字と、UiStructureCatalog.Window で観測台帳の form に当たらない名前を断る。"},
-    {"tool": "editor_find_operation", "input": "text", "minLength": 1, "basis": "UiFind.cs が空の文字を断る。"},
+    {"tool": "editor_find_operation", "input": "texts[]", "minLength": 1, "basis": "UiFind.cs が空の文字を断る。"},
     {"tool": "editor_get_screen_structure", "input": "path[]", "basis": "UiTree.cs の Steps が文字でさえあれば受け取る。"},
     {"tool": "editor_get_screen_structure", "input": "window", "basis": "UiTree.cs の Choose が、form にもタイトルにも当たらない文字を似た名前の候補として受け取る。"},
     {"tool": "editor_open_window", "input": "window", "choicesFrom": "windowForms", "basis": "UiOpenWindow.cs が空の文字と、UiStructureCatalog.Window で観測台帳の form に当たらない名前を断る。"},
@@ -67,6 +67,7 @@
   ],
   "lists": [
     {"tool": "editor_get_screen_structure", "input": "path", "basis": "UiTree.cs の Steps が空の並びを受け取る。"},
+    {"tool": "editor_find_operation", "input": "texts", "least": 1, "basis": "UiFind.cs が空の並びを断る。"},
     {"tool": "editor_press_item", "input": "path", "least": 1, "basis": "UiPressItem.cs が空の並びを断る。"},
     {"tool": "editor_press_saving_item", "input": "path", "least": 1, "basis": "EditorPressSavingItem.cs が空の並びを断る。"},
     {"tool": "session_select_lists_from_view", "input": "kinds", "least": 1, "basis": "ComposedInput.cs の TryChoices が空の並びを断る。"},

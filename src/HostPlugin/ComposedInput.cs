@@ -296,10 +296,10 @@ namespace PmxEditorMcp
         /// 並びを渡す。
         /// </summary>
         /// <param name="selectedName">
-        /// 位置の並びの代わりに画面の選択で指す入力の名前。その口を持たない入力では null。
+        /// 位置の並びの代わりに画面の選択で指す入力の名前。その指し方を持たない入力では null。
         /// </param>
         /// <param name="picked">
-        /// 画面の選択を読む口。その回の相手を画面が選べないときは null。
+        /// 画面の選択を読む手段。その回の相手を画面が選べないときは null。
         /// </param>
         public static bool TryIndices(
             McpMethodContext context,

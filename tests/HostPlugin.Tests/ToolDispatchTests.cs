@@ -684,7 +684,7 @@ namespace PmxEditorMcp.Tests
                     new McpMethodContext(Arguments(), new InlineInvoker(), 100000, Ledger(), Events()));
 
             Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
-            Assert.Contains("絞込の窓を一度表示するまで組まれず", Message(envelope));
+            Assert.Contains("絞込のウィンドウを一度表示するまで組まれず", Message(envelope));
         }
 
         [Fact]
@@ -1680,7 +1680,6 @@ namespace PmxEditorMcp.Tests
                 new UndoSuppression(_log));
         }
 
-        /// <summary>画面へ映す段。題材の口を通して、映し直しの回数を数える。</summary>
         private ScreenRefresh Refresh()
         {
             return new ScreenRefresh(() => _view, () => _form);

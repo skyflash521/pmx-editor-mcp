@@ -4,10 +4,6 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 指した要素を並びから消し、それを指したままの口を片付けるツール。<c>related</c> が
-    /// <c>cascade</c> のときは、消した要素だけが使っていた要素も同じ呼び出しで消える。
-    /// </summary>
     public static class ModelDeleteElements
     {
         /// <summary>このツールの名前。</summary>
@@ -22,7 +18,6 @@ namespace PmxEditorMcp
         /// <summary>つられて消えた要素の種類を返す項目の名前。</summary>
         public const string KindName = "kind";
 
-        /// <summary>直した口の数を返す項目の名前。</summary>
         public const string RepairedName = "repaired";
 
         /// <summary>ツールを表へ足す。</summary>

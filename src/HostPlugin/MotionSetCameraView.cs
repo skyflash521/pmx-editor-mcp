@@ -11,12 +11,6 @@ using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// TransformView の視点を指した位置へ動かすツール。SDKは TransformView の視点へ触る口を持たないので、
-    /// PMXView の視点をそこへ入れ、PMXView の「カメラ同期」を Shift を押した扱いで入れて写す。エディタは
-    /// Shift を押して同期を入れたときだけ、その場の PMXView の視点を SubView と TransformView へ写す。
-    /// SDKで入れた視点は同期で写らない。
-    /// </summary>
     public static class MotionSetCameraView
     {
         /// <summary>このツールの名前。</summary>
@@ -108,6 +102,7 @@ namespace PmxEditorMcp
             IPEVector3 heldUp = pmx.CameraUpVector;
             try
             {
+                // SDKで入れた視点は、Shift を押した同期でだけ SubView と TransformView へ写る。
                 pmx.SetCameraView(target, position, up);
                 if (synced)
                 {

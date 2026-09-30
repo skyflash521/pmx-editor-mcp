@@ -41,9 +41,12 @@
           "branch": "only",
           "inputs": [
             {
-              "name": "text",
+              "name": "texts",
               "origin": "hostInput",
-              "shape": "text",
+              "element": {
+                "origin": "hostInput",
+                "shape": "text"
+              },
               "required": true
             },
             {

@@ -13,7 +13,7 @@ namespace PmxEditorMcp
         public const string ToolName = "view_reload_model";
 
         /// <summary>
-        /// ツールを表へ足す。<paramref name="subView"/> は、別窓の描画の口を返す。引けないときは
+        /// <paramref name="subView"/> は、別ウィンドウのビューのコネクタを返す。引けないときは
         /// null を返してよい。
         /// </summary>
         public static void AddTo(

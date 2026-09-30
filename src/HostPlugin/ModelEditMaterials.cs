@@ -509,7 +509,6 @@ namespace PmxEditorMcp
 
         private static IPXMaterial Emptied(IPXMaterial material)
         {
-            // 面を作る口はSDKの並びに無いので、元を写して面を空にする。
             IPXMaterial made = (IPXMaterial)material.Clone();
             made.Faces.Clear();
 

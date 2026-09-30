@@ -15,7 +15,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// UIスレッドで呼ぶ。<paramref name="connector"/> が開いている TransformView の口なら、いまのモデルを
+        /// UIスレッドで呼ぶ。<paramref name="connector"/> が開いている TransformView のコネクタなら、いまのモデルを
         /// 読み直させる。変形の状態はエディタが保ったまま読み直す。
         /// </summary>
         public static void Refresh(object connector)

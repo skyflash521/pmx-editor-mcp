@@ -8,12 +8,6 @@ using Xunit;
 
 namespace PmxEditorMcp.Tests
 {
-    /// <summary>
-    /// エディタを閉じるツールが、閉じるときにエディタが未保存の編集について尋ねるダイアログを出しうる状態で
-    /// 閉じないこと。エディタが尋ねるのは、取り消しの履歴を切り詰めたあとか、保存したときの取り消し
-    /// の件数といまの件数が違うときで、SDKから読めるのは取り消せる件数とやり直せる件数だけである。
-    /// 生成したツールの表をそのまま組み、画面の口だけを題材に差し替えて呼ぶ。
-    /// </summary>
     public sealed class PreconditionGateClosingTests : IDisposable
     {
         private const string ToolName = "session_close";
@@ -143,10 +137,6 @@ namespace PmxEditorMcp.Tests
                 new EventQueue(new EventSequenceIssuer())));
         }
 
-        /// <summary>
-        /// 画面の口の題材。取り消せる件数・やり直せる件数を答え、閉じた回数を数える。それ以外の
-        /// メンバーは呼ばれたら断る。
-        /// </summary>
         private sealed class FormDouble : RealProxy
         {
             public FormDouble()

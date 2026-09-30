@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using PmxEditorMcp.SignatureDump;
@@ -28,7 +29,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 FixedToolTable.FindToolName,
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
-                    [FixedToolTable.FindToolTextParameter] = CommonWord,
+                    [FixedToolTable.FindToolTextsParameter] = new[] { CommonWord },
                     ["limit"] = null,
                     ["offset"] = null,
                 },
@@ -47,6 +48,27 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(
                 instructions.Contains("nextOffset", StringComparison.Ordinal),
                 "指示文は find_tool の続きの読み方に触れていない: " + instructions);
+        }
+
+        [Fact]
+        public async Task TheToolSearchRefusesASingleStringWhereTheTextsBelong()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            await using McpClient client = await BridgeToolsTests.StartBridgeAsync(null, null, limit.Token);
+
+            Exception refused = await Record.ExceptionAsync(async () =>
+            {
+                CallToolResult result = await client.CallToolAsync(
+                    FixedToolTable.FindToolName,
+                    new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        [FixedToolTable.FindToolTextsParameter] = CommonWord,
+                    },
+                    cancellationToken: limit.Token);
+                Assert.True(result.IsError);
+            });
+
+            Assert.True(refused == null || refused is McpException, refused?.ToString());
         }
     }
 }

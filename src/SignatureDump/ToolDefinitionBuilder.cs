@@ -484,7 +484,10 @@ namespace PmxEditorMcp.SignatureDump
                 rules.Add(SuppressingOnlyTheOpenPmx());
             }
 
-            rules.InsertRange(0, (branch.Choices ?? new SchemaChoice[0]).Select(Choice));
+            bool nameNarrowingStandsIn = TakesNameContains(branch);
+            rules.InsertRange(
+                0,
+                (branch.Choices ?? new SchemaChoice[0]).Select(c => Choice(c, nameNarrowingStandsIn)));
 
             return new BranchShape(
                 properties,
@@ -635,15 +638,20 @@ namespace PmxEditorMcp.SignatureDump
             return new JsonObjectText().Add("not", both.Text).Text;
         }
 
-        /// <summary>
-        /// まとまりのうち1つだけを受け取る決まりを綴る。必ず要るまとまりはどれか1つを要り、
-        /// 要らないまとまりはどれも無い形も許す。
-        /// </summary>
-        private static string Choice(SchemaChoice choice)
+        private static string Choice(SchemaChoice choice, bool nameNarrowingStandsIn)
         {
             List<string> cases = choice.Names
                 .Select(n => new JsonObjectText().Add("required", JsonWriter.TextArray(new[] { n })).Text)
                 .ToList();
+
+            if (choice.Required && nameNarrowingStandsIn)
+            {
+                string pointing = new JsonObjectText().Add("anyOf", JsonWriter.Array(cases)).Text;
+                cases.Add(new JsonObjectText()
+                    .Add("required", JsonWriter.TextArray(new[] { NameContainsName }))
+                    .Add("not", pointing)
+                    .Text);
+            }
 
             if (!choice.Required)
             {
@@ -653,6 +661,12 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new JsonObjectText().Add("oneOf", JsonWriter.Array(cases)).Text;
+        }
+
+        private static bool TakesNameContains(SchemaBranch branch)
+        {
+            return branch.Inputs.Any(
+                i => !i.Injected && string.Equals(i.Name, NameContainsName, StringComparison.Ordinal));
         }
 
         private static string Item(

@@ -142,8 +142,8 @@ namespace PmxEditorMcp.Bridge
             bool declared)
         {
             return McpServerTool.Create(
-                (string text, int? limit, int? offset) => ToolEnvelopeResult.From(
-                    ToolSearch.Answer(text, limit, offset, entries, client.BudgetChars),
+                (string[] texts, int? limit, int? offset) => ToolEnvelopeResult.From(
+                    ToolSearch.Answer(texts, limit, offset, entries, client.BudgetChars),
                     string.Empty,
                     client.BudgetChars,
                     false),

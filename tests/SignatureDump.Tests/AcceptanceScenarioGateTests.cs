@@ -190,7 +190,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AFixedToolCalledWithTheArgumentsItTakesIsAccepted()
         {
             string step = @"{""kind"":""tool"",""tool"":""find_tool"","
-                + @"""arguments"":{""text"":""頂点"",""limit"":null,""offset"":null},"
+                + @"""arguments"":{""texts"":[""頂点""],""limit"":null,""offset"":null},"
                 + @"""expect"":{""ok"":true}}";
 
             Require(Scenario(step + "," + Step(Listing, @"{""all"":true}")));

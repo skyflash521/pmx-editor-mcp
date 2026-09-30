@@ -1,4 +1,3 @@
-// 画面とリストの口と、その口へ渡すモーションの題材。使う口だけが値を持ち、それ以外は支えない。
 
 using System;
 using System.Collections.Generic;

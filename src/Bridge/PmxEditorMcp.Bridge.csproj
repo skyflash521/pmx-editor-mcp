@@ -14,8 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- 接続の失敗をエラーコードへ変換する経路は、実際の入出力の失敗を起こさないと通らない。
-         テストから差し替えられる口を internal で開ける。 -->
     <InternalsVisibleTo Include="PmxEditorMcp.Bridge.Tests" />
   </ItemGroup>
 

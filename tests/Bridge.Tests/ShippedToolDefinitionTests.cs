@@ -22,6 +22,7 @@ namespace PmxEditorMcp.Bridge.Tests
     public sealed class ShippedToolDefinitionTests
     {
         private const string ConfirmName = "confirm";
+        private const string NameContainsName = "nameContains";
 
         private const string SuppressName = "suppressUndo";
 
@@ -252,7 +253,7 @@ namespace PmxEditorMcp.Bridge.Tests
                     IEnumerable<string> hit = null;
                     foreach (string term in search.AsArray().Select(t => t.GetValue<string>()))
                     {
-                        IList<string> named = ToolSearch.Found(term, entries);
+                        IList<string> named = ToolSearch.Found(new[] { term }, entries);
                         hit = hit == null ? named : hit.Intersect(named, StringComparer.Ordinal).ToList();
                     }
 
@@ -2578,7 +2579,8 @@ namespace PmxEditorMcp.Bridge.Tests
                 foreach (HostChoice choice in Choices)
                 {
                     int taken = choice.Names.Count(given.Contains);
-                    if (taken > 1 || (choice.Required && taken == 0))
+                    bool narrowedByName = given.Contains(NameContainsName);
+                    if (taken > 1 || (choice.Required && taken == 0 && !narrowedByName))
                     {
                         return false;
                     }

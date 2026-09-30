@@ -1,22 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json.Nodes;
 using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>語からツールを引く。名前と説明文の両方へ当てる。</summary>
     public static class ToolSearch
     {
-        /// <summary>返す件数の既定。</summary>
-        public const int DefaultLimit = 50;
+        public const int DefaultLimit = FixedToolTable.FindToolDefaultLimit;
 
-        /// <summary>返す件数の下限。</summary>
-        public const int MinimumLimit = 1;
+        public const int MinimumLimit = FixedToolTable.FindToolMinimumLimit;
 
-        /// <summary>返す件数の上限。</summary>
-        public const int MaximumLimit = 500;
+        public const int MaximumLimit = FixedToolTable.FindToolMaximumLimit;
 
         private const string TotalName = "total";
 
@@ -59,13 +56,13 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
-        /// <paramref name="text"/> を名前と説明文へ当てたツールの名前を、名前の昇順で返す。
+        /// <paramref name="texts"/> のどれかを名前と説明文へ当てたツールの名前を、名前の昇順で返す。
         /// </summary>
-        public static IList<string> Found(string text, IEnumerable<Entry> entries)
+        public static IList<string> Found(IList<string> texts, IEnumerable<Entry> entries)
         {
-            if (text == null)
+            if (texts == null)
             {
-                throw new ArgumentNullException(nameof(text));
+                throw new ArgumentNullException(nameof(texts));
             }
 
             if (entries == null)
@@ -76,8 +73,9 @@ namespace PmxEditorMcp.Bridge
             List<string> found = new List<string>();
             foreach (Entry entry in entries)
             {
-                if (TextMatch.Contains(entry.Name, text)
-                    || TextMatch.Contains(entry.Description, text))
+                if (texts.Any(
+                    text => TextMatch.Contains(entry.Name, text)
+                        || TextMatch.Contains(entry.Description, text)))
                 {
                     found.Add(entry.Name);
                 }
@@ -94,7 +92,7 @@ namespace PmxEditorMcp.Bridge
         /// どちらか先に尽きるところまで並べ、残りがあれば続きの位置を添える。
         /// </summary>
         public static JsonObject Answer(
-            string text,
+            IList<string> texts,
             int? limit,
             int? offset,
             IEnumerable<Entry> entries,
@@ -105,10 +103,11 @@ namespace PmxEditorMcp.Bridge
                 throw new ArgumentNullException(nameof(entries));
             }
 
-            if (string.IsNullOrEmpty(text))
+            if (texts == null || texts.Count == 0 || texts.Any(string.IsNullOrEmpty))
             {
                 return Refusal(
-                    FixedToolTable.FindToolTextParameter + " は1文字以上の文字列でなければならない。");
+                    FixedToolTable.FindToolTextsParameter
+                        + " は1文字以上の文字列を1つ以上並べた配列でなければならない。");
             }
 
             int taking = limit ?? DefaultLimit;
@@ -124,7 +123,7 @@ namespace PmxEditorMcp.Bridge
                 return Refusal("offset は0以上の整数でなければならない: " + Written(from));
             }
 
-            IList<string> found = Found(text, entries);
+            IList<string> found = Found(texts, entries);
             if (from > found.Count)
             {
                 return Refusal("offset が当たりの件数を超えている: " + Written(from)

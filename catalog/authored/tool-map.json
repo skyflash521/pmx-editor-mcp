@@ -448,7 +448,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.Location()",
       "editKind": "viewSession",
-      "basis": "窓の左上の位置を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "ウィンドウの左上の位置を画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "session_get_form_connector",
         "session_update_form_connector"
@@ -751,7 +751,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.TopMost()",
       "editKind": "viewSession",
-      "basis": "窓を常に手前へ出すかどうかを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "ウィンドウを常に手前へ出すかどうかを画面の側で持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "session_get_form_connector",
         "session_update_form_connector"
@@ -4829,7 +4829,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEBaseWindowConnector.Focus()",
       "editKind": "viewSession",
-      "basis": "窓へ焦点を移すだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "ウィンドウへ焦点を移すだけで、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -4842,7 +4842,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEBaseWindowConnector.Location()",
       "editKind": "viewSession",
-      "basis": "窓の左上の位置という窓の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "ウィンドウの左上の位置というウィンドウの設定を持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "view_get_base_window_connector",
         "view_update_base_window_connector"
@@ -4851,7 +4851,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEBaseWindowConnector.Visible()",
       "editKind": "viewSession",
-      "basis": "窓を見せるかどうかという窓の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "ウィンドウを見せるかどうかというウィンドウの設定を持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "view_get_base_window_connector",
         "view_update_base_window_connector"
@@ -5608,7 +5608,7 @@
     {
       "signatureKey": "PEPlugin.View.IPESizableWindowConnector.Size()",
       "editKind": "viewSession",
-      "basis": "窓の大きさという窓の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "ウィンドウの大きさというウィンドウの設定を持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "view_get_sizable_window_connector",
         "view_update_sizable_window_connector"
@@ -5617,7 +5617,7 @@
     {
       "signatureKey": "PEPlugin.View.IPESizableWindowConnector.WindowState()",
       "editKind": "viewSession",
-      "basis": "窓の開き方という窓の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "ウィンドウの開き方というウィンドウの設定を持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "view_get_sizable_window_connector",
         "view_update_sizable_window_connector"
@@ -12559,7 +12559,7 @@
     {
       "signatureKey": "PXCPlugin.Event.IPXEventConnector.CreateViewEventListener()",
       "editKind": "viewSession",
-      "basis": "画面で起きたことを受け取る口を作るだけで、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
+      "basis": "画面で起きたことの受信先を作るだけで、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -13808,7 +13808,7 @@
     {
       "signatureKey": "PXCPlugin.PXCBridge.CreateEventConnector(PXCPlugin.IPXCPluginConnector)",
       "editKind": "viewSession",
-      "basis": "イベントの受け口をこの接続のために作るだけで、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
+      "basis": "イベントのコネクタをこの接続のために作るだけで、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",
@@ -13948,7 +13948,7 @@
     {
       "signatureKey": "PXCPlugin.UIModel.IPXUIModel.CreateEventListener(PXCPlugin.Event.IPXEventConnector,System.Int32[])",
       "editKind": "viewSession",
-      "basis": "UIモデルで起きたことを受け取る口を作るだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
+      "basis": "UIモデルで起きたことの受信先を作るだけで、UIモデルは画面へ重ねて見せるものなので、モデルのデータにもファイルにも作用しない。出たハンドルを引数に取る一覧のツールが無いので、出たことは呼び出しの記録で確かめる。",
       "postcondition": [
         {
           "effectType": "handleCreated",

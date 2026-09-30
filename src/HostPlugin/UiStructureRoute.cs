@@ -3,16 +3,13 @@ using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 主画面からその窓までの道筋を、台帳の「どこから開くか」を遡って組む。得られるのは段数の
-    /// 最も少ない道筋で、一度通った窓は再び通らない。
-    /// </summary>
     internal static class UiStructureRoute
     {
         internal const string ViaName = "via";
 
         /// <summary>
-        /// 主画面までの道筋。主画面そのものなら空を返し、届かない窓なら null を返す。
+        /// 主画面までの道筋。主画面そのものなら空を返し、届かないウィンドウなら null を返す。
+        /// 得られるのは段数の最も少ない道筋で、一度通ったウィンドウは再び通らない。
         /// </summary>
         internal static IList<IDictionary<string, object>> To(string form)
         {
@@ -46,7 +43,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 主画面へ届くまで、開く側へ遡る。返すのは、開く側の窓から「次に開く窓と、その中の
+        /// 返すのは、開く側のウィンドウから「次に開くウィンドウと、その中の
         /// 道筋の綴り」への対応である。
         /// </summary>
         private static IDictionary<string, string[]> Walk(string form, string main)
@@ -81,7 +78,7 @@ namespace PmxEditorMcp
             return null;
         }
 
-        /// <summary>道筋の1段。開く側の窓と、その窓の中で辿る部品を並べる。</summary>
+        /// <summary>道筋の1段。開く側のウィンドウと、そのウィンドウの中で辿る部品を並べる。</summary>
         private static IDictionary<string, object> Hop(string opener, string joined)
         {
             IDictionary<string, object> window = UiStructureCatalog.Window(opener);

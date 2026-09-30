@@ -11,7 +11,6 @@ namespace PmxEditorMcp.Tests
     public class ElementKindsTests
     {
 
-        /// <summary>kind を受け取るツール。どれも共通の契約の役目の文で kind の名前を並べる。</summary>
         public static IEnumerable<object[]> KindTools()
         {
             yield return new object[] { ModelDeleteElements.ToolName };
@@ -19,7 +18,6 @@ namespace PmxEditorMcp.Tests
             yield return new object[] { ModelReorderElements.ToolName };
         }
 
-        /// <summary>共通の契約が並べる kind の名前。</summary>
         public static IEnumerable<object[]> ContractNames()
         {
             return Offered(ModelDeleteElements.ToolName).Select(name => new object[] { name });
@@ -394,43 +392,33 @@ namespace PmxEditorMcp.Tests
             return pmx;
         }
 
-        /// <summary>
-        /// 共通の契約(catalog/authored/common-contract.json)で、そのツールの役目の文が
-        /// 「kind は …・… のいずれか」と並べる名前。
-        /// </summary>
         private static string[] Offered(string tool)
         {
-            string path = Contract();
-            IDictionary<string, object> contract = (IDictionary<string, object>)
+            IDictionary<string, object> reads = (IDictionary<string, object>)
                 new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue }
-                    .DeserializeObject(System.IO.File.ReadAllText(path, System.Text.Encoding.UTF8));
-            string duty = ((object[])contract["composedTools"])
-                .Cast<IDictionary<string, object>>()
-                .Where(entry => Equals(entry["tool"], tool))
-                .Select(entry => (string)entry["duty"])
-                .Single();
-            System.Text.RegularExpressions.Match listed = System.Text.RegularExpressions.Regex.Match(
-                duty, ElementKinds.KindName + " は (?<names>[A-Za-z]+(・[A-Za-z]+)*) のいずれか");
-            Assert.True(listed.Success, tool + " の役目の文に kind の名前の並びが無い。");
+                    .DeserializeObject(System.IO.File.ReadAllText(Reads(), System.Text.Encoding.UTF8));
 
-            return listed.Groups["names"].Value.Split('・');
+            return ((object[])reads["inputs"])
+                .Cast<IDictionary<string, object>>()
+                .Where(entry => Equals(entry["tool"], tool) && Equals(entry["input"], ElementKinds.KindName))
+                .SelectMany(entry => ((object[])entry["choices"]).Cast<string>())
+                .ToArray();
         }
 
-        /// <summary>テストの出力から上へ辿って見つけた、共通の契約のファイル。</summary>
-        private static string Contract()
+        private static string Reads()
         {
             for (System.IO.DirectoryInfo at = new System.IO.DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
                 at != null;
                 at = at.Parent)
             {
-                string path = System.IO.Path.Combine(at.FullName, "catalog", "authored", "common-contract.json");
+                string path = System.IO.Path.Combine(at.FullName, "catalog", "observed", "composed-text-reads.json");
                 if (System.IO.File.Exists(path))
                 {
                     return path;
                 }
             }
 
-            throw new InvalidOperationException("共通の契約のファイルが見つからない。");
+            throw new InvalidOperationException("composed-text-reads.json が見つからない。");
         }
 
         private static ElementKind Resolved(string name)

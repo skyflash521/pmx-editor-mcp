@@ -84,9 +84,40 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string note = Note(true, "indices", "range", "all", "offset", "limit", "nameContains");
 
             Assert.Contains(
-                "nameContains に文字列の配列を渡すと、name がそのどれかを含む要素だけが残る。", note, StringComparison.Ordinal);
+                "nameContains に並べた文字列のどれかを name に含む要素だけが残る。", note, StringComparison.Ordinal);
             Assert.Contains("大文字小文字は区別し", note, StringComparison.Ordinal);
             Assert.Contains("total は絞り込む前の件数のままになる。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingThatMustPointAtElementsSaysThatNameContainsAloneNarrowsTheWholeList()
+        {
+            ToolSchema schema = new ToolSchema(
+                "model_list_vertices",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[] { Item("all", "boolean", null, null), Item("nameContains", "text", null, null) },
+                        new[] { new SchemaChoice(new[] { "all" }, true) }),
+                },
+                Listed(),
+                null);
+
+            Assert.Contains(
+                "対象を指さずに nameContains を渡すと全件から絞り込む。",
+                ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingWithNoRequiredWayOfPointingDoesNotSayThatNameContainsAloneNarrowsTheWholeList()
+        {
+            Assert.DoesNotContain(
+                "nameContains を渡すと全件から絞り込む。",
+                Note(true, "indices", "range", "all", "offset", "limit", "nameContains"),
+                StringComparison.Ordinal);
         }
 
         [Fact]

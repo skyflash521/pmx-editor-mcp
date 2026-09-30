@@ -4,9 +4,6 @@ using System.Windows.Forms;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// SDKの1メンバーへ写らない、画面とリストの組み立てツールを表へ足す口。
-    /// </summary>
     public static class ComposedScreenTools
     {
         /// <summary>

@@ -9,10 +9,6 @@ using PEPlugin.SDX;
 
 namespace PmxEditorMcp.Tests
 {
-    /// <summary>
-    /// 画面とリストへ触るツールを呼ぶための題材一式。画面の口とリストの口を1つずつ持ち、
-    /// いま相手にするPMXは複製編集の題材と同じものを返す。
-    /// </summary>
     internal sealed class ComposedScreenFixture : IDisposable
     {
         /// <summary>持ち物を辿る深さの上限。これより深い入れ子は綴りへ出ない。</summary>
@@ -31,7 +27,6 @@ namespace PmxEditorMcp.Tests
             TransformView = new FakeTransformView(() => Model.Bone.Count, () => Model.Morph.Count);
         }
 
-        /// <summary>現在のPMXとして複製を返す題材。</summary>
         public FakePmx Model
         {
             get { return _edit.Model; }
@@ -40,13 +35,11 @@ namespace PmxEditorMcp.Tests
         /// <summary>VMDやPMXを作る相手の題材。</summary>
         public FakeHostBuilder Builder { get; } = new FakeHostBuilder();
 
-        /// <summary>3Dビューの題材。複製編集の題材と同じ口を使う。</summary>
         public FakePmxView View
         {
             get { return _edit.View; }
         }
 
-        /// <summary>リストを持つ画面の題材。複製編集の題材と同じ口を使う。</summary>
         public FakeFormConnector Form
         {
             get { return _edit.Form; }

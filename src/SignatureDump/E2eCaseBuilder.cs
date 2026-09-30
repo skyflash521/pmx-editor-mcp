@@ -746,7 +746,6 @@ namespace PmxEditorMcp.SignatureDump
                 i => !i.Injected && string.Equals(i.Name, AimName, StringComparison.Ordinal));
         }
 
-        /// <summary>受け手をハンドルの並びで受け取るツールか。渡し口が無ければ借りて渡せない。</summary>
         private static bool Holds(ToolSchema schema)
         {
             return schema.Branches.SelectMany(b => b.Inputs).Any(

@@ -15,7 +15,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// その種類の選択について添える知らせ。面でないか、面が画面に出る設定なら空を渡す。
-        /// <paramref name="setting"/> はビューの表示の設定の口で、引けていなければ null。
+        /// <paramref name="setting"/> はビューの表示の設定のコネクタで、引けていなければ null。
         /// </summary>
         public static IList<string> Warnings(object setting, string kind)
         {

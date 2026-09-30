@@ -4,15 +4,11 @@ using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// PMXビューの絞込の窓の表示を切り替えるツール。
-    /// </summary>
     public static class ViewPartsSelectWindow
     {
         /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_update_parts_select_window";
 
-        /// <summary>窓を表示するかを受け取り、切り替えた結果を返す項目の名前。</summary>
         public const string VisibleName = "visible";
 
         /// <summary>材質の一覧に並んでいる項目の数を返す項目の名前。</summary>

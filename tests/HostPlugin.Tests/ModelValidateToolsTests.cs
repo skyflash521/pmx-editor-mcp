@@ -344,7 +344,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void RunsGiveABoneWithTwoDanglingMouthsOnceWhileTheCountStaysTwo()
+        public void RunsGiveABoneWithTwoDanglingReferencesOnceWhileTheCountStaysTwo()
         {
             _fixture.Model.Bone.Add(new FakeBone("根"));
             FakeBone broken = new FakeBone("腕");

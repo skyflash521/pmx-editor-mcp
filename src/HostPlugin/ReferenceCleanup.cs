@@ -6,25 +6,18 @@ using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
 {
-    /// <summary>消した要素を指していた口の始末の仕方。</summary>
     public enum RelatedHandling
     {
-        /// <summary>何も触らない。指す先を失った口はそのまま残る。</summary>
+        /// <summary>何も触らない。指す先を失った参照はそのまま残る。</summary>
         Keep,
 
-        /// <summary>指す先を失った口を直す。ウェイトは残るボーンへ移し、直せない口は落とす。</summary>
+        /// <summary>指す先を失った参照を直す。ウェイトは残るボーンへ移し、直せない参照は落とす。</summary>
         Repair,
 
         /// <summary>直すことに加えて、消した要素だけが使っていた要素も一緒に消す。</summary>
         Cascade,
     }
 
-    /// <summary>
-    /// 並びから消えた要素を指したままの口を片付ける。PMXの要素はIndexではなくオブジェクトの参照で
-    /// 繋がるので、並びから外しただけでは他の要素が指したままになる。指す先を失った口は、その口が
-    /// 空を取れるなら空にし、取れないなら口を持つ要素ごと落とす。頂点のウェイトだけは落とせない
-    /// ので、残っている祖先のボーンへ移し、同じボーンが重なったら重みを足してまとめる。
-    /// </summary>
     public static class ReferenceCleanup
     {
         /// <summary>始末の仕方を受け取る入力の名前。</summary>
@@ -33,7 +26,6 @@ namespace PmxEditorMcp
         /// <summary>何も触らない。</summary>
         public const string Keep = "keep";
 
-        /// <summary>指す先を失った口を直す。</summary>
         public const string Repair = "repair";
 
         /// <summary>直すことに加えて、消した要素だけが使っていた要素も消す。</summary>
@@ -177,7 +169,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 頂点を指したままの口を、別の頂点へ付け替える。表に無い頂点を指す口はそのままにする。
+        /// 頂点を指したままの参照を、別の頂点へ付け替える。表に無い頂点を指す参照はそのままにする。
         /// </summary>
         public static void Repoint(object pmx, IDictionary<IPXVertex, IPXVertex> moved)
         {
@@ -195,7 +187,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 材質を指したままの口を、別の材質へ付け替える。表に無い材質を指す口はそのままにする。
+        /// 材質を指したままの参照を、別の材質へ付け替える。表に無い材質を指す参照はそのままにする。
         /// </summary>
         public static void Repoint(object pmx, IDictionary<IPXMaterial, IPXMaterial> moved)
         {
@@ -213,7 +205,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// モーフを指したままの口を、別のモーフへ付け替える。表に無いモーフを指す口はそのままにする。
+        /// モーフを指したままの参照を、別のモーフへ付け替える。表に無いモーフを指す参照はそのままにする。
         /// </summary>
         public static void Repoint(object pmx, IDictionary<IPXMorph, IPXMorph> moved)
         {
@@ -231,7 +223,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// ボーンを指したままの口を、別のボーンへ付け替える。表に無いボーンを指す口はそのままにする。
+        /// ボーンを指したままの参照を、別のボーンへ付け替える。表に無いボーンを指す参照はそのままにする。
         /// </summary>
         public static void Repoint(object pmx, IDictionary<IPXBone, IPXBone> moved)
         {
@@ -248,7 +240,6 @@ namespace PmxEditorMcp
             Retarget(pmx, ElementKinds.Bone, held => Moved(moved, (IPXBone)held));
         }
 
-        /// <summary>その種類を指したままの口を、辺の表をたどって別の相手へ付け替える。</summary>
         private static void Retarget(object pmx, string kind, Func<object, object> moved)
         {
             foreach (ReferenceEdge edge in ReferenceEdges.Into(kind))
@@ -281,7 +272,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// PMX全体を見て、並びに居ない要素を指したままの口を直す。直した口の数を返す。
+        /// PMX全体を見て、並びに居ない要素を指したままの参照を直す。直した参照の数を返す。
         /// </summary>
         public static int Sweep(object pmx)
         {

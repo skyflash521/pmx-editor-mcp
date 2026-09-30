@@ -232,16 +232,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 }
             }
 
-            HashSet<string> letters = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string text in matchables.SelectMany(m => m).Where(t => !string.IsNullOrEmpty(t)))
-            {
-                foreach (System.Text.Rune letter in text.EnumerateRunes())
-                {
-                    letters.Add(letter.ToString());
-                }
-            }
-
-            return letters.Max(letter => matchables.Count(m => m.Any(t => TextMatch.Contains(t, letter))));
+            return matchables.Count(m => m.Any(t => !string.IsNullOrEmpty(t)));
         }
 
         private static void AddParts(JsonElement node, IList<string[]> matchables)

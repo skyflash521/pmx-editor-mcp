@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Web.Script.Serialization;
 using PmxEditorMcp.SignatureDump;
 
@@ -20,8 +21,7 @@ namespace PmxEditorMcp
         /// <summary>このツールの名前。</summary>
         public const string ToolName = "editor_find_operation";
 
-        /// <summary>探す文言を受け取る入力の名前。</summary>
-        public const string TextName = "text";
+        public const string TextsName = "texts";
 
         /// <summary>返す件数の上限を受け取る入力の名前。</summary>
         public const string LimitName = "limit";
@@ -66,12 +66,17 @@ namespace PmxEditorMcp
         private static object Find(McpMethodContext context)
         {
             object given;
-            string wanted = context.Params.TryGetValue(TextName, out given) ? given as string : null;
-            if (string.IsNullOrEmpty(wanted))
+            object[] taken = context.Params.TryGetValue(TextsName, out given) ? given as object[] : null;
+            if (taken == null
+                || taken.Length == 0
+                || taken.Any(t => !(t is string) || ((string)t).Length == 0))
             {
                 return ToolEnvelope.Failure(
-                    ToolEnvelope.InvalidArgument, TextName + " は1文字以上の文字列でなければならない。");
+                    ToolEnvelope.InvalidArgument,
+                    TextsName + " は1文字以上の文字列を1つ以上並べた配列でなければならない。");
             }
+
+            IList<string> wanted = taken.Cast<string>().ToList();
 
             int limit;
             string message;
@@ -106,7 +111,7 @@ namespace PmxEditorMcp
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.ResponseTooLarge,
-                    "当たりが1件も値の枠に収まらない。" + TextName + " を絞るか、応答の枠を広げる。");
+                    "当たりが1件も値の枠に収まらない。" + TextsName + " を絞るか、応答の枠を広げる。");
             }
 
             Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
@@ -139,14 +144,14 @@ namespace PmxEditorMcp
             }).Length;
         }
 
-        private static IList<IDictionary<string, object>> Matches(string wanted)
+        private static IList<IDictionary<string, object>> Matches(IList<string> wanted)
         {
             List<IDictionary<string, object>> found = new List<IDictionary<string, object>>();
             foreach (IDictionary<string, object> window in UiStructureCatalog.Windows())
             {
                 string form = UiStructureCatalog.Text(window, UiStructureCatalog.FormName);
                 string title = UiStructureCatalog.Text(window, UiStructureCatalog.TitleName);
-                if (TextMatch.Contains(title, wanted))
+                if (Holds(title, wanted))
                 {
                     found.Add(Match(form, title, new List<IDictionary<string, object>>(), null));
                 }
@@ -161,7 +166,7 @@ namespace PmxEditorMcp
 
                 foreach (string said in UiStructureCatalog.Texts(window, UiStructureCatalog.MessagesName))
                 {
-                    if (TextMatch.Contains(said, wanted))
+                    if (Holds(said, wanted))
                     {
                         found.Add(Match(form, title, null, said));
                     }
@@ -176,23 +181,26 @@ namespace PmxEditorMcp
             IList<IDictionary<string, object>> path,
             string form,
             string title,
-            string wanted,
+            IList<string> wanted,
             IList<IDictionary<string, object>> found)
         {
             foreach (IDictionary<string, object> child in UiStructureCatalog.Children(node))
             {
                 List<IDictionary<string, object>> below =
                     new List<IDictionary<string, object>>(path) { Step(child) };
-                if (TextMatch.Contains(
-                        UiStructureCatalog.Text(child, UiStructureCatalog.TextName), wanted)
-                    || TextMatch.Contains(
-                        UiStructureCatalog.Text(child, UiStructureCatalog.ToolTipName), wanted))
+                if (Holds(UiStructureCatalog.Text(child, UiStructureCatalog.TextName), wanted)
+                    || Holds(UiStructureCatalog.Text(child, UiStructureCatalog.ToolTipName), wanted))
                 {
                     found.Add(Match(form, title, below, null));
                 }
 
                 Walk(child, below, form, title, wanted, found);
             }
+        }
+
+        private static bool Holds(string haystack, IList<string> wanted)
+        {
+            return wanted.Any(w => TextMatch.Contains(haystack, w));
         }
 
         private static IDictionary<string, object> Step(IDictionary<string, object> node)

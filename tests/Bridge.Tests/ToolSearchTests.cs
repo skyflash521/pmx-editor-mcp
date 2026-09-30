@@ -23,10 +23,10 @@ namespace PmxEditorMcp.Bridge.Tests
         public void TheToolsWhoseNameOrDutyCarriesTheWordComeBackInTheOrderOfTheirNames()
         {
             Assert.Equal(
-                new[] { "model_edit_materials" }, Names(ToolSearch.Answer("分割", null, null, Tools, Budget)));
+                new[] { "model_edit_materials" }, Names(ToolSearch.Answer(new[] { "分割" }, null, null, Tools, Budget)));
             Assert.Equal(
                 new[] { "model_clone_face", "model_edit_materials" },
-                Names(ToolSearch.Answer("model_", null, null, Tools, Budget)));
+                Names(ToolSearch.Answer(new[] { "model_" }, null, null, Tools, Budget)));
         }
 
         [Fact]
@@ -34,7 +34,7 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             Assert.Equal(
                 new[] { "view_filter_display" },
-                Names(ToolSearch.Answer("VIEW_FILTER", null, null, Tools, Budget)));
+                Names(ToolSearch.Answer(new[] { "VIEW_FILTER" }, null, null, Tools, Budget)));
         }
 
         [Fact]
@@ -42,7 +42,36 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             Assert.Equal("TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(null, null, null, Tools, Budget)));
             Assert.Equal(
-                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(string.Empty, null, null, Tools, Budget)));
+                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(new[] { string.Empty }, null, null, Tools, Budget)));
+        }
+
+        [Fact]
+        public void AnEmptyListOfWordsOrAnEmptyWordAmongThemIsRefused()
+        {
+            Assert.Equal(
+                "TOOL_INVALID_ARGUMENT",
+                Code(ToolSearch.Answer(new string[0], null, null, Tools, Budget)));
+            Assert.Equal(
+                "TOOL_INVALID_ARGUMENT",
+                Code(ToolSearch.Answer(new[] { "分割", string.Empty }, null, null, Tools, Budget)));
+        }
+
+        [Fact]
+        public void TheToolsWhoseNameOrDutyCarriesAnyOfTheWordsComeBackInTheOrderOfTheirNames()
+        {
+            JsonObject answer = ToolSearch.Answer(new[] { "絞込", "分割" }, null, null, Tools, Budget);
+
+            Assert.Equal(new[] { "model_edit_materials", "view_filter_display" }, Names(answer));
+            Assert.Equal(2, Total(answer));
+        }
+
+        [Fact]
+        public void AToolThatCarriesSeveralOfTheWordsIsListedOnce()
+        {
+            JsonObject answer = ToolSearch.Answer(new[] { "model_", "分割", "材質" }, null, null, Tools, Budget);
+
+            Assert.Equal(new[] { "model_clone_face", "model_edit_materials" }, Names(answer));
+            Assert.Equal(2, Total(answer));
         }
 
         [Theory]
@@ -52,27 +81,27 @@ namespace PmxEditorMcp.Bridge.Tests
         public void ACountOutsideTheBoundsIsRefused(int limit)
         {
             Assert.Equal(
-                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer("model_", limit, null, Tools, Budget)));
+                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(new[] { "model_" }, limit, null, Tools, Budget)));
         }
 
         [Fact]
         public void APositionBelowZeroOrPastTheHitsIsRefused()
         {
             Assert.Equal(
-                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer("model_", null, -1, Tools, Budget)));
+                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(new[] { "model_" }, null, -1, Tools, Budget)));
             Assert.Equal(
-                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer("model_", null, 3, Tools, Budget)));
+                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(new[] { "model_" }, null, 3, Tools, Budget)));
         }
 
         [Fact]
         public void TheRestIsLeftBehindWithThePositionToTakeItFrom()
         {
-            JsonObject answer = ToolSearch.Answer("model_", 1, null, Tools, Budget);
+            JsonObject answer = ToolSearch.Answer(new[] { "model_" }, 1, null, Tools, Budget);
 
             Assert.Equal(new[] { "model_clone_face" }, Names(answer));
             Assert.Equal(2, Total(answer));
             Assert.Equal(1, Next(answer));
-            Assert.Equal(new[] { "model_edit_materials" }, Names(ToolSearch.Answer("model_", null, 1, Tools, Budget)));
+            Assert.Equal(new[] { "model_edit_materials" }, Names(ToolSearch.Answer(new[] { "model_" }, null, 1, Tools, Budget)));
         }
 
         [Fact]
@@ -84,7 +113,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 many.Add(new ToolSearch.Entry("model_" + new string('x', 200) + at, "説明。"));
             }
 
-            JsonObject answer = ToolSearch.Answer("model_", ToolSearch.MaximumLimit, null, many, 10000);
+            JsonObject answer = ToolSearch.Answer(new[] { "model_" }, ToolSearch.MaximumLimit, null, many, 10000);
 
             Assert.True(Names(answer).Length < many.Count);
             Assert.Equal(Names(answer).Length, Next(answer));
@@ -94,9 +123,9 @@ namespace PmxEditorMcp.Bridge.Tests
         public void TheArgumentsAreChecked()
         {
             Assert.Throws<ArgumentNullException>(() => ToolSearch.Found(null, Tools));
-            Assert.Throws<ArgumentNullException>(() => ToolSearch.Found("model_", null));
+            Assert.Throws<ArgumentNullException>(() => ToolSearch.Found(new[] { "model_" }, null));
             Assert.Throws<ArgumentNullException>(
-                () => ToolSearch.Answer("model_", null, null, null, Budget));
+                () => ToolSearch.Answer(new[] { "model_" }, null, null, null, Budget));
             Assert.Throws<ArgumentNullException>(() => new ToolSearch.Entry(null, "説明。"));
         }
 

@@ -8,7 +8,6 @@ using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
 {
-    /// <summary>1つの種類について、画面の選択を読む口と、その選択を書き換えるツールの名前。</summary>
     public sealed class ScreenPick
     {
         private readonly Func<IList<int>> _taken;
@@ -39,10 +38,6 @@ namespace PmxEditorMcp
         }
     }
 
-    /// <summary>
-    /// 画面が選んでいる位置を種類ごとに読む。3Dビューが選ぶ種類はビューの口から、材質はリストを
-    /// 持つ画面の口から読む。
-    /// </summary>
     public sealed class ScreenTargets
     {
         /// <summary>画面の選択を読めない段。読む相手を持たないところが使う。</summary>
@@ -178,7 +173,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 画面がいま選んでいる面のうち、<paramref name="owner"/> 番目の材質のものを、その材質の
-        /// 中の位置で読む口。<paramref name="counts"/> は <see cref="TakenFaces"/> と同じ。
+        /// 中の位置で読む手段。<paramref name="counts"/> は <see cref="TakenFaces"/> と同じ。
         /// </summary>
         public ScreenPick PickFaces(IList<int> counts, int owner)
         {
@@ -188,14 +183,14 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// その種類の選択を読む口。画面が選べない種類では null。
+        /// その種類の選択を読む手段。画面が選べない種類では null。
         /// </summary>
         public ScreenPick Pick(string kind, int count)
         {
             return Selects(kind) ? new ScreenPick(() => Taken(kind, count), Picking(kind)) : null;
         }
 
-        /// <summary>その型の要素の選択を読む口。画面が選べない型では null。</summary>
+        /// <summary>その型の要素の選択を読む手段。画面が選べない型では null。</summary>
         public ScreenPick Pick(Type element, int count)
         {
             return Pick(Kind(element), count);
@@ -203,7 +198,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// その型の要素のうち、画面がいま選んでいる位置。選んだ順のまま渡し、いまのリストに
-        /// 並んでいない位置は外す。画面の口を引けなければ空を渡す。
+        /// 並んでいない位置は外す。画面のコネクタを引けなければ空を渡す。
         /// </summary>
         public IList<int> Taken(Type element, int count)
         {

@@ -25,9 +25,7 @@ export const CASES = [
         image: false,
     },
     {
-        // ビューの画像。既定の窓の大きさのまま1回で得られること、そして文字列でなく画像として
-        // 届くことを見る——文字列で届くと、参照クライアントは中身を見られない。仕様に合っているかでは
-        // なく、クライアントが画像として受け取るかを見る。
+        // 文字列で届くと、参照クライアントは中身を見られない。
         tool: "view_get_client_image_pmd_view_connector",
         arguments: {},
         image: true,

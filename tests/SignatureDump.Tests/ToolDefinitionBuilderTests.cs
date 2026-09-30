@@ -345,6 +345,36 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ANameNarrowingAloneStandsInForTheRequiredGroupOfAlternatives()
+        {
+            string schema = Schema(new ToolSchema(
+                "one",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[]
+                        {
+                            Optional(Array("indices", "number", 4)),
+                            Input("all", "boolean", false),
+                            Optional(Array("nameContains", "text", 4)),
+                        },
+                        new[] { new SchemaChoice(new[] { "all", "indices" }, true) }),
+                },
+                Output("number"),
+                null));
+
+            Assert.True(Takes(schema, "{\"nameContains\":[\"a\"]}"), schema);
+            Assert.True(Takes(schema, "{\"all\":true,\"nameContains\":[\"a\"]}"), schema);
+            Assert.True(Takes(schema, "{\"indices\":[0],\"nameContains\":[\"a\"]}"), schema);
+            Assert.False(
+                Takes(schema, "{\"all\":true,\"indices\":[0],\"nameContains\":[\"a\"]}"), schema);
+            Assert.False(Takes(schema, "{}"), schema);
+        }
+
+        [Fact]
         public void ARequiredGroupOfAlternativesIsClosedToOne()
         {
             string schema = Schema(new ToolSchema(

@@ -1227,7 +1227,6 @@ namespace PmxEditorMcp.Tests
             return _model.Items.Select(item => item.Name).ToArray();
         }
 
-        /// <summary>画面へ映す段。題材の口を通して、映し直しの結末を数える。</summary>
         private ScreenRefresh Refresh()
         {
             return new ScreenRefresh(() => _view, () => _form);

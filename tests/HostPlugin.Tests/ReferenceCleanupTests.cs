@@ -5,10 +5,6 @@ using Xunit;
 
 namespace PmxEditorMcp.Tests
 {
-    /// <summary>
-    /// 並びから消えた要素を指したままの口を片付けるところ。要素はIndexではなくオブジェクトで
-    /// 繋がるので、並びから外しただけでは指したままになる。
-    /// </summary>
     public class ReferenceCleanupTests
     {
 

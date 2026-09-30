@@ -12,10 +12,8 @@ namespace PmxEditorMcp
         /// <summary>どれも要らない。</summary>
         None = 0,
 
-        /// <summary>3Dビューの口。</summary>
         View = 1,
 
-        /// <summary>リストを持つ画面の口。</summary>
         Form = 2,
 
         /// <summary>現在のPMXの複製。</summary>
@@ -23,7 +21,6 @@ namespace PmxEditorMcp
 
         Parts = 8,
 
-        /// <summary>ビューの表示の設定の口。</summary>
         Setting = 16,
     }
 
@@ -39,10 +36,8 @@ namespace PmxEditorMcp
             Setting = setting;
         }
 
-        /// <summary>3Dビューの口。</summary>
         public object View { get; }
 
-        /// <summary>リストを持つ画面の口。</summary>
         public object Form { get; }
 
         public object Parts { get; }
@@ -50,7 +45,6 @@ namespace PmxEditorMcp
         /// <summary>いま相手にするPMX。</summary>
         public object Pmx { get; }
 
-        /// <summary>ビューの表示の設定の口。</summary>
         public object Setting { get; }
     }
 
@@ -115,7 +109,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// <paramref name="body"/> を、画面の口とPMXを受け取る呼び出しにする。
+        /// <paramref name="body"/> を、画面のコネクタとPMXを受け取る呼び出しにする。
         /// <paramref name="known"/> はそのツールが受け取る項目の名前、<paramref name="needs"/> は
         /// そのツールが要る相手で、引けない相手が1つでもあればそのツールだけを断る。
         /// <paramref name="refresh"/> は、済んだあとに画面へ映すのに要ることで、断った呼び出しでは
@@ -169,28 +163,28 @@ namespace PmxEditorMcp
                     object setting = Wanted(needs, ScreenNeeds.Setting) ? _setting() : null;
                     if (view == null && Wanted(needs, ScreenNeeds.View))
                     {
-                        Refuse("3Dビューの口を引けない。", out refusedCode, out refusedMessage);
+                        Refuse("3Dビューを取得できない。", out refusedCode, out refusedMessage);
 
                         return;
                     }
 
                     if (form == null && Wanted(needs, ScreenNeeds.Form))
                     {
-                        Refuse("リストの口を引けない。", out refusedCode, out refusedMessage);
+                        Refuse("リストのフォームを取得できない。", out refusedCode, out refusedMessage);
 
                         return;
                     }
 
                     if (parts == null && Wanted(needs, ScreenNeeds.Parts))
                     {
-                        Refuse("絞込みの口を引けない。", out refusedCode, out refusedMessage);
+                        Refuse("絞込みのウィンドウを取得できない。", out refusedCode, out refusedMessage);
 
                         return;
                     }
 
                     if (setting == null && Wanted(needs, ScreenNeeds.Setting))
                     {
-                        Refuse("ビューの表示の設定の口を引けない。", out refusedCode, out refusedMessage);
+                        Refuse("ビューの表示の設定を取得できない。", out refusedCode, out refusedMessage);
 
                         return;
                     }
