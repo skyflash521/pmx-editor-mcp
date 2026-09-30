@@ -396,6 +396,77 @@ namespace PmxEditorMcp.Tests
             Assert.Contains("このツールでは指定できない", message);
         }
 
+        [Fact]
+        public void NumbersKeepTheOrderTheRequestGaveAndResolveAsTheNumberedForm()
+        {
+            bool resolvedOk = TargetSelection.TryResolve(
+                new TargetRequest(numbered: new[] { 4, 1 }),
+                TargetForm.Numbered,
+                listCount: 5,
+                isUsableHandle: h => false,
+                resolved: out ResolvedTargets resolved,
+                code: out string code,
+                message: out string message,
+                names: TargetNames.Element);
+
+            Assert.True(resolvedOk, code + ": " + message);
+            Assert.Equal(TargetForm.Numbered, resolved.Form);
+            Assert.Equal(new[] { 4, 1 }, resolved.Indices);
+        }
+
+        [Fact]
+        public void ANumberPastTheListIsOutOfRangeAndNamesTheNumberedInput()
+        {
+            bool resolvedOk = TargetSelection.TryResolve(
+                new TargetRequest(numbered: new[] { 5 }),
+                TargetForm.Numbered,
+                listCount: 5,
+                isUsableHandle: h => false,
+                resolved: out ResolvedTargets resolved,
+                code: out string code,
+                message: out string message,
+                names: TargetNames.Element);
+
+            Assert.False(resolvedOk);
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, code);
+            Assert.StartsWith("modelIndices ", message);
+        }
+
+        [Fact]
+        public void NumbersTogetherWithIndicesAreAnInvalidArgument()
+        {
+            bool resolvedOk = TargetSelection.TryResolve(
+                new TargetRequest(indices: new[] { 0 }, numbered: new[] { 1 }),
+                TargetForm.Indices | TargetForm.Numbered,
+                listCount: 5,
+                isUsableHandle: h => false,
+                resolved: out ResolvedTargets resolved,
+                code: out string code,
+                message: out string message,
+                names: TargetNames.Element);
+
+            Assert.False(resolvedOk);
+            Assert.Equal(ToolEnvelope.InvalidArgument, code);
+            Assert.Contains("modelIndices", message);
+        }
+
+        [Fact]
+        public void ASetOfNamesWithoutTheNumberedInputDoesNotAcceptNumbers()
+        {
+            bool resolvedOk = TargetSelection.TryResolve(
+                new TargetRequest(numbered: new[] { 1 }),
+                TargetForm.Indices | TargetForm.Numbered,
+                listCount: 5,
+                isUsableHandle: h => false,
+                resolved: out ResolvedTargets resolved,
+                code: out string code,
+                message: out string message,
+                names: TargetNames.Parent);
+
+            Assert.False(resolvedOk);
+            Assert.Equal(ToolEnvelope.InvalidArgument, code);
+        }
+
         private static ResolvedTargets Resolve(
             TargetRequest request, int listCount, IList<int> selected = null)
         {

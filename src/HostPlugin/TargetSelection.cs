@@ -26,6 +26,8 @@ namespace PmxEditorMcp
 
         /// <summary>画面がいま選んでいるもの。</summary>
         Selected = 16,
+
+        Numbered = 32,
     }
 
     /// <summary>
@@ -34,7 +36,12 @@ namespace PmxEditorMcp
     public sealed class TargetNames
     {
         public TargetNames(
-            string indices, string range, string all, string handles, string selected = null)
+            string indices,
+            string range,
+            string all,
+            string handles,
+            string selected = null,
+            string numbered = null)
         {
             if (string.IsNullOrWhiteSpace(indices))
             {
@@ -61,11 +68,12 @@ namespace PmxEditorMcp
             All = all;
             Handles = handles;
             Selected = selected;
+            Numbered = numbered;
         }
 
         /// <summary>対象そのものの集合を指す名前。</summary>
         public static TargetNames Element { get; } =
-            new TargetNames("indices", "range", "all", "handles", "selected");
+            new TargetNames("indices", "range", "all", "handles", "selected", "modelIndices");
 
         /// <summary>親の集合を指す名前。</summary>
         public static TargetNames Parent { get; } =
@@ -81,6 +89,8 @@ namespace PmxEditorMcp
 
         /// <summary>画面の選択を指す名前。その組が画面の選択を名指ししないなら null。</summary>
         public string Selected { get; }
+
+        public string Numbered { get; }
     }
 
     /// <summary>要求が持ってきた集合の指定。持たない形は null を渡す。</summary>
@@ -92,7 +102,8 @@ namespace PmxEditorMcp
             int? rangeCount = null,
             bool? all = null,
             IList<long> handles = null,
-            bool? selected = null)
+            bool? selected = null,
+            IList<int> numbered = null)
         {
             Indices = indices;
             RangeStart = rangeStart;
@@ -100,6 +111,7 @@ namespace PmxEditorMcp
             All = all;
             Handles = handles;
             Selected = selected;
+            Numbered = numbered;
         }
 
         /// <summary>位置の配列。指定が無ければ null。</summary>
@@ -119,6 +131,8 @@ namespace PmxEditorMcp
 
         /// <summary>画面の選択の指定。指定が無ければ null。</summary>
         public bool? Selected { get; }
+
+        public IList<int> Numbered { get; }
     }
 
     /// <summary>解決した集合。</summary>
@@ -198,6 +212,11 @@ namespace PmxEditorMcp
                 allowed &= ~TargetForm.Selected;
             }
 
+            if (names.Numbered == null)
+            {
+                allowed &= ~TargetForm.Numbered;
+            }
+
             if ((allowed & TargetForm.Selected) == TargetForm.Selected && selected == null)
             {
                 throw new ArgumentNullException(nameof(selected));
@@ -217,7 +236,13 @@ namespace PmxEditorMcp
             {
                 case TargetForm.Indices:
                     return TryResolveIndices(
-                        request.Indices, listCount, names, out resolved, out code, out message);
+                        request.Indices, listCount, names.Indices, TargetForm.Indices,
+                        out resolved, out code, out message);
+
+                case TargetForm.Numbered:
+                    return TryResolveIndices(
+                        request.Numbered, listCount, names.Numbered, TargetForm.Numbered,
+                        out resolved, out code, out message);
 
                 case TargetForm.Range:
                     return TryResolveRange(
@@ -279,6 +304,11 @@ namespace PmxEditorMcp
                 given |= TargetForm.Selected;
             }
 
+            if (request.Numbered != null)
+            {
+                given |= TargetForm.Numbered;
+            }
+
             return given;
         }
 
@@ -326,7 +356,8 @@ namespace PmxEditorMcp
         private static bool TryResolveIndices(
             IList<int> indices,
             int listCount,
-            TargetNames names,
+            string name,
+            TargetForm form,
             out ResolvedTargets resolved,
             out string code,
             out string message)
@@ -338,7 +369,7 @@ namespace PmxEditorMcp
             if (indices.Count == 0)
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = names.Indices + " が空である。空だと対象が決まらない。";
+                message = name + " が空である。空だと対象が決まらない。";
                 return false;
             }
 
@@ -351,7 +382,7 @@ namespace PmxEditorMcp
                     message = string.Format(
                         CultureInfo.InvariantCulture,
                         "{0} が同じ位置を二度指している: {1}",
-                        names.Indices,
+                        name,
                         index);
                     return false;
                 }
@@ -365,14 +396,14 @@ namespace PmxEditorMcp
                     message = string.Format(
                         CultureInfo.InvariantCulture,
                         "{0} の位置が範囲の外にある: {1}(リストの件数は {2})",
-                        names.Indices,
+                        name,
                         index,
                         listCount);
                     return false;
                 }
             }
 
-            resolved = new ResolvedTargets(TargetForm.Indices, indices.ToArray(), null);
+            resolved = new ResolvedTargets(form, indices.ToArray(), null);
 
             return true;
         }
@@ -559,6 +590,7 @@ namespace PmxEditorMcp
             yield return TargetForm.All;
             yield return TargetForm.Handles;
             yield return TargetForm.Selected;
+            yield return TargetForm.Numbered;
         }
 
         private static string AllowedText(TargetForm allowed, TargetNames names)
@@ -588,6 +620,9 @@ namespace PmxEditorMcp
 
                 case TargetForm.Selected:
                     return names.Selected;
+
+                case TargetForm.Numbered:
+                    return names.Numbered;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(form), form, "知らない指し方。");

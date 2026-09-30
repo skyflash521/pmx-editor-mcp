@@ -37,7 +37,7 @@ namespace PmxEditorMcp
 
             code = null;
             message = null;
-            string[] held = { names.Indices, names.Range, names.All, names.Selected };
+            string[] held = { names.Indices, names.Range, names.All, names.Selected, names.Numbered };
             foreach (string name in held.Where(n => n != null && given.ContainsKey(n)))
             {
                 code = ToolEnvelope.InvalidArgument;
@@ -74,12 +74,14 @@ namespace PmxEditorMcp
 
             request = null;
             IList<int> indices;
+            IList<int> numbered;
             int? start;
             int? count;
             bool? all;
             bool? selected;
             IList<long> held = null;
-            if (!TryIndices(parameters, names, out indices, out code, out message)
+            if (!TryIndices(parameters, names.Indices, out indices, out code, out message)
+                || !TryIndices(parameters, names.Numbered, out numbered, out code, out message)
                 || !TryRange(parameters, names, out start, out count, out code, out message)
                 || !TryAll(parameters, names, out all, out code, out message)
                 || !TryFlag(parameters, names.Selected, out selected, out code, out message)
@@ -88,7 +90,7 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            request = new TargetRequest(indices, start, count, all, held, selected);
+            request = new TargetRequest(indices, start, count, all, held, selected, numbered);
 
             return true;
         }
@@ -178,7 +180,7 @@ namespace PmxEditorMcp
 
         private static bool TryIndices(
             IDictionary<string, object> parameters,
-            TargetNames names,
+            string name,
             out IList<int> indices,
             out string code,
             out string message)
@@ -187,7 +189,7 @@ namespace PmxEditorMcp
             message = null;
             indices = null;
             object value;
-            if (!parameters.TryGetValue(names.Indices, out value))
+            if (name == null || !parameters.TryGetValue(name, out value))
             {
                 return true;
             }
@@ -196,7 +198,7 @@ namespace PmxEditorMcp
             if (items == null)
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = names.Indices + " は位置の配列でなければならない。";
+                message = name + " は位置の配列でなければならない。";
 
                 return false;
             }
@@ -208,7 +210,7 @@ namespace PmxEditorMcp
                 if (!ValueInput.TryIndex(item, out number))
                 {
                     code = ToolEnvelope.InvalidArgument;
-                    message = names.Indices + " は整数の配列でなければならない。";
+                    message = name + " は整数の配列でなければならない。";
 
                     return false;
                 }

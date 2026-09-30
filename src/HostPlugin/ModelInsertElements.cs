@@ -109,6 +109,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
                 TargetNames.Element.Selected,
+                TargetNames.Element.Numbered,
                 OperationName,
                 AtName,
                 CountName,
@@ -181,6 +182,26 @@ namespace PmxEditorMcp
                 makes.Add(made);
             }
 
+            bool numbered = context.Params.ContainsKey(TargetNames.Element.Numbered);
+            List<int> bases = new List<int>();
+            List<int> numbers = new List<int>();
+            if (numbered)
+            {
+                int before = 0;
+                for (int each = 0; each < owners.Count; each++)
+                {
+                    bases.Add(before);
+                    before += kind.Items(owners[each]).Count + makes[each].Count;
+                }
+
+                List<int> receiving = Enumerable.Range(0, owners.Count)
+                    .Where(each => makes[each].Count != 0)
+                    .ToList();
+                bases = receiving.Select(each => bases[each]).ToList();
+                owners = receiving.Select(each => owners[each]).ToList();
+                makes = receiving.Select(each => makes[each]).ToList();
+            }
+
             List<int> puts = new List<int>();
             List<object> landed = new List<object>();
             for (int each = 0; each < owners.Count; each++)
@@ -194,7 +215,19 @@ namespace PmxEditorMcp
                 }
 
                 puts.Add(put);
-                landed.Add(PositionRuns.Of(put, makes[each].Count));
+                if (numbered)
+                {
+                    numbers.AddRange(Enumerable.Range(bases[each] + put, makes[each].Count));
+                }
+                else
+                {
+                    landed.Add(PositionRuns.Of(put, makes[each].Count));
+                }
+            }
+
+            if (numbered)
+            {
+                landed.AddRange(PositionRuns.Joined(numbers));
             }
 
             Dictionary<string, object> answer =
@@ -280,7 +313,8 @@ namespace PmxEditorMcp
             return string.Equals(name, TargetNames.Element.Indices, StringComparison.Ordinal)
                 || string.Equals(name, TargetNames.Element.Range, StringComparison.Ordinal)
                 || string.Equals(name, TargetNames.Element.All, StringComparison.Ordinal)
-                || string.Equals(name, TargetNames.Element.Selected, StringComparison.Ordinal);
+                || string.Equals(name, TargetNames.Element.Selected, StringComparison.Ordinal)
+                || string.Equals(name, TargetNames.Element.Numbered, StringComparison.Ordinal);
         }
 
         private static bool TryOperation(

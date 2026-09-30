@@ -74,6 +74,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
                 TargetNames.Element.Selected,
+                TargetNames.Element.Numbered,
                 DistanceName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
@@ -88,10 +89,9 @@ namespace PmxEditorMcp
             IList<int> parents;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message)
-                || !TargetInput.TryPositions(
-                    context.Params,
-                    TargetNames.Parent,
-                    model.Material.Count,
+                || !ElementScope.TryMaterials(
+                    context,
+                    model.Material.Select(m => m.Faces.Count).ToList(),
                     out parents,
                     out code,
                     out message))

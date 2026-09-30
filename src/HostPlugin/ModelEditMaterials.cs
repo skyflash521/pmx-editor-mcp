@@ -76,10 +76,20 @@ namespace PmxEditorMcp
         /// <summary>足した材質の位置を返す項目の名前。</summary>
         public const string AddedName = "added";
 
+        public const string FaceModelIndicesName = "faceModelIndices";
+
         private const string FaceHandlesName = "faceHandles";
 
         private static readonly TargetNames FaceNames =
             new TargetNames(FaceIndicesName, FaceRangeName, FaceAllName, FaceHandlesName);
+
+        private static readonly TargetNames NumberedFaceNames = new TargetNames(
+            FaceIndicesName,
+            FaceRangeName,
+            FaceAllName,
+            FaceHandlesName,
+            null,
+            FaceModelIndicesName);
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
@@ -136,6 +146,7 @@ namespace PmxEditorMcp
                 FaceIndicesName,
                 FaceRangeName,
                 FaceAllName,
+                FaceModelIndicesName,
                 VertexIndicesName,
                 VertexSelectedName,
             };
@@ -149,9 +160,18 @@ namespace PmxEditorMcp
             string code;
             string message;
             IList<int> chosen;
+            IList<IList<int>> faceSets = null;
             if (!ComposedOperation.TryTake(
-                    context, Operations, out operation, out code, out message)
-                || !TargetInput.TryPositions(
+                context, Operations, out operation, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            bool numbered = context.Params.ContainsKey(FaceModelIndicesName);
+            if (numbered
+                ? !TryNumberedFaces(
+                    context, model, operation, out chosen, out faceSets, out code, out message)
+                : !TargetInput.TryPositions(
                     context.Params,
                     TargetNames.Element,
                     model.Material.Count,
@@ -209,7 +229,7 @@ namespace PmxEditorMcp
                     return Split(context, model, picked, corners);
 
                 case ExtractFacesWithVertices:
-                    return Extracted(context, model, picked, true);
+                    return Extracted(context, model, picked, true, faceSets);
 
                 case Merge:
                     return Merged(model, new[] { picked });
@@ -221,7 +241,7 @@ namespace PmxEditorMcp
                     return Merged(model, Alike(picked, tolerance));
 
                 case ExtractFaces:
-                    return Extracted(context, model, picked, false);
+                    return Extracted(context, model, picked, false, faceSets);
 
                 case DuplicateParts:
                     return Duplicated(model, picked, parts);
@@ -366,15 +386,24 @@ namespace PmxEditorMcp
         }
 
         private static ComposedEditResult Extracted(
-            McpMethodContext context, IPXPmx model, IList<IPXMaterial> picked, bool apart)
+            McpMethodContext context,
+            IPXPmx model,
+            IList<IPXMaterial> picked,
+            bool apart,
+            IList<IList<int>> faceSets)
         {
             List<int> added = new List<int>();
-            foreach (IPXMaterial material in picked)
+            for (int each = 0; each < picked.Count; each++)
             {
+                IPXMaterial material = picked[each];
                 IList<int> faces;
                 string code;
                 string message;
-                if (!TargetInput.TryPositions(
+                if (faceSets != null)
+                {
+                    faces = faceSets[each];
+                }
+                else if (!TargetInput.TryPositions(
                     context.Params,
                     FaceNames,
                     material.Faces.Count,
@@ -593,6 +622,87 @@ namespace PmxEditorMcp
             }
 
             return made;
+        }
+
+        private static bool TryNumberedFaces(
+            McpMethodContext context,
+            IPXPmx model,
+            string operation,
+            out IList<int> materials,
+            out IList<IList<int>> faceSets,
+            out string code,
+            out string message)
+        {
+            materials = null;
+            faceSets = null;
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            if (!Extracting.Contains(operation, StringComparer.Ordinal))
+            {
+                message = FaceModelIndicesName + " を渡せるのは "
+                    + string.Join("・", Extracting.ToArray()) + " のときだけである。";
+
+                return false;
+            }
+
+            string[] pointing =
+            {
+                TargetNames.Element.Indices,
+                TargetNames.Element.Range,
+                TargetNames.Element.All,
+                TargetNames.Element.Selected,
+            };
+            if (pointing.Any(context.Params.ContainsKey))
+            {
+                message = FaceModelIndicesName
+                    + " は材質の指し方と一緒に渡せない。面を持つ材質は面の番号から決まる。";
+
+                return false;
+            }
+
+            TargetRequest request;
+            ResolvedTargets resolved;
+            IList<int> counts = model.Material.Select(m => m.Faces.Count).ToList();
+            if (!TargetInput.TryTake(
+                    context.Params, NumberedFaceNames, false, out request, out code, out message)
+                || !TargetSelection.TryResolve(
+                    request,
+                    TargetForm.Numbered,
+                    counts.Sum(),
+                    id => false,
+                    out resolved,
+                    out code,
+                    out message,
+                    NumberedFaceNames))
+            {
+                return false;
+            }
+
+            List<int> owning = new List<int>();
+            List<IList<int>> sets = new List<IList<int>>();
+            int start = 0;
+            for (int at = 0; at < counts.Count; at++)
+            {
+                int first = start;
+                int end = start + counts[at];
+                List<int> inside = resolved.Indices
+                    .Where(number => number >= first && number < end)
+                    .Select(number => number - first)
+                    .OrderBy(number => number)
+                    .ToList();
+                if (inside.Count != 0)
+                {
+                    owning.Add(at);
+                    sets.Add(inside);
+                }
+
+                start = end;
+            }
+
+            materials = owning;
+            faceSets = sets;
+
+            return true;
         }
 
         private static bool TryFacesGiven(

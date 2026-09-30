@@ -7,6 +7,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         [Theory]
         [InlineData("indices")]
+        [InlineData("modelIndices")]
+        [InlineData("faceIndices")]
+        [InlineData("faceModelIndices")]
         [InlineData("handles")]
         [InlineData("parentIndices")]
         [InlineData("parentHandles")]

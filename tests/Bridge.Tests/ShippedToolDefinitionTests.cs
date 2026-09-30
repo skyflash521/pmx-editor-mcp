@@ -951,7 +951,8 @@ namespace PmxEditorMcp.Bridge.Tests
 
             private static readonly string[] RangeNames = { "range", "parentRange" };
 
-            private static readonly string[] PositionListNames = { "indices", "parentIndices" };
+            private static readonly string[] PositionListNames =
+                { "indices", "modelIndices", "parentIndices" };
 
             private static readonly string[] HandleListNames = { "handles", "parentHandles" };
 

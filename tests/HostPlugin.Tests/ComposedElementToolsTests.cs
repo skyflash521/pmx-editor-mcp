@@ -881,6 +881,227 @@ namespace PmxEditorMcp.Tests
             Assert.Single(Now(second).Faces);
         }
 
+        [Fact]
+        public void FacesAreDeletedByTheirNumberCountedOverTheWholeModel()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            Now(first).Faces.Add(Triangle());
+            Now(first).Faces.Add(Triangle());
+            Now(second).Faces.Add(Triangle());
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("modelIndices", new object[] { 1, 2 })));
+
+            Assert.Equal(2, value[ModelDeleteElements.RemovedName]);
+            Assert.Single(Now(first).Faces);
+            Assert.Empty(Now(second).Faces);
+        }
+
+        [Fact]
+        public void FacesAreMovedByTheirNumberCountedOverTheWholeModel()
+        {
+            FakeVertex one = new FakeVertex();
+            FakeVertex two = new FakeVertex(1f, 0f, 0f);
+            FakeVertex three = new FakeVertex(2f, 0f, 0f);
+            _fixture.Model.Vertex.Add(one);
+            _fixture.Model.Vertex.Add(two);
+            _fixture.Model.Vertex.Add(three);
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            Now(first).Faces.Add(new FakeFace(one, one, one));
+            Now(second).Faces.Add(new FakeFace(two, two, two));
+            Now(second).Faces.Add(new FakeFace(three, three, three));
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+
+            ComposedEditFixture.Value(Reorder(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("modelIndices", new object[] { 2 }),
+                ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.Up)));
+
+            Assert.Equal(
+                new IPXVertex[] { Now(three), Now(two) },
+                _fixture.Model.Material[1].Faces.Select(face => face.Vertex1).ToArray());
+        }
+
+        [Fact]
+        public void ACopyOfAFacePickedByItsNumberLandsInTheMaterialThatOwnsIt()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            Now(first).Faces.Add(Triangle());
+            Now(second).Faces.Add(Triangle());
+            Now(second).Faces.Add(Triangle());
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.Clone),
+                ComposedEditFixture.Given("modelIndices", new object[] { 2 })));
+
+            Assert.Single(Now(first).Faces);
+            Assert.Equal(3, Now(second).Faces.Count);
+            Assert.Equal(new[] { "3+1" }, Landed(value));
+        }
+
+        [Fact]
+        public void CopiesOfFacesPickedByNumberAnswerWhereTheyLandCountedOverTheWholeModel()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            Now(first).Faces.Add(Triangle());
+            Now(second).Faces.Add(Triangle());
+            Now(second).Faces.Add(Triangle());
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.Clone),
+                ComposedEditFixture.Given("modelIndices", new object[] { 0, 2 })));
+
+            Assert.Equal(new[] { "1+1", "4+1" }, Landed(value));
+        }
+
+        [Fact]
+        public void FacesMovedByNumberAnswerTheirNewPlaceCountedOverTheWholeModel()
+        {
+            FakeVertex one = new FakeVertex();
+            FakeVertex two = new FakeVertex(1f, 0f, 0f);
+            FakeVertex three = new FakeVertex(2f, 0f, 0f);
+            _fixture.Model.Vertex.Add(one);
+            _fixture.Model.Vertex.Add(two);
+            _fixture.Model.Vertex.Add(three);
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            Now(first).Faces.Add(new FakeFace(one, one, one));
+            Now(second).Faces.Add(new FakeFace(two, two, two));
+            Now(second).Faces.Add(new FakeFace(three, three, three));
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Reorder(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("modelIndices", new object[] { 2 }),
+                ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.Up)));
+
+            Assert.Equal(new[] { "1+1" }, Moved(value));
+        }
+
+        [Fact]
+        public void FacesMovedByNumberAcrossMaterialsAnswerOneRunWhereTheNumbersAdjoin()
+        {
+            FakeVertex one = new FakeVertex();
+            FakeVertex two = new FakeVertex(1f, 0f, 0f);
+            _fixture.Model.Vertex.Add(one);
+            _fixture.Model.Vertex.Add(two);
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            Now(first).Faces.Add(new FakeFace(one, one, one));
+            Now(second).Faces.Add(new FakeFace(two, two, two));
+            Now(second).Faces.Add(new FakeFace(two, two, two));
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Reorder(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("modelIndices", new object[] { 0, 1 }),
+                ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.Top)));
+
+            Assert.Equal(new[] { "0+2" }, Moved(value));
+        }
+
+        [Fact]
+        public void FacesMovedToAPositionByNumberIgnoreAMaterialHoldingNoneOfThem()
+        {
+            FakeVertex one = new FakeVertex();
+            FakeVertex two = new FakeVertex(1f, 0f, 0f);
+            FakeVertex three = new FakeVertex(2f, 0f, 0f);
+            _fixture.Model.Vertex.Add(one);
+            _fixture.Model.Vertex.Add(two);
+            _fixture.Model.Vertex.Add(three);
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            Now(first).Faces.Add(new FakeFace(one, one, one));
+            Now(second).Faces.Add(new FakeFace(two, two, two));
+            Now(second).Faces.Add(new FakeFace(three, three, three));
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+
+            ComposedEditFixture.Value(Reorder(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("modelIndices", new object[] { 1 }),
+                ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.To),
+                ComposedEditFixture.Given(ModelReorderElements.ToIndexName, 1)));
+
+            Assert.Equal(
+                new IPXVertex[] { Now(three), Now(two) },
+                _fixture.Model.Material[1].Faces.Select(face => face.Vertex1).ToArray());
+        }
+
+        [Fact]
+        public void NumbersCountedOverTheWholeModelAreRefusedForAKindThatIsNotAFace()
+        {
+            Bones("一");
+
+            IDictionary<string, object> envelope = Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given("modelIndices", new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.DoesNotContain("知らない引数", ComposedEditFixture.Message(envelope));
+            Assert.Single(_fixture.Model.Bone);
+        }
+
+        [Fact]
+        public void NumbersCountedOverTheWholeModelAreRefusedTogetherWithAParent()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            Now(first).Faces.Add(Triangle());
+            _fixture.Model.Material.Add(first);
+
+            IDictionary<string, object> envelope = Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("parentIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("modelIndices", new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.DoesNotContain("知らない引数", ComposedEditFixture.Message(envelope));
+            Assert.Single(Now(first).Faces);
+        }
+
+        [Fact]
+        public void ANumberIsRefusedInAModelWithNoMaterial()
+        {
+            IDictionary<string, object> envelope = Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("modelIndices", new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void ANumberPastTheWholeModelIsRefusedAndDeletesNothing()
+        {
+            FakeMaterial first = new FakeMaterial("一");
+            Now(first).Faces.Add(Triangle());
+            _fixture.Model.Material.Add(first);
+
+            IDictionary<string, object> envelope = Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Face),
+                ComposedEditFixture.Given("modelIndices", new object[] { 1 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+            Assert.Single(Now(first).Faces);
+        }
+
         private IPXFace Triangle()
         {
             FakeVertex[] corners =

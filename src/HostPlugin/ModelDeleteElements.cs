@@ -39,6 +39,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
                 TargetNames.Element.Selected,
+                TargetNames.Element.Numbered,
                 ReferenceCleanup.RelatedName,
             };
             methods.Add(ToolName, edit.Method(known, Run));

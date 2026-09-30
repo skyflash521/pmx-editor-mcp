@@ -176,7 +176,7 @@ namespace PmxEditorMcp.SignatureDump
         /// </summary>
         private static readonly string[] PointingNames =
         {
-            "indices", "range", "all", "handles",
+            "indices", "modelIndices", "range", "all", "handles",
             "parentIndices", "parentRange", "parentAll", "parentHandles",
         };
 

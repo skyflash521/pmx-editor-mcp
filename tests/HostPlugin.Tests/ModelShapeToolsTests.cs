@@ -119,6 +119,48 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void FlippingFacesByTheirNumberCountedOverTheWholeModelReachesEveryMaterial()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            FakeMaterial first = Material("一", Face(vertices, 0, 1, 2), Face(vertices, 0, 1, 2));
+            FakeMaterial second = Material("二", Face(vertices, 0, 1, 2));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(EditFaces(
+                Operation(ModelEditFaces.Flip),
+                ComposedEditFixture.Given("modelIndices", new object[] { 1, 2 })));
+
+            Assert.Equal(2, value[ModelEditFaces.ChangedName]);
+            Assert.Same(NowAll(vertices)[1], Now(first).Faces[0].Vertex2);
+            Assert.Same(NowAll(vertices)[2], Now(first).Faces[1].Vertex2);
+            Assert.Same(NowAll(vertices)[2], Now(second).Faces[0].Vertex2);
+        }
+
+        [Fact]
+        public void FlippingFacesByNumberInAModelWithNoMaterialIsRefused()
+        {
+            IDictionary<string, object> envelope = EditFaces(
+                Operation(ModelEditFaces.Flip),
+                ComposedEditFixture.Given("modelIndices", new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void FlippingFacesByNumberTogetherWithAMaterialIsRefused()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Material("一", Face(vertices, 0, 1, 2));
+
+            IDictionary<string, object> envelope = EditFaces(
+                Operation(ModelEditFaces.Flip),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("modelIndices", new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.DoesNotContain("知らない引数", ComposedEditFixture.Message(envelope));
+        }
+
+        [Fact]
         public void SwappingTheDiagonalRedrawsTheSquareAndKeepsBothFacesFacingTheSameWay()
         {
             IList<IPXVertex> vertices = Quad();
@@ -421,6 +463,58 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new[] { new[] { 0, 1, 2 } }, Places(material));
             Assert.Equal(new[] { new[] { 0, 2, 3 } }, Places(_fixture.Model.Material[1]));
             Assert.Equal(new object[] { 1 }, (object[])value[ModelEditMaterials.AddedName]);
+        }
+
+        [Fact]
+        public void FacesTakenOutByTheirNumberGoIntoAMaterialPerOwningMaterial()
+        {
+            IList<IPXVertex> vertices = Vertices(4);
+            FakeMaterial first = Material("一", Face(vertices, 0, 1, 2), Face(vertices, 0, 2, 3));
+            FakeMaterial second = Material("二", Face(vertices, 1, 2, 3));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(EditMaterials(
+                Operation(ModelEditMaterials.ExtractFaces),
+                ComposedEditFixture.Given(
+                    ModelEditMaterials.FaceModelIndicesName, new object[] { 1, 2 })));
+
+            Assert.Equal(4, _fixture.Model.Material.Count);
+            Assert.Equal(new[] { new[] { 0, 1, 2 } }, Places(first));
+            Assert.Empty(Now(second).Faces);
+            Assert.Equal(new[] { new[] { 0, 2, 3 } }, Places(_fixture.Model.Material[2]));
+            Assert.Equal(new[] { new[] { 1, 2, 3 } }, Places(_fixture.Model.Material[3]));
+            Assert.Equal(new object[] { 2, 3 }, (object[])value[ModelEditMaterials.AddedName]);
+        }
+
+        [Fact]
+        public void FacesTakenOutByTheirNumberTogetherWithAMaterialIsRefused()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Material("材質", Face(vertices, 0, 1, 2));
+
+            IDictionary<string, object> envelope = EditMaterials(
+                Operation(ModelEditMaterials.ExtractFaces),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(
+                    ModelEditMaterials.FaceModelIndicesName, new object[] { 0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.DoesNotContain("知らない引数", ComposedEditFixture.Message(envelope));
+            Assert.Single(_fixture.Model.Material);
+        }
+
+        [Fact]
+        public void APastTheEndFaceNumberTakesNothingOut()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Material("材質", Face(vertices, 0, 1, 2));
+
+            IDictionary<string, object> envelope = EditMaterials(
+                Operation(ModelEditMaterials.ExtractFaces),
+                ComposedEditFixture.Given(
+                    ModelEditMaterials.FaceModelIndicesName, new object[] { 1 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+            Assert.Single(_fixture.Model.Material);
         }
 
         [Fact]

@@ -197,6 +197,110 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void PositionsUnderSeveralParentsAreCountedInsideEachParent()
+        {
+            Materials(3, 2);
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_faces",
+                Arguments("parentIndices", new object[] { 0, 1 }, "indices", new object[] { 0, 1 })));
+
+            Assert.Equal(
+                new[] { "0:0", "0:1", "1:0", "1:1" },
+                PlacesOf((object[])value[ToolDispatch.ItemsName]));
+            Assert.Equal(4, value[ToolDispatch.TotalName]);
+        }
+
+        [Fact]
+        public void ARangeUnderSeveralParentsIsCountedInsideEachParent()
+        {
+            Materials(3, 2);
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_faces",
+                Arguments(
+                    "parentIndices", new object[] { 0, 1 },
+                    "range", Arguments("start", 1, "count", 1))));
+
+            Assert.Equal(
+                new[] { "0:1", "1:1" }, PlacesOf((object[])value[ToolDispatch.ItemsName]));
+        }
+
+        [Fact]
+        public void APositionPastTheEndOfOneOfSeveralParentsIsRefused()
+        {
+            Materials(3, 2);
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_faces",
+                Arguments("parentIndices", new object[] { 0, 1 }, "indices", new object[] { 2 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, Code(envelope));
+        }
+
+        [Fact]
+        public void FacesAreListedByTheirNumberCountedOverTheWholeModel()
+        {
+            Materials(3, 2);
+
+            IDictionary<string, object> value = Value(Call(
+                "model_list_faces", Arguments("modelIndices", new object[] { 4, 1 })));
+
+            Assert.Equal(new[] { "1:1", "0:1" }, PlacesOf((object[])value[ToolDispatch.ItemsName]));
+            Assert.Equal(2, value[ToolDispatch.TotalName]);
+        }
+
+        [Fact]
+        public void ANumberPastTheWholeModelIsRefused()
+        {
+            Materials(3, 2);
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_faces", Arguments("modelIndices", new object[] { 5 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, Code(envelope));
+            Assert.DoesNotContain("知らない引数", Message(envelope));
+        }
+
+        [Fact]
+        public void ANumberGivenTwiceIsRefused()
+        {
+            Materials(3, 2);
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_faces", Arguments("modelIndices", new object[] { 1, 1 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.DoesNotContain("知らない引数", Message(envelope));
+        }
+
+        [Fact]
+        public void NumbersCountedOverTheWholeModelAreRefusedTogetherWithAParent()
+        {
+            Materials(3, 2);
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_faces",
+                Arguments("parentIndices", new object[] { 0 }, "modelIndices", new object[] { 4 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.DoesNotContain("知らない引数", Message(envelope));
+        }
+
+        [Fact]
+        public void NumbersCountedOverTheWholeModelAreRefusedTogetherWithPositionsInAParent()
+        {
+            Materials(3, 2);
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_faces",
+                Arguments("indices", new object[] { 0 }, "modelIndices", new object[] { 4 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.DoesNotContain("知らない引数", Message(envelope));
+        }
+
+        [Fact]
         public void SettingASelectionAnswersHowManyAreSelectedAfterward()
         {
             IDictionary<string, object> value = Value(Call(
@@ -718,6 +822,28 @@ namespace PmxEditorMcp.Tests
             }
 
             return arguments;
+        }
+
+        private void Materials(params int[] counts)
+        {
+            foreach (int count in counts)
+            {
+                FakeMaterial material = new FakeMaterial("材質");
+                for (int at = 0; at < count; at++)
+                {
+                    material.Faces.Add(new FakeFace());
+                }
+
+                _model.Materials.Add(material);
+            }
+        }
+
+        private static string[] PlacesOf(object[] items)
+        {
+            return items
+                .Cast<IDictionary<string, object>>()
+                .Select(item => item["parentIndex"] + ":" + item["indexInParent"])
+                .ToArray();
         }
 
         /// <summary>現在のPMXを、表情枠にモーフを1つだけ載せたモデルにする。</summary>

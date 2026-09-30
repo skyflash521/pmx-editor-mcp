@@ -17,7 +17,7 @@ namespace PmxEditorMcp.SignatureDump
         private const string NullSpelling = "null_value";
 
         /// <summary>[対象の集合]が定める指し方。受け手を集合で受け取る入力の名前。</summary>
-        private static readonly string[] TargetSelectors = { "all", "handles", "indices", "range" };
+        private static readonly string[] TargetSelectors = { "all", "handles", "indices", "modelIndices", "range" };
 
         /// <summary>ハンドルで操作する型の受け手の入力の名前。</summary>
         private const string HandleSelector = "handles";

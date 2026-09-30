@@ -3944,6 +3944,11 @@ namespace PmxEditorMcp
                 yield return TargetNames.Element.Selected;
             }
 
+            if (ScreenTargets.SelectsAcross(access))
+            {
+                yield return TargetNames.Element.Numbered;
+            }
+
             if (handles)
             {
                 yield return TargetNames.Element.Handles;
@@ -4090,6 +4095,21 @@ namespace PmxEditorMcp
                 return false;
             }
 
+            if (elements.Numbered != null)
+            {
+                if (elements.Handles != null || (parents != null && TargetSelection.Points(parents)))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = TargetNames.Element.Numbered
+                        + " は親の指し方・ハンドルと一緒に渡せない。全部の親の下を材質の順につないだ列の"
+                        + "位置で対象を指す。";
+
+                    return false;
+                }
+
+                parents = new TargetRequest(all: true);
+            }
+
             bool byHandle = elements.Handles != null;
             if (byHandle && parents != null && TargetSelection.Points(parents))
             {
@@ -4221,6 +4241,7 @@ namespace PmxEditorMcp
                 && pointed.Parents != null
                 && pointed.Parents.Indices == null;
             List<Spot> spots = new List<Spot>();
+            List<ParentGroup> groups = new List<ParentGroup>();
             foreach (int parent in chosen)
             {
                 if (holdingOnly && !StepPresence.Holds(access.RowKey, owners[parent]))
@@ -4234,6 +4255,12 @@ namespace PmxEditorMcp
                     return false;
                 }
 
+                groups.Add(new ParentGroup(
+                    spots.Count,
+                    reached.Count,
+                    ids == null
+                        ? "位置 " + parent.ToString(CultureInfo.InvariantCulture)
+                        : "ハンドル " + ids[parent].ToString(CultureInfo.InvariantCulture)));
                 for (int at = 0; at < reached.Count; at++)
                 {
                     spots.Add(new Spot(
@@ -4250,6 +4277,11 @@ namespace PmxEditorMcp
             string code;
             string message;
             TargetForm allowed = TargetForm.Indices | TargetForm.Range | TargetForm.All;
+            if (ScreenTargets.SelectsAcross(access))
+            {
+                allowed |= TargetForm.Numbered;
+            }
+
             ScreenPick selected = null;
             if (ScreenTargets.Selects(access))
             {
@@ -4266,6 +4298,12 @@ namespace PmxEditorMcp
                 }
 
                 allowed |= TargetForm.Selected;
+            }
+
+            if (access.Listed && InsideEachParent(pointed.Elements) && groups.Count != 0)
+            {
+                return TryInsideEachParent(
+                    pointed.Elements, allowed, groups, selected, spots, out column, out refused);
             }
 
             if (!TargetSelection.TryResolve(
@@ -4292,6 +4330,57 @@ namespace PmxEditorMcp
             }
 
             column = resolved.Indices.Select(i => spots[i]).ToList();
+
+            return true;
+        }
+
+        private static bool InsideEachParent(TargetRequest elements)
+        {
+            return elements != null
+                && (elements.Indices != null
+                    || elements.RangeStart.HasValue
+                    || elements.RangeCount.HasValue);
+        }
+
+        private static bool TryInsideEachParent(
+            TargetRequest elements,
+            TargetForm allowed,
+            IList<ParentGroup> groups,
+            ScreenPick selected,
+            IList<Spot> spots,
+            out IList<Spot> column,
+            out Refusal refused)
+        {
+            column = null;
+            refused = null;
+            List<Spot> found = new List<Spot>();
+            foreach (ParentGroup group in groups)
+            {
+                ResolvedTargets resolved;
+                string code;
+                string message;
+                if (!TargetSelection.TryResolve(
+                    elements,
+                    allowed,
+                    group.Count,
+                    id => false,
+                    out resolved,
+                    out code,
+                    out message,
+                    TargetNames.Element,
+                    selected))
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(
+                        code,
+                        groups.Count == 1 ? message : "親(" + group.Label + ")の中で: " + message));
+
+                    return false;
+                }
+
+                found.AddRange(resolved.Indices.Select(at => spots[group.Start + at]));
+            }
+
+            column = found;
 
             return true;
         }
@@ -4438,13 +4527,27 @@ namespace PmxEditorMcp
 
                 refused = new Refusal(ToolEnvelope.Failure(
                     ToolEnvelope.NotApplicable,
-                    "対象の実行時の型が合わない: 位置 " + spot.Position + " は "
+                    "対象の実行時の型が合わない: " + Placed(access, spot) + " は "
                         + Named(access, spot.Item) + " で、求めるのは " + wanted + "。"));
 
                 return false;
             }
 
             return true;
+        }
+
+        private static string Placed(ToolAccess access, Spot spot)
+        {
+            if (!access.Listed || spot.Owner == null || spot.IndexInParent < 0)
+            {
+                return "位置 " + spot.Position.ToString(CultureInfo.InvariantCulture);
+            }
+
+            string parent = spot.ParentHandle.HasValue
+                ? "親のハンドル " + spot.ParentHandle.Value.ToString(CultureInfo.InvariantCulture)
+                : "親 " + spot.ParentIndex.ToString(CultureInfo.InvariantCulture);
+
+            return parent + " の位置 " + spot.IndexInParent.ToString(CultureInfo.InvariantCulture);
         }
 
         private static ToolHop Step(ToolAccess access)
@@ -5802,6 +5905,22 @@ namespace PmxEditorMcp
         private static IDictionary<string, object> Failed(Exception failure, EditStage stage)
         {
             return ToolFailure.Failed(failure, stage);
+        }
+
+        private sealed class ParentGroup
+        {
+            public ParentGroup(int start, int count, string label)
+            {
+                Start = start;
+                Count = count;
+                Label = label;
+            }
+
+            public int Start { get; }
+
+            public int Count { get; }
+
+            public string Label { get; }
         }
 
         /// <summary>対象1件の居場所。</summary>

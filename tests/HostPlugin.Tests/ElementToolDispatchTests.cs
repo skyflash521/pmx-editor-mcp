@@ -921,10 +921,10 @@ namespace PmxEditorMcp.Tests
                 "model_list_leaves",
                 Arguments(
                     TargetNames.Parent.All, true,
-                    TargetNames.Element.Indices, new object[] { 2 }));
+                    TargetNames.Element.Indices, new object[] { 0 }));
 
             Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
-            Assert.Contains("位置 2 は spare", Message(envelope));
+            Assert.Contains("親 1 の位置 0 は spare", Message(envelope));
         }
 
         [Fact]

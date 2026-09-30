@@ -53,6 +53,65 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolThatPointsAtParentsAndPositionsSaysThePositionsAreCountedInsideEachParent()
+        {
+            string note = Note(
+                false, "parentIndices", "parentRange", "parentAll", "indices", "range", "all");
+
+            Assert.Contains(
+                "indices・range の位置は、指した親のそれぞれの中で数える。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolWhoseParentsEachHoldOneChildDoesNotSayPositionsAreCountedInsideEachParent()
+        {
+            ToolSchema schema = Schema(
+                false, new[] { "parentIndices", "parentRange", "parentAll", "indices", "range", "all" });
+
+            Assert.DoesNotContain(
+                "それぞれの中で数える",
+                ToolUsageNoteRule.Compose(schema, false) ?? string.Empty,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatPointsAtParentsByHandleSaysThePositionsAreCountedInsideEachParent()
+        {
+            string note = Note(false, "parentHandles", "indices", "range", "all");
+
+            Assert.Contains(
+                "indices・range の位置は、指した親のそれぞれの中で数える。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatPointsAtNoParentDoesNotSayPositionsAreCountedInsideEachParent()
+        {
+            Assert.DoesNotContain(
+                "それぞれの中で数える",
+                Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesModelIndicesSaysTheyCountOverTheWholeModelAndTakeNoParent()
+        {
+            string note = Note(false, "modelIndices");
+
+            Assert.Contains("modelIndices", note, StringComparison.Ordinal);
+            Assert.Contains("モデル全体で数えた通し番号", note, StringComparison.Ordinal);
+            Assert.Contains("親の指し方とは一緒に渡さない", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatDoesNotTakeModelIndicesDoesNotCarryIt()
+        {
+            Assert.DoesNotContain(
+                "modelIndices",
+                Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AListingWithNoParentDoesNotCarryTheParent()
         {
             Assert.DoesNotContain(

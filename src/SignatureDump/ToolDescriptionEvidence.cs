@@ -75,6 +75,11 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, TypeRoleRecord> byType = roles.Types
                 .ToDictionary(t => TypeDefinitionName.OfElement(t.TypeName), StringComparer.Ordinal);
             IDictionary<string, string> japanese = JapaneseNames(names, signatures, propertyNotes);
+            ISet<string> listedTypes = new HashSet<string>(
+                ElementPathEvidence.Resolve(inventory, roles)
+                    .Where(p => p.Value.Kind == AccessPathKind.Element && p.Value.Listed)
+                    .Select(p => p.Key),
+                StringComparer.Ordinal);
 
             List<ToolDescriptionMaterial> materials = new List<ToolDescriptionMaterial>();
             foreach (IGrouping<string, ToolMapRow> tool in map.Rows
@@ -93,7 +98,8 @@ namespace PmxEditorMcp.SignatureDump
                     methodNotes,
                     propertyNotes,
                     null,
-                    schemasByTool));
+                    schemasByTool,
+                    listedTypes));
             }
 
             foreach (Aggregated tool in Aggregations(map, byType, toolNames, inventory, roles))
@@ -109,7 +115,8 @@ namespace PmxEditorMcp.SignatureDump
                     methodNotes,
                     propertyNotes,
                     tool.Holder,
-                    schemasByTool));
+                    schemasByTool,
+                    listedTypes));
             }
 
             foreach (KeyValuePair<string, TypeRoleRecord> element in ElementTools(
@@ -126,7 +133,8 @@ namespace PmxEditorMcp.SignatureDump
                     methodNotes,
                     propertyNotes,
                     element.Value,
-                    schemasByTool));
+                    schemasByTool,
+                    listedTypes));
             }
 
             materials.Sort(
@@ -302,7 +310,8 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> methodNotes,
             IDictionary<string, string> propertyNotes,
             TypeRoleRecord named,
-            IDictionary<string, ToolSchema> schemasByTool)
+            IDictionary<string, ToolSchema> schemasByTool,
+            ISet<string> listedTypes)
         {
             SignatureRecord signature = named == null
                 ? OneType(tool, rows, signatures)
@@ -321,17 +330,23 @@ namespace PmxEditorMcp.SignatureDump
                 Joined(rows.Select(r => Contract(r.SignatureKey, contractNotes))),
                 Joined(rows.Select(r => Note(
                     Signature(r.SignatureKey, signatures), methodNotes, propertyNotes))),
-                Usage(tool, schemasByTool),
+                Usage(
+                    tool,
+                    schemasByTool,
+                    listedTypes.Contains(
+                        TypeDefinitionName.OfElement(
+                            named == null ? signature.DeclaringType : named.TypeName))),
                 IndexTerms(tool, map, japanese, signatures));
         }
 
         /// <summary>そのツールの呼び方。スキーマ正本に無いツールでは null。</summary>
-        private static string Usage(string tool, IDictionary<string, ToolSchema> schemasByTool)
+        private static string Usage(
+            string tool, IDictionary<string, ToolSchema> schemasByTool, bool listedUnderParents)
         {
             ToolSchema schema;
 
             return schemasByTool.TryGetValue(tool, out schema)
-                ? ToolUsageNoteRule.Compose(schema)
+                ? ToolUsageNoteRule.Compose(schema, listedUnderParents)
                 : null;
         }
 

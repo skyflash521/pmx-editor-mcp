@@ -392,6 +392,32 @@ namespace PmxEditorMcp
             }
 
             IList<object> all = ElementKinds.Owners(pmx, kind);
+            if (context.Params.ContainsKey(TargetNames.Element.Numbered))
+            {
+                if (!TryNumberedKind(kind.Name, request, out message))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+
+                    return false;
+                }
+
+                ElementKind resolvedKind = kind;
+                ResolvedTargets numbered;
+                if (!TryResolveNumbers(
+                    context,
+                    all.Select(o => resolvedKind.Items(o).Count).ToList(),
+                    out numbered,
+                    out code,
+                    out message))
+                {
+                    return false;
+                }
+
+                owners = all;
+
+                return true;
+            }
+
             if (kind.Owner == null)
             {
                 if (TargetSelection.Points(request))
@@ -426,6 +452,78 @@ namespace PmxEditorMcp
             return true;
         }
 
+        public static bool TryMaterials(
+            McpMethodContext context,
+            IList<int> faceCounts,
+            out IList<int> materials,
+            out string code,
+            out string message)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            materials = null;
+            TargetRequest request;
+            if (context.Params.ContainsKey(TargetNames.Element.Numbered))
+            {
+                if (!TargetInput.TryTake(
+                    context.Params, TargetNames.Parent, false, out request, out code, out message))
+                {
+                    return false;
+                }
+
+                if (!TryNumberedKind(ElementKinds.Face, request, out message))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+
+                    return false;
+                }
+
+                ResolvedTargets numbered;
+                if (!TryResolveNumbers(context, faceCounts, out numbered, out code, out message))
+                {
+                    return false;
+                }
+
+                materials = Enumerable.Range(0, faceCounts.Count).ToList();
+
+                return true;
+            }
+
+            return TargetInput.TryPositions(
+                context.Params,
+                TargetNames.Parent,
+                faceCounts.Count,
+                out materials,
+                out code,
+                out message);
+        }
+
+        private static bool TryNumberedKind(
+            string kind, TargetRequest parents, out string message)
+        {
+            message = null;
+            if (!string.Equals(kind, ElementKinds.Face, StringComparison.Ordinal))
+            {
+                message = TargetNames.Element.Numbered + " で指せる種類ではない: " + kind
+                    + "。面だけを指せる。";
+
+                return false;
+            }
+
+            if (TargetSelection.Points(parents))
+            {
+                message = TargetNames.Element.Numbered
+                    + " は親の指し方と一緒に渡せない。全部の材質の面を材質の順につないだ列の位置で指す。";
+
+                return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// <paramref name="owner"/> 番目の材質の面の並びの中で、指した面の位置を解く。
         /// <paramref name="counts"/> は材質ごとの面の数で、材質の並びの順に渡す。画面の選択で
@@ -448,6 +546,11 @@ namespace PmxEditorMcp
             if (counts == null)
             {
                 throw new ArgumentNullException(nameof(counts));
+            }
+
+            if (context.Params.ContainsKey(TargetNames.Element.Numbered))
+            {
+                return TryNumberedFaces(context, counts, owner, out positions, out code, out message);
             }
 
             ScreenPick picked = context.Screen.PickFaces(counts, owner);
@@ -473,6 +576,54 @@ namespace PmxEditorMcp
             }
 
             return false;
+        }
+
+        private static bool TryResolveNumbers(
+            McpMethodContext context,
+            IList<int> counts,
+            out ResolvedTargets resolved,
+            out string code,
+            out string message)
+        {
+            resolved = null;
+            TargetRequest request;
+
+            return TargetInput.TryTake(
+                    context.Params, TargetNames.Element, false, out request, out code, out message)
+                && TargetSelection.TryResolve(
+                    request,
+                    TargetForm.Numbered,
+                    counts.Sum(),
+                    id => false,
+                    out resolved,
+                    out code,
+                    out message,
+                    TargetNames.Element);
+        }
+
+        private static bool TryNumberedFaces(
+            McpMethodContext context,
+            IList<int> counts,
+            int owner,
+            out IList<int> positions,
+            out string code,
+            out string message)
+        {
+            positions = null;
+            ResolvedTargets resolved;
+            if (!TryResolveNumbers(context, counts, out resolved, out code, out message))
+            {
+                return false;
+            }
+
+            int start = counts.Take(owner).Sum();
+            positions = resolved.Indices
+                .Where(at => at >= start && at < start + counts[owner])
+                .Select(at => at - start)
+                .OrderBy(at => at)
+                .ToList();
+
+            return true;
         }
 
         /// <summary>

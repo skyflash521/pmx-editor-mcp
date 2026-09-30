@@ -13,9 +13,12 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly ReadOnlyCollection<string> Names = Array.AsReadOnly(new[]
         {
             "assignments",
+            "faceIndices",
+            "faceModelIndices",
             "handles",
             "indices",
             "kinds",
+            "modelIndices",
             "nameContains",
             "parentHandles",
             "parentIndices",

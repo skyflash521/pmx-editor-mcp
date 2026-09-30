@@ -13,6 +13,16 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string RangeName = "range";
 
+        private const string IndicesName = "indices";
+
+        private const string ParentIndicesName = "parentIndices";
+
+        private const string ParentRangeName = "parentRange";
+
+        private const string ParentHandlesName = "parentHandles";
+
+        private const string ModelIndicesName = "modelIndices";
+
         private const string SelectedName = "selected";
 
         private const string TotalName = "total";
@@ -54,6 +64,13 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string TakesTheScreenSelection =
             SelectedName + " に真を渡すと、画面がいま選んでいるものを対象にする。";
+
+        private const string CountsInEachParent =
+            IndicesName + "・" + RangeName + " の位置は、指した親のそれぞれの中で数える。";
+
+        private const string CountsOverTheWholeModel =
+            ModelIndicesName + " は、すべての親の下を並べた列の中の位置で指し、面ではモデル全体で数えた通し番号になる。"
+                + "親の指し方とは一緒に渡さない。";
 
         private const string ValueName = "value";
 
@@ -109,16 +126,16 @@ namespace PmxEditorMcp.SignatureDump
             ToolSchema schema = schemas.Tools.FirstOrDefault(
                 t => string.Equals(t.Tool, tool, StringComparison.Ordinal));
 
-            return schema == null ? null : Compose(schema, false);
+            return schema == null ? null : ComposeNote(schema, false, true);
         }
 
         /// <summary>そのツールの呼び方。対象の指し方も書く。書くことが無ければ null。</summary>
-        public static string Compose(ToolSchema schema)
+        public static string Compose(ToolSchema schema, bool listedUnderParents = true)
         {
-            return Compose(schema, true);
+            return ComposeNote(schema, true, listedUnderParents);
         }
 
-        private static string Compose(ToolSchema schema, bool pointing)
+        private static string ComposeNote(ToolSchema schema, bool pointing, bool listedUnderParents)
         {
             if (schema == null)
             {
@@ -173,6 +190,21 @@ namespace PmxEditorMcp.SignatureDump
             if (pointing && Takes(schema, SelectedName))
             {
                 built.Append(TakesTheScreenSelection);
+            }
+
+            if (pointing
+                && listedUnderParents
+                && (Takes(schema, ParentIndicesName)
+                    || Takes(schema, ParentRangeName)
+                    || Takes(schema, ParentHandlesName))
+                && (Takes(schema, IndicesName) || Takes(schema, RangeName)))
+            {
+                built.Append(CountsInEachParent);
+            }
+
+            if (pointing && Takes(schema, ModelIndicesName))
+            {
+                built.Append(CountsOverTheWholeModel);
             }
 
             if (Takes(schema, ValuesName))

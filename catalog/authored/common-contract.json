@@ -347,7 +347,7 @@
     {
       "tool": "model_delete_elements",
       "branching": false,
-      "duty": "指した要素を並びから消す。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。消す対象は indices・range・all・selected のどれか1つで指す。related の repair は指す先を失った参照を直し、ウェイトは残るボーンへ移し、直せない参照は落とす。cascade はそれに加えて、消した要素だけが使っていた要素も消す。keep は何も触らない。removed に消した件数、following に種類ごとのつられて消えた件数、repaired に直した参照の数を返す。"
+      "duty": "指した要素を並びから消す。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。消す対象は indices・range・all・selected のどれか1つで指す。related の repair は指す先を失った参照を直し、ウェイトは残るボーンへ移し、直せない参照は落とす。cascade はそれに加えて、消した要素だけが使っていた要素も消す。keep は何も触らない。removed に消した件数、following に種類ごとのつられて消えた件数、repaired に直した参照の数を返す。modelIndices は kind が face のときだけ渡せ、全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)で指す。親と、indices・range・all・selected とは一緒に渡さない。親を複数指したとき、indices・range の位置は指した親のそれぞれの中で数える。"
     },
     {
       "tool": "model_draw_uv_layout",
@@ -362,12 +362,12 @@
     {
       "tool": "model_edit_faces",
       "branching": false,
-      "duty": "指した面の向き・対角線・押し出し・共有頂点の分離を行う。材質は parentIndices・parentRange・parentAll のどれか1つ、その中の面は indices・range・all・selected のどれか1つで指す。selected に真を渡すと、画面がいま選んでいる面のうち、指した材質のものを対象にする。flip は2つめと3つめの頂点を入れ替える。swapDiagonal は辺を共有する2つの面が作る四角の対角線を引き直す。extrude は distance に押し出す長さを渡し、指した面をひとまとまりとして押し出して境界の辺へ側面を張る。separateSharedVertices は指していない面と共有する頂点を複製して分ける。changed・addedVertices・addedFaces を返す。"
+      "duty": "指した面の向き・対角線・押し出し・共有頂点の分離を行う。材質は parentIndices・parentRange・parentAll のどれか1つ、その中の面は indices・range・all・selected のどれか1つで指す。selected に真を渡すと、画面がいま選んでいる面のうち、指した材質のものを対象にする。flip は2つめと3つめの頂点を入れ替える。swapDiagonal は辺を共有する2つの面が作る四角の対角線を引き直す。extrude は distance に押し出す長さを渡し、指した面をひとまとまりとして押し出して境界の辺へ側面を張る。separateSharedVertices は指していない面と共有する頂点を複製して分ける。changed・addedVertices・addedFaces を返す。modelIndices は、全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)で面を指す。材質の指し方と、indices・range・all・selected とは一緒に渡さない。"
     },
     {
       "tool": "model_edit_materials",
       "branching": false,
-      "duty": "指した材質の結合・単一化・分割・取り出し・複製・色の丸めを行う。材質は indices・range・all・selected のどれか1つで指す。merge は指した材質を先頭へまとめ、mergeAll は並びのすべてを1つへまとめる。mergeSame は colorTolerance に色の許容幅を渡し、その中で設定が同じ材質どうしをまとめる。extractFaces は faceIndices・faceRange・faceAll のどれか1つで材質の中の面を指し、その面を新しい材質へ移す。extractFacesWithVertices は同じ指し方で面を指し、指していない面と共にしている頂点を複製して分けたうえで新しい材質へ移す。extractVertices は vertexIndices か vertexSelected で頂点を指し、その頂点だけで作られている面を、指した材質から集めて新しい材質へ移す。duplicateParts は parts を渡し、その持ち物を複製した材質を足す。clampColor は色の各成分を0以上1以下へ丸める。changed・removed・added を返す。"
+      "duty": "指した材質の結合・単一化・分割・取り出し・複製・色の丸めを行う。材質は indices・range・all・selected のどれか1つで指す。merge は指した材質を先頭へまとめ、mergeAll は並びのすべてを1つへまとめる。mergeSame は colorTolerance に色の許容幅を渡し、その中で設定が同じ材質どうしをまとめる。extractFaces は faceIndices・faceRange・faceAll のどれか1つで材質の中の面を指し、その面を新しい材質へ移す。extractFacesWithVertices は同じ指し方で面を指し、指していない面と共にしている頂点を複製して分けたうえで新しい材質へ移す。extractVertices は vertexIndices か vertexSelected で頂点を指し、その頂点だけで作られている面を、指した材質から集めて新しい材質へ移す。duplicateParts は parts を渡し、その持ち物を複製した材質を足す。clampColor は色の各成分を0以上1以下へ丸める。changed・removed・added を返す。extractFaces・extractFacesWithVertices では、faceModelIndices に全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)を渡して面を指すこともでき、そのときは材質を指さず、面を持つ材質ごとに新しい材質を足す。材質の指し方・faceIndices・faceRange・faceAll とは一緒に渡さない。"
     },
     {
       "tool": "model_edit_morphs",
@@ -432,7 +432,7 @@
     {
       "tool": "model_insert_elements",
       "branching": false,
-      "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation が new のときは count に作る数を渡し、clone のときは indices・range・all・selected のどれか1つで写す元を指す。親が並びを持つ5つは、new では作れず、clone だけを受け取る。morph を new で作るときは、variant を渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。ranges に、入った位置を親ごとに start と count の組で返し、親を指さない8つでは組は1つになる。組が値の枠に収まらないときは何も入れず response_too_large を返す。"
+      "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation が new のときは count に作る数を渡し、clone のときは indices・range・all・selected のどれか1つで写す元を指す。親が並びを持つ5つは、new では作れず、clone だけを受け取る。morph を new で作るときは、variant を渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。ranges に、入った位置を親ごとに start と count の組で返し、親を指さない8つでは組は1つになる。組が値の枠に収まらないときは何も入れず response_too_large を返す。modelIndices は kind が face で operation が clone のときだけ渡せ、全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)で写す元を指す。親と、indices・range・all・selected とは一緒に渡さない。modelIndices のときは、写しは元の面の材質の中の位置 at へ入り、ranges には入った後のモデル全体で数えた通し番号を返す。親を複数指したとき、indices・range の位置は指した親のそれぞれの中で数える。"
     },
     {
       "tool": "model_mirror_elements",
@@ -452,7 +452,7 @@
     {
       "tool": "model_reorder_elements",
       "branching": false,
-      "duty": "指した要素を並びの中で動かす。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all・selected のどれか1つで指す。move が to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。ranges に、動いた後の位置を連なった区間ごとに start と count の組で返す。組が値の枠に収まらないときは何も動かさず response_too_large を返す。"
+      "duty": "指した要素を並びの中で動かす。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all・selected のどれか1つで指す。move が to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。ranges に、動いた後の位置を連なった区間ごとに start と count の組で返す。組が値の枠に収まらないときは何も動かさず response_too_large を返す。modelIndices は kind が face のときだけ渡せ、全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)で指す。親と、indices・range・all・selected とは一緒に渡さない。modelIndices のときも toIndex は動かす面を持つ材質の中の位置で指し、ranges の位置はモデル全体で数えた通し番号で返す。親を複数指したとき、indices・range の位置は指した親のそれぞれの中で数える。"
     },
     {
       "tool": "model_set_deform_type",

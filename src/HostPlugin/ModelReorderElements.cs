@@ -62,6 +62,7 @@ namespace PmxEditorMcp
                 TargetNames.Element.Range,
                 TargetNames.Element.All,
                 TargetNames.Element.Selected,
+                TargetNames.Element.Numbered,
                 MoveName,
                 ToIndexName,
             };
@@ -85,6 +86,9 @@ namespace PmxEditorMcp
             List<IList<int>> picks = new List<IList<int>>();
             List<IList<int>> lands = new List<IList<int>>();
             List<object> moved = new List<object>();
+            List<int> movedNumbers = new List<int>();
+            bool numbered = context.Params.ContainsKey(TargetNames.Element.Numbered);
+            int before = 0;
             foreach (object owner in owners)
             {
                 IList<int> chosen;
@@ -95,7 +99,7 @@ namespace PmxEditorMcp
                 }
 
                 int length = kind.Items(owner).Count;
-                if (to.HasValue && (to.Value < 0 || to.Value >= length))
+                if (chosen.Count != 0 && to.HasValue && (to.Value < 0 || to.Value >= length))
                 {
                     return ComposedEditResult.Refuse(
                         ToolEnvelope.IndexOutOfRange,
@@ -105,7 +109,21 @@ namespace PmxEditorMcp
                 IList<int> landed = Landed(move, to, chosen, length);
                 picks.Add(chosen);
                 lands.Add(landed);
-                moved.AddRange(PositionRuns.Joined(landed));
+                if (numbered)
+                {
+                    movedNumbers.AddRange(landed.Select(at => at + before));
+                }
+                else
+                {
+                    moved.AddRange(PositionRuns.Joined(landed));
+                }
+
+                before += length;
+            }
+
+            if (numbered)
+            {
+                moved.AddRange(PositionRuns.Joined(movedNumbers));
             }
 
             Dictionary<string, object> answer =

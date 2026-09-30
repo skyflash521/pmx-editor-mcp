@@ -95,7 +95,8 @@ namespace PmxEditorMcp.SignatureDump
 
         private static readonly string[] PmxHandleNames = { PmxHandleName, "basePmxHandle" };
 
-        private static readonly string[] PositionListNames = { "indices", "parentIndices" };
+        private static readonly string[] PositionListNames =
+            { "indices", "modelIndices", "parentIndices" };
 
         private static readonly string[] HandleListNames = { "handles", "parentHandles" };
 
