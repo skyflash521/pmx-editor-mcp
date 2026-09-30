@@ -4,7 +4,7 @@
 
 ## バージョン番号の定義
 
-**配布のバージョンは [Directory.Build.props](../../Directory.Build.props) の `Version` だけが持つ。**
+配布のバージョンは [Directory.Build.props](../../Directory.Build.props) の `Version` だけが持つ。
 ほかの場所へバージョンの番号を綴らない。
 
 形は `MAJOR.MINOR.PATCH` とする。
@@ -27,7 +27,7 @@
 
 | 桁 | 上げる変更 |
 |---|---|
-| PATCH | 修正・内部の変更。**0.0.x のあいだは、機能の追加・変更も互換性の無い変更もここへ入れてよい** |
+| PATCH | 修正・内部の変更。0.0.x のあいだは、機能の追加・変更も互換性の無い変更もここへ入れてよい |
 | MINOR | 機能の追加・変更。互換性の無い変更もここへ入れる |
 | MAJOR | 上げない |
 
