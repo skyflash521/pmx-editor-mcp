@@ -71,6 +71,8 @@ namespace PmxEditorMcp
             ViewReloadModel.AddTo(methods, screen, subView);
             ViewLoadVmdView.AddTo(methods, screen, builder);
             ViewClearVmdView.AddTo(methods, screen, builder);
+            ViewGetVmdViewState.AddTo(methods, screen, forms);
+            ViewSetVmdViewState.AddTo(methods, screen, forms);
             SessionUpdateAllLists.AddTo(methods, screen);
             SessionSelectListsFromView.AddTo(methods, screen);
             MotionSetCameraView.AddTo(methods, screen, forms);

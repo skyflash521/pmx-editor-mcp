@@ -525,6 +525,11 @@
       "duty": "画面の絞込みの表示を、画面の選択から決める。operation は materialsFromVertices・materialsFromFaces・excludeMaterialsFromFaces・verticesByEdgeScale のいずれか。materialsFromVertices は画面で選んでいる頂点を使う材質だけを表示に残し、materialsFromFaces は画面で選んでいる面を持つ材質だけを残す。excludeMaterialsFromFaces は、いま表示している材質からその面を持つ材質を外す。verticesByEdgeScale はエッジの倍率が1でない頂点だけを絞込みの表示に出す。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。shown に表示へ残した数を返す。"
     },
     {
+      "tool": "view_get_vmd_view_state",
+      "branching": false,
+      "duty": "VMDViewの再生の状態を読む。frame にいまのフレームを、lastFrame に最後のフレームを、playing に再生中かを、playRangeStart と playRangeEnd に再生範囲を、loop に繰り返しの入り切りを、startAtCurrentFrame に「現在位置から開始」の入り切りを返す。フレームの番号は、モーションのキーのフレーム番号と同じ数え方である。ただし VME のイベントを VMDView へ設定したあと(view_set_vme_event・motion_preview_vme)は、イベントの先頭からの数え方になる。VMDViewが開いていないときと、再生範囲の欄が整数でないときは TOOL_NOT_APPLICABLE で断る。欄が整数でないときは、view_set_vmd_view_state へ playRangeStart と playRangeEnd を両方渡すと直る。"
+    },
+    {
       "tool": "view_load_vmd_view",
       "branching": false,
       "duty": "VMDViewへモデルとモーションを読み込む。読み込むモデルは、modelPath を渡せばそのファイルのモデル、省けばいま編集しているモデルである。道の末尾が .pmd のファイルはPMDとして読み、それ以外はPMXとして読む。parts は modelOnly・wholeMotion・modelMotion・cameraMotion・lightMotion のいずれかで、modelOnly はモデルだけを読み込み、残りは motionPath が指すVMDも読み込んで再生を始める。wholeMotion はVMDの中身をすべて使い、modelMotion はボーン・モーフ・IK表示のキーだけ、cameraMotion はカメラのキーだけ、lightMotion は照明とセルフシャドウのキーだけを残して、残りを落とす。VMDViewが立ち上がっていなければ、ここで立ち上がる。booted にVMDViewが立ち上がっているかを返す。"
@@ -558,6 +563,11 @@
       "tool": "view_set_camera_rotate_center",
       "branching": false,
       "duty": "視点の回転の中心を、画面で選んでいる要素の重心にする。operation は vertices・bones・face・faceFront のいずれかで、face と faceFront は選んだ面が使う頂点の重心を取り、2つ以上の面が同じくする頂点はその面の数だけ数える。faceFront は中心を決めたうえで、選んだ面の法線をならした向きの側からその中心を見るところへ視点を移し、上を+Yへ向ける。その種類を1つも選んでいなければ断る。centre に決めた中心のxyzを返す。"
+    },
+    {
+      "tool": "view_set_vmd_view_state",
+      "branching": false,
+      "duty": "VMDViewのフレーム・再生範囲・繰り返し・「現在位置から開始」を変える。渡した項目だけを変えて、変えたあとの状態を view_get_vmd_view_state と同じ形で返す。「編集」メニューの「Fixモーションで再生」が無効のとき、frame へ移した姿勢は物理演算を回さずに表示され、物理演算を含む姿勢は再生でだけ得られる。その姿勢は、物理演算が有効なときに、playRangeStart を 0 に、playRangeEnd を見たいフレームに、loop と startAtCurrentFrame を偽にして view_play_vmd_view で再生し、view_get_vmd_view_state の playing が偽に戻ったあとの姿勢である。「Fixモーションで再生」が有効のときは、frame へ移すだけで、Fixモーションが持つ物理演算を含む姿勢が表示される。その画像は、MCPクライアントがスクリーンショットを撮って得る。再生中は view_stop_vmd_view で止めるまで、VME のイベントを VMDView へ設定したあと(view_set_vme_event・motion_preview_vme)は VMDView を閉じて view_load_vmd_view で開き直すまで、VMDView が開いていないときは開くまで、映像出力のダイアログの表示中と Fixモーションの作成中は終わるまで、再生範囲の欄が整数でないときは playRangeStart と playRangeEnd を両方渡すまで、TOOL_NOT_APPLICABLE で断る。frame が最後のフレームを超えるときと、再生範囲の終わりが最後のフレームを超えるときと、始まりが終わりを超えるときは TOOL_INVALID_ARGUMENT で断る。断ったときは何も変えない。"
     },
     {
       "tool": "view_update_parts_select_window",

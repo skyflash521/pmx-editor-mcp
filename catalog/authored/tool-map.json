@@ -109,6 +109,30 @@
           }
         }
       ]
+    },
+    {
+      "tool": "view_get_vmd_view_state",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "view_load_vmd_view",
+          "args": {
+            "parts": "modelOnly"
+          }
+        }
+      ]
+    },
+    {
+      "tool": "view_set_vmd_view_state",
+      "setup": [
+        {
+          "tag": "callTool",
+          "tool": "view_load_vmd_view",
+          "args": {
+            "parts": "modelOnly"
+          }
+        }
+      ]
     }
   ],
   "rows": [

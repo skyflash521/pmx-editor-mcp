@@ -44941,6 +44941,55 @@
       }
     },
     {
+      "tool": "view_get_vmd_view_state",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": []
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "frame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "lastFrame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "playing",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          },
+          {
+            "name": "playRangeStart",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "playRangeEnd",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "loop",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          },
+          {
+            "name": "startAtCurrentFrame",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          }
+        ]
+      }
+    },
+    {
       "tool": "view_get_world_ui_model",
       "branches": [
         {
@@ -47562,6 +47611,95 @@
             "name": "selected",
             "origin": "hostOutput",
             "shape": "number"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "view_set_vmd_view_state",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "frame",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "playRangeStart",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "playRangeEnd",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "loop",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "startAtCurrentFrame",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "frame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "lastFrame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "playing",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          },
+          {
+            "name": "playRangeStart",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "playRangeEnd",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "loop",
+            "origin": "hostOutput",
+            "shape": "boolean"
+          },
+          {
+            "name": "startAtCurrentFrame",
+            "origin": "hostOutput",
+            "shape": "boolean"
           }
         ]
       }

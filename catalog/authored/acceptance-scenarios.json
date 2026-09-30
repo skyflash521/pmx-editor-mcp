@@ -8740,9 +8740,225 @@
         },
         {
           "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "name": "センター"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd",
+          "arguments": {
+            "boneNames": [
+              "センター"
+            ],
+            "morphNames": []
+          },
+          "record": {
+            "name": "playVmd",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bone_key",
+          "arguments": {},
+          "record": {
+            "name": "playFirst",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_create_vmd_bone_key",
+          "arguments": {},
+          "record": {
+            "name": "playLast",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_frame_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "playFirst"
+              },
+              {
+                "$from": "playLast"
+              }
+            ],
+            "values": [
+              {
+                "frameIndex": 0
+              },
+              {
+                "frameIndex": 30
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_update_vmd_bone_keys",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "playFirst"
+              },
+              {
+                "$from": "playLast"
+              }
+            ],
+            "values": [
+              {
+                "boneIndex": 0,
+                "translation": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "boneIndex": 0,
+                "translation": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_add_vmd_bone_keys",
+          "arguments": {
+            "assignments": [
+              {
+                "parentHandle": {
+                  "$from": "playVmd"
+                },
+                "handles": [
+                  {
+                    "$from": "playFirst"
+                  },
+                  {
+                    "$from": "playLast"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "file",
+          "action": "ensureDirectory",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-vmd-view"
+        },
+        {
+          "kind": "file",
+          "action": "ensureMissing",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-vmd-view\\再生.vmd"
+        },
+        {
+          "kind": "tool",
+          "tool": "motion_to_file_vmd",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "playVmd"
+              }
+            ],
+            "args": {
+              "path": "%TEMP%\\pmx-editor-mcp-acceptance-vmd-view\\再生.vmd",
+              "trimKeys": false
+            },
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "file",
+          "action": "expectPresent",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-vmd-view\\再生.vmd"
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "playVmd"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "view_load_vmd_view",
           "arguments": {
-            "parts": "modelOnly"
+            "parts": "wholeMotion",
+            "motionPath": "%TEMP%\\pmx-editor-mcp-acceptance-vmd-view\\再生.vmd"
           },
           "expect": {
             "ok": true,
@@ -8752,6 +8968,208 @@
                 "equals": true
               }
             ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_stop_vmd_view",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_vmd_view_state",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "playing",
+                "equals": false
+              },
+              {
+                "path": "loop",
+                "equals": false
+              },
+              {
+                "path": "lastFrame",
+                "equals": 30
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_vmd_view_state",
+          "arguments": {
+            "loop": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "loop",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_vmd_view_state",
+          "arguments": {
+            "loop": false,
+            "frame": 0
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "loop",
+                "equals": false
+              },
+              {
+                "path": "frame",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_vmd_view_state",
+          "arguments": {
+            "loop": true,
+            "frame": 0
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "loop",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_play_vmd_view",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_vmd_view_state",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "playing",
+                "equals": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_vmd_view_state",
+          "arguments": {
+            "frame": 5
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_NOT_APPLICABLE"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_stop_vmd_view",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_vmd_view_state",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "playing",
+                "equals": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_vmd_view_state",
+          "arguments": {
+            "frame": 12,
+            "playRangeStart": 3,
+            "playRangeEnd": 24
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "frame",
+                "equals": 12
+              },
+              {
+                "path": "playRangeStart",
+                "equals": 3
+              },
+              {
+                "path": "playRangeEnd",
+                "equals": 24
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_get_vmd_view_state",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "frame",
+                "equals": 12
+              },
+              {
+                "path": "playRangeStart",
+                "equals": 3
+              },
+              {
+                "path": "playRangeEnd",
+                "equals": 24
+              },
+              {
+                "path": "playing",
+                "equals": false
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "view_set_vmd_view_state",
+          "arguments": {
+            "frame": 2147483647
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
           }
         },
         {
@@ -8951,6 +9369,11 @@
               }
             ]
           }
+        },
+        {
+          "kind": "file",
+          "action": "removeTree",
+          "path": "%TEMP%\\pmx-editor-mcp-acceptance-vmd-view"
         }
       ]
     },

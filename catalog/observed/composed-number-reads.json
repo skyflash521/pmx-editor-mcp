@@ -215,7 +215,10 @@
     {"tool": "view_select_related", "input": "maxU", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectRelated.cs が ComposedInput.TryFloat で単精度の有限の数として読む。"},
     {"tool": "view_select_related", "input": "maxV", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectRelated.cs が ComposedInput.TryFloat で単精度の有限の数として読む。"},
     {"tool": "view_select_related", "input": "minU", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectRelated.cs が ComposedInput.TryFloat で単精度の有限の数として読む。"},
-    {"tool": "view_select_related", "input": "minV", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectRelated.cs が ComposedInput.TryFloat で単精度の有限の数として読む。"}
+    {"tool": "view_select_related", "input": "minV", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectRelated.cs が ComposedInput.TryFloat で単精度の有限の数として読む。"},
+    {"tool": "view_set_vmd_view_state", "input": "frame", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が0以上 int の最大値以下の整数として読む。"},
+    {"tool": "view_set_vmd_view_state", "input": "playRangeEnd", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が0以上 int の最大値以下の整数として読む。"},
+    {"tool": "view_set_vmd_view_state", "input": "playRangeStart", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が0以上 int の最大値以下の整数として読む。"}
   ],
   "lists": [
     {"tool": "model_clean_faces", "input": "indices", "basis": "TargetInput.cs が要素の数を問わずに読む。"},
