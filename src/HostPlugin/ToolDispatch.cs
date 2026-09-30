@@ -1665,6 +1665,18 @@ namespace PmxEditorMcp
 
                         return;
                     }
+
+                    if (!VmeResults.TryCall(
+                        call.RowKey,
+                        column[at].Item,
+                        spread ? passing[0] : passing[at],
+                        out code,
+                        out message))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return;
+                    }
                 }
 
                 stage = Changing(call.Receiver, target);

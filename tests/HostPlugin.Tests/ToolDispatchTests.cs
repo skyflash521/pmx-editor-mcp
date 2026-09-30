@@ -89,6 +89,8 @@ namespace PmxEditorMcp.Tests
 
         private const string CreatePoseStatesKey = VmdPoseStates.CreateKey;
 
+        private const string SetVmeResultKey = VmeResults.SetKey;
+
         private readonly string _root;
 
         private readonly HostLog _log;
@@ -125,6 +127,8 @@ namespace PmxEditorMcp.Tests
         private int _vmdSaved;
 
         private int _poseStatesRelayed;
+
+        private int _vmeResultsRelayed;
 
         public ToolDispatchTests()
         {
@@ -1614,6 +1618,50 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, _vmdSaved);
         }
 
+        [Fact]
+        public void AResultIsRefusedBeforeItIsAppliedToAVmeHoldingARepeatedName()
+        {
+            HandleLedger ledger = Ledger();
+            FakeVmeResult result = new FakeVmeResult { Frames = 2, BoneEnabled = true, Bones = 1 };
+            int vme = ledger.Issue(
+                typeof(FakeVme).FullName,
+                new FakeVme().Named(new[] { "x", "x" }, null),
+                () => { });
+            int held = ledger.Issue(typeof(FakeVmeResult).FullName, result, () => { });
+            IDictionary<string, object> arguments = Arguments(
+                "handles", new object[] { (long)vme },
+                "args", Arguments("result", (long)held));
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("vme_set_result")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Equal(0, _vmeResultsRelayed);
+        }
+
+        [Fact]
+        public void AResultIsAppliedToAVmeWhoseNamesDoNotRepeat()
+        {
+            HandleLedger ledger = Ledger();
+            FakeVmeResult result = new FakeVmeResult { Frames = 2, BoneEnabled = true, Bones = 1 };
+            int vme = ledger.Issue(
+                typeof(FakeVme).FullName,
+                new FakeVme().Named(new[] { "x", "y" }, null),
+                () => { });
+            int held = ledger.Issue(typeof(FakeVmeResult).FullName, result, () => { });
+            IDictionary<string, object> arguments = Arguments(
+                "handles", new object[] { (long)vme },
+                "args", Arguments("result", (long)held));
+
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("vme_set_result")(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, Events()));
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(1, _vmeResultsRelayed);
+        }
+
         private static IDictionary<string, object> Arguments(params object[] pairs)
         {
             Dictionary<string, object> arguments =
@@ -1905,6 +1953,14 @@ namespace PmxEditorMcp.Tests
                         (target, arguments) =>
                         {
                             _poseStatesRelayed++;
+                            return null;
+                        }
+                    },
+                    {
+                        SetVmeResultKey,
+                        (target, arguments) =>
+                        {
+                            _vmeResultsRelayed++;
                             return null;
                         }
                     },
@@ -2245,6 +2301,29 @@ namespace PmxEditorMcp.Tests
                         {
                             new ToolArgument("path", typeof(string)),
                             new ToolArgument("trimKeys", typeof(bool)),
+                        },
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "vme_set_result",
+                    new ToolCall(
+                        SetVmeResultKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Handle,
+                            TargetType,
+                            EditKind.DirectChange,
+                            false,
+                            item => item is FakeVme),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new[]
+                        {
+                            new ToolArgument(
+                                "result",
+                                typeof(FakeVmeResult),
+                                held: typeof(FakeVmeResult),
+                                holds: item => item is FakeVmeResult),
                         },
                         new ToolArgument[0],
                         null)
