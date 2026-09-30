@@ -7,9 +7,6 @@ using PEPlugin.SDX;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 指した頂点のウェイトの平均化・平滑化・近いボーンからの設定・鏡像・正規化・修復を行うツール。
-    /// </summary>
     public static class ModelEditWeights
     {
         /// <summary>このツールの名前。</summary>
@@ -35,6 +32,12 @@ namespace PmxEditorMcp
 
         /// <summary>並びに居ないボーンを指すウェイトを直す。</summary>
         public const string RepairMissingBone = "repairMissingBone";
+
+        public const string ReplaceBone = "replaceBone";
+
+        public const string FromBoneName = "fromBone";
+
+        public const string ToBoneName = "toBone";
 
         /// <summary>平滑化の強さを受け取る入力の名前。</summary>
         public const string StrengthName = "strength";
@@ -64,6 +67,7 @@ namespace PmxEditorMcp
                     FromMirror,
                     Normalize,
                     RepairMissingBone,
+                    ReplaceBone,
                 };
             }
         }
@@ -91,6 +95,8 @@ namespace PmxEditorMcp
                 ModelFindVertexBounds.MaterialIndicesName,
                 StrengthName,
                 AxisName,
+                FromBoneName,
+                ToBoneName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -140,7 +146,37 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            int fromBone;
+            int toBone;
+            if (!ComposedInput.TryCount(
+                    context,
+                    FromBoneName,
+                    operation,
+                    new[] { ReplaceBone },
+                    0,
+                    out fromBone,
+                    out code,
+                    out message)
+                || !ComposedInput.TryCount(
+                    context,
+                    ToBoneName,
+                    operation,
+                    new[] { ReplaceBone },
+                    0,
+                    out toBone,
+                    out code,
+                    out message)
+                || !TryBones(model, operation, fromBone, toBone, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
             IList<IPXVertex> picked = chosen.Select(at => model.Vertex[at]).ToList();
+            if (string.Equals(operation, ReplaceBone, StringComparison.Ordinal))
+            {
+                picked = Holding(picked, model.Bone[fromBone]);
+            }
+
             IList<IList<KeyValuePair<IPXBone, float>>> before =
                 picked.Select(VertexWeights.All).ToList();
             switch (operation)
@@ -163,6 +199,10 @@ namespace PmxEditorMcp
 
                 case FromMirror:
                     Mirrored(model, picked, axis);
+                    break;
+
+                case ReplaceBone:
+                    Replaced(picked, model.Bone[fromBone], model.Bone[toBone]);
                     break;
 
                 default:
@@ -188,6 +228,85 @@ namespace PmxEditorMcp
                     { ChangedName, changed },
                 },
                 new[] { ScreenRefresh.WeightKind });
+        }
+
+        private static bool TryBones(
+            IPXPmx model,
+            string operation,
+            int fromBone,
+            int toBone,
+            out string code,
+            out string message)
+        {
+            code = null;
+            message = null;
+            if (!string.Equals(operation, ReplaceBone, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            if (fromBone >= model.Bone.Count || toBone >= model.Bone.Count)
+            {
+                message = FromBoneName + " と " + ToBoneName + " はボーンの数 "
+                    + model.Bone.Count.ToString(CultureInfo.InvariantCulture)
+                    + " 未満でなければならない。";
+
+                return false;
+            }
+
+            if (fromBone == toBone)
+            {
+                message = FromBoneName + " と " + ToBoneName + " は別のボーンを指さなければならない。";
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
+        }
+
+        private static IList<IPXVertex> Holding(IEnumerable<IPXVertex> picked, IPXBone from)
+        {
+            return picked
+                .Where(vertex => VertexWeights.Read(vertex)
+                    .Any(share => share.Value > 0f && ReferenceEquals(share.Key, from)))
+                .ToList();
+        }
+
+        private static void Replaced(IEnumerable<IPXVertex> held, IPXBone from, IPXBone to)
+        {
+            foreach (IPXVertex vertex in held)
+            {
+                if (vertex.SDEF)
+                {
+                    ReplacedInSlots(vertex, from, to);
+                    continue;
+                }
+
+                VertexWeights.Write(
+                    vertex,
+                    VertexWeights.Settled(VertexWeights.Read(vertex).Select(share =>
+                        ReferenceEquals(share.Key, from)
+                            ? new KeyValuePair<IPXBone, float>(to, share.Value)
+                            : share)));
+            }
+        }
+
+        private static void ReplacedInSlots(IPXVertex vertex, IPXBone from, IPXBone to)
+        {
+            vertex.Bone1 = ReferenceEquals(vertex.Bone1, from) ? to : vertex.Bone1;
+            vertex.Bone2 = ReferenceEquals(vertex.Bone2, from) ? to : vertex.Bone2;
+            if (vertex.Bone1 == null || !ReferenceEquals(vertex.Bone1, vertex.Bone2))
+            {
+                return;
+            }
+
+            vertex.Weight1 += vertex.Weight2;
+            vertex.Bone2 = null;
+            vertex.Weight2 = 0f;
+            vertex.SDEF = false;
         }
 
         private static IList<KeyValuePair<IPXBone, float>> Averaged(IList<IPXVertex> picked)

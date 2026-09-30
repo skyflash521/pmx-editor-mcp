@@ -6235,6 +6235,24 @@
               "origin": "hostInput",
               "shape": "text",
               "required": false
+            },
+            {
+              "name": "fromBone",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "toBone",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
             }
           ],
           "choices": [

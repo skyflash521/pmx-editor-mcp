@@ -384,6 +384,219 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ReplacingTheBoneMovesItsShareToTheOtherBoneOnlyOnThePickedVerticesHoldingIt()
+        {
+            IList<IPXBone> bones = Bones("元", "先", "他");
+            FakeVertex holding = Vertex(0f, 0f, 0f);
+            Now(holding).Bone1 = NowAll(bones)[2];
+            Now(holding).Weight1 = 0.4f;
+            Now(holding).Bone2 = NowAll(bones)[0];
+            Now(holding).Weight2 = 0.6f;
+            FakeVertex bare = Vertex(1f, 0f, 0f);
+            Weigh(bare, NowAll(bones)[2], 1f);
+            FakeVertex unpicked = Vertex(2f, 0f, 0f);
+            Weigh(unpicked, NowAll(bones)[0], 1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+                Operation(ModelEditWeights.ReplaceBone),
+                ComposedEditFixture.Given("indices", new object[] { 0, 1 }),
+                ComposedEditFixture.Given(ModelEditWeights.FromBoneName, 0),
+                ComposedEditFixture.Given(ModelEditWeights.ToBoneName, 1)));
+
+            Near(0.0, Share(holding, NowAll(bones)[0]));
+            Near(0.6, Share(holding, NowAll(bones)[1]));
+            Near(0.4, Share(holding, NowAll(bones)[2]));
+            Near(1.0, Share(bare, NowAll(bones)[2]));
+            Near(1.0, Share(unpicked, NowAll(bones)[0]));
+            Assert.Equal(1, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
+        public void ReplacingTheBoneAddsUpWhenTheOtherBoneAlreadyHoldsAShare()
+        {
+            IList<IPXBone> bones = Bones("元", "先");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0.3f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 0.7f;
+
+            Weights(
+                Operation(ModelEditWeights.ReplaceBone),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditWeights.FromBoneName, 0),
+                ComposedEditFixture.Given(ModelEditWeights.ToBoneName, 1));
+
+            Near(0.0, Share(vertex, NowAll(bones)[0]));
+            Near(1.0, Share(vertex, NowAll(bones)[1]));
+            Assert.Null(Now(vertex).Bone2);
+        }
+
+        [Fact]
+        public void ReplacingTheBoneLeavesTheVerticesWithoutItUntouchedAndUncounted()
+        {
+            IList<IPXBone> bones = Bones("元", "先", "甲", "乙");
+            FakeVertex bare = Vertex(0f, 0f, 0f);
+            Now(bare).Bone1 = NowAll(bones)[2];
+            Now(bare).Weight1 = 0.3f;
+            Now(bare).Bone2 = NowAll(bones)[3];
+            Now(bare).Weight2 = 0.7f;
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+                Operation(ModelEditWeights.ReplaceBone),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditWeights.FromBoneName, 0),
+                ComposedEditFixture.Given(ModelEditWeights.ToBoneName, 1)));
+
+            Assert.Equal(0, value[ModelEditWeights.ChangedName]);
+            Near(0.3, Share(bare, NowAll(bones)[2]));
+            Near(0.7, Share(bare, NowAll(bones)[3]));
+        }
+
+        [Fact]
+        public void ReplacingTheBoneLeavesAVertexWhoseShareOfItIsZeroUntouchedAndUncounted()
+        {
+            IList<IPXBone> bones = Bones("元", "先", "甲");
+            FakeVertex empty = Vertex(0f, 0f, 0f);
+            Now(empty).Bone1 = NowAll(bones)[2];
+            Now(empty).Weight1 = 1f;
+            Now(empty).Bone2 = NowAll(bones)[0];
+            Now(empty).Weight2 = 0f;
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+                Operation(ModelEditWeights.ReplaceBone),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditWeights.FromBoneName, 0),
+                ComposedEditFixture.Given(ModelEditWeights.ToBoneName, 1)));
+
+            Assert.Equal(0, value[ModelEditWeights.ChangedName]);
+            Assert.Same(NowAll(bones)[0], Now(empty).Bone2);
+            Near(1.0, Share(empty, NowAll(bones)[2]));
+        }
+
+        [Fact]
+        public void ReplacingTheBoneSettlesTheTotalOfTheVerticesItTouchesToOne()
+        {
+            IList<IPXBone> bones = Bones("元", "先", "甲");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0.6f;
+            Now(vertex).Bone2 = NowAll(bones)[2];
+            Now(vertex).Weight2 = 0.6f;
+
+            Weights(
+                Operation(ModelEditWeights.ReplaceBone),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditWeights.FromBoneName, 0),
+                ComposedEditFixture.Given(ModelEditWeights.ToBoneName, 1));
+
+            Near(0.5, Share(vertex, NowAll(bones)[1]));
+            Near(0.5, Share(vertex, NowAll(bones)[2]));
+        }
+
+        [Fact]
+        public void ReplacingTheBoneOfAnSdefVertexKeepsTheBoneInItsSlot()
+        {
+            IList<IPXBone> bones = Bones("元", "先", "甲");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            Now(vertex).SDEF = true;
+            Now(vertex).Bone1 = NowAll(bones)[2];
+            Now(vertex).Weight1 = 0.3f;
+            Now(vertex).Bone2 = NowAll(bones)[0];
+            Now(vertex).Weight2 = 0.7f;
+            Now(vertex).SDEF_R0 = new V3(1f, 0f, 0f);
+            Now(vertex).SDEF_R1 = new V3(0f, 1f, 0f);
+
+            Weights(
+                Operation(ModelEditWeights.ReplaceBone),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditWeights.FromBoneName, 0),
+                ComposedEditFixture.Given(ModelEditWeights.ToBoneName, 1));
+
+            IPXVertex now = Now(vertex);
+            Assert.True(now.SDEF);
+            Near(0.3, Share(vertex, NowAll(bones)[2]));
+            Near(0.7, Share(vertex, NowAll(bones)[1]));
+            V3 firstCentre = now.Bone1.Name == "甲" ? now.SDEF_R0 : now.SDEF_R1;
+            V3 secondCentre = now.Bone1.Name == "甲" ? now.SDEF_R1 : now.SDEF_R0;
+            Near(1.0, firstCentre.X);
+            Near(1.0, secondCentre.Y);
+        }
+
+        [Fact]
+        public void ReplacingOneOfTheTwoBonesOfAnSdefVertexWithTheOtherLeavesOneBoneAndNoSdef()
+        {
+            IList<IPXBone> bones = Bones("元", "先");
+            FakeVertex vertex = Vertex(0f, 0f, 0f);
+            Now(vertex).SDEF = true;
+            Now(vertex).Bone1 = NowAll(bones)[0];
+            Now(vertex).Weight1 = 0.3f;
+            Now(vertex).Bone2 = NowAll(bones)[1];
+            Now(vertex).Weight2 = 0.7f;
+
+            Weights(
+                Operation(ModelEditWeights.ReplaceBone),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditWeights.FromBoneName, 0),
+                ComposedEditFixture.Given(ModelEditWeights.ToBoneName, 1));
+
+            Assert.False(Now(vertex).SDEF);
+            Assert.Equal("先", Now(vertex).Bone1.Name);
+            Assert.Null(Now(vertex).Bone2);
+            Near(1.0, Now(vertex).Weight1);
+        }
+
+        [Fact]
+        public void ReplacingTheBoneNeedsBothBonesInsideTheModelAndDifferent()
+        {
+            Bones("元", "先");
+            Vertex(0f, 0f, 0f);
+            object[][] wrong =
+            {
+                new object[] { 0, null },
+                new object[] { null, 1 },
+                new object[] { 0, 2 },
+                new object[] { -1, 1 },
+                new object[] { 1, 1 },
+            };
+            foreach (object[] pair in wrong)
+            {
+                List<KeyValuePair<string, object>> given = new List<KeyValuePair<string, object>>
+                {
+                    Operation(ModelEditWeights.ReplaceBone),
+                    ComposedEditFixture.Given("all", true),
+                };
+                if (pair[0] != null)
+                {
+                    given.Add(ComposedEditFixture.Given(ModelEditWeights.FromBoneName, pair[0]));
+                }
+
+                if (pair[1] != null)
+                {
+                    given.Add(ComposedEditFixture.Given(ModelEditWeights.ToBoneName, pair[1]));
+                }
+
+                Assert.Equal(
+                    ToolEnvelope.InvalidArgument,
+                    ComposedEditFixture.Code(Weights(given.ToArray())));
+            }
+        }
+
+        [Fact]
+        public void TheBoneInputsOfReplacingAreRefusedForOtherOperations()
+        {
+            Bones("元", "先");
+            Vertex(0f, 0f, 0f);
+
+            IDictionary<string, object> envelope = Weights(
+                Operation(ModelEditWeights.Normalize),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditWeights.FromBoneName, 0));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void NormalisingTheWeightsMakesThemAddUpToOne()
         {
             IList<IPXBone> bones = Bones("一", "二");

@@ -7269,6 +7269,41 @@
           "kind": "tool",
           "tool": "model_edit_weights",
           "arguments": {
+            "operation": "replaceBone",
+            "all": true,
+            "fromBone": 0,
+            "toBone": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_bone_weights",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_weights",
+          "arguments": {
             "operation": "normalize",
             "all": true
           },
