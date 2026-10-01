@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Json.Schema;
 using PmxEditorMcp.Bridge;
 using PmxEditorMcp.SignatureDump;
@@ -51,7 +50,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 new string[0],
                 definitions.Select(d => d.Name).Where(n => !sources.ContainsKey(n)).ToArray());
             IList<string>[] found = new IList<string>[definitions.Length];
-            Parallel.For(0, definitions.Length, at =>
+            DedicatedParallel.For(0, definitions.Length, at =>
             {
                 found[at] = Violations(definitions[at], Branches(sources[definitions[at].Name]));
             });
@@ -283,7 +282,7 @@ namespace PmxEditorMcp.Bridge.Tests
             ISet<string> confirmedByTheHost = ToolsTheHostConfirms();
             GeneratedToolDefinition[] definitions = GeneratedToolDefinitions.Create().ToArray();
             string[] found = new string[definitions.Length];
-            Parallel.For(0, definitions.Length, at =>
+            DedicatedParallel.For(0, definitions.Length, at =>
             {
                 GeneratedToolDefinition definition = definitions[at];
                 JsonSchema schema = JsonSchema.FromText(definition.InputSchema);

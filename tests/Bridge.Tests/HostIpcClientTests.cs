@@ -626,14 +626,10 @@ namespace PmxEditorMcp.Bridge.Tests
                     + "またはエディタでホストが停止している可能性がある。",
                 error.Message);
 
-            // 打ち切りは公開した上限で決まる。上下から挟まないと、上限を名乗りながら実際には
-            // ずっと短い値で諦める作りも、上限と無関係に長く待つ作りも通ってしまう。
-            // 上側は、与えた上限を捨てて既定の5秒を待ち切る作りが入らない幅にする。幅を比べる
-            // 相手より大きく取ると、注入した値が効いていなくてもこの件が通る。
             Assert.InRange(
                 elapsed.Elapsed,
                 limit - TimeSpan.FromMilliseconds(100),
-                limit + TimeSpan.FromSeconds(1));
+                TimeSpan.FromTicks(NamedPipeHostConnector.ConnectWaitLimit.Ticks / 2));
         }
 
         [Fact]
@@ -668,8 +664,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task PipeAppearingSlightlyLateIsAcceptedWithinLimit()
         {
             string pipeName = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
-            NamedPipeHostConnector connector = new NamedPipeHostConnector(
-                selected => pipeName, NamedPipeHostConnector.OpenNamedPipeAsync);
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(selected => pipeName, TestWait);
 
             Task<HostConnection> connecting = connector.ConnectAsync(null, CancellationToken.None);
 
