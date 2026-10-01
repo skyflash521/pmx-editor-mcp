@@ -35,6 +35,34 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[ModelMirrorElements.AddedName]);
         }
 
+        [Theory]
+        [InlineData("_左腕", "_右腕")]
+        [InlineData("__右腕", "__左腕")]
+        [InlineData("腕左_", "腕右_")]
+        [InlineData("_腕右_", "_腕左_")]
+        public void UnderscoresAroundTheNameDoNotHideItsSide(string name, string expected)
+        {
+            Bone(name, 2f, 3f, 4f);
+
+            Mirror(
+                Operation(ModelMirrorElements.CopyTargets),
+                Targets(Target(ElementKinds.Bone, 0)));
+
+            Assert.Equal(expected, _fixture.Model.Bone[1].Name);
+        }
+
+        [Fact]
+        public void ANameOfOnlyUnderscoresGetsAMark()
+        {
+            Bone("__", 2f, 3f, 4f);
+
+            Mirror(
+                Operation(ModelMirrorElements.CopyTargets),
+                Targets(Target(ElementKinds.Bone, 0)));
+
+            Assert.Equal("M-__", _fixture.Model.Bone[1].Name);
+        }
+
         [Fact]
         public void ACopiedNameWithNoSideGetsAMarkSoThatItStaysApart()
         {

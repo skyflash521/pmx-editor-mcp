@@ -557,10 +557,26 @@ namespace PmxEditorMcp
             }
 
             char[] letters = name.ToCharArray();
+            int first = 0;
             int last = letters.Length - 1;
-            if (letters[0] == '左' || letters[0] == '右')
+            while (first <= last && letters[first] == '_')
             {
-                letters[0] = letters[0] == '左' ? '右' : '左';
+                first++;
+            }
+
+            while (last >= first && letters[last] == '_')
+            {
+                last--;
+            }
+
+            if (first > last)
+            {
+                return marking ? Mark + name : name;
+            }
+
+            if (letters[first] == '左' || letters[first] == '右')
+            {
+                letters[first] = letters[first] == '左' ? '右' : '左';
             }
             else if (letters[last] == '左' || letters[last] == '右')
             {
