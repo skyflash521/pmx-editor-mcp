@@ -198,6 +198,123 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheDistributionCountsTheVerticesWithinEachThresholdInTheOrderGiven()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0f, 0.05f, 0f);
+            Vertex(0f, 0.2f, 0f);
+            Vertex(0f, 0.2f, 0.1f);
+            Vertex(0f, -0.15f, 0f);
+            Vertex(0f, 0.8f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("indices", new object[] { 4, 5, 6, 7, 8 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("distanceThresholds", new object[] { 0.25, 0.1, 1.0, 0.0 })));
+
+            object[] distribution = (object[])value["distribution"];
+            Assert.Equal(4, distribution.Length);
+            AssertLimit(0.25f, 4, distribution[0]);
+            AssertLimit(0.1f, 1, distribution[1]);
+            AssertLimit(1f, 5, distribution[2]);
+            AssertLimit(0f, 0, distribution[3]);
+        }
+
+        [Fact]
+        public void AVertexExactlyAtAThresholdIsCountedWithinIt()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0f, 0.2f, 0f);
+            Vertex(0f, 0f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("indices", new object[] { 4, 5 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("distanceThresholds", new object[] { 0.2, 0.0 })));
+
+            object[] distribution = (object[])value["distribution"];
+            AssertLimit(0.2f, 2, distribution[0]);
+            AssertLimit(0f, 1, distribution[1]);
+        }
+
+        [Fact]
+        public void TheDistributionIsKeptPerBoxToo()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0f, 0.05f, 0f);
+            Vertex(3f, 0.3f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("indices", new object[] { 4, 5 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("distanceThresholds", new object[] { 0.1 }),
+                ComposedEditFixture.Given(
+                    "boxes",
+                    new object[]
+                    {
+                        Box("minX", -1.0, "maxX", 1.0, "minY", -1.0, "maxY", 1.0, "minZ", -1.0, "maxZ", 1.0),
+                        Box("minX", 2.0, "maxX", 4.0, "minY", -1.0, "maxY", 1.0, "minZ", -1.0, "maxZ", 1.0),
+                    })));
+
+            object[] boxes = (object[])value["boxes"];
+            AssertLimit(0.1f, 1, ((object[])((IDictionary<string, object>)boxes[0])["distribution"])[0]);
+            AssertLimit(0.1f, 0, ((object[])((IDictionary<string, object>)boxes[1])["distribution"])[0]);
+        }
+
+        [Fact]
+        public void VerticesFartherThanTheDistanceLimitAreLeftOutOfTheDistribution()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0f, 0.05f, 0f);
+            Vertex(0f, 5f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("indices", new object[] { 4, 5 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("distanceLimit", 1.0),
+                ComposedEditFixture.Given("distanceThresholds", new object[] { 10.0 })));
+
+            AssertLimit(10f, 1, ((object[])value["distribution"])[0]);
+        }
+
+        [Fact]
+        public void WithoutThresholdsThereIsNoDistribution()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0f, 0.05f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("indices", new object[] { 4 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 })));
+
+            Assert.False(value.ContainsKey("distribution"));
+        }
+
+        [Theory]
+        [MemberData(nameof(BadThresholds))]
+        public void ThresholdsThatAreNotNonNegativeFiniteNumbersAreRefused(object given)
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0f, 0.05f, 0f);
+
+            IDictionary<string, object> envelope = Find(
+                ComposedEditFixture.Given("indices", new object[] { 4 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("distanceThresholds", given));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        public static IEnumerable<object[]> BadThresholds()
+        {
+            yield return new object[] { new object[0] };
+            yield return new object[] { new object[] { -0.1 } };
+            yield return new object[] { new object[] { "0.1" } };
+            yield return new object[] { new object[] { double.PositiveInfinity } };
+            yield return new object[] { 0.1 };
+        }
+
+        [Fact]
         public void ProjectingMovesTheVerticesOntoTheNearestPointOfTheSurface()
         {
             Floor(new V3(0f, 1f, 0f));
@@ -350,6 +467,13 @@ namespace PmxEditorMcp.Tests
         {
             return _fixture.Call(
                 ModelFindSurfaceDistances.ToolName, ComposedEditFixture.Arguments(given));
+        }
+
+        private static void AssertLimit(float limit, int count, object given)
+        {
+            IDictionary<string, object> row = (IDictionary<string, object>)given;
+            Assert.Equal(limit, (float)row["limit"], 5);
+            Assert.Equal(count, row["count"]);
         }
 
         private static void AssertPoint(float x, float y, float z, object given)

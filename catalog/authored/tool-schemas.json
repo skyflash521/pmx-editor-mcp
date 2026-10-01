@@ -7149,6 +7149,18 @@
               "bounds": {
                 "minimum": 0
               }
+            },
+            {
+              "name": "distanceThresholds",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
             }
           ],
           "choices": [
@@ -7187,6 +7199,25 @@
             "name": "farCount",
             "origin": "hostOutput",
             "shape": "number"
+          },
+          {
+            "name": "distribution",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "limit",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
           },
           {
             "name": "minDistance",
@@ -7249,6 +7280,25 @@
                   "name": "farCount",
                   "origin": "hostOutput",
                   "shape": "number"
+                },
+                {
+                  "name": "distribution",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "members": [
+                      {
+                        "name": "limit",
+                        "origin": "hostOutput",
+                        "shape": "number"
+                      },
+                      {
+                        "name": "count",
+                        "origin": "hostOutput",
+                        "shape": "number"
+                      }
+                    ]
+                  }
                 },
                 {
                   "name": "minDistance",

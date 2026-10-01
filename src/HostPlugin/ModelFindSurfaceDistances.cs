@@ -14,6 +14,12 @@ namespace PmxEditorMcp
 
         public const string DistanceLimitName = "distanceLimit";
 
+        public const string DistanceThresholdsName = "distanceThresholds";
+
+        public const string DistributionName = "distribution";
+
+        public const string LimitName = "limit";
+
         public const string CountName = "count";
 
         public const string FrontCountName = "frontCount";
@@ -52,6 +58,7 @@ namespace PmxEditorMcp
                 ModelFindVertexBounds.BoxesName,
                 SurfaceMaterialIndicesName,
                 DistanceLimitName,
+                DistanceThresholdsName,
             };
             methods.Add(ToolName, edit.Read(known, Run));
         }
@@ -75,7 +82,9 @@ namespace PmxEditorMcp
 
             float? limit;
             List<float[]> boxes;
+            List<float> thresholds;
             if (!TryLimit(context, out limit, out message)
+                || !TryThresholds(context, out thresholds, out message)
                 || !ModelFindVertexBounds.TryBoxes(context, out boxes, out message))
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
@@ -96,20 +105,22 @@ namespace PmxEditorMcp
                 measures.Add(new Measure(at, position, tree.Nearest(Vec.Of(position), reach)));
             }
 
-            Dictionary<string, object> value = Summary(measures, limit.HasValue);
+            Dictionary<string, object> value = Summary(measures, limit.HasValue, thresholds);
             if (boxes != null)
             {
                 value.Add(
                     ModelFindVertexBounds.BoxesName,
                     boxes.Select(box => (object)Summary(
                         measures.Where(m => ModelFindVertexBounds.Inside(box, m.Position)).ToList(),
-                        limit.HasValue)).ToArray());
+                        limit.HasValue,
+                        thresholds)).ToArray());
             }
 
             return ComposedEditResult.Complete(value);
         }
 
-        private static Dictionary<string, object> Summary(List<Measure> measures, bool limited)
+        private static Dictionary<string, object> Summary(
+            List<Measure> measures, bool limited, List<float> thresholds)
         {
             List<Measure> near = measures.Where(m => m.Hit != null).ToList();
             Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
@@ -121,6 +132,17 @@ namespace PmxEditorMcp
             if (limited)
             {
                 value.Add(FarCountName, measures.Count - near.Count);
+            }
+
+            if (thresholds != null)
+            {
+                value.Add(
+                    DistributionName,
+                    thresholds.Select(t => (object)new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { LimitName, t },
+                        { CountName, near.Count(m => Math.Abs(m.Hit.Signed) <= t) },
+                    }).ToArray());
             }
 
             if (near.Count == 0)
@@ -151,6 +173,44 @@ namespace PmxEditorMcp
             value.Add(MaxPointName, high.Hit.Point.Components());
 
             return value;
+        }
+
+        private static bool TryThresholds(
+            McpMethodContext context, out List<float> thresholds, out string message)
+        {
+            thresholds = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(DistanceThresholdsName, out given))
+            {
+                return true;
+            }
+
+            object[] items = given as object[];
+            if (items == null || items.Length == 0)
+            {
+                message = DistanceThresholdsName + " は0以上の有限の数を1つ以上並べた並びでなければならない。";
+
+                return false;
+            }
+
+            List<float> read = new List<float>();
+            foreach (object item in items)
+            {
+                float one;
+                if (!ValueInput.TrySingle(item, out one) || !(one >= 0) || float.IsInfinity(one))
+                {
+                    message = DistanceThresholdsName + " は0以上の有限の数を1つ以上並べた並びでなければならない。";
+
+                    return false;
+                }
+
+                read.Add(one);
+            }
+
+            thresholds = read;
+
+            return true;
         }
 
         internal static bool TryMaterials(
