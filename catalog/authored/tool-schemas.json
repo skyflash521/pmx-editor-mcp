@@ -5991,6 +5991,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "basePmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ],
           "choices": [
@@ -6523,7 +6529,8 @@
               "name": "surfaceOffset",
               "origin": "hostInput",
               "shape": "number",
-              "required": false
+              "required": false,
+              "default": 0
             },
             {
               "name": "distanceLimit",
@@ -6539,6 +6546,7 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false,
+              "default": 0,
               "bounds": {
                 "minimum": 0
               }

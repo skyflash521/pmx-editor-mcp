@@ -134,6 +134,48 @@ namespace PmxEditorMcp
         public static void ForEachNear(IList<Vec> points, double radius, Action<int, int> visit)
         {
             double cell = Math.Max(radius, 1e-9);
+            Dictionary<CellKey, List<int>> cells = Grid(points, cell);
+            for (int at = 0; at < points.Count; at++)
+            {
+                if (!IsFinite(points[at]))
+                {
+                    continue;
+                }
+
+                foreach (int other in InCells(cells, points[at], cell))
+                {
+                    if (other != at && (points[at] - points[other]).Length <= radius)
+                    {
+                        visit(at, other);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 問い合わせの点ごとに、<paramref name="radius"/> 以内にある <paramref name="points"/> の番号を
+        /// 昇順に返す。有限でない点は、探す側にも探される側にも組にならない。
+        /// </summary>
+        public static IList<int>[] Near(IList<Vec> points, IList<Vec> queries, double radius)
+        {
+            double cell = Math.Max(radius, 1e-9);
+            Dictionary<CellKey, List<int>> cells = Grid(points, cell);
+            IList<int>[] found = new IList<int>[queries.Count];
+            for (int at = 0; at < found.Length; at++)
+            {
+                found[at] = IsFinite(queries[at])
+                    ? InCells(cells, queries[at], cell)
+                        .Where(other => (points[other] - queries[at]).Length <= radius)
+                        .OrderBy(other => other)
+                        .ToList()
+                    : new int[0];
+            }
+
+            return found;
+        }
+
+        private static Dictionary<CellKey, List<int>> Grid(IList<Vec> points, double cell)
+        {
             Dictionary<CellKey, List<int>> cells = new Dictionary<CellKey, List<int>>();
             for (int at = 0; at < points.Count; at++)
             {
@@ -153,33 +195,27 @@ namespace PmxEditorMcp
                 held.Add(at);
             }
 
-            for (int at = 0; at < points.Count; at++)
+            return cells;
+        }
+
+        private static IEnumerable<int> InCells(Dictionary<CellKey, List<int>> cells, Vec at, double cell)
+        {
+            CellKey home = CellKey.Of(at, cell);
+            for (int dx = -1; dx <= 1; dx++)
             {
-                if (!IsFinite(points[at]))
+                for (int dy = -1; dy <= 1; dy++)
                 {
-                    continue;
-                }
-
-                CellKey home = CellKey.Of(points[at], cell);
-                for (int dx = -1; dx <= 1; dx++)
-                {
-                    for (int dy = -1; dy <= 1; dy++)
+                    for (int dz = -1; dz <= 1; dz++)
                     {
-                        for (int dz = -1; dz <= 1; dz++)
+                        List<int> held;
+                        if (!cells.TryGetValue(new CellKey(home.X + dx, home.Y + dy, home.Z + dz), out held))
                         {
-                            List<int> held;
-                            if (!cells.TryGetValue(new CellKey(home.X + dx, home.Y + dy, home.Z + dz), out held))
-                            {
-                                continue;
-                            }
+                            continue;
+                        }
 
-                            foreach (int other in held)
-                            {
-                                if (other != at && (points[at] - points[other]).Length <= radius)
-                                {
-                                    visit(at, other);
-                                }
-                            }
+                        foreach (int other in held)
+                        {
+                            yield return other;
                         }
                     }
                 }
@@ -335,6 +371,11 @@ namespace PmxEditorMcp
             public double Axis(int axis)
             {
                 return axis == 0 ? X : axis == 1 ? Y : Z;
+            }
+
+            public V3 ToV3()
+            {
+                return new V3((float)X, (float)Y, (float)Z);
             }
 
             public object[] Components()

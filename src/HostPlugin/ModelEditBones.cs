@@ -83,6 +83,8 @@ namespace PmxEditorMcp
 
         public const string FollowVertices = "followVertices";
 
+        public const string MirrorDisplacement = "mirrorDisplacement";
+
         /// <summary>軸を受け取る入力の名前。</summary>
         public const string AxisName = "axis";
 
@@ -145,6 +147,7 @@ namespace PmxEditorMcp
                     ResetLocalAxis,
                     SetPmdBoneKind,
                     FollowVertices,
+                    MirrorDisplacement,
                 };
             }
         }
@@ -206,7 +209,7 @@ namespace PmxEditorMcp
                     context,
                     AxisName,
                     operation,
-                    new[] { MirrorPosition },
+                    new[] { MirrorPosition, MirrorDisplacement },
                     ModelEditVertices.Axes,
                     out axis,
                     out code,
@@ -235,16 +238,23 @@ namespace PmxEditorMcp
             }
 
             bool following = string.Equals(operation, FollowVertices, StringComparison.Ordinal);
-            if (!following && context.Params.ContainsKey(ModelMorphFromMoved.BasePmxHandleName))
+            bool displacing = string.Equals(operation, MirrorDisplacement, StringComparison.Ordinal);
+            if (!following && !displacing && context.Params.ContainsKey(ModelMorphFromMoved.BasePmxHandleName))
             {
                 return ComposedEditResult.Refuse(
                     ToolEnvelope.InvalidArgument,
-                    ModelMorphFromMoved.BasePmxHandleName + " を渡せるのは " + FollowVertices + " のときだけである。");
+                    ModelMorphFromMoved.BasePmxHandleName + " を渡せるのは "
+                        + FollowVertices + "・" + MirrorDisplacement + " のときだけである。");
             }
 
             if (following)
             {
                 return Followed(context, model, chosen, radius);
+            }
+
+            if (displacing)
+            {
+                return Displaced(context, model, chosen, axis);
             }
 
             if (vertices)
@@ -414,6 +424,60 @@ namespace PmxEditorMcp
                     bone.ToOffset = offset;
                     changed++;
                 }
+            }
+
+            return Answer(new int[0], changed, 0, new[] { ElementKinds.Bone });
+        }
+
+        private static ComposedEditResult Displaced(
+            McpMethodContext context, IPXPmx model, IList<int> chosen, string axis)
+        {
+            IPXPmx based;
+            string code;
+            string message;
+            if (!ModelMorphFromMoved.TryBase(context, out based, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string differs = ModelCompareShape.Differs(based, model);
+            if (differs != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);
+            }
+
+            int along = MirrorPartners.AxisIndex(axis);
+            Dictionary<IPXBone, KeyValuePair<V3, V3>> made =
+                new Dictionary<IPXBone, KeyValuePair<V3, V3>>(ReferenceComparer<IPXBone>.Instance);
+            foreach (int at in chosen.Distinct())
+            {
+                IPXBone bone = model.Bone[at];
+                IPXBone twin = Twin(model, bone);
+                if (twin == null)
+                {
+                    continue;
+                }
+
+                Vec moved = Vec.Of(bone.Position) - Vec.Of(based.Bone[at].Position);
+                V3 offset = bone.ToBone == null && twin.ToBone == null
+                    ? MirrorPartners.Flip(Vec.Of(bone.ToOffset), along).ToV3()
+                    : twin.ToOffset;
+                made[twin] = new KeyValuePair<V3, V3>(
+                    (Vec.Of(twin.Position) + MirrorPartners.Flip(moved, along)).ToV3(), offset);
+            }
+
+            int changed = 0;
+            foreach (KeyValuePair<IPXBone, KeyValuePair<V3, V3>> each in made)
+            {
+                if (Vectors.Same(each.Key.Position, each.Value.Key)
+                    && Vectors.Same(each.Key.ToOffset, each.Value.Value))
+                {
+                    continue;
+                }
+
+                each.Key.Position = each.Value.Key;
+                each.Key.ToOffset = each.Value.Value;
+                changed++;
             }
 
             return Answer(new int[0], changed, 0, new[] { ElementKinds.Bone });
@@ -751,13 +815,19 @@ namespace PmxEditorMcp
             return found != null && gone.Contains(found) ? null : found;
         }
 
-        private static bool Mirrored(IPXPmx model, IPXBone bone, string axis)
+        internal static IPXBone Twin(IPXPmx model, IPXBone bone)
         {
             string turned = Turned(bone.Name);
-            IPXBone twin = turned == null
+
+            return turned == null
                 ? null
                 : model.Bone.FirstOrDefault(
                     held => string.Equals(held.Name, turned, StringComparison.Ordinal));
+        }
+
+        private static bool Mirrored(IPXPmx model, IPXBone bone, string axis)
+        {
+            IPXBone twin = Twin(model, bone);
             if (twin == null)
             {
                 return false;

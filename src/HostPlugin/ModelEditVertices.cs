@@ -33,6 +33,8 @@ namespace PmxEditorMcp
 
         public const string FollowGuide = "followGuide";
 
+        public const string MirrorDisplacement = "mirrorDisplacement";
+
         public const string GuideIndicesName = "guideIndices";
 
         public const string ModeName = "mode";
@@ -94,13 +96,14 @@ namespace PmxEditorMcp
             new KeyValuePair<string, string[]>(MarginName, new[] { PushOutOfSurface }),
             new KeyValuePair<string, string[]>(SpreadRadiusName, new[] { PushOutOfSurface }),
             new KeyValuePair<string, string[]>(GuideIndicesName, new[] { FollowGuide }),
-            new KeyValuePair<string, string[]>(ModelMorphFromMoved.BasePmxHandleName, new[] { FollowGuide }),
+            new KeyValuePair<string, string[]>(
+                ModelMorphFromMoved.BasePmxHandleName, new[] { FollowGuide, MirrorDisplacement }),
         };
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
-            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide }; }
+            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide, MirrorDisplacement }; }
         }
 
         public static IList<string> Modes
@@ -186,7 +189,7 @@ namespace PmxEditorMcp
                     context,
                     AxisName,
                     operation,
-                    new[] { Align, MirrorCopy, MirrorModel },
+                    new[] { Align, MirrorCopy, MirrorModel, MirrorDisplacement },
                     Axes,
                     out axis,
                     out code,
@@ -223,6 +226,11 @@ namespace PmxEditorMcp
             if (string.Equals(operation, FollowGuide, StringComparison.Ordinal))
             {
                 return Followed(context, model, chosen, mode);
+            }
+
+            if (string.Equals(operation, MirrorDisplacement, StringComparison.Ordinal))
+            {
+                return Displaced(context, model, chosen, axis);
             }
 
             if (string.Equals(operation, ProjectOntoSurface, StringComparison.Ordinal))
@@ -575,6 +583,70 @@ namespace PmxEditorMcp
                     model.Vertex[at].Position = made;
                     changed++;
                 }
+            }
+
+            return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });
+        }
+
+        private static ComposedEditResult Displaced(
+            McpMethodContext context, IPXPmx model, IList<int> chosen, string axis)
+        {
+            IPXPmx based;
+            string code;
+            string message;
+            if (!ModelMorphFromMoved.TryBase(context, out based, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string differs = ModelCompareShape.Differs(based, model);
+            if (differs != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);
+            }
+
+            int along = MirrorPartners.AxisIndex(axis);
+            Vec[] before = ModelCompareShape.Positions(based);
+            Vec[] now = ModelCompareShape.Positions(model);
+            IDictionary<int, int> partners = MirrorPartners.OfVertices(based, along, chosen);
+            Dictionary<int, KeyValuePair<V3, V3>> made = new Dictionary<int, KeyValuePair<V3, V3>>();
+            foreach (int at in chosen.Distinct())
+            {
+                int partner;
+                if (!partners.TryGetValue(at, out partner))
+                {
+                    continue;
+                }
+
+                Vec moved = now[at] - before[at];
+                V3 given = model.Vertex[at].Normal;
+                if (partner != at)
+                {
+                    made[partner] = new KeyValuePair<V3, V3>(
+                        (now[partner] + MirrorPartners.Flip(moved, along)).ToV3(),
+                        MirrorPartners.Flip(Vec.Of(given), along).ToV3());
+                    continue;
+                }
+
+                Vec level = MirrorPartners.Level(Vec.Of(given), along);
+                made[at] = new KeyValuePair<V3, V3>(
+                    (before[at] + MirrorPartners.Level(moved, along)).ToV3(),
+                    level.Length > 0d ? (level * (1d / level.Length)).ToV3() : given);
+            }
+
+            int changed = 0;
+            foreach (KeyValuePair<int, KeyValuePair<V3, V3>> each in made)
+            {
+                IPXVertex vertex = model.Vertex[each.Key];
+                if (Vectors.Same(vertex.Position, each.Value.Key)
+                    && Vectors.Same(vertex.Normal, each.Value.Value))
+                {
+                    continue;
+                }
+
+                vertex.Position = each.Value.Key;
+                vertex.Normal = each.Value.Value;
+                changed++;
             }
 
             return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });

@@ -19824,6 +19824,2032 @@
           }
         }
       ]
+    },
+    {
+      "id": 28,
+      "title": "複製との差を反対側の頂点へ反転して写す",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 13
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 13
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  3,
+                  5
+                ],
+                "normal": [
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  -2,
+                  3,
+                  5
+                ],
+                "normal": [
+                  0,
+                  0,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  3,
+                  5
+                ],
+                "normal": [
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  7,
+                  8,
+                  9
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  1,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  -1,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  -2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  -3,
+                  4,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  -3,
+                  -4,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  -2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  -3,
+                  1,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  -3,
+                  -1,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 13
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "mirrorFace0",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "mirrorFace1",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "mirrorFace2",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "mirrorFace0"
+              }
+            ],
+            "value": {
+              "vertex1": 4,
+              "vertex2": 5,
+              "vertex3": 6
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "mirrorFace1"
+              }
+            ],
+            "value": {
+              "vertex1": 7,
+              "vertex2": 8,
+              "vertex3": 9
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "mirrorFace2"
+              }
+            ],
+            "value": {
+              "vertex1": 10,
+              "vertex2": 11,
+              "vertex3": 12
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "mirrorFace0"
+                  },
+                  {
+                    "$from": "mirrorFace1"
+                  },
+                  {
+                    "$from": "mirrorFace2"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "record": {
+            "name": "mirrorBasePmx",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              4
+            ],
+            "values": [
+              {
+                "position": [
+                  2.5,
+                  3.25,
+                  4.25
+                ],
+                "normal": [
+                  1,
+                  2,
+                  2
+                ]
+              },
+              {
+                "position": [
+                  -1.75,
+                  2.5,
+                  5.125
+                ],
+                "normal": [
+                  2,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "position": [
+                  0.25,
+                  3.25,
+                  4.25
+                ],
+                "normal": [
+                  3,
+                  0,
+                  2
+                ]
+              },
+              {
+                "position": [
+                  2.5,
+                  0.25,
+                  -0.75
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              0
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "fields": [
+              "position",
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2.5,
+                  3.25,
+                  4.25
+                ]
+              },
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  1,
+                  2,
+                  2
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -2.25,
+                  2.75,
+                  4.375
+                ]
+              },
+              {
+                "path": "items.1.normal",
+                "equals": [
+                  -1,
+                  2,
+                  2
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              1
+            ],
+            "fields": [
+              "position",
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  -1.75,
+                  2.5,
+                  5.125
+                ]
+              },
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  2,
+                  -1,
+                  2
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              0,
+              1
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "fields": [
+              "position",
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2.25,
+                  2.75,
+                  4.375
+                ]
+              },
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  -2,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -2.25,
+                  2.75,
+                  4.375
+                ]
+              },
+              {
+                "path": "items.1.normal",
+                "equals": [
+                  -1,
+                  2,
+                  2
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              2
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              2
+            ],
+            "fields": [
+              "position",
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  3.25,
+                  4.25
+                ]
+              },
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              3
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              3
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  7,
+                  8,
+                  9
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              4
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              7,
+              10
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  -2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -2.5,
+                  0.25,
+                  -0.75
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              0
+            ],
+            "axis": "x"
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              0
+            ],
+            "basePmxHandle": {
+              "$from": "mirrorBasePmx"
+            }
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "align",
+            "indices": [
+              0,
+              1
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBasePmx"
+            }
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "mirrorBasePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "title": "複製との差を反対側のボーンへ反転して写す",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "bone",
+            "operation": "new",
+            "count": 3
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "name": "左腕",
+                "position": [
+                  2,
+                  3,
+                  5
+                ],
+                "toOffset": [
+                  9,
+                  9,
+                  9
+                ]
+              },
+              {
+                "name": "右腕",
+                "position": [
+                  -2,
+                  3,
+                  5
+                ],
+                "toOffset": [
+                  5,
+                  5,
+                  5
+                ]
+              },
+              {
+                "name": "首",
+                "position": [
+                  7,
+                  8,
+                  9
+                ],
+                "toOffset": [
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "record": {
+            "name": "mirrorBoneBasePmx",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "values": [
+              {
+                "position": [
+                  2.5,
+                  3.25,
+                  4.25
+                ],
+                "toOffset": [
+                  2,
+                  1,
+                  -3
+                ]
+              },
+              {
+                "position": [
+                  -1.875,
+                  2.75,
+                  5.5
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              0
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBoneBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "fields": [
+              "position",
+              "toOffset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2.5,
+                  3.25,
+                  4.25
+                ]
+              },
+              {
+                "path": "items.0.toOffset",
+                "equals": [
+                  2,
+                  1,
+                  -3
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -2.375,
+                  3,
+                  4.75
+                ]
+              },
+              {
+                "path": "items.1.toOffset",
+                "equals": [
+                  -2,
+                  1,
+                  -3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              1
+            ],
+            "fields": [
+              "position",
+              "toOffset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  -1.875,
+                  2.75,
+                  5.5
+                ]
+              },
+              {
+                "path": "items.0.toOffset",
+                "equals": [
+                  5,
+                  5,
+                  5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              0,
+              1
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBoneBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "fields": [
+              "position",
+              "toOffset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2.375,
+                  3,
+                  4.75
+                ]
+              },
+              {
+                "path": "items.0.toOffset",
+                "equals": [
+                  -5,
+                  5,
+                  5
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -2.375,
+                  3,
+                  4.75
+                ]
+              },
+              {
+                "path": "items.1.toOffset",
+                "equals": [
+                  -2,
+                  1,
+                  -3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              2
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBoneBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              2
+            ],
+            "fields": [
+              "position",
+              "toOffset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  7,
+                  8,
+                  9
+                ]
+              },
+              {
+                "path": "items.0.toOffset",
+                "equals": [
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "mirrorDisplacement",
+            "indices": [
+              0
+            ],
+            "axis": "x"
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "mirrorPosition",
+            "indices": [
+              0
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorBoneBasePmx"
+            }
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "mirrorBoneBasePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "title": "頂点モーフとボーンモーフのオフセットを反対側へ反転して写す",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 3
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  3,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  -2,
+                  3,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  7,
+                  8,
+                  9
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "bone",
+            "operation": "new",
+            "count": 3
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "name": "左腕"
+              },
+              {
+                "name": "右腕"
+              },
+              {
+                "name": "首"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "morph",
+            "operation": "new",
+            "count": 1,
+            "variant": "vertex"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "morph",
+            "operation": "new",
+            "count": 1,
+            "variant": "bone"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_morphs",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "values": [
+              {
+                "name": "左目"
+              },
+              {
+                "name": "左腕上げ"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex_morph_offset",
+          "arguments": {
+            "vertex": 0,
+            "offset": [
+              0.5,
+              -0.25,
+              0.75
+            ]
+          },
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "mirrorOffset0",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex_morph_offset",
+          "arguments": {
+            "vertex": 1,
+            "offset": [
+              1,
+              2,
+              3
+            ]
+          },
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "mirrorOffset1",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_vertex_morph_offset",
+          "arguments": {
+            "vertex": 2,
+            "offset": [
+              1.5,
+              2,
+              -3
+            ]
+          },
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "mirrorOffset2",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_morph_offsets",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "mirrorOffset0"
+                  },
+                  {
+                    "$from": "mirrorOffset1"
+                  },
+                  {
+                    "$from": "mirrorOffset2"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_bone_morph_offset",
+          "arguments": {
+            "bone": 0,
+            "translation": [
+              0.5,
+              -0.25,
+              0.75
+            ],
+            "rotation": [
+              0.5,
+              -0.5,
+              0.5,
+              0.5
+            ]
+          },
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "mirrorPose0",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_morph_offsets",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 1,
+                "handles": [
+                  {
+                    "$from": "mirrorPose0"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "record": {
+            "name": "mirrorMorphBasePmx",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "mirrorOffsets",
+            "indices": [
+              0
+            ],
+            "targetIndices": [
+              0,
+              2
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorMorphBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true,
+            "fields": [
+              "vertex",
+              "offset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.vertex",
+                "equals": 0
+              },
+              {
+                "path": "items.0.offset",
+                "equals": [
+                  0.5,
+                  -0.25,
+                  0.75
+                ]
+              },
+              {
+                "path": "items.1.vertex",
+                "equals": 1
+              },
+              {
+                "path": "items.1.offset",
+                "equals": [
+                  -0.5,
+                  -0.25,
+                  0.75
+                ]
+              },
+              {
+                "path": "items.2.vertex",
+                "equals": 2
+              },
+              {
+                "path": "items.2.offset",
+                "equals": [
+                  1.5,
+                  2,
+                  -3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true,
+            "fields": [
+              "vertex",
+              "offset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.vertex",
+                "equals": 0
+              },
+              {
+                "path": "items.0.offset",
+                "equals": [
+                  0.5,
+                  -0.25,
+                  0.75
+                ]
+              },
+              {
+                "path": "items.1.vertex",
+                "equals": 1
+              },
+              {
+                "path": "items.1.offset",
+                "equals": [
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "path": "items.2.vertex",
+                "equals": 2
+              },
+              {
+                "path": "items.2.offset",
+                "equals": [
+                  1.5,
+                  2,
+                  -3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "mirrorOffsets",
+            "indices": [
+              0
+            ],
+            "targetIndices": [
+              0,
+              1
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorMorphBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true,
+            "fields": [
+              "vertex",
+              "offset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              },
+              {
+                "path": "items.0.vertex",
+                "equals": 0
+              },
+              {
+                "path": "items.0.offset",
+                "equals": [
+                  -1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "path": "items.1.vertex",
+                "equals": 1
+              },
+              {
+                "path": "items.1.offset",
+                "equals": [
+                  -0.5,
+                  -0.25,
+                  0.75
+                ]
+              },
+              {
+                "path": "items.2.vertex",
+                "equals": 2
+              },
+              {
+                "path": "items.2.offset",
+                "equals": [
+                  1.5,
+                  2,
+                  -3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "mirrorOffsets",
+            "indices": [
+              1
+            ],
+            "targetIndices": [
+              0
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorMorphBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentIndices": [
+              1
+            ],
+            "all": true,
+            "fields": [
+              "bone",
+              "translation",
+              "rotation"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.bone",
+                "equals": 0
+              },
+              {
+                "path": "items.0.translation",
+                "equals": [
+                  0.5,
+                  -0.25,
+                  0.75
+                ]
+              },
+              {
+                "path": "items.0.rotation",
+                "equals": [
+                  0.5,
+                  -0.5,
+                  0.5,
+                  0.5
+                ]
+              },
+              {
+                "path": "items.1.bone",
+                "equals": 1
+              },
+              {
+                "path": "items.1.translation",
+                "equals": [
+                  -0.5,
+                  -0.25,
+                  0.75
+                ]
+              },
+              {
+                "path": "items.1.rotation",
+                "equals": [
+                  0.5,
+                  0.5,
+                  -0.5,
+                  0.5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "mirrorOffsets",
+            "indices": [
+              0,
+              1
+            ],
+            "targetIndices": [
+              0
+            ],
+            "axis": "x",
+            "basePmxHandle": {
+              "$from": "mirrorMorphBasePmx"
+            }
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "mirrorOffsets",
+            "indices": [
+              0
+            ],
+            "targetIndices": [
+              0
+            ],
+            "axis": "x"
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_morphs",
+          "arguments": {
+            "operation": "addOffsets",
+            "indices": [
+              0
+            ],
+            "targetIndices": [
+              0
+            ],
+            "basePmxHandle": {
+              "$from": "mirrorMorphBasePmx"
+            }
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "mirrorMorphBasePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
     }
   ]
 }

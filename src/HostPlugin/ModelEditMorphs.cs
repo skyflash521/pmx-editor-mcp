@@ -4,6 +4,7 @@ using System.Linq;
 using PEPlugin;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
+using Vec = PmxEditorMcp.SurfaceGeometry.Vec;
 
 namespace PmxEditorMcp
 {
@@ -48,6 +49,8 @@ namespace PmxEditorMcp
         /// <summary>指した頂点を動かす頂点モーフを1つ足す。</summary>
         public const string VertexMorphFromVertices = "vertexMorphFromVertices";
 
+        public const string MirrorOffsets = "mirrorOffsets";
+
         /// <summary>足すオフセットが指す相手の位置を受け取る入力の名前。</summary>
         public const string TargetIndicesName = "targetIndices";
 
@@ -89,6 +92,7 @@ namespace PmxEditorMcp
                     MaterialFromCurrent,
                     AddOffsets,
                     VertexMorphFromVertices,
+                    MirrorOffsets,
                 };
             }
         }
@@ -122,6 +126,7 @@ namespace PmxEditorMcp
                 TargetSelectedName,
                 AxisName,
                 BoundaryName,
+                ModelMorphFromMoved.BasePmxHandleName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -150,7 +155,7 @@ namespace PmxEditorMcp
                     context,
                     AxisName,
                     operation,
-                    new[] { SplitVerticesByAxis },
+                    new[] { SplitVerticesByAxis, MirrorOffsets },
                     ModelEditVertices.Axes,
                     out axis,
                     out code,
@@ -168,7 +173,7 @@ namespace PmxEditorMcp
                     context,
                     TargetIndicesName,
                     operation,
-                    new[] { AddOffsets, VertexMorphFromVertices },
+                    new[] { AddOffsets, VertexMorphFromVertices, MirrorOffsets },
                     Reach(model, operation, chosen),
                     out targets,
                     out code,
@@ -179,6 +184,14 @@ namespace PmxEditorMcp
                         Aimed(model, operation, chosen), Reach(model, operation, chosen))))
             {
                 return ComposedEditResult.Refuse(code, message);
+            }
+
+            if (!string.Equals(operation, MirrorOffsets, StringComparison.Ordinal)
+                && context.Params.ContainsKey(ModelMorphFromMoved.BasePmxHandleName))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    ModelMorphFromMoved.BasePmxHandleName + " を渡せるのは " + MirrorOffsets + " のときだけである。");
             }
 
             IList<IPXMorph> picked = chosen.Select(at => model.Morph[at]).ToList();
@@ -222,15 +235,20 @@ namespace PmxEditorMcp
                 case VertexMorphFromVertices:
                     return FromVertices(model, builder, name, targets);
 
+                case MirrorOffsets:
+                    return Mirrored(context, model, builder, picked, targets, axis);
+
                 default:
                     return FromMaterials(model, builder, name);
             }
         }
 
-        /// <summary>
-        /// 指す相手を並べる先の数。オフセットを足す操作では、指したモーフのうち先頭の種類が指す並びの
-        /// 数、頂点からモーフを作る操作では頂点の数である。ほかの操作では0でよい。
-        /// </summary>
+        private static bool PointsAtTargets(string operation)
+        {
+            return string.Equals(operation, AddOffsets, StringComparison.Ordinal)
+                || string.Equals(operation, MirrorOffsets, StringComparison.Ordinal);
+        }
+
         private static int Reach(IPXPmx model, string operation, IList<int> chosen)
         {
             if (string.Equals(operation, VertexMorphFromVertices, StringComparison.Ordinal))
@@ -238,7 +256,7 @@ namespace PmxEditorMcp
                 return model.Vertex.Count;
             }
 
-            if (!string.Equals(operation, AddOffsets, StringComparison.Ordinal) || chosen.Count == 0)
+            if (!PointsAtTargets(operation) || chosen.Count == 0)
             {
                 return 0;
             }
@@ -254,7 +272,7 @@ namespace PmxEditorMcp
                 return ElementKinds.Vertex;
             }
 
-            if (!string.Equals(operation, AddOffsets, StringComparison.Ordinal) || chosen.Count == 0)
+            if (!PointsAtTargets(operation) || chosen.Count == 0)
             {
                 return null;
             }
@@ -354,6 +372,161 @@ namespace PmxEditorMcp
             }
 
             return Answer(new int[0], changed, 0);
+        }
+
+        private static ComposedEditResult Mirrored(
+            McpMethodContext context,
+            IPXPmx model,
+            Func<object> builder,
+            IList<IPXMorph> picked,
+            IList<int> targets,
+            string axis)
+        {
+            IPXPmx based;
+            string code;
+            string message;
+            if (!ModelMorphFromMoved.TryBase(context, out based, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string differs = ModelCompareShape.Differs(based, model);
+            if (differs != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);
+            }
+
+            if (picked.Count == 0)
+            {
+                return Answer(new int[0], 0, 0);
+            }
+
+            MorphKind kind = picked[0].Kind;
+            if (picked.Any(morph => morph.Kind != kind))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    "指したモーフの種類がそろっていないので、写すオフセットの形が決まらない。");
+            }
+
+            if (kind != MorphKind.Vertex && kind != MorphKind.Bone)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.NotApplicable,
+                    kind + " のモーフのオフセットは、反対側へ写せない。");
+            }
+
+            int along = MirrorPartners.AxisIndex(axis);
+            Dictionary<object, object> partners =
+                new Dictionary<object, object>(ReferenceComparer<object>.Instance);
+            if (kind == MorphKind.Vertex)
+            {
+                foreach (KeyValuePair<int, int> pair in MirrorPartners.OfVertices(based, along, targets))
+                {
+                    partners[model.Vertex[pair.Key]] = model.Vertex[pair.Value];
+                }
+            }
+            else
+            {
+                foreach (int at in targets.Distinct())
+                {
+                    IPXBone twin = ModelEditBones.Twin(model, model.Bone[at]);
+                    if (twin != null)
+                    {
+                        partners[model.Bone[at]] = twin;
+                    }
+                }
+            }
+
+            IPXPmxBuilder made = (IPXPmxBuilder)builder();
+
+            return Answer(new int[0], picked.Count(morph => Reflected(made, morph, partners, along)), 0);
+        }
+
+        private static bool Reflected(
+            IPXPmxBuilder builder,
+            IPXMorph morph,
+            IDictionary<object, object> partners,
+            int along)
+        {
+            Dictionary<object, IPXMorphOffset> toward = Towards(morph);
+            List<Action> writes = new List<Action>();
+            foreach (KeyValuePair<object, object> pair in partners)
+            {
+                IPXMorphOffset held;
+                if (!toward.TryGetValue(pair.Key, out held))
+                {
+                    continue;
+                }
+
+                object partner = pair.Value;
+                IPXVertexMorphOffset shifted = held as IPXVertexMorphOffset;
+                if (shifted != null)
+                {
+                    Vec offset = Vec.Of(shifted.Offset);
+                    V3 value = (ReferenceEquals(partner, pair.Key)
+                        ? MirrorPartners.Level(offset, along)
+                        : MirrorPartners.Flip(offset, along)).ToV3();
+                    writes.Add(() =>
+                    {
+                        IPXMorphOffset existing;
+                        IPXVertexMorphOffset target = toward.TryGetValue(partner, out existing)
+                            ? (IPXVertexMorphOffset)existing
+                            : null;
+                        if (target == null)
+                        {
+                            target = builder.VertexMorphOffset();
+                            target.Vertex = (IPXVertex)partner;
+                            morph.Offsets.Add(target);
+                            toward.Add(partner, target);
+                        }
+
+                        target.Offset = value;
+                    });
+
+                    continue;
+                }
+
+                IPXBoneMorphOffset posed = held as IPXBoneMorphOffset;
+                if (posed != null)
+                {
+                    V3 translation = MirrorPartners.Flip(Vec.Of(posed.Translation), along).ToV3();
+                    Q rotation = Reflected(posed.Rotation, along);
+                    writes.Add(() =>
+                    {
+                        IPXMorphOffset existing;
+                        IPXBoneMorphOffset target = toward.TryGetValue(partner, out existing)
+                            ? (IPXBoneMorphOffset)existing
+                            : null;
+                        if (target == null)
+                        {
+                            target = builder.BoneMorphOffset();
+                            target.Bone = (IPXBone)partner;
+                            morph.Offsets.Add(target);
+                            toward.Add(partner, target);
+                        }
+
+                        target.Translation = translation;
+                        target.Rotation = rotation;
+                    });
+                }
+            }
+
+            foreach (Action write in writes)
+            {
+                write();
+            }
+
+            return writes.Count > 0;
+        }
+
+        private static Q Reflected(Q given, int along)
+        {
+            return new Q(
+                along == 0 ? given.X : -given.X,
+                along == 1 ? given.Y : -given.Y,
+                along == 2 ? given.Z : -given.Z,
+                given.W);
         }
 
         /// <summary>指した頂点を指す頂点モーフを1つ足す。値はどれも動かさない値にする。</summary>
