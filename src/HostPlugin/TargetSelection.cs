@@ -430,7 +430,7 @@ namespace PmxEditorMcp
 
             if (start.Value < 0)
             {
-                code = ToolEnvelope.InvalidArgument;
+                code = ToolEnvelope.IndexOutOfRange;
                 message = string.Format(
                     CultureInfo.InvariantCulture,
                     "{0} の start が0を下回っている: {1}",

@@ -185,15 +185,23 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.IndexOutOfRange, failure.Code);
         }
 
-        [Theory]
-        [InlineData(-1, 1)]
-        [InlineData(0, 0)]
-        public void ARangeOutsideItsOwnBoundsIsAnInvalidArgument(int start, int count)
+        [Fact]
+        public void ARangeCountBelowOneIsAnInvalidArgument()
         {
             Failure failure = Reject(
-                new TargetRequest(rangeStart: start, rangeCount: count), listCount: 5);
+                new TargetRequest(rangeStart: 0, rangeCount: 0), listCount: 5);
 
             Assert.Equal(ToolEnvelope.InvalidArgument, failure.Code);
+        }
+
+        [Fact]
+        public void ANegativeRangeStartIsOutsideTheList()
+        {
+            Failure failure = Reject(
+                new TargetRequest(rangeStart: -1, rangeCount: 1), listCount: 5);
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, failure.Code);
+            Assert.Contains("start", failure.Message);
         }
 
         [Fact]

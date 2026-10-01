@@ -135,6 +135,39 @@ namespace PmxEditorMcp
             return true;
         }
 
+        public static bool TryInteger(
+            McpMethodContext context,
+            string name,
+            string operation,
+            IList<string> wanted,
+            out int number,
+            out string code,
+            out string message)
+        {
+            number = 0;
+            object given;
+            bool asked;
+            if (!TryWanted(context, name, operation, wanted, out given, out asked, out code, out message))
+            {
+                return false;
+            }
+
+            if (!asked)
+            {
+                return true;
+            }
+
+            if (!ValueInput.TryIndex(given, out number))
+            {
+                number = 0;
+
+                return Refuse(
+                    name + " は " + Listed(wanted) + " のときに渡す整数である。", out code, out message);
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// 要る操作のときだけ受け取る、決まった値のどれかを読む。要る操作で欠けていれば偽、
         /// 要らない操作で渡されていれば偽を返し、断る内容を渡す。要らない操作では空を渡す。
@@ -352,11 +385,19 @@ namespace PmxEditorMcp
                 foreach (object item in items)
                 {
                     int number;
-                    if (!ValueInput.TryIndex(item, out number) || number >= ceiling)
+                    if (!ValueInput.TryIndex(item, out number))
                     {
                         items = null;
 
                         break;
+                    }
+
+                    if (number < 0 || number >= ceiling)
+                    {
+                        code = ToolEnvelope.IndexOutOfRange;
+                        message = name + " が並びの外を指している: " + Spelled(number);
+
+                        return false;
                     }
 
                     taken.Add(number);
@@ -366,8 +407,7 @@ namespace PmxEditorMcp
             if (items == null)
             {
                 return Refuse(
-                    name + " は " + Listed(wanted) + " のときに渡す、0以上 "
-                        + Spelled(ceiling) + " 未満の位置の並びである。",
+                    name + " は " + Listed(wanted) + " のときに渡す、位置の並びである。",
                     out code,
                     out message);
             }

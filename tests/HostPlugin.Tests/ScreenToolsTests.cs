@@ -905,6 +905,25 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ANegativeMaterialIsRefusedAsOutsideTheList()
+        {
+            IList<IPXVertex> vertices = Vertices(3);
+            Faces(Face(vertices, 0, 1, 2));
+            ComposedScreenFixture.Value(Related(
+                Operation(ViewSelectRelated.MaterialToFaces),
+                ComposedScreenFixture.Given(
+                    ViewSelectRelated.MaterialIndicesName, new object[] { 0 })));
+
+            IDictionary<string, object> envelope = Related(
+                Operation(ViewSelectRelated.MaterialToFaces),
+                ComposedScreenFixture.Given(
+                    ViewSelectRelated.MaterialIndicesName, new object[] { -1 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedScreenFixture.Code(envelope));
+            Assert.Contains(ViewSelectRelated.MaterialIndicesName, ComposedEditFixture.Message(envelope));
+        }
+
+        [Fact]
         public void EachSelectedFaceReachesTheViewAsItsThreeCorners()
         {
             IList<IPXVertex> vertices = Vertices(5);

@@ -192,21 +192,19 @@ namespace PmxEditorMcp
 
             int fromBone;
             int toBone;
-            if (!ComposedInput.TryCount(
+            if (!ComposedInput.TryInteger(
                     context,
                     FromBoneName,
                     operation,
                     new[] { ReplaceBone },
-                    0,
                     out fromBone,
                     out code,
                     out message)
-                || !ComposedInput.TryCount(
+                || !ComposedInput.TryInteger(
                     context,
                     ToBoneName,
                     operation,
                     new[] { ReplaceBone },
-                    0,
                     out toBone,
                     out code,
                     out message)
@@ -434,7 +432,6 @@ namespace PmxEditorMcp
                     out code,
                     out message))
             {
-                code = ToolEnvelope.InvalidArgument;
                 input = null;
 
                 return false;
@@ -463,7 +460,7 @@ namespace PmxEditorMcp
                         out minWeight,
                         out code,
                         out message))
-                || !TryExcluded(context, model, excluded, out message)
+                || !TryExcluded(context, model, excluded, out code, out message)
                 || !TryFalloff(context, input, out message))
             {
                 code = code ?? ToolEnvelope.InvalidArgument;
@@ -526,8 +523,13 @@ namespace PmxEditorMcp
         }
 
         private static bool TryExcluded(
-            McpMethodContext context, IPXPmx model, ISet<IPXBone> excluded, out string message)
+            McpMethodContext context,
+            IPXPmx model,
+            ISet<IPXBone> excluded,
+            out string code,
+            out string message)
         {
+            code = null;
             message = null;
             object given;
             if (!context.Params.TryGetValue(ExcludeBonesName, out given))
@@ -537,25 +539,35 @@ namespace PmxEditorMcp
 
             object[] items = given as object[];
             HashSet<IPXBone> roots = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
-            bool sound = items != null;
-            foreach (object item in items ?? new object[0])
+            string shape = ExcludeBonesName + " はボーンの位置を並べた並びでなければならない。";
+            if (items == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = shape;
+
+                return false;
+            }
+
+            foreach (object item in items)
             {
                 int at;
-                if (!ValueInput.TryIndex(item, out at) || at < 0 || at >= model.Bone.Count)
+                if (!ValueInput.TryIndex(item, out at))
                 {
-                    sound = false;
-                    break;
+                    code = ToolEnvelope.InvalidArgument;
+                    message = shape;
+
+                    return false;
+                }
+
+                if (at < 0 || at >= model.Bone.Count)
+                {
+                    code = ToolEnvelope.IndexOutOfRange;
+                    message = ExcludeBonesName + " が並びの外を指している: " + at;
+
+                    return false;
                 }
 
                 roots.Add(model.Bone[at]);
-            }
-
-            if (!sound)
-            {
-                message = ExcludeBonesName + " はボーンの位置を並べた並びで、どれもボーンの数 "
-                    + model.Bone.Count.ToString(CultureInfo.InvariantCulture) + " 未満でなければならない。";
-
-                return false;
             }
 
             foreach (IPXBone bone in model.Bone)
@@ -788,15 +800,17 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            code = ToolEnvelope.InvalidArgument;
-            if (fromBone >= model.Bone.Count || toBone >= model.Bone.Count)
+            code = ToolEnvelope.IndexOutOfRange;
+            if (fromBone < 0 || toBone < 0 || fromBone >= model.Bone.Count || toBone >= model.Bone.Count)
             {
                 message = FromBoneName + " と " + ToBoneName + " はボーンの数 "
                     + model.Bone.Count.ToString(CultureInfo.InvariantCulture)
-                    + " 未満でなければならない。";
+                    + " 未満の0以上でなければならない。";
 
                 return false;
             }
+
+            code = ToolEnvelope.InvalidArgument;
 
             if (fromBone == toBone)
             {

@@ -106,8 +106,11 @@ namespace PmxEditorMcp.Tests
                 using (Screen screen = new Screen(fixture, 2))
                 {
                     Assert.Equal(
-                        ToolEnvelope.InvalidArgument,
+                        ToolEnvelope.IndexOutOfRange,
                         ComposedScreenFixture.Code(Call(fixture, false, new object[] { 1, 99 })));
+                    Assert.Equal(
+                        ToolEnvelope.IndexOutOfRange,
+                        ComposedScreenFixture.Code(Call(fixture, false, new object[] { -1 })));
                     Assert.Equal(new[] { true, true }, screen.Enabled);
                 }
             });

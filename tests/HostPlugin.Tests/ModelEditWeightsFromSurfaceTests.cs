@@ -167,7 +167,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("indices", new object[] { 3 }),
                 ComposedEditFixture.Given(SurfaceMaterialIndices, new object[] { 5 }));
 
-            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
             Assert.Contains(SurfaceMaterialIndices, ComposedEditFixture.Message(envelope));
         }
 
@@ -353,7 +353,49 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("indices", new object[] { 3 }),
                 ComposedEditFixture.Given(ExcludeBones, new object[] { 9 }));
 
-            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+            Assert.Contains(ExcludeBones, ComposedEditFixture.Message(envelope));
+        }
+
+        [Fact]
+        public void AnExcludedBoneThatIsNotAPositionIsRefusedAsInvalid()
+        {
+            IList<IPXBone> bones = Bones("一", "元");
+            Triangle(bones[0], bones[0], bones[0]);
+            Target(0.25f, 0.1f, 0.5f, bones[1]);
+            ComposedEditFixture.Value(
+                FromTheSurface(
+                    ComposedEditFixture.Given("indices", new object[] { 3 }),
+                    ComposedEditFixture.Given(ExcludeBones, new object[] { 1 })));
+
+            object[] wrong = { 1, "a", new object[] { "a" }, new object[] { 0.5 } };
+            foreach (object excluded in wrong)
+            {
+                IDictionary<string, object> envelope = FromTheSurface(
+                    ComposedEditFixture.Given("indices", new object[] { 3 }),
+                    ComposedEditFixture.Given(ExcludeBones, excluded));
+
+                Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+                Assert.Contains(ExcludeBones, ComposedEditFixture.Message(envelope));
+            }
+        }
+
+        [Fact]
+        public void ANegativeExcludedBoneIsRefusedAsOutsideTheList()
+        {
+            IList<IPXBone> bones = Bones("一", "元");
+            Triangle(bones[0], bones[0], bones[0]);
+            Target(0.25f, 0.1f, 0.5f, bones[1]);
+            ComposedEditFixture.Value(
+                FromTheSurface(
+                    ComposedEditFixture.Given("indices", new object[] { 3 }),
+                    ComposedEditFixture.Given(ExcludeBones, new object[] { 1 })));
+
+            IDictionary<string, object> envelope = FromTheSurface(
+                ComposedEditFixture.Given("indices", new object[] { 3 }),
+                ComposedEditFixture.Given(ExcludeBones, new object[] { -1 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
             Assert.Contains(ExcludeBones, ComposedEditFixture.Message(envelope));
         }
 

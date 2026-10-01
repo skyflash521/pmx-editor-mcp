@@ -118,6 +118,16 @@ namespace PmxEditorMcp
                 separator = between;
             }
 
+            foreach (int bone in wanted ?? new int[0])
+            {
+                if (bone < 0 || bone >= model.Bone.Count)
+                {
+                    return ComposedEditResult.Refuse(
+                        ToolEnvelope.IndexOutOfRange,
+                        BoneIndicesName + " が並びの外を指している: " + bone);
+                }
+            }
+
             IList<int> targets = wanted ?? listed;
             foreach (int bone in targets)
             {

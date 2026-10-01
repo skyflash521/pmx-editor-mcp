@@ -553,11 +553,14 @@ namespace PmxEditorMcp.Tests
             Vertex(0f, 0f, 0f);
             object[][] wrong =
             {
-                new object[] { 0, null },
-                new object[] { null, 1 },
-                new object[] { 0, 2 },
-                new object[] { -1, 1 },
-                new object[] { 1, 1 },
+                new object[] { 0, null, ToolEnvelope.InvalidArgument },
+                new object[] { null, 1, ToolEnvelope.InvalidArgument },
+                new object[] { 0, 0.5, ToolEnvelope.InvalidArgument },
+                new object[] { "a", 1, ToolEnvelope.InvalidArgument },
+                new object[] { 0, 2, ToolEnvelope.IndexOutOfRange },
+                new object[] { -1, 1, ToolEnvelope.IndexOutOfRange },
+                new object[] { 1, -1, ToolEnvelope.IndexOutOfRange },
+                new object[] { 1, 1, ToolEnvelope.InvalidArgument },
             };
             foreach (object[] pair in wrong)
             {
@@ -577,7 +580,7 @@ namespace PmxEditorMcp.Tests
                 }
 
                 Assert.Equal(
-                    ToolEnvelope.InvalidArgument,
+                    (string)pair[2],
                     ComposedEditFixture.Code(Weights(given.ToArray())));
             }
         }

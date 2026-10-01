@@ -422,6 +422,20 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ANegativeTargetIsRefusedAsOutsideTheList()
+        {
+            Settled();
+            string before = Shape();
+
+            IDictionary<string, object> envelope = Run(With(
+                Full(Handle(), "x", new[] { 0 }, new[] { 0 }), TargetIndices, new object[] { -1 }));
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+            Assert.Contains(TargetIndices, ComposedEditFixture.Message(envelope));
+            Assert.Equal(before, Shape());
+        }
+
+        [Fact]
         public void ACopyHandleThatIsNotHeldIsRefused()
         {
             Settled();
