@@ -250,6 +250,37 @@ namespace PmxEditorMcp.Tests
             Near(1.0, Share(target, bones[1]));
         }
 
+        [Theory]
+        [InlineData(1f)]
+        [InlineData(-1f)]
+        public void TheRayProjectionTakesTheFaceTheVertexLiesOnWhicheverWayTheNormalFaces(float normalY)
+        {
+            IList<IPXBone> bones = Bones("下", "上", "元");
+            Triangle(bones[0], bones[0], bones[0]);
+            FakeVertex[] upper =
+            {
+                new FakeVertex(0f, 1f, 0f),
+                new FakeVertex(1f, 1f, 0f),
+                new FakeVertex(0f, 1f, 1f),
+            };
+            foreach (FakeVertex corner in upper)
+            {
+                Weigh(corner, bones[1], 1f);
+                _fixture.Model.Vertex.Add(corner);
+            }
+
+            _surface.Faces.Add(new FakeFace(upper[0], upper[1], upper[2]));
+            FakeVertex target = Target(0.25f, 0f, 0.5f, bones[2]);
+            target.Normal = new V3(0f, normalY, 0f);
+
+            FromTheSurface(
+                ComposedEditFixture.Given("indices", new object[] { 6 }),
+                ComposedEditFixture.Given(Projection, "ray"));
+
+            Near(1.0, Share(target, bones[0]));
+            Near(0.0, Share(target, bones[1]));
+        }
+
         [Fact]
         public void AProjectionOtherThanNearestAndRayIsRefused()
         {

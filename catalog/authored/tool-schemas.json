@@ -6437,6 +6437,80 @@
               "bounds": {
                 "minimum": 0
               }
+            },
+            {
+              "name": "surfaceMaterialIndices",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "projection",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            },
+            {
+              "name": "excludeBones",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "maxBones",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 1,
+                "maximum": 4
+              }
+            },
+            {
+              "name": "minWeight",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "falloff",
+              "origin": "hostInput",
+              "required": false,
+              "members": [
+                {
+                  "name": "near",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "fade",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                }
+              ]
             }
           ],
           "choices": [

@@ -170,10 +170,17 @@ namespace PmxEditorMcp
         internal sealed class Hit
         {
             public Hit(Vec point, double signed, Vec front)
+                : this(point, signed, front, null, null)
+            {
+            }
+
+            public Hit(Vec point, double signed, Vec front, IPXVertex[] corners, double[] barycentric)
             {
                 Point = point;
                 Signed = signed;
                 Front = front;
+                Corners = corners;
+                Barycentric = barycentric;
             }
 
             public Vec Point { get; }
@@ -181,6 +188,10 @@ namespace PmxEditorMcp
             public double Signed { get; }
 
             public Vec Front { get; }
+
+            public IPXVertex[] Corners { get; }
+
+            public double[] Barycentric { get; }
         }
 
         internal struct Vec
@@ -253,10 +264,11 @@ namespace PmxEditorMcp
 
             private readonly Vec[] _normals;
 
-            public Triangle(Vec[] corners, Vec[] normals)
+            public Triangle(Vec[] corners, Vec[] normals, IPXVertex[] vertices)
             {
                 _corners = corners;
                 _normals = normals;
+                Vertices = vertices;
                 Low = new Vec(
                     corners.Min(c => c.X), corners.Min(c => c.Y), corners.Min(c => c.Z));
                 High = new Vec(
@@ -269,6 +281,48 @@ namespace PmxEditorMcp
             public Vec High { get; }
 
             public Vec Centre { get; }
+
+            public IPXVertex[] Vertices { get; }
+
+            public bool Hits(Vec origin, Vec direction, out double along, out double[] barycentric)
+            {
+                along = 0;
+                barycentric = null;
+                Vec first = _corners[1] - _corners[0];
+                Vec second = _corners[2] - _corners[0];
+                Vec across = direction.Cross(second);
+                double det = first.Dot(across);
+                if (Math.Abs(det) < 1e-18)
+                {
+                    return false;
+                }
+
+                double inverse = 1.0 / det;
+                Vec from = origin - _corners[0];
+                double u = from.Dot(across) * inverse;
+                if (u < 0 || u > 1)
+                {
+                    return false;
+                }
+
+                Vec up = from.Cross(first);
+                double v = direction.Dot(up) * inverse;
+                if (v < 0 || u + v > 1)
+                {
+                    return false;
+                }
+
+                along = second.Dot(up) * inverse;
+                if (!(along >= -1e-9))
+                {
+                    return false;
+                }
+
+                along = Math.Max(along, 0);
+                barycentric = new[] { 1 - u - v, u, v };
+
+                return true;
+            }
 
             /// <summary>始点 <paramref name="origin"/> から向き <paramref name="direction"/> へ伸ばした半直線が面を貫くか。</summary>
             public bool Crosses(Vec origin, Vec direction)
@@ -301,12 +355,13 @@ namespace PmxEditorMcp
             }
 
             /// <summary>面の上で <paramref name="point"/> に最も近い点と、そこでの表の向きを返す。</summary>
-            public Vec Closest(Vec point, out Vec front)
+            public Vec Closest(Vec point, out Vec front, out double[] barycentric)
             {
                 double u;
                 double v;
                 double w;
                 Barycentric(point, out u, out v, out w);
+                barycentric = new[] { u, v, w };
                 front = (_normals[0] * u) + (_normals[1] * v) + (_normals[2] * w);
                 if (front.Dot(front) == 0)
                 {
@@ -499,7 +554,7 @@ namespace PmxEditorMcp
                             continue;
                         }
 
-                        triangles.Add(new Triangle(spots, corners.Select(c => Vec.Of(c.Normal)).ToArray()));
+                        triangles.Add(new Triangle(spots, corners.Select(c => Vec.Of(c.Normal)).ToArray(), corners));
                     }
                 }
 
@@ -512,9 +567,10 @@ namespace PmxEditorMcp
                 double best = reach * reach;
                 Vec closest = default(Vec);
                 Vec front = default(Vec);
-                bool found = false;
-                Search(point, ref best, ref closest, ref front, ref found);
-                if (!found)
+                Triangle on = null;
+                double[] weights = null;
+                Search(point, ref best, ref closest, ref front, ref on, ref weights);
+                if (on == null)
                 {
                     return null;
                 }
@@ -525,7 +581,62 @@ namespace PmxEditorMcp
                 return new Hit(
                     closest,
                     (point - closest).Dot(front) < 0 ? -distance : distance,
-                    span > 0 ? front * (1.0 / span) : front);
+                    span > 0 ? front * (1.0 / span) : front,
+                    on.Vertices,
+                    weights);
+            }
+
+            /// <summary>
+            /// 始点が面の上にあるときはその面も貫かれたものとして、半直線が最初に貫く面を返す。貫く面が無ければ null を返す。
+            /// 返す <see cref="Hit.Signed"/> は始点から貫く点までの長さである。
+            /// </summary>
+            public Hit Cast(Vec origin, Vec direction)
+            {
+                double best = double.PositiveInfinity;
+                Triangle found = null;
+                double[] weights = null;
+                Cross(origin, direction, ref best, ref found, ref weights);
+                if (found == null)
+                {
+                    return null;
+                }
+
+                Vec on = origin + (direction * best);
+                Vec front;
+                double[] unused;
+                found.Closest(on, out front, out unused);
+                double span = front.Length;
+
+                return new Hit(on, best, span > 0 ? front * (1.0 / span) : front, found.Vertices, weights);
+            }
+
+            private void Cross(
+                Vec origin, Vec direction, ref double best, ref Triangle found, ref double[] weights)
+            {
+                if (!RayHitsBox(origin, direction))
+                {
+                    return;
+                }
+
+                if (_leaf != null)
+                {
+                    foreach (Triangle triangle in _leaf)
+                    {
+                        double along;
+                        double[] barycentric;
+                        if (triangle.Hits(origin, direction, out along, out barycentric) && along < best)
+                        {
+                            best = along;
+                            found = triangle;
+                            weights = barycentric;
+                        }
+                    }
+
+                    return;
+                }
+
+                _left.Cross(origin, direction, ref best, ref found, ref weights);
+                _right.Cross(origin, direction, ref best, ref found, ref weights);
             }
 
             /// <summary>3方向の半直線が面を貫く回数の偶奇のうち、奇数が多い向きの数で内側かを決める。</summary>
@@ -587,7 +698,8 @@ namespace PmxEditorMcp
                 return near <= far && far >= 0;
             }
 
-            private void Search(Vec point, ref double best, ref Vec closest, ref Vec front, ref bool found)
+            private void Search(
+                Vec point, ref double best, ref Vec closest, ref Vec front, ref Triangle found, ref double[] weights)
             {
                 if (BoxDistance(point) > best)
                 {
@@ -599,15 +711,17 @@ namespace PmxEditorMcp
                     foreach (Triangle triangle in _leaf)
                     {
                         Vec facing;
-                        Vec on = triangle.Closest(point, out facing);
+                        double[] barycentric;
+                        Vec on = triangle.Closest(point, out facing, out barycentric);
                         Vec gap = point - on;
                         double squared = gap.Dot(gap);
-                        if (squared < best || (!found && squared <= best))
+                        if (squared < best || (found == null && squared <= best))
                         {
                             best = squared;
                             closest = on;
                             front = facing;
-                            found = true;
+                            found = triangle;
+                            weights = barycentric;
                         }
                     }
 
@@ -622,8 +736,8 @@ namespace PmxEditorMcp
                     second = _left;
                 }
 
-                first.Search(point, ref best, ref closest, ref front, ref found);
-                second.Search(point, ref best, ref closest, ref front, ref found);
+                first.Search(point, ref best, ref closest, ref front, ref found, ref weights);
+                second.Search(point, ref best, ref closest, ref front, ref found, ref weights);
             }
 
             private double BoxDistance(Vec point)

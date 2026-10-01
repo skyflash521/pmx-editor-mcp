@@ -35,6 +35,8 @@ namespace PmxEditorMcp
 
         public const string ReplaceBone = "replaceBone";
 
+        public const string FromSurface = "fromSurface";
+
         public const string FromBoneName = "fromBone";
 
         public const string ToBoneName = "toBone";
@@ -44,6 +46,26 @@ namespace PmxEditorMcp
 
         /// <summary>軸を受け取る入力の名前。</summary>
         public const string AxisName = "axis";
+
+        public const string ProjectionName = "projection";
+
+        public const string ProjectionNearest = "nearest";
+
+        public const string ProjectionRay = "ray";
+
+        public const string ExcludeBonesName = "excludeBones";
+
+        public const string MaxBonesName = "maxBones";
+
+        public const string MinWeightName = "minWeight";
+
+        public const string FalloffName = "falloff";
+
+        public const string FalloffNearName = "near";
+
+        public const string FalloffFadeName = "fade";
+
+        private const int DefaultMaxBones = 4;
 
         /// <summary>変えた頂点の数を返す項目の名前。</summary>
         public const string ChangedName = "changed";
@@ -68,6 +90,7 @@ namespace PmxEditorMcp
                     Normalize,
                     RepairMissingBone,
                     ReplaceBone,
+                    FromSurface,
                 };
             }
         }
@@ -97,6 +120,12 @@ namespace PmxEditorMcp
                 AxisName,
                 FromBoneName,
                 ToBoneName,
+                ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
+                ProjectionName,
+                ExcludeBonesName,
+                MaxBonesName,
+                MinWeightName,
+                FalloffName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -171,6 +200,12 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            SurfaceInput surface;
+            if (!TrySurface(context, model, operation, out surface, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
             IList<IPXVertex> picked = chosen.Select(at => model.Vertex[at]).ToList();
             if (string.Equals(operation, ReplaceBone, StringComparison.Ordinal))
             {
@@ -205,6 +240,10 @@ namespace PmxEditorMcp
                     Replaced(picked, model.Bone[fromBone], model.Bone[toBone]);
                     break;
 
+                case FromSurface:
+                    Surfaced(picked, surface);
+                    break;
+
                 default:
                     break;
             }
@@ -228,6 +267,412 @@ namespace PmxEditorMcp
                     { ChangedName, changed },
                 },
                 new[] { ScreenRefresh.WeightKind });
+        }
+
+        private sealed class SurfaceInput
+        {
+            public SurfaceGeometry.SurfaceTree Tree { get; set; }
+
+            public bool Ray { get; set; }
+
+            public ISet<IPXBone> Excluded { get; set; }
+
+            public int MaxBones { get; set; }
+
+            public float MinWeight { get; set; }
+
+            public bool Fades { get; set; }
+
+            public double Near { get; set; }
+
+            public double Fade { get; set; }
+        }
+
+        private static bool TrySurface(
+            McpMethodContext context,
+            IPXPmx model,
+            string operation,
+            out SurfaceInput input,
+            out string code,
+            out string message)
+        {
+            input = null;
+            code = null;
+            message = null;
+            string[] names =
+            {
+                ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
+                ProjectionName,
+                ExcludeBonesName,
+                MaxBonesName,
+                MinWeightName,
+                FalloffName,
+            };
+            if (!string.Equals(operation, FromSurface, StringComparison.Ordinal))
+            {
+                string stray = names.FirstOrDefault(name => context.Params.ContainsKey(name));
+                if (stray == null)
+                {
+                    return true;
+                }
+
+                code = ToolEnvelope.InvalidArgument;
+                message = stray + " を渡せるのは " + FromSurface + " のときだけである。";
+
+                return false;
+            }
+
+            List<int> materials;
+            string projection = ProjectionNearest;
+            int maxBones = DefaultMaxBones;
+            float minWeight = 0f;
+            ISet<IPXBone> excluded = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            input = new SurfaceInput();
+            if (!ModelFindSurfaceDistances.TryMaterials(
+                    context,
+                    model,
+                    ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
+                    out materials,
+                    out code,
+                    out message))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                input = null;
+
+                return false;
+            }
+
+            if ((context.Params.ContainsKey(ProjectionName)
+                    && !ComposedInput.TryChoice(
+                        context,
+                        ProjectionName,
+                        operation,
+                        new[] { FromSurface },
+                        new[] { ProjectionNearest, ProjectionRay },
+                        out projection,
+                        out code,
+                        out message))
+                || (context.Params.ContainsKey(MaxBonesName)
+                    && !TryMaxBones(context, operation, out maxBones, out code, out message))
+                || (context.Params.ContainsKey(MinWeightName)
+                    && !ComposedInput.TryFloat(
+                        context,
+                        MinWeightName,
+                        operation,
+                        new[] { FromSurface },
+                        0f,
+                        ComposedInput.NoCeiling,
+                        out minWeight,
+                        out code,
+                        out message))
+                || !TryExcluded(context, model, excluded, out message)
+                || !TryFalloff(context, input, out message))
+            {
+                code = code ?? ToolEnvelope.InvalidArgument;
+                input = null;
+
+                return false;
+            }
+
+            code = null;
+            message = null;
+            input.Tree = SurfaceGeometry.SurfaceTree.Of(model, materials);
+            if (input.Tree == null)
+            {
+                code = ToolEnvelope.NotApplicable;
+                message = ModelFindSurfaceDistances.SurfaceMaterialIndicesName
+                    + " の材質に面積のある面が1つも無い。";
+                input = null;
+
+                return false;
+            }
+
+            input.Ray = string.Equals(projection, ProjectionRay, StringComparison.Ordinal);
+            input.Excluded = excluded;
+            input.MaxBones = maxBones;
+            input.MinWeight = minWeight;
+
+            return true;
+        }
+
+        private static bool TryMaxBones(
+            McpMethodContext context,
+            string operation,
+            out int maxBones,
+            out string code,
+            out string message)
+        {
+            if (!ComposedInput.TryCount(
+                    context,
+                    MaxBonesName,
+                    operation,
+                    new[] { FromSurface },
+                    1,
+                    out maxBones,
+                    out code,
+                    out message))
+            {
+                return false;
+            }
+
+            if (maxBones <= VertexWeights.Slots)
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = MaxBonesName + " は 1 以上 "
+                + VertexWeights.Slots.ToString(CultureInfo.InvariantCulture) + " 以下でなければならない。";
+
+            return false;
+        }
+
+        private static bool TryExcluded(
+            McpMethodContext context, IPXPmx model, ISet<IPXBone> excluded, out string message)
+        {
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(ExcludeBonesName, out given))
+            {
+                return true;
+            }
+
+            object[] items = given as object[];
+            HashSet<IPXBone> roots = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            bool sound = items != null;
+            foreach (object item in items ?? new object[0])
+            {
+                int at;
+                if (!ValueInput.TryIndex(item, out at) || at < 0 || at >= model.Bone.Count)
+                {
+                    sound = false;
+                    break;
+                }
+
+                roots.Add(model.Bone[at]);
+            }
+
+            if (!sound)
+            {
+                message = ExcludeBonesName + " はボーンの位置を並べた並びで、どれもボーンの数 "
+                    + model.Bone.Count.ToString(CultureInfo.InvariantCulture) + " 未満でなければならない。";
+
+                return false;
+            }
+
+            foreach (IPXBone bone in model.Bone)
+            {
+                IPXBone up = bone;
+                for (int steps = 0; up != null && steps <= model.Bone.Count; steps++)
+                {
+                    if (roots.Contains(up))
+                    {
+                        excluded.Add(bone);
+                        break;
+                    }
+
+                    up = up.Parent;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool TryFalloff(McpMethodContext context, SurfaceInput input, out string message)
+        {
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(FalloffName, out given))
+            {
+                return true;
+            }
+
+            IDictionary<string, object> members = given as IDictionary<string, object>;
+            object near;
+            object fade;
+            float nearRead;
+            float fadeRead;
+            if (members == null
+                || members.Keys.Any(name => name != FalloffNearName && name != FalloffFadeName)
+                || !members.TryGetValue(FalloffNearName, out near)
+                || !members.TryGetValue(FalloffFadeName, out fade)
+                || !ValueInput.TrySingle(near, out nearRead)
+                || !ValueInput.TrySingle(fade, out fadeRead)
+                || !(nearRead >= 0f)
+                || !(fadeRead >= 0f)
+                || float.IsInfinity(nearRead)
+                || float.IsInfinity(fadeRead))
+            {
+                message = FalloffName + " は " + FalloffNearName + " と " + FalloffFadeName
+                    + " の両方を0以上の有限の数で持つ組でなければならない。";
+
+                return false;
+            }
+
+            input.Fades = true;
+            input.Near = nearRead;
+            input.Fade = fadeRead;
+
+            return true;
+        }
+
+        private static void Surfaced(IEnumerable<IPXVertex> picked, SurfaceInput input)
+        {
+            foreach (IPXVertex vertex in picked)
+            {
+                if (!Vectors.Finite(vertex.Position))
+                {
+                    continue;
+                }
+
+                SurfaceGeometry.Vec at = SurfaceGeometry.Vec.Of(vertex.Position);
+                SurfaceGeometry.Hit hit = Landing(input, at, vertex.Normal);
+                if (hit == null || hit.Corners == null)
+                {
+                    continue;
+                }
+
+                double fade = Faded(input, (hit.Point - at).Length);
+                IList<KeyValuePair<IPXBone, float>> copied = Copied(hit, input);
+                if (fade >= 1d || copied.Count == 0)
+                {
+                    continue;
+                }
+
+                if (fade == 0d && TrySdef(vertex, hit, copied))
+                {
+                    continue;
+                }
+
+                vertex.SDEF = false;
+                VertexWeights.Write(
+                    vertex,
+                    fade == 0d
+                        ? copied
+                        : VertexWeights.Settled(
+                            Weighted(copied, (float)(1d - fade))
+                                .Concat(Weighted(VertexWeights.Read(vertex), (float)fade))));
+            }
+        }
+
+        private static SurfaceGeometry.Hit Landing(SurfaceInput input, SurfaceGeometry.Vec at, V3 normal)
+        {
+            if (input.Ray && Vectors.Finite(normal))
+            {
+                SurfaceGeometry.Vec along = SurfaceGeometry.Vec.Of(normal);
+                double length = along.Length;
+                if (length > 0d && !double.IsInfinity(length))
+                {
+                    along = along * (1d / length);
+                    SurfaceGeometry.Hit front = input.Tree.Cast(at, along);
+                    SurfaceGeometry.Hit back = input.Tree.Cast(at, along * -1d);
+                    if (front != null && (back == null || front.Signed <= back.Signed))
+                    {
+                        return front;
+                    }
+
+                    if (back != null)
+                    {
+                        return back;
+                    }
+                }
+            }
+
+            return input.Tree.Nearest(at, double.PositiveInfinity);
+        }
+
+        private static double Faded(SurfaceInput input, double apart)
+        {
+            if (!input.Fades || apart <= input.Near)
+            {
+                return 0d;
+            }
+
+            if (input.Fade <= 0d || apart >= input.Near + input.Fade)
+            {
+                return 1d;
+            }
+
+            double t = (apart - input.Near) / input.Fade;
+
+            return t * t * (3d - (2d * t));
+        }
+
+        private static IList<KeyValuePair<IPXBone, float>> Copied(SurfaceGeometry.Hit hit, SurfaceInput input)
+        {
+            List<KeyValuePair<IPXBone, float>> mixed = new List<KeyValuePair<IPXBone, float>>();
+            for (int corner = 0; corner < hit.Corners.Length; corner++)
+            {
+                double by = hit.Barycentric[corner];
+                if (!(by > 0d))
+                {
+                    continue;
+                }
+
+                foreach (KeyValuePair<IPXBone, float> share in VertexWeights.Read(hit.Corners[corner]))
+                {
+                    if (share.Value > 0f && !input.Excluded.Contains(share.Key))
+                    {
+                        mixed.Add(new KeyValuePair<IPXBone, float>(share.Key, (float)(share.Value * by)));
+                    }
+                }
+            }
+
+            IList<KeyValuePair<IPXBone, float>> settled = VertexWeights.Settled(mixed);
+            settled = VertexWeights.Settled(settled.Take(input.MaxBones).ToList());
+
+            return VertexWeights.Settled(
+                settled.Where((share, at) => at == 0 || share.Value >= input.MinWeight).ToList());
+        }
+
+        private static bool TrySdef(
+            IPXVertex vertex, SurfaceGeometry.Hit hit, IList<KeyValuePair<IPXBone, float>> copied)
+        {
+            IPXVertex first = hit.Corners[0];
+            if (!hit.Corners.All(corner => corner.SDEF
+                    && corner.Bone1 != null
+                    && corner.Bone2 != null
+                    && ReferenceEquals(corner.Bone1, first.Bone1)
+                    && ReferenceEquals(corner.Bone2, first.Bone2))
+                || ReferenceEquals(first.Bone1, first.Bone2)
+                || copied.Count != 2
+                || !copied.Any(share => ReferenceEquals(share.Key, first.Bone1))
+                || !copied.Any(share => ReferenceEquals(share.Key, first.Bone2)))
+            {
+                return false;
+            }
+
+            double[] by = hit.Barycentric;
+            vertex.SDEF = true;
+            vertex.Bone1 = first.Bone1;
+            vertex.Bone2 = first.Bone2;
+            vertex.Bone3 = null;
+            vertex.Bone4 = null;
+            vertex.Weight1 = copied.First(share => ReferenceEquals(share.Key, first.Bone1)).Value;
+            vertex.Weight2 = copied.First(share => ReferenceEquals(share.Key, first.Bone2)).Value;
+            vertex.Weight3 = 0f;
+            vertex.Weight4 = 0f;
+            vertex.SDEF_C = Blended(hit.Corners, by, corner => corner.SDEF_C);
+            vertex.SDEF_R0 = Blended(hit.Corners, by, corner => corner.SDEF_R0);
+            vertex.SDEF_R1 = Blended(hit.Corners, by, corner => corner.SDEF_R1);
+
+            return true;
+        }
+
+        private static V3 Blended(IPXVertex[] corners, double[] by, Func<IPXVertex, V3> member)
+        {
+            double x = 0d;
+            double y = 0d;
+            double z = 0d;
+            for (int at = 0; at < corners.Length; at++)
+            {
+                V3 held = member(corners[at]);
+                x += held.X * by[at];
+                y += held.Y * by[at];
+                z += held.Z * by[at];
+            }
+
+            return new V3((float)x, (float)y, (float)z);
         }
 
         private static bool TryBones(
