@@ -135,16 +135,17 @@ namespace PmxEditorMcp
             return true;
         }
 
-        public static bool TryInteger(
+        public static bool TryPosition(
             McpMethodContext context,
             string name,
             string operation,
             IList<string> wanted,
-            out int number,
+            int ceiling,
+            out int at,
             out string code,
             out string message)
         {
-            number = 0;
+            at = 0;
             object given;
             bool asked;
             if (!TryWanted(context, name, operation, wanted, out given, out asked, out code, out message))
@@ -157,15 +158,14 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            if (!ValueInput.TryIndex(given, out number))
-            {
-                number = 0;
-
-                return Refuse(
-                    name + " は " + Listed(wanted) + " のときに渡す整数である。", out code, out message);
-            }
-
-            return true;
+            return PositionInput.TryOne(
+                given,
+                name,
+                name + " は " + Listed(wanted) + " のときに渡す位置の整数である。",
+                ceiling,
+                out at,
+                out code,
+                out message);
         }
 
         /// <summary>
@@ -378,38 +378,18 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            object[] items = given as object[];
-            List<int> taken = new List<int>();
-            if (items != null)
+            List<int> taken;
+            if (!PositionInput.TryMany(
+                given,
+                name,
+                name + " は " + Listed(wanted) + " のときに渡す、位置の並びである。",
+                ceiling,
+                true,
+                out taken,
+                out code,
+                out message))
             {
-                foreach (object item in items)
-                {
-                    int number;
-                    if (!ValueInput.TryIndex(item, out number))
-                    {
-                        items = null;
-
-                        break;
-                    }
-
-                    if (number < 0 || number >= ceiling)
-                    {
-                        code = ToolEnvelope.IndexOutOfRange;
-                        message = name + " が並びの外を指している: " + Spelled(number);
-
-                        return false;
-                    }
-
-                    taken.Add(number);
-                }
-            }
-
-            if (items == null)
-            {
-                return Refuse(
-                    name + " は " + Listed(wanted) + " のときに渡す、位置の並びである。",
-                    out code,
-                    out message);
+                return false;
             }
 
             indices = taken;

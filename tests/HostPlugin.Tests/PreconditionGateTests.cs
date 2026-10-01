@@ -109,6 +109,31 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void PointingOutsideTheItemsThatAreListedIsReportedAsOutOfRange()
+        {
+            foreach (long at in new long[] { -1, 62, long.MaxValue, long.MinValue })
+            {
+                string code;
+                string message;
+
+                Assert.False(PreconditionGate.TryAccept(
+                    PreconditionKind.ListedParts, 62, false, new long[] { at }, out code, out message));
+                Assert.Equal(ToolEnvelope.IndexOutOfRange, code);
+            }
+        }
+
+        [Fact]
+        public void AListThatHasNotBeenBuiltIsReportedAsNotApplicable()
+        {
+            string code;
+            string message;
+
+            Assert.False(PreconditionGate.TryAccept(
+                PreconditionKind.ListedParts, 0, false, new long[] { 0 }, out code, out message));
+            Assert.Equal(ToolEnvelope.NotApplicable, code);
+        }
+
+        [Fact]
         public void PointingAtTheItemsThatAreListedGoesThrough()
         {
             string message;

@@ -320,34 +320,18 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            object[] items = given as object[];
-            if (items == null)
+            List<int> materials;
+            if (!PositionInput.TryMany(
+                given,
+                MaterialIndicesName,
+                MaterialIndicesName + " は材質の位置の並びでなければならない。",
+                model.Material.Count,
+                true,
+                out materials,
+                out code,
+                out message))
             {
-                message = MaterialIndicesName + " は材質の位置の並びでなければならない。";
-
                 return false;
-            }
-
-            List<int> materials = new List<int>();
-            foreach (object item in items)
-            {
-                int at;
-                if (!ValueInput.TryIndex(item, out at))
-                {
-                    message = MaterialIndicesName + " は材質の位置の並びでなければならない。";
-
-                    return false;
-                }
-
-                if (at < 0 || at >= model.Material.Count)
-                {
-                    code = ToolEnvelope.IndexOutOfRange;
-                    message = MaterialIndicesName + " が並びの外を指している: " + at;
-
-                    return false;
-                }
-
-                materials.Add(at);
             }
 
             chosen = ModelFindMaterialVertices.Used(model, materials).ToList();

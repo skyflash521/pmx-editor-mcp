@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 
 namespace PmxEditorMcp
@@ -83,20 +82,11 @@ namespace PmxEditorMcp
             message = null;
             foreach (int index in positions)
             {
-                if (index >= 0 && index < referencedCount)
+                if (!PositionInput.TryWithin(
+                    index, referencedCount, name, out code, out message, "参照先のリストの件数"))
                 {
-                    continue;
+                    return false;
                 }
-
-                code = ToolEnvelope.IndexOutOfRange;
-                message = string.Format(
-                    CultureInfo.InvariantCulture,
-                    "{0} の位置が範囲の外にある: {1}(参照先のリストの件数は {2})",
-                    name,
-                    index,
-                    referencedCount);
-
-                return false;
             }
 
             return true;

@@ -37,6 +37,20 @@ namespace PmxEditorMcp
             IList<long> pointed,
             out string message)
         {
+            string code;
+
+            return TryAccept(kind, counted, modified, pointed, out code, out message);
+        }
+
+        public static bool TryAccept(
+            PreconditionKind kind,
+            int? counted,
+            bool modified,
+            IList<long> pointed,
+            out string code,
+            out string message)
+        {
+            code = ToolEnvelope.NotApplicable;
             message = null;
             if (kind == PreconditionKind.SavedEdits)
             {
@@ -45,7 +59,7 @@ namespace PmxEditorMcp
 
             if (kind == PreconditionKind.ListedParts)
             {
-                return TryListed(counted, out message) && TryInside(counted, pointed, out message);
+                return TryListed(counted, out message) && TryInside(counted, pointed, out code, out message);
             }
 
             if (kind == PreconditionKind.UndoHistory)
@@ -197,8 +211,10 @@ namespace PmxEditorMcp
             return true;
         }
 
-        private static bool TryInside(int? listed, IList<long> pointed, out string message)
+        private static bool TryInside(
+            int? listed, IList<long> pointed, out string code, out string message)
         {
+            code = ToolEnvelope.NotApplicable;
             message = null;
             if (listed == null || pointed == null)
             {
@@ -207,7 +223,13 @@ namespace PmxEditorMcp
 
             foreach (long at in pointed)
             {
-                if (at < 0 || at >= listed.Value)
+                string ignored;
+                if (!PositionInput.TryWithin(
+                    (int)Math.Min(Math.Max(at, int.MinValue), int.MaxValue),
+                    listed.Value,
+                    string.Empty,
+                    out code,
+                    out ignored))
                 {
                     message = "絞込の一覧に並んでいない位置を指している: " + at
                         + "。並んでいるのは 0 から " + (listed.Value - 1) + " までの "

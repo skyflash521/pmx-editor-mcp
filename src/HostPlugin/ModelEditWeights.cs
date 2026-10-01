@@ -192,23 +192,25 @@ namespace PmxEditorMcp
 
             int fromBone;
             int toBone;
-            if (!ComposedInput.TryInteger(
+            if (!ComposedInput.TryPosition(
                     context,
                     FromBoneName,
                     operation,
                     new[] { ReplaceBone },
+                    model.Bone.Count,
                     out fromBone,
                     out code,
                     out message)
-                || !ComposedInput.TryInteger(
+                || !ComposedInput.TryPosition(
                     context,
                     ToBoneName,
                     operation,
                     new[] { ReplaceBone },
+                    model.Bone.Count,
                     out toBone,
                     out code,
                     out message)
-                || !TryBones(model, operation, fromBone, toBone, out code, out message))
+                || !TryBones(operation, fromBone, toBone, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -537,38 +539,22 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            object[] items = given as object[];
-            HashSet<IPXBone> roots = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
-            string shape = ExcludeBonesName + " はボーンの位置を並べた並びでなければならない。";
-            if (items == null)
+            List<int> taken;
+            if (!PositionInput.TryMany(
+                given,
+                ExcludeBonesName,
+                ExcludeBonesName + " はボーンの位置を並べた並びでなければならない。",
+                model.Bone.Count,
+                true,
+                out taken,
+                out code,
+                out message))
             {
-                code = ToolEnvelope.InvalidArgument;
-                message = shape;
-
                 return false;
             }
 
-            foreach (object item in items)
-            {
-                int at;
-                if (!ValueInput.TryIndex(item, out at))
-                {
-                    code = ToolEnvelope.InvalidArgument;
-                    message = shape;
-
-                    return false;
-                }
-
-                if (at < 0 || at >= model.Bone.Count)
-                {
-                    code = ToolEnvelope.IndexOutOfRange;
-                    message = ExcludeBonesName + " が並びの外を指している: " + at;
-
-                    return false;
-                }
-
-                roots.Add(model.Bone[at]);
-            }
+            HashSet<IPXBone> roots = new HashSet<IPXBone>(
+                taken.Select(at => model.Bone[at]), ReferenceComparer<IPXBone>.Instance);
 
             foreach (IPXBone bone in model.Bone)
             {
@@ -786,7 +772,6 @@ namespace PmxEditorMcp
         }
 
         private static bool TryBones(
-            IPXPmx model,
             string operation,
             int fromBone,
             int toBone,
@@ -798,16 +783,6 @@ namespace PmxEditorMcp
             if (!string.Equals(operation, ReplaceBone, StringComparison.Ordinal))
             {
                 return true;
-            }
-
-            code = ToolEnvelope.IndexOutOfRange;
-            if (fromBone < 0 || toBone < 0 || fromBone >= model.Bone.Count || toBone >= model.Bone.Count)
-            {
-                message = FromBoneName + " と " + ToBoneName + " はボーンの数 "
-                    + model.Bone.Count.ToString(CultureInfo.InvariantCulture)
-                    + " 未満の0以上でなければならない。";
-
-                return false;
             }
 
             code = ToolEnvelope.InvalidArgument;

@@ -99,11 +99,11 @@ namespace PmxEditorMcp
                 }
 
                 int length = kind.Items(owner).Count;
-                if (chosen.Count != 0 && to.HasValue && (to.Value < 0 || to.Value >= length))
+                if (chosen.Count != 0
+                    && to.HasValue
+                    && !PositionInput.TryWithin(to.Value, length, ToIndexName, out code, out message))
                 {
-                    return ComposedEditResult.Refuse(
-                        ToolEnvelope.IndexOutOfRange,
-                        ToIndexName + " が並びの外を指している: " + to.Value);
+                    return ComposedEditResult.Refuse(code, message);
                 }
 
                 IList<int> landed = Landed(move, to, chosen, length);
@@ -250,10 +250,13 @@ namespace PmxEditorMcp
             if (string.Equals(move, To, StringComparison.Ordinal))
             {
                 int taken;
-                if (!pointed || !ValueInput.TryIndex(wanted, out taken))
+                if (!PositionInput.TryRead(
+                    wanted,
+                    ToIndexName + " は " + To + " のときに渡す整数である。",
+                    out taken,
+                    out code,
+                    out message))
                 {
-                    message = ToIndexName + " は " + To + " のときに渡す整数である。";
-
                     return false;
                 }
 

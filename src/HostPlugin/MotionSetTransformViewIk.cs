@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Windows.Forms;
 using PEPlugin.Pmx;
 
@@ -62,10 +63,11 @@ namespace PmxEditorMcp
 
             bool enabled = (bool)given;
             IList<int> wanted;
+            string code;
             string message;
-            if (!TryBoneIndices(context, out wanted, out message))
+            if (!TryBoneIndices(context, out wanted, out code, out message))
             {
-                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
+                return ComposedEditResult.Refuse(code, message);
             }
 
             Form view = UiLive.Shown(forms(), TransformForm);
@@ -120,11 +122,9 @@ namespace PmxEditorMcp
 
             foreach (int bone in wanted ?? new int[0])
             {
-                if (bone < 0 || bone >= model.Bone.Count)
+                if (!PositionInput.TryWithin(bone, model.Bone.Count, BoneIndicesName, out code, out message))
                 {
-                    return ComposedEditResult.Refuse(
-                        ToolEnvelope.IndexOutOfRange,
-                        BoneIndicesName + " が並びの外を指している: " + bone);
+                    return ComposedEditResult.Refuse(code, message);
                 }
             }
 
@@ -182,9 +182,11 @@ namespace PmxEditorMcp
         }
 
         /// <summary>渡されていなければ null を返す。</summary>
-        private static bool TryBoneIndices(McpMethodContext context, out IList<int> indices, out string message)
+        private static bool TryBoneIndices(
+            McpMethodContext context, out IList<int> indices, out string code, out string message)
         {
             indices = null;
+            code = null;
             message = null;
             object given;
             if (!context.Params.TryGetValue(BoneIndicesName, out given) || given == null)
@@ -192,32 +194,21 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            object[] items = given as object[];
-            if (items == null)
+            List<int> read;
+            if (!PositionInput.TryMany(
+                given,
+                BoneIndicesName,
+                BoneIndicesName + " はボーンの位置を並べた並びでなければならない。",
+                PositionInput.Unbounded,
+                true,
+                out read,
+                out code,
+                out message))
             {
-                message = BoneIndicesName + " は0以上の整数の配列でなければならない。";
-
                 return false;
             }
 
-            List<int> taken = new List<int>();
-            foreach (object item in items)
-            {
-                int number;
-                if (!ValueInput.TryIndex(item, out number))
-                {
-                    message = BoneIndicesName + " は0以上の整数の配列でなければならない。";
-
-                    return false;
-                }
-
-                if (!taken.Contains(number))
-                {
-                    taken.Add(number);
-                }
-            }
-
-            indices = taken;
+            indices = read.Distinct().ToList();
 
             return true;
         }

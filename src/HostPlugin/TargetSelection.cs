@@ -390,15 +390,9 @@ namespace PmxEditorMcp
 
             foreach (int index in indices)
             {
-                if (index < 0 || index >= listCount)
+                if (!PositionInput.TryWithin(
+                    index, listCount, name, out code, out message, PositionInput.ListCountName))
                 {
-                    code = ToolEnvelope.IndexOutOfRange;
-                    message = string.Format(
-                        CultureInfo.InvariantCulture,
-                        "{0} の位置が範囲の外にある: {1}(リストの件数は {2})",
-                        name,
-                        index,
-                        listCount);
                     return false;
                 }
             }
@@ -428,39 +422,8 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            if (start.Value < 0)
+            if (!PositionInput.TryRange(start.Value, count.Value, listCount, names.Range, out code, out message))
             {
-                code = ToolEnvelope.IndexOutOfRange;
-                message = string.Format(
-                    CultureInfo.InvariantCulture,
-                    "{0} の start が0を下回っている: {1}",
-                    names.Range,
-                    start.Value);
-                return false;
-            }
-
-            if (count.Value < 1)
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = string.Format(
-                    CultureInfo.InvariantCulture,
-                    "{0} の count が1を下回っている: {1}",
-                    names.Range,
-                    count.Value);
-                return false;
-            }
-
-            long last = (long)start.Value + count.Value - 1;
-            if (last >= listCount)
-            {
-                code = ToolEnvelope.IndexOutOfRange;
-                message = string.Format(
-                    CultureInfo.InvariantCulture,
-                    "{0} が範囲の外まで及んでいる: {1} から {2} 件(リストの件数は {3})",
-                    names.Range,
-                    start.Value,
-                    count.Value,
-                    listCount);
                 return false;
             }
 

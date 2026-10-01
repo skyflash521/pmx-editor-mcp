@@ -188,6 +188,47 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void APositionToMoveToIsRefusedFromTheListLengthOnAndBelowZero()
+        {
+            Bones("一", "二");
+
+            foreach (object to in new object[] { 2, -1 })
+            {
+                IDictionary<string, object> envelope = Reorder(
+                    ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                    ComposedEditFixture.Given("indices", new object[] { 0 }),
+                    ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.To),
+                    ComposedEditFixture.Given(ModelReorderElements.ToIndexName, to));
+
+                Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+            }
+
+            ComposedEditFixture.Value(Reorder(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.To),
+                ComposedEditFixture.Given(ModelReorderElements.ToIndexName, 1)));
+            Assert.Equal(new[] { "二", "一" }, Names());
+        }
+
+        [Fact]
+        public void APositionToMoveToThatIsNotAnIntegerIsRefusedAsInvalid()
+        {
+            Bones("一", "二");
+
+            foreach (object to in new object[] { "a", 0.5 })
+            {
+                IDictionary<string, object> envelope = Reorder(
+                    ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                    ComposedEditFixture.Given("indices", new object[] { 0 }),
+                    ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.To),
+                    ComposedEditFixture.Given(ModelReorderElements.ToIndexName, to));
+
+                Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            }
+        }
+
+        [Fact]
         public void AMoveTheToolDoesNotKnowIsRefused()
         {
             Bones("一", "二");
@@ -744,6 +785,47 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelInsertElements.AtName, -1));
 
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void AnInsertPositionIsRefusedBeyondTheEndOfTheListAndAcceptedAtTheEnd()
+        {
+            Bones("一");
+
+            foreach (object at in new object[] { 2, 100, -1 })
+            {
+                IDictionary<string, object> refused = Insert(
+                    ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                    ComposedEditFixture.Given(
+                        ModelInsertElements.OperationName, ModelInsertElements.New),
+                    ComposedEditFixture.Given(ModelInsertElements.AtName, at));
+
+                Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(refused));
+            }
+
+            ComposedEditFixture.Value(Insert(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given(
+                    ModelInsertElements.OperationName, ModelInsertElements.New),
+                ComposedEditFixture.Given(ModelInsertElements.AtName, 1)));
+            Assert.Equal(2, _fixture.Model.Bone.Count);
+        }
+
+        [Fact]
+        public void AnInsertPositionThatIsNotAnIntegerIsRefusedAsInvalid()
+        {
+            Bones("一");
+
+            foreach (object at in new object[] { "a", 0.5, true })
+            {
+                IDictionary<string, object> envelope = Insert(
+                    ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                    ComposedEditFixture.Given(
+                        ModelInsertElements.OperationName, ModelInsertElements.New),
+                    ComposedEditFixture.Given(ModelInsertElements.AtName, at));
+
+                Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            }
         }
 
         [Fact]

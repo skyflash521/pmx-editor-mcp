@@ -183,18 +183,15 @@ namespace PmxEditorMcp
             }
 
             int taken;
-            if (!pointed || !ValueInput.TryIndex(given, out taken))
+            if (!PositionInput.TryOne(
+                given,
+                SourceName,
+                SourceName + " は " + Copy + " のときに渡す整数である。",
+                count,
+                out taken,
+                out code,
+                out message))
             {
-                message = SourceName + " は " + Copy + " のときに渡す整数である。";
-
-                return false;
-            }
-
-            if (taken < 0 || taken >= count)
-            {
-                code = ToolEnvelope.IndexOutOfRange;
-                message = SourceName + " が並びの外を指している: " + taken;
-
                 return false;
             }
 

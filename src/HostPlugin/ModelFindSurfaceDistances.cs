@@ -269,45 +269,18 @@ namespace PmxEditorMcp
             out string code,
             out string message)
         {
-            surface = new List<int>();
-            code = ToolEnvelope.InvalidArgument;
-            string shape = name + " は" + noun + "の位置を1つ以上並べた並びでなければならない。";
             object given;
-            object[] items;
-            if (!context.Params.TryGetValue(name, out given)
-                || (items = given as object[]) == null
-                || items.Length == 0)
-            {
-                message = shape;
+            context.Params.TryGetValue(name, out given);
 
-                return false;
-            }
-
-            foreach (object item in items)
-            {
-                int at;
-                if (!ValueInput.TryIndex(item, out at))
-                {
-                    message = shape;
-
-                    return false;
-                }
-
-                if (at < 0 || at >= count)
-                {
-                    code = ToolEnvelope.IndexOutOfRange;
-                    message = name + " が並びの外を指している: " + at;
-
-                    return false;
-                }
-
-                surface.Add(at);
-            }
-
-            code = null;
-            message = null;
-
-            return true;
+            return PositionInput.TryMany(
+                given,
+                name,
+                name + " は" + noun + "の位置を1つ以上並べた並びでなければならない。",
+                count,
+                false,
+                out surface,
+                out code,
+                out message);
         }
 
         internal static bool TryLimit(McpMethodContext context, out float? limit, out string message)

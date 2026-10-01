@@ -208,10 +208,9 @@ namespace PmxEditorMcp
             {
                 int length = kind.Items(owners[each]).Count;
                 int put = at ?? length;
-                if (put < 0 || put > length)
+                if (!PositionInput.TryWithin(put, length + 1, AtName, out code, out message))
                 {
-                    return ComposedEditResult.Refuse(
-                        ToolEnvelope.IndexOutOfRange, AtName + " が並びの外を指している: " + put);
+                    return ComposedEditResult.Refuse(code, message);
                 }
 
                 puts.Add(put);
@@ -470,11 +469,9 @@ namespace PmxEditorMcp
             }
 
             int taken;
-            if (!ValueInput.TryIndex(given, out taken))
+            if (!PositionInput.TryRead(
+                given, AtName + " は整数でなければならない。", out taken, out code, out message))
             {
-                code = ToolEnvelope.InvalidArgument;
-                message = AtName + " は整数でなければならない。";
-
                 return false;
             }
 

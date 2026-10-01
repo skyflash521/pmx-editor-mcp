@@ -987,6 +987,44 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void CopyingTheUvFromAVertexOutsideTheListIsOutOfRangeAndFromTheLastOneIsAccepted()
+        {
+            Vertices(2);
+
+            foreach (object source in new object[] { 2, -1 })
+            {
+                IDictionary<string, object> envelope = EditUv(
+                    Operation(ModelEditUv.Copy),
+                    ComposedEditFixture.Given("all", true),
+                    ComposedEditFixture.Given(ModelEditUv.SourceName, source));
+
+                Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
+                Assert.Contains(ModelEditUv.SourceName, ComposedEditFixture.Message(envelope));
+            }
+
+            ComposedEditFixture.Value(EditUv(
+                Operation(ModelEditUv.Copy),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditUv.SourceName, 1)));
+        }
+
+        [Fact]
+        public void CopyingTheUvFromSomethingThatIsNotAnIntegerIsInvalid()
+        {
+            Vertices(2);
+
+            foreach (object source in new object[] { "a", 0.5 })
+            {
+                IDictionary<string, object> envelope = EditUv(
+                    Operation(ModelEditUv.Copy),
+                    ComposedEditFixture.Given("all", true),
+                    ComposedEditFixture.Given(ModelEditUv.SourceName, source));
+
+                Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            }
+        }
+
+        [Fact]
         public void CopyingTheUvWithoutSayingWhereFromIsRefused()
         {
             Vertices(2);

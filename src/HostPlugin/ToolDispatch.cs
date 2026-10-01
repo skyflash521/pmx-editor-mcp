@@ -415,18 +415,20 @@ namespace PmxEditorMcp
                 return true;
             }
 
+            string code;
             string message;
             if (PreconditionGate.TryAccept(
                 precondition.Kind,
                 Counted(context, precondition, receiver),
                 _modifiers.AnyHeld(),
                 Pointing(context),
+                out code,
                 out message))
             {
                 return true;
             }
 
-            refused = new Refusal(ToolEnvelope.Failure(ToolEnvelope.NotApplicable, message));
+            refused = new Refusal(ToolEnvelope.Failure(code, message));
 
             return false;
         }
@@ -1966,12 +1968,12 @@ namespace PmxEditorMcp
                     }
 
                     int index = (int)one[at];
-                    if (index < 0 || index >= listed.Count)
+                    string code;
+                    string message;
+                    if (!PositionInput.TryWithin(
+                        index, listed.Count, argument.Name, out code, out message, PositionInput.ListCountName))
                     {
-                        refused = new Refusal(ToolEnvelope.Failure(
-                            ToolEnvelope.IndexOutOfRange,
-                            argument.Name + " の位置が範囲の外にある: " + index
-                                + "(リストの件数は " + listed.Count + ")"));
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
 
                         return false;
                     }
@@ -2082,12 +2084,12 @@ namespace PmxEditorMcp
             }
 
             int index = (int)value;
-            if (index < 0 || index >= listed.Count)
+            string code;
+            string message;
+            if (!PositionInput.TryWithin(
+                index, listed.Count, field.Name, out code, out message, PositionInput.ListCountName))
             {
-                refused = new Refusal(ToolEnvelope.Failure(
-                    ToolEnvelope.IndexOutOfRange,
-                    field.Name + " の位置が範囲の外にある: " + index
-                        + "(リストの件数は " + listed.Count + ")"));
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
 
                 return false;
             }
@@ -2466,12 +2468,17 @@ namespace PmxEditorMcp
                     return false;
                 }
 
-                if (pending.Position < 0 || pending.Position >= listed.Count)
+                string code;
+                string message;
+                if (!PositionInput.TryWithin(
+                    pending.Position,
+                    listed.Count,
+                    pending.Field.Name,
+                    out code,
+                    out message,
+                    PositionInput.ListCountName))
                 {
-                    refused = new Refusal(ToolEnvelope.Failure(
-                        ToolEnvelope.IndexOutOfRange,
-                        pending.Field.Name + " の位置が範囲の外にある: " + pending.Position
-                            + "(リストの件数は " + listed.Count + ")"));
+                    refused = new Refusal(ToolEnvelope.Failure(code, message));
 
                     return false;
                 }
@@ -3741,12 +3748,18 @@ namespace PmxEditorMcp
 
                 foreach (Assignment assignment in assignments)
                 {
+                    string code;
+                    string message;
                     if (!byHandle
-                        && (assignment.Parent < 0 || assignment.Parent >= owners.Count))
+                        && !PositionInput.TryWithin(
+                            assignment.Parent,
+                            owners.Count,
+                            ParentIndexName,
+                            out code,
+                            out message,
+                            "親の列の件数"))
                     {
-                        refused = new Refusal(ToolEnvelope.Failure(
-                            ToolEnvelope.IndexOutOfRange,
-                            ParentIndexName + " が親の列の外を指している: " + assignment.Parent));
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
 
                         return;
                     }
