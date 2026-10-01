@@ -150,7 +150,7 @@ namespace PmxEditorMcp.Tests
                 out value));
         }
 
-        private sealed class FakeVmePath : IPEVmePath
+        internal sealed class FakeVmePath : IPEVmePath
         {
             private readonly int _points;
 

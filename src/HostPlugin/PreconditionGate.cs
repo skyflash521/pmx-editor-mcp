@@ -231,7 +231,7 @@ namespace PmxEditorMcp
                     out code,
                     out ignored))
                 {
-                    message = "絞込の一覧に並んでいない位置を指している: " + at
+                    message = TargetNames.Element.Indices + " が絞込の一覧に並んでいない位置を指している: " + at
                         + "。並んでいるのは 0 から " + (listed.Value - 1) + " までの "
                         + listed.Value + " 件で、この一覧はモデルの要素の数が変わっても"
                         + "組み直されない。"

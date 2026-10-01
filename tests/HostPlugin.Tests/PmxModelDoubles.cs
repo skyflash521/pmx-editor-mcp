@@ -1152,7 +1152,7 @@ namespace PmxEditorMcp.Tests
 
         public IPXPrimitiveBuilder Primitive
         {
-            get { throw new NotSupportedException(); }
+            get { return new FakePrimitiveBuilder(); }
         }
 
         public void Clear()
@@ -1188,7 +1188,7 @@ namespace PmxEditorMcp.Tests
 
         public void ToStream(System.IO.Stream s)
         {
-            throw new NotSupportedException();
+            s.WriteByte(0);
         }
 
         public object Clone()
@@ -2427,6 +2427,69 @@ namespace PmxEditorMcp.Tests
         public IPXSoftBodyAnchor SoftBodyAnchor()
         {
             return new FakeSoftBodyAnchor();
+        }
+    }
+
+    public sealed class FakePrimitiveBuilder : IPXPrimitiveBuilder, PXCPlugin.IPXCPrimitiveBuilder
+    {
+        public void AddPlane(int material, V3 pos, float width, float height, int uc, int vc, int dir, bool uv, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddBox(int material, V3 pos, float width, float height, float depth, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddSphere(int material, V3 pos, float r, int slices, int stacks, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddCylinder(int material, V3 pos, float r1, float r2, float length, int slices, int stacks, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddTorus(int material, V3 pos, float r1, float r2, int sides, int rings, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddText(int material, V3 pos, System.Drawing.Font font, string text, float d, float ex, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddPlane(IPXPmx pmx, int material, V3 pos, float width, float height, int uc, int vc, int dir, bool uv, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddBox(IPXPmx pmx, int material, V3 pos, float width, float height, float depth, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddSphere(IPXPmx pmx, int material, V3 pos, float r, int slices, int stacks, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddCylinder(IPXPmx pmx, int material, V3 pos, float r1, float r2, float length, int slices, int stacks, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddTorus(IPXPmx pmx, int material, V3 pos, float r1, float r2, int sides, int rings, IPXBone bone)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void AddText(IPXPmx pmx, int material, V3 pos, System.Drawing.Font font, string text, float d, float ex, IPXBone bone)
+        {
+            throw new NotSupportedException();
         }
     }
 }

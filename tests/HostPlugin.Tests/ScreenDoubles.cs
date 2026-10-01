@@ -1528,6 +1528,10 @@ namespace PmxEditorMcp.Tests
             throw new NotSupportedException();
         }
 
+        public string[] BoneNames { get; set; }
+
+        public string[] MorphNames { get; set; }
+
         public string GetBoneName(int index)
         {
             throw new NotSupportedException();
@@ -1535,7 +1539,7 @@ namespace PmxEditorMcp.Tests
 
         public string[] GetBoneNames()
         {
-            throw new NotSupportedException();
+            return BoneNames ?? throw new NotSupportedException();
         }
 
         public int GetMorphIndex(string name)
@@ -1550,7 +1554,7 @@ namespace PmxEditorMcp.Tests
 
         public string[] GetMorphNames()
         {
-            throw new NotSupportedException();
+            return MorphNames ?? throw new NotSupportedException();
         }
 
         public void Init(PEPlugin.Pmd.IPEPmd pmd)

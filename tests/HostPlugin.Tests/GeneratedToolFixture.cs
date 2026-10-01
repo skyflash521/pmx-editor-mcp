@@ -15,6 +15,10 @@ namespace PmxEditorMcp.Tests
 
         private const string FormType = "PEPlugin.Form.IPEFormConnector";
 
+        private const string CPrimitiveType = "PXCPlugin.IPXCPrimitiveBuilder";
+
+        private const string PartsSelectType = "PEPlugin.View.IPEPartsSelectConnector";
+
         private const string StateReadKey = "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()";
 
         private const string CommitKey = "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx)";
@@ -45,6 +49,11 @@ namespace PmxEditorMcp.Tests
             receivers[ConnectorType] = connection => _connector;
             receivers[BuilderType] = connection => Builder;
             receivers[FormType] = connection => Form;
+            receivers[CPrimitiveType] = connection => new FakePrimitiveBuilder();
+            receivers["PXCPlugin.IPXSystemControl"] = connection => new FakeSystemControl();
+            receivers["PEPlugin.IPEBuilder"] = connection => new FakeHostBuilder();
+            Parts.Model = Model;
+            receivers[PartsSelectType] = connection => Parts;
             ResidentConnection resident = ResidentConnection.Hold(
                 new StubRunArgs(
                     new StubPluginHost(
@@ -97,6 +106,8 @@ namespace PmxEditorMcp.Tests
         public FakePmxView View { get; } = new FakePmxView();
 
         public FakeFormConnector Form { get; } = new FakeFormConnector();
+
+        public FakePartsSelect Parts { get; } = new FakePartsSelect();
 
         public HandleLedger Handles { get; }
 

@@ -513,8 +513,8 @@
         "n": 2147483647
       },
       "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
-      "refused": "TOOL_OPERATION_FAILED",
-      "says": "指定のプラグインは存在しません"
+      "refused": "TOOL_INDEX_OUT_OF_RANGE",
+      "says": "範囲の外"
     },
     {
       "signatureKey": "PEPlugin.IPESystemConnector.RunPlugin(System.Int32)",
@@ -522,8 +522,8 @@
         "n": 2147483647
       },
       "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
-      "refused": "TOOL_OPERATION_FAILED",
-      "says": "指定のプラグインは存在しません"
+      "refused": "TOOL_INDEX_OUT_OF_RANGE",
+      "says": "範囲の外"
     },
     {
       "signatureKey": "PEPlugin.IPESystemConnector.SetShareObject(System.String,System.Object)",
@@ -697,11 +697,9 @@
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedBodyIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedBoneIndices(System.Int32[])",
@@ -715,38 +713,30 @@
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedFaceIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedJointIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedVertexIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetVertexIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModelSize(System.Single)",
@@ -863,20 +853,16 @@
       "signatureKey": "PEPlugin.View.IPEVertexEditConnector.SetVertexMemory(System.Int32,System.Int32[])",
       "arguments": {
         "num": 0,
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "先頭の記憶域へ、段取りが入れた先頭の頂点を覚えさせる。"
+      "basis": "頂点を選ばない並びを、先頭の記憶域へ置く。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEVertexGuideConnector.SetVertexIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の頂点を指す。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEViewSettingConnector.LoadViewSetting(System.String)",
@@ -920,6 +906,28 @@
       "basis": "実行器が書いたモーションを読み込む。表示とIKのキーを1つだけ持つ中身で、読み込みが成り立つことを見る。"
     },
     {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.GetBoneName(System.Int32)",
+      "arguments": {
+        "args": {
+          "index": 0
+        }
+      },
+      "basis": "作ったばかりのVMDはボーン名を1つも持たないので、どの番号も並びの外を指す。",
+      "refused": "TOOL_INDEX_OUT_OF_RANGE",
+      "says": "範囲の外"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmd.GetMorphName(System.Int32)",
+      "arguments": {
+        "args": {
+          "index": 0
+        }
+      },
+      "basis": "作ったばかりのVMDはモーフ名を1つも持たないので、どの番号も並びの外を指す。",
+      "refused": "TOOL_INDEX_OUT_OF_RANGE",
+      "says": "範囲の外"
+    },
+    {
       "signatureKey": "PEPlugin.Vmd.IPEVmd.ToFile(System.String,System.Boolean)",
       "arguments": {
         "args": {
@@ -928,6 +936,18 @@
         }
       },
       "basis": "持っているモーションを書き出す操作なので、書き先に一時の置き場を渡す。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vmd.IPEVmdBonePoseState.FromVmd(PEPlugin.Vmd.IPEVmd,System.Int32)",
+      "arguments": {
+        "args": {
+          "boneIndex": 0,
+          "vmd": 0
+        }
+      },
+      "basis": "作ったばかりのVMDはボーン名を1つも持たないので、どの番号も並びの外を指す。",
+      "refused": "TOOL_INDEX_OUT_OF_RANGE",
+      "says": "範囲の外"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmeGroup.GetElement(System.Int32)",
@@ -955,6 +975,17 @@
         }
       },
       "basis": "先頭の要素を引く。群はPMXから写した並びをそのまま持つので、確かに在ると言えるのは先頭だけである。"
+    },
+    {
+      "signatureKey": "PEPlugin.Vme.IPEVmePath.GetDistanceAtPoint(System.Int32)",
+      "arguments": {
+        "args": {
+          "pos": 0
+        }
+      },
+      "basis": "点を置いていないパスには、どの位置も無い。",
+      "refused": "TOOL_INDEX_OUT_OF_RANGE",
+      "says": "範囲の外"
     },
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.SetPoint(SlimDX.Vector3[])",
@@ -1024,11 +1055,9 @@
     {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBodyIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedBoneIndices(System.Int32[])",
@@ -1042,29 +1071,23 @@
     {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedFaceIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedJointIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPluginConnector.SetSelectedVertexIndices(System.Int32[])",
       "arguments": {
-        "indices": [
-          0
-        ]
+        "indices": []
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。"
+      "basis": "空の選択はどの状態でも通る。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddBox(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
@@ -1209,14 +1232,18 @@
       "arguments": {
         "n": 2147483647
       },
-      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡す。エディタは番号が無くても何も走らせずに返す。"
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
+      "refused": "TOOL_INDEX_OUT_OF_RANGE",
+      "says": "範囲の外"
     },
     {
       "signatureKey": "PXCPlugin.IPXSystemControl.RunPEPlugin(System.Int32)",
       "arguments": {
         "n": 2147483647
       },
-      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡す。エディタは番号が無くても何も走らせずに返す。"
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
+      "refused": "TOOL_INDEX_OUT_OF_RANGE",
+      "says": "範囲の外"
     },
     {
       "signatureKey": "PXCPlugin.IPXSystemControl.SetShareData(System.String,System.Byte[])",

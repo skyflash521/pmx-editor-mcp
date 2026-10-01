@@ -1024,7 +1024,8 @@ namespace PmxEditorMcp
             {
                 PmxTarget target;
                 IList<Spot> column;
-                if (!TryTake(context, call.Receiver, Targets(call), handle, false, out target, out refused, issues)
+                if (!TryPositions(context, call, arguments, out refused)
+                    || !TryTake(context, call.Receiver, Targets(call), handle, false, out target, out refused, issues)
                     || !TryColumn(
                         context,
                         call.Access,
@@ -1035,7 +1036,8 @@ namespace PmxEditorMcp
                         out column,
                         out refused)
                     || !TryBound(call, target, new[] { arguments }, out refused)
-                    || !TryMet(context, precondition, column[0].Item, out refused))
+                    || !TryMet(context, precondition, column[0].Item, out refused)
+                    || !TryPositionsOf(call, arguments, target, column[0].Item, out refused))
                 {
                     return;
                 }
@@ -1075,6 +1077,7 @@ namespace PmxEditorMcp
                         return;
                     }
 
+                    UiModelCounts.Remember(call.RowKey, ArgumentNames(call), arguments, value);
                     if (!TryProjected(call, value, out result, out refused))
                     {
                         return;
@@ -1693,6 +1696,12 @@ namespace PmxEditorMcp
                     {
                         refused = new Refusal(ToolEnvelope.Failure(code, message));
 
+                        return;
+                    }
+
+                    if (!TryPositionsOf(
+                        call, spread ? passing[0] : passing[at], target, column[at].Item, out refused))
+                    {
                         return;
                     }
                 }
@@ -4089,6 +4098,93 @@ namespace PmxEditorMcp
 
             return ToolEnvelope.Success(
                 PageValue(name, whole.Length, offset, page.Items), warnings.Concat(page.Warnings).ToList());
+        }
+
+        private bool TryPositions(
+            McpMethodContext context, ToolCall call, object[] arguments, out Refusal refused)
+        {
+            refused = null;
+            if (!PositionArguments.TracksCurrent(call.RowKey))
+            {
+                return true;
+            }
+
+            PmxTarget current;
+            if (!TryCurrent(context, out current, out refused))
+            {
+                return false;
+            }
+
+            PEPlugin.Pmx.IPXPmx model = current.Pmx as PEPlugin.Pmx.IPXPmx;
+            string code;
+            string message;
+            if (model == null
+                || PositionArguments.TryCurrent(
+                    call.RowKey, ArgumentNames(call), arguments, model, out code, out message))
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+            return false;
+        }
+
+        private bool TryPositionsOf(
+            ToolCall call, object[] arguments, PmxTarget target, object receiver, out Refusal refused)
+        {
+            refused = null;
+            if (!PositionArguments.TracksLater(call.RowKey))
+            {
+                return true;
+            }
+
+            IList<string> names = ArgumentNames(call);
+            int pmx = names.IndexOf("pmx");
+            PEPlugin.Pmx.IPXPmx model = (pmx >= 0 ? arguments[pmx] as PEPlugin.Pmx.IPXPmx : null)
+                ?? (target == null ? null : target.Pmx as PEPlugin.Pmx.IPXPmx);
+            string code;
+            string message;
+            if (PositionArguments.TryLater(
+                call.RowKey, names, arguments, model, receiver, ReadCount, out code, out message))
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+            return false;
+        }
+
+        private int? ReadCount(string rowKey, object owner)
+        {
+            if (rowKey == PositionArguments.PathPointsRow)
+            {
+                PEPlugin.Vme.IPEVmePath path = owner as PEPlugin.Vme.IPEVmePath;
+
+                return path == null ? (int?)null : VmePathPoints.Count(path);
+            }
+
+            object value;
+            SdkRelayRefusal refusal;
+            if (!_relay.TryInvoke(rowKey, owner, new object[0], out value, out refusal))
+            {
+                return null;
+            }
+
+            if (value is int)
+            {
+                return (int)value;
+            }
+
+            ICollection collection = value as ICollection;
+
+            return collection == null ? (int?)null : collection.Count;
+        }
+
+        private static IList<string> ArgumentNames(ToolCall call)
+        {
+            return call.Arguments.Select(a => a.Name).ToList();
         }
 
         private bool TryCurrent(McpMethodContext context, out PmxTarget current, out Refusal refused)

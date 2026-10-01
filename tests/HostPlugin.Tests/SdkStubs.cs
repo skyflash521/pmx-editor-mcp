@@ -131,6 +131,10 @@ namespace PmxEditorMcp.Tests
     {
         private readonly IPXCPluginRunArgs _cPluginRunArgs;
 
+        public const int RegisteredPlugins = 23;
+
+        public const int RegisteredCPlugins = 24;
+
         public StubSystemConnector(IPXCPluginRunArgs cPluginRunArgs)
         {
             _cPluginRunArgs = cPluginRunArgs;
@@ -172,12 +176,12 @@ namespace PmxEditorMcp.Tests
 
         public int RegisteredCPluginCount
         {
-            get { throw new NotSupportedException(); }
+            get { return RegisteredCPlugins; }
         }
 
         public int RegisteredPluginCount
         {
-            get { throw new NotSupportedException(); }
+            get { return RegisteredPlugins; }
         }
 
         public string SlimDXAssemblyPath
@@ -230,6 +234,11 @@ namespace PmxEditorMcp.Tests
     {
         public object Connect(int n, object obj)
         {
+            if (n == 1250)
+            {
+                return 7u;
+            }
+
             throw new NotSupportedException();
         }
 
